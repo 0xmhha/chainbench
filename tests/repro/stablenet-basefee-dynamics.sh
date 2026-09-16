@@ -68,7 +68,7 @@ log "boot stablenet ($VALIDATORS validators + $ENDPOINTS endpoint)"
   exit 1
 }
 
-RPC_URL="$(python3 -c "import json; ws=json.load(open('$WORK/workspace.json')); n=next(n for n in ws['nodes'] if n['index']==1); print('http://%s:%d' % (n.get('host') or '127.0.0.1', n['http']))")"
+RPC_URL="$(python3 -c "import json; ws=json.load(open('$WORK/chain-record.json')); n=next(n for n in ws['nodes'] if n['index']==1); print('http://%s:%d' % (n.get('host') or '127.0.0.1', n['http']))")"
 
 log "settle ${SETTLE}s for boot + peering"
 sleep "$SETTLE"

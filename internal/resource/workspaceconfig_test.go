@@ -130,8 +130,8 @@ func TestValidate_Rejects(t *testing.T) {
 		"unknown field":      func(s string) string { return s + "\nunknownField: x\n" },
 		"unknown input mode": func(s string) string { return strings.Replace(s, "mode: generated", "mode: borrowed", 1) },
 		"unknown chain mode": func(s string) string { return strings.Replace(s, "chain: fresh", "chain: recycled", 1) },
-		"generated + preset": func(s string) string {
-			return strings.Replace(s, "mode: generated", "mode: generated\n  preset: regression", 1)
+		"generated + a named bundle": func(s string) string {
+			return strings.Replace(s, "mode: generated", "mode: generated\n  name: regression", 1)
 		},
 	}
 	for name, mutate := range cases {
@@ -143,38 +143,38 @@ func TestValidate_Rejects(t *testing.T) {
 	}
 }
 
-// TestInputs_PreparedNeedsPresetThatExists: prepared must name a preset, and the
-// preset must be declared.
-func TestInputs_PreparedNeedsPresetThatExists(t *testing.T) {
-	prepared := `
+// TestInputs_ExistingNeedsANameThatExists: the existing mode must name a
+// bundle, and the bundle must be declared.
+func TestInputs_ExistingNeedsANameThatExists(t *testing.T) {
+	existing := `
 version: 1
 dataRoot: /data
 paths: {binaries: bin, configs: configs, genesis: genesis, keystore: keystore, keyrings: keys, nodes: node, runtime: runtime, logs: logs}
 control: {artifactRoot: ~/.chainbench}
 inputs:
-  mode: prepared
-  preset: regression
+  mode: existing
+  name: regression
 execution:
   chain: fresh
-presets:
+existingInputs:
   regression:
     genesis: srv://server-01/data/genesis/g.json
     keyring: srv://server-01/data/keys/r
     configs:
       default: srv://server-01/data/configs/c.toml
 `
-	if _, err := ParseWorkspaceConfig([]byte(prepared)); err != nil {
-		t.Fatalf("valid prepared config rejected: %v", err)
+	if _, err := ParseWorkspaceConfig([]byte(existing)); err != nil {
+		t.Fatalf("valid existing-inputs config rejected: %v", err)
 	}
-	// prepared with no preset -> error.
-	noPreset := strings.Replace(prepared, "  preset: regression\n", "", 1)
-	if _, err := ParseWorkspaceConfig([]byte(noPreset)); err == nil {
-		t.Fatal("prepared with no preset was accepted")
+	// existing with no name -> error.
+	noName := strings.Replace(existing, "  name: regression\n", "", 1)
+	if _, err := ParseWorkspaceConfig([]byte(noName)); err == nil {
+		t.Fatal("existing with no name was accepted")
 	}
-	// preset names a missing entry -> error.
-	missing := strings.Replace(prepared, "preset: regression", "preset: nonesuch", 1)
+	// the name points at a missing entry -> error.
+	missing := strings.Replace(existing, "name: regression", "name: nonesuch", 1)
 	if _, err := ParseWorkspaceConfig([]byte(missing)); err == nil {
-		t.Fatal("preset naming a missing entry was accepted")
+		t.Fatal("a name with no entry in existingInputs was accepted")
 	}
 }
 
@@ -249,9 +249,9 @@ func TestWorkspaceConfig_SampleSketchesNothingThatCannotBeUsed(t *testing.T) {
 	objectForm := strings.Replace(validConfig, `inputs:
   mode: generated
 `, `inputs:
-  mode: prepared
-  preset: regression
-presets:
+  mode: existing
+  name: regression
+existingInputs:
   regression:
     genesis:
       server: server-01

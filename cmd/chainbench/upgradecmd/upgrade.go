@@ -18,7 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newUpgradeCmd drives the concurrent consensus-family handoff (go-wemix+etcd ->
+// New drives the concurrent consensus-family handoff (go-wemix+etcd ->
 // go-wbft) framework in pkg/consensus/upgrade from a golden profile. Unlike the
 // `hardfork` command (an in-place binary swap for a homogeneous fork), this
 // composes a plan where producers and validators run concurrently.

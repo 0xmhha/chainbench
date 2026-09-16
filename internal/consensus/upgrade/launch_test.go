@@ -1,7 +1,9 @@
 package upgrade_test
 
 import (
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"strings"
 	"testing"
 
@@ -10,10 +12,18 @@ import (
 
 func TestLaunchArgs(t *testing.T) {
 	n := upgrade.NodeSpec{
+		Chain:     "wemix",
+		Role:      node.RoleBP,
 		NetworkID: 8285,
 		Ports:     node.Endpoints{P2P: 30011, Etcd: 30012, HTTP: 40011, WS: 40012, Auth: 40013},
 	}
-	args, err := upgrade.LaunchArgs(n, "/data/node1", []string{"--mine"})
+	// The plugin answers both halves of the launch: a producer seals, and the
+	// binary's flag vocabulary is the one its manifest names.
+	p, err := registry.Get("wemix")
+	if err != nil {
+		t.Fatal(err)
+	}
+	args, err := upgrade.LaunchArgs(n, "/data/node1", p)
 	if err != nil {
 		t.Fatal(err)
 	}

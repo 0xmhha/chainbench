@@ -1,27 +1,14 @@
-// Package netcompose is the shared core behind the `chainbench net` step
-// commands and their MCP mirrors: it composes a chain network for testing one
-// customizable step at a time (keys, allocate, genesis, config, provision,
-// init, start/stop, logs, test), persisting the accumulating state in a local
-// data directory so steps run independently, re-run, and are inspectable.
+// Workspace and the state it records. The package comment is in doc.go.
 //
-// Two planes are kept separate. The CONTROL plane — the composition state in
-// workspace.json (chain, keys, placements, node table, step-tracking) — always
-// lives locally on the operator's resource. The DATA plane — genesis, configs,
-// datadirs, logs — lives on a Target (this machine's filesystem, or a remote
-// SSH host); see target.go. Step functions use the Target's FileStore/Driver and
-// never branch on local vs remote.
-//
-// Persistence belongs to core/session (Composition — the long-lived
-// environment mode); this package owns only the domain state and the step
-// functions. The CLI and MCP surfaces are thin wrappers over the app layer,
-// which calls the step functions here, so both drive the exact same behavior.
+// Persistence belongs to core/session (Composition, the long-lived environment
+// mode); this file owns the domain state and the accessors the steps use.
+
 package chainsetup
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -33,9 +20,18 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// nodeScopeRE matches a per-node override scope key ("node1", "node12"), the
-// storage form both config and launch overrides share.
-var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
+// StateFormatVersion is the shape of the composition record this build reads
+// and writes.
+//
+// It exists because the record had no version at all. A field could be renamed
+// or its meaning changed and an older record would still decode — the missing
+// field reads as a zero, and a zero is a legitimate value for most of them, so
+// the composition came up describing itself wrongly rather than refusing. There
+// is no migration path on purpose: this track keeps one current shape, and a
+// record from another version is a workspace to compose again.
+//
+// Raise it whenever a field changes meaning, is removed, or is renamed.
+const StateFormatVersion = 1
 
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step
@@ -46,6 +42,14 @@ type Step = session.Step
 // secrets — a server-set placement reads its login from the server-set file at
 // resolve time, and a directly named target reads the environment.
 type State struct {
+	// FormatVersion is the shape this record was written in. A build reads only
+	// the version it writes: this track removes old-format readers rather than
+	// keeping one per era, so a record from another version is refused by name
+	// instead of being half-understood.
+	//
+	// It is first because it decides whether the rest means anything.
+	FormatVersion int `json:"formatVersion"`
+
 	Chain string `json:"chain"`
 	// CompositionID is a stable identifier for this composition, set once at
 	// `new` and kept across resume and binary swap. It names the composition's
@@ -56,13 +60,17 @@ type State struct {
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
-	ManifestPath string        `json:"manifestPath,omitempty"`
-	TemplatePath string        `json:"templatePath,omitempty"`
-	Binary       string        `json:"binary,omitempty"`
-	KeysDir      string        `json:"keysDir,omitempty"`
-	Validators   int           `json:"validators,omitempty"`
-	Target       resource.Spec `json:"target"`
-	GenesisPath  string        `json:"genesisPath,omitempty"`
+	ManifestPath string `json:"manifestPath,omitempty"`
+	TemplatePath string `json:"templatePath,omitempty"`
+	Binary       string `json:"binary,omitempty"`
+	KeysDir      string `json:"keysDir,omitempty"`
+	// BPCount is how many bp nodes the placement resolved to. The genesis step
+	// sizes the validator set from it: the producers ARE the validator set, and
+	// counting the placements rather than the request is what makes a topology
+	// decide it.
+	BPCount     int           `json:"bp,omitempty"`
+	Target      resource.Spec `json:"target"`
+	GenesisPath string        `json:"genesisPath,omitempty"`
 	// LaunchInputs is what each launch input hashed to when this workspace
 	// wrote it, keyed by path on the target.
 	//
@@ -95,10 +103,6 @@ type State struct {
 	// composition was set up with, recorded so later steps and a resume resolve
 	// portable file references under the same data root and purpose directories.
 	WorkspaceConfig string `json:"workspaceConfig,omitempty"`
-	// LegacyServerSet reads the field's pre-rename key so a workspace composed
-	// before the rename keeps its recorded path. It is migrated into ServerSet
-	// on open and never written back.
-	LegacyServerSet string `json:"serverConfig,omitempty"`
 	// Docker records that this composition treats its servers as local docker
 	// containers: the harness's own dials are translated through the localmap
 	// next to ServerSet. It is recorded once at `chain new --docker` so a
@@ -122,7 +126,7 @@ type State struct {
 	// recomputes it each time it runs — a fresh config is a new revision.
 	ConfigProvenance []ConfigProvenance `json:"configProvenance,omitempty"`
 	// LaunchSet holds per-scope launch-argv overrides, keyed by scope: "all" for
-	// every node, a role ("bp"/"en"/"boot") for that role, "node<N>" for one.
+	// every node, a role ("bp"/"en") for that role, "node<N>" for one.
 	// Each value is a list of "key" (boolean flag) or "key=value" applied at
 	// argv assembly, most-general-first (all, then role, then node — node wins).
 	LaunchSet map[string][]string `json:"launchSet,omitempty"`
@@ -202,16 +206,19 @@ func open(dir string, now func() time.Time) (*Workspace, error) {
 		return nil, err
 	}
 	ws := &Workspace{comp: comp, env: os.Getenv, now: now, state: State{Steps: map[string]Step{}}}
-	if err := comp.Load(&ws.state); err != nil {
+	found, err := comp.Load(&ws.state)
+	if err != nil {
 		return nil, err
 	}
+	if found && ws.state.FormatVersion != StateFormatVersion {
+		return nil, fmt.Errorf(
+			"chainsetup: the composition record in %s is format %d, and this build reads format %d — compose it again with `chain new`",
+			dir, ws.state.FormatVersion, StateFormatVersion)
+	}
+	ws.state.FormatVersion = StateFormatVersion
 	if ws.state.Steps == nil {
 		ws.state.Steps = map[string]Step{}
 	}
-	if ws.state.ServerSet == "" && ws.state.LegacyServerSet != "" {
-		ws.state.ServerSet = ws.state.LegacyServerSet
-	}
-	ws.state.LegacyServerSet = ""
 	return ws, nil
 }
 
@@ -339,11 +346,11 @@ func (w *Workspace) opener() resource.Opener {
 }
 
 // applyConfigOverrides applies the workspace's config-knob overrides to one
-// node's spec: the "all" scope first, then that node's own scope (so a node
-// override wins). Each entry is a dot-path "key=value"; an unknown key or a
-// malformed entry is an error, never a silent no-op.
-func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error {
-	for _, kv := range w.configOverridesFor(index) {
+// node's spec, most-general-first, so the narrowest scope wins. Each entry is a
+// dot-path "key=value"; an unknown key or a malformed entry is an error, never
+// a silent no-op.
+func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, index int) error {
+	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
 			return fmt.Errorf("config override %q must be key=value", kv)
@@ -356,14 +363,16 @@ func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error
 }
 
 // configOverridesFor returns the config overrides that apply to one node,
-// most-general-first: "all" then "node<N>" (node wins). It is the single source
-// of which overrides shape a node's config — applyConfigOverrides applies them
-// and the config step records them as provenance, so the two never diverge. A
-// node reads only its own "node<N>" scope, so one node's override never leaks
-// into another's config.
-func (w *Workspace) configOverridesFor(index int) []string {
+// most-general-first: "all", then the node's role, then the node itself, so the
+// narrowest scope wins.
+//
+// It is the single source of which overrides shape a node's config —
+// applyConfigOverrides applies them and the config step records them as
+// provenance, so the two never diverge. A node reads only its own "node<N>"
+// scope, so one node's override never leaks into another's config.
+func (w *Workspace) configOverridesFor(role node.Role, index int) []string {
 	var out []string
-	for _, scope := range []string{"all", fmt.Sprintf("node%d", index)} {
+	for _, scope := range node.ScopeFor(role, index) {
 		out = append(out, w.state.ConfigSet[scope]...)
 	}
 	return out
@@ -399,8 +408,8 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}
-	if !validLaunchScope(scope) {
-		return fmt.Errorf("launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", scope)
+	if !node.ValidScope(scope) {
+		return fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords())
 	}
 	if _, err := ParseOverrides(sets); err != nil {
 		return err
@@ -418,37 +427,25 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 // layer is last-write-wins), so a node override beats a role override beats all.
 func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	var out []string
-	roleScope := ""
-	if r, err := node.NormalizeRole(role); err == nil {
-		roleScope = string(r)
-	}
-	for _, scope := range []string{"all", roleScope, fmt.Sprintf("node%d", index)} {
-		if scope == "" {
-			continue
-		}
+	for _, scope := range node.ScopeFor(node.Role(role), index) {
 		out = append(out, w.state.LaunchSet[scope]...)
 	}
 	return out
 }
 
-// validLaunchScope reports whether scope is a launch scope the workspace applies:
-// "all", a role token, or "node<N>". A role is stored normalized (bp/en/boot).
-func validLaunchScope(scope string) bool {
-	switch scope {
-	case "all", string(node.RoleBP), string(node.RoleValidator),
-		string(node.RoleEN), string(node.RoleEndpoint), string(node.RoleBoot):
-		return true
-	}
-	return nodeScopeRE.MatchString(scope)
-}
-
-// recordConfigSet stores config overrides under a scope ("all" or "node<N>"),
-// appending to what that scope already holds so repeated --set calls accumulate.
-// It validates each entry against the knob contract up front, so a bad override
-// is refused at the point it is set rather than at render.
+// recordConfigSet stores config overrides under a scope, appending to what that
+// scope already holds so repeated --set calls accumulate.
+//
+// Both halves are validated up front, so a bad override is refused where it is
+// set rather than at render. The scope was not checked at all before: a typo
+// stored values under a key nothing reads, and the node it was meant for came
+// up with a config that silently lacked them.
 func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
+	}
+	if !node.ValidScope(scope) {
+		return fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords())
 	}
 	var probe nodeconfig.Spec
 	for _, kv := range sets {

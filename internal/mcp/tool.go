@@ -1,8 +1,7 @@
 // Package mcp is the chainbench MCP surface (requirement #14) as a separate
 // module: it exposes chainbench's core capabilities to an agent over the Model
 // Context Protocol. Tool handlers call the same core packages the CLI uses, so
-// the two surfaces stay behaviorally identical (docs/CHAINBENCH_GO_REDESIGN.md
-// §B). The protocol layer here is self-contained (JSON-RPC 2.0 over stdio) to
+// the two surfaces stay behaviorally identical. The protocol layer here is self-contained (JSON-RPC 2.0 over stdio) to
 // avoid a heavy external SDK; the transport (cmd/chainbench-mcp) is a thin loop
 // over Server.Handle.
 package mcp

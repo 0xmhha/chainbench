@@ -12,7 +12,7 @@ import (
 
 // ExecFn constructs the command a LocalDriver launches. It is injectable so
 // tests can substitute a controllable process without a real node binary
-// (mirrors network/internal/drivers/local).
+// (mirrors the retired network module's local driver).
 type ExecFn func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
 // LocalDriver launches nodes as subprocesses on the local host.

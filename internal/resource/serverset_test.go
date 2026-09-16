@@ -163,7 +163,7 @@ func TestSelect_ByNameByIndexAndTheLoneHost(t *testing.T) {
 	}
 }
 
-// TestPlacement_LocalAndRemoteReadTheSameFields: local and remote differ in the
+// TestPoolFor_LocalAndRemoteReadTheSameFields: local and remote differ in the
 // address and in whether the data plane is reached over SSH — nothing else. The
 // pool is read from the same fields either way, which is why composing a
 // network does not branch on it.

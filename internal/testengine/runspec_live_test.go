@@ -64,7 +64,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 	deps := chainsetup.Deps{}
 	if _, err := chainsetup.NetUp(ctx, deps, chainsetup.NetUpIn{
-		DataDir: dataRoot, Chain: "stablenet", Binary: bin, KeysDir: presetDir, Validators: 4,
+		DataDir: dataRoot, Chain: "stablenet", Binary: bin, KeysDir: presetDir, BPCount: 4,
 	}); err != nil {
 		t.Fatalf("chain up stablenet: %v", err)
 	}

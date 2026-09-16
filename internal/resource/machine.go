@@ -31,7 +31,7 @@ import (
 )
 
 // Spec is the serializable descriptor of the machine an operation acts on
-// (persisted in workspace.json). There is NO kind field: what a spec IS
+// (persisted in chain-record.json). There is NO kind field: what a spec IS
 // follows from what it names — the address decides, the same doctrine the
 // server set follows.
 //

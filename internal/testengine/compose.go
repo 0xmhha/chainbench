@@ -18,6 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -64,8 +65,12 @@ const overlayFilePrefix = "env-genesis-overlay"
 const defaultKeysDir = "keys/preset"
 
 // keySourceGenerate is the key source that creates a fresh set rather than
-// reading a recorded one.
-const keySourceGenerate = "generate"
+// reading a recorded one; keySourceKeyPreset reads the recorded one and is what
+// a declaration that names no source gets.
+const (
+	keySourceGenerate  = "generate"
+	keySourceKeyPreset = "keyPreset"
+)
 
 // generatedKeysSubdir is where a generated set with no ref lands, under the
 // workspace, so generate does not reuse the shared preset by default.
@@ -145,14 +150,14 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		// Refuse them loudly rather than parse an upgrade env that carries them
 		// and silently drop half its declaration.
 		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
-			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply")
+			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply — the network's size lives in the profile's roles (producers, validators), together with the identity order, validator addresses and extradata that have to agree with it, so run a different profile to run a different size")
 		}
 		return composition{handoff: &upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
-			PresetDir:      keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryBefore]),
-			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryAfter]),
+			KeysDir:        keysDir,
+			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryFrom]),
+			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryTo]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
 		}}, nil
@@ -175,7 +180,18 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		binary = topoBinary
 	}
 	if binary == "" {
-		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
+		// Neither the run nor the declaration named one, so the chain does. A
+		// definition that repeats the chain's own name for its binary is how
+		// one binary came to be spelled two ways across the specs; leaving it
+		// out is now the normal case, and chainsetup places the name.
+		p, err := registry.Get(chain)
+		if err != nil {
+			return composition{}, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err)
+		}
+		binary = p.Manifest().Binary
+	}
+	if binary == "" {
+		return composition{}, fmt.Errorf("no binary was given and chain %q names none", chain)
 	}
 
 	var validators, endpoints, proxies int
@@ -186,10 +202,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if err != nil {
 			return composition{}, err
 		}
-		// An explicit --validators is a named count: it turns dynamic sizing off
-		// rather than being filled over.
-		if in.Validators > 0 {
-			validators = in.Validators
+		// An explicit --bp is a named count: it turns dynamic sizing off rather
+		// than being filled over.
+		if in.BPCount > 0 {
+			validators = in.BPCount
 			autoBP = false
 		}
 		if autoBP {
@@ -217,7 +233,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
-		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
+		BPCount: validators, ENCount: endpoints, PNCount: proxies, EndpointSyncMode: syncMode,
 		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
@@ -267,60 +283,63 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target = target
 		up.WorkspaceConfigPath = in.WorkspaceConfigPath
-		if err := applyPreset(up, wc, spec); err != nil {
+		if err := applyExistingInputs(up, wc, spec); err != nil {
 			return composition{}, err
 		}
 	}
 	return composition{up: up}, nil
 }
 
-// applyPreset expands a prepared input preset onto the composition: the
-// preset's finished genesis and its keyring stand in for declaring them in the
-// DSL, which is the point of naming a bundle. A field the DSL already declared
-// is a conflict rather than a silent override. It runs only for inputs.mode
-// prepared; a generated run has no preset (workspace-config validation ensures
-// that).
-func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
-	if wc.Inputs.Mode != resource.InputPrepared {
+// applyExistingInputs expands a named bundle of inputs that are already on the
+// target onto the composition: the bundle's finished genesis and its keyring
+// stand in for declaring them in the DSL, which is the point of naming a
+// bundle. A field the DSL already declared is a conflict rather than a silent
+// override. It runs only for inputs.mode existing; a generated run names no
+// bundle (workspace-config validation ensures that).
+func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+	if wc.Inputs.Mode != resource.InputExisting {
 		return nil
 	}
-	name := wc.Inputs.Preset
-	preset := wc.Presets[name] // validated to exist at parse time
-	if preset.Genesis != "" {
+	name := wc.Inputs.Name
+	existing := wc.ExistingInputs[name] // validated to exist at parse time
+	if existing.Genesis != "" {
 		if up.GenesisExisting != "" || len(spec.Chain.GenesisOverlay) > 0 {
-			return fmt.Errorf("testengine: preset %q sets a genesis, but the spec already declares one — declare it in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a genesis, but the spec already declares one — declare it in one place", name)
 		}
-		up.GenesisExisting = preset.Genesis
+		up.GenesisExisting = existing.Genesis
 	}
-	if preset.Keyring != "" {
+	if existing.Keyring != "" {
 		if spec.EnvKeys != nil {
-			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a keyring, but the spec already declares keys — declare them in one place", name)
 		}
 		// A local key set is used in place; a keyring on a server (srv://) is
 		// downloaded to a local directory by the keys step (materializeKeyring)
 		// so the ring is read the one local way and a node signs with keys at a
 		// known local path. A bare relative name is neither, and is rejected here
 		// rather than mistaken for a local directory.
-		if !strings.HasPrefix(preset.Keyring, "srv://") && !filepath.IsAbs(preset.Keyring) {
-			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path or a srv:// reference", name, preset.Keyring)
+		if !strings.HasPrefix(existing.Keyring, "srv://") && !filepath.IsAbs(existing.Keyring) {
+			return fmt.Errorf("testengine: existing inputs %q keyring %q must be a local absolute path or a srv:// reference", name, existing.Keyring)
 		}
-		up.KeysDir = preset.Keyring
-		up.KeysSource = "preset"
+		up.KeysDir = existing.Keyring
+		// The key SOURCE is a different preset: it says the ring is read as
+		// recorded rather than generated. Naming the bundle "existing inputs"
+		// is what keeps these two readable in one function.
+		up.KeysSource = "keyPreset"
 	}
-	applyPresetConfigs(up, preset)
+	applyExistingConfigs(up, existing)
 	return nil
 }
 
-// applyPresetConfigs resolves each node's logical config name to the preset's
-// file. A node table's config value is a logical name when it is a key in the
-// preset's configs map: the DSL names a config, and the environment's preset
-// says which file that name is on this target, so one spec runs against
-// different targets by swapping the map. A config value that is not a preset
-// key is left as a direct file reference, which is how a node named its config
-// before presets existed. With no node table there is nothing to map onto, and
-// the map is simply unused.
-func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
-	if len(preset.Configs) == 0 || up.Topology == nil {
+// applyExistingConfigs resolves each node's logical config name to the file the
+// bundle names. A node table's config value is a logical name when it is a key
+// in the bundle's configs map: the DSL names a config, and the environment says
+// which file that name is on this target, so one spec runs against different
+// targets by swapping the map. A config value that is not a key is left as a
+// direct file reference, which is how a node named its config before bundles
+// existed. With no node table there is nothing to map onto, and the map is
+// simply unused.
+func applyExistingConfigs(up *chainsetup.NetUpIn, existing resource.ExistingInputs) {
+	if len(existing.Configs) == 0 || up.Topology == nil {
 		return
 	}
 	for i := range up.Topology.Nodes {
@@ -328,7 +347,7 @@ func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
 		if logical == "" {
 			continue
 		}
-		if file, ok := preset.Configs[logical]; ok {
+		if file, ok := existing.Configs[logical]; ok {
 			up.Topology.Nodes[i].Config = file
 		}
 	}
@@ -468,9 +487,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 
 // Topology keys a declaration may use for its node counts.
 const (
-	topoValidators   = "validators"
 	topoBP           = "bp"
-	topoEndpoints    = "endpoints"
 	topoEN           = "en"
 	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
@@ -489,7 +506,7 @@ const (
 func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, autoBP bool, err error) {
 	for k, v := range t {
 		switch k {
-		case topoValidators, topoBP:
+		case topoBP:
 			if s, ok := v.(string); ok {
 				if s != topoMax {
 					return 0, 0, 0, "", false, fmt.Errorf("topology.%s must be a number or %q, got %q", k, topoMax, s)
@@ -498,7 +515,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 				break
 			}
 			validators, err = countOf(k, v)
-		case topoEndpoints, topoEN:
+		case topoEN:
 			endpoints, err = countOf(k, v)
 		case topoPN:
 			proxies, err = countOf(k, v)
@@ -509,7 +526,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
+			err = fmt.Errorf("topology.%s is not a key the composer knows (bp, en, pn, syncMode)", k)
 		}
 		if err != nil {
 			return 0, 0, 0, "", false, err

@@ -22,7 +22,7 @@ func upgradeTool() Tool {
 			"properties": map[string]any{
 				"profile":        map[string]any{"type": "string"},
 				"workspaceDir":   map[string]any{"type": "string"},
-				"preset":         map[string]any{"type": "string"},
+				"keys":           map[string]any{"type": "string"},
 				"fromBinary":     map[string]any{"type": "string"},
 				"toBinary":       map[string]any{"type": "string"},
 				"template":       map[string]any{"type": "string"},
@@ -38,7 +38,7 @@ func upgradeTool() Tool {
 			}
 			out, err := app.UpgradeRun(ctx, app.Deps{}, app.UpgradeRunIn{
 				ProfilePath:    profile,
-				PresetDir:      argString(args, "preset", "keys/preset"),
+				KeysDir:        argString(args, "keys", "keys/preset"),
 				FromBinary:     argString(args, "fromBinary", ""),
 				ToBinary:       argString(args, "toBinary", ""),
 				Template:       argString(args, "template", ""),

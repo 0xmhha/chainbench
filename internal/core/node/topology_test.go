@@ -22,8 +22,8 @@ network: local
 nodes:
   - { index: 1, role: bp,  sync_mode: full }
   - { index: 2, role: en,  sync_mode: full, bootnode: true }
-  - { index: 3, role: endpoint, sync_mode: archive }
-  - { index: 4, role: validator }
+  - { index: 3, role: en, sync_mode: archive }
+  - { index: 4, role: bp }
 `)
 	topo, err := Load(p)
 	if err != nil {
@@ -78,8 +78,8 @@ func TestValidate_Errors(t *testing.T) {
 
 func TestValidate_OK(t *testing.T) {
 	topo := Topology{Chain: "wbft", Nodes: []Entry{
-		{Index: 1, Role: "validator"},
-		{Index: 2, Role: "endpoint", SyncMode: "snap"},
+		{Index: 1, Role: "bp"},
+		{Index: 2, Role: "en", SyncMode: "snap"},
 	}}
 	if err := topo.Validate(); err != nil {
 		t.Fatalf("valid topology rejected: %v", err)

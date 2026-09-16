@@ -1,22 +1,54 @@
 {
   "id": "wbft",
   "binary": "gwbft",
+  "dialect": "geth114",
   "chain_id": 8284,
   "network_id": 8284,
   "miner_recommit": "duration",
-  "bootstrap": { "type": "static" },
-  "build": { "repo": "go-wbft", "make_target": "gwbft" },
+  "bootstrap": {
+    "type": "static"
+  },
+  "build": {
+    "repo": "go-wbft",
+    "make_target": "gwemix"
+  },
   "consensus_family": "wbft",
   "genesis": {
     "engine_field": "croissant",
-    "hardforks": ["istanbul", "pangyo", "applepie", "brioche", "croissant"],
+    "hardforks": [
+      "istanbul",
+      "pangyo",
+      "applepie",
+      "brioche",
+      "croissant"
+    ],
     "template": "wbft"
   },
   "consensus": {
     "rpc_namespace": "istanbul",
     "validators_method": "istanbul_getValidators"
   },
-  "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
-  "probe": { "method": "istanbul_getValidators" },
-  "capabilities": ["process", "rpc", "ws", "consensus"]
+  "tx_types": [
+    "0x00",
+    "0x01",
+    "0x02",
+    "0x03",
+    "0x04",
+    "0x16"
+  ],
+  "probe": {
+    "method": "istanbul_getValidators"
+  },
+  "capabilities": [
+    "process",
+    "rpc",
+    "ws",
+    "consensus"
+  ],
+  "system_contracts": {
+    "govConfig": "0x0000000000000000000000000000000000001000",
+    "govStaking": "0x0000000000000000000000000000000000001001",
+    "govRewardeeImp": "0x0000000000000000000000000000000000001002",
+    "govNCP": "0x0000000000000000000000000000000000001003"
+  }
 }

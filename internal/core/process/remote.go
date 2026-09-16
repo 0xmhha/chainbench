@@ -20,7 +20,7 @@ import (
 type Runner func(ctx context.Context, command string) (remote.ExecResult, error)
 
 // SSHRunner returns a Runner that executes each command over SSH using the given
-// credentials and host-key policy (pkg/core/remote). Errors never include the
+// credentials and host-key policy (internal/core/remote). Errors never include the
 // password.
 func SSHRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner {
 	return func(ctx context.Context, command string) (remote.ExecResult, error) {
@@ -54,7 +54,7 @@ func sudoWrap(command string) string {
 
 // RemoteDriver provisions, launches, and stops nodes on a remote host by running
 // shell commands over the injected Runner. It is the remote counterpart of
-// LocalDriver, built on the SSH access absorbed into pkg/core/remote.
+// LocalDriver, built on the SSH access absorbed into internal/core/remote.
 type RemoteDriver struct {
 	run Runner
 }

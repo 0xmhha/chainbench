@@ -23,7 +23,7 @@ const defaultEtcdFormTimeout = 60 * time.Second
 // UpgradeRunIn shapes a profile-based consensus handoff (the CLI `upgrade run`).
 type UpgradeRunIn struct {
 	ProfilePath    string
-	PresetDir      string
+	KeysDir        string
 	FromBinary     string
 	ToBinary       string
 	Template       string
@@ -151,7 +151,7 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	}
 	hi := upgrade.HandoffInputs{
 		ProfilePath:    in.ProfilePath,
-		PresetDir:      in.PresetDir,
+		KeysDir:        in.KeysDir,
 		FromBinary:     fromBin,
 		ToBinary:       toBin,
 		Template:       in.Template,

@@ -1,4 +1,6 @@
-// Package netid resolves and validates the devp2p network id every node of a
+// Network identity. The package comment is in doc.go.
+//
+// This file resolves and validates the devp2p network id every node of a
 // chain must run with. It exists because the network id is a silent-failure
 // trap: go-wemix defaults it to 1111 (Wemix mainnet) independent of the chain
 // id, while go-wbft defaults it to the chain id, so two binaries meant to form

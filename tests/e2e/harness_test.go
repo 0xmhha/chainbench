@@ -8,7 +8,7 @@
 //
 // This replaces the former bash+python `tests/repro/*.sh` scripts: network
 // orchestration goes through the chainbench CLI (the same surface a user drives),
-// and every assertion is pure Go (pkg/core/rpc + pkg/accounts) — no python, no
+// and every assertion is pure Go (internal/core/rpc + internal/accounts) — no python, no
 // web3.
 package e2e
 
@@ -17,6 +17,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math/big"
 	"os"
 	"os/exec"
@@ -34,8 +35,7 @@ import (
 )
 
 // returns42Init is the creation bytecode of a contract whose runtime
-// (602a60005260206000f3) returns the 32-byte value 42 for any call. Shared
-// fixture (mirrors tests/wbft/accounts/contract_roundtrip.go).
+// (602a60005260206000f3) returns the 32-byte value 42 for any call.
 const returns42Init = "600a600c600039600a6000f3602a60005260206000f3"
 
 // deadAddr is a throwaway value-transfer sink.
@@ -94,35 +94,35 @@ type network struct {
 	rpcURL string // node 1
 }
 
-// boot launches `validators` validators + `endpoints` endpoints of chain on
+// boot launches `bp` block producers + `en` endpoints of chain on
 // binary via `chainbench net up`, and registers cleanup. extraSet are
 // additional genesis config overrides, given either bare ("bohoBlock=40") or
 // in the old "genesis.overrides.<key>=<v>" spelling.
-func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, extraSet ...string) *network {
+func boot(t *testing.T, cli, chain, binary string, bp, en int, extraSet ...string) *network {
 	t.Helper()
 	extra := make([]string, 0, len(extraSet)*2)
 	for _, s := range extraSet {
 		extra = append(extra, "--set", strings.TrimPrefix(s, "genesis.overrides."))
 	}
-	return launch(t, cli, chain, binary, validators, endpoints, extra)
+	return launch(t, cli, chain, binary, bp, en, extra)
 }
 
 // bootOverlay is boot with a --genesis-overlay applied (an overlay file adds
 // capabilities + genesis fields deep-merged into the built genesis).
-func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints int, overlay string) *network {
+func bootOverlay(t *testing.T, cli, chain, binary string, bp, en int, overlay string) *network {
 	t.Helper()
-	return launch(t, cli, chain, binary, validators, endpoints, []string{"--overlay", overlay})
+	return launch(t, cli, chain, binary, bp, en, []string{"--overlay", overlay})
 }
 
 // launch runs `chainbench net up` with extraArgs and registers cleanup.
-func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
+func launch(t *testing.T, cli, chain, binary string, bp, en int, extraArgs []string) *network {
 	t.Helper()
-	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), validators, endpoints, extraArgs)
+	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), bp, en, extraArgs)
 }
 
 // launchPreset is launch with an explicit preset key set (e.g. a generated one
 // larger than the committed 5-node preset).
-func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, endpoints int, extraArgs []string) *network {
+func launchPreset(t *testing.T, cli, chain, binary, keysDir string, bp, en int, extraArgs []string) *network {
 	t.Helper()
 	// Use a SHORT datadir under /tmp, not t.TempDir(): a node's IPC endpoint is a
 	// unix-domain socket at <datadir>/nodeN/<binary>.ipc, and the ~104-byte socket
@@ -145,7 +145,7 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 	})
 	args := []string{"chain", "up",
 		"--workspace-dir", dir, "--chain", chain, "--binary", binary, "--keys", keysDir,
-		"--validators", itoa(validators), "--endpoints", itoa(endpoints),
+		"--bp", itoa(bp), "--en", itoa(en),
 	}
 	args = append(args, extraArgs...)
 	cmd := exec.Command(cli, args...)
@@ -162,7 +162,7 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 // workspace reads the composed network's record.
 func (n *network) workspace() workspaceState {
 	n.t.Helper()
-	b, err := os.ReadFile(filepath.Join(n.dir, "workspace.json"))
+	b, err := os.ReadFile(filepath.Join(n.dir, "chain-record.json"))
 	if err != nil {
 		n.t.Fatalf("read workspace: %v", err)
 	}
@@ -198,12 +198,49 @@ func (n *network) runCase(name string) string {
 	// Attached to the workspace, not composed from the spec: the network is
 	// already up with the capability this case is gated on, and composing again
 	// would test a different one.
-	spec := filepath.Join("tests", "specs", "system-contracts", name+".json")
-	out := n.run("run", "--workspace-dir", n.dir, "--attach", spec)
+	out := n.run("run", "--workspace-dir", n.dir, "--attach", casePath(n.t, name))
 	if skipRe.MatchString(out) {
 		n.t.Fatalf("case %q was skipped (capability/gating problem):\n%s", name, out)
 	}
 	return out
+}
+
+// casePath finds a committed case by its name, wherever the corpus keeps it.
+//
+// It searches rather than joining a path because the corpus has moved once
+// already: these cases lived under tests/specs/system-contracts until the tc
+// consolidation (#362) put them in tests/tc/<chain>/<group>/, with an ordering
+// prefix on the file name. The old path stayed here and nothing noticed —
+// these tests are behind a build tag, so neither the compiler nor CI reads it.
+// A search survives the next move; a missing or ambiguous name fails here,
+// naming what it looked for, instead of forty seconds later as "no such file".
+func casePath(t *testing.T, name string) string {
+	t.Helper()
+	var found []string
+	root := filepath.Join(repoRoot(t), "tests", "tc")
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, name+".json") {
+			return err
+		}
+		rel, rerr := filepath.Rel(repoRoot(t), p)
+		if rerr != nil {
+			return rerr
+		}
+		found = append(found, rel)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("looking for case %q under %s: %v", name, root, err)
+	}
+	switch len(found) {
+	case 1:
+		return found[0]
+	case 0:
+		t.Fatalf("no case named %q under %s", name, root)
+	default:
+		t.Fatalf("case %q is ambiguous: %v", name, found)
+	}
+	return ""
 }
 
 // skipRe matches a non-zero skip count in a run summary. A skipped case is a

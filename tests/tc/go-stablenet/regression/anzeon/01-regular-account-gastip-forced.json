@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "regular-account-gastip-forced",
   "description": "RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨 (원본 regression/anzeon/01-test-regular-account-gastip-forced)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "regular-account-gastip-forced-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

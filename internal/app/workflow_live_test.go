@@ -33,7 +33,7 @@ func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
 		DataDir:    t.TempDir(),
 		Chain:      "stablenet",
 		Binary:     "/data/chainbench/bin/gstable",
-		Validators: 4,
+		BPCount:    4,
 		Server:     resource.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
 		Docker:     true,
 		KeysDir:    filepath.Join("..", "..", "keys", "preset"),

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // SchemaV2 is the canonical v2 grammar (schema/v2.schema.json). The strict
@@ -104,15 +107,26 @@ type AccountV2 struct {
 
 // The two binaries an upgrade env names, by the key it names them under.
 //
-// They are spelled Binary rather than Role because they are not node roles.
-// A handoff names the binary that seals up to the fork and the one that takes
-// over after it, and calling that a "role" put a third meaning on a word that
-// already meant a node's job and an account's function (A7).
+// They are named for the fork rather than for a role, because that is what
+// tells them apart. Both binaries run nodes of several roles; what differs is
+// which side of the fork each one seals.
+//
+// They used to be spelled "producer" and "validator". Both words were wrong in
+// the same way: "producer" reads as the bp role, and "validator" names what a
+// bp does while another bp proposes — neither describes a binary. The names
+// also disagreed with the rest of the handoff, which already says From and To
+// in the code (upgrade.HandoffInputs) and on the command line
+// (--from-binary/--to-binary, --from-genesis/--to-chain).
+//
+// Concretely, on the handoff this harness runs: BinaryFrom is go-wemix, which
+// seals under poa up to the fork block; BinaryTo is go-wbft, which syncs those
+// blocks as an endpoint until the fork and produces under the new consensus
+// after it.
 const (
-	// BinaryBefore seals up to the fork.
-	BinaryBefore = "producer"
-	// BinaryAfter takes over after it.
-	BinaryAfter = "validator"
+	// BinaryFrom seals up to the fork.
+	BinaryFrom = "from"
+	// BinaryTo takes over after it.
+	BinaryTo = "to"
 )
 
 // UpgradeV2 declares a handoff composition: which golden profile shapes it
@@ -266,11 +280,12 @@ func ParseEnv(raw []byte) (EnvV2, error) {
 //	                                             named fields overridden.
 //	"env": { …a full env object… }             — inline, no lookup.
 //
-// The override form is a shallow top-level merge: each field the case names
-// replaces that field of the canonical env whole (topology, hardforks, keys),
-// so a test declares only what differs. A case with an inline env (or a v1
-// spec) passes through untouched. lookup receives the env id and returns the
-// env file's bytes; the caller owns where env files live.
+// The override form is a deep merge: an object meets an object by key, a null
+// removes the key, and anything else replaces — so a case declares what differs
+// and keeps the rest of the shared env. See mergeEnv for why each rule is what
+// it is. A case with an inline env (or a v1 spec) passes through untouched.
+// lookup receives the env id and returns the env file's bytes; the caller owns
+// where env files live.
 func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if !IsV2(raw) {
 		return raw, nil
@@ -306,23 +321,19 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 			if err != nil {
 				return nil, err
 			}
-			var base map[string]json.RawMessage
-			if err := json.Unmarshal(baseRaw, &base); err != nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: %w", baseID, err)
+			base, err := objectOf(baseRaw, baseID)
+			if err != nil {
+				return nil, err
 			}
-			// JSON null unmarshals into a nil map without error, and the
-			// override loop below would then assign into it and panic. A null
-			// env is not an object either, so it fails the way the line above
-			// already promises.
-			if base == nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: it is null", baseID)
+			if _, chained := base["extends"]; chained {
+				return nil, fmt.Errorf("dsl: env %q extends another env; a shared env is the base, not a step in a chain", baseID)
 			}
-			// Shallow override: each field the case names replaces the base's.
-			delete(envObj, "extends")
-			for k, v := range envObj {
-				base[k] = v
+			over, err := objectOf(probe.Env, "the case's env")
+			if err != nil {
+				return nil, err
 			}
-			merged, err := json.Marshal(base)
+			delete(over, "extends")
+			merged, err := json.Marshal(mergeEnv(base, over))
 			if err != nil {
 				return nil, fmt.Errorf("dsl: merge env %q: %w", baseID, err)
 			}
@@ -330,6 +341,61 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 		}
 	}
 	return raw, nil // inline env object (or malformed — ParseV2 reports it)
+}
+
+// UseEnv rewrites a case so it runs on the env named envID, keeping whatever
+// the case itself overrode.
+//
+// It is how one case runs on more than one chain without being edited. A case
+// names its network, and that name is the last mainnet-specific thing left in
+// the common cases; replacing it at read time is what lets the same steps meet
+// a different chain.
+//
+// The two reference forms are rewritten; an inline env object is refused. An
+// inline object IS the case's declaration, and swapping it would discard what
+// the case asked for with no way to tell which parts mattered. Such a case is
+// converted to the extends form first, which says out loud what it keeps.
+//
+// A non-case document, or a case with no env, passes through untouched.
+func UseEnv(raw []byte, envID string) ([]byte, error) {
+	if envID == "" || !IsV2(raw) {
+		return raw, nil
+	}
+	var probe struct {
+		Kind string          `json:"kind"`
+		ID   string          `json:"id"`
+		Env  json.RawMessage `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil, fmt.Errorf("dsl: use env: %w", err)
+	}
+	if probe.Kind != KindCase || len(probe.Env) == 0 {
+		return raw, nil
+	}
+	var id string
+	if json.Unmarshal(probe.Env, &id) == nil && id != "" {
+		return replaceEnv(raw, mustQuote(envID))
+	}
+	over, err := objectOf(probe.Env, "the case's env")
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := over["extends"]; !ok {
+		return nil, fmt.Errorf("dsl: case %s declares its env inline, so it cannot be moved onto env %q — give it \"extends\" and keep only what differs", probe.ID, envID)
+	}
+	over["extends"] = envID
+	merged, err := json.Marshal(over)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: use env %q: %w", envID, err)
+	}
+	return replaceEnv(raw, merged)
+}
+
+// mustQuote renders a string as a JSON scalar. The input is an env id that has
+// already round-tripped through the resolver, so encoding cannot fail.
+func mustQuote(s string) []byte {
+	b, _ := json.Marshal(s)
+	return b
 }
 
 // resolveEnv looks up a canonical env by id, requiring a resolver.
@@ -426,6 +492,14 @@ func lowerCase(c CaseV2) (Spec, error) {
 	spec.Chain.ManifestPath = env.Manifest
 	spec.Chain.TemplatePath = env.GenesisTemplate
 
+	// A definition names a binary; it does not place one. A path here is a
+	// fact about one machine, and a case that carries it runs nowhere else.
+	for key, ref := range env.Binaries {
+		if err := binaryRefIsAName(ref); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref, err)
+		}
+	}
+
 	// Binaries: "default" is every node's binary; other keys are per-role.
 	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
 		spec.Chain.Binary = b
@@ -433,19 +507,20 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.Chain.Binaries = env.Binaries
 	}
 
-	// An upgrade names its two binaries by role, and nothing else: a default
-	// would mean every node runs one binary, which is not a handoff.
+	// An upgrade names its two binaries by which side of the fork each seals,
+	// and nothing else: a default would mean every node runs one binary, which
+	// is not a handoff.
 	if u := env.Upgrade; u != nil {
 		if u.Profile == "" || u.Template == "" {
 			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
 		}
-		for _, role := range []string{BinaryBefore, BinaryAfter} {
-			if env.Binaries[role] == "" {
-				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
+		for _, key := range []string{BinaryFrom, BinaryTo} {
+			if env.Binaries[key] == "" {
+				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names one binary per side of the fork — binaries.%s is missing", c.ID, key)
 			}
 		}
 		if len(env.Binaries) != 2 {
-			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryBefore, BinaryAfter)
+			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryFrom, BinaryTo)
 		}
 		spec.EnvUpgrade = u
 	}
@@ -491,8 +566,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
-			if !launchScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", c.ID, scope)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
@@ -502,8 +577,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Config) > 0 {
 		spec.EnvConfig = map[string][]string{}
 		for scope, kvs := range env.Config {
-			if scope != "all" && !nodeScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be \"all\" or \"node<N>\"", c.ID, scope)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
@@ -659,10 +734,89 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 	return out, nil
 }
 
-// nodeScopeRE matches a per-node config scope key ("node1", "node12").
-var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
+// envDefaultRE matches the ${VAR:-default} form and captures the default, which
+// is the only part of an expansion this file can judge.
+var envDefaultRE = regexp.MustCompile(`^\$\{[A-Za-z_][A-Za-z0-9_]*:-(.*)\}$`)
 
-// launchScopeRE matches a launch scope key: "all", a role token, or "node<N>".
-// Launch is scoped more widely than config because a launch flag often applies
-// to a whole role (every producer mines), not just one node.
-var launchScopeRE = regexp.MustCompile(`^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$`)
+// binaryRefIsAName reports why a declared binary reference is not one.
+//
+// A definition says WHICH binary; a workspace-config says WHERE binaries live
+// on the target (dataRoot plus paths.binaries) and binaryAliases says which
+// file this environment calls that name. Writing the path in the definition
+// says both at once, in the document that is supposed to travel: five specs
+// carried /data/chainbench/bin/... and ran on one docker environment and
+// nowhere else, while the environment file beside them already produced the
+// same path from the name.
+//
+// An expansion is judged by its default, because that is the part the
+// definition wrote. ${GWBFT_BIN:-gwbft} is a name with a machine-local escape
+// hatch; ${GWBFT_BIN:-/opt/gwbft} is the path problem wearing a variable. A
+// bare $VAR names nothing this file can see, so it passes and placeBinary
+// judges what it expands to.
+func binaryRefIsAName(ref string) error {
+	if strings.TrimSpace(ref) == "" {
+		return errors.New("is empty — name the binary, or leave it out and let the chain name it")
+	}
+	lit := ref
+	if m := envDefaultRE.FindStringSubmatch(ref); m != nil {
+		lit = m[1]
+	} else if strings.Contains(ref, "$") {
+		return nil // an expansion with no default: only the machine knows
+	}
+	switch {
+	case strings.HasPrefix(lit, "~"):
+		return errors.New("starts at a home directory, which is a fact about one machine")
+	case strings.ContainsRune(lit, '/'):
+		return errors.New("is a path — name the binary, and let a workspace-config say where binaries live on the target")
+	}
+	return nil
+}
+
+// objectOf decodes a JSON object, naming what failed. A null decodes into a nil
+// map without error, and a caller that then assigns into it panics — so it is
+// refused here with the same words a non-object gets.
+func objectOf(raw []byte, what string) (map[string]any, error) {
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: %w", what, err)
+	}
+	if m == nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: it is null", what)
+	}
+	return m, nil
+}
+
+// mergeEnv lays a case's overrides over a shared env and returns the result.
+//
+// Three rules, and each exists because the alternative loses something the
+// author wrote:
+//
+//   - An object meets an object by KEY, recursively. Replacing the whole object
+//     was the old rule, and under it a case that wanted node2 to differ wrote
+//     config.node2 and silently dropped the shared env's "all" scope and every
+//     other node's — the case ran, and only the result was different.
+//   - null REMOVES the key. Deep merge alone can only add and overwrite, so
+//     there would be no way to switch off something the shared env turned on.
+//     That is not hypothetical: the commonest difference between the 205 inline
+//     envs and the shape they share is a capability list that is absent.
+//   - An array REPLACES. Unioning reads as generous and takes away the only way
+//     to drop an entry, which is the same hole as having no delete.
+//
+// The merged object is parsed strictly afterwards, so a key neither side should
+// have is refused there rather than checked twice here.
+func mergeEnv(base, over map[string]any) map[string]any {
+	for k, v := range over {
+		if v == nil {
+			delete(base, k)
+			continue
+		}
+		bo, baseIsObject := base[k].(map[string]any)
+		oo, overIsObject := v.(map[string]any)
+		if baseIsObject && overIsObject {
+			base[k] = mergeEnv(bo, oo)
+			continue
+		}
+		base[k] = v
+	}
+	return base
+}

@@ -33,7 +33,7 @@ const modulePath = "github.com/0xmhha/chainbench"
 
 // Package is one node of the graph.
 type Package struct {
-	// Path is the import path relative to the module root (e.g. "internal/engine").
+	// Path is the import path relative to the module root (e.g. "internal/testengine").
 	Path string `json:"path"`
 	// Layer is the architectural layer the path maps to (see layerOf).
 	Layer string `json:"layer"`

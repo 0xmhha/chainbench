@@ -28,8 +28,8 @@ func waitForked(t *testing.T, c collector.Collector, want bool) collector.Chains
 // hashes at the same height.
 func TestCollector_ForkAcrossNodes(t *testing.T) {
 	env := envWithNodes(t,
-		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
-		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
+		node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"},
+		node.Node{Index: 2, Role: node.RoleBP, RPCURL: "http://n2"},
 	)
 	states := map[string]collector.Sample{
 		"http://n1": {Height: 5, HeadHash: "0xaaaa", HeadMiner: "0xA"},
@@ -52,8 +52,8 @@ func TestCollector_ForkAcrossNodes(t *testing.T) {
 // TestCollector_NoForkWhenConsistent keeps Forked false while nodes agree.
 func TestCollector_NoForkWhenConsistent(t *testing.T) {
 	env := envWithNodes(t,
-		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
-		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
+		node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"},
+		node.Node{Index: 2, Role: node.RoleBP, RPCURL: "http://n2"},
 	)
 	states := map[string]collector.Sample{
 		"http://n1": {Height: 5, HeadHash: "0xaaaa", HeadMiner: "0xA"},
@@ -78,7 +78,7 @@ func TestCollector_NoForkWhenConsistent(t *testing.T) {
 // TestCollector_ReorgOnSingleNode flags a fork when a node's hash at a known
 // height changes across samples (a reorg).
 func TestCollector_ReorgOnSingleNode(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 
 	var mu sync.Mutex
 	var calls int

@@ -73,7 +73,7 @@ func startedWorkspace(t *testing.T) (dir string, d *inspectingDriver, deps chain
 	for _, name := range []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"} {
 		st.Steps[name] = chainsetup.Step{Done: true, Detail: "seeded"}
 	}
-	st.Request = &chainsetup.NetUpIn{Chain: "stablenet", Binary: "/opt/gstable", Validators: 2, Stage: chainsetup.UpStart}
+	st.Request = &chainsetup.NetUpIn{Chain: "stablenet", Binary: "/opt/gstable", BPCount: 2, Stage: chainsetup.UpStart}
 	if err := comp.Save(st); err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 	bin := fakeNodeBinary(t, dir)
 	deps := chainsetup.Deps{Clock: fixedClock()}
 	if _, err := chainsetup.NetUp(context.Background(), deps, chainsetup.NetUpIn{
-		DataDir: dir, Stage: chainsetup.UpDeploy, Chain: "stablenet", KeysDir: keysAbs, Validators: 2, Binary: bin,
+		DataDir: dir, Stage: chainsetup.UpDeploy, Chain: "stablenet", KeysDir: keysAbs, BPCount: 2, Binary: bin,
 	}); err != nil {
 		t.Fatalf("chain up --stage deploy: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := ws.State().Request
-	if req == nil || req.Validators != 2 || req.Chain != "stablenet" || req.DataDir != "" {
+	if req == nil || req.BPCount != 2 || req.Chain != "stablenet" || req.DataDir != "" {
 		t.Fatalf("recorded request = %+v", req)
 	}
 	// The run was asked to start; the record says it stopped at provision.

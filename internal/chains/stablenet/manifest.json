@@ -1,22 +1,56 @@
 {
   "id": "stablenet",
   "binary": "gstable",
+  "dialect": "geth114",
   "chain_id": 8283,
   "network_id": 8283,
   "miner_recommit": "duration",
-  "bootstrap": { "type": "static" },
-  "build": { "repo": "go-stablenet", "make_target": "gstable" },
+  "bootstrap": {
+    "type": "static"
+  },
+  "build": {
+    "repo": "go-stablenet",
+    "make_target": "gstable"
+  },
   "consensus_family": "wbft",
   "genesis": {
     "engine_field": "anzeon",
-    "hardforks": ["istanbul", "boho"],
+    "hardforks": [
+      "istanbul",
+      "boho"
+    ],
     "template": "stablenet"
   },
   "consensus": {
     "rpc_namespace": "istanbul",
     "validators_method": "istanbul_getValidators"
   },
-  "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
-  "probe": { "method": "istanbul_getValidators", "chain_ids": [8283] },
-  "capabilities": ["process", "rpc", "ws", "consensus"]
+  "tx_types": [
+    "0x00",
+    "0x01",
+    "0x02",
+    "0x03",
+    "0x04",
+    "0x16"
+  ],
+  "probe": {
+    "method": "istanbul_getValidators",
+    "chain_ids": [
+      8283
+    ]
+  },
+  "capabilities": [
+    "process",
+    "rpc",
+    "ws",
+    "consensus"
+  ],
+  "system_contracts": {
+    "nativeCoinAdapter": "0x0000000000000000000000000000000000001000",
+    "govValidator": "0x0000000000000000000000000000000000001001",
+    "govMasterMinter": "0x0000000000000000000000000000000000001002",
+    "govMinter": "0x0000000000000000000000000000000000001003",
+    "govCouncil": "0x0000000000000000000000000000000000001004",
+    "accountManager": "0x0000000000000000000000000000000000b00003"
+  }
 }

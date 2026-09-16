@@ -2,27 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "token-metadata",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "token-metadata-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -33,14 +18,14 @@
       "data": "0x06fdde03",
       "expect": "call",
       "is": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004574b524300000000000000000000000000000000000000000000000000000000",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "compare": "Equal",
       "data": "0x95d89b41",
       "expect": "call",
       "is": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000004574b524300000000000000000000000000000000000000000000000000000000",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

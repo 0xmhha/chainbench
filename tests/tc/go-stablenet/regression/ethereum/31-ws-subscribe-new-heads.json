@@ -9,22 +9,7 @@
     "ws"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "ws-subscribe-new-heads-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "ws"

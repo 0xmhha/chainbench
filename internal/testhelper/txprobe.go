@@ -100,9 +100,13 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 	if err != nil {
 		return err
 	}
-	to, _ := ac.Args["to"].(string)
-	if to == "" {
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
 		return fmt.Errorf("dsl: sendRawTampered requires \"to\"")
+	}
+	to, err := ResolveAddress(ac.Deps, toRef)
+	if err != nil {
+		return err
 	}
 	value, err := parseValueWei(ac.Args["value"])
 	if err != nil {
@@ -297,12 +301,17 @@ type callErrorAssertion struct{}
 func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertCallError, Provenance: ac.Spec, Pass: true}
 	res.Expected = "eth_call returns an error"
-	to, _ := ac.Spec["to"].(string)
+	toRef, _ := ac.Spec["to"].(string)
 	data, _ := ac.Spec["data"].(string)
-	if to == "" || data == "" {
+	if toRef == "" || data == "" {
 		err := fmt.Errorf("dsl: callError requires \"to\" and \"data\"")
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
+	}
+	to, rerr := ResolveAddress(ac.Deps, toRef)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
 	}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {

@@ -1,4 +1,6 @@
-// Package portplan computes each node's full set of listening ports from two
+// Port arithmetic. The package comment is in doc.go.
+//
+// This file computes each node's full set of listening ports from two
 // disjoint bands, and validates that nothing collides. It encodes a rule that
 // caused repeated silent failures: the wemix binary derives its etcd port as
 // p2p_port + 1, so if p2p ports are packed one apart, or if the p2p band

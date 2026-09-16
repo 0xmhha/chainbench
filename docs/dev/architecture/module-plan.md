@@ -351,7 +351,7 @@ remove one with `chainbench net rm`
 
 **구현(P1.5, 2026-08-28).** 위 모양 그대로 `internal/resource/inventory.go`. 워크스페이스는
 등록되지 않고 **발견**된다 — `chainsetup.Discover(root)` 가 `~/.chainbench/*/chainsetup`
-의 `workspace.json` 을 찾고, `chainsetup.Allocations(ws)` 가 노드 레코드를 `Allocation`
+의 `chain-record.json` 을 찾고, `chainsetup.Allocations(ws)` 가 노드 레코드를 `Allocation`
 (network·node·host·p2p)으로 읽는다. 인벤토리는 host 와 p2p 포트로 슬롯을 역산한다
 (`(p2p-base)/step+1`). 다른 곳에 만든 워크스페이스는 이름을 대야 센다.
 `Take` 의 순서는 `Assign` 과 같다(호스트 먼저, 슬롯 나중) — 그래야 plan 과 take 가
@@ -429,7 +429,7 @@ remove one with `chainbench net rm`
 
 **결과(2026-08-28).** 사실 레코드는 **`node.Record`** 로 승격했다 —
 `chainsetup.NodeState` 가 가장 완전한 형태였고(라벨·역할·서버·호스트·경로·포트·
-argv·pid) JSON 태그가 `workspace.json` 계약이라 그대로 가져왔다. 셋만 노드를 뜻한다:
+argv·pid) JSON 태그가 `chain-record.json` 계약이라 그대로 가져왔다. 셋만 노드를 뜻한다:
 `node.Record`(정본) · `driver.NodeSpec`(기동 입력 뷰) · `node.Node`(런타임 hand-off,
 fan-in 24). 나머지는 노드가 아니라 **노드에 대한 다른 것**이었고 이름이 그것을
 말하게 했다: `collector.NodeState`→**`Sample`**(관측 한 번), `chainsetup.NodeStatus`
@@ -555,7 +555,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   됐다(테스트 더블·다른 전송). 레거시 명령 9곳의 `--data-dir` 은 `--workspace-dir` 로,
   MCP 의 `data_dir` 인자는 `workspaceDir` 로 바꿨다(`upgrade run --data-dir` 만 노드
   데이터 루트라는 뜻 그대로 남는다). e2e 하네스와 repro 3종은 `net up` 으로 띄우고
-  `workspace.json` 을 읽는다. **라이브(gstable)**: e2e `StablenetChain`·`SyncGap`
+  `chain-record.json` 을 읽는다. **라이브(gstable)**: e2e `StablenetChain`·`SyncGap`
   (node stop/start)·`HardforkSwap` 을 새 경로로 통과. 결과: `chainsetup` 3,589 →
   **3,313줄**, `app` 1,757 → 1,410, `cmd/chainbench` 2,746 → 2,580, 위반 0.
 - **P6.3 핸드오프 중복 제거 — 완료 2026-08-28.** `handoff_driver.go`(371줄)와
@@ -711,7 +711,7 @@ P1 착수 전(§0)과 P6.2 를 마친 뒤를 같은 도구(`scripts/inventory/co
 | 노드 하나의 **사실** 타입 | 10 | **2** (`node.Node`·`node.Record`) | 나머지는 목적별 뷰다: `driver.NodeSpec`(실행 명세), `preflight.Node`(비교), `hardfork.NodeSwap`(교체 계획), `upgrade.NodeSpec`(핸드오프 계획) |
 | 노드를 띄우는 진입점 | 8 | **3** | `driver`(실행) · `launcher`(기동 정책) · `upgrade.Handoff`(혼합 바이너리). 워크스페이스 `Start/StartNode` 는 `driver` 를 부른다 |
 | 경로를 계산하는 곳 | 4 | `node.Layout` 1 + 잔여 2 | 잔여: `hardfork.BuildPlan`·`upgrade.BuildNodeSpecs` 가 아직 `fmt.Sprintf("node%d")` 를 쓴다(둘 다 실행은 레코드의 경로를 쓰므로 표시용) |
-| 상태 파일 | 3종 (`chain-network.json`·`nodeset.json`+`nodespecs.json`·`workspace.json`) | **1종** (`workspace.json`) | P6.4·P6.2 |
+| 상태 파일 | 3종 (`chain-network.json`·`nodeset.json`+`nodespecs.json`·`chain-record.json`) | **1종** (`chain-record.json`) | P6.4·P6.2 |
 | 레이어 위반 | 1 (`launcher` 테스트 → `chainsetup`) | **0** | |
 | `node` out-edge | 0 | **0** | 게이트 유지 |
 | `testspec → testhelper` | — | **0** | P4.3 게이트 |
@@ -745,9 +745,9 @@ core 를 직접 부른다는 v2 원칙과 부딪힌다 — §7 열린 질문 7 �
    이 "순서 + 표면" 을 겸한다. F1 뒤에 정한다.
 6. ~~워크스페이스 낱말의 삼중 정의~~ → **소유 확정(P2, 2026-08-28)**. 코드를 읽은
    결과 셋은 겹치는 것이 아니라 층이 다르다:
-   - **`workspace.json` 을 만드는 것은 `session.Composition`** 이다 — 단계별
+   - **`chain-record.json` 을 만드는 것은 `session.Composition`** 이다 — 단계별
      조립이 명령 사이를 건너 누적되는 "장수명 환경 모드" 의 persistence 를
-     session 이 소유한다(파일명 상수 `compositionFile = "workspace.json"`).
+     session 이 소유한다(파일명 상수 `compositionFile = "chain-record.json"`).
    - **`chainsetup.Workspace`** 는 그 위의 도메인 상태와 단계 함수다. 파일을
      직접 쓰지 않고 Composition 에 위탁한다.
    - **`session.Environment`** 는 다른 수명이다 — 엔진 실행 한 번의 아티팩트

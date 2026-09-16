@@ -35,7 +35,7 @@ func composeChainForQuery(t *testing.T, chain string) string {
 	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: chain, KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 3, Endpoints: 1}); err != nil {
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, BPCount: 3, ENCount: 1}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	return dir

@@ -5,24 +5,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "anzeon-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4",
   "steps": [
     {
       "do": "waitBlock",
@@ -36,7 +19,7 @@
     },
     {
       "do": "load",
-      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "from": "node1",
       "fillPercent": 25,
       "blocks": 6,
       "timeout": "60s"

@@ -12,7 +12,7 @@ import (
 func specFor(index int, binary string, args ...string) process.NodeSpec {
 	return process.NodeSpec{
 		Index:   index,
-		Role:    node.RoleValidator,
+		Role:    node.RoleBP,
 		Host:    "10.0.0.5",
 		Binary:  binary,
 		DataDir: "/data/node",

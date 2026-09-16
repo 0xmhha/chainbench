@@ -14,7 +14,7 @@ import (
 // TestCollector_LiveTail follows a node log from the start and through live
 // appends, emitting each complete line once and never a partial line.
 func TestCollector_LiveTail(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 	path := env.LogPath("node1")
 	if err := os.WriteFile(path, []byte("l1\nl2\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -108,7 +108,7 @@ func TestCollector_TailUsesTheInjectedLogReader(t *testing.T) {
 		11: "partial line\n",
 	}}
 
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 	var mu sync.Mutex
 	var got []string
 	c := collector.New(collector.Deps{

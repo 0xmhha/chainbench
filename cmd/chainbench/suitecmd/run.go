@@ -36,7 +36,7 @@ type runReport struct {
 	app.RunSummary
 }
 
-// newRunCmd runs DSL test specs through the test engine. With --workspace-dir
+// NewRun runs DSL test specs through the test engine. With --workspace-dir
 // it composes the network the specs declare through the workspace steps (a
 // handoff env composes the handoff) and runs against that; with --rpc it
 // attaches to a running network. The engine's self-assembly build path is
@@ -49,7 +49,7 @@ func NewRun() *cobra.Command {
 		keysDir         string
 		keysSource      string
 		artifactRoot    string
-		validators      int
+		bpCount         int
 		chainID         int64
 		networkID       int64
 		launchOpts      []string
@@ -62,6 +62,8 @@ func NewRun() *cobra.Command {
 		nodeMonitorT    time.Duration
 		docker          bool
 		attach          bool
+		planOnly        bool
+		envRef          string
 		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -88,7 +90,7 @@ func NewRun() *cobra.Command {
 				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
 			}
 			in := app.RunSuiteIn{
-				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
+				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
 				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 				NodeMonitorTimeout: nodeMonitorT,
@@ -99,8 +101,8 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("keys-source") {
 				in.KeysSource = keysSource
 			}
-			if cmd.Flags().Changed("validators") {
-				in.Validators = validators
+			if cmd.Flags().Changed("bp") {
+				in.BPCount = bpCount
 			}
 			if cmd.Flags().Changed("artifact-root") {
 				in.ArtifactRoot = artifactRoot
@@ -108,6 +110,12 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("workspace-config") {
 				in.WorkspaceConfigPath = workspaceConfig
 			}
+			if planOnly {
+				return showPlan(cmd, in, jsonOut)
+			}
+			// The plan goes to stderr, not stdout: --json promises a document
+			// and a run that printed prose above it would break every reader.
+			in.OnPlan = planPrinter(cmd.ErrOrStderr())
 			if len(args) > 1 {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
@@ -120,6 +128,8 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
+	cmd.Flags().StringVar(&envRef, "env", "", "compose: run every case on this chain declaration instead of the one it names (an env id, or a path to an env file); what a case overrode is kept")
+	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")
@@ -128,11 +138,11 @@ func NewRun() *cobra.Command {
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
-	cmd.Flags().StringVar(&keysSource, "keys-source", "preset",
-		"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
+	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
+		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
 		"session artifact base directory (compose default: the workspace's sessions directory)")
-	cmd.Flags().IntVar(&validators, "validators", 4, "compose: validator node count, overriding what the specs declare")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "compose: bp node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
@@ -381,6 +391,43 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 			code = 2
 		}
 		return &exitcode.Error{Code: code, Err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
+	}
+	return nil
+}
+
+// planPrinter returns a sink that writes each compose plan to w, skipping one
+// that repeats the last.
+//
+// A run of many definitions composes once and reuses the network, so printing
+// every definition's plan would bury the one thing worth seeing: the moment the
+// network changes between definitions. Repetition is silence; a difference is a
+// new block.
+func planPrinter(w io.Writer) func(app.ComposePlan) {
+	var last string
+	return func(p app.ComposePlan) {
+		s := p.String()
+		if s == last {
+			return
+		}
+		last = s
+		fmt.Fprintf(w, "composing:\n%s", s)
+	}
+}
+
+// showPlan resolves what the run would compose and prints it without composing.
+func showPlan(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+	plans, err := app.PlanSuites(cmd.Context(), in)
+	if err != nil {
+		return err
+	}
+	out := cmd.OutOrStdout()
+	if jsonOut {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(plans)
+	}
+	for _, p := range plans {
+		fmt.Fprintf(out, "%s\n%s\n", p.Spec, p.Plan.String())
 	}
 	return nil
 }

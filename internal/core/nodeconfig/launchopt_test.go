@@ -26,13 +26,36 @@ func TestDialectGenerations(t *testing.T) {
 	}
 }
 
-func TestDialectFor(t *testing.T) {
-	if d := DialectFor("wemix"); d.ID != "geth110-wemix" {
-		t.Fatalf("wemix -> %s", d.ID)
+// TestDialectFor_ResolvesByNameAndRefusesTheRest: a manifest names the flag
+// vocabulary its binary accepts, and this returns it.
+//
+// It used to take a CHAIN id and answer by comparing against "wemix", so every
+// other chain got the modern vocabulary whether or not its binary has it. An
+// unknown name is an error rather than a fallback: a fallback is a node that
+// launches with flags it does not have and dies at boot talking about the flag.
+func TestDialectFor_ResolvesByNameAndRefusesTheRest(t *testing.T) {
+	for name, wantID := range map[string]string{"geth114": "geth114", "geth110-wemix": "geth110-wemix"} {
+		d, err := DialectFor(name)
+		if err != nil {
+			t.Errorf("dialect %q: %v", name, err)
+			continue
+		}
+		if d.ID != wantID {
+			t.Errorf("dialect %q -> %s, want %s", name, d.ID, wantID)
+		}
 	}
-	for _, chain := range []string{"stablenet", "wbft", "anything-else"} {
-		if d := DialectFor(chain); d.ID != "geth114" {
-			t.Fatalf("%s -> %s, want geth114", chain, d.ID)
+	// The old input is now a name this build does not carry, and the message
+	// has to say what it does.
+	for _, name := range []string{"wemix", "stablenet", "anything-else", ""} {
+		_, err := DialectFor(name)
+		if err == nil {
+			t.Errorf("dialect %q must be refused", name)
+			continue
+		}
+		for _, want := range DialectNames() {
+			if !strings.Contains(err.Error(), want) {
+				t.Errorf("error %q does not name %q", err, want)
+			}
 		}
 	}
 }
@@ -52,7 +75,7 @@ func TestArgsUnsupportedKeyIsClassifiedError(t *testing.T) {
 
 func TestArgsSetIfSupportedSkipsSilently(t *testing.T) {
 	a := NewArgs(Geth110Wemix())
-	a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerFamily)
+	a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerHarness)
 	if len(a.Problems()) != 0 || a.Has(KeyRPCDeprecatedPersonal) {
 		t.Fatalf("harmless absence must skip: problems=%v has=%v",
 			a.Problems(), a.Has(KeyRPCDeprecatedPersonal))
@@ -68,17 +91,33 @@ func TestArgsBoolValueMismatch(t *testing.T) {
 	}
 }
 
-func TestArgsOverrideKeepsPositionAndRecordsLayer(t *testing.T) {
+// TestArgsOverrideKeepsPosition: a later layer replaces a knob's value in
+// place. Re-ordering argv on an override would make two runs that asked for the
+// same thing produce different command lines, and a command line is what a
+// reader compares when a node came up wrong.
+func TestArgsOverrideKeepsPosition(t *testing.T) {
 	a := NewArgs(Geth114())
 	a.Set(KeyHTTPPort, "8545", LayerRole)
 	a.Set(KeySyncMode, "full", LayerEnv)
-	a.Set(KeyHTTPPort, "9999", LayerCase) // override must not reshuffle
+	a.Set(KeyHTTPPort, "9999", LayerCommand) // override must not reshuffle
 	want := []string{"--http.port", "9999", "--syncmode", "full"}
 	if got := a.Argv(); !equal(got, want) {
 		t.Fatalf("argv = %v, want %v", got, want)
 	}
-	if l := a.WonBy(KeyHTTPPort); l != LayerCase {
-		t.Fatalf("winner = %s, want %s", l, LayerCase)
+}
+
+// TestArgsLayerNamesTheAsker: the layer travels so a refusal can say who asked
+// for a knob the binary does not have. That is the only thing it is for now —
+// the stored winner it also fed went with the display that never read it.
+func TestArgsLayerNamesTheAsker(t *testing.T) {
+	a := NewArgs(Geth110Wemix()) // has no --rpc.enabledeprecatedpersonal
+	a.Enable(KeyRPCDeprecatedPersonal, LayerEnv)
+	probs := a.Problems()
+	if len(probs) != 1 {
+		t.Fatalf("problems = %v, want one", probs)
+	}
+	if !strings.Contains(probs[0].Error(), string(LayerEnv)) {
+		t.Errorf("problem %q does not say which layer asked", probs[0])
 	}
 }
 
@@ -218,24 +257,6 @@ func TestBuildOverridesWin(t *testing.T) {
 	want := []string{"--datadir", "/d", "--port", "40000", "--maxpeers", "9"}
 	if !equal(got, want) {
 		t.Fatalf("argv = %v, want %v", got, want)
-	}
-}
-
-// --- Family shim ---
-
-func TestParseFamilyFlags(t *testing.T) {
-	p, err := ParseFamilyFlags([]string{
-		"--allow-insecure-unlock", "--rpc.enabledeprecatedpersonal",
-		"--rpc.allow-unprotected-txs", "--mine",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !p.AllowInsecureUnlock || !p.DeprecatedPersonal || !p.UnprotectedTxs || !p.Mine {
-		t.Fatalf("policy = %+v", p)
-	}
-	if _, err := ParseFamilyFlags([]string{"--verbosity"}); err == nil {
-		t.Fatal("unknown family flag must fail")
 	}
 }
 

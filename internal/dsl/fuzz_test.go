@@ -135,12 +135,20 @@ func TestValidate_RefusesAStatementThatNamesNothing(t *testing.T) {
 }
 
 // TestMigrate_EmitsWhatItsOwnParserReads is the property the fuzzer asserts,
-// stated once against the committed specs. A migration reported as successful
-// that produces an unreadable document fails at whatever picks the file up
-// next, by which time the original is gone.
+// stated once against the committed v1 specs. A migration reported as
+// successful that produces an unreadable document fails at whatever picks the
+// file up next, by which time the original is gone.
+//
+// The corpus is examples/specs, which is where the v1 specs live. It used to
+// walk tests/tc, and that worked only by accident: a v2 case lowers onto the
+// executable v1 shape, so every inline-env case came back from Parse looking
+// like a v1 spec and was "migrated". When P1 moved the declarations into shared
+// env files the cases stopped parsing standalone, the count fell to zero, and
+// the test said so — which is the guard doing its job, on a population that was
+// never the right one.
 func TestMigrate_EmitsWhatItsOwnParserReads(t *testing.T) {
 	var n int
-	err := filepath.WalkDir("../../tests/tc", func(p string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir("../../examples/specs", func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
 			return nil
 		}
@@ -164,5 +172,5 @@ func TestMigrate_EmitsWhatItsOwnParserReads(t *testing.T) {
 	if n == 0 {
 		t.Fatal("no spec was migrated, so this test asserts nothing")
 	}
-	t.Logf("%d committed specs migrate to documents the parser reads", n)
+	t.Logf("%d committed v1 specs migrate to documents the parser reads", n)
 }

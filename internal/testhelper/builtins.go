@@ -68,11 +68,6 @@ const (
 	defaultBlockAdvancePoll    = 500 * time.Millisecond
 )
 
-// Register puts the built-in vocabulary on r: the actions a spec can do, the
-// assertions it can check, and the readers "read" and "waitFor" draw from.
-// The grammar and interpreter (dsl) know none of these — a run wires
-// them by calling this, and a test that wants a narrower vocabulary registers
-// its own.
 // Registry returns a fresh registry with the built-ins registered — the
 // default vocabulary a run or `validate` resolves against.
 func Registry() interp.Registry {
@@ -81,6 +76,11 @@ func Registry() interp.Registry {
 	return r
 }
 
+// Register puts the built-in vocabulary on r: the actions a spec can do, the
+// assertions it can check, and the readers "read" and "waitFor" draw from.
+// The grammar and interpreter (dsl) know none of these — a run wires
+// them by calling this, and a test that wants a narrower vocabulary registers
+// its own.
 func Register(r interp.Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
@@ -179,11 +179,13 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 	args := rpc.SendTxArgs{From: sender.Address}
 	if to, ok := ac.Args["to"].(string); ok {
-		recipient, rerr := ResolveAccount(ac.Deps, to)
+		// A recipient may be a contract, which has no key. Only "from" has to be
+		// an account here.
+		addr, rerr := ResolveAddress(ac.Deps, to)
 		if rerr != nil {
 			return rerr
 		}
-		args.To = recipient.Address
+		args.To = addr
 	}
 	if data, ok := ac.Args["data"].(string); ok {
 		args.Data = data
@@ -261,11 +263,10 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	if toRef == "" {
 		return fmt.Errorf("dsl: sendTx requires \"to\" when this harness signs")
 	}
-	recipient, err := ResolveAccount(ac.Deps, toRef)
+	to, err := ResolveAddress(ac.Deps, toRef)
 	if err != nil {
 		return err
 	}
-	to := recipient.Address
 	value, err := parseValueWei(ac.Args["value"])
 	if err != nil {
 		return err

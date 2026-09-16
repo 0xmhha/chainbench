@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+
+	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // Running several test definitions in one command.
@@ -119,4 +121,36 @@ func suiteSpecUnits(in RunSuiteIn) ([]specUnit, error) {
 		units = append(units, specUnit{label: p, paths: []string{p}})
 	}
 	return units, nil
+}
+
+// SuitePlan is one definition's compose plan, labelled the way RunSuites labels
+// its results so a reader can line the two up.
+type SuitePlan struct {
+	Spec string      `json:"spec"`
+	Plan ComposePlan `json:"plan"`
+}
+
+// PlanSuites resolves what RunSuites would compose, definition by definition,
+// without composing anything.
+//
+// It splits the request exactly as RunSuites does. Planning the whole set as
+// one document would refuse a pair of definitions that declare different
+// networks, which RunSuites runs happily one after the other — a plan that
+// refuses what the runner accepts is a plan nobody will trust.
+func PlanSuites(ctx context.Context, in RunSuiteIn) ([]SuitePlan, error) {
+	specs, err := suiteSpecUnits(in)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]SuitePlan, 0, len(specs))
+	for _, unit := range specs {
+		one := in
+		one.SpecPaths, one.SpecContent = unit.paths, unit.content
+		p, err := testengine.PlanSuite(ctx, one)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", unit.label, err)
+		}
+		out = append(out, SuitePlan{Spec: unit.label, Plan: p})
+	}
+	return out, nil
 }

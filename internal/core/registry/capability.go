@@ -1,4 +1,6 @@
-// Package capability is the layered, per-project feature registry behind the
+// The capability registry. The package comment is in manifest.go.
+//
+// It is the layered, per-project feature registry behind the
 // chainbench MCP surface. It answers "which features does chain X support, and
 // how are they called" as data, so the tool set grows with chains/projects
 // without editing a central switch.
@@ -6,8 +8,8 @@
 // The model is hierarchical: a capability is addressed by
 // <version>.<chain>.<name> (e.g. "v1.common.faucet.send" or
 // "v1.stablenet.governance.propose_mint"). "common" capabilities apply to every
-// chain and are implemented once (pkg/chains/common); chain-specific ones
-// live in that chain's project package (pkg/chains/<chain>). Each project
+// chain and are implemented once (internal/chains/common); chain-specific ones
+// live in that chain's project package (internal/chains/<chain>). Each project
 // ships a declarative catalog (a .jsonl list of Descriptors) plus handlers, and
 // registers both here at init(). A capability is EXPOSED only if its catalog
 // entry has a bound handler — so the exposed surface is exactly what projects
@@ -151,7 +153,7 @@ func For(chain string) []Capability {
 	return out
 }
 
-// Get returns the cataloged descriptor at address, whether or not it has a
+// GetByAddress returns the cataloged descriptor at address, whether or not it has a
 // bound handler (i.e. including flat, tool-backed entries).
 func GetByAddress(address string) (Descriptor, bool) {
 	mu.Lock()

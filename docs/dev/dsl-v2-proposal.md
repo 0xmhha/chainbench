@@ -166,11 +166,11 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   // "upgrade": { "profile": "profiles/wemix-upgrade.yaml", "template": "${GOWEMIX_TEMPLATE}" },
 
   "keys": {                                                 // 1.4 · 1.5 — G1 해소
-    "nodekeys": { "source": "preset", "ref": "keys/preset" },
-    //   source: preset | random | import | remote
+    "nodekeys": { "source": "keyPreset", "ref": "keys/preset" },
+    //   source: keyPreset | random | import | remote
     //   random 이면 keyreg 가 생성하고 BLSDeriver 로 BLS/PoP 를 채운다(design §3.5)
     "accounts": {
-      "source": "preset", "ref": "keys/preset",
+      "source": "keyPreset", "ref": "keys/preset",
       "extra": [
         { "name": "acctA", "source": "random", "balance": "100ether" },
         { "name": "op1",   "source": "import", "ref": "keys/ops/op1.key" }

@@ -48,7 +48,7 @@ func (m Identity) Apply(a *Args) error {
 		a.Set(KeyPassword, m.PasswordFile, LayerRole)
 	}
 	if m.AllowInsecureUnlock {
-		a.Enable(KeyAllowInsecureUnlock, LayerFamily)
+		a.Enable(KeyAllowInsecureUnlock, LayerHarness)
 	}
 	if m.Etherbase != "" {
 		a.Set(KeyEtherbase, m.Etherbase, LayerRole)
@@ -238,10 +238,10 @@ func (m RPCPolicy) Apply(a *Args) error {
 		// go-wemix's generation predates the personal-namespace deprecation, so
 		// the flag's absence there is the "harmless absence" branch: the
 		// behavior the flag would enable is already the default.
-		a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerFamily)
+		a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerHarness)
 	}
 	if m.UnprotectedTxs {
-		a.Enable(KeyRPCUnprotectedTxs, LayerFamily)
+		a.Enable(KeyRPCUnprotectedTxs, LayerHarness)
 	}
 	if m.GasCap != "" {
 		a.Set(KeyRPCGasCap, m.GasCap, LayerEnv)

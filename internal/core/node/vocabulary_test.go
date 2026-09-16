@@ -25,59 +25,14 @@ func TestLabelFor_RoundTrips(t *testing.T) {
 	}
 }
 
-// TestNormalizeRole_FoldsEverySpelling is the single folding table: both the
-// canonical vocabulary and the legacy spellings land on bp/en/pn, and an
-// unknown word is an error rather than an invented role.
-
-// TestNormalizeRole_FoldsEverySpelling is the single folding table: both the
-// canonical vocabulary and the legacy spellings land on bp/en/pn, and an
-// unknown word is an error rather than an invented role.
-func TestNormalizeRole_FoldsEverySpelling(t *testing.T) {
-	cases := []struct {
-		in   string
-		want node.Role
-	}{
-		{"bp", node.RoleBP}, {"validator", node.RoleBP},
-		{"en", node.RoleEN}, {"endpoint", node.RoleEN},
-		{"pn", node.RolePN},
-		{"boot", node.RoleBP}, // boot folds onto bp; the etcd seed is chosen positionally
-	}
-	for _, tc := range cases {
-		got, err := node.NormalizeRole(tc.in)
-		if err != nil || got != tc.want {
-			t.Errorf("NormalizeRole(%q) = %v, %v; want %v", tc.in, got, err, tc.want)
-		}
-	}
-	if _, err := node.NormalizeRole("miner"); err == nil {
-		t.Error("an unknown role was accepted")
-	}
-}
-
-// TestUnmarshalJSON_FoldsAtTheBoundary is NM6's compatibility guarantee: a
-// workspace composed before the flip holds "validator" and "endpoint" on disk,
-// and reading it must produce the canonical vocabulary so nothing above this
-// package ever has to know which era wrote the file.
-func TestUnmarshalJSON_FoldsAtTheBoundary(t *testing.T) {
-	const legacy = `{"chain":"wbft","network":"local","nodes":[
-		{"index":1,"role":"validator","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8545"},
-		{"index":2,"role":"endpoint","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8546"},
-		{"index":3,"role":"pn","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8547"}]}`
-
-	var ns node.NodeSet
-	if err := json.Unmarshal([]byte(legacy), &ns); err != nil {
-		t.Fatalf("a workspace written before NM6 must still read: %v", err)
-	}
-	want := []node.Role{node.RoleBP, node.RoleEN, node.RolePN}
-	for i, n := range ns.Nodes {
-		if n.Role != want[i] {
-			t.Errorf("node%d role = %q, want the canonical %q", n.Index, n.Role, want[i])
-		}
-	}
-
-	// An unrecognised role survives decoding untouched. Whether it may launch
-	// is Validate's and SupportsRole's question, and they answer it with the
-	// node's own word; failing here would make a bad topology unreadable
-	// instead of merely invalid.
+// TestUnmarshalJSON_LeavesAnUnknownRoleForValidateToReport pins what decoding
+// does with a role it does not know: nothing.
+//
+// Decoding is not where a role is judged. Topology.Validate and
+// ChainPlugin.SupportsRole are, and they report with the node's own word, so a
+// session written with a bad role stays readable and says what is wrong.
+// Rejecting here would turn an invalid topology into an unreadable one.
+func TestUnmarshalJSON_LeavesAnUnknownRoleForValidateToReport(t *testing.T) {
 	var one node.Node
 	if err := json.Unmarshal([]byte(`{"index":1,"role":"miner"}`), &one); err != nil {
 		t.Fatalf("decoding must not reject an unknown role: %v", err)
@@ -171,25 +126,16 @@ func TestRoleLabel_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestParseRoleLabel_FoldsLegacyAndRejectsTheRest(t *testing.T) {
-	// A legacy spelling folds onto the canonical role, like everywhere else.
-	for _, in := range []node.Label{"validator1", "endpoint3"} {
-		role, ord, err := node.ParseRoleLabel(in)
-		if err != nil {
-			t.Fatalf("ParseRoleLabel(%q): %v", in, err)
-		}
-		if role != node.RoleBP && role != node.RoleEN {
-			t.Fatalf("ParseRoleLabel(%q) role = %q, want a canonical role", in, role)
-		}
-		if ord < 1 {
-			t.Fatalf("ParseRoleLabel(%q) ord = %d, want >= 1", in, ord)
-		}
-	}
-	// Not role labels: an identity label, a role with no ordinal, a zero
-	// ordinal (labels are 1-based), and a word that is not a role.
-	for _, in := range []node.Label{"node7", "en", "en0", "xyz1", "1"} {
-		if _, _, err := node.ParseRoleLabel(in); err == nil {
-			t.Fatalf("ParseRoleLabel(%q) must error", in)
+// TestParseRoleLabel_RejectsWhatIsNotARoleLabel: a label carries a role, so
+// the vocabulary decides it. "validator1" and "endpoint3" used to resolve to
+// bp 1 and en 3; they do not resolve at all now.
+func TestParseRoleLabel_RejectsWhatIsNotARoleLabel(t *testing.T) {
+	// A retired spelling, an identity label, a role with no ordinal, a zero
+	// ordinal (labels are 1-based), a word that is not a role, and a bare
+	// number.
+	for _, in := range []node.Label{"validator1", "endpoint3", "boot1", "node7", "en", "en0", "xyz1", "1"} {
+		if role, ord, err := node.ParseRoleLabel(in); err == nil {
+			t.Errorf("ParseRoleLabel(%q) = (%q, %d), want an error", in, role, ord)
 		}
 	}
 }

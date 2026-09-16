@@ -48,7 +48,7 @@ func TestWorkspace_DockerWithoutLocalmapRefusesLoudly(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 	// A minimal node table so Health reaches the address resolution.
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 1}); err != nil {
 		t.Fatalf("Allocate: %v", err)
 	}
 	_, err = ws.Health(context.Background())
@@ -76,7 +76,7 @@ func TestNodeSet_MetricsURLIsTranslatedLikeTheRPCURL(t *testing.T) {
 	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 1}); err != nil {
 		t.Fatalf("Allocate: %v", err)
 	}
 	ns := ws.NodeSet()

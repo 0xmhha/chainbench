@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
@@ -47,8 +48,8 @@ type RunSuiteIn struct {
 	Chain string
 	// Binary overrides the declared binary path for a single-binary network.
 	Binary string
-	// Validators overrides the declared validator count.
-	Validators int
+	// BPCount overrides the bp node count the specs declare.
+	BPCount int
 	// Server selects where the nodes run, from the operator's server set.
 	Server resource.ServerRef
 	// Docker treats the servers as local docker containers (the option is the
@@ -56,7 +57,7 @@ type RunSuiteIn struct {
 	Docker bool
 	// KeysDir overrides the declared key set (default keys/preset).
 	KeysDir string
-	// KeysSource overrides where node identities come from ("preset" or
+	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string
 	// ChainID overrides the manifest chain id in the built genesis.
@@ -85,6 +86,20 @@ type RunSuiteIn struct {
 	// endpoints sync slowly) raises it so the gate does not terminate a network
 	// that is merely still forming.
 	NodeMonitorTimeout time.Duration
+	// Env, when set, moves every case onto that chain declaration instead of
+	// the one it names. It is an env id, or a path to an env file.
+	//
+	// It is what lets one set of cases meet more than one chain: the steps say
+	// nothing about which mainnet they are on, so the only thing that has to
+	// change is which declaration they compose against. A case's own overrides
+	// survive the swap, because those belong to the test.
+	Env string
+	// OnPlan, when set, is handed the merged composition plan after the
+	// declaration and these overrides are resolved and before anything is
+	// written or launched. It is the seam the CLI prints through: a library
+	// that writes to a terminal cannot be used by one that does not have one.
+	// Nil runs silently.
+	OnPlan func(ComposePlan)
 	// WorkspaceConfigPath is the environment file (--workspace-config) that owns
 	// the target dataRoot and its purpose directories. When set, its dataRoot is
 	// the target's data root, so the same DSL runs across targets by swapping
@@ -228,6 +243,86 @@ func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (strin
 	return string(buf[:read]), nil
 }
 
+// verifyAgainstPlan holds the launched network to the plan and refuses to test
+// one that is not it.
+//
+// Every other check in this package asks whether the declaration is coherent.
+// This is the only one that asks whether the network that came up is the one
+// described, which matters because the last word belongs to the command line:
+// an override naming no layer beats every document, so the merge can be right
+// and the nodes still run something else. A test against the wrong network
+// does not fail, it answers a question nobody asked.
+//
+// Reading the record rather than the in-memory state is deliberate: the record
+// is what a later reader sees, so a fact that never reached it is a fact the
+// run cannot show afterwards either.
+func verifyAgainstPlan(plan ComposePlan, dir string, out *RunSuiteOut) error {
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		// The compose error, if there is one, says more than this would.
+		return nil //nolint:nilerr // absence of a record is reported by the caller
+	}
+	bad := VerifyLaunched(plan, ws.State())
+	if len(bad) == 0 {
+		out.SetupSteps = append(out.SetupSteps, "verify: the launched network matches the plan")
+		return nil
+	}
+	lines := make([]string, 0, len(bad))
+	for _, m := range bad {
+		lines = append(lines, m.String())
+	}
+	out.SetupSteps = append(out.SetupSteps, "verify: "+strings.Join(lines, "; "))
+	return fmt.Errorf("engine: run suite: the launched network is not the one planned: %s", strings.Join(lines, "; "))
+}
+
+// resolveComposition is everything RunSuite does before it writes anything:
+// read the specs, parse them, refuse a set that cannot share one network, run
+// the pre-flight, and merge the declaration with the command's overrides.
+//
+// It is separate so that planning and running resolve the same way. A planner
+// that repeated these steps would eventually answer a different question than
+// the runner, which is the one thing a plan must never do.
+func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spec, composition, error) {
+	if in.DataDir == "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: a workspace directory is required")
+	}
+	specs := in.SpecContent
+	if len(specs) > 0 && in.Env != "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against")
+	}
+	if len(specs) == 0 {
+		var err error
+		if specs, err = dsl.ReadFilesWithEnv(in.SpecPaths, in.Env); err != nil {
+			return nil, nil, composition{}, err
+		}
+	}
+	parsed := make([]dsl.Spec, 0, len(specs))
+	for i, raw := range specs {
+		s, err := dsl.Parse(raw)
+		if err != nil {
+			return nil, nil, composition{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
+		}
+		parsed = append(parsed, s)
+	}
+	if err := sameChain(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	if err := sameComposition(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	// Pre-flight before anything is allocated or written: a spec that names an
+	// action/assertion/reader/reference that does not resolve, or a malformed
+	// node selector, fails here rather than after a network is composed.
+	if err := Precheck(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	comp, err := compositionOf(ctx, parsed[0], in)
+	if err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	return specs, parsed, comp, nil
+}
+
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
 // through chainsetup, run the tests, collect, and stop the network unless
 // asked to keep it. Setup failure aborts before any test runs; a test-phase
@@ -236,39 +331,17 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: no specs given")
 	}
-	if in.DataDir == "" {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: a workspace directory is required")
-	}
-	specs := in.SpecContent
-	if len(specs) == 0 {
-		var err error
-		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
-			return RunSuiteOut{}, err
-		}
-	}
-	parsed := make([]dsl.Spec, 0, len(specs))
-	for i, raw := range specs {
-		s, err := dsl.Parse(raw)
-		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
-		}
-		parsed = append(parsed, s)
-	}
-	if err := sameChain(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	if err := sameComposition(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	// Pre-flight before anything is allocated or written: a spec that names an
-	// action/assertion/reader/reference that does not resolve, or a malformed
-	// node selector, fails here rather than after a network is composed.
-	if err := Precheck(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	comp, err := compositionOf(ctx, parsed[0], in)
+	specs, parsed, comp, err := resolveComposition(ctx, in)
 	if err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+		return RunSuiteOut{}, err
+	}
+	// Announced before the first byte is written: the merge that produced this
+	// happened across three layers and none of them is the file the operator
+	// just named, so this is the only place the network can be seen whole
+	// while it is still cheap to stop.
+	plan := planOf(comp, parsed[0].Chain.Name)
+	if in.OnPlan != nil {
+		in.OnPlan(plan)
 	}
 	if in.ArtifactRoot == "" {
 		// The session belongs with the workspace it tested.
@@ -288,6 +361,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
 	} else {
 		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
+		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
+			return out, verr
+		}
 		if err != nil {
 			return out, err
 		}

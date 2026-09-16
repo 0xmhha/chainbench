@@ -45,8 +45,8 @@ func TestWorkspace_NewPersist(t *testing.T) {
 	if !st.Steps["new"].Done {
 		t.Fatalf("new step not recorded: %+v", st.Steps)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "workspace.json")); err != nil {
-		t.Fatalf("workspace.json not written: %v", err)
+	if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); err != nil {
+		t.Fatalf("chain-record.json not written: %v", err)
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 
 // spaFiles is the built Svelte SPA (decision D5). The sources live in web/ and
 // are compiled with `npm --prefix web run build`, which writes the static bundle
-// to pkg/dashboard/spa/ (committed) so it embeds into the binary. The SPA is
+// to internal/dashboard/spa/ (committed) so it embeds into the binary. The SPA is
 // served at the site root and speaks the same contract as the legacy page — the
 // SSE stream at /events and the run list at /api/runs.
 //

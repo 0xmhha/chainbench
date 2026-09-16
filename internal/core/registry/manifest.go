@@ -1,8 +1,8 @@
 // Package registry is the chain-agnostic plugin registry. It holds the
 // declarative per-chain Manifest data and the ChainPlugin/ConsensusFamily
 // contracts that core code (pipeline, drivers, mcp) uses without importing any
-// specific chain — chain knowledge lives in pkg/chains/* and pkg/consensus/*,
-// which register here at init (docs/CHAINBENCH_GO_REDESIGN.md §4).
+// specific chain — chain knowledge lives in internal/chains/* and internal/consensus/*,
+// which register here at init.
 package registry
 
 import (
@@ -11,8 +11,8 @@ import (
 )
 
 // Manifest is the declarative static profile of one chain, mirroring
-// pkg/chains/<id>/manifest.json. It data-izes the facts that were previously
-// hardcoded across lib/*.sh and network/internal/probe (binary name, consensus
+// internal/chains/<id>/manifest.json. It data-izes the facts that were previously
+// hardcoded across lib/*.sh and the retired network module's probe (binary name, consensus
 // namespace, hardfork fields, supported tx types, probe signature) so adding a
 // chain is mostly data, not code.
 type Manifest struct {
@@ -30,6 +30,17 @@ type Manifest struct {
 	// There is deliberately no code default — set it here so a run's network id
 	// is always traceable to the manifest.
 	NetworkID int64 `json:"network_id"`
+	// Dialect names the flag vocabulary this chain's binary accepts, by the id
+	// the launch-option tables use ("geth114" | "geth110-wemix").
+	//
+	// The chain says it because only the chain knows. It was decided by
+	// comparing the chain's id against "wemix" in the layer that assembles
+	// argv, so a chain on the older generation under any other name silently
+	// got the modern vocabulary and launched with flags its binary does not
+	// have. There is deliberately no code default, for the same reason
+	// network_id has none: a wrong guess here is a node that dies at boot with
+	// a message about a flag rather than about the manifest.
+	Dialect string `json:"dialect"`
 	// MinerRecommit selects the TOML encoding of miner.Config.Recommit that
 	// this chain's binary accepts: "duration" (a TOML string like "2s", used by
 	// go-stablenet/go-wbft) or "nanos" (an integer number of nanoseconds, used
@@ -61,6 +72,22 @@ type Manifest struct {
 	// Capabilities is the provider-independent capability set the chain
 	// supports (e.g. "consensus").
 	Capabilities []string `json:"capabilities"`
+	// SystemContracts maps this chain's own contracts to the addresses they sit
+	// at, by the name the chain calls them.
+	//
+	// The name is the point. The same address holds a different contract on
+	// different chains — 0x…1001 is govValidator on stablenet and govStaking on
+	// wbft, 0x…1003 is govMinter and govNCP — so an address written into a test
+	// says nothing about which contract it meant, and a test moved to another
+	// chain calls a different one in silence.
+	//
+	// Where a chain has a genesis template the same pairs are in it, and a test
+	// holds the two to each other. Entries with no template counterpart are
+	// legitimate: a chain may deploy its contracts at run time (wemix reads its
+	// governance address from admin_wemixInfo and so declares none here), and a
+	// contract the binary provides rather than genesis is nowhere in a template
+	// at all (stablenet's accountManager).
+	SystemContracts map[string]string `json:"system_contracts,omitempty"`
 	// Upgrade, when present, declares that a network of this chain hands block
 	// production off to another chain's binary/consensus at a fork block (the
 	// wemix+etcd -> wbft hardfork). Absent for chains with no upgrade.
@@ -95,16 +122,23 @@ type UpgradeSpec struct {
 }
 
 // BuildSpec describes how to obtain the node binary.
+//
+// MakeTarget is the repository's own target name and is not always Binary:
+// go-wbft builds cmd/gwemix through a target called gwemix, while chainbench
+// calls the result gwbft because a handoff runs go-wemix's gwemix and
+// go-wbft's beside each other and two binaries cannot share one name. The
+// operator bridges the two with GWBFT_BIN or a workspace alias; this field says
+// how to BUILD it, so it has to be what the repository actually answers to.
 type BuildSpec struct {
 	Repo       string `json:"repo"`        // e.g. "go-wbft"
-	MakeTarget string `json:"make_target"` // e.g. "gwbft"
+	MakeTarget string `json:"make_target"` // e.g. "gwemix" — the repo's target, not Binary
 }
 
 // GenesisSpec describes a chain's genesis structure. EngineField is the config
 // key that carries consensus config ("anzeon" for stablenet, "croissant" for
 // wbft; empty for the poa/registry family whose genesis is deploy-time).
 // Template names the chain's genesis template (embedded as
-// pkg/chains/<id>/genesis.json by the plugin).
+// internal/chains/<id>/genesis.json by the plugin).
 type GenesisSpec struct {
 	EngineField string   `json:"engine_field"`
 	Hardforks   []string `json:"hardforks"`
@@ -117,10 +151,25 @@ type ConsensusSpec struct {
 	ValidatorsMethod string `json:"validators_method"` // "istanbul_getValidators" | ...
 }
 
-// ProbeSpec is the chain-detection signature (see network/internal/probe).
+// ProbeSpec is the chain-detection signature (it replaced the retired network module's probe).
 type ProbeSpec struct {
 	Method   string  `json:"method"`              // RPC method whose presence identifies the chain
 	ChainIDs []int64 `json:"chain_ids,omitempty"` // optional chain-id gate for disambiguation
+}
+
+// MustParseManifest is ParseManifest for a manifest embedded in the binary.
+//
+// A chain's own manifest is compiled in, so a parse failure is a build that
+// should not have shipped rather than a condition to handle: every chain
+// package did the same four lines of parse-and-panic, and the panic is the
+// honest answer. An operator's manifest arrives through ParseManifest, where a
+// bad file is an error they can fix.
+func MustParseManifest(b []byte) Manifest {
+	m, err := ParseManifest(b)
+	if err != nil {
+		panic(fmt.Sprintf("registry: embedded manifest: %v", err))
+	}
+	return m
 }
 
 // ParseManifest decodes a Manifest from JSON bytes and validates required
@@ -151,6 +200,9 @@ func (m Manifest) validate() error {
 	}
 	if m.NetworkID <= 0 {
 		return fmt.Errorf("registry: manifest %q missing/invalid network_id (set it explicitly; there is no default)", m.ID)
+	}
+	if m.Dialect == "" {
+		return fmt.Errorf("registry: manifest %q missing dialect (set it explicitly; there is no default)", m.ID)
 	}
 	switch m.MinerRecommit {
 	case "duration", "nanos":

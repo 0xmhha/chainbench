@@ -31,7 +31,7 @@ func launchOpts(t *testing.T) upgrade.LaunchOptions {
 	return upgrade.LaunchOptions{
 		DataRoot:   t.TempDir(),
 		FromBinary: "gwemix", ToBinary: "gwbft",
-		FromFamily: from.Family(), ToFamily: to.Family(),
+		FromChain: from, ToChain: to,
 		InitFn: func(_ context.Context, binary, dataDir, genesisPath string) error { return nil },
 	}
 }

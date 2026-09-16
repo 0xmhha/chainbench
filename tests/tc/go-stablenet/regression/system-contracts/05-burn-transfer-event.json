@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "burn-transfer-event",
   "description": "RT-F-1-05 — Burn 실행 시 Transfer(account → 0x0) 이벤트 발생 (원본 regression/system-contracts/05-test-burn-transfer-event)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "burn-transfer-event-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -36,7 +22,7 @@
       "gas": "0xb71b0",
       "on": "node1",
       "save": "burnHash",
-      "to": "0x0000000000000000000000000000000000001003",
+      "to": "govMinter",
       "value": "0xde0b6b3a7640000"
     },
     {
@@ -55,7 +41,7 @@
       "is": "0x1"
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$burnBlk",

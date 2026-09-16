@@ -3,28 +3,13 @@
   "kind": "case",
   "id": "authorized-extra-bit-synced",
   "description": "TC-4-5-01,TC-4-5-02 — Account Extra alloc bits reflected in AccountManager (authorized + blacklisted) (원본 post-v1.0.0-change/extra-state/01-test-extra-alloc-to-contract)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "account-extra"
+    "account-extra",
+    "contract:accountManager"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "authorized-extra-bit-synced-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "account-extra"
@@ -46,7 +31,7 @@
       "data": "$isAuthData",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     }
   ]
 }

@@ -48,7 +48,7 @@ func TestPlan_ComputesWithoutComposing(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(cwd) })
 
-	out, err := run(t, "resource", "plan", "--validators", "2", "--endpoints", "1")
+	out, err := run(t, "resource", "plan", "--bp", "2", "--en", "1")
 	if err != nil {
 		t.Fatalf("plan: %v\n%s", err, out)
 	}
@@ -73,11 +73,11 @@ func TestPlan_ComputesWithoutComposing(t *testing.T) {
 // TestPlan_IsDeterministic pins the allocator's core promise through the CLI:
 // the same inputs always place the same.
 func TestPlan_IsDeterministic(t *testing.T) {
-	first, err := run(t, "resource", "plan", "--validators", "3")
+	first, err := run(t, "resource", "plan", "--bp", "3")
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := run(t, "resource", "plan", "--validators", "3")
+	second, err := run(t, "resource", "plan", "--bp", "3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestPlan_IsDeterministic(t *testing.T) {
 // TestPlan_RefusesAProducerlessNetwork: a network where nothing seals never
 // advances, and the refusal belongs here, not at chain start.
 func TestPlan_RefusesAProducerlessNetwork(t *testing.T) {
-	if _, err := run(t, "resource", "plan", "--validators", "0", "--endpoints", "2"); err == nil {
+	if _, err := run(t, "resource", "plan", "--bp", "0", "--en", "2"); err == nil {
 		t.Fatal("planned a network with no validator")
 	}
 }
@@ -112,7 +112,7 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 	if err := os.WriteFile(inv, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	out, err := run(t, "resource", "plan", "--server-set", inv, "--server", "box1", "--validators", "2")
+	out, err := run(t, "resource", "plan", "--server-set", inv, "--server", "box1", "--bp", "2")
 	if err != nil {
 		t.Fatalf("plan over inventory: %v\n%s", err, out)
 	}
@@ -136,7 +136,7 @@ func composedWorkspace(t *testing.T) string {
 	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2, Endpoints: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 2, ENCount: 1}); err != nil {
 		t.Fatal(err)
 	}
 	if err := ws.Save(); err != nil {
@@ -179,7 +179,7 @@ func TestPool_CountsEveryCompositionUnderTheRoot(t *testing.T) {
 		if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2}); err != nil {
+		if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 2}); err != nil {
 			t.Fatal(err)
 		}
 		if err := ws.Save(); err != nil {

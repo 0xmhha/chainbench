@@ -91,14 +91,14 @@ inputs:
 execution:
   chain: fresh
 
-# 이미 준비된 입력을 쓰려면 위 inputs 블록을 아래 블록으로 교체한다.
-# inputs 키를 두 번 작성하지 않는다. prepared에서는 preset이 필수다.
+# 대상에 이미 있는 입력을 쓰려면 위 inputs 블록을 아래 블록으로 교체한다.
+# inputs 키를 두 번 작성하지 않는다. existing에서는 name이 필수다.
 # 파일이 없으면 오류로 종료하며 generated로 자동 전환하지 않는다.
 # inputs:
-#   mode: prepared
-#   preset: regression
+#   mode: existing
+#   name: regression
 #
-# presets:
+# existingInputs:
 #   regression:
 #     genesis: srv://server-01/data/genesis/genesis-wemix-regression.json
 #     keyring: srv://server-01/data/keys/regression-keys
@@ -110,7 +110,7 @@ execution:
 # 원본 파일 위치를 지정하는 것이며 노드 배치나 개인 키 전송을 지시하지 않는다.
 # 모든 노드가 다른 서버에 있으면 원본/목적지와 배포 정책을 별도로 검증한다.
 #
-# preset 참조로 쓸 수 있는 것은 문자열 세 형식이다. 다른 형식은 없다.
+# existingInputs의 참조로 쓸 수 있는 것은 문자열 세 형식이다. 다른 형식은 없다.
 #
 #   srv://<서버이름>/<절대경로>   지정한 서버의 그 경로 (dataRoot를 덧붙이지 않는다)
 #   <상대 파일명>                대상의 용도별 디렉터리 아래
@@ -119,12 +119,12 @@ execution:
 # 예전 이 자리에는 객체형 참조({server, ref} / {serverIndex, ref} / {localPath})가
 # "미구현"이라는 딱지와 함께 예시로 적혀 있었다. 2026-09-12에 그 계획을 철회했다.
 # 이유는 표현력이 아니라 값이다 — srv://와 상대 파일명이 실제로 쓰이는 경우를 모두
-# 덮고 있고, 객체형을 preset에서 끝까지 나르려면 KeysDir/GenesisExisting이 문자열인
+# 덮고 있고, 객체형을 이 묶음에서 끝까지 나르려면 KeysDir/GenesisExisting이 문자열인
 # 32개 파일 105곳을 구조체로 바꿔야 하는데 그 표현력을 요구하는 호출자가 없다.
 # 포기한 것은 serverIndex 하나다: 서버를 이름이 아니라 순번으로 고르는 것은 문자열로
 # 표현할 수 없다. 필요해지면 그때 요구와 함께 다시 연다.
 
 # 구성 ID, 노드 ID, 실행 시각, PID, 실제 명령어, 체크섬은 운영자가 입력하지 않는다.
-# chainbench가 생성하여 기존 workspace.json 및 실행 기록에 저장한다.
+# chainbench가 생성하여 기존 chain-record.json 및 실행 기록에 저장한다.
 # 바이너리 다운로드/업로드 정책과 로컬 원본 경로는 별도 배포 계약으로 설계한다.
 # 이 샘플의 경로 선언만으로 자동 전송을 의미하지 않는다.

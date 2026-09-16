@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "max-priority-fee-equals-gastip",
   "description": "RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "max-priority-fee-equals-gastip-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

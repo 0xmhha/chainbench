@@ -122,7 +122,7 @@ SKIP  await-fork
 
 ```sh
 chainbench upgrade run \
-  --profile profiles/wemix-upgrade.yaml --preset keys/preset \
+  --profile profiles/wemix-upgrade.yaml --keys keys/preset \
   --from-binary $CHAIN/go-wemix/build/bin/gwemix \
   --to-binary   $CHAIN/go-wbft/build/bin/gwemix \
   --template    $CHAIN/go-wemix/wemix/scripts/genesis-template.json \

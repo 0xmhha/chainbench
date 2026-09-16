@@ -3,25 +3,12 @@
   "kind": "case",
   "id": "stablenet-delayed-fork",
   "requires": [
-    "rpc"
+    "rpc",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "delayed-fork-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {

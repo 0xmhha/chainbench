@@ -25,8 +25,8 @@ const (
 	// DefaultTag is the value a surface offers when the caller says nothing.
 	//
 	// It is separate from the zero value because they are different facts:
-	// `--validators` defaults to 4 and zero validators is not a network, while
-	// `--endpoints` defaults to 0 and means it. Deriving one from the other
+	// `--bp` defaults to 4 and zero producers is not a network, while
+	// `--en` defaults to 0 and means it. Deriving one from the other
 	// would have silently changed what `chain place` does.
 	DefaultTag = "default"
 )

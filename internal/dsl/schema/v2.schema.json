@@ -54,7 +54,7 @@
         },
         "binaries": {
           "type": "object",
-          "description": "name -> binary path. \"default\" applies to every node without its own; a per-node topology entry's \"binary\" names one of these; an upgrade names \"producer\"/\"validator\"",
+          "description": "name -> binary path. \"default\" applies to every node without its own; a per-node topology entry's \"binary\" names one of these; an upgrade names \"from\"/\"to\"",
           "additionalProperties": {
             "type": "string"
           }
@@ -94,7 +94,7 @@
         },
         "topology": {
           "type": "object",
-          "description": "either the count form ({bp|validators, en|endpoints, syncMode}) or the node table ({nodes: [{role, binary, sync, bootnode, index}]}); the node table gives each node its own role and binary"
+          "description": "either the count form ({bp, en, pn, syncMode}) or the node table ({nodes: [{role, binary, sync, bootnode, index}]}); the node table gives each node its own role and binary"
         },
         "hardforks": {
           "type": "object",
@@ -104,22 +104,22 @@
         },
         "launch": {
           "type": "object",
-          "description": "scope -> launchopt knobs. scope: \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
+          "description": "scope -> launchopt knobs. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
           "additionalProperties": {
             "type": "object"
           },
           "propertyNames": {
-            "pattern": "^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$"
+            "pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"
           }
         },
         "config": {
           "type": "object",
-          "description": "scope -> config-knob overrides. scope: \"all\" or \"node<N>\"",
+          "description": "scope -> config-knob overrides. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
           "additionalProperties": {
             "type": "object"
           },
           "propertyNames": {
-            "pattern": "^(all|node[1-9][0-9]*)$"
+            "pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"
           }
         },
         "capabilities": {
@@ -135,7 +135,7 @@
             "profile",
             "template"
           ],
-          "description": "a mixed-binary handoff: the network starts on binaries.producer and forks to binaries.validator, shaped by a golden profile",
+          "description": "a mixed-binary handoff: the network starts on binaries.from and forks to binaries.to, shaped by a golden profile",
           "properties": {
             "profile": {
               "type": "string",
@@ -143,7 +143,7 @@
             },
             "template": {
               "type": "string",
-              "description": "the producer chain's own genesis template"
+              "description": "the from-chain's own genesis template"
             }
           }
         },
@@ -172,7 +172,7 @@
       "properties": {
         "source": {
           "enum": [
-            "preset",
+            "keyPreset",
             "generate"
           ]
         },

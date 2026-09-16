@@ -16,10 +16,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newNetCmd is the composable step surface: it composes a chain network for
+// New is the composable step surface: it composes a chain network for
 // testing one customizable step at a time over a shared --workspace-dir workspace,
 // so each step can be run, customized, and verified independently. Each
-// subcommand mirrors an MCP tool (net_*) driving the same netcompose core.
+// subcommand mirrors an MCP tool driving the same chainsetup core.
 //
 // The workspace (control state) is always local; a step's files/processes live
 // on the target — this machine or a remote SSH host — selected once at `chain new`

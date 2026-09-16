@@ -51,7 +51,7 @@ func collectEnv(t *testing.T, nodes ...node.Node) session.Environment {
 // TestStartCollection_MirrorsChainstateAndLogs proves live collection publishes
 // both a chainstate snapshot and tailed log lines to the bus.
 func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
-	env := collectEnv(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := collectEnv(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 	if err := os.WriteFile(env.LogPath("node1"), []byte("hello world\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

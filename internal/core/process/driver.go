@@ -1,9 +1,10 @@
-// Package driver runs chain nodes on behalf of the setup pipeline. A Driver
+// Driver and the local implementation of it. The package comment is in doc.go.
+//
+// A Driver runs chain nodes on behalf of the setup pipeline. It
 // abstracts where/how a node runs so the pipeline treats local, remote, and
-// attached nodes through one surface (requirements #5–7,
-// docs/CHAINBENCH_GO_REDESIGN.md §7). This package ships the local driver; the
-// remote (ssh key / id·pw) and attach drivers, ported from
-// network/internal/drivers, land with G3.
+// attached nodes through one surface (requirements #5–7). This package ships the local driver; the
+// remote (ssh key / id·pw) and attach drivers, ported from the retired
+// network module's drivers, land with G3.
 package process
 
 import (

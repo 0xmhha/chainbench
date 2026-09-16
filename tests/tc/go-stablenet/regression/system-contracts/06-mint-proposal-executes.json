@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "mint-proposal-executes",
   "description": "RT-F-2-01 — 코인 발행: proposeMint(proofData) → 승인 → execute (원본 regression/system-contracts/06-test-mint-proposal)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "mint-proposal-executes-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -52,7 +37,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -79,7 +64,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",

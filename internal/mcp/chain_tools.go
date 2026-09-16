@@ -107,7 +107,7 @@ func chainKeysTool() Tool {
 		Name:        "chainbench_chain_keys",
 		Description: "Ensure the workspace's key set exists and covers the node count (preset, or generate a fresh set in process).",
 		InputSchema: workspaceDirSchema(map[string]any{
-			"source":     map[string]any{"type": "string", "description": "preset (default) | generate"},
+			"source":     map[string]any{"type": "string", "description": "keyPreset (default) | generate"},
 			"nodes":      map[string]any{"type": "number", "description": "identities the set must cover (default: allocated node count)"},
 			"validators": map[string]any{"type": "number", "description": "identities joining the validator set (generate; 0 = all)"},
 		}),
@@ -127,8 +127,8 @@ func chainPlaceTool() Tool {
 		Name:        "chainbench_chain_place",
 		Description: "Build the workspace's node table: roles, target-side paths, deterministic ports.",
 		InputSchema: workspaceDirSchema(map[string]any{
-			"validators": map[string]any{"type": "number", "description": "validator node count (default 4)"},
-			"endpoints":  map[string]any{"type": "number", "description": "endpoint node count"},
+			"bp": map[string]any{"type": "number", "description": "bp (block-producing) node count (default 4)"},
+			"en": map[string]any{"type": "number", "description": "en (endpoint, non-producing) node count"},
 			"peering": map[string]any{
 				"type":        "string",
 				"enum":        []string{"mesh", "proxied"},
@@ -137,8 +137,8 @@ func chainPlaceTool() Tool {
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			out, err := app.NetAllocate(ctx, app.Deps{}, app.NetAllocateIn{
-				DataDir:    argString(args, "workspaceDir", ""),
-				Validators: argInt(args, "validators", 4), Endpoints: argInt(args, "endpoints", 0),
+				DataDir: argString(args, "workspaceDir", ""),
+				BPCount: argInt(args, "bp", 4), ENCount: argInt(args, "en", 0),
 				Peering: argString(args, "peering", ""),
 			})
 			return out.Detail, err
@@ -400,13 +400,13 @@ func chainUpTool() Tool {
 	return Tool{
 		Name: "chainbench_chain_up",
 		Description: "Compose and launch a network in one call (runs every chain step in order), leaving it up for follow-on rpc/tx/attach. " +
-			"Args: workspaceDir, chain, binary, validators, endpoints, proxies, keysDir, keysSource, endpointSyncMode, peering, docker, serverSet/server/allServers.",
+			"Args: workspaceDir, chain, binary, bp, en, pn, keysDir, keysSource, endpointSyncMode, peering, docker, serverSet/server/allServers.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"chain":            map[string]any{"type": "string"},
 			"binary":           map[string]any{"type": "string"},
-			"validators":       map[string]any{"type": "integer"},
-			"endpoints":        map[string]any{"type": "integer"},
-			"proxies":          map[string]any{"type": "integer", "description": "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it"},
+			"bp":               map[string]any{"type": "integer", "description": "bp (block-producing) node count"},
+			"en":               map[string]any{"type": "integer", "description": "en (endpoint, non-producing) node count"},
+			"pn":               map[string]any{"type": "integer", "description": "pn (proxy-tier) node count; a family with no proxy tier refuses it"},
 			"keysDir":          map[string]any{"type": "string"},
 			"keysSource":       map[string]any{"type": "string"},
 			"endpointSyncMode": map[string]any{"type": "string"},
@@ -427,9 +427,9 @@ func chainUpTool() Tool {
 				DataDir:             argString(args, "workspaceDir", ""),
 				Chain:               argString(args, "chain", ""),
 				Binary:              argString(args, "binary", ""),
-				Validators:          argInt(args, "validators", 4),
-				Endpoints:           argInt(args, "endpoints", 0),
-				Proxies:             argInt(args, "proxies", 0),
+				BPCount:             argInt(args, "bp", 4),
+				ENCount:             argInt(args, "en", 0),
+				PNCount:             argInt(args, "pn", 0),
 				KeysDir:             argString(args, "keysDir", ""),
 				KeysSource:          argString(args, "keysSource", ""),
 				EndpointSyncMode:    argString(args, "endpointSyncMode", ""),

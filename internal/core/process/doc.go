@@ -1,4 +1,4 @@
-// Package launcher owns how a node comes up and goes down.
+// Package process owns how a node comes up and goes down.
 //
 // Two halves, one module. Direct is how to launch: arm a plan into node specs
 // (argv, config, identity), materialize the files on the target, init each

@@ -5,26 +5,12 @@
   "description": "RT-B-04 — 멤버로 추가된 노드가 에폭 경계에서 실제 검증자 집합에 들어간다",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "engine:anzeon",
+    "contract:govValidator"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "add-validator-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4-en1",
     "genesis": {
       "overlay": {
         "config": {
@@ -85,7 +71,7 @@
       "do": "sendTx",
       "on": "node1",
       "from": "node1",
-      "to": "0x0000000000000000000000000000000000001001",
+      "to": "govValidator",
       "gas": "0x16e360",
       "data": "$addData",
       "save": "addHash",
@@ -113,7 +99,7 @@
       "do": "sendTx",
       "on": "node2",
       "from": "node2",
-      "to": "0x0000000000000000000000000000000000001001",
+      "to": "govValidator",
       "gas": "0x16e360",
       "data": "$approveData",
       "save": "apHash",

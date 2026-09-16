@@ -128,8 +128,8 @@ func TestEnvironment_Resolve(t *testing.T) {
 	s := newSession(t)
 	env, _ := s.NewEnvironment(session.Fingerprint("cccccccccccc3333"))
 	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, RPCURL: "http://a"},
-		{Index: 2, Role: node.RoleValidator, RPCURL: "http://b"},
+		{Index: 1, Role: node.RoleBP, RPCURL: "http://a"},
+		{Index: 2, Role: node.RoleBP, RPCURL: "http://b"},
 		{Index: 3, Role: node.RoleEN, RPCURL: "http://c"},
 	}})
 
@@ -164,7 +164,7 @@ func TestSave_WritesJSON(t *testing.T) {
 	s := newSession(t)
 	env, _ := s.NewEnvironment(session.Fingerprint("dddddddddddd4444"))
 	env.PopulateNodeTable(node.NodeSet{Chain: "wbft", Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: "http://a"},
+		{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", RPCURL: "http://a"},
 	}})
 	if err := env.Save(); err != nil {
 		t.Fatalf("env.Save: %v", err)
@@ -250,19 +250,17 @@ func TestEnvironment_Resolve_CanonicalAndLegacyRoles(t *testing.T) {
 	env, _ := s.NewEnvironment(session.Fingerprint("eeeeeeeeeeee5555"))
 	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
 		{Index: 1, Role: node.RoleBP, RPCURL: "http://canonical-bp"},
-		{Index: 2, Role: node.RoleValidator, RPCURL: "http://legacy-bp"},
+		{Index: 2, Role: node.RoleBP, RPCURL: "http://second-bp"},
 		{Index: 3, Role: node.RoleEN, RPCURL: "http://canonical-en"},
-		{Index: 4, Role: node.RoleEndpoint, RPCURL: "http://legacy-en"},
+		{Index: 4, Role: node.RoleEN, RPCURL: "http://second-en"},
 		{Index: 5, Role: node.RolePN, RPCURL: "http://pn"},
 	}})
 
 	cases := []struct{ sel, want string }{
 		{"bp1", "http://canonical-bp"},
-		{"bp2", "http://legacy-bp"},
-		{"validator1", "http://canonical-bp"}, // legacy word, same set
+		{"bp2", "http://second-bp"},
 		{"en1", "http://canonical-en"},
-		{"en2", "http://legacy-en"},
-		{"endpoint1", "http://canonical-en"},
+		{"en2", "http://second-en"},
 		{"pn1", "http://pn"},
 		{"pn:any", "http://pn"},
 	}
@@ -316,8 +314,8 @@ func TestEnvironmentResolve_RoleAbsentFallsBackToIndexOrder(t *testing.T) {
 	}
 	// A workspace-composed table: validators only, no endpoint of any kind.
 	env.PopulateNodeTable(node.NodeSet{Chain: "stablenet", Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, RPCURL: "http://one"},
-		{Index: 2, Role: node.RoleValidator, RPCURL: "http://two"},
+		{Index: 1, Role: node.RoleBP, RPCURL: "http://one"},
+		{Index: 2, Role: node.RoleBP, RPCURL: "http://two"},
 	}})
 
 	n, err := env.Resolve("en2")

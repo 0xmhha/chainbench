@@ -84,7 +84,7 @@ type StepOut struct {
 type NetKeysIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	// Source is preset (default) | generate | declared.
-	Source string `cb:"keys-source" default:"preset" help:"preset (use the recorded key set) | generate (create a fresh set)"`
+	Source string `cb:"keys-source" default:"keyPreset" help:"keyPreset (use the recorded key set) | generate (create a fresh set)"`
 	// BlueprintPath is the declaration the keys come from when Source is
 	// "declared" (or when a blueprint is given and Source is silent).
 	BlueprintPath string
@@ -113,10 +113,10 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 
 // NetAllocateIn sizes the network.
 type NetAllocateIn struct {
-	DataDir    string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
-	Validators int    `cb:"validators" default:"4" help:"validator node count"`
-	Endpoints  int    `cb:"endpoints" help:"endpoint (non-validator) node count"`
-	Proxies    int    `cb:"proxies" help:"pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it"`
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	BPCount int    `cb:"bp" default:"4" help:"bp (block-producing) node count"`
+	ENCount int    `cb:"en" help:"en (endpoint, non-producing) node count"`
+	PNCount int    `cb:"pn" help:"pn (proxy-tier) node count; a family with no proxy tier refuses it"`
 	// Peering is the peer graph ("mesh" default, "proxied").
 	Peering string `cb:"peering" help:"peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)"`
 	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
@@ -124,7 +124,7 @@ type NetAllocateIn struct {
 	EndpointSyncMode string `cb:"endpoint-syncmode" help:"sync mode for endpoints (snap|archive); default full"`
 	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
 	// replaces the counts, which cannot express a per-node choice.
-	TopologyPath string `cb:"topology" help:"per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints"`
+	TopologyPath string `cb:"topology" help:"per-node layout YAML (role/sync-mode/bootnode/binary); overrides --bp/--en/--pn"`
 	// BlueprintPath is a network declaration (N1). It is the widest of the
 	// three layout sources and wins over both the counts and a topology.
 	BlueprintPath string
@@ -196,7 +196,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 			}
 		}
 		return ws.Allocate(AllocateOpts{
-			Validators: in.Validators, Endpoints: in.Endpoints, Proxies: in.Proxies,
+			BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
 			Peering: peeringOf(bp, in.Peering),
 			Pool:    resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
@@ -355,8 +355,9 @@ type NetConfigIn struct {
 	// Set are dot-path "key=value" config-knob overrides to record. Empty
 	// renders with whatever overrides the workspace already holds.
 	Set []string `cb:"set" help:"config knob override key=value (repeatable; supported keys: syncMode, httpHost, metricsHost)"`
-	// ScopedSet records overrides for several scopes at once ("all", "node<N>"),
-	// the form the up flow and a DSL env pass. It is applied before Set.
+	// ScopedSet records overrides for several scopes at once ("all", a role,
+	// "node<N>"), the form the up flow and a DSL env pass. It is applied before
+	// Set, most general scope first.
 	ScopedSet map[string][]string
 }
 
@@ -371,7 +372,7 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 			}
 		}
 		if len(in.Set) > 0 {
-			scope := "all"
+			scope := node.ScopeAll
 			if in.Node > 0 {
 				scope = fmt.Sprintf("node%d", in.Node)
 			}
@@ -546,9 +547,9 @@ func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (NetHealthOut, error
 	return NetHealthOut{Nodes: nodes}, err
 }
 
-// sortedScopes orders config-override scopes deterministically: "all" first,
-// then the node scopes by index, so recording is reproducible regardless of
-// map iteration order.
+// sortedScopes orders config-override scopes deterministically, most general
+// first, so recording is reproducible regardless of map iteration order. Ties
+// within a rank are broken by name for the same reason.
 func sortedScopes(m map[string][]string) []string {
 	if len(m) == 0 {
 		return nil
@@ -558,11 +559,9 @@ func sortedScopes(m map[string][]string) []string {
 		scopes = append(scopes, k)
 	}
 	sort.Slice(scopes, func(i, j int) bool {
-		if scopes[i] == "all" {
-			return true
-		}
-		if scopes[j] == "all" {
-			return false
+		ri, rj := node.ScopeRank(scopes[i]), node.ScopeRank(scopes[j])
+		if ri != rj {
+			return ri < rj
 		}
 		return scopes[i] < scopes[j]
 	})

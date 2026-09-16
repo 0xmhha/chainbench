@@ -6,24 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4",
   "steps": [
     {
       "do": "waitBlock",

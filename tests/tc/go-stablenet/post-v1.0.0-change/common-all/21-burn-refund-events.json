@@ -2,27 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "burn-refund-events",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "burn-refund-events-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -35,7 +20,7 @@
       "gas": "0xb71b0",
       "on": "node4",
       "save": "burnHash",
-      "to": "0x0000000000000000000000000000000000001003",
+      "to": "govMinter",
       "value": "0xde0b6b3a7640000"
     },
     {
@@ -63,7 +48,7 @@
       "gas": "0xb71b0",
       "on": "node4",
       "save": "cancelHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -82,7 +67,7 @@
       "gas": "0xb71b0",
       "on": "node4",
       "save": "claimHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -110,7 +95,7 @@
       "is": "0x1"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$cancelBlk",
@@ -122,7 +107,7 @@
       ]
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$claimBlk",

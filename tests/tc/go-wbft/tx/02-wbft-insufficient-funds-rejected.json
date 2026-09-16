@@ -6,24 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wbft-insufficient-funds",
-    "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "wbft-bp4",
   "steps": [
     {
       "do": "read",

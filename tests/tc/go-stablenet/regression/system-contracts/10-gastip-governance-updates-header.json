@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "gastip-governance-updates-header",
   "description": "RT-B-06 — GasTip 거버넌스 변경 → 블록 헤더 WBFTExtra.GasTip 반영 검증 + 원복 (원본 regression/wbft/06-test-gastip-header-sync)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "gastip-governance-updates-header-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -62,7 +47,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
@@ -89,7 +74,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "compare": "Equal",
@@ -121,7 +106,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "restoreHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
@@ -148,7 +133,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash2",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "compare": "Equal",
@@ -184,7 +169,7 @@
       "is": "0x1"
     },
     {
-      "address": "0x0000000000000000000000000000000000001001",
+      "address": "govValidator",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "earliest",

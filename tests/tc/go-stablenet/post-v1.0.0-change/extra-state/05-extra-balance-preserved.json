@@ -9,22 +9,7 @@
     "account-extra"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "extra-balance-preserved-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "account-extra"

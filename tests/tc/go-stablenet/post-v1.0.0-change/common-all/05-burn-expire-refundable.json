@@ -3,28 +3,13 @@
   "kind": "case",
   "id": "burn-expire-refundable",
   "description": "TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다.",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "short-expiry"
+    "short-expiry",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "burn-expire-refundable-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "short-expiry"
@@ -34,7 +19,7 @@
     {
       "do": "read",
       "of": [
-        "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+        "node3"
       ],
       "op": "abiCall",
       "save": "refBalCall",
@@ -46,10 +31,10 @@
       "do": "read",
       "save": "refBefore",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "do": "read",
       "save": "govBefore",
       "source": "balanceAt"
@@ -61,11 +46,11 @@
       "gas": "0xb71b0",
       "on": "node3",
       "save": "burnHash",
-      "to": "0x0000000000000000000000000000000000001003",
+      "to": "govMinter",
       "value": "0xde0b6b3a7640000"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "do": "read",
       "save": "govAfterBurn",
       "source": "balanceAt"
@@ -130,7 +115,7 @@
       "gas": "0xb71b0",
       "on": "node1",
       "save": "expHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -157,14 +142,14 @@
       "do": "read",
       "save": "proposalsRet",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "data": "$refBalCall",
       "do": "read",
       "save": "refAfter",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",
@@ -207,7 +192,7 @@
       "op": "diff"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$expBlk",

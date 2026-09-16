@@ -139,21 +139,26 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 type registerContractAction struct{}
 
 func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
-	to, _ := ac.Args["to"].(string)
-	if to == "" {
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
 		return fmt.Errorf("dsl: registerContract requires \"to\" (the deployed contract address)")
+	}
+	// The target is a contract by definition, so it may be named.
+	to, err := ResolveAddress(ac.Deps, toRef)
+	if err != nil {
+		return err
 	}
 	data, _ := ac.Args["data"].(string)
 	if data == "" {
 		return fmt.Errorf("dsl: registerContract requires \"data\" (the encoded call)")
 	}
-	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
-	if err != nil {
-		return err
+	c, cerr := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
+	if cerr != nil {
+		return cerr
 	}
-	from, err := funder(ctx, c, ac.Deps, ac.Args)
-	if err != nil {
-		return err
+	from, ferr := funder(ctx, c, ac.Deps, ac.Args)
+	if ferr != nil {
+		return ferr
 	}
 
 	args := rpc.SendTxArgs{From: from, To: to, Data: data}

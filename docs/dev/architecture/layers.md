@@ -222,7 +222,7 @@ flowchart TD
 | 무엇 | 실행 기록 · 판정 · 컴포지션 상태 | genesis · config.toml · datadir · 로그 |
 | 어디 | **항상 조작자의 로컬 머신** | 타깃(이 머신 또는 원격 SSH 호스트) |
 | 소유 | `core/session` | `core/filestore.FileSink` |
-| 예 | `session.json` · `env.json` · `workspace.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
+| 예 | `session.json` · `env.json` · `chain-record.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
 
 이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
 

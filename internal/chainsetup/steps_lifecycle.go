@@ -43,16 +43,6 @@ func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
 	return fallback
 }
 
-func (w *Workspace) binary(arg string) (string, error) {
-	if arg != "" {
-		return arg, nil
-	}
-	if w.state.Binary != "" {
-		return w.state.Binary, nil
-	}
-	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `chain new`)")
-}
-
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -292,14 +282,6 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
-// SwapNode stops node index and relaunches it with a different binary and/or
-// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
-// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
-// command are kept as a ledger revision (recordSwap); the node's per-node
-// binary and config provenance are updated so a later restart uses the swapped
-// ones. binary is a path (empty keeps the current one); config is a set of
-// key=value config overrides (empty keeps the current config); purpose names the
-// config fixture in provenance.
 // SwapNodeOpts is what one node is relaunched with. Every field is optional on
 // its own, but at least one must be set — a swap that changes nothing is a
 // restart, and saying so is clearer than doing it silently.
@@ -320,6 +302,12 @@ type SwapNodeOpts struct {
 	Purpose string
 }
 
+// SwapNode stops node index and relaunches it with a different binary and/or
+// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
+// command are kept as a ledger revision (recordSwap); the node's per-node
+// binary and config provenance are updated so a later restart uses the swapped
+// ones.
 func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
@@ -583,17 +571,6 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	return out, nil
 }
 
-// startPhase launches one phase's nodes, or every stopped node when the phase
-// names none. A node already running is left alone: `chain restart` bounces one,
-// and re-running `chain start` should not double-launch the rest.
-// checkVacant refuses to launch onto ports something is already listening on.
-//
-// Without it the collision is discovered by the node, which dies with "address
-// already in use" partway through a bring-up, and the operator has to work out
-// which of three situations they are in. This says which: a port held by a node
-// this workspace recorded is its own leftover and `chain stop` clears it; anything
-// else belongs to something this workspace did not start, and guessing would be
-// worse than refusing.
 // Preflight is the check-only entry: the same pre-launch inspection Start
 // runs, callable without composing anything. It answers "may a network of
 // this shape start here right now?" with the refusal Start would give — port
@@ -651,6 +628,14 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, na
 	return nil
 }
 
+// checkVacant refuses to launch onto ports something is already listening on.
+//
+// Without it the collision is discovered by the node, which dies with "address
+// already in use" partway through a bring-up, and the operator has to work out
+// which of three situations they are in. This says which: a port held by a node
+// this workspace recorded is its own leftover and `chain stop` clears it; anything
+// else belongs to something this workspace did not start, and guessing would be
+// worse than refusing.
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
 	var addrs []inspector.Addr
 	for _, ns := range w.state.Nodes {
@@ -815,6 +800,9 @@ type owner struct {
 	pid  int
 }
 
+// startPhase launches one phase's nodes, or every stopped node when the phase
+// names none. A node already running is left alone: `chain restart` bounces one,
+// and re-running `chain start` should not double-launch the rest.
 func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
@@ -987,8 +975,13 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 		if err != nil {
 			return err
 		}
+		// The binary is asked for separately because a name is not a path: a
+		// bare name is whatever the target's PATH resolves, and stating it
+		// would report a binary the launch will find as missing.
+		if err := checkBinary(ctx, t, bin); err != nil {
+			lines = append(lines, "  "+err.Error())
+		}
 		want := []inspector.Path{
-			{Path: bin, Purpose: "binary"},
 			{Path: w.state.GenesisPath, Purpose: "genesis"},
 			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
 			{Path: ns.ConfigPath, Node: ns.Index, Purpose: "config"},
@@ -1008,8 +1001,41 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	if len(lines) == 0 {
 		return nil
 	}
-	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
+	return fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
+}
+
+// checkBinary reports the binary as missing when the target cannot produce it,
+// whether it was named as a path or as a command.
+//
+// It is the one pre-launch check that cannot be a file lookup. A workspace-
+// config places the binary under the data root and the answer is a path; with
+// no workspace-config the name is the target's to resolve on PATH, and asking
+// the file store about it stats it against the working directory and answers
+// no for a binary the launch would have found.
+func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
+	if bin == "" {
+		return fmt.Errorf("binary: none is set")
+	}
+	if strings.ContainsRune(bin, '/') {
+		ok, err := t.Files.Exists(ctx, bin)
+		if err != nil {
+			return fmt.Errorf("binary %s: %v", bin, err)
+		}
+		if !ok {
+			return fmt.Errorf("binary %s: not on the target", bin)
+		}
+		return nil
+	}
+	path, ok, err := inspector.OnPath(ctx, t.Runner, bin)
+	if err != nil {
+		return fmt.Errorf("binary %s: %v", bin, err)
+	}
+	if !ok {
+		return fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin)
+	}
+	_ = path
+	return nil
 }
 
 // uniq drops repeated lines, keeping first occurrence order — the binary and

@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "blacklist-proposal-executes",
   "description": "RT-F-5-01 — GovCouncil blacklist proposal → execute → isBlacklisted == true (원본 regression/system-contracts/16-test-blacklist)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "blacklist-proposal-executes-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -36,7 +22,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -63,7 +49,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -90,10 +76,10 @@
       "data": "0xfe575a8700000000000000000000000000000000000000000000000000000000c0ffee06",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
-      "address": "0x0000000000000000000000000000000000001004",
+      "address": "govCouncil",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$apBlk",

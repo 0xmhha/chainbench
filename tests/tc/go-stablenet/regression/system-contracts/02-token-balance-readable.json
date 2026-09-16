@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "token-balance-readable",
   "description": "RT-F-1-02 — NativeCoinAdapter.balanceOf == eth_getBalance (원본 regression/system-contracts/02-test-balance-of)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "token-balance-readable-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -34,14 +19,14 @@
       "do": "read",
       "save": "bal",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "compare": "GreaterOrEqual",
       "data": "0x18160ddd",
       "expect": "call",
       "is": "$bal",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

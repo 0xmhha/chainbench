@@ -1,0 +1,38 @@
+# Secret-scanning configuration for chainbench.
+#
+# Every rule of the default set stays on. The allowlist below covers exactly the
+# two places README.md declares to be test fixtures, and nothing else:
+#
+#   > Treat a finding as real only if it is outside `keys/preset/` and outside
+#   > test code.
+#
+# The keys under keys/preset/ are committed on purpose so a local run is
+# reproducible. They are decryptable, every node binds to 127.0.0.1, and README
+# states they must never be used on any production, mainnet, testnet, staging or
+# shared network. The inline keys in test source are the upstream go-ethereum
+# test keys, already public in every geth fork.
+#
+# Two of the paths no longer exist in the tree. They are listed because the
+# history scan still reaches them: `network/` was an earlier binary and
+# `docs/superpowers/plans/` held planning notes that quoted test keys.
+#
+# Do NOT widen this list to silence a finding. A finding anywhere else is real.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "committed test fixtures under keys/preset (README CAUTION)"
+paths = ['''^keys/preset/''']
+
+[[allowlists]]
+description = "inline test keys in Go test source (upstream go-ethereum test keys)"
+paths = ['''_test\.go$''']
+
+[[allowlists]]
+description = "test suites and their fixtures"
+paths = ['''^tests/''']
+
+[[allowlists]]
+description = "retired paths reachable only through git history"
+paths = ['''^network/''', '''^docs/superpowers/plans/''']

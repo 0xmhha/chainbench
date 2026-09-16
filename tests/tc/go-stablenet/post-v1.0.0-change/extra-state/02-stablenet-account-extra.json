@@ -3,25 +3,11 @@
   "kind": "case",
   "id": "stablenet-account-extra",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "account-extra-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "alloc": {
@@ -60,7 +46,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000B00003",
+      "to": "accountManager",
       "data": "$authCall",
       "compare": "Equal",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -78,7 +64,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000B00003",
+      "to": "accountManager",
       "data": "$blCall",
       "compare": "Equal",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -96,7 +82,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000B00003",
+      "to": "accountManager",
       "data": "$dualAuth",
       "compare": "Equal",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -114,7 +100,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000B00003",
+      "to": "accountManager",
       "data": "$dualBl",
       "compare": "Equal",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001"

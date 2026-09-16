@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "v1-params-init-storage",
   "description": "TC-5-2-04: v1 시스템 컨트랙트의 Params 가 genesis 에서 초기화된다. GovValidator gasTip 슬롯(0x39)과 GovMinter quorum 슬롯(0x04)이 0이 아니어야 한다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter",
+    "contract:govValidator"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "v1-params-init-storage-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

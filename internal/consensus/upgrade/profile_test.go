@@ -10,7 +10,7 @@ import (
 )
 
 // goldenProfilePath resolves the repo's golden upgrade profile from this test's
-// package dir (pkg/consensus/upgrade -> repo root).
+// package dir (internal/consensus/upgrade -> repo root).
 func goldenProfilePath() string {
 	return filepath.Join("..", "..", "..", "profiles", "wemix-upgrade.yaml")
 }

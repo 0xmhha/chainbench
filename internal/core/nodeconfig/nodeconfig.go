@@ -29,8 +29,13 @@ var baseModules = []string{"admin", "eth", "debug", "miner", "net", "txpool", "p
 // Chain is what a node's configuration takes from the chain it runs: facts
 // from the manifest and the consensus family, none of them per node.
 type Chain struct {
-	// ID is the manifest id; it selects the flag dialect the binary speaks.
+	// ID is the manifest id.
 	ID string
+	// Dialect names the flag vocabulary the chain's binary accepts, as the
+	// manifest declares it. It used to be derived from ID by comparing against
+	// one chain's name, which answered wrongly for every other chain on that
+	// binary generation.
+	Dialect string
 	// RPCNamespace is the consensus namespace exposed over RPC ("istanbul",
 	// "wemix").
 	RPCNamespace string
@@ -39,9 +44,10 @@ type Chain struct {
 	MinerRecommit string
 	// NetworkID is the devp2p network id; 0 leaves it to the binary.
 	NetworkID int64
-	// FamilyFlags are the family's role-specific start flags, parsed into the
-	// policy the argv carries (mining, unlock policy, RPC policy).
-	FamilyFlags []string
+	// Launch is what the consensus asks of this node's launch. It carries facts
+	// rather than flags: which flag says "seal" is the dialect's question, and
+	// the family cannot answer it for a binary it does not know.
+	Launch registry.LaunchPolicy
 }
 
 // ChainOf reads a node's chain facts from its plugin for one role.
@@ -49,10 +55,11 @@ func ChainOf(plugin registry.ChainPlugin, role node.Role) Chain {
 	m := plugin.Manifest()
 	return Chain{
 		ID:            m.ID,
+		Dialect:       m.Dialect,
 		RPCNamespace:  m.Consensus.RPCNamespace,
 		MinerRecommit: m.MinerRecommit,
 		NetworkID:     m.NetworkID,
-		FamilyFlags:   plugin.Family().StartFlags(role),
+		Launch:        plugin.Family().LaunchPolicy(role),
 	}
 }
 
@@ -170,13 +177,12 @@ func TOML(s Spec) []byte {
 // A spec with a ConfigPath leaves the auth port to the file; one without
 // (a handoff relaunch that carries no config) says it on the command line.
 func Argv(s Spec, overrides ...Override) ([]string, error) {
-	policy, err := ParseFamilyFlags(s.Chain.FamilyFlags)
-	if err != nil {
-		return nil, err
-	}
 	id := Identity{
-		NodeKeyFile:         s.NodekeyPath,
-		AllowInsecureUnlock: policy.AllowInsecureUnlock,
+		NodeKeyFile: s.NodekeyPath,
+		// The harness unlocks a node account over HTTP, so every launch needs
+		// this. It travelled as a family flag, which said it was a consensus
+		// fact; both families set it unconditionally, which said it was not.
+		AllowInsecureUnlock: true,
 	}
 	if s.Unlock != "" {
 		id.Unlock = s.Unlock
@@ -198,8 +204,13 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 		modules = append(modules, AuthIPC{AuthPort: s.Ports.Auth})
 	}
 	modules = append(modules,
-		RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
-		Mining{Mine: policy.Mine},
+		// Both of these are asked for on every launch and the DIALECT decides
+		// whether the binary has them: the go-wemix generation has no
+		// --rpc.enabledeprecatedpersonal, and EnableIfSupported skips it there.
+		// They used to arrive as wbft-family flags, which made a consensus
+		// family the thing that decided what a binary accepts.
+		RPCPolicy{DeprecatedPersonal: true, UnprotectedTxs: true},
+		Mining{Mine: s.Chain.Launch.Mine},
 	)
 	// A node launched with a config file gets metrics from its [Metrics] block.
 	// One launched without — the handoff relaunch, which carries no config —
@@ -214,7 +225,11 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 			Port:    s.Ports.Metrics,
 		})
 	}
-	return New(DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
+	d, err := DialectFor(s.Chain.Dialect)
+	if err != nil {
+		return nil, err
+	}
+	return New(d, modules...).WithOverrides(overrides...).Build()
 }
 
 func quoteList(ss []string) string {

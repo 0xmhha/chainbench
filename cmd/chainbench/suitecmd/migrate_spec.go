@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newMigrateSpecCmd mechanically converts a v1 spec to the v2 grammar
+// NewMigrateSpec mechanically converts a v1 spec to the v2 grammar
 // (dsl-v2-proposal §3.6): chain/topology/... fold into an inline env, steps
 // become do statements, assertions become expect statements appended after
 // them (v1's fixed order), and pre/post actions become hooks.

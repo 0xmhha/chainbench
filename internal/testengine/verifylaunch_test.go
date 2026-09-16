@@ -1,0 +1,139 @@
+package testengine_test
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/testengine"
+)
+
+// recorded builds the record a composed network leaves behind.
+func recorded(nodes ...node.Record) chainsetup.State {
+	return chainsetup.State{Chain: "stablenet", KeysDir: "keys/preset", Nodes: nodes}
+}
+
+func bp(i int, args ...string) node.Record {
+	return node.Record{Index: i, Label: "node" + itoa(i), Role: string(node.RoleBP), Args: args}
+}
+
+func en(i int, args ...string) node.Record {
+	return node.Record{Index: i, Label: "node" + itoa(i), Role: string(node.RoleEN), Args: args}
+}
+
+func itoa(i int) string { return string(rune('0' + i)) }
+
+// planFor builds a plan asking for what recorded() would satisfy.
+func planFor() testengine.ComposePlan {
+	p := testengine.ComposePlan{Chain: "stablenet"}
+	p.Keys.Dir = "keys/preset"
+	p.Nodes.BP, p.Nodes.EN = 2, 1
+	return p
+}
+
+// TestVerifyLaunched_AcceptsTheNetworkItAskedFor.
+func TestVerifyLaunched_AcceptsTheNetworkItAskedFor(t *testing.T) {
+	got := testengine.VerifyLaunched(planFor(), recorded(bp(1), bp(2), en(3)))
+	if len(got) != 0 {
+		t.Fatalf("a matching network reported %v", got)
+	}
+}
+
+// TestVerifyLaunched_CatchesAChainThatIsNotTheOnePlanned is the coarsest
+// mismatch and the one a reader would never suspect: every step reports
+// success, and the tests answer about another chain.
+func TestVerifyLaunched_CatchesAChainThatIsNotTheOnePlanned(t *testing.T) {
+	st := recorded(bp(1), bp(2), en(3))
+	st.Chain = "wbft"
+	got := testengine.VerifyLaunched(planFor(), st)
+	if len(got) != 1 || !strings.Contains(got[0].String(), "wbft") {
+		t.Fatalf("mismatches = %v", got)
+	}
+}
+
+// TestVerifyLaunched_CatchesAShapeThatIsNotThePlanned.
+func TestVerifyLaunched_CatchesAShapeThatIsNotThePlanned(t *testing.T) {
+	got := testengine.VerifyLaunched(planFor(), recorded(bp(1), en(3)))
+	if len(got) != 1 {
+		t.Fatalf("one bp short must be one mismatch, got %v", got)
+	}
+	if !strings.Contains(got[0].String(), "2 bp") {
+		t.Errorf("the mismatch must say what it wanted: %s", got[0])
+	}
+}
+
+// TestVerifyLaunched_AutoSizedBPIsAFloor: a plan whose bp count fills from the
+// server set states a minimum, so a bigger table is what it asked for and a
+// smaller one is not.
+func TestVerifyLaunched_AutoSizedBPIsAFloor(t *testing.T) {
+	p := planFor()
+	p.Nodes.AutoSize = true
+	if got := testengine.VerifyLaunched(p, recorded(bp(1), bp(2), bp(4), en(3))); len(got) != 0 {
+		t.Errorf("more bp than the floor is not a mismatch: %v", got)
+	}
+	if got := testengine.VerifyLaunched(p, recorded(bp(1), en(3))); len(got) != 1 {
+		t.Errorf("fewer bp than the floor is: %v", got)
+	}
+}
+
+// TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv is why this exists.
+//
+// The command line has the last word, so a knob a declaration asked for can be
+// merged correctly and still not be on the node. Nothing else in this package
+// would notice: the plan says it was asked for and the run says every step
+// succeeded.
+func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
+	p := planFor()
+	p.Launch = map[string][]string{node.ScopeAll: {"nodiscover"}, "bp": {"mine"}}
+
+	full := recorded(
+		bp(1, "--nodiscover", "--mine"),
+		bp(2, "--nodiscover", "--mine"),
+		en(3, "--nodiscover"),
+	)
+	if got := testengine.VerifyLaunched(p, full); len(got) != 0 {
+		t.Fatalf("every knob is present: %v", got)
+	}
+
+	// node2 lost --mine, and the bp scope covers it.
+	missing := recorded(
+		bp(1, "--nodiscover", "--mine"),
+		bp(2, "--nodiscover"),
+		en(3, "--nodiscover"),
+	)
+	got := testengine.VerifyLaunched(p, missing)
+	if len(got) != 1 {
+		t.Fatalf("mismatches = %v", got)
+	}
+	if !strings.Contains(got[0].String(), "node2") || !strings.Contains(got[0].String(), "mine") {
+		t.Errorf("the mismatch must name the node and the knob: %s", got[0])
+	}
+}
+
+// TestVerifyLaunched_AKnobIsFoundByItsLastSegment: a declaration writes a knob
+// as a dot path and the binary takes a dotted flag; neither spelling is the
+// other, and the name they share is the last segment.
+func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
+	p := planFor()
+	p.Launch = map[string][]string{node.ScopeAll: {"chain.networkid=8283", "rpc.allow-unprotected-txs"}}
+
+	st := recorded(
+		bp(1, "--networkid", "8283", "--rpc.allow-unprotected-txs"),
+		bp(2, "--networkid", "8283", "--rpc.allow-unprotected-txs"),
+		en(3, "--networkid", "8283", "--rpc.allow-unprotected-txs"),
+	)
+	if got := testengine.VerifyLaunched(p, st); len(got) != 0 {
+		t.Fatalf("both spellings must match: %v", got)
+	}
+}
+
+// TestVerifyLaunched_SaysNothingAboutAHandoff: a handoff plans no layout, so
+// there is nothing here to hold it to.
+func TestVerifyLaunched_SaysNothingAboutAHandoff(t *testing.T) {
+	p := planFor()
+	p.Handoff = &testengine.PlanHandoff{Profile: "profiles/p.yaml"}
+	if got := testengine.VerifyLaunched(p, recorded()); len(got) != 0 {
+		t.Fatalf("a handoff reported %v", got)
+	}
+}

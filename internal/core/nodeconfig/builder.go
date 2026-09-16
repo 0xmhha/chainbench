@@ -16,7 +16,7 @@ type Override struct {
 
 // Builder assembles modules into a command line in a fixed order and then runs
 // the cross-module checks no single module can see. Module order is the
-// declaration order in docs/chain-binary-flag-graph.md §3.3 — deterministic
+// declaration order in docs/dev/archive/chain-binary-flag-graph.md §3.3 — deterministic
 // output is part of the contract.
 type Builder struct {
 	dialect   Dialect
@@ -50,7 +50,7 @@ func (b *Builder) Build() ([]string, error) {
 	for _, ov := range b.overrides {
 		layer := ov.Layer
 		if layer == "" {
-			layer = LayerCase
+			layer = LayerCommand
 		}
 		if b.dialect.IsBool(ov.Key) {
 			a.Enable(ov.Key, layer)
@@ -86,45 +86,6 @@ func (b *Builder) crossChecks(a *Args) []error {
 		errs = append(errs, fmt.Errorf("launchopt: metrics.port set but metrics not enabled"))
 	}
 	return errs
-}
-
-// FamilyPolicy is the consensus family's contribution translated to typed
-// knobs. It exists so families can keep exposing their launch posture as data
-// while argv assembly stays single-sited here.
-type FamilyPolicy struct {
-	AllowInsecureUnlock bool
-	DeprecatedPersonal  bool
-	UnprotectedTxs      bool
-	Mine                bool
-}
-
-// ParseFamilyFlags maps a family's legacy StartFlags vocabulary onto a
-// FamilyPolicy. The vocabulary is closed (families emit only these four); an
-// unknown flag is an error so a family extending its surface is forced to
-// extend the typed model instead of leaking a raw string through.
-//
-// Transitional: this shim exists so registry.ChainPlugin keeps its StartFlags
-// signature during the golden conversion. It goes away when families declare
-// a FamilyPolicy directly.
-func ParseFamilyFlags(flags []string) (FamilyPolicy, error) {
-	var p FamilyPolicy
-	for _, f := range flags {
-		switch f {
-		case "--allow-insecure-unlock":
-			p.AllowInsecureUnlock = true
-		case "--rpc.enabledeprecatedpersonal":
-			p.DeprecatedPersonal = true
-		case "--rpc.allow-unprotected-txs":
-			p.UnprotectedTxs = true
-		case "--mine":
-			p.Mine = true
-		default:
-			return FamilyPolicy{}, fmt.Errorf(
-				"launchopt: family flag %q is outside the typed vocabulary %s",
-				f, "[--allow-insecure-unlock --rpc.enabledeprecatedpersonal --rpc.allow-unprotected-txs --mine]")
-		}
-	}
-	return p, nil
 }
 
 // String renders an argv for logs and errors.

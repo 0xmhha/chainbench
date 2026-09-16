@@ -17,10 +17,10 @@ type BlueprintFromPresetIn struct {
 	// Chain names a registered chain, or Manifest an external one.
 	Chain    string
 	Manifest string
-	// Producers and Endpoints size the network; zero producers means every
-	// identity the set declares as a validator.
-	Producers int
-	Endpoints int
+	// BPCount and ENCount size the network; zero bp means every identity the
+	// set declares as a validator.
+	BPCount int
+	ENCount int
 	// Binary is the node executable to record, when the caller knows it.
 	Binary string
 	// Peering is the peer graph to record; empty leaves the default.
@@ -48,13 +48,13 @@ func BlueprintFromPreset(ctx context.Context, _ Deps, in BlueprintFromPresetIn) 
 	}
 	// Ensure rather than a bare load, so this reads a set the same way the
 	// composition does and reports the same problem if it cannot.
-	set, err := store.PresetKeys{Path: in.KeysDir}.Ensure(ctx, in.Producers+in.Endpoints)
+	set, err := store.PresetKeys{Path: in.KeysDir}.Ensure(ctx, in.BPCount+in.ENCount)
 	if err != nil {
 		return BlueprintFromPresetOut{}, err
 	}
 	bp, err := blueprint.FromPreset(set, blueprint.FromPresetIn{
 		Dir: in.KeysDir, Chain: in.Chain, Manifest: in.Manifest,
-		Producers: in.Producers, Endpoints: in.Endpoints,
+		BPCount: in.BPCount, ENCount: in.ENCount,
 		Binary: in.Binary, Peering: in.Peering,
 	})
 	if err != nil {

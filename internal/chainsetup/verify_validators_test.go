@@ -45,7 +45,7 @@ func wsForValidatorCheck(t *testing.T, srv *httptest.Server) (*Workspace, []stri
 	w.SetEnv(os.Getenv)
 	w.state.Chain = "stablenet"
 	w.state.KeysDir = presetDir
-	w.state.Validators = 4
+	w.state.BPCount = 4
 	w.state.Nodes = []node.Record{{Index: 1, Label: "node1", Host: u.Hostname(), Endpoints: node.Endpoints{HTTP: port}}}
 	w.state.Target = resource.Spec{DataRoot: t.TempDir()}
 
