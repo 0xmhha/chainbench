@@ -1,6 +1,8 @@
 package testengine_test
 
 import (
+	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -197,5 +199,61 @@ func TestVerifyLaunched_CatchesNodesOnAnotherMachine(t *testing.T) {
 	got := testengine.VerifyLaunched(p, st)
 	if len(got) != 1 || !strings.Contains(got[0].String(), "b.example") {
 		t.Fatalf("mismatches = %v", got)
+	}
+}
+
+// TestStopAfterFailedSetup covers the two directions of taking a network down
+// when setting it up failed.
+//
+// Setting up is not all-or-nothing: the nodes launch and then the readiness
+// gate refuses what came up. The run then reported the failure and left four
+// nodes holding their ports, so the next run could not compose at all. The
+// second case is the one that keeps the first honest — an operator who passed
+// --keep-up wants to look at exactly this network.
+func TestStopAfterFailedSetup(t *testing.T) {
+	setupErr := errors.New("network not ready to test")
+
+	for _, tc := range []struct {
+		name       string
+		keepUp     bool
+		hasNet     bool
+		wantStops  int
+		wantErrHas string
+	}{
+		{"a failed setup takes the network down", false, true, 1, "not ready"},
+		{"keep-up leaves it up to be looked at", true, true, 0, "not ready"},
+		{"nothing came up, nothing to take down", false, false, 0, "not ready"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stops := 0
+			net := testengine.ComposedForTest(nil)
+			if tc.hasNet {
+				net = testengine.ComposedForTest(func(context.Context) error {
+					stops++
+					return nil
+				})
+			}
+			err := testengine.StopAfterFailedSetupForTest(context.Background(), net, tc.keepUp, setupErr)
+			if stops != tc.wantStops {
+				t.Errorf("teardown ran %d time(s), want %d", stops, tc.wantStops)
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErrHas) {
+				t.Errorf("the setup error must survive: %v", err)
+			}
+		})
+	}
+}
+
+// TestStopAfterFailedSetup_SaysWhenItCouldNotStop: a network that will not go
+// down is worse news than the setup failure, and the operator has to be told
+// both — the one they were waiting for, and the one that will block their next
+// run.
+func TestStopAfterFailedSetup_SaysWhenItCouldNotStop(t *testing.T) {
+	net := testengine.ComposedForTest(func(context.Context) error {
+		return errors.New("node2 is still present after SIGKILL")
+	})
+	err := testengine.StopAfterFailedSetupForTest(context.Background(), net, false, errors.New("not ready"))
+	if err == nil || !strings.Contains(err.Error(), "not ready") || !strings.Contains(err.Error(), "SIGKILL") {
+		t.Fatalf("both failures must be named: %v", err)
 	}
 }

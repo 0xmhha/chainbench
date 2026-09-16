@@ -367,10 +367,10 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	} else {
 		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
 		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
-			return out, verr
+			return out, stopAfterFailedSetup(ctx, net, in.KeepUp, verr)
 		}
 		if err != nil {
-			return out, err
+			return out, stopAfterFailedSetup(ctx, net, in.KeepUp, err)
 		}
 	}
 	out.Endpoints = net.endpoints
@@ -425,6 +425,27 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		}
 	}
 	return out, runErr
+}
+
+// stopAfterFailedSetup takes down a network that came up before setup failed,
+// and returns the setup error either way.
+//
+// Setting a network up is not all-or-nothing: the nodes launch and then a
+// readiness gate, or the plan check, refuses what came up. Leaving those nodes
+// running holds the ports and the datadirs, so the next run cannot compose —
+// and nothing says so, because the run reported the setup failure and stopped
+// talking.
+//
+// --keep-up still keeps them. A failure is exactly when an operator wants to
+// look, and the flag says they will.
+func stopAfterFailedSetup(ctx context.Context, net composed, keepUp bool, setupErr error) error {
+	if keepUp || net.teardown == nil {
+		return setupErr
+	}
+	if err := net.teardown(ctx); err != nil {
+		return fmt.Errorf("%w (and the network could not be taken down: %v)", setupErr, err)
+	}
+	return setupErr
 }
 
 // attachWiring is the run-side wiring the compose path and the workspace-attach
@@ -614,10 +635,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	// The network is composed (or reused); gate it before any test runs on it —
 	// wait on nodes still coming up, restart dead ones within limits, terminate
 	// on a state that would need a destructive remedy (E6).
-	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget); err != nil {
-		return composed{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	return composed{
+	out := composed{
 		endpoints: endpoints,
 		caps:      caps,
 		teardown: func(ctx context.Context) error {
@@ -627,7 +645,16 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 		nodes:   nodes,
 		control: workspaceNodes{sd: sd, dataDir: dataDir},
 		keysDir: keysDir,
-	}, nil
+	}
+	// The gate can fail on a network that is already up — nodes launched, one
+	// of them not answering yet — so the way to take it down is returned WITH
+	// the error rather than dropped with it. Returning the zero value here left
+	// four nodes holding their ports after every readiness failure, and the
+	// next run on those ports could not compose at all.
+	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget); err != nil {
+		return out, fmt.Errorf("engine: run suite: %w", err)
+	}
+	return out, nil
 }
 
 // remoteLogReader returns an SSH-backed log reader for a remote target's node
