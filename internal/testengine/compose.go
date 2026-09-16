@@ -200,6 +200,18 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if err != nil {
 		return composition{}, err
 	}
+	// The count form has no node table to resolve names against, and the names
+	// were being dropped with it. A declaration that names binaries is not only
+	// talking about the nodes it composes: a case swaps one node onto a name
+	// mid-test, and a name nothing resolved reaches exec as a path. That is how
+	// "upgrade" became `exec: "upgrade": executable file not found`, with the
+	// declaration saying plainly that upgrade means gstable.
+	if inlineTopo == nil && len(spec.Chain.Binaries) > 0 {
+		resolvedBins = map[string]string{}
+		for name, path := range spec.Chain.Binaries {
+			resolvedBins[name] = expand(path)
+		}
+	}
 
 	binary := in.Binary
 	from[FieldBinary] = SourceCommand

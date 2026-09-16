@@ -85,6 +85,24 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			}
 			spec := process.SpecOf(ns)
 			spec.Binary = w.binaryFor(ns, bin)
+			// Clear the datadir first, so "init" means what it says.
+			//
+			// The binary refuses to init over a chain database that holds a
+			// different genesis ("mismatching Boho fork block in database"),
+			// which is exactly the case a rebuild is for: preflight says
+			// "rebuild-all: genesis differs", the network is stopped, a new
+			// genesis is written — and then init hands the old database to the
+			// binary and the whole composition dies. Measured: 12 of 161 cases
+			// declared a genesis overlay and none of them could run.
+			//
+			// Nothing else lives here. The genesis and the configs are shared
+			// files at the workspace root, the identities are passed by path
+			// from the key set (--nodekey), and a node that is still running is
+			// skipped above — so what is removed is the chain this node built,
+			// which is what a rebuild discards.
+			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
+				return fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err)
+			}
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
@@ -395,9 +413,20 @@ func (w *Workspace) reinitNodeGenesis(ctx context.Context, t *resource.Access, s
 
 // setNodeBinary registers binary under a per-node key and points node ni at it,
 // so binaryFor resolves the swapped binary for this and any later launch.
+//
+// binary may be a path or a name the declaration gave one ("upgrade",
+// "mismatch"), because that is what a case writes: it says which of the
+// binaries the env declared a node should swap onto, not where that binary
+// lives. A name is resolved here, once, so everything downstream holds a path.
+// Storing the name instead handed it to exec, and a case that swapped onto
+// "upgrade" died with `exec: "upgrade": executable file not found in $PATH`
+// while the declaration said plainly what upgrade meant.
 func (w *Workspace) setNodeBinary(ni int, binary string) {
 	if w.state.Binaries == nil {
 		w.state.Binaries = map[string]string{}
+	}
+	if path := w.state.Binaries[binary]; path != "" {
+		binary = path
 	}
 	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
