@@ -22,6 +22,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -195,26 +197,70 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
+//
+// Every node is attempted. A node whose machine cannot be resolved used to end
+// the whole loop, so one unreachable server left every node after it running —
+// and the caller was told "stop failed", which reads as "nothing stopped" when
+// the truth was "some stopped, and I do not know which". Now each node's
+// failure is collected and the rest are still stopped; the error names them all.
+//
+// The nodes are stopped concurrently because stopping one is mostly waiting:
+// the driver sends SIGTERM and gives the process up to process.StopGrace to
+// close its database. Done in sequence, five nodes take five grace periods —
+// measured at 15s each, so a network that will not go down quietly held the
+// next run's ports for over a minute. Done together they take one.
 func (w *Workspace) Stop(ctx context.Context) (string, error) {
-	stopped := 0
-	var errs []string
+	type outcome struct {
+		i   int
+		err error
+	}
+	var (
+		mu       sync.Mutex
+		results  []outcome
+		wg       sync.WaitGroup
+		attempts int
+	)
 	for i, ns := range w.state.Nodes {
 		if ns.PID <= 0 {
 			continue
 		}
+		attempts++
+		// Resolving the machine touches the workspace's memoized map, so it is
+		// done here, one at a time, and only the wait runs concurrently.
 		t, err := w.machineFor(ns)
 		if err != nil {
-			return "", err
-		}
-		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
-			errs = append(errs, fmt.Sprintf("node%d: %v", ns.Index, err))
+			mu.Lock()
+			results = append(results, outcome{i: i, err: fmt.Errorf("resolve machine: %w", err)})
+			mu.Unlock()
 			continue
 		}
-		w.clearPID(i)
+		wg.Add(1)
+		go func(i int, ns node.Record, t *resource.Access) {
+			defer wg.Done()
+			err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID})
+			mu.Lock()
+			results = append(results, outcome{i: i, err: err})
+			mu.Unlock()
+		}(i, ns, t)
+	}
+	wg.Wait()
+
+	// Sorted so the same failure reads the same way twice: goroutines finish in
+	// whatever order the processes happen to die.
+	sort.Slice(results, func(a, b int) bool { return results[a].i < results[b].i })
+	stopped := 0
+	var errs []string
+	for _, r := range results {
+		if r.err != nil {
+			errs = append(errs, fmt.Sprintf("node%d: %v", w.state.Nodes[r.i].Index, r.err))
+			continue
+		}
+		w.clearPID(r.i)
 		stopped++
 	}
 	if len(errs) > 0 {
-		return "", fmt.Errorf("chainsetup: stop: %s", strings.Join(errs, "; "))
+		return "", fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
+			stopped, attempts, strings.Join(errs, "; "))
 	}
 	detail := fmt.Sprintf("%d node(s) stopped", stopped)
 	w.markStep("stop", detail)

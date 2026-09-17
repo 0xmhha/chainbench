@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
@@ -17,7 +18,12 @@ import (
 
 // stubDriver stands in for node processes: it records what it was asked to do
 // and never touches the OS.
+//
+// The mutex is not ceremony: Stop is called on every node at once, because
+// stopping one is mostly waiting for it to close its database and doing that in
+// sequence costs a grace period per node.
 type stubDriver struct {
+	mu       sync.Mutex
 	stopped  []int
 	launched []int
 	stopErr  error
@@ -34,6 +40,8 @@ func (s *stubDriver) Stop(_ context.Context, h process.Handle) error {
 	if s.stopErr != nil {
 		return s.stopErr
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.stopped = append(s.stopped, h.Index)
 	return nil
 }
@@ -278,5 +286,38 @@ func TestNetworkRemove_ComposedButNeverStartedIsRemovable(t *testing.T) {
 	}
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
 		t.Errorf("workspace still present: %v", err)
+	}
+}
+
+// TestNetworkStop_OneUnreachableNodeDoesNotStrandTheRest.
+//
+// Stop used to return the moment a node's machine would not resolve, so every
+// node after it was left running — and the caller was told "stop failed", which
+// reads as "nothing stopped" when the truth was "some stopped, and I do not know
+// which". A network that will not go down holds the ports, and the next run
+// cannot compose; that is how whole groups of cases were blocked twice in a day.
+func TestNetworkStop_OneUnreachableNodeDoesNotStrandTheRest(t *testing.T) {
+	dir := t.TempDir()
+	// node2 names a server the workspace has no entry for, so resolving its
+	// machine fails for it and only for it.
+	n1, n2, n3 := record(dir, 1, 8600, 1001), record(dir, 2, 8610, 1002), record(dir, 3, 8620, 1003)
+	n2.Server = "no-such-server"
+	seedWorkspace(t, dir, "stablenet", "/opt/gstable", []node.Record{n1, n2, n3})
+	d := &stubDriver{}
+	deps := chainsetup.Deps{Driver: func() (process.Driver, error) { return d, nil }}
+
+	_, err := chainsetup.NetStop(context.Background(), deps, chainsetup.NetStopIn{DataDir: dir})
+	if err == nil {
+		t.Fatal("a node that could not be stopped must be reported")
+	}
+	if !strings.Contains(err.Error(), "node2") {
+		t.Errorf("the error must name the node it could not stop: %v", err)
+	}
+	// The message has to say how much got done, not just that something failed.
+	if !strings.Contains(err.Error(), "2 of 3") {
+		t.Errorf("the error must say how many stopped: %v", err)
+	}
+	if len(d.stopped) != 2 {
+		t.Errorf("the reachable nodes were stranded: driver stopped %v", d.stopped)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"sync"
 )
 
 // reuse-if-matching's whole promise is that a node whose inputs did not move
@@ -23,6 +24,7 @@ import (
 
 // recordingDriver notes every Stop it is asked for.
 type recordingDriver struct {
+	mu      sync.Mutex
 	stopped []int
 }
 
@@ -31,6 +33,8 @@ func (d *recordingDriver) Launch(context.Context, process.NodeSpec) (process.Han
 	return process.Handle{}, nil
 }
 func (d *recordingDriver) Stop(_ context.Context, h process.Handle) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	d.stopped = append(d.stopped, h.PID)
 	return nil
 }
