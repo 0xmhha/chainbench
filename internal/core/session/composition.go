@@ -37,12 +37,45 @@ const legacyRecordFile = "workspace.json"
 // compositionDirPerm is the permission for a created composition directory.
 const compositionDirPerm os.FileMode = 0o755
 
-// Step records that one composition step ran, with a human-readable detail
-// and the (injected) timestamp it completed.
+// StepState is how a composition step ended.
+//
+// It is a string in the record because a record is read by people, and a
+// number there would need this file open beside it to mean anything. It is not
+// StepResult, which is the outcome of one TEST step (a tx hash, a receipt); the
+// two words sit in the same package and mean different things.
+type StepState string
+
+const (
+	// StepRunning is written when a step begins. A record whose last step is
+	// still running is a run that died inside it — which is the one thing the
+	// record could not say before, because a step was only ever written after
+	// it succeeded.
+	StepRunning StepState = "running"
+	// StepDone is a step that finished its work.
+	StepDone StepState = "done"
+	// StepFailed is a step that was reached and did not finish. Err says why.
+	StepFailed StepState = "failed"
+	// StepReused is a step that had nothing to do because what it would have
+	// produced was already there. It is not StepDone: a reader asking "did this
+	// run build the genesis?" has to be able to tell "yes" from "it was already
+	// built", and an absent step from a step that was skipped on purpose.
+	StepReused StepState = "reused"
+)
+
+// Step records one composition step: that it was reached, how it ended, and
+// when. Detail is the line an operator reads.
+//
+// Done is kept because records written before Result existed have it, and a
+// reader of those records still has to work. New writes set both.
 type Step struct {
-	Done   bool   `json:"done"`
-	Detail string `json:"detail,omitempty"`
-	At     string `json:"at,omitempty"`
+	Done   bool      `json:"done"`
+	Result StepState `json:"result,omitempty"`
+	Detail string    `json:"detail,omitempty"`
+	Err    string    `json:"err,omitempty"`
+	// StartedAt and At are RFC3339 UTC. A step that is still running has the
+	// first and not the second.
+	StartedAt string `json:"startedAt,omitempty"`
+	At        string `json:"at,omitempty"`
 }
 
 // Composition is the persistence boundary of one long-lived environment: it owns
@@ -111,7 +144,29 @@ func (c Composition) Save(state any) error {
 
 // StepMark stamps a completed step with the composition's clock.
 func (c Composition) StepMark(detail string) Step {
-	return Step{Done: true, Detail: detail, At: c.now().UTC().Format(time.RFC3339)}
+	now := c.now().UTC().Format(time.RFC3339)
+	return Step{Done: true, Result: StepDone, Detail: detail, StartedAt: now, At: now}
+}
+
+// StepBegin marks a step as reached but not finished. The caller overwrites it
+// with StepEnd; a record left holding this is a run that died inside the step.
+func (c Composition) StepBegin() Step {
+	return Step{Result: StepRunning, StartedAt: c.now().UTC().Format(time.RFC3339)}
+}
+
+// StepEnd closes a step begun with StepBegin, keeping its start time.
+func (c Composition) StepEnd(begun Step, detail string, err error) Step {
+	out := begun
+	out.Detail = detail
+	out.At = c.now().UTC().Format(time.RFC3339)
+	if err != nil {
+		out.Result = StepFailed
+		out.Err = err.Error()
+		return out
+	}
+	out.Done = true
+	out.Result = StepDone
+	return out
 }
 
 // ChainRecordPath is where a composition's chain record lives under dir.

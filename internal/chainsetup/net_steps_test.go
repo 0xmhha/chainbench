@@ -88,10 +88,19 @@ func TestNetStepPipeline(t *testing.T) {
 		t.Fatalf("persisted node table incomplete: %+v", st.State.Nodes)
 	}
 
-	// Lifecycle prerequisites fail with actionable messages (no binary set).
+	// Lifecycle prerequisites fail with actionable messages. Start now refuses
+	// before it looks at the binary, because init has not run: launching a node
+	// over a datadir no genesis ever reached is the worse of the two, and the
+	// order the message arrives in is the order the operator has to fix them.
 	if _, err := chainsetup.NetStart(ctx, d, chainsetup.NetStartIn{DataDir: dir}); err == nil ||
-		!strings.Contains(err.Error(), "binary") {
-		t.Fatalf("start without a binary must name the missing binary, got %v", err)
+		!strings.Contains(err.Error(), "init has not run") {
+		t.Fatalf("start before init must say so, got %v", err)
+	}
+	// init is reached (its own prerequisite, deploy, has run) and fails on the
+	// binary itself, which is what the operator has to supply.
+	if _, err := chainsetup.NetInit(ctx, d, chainsetup.NetInitIn{DataDir: dir}); err == nil ||
+		!strings.Contains(err.Error(), "gstable") {
+		t.Fatalf("init must fail naming the binary it could not run, got %v", err)
 	}
 	if _, err := chainsetup.NetRestart(ctx, d, chainsetup.NetRestartIn{DataDir: dir, Node: 9}); err == nil {
 		t.Fatal("restart of an unknown node must fail")

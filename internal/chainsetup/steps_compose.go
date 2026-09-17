@@ -1368,6 +1368,12 @@ var composeNeeds = map[string][]string{
 	"config":  {"place", "keys"},
 	"build":   {"place", "keys"},
 	"deploy":  {"place", "genesis", "config"},
+	// init and start were in the order and not in this table, so the rule that
+	// a datadir is initialized before a node launches lived only in the order
+	// upSteps happens to iterate. Running the steps by hand, or resuming from
+	// one, could launch a node over a datadir no genesis had ever reached.
+	"init":  {"deploy"},
+	"start": {"init"},
 }
 
 // require reports whether every step that has to resolve before step has run,

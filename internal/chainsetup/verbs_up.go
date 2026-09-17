@@ -116,6 +116,20 @@ type NetUpOut struct {
 	Nodes NetworkStatusOut
 }
 
+// markStepFailed writes a failed step into the composition record.
+//
+// Best effort on purpose, and silent when it cannot write: this runs while a
+// composition is already failing, and a second error about the bookkeeping
+// would bury the first one — which is the error the operator came for.
+func markStepFailed(d Deps, dataDir, name string, cause error) {
+	ws, err := Open(dataDir, d.Clock)
+	if err != nil {
+		return
+	}
+	ws.MarkStepFailed(name, cause)
+	_ = ws.Save()
+}
+
 // upStepNames is the composition order — the one list resume and up share.
 var upStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
 
@@ -290,10 +304,18 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	var out NetUpOut
 	// record runs one step and appends its detail, stopping the whole run on the
 	// first failure so a later step never composes on top of a broken one.
+	//
+	// A failure is written into the record before it is returned. The step verbs
+	// mark themselves only on success, which meant a composition that died left
+	// the record saying nothing at all about the step it died in: the reader saw
+	// the last step that WORKED and had to guess what came next. Now the record
+	// names the step, the time, and the error.
 	record := func(name string, fn func() (string, error)) error {
 		detail, err := fn()
 		if err != nil {
-			return fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
+			werr := fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
+			markStepFailed(d, in.DataDir, name, werr)
+			return werr
 		}
 		out.Steps = append(out.Steps, name+": "+detail)
 		return nil

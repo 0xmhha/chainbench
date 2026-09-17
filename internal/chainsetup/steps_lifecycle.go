@@ -46,6 +46,9 @@ func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
+	if err := w.require("init"); err != nil {
+		return "", err
+	}
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("chainsetup: init: no node table — run `chain place` first")
 	}
@@ -126,6 +129,9 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 // it ran; otherwise it is assembled here through the same single site
 // (nodeconfig.Argv) with no overrides.
 func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
+	if err := w.require("start"); err != nil {
+		return "", err
+	}
 	p, err := w.plugin()
 	if err != nil {
 		return "", err

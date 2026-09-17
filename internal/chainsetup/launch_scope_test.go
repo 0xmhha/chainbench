@@ -1,8 +1,12 @@
 package chainsetup
 
 import (
+	"errors"
+	"github.com/0xmhha/chainbench/internal/core/session"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestLaunchOverridesFor_MergesScopesMostGeneralFirst locks the per-node scope
@@ -110,5 +114,53 @@ func TestRecordLaunchSet_HoldsOneEntryPerKey(t *testing.T) {
 	got = w.state.LaunchSet["bp"]
 	if len(got) != 2 || got[0] != "mine=false" || got[1] != "nodiscover" {
 		t.Fatalf("after replacing mine: %v", got)
+	}
+}
+
+// TestMarkStepFailed_TheRecordSaysWhereItDied.
+//
+// A step verb marks itself only after it succeeds, so a composition that died
+// left the record showing the last step that WORKED and nothing about the one
+// that did not. The reader had to know the order by heart to guess what came
+// next. Measured before this: a run whose init could not exec the binary wrote
+// seven "done" steps and no trace of init.
+func TestMarkStepFailed_TheRecordSaysWhereItDied(t *testing.T) {
+	comp, err := session.OpenComposition(t.TempDir(), func() time.Time { return time.Unix(0, 0).UTC() })
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := &Workspace{state: State{Steps: map[string]Step{}}, comp: comp}
+
+	w.MarkStepFailed("init", errors.New(`driver: "gstable": executable file not found`))
+
+	got, ok := w.state.Steps["init"]
+	if !ok {
+		t.Fatal("the failed step is not in the record")
+	}
+	if got.Result != session.StepFailed {
+		t.Errorf("result = %q, want %q", got.Result, session.StepFailed)
+	}
+	if got.Done {
+		t.Error("a failed step must not read as done")
+	}
+	if !strings.Contains(got.Err, "executable file not found") {
+		t.Errorf("the record must carry why: %q", got.Err)
+	}
+}
+
+// TestComposeNeeds_InitBeforeStart: the rule that a datadir is initialized
+// before a node launches used to live only in the order upSteps iterates, so
+// running the steps by hand (or resuming from one) could launch a node over a
+// datadir no genesis had reached.
+func TestComposeNeeds_InitBeforeStart(t *testing.T) {
+	for step, want := range map[string]string{"init": "deploy", "start": "init"} {
+		needs := composeNeeds[step]
+		if len(needs) == 0 {
+			t.Errorf("%s declares no prerequisite", step)
+			continue
+		}
+		if !slices.Contains(needs, want) {
+			t.Errorf("%s needs %v, want it to include %q", step, needs, want)
+		}
 	}
 }

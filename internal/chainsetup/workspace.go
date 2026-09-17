@@ -504,6 +504,18 @@ func (w *Workspace) markStep(step, detail string) {
 	w.state.Steps[step] = w.comp.StepMark(detail)
 }
 
+// MarkStepFailed records that step was reached and did not finish.
+//
+// It is exported because the failure is noticed by the runner that drives the
+// steps, not by the step itself: a step that fails returns an error and never
+// reaches its own markStep call.
+func (w *Workspace) MarkStepFailed(step string, cause error) {
+	if w.state.Steps == nil {
+		w.state.Steps = map[string]Step{}
+	}
+	w.state.Steps[step] = w.comp.StepEnd(w.comp.StepBegin(), "", cause)
+}
+
 // Save writes the composition state to the manifest.
 func (w *Workspace) Save() error {
 	if w.ledger != nil {
