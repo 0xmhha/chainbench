@@ -1300,9 +1300,39 @@ genesis(1번), 타깃·배치 해석(3번).
 
 #### 순서 (착수 전)
 
-1. **핸드오프가 자기 `phases()` 가 이미 받은 `Actions` 를 쓰게 한다.** 흡수와
-   무관하게 가장 싼 이득이고, `DeployGovernance`/`EtcdInit`/`VerifyEtcd` 손 호출이
-   사라진다. **라이브 핸드오프 실행으로 확인해야 한다** — 부트업을 건드린다.
+1. **완료 (2026-09-17).** 조사해 보니 적어 둔 것보다 넓었다. 오케스트레이션이
+   **둘**이었고 **둘 다** 가족의 선언을 안 따랐다.
+
+   - `Handoff.Run` 은 첫 단계만 쓰고 나머지 단계를 **전부 하나로 뭉개** launch 했다.
+   - DSL 경로(`handoffUp`)는 **다섯 노드를 한꺼번에 띄우고** 그 다음 governance 를
+     배포했다 — `Run` 의 주석이 경고하는 바로 그 순서다(poa 클러스터는 생산자가
+     혼자일 때만 형성된다).
+   - 둘 다 deploy-governance·etcd-init·verify-etcd 를 **손으로** 불렀고,
+     **`etcd-join` 은 아무도 안 돌렸다.**
+
+   생산자가 1이면 셋 다 안 드러난다. 프로필이 1이다.
+
+   `Handoff.BringUp` 이 선언된 단계를 걸으며 각 단계의 노드를 띄우고 그 단계가
+   선언한 액션을 **가족 자신의 실행기**(보통 경로가 쓰는 그것)로 돌린다. 두 표면이
+   그것을 부른다.
+
+   두 번째 사본을 살려 두던 차이가 셋이었는데 둘은 이미 표현 가능했고(부트
+   keystore, 그리고 양쪽이 genesis 옆에 같은 이름으로 두는 거버넌스 config),
+   셋째만 없었다 — **비밀번호 경로**. 핸드오프는 그것을 키가 아니라 망 데이터 옆에
+   쓴다. `poa.Bootstrap.Password` 로 받는다.
+
+   **라이브 검증.** 바꾸기 전 기준선을 잡고 두 표면 다 돌렸다. 결과 동일 —
+   거버넌스 배포, 클러스터 형성, 블록 21-30 을 후계 검증자 4/4 가 전부 봉인.
+   순서만 바뀌었다.
+
+   ```
+   launch:boot: 1 node(s)        ← 전: launch: 5 node(s)
+   deploy-governance: on node1
+   etcd-init: on node1
+   verify-etcd: on node1
+   launch:endpoints: 4 node(s)
+   mesh: 5 endpoint(s) meshed
+   ```
 2. **#2** `Layout.NodekeyPath(label, binary)`. `IPCPath` 와 같은 무늬, 독립적.
 3. **#4** 거버넌스 정책의 DSL 문법.
 4. **#3** 유도값과 프로필 값을 실제로 대조한다. 같으면 프로필의 validator 블록은
@@ -1310,8 +1340,14 @@ genesis(1번), 타깃·배치 해석(3번).
 5. **#1** PlanOrder. `topology.nodes[].key` 로 표현되는지 먼저 본다.
 6. 1~5 뒤에 흡수를 시도한다.
 
-**확인하지 않은 것.** 핸드오프를 보통 경로로 아직 돌려 보지 않았다. 위 판정은
-전부 코드를 읽어 내린 것이고, 라이브 대조는 1번에서 처음 필요해진다.
+**라이브 전제 (2026-09-17 실측).** 핸드오프는 세 가지가 있어야 돈다 —
+`GWEMIX_BIN`, `GWBFT_BIN`, 그리고 **`GOWEMIX_TEMPLATE`**(go-wemix 자신의
+`wemix/scripts/genesis-template.json`). 셋째가 없으면 "a profile and a go-wemix
+genesis template are required" 로 준비 단계에서 멈춘다.
+
+**여전히 확인하지 않은 것.** 생산자가 **둘 이상인** 핸드오프는 안 돌려 봤다.
+`etcd-join` 과 단계별 순차 기동은 이번에 비로소 돌 수 있게 됐지만, 실제로 도는
+것은 못 봤다. 프로필이 생산자 1을 쓰기 때문이다.
 
 ### 11.2.4 결과물이 쌓이는 자리 — 완료 (2026-09-17)
 
