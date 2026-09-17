@@ -71,3 +71,86 @@ func TestSaveFailureData_NothingGatheredWritesNothing(t *testing.T) {
 		t.Errorf("an empty gather created %s", failureDir)
 	}
 }
+
+// TestArtifactRoot_LayersLikeEverythingElse.
+//
+// The workspace-config layer was written and never read: the file requires
+// control.artifactRoot and nothing called the resolver, so an operator was told
+// to name a path that was then ignored. The layers are the ones this track uses
+// everywhere — harness default, then declaration, then invocation.
+func TestArtifactRoot_LayersLikeEverythingElse(t *testing.T) {
+	dir := t.TempDir()
+	configured := filepath.Join(dir, "from-config")
+	cfg := filepath.Join(dir, "workspace-config.yaml")
+	writeConfig(t, cfg, configured)
+
+	t.Run("no config, no flag: beside the workspace", func(t *testing.T) {
+		got, err := artifactRoot("", "", "/ws")
+		if err != nil || got != filepath.Join("/ws", "sessions") {
+			t.Fatalf("artifactRoot = %q, %v", got, err)
+		}
+	})
+	t.Run("the config is read", func(t *testing.T) {
+		got, err := artifactRoot("", cfg, "/ws")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != configured {
+			t.Fatalf("artifactRoot = %q, want the configured %q", got, configured)
+		}
+		// It is created, because a run that cannot write there has to fail here
+		// and not halfway through its first test.
+		if _, err := os.Stat(configured); err != nil {
+			t.Errorf("the configured root was not created: %v", err)
+		}
+	})
+	t.Run("the invocation wins", func(t *testing.T) {
+		got, err := artifactRoot("/explicit", cfg, "/ws")
+		if err != nil || got != "/explicit" {
+			t.Fatalf("artifactRoot = %q, %v", got, err)
+		}
+	})
+}
+
+// TestArtifactRoot_AnUnusableConfiguredRootIsAnError: falling back would put the
+// results somewhere the operator did not ask for and say nothing, and they would
+// go looking in the path they wrote.
+func TestArtifactRoot_AnUnusableConfiguredRootIsAnError(t *testing.T) {
+	dir := t.TempDir()
+	blocker := filepath.Join(dir, "not-a-dir")
+	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := filepath.Join(dir, "workspace-config.yaml")
+	writeConfig(t, cfg, filepath.Join(blocker, "under-a-file"))
+
+	if _, err := artifactRoot("", cfg, "/ws"); err == nil {
+		t.Fatal("a configured root that cannot be created must fail, not fall back")
+	}
+}
+
+// writeConfig writes the smallest workspace-config that parses, with the
+// artifact root under test.
+func writeConfig(t *testing.T, path, artifactRoot string) {
+	t.Helper()
+	body := `version: 1
+dataRoot: /data
+paths:
+  binaries: bin
+  configs: configs
+  genesis: genesis
+  keystore: keystore
+  keyrings: keys
+  nodes: node
+  runtime: runtime
+  logs: logs
+inputs:
+  mode: generated
+execution:
+  chain: fresh
+control:
+  artifactRoot: ` + artifactRoot + "\n"
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}

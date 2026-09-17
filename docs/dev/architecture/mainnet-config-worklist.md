@@ -1004,6 +1004,7 @@ H1 · H3 · H4(1단계) · X1~X3 · X4 · X6~X8 · X10 · X12 · X13 · X15, 그
 | **W1** 구성 식별자가 위치에서 파생 | **이미 해소돼 있다. 워크리스트 설명이 낡았다.** `compositionID(dir)` 는 `new` 때 **한 번** 값을 정하는 씨앗이고, 그 뒤로는 기록이 소유자다(`new.go:95` — 비어 있을 때만 채운다). **실측: 워크스페이스를 옮겨도 `301ac9bbddbc` 그대로였다** | 없음 (항목 종료) |
 | **W2** 기록 저장이 원자적이지 않다 | **고칠 자리가 한 줄이다.** `Composition.Save` 가 `os.WriteFile` 을 직접 부르는데(`composition.go:139`), **같은 패키지에 `WriteFileAtomic` 이 이미 있다**(`write.go:17`, 임시 파일 + rename). 다른 기록들은 그것을 쓴다 | 한 줄 교체 |
 | **W3** 기록된 PID 는 생존 증거가 아니다 | **도구가 이미 있다.** `PIDAlive` 가 로컬·원격 양쪽에 구현돼 있다(`inspect.go:62,114`). `NetworkStatus` 가 안 부를 뿐이고, 서명이 `_ context.Context` 로 컨텍스트를 버리는 것이 그 증거다 — 확인할 생각이 없는 서명이다 | status 가 `PIDAlive` 를 묻게 한다 |
+| **W4b** 계획이 설정의 바이너리 경로를 모른다 | **W4 확인 중 발견.** workspace-config 가 바이너리를 데이터 루트 아래에서 찾는데(`<dataRoot>/bin/gstable`), 계획은 매니페스트의 이름(`gstable`)을 적는다. M4-c 대조가 `asked for binary gstable, launched with /tmp/.../bin/gstable` 로 **실제 불일치를 잡았다** — 검사는 옳고, 계획이 설정 층을 안 읽는다 | 계획이 workspace-config 의 바이너리 해석을 거치게 한다 |
 | **W4** 결과 경로 기본값이 갈린다 | **셋이 다른 것보다 나쁘다.** `WorkspaceConfig.ArtifactRoot()` 가 있고 설정 파일이 그 값을 **필수로 요구**하는데(빈 값이면 거부), **그 함수를 부르는 코드가 저장소에 없다.** 사용자에게 적으라고 해 놓고 쓰지 않는다. 실제로 쓰이는 것은 CLI 기본값(`~/.chainbench/sessions`)과 엔진 기본값(`<워크스페이스>/sessions`) 둘뿐이다 | 설정값을 읽거나, 필수에서 빼거나 — **둘 중 하나는 해야 한다** |
 | **W7** prepared 경로 엣지 케이스 | **이름부터 이미 정리돼 있다.** `ExistingInputs` 이고 주석이 이유를 적는다 — "chainbench 가 확인할 수 있는 사실은 파일이 거기 있다는 것과 자기가 만들지 않았다는 것뿐이다. 누가 언제 준비했는지는 모른다." 모드도 `InputExisting` 이며 **없으면 오류이지 조용한 생성 대체가 아니다.** 존재 검사는 파싱 시점에 한다 | 남은 엣지(오래됨·공유)는 W6 결론 뒤 |
 

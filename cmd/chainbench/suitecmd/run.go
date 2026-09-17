@@ -141,7 +141,8 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
-		"session artifact base directory (compose default: the workspace's sessions directory)")
+		"session artifact base directory; overrides workspace-config's control.artifactRoot "+
+			"(compose default: the workspace's sessions directory)")
 	cmd.Flags().IntVar(&bpCount, "bp", 4, "compose: bp node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")

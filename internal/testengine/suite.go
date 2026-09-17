@@ -349,10 +349,11 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if err := WritePlan(in.DataDir, plan); err != nil {
 		out.SetupSteps = append(out.SetupSteps, "plan: "+err.Error())
 	}
-	if in.ArtifactRoot == "" {
-		// The session belongs with the workspace it tested.
-		in.ArtifactRoot = filepath.Join(in.DataDir, "sessions")
+	root, rerr := artifactRoot(in.ArtifactRoot, in.WorkspaceConfigPath, in.DataDir)
+	if rerr != nil {
+		return out, rerr
 	}
+	in.ArtifactRoot = root
 	chain := parsed[0].Chain.Name
 
 	var net composed
@@ -458,6 +459,44 @@ func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, n
 		return fmt.Errorf("%w (and the network could not be taken down: %v)", setupErr, err)
 	}
 	return setupErr
+}
+
+// artifactRoot decides where the session lands, in the layers this track uses
+// everywhere else: the harness default, then what a declaration said, then what
+// the invocation said.
+//
+// The workspace-config layer was written and never read. The file requires
+// control.artifactRoot — an empty one is refused — and nothing called the
+// resolver, so an operator was told to name a path that was then ignored. That
+// is the failure this track keeps removing: a declaration that does not reach
+// the run.
+//
+// A configured root that cannot be created is an error rather than a fall back
+// to the default. Falling back would put the results somewhere the operator did
+// not ask for and say nothing, and they would go looking in the path they wrote.
+func artifactRoot(explicit, configPath, dataDir string) (string, error) {
+	// The command names no layer and wins over every document.
+	if explicit != "" {
+		return explicit, nil
+	}
+	if configPath != "" {
+		wc, err := resource.LoadWorkspaceConfig(configPath)
+		if err != nil {
+			return "", fmt.Errorf("engine: run suite: %w", err)
+		}
+		root, err := wc.ArtifactRoot()
+		if err != nil {
+			return "", fmt.Errorf("engine: run suite: %w", err)
+		}
+		if root != "" {
+			if err := os.MkdirAll(root, 0o755); err != nil {
+				return "", fmt.Errorf("engine: run suite: workspace-config artifactRoot %q: %w", root, err)
+			}
+			return root, nil
+		}
+	}
+	// The session belongs with the workspace it tested.
+	return filepath.Join(dataDir, "sessions"), nil
 }
 
 // attachWiring is the run-side wiring the compose path and the workspace-attach
