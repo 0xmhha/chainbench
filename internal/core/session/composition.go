@@ -131,12 +131,19 @@ func (c Composition) Load(out any) (bool, error) {
 }
 
 // Save writes the state to the composition's manifest.
+//
+// Atomically, through the same helper every other record in this package uses.
+// A direct write truncates the file and then fills it, so a process that dies
+// in between leaves a half-written record — and this record is what says a
+// workspace is composed at all. A reader finding it truncated reads a
+// composition that is not there, which is worse than finding the previous one:
+// the previous one was at least true a moment ago.
 func (c Composition) Save(state any) error {
 	b, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return fmt.Errorf("session: marshal composition state: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(c.dir, chainRecordFile), b, 0o644); err != nil {
+	if err := WriteFileAtomic(filepath.Join(c.dir, chainRecordFile), b, 0o644); err != nil {
 		return fmt.Errorf("session: write %s: %w", chainRecordFile, err)
 	}
 	return nil

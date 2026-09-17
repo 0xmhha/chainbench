@@ -653,6 +653,36 @@ func excerpt(s string, head, tail int) string {
 	return strings.Join(out, "\n")
 }
 
+// livePIDs asks each node's machine whether its recorded pid is still a
+// process, for the nodes that have one.
+//
+// Best effort, and deliberately silent about its own failures: this answers
+// "what is running", and a machine that cannot be reached has not told us the
+// node is gone. Absent from the map means "not asked or could not ask", which
+// a caller must not read as "dead" — the map only ever carries answers.
+func (w *Workspace) livePIDs(ctx context.Context) map[int]bool {
+	out := map[int]bool{}
+	for _, ns := range w.state.Nodes {
+		if ns.PID <= 0 {
+			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			continue
+		}
+		insp, ok := t.Driver.(process.ProcessInspector)
+		if !ok {
+			continue
+		}
+		alive, err := insp.PIDAlive(ctx, ns.PID)
+		if err != nil {
+			continue
+		}
+		out[ns.Index] = alive
+	}
+	return out
+}
+
 // NodeHealth is one node's health probe result.
 type NodeHealth struct {
 	Index int    `json:"index"`

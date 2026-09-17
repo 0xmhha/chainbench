@@ -23,13 +23,28 @@ type NetworkStatusIn struct {
 	DataDir string
 }
 
-// NetworkStatusOut is the recorded node set.
+// NetworkStatusOut is the recorded node set, with what the machines say about
+// the pids in it.
 type NetworkStatusOut struct {
 	Nodes node.NodeSet
+	// Alive maps a node index to whether its recorded pid is a live process on
+	// the machine that node runs on. A node with no recorded pid is absent from
+	// the map, and so is one whose machine could not be asked — "not asked" and
+	// "asked and gone" are different answers and the second one is the news.
+	Alive map[int]bool
 }
 
-// NetworkStatus reads a network's node set from its workspace. Read-only.
-func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
+// NetworkStatus reads a network's node set from its workspace and asks each
+// node's machine whether the recorded pid is still a process.
+//
+// The record says a node was started; it cannot say the node is running. A pid
+// outlives nothing — the process it named can be gone, or replaced by an
+// unrelated one — so a status built from the record alone reports a network
+// that may have died an hour ago. The check is what the ProcessInspector
+// capability is for, and every other lifecycle path already asks it; status was
+// the one that did not, and its signature said so: it took the context and
+// discarded it.
+func NetworkStatus(ctx context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
 	if in.DataDir == "" {
 		return NetworkStatusOut{}, ErrNoDataDir
 	}
@@ -40,7 +55,9 @@ func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatus
 	if err != nil {
 		return NetworkStatusOut{}, err
 	}
-	return NetworkStatusOut{Nodes: ws.NodeSet()}, nil
+	ws.SetEnv(d.Env)
+	ws.SetDriver(d.Driver)
+	return NetworkStatusOut{Nodes: ws.NodeSet(), Alive: ws.livePIDs(ctx)}, nil
 }
 
 // isComposition reports whether dir holds a composed chain. Its chain record is
