@@ -1098,9 +1098,49 @@ binary     /tmp/cbw4c/data/bin/gstable
 `state.Binaries` 값이 그 타입이어야 하고, 그것을 채우는 쪽은 `PlaceBinary` 를
 거칠 수밖에 없다. `PlaceBinary` 가 유일한 생산자이기 때문이다.
 
-**얻는 것.** 증상 2 — **한 망에서 두 빌드가 도는 것** — 이 구조적으로 불가능해진다.
-규약으로 피하는 것이 아니라 컴파일이 안 된다. 셋 중 유일하게 **위험한** 증상이다
-(1 과 3 은 낭비와 헛된 거부이지 잘못된 바이너리가 도는 것이 아니다).
+**얻는 것.** 증상 2 — **배치를 안 거친 참조가 exec 에 닿는 것** — 이 구조적으로
+불가능해진다. 규약으로 피하는 것이 아니라 컴파일이 안 된다. 셋 중 유일하게
+**위험한** 증상이다(1 과 3 은 낭비와 헛된 거부이지 잘못된 바이너리가 도는 것이
+아니다).
+
+**막는 것이 무엇이 아닌지 분명히 해 둔다.** 한 망에서 여러 빌드가 도는 것은
+**막을 대상이 아니라 지켜야 할 기능**이다. 실제로 셋이 그렇게 돈다 —
+`stablenet-bp4-default-mismatch`(default+mismatch, swapNode),
+`stablenet-bp4-en1-default-upgrade`(TC-3-1-04, 노드를 다른 바이너리로 재기동),
+`wbft-from-to`(포크를 사이에 두고 from→to). 타입은 **값의 형태**를 강제하지
+개수를 제한하지 않는다. 한 망에 배치된 경로가 둘이면 그대로 둘이다.
+
+실측(`--plan`, workspace-config 적용):
+
+```
+binary  /tmp/cbw4c/data/bin/gstable
+        (per node: default=/tmp/.../bin/gstable, upgrade=/tmp/.../bin/gstable)
+```
+
+### 11.2.7 핸드오프는 workspace-config 를 통째로 무시한다 (2026-09-17, 미해결)
+
+W4c 를 확인하다 나왔다. `compositionOf` 의 핸드오프 분기는 workspace-config
+블록보다 **먼저 return 한다**(`compose.go:224`). 그래서 업그레이드 케이스는
+`--workspace-config` 를 줘도 데이터 루트도, 배치도, existing inputs 도 적용받지
+않는다. **말없이** 그렇게 된다.
+
+실측 — `--workspace-config` 가 `paths.binaries: bin`, `dataRoot: /tmp/cbw4c/data`
+를 적었는데:
+
+```
+chain      wbft  (consensus handoff)
+binaries   from gwemix -> to gwbft     ← 이름 그대로
+```
+
+`target` 줄 자체가 없다. 핸드오프는 설계상 **로컬 전용**이고(`planOf` 가
+`Target: "this machine"` 을 적는다) 원격 데이터 루트 아래 경로를 로컬에서 exec
+할 수는 없으니, **배치하는 것이 옳은지 자체가 결정 사항**이다.
+
+**옳고 그름과 무관하게 분명한 것 하나.** 같은 분기가 genesis·launch·key-source
+override 는 **소리 내어 거부한다.** workspace-config 만 조용히 사라진다. 적어도
+같은 대접은 해야 한다 — 이 트랙이 계속 없애 온 "선언이 실행에 닿지 않는" 바로 그
+모양이다.
+
 
 **비용.** 저장소에 `Binary string` 필드가 **39개**다. 전부는 아니고 실행 경로의
 부분집합이 대상이다 — `node.LaunchReq`, `process` 의 spec 둘, `State.Binary`,
