@@ -723,6 +723,19 @@ type GenesisOpts struct {
 	// target, instead of building one from a template. Overrides/Overlay do not
 	// apply to it. Empty builds as usual.
 	Existing string
+	// Variants are extra genesis documents, one per binary name, each a JSON
+	// fragment deep-merged onto the built genesis. The nodes running that
+	// binary initialize from the result; every other node keeps the network's.
+	//
+	// It exists because a network can run two binaries that do not accept the
+	// same genesis. A handoff across a fork is the case: the successor needs
+	// fork settings the predecessor may refuse, and whether it refuses them is
+	// a fact about those two builds rather than something a composer can
+	// assume. Merged onto the BUILT genesis, not rebuilt from the template, so
+	// the second document is demonstrably the first plus what that side needs —
+	// and a family whose genesis its own binary generates is not generated
+	// twice.
+	Variants map[string][]byte
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -790,6 +803,9 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	w.state.GenesisPath = path
+	if err := w.writeGenesisVariants(ctx, lay, gen, opts.Variants); err != nil {
+		return "", err
+	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), opts)
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
@@ -802,8 +818,56 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if len(opts.Overlay) > 0 {
 		detail += ", overlay merged"
 	}
+	if n := len(opts.Variants); n > 0 {
+		detail += fmt.Sprintf(", %d binary-specific genesis", n)
+	}
 	w.markStep("genesis", detail)
 	return detail, nil
+}
+
+// writeGenesisVariants builds and writes the per-binary genesis documents, each
+// the built genesis plus what that binary needs, and records where they landed.
+//
+// Through genesis.Customize, the same merge-then-revalidate the network's own
+// overlay goes through: a variant that reorders the forks has to fail here, at
+// the step that wrote it, rather than at the boot of the nodes that read it.
+//
+// A variant naming a binary no node runs is refused. Writing it would leave a
+// document nothing reads and say nothing, and the likeliest cause is a
+// misspelled name — in which case the nodes that were meant to get it silently
+// initialized from the network's genesis instead.
+func (w *Workspace) writeGenesisVariants(ctx context.Context, lay node.Layout, base []byte, variants map[string][]byte) error {
+	if len(variants) == 0 {
+		w.state.GenesisPaths = nil
+		return nil
+	}
+	paths := make(map[string]string, len(variants))
+	for _, name := range slices.Sorted(maps.Keys(variants)) {
+		if w.state.Binaries[name] == "" {
+			return fmt.Errorf("chainsetup: genesis: a genesis is declared for binary %q, which no node runs — name one of the declared binaries", name)
+		}
+		gen, err := genesis.Customize(base, genesis.NetworkOptions{Overlay: variants[name]})
+		if err != nil {
+			return fmt.Errorf("chainsetup: genesis: binary %q: %w", name, err)
+		}
+		path := lay.GenesisVariantPath(name)
+		err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
+			ml := lay
+			ml.Root = t.DataRoot
+			p := ml.GenesisVariantPath(name)
+			if werr := t.Files.Write(ctx, p, gen, 0o644); werr != nil {
+				return fmt.Errorf("chainsetup: genesis: write %s: %w", p, werr)
+			}
+			w.recordInput(p, gen)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		paths[name] = path
+	}
+	w.state.GenesisPaths = paths
+	return nil
 }
 
 // delayedForkSuffix marks a config override that moves a fork off genesis. Such

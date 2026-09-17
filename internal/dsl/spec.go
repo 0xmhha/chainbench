@@ -16,6 +16,16 @@ type ChainSpec struct {
 	Binaries       map[string]string `json:"binaries,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// GenesisPerBinary is, per binary name, what that binary's own genesis
+	// needs on top of the network's. The nodes running it initialize from the
+	// network's genesis merged with this; every other node gets the network's
+	// unchanged.
+	//
+	// It exists because two builds in one network need not accept the same
+	// genesis — a handoff across a fork is the case — and which of them tolerates
+	// the other's settings is a fact about those builds, not one a composer can
+	// assume.
+	GenesisPerBinary map[string]map[string]any `json:"genesisPerBinary,omitempty"`
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"), instead of building one from a template.
 	GenesisExisting string `json:"genesisExisting,omitempty"`

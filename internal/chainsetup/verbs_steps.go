@@ -253,6 +253,10 @@ type NetGenesisIn struct {
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"); empty builds from the template.
 	GenesisExisting string
+	// PerBinary names, per binary, an overlay file in the same shape as
+	// OverlayPath. Its genesis fragment is merged onto the built genesis to
+	// make that binary's own document.
+	PerBinary map[string]string
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
@@ -307,6 +311,9 @@ func (o GenesisOpts) checkExistingIsUnchanged() error {
 	if len(o.Overlay) > 0 {
 		asked = append(asked, "a genesis overlay")
 	}
+	if len(o.Variants) > 0 {
+		asked = append(asked, fmt.Sprintf("a separate genesis for binary %s", strings.Join(slices.Sorted(maps.Keys(o.Variants)), ", ")))
+	}
 	if len(asked) == 0 {
 		return nil
 	}
@@ -327,23 +334,52 @@ func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 		}
 		opts.Overrides[k] = v
 	}
+	for _, name := range slices.Sorted(maps.Keys(in.PerBinary)) {
+		overlay, err := readGenesisOverlay(in.PerBinary[name])
+		if err != nil {
+			return opts, err
+		}
+		// Capabilities describe the network, and a network advertises one set.
+		// Accepting them here would let two binaries claim different ones with
+		// no way to say which the network has.
+		if len(overlay.Capabilities) > 0 {
+			return opts, fmt.Errorf("chainsetup: genesis: the overlay for binary %q declares capabilities, which describe the whole network — declare them on the network's own overlay", name)
+		}
+		if opts.Variants == nil {
+			opts.Variants = map[string][]byte{}
+		}
+		opts.Variants[name] = overlay.Genesis
+	}
 	if in.OverlayPath == "" {
 		return opts, nil
 	}
-	raw, err := os.ReadFile(in.OverlayPath)
+	overlay, err := readGenesisOverlay(in.OverlayPath)
 	if err != nil {
 		return opts, err
-	}
-	var overlay struct {
-		Capabilities []string        `json:"capabilities"`
-		Genesis      json.RawMessage `json:"genesis"`
-	}
-	if err := json.Unmarshal(raw, &overlay); err != nil {
-		return opts, fmt.Errorf("chainsetup: bad genesis overlay %q: %w", in.OverlayPath, err)
 	}
 	opts.Overlay = overlay.Genesis
 	opts.Capabilities = overlay.Capabilities
 	return opts, nil
+}
+
+// genesisOverlayFile is the {capabilities, genesis} document an overlay path
+// holds. One reader for the network's overlay and for a binary's own, so the
+// two cannot come to disagree about the shape.
+type genesisOverlayFile struct {
+	Capabilities []string        `json:"capabilities"`
+	Genesis      json.RawMessage `json:"genesis"`
+}
+
+func readGenesisOverlay(path string) (genesisOverlayFile, error) {
+	var overlay genesisOverlayFile
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return overlay, err
+	}
+	if err := json.Unmarshal(raw, &overlay); err != nil {
+		return overlay, fmt.Errorf("chainsetup: bad genesis overlay %q: %w", path, err)
+	}
+	return overlay, nil
 }
 
 // NetConfigIn identifies the workspace and, optionally, per-node config

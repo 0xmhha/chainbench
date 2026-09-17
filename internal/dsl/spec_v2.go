@@ -127,6 +127,10 @@ const (
 	BinaryFrom = "from"
 	// BinaryTo takes over after it.
 	BinaryTo = "to"
+	// BinaryDefault is what a node that names no binary runs. A declaration of
+	// one binary calls it that, and a declaration of several says which of them
+	// the rest of the network runs.
+	BinaryDefault = "default"
 )
 
 // UpgradeV2 declares a handoff composition: which golden profile shapes it
@@ -177,6 +181,23 @@ type GenesisV2 struct {
 	// otherwise.
 	Ref string `json:"ref,omitempty"`
 	// Set applies dot-path single values (e.g. "config.chainId": 8284).
+	Set map[string]any `json:"set,omitempty"`
+	// Overlay deep-merges into the built genesis.
+	Overlay map[string]any `json:"overlay,omitempty"`
+	// PerBinary is, per binary name (the keys "binaries" declares), what that
+	// binary's own genesis needs on top of the network's, in the same two forms
+	// the network's genesis takes.
+	//
+	// A network can run two builds that do not accept the same genesis. The
+	// nodes running a named binary initialize from the network's genesis merged
+	// with its entry here; every other node gets the network's unchanged.
+	PerBinary map[string]GenesisSideV2 `json:"perBinary,omitempty"`
+}
+
+// GenesisSideV2 is the extra one binary's genesis needs, in the same two forms
+// the network's genesis takes.
+type GenesisSideV2 struct {
+	// Set applies dot-path single values (e.g. "config.croissantBlock": 20).
 	Set map[string]any `json:"set,omitempty"`
 	// Overlay deep-merges into the built genesis.
 	Overlay map[string]any `json:"overlay,omitempty"`
@@ -501,7 +522,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	}
 
 	// Binaries: "default" is every node's binary; other keys are per-role.
-	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
+	if b, ok := env.Binaries[BinaryDefault]; ok && len(env.Binaries) == 1 {
 		spec.Chain.Binary = b
 	} else if len(env.Binaries) > 0 {
 		spec.Chain.Binaries = env.Binaries
@@ -537,6 +558,23 @@ func lowerCase(c CaseV2) (Spec, error) {
 			}
 			if len(overlay) > 0 {
 				spec.Chain.GenesisOverlay = overlay
+			}
+			for name, side := range g.PerBinary {
+				if _, ok := env.Binaries[name]; !ok {
+					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)
+				}
+				one := map[string]any{}
+				maps.Copy(one, side.Overlay)
+				for path, v := range side.Set {
+					mergeDotPath(one, path, v)
+				}
+				if len(one) == 0 {
+					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary.%s says nothing — give it a set or an overlay, or drop it", c.ID, name)
+				}
+				if spec.Chain.GenesisPerBinary == nil {
+					spec.Chain.GenesisPerBinary = map[string]map[string]any{}
+				}
+				spec.Chain.GenesisPerBinary[name] = one
 			}
 		case "existing":
 			// A finished genesis is used verbatim, so set/overlay — which edit a

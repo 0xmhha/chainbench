@@ -2,9 +2,12 @@ package testengine
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
@@ -426,4 +429,82 @@ func TestComposition_OneFormOfABinaryReference(t *testing.T) {
 			t.Fatalf("verdict = %s, reasons %v — want reuse", d.Verdict, d.Reasons)
 		}
 	})
+}
+
+// TestComposition_ASecondGenesisForASecondBinary.
+//
+// A network can run two builds that do not accept the same genesis. The
+// declaration names what the second one needs on top of the network's, and the
+// composition carries an overlay file for it to the genesis step, which merges
+// it onto the built genesis and records where that document landed.
+func TestComposition_ASecondGenesisForASecondBinary(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable","next":"gstable-next"},
+	  "genesis":{"mode":"template","perBinary":{
+	     "next":{"set":{"config.croissantBlock":20}}}},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"bp"},{"index":2,"role":"bp","binary":"next"}]}}`
+
+	spec := caseWithEnv(t, env)
+	if got := spec.Chain.GenesisPerBinary["next"]; got == nil {
+		t.Fatalf("the declaration did not reach the spec: %+v", spec.Chain)
+	}
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+	path := comp.up.GenesisPerBinary["next"]
+	if path == "" {
+		t.Fatalf("no overlay was rendered for the second binary: %v", comp.up.GenesisPerBinary)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "croissantBlock") {
+		t.Errorf("the rendered overlay does not carry what was declared: %s", b)
+	}
+}
+
+// TestComposition_ASecondGenesisMustNameADeclaredBinary: the nodes meant to get
+// it would otherwise initialize from the network's genesis and nothing would
+// say so, which is the shape a misspelled name takes.
+func TestComposition_ASecondGenesisMustNameADeclaredBinary(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable","next":"gstable-next"},
+	  "genesis":{"mode":"template","perBinary":{"nxet":{"set":{"config.croissantBlock":20}}}},
+	  "topology":{"bp":2}}`
+	raw := `{"schemaVersion":"2","kind":"case","id":"typo","env":` + env + `,
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	if _, err := dsl.Parse([]byte(raw)); err == nil ||
+		!strings.Contains(err.Error(), "binaries does not declare") {
+		t.Fatalf("a misspelled binary name was accepted: %v", err)
+	}
+}
+
+// TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns.
+//
+// A node table that assigns binaries to SOME nodes leaves the others on the
+// declaration's "default". They used to be put on whichever binary the first
+// assigned node happened to name, so a four-node network with two on the
+// successor ran all four on the successor — and the plan said so, with nothing
+// about it looking wrong.
+func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable","next":"gstable-next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
+	    {"index":3,"role":"bp","binary":"next"},{"index":4,"role":"bp","binary":"next"}]}}`
+
+	spec := caseWithEnv(t, env)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+	if got := comp.up.Binary; got != "gstable" {
+		t.Errorf("the network's binary = %q, want the declared default %q", got, "gstable")
+	}
+	if got := comp.up.Binaries["next"]; got != "gstable-next" {
+		t.Errorf("binaries[next] = %q, want gstable-next", got)
+	}
 }

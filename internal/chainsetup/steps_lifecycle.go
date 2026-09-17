@@ -3,9 +3,11 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -45,6 +47,42 @@ func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
 	return fallback
 }
 
+// genesisFor resolves the genesis one node initializes from: the one recorded
+// for its binary when the composition built a separate document for that
+// binary, otherwise the network's.
+//
+// It mirrors binaryFor deliberately. A node's binary and its genesis are the
+// same question asked twice — which of the network's builds is this node — and
+// two different answers to it is how they come apart.
+func (w *Workspace) genesisFor(ns node.Record) string {
+	if ns.Binary != "" {
+		if p := w.state.GenesisPaths[ns.Binary]; p != "" {
+			return p
+		}
+	}
+	return w.state.GenesisPath
+}
+
+// genesisPaths is every genesis document this composition wrote, deduplicated,
+// with the network's first. Used by the steps that have to act on all of them:
+// removing them, recording them, checking they are still there.
+func (w *Workspace) genesisPaths() []string {
+	var out []string
+	seen := map[string]bool{}
+	add := func(p string) {
+		if p == "" || seen[p] {
+			return
+		}
+		seen[p] = true
+		out = append(out, p)
+	}
+	add(w.state.GenesisPath)
+	for _, name := range slices.Sorted(maps.Keys(w.state.GenesisPaths)) {
+		add(w.state.GenesisPaths[name])
+	}
+	return out
+}
+
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -75,11 +113,21 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 		if !ok {
 			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
 		}
-		// GenesisPath is a path on the machine: the genesis step wrote it
-		// through each machine's file store, so it is read back the same way.
-		gen, err := t.Files.Read(ctx, w.state.GenesisPath)
-		if err != nil {
-			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
+		// A path on the machine: the genesis step wrote it through each
+		// machine's file store, so it is read back the same way. Read once per
+		// document rather than once per node — a network of one binary has one
+		// document and this is the same single read it always was.
+		byPath := map[string][]byte{}
+		readGenesis := func(p string) ([]byte, error) {
+			if gen, ok := byPath[p]; ok {
+				return gen, nil
+			}
+			gen, err := t.Files.Read(ctx, p)
+			if err != nil {
+				return nil, fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err)
+			}
+			byPath[p] = gen
+			return gen, nil
 		}
 		for _, ns := range nodes {
 			// A running node's datadir is not re-initialized: reuse-if-matching
@@ -107,6 +155,13 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			// which is what a rebuild discards.
 			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err)
+			}
+			// The genesis this node's binary accepts, which is not always the
+			// network's: two builds in one network need not take the same
+			// document.
+			gen, err := readGenesis(w.genesisFor(ns))
+			if err != nil {
+				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
@@ -573,14 +628,17 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 				return "", err
 			}
 		}
-		if w.state.GenesisPath != "" && !genesisDone[ns.Server] {
-			if err := remove(acc, w.state.GenesisPath); err != nil {
-				return "", err
+		if !genesisDone[ns.Server] {
+			for _, p := range w.genesisPaths() {
+				if err := remove(acc, p); err != nil {
+					return "", err
+				}
 			}
 			genesisDone[ns.Server] = true
 		}
 	}
 	w.state.GenesisPath = ""
+	w.state.GenesisPaths = nil
 	w.state.Nodes = nil
 	detail := fmt.Sprintf("%d path(s) removed; node table cleared", removed)
 	w.markStep("rm", detail)
@@ -1147,7 +1205,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 			lines = append(lines, "  "+err.Error())
 		}
 		want := []inspector.Path{
-			{Path: w.state.GenesisPath, Purpose: "genesis"},
+			{Path: w.genesisFor(ns), Purpose: "genesis"},
 			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
 			{Path: ns.ConfigPath, Node: ns.Index, Purpose: "config"},
 		}

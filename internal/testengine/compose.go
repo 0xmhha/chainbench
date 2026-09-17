@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -202,6 +204,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		from[FieldKeysDir] = SourceHarness
 	}
+	perBinaryOverlay, err := writeOverlays(ctx, in.DataDir, spec.Chain.GenesisPerBinary)
+	if err != nil {
+		return composition{}, err
+	}
 	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
 	if err != nil {
 		return composition{}, err
@@ -258,8 +264,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		from[FieldBinary] = SourceDeclaration
 	}
 	if binary == "" {
-		// With a node table but no single binary, launch falls back per node to
-		// the first node's binary; a node names its own binary over this.
+		// The declaration's own word for what the rest of the network runs. A
+		// node table that assigns binaries to SOME nodes leaves the others on
+		// this; before it was read, they were put on whichever binary the first
+		// assigned node happened to name — so a four-node network with two on
+		// the successor ran all four on the successor, and the plan said so
+		// without anything looking wrong.
+		binary = spec.Chain.Binaries[dsl.BinaryDefault]
+	}
+	if binary == "" {
+		// No default declared: fall back per node to the first node's binary, as
+		// before. A node names its own binary over this.
 		binary = topoBinary
 	}
 	if binary == "" {
@@ -331,13 +346,14 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
-		ChainID:         in.ChainID,
-		GenesisSet:      hardforkSets(spec.Hardforks),
-		OverlayPath:     overlayPath,
-		GenesisExisting: spec.Chain.GenesisExisting,
-		LaunchSet:       launch,
-		LaunchScoped:    spec.EnvLaunch,
-		ConfigSet:       spec.EnvConfig,
+		ChainID:          in.ChainID,
+		GenesisSet:       hardforkSets(spec.Hardforks),
+		OverlayPath:      overlayPath,
+		GenesisPerBinary: perBinaryOverlay,
+		GenesisExisting:  spec.Chain.GenesisExisting,
+		LaunchSet:        launch,
+		LaunchScoped:     spec.EnvLaunch,
+		ConfigSet:        spec.EnvConfig,
 	}
 	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
 	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
@@ -700,6 +716,23 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 		return "", fmt.Errorf("write genesis overlay: %w", err)
 	}
 	return path, nil
+}
+
+// writeOverlays renders one overlay file per binary, the same way the network's
+// own overlay is rendered, and returns where each landed.
+func writeOverlays(ctx context.Context, dataDir string, per map[string]map[string]any) (map[string]string, error) {
+	if len(per) == 0 {
+		return nil, nil
+	}
+	out := make(map[string]string, len(per))
+	for _, name := range slices.Sorted(maps.Keys(per)) {
+		path, err := writeOverlay(ctx, dataDir, per[name])
+		if err != nil {
+			return nil, fmt.Errorf("binary %s: %w", name, err)
+		}
+		out[name] = path
+	}
+	return out, nil
 }
 
 // handoffUp composes a mixed-binary network: the handoff's steps in order,

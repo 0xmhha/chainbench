@@ -89,6 +89,10 @@ type NetUpIn struct {
 	ChainID     int64    `json:"chainID,omitempty"`
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
+	// GenesisPerBinary names, per binary, an overlay file whose genesis
+	// fragment is merged onto the built genesis to make that binary's own
+	// document. The nodes running it initialize from the result.
+	GenesisPerBinary map[string]string `json:"genesisPerBinary,omitempty"`
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"); empty builds from the template as usual.
 	GenesisExisting string `json:"genesisExisting,omitempty"`
@@ -232,7 +236,7 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 		"genesis": func() (string, error) {
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
-				GenesisExisting: in.GenesisExisting,
+				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
 			})
 			return r.Detail, err
 		},
@@ -350,6 +354,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			gopts, gerr := genesisOpts(NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
+				PerBinary: in.GenesisPerBinary,
 			})
 			if gerr != nil {
 				return out, gerr

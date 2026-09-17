@@ -71,6 +71,20 @@ type State struct {
 	BPCount     int           `json:"bp,omitempty"`
 	Target      resource.Spec `json:"target"`
 	GenesisPath string        `json:"genesisPath,omitempty"`
+	// GenesisPaths maps a binary name — the same names Binaries uses — to the
+	// genesis the nodes running that binary initialize from. Absent, or a name
+	// it does not hold, means GenesisPath: one document for the network, which
+	// is what every composition of a single binary wants and what this was
+	// before.
+	//
+	// It exists because a network can run two binaries that do not accept the
+	// same genesis. A handoff across a fork is the case: the successor needs
+	// fork settings in its genesis, and whether the predecessor tolerates them
+	// is a fact about those two builds, not something a composer can assume.
+	// Keyed by binary name rather than by node because that is the grouping the
+	// declaration already makes — a node says which binary it runs, and its
+	// genesis follows from that.
+	GenesisPaths map[string]string `json:"genesisPaths,omitempty"`
 	// LaunchInputs is what each launch input hashed to when this workspace
 	// wrote it, keyed by path on the target.
 	//
