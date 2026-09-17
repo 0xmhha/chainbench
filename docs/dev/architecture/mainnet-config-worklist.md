@@ -1291,7 +1291,7 @@ genesis(1번), 타깃·배치 해석(3번).
 | # | 프로필이 가진 것 | 보통 경로 | 크기 |
 |---|---|---|---|
 | 1 | `Identities.PlanOrder` — 플랜 노드 k 가 프리셋 노드 N 의 키를 쓴다 | 노드 인덱스 = 프리셋 인덱스로 묶여 있다. 다만 `topology.nodes[].key` 가 이미 노드별 키를 받는다 | 중 |
-| 2 | `Chains.From/To.NodekeyDir` — 바이너리마다 nodekey 를 찾는 디렉터리가 다르다 | `Layout.NodekeyPath(label)` 이 바이너리를 안 받는다. **`IPCPath(label, binary)` 는 받는다** — 같은 무늬, 함수 하나 차이 | 소 |
+| 2 | `Chains.From/To.NodekeyDir` — 바이너리마다 nodekey 를 찾는 디렉터리가 다르다 | **내가 거꾸로 적었다. §아래 참조** | — |
 | 3 | `Validators.Addresses/BLSPublicKeys/ExtraData` — 미리 계산된 값 | `wbft.ExtraData(validators, blsKeys)` 가 키셋에서 유도한다. 새 망이면 프로필 값은 **아마 불필요** — **대조해 보지 않았다** | 미확인 |
 | 4 | `Producers.Governance` — 거버넌스 정책 | 소스는 받는데 **DSL 이 말할 방법이 없다** | 소 |
 
@@ -1333,7 +1333,8 @@ genesis(1번), 타깃·배치 해석(3번).
    launch:endpoints: 4 node(s)
    mesh: 5 endpoint(s) meshed
    ```
-2. **#2** `Layout.NodekeyPath(label, binary)`. `IPCPath` 와 같은 무늬, 독립적.
+2. ~~**#2** `Layout.NodekeyPath(label, binary)`~~ — **지을 것이 없었다(2026-09-17).
+   §11.2.9 참조.**
 3. **#4** 거버넌스 정책의 DSL 문법.
 4. **#3** 유도값과 프로필 값을 실제로 대조한다. 같으면 프로필의 validator 블록은
    골든 파일의 편의이지 요구사항이 아니다.
@@ -1348,6 +1349,46 @@ genesis template are required" 로 준비 단계에서 멈춘다.
 **여전히 확인하지 않은 것.** 생산자가 **둘 이상인** 핸드오프는 안 돌려 봤다.
 `etcd-join` 과 단계별 순차 기동은 이번에 비로소 돌 수 있게 됐지만, 실제로 도는
 것은 못 봤다. 프로필이 생산자 1을 쓰기 때문이다.
+
+### 11.2.9 2번은 거꾸로였다 (2026-09-17, 실측)
+
+**내가 §11.2.8 에 적은 2번은 틀렸다. 두 군데가.**
+
+> ~~"`Layout.NodekeyPath(label)` 이 바이너리를 안 받는다"~~ — 받을 필요가 없다.
+> 게다가 **그 함수는 프로덕션 호출자가 없다.** 테스트 하나뿐이다.
+>
+> ~~"`IPCPath` 와 같은 무늬, 함수 하나 차이"~~ — 같은 무늬가 아니다. IPC 소켓
+> 이름은 바이너리가 정하지만 nodekey 는 **알려 주면 되는 것**이다.
+
+**보통 경로는 관례를 알 필요가 없다.** `--nodekey <키셋>/node<N>/nodekey` 로
+**파일을 직접 가리킨다**(`process/nodeconfig.go:26` — 경로가 datadir 이 아니라
+**키셋** 아래다). static-nodes 도 마찬가지로 노드별 config 에 적는다.
+
+**실측** — 보통 경로로 gwemix 망을 구성해 통과시켰다
+(`01-wemix-etcd-and-governance`, pass). 워크스페이스를 보면:
+
+```
+보통 경로:  node1/geth/nodekey     ← 바이너리가 만든 것. config_node1.toml 존재
+                                     static-nodes.json 없음 (config 안에 있다)
+핸드오프:   node1/geth/nodekey     ← 핸드오프가 쓴 것. .toml 없음
+            node2/gwemix/nodekey     node2/gwemix/static-nodes.json
+```
+
+**그래서 진짜 원인은 함수가 아니라 단계다.** 핸드오프는 **노드별 config 파일 없이**
+띄운다(`LaunchArgs` 가 `ConfigPath` 를 `nodeconfig.Spec` 에 넣지 않는다). config 가
+없으니 nodekey 도 static-nodes 도 **각 바이너리가 관례로 찾는 자리**에 있어야 하고,
+그래서 프로필이 `nodekey_dir` 을 들고 있다. **보통 경로의 config 단계를 주면 그
+필드는 사라진다.**
+
+**드롭인은 아니다.** `nodeconfig.TOML(Spec)` 은 순수 함수라 재사용 가능하지만,
+핸드오프는 계정·RPC 네임스페이스·unlock 을 `nodeconfig.Override` 로 **argv 층에**
+얹는다. config 파일을 쓰면 `Argv` 가 일부를 argv 에서 빼므로(주석: "A spec with a
+ConfigPath leaves the auth port to the file"), 그 override 들이 파일 쪽으로도 가야
+한다. `ApplyConfigOverride` 가 같은 키 타입을 받으니 길은 있다.
+
+**판정.** 2번은 독립된 작은 항목이 아니라 **흡수(4번)의 한 조각**이다. 순서에서
+빼고 흡수 쪽으로 옮긴다. 얻는 것은 프로필 필드 하나가 아니라 **핸드오프가 관례
+대신 선언으로 돌게 되는 것**이다.
 
 ### 11.2.4 결과물이 쌓이는 자리 — 완료 (2026-09-17)
 
