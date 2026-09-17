@@ -24,6 +24,17 @@ type Deps struct {
 	Driver func() (process.Driver, error)
 }
 
+// Now is the clock the doc above promises, with its default applied. Callers
+// outside this package need the same default — a nil Clock is ordinary, and
+// every caller that reached for d.Clock() directly was one nil away from a
+// panic.
+func (d Deps) Now() time.Time {
+	if d.Clock == nil {
+		return time.Now()
+	}
+	return d.Clock()
+}
+
 func (d Deps) command() string { return d.Command }
 
 func (d Deps) logf(format string, args ...any) {

@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/health"
@@ -30,9 +27,6 @@ const (
 	failureLogHeadLines = 200
 	failureLogTailLines = 200
 )
-
-// failureDir is where evidence lands when a run fails before it has a session.
-const failureDir = "failures"
 
 // evidence is one gathered file: what to call it and what is in it.
 type evidence struct {
@@ -122,35 +116,4 @@ func collectFailureData(ctx context.Context, sd chainsetup.Deps, dataDir string,
 	for _, e := range gatherFailureData(ctx, sd, dataDir, nodes) {
 		rec.Observation(e.Name, e.Data)
 	}
-}
-
-// saveFailureData writes the evidence into the workspace, for a failure that
-// happened before any test record existed to hold it.
-//
-// It goes under the workspace rather than a session because there is no session
-// yet: the engine creates that, and this is the failure that stops the engine
-// from starting. The directory is stamped so two failed attempts on one
-// workspace do not overwrite each other.
-//
-// Secrets are scrubbed the same way a record scrubs an observation — the same
-// function, so the two paths cannot drift on what counts as a secret.
-func saveFailureData(clock func() time.Time, dataDir string, ev []evidence) (string, error) {
-	if len(ev) == 0 {
-		return "", nil
-	}
-	now := time.Now().UTC()
-	if clock != nil {
-		now = clock().UTC()
-	}
-	dir := filepath.Join(dataDir, failureDir, now.Format("20060102-150405"))
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", fmt.Errorf("testengine: save failure data: %w", err)
-	}
-	for _, e := range ev {
-		p := filepath.Join(dir, e.Name)
-		if err := session.WriteFileAtomic(p, session.Scrub(e.Data), 0o644); err != nil {
-			return dir, fmt.Errorf("testengine: save failure data: %s: %w", e.Name, err)
-		}
-	}
-	return dir, nil
 }

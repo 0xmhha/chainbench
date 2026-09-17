@@ -1,74 +1,93 @@
 package testengine
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
-// TestSaveFailureData_LeavesEvidenceWhereThereIsNoSession is the point of
-// splitting gathering from writing.
+// TestRecordBlockedBySetup_FilesTheFailureUnderTheTestThatAskedForIt.
 //
-// A run that fails before its first test has no session and no test record, so
-// the evidence used to have nowhere to go and was dropped. It reported "1 node
-// still not ready" and threw away the only thing that could say which node.
-func TestSaveFailureData_LeavesEvidenceWhereThereIsNoSession(t *testing.T) {
-	dir := t.TempDir()
-	at := time.Date(2026, 9, 17, 4, 24, 48, 0, time.UTC)
-
-	got, err := saveFailureData(func() time.Time { return at }, dir, []evidence{
-		{Name: "health.json", Data: []byte(`{"producing":false}`)},
-		{Name: "node1.log", Data: []byte("Fatal: something\n")},
-	})
+// A network is composed for the test that asked for it, so a network that will
+// not come up is that test's failure. It used to be nobody's: the evidence was
+// dumped into the workspace under failures/<stamp>/ and the run reported "1 node
+// still not ready" with no verdict at all, because the session was created by
+// the engine and the engine had not started. A reader of the workspace dump then
+// had to work out which of several attempts it belonged to.
+func TestRecordBlockedBySetup_FilesTheFailureUnderTheTestThatAskedForIt(t *testing.T) {
+	root := t.TempDir()
+	sess, err := session.New(root, "chainbench", time.Date(2026, 9, 17, 4, 24, 48, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The directory is stamped so two failed attempts on one workspace do not
-	// overwrite each other.
-	if want := filepath.Join(dir, failureDir, "20260917-042448"); got != want {
-		t.Fatalf("evidence went to %q, want %q", got, want)
+	var out RunSuiteOut
+	setupErr := errors.New("1 node(s) still not ready after 1m30s")
+
+	recordBlockedBySetup(context.Background(), chainsetup.Deps{}, t.TempDir(), composed{}, &out, setupErr, blockedRun{
+		sess:  sess,
+		raw:   [][]byte{[]byte(`{"id":"gov-01"}`)},
+		specs: []dsl.Spec{{ID: "gov-01"}},
+	})
+
+	dir := filepath.Join(sess.Root(), "tests", "001_gov-01")
+	b, err := os.ReadFile(filepath.Join(dir, "status.json"))
+	if err != nil {
+		t.Fatalf("the blocked test left no verdict: %v", err)
 	}
-	for _, name := range []string{"health.json", "node1.log"} {
-		if _, err := os.Stat(filepath.Join(got, name)); err != nil {
+	if !strings.Contains(string(b), `"blocked"`) || !strings.Contains(string(b), "still not ready") {
+		t.Errorf("the verdict does not say what happened: %s", b)
+	}
+	// The gather has no node table and no workspace here, so what it can say is
+	// that it could not say anything — which is itself evidence, and has to land
+	// in the same place the rest would.
+	if _, err := os.Stat(filepath.Join(dir, "observations", "gather-problems.txt")); err != nil {
+		t.Errorf("no evidence under the test: %v", err)
+	}
+	// And the run's own summary counts it, so the command reports a blocked test
+	// rather than only an error string.
+	if out.Summary.Summary.Blocked != 1 {
+		t.Errorf("summary counted %d blocked, want 1", out.Summary.Summary.Blocked)
+	}
+}
+
+// TestRecordBlockedBySetup_EveryWaitingTestGetsItsOwnCopy: several definitions
+// given to one command are several attempts. Pointing all of them at one copy of
+// the evidence would save space and lose the only thing that makes it readable
+// later — which attempt it came from.
+func TestRecordBlockedBySetup_EveryWaitingTestGetsItsOwnCopy(t *testing.T) {
+	sess, err := session.New(t.TempDir(), "chainbench", time.Unix(0, 0).UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out RunSuiteOut
+	recordBlockedBySetup(context.Background(), chainsetup.Deps{}, t.TempDir(), composed{}, &out, errors.New("no"), blockedRun{
+		sess:  sess,
+		raw:   [][]byte{[]byte(`{}`), []byte(`{}`)},
+		specs: []dsl.Spec{{ID: "a"}, {ID: "b"}},
+	})
+	for _, name := range []string{"001_a", "002_b"} {
+		if _, err := os.Stat(filepath.Join(sess.Root(), "tests", name, "observations", "gather-problems.txt")); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}
 	}
 }
 
-// TestSaveFailureData_ScrubsSecrets: the evidence holds a node's launch command,
-// and that command carries a password path and an unlock address. It is written
-// through the same scrubber a test record uses, so the two paths cannot disagree
-// about what counts as a secret.
-func TestSaveFailureData_ScrubsSecrets(t *testing.T) {
-	dir := t.TempDir()
-	raw := []byte(`gstable --password /k/password --unlock 0xc17d493883eaa3b4cceb0f214b273392d562f9d8`)
-
-	got, err := saveFailureData(nil, dir, []evidence{{Name: "processes.json", Data: raw}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := os.ReadFile(filepath.Join(got, "processes.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(b), "/k/password") {
-		t.Errorf("the password path reached the evidence: %s", b)
-	}
-}
-
-// TestSaveFailureData_NothingGatheredWritesNothing: an empty gather is not a
-// failure to report. A workspace that never composed has nothing to say, and a
-// directory holding no files would only make an operator look for one.
-func TestSaveFailureData_NothingGatheredWritesNothing(t *testing.T) {
-	dir := t.TempDir()
-	got, err := saveFailureData(nil, dir, nil)
-	if err != nil || got != "" {
-		t.Fatalf("saveFailureData(nil) = %q, %v", got, err)
-	}
-	if _, err := os.Stat(filepath.Join(dir, failureDir)); !os.IsNotExist(err) {
-		t.Errorf("an empty gather created %s", failureDir)
+// TestRecordBlockedBySetup_NoSessionRecordsNothing: the failure paths that run
+// before a session exists (and the tests that drive only the teardown decision)
+// must not panic on the way past.
+func TestRecordBlockedBySetup_NoSessionRecordsNothing(t *testing.T) {
+	var out RunSuiteOut
+	recordBlockedBySetup(context.Background(), chainsetup.Deps{}, t.TempDir(), composed{}, &out, errors.New("no"), blockedRun{})
+	if len(out.SetupSteps) != 0 {
+		t.Errorf("it recorded %v", out.SetupSteps)
 	}
 }
 

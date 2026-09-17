@@ -356,6 +356,15 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	in.ArtifactRoot = root
 	chain := parsed[0].Chain.Name
 
+	// Before the network, not after. Everything from here on — including a
+	// network that never comes up — is this run, and a run that has nowhere to
+	// write is a run nobody can debug afterwards.
+	sess, serr := session.New(root, engineCommand, sd.Now())
+	if serr != nil {
+		return out, fmt.Errorf("engine: run suite: %w", serr)
+	}
+	out.SessionRoot = sess.Root()
+
 	var net composed
 	if comp.handoff != nil {
 		ns, steps, teardown, err := handoffUp(ctx, *comp.handoff)
@@ -367,11 +376,12 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
 	} else {
 		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
+		blocked := blockedRun{sess: sess, raw: specs, specs: parsed}
 		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
-			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr)
+			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr, blocked)
 		}
 		if err != nil {
-			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err)
+			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err, blocked)
 		}
 	}
 	out.Endpoints = net.endpoints
@@ -401,6 +411,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		eng, err := wiredAttachEngine(sd, net, attachWiring{
 			Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
 			Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
+			Session: sess,
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -428,8 +439,17 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	return out, runErr
 }
 
-// afterFailedSetup gathers what the failed network can still say, then takes it
-// down, and returns the setup error either way.
+// blockedRun is the run a failed setup never got to: the session it would have
+// been recorded in, and the specs that will not run.
+type blockedRun struct {
+	sess  session.Session
+	raw   [][]byte
+	specs []dsl.Spec
+}
+
+// afterFailedSetup records the failure as the tests' own, gathers what the
+// network can still say, then takes it down, and returns the setup error either
+// way.
 //
 // Setting a network up is not all-or-nothing: the nodes launch and then a
 // readiness gate, or the plan check, refuses what came up. Two things used to go
@@ -444,14 +464,8 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 //
 // --keep-up still keeps the network. A failure is when an operator wants to
 // look, and the flag says they will.
-func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, keepUp bool, out *RunSuiteOut, setupErr error) error {
-	if ev := gatherFailureData(ctx, sd, dataDir, net.nodes); len(ev) > 0 {
-		if dir, err := saveFailureData(sd.Clock, dataDir, ev); err == nil {
-			out.SetupSteps = append(out.SetupSteps, "evidence: "+dir)
-		} else {
-			out.SetupSteps = append(out.SetupSteps, "evidence: "+err.Error())
-		}
-	}
+func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, keepUp bool, out *RunSuiteOut, setupErr error, blocked blockedRun) error {
+	recordBlockedBySetup(ctx, sd, dataDir, net, out, setupErr, blocked)
 	if keepUp || net.teardown == nil {
 		return setupErr
 	}
@@ -459,6 +473,42 @@ func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, n
 		return fmt.Errorf("%w (and the network could not be taken down: %v)", setupErr, err)
 	}
 	return setupErr
+}
+
+// recordBlockedBySetup writes the setup failure into the run's artifacts: every
+// spec that was going to run gets its folder, a blocked verdict naming the setup
+// error, and the gathered evidence under its observations/.
+//
+// Under the test, because a network is composed for the test that asked for it.
+// Five definitions given to one command are five attempts, each composing its
+// own network, and a failure filed anywhere else — a folder named after the
+// chain, a shared dump beside the workspace — severs the one link a reader
+// needs: which attempt this was. The evidence is copied per test for the same
+// reason, and it is bulky on purpose.
+func recordBlockedBySetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, out *RunSuiteOut, setupErr error, blocked blockedRun) {
+	if blocked.sess == nil || len(blocked.specs) == 0 {
+		return
+	}
+	ev := gatherFailureData(ctx, sd, dataDir, net.nodes)
+	for i, spec := range blocked.specs {
+		rec := blocked.sess.Test(i+1, spec.ID)
+		if i < len(blocked.raw) {
+			rec.Spec(blocked.raw[i])
+		}
+		rec.Status(session.StatusBlocked)
+		rec.Reason(setupErr.Error())
+		for _, e := range ev {
+			rec.Observation(e.Name, e.Data)
+		}
+	}
+	if err := blocked.sess.Save(); err != nil {
+		out.SetupSteps = append(out.SetupSteps, "evidence: "+err.Error())
+		return
+	}
+	out.SetupSteps = append(out.SetupSteps, "evidence: "+blocked.sess.Root())
+	if sum, serr := ReadSessionSummary(blocked.sess.Root()); serr == nil {
+		out.Summary = sum
+	}
 }
 
 // artifactRoot decides where the session lands, in the layers this track uses
@@ -509,6 +559,11 @@ type attachWiring struct {
 	Caps               []string
 	NodeMonitorTimeout time.Duration
 	SetupSteps         *[]string
+	// Session, when non-nil, is the session the caller already opened. The
+	// compose path opens one before it composes so a setup failure has a test
+	// folder to be recorded in; the attach path has nothing to record before
+	// the engine runs and leaves this nil.
+	Session session.Session
 }
 
 // wiredAttachEngine builds an attach engine over a composed network with the
@@ -521,6 +576,7 @@ func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine
 	return NewAttachEngine(AttachConfig{
 		Chain: w.Chain, RPCURLs: net.endpoints,
 		ArtifactRoot: w.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), w.Caps...), Clock: sd.Clock,
+		Session: w.Session,
 		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
 		Artifacts: composedArtifacts(net),
 		Bus:       collector.NewBus(),

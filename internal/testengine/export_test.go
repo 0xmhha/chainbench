@@ -19,10 +19,10 @@ func ComposedForTest(teardown func(context.Context) error) composed {
 	return composed{teardown: teardown}
 }
 
-// AfterFailedSetupForTest exposes afterFailedSetup with the gathering side
-// disabled: it is driven with an empty workspace path, so the test drives the
-// decision (stop or keep) without a network to gather from.
+// AfterFailedSetupForTest exposes afterFailedSetup with the recording side
+// disabled: it is driven with no session and an empty workspace path, so the
+// test drives the decision (stop or keep) without a network to gather from.
 func AfterFailedSetupForTest(ctx context.Context, net composed, keepUp bool, setupErr error) error {
 	var out RunSuiteOut
-	return afterFailedSetup(ctx, chainsetup.Deps{}, "", net, keepUp, &out, setupErr)
+	return afterFailedSetup(ctx, chainsetup.Deps{}, "", net, keepUp, &out, setupErr, blockedRun{})
 }

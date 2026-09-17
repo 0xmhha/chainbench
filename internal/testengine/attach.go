@@ -65,6 +65,17 @@ type AttachConfig struct {
 	Caps []string
 	// Clock supplies the session start time; nil uses time.Now.
 	Clock func() time.Time
+	// Session, when non-nil, is the artifact session this run writes into,
+	// already created by the caller. The engine then records into it instead of
+	// opening one of its own.
+	//
+	// It exists because a run can fail before the engine starts. Composing the
+	// network comes first, and a network that will not come up used to leave
+	// nothing behind at all: the session was created by the engine, the engine
+	// had not run, so there was no test folder for the evidence and no verdict
+	// saying the test was blocked. The caller creates the session up front and
+	// hands it in, and the failure has somewhere to be recorded.
+	Session session.Session
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
 	// disables emission.
 	Bus *collector.Bus
@@ -189,6 +200,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	return New(Deps{
 		Command: engineCommand,
 		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
+			// The caller's session wins: it is the one already holding whatever
+			// was recorded before the engine started.
+			if cfg.Session != nil {
+				return cfg.Session, nil
+			}
 			// Attach owns no node identities, but a spec may still generate keys
 			// mid-run, so the session gets a keyring rooted in its own keys/
 			// directory rather than nothing.
