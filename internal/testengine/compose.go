@@ -367,7 +367,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
 		BPCount: validators, ENCount: endpoints, PNCount: proxies, EndpointSyncMode: syncMode,
 		AutoSize: autoBP,
-		Topology: inlineTopo, Binaries: resolvedBins,
+		Topology: inlineTopo, Binaries: resolvedBins, BinaryChains: spec.Chain.BinaryChains,
 		Server: in.Server, Docker: in.Docker,
 		ChainID:          in.ChainID,
 		GenesisSet:       hardforkSets(spec.Hardforks),

@@ -71,6 +71,15 @@ type State struct {
 	BPCount     int           `json:"bp,omitempty"`
 	Target      resource.Spec `json:"target"`
 	GenesisPath string        `json:"genesisPath,omitempty"`
+	// BinaryChains maps a binary name — the same names Binaries uses — to the
+	// chain that binary runs. Absent, or a name it does not hold, means the
+	// composition's own chain.
+	//
+	// It exists because the chain is what answers a node's launch: which flag
+	// vocabulary its binary accepts, which RPC namespace it serves, and what its
+	// consensus asks of it. A network running two builds of two different chains
+	// had every node answering with one of them.
+	BinaryChains map[string]string `json:"binaryChains,omitempty"`
 	// GenesisPaths maps a binary name — the same names Binaries uses — to the
 	// genesis the nodes running that binary initialize from. Absent, or a name
 	// it does not hold, means GenesisPath: one document for the network, which

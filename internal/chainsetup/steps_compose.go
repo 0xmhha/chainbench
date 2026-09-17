@@ -404,6 +404,10 @@ type AllocateOpts struct {
 	// its resolved path, recorded on the workspace so launch resolves each
 	// node's binary. Empty means every node runs the single binary.
 	Binaries map[string]string
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the composition's. A name it does not hold runs the composition's chain,
+	// which is every network of one build.
+	BinaryChains map[string]string
 	// Topology, when set, gives the layout explicitly — one entry per node, in
 	// launch order, each with its own role and sync mode. It replaces the
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
@@ -672,6 +676,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if len(opts.Binaries) > 0 {
 		w.state.Binaries = opts.Binaries
 	}
+	if len(opts.BinaryChains) > 0 {
+		w.state.BinaryChains = opts.BinaryChains
+	}
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
 	w.state.BPCount = validators
@@ -920,7 +927,13 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	w.state.ConfigProvenance = w.state.ConfigProvenance[:0]
 	overridden := 0
 	for _, ns := range w.state.Nodes {
-		prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, ns, "")
+		// Each node's config is rendered from ITS chain. A network of one build
+		// resolves to the composition's for every node, which is what this was.
+		np, perr := w.pluginFor(ns)
+		if perr != nil {
+			return "", perr
+		}
+		prov, err := w.writeNodeConfig(ctx, np, preset, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}

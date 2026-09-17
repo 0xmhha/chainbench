@@ -89,6 +89,10 @@ type NetUpIn struct {
 	ChainID     int64    `json:"chainID,omitempty"`
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the composition's. It travels beside Binaries because it answers the same
+	// question about the same name.
+	BinaryChains map[string]string `json:"binaryChains,omitempty"`
 	// GenesisPerBinary names, per binary, an overlay file whose genesis
 	// fragment is merged onto the built genesis to make that binary's own
 	// document. The nodes running it initialize from the result.
@@ -220,7 +224,7 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
-				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,
+				Topology:      in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains, Peering: in.Peering,
 				Server:   in.Server,
 				AutoSize: in.AutoSize,
 			})

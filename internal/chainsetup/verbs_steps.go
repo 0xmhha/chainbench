@@ -137,6 +137,9 @@ type NetAllocateIn struct {
 	Topology *node.Topology
 	// Binaries maps per-node binary names to paths (with a per-node topology).
 	Binaries map[string]string
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the composition's.
+	BinaryChains map[string]string
 	// AutoSize fills the validator count to the server set (bp: "max"): the
 	// network is one node per server, less the proxies and endpoints asked for.
 	// It needs a server-set target and is ignored when a topology or blueprint
@@ -200,7 +203,8 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
 			Peering: peeringOf(bp, in.Peering),
 			Pool:    resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
-			AutoSize: in.AutoSize,
+			BinaryChains: in.BinaryChains,
+			AutoSize:     in.AutoSize,
 		})
 	})
 	return StepOut{Detail: detail}, err

@@ -11,9 +11,14 @@ import (
 // test. A single Binary applies to all nodes; Binaries maps roles to binaries
 // for mixed (handoff) environments.
 type ChainSpec struct {
-	Name           string            `json:"name"`
-	Binary         string            `json:"binary,omitempty"`
-	Binaries       map[string]string `json:"binaries,omitempty"`
+	Name     string            `json:"name"`
+	Binary   string            `json:"binary,omitempty"`
+	Binaries map[string]string `json:"binaries,omitempty"`
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the one Name says. A network running two builds of two different chains
+	// needs it: the chain is what supplies each node's flag vocabulary, its RPC
+	// namespace and what its consensus asks of a launch.
+	BinaryChains   map[string]string `json:"binaryChains,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
 	// GenesisPerBinary is, per binary name, what that binary's own genesis

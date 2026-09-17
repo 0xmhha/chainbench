@@ -69,10 +69,10 @@ type EnvV2 struct {
 	// Manifest is an external, project-supplied chain manifest JSON, run on the
 	// built-in family named by Chain; GenesisTemplate is its genesis template.
 	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
-	Manifest        string            `json:"manifest,omitempty"`
-	GenesisTemplate string            `json:"genesisTemplate,omitempty"`
-	Binaries        map[string]string `json:"binaries,omitempty"`
-	Keys            *KeysV2           `json:"keys,omitempty"`
+	Manifest        string                 `json:"manifest,omitempty"`
+	GenesisTemplate string                 `json:"genesisTemplate,omitempty"`
+	Binaries        map[string]BinaryRefV2 `json:"binaries,omitempty"`
+	Keys            *KeysV2                `json:"keys,omitempty"`
 	// Blueprint is a network declaration file — the layout AND the node keys in
 	// one document. With it, no topology or key set is needed; it is the DSL
 	// equivalent of the CLI's --blueprint.
@@ -132,6 +132,41 @@ const (
 	// the rest of the network runs.
 	BinaryDefault = "default"
 )
+
+// BinaryRefV2 is one entry of an env's "binaries": which binary the name means
+// and, when it differs from the environment's, which chain that binary runs.
+//
+// A bare string is the shorthand and means "this environment's chain", which is
+// every declaration that runs one build. Chain is for a network that runs two
+// that are not the same chain — a handoff across a fork is the case — because
+// the chain is what says the binary's flag vocabulary, its RPC namespace and
+// what its consensus asks of a launch. A per-node binary without it left every
+// node assembling argv against the other build's answers.
+type BinaryRefV2 struct {
+	Binary string `json:"binary"`
+	Chain  string `json:"chain,omitempty"`
+}
+
+// UnmarshalJSON accepts both forms: "gwbft" and {"binary":"gwbft","chain":"wbft"}.
+func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
+	var name string
+	if err := json.Unmarshal(data, &name); err == nil {
+		b.Binary = name
+		return nil
+	}
+	type ref BinaryRefV2
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	var r ref
+	if err := dec.Decode(&r); err != nil {
+		return fmt.Errorf("dsl: a binaries entry is a name or {binary, chain}: %w", err)
+	}
+	if r.Binary == "" {
+		return fmt.Errorf("dsl: a binaries entry needs a binary")
+	}
+	*b = BinaryRefV2(r)
+	return nil
+}
 
 // UpgradeV2 declares a handoff composition: which golden profile shapes it
 // and which genesis template the producer's binary generates from. It is a
@@ -515,17 +550,26 @@ func lowerCase(c CaseV2) (Spec, error) {
 
 	// A definition names a binary; it does not place one. A path here is a
 	// fact about one machine, and a case that carries it runs nowhere else.
+	names := map[string]string{}
 	for key, ref := range env.Binaries {
-		if err := binaryRefIsAName(ref); err != nil {
-			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref, err)
+		if err := binaryRefIsAName(ref.Binary); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref.Binary, err)
 		}
+		names[key] = ref.Binary
+		if ref.Chain == "" {
+			continue
+		}
+		if spec.Chain.BinaryChains == nil {
+			spec.Chain.BinaryChains = map[string]string{}
+		}
+		spec.Chain.BinaryChains[key] = ref.Chain
 	}
 
 	// Binaries: "default" is every node's binary; other keys are per-role.
-	if b, ok := env.Binaries[BinaryDefault]; ok && len(env.Binaries) == 1 {
+	if b, ok := names[BinaryDefault]; ok && len(names) == 1 {
 		spec.Chain.Binary = b
-	} else if len(env.Binaries) > 0 {
-		spec.Chain.Binaries = env.Binaries
+	} else if len(names) > 0 {
+		spec.Chain.Binaries = names
 	}
 
 	// An upgrade names its two binaries by which side of the fork each seals,
@@ -536,7 +580,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
 		}
 		for _, key := range []string{BinaryFrom, BinaryTo} {
-			if env.Binaries[key] == "" {
+			if env.Binaries[key].Binary == "" {
 				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names one binary per side of the fork — binaries.%s is missing", c.ID, key)
 			}
 		}

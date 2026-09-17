@@ -508,3 +508,47 @@ func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.
 		t.Errorf("binaries[next] = %q, want gstable-next", got)
 	}
 }
+
+// TestComposition_ABinaryCanNameItsOwnChain.
+//
+// A network that runs two builds of two different chains needs each node
+// configured against its own: the chain is what says the flag vocabulary, the
+// RPC namespace and what the consensus asks of a launch. The declaration says
+// it per binary, and a bare string keeps meaning "this environment's chain".
+func TestComposition_ABinaryCanNameItsOwnChain(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{
+	    "default":"gwemix",
+	    "next":{"binary":"gwbft","chain":"wbft"}},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"bp"},{"index":2,"role":"en","binary":"next"}]}}`
+
+	spec := caseWithEnv(t, env)
+	if got := spec.Chain.BinaryChains["next"]; got != "wbft" {
+		t.Fatalf("the declaration did not reach the spec: %v", spec.Chain.BinaryChains)
+	}
+	if _, named := spec.Chain.BinaryChains["default"]; named {
+		t.Errorf("a bare string named a chain: %v", spec.Chain.BinaryChains)
+	}
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+	if got := comp.up.BinaryChains["next"]; got != "wbft" {
+		t.Errorf("the request carries %v, want next->wbft", comp.up.BinaryChains)
+	}
+}
+
+// TestComposition_ABinaryEntryNeedsABinary: an object form that names only a
+// chain says which chain nothing runs.
+func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix","next":{"chain":"wbft"}},
+	  "topology":{"bp":1}}`
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + env + `,
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	if _, err := dsl.Parse([]byte(raw)); err == nil ||
+		!strings.Contains(err.Error(), "needs a binary") {
+		t.Fatalf("an entry with no binary was accepted: %v", err)
+	}
+}

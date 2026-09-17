@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
@@ -61,6 +62,21 @@ func (w *Workspace) genesisFor(ns node.Record) string {
 		}
 	}
 	return w.state.GenesisPath
+}
+
+// pluginFor resolves the chain one node runs: the one recorded for its binary
+// when that binary is a different chain, otherwise the composition's.
+//
+// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
+// same question: which of this network's builds is this node. Keeping them the
+// same shape is what stops one of them answering differently from the others.
+func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
+	if ns.Binary != "" {
+		if id := w.state.BinaryChains[ns.Binary]; id != "" {
+			return external.ResolveChain(id, "", "")
+		}
+	}
+	return w.plugin()
 }
 
 // genesisPaths is every genesis document this composition wrote, deduplicated,
@@ -532,11 +548,21 @@ func (w *Workspace) setNodeBinary(ni int, binary string) {
 	if w.state.Binaries == nil {
 		w.state.Binaries = map[string]string{}
 	}
+	name := binary
 	if path := w.state.Binaries[binary]; path != "" {
 		binary = path
 	}
 	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
+	// The chain travels with the name. Without this a swap onto another build
+	// kept its path and lost which chain it is, so the node relaunched with the
+	// other build's flag vocabulary.
+	if id := w.state.BinaryChains[name]; id != "" {
+		if w.state.BinaryChains == nil {
+			w.state.BinaryChains = map[string]string{}
+		}
+		w.state.BinaryChains[key] = id
+	}
 	w.state.Nodes[ni].Binary = key
 }
 
@@ -558,7 +584,11 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 		w.state.ConfigSet = map[string][]string{}
 	}
 	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], config...)
-	prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
+	np, err := w.pluginFor(w.state.Nodes[ni])
+	if err != nil {
+		return err
+	}
+	prov, err := w.writeNodeConfig(ctx, np, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
 	if err != nil {
 		return err
 	}
@@ -1032,7 +1062,14 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d peers: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
+			// This node's own chain, which is not always the composition's: a
+			// network can run two builds, and the chain is what says which flag
+			// vocabulary the binary accepts and which RPC namespace it serves.
+			np, perr := w.pluginFor(ns)
+			if perr != nil {
+				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, perr)
+			}
+			args, err := nodeconfig.Argv(process.NodeConfig(np, preset, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
