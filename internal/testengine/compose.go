@@ -227,7 +227,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
 			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply — the network's size lives in the profile's roles (producers, validators), together with the identity order, validator addresses and extradata that have to agree with it, so run a different profile to run a different size")
 		}
-		return composition{handoff: &upgrade.HandoffInputs{
+		hi := upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
 			KeysDir:        keysDir,
@@ -235,7 +235,30 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryTo]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
-		}}, nil
+		}
+		// Where its nodes run, through the same resolver `chainbench upgrade`
+		// uses. A handoff is a network like any other in this respect: it is
+		// placed on a server set or on this machine, and which one is the
+		// caller's to say. This surface used to fill seven fields and stop, so
+		// a case declaring a handoff ran locally whatever the operator asked
+		// for, and said nothing about the server, the target or the environment
+		// file it had been given.
+		wc, terr := upgradeTarget(in).Apply(&hi, handoffNodes(hi.ProfilePath))
+		if terr != nil {
+			return composition{}, terr
+		}
+		// And which file the binary names point at over there, the same way the
+		// composition path places its own.
+		if wc != nil {
+			for _, b := range []*string{&hi.FromBinary, &hi.ToBinary} {
+				placed, perr := chainsetup.PlaceBinary(*b, wc)
+				if perr != nil {
+					return composition{}, perr
+				}
+				*b = placed
+			}
+		}
+		return composition{handoff: &hi}, nil
 	}
 
 	// A node table (topology.nodes[]) declares each node's role and binary
@@ -716,6 +739,28 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 		return "", fmt.Errorf("write genesis overlay: %w", err)
 	}
 	return path, nil
+}
+
+// upgradeTarget is where a handoff's nodes run, read from the same request
+// fields the composition path reads them from.
+func upgradeTarget(in RunSuiteIn) upgrade.Target {
+	return upgrade.Target{
+		Server:              in.Server,
+		AllServers:          in.Server.All,
+		WorkspaceConfigPath: in.WorkspaceConfigPath,
+		Docker:              in.Docker,
+	}
+}
+
+// handoffNodes is how many nodes the profile places, which the placement needs
+// before the handoff is built. A profile that cannot be read yields zero and
+// lets NewHandoff report it, so one unreadable profile is not two errors.
+func handoffNodes(profilePath string) int {
+	prof, err := upgrade.LoadProfile(profilePath)
+	if err != nil {
+		return 0
+	}
+	return prof.Roles.Producers + prof.Roles.Validators
 }
 
 // writeOverlays renders one overlay file per binary, the same way the network's

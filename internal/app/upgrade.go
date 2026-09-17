@@ -3,9 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"os/exec"
@@ -98,93 +95,34 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	// the operator's own PATH is how the first remote run failed, reporting a
 	// binary "not found" that was sitting on the target all along.
 	//
-	// Placement comes before the target for the same reason in reverse: with
-	// --all-servers the set names every machine, so the base target is not a
-	// flag the operator repeats but the machine the first node landed on.
-	// Requiring --server beside --all-servers asked for a fact the placement
-	// already knew, and omitting it failed with "a data dir is required".
-	var (
-		acc      *resource.Access
-		wc       *resource.WorkspaceConfig
-		placed   *node.Map
-		machines func(int) (filestore.Store, process.Driver, error)
-		dialURL  func(string, int) (string, error)
-	)
-	if in.Server.Name != "" || in.AllServers {
-		placed, err = placeHandoff(d, in, prof.Roles.Producers+prof.Roles.Validators)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
-		// The opener is the one place an address becomes reachable: it applies the
-		// localmap under --docker and leaves a real server's address alone. The
-		// handoff dialled the node's own address before, which under --docker is
-		// the container's and answers to nobody else.
-		opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
-		dialURL = opener.HTTPEndpoint
-		// Each node's machine, resolved from the server the placement put it on.
-		// Without this a driver bound to one host runs every node there, whatever
-		// the plan says: the composition path has resolved per node since it
-		// started placing networks across a set, and this is the same seam.
-		machines, err = handoffMachines(d, in, placed, opener)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
-		if in.Server.Name == "" {
-			name, err := firstPlacedServer(in, placed)
-			if err != nil {
-				return UpgradeRunOut{}, err
-			}
-			in.Server.Name = name
-		}
-		acc, wc, err = openHandoffTarget(d, in)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
-	}
-	fromBin, err := resolveBinaryOn(ctx, acc, wc, in.FromBinary, prof.Chains.From.Binary)
-	if err != nil {
-		return UpgradeRunOut{}, fmt.Errorf("from binary: %w", err)
-	}
-	toBin, err := resolveBinaryOn(ctx, acc, wc, in.ToBinary, prof.Chains.To.Binary)
-	if err != nil {
-		return UpgradeRunOut{}, fmt.Errorf("to binary: %w", err)
-	}
+	// The resolution itself lives with HandoffInputs now, so the other surface
+	// that composes a handoff — a case declaring one in the DSL — gets the same
+	// answer instead of a local-only one.
 	hi := upgrade.HandoffInputs{
 		ProfilePath:    in.ProfilePath,
 		KeysDir:        in.KeysDir,
-		FromBinary:     fromBin,
-		ToBinary:       toBin,
 		Template:       in.Template,
 		GenesisOverlay: in.GenesisOverlay,
 		DataDir:        in.DataDir,
 	}
-	// A named server moves the data plane. The profile, template, preset and
-	// overlay stay local — they are the operator's inputs — while the genesis,
-	// configs, keystores and the node processes go through the target's own
-	// boundaries. That split is already what HandoffInputs documents; this is
-	// the resolution that was missing.
-	// A named server means the ports come from the server set rather than the
-	// profile. That matters even for ONE server: the profile's bases (rpc 40010,
-	// step 10) are not what a fleet publishes, so a handoff on a server dialled a
-	// port nothing answered on. Drawing from the set puts the nodes on that
-	// server's slots, whose ports the set already declares and the fleet already
-	// maps.
-	if placed != nil {
-		hi.Placement = placed
-		hi.MultiMachine = spansHosts(placed)
-		hi.DialURL = dialURL
-		hi.Machine = machines
+	target := upgrade.Target{
+		Server: in.Server, AllServers: in.AllServers,
+		WorkspaceConfigPath: in.WorkspaceConfigPath, Docker: in.Docker,
+		Env: d.Env, Report: d.Logf,
 	}
-	if acc != nil {
-		hi.Host = acc.Spec.Host
-		hi.DataDir = acc.DataRoot
-		hi.Files = acc.Files
-		hi.Driver = acc.Driver
-		ex, err := handoffExec(acc)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
-		hi.Exec = ex
+	wc, err := target.Apply(&hi, prof.Roles.Producers+prof.Roles.Validators)
+	if err != nil {
+		return UpgradeRunOut{}, err
+	}
+	var acc *resource.Access
+	if !target.Local() {
+		acc = &resource.Access{Spec: resource.Spec{Server: hi.Host}, Files: hi.Files, Driver: hi.Driver}
+	}
+	if hi.FromBinary, err = resolveBinaryOn(ctx, acc, wc, in.FromBinary, prof.Chains.From.Binary); err != nil {
+		return UpgradeRunOut{}, fmt.Errorf("from binary: %w", err)
+	}
+	if hi.ToBinary, err = resolveBinaryOn(ctx, acc, wc, in.ToBinary, prof.Chains.To.Binary); err != nil {
+		return UpgradeRunOut{}, fmt.Errorf("to binary: %w", err)
 	}
 	h, err := upgrade.NewHandoff(hi)
 	if err != nil {
@@ -340,169 +278,4 @@ func UpgradeGenesis(_ Deps, profilePath, fromGenesisPath string) (UpgradeGenesis
 		})
 	}
 	return out, nil
-}
-
-// openHandoffTarget resolves where a remote handoff's data plane lives.
-//
-// It mirrors openTransferTarget: the workspace-config owns the data root, and a
-// remote server cannot resolve without it, so asking for a server without one is
-// an error naming the missing file rather than a resolution failure further down.
-func openHandoffTarget(d Deps, in UpgradeRunIn) (*resource.Access, *resource.WorkspaceConfig, error) {
-	if in.WorkspaceConfigPath == "" {
-		return nil, nil, fmt.Errorf("upgrade run: --workspace-config is required with --server/--all-servers (it owns the target data root)")
-	}
-	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
-	if err != nil {
-		return nil, nil, err
-	}
-	opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
-	acc, err := opener.Open(resource.Spec{Server: in.Server.Name, DataRoot: wc.DataRoot})
-	if err != nil {
-		return nil, nil, err
-	}
-	// The config is returned rather than dropped because it is also the answer to
-	// "where does a bare binary name live over there": dataRoot + paths.binaries,
-	// with binaryAliases applied. Dropping it is why that question had no answer.
-	return acc, &wc, nil
-}
-
-// handoffExec is the bootstrap runner for a remote target: the poa helpers take
-// a binary and arguments, and a remote target takes one command line, so the
-// target's own Commander does the quoting through process.ShellRunner — the same
-// adapter the composition path uses for the poa phase actions.
-func handoffExec(acc *resource.Access) (poa.Runner, error) {
-	cmdr, ok := acc.Driver.(process.Commander)
-	if !ok {
-		return nil, fmt.Errorf("upgrade run: target %q cannot run commands, so governance and etcd cannot be bootstrapped on it", acc.Spec.Server)
-	}
-	return poa.Runner(process.ShellRunner(cmdr)), nil
-}
-
-// placeHandoff draws the handoff's nodes from the server set: which machine each
-// one runs on and which port band it gets.
-//
-// Every node is requested as a producer role because a handoff's roles are
-// producer/successor rather than bp/en, and the allocator only needs to know how
-// many slots to hand out. The order it returns is the order the plan reads: the
-// profile's producers come first, so nodes 1..P are the from-chain miners and the
-// rest are the successors — which on a 15-server set puts one of each on every
-// server, the second at the next port band.
-func placeHandoff(d Deps, in UpgradeRunIn, total int) (*node.Map, error) {
-	ref := in.Server
-	ref.All = in.AllServers
-	resolved, err := resource.ResolveServer(ref, 1, handoffPortBand)
-	if err != nil {
-		return nil, fmt.Errorf("upgrade run: placing %d node(s): %w", total, err)
-	}
-	inv, err := resource.NewInventory(resolved.Pool)
-	if err != nil {
-		return nil, fmt.Errorf("upgrade run: %w", err)
-	}
-	reqs := make([]resource.Request, total)
-	for i := range reqs {
-		reqs[i] = resource.Request{Role: node.RoleBP}
-	}
-	placed, err := inv.Assign(reqs, "")
-	if err != nil {
-		return nil, fmt.Errorf("upgrade run: placing %d node(s) on the server set: %w", total, err)
-	}
-	if d.Logf != nil {
-		for _, pl := range placed.Placements() {
-			d.Logf("place: %s on %s p2p=%d http=%d", pl.Label, pl.Host, pl.Ports.P2P, pl.Ports.HTTP)
-		}
-	}
-	return placed, nil
-}
-
-// handoffPortBand is the span one server's port purposes occupy, matching what
-// the composition path reserves.
-const handoffPortBand = 100
-
-// spansHosts reports whether a placement put nodes on more than one machine,
-// which is what needs a file store and a driver per node.
-func spansHosts(m *node.Map) bool {
-	seen := map[string]bool{}
-	for _, pl := range m.Placements() {
-		seen[pl.Host] = true
-	}
-	return len(seen) > 1
-}
-
-// firstPlacedServer names the server the handoff's first node landed on. With
-// --all-servers there is no --server to read the base target from, and every
-// machine in the set is equally a target, so the plan's own first node decides:
-// its machine is the one whose workspace-config owns the data root and whose
-// PATH a bare binary name is looked up on.
-func firstPlacedServer(in UpgradeRunIn, placed *node.Map) (string, error) {
-	names, err := serverNamesByIndex(in, placed)
-	if err != nil {
-		return "", err
-	}
-	name, ok := names[0]
-	if !ok {
-		return "", fmt.Errorf("upgrade run: the placement has no node1, so there is no server to take the data root from")
-	}
-	return name, nil
-}
-
-// serverNamesByIndex maps each placed node's zero-based index to the name of the
-// server set entry that owns its address. The placement records an address; the
-// credentials, and therefore the Access, belong to the named entry.
-func serverNamesByIndex(in UpgradeRunIn, placed *node.Map) (map[int]string, error) {
-	setPath := in.Server.SetPath
-	if setPath == "" {
-		setPath = resource.DefaultSetFile
-	}
-	set, err := resource.LoadSet(setPath)
-	if err != nil {
-		return nil, fmt.Errorf("upgrade run: server set: %w", err)
-	}
-	nameOf := map[string]string{}
-	for _, h := range set.PoolSpec.Hosts {
-		nameOf[h.Addr] = h.Name
-	}
-	byIndex := map[int]string{}
-	for _, pl := range placed.Placements() {
-		name, ok := nameOf[pl.Host]
-		if !ok {
-			return nil, fmt.Errorf("upgrade run: %s was placed at %s, which the server set does not name", pl.Label, pl.Host)
-		}
-		byIndex[pl.Index-1] = name
-	}
-	return byIndex, nil
-}
-
-// handoffMachines resolves a file store and a driver for each placed node, by the
-// server its address belongs to.
-//
-// The placement records an address, and a server set maps an address back to the
-// entry that owns its credentials — so the lookup goes address -> server name ->
-// Access, and each Access is opened once and shared by the nodes on that machine.
-func handoffMachines(d Deps, in UpgradeRunIn, placed *node.Map, opener resource.Opener) (
-	func(int) (filestore.Store, process.Driver, error), error,
-) {
-	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	byIndex, err := serverNamesByIndex(in, placed)
-	if err != nil {
-		return nil, err
-	}
-	cache := map[string]*resource.Access{}
-	return func(i int) (filestore.Store, process.Driver, error) {
-		name, ok := byIndex[i]
-		if !ok {
-			return nil, nil, fmt.Errorf("upgrade run: node%d has no placement", i+1)
-		}
-		if acc, hit := cache[name]; hit {
-			return acc.Files, acc.Driver, nil
-		}
-		acc, err := opener.Open(resource.Spec{Server: name, DataRoot: wc.DataRoot})
-		if err != nil {
-			return nil, nil, fmt.Errorf("upgrade run: node%d on %s: %w", i+1, name, err)
-		}
-		cache[name] = acc
-		return acc.Files, acc.Driver, nil
-	}, nil
 }
