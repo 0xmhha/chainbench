@@ -2,6 +2,7 @@ package testengine
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -328,4 +329,48 @@ func TestRefuseMachineConflict(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestPlan_NamesTheBinaryTheLaunchWillRun (W4b).
+//
+// A workspace-config exists to say where files actually are, and it puts
+// binaries under the target's data root. The launch resolved a name through it
+// and recorded /data/bin/gstable; the plan recorded "gstable". The pre-test
+// comparison then refused a run that was entirely correct —
+//
+//	the network: asked for binary gstable, launched with /data/bin/gstable
+//
+// — and the refusal was right about the disagreement and wrong about who was
+// at fault. The plan was reading one layer short.
+func TestPlan_NamesTheBinaryTheLaunchWillRun(t *testing.T) {
+	dir := t.TempDir()
+	cfg := filepath.Join(dir, "workspace-config.yaml")
+	writeConfig(t, cfg, filepath.Join(dir, "out"))
+
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"topology":{"bp":1}}`
+
+	t.Run("placed through the environment file", func(t *testing.T) {
+		p := planFor(t, env, RunSuiteIn{WorkspaceConfigPath: cfg})
+		if want := "/data/bin/gstable"; p.Binary != want {
+			t.Fatalf("plan binary = %q, want the placed %q", p.Binary, want)
+		}
+	})
+
+	// Without one a name is the target's to resolve, and the plan must not
+	// invent a path the launch would not use.
+	t.Run("a name stays a name without one", func(t *testing.T) {
+		p := planFor(t, env, RunSuiteIn{})
+		if p.Binary != "gstable" {
+			t.Fatalf("plan binary = %q, want gstable", p.Binary)
+		}
+	})
+
+	// An operator's explicit path is already placed, on both sides.
+	t.Run("an absolute path is left alone", func(t *testing.T) {
+		p := planFor(t, env, RunSuiteIn{WorkspaceConfigPath: cfg, Binary: "/opt/gstable"})
+		if p.Binary != "/opt/gstable" {
+			t.Fatalf("plan binary = %q, want /opt/gstable", p.Binary)
+		}
+	})
 }

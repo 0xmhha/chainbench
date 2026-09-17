@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // The binary a node runs is named in up to four places, and before this file
@@ -65,15 +67,28 @@ func (w *Workspace) manifestBinary() (string, error) {
 // running it. A name is placed through the workspace-config when there is one,
 // and otherwise left for the target's PATH.
 func (w *Workspace) placeBinary(ref string) (string, error) {
+	wc, err := w.wc()
+	if err != nil {
+		return "", err
+	}
+	return PlaceBinary(ref, wc)
+}
+
+// PlaceBinary turns a binary reference into what the target will run, under the
+// environment wc describes. A nil wc is no environment file.
+//
+// Exported because the plan has to say the same thing. A plan that records the
+// name while the launch records the placed path makes the two disagree about a
+// run that is correct, and the pre-test comparison then refuses it: "asked for
+// binary gstable, launched with /data/net1/bin/gstable". The check was right and
+// the plan was reading one layer short — a workspace-config exists to say where
+// the file actually is, so the plan has to go through it too.
+func PlaceBinary(ref string, wc *resource.WorkspaceConfig) (string, error) {
 	if ref == "" {
 		return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `chain new`)")
 	}
 	if filepath.IsAbs(ref) {
 		return ref, nil
-	}
-	wc, err := w.wc()
-	if err != nil {
-		return "", err
 	}
 	if wc == nil {
 		// No environment file: the name is the target's to resolve. A relative
