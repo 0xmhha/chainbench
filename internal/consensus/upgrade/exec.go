@@ -30,6 +30,18 @@ type LaunchOptions struct {
 	FromChain, ToChain registry.ChainPlugin
 	// Host is the address nodes bind/advertise; defaults to 127.0.0.1.
 	Host string
+	// StaticNodes are the enode URLs every node dials. They go into each
+	// node's config file, which is where a geth-family binary reads them:
+	// the static-nodes.json this used to write is deprecated, and go-wbft says
+	// so in its log and ignores the file.
+	StaticNodes []string
+	// Identity says which account a node unlocks and seals with, and where its
+	// password file is. A node that seals nothing returns empty.
+	//
+	// It is a field of the configuration rather than a launch override because
+	// both renderers need it: the config file names the keystore directory and
+	// the command line names the account.
+	Identity func(spec NodeSpec, producer bool) (unlock, passwordFile string)
 	// InitFn initializes a node's datadir from the shared genesis using the
 	// node's own binary; defaults to process.InitDatadir. Injectable for tests.
 	InitFn func(ctx context.Context, binary, dataDir, genesisPath string) error
@@ -121,13 +133,27 @@ func (o LaunchOptions) host() string {
 // the to-binary with the to-family's flags, all with the plan's uniform network
 // id and collision-free ports. Pure — no disk or process side effects.
 func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
+	specs, _, err := buildLaunch(plan, opts)
+	return specs, err
+}
+
+// buildLaunch returns both halves of a launch: the driver specs and the
+// configuration each was rendered from.
+//
+// One Spec per node feeds both renderers, so the file and the command line
+// cannot disagree about the same node. Before this the handoff rendered only
+// argv and wrote no file at all, which is why its nodekey and its static nodes
+// had to sit where each binary looks for them by convention — and why one of
+// the two binaries ignored the file it was given.
+func buildLaunch(plan Plan, opts LaunchOptions) ([]process.NodeSpec, []nodeconfig.Spec, error) {
 	if opts.FromBinary == "" || opts.ToBinary == "" {
-		return nil, fmt.Errorf("upgrade: both from and to binaries must be set")
+		return nil, nil, fmt.Errorf("upgrade: both from and to binaries must be set")
 	}
 	if opts.FromChain == nil || opts.ToChain == nil {
-		return nil, fmt.Errorf("upgrade: both from and to chains must be set")
+		return nil, nil, fmt.Errorf("upgrade: both from and to chains must be set")
 	}
 	specs := make([]process.NodeSpec, 0, len(plan.Nodes))
+	configs := make([]nodeconfig.Spec, 0, len(plan.Nodes))
 	for _, n := range plan.Nodes {
 		binary, chain := opts.ToBinary, opts.ToChain
 		if n.Producer {
@@ -136,20 +162,41 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 		num := n.Index + 1
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
 		configPath := filepath.Join(opts.DataRoot, fmt.Sprintf("config_node%d.toml", num))
-		endpoints := n.Ports
-		var overrides []nodeconfig.Override
-		if opts.Overrides != nil {
-			overrides = opts.Overrides(n, n.Producer)
-		}
-		args, err := LaunchArgs(n, dataDir, chain, overrides...)
-		if err != nil {
-			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
-		}
 		// The node's own host when the plan placed it on one; the launch's single
 		// host otherwise. A handoff over a server set has a host per node.
 		host := n.Host
 		if host == "" {
 			host = opts.host()
+		}
+		httpHost := "127.0.0.1"
+		if n.Host != "" {
+			httpHost = "0.0.0.0"
+		}
+		cfg := nodeconfig.Spec{
+			// Through the node's own plugin, so the RPC namespace, the flag
+			// vocabulary and the miner's recommit form are the ones ITS binary
+			// speaks. The network id is the plan's: a handoff's devp2p id is not
+			// either manifest's.
+			Chain:       chainFactsOf(chain, n),
+			Role:        n.Role,
+			Ports:       n.Ports,
+			DataDir:     dataDir,
+			ConfigPath:  configPath,
+			NodekeyPath: filepath.Join(dataDir, "nodekey"),
+			KeystoreDir: filepath.Join(dataDir, "keystore"),
+			StaticNodes: opts.StaticNodes,
+			HTTPHost:    httpHost,
+		}
+		if opts.Identity != nil {
+			cfg.Unlock, cfg.PasswordFile = opts.Identity(n, n.Producer)
+		}
+		var overrides []nodeconfig.Override
+		if opts.Overrides != nil {
+			overrides = opts.Overrides(n, n.Producer)
+		}
+		args, err := nodeconfig.Argv(cfg, overrides...)
+		if err != nil {
+			return nil, nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}
 		specs = append(specs, process.NodeSpec{
 			Index:      n.Index,
@@ -161,10 +208,23 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(opts.DataRoot, "logs", fmt.Sprintf("node%d.log", num)),
 			Args:       args,
-			Ports:      endpoints,
+			Ports:      n.Ports,
 		})
+		configs = append(configs, cfg)
 	}
-	return specs, nil
+	return specs, configs, nil
+}
+
+// chainFactsOf is one node's chain facts: its own plugin's answers, with the
+// plan's devp2p network id over the manifest's. A handoff runs one network on
+// two chains, and the id belongs to the network.
+func chainFactsOf(plugin registry.ChainPlugin, n NodeSpec) nodeconfig.Chain {
+	c := nodeconfig.ChainOf(plugin, n.Role)
+	c.NetworkID = n.NetworkID
+	if n.Chain != "" {
+		c.ID = n.Chain
+	}
+	return c
 }
 
 // Launch runs a handoff network: it writes the shared genesis, initializes each
@@ -183,7 +243,7 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 
 	genesisPath := filepath.Join(opts.DataRoot, "genesis.json")
 
-	specs, err := BuildNodeSpecs(plan, opts)
+	specs, configs, err := buildLaunch(plan, opts)
 	if err != nil {
 		return ns, err
 	}
@@ -212,6 +272,23 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 			return ns, fmt.Errorf("upgrade: write genesis for node%d: %w", i+1, err)
 		}
 		written[at] = true
+	}
+	// Each node's config goes to its own machine, beside the genesis. It holds
+	// the node's keystore directory, its endpoints, its RPC modules and its
+	// static peers — the facts a geth-family binary reads from a file rather
+	// than from argv, and the ones this launch used to leave to each binary's
+	// own conventions.
+	for i := range specs {
+		if !opts.wants(i) {
+			continue
+		}
+		files, _, merr := opts.machineFor(i, d)
+		if merr != nil {
+			return ns, fmt.Errorf("upgrade: node%d machine: %w", i+1, merr)
+		}
+		if werr := files.Write(ctx, specs[i].ConfigPath, nodeconfig.TOML(configs[i]), 0o644); werr != nil {
+			return ns, fmt.Errorf("upgrade: write config for node%d: %w", i+1, werr)
+		}
 	}
 	// A driver that can initialize a datadir itself is asked to. The remote
 	// driver is one — it ships the genesis and runs `init` on the host — and

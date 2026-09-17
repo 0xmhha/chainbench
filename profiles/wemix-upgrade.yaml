@@ -31,12 +31,10 @@ chains:
   from:
     binary: gwemix
     binary_path: ""               # go-wemix build/bin/gwemix (required)
-    nodekey_dir: geth             # go-wemix stores the nodekey under geth/
     miner_recommit: nanos         # go-wemix encodes miner.Recommit as int(nanos)
   to:
     binary: gwbft
     binary_path: ""               # go-wbft build/bin/gwbft (required)
-    nodekey_dir: gwemix           # go-wbft stores the nodekey under gwemix/
     miner_recommit: duration      # go-wbft encodes miner.Recommit as "2s"
 
 roles:

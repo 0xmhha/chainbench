@@ -422,6 +422,8 @@ func (h *Handoff) launchOptions(only []int) LaunchOptions {
 		Host:          h.in.host(),
 		ProvisionKeys: h.provisionKeys(),
 		Overrides:     h.overrides(),
+		Identity:      h.identity(),
+		StaticNodes:   h.Plan.Enodes(h.in.host()),
 		Files:         h.in.Files,
 		Machine:       h.in.Machine,
 		Only:          only,
@@ -953,8 +955,6 @@ func (h *Handoff) label(n node.Node) node.Label { return node.LabelFor(n.Index +
 // nodekey in the binary-specific instance directory, the static-nodes list,
 // and — for the producer — its keystore.
 func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) error {
-	enodes := h.Plan.Enodes(h.in.host())
-	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
 	return func(ctx context.Context, spec process.NodeSpec, producer bool) error {
 		// This node's own store. Capturing one store for the whole network sent
 		// every node's key material to one machine, which is where a placement
@@ -963,20 +963,20 @@ func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) 
 		if err != nil {
 			return err
 		}
-		inst := h.Profile.Chains.To.NodekeyDir
-		if producer {
-			inst = h.Profile.Chains.From.NodekeyDir
-		}
 		num := h.order[spec.Index]
 		nk, ok := h.Preset.Node(num)
 		if !ok {
 			return fmt.Errorf("upgrade: preset node %d missing", num)
 		}
-		dir := filepath.Join(spec.DataDir, inst)
-		if err := files.Write(ctx, filepath.Join(dir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
-			return err
-		}
-		if err := files.Write(ctx, filepath.Join(dir, "static-nodes.json"), staticNodes, 0o644); err != nil {
+		// Beside the datadir, and named in the node's config, rather than inside
+		// the directory its binary happens to look in. The two binaries look in
+		// different ones, so the convention had to be carried per binary in the
+		// profile; a named path needs no convention at all.
+		//
+		// The static peers move to the config file with it. go-wbft answers the
+		// static-nodes.json that used to be written here with "deprecated and
+		// ignored" and reads P2P.StaticNodes instead.
+		if err := files.Write(ctx, filepath.Join(spec.DataDir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
 			return err
 		}
 		if !producer {
@@ -998,30 +998,32 @@ func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) 
 // because the mesh is wired with admin_addPeer, and the producer's unlocked
 // etherbase.
 func (h *Handoff) overrides() func(NodeSpec, bool) []nodeconfig.Override {
-	fromNS, toNS := h.From.Family().RPCNamespace(), h.To.Family().RPCNamespace()
+	// What is left once the configuration carries the rest.
+	//
+	// The RPC modules went with it: a node's config names them from its own
+	// chain, and the shared set already covers what this run reaches for —
+	// admin for the mesh, miner and txpool and personal for the tests. Naming
+	// them here made a handoff the one launch whose modules were assembled by
+	// hand.
+	return func(NodeSpec, bool) []nodeconfig.Override {
+		return []nodeconfig.Override{{Key: nodeconfig.KeyNAT, Value: "none"}}
+	}
+}
+
+// identity is the account a node unlocks and seals with.
+//
+// Each producer uses ITS OWN. This used to be Producers.Members[0] for every
+// producer, which is invisible while there is one of them and fatal past that:
+// the fifteenth producer was told to unlock the first one's address and exited
+// with "no key for given address or file", because the only keystore on its
+// machine is its own.
+func (h *Handoff) identity() func(NodeSpec, bool) (string, string) {
 	pwPath := h.pwPath
-	return func(spec NodeSpec, producer bool) []nodeconfig.Override {
-		if producer {
-			// Each producer unlocks and seals with ITS OWN account.
-			//
-			// This used to be Producers.Members[0] for every producer, which is
-			// invisible while there is one of them and fatal past that: the
-			// fifteenth producer was told to unlock the first one's address and
-			// exited with "no key for given address or file", because the only
-			// keystore on its machine is its own.
-			acct := h.producerAccountFor(spec.Index)
-			return []nodeconfig.Override{
-				{Key: nodeconfig.KeyNAT, Value: "none"},
-				{Key: nodeconfig.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
-				{Key: nodeconfig.KeyEtherbase, Value: acct},
-				{Key: nodeconfig.KeyUnlock, Value: acct},
-				{Key: nodeconfig.KeyPassword, Value: pwPath},
-			}
+	return func(spec NodeSpec, producer bool) (string, string) {
+		if !producer {
+			return "", ""
 		}
-		return []nodeconfig.Override{
-			{Key: nodeconfig.KeyNAT, Value: "none"},
-			{Key: nodeconfig.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
-		}
+		return h.producerAccountFor(spec.Index), pwPath
 	}
 }
 

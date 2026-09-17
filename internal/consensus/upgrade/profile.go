@@ -62,10 +62,15 @@ type Profile struct {
 }
 
 // ChainBinding binds one side of the handoff to a concrete binary.
+//
+// It used to carry nodekey_dir, the directory that side's binary looks in for
+// its devp2p key. That was only ever needed because the launch wrote no config
+// file and so had to put the key where each binary would find it by itself. A
+// node's config names the file now, so the two binaries need not agree on a
+// directory and the profile need not know either one.
 type ChainBinding struct {
 	Binary     string `yaml:"binary"`
 	BinaryPath string `yaml:"binary_path"`
-	NodekeyDir string `yaml:"nodekey_dir"`
 	Recommit   string `yaml:"miner_recommit"`
 }
 

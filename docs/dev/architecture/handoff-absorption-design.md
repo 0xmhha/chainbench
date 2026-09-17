@@ -215,14 +215,36 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 
 중간에 깨진 채로 있는 구간을 두지 않는다. 각 단계마다 §5 를 돌린다.
 
-1. **노드별 config 파일.** 핸드오프가 `nodeconfig.TOML` 로 노드별 config 를 쓰고
-   `ConfigPath` 를 넘긴다. argv 층 override 를 `ApplyConfigOverride` 로 Spec 에
-   옮긴다. **§1.1 이 없어진다** — nodekey 와 static-nodes 가 선언으로 가고
-   `nodekey_dir` 의존이 사라지며, gwbft 가 무시하던 파일도 없어진다.
+1. **노드별 config 파일 — 완료 (2026-09-17).** 노드마다 `nodeconfig.Spec` 을 하나
+   만들어 **config 파일과 argv 를 둘 다 거기서 낸다.** 그래서 파일과 명령줄이 한
+   노드를 두고 어긋날 수 없다.
+
+   **§1.1 과 §1.2 가 같이 없어졌다.** nodekey 는 `<datadir>/nodekey` 로 가고
+   config 가 그 경로를 이름으로 말한다. static peers 는 `P2P.StaticNodes` 로
+   간다. 그리고 config 의 `HTTPModules` 가 **각 노드 자신의 체인**에서 나오므로
+   RPC 네임스페이스가 저절로 노드별로 갈린다(실측):
+
+   ```
+   node1 (생산자)  HTTPModules = [..., "wemix"]
+   node2 (후계자)  HTTPModules = [..., "istanbul"]
+   ```
+
+   `Profile.Chains.*.NodekeyDir` 은 읽는 곳이 없어져 **지웠다.** 프로필에서도
+   뺐다. gwbft 가 "deprecated and ignored" 로 답하던 `static-nodes.json` 도
+   더는 쓰지 않는다(실측 — 로그에서 사라졌다).
+
+   **설계에서 틀린 것 하나.** `ApplyConfigOverride` 로 argv override 를 Spec 에
+   옮기면 된다고 적었는데, 그 함수는 `syncMode`·`httpHost`·`metricsHost` 세 개만
+   받는다. 실제로는 계정 관련을 `Spec.Unlock`/`PasswordFile` 로 옮기고, RPC
+   모듈은 config 에 맡기고, `--nat=none` 만 override 로 남겼다.
+
 2. **`binaries` 값에 체인.** DSL 과 `NetUpIn` 이 바이너리별 체인을 나른다.
    `w.plugin()` 이 `w.pluginFor(ns)` 가 되는데, **10곳 중 노드별이 필요한 것은
    `Start`·`Config`·`swapNodeConfig`·`LaunchOpts` 넷**이고 나머지는 구성 전체의
-   답으로 족하다(읽음 — 이 단계에서 컴파일러가 확인한다). **§1.2 가 없어진다.**
+   답으로 족하다(읽음 — 이 단계에서 컴파일러가 확인한다).
+
+   **핸드오프 쪽 §1.2 는 1단계가 이미 풀었다.** 이 단계가 필요한 것은 **보통
+   경로**가 섞인 망을 낼 수 있게 하기 위해서다.
 3. **`upgrade` 선언을 넓힌다.** §2.2 의 문법을 파싱하고, `style: restart` 를 이름을
    대며 거부한다. 하드포크 preset 을 `upgrade.preset` 으로 읽는다.
 4. **핸드오프 케이스를 보통 경로로 돌린다.** 같은 망이 서는지 §5 로 대조한다.
@@ -262,7 +284,8 @@ pass=1
 
 - **생산자가 둘 이상인 핸드오프.** `etcd-join` 과 단계별 순차 기동은 이제 돌 수
   있지만 **도는 것을 못 봤다.** 프로필이 생산자 1을 쓴다. 4단계에서 돌려 본다.
-- **메시가 필요한지.** §1.1 의 로그가 단서다. 1단계에서 드러난다.
+- **메시가 필요한지.** 1단계로 static peers 가 config 에 들어갔다(실측). 그래도
+  `WireMesh` 를 뺀 채로는 **돌려 보지 않았다.** 빼고 돌려 봐야 안다.
 - **`w.plugin()` 10곳의 분류.** 넷이 노드별이라는 것은 **읽고 내린 판단**이다.
   2단계에서 컴파일러가 확인한다.
 - **원격 핸드오프.** `Target` 배선은 오늘 넣었지만 서버셋으로 **돌려 보지
