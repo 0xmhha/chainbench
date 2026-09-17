@@ -36,15 +36,22 @@ func TestPhases_TheProducerGoesUpAlone(t *testing.T) {
 	}
 	h.From = poaFamilyPlugin(t)
 
-	boot, rest := h.phases()
+	phases := h.phases()
+	if len(phases) != 2 {
+		t.Fatalf("phases = %d, want boot then the endpoints", len(phases))
+	}
+	boot := positionsOf(phases[0])
 	if len(boot) != 1 || boot[0] != 0 {
 		t.Fatalf("boot = %v, want only the producer at position 0", boot)
 	}
-	if len(rest) != 3 {
-		t.Fatalf("rest = %v, want the other three", rest)
+	// And what has to happen once it is up, which the handoff used to drop and
+	// then call by hand.
+	if len(phases[0].Actions) == 0 {
+		t.Fatal("the boot phase names no actions, so nothing bootstraps the cluster")
 	}
+	rest := positionsOf(phases[1])
 	for i, want := range []int{1, 2, 3} {
-		if rest[i] != want {
+		if i >= len(rest) || rest[i] != want {
 			t.Fatalf("rest = %v, want [1 2 3] — positions are the plan's, 0-based", rest)
 		}
 	}
@@ -57,9 +64,12 @@ func TestPhases_ALoneProducerHasNoSecondStep(t *testing.T) {
 	h.Plan.Nodes = []NodeSpec{{Producer: true}}
 	h.From = poaFamilyPlugin(t)
 
-	boot, rest := h.phases()
-	if len(boot) != 1 || len(rest) != 0 {
-		t.Fatalf("boot = %v, rest = %v; want the producer alone and nothing after", boot, rest)
+	phases := h.phases()
+	if len(phases) != 1 {
+		t.Fatalf("phases = %d, want the producer alone and nothing after", len(phases))
+	}
+	if boot := positionsOf(phases[0]); len(boot) != 1 || boot[0] != 0 {
+		t.Fatalf("boot = %v, want the producer at position 0", boot)
 	}
 }
 

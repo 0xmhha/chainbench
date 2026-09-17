@@ -77,6 +77,15 @@ type Bootstrap struct {
 	// join runs on the joiner's machine, not the boot node's. Nil falls back to
 	// Run/Files (a single machine, or local).
 	Access NodeAccess
+	// Password is the file holding the keystore password, a path on the boot
+	// node's machine. Empty takes KeysDir/password, which is where a composition
+	// ships it.
+	//
+	// It is a field because the password does not always live with the keys. A
+	// handoff writes one password per machine beside the network's data, and
+	// reading it from KeysDir there found nothing — which is one of the three
+	// small differences that kept a second copy of this sequence alive.
+	Password string
 	// BootKeystore is the boot node's keystore file, a path on its machine.
 	// Empty finds it by listing the local keystore directory, which is correct
 	// only when KeysDir is local; a remote bootstrap sets it because the store
@@ -200,7 +209,10 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 				return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 			}
 		}
-		password := path.Join(b.KeysDir, "password")
+		password := b.Password
+		if password == "" {
+			password = path.Join(b.KeysDir, "password")
+		}
 		cfgName := b.ConfigName
 		if cfgName == "" {
 			cfgName = ConfigFileName

@@ -817,12 +817,13 @@ func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []s
 	}
 	record("overlay", detail)
 
-	ns, err := h.Launch(ctx)
+	// One bring-up, the family's. This path used to launch every node at once
+	// and deploy governance afterwards, which is the order a poa cluster cannot
+	// form in: it forms only while the producer is alone. It worked because the
+	// profile has one producer and the four successors run the other binary.
+	ns, err := h.BringUp(ctx, record)
 	if err != nil {
-		return fail("launch", err)
-	}
-	if len(ns.Nodes) == 0 {
-		return fail("launch", fmt.Errorf("no nodes launched"))
+		return fail("bring-up", err)
 	}
 	teardown := func(ctx context.Context) error {
 		_, errs := process.StopNodeSet(ctx, process.NewLocalDriver(), ns)
@@ -832,7 +833,7 @@ func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []s
 		return nil
 	}
 	producer := ns.Nodes[0]
-	record("launch", fmt.Sprintf("%d node(s); producer %s", len(ns.Nodes), producer.RPCURL))
+	record("producer", producer.RPCURL)
 	live := func(name string, fn func() (string, error)) error {
 		detail, err := fn()
 		if err != nil {
@@ -841,21 +842,6 @@ func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []s
 		}
 		record(name, detail)
 		return nil
-	}
-	if err := live("mesh", func() (string, error) {
-		return fmt.Sprintf("%d endpoint(s) meshed", len(ns.Nodes)), h.WireMesh(ctx, ns)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("governance", func() (string, error) {
-		return "deployed (effect checked by verify-etcd)", h.DeployGovernance(ctx, producer)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("etcd-init", func() (string, error) {
-		return "called (effect checked by verify-etcd)", h.EtcdInit(ctx, producer)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
 	}
 	if err := live("verify-etcd", func() (string, error) {
 		info, err := h.VerifyEtcd(ctx, producer, etcdFormWait)

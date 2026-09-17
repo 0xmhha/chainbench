@@ -407,7 +407,15 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 		}
 		wrote[n.Host] = true
 	}
-	opts := LaunchOptions{
+	return Launch(ctx, h.in.driver(), h.Plan, h.launchOptions(only))
+}
+
+// launchOptions is how this handoff launches: which binary each side runs, where
+// the files go, which machine each node is on, and which of them this call is
+// for. The bring-up actions read the same options, so the specs they address
+// nodes by are the specs that were launched.
+func (h *Handoff) launchOptions(only []int) LaunchOptions {
+	return LaunchOptions{
 		DataRoot:   h.in.DataDir,
 		FromBinary: h.in.FromBinary, ToBinary: h.in.ToBinary,
 		FromChain: h.From, ToChain: h.To,
@@ -418,7 +426,6 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 		Machine:       h.in.Machine,
 		Only:          only,
 	}
-	return Launch(ctx, h.in.driver(), h.Plan, opts)
 }
 
 // machineFiles is node i's file store: its own machine's when one is resolved,
@@ -624,53 +631,26 @@ func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.Node
 	if _, err := h.ApplyOverlay(); err != nil {
 		return node.NodeSet{}, poa.Info{}, err
 	}
-	// The producer comes up alone. A poa network's etcd cluster forms only
-	// while it is: with the others already running, admin.etcdInit() returns
-	// without error and creates nothing, and the producer then never seals.
-	// The order is not this function's to invent — the consensus family
-	// declares it, and the composition path has followed that declaration since
-	// F3. Doing it by hand here is what left the handoff failing at
-	// verify-etcd while the same network came up correctly through `chain up`.
-	boot, rest := h.phases()
-	ns, err := h.LaunchPhase(ctx, boot)
+	ns, err := h.BringUp(ctx, nil)
 	if err != nil {
 		return ns, poa.Info{}, err
 	}
-	if len(ns.Nodes) == 0 {
-		return ns, poa.Info{}, fmt.Errorf("upgrade: launch produced no nodes")
-	}
-	producer := ns.Nodes[0]
-	if err := h.DeployGovernance(ctx, producer); err != nil {
-		return ns, poa.Info{}, err
-	}
-	if err := h.EtcdInit(ctx, producer); err != nil {
-		return ns, poa.Info{}, err
-	}
-	info, err := h.VerifyEtcd(ctx, producer, etcdTimeout)
+	// The cluster was already verified by the boot phase's own verify-etcd
+	// action; this reads it back for the report. It answers on the first poll
+	// when the cluster is up, which it is by here.
+	info, err := h.VerifyEtcd(ctx, ns.Nodes[0], etcdTimeout)
 	if err != nil {
-		return ns, poa.Info{}, err
-	}
-	if len(rest) > 0 {
-		more, err := h.LaunchPhase(ctx, rest)
-		if err != nil {
-			return ns, poa.Info{}, err
-		}
-		ns.Nodes = append(ns.Nodes, more.Nodes...)
-	}
-	// The mesh is wired once everyone is up: admin_addPeer needs both ends.
-	if err := h.WireMesh(ctx, ns); err != nil {
 		return ns, poa.Info{}, err
 	}
 	return ns, info, nil
 }
 
-// phases asks the producer's consensus family how to order the bring-up, and
-// renders its answer as the node positions this plan launches in each step.
+// phases asks the producer's consensus family how to order the bring-up.
 //
 // The family speaks in roles, so the plan's producers are offered as producers
 // and everything else as endpoints; what comes back is which of them may start
-// together.
-func (h *Handoff) phases() (boot, rest []int) {
+// together, and what has to happen after each group is up.
+func (h *Handoff) phases() []registry.Phase {
 	roles := make([]node.Role, len(h.Plan.Nodes))
 	for i, n := range h.Plan.Nodes {
 		roles[i] = node.RoleEN
@@ -678,18 +658,156 @@ func (h *Handoff) phases() (boot, rest []int) {
 			roles[i] = node.RoleBP
 		}
 	}
-	for _, phase := range h.From.Family().BringUpPhases(roles) {
-		positions := make([]int, 0, len(phase.Nodes))
-		for _, oneBased := range phase.Nodes {
-			positions = append(positions, oneBased-1)
+	return h.From.Family().BringUpPhases(roles)
+}
+
+// BringUp launches the network in the order the producer's consensus family
+// declares, running each phase's declared actions on the node it names, then
+// wires the mesh. report, when non-nil, is told each step as it finishes.
+//
+// It is the one bring-up. There used to be two, and neither ran what the family
+// declared. Handoff.Run took the family's first phase and flattened every other
+// one into a single launch; the DSL path launched all five nodes at once and
+// deployed governance afterwards — which is the order Run's own comment warns
+// about, since a poa cluster forms only while the producer is alone. Both then
+// called deploy-governance, etcd-init and verify-etcd by hand, and neither ran
+// etcd-join at all. With one producer none of that shows; the profile has one.
+//
+// The actions come from the family and run through the family's own executor,
+// the same one the composition path uses, so a lesson learned in either place
+// is learned in both. That the sequence had to be written twice is what this
+// file's own comment called the real defect.
+func (h *Handoff) BringUp(ctx context.Context, report func(name, detail string)) (node.NodeSet, error) {
+	say := func(name, detail string) {
+		if report != nil {
+			report(name, detail)
 		}
-		if boot == nil {
-			boot = positions
+	}
+	var ns node.NodeSet
+	for _, phase := range h.phases() {
+		launched, err := h.LaunchPhase(ctx, positionsOf(phase))
+		if err != nil {
+			return ns, err
+		}
+		if ns.Chain == "" {
+			ns.Chain, ns.Network = launched.Chain, launched.Network
+		}
+		ns.Nodes = append(ns.Nodes, launched.Nodes...)
+		say("launch:"+phase.Name, fmt.Sprintf("%d node(s)", len(launched.Nodes)))
+		if len(phase.Actions) == 0 {
 			continue
 		}
-		rest = append(rest, positions...)
+		on, ok := actionNodeOf(phase, ns)
+		if !ok {
+			return ns, fmt.Errorf("upgrade: phase %q names actions but launched no node to run them on", phase.Name)
+		}
+		plan, err := h.bootstrapPlan()
+		if err != nil {
+			return ns, err
+		}
+		boot := h.bootstrap()
+		for _, action := range phase.Actions {
+			if err := boot.Action(ctx, action, plan, on); err != nil {
+				return ns, err
+			}
+			say(action, "on "+string(node.LabelFor(on.Index)))
+		}
 	}
-	return boot, rest
+	if len(ns.Nodes) == 0 {
+		return ns, fmt.Errorf("upgrade: launch produced no nodes")
+	}
+	// Last, because admin_addPeer needs both ends up.
+	if err := h.WireMesh(ctx, ns); err != nil {
+		return ns, err
+	}
+	say("mesh", fmt.Sprintf("%d endpoint(s) meshed", len(ns.Nodes)))
+	return ns, nil
+}
+
+// positionsOf turns a phase's 1-based node numbers into the plan positions
+// LaunchPhase selects on.
+func positionsOf(phase registry.Phase) []int {
+	out := make([]int, 0, len(phase.Nodes))
+	for _, oneBased := range phase.Nodes {
+		out = append(out, oneBased-1)
+	}
+	return out
+}
+
+// actionNodeOf is the node a phase's actions run on, named the way the poa
+// executor names nodes: 1-based, so node.LabelFor gives the name the chain
+// knows it by.
+//
+// The launched set counts from zero — a plan position — and everything the
+// family says counts from one. The two meet here and nowhere else.
+func actionNodeOf(phase registry.Phase, ns node.NodeSet) (node.Node, bool) {
+	want := phase.ActionsOn
+	if want == 0 && len(phase.Nodes) > 0 {
+		want = phase.Nodes[0]
+	}
+	for _, n := range ns.Nodes {
+		if n.Index+1 != want {
+			continue
+		}
+		one := n
+		one.Index = want
+		return one, true
+	}
+	return node.Node{}, false
+}
+
+// bootstrapPlan is what the bring-up actions run against: every node's launch
+// spec, numbered from one.
+//
+// From one because the poa executor names nodes with node.LabelFor, and those
+// names are what the chain knows them by — an etcd join announcing "node0"
+// joins nothing. The launch specs count from zero because the plan positions
+// do, so the renumbering happens here, at the one boundary between them.
+func (h *Handoff) bootstrapPlan() (process.Plan, error) {
+	specs, err := BuildNodeSpecs(h.Plan, h.launchOptions(nil))
+	if err != nil {
+		return process.Plan{}, err
+	}
+	for i := range specs {
+		specs[i].Index++
+	}
+	return process.Plan{
+		DataRoot:    h.in.DataDir,
+		GenesisPath: filepath.Join(h.in.DataDir, "genesis.json"),
+		Nodes:       specs,
+	}, nil
+}
+
+// bootstrap is the family's executor, wired to this handoff's machines and to
+// the files this run wrote.
+//
+// No Binary: the executor prefers the plan's own entry for the node it runs on,
+// which for a producer is the from-binary. Naming one here would override that,
+// and this network runs two.
+func (h *Handoff) bootstrap() poa.Bootstrap {
+	return poa.Bootstrap{
+		KeysDir:      h.in.KeysDir,
+		Password:     h.pwPath,
+		BootKeystore: h.producerKeystore,
+		Run:          h.in.exec(),
+		Files:        h.in.files(),
+		Access: func(oneBased int) (poa.Runner, filestore.Store, error) {
+			if h.in.Machine == nil {
+				return h.in.exec(), h.in.files(), nil
+			}
+			files, driver, err := h.machineFiles(oneBased - 1)
+			if err != nil {
+				return nil, nil, err
+			}
+			cmdr, ok := driver.(process.Commander)
+			if !ok {
+				// A local driver runs commands as this process does, which is
+				// what the injected runner already is.
+				return h.in.exec(), files, nil
+			}
+			return poa.Runner(process.ShellRunner(cmdr)), files, nil
+		},
+	}
 }
 
 // ProducerIPC is the producer's console socket under the data root.
