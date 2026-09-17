@@ -1293,7 +1293,7 @@ genesis(1번), 타깃·배치 해석(3번).
 | 1 | `Identities.PlanOrder` — 플랜 노드 k 가 프리셋 노드 N 의 키를 쓴다 | 노드 인덱스 = 프리셋 인덱스로 묶여 있다. 다만 `topology.nodes[].key` 가 이미 노드별 키를 받는다 | 중 |
 | 2 | `Chains.From/To.NodekeyDir` — 바이너리마다 nodekey 를 찾는 디렉터리가 다르다 | **내가 거꾸로 적었다. §아래 참조** | — |
 | 3 | `Validators.Addresses/BLSPublicKeys/ExtraData` — 미리 계산된 값 | **전부 유도된다. 대조 완료 — §11.2.10** | 해소 |
-| 4 | `Producers.Governance` — 거버넌스 정책 | 소스는 받는데 **DSL 이 말할 방법이 없다** | 소 |
+| 4 | `Producers.Governance` — 거버넌스 정책 | **기본값과 필드 하나하나 동일하다. §11.2.11** | 해소 |
 
 그 밖에 피어링이 다르다. 핸드오프는 `static-nodes.json` 을 쓰고 **추가로**
 `admin_addPeer` 로 메시를 건다. 보통 경로는 static-nodes 만 쓴다.
@@ -1335,7 +1335,8 @@ genesis(1번), 타깃·배치 해석(3번).
    ```
 2. ~~**#2** `Layout.NodekeyPath(label, binary)`~~ — **지을 것이 없었다(2026-09-17).
    §11.2.9 참조.**
-3. **#4** 거버넌스 정책의 DSL 문법.
+3. ~~**#4** 거버넌스 정책의 DSL 문법~~ — **지금은 안 짓는다(2026-09-17).
+   소비자가 없다. §11.2.11.**
 4. ~~**#3** 유도값과 프로필 값 대조~~ — **완료(2026-09-17). 셋 다 일치.
    §11.2.10.**
 5. **#1** PlanOrder. `topology.nodes[].key` 로 표현되는지 먼저 본다.
@@ -1349,6 +1350,33 @@ genesis template are required" 로 준비 단계에서 멈춘다.
 **여전히 확인하지 않은 것.** 생산자가 **둘 이상인** 핸드오프는 안 돌려 봤다.
 `etcd-join` 과 단계별 순차 기동은 이번에 비로소 돌 수 있게 됐지만, 실제로 도는
 것은 못 봤다. 프로필이 생산자 1을 쓰기 때문이다.
+
+### 11.2.11 거버넌스 정책은 기본값을 다시 적은 것이다 (2026-09-17, 대조 완료)
+
+문법을 짓기 전에 **소비자를 먼저 찾았다. 없었다.**
+
+처음에 anzeon basefee 케이스들이 소비자일 거라고 봤는데 **틀렸다** — 그것들은
+go-stablenet 이고 wemix 거버넌스와 무관하다. 남은 소비자는 프로필뿐이었고,
+프로필 값이 기본값과 다른지 봤더니 **필드 열셋이 하나하나 같았다.**
+
+```
+ballot_duration_min 86400 · ballot_duration_max 604800
+staking_min/max · max_idle_block_interval 5 · block_creation_time 1000
+block_reward_amount · max_priority_fee_per_gas · reward_distribution [4000 1000 2500 2500]
+max_base_fee · block_gas_limit 105000000 · base_fee_max_change_rate 55
+gas_target_percentage 30
+                              ← 전부 poa.DefaultEnv() 과 동일
+```
+
+**그래서 §11.2.10 과 같은 모양이다.** 프로필이 선택을 적은 것이 아니라 기본값을
+다시 적었다. 보통 경로의 genesis 소스는 `Env` 를 받고 바로 이 값으로 기본값을
+잡으므로, 흡수를 막는 항목에서 빠진다.
+
+**문법은 짓지 않았다.** 소비자 없는 구조를 넓게 배선하는 것이 이 워크리스트가
+P2·P3 에서 스스로 경고한 바로 그것이다. 대신 **회귀 테스트**를 뒀다 — 프로필이
+기본값에서 벗어나면 실패하고, 실패 메시지가 "이제 선언할 방법이 필요하다" 고
+말한다. 즉 **문법이 필요해지는 순간을 테스트가 알려 준다.** `gas_target_percentage`
+를 30→40 으로 바꿔 실제로 잡히는 것을 확인했다.
 
 ### 11.2.10 프로필의 validator 블록은 전부 유도된다 (2026-09-17, 대조 완료)
 

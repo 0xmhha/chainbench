@@ -1042,16 +1042,7 @@ func (h *Handoff) producerAccountFor(i int) string {
 // an alloc funding the producer and every validator.
 func (h *Handoff) poaConfig(prod keyring.Entry) poa.Config {
 	prof := h.Profile
-	g := prof.Producers.Governance
-	env := poa.Env{
-		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
-		StakingMin: dec(g.StakingMin), StakingMax: dec(g.StakingMax),
-		MaxIdleBlockInterval: g.MaxIdleBlockInterval, BlockCreationTime: g.BlockCreationTime,
-		BlockRewardAmount: dec(g.BlockRewardAmount), MaxPriorityFeePerGas: dec(g.MaxPriorityFeePerGas),
-		RewardDistribution: g.RewardDistribution, MaxBaseFee: dec(g.MaxBaseFee),
-		BlockGasLimit: g.BlockGasLimit, BaseFeeMaxChangeRate: g.BaseFeeMaxChangeRate,
-		GasTargetPercentage: g.GasTargetPercentage,
-	}
+	env := h.governanceEnv()
 	bal := dec(handoffBalance)
 	// Every producer and every successor is funded: a producer that cannot pay for
 	// its own staking transaction is a member on paper only.
@@ -1082,6 +1073,24 @@ func (h *Handoff) poaConfig(prod keyring.Entry) poa.Config {
 			ID: "0x" + prod.PublicKey, IP: host, Port: port, Bootnode: true,
 		}},
 		Accounts: accounts,
+	}
+}
+
+// governanceEnv is the governance policy the profile declares.
+//
+// Separate from the config it goes into so it can be compared with the default
+// on its own. It is the default today, field for field, which is what says the
+// ordinary composition path can produce this chain without being told a policy.
+func (h *Handoff) governanceEnv() poa.Env {
+	g := h.Profile.Producers.Governance
+	return poa.Env{
+		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
+		StakingMin: dec(g.StakingMin), StakingMax: dec(g.StakingMax),
+		MaxIdleBlockInterval: g.MaxIdleBlockInterval, BlockCreationTime: g.BlockCreationTime,
+		BlockRewardAmount: dec(g.BlockRewardAmount), MaxPriorityFeePerGas: dec(g.MaxPriorityFeePerGas),
+		RewardDistribution: g.RewardDistribution, MaxBaseFee: dec(g.MaxBaseFee),
+		BlockGasLimit: g.BlockGasLimit, BaseFeeMaxChangeRate: g.BaseFeeMaxChangeRate,
+		GasTargetPercentage: g.GasTargetPercentage,
 	}
 }
 
