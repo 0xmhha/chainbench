@@ -49,7 +49,7 @@ func TestUpgradeRunE2E(t *testing.T) {
 	cmd := newRootCmd()
 	cmd.SetArgs([]string{
 		"upgrade", "run",
-		"--profile", "../../profiles/wemix-upgrade.yaml",
+		"--profile", "../../presets/hardfork/wemix-upgrade.yaml",
 		"--keys", "../../keys/preset",
 		"--from-binary", fromBin,
 		"--to-binary", toBin,

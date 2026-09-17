@@ -19,7 +19,7 @@ import (
 // So what is pinned here is the shape of the merge: what it adds, and what it
 // leaves exactly as it found it.
 
-const goldenProfile = "../../profiles/wemix-upgrade.yaml"
+const goldenProfile = "../../presets/hardfork/wemix-upgrade.yaml"
 
 // baseGenesis writes a minimal from-chain genesis: the fork keys
 // ValidateForks requires, a recognisable extraData, and an alloc.

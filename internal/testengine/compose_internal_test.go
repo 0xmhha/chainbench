@@ -98,7 +98,7 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 	t.Setenv("GWBFT_BIN", "")
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
 	  "binaries":{"from":"gwemix","to":"${GWBFT_BIN:-gwbft}"},
-	  "upgrade":{"profile":"profiles/wemix-upgrade.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
+	  "upgrade":{"profile":"presets/hardfork/wemix-upgrade.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
 	dir := t.TempDir()
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
 	if err != nil {
@@ -111,7 +111,7 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 	if h.FromBinary != "gwemix" || h.ToBinary != "gwbft" {
 		t.Errorf("binaries = %q -> %q (a ${VAR:-default} with the var unset takes the default)", h.FromBinary, h.ToBinary)
 	}
-	if h.Template != "/tmpl/genesis-template.json" || h.ProfilePath != "profiles/wemix-upgrade.yaml" || h.DataDir != dir {
+	if h.Template != "/tmpl/genesis-template.json" || h.ProfilePath != "presets/hardfork/wemix-upgrade.yaml" || h.DataDir != dir {
 		t.Errorf("handoff inputs = %+v", h)
 	}
 	if h.KeysDir != defaultKeysDir {

@@ -227,14 +227,27 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
 			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply — the network's size lives in the profile's roles (producers, validators), together with the identity order, validator addresses and extradata that have to agree with it, so run a different profile to run a different size")
 		}
+		from, to := u.From, u.To
+		if from == "" {
+			from = dsl.BinaryFrom
+		}
+		if to == "" {
+			to = dsl.BinaryTo
+		}
 		hi := upgrade.HandoffInputs{
-			ProfilePath:    expand(u.Profile),
+			ProfilePath:    upgradePresetPath(u),
 			Template:       expand(u.Template),
 			KeysDir:        keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryFrom]),
-			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryTo]),
+			FromBinary:     expand(spec.Chain.Binaries[from]),
+			ToBinary:       expand(spec.Chain.Binaries[to]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
+		}
+		// What the case says about the fork is checked against the preset that
+		// decides it. A case naming the wrong fork or the wrong block would
+		// otherwise run happily against another one and report a pass.
+		if err := checkDeclaredFork(u, hi.ProfilePath); err != nil {
+			return composition{}, err
 		}
 		// Where its nodes run, through the same resolver `chainbench upgrade`
 		// uses. A handoff is a network like any other in this respect: it is
@@ -739,6 +752,40 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 		return "", fmt.Errorf("write genesis overlay: %w", err)
 	}
 	return path, nil
+}
+
+// hardforkPresetDir is where a named hardfork preset lives.
+const hardforkPresetDir = "presets/hardfork"
+
+// upgradePresetPath is the preset file this declaration names: a path when it
+// gave one, and otherwise the named preset under presets/hardfork.
+func upgradePresetPath(u *dsl.UpgradeV2) string {
+	if u.Profile != "" {
+		return expand(u.Profile)
+	}
+	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
+}
+
+// checkDeclaredFork holds a case to what it said about the fork.
+//
+// The preset decides which fork and which block; a case may repeat them, and a
+// repetition that disagrees is the case testing something other than what it
+// claims. Saying nothing is fine — the preset answers.
+func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
+	if u.Fork == "" && u.At == nil {
+		return nil
+	}
+	prof, err := upgrade.LoadProfile(presetPath)
+	if err != nil {
+		return fmt.Errorf("upgrade preset: %w", err)
+	}
+	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
+		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)
+	}
+	if u.At != nil && *u.At != prof.Upgrade.ForkBlock {
+		return fmt.Errorf("the case says the fork is at block %d and %s schedules block %d", *u.At, presetPath, prof.Upgrade.ForkBlock)
+	}
+	return nil
 }
 
 // upgradeTarget is where a handoff's nodes run, read from the same request

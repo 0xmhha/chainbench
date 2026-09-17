@@ -27,7 +27,7 @@ import (
 // preset's producer-capable entry is LAST. A node table chooses its own order,
 // so it can put the producer on node5 and need no remap at all.
 func TestProfile_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
-	prof, err := LoadProfile("../../../profiles/wemix-upgrade.yaml")
+	prof, err := LoadProfile("../../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}

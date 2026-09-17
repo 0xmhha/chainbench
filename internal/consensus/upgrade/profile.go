@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 )
 
-// Profile is the golden upgrade profile (profiles/wemix-upgrade.yaml) decoded.
+// Profile is a hardfork preset (presets/hardfork/*.yaml) decoded.
 // It is the single, declarative record of the environment under test: every
 // value BuildPlan needs comes from here, so there are no code defaults to hide
 // what was actually run.

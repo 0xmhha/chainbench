@@ -172,11 +172,44 @@ func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
 // and which genesis template the producer's binary generates from. It is a
 // declaration only; the composer that runs it lives above the grammar.
 type UpgradeV2 struct {
-	// Profile is the golden upgrade profile (profiles/*.yaml).
-	Profile string `json:"profile"`
+	// Preset names a hardfork preset under presets/hardfork, without the
+	// directory or the extension.
+	Preset string `json:"preset,omitempty"`
+	// Profile is a hardfork preset by path, for one that is not under
+	// presets/hardfork. Preset names one that is.
+	Profile string `json:"profile,omitempty"`
 	// Template is the producer chain's own genesis template.
 	Template string `json:"template"`
+	// Fork is the hardfork's name and At is the block it activates on. Given,
+	// they are checked against the preset rather than replacing it: a case
+	// saying which fork it tests and being wrong about it is worse than a case
+	// that does not say.
+	Fork string `json:"fork,omitempty"`
+	At   *int64 `json:"at,omitempty"`
+	// From and To name the binaries — the keys of "binaries" — that handle
+	// before and after the fork. They default to "from" and "to".
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
+	// Style is how the network crosses the fork.
+	//
+	// UpgradeConcurrent is the unusual one and the one this harness runs: both
+	// binaries are up from genesis and the nodes that seal change at the fork.
+	// UpgradeRestart is the ordinary hardfork — every node runs the pre-fork
+	// binary, then is stopped and relaunched on the post-fork one. Empty is
+	// concurrent, which is what every upgrade declaration written so far means.
+	Style string `json:"style,omitempty"`
 }
+
+// How a network crosses a hardfork.
+const (
+	// UpgradeConcurrent runs both binaries from genesis; the sealing set
+	// changes at the fork.
+	UpgradeConcurrent = "concurrent"
+	// UpgradeRestart runs one binary, then relaunches every node on the other.
+	// Declared but not implemented: no case uses it, so there is nothing to run
+	// it against, and it is refused by name rather than accepted and ignored.
+	UpgradeRestart = "restart"
+)
 
 // KeysV2 declares where node identities come from (background 1.4/1.5,
 // algorithm steps 2-3 — gap G1's grammar side).
@@ -236,6 +269,51 @@ type GenesisSideV2 struct {
 	Set map[string]any `json:"set,omitempty"`
 	// Overlay deep-merges into the built genesis.
 	Overlay map[string]any `json:"overlay,omitempty"`
+}
+
+// checkUpgrade refuses an upgrade declaration that contradicts itself or the
+// environment around it.
+//
+// Every refusal here is one the runtime would otherwise meet as something else:
+// a missing preset as a file-not-found, a misspelled side as a node running the
+// wrong build, an unbuilt style as a handoff that quietly did the other thing.
+func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
+	switch u.Style {
+	case "", UpgradeConcurrent:
+	case UpgradeRestart:
+		return fmt.Errorf("dsl: case %s: upgrade style %q is not built yet — the ordinary hardfork, where every node is relaunched on the post-fork binary, has no case to run it against", caseID, u.Style)
+	default:
+		return fmt.Errorf("dsl: case %s: unknown upgrade style %q (want %s or %s)", caseID, u.Style, UpgradeConcurrent, UpgradeRestart)
+	}
+	if u.Preset == "" && u.Profile == "" {
+		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\" or a \"profile\"", caseID)
+	}
+	if u.Preset != "" && u.Profile != "" {
+		return fmt.Errorf("dsl: case %s: upgrade names both a preset (%s) and a profile (%s) — name one", caseID, u.Preset, u.Profile)
+	}
+	if u.Template == "" {
+		return fmt.Errorf("dsl: case %s: upgrade needs a \"template\"", caseID)
+	}
+	// The two sides, by the names the env's own binaries use.
+	from, to := u.From, u.To
+	if from == "" {
+		from = BinaryFrom
+	}
+	if to == "" {
+		to = BinaryTo
+	}
+	if from == to {
+		return fmt.Errorf("dsl: case %s: upgrade names %q on both sides of the fork", caseID, from)
+	}
+	for _, name := range []string{from, to} {
+		if env.Binaries[name].Binary == "" {
+			return fmt.Errorf("dsl: case %s: upgrade runs %q across the fork but binaries.%s is missing", caseID, name, name)
+		}
+	}
+	if len(env.Binaries) != 2 {
+		return fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", caseID, from, to)
+	}
+	return nil
 }
 
 // HooksV2 are the case hooks. Override hooks (gap G5) are deliberately not
@@ -576,16 +654,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// and nothing else: a default would mean every node runs one binary, which
 	// is not a handoff.
 	if u := env.Upgrade; u != nil {
-		if u.Profile == "" || u.Template == "" {
-			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
-		}
-		for _, key := range []string{BinaryFrom, BinaryTo} {
-			if env.Binaries[key].Binary == "" {
-				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names one binary per side of the fork — binaries.%s is missing", c.ID, key)
-			}
-		}
-		if len(env.Binaries) != 2 {
-			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryFrom, BinaryTo)
+		if err := checkUpgrade(c.ID, u, env); err != nil {
+			return Spec{}, err
 		}
 		spec.EnvUpgrade = u
 	}

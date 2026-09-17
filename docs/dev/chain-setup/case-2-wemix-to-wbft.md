@@ -20,7 +20,7 @@
 | from 바이너리 | `<chain>/go-wemix/build/bin/gwemix` (프로듀서, 포크 전) |
 | to 바이너리 | `<chain>/go-wbft/build/bin/gwemix` (검증자, 포크 후) |
 | genesis 템플릿 | `<chain>/go-wemix/wemix/scripts/genesis-template.json` |
-| 프로파일 | `profiles/wemix-upgrade.yaml` (golden) |
+| 프로파일 | `presets/hardfork/wemix-upgrade.yaml` (golden) |
 | 포크 | `croissant` @ block 20 |
 | 역할 | 프로듀서 1 + 검증자 4 (**검증자 ≥ 4 강제**) |
 | network id | 8285 (**전 노드 균일**) |
@@ -34,7 +34,7 @@
 
 | # | 단계 | 하는 일 | 상태 |
 |---|---|---|---|
-| 1 | load-profile | `profiles/wemix-upgrade.yaml` → 역할·포크·포트·거버넌스 env·검증자셋 | ✅ |
+| 1 | load-profile | `presets/hardfork/wemix-upgrade.yaml` → 역할·포크·포트·거버넌스 env·검증자셋 | ✅ |
 | 2 | load-preset | `keys/preset`; `identities.plan_order: [5,1,2,3,4]` 로 플랜 순서↔프리셋 노드 매핑 | ✅ |
 | 3 | wemix-config | 프로듀서 멤버 1 + 거버넌스 env + alloc → `<data>/wemix-config.json` | ✅ |
 | 4 | base-genesis | `gwemix wemix genesis --data <cfg> --genesis <template> --out <base>` | ✅ |
@@ -58,7 +58,7 @@ to-chain 의 자기 genesis 템플릿에서 **데이터로 추출**해 from-chai
 
 ## 3. 이 케이스의 변곡점
 
-프로파일(`profiles/wemix-upgrade.yaml`)이 사실상 전체 변곡점 표다.
+프로파일(`presets/hardfork/wemix-upgrade.yaml`)이 사실상 전체 변곡점 표다.
 
 | 변곡점 | 프로파일 키 | 비고 |
 |---|---|---|
@@ -93,7 +93,7 @@ to-chain 의 자기 genesis 템플릿에서 **데이터로 추출**해 from-chai
 ```sh
 CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
 chainbench upgrade run \
-  --profile profiles/wemix-upgrade.yaml \
+  --profile presets/hardfork/wemix-upgrade.yaml \
   --from-binary $CHAIN/go-wemix/build/bin/gwemix \
   --to-binary   $CHAIN/go-wbft/build/bin/gwemix \
   --template    $CHAIN/go-wemix/wemix/scripts/genesis-template.json \
@@ -122,7 +122,7 @@ SKIP  await-fork
 
 ```sh
 chainbench upgrade run \
-  --profile profiles/wemix-upgrade.yaml --keys keys/preset \
+  --profile presets/hardfork/wemix-upgrade.yaml --keys keys/preset \
   --from-binary $CHAIN/go-wemix/build/bin/gwemix \
   --to-binary   $CHAIN/go-wbft/build/bin/gwemix \
   --template    $CHAIN/go-wemix/wemix/scripts/genesis-template.json \
@@ -151,7 +151,7 @@ $CHAIN/go-wemix/build/bin/gwemix attach /tmp/hand/node1/gwemix.ipc \
 
 ```sh
 CHAIN_DIR=/Users/0xtopaz/work/github/0xmhha/chain \
-PROFILE=profiles/wemix-upgrade.yaml \
+PROFILE=presets/hardfork/wemix-upgrade.yaml \
   scripts/chain-setup/handoff-wemix-wbft.sh /tmp/handoff
 ```
 

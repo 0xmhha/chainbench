@@ -177,7 +177,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		cmd := newRootCmd()
 		args := []string{
 			"upgrade", "run",
-			"--profile", "../../profiles/wemix-upgrade.yaml",
+			"--profile", "../../presets/hardfork/wemix-upgrade.yaml",
 			"--keys", "../../keys/preset",
 			"--from-binary", fromBin,
 			"--to-binary", toBin,

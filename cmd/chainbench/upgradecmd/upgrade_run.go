@@ -65,7 +65,7 @@ func newRunCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&profilePath, "profile", "", "golden upgrade profile (profiles/*.yaml)")
+	cmd.Flags().StringVar(&profilePath, "profile", "", "hardfork preset file (presets/hardfork/*.yaml)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the handoff's nodes take their identities from")
 	cmd.Flags().StringVar(&fromBinary, "from-binary", "", "from-chain (producer) binary path")
 	cmd.Flags().StringVar(&toBinary, "to-binary", "", "to-chain (validator) binary path")

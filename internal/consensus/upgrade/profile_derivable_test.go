@@ -26,7 +26,7 @@ import (
 
 // TestProfile_TheValidatorSetIsWhatTheKeySetDerives.
 func TestProfile_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
-	prof, err := LoadProfile("../../../profiles/wemix-upgrade.yaml")
+	prof, err := LoadProfile("../../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}

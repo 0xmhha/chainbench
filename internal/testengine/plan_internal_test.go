@@ -178,7 +178,7 @@ func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
 func TestPlan_HandoffTakesItsSizeFromTheProfile(t *testing.T) {
 	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
 	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"../../profiles/wemix-upgrade.yaml","template":"t.json"}}`
+	  "upgrade":{"profile":"../../presets/hardfork/wemix-upgrade.yaml","template":"t.json"}}`
 	p := planFor(t, env, RunSuiteIn{})
 
 	if p.Handoff.Producers != 1 || p.Handoff.Validators != 4 {

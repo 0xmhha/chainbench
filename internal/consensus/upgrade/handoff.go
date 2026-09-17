@@ -61,7 +61,7 @@ const handoffBalance = "1000000000000000000000000000"
 // Peers) are how a caller runs the same sequence against a fake or a remote
 // target; nil takes the local default.
 type HandoffInputs struct {
-	// ProfilePath is the golden upgrade profile (profiles/*.yaml).
+	// ProfilePath is the hardfork preset file (presets/hardfork/*.yaml).
 	ProfilePath string
 	// KeysDir is the key set the nodes' identities come from. It is the same
 	// value every other surface calls --keys, and empty means the shipped one.

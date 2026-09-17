@@ -71,7 +71,7 @@ func newGenesisCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&profilePath, "profile", "", "golden upgrade profile (profiles/*.yaml)")
+	cmd.Flags().StringVar(&profilePath, "profile", "", "hardfork preset file (presets/hardfork/*.yaml)")
 	cmd.Flags().StringVar(&fromGenesis, "from-genesis", "", "from-chain base genesis (e.g. gwemix wemix genesis output)")
 	cmd.Flags().StringVar(&out, "out", "", "write the merged genesis to this path")
 	return cmd

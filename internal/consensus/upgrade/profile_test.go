@@ -12,7 +12,7 @@ import (
 // goldenProfilePath resolves the repo's golden upgrade profile from this test's
 // package dir (internal/consensus/upgrade -> repo root).
 func goldenProfilePath() string {
-	return filepath.Join("..", "..", "..", "profiles", "wemix-upgrade.yaml")
+	return filepath.Join("..", "..", "..", "presets", "hardfork", "wemix-upgrade.yaml")
 }
 
 // The golden profile must load and drive BuildPlan to a valid plan. This is the

@@ -82,7 +82,7 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 | etcd | (파생) | 포트 `p2p+1`, 클러스터 토큰은 바이너리 내장 |
 | 조인 슬롯 | `supervisor.JoinGap(N)` | ≤11→7s, ≤23→11s, ≤41→17s, else 23s |
 
-프로파일 예시는 `profiles/wemix-upgrade.yaml` 의 `producers.governance` 블록이 그대로 참고가 된다.
+프로파일 예시는 `presets/hardfork/wemix-upgrade.yaml` 의 `producers.governance` 블록이 그대로 참고가 된다.
 
 ---
 

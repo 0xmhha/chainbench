@@ -24,7 +24,7 @@ import (
 // governance policy needs a way to be DECLARED — a DSL surface for it, which is
 // deliberately not built while nothing asks for one.
 func TestProfile_TheGovernancePolicyIsTheDefault(t *testing.T) {
-	prof, err := LoadProfile("../../../profiles/wemix-upgrade.yaml")
+	prof, err := LoadProfile("../../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}

@@ -172,13 +172,13 @@ profile** as the single source of truth.
 
 ```bash
 chainbench upgrade run \
-  --profile profiles/wemix-upgrade.yaml \
+  --profile presets/hardfork/wemix-upgrade.yaml \
   --from-binary /path/to/gwemix \
   --to-binary   /path/to/gwbft \
   --wait 60
 ```
 
-See [`profiles/wemix-upgrade.yaml`](profiles/wemix-upgrade.yaml) for the encoded
+See [`presets/hardfork/wemix-upgrade.yaml`](presets/hardfork/wemix-upgrade.yaml) for the encoded
 conditions (uniform network id, disjoint producers/validators, BFT quorum,
 paired fork sections). `upgrade genesis` builds just the merged handoff genesis.
 
@@ -291,7 +291,8 @@ chainbench/
 │   ├── mcp/              # MCP tool handlers (through the app layer)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
 │   └── testkit/          # test-case framework (Case / T / Report)
-├── profiles/             # network + golden upgrade profiles (YAML)
+├── profiles/             # remote-chain connection profiles (YAML)
+├── presets/hardfork/     # hardfork presets: fork block, roles, binaries (YAML)
 ├── keys/preset/          # preset validator keys (TEST FIXTURE ONLY)
 ├── tests/                # Go test cases (tests/all) + repro scripts (tests/repro)
 └── web/                  # dashboard SPA source (Svelte + Vite)

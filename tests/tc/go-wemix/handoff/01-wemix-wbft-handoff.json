@@ -8,8 +8,13 @@
   "env": {
     "extends": "wbft-from-to",
     "upgrade": {
-      "profile": "profiles/wemix-upgrade.yaml",
-      "template": "${GOWEMIX_TEMPLATE}"
+      "preset": "wemix-upgrade",
+      "template": "${GOWEMIX_TEMPLATE}",
+      "fork": "croissant",
+      "at": 20,
+      "from": "from",
+      "to": "to",
+      "style": "concurrent"
     }
   },
   "steps": [
