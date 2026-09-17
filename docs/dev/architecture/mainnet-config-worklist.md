@@ -1014,19 +1014,69 @@ H1 · H3 · H4(1단계) · X1~X3 · X4 · X6~X8 · X10 · X12 · X13 · X15, 그
 갖고 있다 — `AdoptDataRoot` 처럼 **조용히 덮지 말고 충돌로 거부하며 고칠 자리를
 말한다.** 같은 규칙을 두 곳에 더 적용하면 된다.
 
-### 11.2.5 W4b 를 고치다 발견한 것 — W4c (2026-09-17, 미확인)
+### 11.2.5 W4c — 재현 완료 (2026-09-17)
 
-**per-node 바이너리 맵은 workspace-config 를 거치지 않는다.** 단일 바이너리는
-`placeBinary` 를 거치는데, `state.Binaries` 의 값은 DSL 이 적은 그대로 저장되고
-(`steps_compose.go:673`) `binaryFor` 가 그것을 **exec 경로로 바로 쓴다**
-(`steps_lifecycle.go:41`). 그래서 선언이 `"binaries":{"upgrade":"gstable"}` 이고
-workspace-config 가 있어도, `upgrade` 로 swap 한 노드는 `<dataRoot>/bin/gstable`
-이 아니라 PATH 의 `gstable` 을 찾는다.
+**적어 뒀던 것보다 넓다.** 증상이 셋인데 뿌리는 하나다.
 
-**코드를 읽고 내린 판단이고 라이브로 확인하지 않았다.** 재현하려면
-workspace-config 를 쓰면서 이름으로 된 per-node 바이너리를 swap 해야 한다.
-고친다면 자리는 하나다 — `state.Binaries` 를 채울 때 값마다 `PlaceBinary` 를
-통과시킨다.
+**뿌리.** 바이너리 참조는 **실행 직전에만** 배치된다(`Workspace.placeBinary`,
+`Init`/`Start` 가 `state.Binary` 에 배치된 값을 적는다). 그런데 **그 실행과
+대조하는 쪽들은 배치를 안 거친다.** 그래서 같은 바이너리를 한쪽은 이름으로,
+다른 쪽은 경로로 말한다.
+
+**증상 1 — 계획. 고쳤다(W4b).**
+
+**증상 2 — 한 망 안에서 노드마다 다른 것을 실행한다.**
+
+선언이 노드에 바이너리를 붙이면(`topology.nodes[].binary`) 그 이름이
+`inlineTopologyOf` 에서 `resolved[name] = expand(path)` 로 들어가고
+(`compose.go:597`), `state.Binaries` 에 **그대로** 저장되며
+(`steps_compose.go:673`), `binaryFor` 가 그것을 **exec 경로로 바로 쓴다**
+(`steps_lifecycle.go:41`). 단일 바이너리만 배치를 거친다.
+
+실측 — `dataRoot: /data`, `paths.binaries: bin`, 선언은
+`"binaries":{"default":"gstable","upgrade":"gstable-next"}` 와
+`{"index":3,"role":"bp","binary":"upgrade"}`:
+
+```
+node1 execs "/data/bin/gstable-next"   ← 배치됨
+node3 execs "gstable-next"             ← 배치 안 됨, 타깃 PATH 를 찾는다
+```
+
+PATH 에 없으면 node3 만 안 뜬다. PATH 에 **다른 빌드**가 있으면 한 망에서 두
+빌드가 돌고 아무도 말해 주지 않는다.
+
+`chainsetup` 쪽 필드 주석은 이 맵이 "its **resolved path**" 를 담는다고 적는다.
+계약은 분명하고, 채우는 쪽이 계약을 안 지킨다.
+
+**증상 3 — workspace-config 를 쓰면 재사용이 아예 안 된다.**
+
+`Have.Binary` 는 기록된 **배치된 경로**이고(`steps_preflight.go:20`),
+`WantOf` 는 요청의 **이름**을 그대로 쓴다(`steps_preflight.go:46`). 똑같은 요청을
+다시 해도:
+
+```
+verdict = rebuild-all
+  reason: binary: have "/data/bin/gstable", want "gstable"
+```
+
+**매번 체인 전체를 다시 만든다.** `--binary` 에 절대 경로를 주면 가려진다 —
+그러니까 workspace-config 에 배치를 맡기는 **의도된 사용법에서만** 터진다.
+이 경로는 `chain up` 과 `run` 양쪽이 공유한다(`preflightDecision` →
+`ws.Compare`, `WantOf(up)`).
+
+**재현 방법.** 셋 다 오프라인이고 바이너리가 필요 없다. `Workspace` 를
+`&Workspace{state: State{...}}` 로 직접 세우면 `binary("")` 와 `binaryFor` 를
+바로 부를 수 있고, 증상 3 은 `preflight.Compare(have, WantOf(in))` 한 줄이다.
+
+**고칠 자리 — 결정 필요.** 배치 규칙은 이미 `chainsetup.PlaceBinary` 하나다.
+남은 질문은 **참조를 언제 배치하느냐**다.
+
+- **(가) 들어올 때 한 번.** `NetUpIn` 을 받는 자리에서 `Binary` 와 `Binaries` 를
+  배치하면 계획·재사용·실행이 저절로 같은 값을 본다. `placedBinary` 도 필요
+  없어진다. 대신 `state.Binary` 가 이름에서 경로로 바뀌므로 **기존 워크스페이스가
+  한 번 재구성된다.**
+- **(나) 대조하는 자리마다.** `WantOf` 와 맵 저장 지점에서 각각 배치한다. 기존
+  워크스페이스를 건드리지 않지만 `PlaceBinary` 호출이 세 곳으로 흩어진다.
 
 ### 11.2.4 결과물이 쌓이는 자리 — 완료 (2026-09-17)
 
@@ -1065,7 +1115,7 @@ workspace-config 를 쓰면서 이름으로 된 per-node 바이너리를 swap �
 
 | 순위 | 항목 | 크기 | 왜 이 자리인가 |
 |---|---|---|---|
-| **1** | **W4c** per-node 바이너리 맵이 설정을 안 거친다 | 소 | W4b 를 고치다 나왔다(§11.2.5). 재현이 먼저다 |
+| **1** | **W4c** 배치를 안 거치는 대조들 | 중 | **재현 완료**(§11.2.5). 고칠 자리 (가)/(나) 결정이 먼저다 |
 | 2 | **X11** repro 스크립트 3종 | 소 | 은퇴한 `net up` 을 부른다. 옮길지 지울지 **결정이 먼저다** |
 | 3 | **H3-b** 비교값의 계정 라벨 14곳 | 소 | 못 풀 때 오류인지 그대로 두는지 **규칙 결정이 먼저다** |
 | 4 | **N1** attach 선언 | 대 | 신규 기능. P 묶음 뒤로 미뤄 둔 그대로다 |
