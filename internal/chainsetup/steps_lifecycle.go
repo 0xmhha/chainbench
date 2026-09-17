@@ -996,19 +996,20 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 // phase that named it expects it to have happened, and a bootstrap quietly
 // skipped is a network that starts and then does nothing.
 func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
-	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
-	for _, ns := range w.state.Nodes {
-		spec := process.SpecOf(ns)
-		spec.Binary = bin
-		specs = append(specs, spec)
-	}
-	plan := process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
+	plan := w.phasePlan(bin)
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
-	exec := poa.Bootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	// No Binary override: the executor already prefers the plan's own entry for
+	// the node it runs on, and that is the node's binary. Naming one here
+	// overrode it with the network's single binary, which is wrong the moment
+	// the network runs more than one — and it runs more than one on purpose,
+	// for a swap and for a handoff across a fork. The socket the bootstrap
+	// attaches to is derived from the binary, so a node running the other one
+	// was waited for at a path it never creates.
+	exec := poa.Bootstrap{KeysDir: w.state.KeysDir}
 	// A remote target runs the bootstrap where the node is: the binary, its IPC
 	// socket, the governance config and the keystore all live on the target, so
 	// route the runner and the file probes through that node's access — the same
@@ -1046,6 +1047,23 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		}
 	}
 	return nil
+}
+
+// phasePlan is the launch plan a phase's actions run against: every node, each
+// with the binary IT runs.
+//
+// Per node, not per network. A network can run more than one binary on purpose
+// — a case swaps a node onto another build, a handoff puts the pre-fork and
+// post-fork binaries in one network from genesis — and a bring-up action that
+// assumed one of them addressed the others through the wrong binary.
+func (w *Workspace) phasePlan(bin string) process.Plan {
+	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		spec := process.SpecOf(ns)
+		spec.Binary = w.binaryFor(ns, bin)
+		specs = append(specs, spec)
+	}
+	return process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
 }
 
 // recordByIndex returns the node record with the given 1-based index.
