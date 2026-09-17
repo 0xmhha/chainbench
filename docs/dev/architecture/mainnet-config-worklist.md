@@ -1234,12 +1234,21 @@ genesis 는 **같은 질문을 두 번 묻는 것**이고, 답이 둘로 갈리�
 4노드 중 2개를 후속 바이너리에 올리면 **4개 다** 후속 바이너리로 돌았고,
 계획도 그렇게 적었으며 이상해 보이는 곳이 없었다. 실측 후 고쳤다.
 
-**3번 남음.** DSL 표면의 핸드오프 배선 — placement·machine·workspace-config 를
-`chainbench upgrade` 와 같은 수준으로 채우거나, 적어도 무시한다고 **말은 하게**
-한다.
+**3번 완료 (2026-09-17).** 배선이 `upgrade.Target` 으로 내려왔고 두 표면이 같은
+것을 부른다. `app` 의 사본(`openHandoffTarget` `placeHandoff` `handoffMachines`
+`spansHosts` `firstPlacedServer` `serverNamesByIndex` `handoffExec`)은 지웠다.
 
-**4번 남음.** 1~3 뒤에 `upgrade` 패키지를 보통 경로로 흡수할 수 있는지 다시
-본다. 1,959줄이 걸려 있다.
+덤으로 하나 더 고쳤다. **로컬 핸드오프도 환경 파일을 읽는다.** 환경 파일은
+파일이 어디 있는지를 말하고, 그것은 이 머신에도 똑같이 참이다. 실측:
+
+```
+workspace  /tmp/cbw4c/data
+binaries   from /tmp/cbw4c/data/bin/gwemix -> to /tmp/cbw4c/data/bin/gwbft
+```
+
+환경 파일이 없으면 아무것도 안 바뀐다 — 데이터 루트는 워크스페이스, 이름은 이름.
+
+**4번 판정은 §11.2.8.**
 
 **확인하지 않은 것.** 노드별 genesis 를 넣었지만 핸드오프가 정말 보통 경로로
 표현되는지는 **아직 안 돌려 봤다.** 부트스트랩 순서(etcd init, governance
@@ -1252,6 +1261,57 @@ deploy, await fork)가 phase 액션으로 다 표현되는지도 보지 않았�
 이유는 **이전 바이너리가 그 필드들을 받아 주기 때문**이다. 문서가 둘 필요한
 경우는 이전 바이너리가 거부하는 설정이 후속에 필요할 때이고, 그것이 이번에 넣은
 기능이 대비하는 경우다.
+
+### 11.2.8 `upgrade` 를 흡수할 수 있나 — 판정 (2026-09-17)
+
+**할 수 있다. 막는 것은 구조가 아니라 작고 구체적인 사실 넷이다.**
+
+#### 이미 공유하고 있는 것 (코드로 확인)
+
+**부트업 순서는 이미 같은 선언을 읽는다.** `Handoff.phases()` 가
+`From.Family().BringUpPhases(roles)` 를 부른다. 주석이 직접 적는다 — "순서는 이
+함수가 지어낼 것이 아니다. consensus family 가 선언하고, 구성 경로는 F3 이후로 그
+선언을 따라 왔다."
+
+**부트 액션도 그 선언에 들어 있다.** `poa.Family.BringUpPhases` 가
+`Actions: [deploy-governance, etcd-init, verify-etcd]` 를 돌려주고, 보통 경로의
+`runPhaseActions` 가 그것을 실행한다. **그런데 `phases()` 는 `Nodes` 만 읽고
+`Actions` 를 버린 뒤, `Run` 이 그 셋을 손으로 다시 부른다.** 중복이 가장 선명한
+자리다.
+
+**나머지 셋은 이번 작업으로 들어왔다** — 노드별 바이너리(2번), 노드별
+genesis(1번), 타깃·배치 해석(3번).
+
+**거버넌스 파라미터도 보통 경로에 있다.** `poa.GenesisSource.Env *Env` 가 그것
+이고 "zero value 는 DefaultEnv" 다. 프로필의 값을 못 받는 것이 아니라 **받을 DSL
+문법이 없을 뿐**이다.
+
+#### 못 하는 것 넷
+
+| # | 프로필이 가진 것 | 보통 경로 | 크기 |
+|---|---|---|---|
+| 1 | `Identities.PlanOrder` — 플랜 노드 k 가 프리셋 노드 N 의 키를 쓴다 | 노드 인덱스 = 프리셋 인덱스로 묶여 있다. 다만 `topology.nodes[].key` 가 이미 노드별 키를 받는다 | 중 |
+| 2 | `Chains.From/To.NodekeyDir` — 바이너리마다 nodekey 를 찾는 디렉터리가 다르다 | `Layout.NodekeyPath(label)` 이 바이너리를 안 받는다. **`IPCPath(label, binary)` 는 받는다** — 같은 무늬, 함수 하나 차이 | 소 |
+| 3 | `Validators.Addresses/BLSPublicKeys/ExtraData` — 미리 계산된 값 | `wbft.ExtraData(validators, blsKeys)` 가 키셋에서 유도한다. 새 망이면 프로필 값은 **아마 불필요** — **대조해 보지 않았다** | 미확인 |
+| 4 | `Producers.Governance` — 거버넌스 정책 | 소스는 받는데 **DSL 이 말할 방법이 없다** | 소 |
+
+그 밖에 피어링이 다르다. 핸드오프는 `static-nodes.json` 을 쓰고 **추가로**
+`admin_addPeer` 로 메시를 건다. 보통 경로는 static-nodes 만 쓴다.
+
+#### 순서 (착수 전)
+
+1. **핸드오프가 자기 `phases()` 가 이미 받은 `Actions` 를 쓰게 한다.** 흡수와
+   무관하게 가장 싼 이득이고, `DeployGovernance`/`EtcdInit`/`VerifyEtcd` 손 호출이
+   사라진다. **라이브 핸드오프 실행으로 확인해야 한다** — 부트업을 건드린다.
+2. **#2** `Layout.NodekeyPath(label, binary)`. `IPCPath` 와 같은 무늬, 독립적.
+3. **#4** 거버넌스 정책의 DSL 문법.
+4. **#3** 유도값과 프로필 값을 실제로 대조한다. 같으면 프로필의 validator 블록은
+   골든 파일의 편의이지 요구사항이 아니다.
+5. **#1** PlanOrder. `topology.nodes[].key` 로 표현되는지 먼저 본다.
+6. 1~5 뒤에 흡수를 시도한다.
+
+**확인하지 않은 것.** 핸드오프를 보통 경로로 아직 돌려 보지 않았다. 위 판정은
+전부 코드를 읽어 내린 것이고, 라이브 대조는 1번에서 처음 필요해진다.
 
 ### 11.2.4 결과물이 쌓이는 자리 — 완료 (2026-09-17)
 
