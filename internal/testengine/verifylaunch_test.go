@@ -233,7 +233,7 @@ func TestStopAfterFailedSetup(t *testing.T) {
 					return nil
 				})
 			}
-			err := testengine.StopAfterFailedSetupForTest(context.Background(), net, tc.keepUp, setupErr)
+			err := testengine.AfterFailedSetupForTest(context.Background(), net, tc.keepUp, setupErr)
 			if stops != tc.wantStops {
 				t.Errorf("teardown ran %d time(s), want %d", stops, tc.wantStops)
 			}
@@ -252,7 +252,7 @@ func TestStopAfterFailedSetup_SaysWhenItCouldNotStop(t *testing.T) {
 	net := testengine.ComposedForTest(func(context.Context) error {
 		return errors.New("node2 is still present after SIGKILL")
 	})
-	err := testengine.StopAfterFailedSetupForTest(context.Background(), net, false, errors.New("not ready"))
+	err := testengine.AfterFailedSetupForTest(context.Background(), net, false, errors.New("not ready"))
 	if err == nil || !strings.Contains(err.Error(), "not ready") || !strings.Contains(err.Error(), "SIGKILL") {
 		t.Fatalf("both failures must be named: %v", err)
 	}

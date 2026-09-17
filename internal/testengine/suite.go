@@ -367,10 +367,10 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	} else {
 		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
 		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
-			return out, stopAfterFailedSetup(ctx, net, in.KeepUp, verr)
+			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr)
 		}
 		if err != nil {
-			return out, stopAfterFailedSetup(ctx, net, in.KeepUp, err)
+			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err)
 		}
 	}
 	out.Endpoints = net.endpoints
@@ -427,18 +427,30 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	return out, runErr
 }
 
-// stopAfterFailedSetup takes down a network that came up before setup failed,
-// and returns the setup error either way.
+// afterFailedSetup gathers what the failed network can still say, then takes it
+// down, and returns the setup error either way.
 //
 // Setting a network up is not all-or-nothing: the nodes launch and then a
-// readiness gate, or the plan check, refuses what came up. Leaving those nodes
-// running holds the ports and the datadirs, so the next run cannot compose —
-// and nothing says so, because the run reported the setup failure and stopped
-// talking.
+// readiness gate, or the plan check, refuses what came up. Two things used to go
+// wrong at once. Nothing was collected, because evidence gathering hung on a
+// test record and no test had started — so "1 node still not ready" was the
+// entire account of the failure, and which node, and why, was gone. And the
+// nodes were left running, holding the ports and the datadirs, so the next run
+// could not compose either.
 //
-// --keep-up still keeps them. A failure is exactly when an operator wants to
+// Order matters: gather first. The health probe needs the nodes answering, and
+// taking them down is exactly what stops them answering.
+//
+// --keep-up still keeps the network. A failure is when an operator wants to
 // look, and the flag says they will.
-func stopAfterFailedSetup(ctx context.Context, net composed, keepUp bool, setupErr error) error {
+func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, keepUp bool, out *RunSuiteOut, setupErr error) error {
+	if ev := gatherFailureData(ctx, sd, dataDir, net.nodes); len(ev) > 0 {
+		if dir, err := saveFailureData(sd.Clock, dataDir, ev); err == nil {
+			out.SetupSteps = append(out.SetupSteps, "evidence: "+dir)
+		} else {
+			out.SetupSteps = append(out.SetupSteps, "evidence: "+err.Error())
+		}
+	}
 	if keepUp || net.teardown == nil {
 		return setupErr
 	}

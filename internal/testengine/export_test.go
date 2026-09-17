@@ -7,7 +7,11 @@
 
 package testengine
 
-import "context"
+import (
+	"context"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+)
 
 // ComposedForTest builds a composed network whose only live part is how it is
 // taken down.
@@ -15,7 +19,10 @@ func ComposedForTest(teardown func(context.Context) error) composed {
 	return composed{teardown: teardown}
 }
 
-// StopAfterFailedSetupForTest exposes stopAfterFailedSetup.
-func StopAfterFailedSetupForTest(ctx context.Context, net composed, keepUp bool, setupErr error) error {
-	return stopAfterFailedSetup(ctx, net, keepUp, setupErr)
+// AfterFailedSetupForTest exposes afterFailedSetup with the gathering side
+// disabled: it is driven with an empty workspace path, so the test drives the
+// decision (stop or keep) without a network to gather from.
+func AfterFailedSetupForTest(ctx context.Context, net composed, keepUp bool, setupErr error) error {
+	var out RunSuiteOut
+	return afterFailedSetup(ctx, chainsetup.Deps{}, "", net, keepUp, &out, setupErr)
 }
