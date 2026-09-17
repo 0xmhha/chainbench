@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -371,6 +373,57 @@ func TestPlan_NamesTheBinaryTheLaunchWillRun(t *testing.T) {
 		p := planFor(t, env, RunSuiteIn{WorkspaceConfigPath: cfg, Binary: "/opt/gstable"})
 		if p.Binary != "/opt/gstable" {
 			t.Fatalf("plan binary = %q, want /opt/gstable", p.Binary)
+		}
+	})
+}
+
+// TestComposition_OneFormOfABinaryReference (W4c).
+//
+// Placing used to happen only inside init and start, so everything that asked
+// a question ABOUT the launch asked it in the other language. Two of the three
+// symptoms are here, on the path a run takes before anything launches.
+func TestComposition_OneFormOfABinaryReference(t *testing.T) {
+	dir := t.TempDir()
+	cfg := filepath.Join(dir, "workspace-config.yaml")
+	writeConfig(t, cfg, filepath.Join(dir, "out"))
+
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable","upgrade":"gstable-next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
+	    {"index":3,"role":"bp","binary":"upgrade"},{"index":4,"role":"en"}]}}`
+
+	spec := caseWithEnv(t, env)
+	comp, err := compositionOf(context.Background(), spec,
+		RunSuiteIn{WorkspaceConfigPath: cfg, DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+
+	// The per-node map is handed to exec as it is stored. Stored as declared,
+	// node 3 ran a bare name off the target's PATH while every other node in
+	// the same network ran the placed path — two builds in one chain, silently,
+	// whenever the PATH held a different one.
+	t.Run("the per-node map holds placed paths", func(t *testing.T) {
+		if got, want := comp.up.Binaries["upgrade"], "/data/bin/gstable-next"; got != want {
+			t.Fatalf("binaries[upgrade] = %q, want %q", got, want)
+		}
+	})
+
+	// Preflight compared the recorded placed path against the requested name,
+	// so an identical request answered rebuild-all and the chain was recomposed
+	// on every run — but only when the environment file was doing its job, which
+	// is when an absolute --binary was not hiding it.
+	t.Run("an identical request reuses what is composed", func(t *testing.T) {
+		// Everything else answers what was asked, so the binary is the only
+		// thing left that can disagree.
+		have := preflight.Have{
+			Chain: "stablenet", Binary: comp.up.Binary, KeysDir: comp.up.KeysDir,
+			Started: true, Nodes: []preflight.Node{{Index: 1, PID: 100}},
+		}
+		d := preflight.Compare(have, chainsetup.WantOf(*comp.up))
+		if d.Verdict != preflight.Reuse {
+			t.Fatalf("verdict = %s, reasons %v — want reuse", d.Verdict, d.Reasons)
 		}
 	})
 }

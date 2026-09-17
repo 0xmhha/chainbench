@@ -106,3 +106,54 @@ func PlaceBinary(ref string, wc *resource.WorkspaceConfig) (string, error) {
 	}
 	return path, nil
 }
+
+// PlaceRequest turns every binary reference in a compose request into what the
+// target will run, once, before the request is recorded, compared or launched.
+//
+// It exists because placing used to happen only at the last possible moment,
+// inside init and start. Everything that asks a question ABOUT the launch was
+// then asking it in the other language. Three things went wrong at once and
+// none of them looked related:
+//
+//   - the plan promised "gstable" while the launch recorded /data/bin/gstable,
+//     so the pre-test comparison refused a correct run;
+//   - the per-node binaries map was stored as declared and handed to exec, so a
+//     node the topology assigned a binary ran a bare name while every other node
+//     in the same network ran the placed path;
+//   - preflight compared a recorded placed path against a requested name, so an
+//     identical request answered rebuild-all and the chain was recomposed every
+//     single time.
+//
+// One form, decided once, at the edge. PlaceBinary is idempotent — an absolute
+// path places to itself — so a later caller that places again is harmless, and
+// no single site is load-bearing.
+//
+// A nil wc is no environment file, and a name then stays a name for the
+// target's PATH to resolve.
+func PlaceRequest(in *NetUpIn, wc *resource.WorkspaceConfig) error {
+	if in == nil {
+		return nil
+	}
+	if in.Binary != "" {
+		placed, err := PlaceBinary(in.Binary, wc)
+		if err != nil {
+			return err
+		}
+		in.Binary = placed
+	}
+	if len(in.Binaries) == 0 {
+		return nil
+	}
+	// A fresh map: the caller's may be shared, and a request being placed must
+	// not rewrite a declaration somebody else is still reading.
+	placed := make(map[string]string, len(in.Binaries))
+	for name, ref := range in.Binaries {
+		p, err := PlaceBinary(ref, wc)
+		if err != nil {
+			return fmt.Errorf("chainsetup: binaries.%s: %w", name, err)
+		}
+		placed[name] = p
+	}
+	in.Binaries = placed
+	return nil
+}

@@ -269,6 +269,11 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	if err != nil {
 		return NetUpOut{}, err
 	}
+	// Before the workspace is opened, so what this request records, compares
+	// and launches with is one form of the same reference.
+	if err := placeUpRequest(&in); err != nil {
+		return NetUpOut{}, err
+	}
 	stage, mode := up.stage, up.mode
 
 	// The composite holds the workspace for its whole run. Each step it calls
@@ -366,6 +371,19 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// placeUpRequest places the request's binary references through the environment
+// file it names, if it names one.
+func placeUpRequest(in *NetUpIn) error {
+	if in.WorkspaceConfigPath == "" {
+		return PlaceRequest(in, nil)
+	}
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return fmt.Errorf("chainsetup: chain up: %w", err)
+	}
+	return PlaceRequest(in, &wc)
 }
 
 // upChainMode reads how this up should treat an existing composition from the

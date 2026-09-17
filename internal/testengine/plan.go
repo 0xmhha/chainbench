@@ -216,7 +216,7 @@ func planOf(c composition, chain string) ComposePlan {
 		Workspace: up.DataDir,
 		Target:    describeTarget(up),
 		Placement: up.Target,
-		Binary:    planBinary(c),
+		Binary:    up.Binary,
 		Binaries:  up.Binaries,
 		Nodes:     planNodes(up),
 		Keys: PlanKeys{
@@ -235,15 +235,6 @@ func planOf(c composition, chain string) ComposePlan {
 	}
 	p.Launch = mergeScopes(up.LaunchScoped, up.LaunchSet)
 	return p
-}
-
-// planBinary is the binary the plan promises: where the environment file puts
-// it when there is one, and the agreed reference otherwise.
-func planBinary(c composition) string {
-	if c.placedBinary != "" {
-		return c.placedBinary
-	}
-	return c.up.Binary
 }
 
 // mergeScopes folds the flat "all"-scope list into the scoped map so a reader

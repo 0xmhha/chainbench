@@ -154,16 +154,6 @@ type composition struct {
 	up      *chainsetup.NetUpIn
 	handoff *upgrade.HandoffInputs
 	from    map[PlanField]PlanSource
-	// placedBinary is up.Binary after the environment file has said where that
-	// file actually is. Empty when there is no environment file, and the name
-	// then stands on its own.
-	//
-	// It is kept beside up.Binary rather than replacing it because the two
-	// answer different questions. up.Binary is the reference the layers agreed
-	// on and is what the composition records; this is where the reference lands
-	// on the target, and is what the plan promises and the pre-test comparison
-	// holds the run to.
-	placedBinary string
 }
 
 // compositionOf reads the network a spec declares and applies the caller's
@@ -382,7 +372,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// set). Setting it here means `new` records it and every later step — and a
 	// server selection through Retarget, which keeps a data root already set —
 	// resolves paths under the root the environment named, not the workspace dir.
-	var placedBinary string
+	var wcOrNil *resource.WorkspaceConfig
 	if in.WorkspaceConfigPath != "" {
 		wc, werr := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
 		if werr != nil {
@@ -401,15 +391,16 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if err := applyExistingInputs(up, wc, spec); err != nil {
 			return composition{}, err
 		}
-		// Through the same rule the launch uses, so the plan names the file the
-		// launch will exec rather than the name it was asked for.
-		placed, perr := chainsetup.PlaceBinary(up.Binary, &wc)
-		if perr != nil {
-			return composition{}, perr
-		}
-		placedBinary = placed
+		wcOrNil = &wc
 	}
-	return composition{up: up, from: from, placedBinary: placedBinary}, nil
+	// Once, here, because this path asks two questions about the launch before
+	// the launch runs: the plan it prints, and the preflight comparison that
+	// decides whether to reuse what is composed. Both were asking in the other
+	// language. chainsetup places again on the way in, which is harmless.
+	if err := chainsetup.PlaceRequest(up, wcOrNil); err != nil {
+		return composition{}, err
+	}
+	return composition{up: up, from: from}, nil
 }
 
 // applyExistingInputs expands a named bundle of inputs that are already on the

@@ -130,3 +130,49 @@ func TestBinary_ANameStaysANameWithoutAnEnvironmentFile(t *testing.T) {
 		t.Errorf("binary = %q, %v; want the bare name %q", got, err, "gwemix")
 	}
 }
+
+// TestPlaceRequest_PlacesEveryReferenceOnce (W4c) covers the `chain up` entry,
+// which reaches none of the test engine's path.
+func TestPlaceRequest_PlacesEveryReferenceOnce(t *testing.T) {
+	cfg := writeWorkspaceConfig(t, "/data", nil)
+	declared := map[string]string{"upgrade": "gstable-next"}
+
+	in := NetUpIn{
+		DataDir: t.TempDir(), Chain: "stablenet", Stage: UpStart,
+		Binary: "gstable", Binaries: declared, WorkspaceConfigPath: cfg,
+	}
+	if err := placeUpRequest(&in); err != nil {
+		t.Fatal(err)
+	}
+	if want := "/data/bin/gstable"; in.Binary != want {
+		t.Errorf("binary = %q, want %q", in.Binary, want)
+	}
+	if want := "/data/bin/gstable-next"; in.Binaries["upgrade"] != want {
+		t.Errorf("binaries[upgrade] = %q, want %q", in.Binaries["upgrade"], want)
+	}
+	// The caller's map is not the request's to rewrite: a declaration may be
+	// shared with whoever is still reading it.
+	if declared["upgrade"] != "gstable-next" {
+		t.Errorf("the declared map was rewritten: %v", declared)
+	}
+	// Idempotent, so a second placement on the way through is harmless and no
+	// single site has to be the one that remembers.
+	if err := placeUpRequest(&in); err != nil {
+		t.Fatal(err)
+	}
+	if want := "/data/bin/gstable"; in.Binary != want {
+		t.Errorf("placing twice moved it to %q", in.Binary)
+	}
+}
+
+// TestPlaceRequest_WithoutAnEnvironmentFileANameStaysAName: the target resolves
+// it on its PATH, and inventing a path here would name a file nobody put there.
+func TestPlaceRequest_WithoutAnEnvironmentFileANameStaysAName(t *testing.T) {
+	in := NetUpIn{Binary: "gstable", Binaries: map[string]string{"upgrade": "gstable-next"}}
+	if err := PlaceRequest(&in, nil); err != nil {
+		t.Fatal(err)
+	}
+	if in.Binary != "gstable" || in.Binaries["upgrade"] != "gstable-next" {
+		t.Errorf("a name was placed without an environment file: %q %v", in.Binary, in.Binaries)
+	}
+}
