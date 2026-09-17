@@ -34,19 +34,22 @@ func TestList_And_ChainstatePaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// The id is root-relative, not the run alone: a run lives under the
+	// directory of the process that produced it.
+	id := session.IDFor(root, s.Root())
 	ids, err := session.List(root)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
-	if len(ids) != 1 || ids[0] != s.ID() {
-		t.Fatalf("List = %v, want [%s]", ids, s.ID())
+	if len(ids) != 1 || ids[0] != id {
+		t.Fatalf("List = %v, want [%s]", ids, id)
 	}
 
-	if got := session.SessionFilePath(root, s.ID()); got != filepath.Join(s.Root(), "session.json") {
+	if got := session.SessionFilePath(root, id); got != filepath.Join(s.Root(), "session.json") {
 		t.Fatalf("SessionFilePath = %s", got)
 	}
 
-	paths, err := session.ChainstatePaths(root, s.ID())
+	paths, err := session.ChainstatePaths(root, id)
 	if err != nil {
 		t.Fatalf("ChainstatePaths: %v", err)
 	}

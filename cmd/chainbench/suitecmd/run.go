@@ -142,7 +142,8 @@ func NewRun() *cobra.Command {
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
 		"session artifact base directory; overrides workspace-config's control.artifactRoot "+
-			"(compose default: the workspace's sessions directory)")
+			"(default: ~/.chainbench/sessions — outside the workspace, so removing the workspace "+
+			"does not remove the record of what was tested)")
 	cmd.Flags().IntVar(&bpCount, "bp", 4, "compose: bp node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
@@ -156,12 +157,14 @@ func NewRun() *cobra.Command {
 	return cmd
 }
 
-// defaultArtifactRoot is where a run's session lands when no root is named.
+// defaultArtifactRoot is where a run's artifacts land when no root is named.
 //
-// A composed run keeps its sessions beside its workspace; this is the answer
-// for attaching to a network somebody else is running, which has no workspace
-// to keep them beside. It used to be the relative "chainbench-out", which
-// scattered sessions across the filesystem one working directory at a time.
+// One answer for every run, composed or attached. A composed run used to keep
+// its artifacts beside its workspace, which tied the record of what was tested
+// to the scratch directory it was tested in: removing the workspace to reclaim
+// disk, or to force a clean compose, took every verdict and every log with it.
+// Before that it was the relative "chainbench-out", which scattered them across
+// the filesystem one working directory at a time.
 func defaultArtifactRoot() string {
 	d, err := home.Sessions()
 	if err != nil {

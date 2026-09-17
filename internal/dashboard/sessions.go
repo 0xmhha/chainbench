@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -27,8 +28,8 @@ func (s *Server) handleSessions(w http.ResponseWriter, _ *http.Request) {
 
 // handleSession serves one session's session.json verdict.
 func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if !validSessionID(id) {
+	id, ok := sessionIDOf(r)
+	if !ok {
 		http.Error(w, "bad session id", http.StatusBadRequest)
 		return
 	}
@@ -48,8 +49,8 @@ func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
 // handleSessionChainstate returns the chainstate samples persisted across the
 // session's environments as a JSON array, so the dashboard can replay a run.
 func (s *Server) handleSessionChainstate(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if !validSessionID(id) {
+	id, ok := sessionIDOf(r)
+	if !ok {
 		http.Error(w, "bad session id", http.StatusBadRequest)
 		return
 	}
@@ -89,8 +90,25 @@ func readJSONL(path string) []json.RawMessage {
 	return out
 }
 
+// sessionIDOf reads the run id from the request path, joining the process
+// segment when the route carried one, and reports whether it is safe to use.
+func sessionIDOf(r *http.Request) (string, bool) {
+	id := r.PathValue("id")
+	if !validSessionID(id) {
+		return "", false
+	}
+	proc := r.PathValue("proc")
+	if proc == "" {
+		return id, true
+	}
+	if !validSessionID(proc) {
+		return "", false
+	}
+	return filepath.Join(proc, id), true
+}
+
 // validSessionID rejects empty ids and anything that could escape the artifact
-// root; a session id is a single path segment.
+// root; each segment of an id is a single path segment.
 func validSessionID(id string) bool {
 	if id == "" || id == "." || id == ".." {
 		return false

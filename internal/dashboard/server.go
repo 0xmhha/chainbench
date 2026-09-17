@@ -56,6 +56,11 @@ func NewServer(bus *collector.Bus, store collector.Store, opts ...Option) *Serve
 	s.mux.HandleFunc("GET /api/sessions", s.handleSessions)
 	s.mux.HandleFunc("GET /api/sessions/{id}", s.handleSession)
 	s.mux.HandleFunc("GET /api/sessions/{id}/chainstate", s.handleSessionChainstate)
+	// A run lives under the directory of the process that produced it, so its
+	// id is two segments. The one-segment routes stay for a root written by an
+	// earlier build, whose runs sit directly under it.
+	s.mux.HandleFunc("GET /api/sessions/{proc}/{id}", s.handleSession)
+	s.mux.HandleFunc("GET /api/sessions/{proc}/{id}/chainstate", s.handleSessionChainstate)
 	return s
 }
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -103,10 +104,17 @@ func TestArtifactRoot_LayersLikeEverythingElse(t *testing.T) {
 	cfg := filepath.Join(dir, "workspace-config.yaml")
 	writeConfig(t, cfg, configured)
 
-	t.Run("no config, no flag: beside the workspace", func(t *testing.T) {
+	// The default is the promised place, not a directory inside the workspace.
+	// A workspace is scratch and gets removed; the record of what was tested
+	// has to outlive it.
+	t.Run("no config, no flag: the promised place", func(t *testing.T) {
+		want, herr := home.Sessions()
+		if herr != nil {
+			t.Skip("no home directory to promise")
+		}
 		got, err := artifactRoot("", "", "/ws")
-		if err != nil || got != filepath.Join("/ws", "sessions") {
-			t.Fatalf("artifactRoot = %q, %v", got, err)
+		if err != nil || got != want {
+			t.Fatalf("artifactRoot = %q, %v, want %q", got, err, want)
 		}
 	})
 	t.Run("the config is read", func(t *testing.T) {

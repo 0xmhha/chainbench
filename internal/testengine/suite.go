@@ -7,13 +7,13 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -524,7 +524,14 @@ func recordBlockedBySetup(ctx context.Context, sd chainsetup.Deps, dataDir strin
 // A configured root that cannot be created is an error rather than a fall back
 // to the default. Falling back would put the results somewhere the operator did
 // not ask for and say nothing, and they would go looking in the path they wrote.
-func artifactRoot(explicit, configPath, dataDir string) (string, error) {
+//
+// The harness default is ~/.chainbench/sessions, not a directory inside the
+// workspace. What a run produced and what it ran on have different lifetimes: a
+// workspace is scratch and gets removed to reclaim the disk or to force a clean
+// compose, and that used to take every verdict and every log with it. The
+// workspace is still where the chain is; this is where the record of testing it
+// is kept.
+func artifactRoot(explicit, configPath, _ string) (string, error) {
 	// The command names no layer and wins over every document.
 	if explicit != "" {
 		return explicit, nil
@@ -545,8 +552,7 @@ func artifactRoot(explicit, configPath, dataDir string) (string, error) {
 			return root, nil
 		}
 	}
-	// The session belongs with the workspace it tested.
-	return filepath.Join(dataDir, "sessions"), nil
+	return home.Sessions()
 }
 
 // attachWiring is the run-side wiring the compose path and the workspace-attach
@@ -631,9 +637,9 @@ func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorksp
 	if chain == "" {
 		return "", fmt.Errorf("engine: attach workspace: a chain is required to attach")
 	}
-	artifactRoot := in.ArtifactRoot
-	if artifactRoot == "" {
-		artifactRoot = filepath.Join(in.DataDir, "sessions")
+	artifactRoot, err := artifactRoot(in.ArtifactRoot, "", in.DataDir)
+	if err != nil {
+		return "", fmt.Errorf("engine: attach workspace: %w", err)
 	}
 	var setupSteps []string
 	net, err := readWorkspaceComposed(ctx, sd, in.DataDir, keysDir, &setupSteps, in.NodeMonitorTimeout)

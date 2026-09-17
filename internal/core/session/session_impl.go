@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -43,6 +44,41 @@ const (
 // "UTC-YYYYMMDD-HHMMSS" in UTC.
 func SessionID(startedAt time.Time) string {
 	return "UTC-" + startedAt.UTC().Format(sessionIDLayout)
+}
+
+// processStartedAt is when this process began. It is captured here, not asked
+// of a clock, because it is not an input to any decision: it is the identity of
+// the running program, and it must not change while it runs.
+var processStartedAt = time.Now()
+
+// ProcessID names the process producing artifacts: the UTC second it started,
+// then its pid — "20260917-071831-41210".
+//
+// Several agents drive chainbench at once, and their runs used to land in one
+// flat directory where nothing said which of them produced what. This groups
+// them. The value is deterministic (asked twice in one process it answers the
+// same, so a run cannot straddle two directories) and cannot collide (one pid
+// starts once in a given second). The pid is there so a directory can be traced
+// back to a process something like ps can still find.
+//
+// An environment variable was considered and rejected: one value would cover
+// every run on the machine, which is the thing being separated.
+//
+// On disk this level is the session and the tree below it is one run. This
+// package's Session type is that run, and is misnamed — renaming it touches
+// session.json and its 170-odd references, so it is tracked separately.
+func ProcessID(startedAt time.Time, pid int) string {
+	return startedAt.UTC().Format(sessionIDLayout) + "-" + strconv.Itoa(pid)
+}
+
+// currentProcessID is this process's id, computed once.
+var currentProcessID = sync.OnceValue(func() string {
+	return ProcessID(processStartedAt, os.Getpid())
+})
+
+// ProcessDir is where this process's runs go under an artifact root.
+func ProcessDir(root string) string {
+	return filepath.Join(root, currentProcessID())
 }
 
 // EnvID returns the environment folder id for a fingerprint: "env-" plus the
@@ -84,7 +120,9 @@ func New(baseDir, command string, startedAt time.Time) (Session, error) {
 // leaking to callers.
 func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) *store.KeySet) (Session, error) {
 	id := SessionID(startedAt)
-	root := filepath.Join(baseDir, id)
+	// Under this process's own directory: the artifact root is shared, and
+	// several agents write into it at the same time.
+	root := filepath.Join(ProcessDir(baseDir), id)
 	dirs := []struct {
 		path string
 		perm fs.FileMode
