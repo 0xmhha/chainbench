@@ -552,3 +552,26 @@ func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
 		t.Fatalf("an entry with no binary was accepted: %v", err)
 	}
 }
+
+// TestComposition_TheDeclaredDefaultIsExpandedLikeAnyOtherReference.
+//
+// A declaration writes ${GSTABLE_BIN:-gstable} for the network's binary as
+// readily as for a per-node one. The per-node entries were expanded and this
+// lookup was not, so the plan printed the placeholder and exec would have been
+// handed it — found by composing a network that used the object form for both.
+func TestComposition_TheDeclaredDefaultIsExpandedLikeAnyOtherReference(t *testing.T) {
+	t.Setenv("CB_TEST_DEFAULT_BIN", "/opt/gstable")
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"${CB_TEST_DEFAULT_BIN}","next":"gstable-next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"bp"},{"index":2,"role":"bp","binary":"next"}]}}`
+
+	spec := caseWithEnv(t, env)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+	if got := comp.up.Binary; got != "/opt/gstable" {
+		t.Errorf("the network's binary = %q, want the expanded /opt/gstable", got)
+	}
+}

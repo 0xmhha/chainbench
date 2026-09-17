@@ -306,7 +306,11 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		// assigned node happened to name — so a four-node network with two on
 		// the successor ran all four on the successor, and the plan said so
 		// without anything looking wrong.
-		binary = spec.Chain.Binaries[dsl.BinaryDefault]
+		// Expanded like every other binary reference. A declaration writes
+		// ${GSTABLE_BIN:-gstable} here as readily as anywhere else, and this
+		// lookup read it raw — so the plan showed the placeholder and exec would
+		// have been handed it.
+		binary = expand(spec.Chain.Binaries[dsl.BinaryDefault])
 	}
 	if binary == "" {
 		// No default declared: fall back per node to the first node's binary, as

@@ -274,9 +274,60 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
    **`style: restart` 는 이름을 대며 거부한다.** 그 밖에 스스로 모순인 선언도
    거부한다 — preset 과 profile 을 둘 다 적거나, 한쪽 이름을 양쪽에 적거나,
    `binaries` 가 모르는 이름을 적는 경우.
-4. **핸드오프 케이스를 보통 경로로 돌린다.** 같은 망이 서는지 §5 로 대조한다.
-   **여기서 처음으로 흡수 가능 여부가 사실로 드러난다.** 생산자 2로도 돌려 본다.
-5. **`upgrade` 축소.** 4가 통과한 뒤에야 지운다. `AwaitFork` 는 테스트 쪽으로.
+4. **핸드오프를 보통 경로로 돌렸다 — 실측 완료, 막힌 곳 둘 (2026-09-18).**
+
+   §2.2 의 선언을 그대로 써서 돌렸다. **구성은 끝까지 갔다** — place, keys,
+   genesis, config, build, deploy, init 이 전부 통과하고 기동에서 멈췄다.
+
+   ```
+   init: 5 datadir(s) initialized
+   verify: the launched network matches the plan
+   error: ... "deploy-governance": the node produced no block within 1m0s
+   ```
+
+   **막힌 것 하나 — 생산자가 계정을 열지 못한다 (실측).** 생산자 로그:
+
+   ```
+   Fatal: Failed to unlock account 0x5400d8b5… (no key for given address or file)
+   ```
+
+   보통 경로는 bp 에게 **그 노드의 nodekey 가 만들어 내는 주소**를 준다
+   (`preset.Node(i).Address`). 그런데 프리셋 node5 의 keystore 에는 **다른
+   계정**(`0xf9593d…`)이 들어 있다 — 일부러 그렇고, 그것이 핸드오프의 생산자
+   계정이다(§11.2.12).
+
+   **보통 경로에는 "이 노드는 이 계정을 연다" 고 말할 방법이 없다.** 길은 둘 —
+   프리셋을 앞뒤가 맞게 고치거나, 노드 표가 계정을 말할 수 있게 하거나.
+
+   *(로그의 `Unavailable modules ... unavailable=[wemix]` 는 무해하다. 통과하는
+   보통 wemix 망에도 같은 줄이 있다 — 실측.)*
+
+   **막힌 것 둘 — 포크 섹션을 선언할 수 없다 (읽음).** 핸드오프의 genesis 는
+   from-체인 genesis 에 to-체인의 포크 섹션을 **계산해서** 얹은 것이다
+   (`plan.go:166` — to-체인 genesis 를 그 템플릿으로 빌드하고,
+   `ExtractConfigSection(…, "croissant")` 로 떼어, `SetConfigSection` 으로 얹는다).
+
+   `genesis.perBinary` 는 **리터럴** overlay 를 받으므로 "X 체인의 포크 섹션을
+   가져와라" 를 말할 수 없다. 게다가 그 섹션의 검증자는 **`to` 바이너리를 도는
+   노드들**이라, 생산자를 고르는 `presetNetwork` 도 그대로는 못 쓴다.
+
+   필요한 것은 작다 — `upgrade` 선언이 이미 `fork`·`at`·`from`·`to` 를 갖고
+   있으니, **genesis 단계가 그것을 보고 빌드-추출-병합을 하면 된다.** 조각
+   (`genesis.Build`·`ExtractConfigSection`·`SetConfigSection`·`ValidateForks`)은
+   전부 `internal/core/genesis` 에 이미 있다.
+
+   **덤으로 고친 것.** 이 실행이 결함 하나를 드러냈다 — `binaries` 의 `default`
+   값이 **확장되지 않고** 있었다. 노드별 값은 확장되는데 default 만 아니어서,
+   계획에 `${GWEMIX_BIN:-gwemix}` 가 그대로 찍혔고 exec 에도 그대로 갔을 것이다.
+
+   **아직 안 한 것.** 생산자 2 이상은 못 돌려 봤다. 위 둘이 먼저다.
+
+5. **그리고 내가 만든 것 하나는 아직 소비자가 없다.** 바이너리별 genesis
+   (`genesis.perBinary`)는 두 바이너리가 같은 문서를 못 받아들일 때를 위한 것인데,
+   **wemix·wbft 쌍은 받아들인다**(하나의 genesis 로 라이브 통과). `restart` 방식도
+   genesis 가 하나다. 그러니 지금 이 기능을 쓰는 것이 없다. 사용자가 말한 모델은
+   실재하지만, **이 쌍에는 해당하지 않는다.**
+6. **`upgrade` 축소.** 4가 통과한 뒤에야 지운다. `AwaitFork` 는 테스트 쪽으로.
 
 **1과 2는 4의 결과와 무관하게 이득이다.** 1은 관례 의존과 무시되는 파일을 없애고,
 2는 섞인 망의 어휘를 바로잡는다. 4가 실패해도 버려지지 않는다.
