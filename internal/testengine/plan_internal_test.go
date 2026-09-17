@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // planFor composes the plan the way RunSuite does: through compositionOf, so a
@@ -286,5 +288,44 @@ func TestPlan_ATargetTheDeclarationNamedIsShown(t *testing.T) {
 	}
 	if !strings.Contains(p.Target, "host.example") || !strings.Contains(p.Target, "/data/net1") {
 		t.Errorf("the target must name the host and the root it was given: %q", p.Target)
+	}
+}
+
+// TestRefuseMachineConflict covers the four shapes of "who picks the machine".
+//
+// The data root already refuses two answers rather than picking one. The
+// machine had no such rule: a case declaring srv://alpha and a command passing
+// --server beta composed on beta and said nothing — the plan printed "server
+// beta" and credited the command, and alpha was gone. A test that runs on the
+// wrong machine does not fail; it answers a question nobody asked.
+func TestRefuseMachineConflict(t *testing.T) {
+	alpha := resource.Spec{Server: "alpha", DataRoot: "/data/net1"}
+	for _, tc := range []struct {
+		name      string
+		in        RunSuiteIn
+		declared  resource.Spec
+		wantError bool
+	}{
+		{"they disagree", RunSuiteIn{Server: resource.ServerRef{Name: "beta"}}, alpha, true},
+		{"they agree", RunSuiteIn{Server: resource.ServerRef{Name: "alpha"}}, alpha, false},
+		{"the command names none", RunSuiteIn{}, alpha, false},
+		// A declaration naming a path has nothing to disagree with.
+		{"the declaration names a path", RunSuiteIn{Server: resource.ServerRef{Name: "beta"}},
+			resource.Spec{DataRoot: "/srv/net1"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := refuseMachineConflict(tc.in, tc.declared, "srv://alpha/data/net1")
+			if tc.wantError && err == nil {
+				t.Fatal("the run must be refused")
+			}
+			if !tc.wantError && err != nil {
+				t.Fatalf("unexpected refusal: %v", err)
+			}
+			// The refusal has to name both answers, because the reader has to
+			// decide which one to delete.
+			if tc.wantError && (!strings.Contains(err.Error(), "alpha") || !strings.Contains(err.Error(), "beta")) {
+				t.Errorf("the refusal must name both machines: %v", err)
+			}
+		})
 	}
 }

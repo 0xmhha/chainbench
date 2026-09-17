@@ -93,6 +93,44 @@ func expand(s string) string {
 	})
 }
 
+// refuseMachineConflict stops a run whose declaration and command name
+// different machines.
+//
+// The data root already works this way: WorkspaceConfig.AdoptDataRoot refuses
+// two answers rather than picking one, and names the line to change. The
+// machine had no such rule, so a case declaring srv://alpha and a command
+// passing --server beta composed on beta and said nothing — the plan printed
+// "server beta" and credited the command, and alpha was gone. A test that runs
+// on the wrong machine does not fail; it answers a question nobody asked.
+//
+// --docker is not a machine and is not checked here: it says how the server
+// set's entries are reached (as local containers), not which entry to use.
+func refuseMachineConflict(in RunSuiteIn, declared resource.Spec, placement string) error {
+	commanded := in.Server.Name
+	switch {
+	case in.Server.All:
+		commanded = "every server in the set"
+	case commanded == "":
+		return nil
+	}
+	// Which machine a spec names is resource's to say, not this one's: it owns
+	// the locality rule (architecture-v2 §4). Server first, then a host; neither
+	// means the declaration named a path and there is nothing to disagree with.
+	named := declared.Server
+	if named == "" {
+		named = declared.Host
+	}
+	if named == "" {
+		return nil
+	}
+	if named == commanded {
+		return nil
+	}
+	return fmt.Errorf(
+		"testengine: machine conflict: the env target %q says %q but --server says %q — name the machine in one place",
+		placement, named, commanded)
+}
+
 // countFrom records that the declaration asked for a node count.
 //
 // A count left at zero records nothing. Zero means the role is absent, and
@@ -321,6 +359,9 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		tgt, perr := resource.Parse(spec.Placement)
 		if perr != nil {
 			return composition{}, fmt.Errorf("testengine: env target %q: %w", spec.Placement, perr)
+		}
+		if err := refuseMachineConflict(in, tgt, spec.Placement); err != nil {
+			return composition{}, err
 		}
 		up.Target = tgt
 		if from[FieldTarget] == SourceHarness {
