@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"errors"
+	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"slices"
 	"strings"
@@ -162,5 +163,42 @@ func TestComposeNeeds_InitBeforeStart(t *testing.T) {
 		if !slices.Contains(needs, want) {
 			t.Errorf("%s needs %v, want it to include %q", step, needs, want)
 		}
+	}
+}
+
+// TestExcerpt_KeepsBothEnds.
+//
+// The tail alone was kept, and the failure this evidence exists to explain
+// lives at the other end: a node that refuses its genesis says so in its first
+// lines and exits. At one block per second a node writes several lines a
+// second, so a 200-line tail is the last half minute — the one window a startup
+// failure is not in.
+func TestExcerpt_KeepsBothEnds(t *testing.T) {
+	lines := make([]string, 0, 1000)
+	lines = append(lines, "Fatal: mismatching Boho fork block in database")
+	for i := 1; i < 999; i++ {
+		lines = append(lines, fmt.Sprintf("INFO imported block %d", i))
+	}
+	lines = append(lines, "Blockchain stopped")
+
+	got := excerpt(strings.Join(lines, "\n"), 2, 2)
+
+	if !strings.Contains(got, "Fatal: mismatching") {
+		t.Error("the first line is where a startup failure says why; it was dropped")
+	}
+	if !strings.Contains(got, "Blockchain stopped") {
+		t.Error("the last line was dropped")
+	}
+	// A reader has to know how much they are not seeing.
+	if !strings.Contains(got, "996 line(s) elided") {
+		t.Errorf("the excerpt must say what it left out: %q", got[:120])
+	}
+}
+
+// TestExcerpt_ShortLogIsWhole: eliding nothing is not worth a marker saying so.
+func TestExcerpt_ShortLogIsWhole(t *testing.T) {
+	in := "one\ntwo\nthree"
+	if got := excerpt(in, 2, 2); got != in {
+		t.Errorf("excerpt = %q, want the whole log", got)
 	}
 }

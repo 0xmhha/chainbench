@@ -17,8 +17,19 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-// failureLogTailLines is how much of each node's log a failed test keeps.
-const failureLogTailLines = 200
+// failureLogHeadLines and failureLogTailLines are how much of each node's log a
+// failure keeps, from each end.
+//
+// Both ends, because the two failures this evidence explains live at opposite
+// ones. A node that refuses its genesis or cannot bind a port says so in its
+// first lines and exits; a node that dies after an hour says so in its last.
+// The tail alone used to be kept, and at one block per second a geth-family
+// node writes several lines a second — so 200 lines was the last half minute,
+// which is exactly the window a startup failure is not in.
+const (
+	failureLogHeadLines = 200
+	failureLogTailLines = 200
+)
 
 // failureDir is where evidence lands when a run fails before it has a session.
 const failureDir = "failures"
@@ -91,12 +102,12 @@ func gatherFailureData(ctx context.Context, sd chainsetup.Deps, dataDir string, 
 				note("%s: the node table records no log path", name)
 				continue
 			}
-			tail, lerr := ws.Logs(ctx, n.Index, failureLogTailLines)
+			excerpt, lerr := ws.LogExcerpt(ctx, n.Index, failureLogHeadLines, failureLogTailLines)
 			if lerr != nil {
 				note("%s: %v", name, lerr)
 				continue
 			}
-			add(name, []byte(tail))
+			add(name, []byte(excerpt))
 		}
 	}
 
