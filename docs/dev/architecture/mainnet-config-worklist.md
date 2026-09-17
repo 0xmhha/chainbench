@@ -1117,43 +1117,107 @@ binary  /tmp/cbw4c/data/bin/gstable
         (per node: default=/tmp/.../bin/gstable, upgrade=/tmp/.../bin/gstable)
 ```
 
-### 11.2.7 핸드오프는 workspace-config 를 통째로 무시한다 (2026-09-17, 미해결)
+### 11.2.7 핸드오프는 두 번째 컴포저다 (2026-09-17, 재검토)
 
-W4c 를 확인하다 나왔다. `compositionOf` 의 핸드오프 분기는 workspace-config
-블록보다 **먼저 return 한다**(`compose.go:224`). 그래서 업그레이드 케이스는
-`--workspace-config` 를 줘도 데이터 루트도, 배치도, existing inputs 도 적용받지
-않는다. **말없이** 그렇게 된다.
+**앞서 적었던 두 문장이 틀렸다.** 지우지 않고 무엇이 틀렸는지 남긴다.
 
-실측 — `--workspace-config` 가 `paths.binaries: bin`, `dataRoot: /tmp/cbw4c/data`
-를 적었는데:
+> ~~"핸드오프는 설계상 로컬 전용이다"~~ — 아니다. `HandoffInputs` 에
+> `MultiMachine`, `Machine func(index)`, `Placement`, `DialURL`, 원격
+> `Files`/`Driver`/`Exec` 가 **다 있다.**
+>
+> ~~"배치하는 것이 옳은지 자체가 결정 사항이다"~~ — 아니다. `chainbench upgrade`
+> 는 **이미** workspace-config 로 배치한다(`app/upgrade.go:144`,
+> `resolveBinaryOn` → `wc.BinaryPath`).
+
+#### 핸드오프는 구조적으로 특별하지 않다
+
+노드마다 다른 것은 셋뿐이고, 셋 다 **"이 노드가 어떤 바이너리로 도는가"** 에서
+따라온다.
+
+1. **바이너리** — 포크 이전 것과 이후 것.
+2. **genesis** — 같은 base 에 포크 이후 동작을 위한 설정이 더해진 두 번째 문서.
+   이전 바이너리 노드는 첫 번째를, 이후 바이너리 노드는 두 번째를 쓴다.
+3. **그 바이너리가 요구하는 레이아웃** — nodekey 디렉터리 이름
+   (`Profile.Chains.From/To.NodekeyDir`), IPC 소켓 이름, RPC 네임스페이스.
+
+나머지는 **보통 구성과 같다.** 어느 머신에 놓을지, 포트, 키 출처, config(공통이든
+노드별이든), 부트스트랩 순서 — 다르지 않다. 실행 커맨드도 바이너리·genesis·config
+의 이름만 바뀐다.
+
+#### 보통 경로가 이미 하는 것
+
+| 필요한 것 | 보통 경로 | 근거 |
+|---|---|---|
+| 노드별 바이너리 | ✅ | `node.Record.Binary` + `state.Binaries` + `binaryFor` |
+| 노드별 config | ✅ | `node.Entry.Config`, `writeNodeConfig` |
+| 배치·서버셋·원격·포트 | ✅ | `eachMachine`, `resource.Access` |
+| poa 부트스트랩 (원격 포함) | ✅ | `runPhaseActions` + `poa.Bootstrap`, 노드별 `exec.Access` |
+| 바이너리로 갈리는 IPC 경로 | ✅ | `node.Layout.IPCPath(label, binary)` |
+| **노드별 genesis** | **❌** | `state.GenesisPath` 가 **망 전체에 하나**. `Init` 이 머신당 한 번 읽어 그 머신의 모든 노드에 같은 바이트를 준다(`steps_lifecycle.go:80-111`) |
+
+**확인된 공백은 노드별 genesis 하나다.** 다른 것도 있는지는 전수로 보지 않았다.
+찾은 작은 것 하나 — `runPhaseActions` 는 `spec.Binary = bin` 으로 **단일
+바이너리**를 쓴다(`steps_lifecycle.go:1002`). `binaryFor` 가 아니다. 섞인 망에서
+phase 액션은 노드가 실제로 도는 바이너리로 돌지 않는다.
+
+#### 그래서 무엇이 중복인가
+
+`internal/consensus/upgrade` 가 **비테스트 1,959줄**로 두 번째 컴포저를 들고 있다
+(handoff 1039 · plan 326 · exec 263 · profile 153 · mesh 125 · launch 53).
+자기만의 `WriteConfig` `BaseGenesis` `ComposePlan` `ApplyOverlay` `Launch`
+`WireMesh` `machineFiles` `provisionKeys` `label` 포트 계산이 다 있다. 보통 경로에
+있는 것과 **같은 일**이다.
+
+#### 진짜 결함 — 표면 둘의 배선이 딴판이다
+
+호출자가 둘인데 채우는 양이 다르다.
+
+- **`chainbench upgrade`**(`app/upgrade.go:152`) — 전부 채운다. 서버 배치,
+  `MultiMachine`, `DialURL`, `Machine`, 원격 `Files`/`Driver`/`Exec`, 그리고
+  workspace-config 를 거친 바이너리 해석.
+- **`chainbench run <업그레이드 케이스>`**(`testengine/compose.go:224`) — **일곱
+  필드만** 채우고 끝이다. host 없음, placement 없음, machine 없음, files/driver
+  없음, workspace-config 안 읽음, 바이너리 배치 안 함.
+
+핸드오프 분기가 workspace-config 블록보다 **먼저 return 하기 때문**이다.
+
+실측 — `--workspace-config` 가 `dataRoot: /tmp/cbw4c/data`, `paths.binaries: bin`
+을 적었는데:
 
 ```
 chain      wbft  (consensus handoff)
-binaries   from gwemix -> to gwbft     ← 이름 그대로
+binaries   from gwemix -> to gwbft     ← 이름 그대로, target 줄 자체가 없다
 ```
 
-`target` 줄 자체가 없다. 핸드오프는 설계상 **로컬 전용**이고(`planOf` 가
-`Target: "this machine"` 을 적는다) 원격 데이터 루트 아래 경로를 로컬에서 exec
-할 수는 없으니, **배치하는 것이 옳은지 자체가 결정 사항**이다.
+**같은 분기가 genesis·launch·key-source override 는 소리 내어 거부한다.**
+workspace-config 만 조용히 사라진다.
 
-**옳고 그름과 무관하게 분명한 것 하나.** 같은 분기가 genesis·launch·key-source
-override 는 **소리 내어 거부한다.** workspace-config 만 조용히 사라진다. 적어도
-같은 대접은 해야 한다 — 이 트랙이 계속 없애 온 "선언이 실행에 닿지 않는" 바로 그
-모양이다.
+#### 배치 정책이 셋으로 갈려 있다
 
+`wc.BinaryPath` 라는 규칙 자체는 하나인데, 그것을 감싸는 정책이 셋이다.
 
-**비용.** 저장소에 `Binary string` 필드가 **39개**다. 전부는 아니고 실행 경로의
-부분집합이 대상이다 — `node.LaunchReq`, `process` 의 spec 둘, `State.Binary`,
-`State.Binaries`, `node.Record.Binary`, 그리고 `binary`/`binaryFor`/`placeBinary`
-서명. 대략 열 자리 안팎이고 전부 기계적이며 컴파일러가 확인해 준다.
-`type BinaryPath string` 은 문자열로 직렬화되므로 `chain-record.json` 형식은
-그대로다.
+- `chainsetup.PlaceBinary` — wc 가 없으면 이름을 타깃 PATH 에 맡긴다.
+- `app.resolveBinaryOn` — 원격에서 wc 가 없으면 **거부**하고, 배치 뒤 타깃에
+  파일이 있는지까지 **확인한다**. 원격에서는 로컬 PATH 를 믿을 수 없으니 이쪽이
+  더 엄격한 것은 타당하다.
+- `app.ResolveBinary` — 로컬 `exec.LookPath`.
 
-**안 되는 것.** 비교하는 자리(증상 1·3)는 여전히 규약이다. 다만 형태가 하나뿐이면
-어긋날 여지가 훨씬 적다.
+셋이 다른 것이 곧 결함은 아니지만, **어느 것을 언제 쓰는지 적힌 곳이 없다.**
 
-**판단.** 할 값어치가 있다. 다만 트랙 중간에 패키지 경계를 넘는 리팩터링이라
-**별도 단계**로 잡는다.
+#### 그래서 할 일 (착수 전)
+
+1. **노드별 genesis.** 이것이 열쇠다. `state.GenesisPath` 하나를 노드별로
+   갈라야 섞인 망이 보통 경로로 표현된다.
+2. **`runPhaseActions` 가 `binaryFor` 를 쓰게 한다.** 작고 독립적이다.
+3. **DSL 표면의 핸드오프 배선.** 1번 전에도 할 수 있다 — placement·machine·
+   workspace-config 를 `chainbench upgrade` 와 같은 수준으로 채운다. 아니면
+   적어도 무시한다고 **말은 하게** 한다.
+4. 1~3 뒤에 **`upgrade` 패키지를 보통 경로로 흡수**할 수 있는지 다시 본다.
+   1,959줄이 걸려 있다.
+
+**확인하지 않은 것.** 노드별 genesis 를 넣으면 핸드오프가 정말 보통 경로로
+표현되는지 — 부트스트랩 순서(etcd init, governance deploy, await fork)가 phase
+액션으로 다 표현되는지는 보지 않았다. 4번은 그 확인 뒤의 이야기다.
 
 ### 11.2.4 결과물이 쌓이는 자리 — 완료 (2026-09-17)
 
