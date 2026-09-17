@@ -26,6 +26,30 @@ type Entry struct {
 	Nodekey derive.PrivateKey
 	// derive.Identity is everything public that derives from Nodekey.
 	derive.Identity
+	// Account is the address this entry's keystore holds, when that is not the
+	// one its nodekey derives. Empty means they are the same, or that no
+	// keystore was read.
+	//
+	// The two are different things. A node's identity is its devp2p key; the
+	// account it seals and stakes with is a keystore. They coincide in every
+	// network this harness composes from a consistent ring, and they do not
+	// have to — a wemix producer is a governance member, and the member is an
+	// account rather than a peer. The key set is where that fact lives, so both
+	// the genesis that funds the account and the launch that unlocks it read it
+	// from the same place instead of each assuming.
+	Account string
+}
+
+// SealingAccount is the address this entry seals and stakes with: its keystore's
+// when that is a different account, and the one its nodekey derives otherwise.
+//
+// One rule, one owner. The genesis funds this address and the launch unlocks it,
+// and those two answering differently is a producer that starts and cannot seal.
+func (e Entry) SealingAccount() string {
+	if e.Account != "" {
+		return e.Account
+	}
+	return e.Address
 }
 
 // Network is what a *network* decides about a ring's identities: which of them

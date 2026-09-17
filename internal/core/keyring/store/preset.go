@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
@@ -258,4 +260,79 @@ type presetFile struct {
 	SystemContractBLSKeys string          `json:"systemContractBlsKeys,omitempty"`
 	Alloc                 json.RawMessage `json:"alloc,omitempty"`
 	Nodes                 []presetNode    `json:"nodes"`
+}
+
+// LoadPresetWithAccounts is LoadPreset plus each identity's sealing account,
+// read from its own keystore.
+//
+// It is the longer call for the same reason LoadPresetWithKeys is: the index
+// answers nearly every question a ring is asked in one read, and this one costs
+// a directory read per node. The two callers that need it are the ones that
+// have to agree — the genesis that funds and stakes the account, and the launch
+// that unlocks it. Before this they did not read it at all: both assumed the
+// account was the address the nodekey derives, and a ring where it is not
+// produced a node that starts and dies on "no key for given address or file".
+func LoadPresetWithAccounts(dir string) (keyring.Preset, error) {
+	return LoadPresetWithAccountsAt(context.Background(), nil, dir)
+}
+
+// LoadPresetWithAccountsAt is LoadPresetWithAccounts through files (nil = local).
+func LoadPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+	set, err := LoadPresetAt(ctx, files, dir)
+	if err != nil {
+		return keyring.Preset{}, err
+	}
+	for i := range set.Nodes {
+		acct, aerr := KeystoreAccount(dir, set.Nodes[i].Index)
+		if aerr != nil {
+			// A ring entry with no keystore is ordinary: only a node that seals
+			// needs one. Its account is the address its nodekey derives, which
+			// is what SealingAccount answers when this is empty.
+			continue
+		}
+		if !strings.EqualFold(acct, set.Nodes[i].Address) {
+			set.Nodes[i].Account = acct
+		}
+	}
+	return set, nil
+}
+
+// KeystoreAccount is the address one entry's keystore holds.
+//
+// Read from THIS machine. A key set is the operator's, and the keystore file is
+// named with its account and a timestamp, so it is found by listing a directory
+// — which a remote store cannot do. Every other reader of a keystore in this
+// repository already works that way and re-roots the path when it ships the file
+// to a target.
+//
+// A directory holding more than one takes the first by name. A node seals with
+// one account, and a ring that gave it two has not said which; guessing the same
+// way in one place is better than guessing differently in two.
+func KeystoreAccount(dir string, index int) (string, error) {
+	ksDir := filepath.Join(dir, fmt.Sprintf("node%d", index), "keystore")
+	ents, err := os.ReadDir(ksDir)
+	if err != nil {
+		return "", err
+	}
+	names := make([]string, 0, len(ents))
+	for _, e := range ents {
+		if !e.IsDir() {
+			names = append(names, e.Name())
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		b, rerr := os.ReadFile(filepath.Join(ksDir, name))
+		if rerr != nil {
+			continue
+		}
+		var doc struct {
+			Address string `json:"address"`
+		}
+		if json.Unmarshal(b, &doc) != nil || doc.Address == "" {
+			continue
+		}
+		return "0x" + strings.TrimPrefix(doc.Address, "0x"), nil
+	}
+	return "", fmt.Errorf("keyring: node%d has no keystore under %s", index, ksDir)
 }

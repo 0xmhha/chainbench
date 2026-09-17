@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 // GenesisSource produces a wemix genesis the way the chain actually makes
@@ -58,7 +59,9 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 	if req.Nodes == nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: no placement — the governance config names the producer's host and p2p port, so the network has to be placed first")
 	}
-	preset, err := store.LoadPreset(s.KeysDir)
+	// With accounts: this genesis funds and stakes the producer's account, and
+	// that is a keystore's answer rather than a nodekey's when a ring says so.
+	preset, err := store.LoadPresetWithAccounts(s.KeysDir)
 	if err != nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
 	}
@@ -152,11 +155,19 @@ func (s GenesisSource) config(preset keyring.Preset, req genesis.Request) (Confi
 		env = *s.Env
 	}
 	net := preset.NetworkFor(req.Validators)
-	accounts := []Account{{Addr: entry.Address, Balance: DefaultAccountBalance()}}
+	// The account the boot node will SEAL with, which is its keystore's when
+	// the ring says that differs from the address its nodekey derives. Funding
+	// the nodekey address instead left the producer unlocking an account with
+	// no balance: it sealed, and the governance deploy died on "insufficient
+	// funds for gas * price + value".
+	bootAcct := entry.SealingAccount()
+	accounts := []Account{{Addr: bootAcct, Balance: DefaultAccountBalance()}}
+	seen := map[string]bool{strings.ToLower(bootAcct): true}
 	for _, v := range net.Validators {
-		if v == entry.Address {
+		if seen[strings.ToLower(v)] {
 			continue
 		}
+		seen[strings.ToLower(v)] = true
 		accounts = append(accounts, Account{Addr: v, Balance: DefaultAccountBalance()})
 	}
 	// Every producer is a member, not just the boot node.
@@ -175,7 +186,9 @@ func (s GenesisSource) config(preset keyring.Preset, req genesis.Request) (Confi
 			return Config{}, fmt.Errorf("poa: genesis: the key set has no identity for node%d", p.Index)
 		}
 		members = append(members, Member{
-			Addr:  e.Address,
+			// A member is an account, and the account is the one that node
+			// seals with.
+			Addr:  e.SealingAccount(),
 			Stake: env.StakingMin,
 			Name:  string(p.Label),
 			ID:    "0x" + e.PublicKey,

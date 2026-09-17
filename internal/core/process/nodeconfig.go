@@ -29,7 +29,11 @@ func NodeConfig(plugin registry.ChainPlugin, preset keyring.Preset, spec NodeSpe
 	}
 	if node.Is(spec.Role, node.RoleBP) {
 		if nk, ok := preset.Node(spec.Index); ok {
-			cfg.Unlock = nk.Address
+			// The account it seals with, which is its keystore's when the ring
+			// says those differ. Unlocking the address its nodekey derives sent
+			// a producer to "no key for given address or file" on a ring whose
+			// keystore holds another account.
+			cfg.Unlock = nk.SealingAccount()
 			cfg.PasswordFile = filepath.Join(keysDir, "password")
 		}
 	}

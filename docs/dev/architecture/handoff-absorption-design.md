@@ -320,7 +320,31 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
    값이 **확장되지 않고** 있었다. 노드별 값은 확장되는데 default 만 아니어서,
    계획에 `${GWEMIX_BIN:-gwemix}` 가 그대로 찍혔고 exec 에도 그대로 갔을 것이다.
 
-   **아직 안 한 것.** 생산자 2 이상은 못 돌려 봤다. 위 둘이 먼저다.
+   **막힌 것 하나는 고쳤다 (2026-09-18).** 봉인 계정을 키셋이 답하게 했다.
+
+   노드의 **신원**(devp2p 키)과 **봉인 계정**(keystore)은 다른 것이다. 일관되게
+   쓰인 링에서는 겹치지만 겹쳐야 하는 것은 아니다 — wemix 생산자는 거버넌스
+   멤버이고, 멤버는 피어가 아니라 계정이다. 프리셋 node5 가 일부러 그렇다.
+
+   `Entry.Account` 와 `Entry.SealingAccount()` 를 두고, `LoadPresetWithAccounts`
+   가 keystore 에서 읽는다. `LoadPresetWithKeys` 와 같은 모양이다 — 인덱스 한 번
+   읽기는 그대로 두고, **답이 필요한 호출자가 값을 치른다.** genesis(계정에 잔고와
+   스테이크를 준다)와 기동(그 계정을 연다) **둘 다 같은 함수를 읽는다.**
+
+   고치면서 두 번 실측했다. 처음엔 열지 못했고
+   (`no key for given address or file`), 열게 하니 이번엔 잔고가 없었다
+   (`insufficient funds for gas * price + value`) — genesis 가 여전히 nodekey
+   주소를 채우고 있었기 때문이다. **한쪽만 고치면 다른 쪽에서 막힌다**는 것이
+   그대로 나왔다.
+
+   **그래서 망이 떴다 (실측).** 생산자가 **블록 128** 까지 봉인했다.
+
+   **그리고 남은 하나가 실측으로 확인됐다.** 후계자 넷은 **블록 0** 에 멈춰
+   `Synchronisation failed, dropping peer` 를 8번 찍었다. genesis 에
+   `croissant` 섹션도 `croissantBlock` 도 없으니, go-wbft 가 생산자의 블록을
+   검증할 수 없다. **읽어서 낸 판정이 돌려서 확인됐다.**
+
+   **아직 안 한 것.** 생산자 2 이상은 못 돌려 봤다. 포크 섹션이 먼저다.
 
 5. **그리고 내가 만든 것 하나는 아직 소비자가 없다.** 바이너리별 genesis
    (`genesis.perBinary`)는 두 바이너리가 같은 문서를 못 받아들일 때를 위한 것인데,

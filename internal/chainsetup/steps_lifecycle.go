@@ -216,7 +216,9 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	// With accounts: a producer unlocks the account its keystore holds, which is
+	// not always the address its nodekey derives.
+	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start: %w", err)
 	}

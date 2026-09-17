@@ -1361,7 +1361,9 @@ func commanderRunner(c process.Commander) genesis.CommandRunner {
 // public-key lookup by index. Config, launchopts and start all render from
 // the same four, so they are gathered once.
 func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.Preset, *node.Map, node.Peering, func(int) (string, bool), error) {
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	// With accounts, for the same reason start loads them: this renders each
+	// node's config, and a producer's config names the account it unlocks.
+	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
 		return keyring.Preset{}, nil, "", nil, err
 	}
