@@ -14,8 +14,7 @@ type Step struct {
 // ../script/wemix-upgrade: initialize the boot node, deploy the governance
 // contracts, initialize the etcd cluster, then start the remaining nodes. It is
 // returned as data so the setup phase (and tests) can inspect it; executing the
-// steps requires a built gwemix binary (which embeds etcd) and is wired in a later slice
-// (docs/CHAINBENCH_GO_REDESIGN.md §3.4, §11).
+// steps requires a built gwemix binary (which embeds etcd) and is wired in a later slice.
 func BootstrapPlan() []Step {
 	return []Step{
 		{Name: "init-boot", Detail: "initialize the boot node datadir from genesis", OnBootNode: true},

@@ -1,4 +1,6 @@
-// Package serverset loads the server set — where chainbench may run
+// The server set file. The package comment is in doc.go.
+//
+// This file loads the server set — where chainbench may run
 // nodes, on what ports, under what data root, and how to reach it — from a YAML
 // config the repository never carries.
 //
@@ -238,7 +240,7 @@ const SupportedVersion = 2
 // originated.
 func (c *Set) Path() string { return c.path }
 
-// Load reads and validates the server set at path. It rejects unknown fields so
+// LoadSet reads and validates the server set at path. It rejects unknown fields so
 // a typo fails loudly rather than silently leaving a default in place.
 func LoadSet(path string) (*Set, error) {
 	b, err := os.ReadFile(path)

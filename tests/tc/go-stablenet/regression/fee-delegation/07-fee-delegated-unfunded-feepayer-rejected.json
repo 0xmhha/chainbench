@@ -2,27 +2,11 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fee-delegated-unfunded-feepayer-rejected",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "fee-delegated-unfunded-feepayer-rejected-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {

@@ -36,7 +36,7 @@ func writeSession(t *testing.T, root string) string {
 	if err := os.WriteFile(cs, []byte(`{"seq":1,"forked":false}`+"\n"+`{"seq":2,"forked":true}`+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	return s.ID()
+	return session.IDFor(root, s.Root())
 }
 
 func getResp(t *testing.T, url string) (*http.Response, []byte) {

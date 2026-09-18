@@ -1,6 +1,6 @@
 // Command chainbench-mcp serves the chainbench MCP surface (requirement #14)
 // over stdio: it reads newline-delimited JSON-RPC requests from stdin and writes
-// responses to stdout, dispatching to the tools in pkg/mcp. Chain and test-case
+// responses to stdout, dispatching to the tools in internal/mcp. Chain and test-case
 // plugins are imported for registration.
 package main
 

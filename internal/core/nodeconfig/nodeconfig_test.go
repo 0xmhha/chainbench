@@ -10,7 +10,7 @@ import (
 func TestGenerate_Validator(t *testing.T) {
 	toml := string(TOML(Spec{
 		Chain:       Chain{RPCNamespace: "istanbul"},
-		Role:        node.RoleValidator,
+		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Auth: 8551, Metrics: 6061},
 		KeystoreDir: "/data/keystores/node1",
 		StaticNodes: []string{"enode://abc@127.0.0.1:30301?discport=0"}}))
@@ -39,7 +39,7 @@ func TestGenerate_Validator(t *testing.T) {
 func TestGenerate_EndpointHasNoMiner(t *testing.T) {
 	toml := string(TOML(Spec{
 		Chain: Chain{RPCNamespace: "wemix"},
-		Role:  node.RoleEndpoint,
+		Role:  node.RoleEN,
 		Ports: node.Endpoints{P2P: 30302, HTTP: 8502},
 	}))
 	if strings.Contains(toml, "[Eth.Miner]") {
@@ -56,7 +56,7 @@ func TestGenerate_EndpointHasNoMiner(t *testing.T) {
 func TestGenerate_NanosMinerRecommit(t *testing.T) {
 	toml := string(TOML(Spec{
 		Chain: Chain{RPCNamespace: "wemix", MinerRecommit: "nanos"},
-		Role:  node.RoleValidator,
+		Role:  node.RoleBP,
 		Ports: node.Endpoints{P2P: 30301, HTTP: 8501},
 	}))
 	// A "nanos" manifest binary decodes miner.Recommit only from an integer
@@ -76,7 +76,7 @@ func TestGenerate_RecommitDecoupledFromNamespace(t *testing.T) {
 	toml := string(TOML(Spec{
 		// The namespace alone must NOT force the nanos form.
 		Chain: Chain{RPCNamespace: "wemix"},
-		Role:  node.RoleValidator,
+		Role:  node.RoleBP,
 		Ports: node.Endpoints{P2P: 30301, HTTP: 8501},
 	}))
 	if !strings.Contains(toml, `Recommit = "2s"`) {

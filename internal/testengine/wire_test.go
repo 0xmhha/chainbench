@@ -53,7 +53,7 @@ func runEnv(t *testing.T, url string) (session.Environment, session.TestRecord) 
 		t.Fatalf("NewEnvironment: %v", err)
 	}
 	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: url},
+		{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", RPCURL: url},
 	}})
 	return env, sess.Test(1, "T1")
 }

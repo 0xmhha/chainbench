@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "secp256r1-precompile-invalid",
+  "applicableChains": "wbft",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "secp256r1-precompile-invalid-env",
+    "chain": "wbft",
+    "binaries": {
+      "default": "gwbft"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "NotEqual",
+      "data": "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f56db78ca460b055c500064824bed999a25aaf48ebb519ef40f49be5a3fb1549ee6e408c2e9e2b85b02b48a2f4f63f1a53ad77ce3de7b8d7a1d4aac39d82",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000000100"
+    }
+  ]
+}

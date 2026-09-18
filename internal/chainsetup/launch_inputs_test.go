@@ -35,7 +35,7 @@ func composedForInputs(t *testing.T) string {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2, Endpoints: 0}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 2, ENCount: 0}); err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()

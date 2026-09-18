@@ -40,8 +40,8 @@ func newNetStatusCmd() *cobra.Command {
 			// Where the workspace points is the machine module's question;
 			// the status line just prints its answer.
 			target := st.Target.Describe()
-			fmt.Fprintf(out, "workspace: %s\nchain: %s  binary: %s  keys: %s  validators: %d\ntarget: %s\n",
-				res.Dir, st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.Validators, orDash(target))
+			fmt.Fprintf(out, "workspace: %s\nchain: %s  binary: %s  keys: %s  bp: %d\ntarget: %s\n",
+				res.Dir, st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.BPCount, orDash(target))
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "STEP\tDONE\tDETAIL")

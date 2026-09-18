@@ -69,7 +69,7 @@ func TestInitializeAndList(t *testing.T) {
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_node_stop", "chainbench_node_start", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench_run", "chainbench_test_list", "chainbench_chain_up", "chainbench_hardfork", "chainbench_upgrade", "chainbench.capabilities"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_node_stop", "chainbench_node_start", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench_run", "chainbench_test_list", "chainbench_chain_up", "chainbench_hardfork", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
@@ -82,7 +82,7 @@ func TestInitializeAndList(t *testing.T) {
 // to know which era wrote the file.
 func TestStatusTool(t *testing.T) {
 	dir := t.TempDir()
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, 4321))
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "bp", 8501, 4321))
 	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 bp") || !strings.Contains(text, "pid=4321") {
 		t.Errorf("status tool: err=%v text=%s", isErr, text)

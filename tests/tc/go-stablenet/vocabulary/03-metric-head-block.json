@@ -7,25 +7,10 @@
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "stablenet-metrics",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
+    "extends": "stablenet-bp4",
     "launch": {
       "all": {
         "metrics": true
-      }
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
       }
     }
   },

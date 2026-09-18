@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-hardfork-reads",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "applicableChains": "stablenet",
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000000100", "data": "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca6050232927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e04e04e18e1ff7b70e7b5e14d1b70e0bdb8ece3acf34ffee3e8e5a2e4266bfbb0f6afd7ebfa4dfddd60ab0272c226d19c1f6aed1cdee3a51a35e415f4dcc33d70", "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" },
+    { "assert": "call", "to": "0x0000000000000000000000000000000000000100", "data": "0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca605023ff27b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e04e04e18e1ff7b70e7b5e14d1b70e0bdb8ece3acf34ffee3e8e5a2e4266bfbb0f6afd7ebfa4dfddd60ab0272c226d19c1f6aed1cdee3a51a35e415f4dcc33d70", "expected": "0x0000000000000000000000000000000000000000000000000000000000000001", "compare": "NotEqual" },
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001003", "expected": "0x", "compare": "NotEqual" },
+    { "assert": "chainId", "expected": 8283 },
+    { "assert": "blockNumber", "expected": 1, "compare": "GreaterOrEqual" }
+  ]
+}

@@ -1,0 +1,190 @@
+package dsl
+
+import (
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strings"
+)
+
+// ChainSpec selects the chain, its binary/binaries, and genesis overlay for a
+// test. A single Binary applies to all nodes; Binaries maps roles to binaries
+// for mixed (handoff) environments.
+type ChainSpec struct {
+	Name           string            `json:"name"`
+	Binary         string            `json:"binary,omitempty"`
+	Binaries       map[string]string `json:"binaries,omitempty"`
+	Config         string            `json:"config,omitempty"`
+	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// ManifestPath is an external chain manifest run on the family named by
+	// Name; TemplatePath is its genesis template. Empty means an embedded chain.
+	ManifestPath string `json:"manifestPath,omitempty"`
+	TemplatePath string `json:"templatePath,omitempty"`
+}
+
+// Spec is a parsed, validated test definition (schema in design §4.3).
+type Spec struct {
+	SchemaVersion    string            `json:"schemaVersion"`
+	ID               string            `json:"id"`
+	ApplicableChains string            `json:"applicableChains,omitempty"`
+	Requires         []string          `json:"requires,omitempty"`
+	Chain            ChainSpec         `json:"chain"`
+	Topology         map[string]any    `json:"topology,omitempty"`
+	Hardforks        map[string]int    `json:"hardforks,omitempty"`
+	Placement        string            `json:"placement,omitempty"`
+	DefaultOn        string            `json:"defaultOn,omitempty"`
+	PreActions       []map[string]any  `json:"preActions,omitempty"`
+	Steps            []map[string]any  `json:"steps,omitempty"`
+	Assertions       []map[string]any  `json:"assertions"`
+	PostActions      []map[string]any  `json:"postActions,omitempty"`
+	Timeouts         map[string]string `json:"timeouts,omitempty"`
+
+	// Sequence is the unified statement list (v2 steps; v1 desugars its steps
+	// then assertions into it). Runtime-only — never serialized.
+	Sequence []Statement `json:"-"`
+	// OnFailActions run when the case fails (v2 hooks.onFail). Runtime-only.
+	OnFailActions []map[string]any `json:"-"`
+	// EnvKeys is the v2 env's node-key source declaration, for the surface to
+	// fold into the engine's KeySource boundary. Runtime-only.
+	EnvKeys *KeySourceV2 `json:"-"`
+	// EnvBlueprint is the v2 env's network-declaration file (layout + keys in
+	// one document); empty means the env declares its layout and keys directly.
+	// Runtime-only.
+	EnvBlueprint string `json:"-"`
+	// EnvLaunch are the v2 env.launch knobs by scope ("all", a role like "bp"/
+	// "en", or "node<N>"), each a list of "key" (boolean flag) or "key=value".
+	// The surface folds them into the engine's launch-override boundary, applied
+	// per node most-general-first (all, then role, then the node). Runtime-only.
+	EnvLaunch map[string][]string `json:"-"`
+	// EnvUpgrade is the v2 env's handoff declaration, for the composer to run
+	// the network as a mixed-binary handoff. Nil is a single-binary network.
+	// Runtime-only.
+	EnvUpgrade *UpgradeV2 `json:"-"`
+	// EnvConfig are the v2 env.config knob overrides by scope ("all" /
+	// "node<N>"), each a list of dot-path "key=value". Runtime-only.
+	EnvConfig map[string][]string `json:"-"`
+	// EnvAccounts are the v2 env's declared test accounts, by label. The suite
+	// creates them in the key set and funds the ones that ask for a balance,
+	// after the chain is up.
+	EnvAccounts map[string]AccountV2 `json:"-"`
+}
+
+// Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),
+// validates it, and returns the executable Spec. A v2 case referencing an env
+// by id must be resolved with InlineEnv first — the caller owns file lookup.
+func Parse(raw []byte) (Spec, error) {
+	if IsV2(raw) {
+		return ParseV2(raw)
+	}
+	var s Spec
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return Spec{}, fmt.Errorf("dsl: parse: %w", err)
+	}
+	if err := s.validate(); err != nil {
+		return Spec{}, err
+	}
+	return s, nil
+}
+
+// supportedSchemaVersion is the only spec schemaVersion the interpreter accepts.
+// Specs are long-lived assets, so an unknown version is rejected explicitly
+// (forward-compat guard, F16-O2) rather than parsed on a best-effort basis.
+const supportedSchemaVersion = "1"
+
+// validate reports the first set of missing required fields, naming each, then
+// rejects an unsupported schemaVersion.
+func (s Spec) validate() error {
+	var missing []string
+	if s.SchemaVersion == "" {
+		missing = append(missing, "schemaVersion")
+	}
+	if s.ID == "" {
+		missing = append(missing, "id")
+	}
+	if s.Chain.Name == "" {
+		missing = append(missing, "chain.name")
+	}
+	if s.Chain.Binary == "" && len(s.Chain.Binaries) == 0 {
+		missing = append(missing, "chain.binary|binaries")
+	}
+	if len(s.Assertions) == 0 {
+		missing = append(missing, "assertions")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("dsl: missing required field(s): %s", strings.Join(missing, ", "))
+	}
+	if s.SchemaVersion != supportedSchemaVersion {
+		return fmt.Errorf("dsl: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
+	}
+	return s.validateSequence()
+}
+
+// validateSequence rejects a step or an assertion that names nothing.
+//
+// Both used to be caught at run time, as `unknown action ""` or `unknown
+// assertion ""`, which is after the network is composed and launched and with
+// no file or index in the message. `validate` exists to tell an author what is
+// wrong with their document before any of that, and a spec it passes that
+// cannot run is the one thing it must not do. The v2 grammar already refuses
+// the same shapes ("statement needs do or expect"); this is v1 catching up.
+//
+// A fuzz run found it: migrating {"assertions":[{}]} produced a v2 document its
+// own parser rejected, which is only possible because the v1 side let it in.
+func (s Spec) validateSequence() error {
+	for i, st := range s.Steps {
+		switch len(st) {
+		case 1:
+			if ActionName(st) == "" {
+				return fmt.Errorf("dsl: step %d has an empty action name", i+1)
+			}
+		case 0:
+			return fmt.Errorf("dsl: step %d names no action", i+1)
+		default:
+			// One entry, one action. Two keys in a step map means the action
+			// is whichever the map iterates to first, so the same file would
+			// run differently on two days.
+			return fmt.Errorf("dsl: step %d names %d actions (%s) — one step is one action", i+1, len(st), strings.Join(stepKeys(st), ", "))
+		}
+	}
+	for i, as := range s.Assertions {
+		if name, _ := as["assert"].(string); name == "" {
+			return fmt.Errorf("dsl: assertion %d names no check — give it an \"assert\"", i+1)
+		}
+	}
+	return nil
+}
+
+// Get resolves a dot-path (a.b.c) within the spec. ok is false when the path is
+// absent. It navigates the spec's JSON form, so paths use the JSON field names.
+func (s Spec) Get(dotPath string) (any, bool) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return nil, false
+	}
+	var cur any
+	if err := json.Unmarshal(b, &cur); err != nil {
+		return nil, false
+	}
+	for _, part := range strings.Split(dotPath, ".") {
+		m, ok := cur.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		cur, ok = m[part]
+		if !ok {
+			return nil, false
+		}
+	}
+	return cur, true
+}
+
+// stepKeys names a step map's keys in a fixed order, so an error message reads
+// the same twice.
+func stepKeys(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}

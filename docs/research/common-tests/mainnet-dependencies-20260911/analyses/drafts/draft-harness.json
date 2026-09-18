@@ -1,0 +1,1142 @@
+[
+ {
+  "id": "H-01",
+  "area": "실행 경로 (suite run → app → testengine → dsl → interp → testhelper)",
+  "current": [
+   "`suite run`은 --workspace-dir(compose), --workspace-dir --attach(워크스페이스 attach), --rpc(bare attach) 세 갈래로 나뉜다. --rpc와 --workspace-dir은 함께 쓸 수 없다.",
+   "compose 경로: dsl.ReadFiles가 env 참조를 인라인하고, Parse → sameChain → sameComposition → Precheck → compositionOf → composeWorkspace 또는 handoffUp → wiredAttachEngine 순으로 간다.",
+   "--chain은 attach에서 필수이고 compose에서는 spec의 env.chain과 같아야 한다. --binary/--keys/--keys-source/--validators/--chain-id/--network-id/--launch-opt는 compose 전용 override다.",
+   "--workspace-config는 target dataRoot와 prepared inputs 프리셋(genesis/keyring/configs)을 공급한다. 같은 DSL을 파일 교체만으로 다른 target에 돌리는 장치다.",
+   "attach 엔진은 accounts.ForChain(chain)으로 SDK 프로토콜을 고르고, 키셋(ringFor)과 testhelper.Registry()를 interp.Deps에 넣는다. 체인 이름이 SDK에 없으면 attach 자체가 거부된다."
+  ],
+  "configurable_today": [
+   "compose: chain, binary, keys, validators, chain-id, network-id, launch-opt, workspace-config, server/docker",
+   "attach: chain, rpc(반복), keys(라벨 해석용), dashboard",
+   "여러 정의를 순서대로 돌리면 네트워크를 유지하고 preflight가 재사용 여부를 정한다"
+  ],
+  "needs_implementation": [
+   "세 체인을 한 번에 도는 실행 행렬이 없다. 한 suite는 한 chain, 한 composition만 허용하므로 공통 케이스는 체인별 env 3벌과 별도 호출 3회가 필요하다.",
+   "attach는 chain 이름만 받고 실제 노드의 chainId/fork/버전을 대조하지 않는다. 공개 RPC에 붙일 때 chain 오지정을 잡는 preflight가 없다."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 66,
+    "snippet": "case attach && len(rpcURLs) > 0:"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 76,
+    "snippet": "case len(rpcURLs) > 0 && workspaceDir != \"\":"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 113,
+    "snippet": "cmd.Flags().StringVar(&chain, \"chain\", \"\", \"chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs decl"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 115,
+    "snippet": "cmd.Flags().StringVar(&workspaceConfig, \"workspace-config\", \"\", \"compose: environment file owning the target dataRoot and its purpose directories; the"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 119,
+    "snippet": "cmd.Flags().StringArrayVar(&rpcURLs, \"rpc\", nil, \"attach: node RPC URL (repeatable) — runs against a live network\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 122,
+    "snippet": "cmd.Flags().StringVar(&binary, \"binary\", \"\", \"compose: node binary path, overriding what the specs declare\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 123,
+    "snippet": "cmd.Flags().StringVar(&keysDir, \"keys\", \"keys/preset\", \"compose: key set directory, overriding what the specs declare\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "cmd/chainbench/suitecmd/run.go",
+    "line": 129,
+    "snippet": "cmd.Flags().Int64Var(&chainID, \"chain-id\", 0, \"compose: override the chain id in the built genesis (0 = declared/manifest)\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/files.go",
+    "line": 30,
+    "snippet": "b, err = InlineEnv(b, func(id string) ([]byte, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 257,
+    "snippet": "if err := sameChain(parsed); err != nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 260,
+    "snippet": "if err := sameComposition(parsed); err != nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 266,
+    "snippet": "if err := Precheck(parsed); err != nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 269,
+    "snippet": "comp, err := compositionOf(ctx, parsed[0], in)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 319,
+    "snippet": "eng, err := wiredAttachEngine(sd, net, attachWiring{"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 93,
+    "snippet": "if in.Chain != \"\" && in.Chain != chain {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/attach.go",
+    "line": 156,
+    "snippet": "accts, err := accounts.ForChain(cfg.Chain)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/attach.go",
+    "line": 165,
+    "snippet": "run := NewRunSpec(interp.Deps{"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/app/workflow.go",
+    "line": 97,
+    "snippet": "if in.DataDir != \"\" {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/app/workflow.go",
+    "line": 109,
+    "snippet": "eng, err := testengine.NewAttachEngine(testengine.AttachConfig{"
+   }
+  ]
+ },
+ {
+  "id": "H-02",
+  "area": "환경 선언(EnvV2) 필드와 런타임 효과",
+  "current": [
+   "EnvV2 필드: target, chain, manifest, genesisTemplate, binaries, keys, blueprint, genesis, topology, hardforks, launch, config, capabilities, accounts, upgrade. CaseV2는 applicableChains, requires, on, timeouts, hooks, steps를 가진다.",
+   "binaries.default 하나면 단일 바이너리, 그 외 키는 역할별/노드표 참조다. 값은 os.Expand로 $VAR, ${VAR:-default}를 치환한다.",
+   "genesis.mode는 template(set/overlay 병합)와 existing(ref 파일 그대로)만 지원한다. hardforks는 {fork: height}를 <fork>Block=<n> override로 바꾼다.",
+   "accounts는 체인 기동 후 node1이 eth_sendTransaction으로 자금을 보내 만드는 테스트 계정이다. genesis에 넣지 않는다.",
+   "env.capabilities는 case.requires와 합쳐져 gate 입력이 된다. 즉 env가 선언한 capability는 '필요 조건'이지 '제공 조건'이 아니다.",
+   "env 참조(\"env\": \"<id>\")는 <id>.env.json을 case 파일 상위 8단계까지 찾는다. extends는 최상위 필드 단위 얕은 병합이다.",
+   "upgrade env는 profile/template와 producer/validator 바이너리만 받고 hardforks/topology/launch/config/genesis override를 거부한다."
+  ],
+  "configurable_today": [
+   "테스트 계정 역할: keys(nodekeys) + accounts{label: fund} + newAccount 스텝",
+   "RPC endpoint: compose에서는 topology와 target이 정하고, attach에서는 --rpc가 정한다. env에는 endpoint URL을 적는 자리가 없다",
+   "Chain ID: env에는 없고 manifest chain_id 또는 --chain-id/genesis.set(config.chainId)으로 정한다",
+   "fork: hardforks, genesis.set/overlay, delayed-<fork> capability",
+   "topology: bp/en/pn 수, syncMode, nodes[] 표(role/binary/sync/bootnode/config/key)",
+   "binary: binaries.default 또는 역할별, ${VAR:-default}",
+   "launch/config: 노드 실행 플래그와 TOML 값 (scope: all/role/nodeN)"
+  ],
+  "needs_implementation": [
+   "step 상수(가스, 수수료, timeout, 주소, 기대 chainId)를 env에서 주입하는 문법이 없다. 공통 케이스가 체인별 기대값을 갖게 하려면 파라미터 바인딩(예: env.params → $binding) 또는 케이스 생성기가 필요하다.",
+   "외부 RPC의 인증 헤더/토큰, 노드 역할(bp/en) 선언, WS URL, metrics URL을 env에 적을 수 없다. attach 프로필 스키마가 필요하다.",
+   "contract address를 env에 선언할 수 없다. 배포 결과 $binding만 있다. 기배포 계약 주소/ABI/코드해시 레지스트리가 필요하다.",
+   "extends가 얕은 병합이므로 topology 한 키만 바꾸면 나머지 topology가 사라진다. 공통 env를 체인별로 파생할 때 전체 필드를 다시 써야 한다."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 64,
+    "snippet": "Chain       string `json:\"chain\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 70,
+    "snippet": "Binaries        map[string]string `json:\"binaries,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 76,
+    "snippet": "Genesis      *GenesisV2                `json:\"genesis,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 78,
+    "snippet": "Hardforks    map[string]int            `json:\"hardforks,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 81,
+    "snippet": "Capabilities []string                  `json:\"capabilities,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 87,
+    "snippet": "Accounts map[string]AccountV2 `json:\"accounts,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 91,
+    "snippet": "Upgrade *UpgradeV2 `json:\"upgrade,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 101,
+    "snippet": "Fund string `json:\"fund,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 189,
+    "snippet": "ApplicableChains string            `json:\"applicableChains,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 268,
+    "snippet": "// The override form is a shallow top-level merge: each field the case names"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 321,
+    "snippet": "for k, v := range envObj {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 401,
+    "snippet": "if len(env.Capabilities) > 0 {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 420,
+    "snippet": "if b, ok := env.Binaries[\"default\"]; ok && len(env.Binaries) == 1 {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 456,
+    "snippet": "case \"existing\":"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 468,
+    "snippet": "return Spec{}, fmt.Errorf(\"dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template, existing)\", c.ID, g.Mode)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/files.go",
+    "line": 13,
+    "snippet": "const maxEnvSearchDepth = 8"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 70,
+    "snippet": "return os.Expand(s, func(name string) string {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 137,
+    "snippet": "if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 540,
+    "snippet": "out = append(out, fmt.Sprintf(\"%sBlock=%d\", name, forks[name]))"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 311,
+    "snippet": "funder, ok := ring.Get(\"node1\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/accounts.go",
+    "line": 84,
+    "snippet": "_, err := c.SendTransaction(ctx, rpc.SendTxArgs{"
+   }
+  ]
+ },
+ {
+  "id": "H-03",
+  "area": "체인 플러그인과 manifest",
+  "current": [
+   "세 manifest는 binary(gwemix/gwbft/gstable), chain_id(8285/8284/8283), network_id, consensus_family(poa/wbft/wbft), genesis.hardforks, consensus.rpc_namespace(wemix/istanbul/istanbul), tx_types(세 체인 동일 목록), capabilities(세 체인 동일: process,rpc,ws,consensus)를 담는다.",
+   "wbft manifest의 binary와 build.make_target는 gwbft다. 그러나 go-wbft Makefile의 타깃은 gwemix이고 산출물은 build/bin/gwemix다. 하네스는 자동 빌드하지 않으므로 make_target는 소비처가 없다.",
+   "binary 이름은 세 곳에서 실행 파일로 쓰인다. 로컬 드라이버는 exec.Command(name)으로 PATH 검색, app.ResolveBinary는 exec.LookPath, 원격 target은 절대경로만 받는다. tests/tc의 wbft 케이스 8건은 bare 'gwbft'를 선언하므로 PATH에 gwbft라는 이름의 파일이 있어야만 돈다.",
+   "compose 경로는 manifest.Binary를 기본값으로 쓰지 않는다. spec이 binary를 선언하지 않고 --binary도 없으면 오류다. manifest.Binary를 기본값으로 쓰는 곳은 hardfork/upgrade 명령뿐이다.",
+   "capability catalog: common 3건(chains.list/info/hardforks), wemix 1건(bootstrap.plan), stablenet 10건(governance.*). wbft는 catalog가 없다. stablenet 핸들러는 SDK protocol.StableNet().Contract(RoleGovMinter)로 주소를 얻는다.",
+   "accounts SDK 프로토콜은 세 체인 모두 baselineTxTypes(0x00~0x04, 0x16)를 반환한다. go-wemix에 type 0x04가 없어도 SupportsTxType(0x04)는 true다.",
+   "external.Load는 프로젝트 manifest를 poa/wbft 내장 family 위에 올린다. protocol 필드로 SDK 프로토콜을 빌린다."
+  ],
+  "configurable_today": [
+   "--manifest/--genesis-template(env.manifest/genesisTemplate)로 외부 manifest를 쓸 수 있다",
+   "binaries에 절대경로나 ${GWBFT_BIN:-gwbft}를 써서 이름 불일치를 우회할 수 있다"
+  ],
+  "needs_implementation": [
+   "wbft manifest의 binary/make_target를 실제 산출물 이름(gwemix)에 맞추거나, 이름과 경로를 분리해 기록하는 교정이 필요하다. go-wemix 산출물도 gwemix이므로 파일명으로 체인을 구분하면 안 된다.",
+   "manifest.tx_types와 SDK TxTypes는 실제 지원 증거가 아니다. 체인별 실제 tx type/fork 지원표를 하네스가 갖고 preflight에서 검사해야 한다.",
+   "wbft 거버넌스(GovConfig/GovStaking/GovNCP) capability catalog가 없다. 시스템 계약 테스트를 공통화하려면 체인별 adapter가 필요하다."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wemix/manifest.json",
+    "line": 3,
+    "snippet": "\"binary\": \"gwemix\","
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wemix/manifest.json",
+    "line": 4,
+    "snippet": "\"chain_id\": 8285,"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wemix/manifest.json",
+    "line": 16,
+    "snippet": "\"rpc_namespace\": \"wemix\","
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wbft/manifest.json",
+    "line": 3,
+    "snippet": "\"binary\": \"gwbft\","
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wbft/manifest.json",
+    "line": 8,
+    "snippet": "\"build\": { \"repo\": \"go-wbft\", \"make_target\": \"gwbft\" },"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wbft/manifest.json",
+    "line": 19,
+    "snippet": "\"tx_types\": [\"0x00\", \"0x01\", \"0x02\", \"0x03\", \"0x04\", \"0x16\"],"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wbft/manifest.json",
+    "line": 21,
+    "snippet": "\"capabilities\": [\"process\", \"rpc\", \"ws\", \"consensus\"]"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/stablenet/manifest.json",
+    "line": 4,
+    "snippet": "\"chain_id\": 8283,"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/stablenet/manifest.json",
+    "line": 12,
+    "snippet": "\"hardforks\": [\"istanbul\", \"boho\"],"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/registry/manifest.go",
+    "line": 21,
+    "snippet": "// Binary is the node binary name (gstable|gwbft|gwemix)."
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/process/local.go",
+    "line": 55,
+    "snippet": "return exec.Command(name, arg...)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/process/local.go",
+    "line": 85,
+    "snippet": "cmd := d.launch(ctx, spec.Binary, spec.Args...)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/app/upgrade.go",
+    "line": 258,
+    "snippet": "path, err := exec.LookPath(name)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/app/upgrade.go",
+    "line": 239,
+    "snippet": "return \"\", fmt.Errorf(\"binary %q must be an absolute path on server %q — a bare name would be looked up on this machine, not there\","
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 168,
+    "snippet": "return composition{}, fmt.Errorf(\"the spec declares no binary and none was given\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/stablenet/caps.go",
+    "line": 28,
+    "snippet": "registry.RegisterHandler(\"v1\", \"stablenet\", name, h)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/stablenet/caps.go",
+    "line": 54,
+    "snippet": "gov, ok := protocol.StableNet().Contract(protocol.RoleGovMinter)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/external/external.go",
+    "line": 25,
+    "snippet": "func Load(manifestPath, templatePath string) (registry.ChainPlugin, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/external/external.go",
+    "line": 84,
+    "snippet": "func ResolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugin, error) {"
+   }
+  ]
+ },
+ {
+  "id": "H-04",
+  "area": "합의 family와 handoff",
+  "current": [
+   "poa(wemix): RPC namespace wemix, validators는 governance 계약을 eth_call로 열거한다(getMemberLength/getMember). BuildGenesis는 거부하고 바이너리가 governance config로 genesis를 생성한다. 기동은 boot → join-nodeN(역순) → endpoints 단계다. etcd 때문에 포트 span 3이다.",
+   "wbft(wbft/stablenet 공용): namespace istanbul, istanbul_getValidators. 템플릿 치환으로 genesis를 만든다. 모든 노드 동시 기동. StartFlags에 --allow-insecure-unlock, --rpc.enabledeprecatedpersonal, --rpc.allow-unprotected-txs가 붙는다.",
+   "VerifyValidators는 키셋이 도출한 검증자 집합과 체인이 보고하는 집합을 대조한다. poa는 기동 후에만 알 수 있다.",
+   "handoff(upgrade): profile yaml + go-wemix 자체 템플릿 + producer/validator 바이너리로 혼합 네트워크를 만든다. AwaitFork는 fork+10 블록까지 successor 검증자가 봉인했는지 확인한다. handoff 네트워크에는 workspace 노드표와 process control이 없다."
+  ],
+  "configurable_today": [
+   "env.chain으로 family 선택",
+   "upgrade.profile/template + binaries.producer/validator",
+   "topology.pn으로 proxied 그래프"
+  ],
+  "needs_implementation": [
+   "장애 허용 수, 정족수, 블록 주기 같은 합의 기대값을 family가 제공하지 않는다. 케이스가 숫자를 직접 쓴다(derive quorum은 ceil(2n/3) 고정). PoA/etcd 장애 조건은 별도 판정이 필요하다.",
+   "handoff 네트워크에서는 fault 스텝과 노드 역할 선택이 동작하지 않는다(nodes nil, control nil)."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/poa.go",
+    "line": 26,
+    "snippet": "func (Family) RPCNamespace() string     { return \"wemix\" }"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/poa.go",
+    "line": 40,
+    "snippet": "func (Family) BuildGenesis(template []byte, p registry.GenesisParams) ([]byte, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/poa.go",
+    "line": 94,
+    "snippet": "Actions: []string{ActionDeployGovernance, ActionEtcdInit, ActionVerifyEtcd},"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/poa.go",
+    "line": 149,
+    "snippet": "return node.Reservation{P2PSpan: 3, RPCSpan: 3}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/validators.go",
+    "line": 38,
+    "snippet": "func (Family) RuntimeValidators(ctx context.Context, c registry.Caller) ([]string, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/poa/validators.go",
+    "line": 23,
+    "snippet": "govGetMemberLength = \"0xd965ea00\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/wbft/wbft.go",
+    "line": 20,
+    "snippet": "func (Family) RPCNamespace() string     { return \"istanbul\" }"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/wbft/wbft.go",
+    "line": 30,
+    "snippet": "func (Family) BuildGenesis(template []byte, p registry.GenesisParams) ([]byte, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/wbft/wbft.go",
+    "line": 46,
+    "snippet": "\"--rpc.enabledeprecatedpersonal\","
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/wbft/wbft.go",
+    "line": 62,
+    "snippet": "return []registry.Phase{{Name: \"all\"}}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/verify_validators.go",
+    "line": 62,
+    "snippet": "method, actual, err := registry.RunningValidators(ctx, p, caller)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/upgrade/handoff.go",
+    "line": 50,
+    "snippet": "postForkBlocks = 10"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/upgrade/handoff.go",
+    "line": 699,
+    "snippet": "func (h *Handoff) AwaitFork(ctx context.Context, ns node.NodeSet, timeout time.Duration) (string, error) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/upgrade/handoff.go",
+    "line": 730,
+    "snippet": "for _, v := range h.Plan.Network.WbftValidators {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 288,
+    "snippet": "net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/compose.go",
+    "line": 138,
+    "snippet": "return composition{}, fmt.Errorf(\"a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply\")"
+   }
+  ]
+ },
+ {
+  "id": "H-05",
+  "area": "계정과 서명 경로",
+  "current": [
+   "ResolveAccount: 0x 리터럴은 주소만, node<N>은 노드 keystore 서명(키 없음), 그 외 라벨은 키셋의 키로 로컬 서명. faucet은 node1의 별칭이다. 키셋이 없으면 라벨은 오류다.",
+   "sendTx 노드 서명 경로(eth_sendTransaction): to, data, accessList, value, gas, gasPrice|maxFee+tip, nonce를 모두 전달한다. 계약 생성(to 없음)도 가능하다.",
+   "sendTx 로컬 서명 경로(key 인자 또는 로컬 라벨): to가 필수라 계약 생성이 불가하다. feePayerKey가 있으면 SendFeeDelegated(value만, data/gas/nonce/fee 지정 불가). data가 있으면 Execute(fee 자동, gas/nonce 지정 불가). fee/nonce를 명시하면 SendDynamicFeeTx로 가되 gas가 21000 고정이고 data가 빠진다. 아니면 SendCoin(type 0x02 자동 수수료).",
+   "faucet/deployContract/registerContract/load는 funder()가 주소만 돌려주고 sendAndConfirm이 eth_sendTransaction을 쓴다. 로컬 키 라벨을 from에 줘도 노드 서명으로 간다. 즉 이 네 verb는 언락된 노드 계정이 있어야 한다.",
+   "env.accounts 자금 지원도 node1의 eth_sendTransaction이다.",
+   "sendRawTampered/sendSetCode/signAuthorization은 로컬 서명 raw 전송이다. SupportsTxType 게이트는 SDK 값이라 세 체인 모두 통과한다.",
+   "Precheck의 misdirectedSends는 from: nodeN을 다른 노드로 보내는 스텝을 막는다. 공개 RPC(엔드포인트만 있음)에서는 node 라벨 자체가 의미가 없다."
+  ],
+  "configurable_today": [
+   "격리 네트워크: node 라벨, faucet, env.accounts, newAccount+key, 로컬 라벨(dev1 등)",
+   "attach: --keys로 키셋 디렉터리를 주면 라벨이 해석된다"
+  ],
+  "needs_implementation": [
+   "공개 RPC(언락 계정 없음)에서 공통 케이스를 돌리려면 faucet/deployContract/registerContract/load와 env.accounts 자금 지원을 로컬 서명으로도 보낼 수 있어야 한다. 현재는 eth_sendTransaction 고정이다.",
+   "로컬 서명 sendTx에 계약 생성, data+gas+nonce+fee 동시 지정, accessList, 0x16+data가 없다. Wallet.SendDynamicFeeTx는 Data와 창조를 이미 지원하므로 builtins 쪽 배선만 부족하다.",
+   "체인별 tx type 지원표가 SDK에 없다(세 체인 동일). go-wemix에서 sendSetCode는 노드 거부로만 실패한다. 체인별 capability preflight가 필요하다."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/account.go",
+    "line": 20,
+    "snippet": "const FaucetLabel = \"faucet\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/account.go",
+    "line": 76,
+    "snippet": "if addressLiteral.MatchString(ref) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/account.go",
+    "line": 80,
+    "snippet": "return Account{}, fmt.Errorf(\"dsl: %q is a label but this run has no key set to resolve it against\", ref)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/account.go",
+    "line": 84,
+    "snippet": "label = \"node1\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/account.go",
+    "line": 92,
+    "snippet": "if !nodeLabel.MatchString(label) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 158,
+    "snippet": "if keyHex, ok := ac.Args[\"key\"].(string); ok && keyHex != \"\" {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 177,
+    "snippet": "if sender.SignsLocally() {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 193,
+    "snippet": "if al, ok := ac.Args[\"accessList\"]; ok {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 205,
+    "snippet": "hash, err := c.SendTransaction(ctx, args)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 262,
+    "snippet": "return fmt.Errorf(\"dsl: sendTx requires \\\"to\\\" when this harness signs\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 290,
+    "snippet": "hash, err = w.SendFeeDelegated(ctx, fp, to, value)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 296,
+    "snippet": "hash, err = w.Execute(ctx, to, b, value)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 316,
+    "snippet": "dargs := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: 21000, Nonce: noncePtr}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 328,
+    "snippet": "hash, err = w.SendCoin(ctx, to, value)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/assets.go",
+    "line": 196,
+    "snippet": "return acct.Address, nil"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/assets.go",
+    "line": 211,
+    "snippet": "hash, err := c.SendTransaction(ctx, args)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/load.go",
+    "line": 73,
+    "snippet": "receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/accounts.go",
+    "line": 84,
+    "snippet": "_, err := c.SendTransaction(ctx, rpc.SendTxArgs{"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/txprobe.go",
+    "line": 142,
+    "snippet": "sendErr := c.Call(ctx, \"eth_sendRawTransaction\", &h, \"0x\"+hex.EncodeToString(raw))"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/txprobe.go",
+    "line": 162,
+    "snippet": "if !ac.Deps.Accounts.SupportsTxType(setCodeTxType) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/accounts/wallet.go",
+    "line": 80,
+    "snippet": "// account's next nonce; an empty ToHex is a contract creation. Value, GasFeeCap,"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/validate.go",
+    "line": 133,
+    "snippet": "if bad := misdirectedSends(s); len(bad) > 0 {"
+   }
+  ]
+ },
+ {
+  "id": "H-06",
+  "area": "RPC endpoint와 노드 역할",
+  "current": [
+   "rpc.Client는 http.DefaultClient로 JSON-RPC over HTTP를 보낸다. timeout은 ctx로만, 인증 헤더는 없다(Content-Type만).",
+   "bare attach는 모든 endpoint를 RoleEN, 포트 미상으로 등록한다. 역할이 전혀 없으면 선택자 bp1/en1이 순서 기반으로 폴백한다. 워크스페이스 attach는 기록된 역할을 쓴다.",
+   "WS URL은 node.Ports.WS로만 만든다. attach 노드는 포트가 없어 wsSubscribe/wsOpen이 실패한다. metrics도 MetricsURL 또는 Ports.Metrics가 있어야 한다.",
+   "rpcCall 리더는 임의 메서드를 호출하고 dot-path로 값을 뽑는다. @latest 파라미터를 head 번호로 치환한다. 체인 namespace(istanbul_/wemix_)는 케이스에만 나온다.",
+   "composed wbft 노드는 personal/unprotected-tx 플래그가 켜진다. 공개 RPC에는 admin/personal/txpool이 닫혀 있을 수 있다."
+  ],
+  "configurable_today": [
+   "--rpc 반복으로 여러 endpoint",
+   "케이스의 on/onEach 선택자(bp1, en:any, node3)",
+   "step별 timeout/pollInterval"
+  ],
+  "needs_implementation": [
+   "attach 프로필: endpoint별 역할(bp/en/pn), HTTP/WS URL, metrics URL, 인증 헤더, 허용 namespace, 기본 timeout을 선언하고 노드표로 만드는 기능.",
+   "namespace/메서드 노출 preflight(methodPresent는 있지만 케이스마다 수동).",
+   "HTTP 클라이언트 timeout/재시도/인증 주입."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/core/rpc/client.go",
+    "line": 30,
+    "snippet": "return &Client{url: url, http: http.DefaultClient}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/rpc/client.go",
+    "line": 73,
+    "snippet": "httpReq.Header.Set(\"Content-Type\", \"application/json\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/node/attached.go",
+    "line": 37,
+    "snippet": "Role:   RoleEN,"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/session/environment_impl.go",
+    "line": 114,
+    "snippet": "if len(matched) == 0 {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/attach.go",
+    "line": 51,
+    "snippet": "// node: \"en1\" means the first node whose role is en, while \"node1\" means"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 404,
+    "snippet": "return \"\", fmt.Errorf(\"dsl: node%d has no WebSocket port (an attached node's ports are unknown)\", n.Index)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/metric.go",
+    "line": 64,
+    "snippet": "err := fmt.Errorf(\"dsl: metric: %s has no metrics port — was it launched with --metrics?\", t.name)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 217,
+    "snippet": "if err := c.Call(ctx, method, &result, params...); err != nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 235,
+    "snippet": "const latestBlockParam = \"@latest\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/consensus/wbft/wbft.go",
+    "line": 47,
+    "snippet": "\"--rpc.allow-unprotected-txs\","
+   }
+  ]
+ },
+ {
+  "id": "H-07",
+  "area": "장애 주입과 process control",
+  "current": [
+   "faultTarget은 Deps.Nodes(NodeControl)가 없으면 'attach mode does not own the node processes'로 실패한다. control은 워크스페이스 compose/attach에서만 workspaceNodes로 주입된다. bare attach와 handoff는 nil이다.",
+   "partition/healPartition은 admin_removePeer/admin_addPeer다. 발견(discovery)이 켜진 네트워크는 다시 붙을 수 있다고 코드가 명시한다.",
+   "swapNode는 binary/config/genesisOverlay 중 하나가 필요하고 NodeSwapper가 있어야 한다. readNodeLog는 NodeLogReader가 필요하며 워크스페이스의 로컬 로그 경로를 읽는다.",
+   "requires에 process를 선언한 케이스는 13건이다. attach는 rpc만 제공하므로 자동 skip된다."
+  ],
+  "configurable_today": [
+   "compose/워크스페이스 attach: stopNode/startNode/restartNode/swapNode/readNodeLog/partition",
+   "expect: fail + reason으로 기동 실패 사유 검사"
+  ],
+  "needs_implementation": [
+   "운영 메인넷 attach에서는 장애 케이스를 돌릴 수 없다. 공통 목록에서 실행 환경(격리/운영)을 분리해야 한다.",
+   "partition은 admin namespace가 열린 노드에서만 되고 실제 단절 관측(peerCount 감소)은 케이스가 따로 해야 한다.",
+   "원격 target에서 workspaceNodes.Log는 로컬 경로를 읽으므로 빈 로그가 될 수 있다(확인 필요)."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 342,
+    "snippet": "if ac.Deps == nil || ac.Deps.Nodes == nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 344,
+    "snippet": "\"dsl: %s needs node control, which this run has none of (attach mode does not own the node processes)\", action)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 528,
+    "snippet": "control: workspaceNodes{sd: sd, dataDir: dataDir},"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/attach.go",
+    "line": 84,
+    "snippet": "Control interp.NodeControl"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/app/workflow.go",
+    "line": 112,
+    "snippet": "KeysDir: in.KeysDir, Bus: in.Bus, Nodes: in.Nodes,"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 397,
+    "snippet": "if err := c.RemovePeer(ctx, enodes[to.Index]); err != nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 372,
+    "snippet": "// Note: this severs current connections. A network with peer discovery enabled"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 274,
+    "snippet": "return fmt.Errorf(\"dsl: swapNode requires a \\\"binary\\\", \\\"config\\\", or \\\"genesisOverlay\\\"\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/fault.go",
+    "line": 156,
+    "snippet": "return fmt.Errorf(\"dsl: readNodeLog node%d: this run's node control cannot read logs\", n.Index)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 200,
+    "snippet": "path := node.Layout{Root: w.dataDir}.LogPath(node.LabelFor(n.Index))"
+   }
+  ]
+ },
+ {
+  "id": "H-08",
+  "area": "체인 정책이 스며든 assertion/observer",
+  "current": [
+   "sendTx expect:reject는 '전송 오류가 있으면' 통과다. reason은 오류 문자열 부분 일치다. expect:revert는 receipt status 0x0이다.",
+   "기본 comparator: chainId/balanceAt/codeAt/call/txStatus/receiptLog/logs/rpcCall/derive는 Equal, blockNumber/peerCount/baseFee/estimateGas/gasPrice/metric은 GreaterOrEqual. InDelta도 있다.",
+   "blockAdvance 기본 30s/500ms, blockHalt 10s 창에 1블록 허용, blockInterval 20샘플, waitBlock 60s. 블록 주기 기대값은 케이스가 적는다.",
+   "derive: sum/diff/quorum(ceil(2n/3))/abiCall/word. 수수료 공식(baseFee+tip 등)은 케이스가 derive로 조립한다.",
+   "callError는 eth_call 오류면 통과, methodPresent는 -32601이 아니면 통과. 오류 사유 문자열은 체인마다 다를 수 있다.",
+   "체인 이름 분기는 testhelper에 없다. 체인 어휘(istanbul_getWbftExtraInfo 24건, wemix_getBriocheBlockReward 3건)는 케이스 JSON에 있다."
+  ],
+  "configurable_today": [
+   "compare/delta로 비교 방식",
+   "timeout/pollInterval/within/maxAdvance",
+   "reason 부분 일치"
+  ],
+  "needs_implementation": [
+   "체인별 기대값(정족수, 블록 주기, 최소 수수료, 거부 사유, effectiveGasPrice 공식)을 케이스 밖 프로필에서 주입하는 장치가 없다. FeePolicy/ConsensusPolicy oracle 또는 파라미터 바인딩이 필요하다.",
+   "reject 판정이 '아무 오류'라서 잘못된 이유의 거부도 통과한다. 공통 케이스는 reason을 체인별 문자열 표로 관리해야 한다."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 462,
+    "snippet": "if submitErr == nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 466,
+    "snippet": "if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 479,
+    "snippet": "return status == \"0x0\" || status == \"0x00\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/read.go",
+    "line": 314,
+    "snippet": "{name: assertChainID, defaultOp: \"Equal\", read: readChainID},"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/read.go",
+    "line": 325,
+    "snippet": "{name: assertBaseFee, defaultOp: \"GreaterOrEqual\", read: readBaseFee},"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/read.go",
+    "line": 285,
+    "snippet": "if op == \"InDelta\" {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/builtins.go",
+    "line": 67,
+    "snippet": "defaultBlockAdvanceTimeout = 30 * time.Second"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/blockprobe.go",
+    "line": 25,
+    "snippet": "defaultBlockHaltWindow = 10 * time.Second"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 474,
+    "snippet": "// ceil(2n/3) = (2n + 2) / 3 in integer arithmetic."
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 445,
+    "snippet": "case \"sum\":"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 421,
+    "snippet": "if op == \"abiCall\" {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/txprobe.go",
+    "line": 319,
+    "snippet": "if callErr == nil {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/txprobe.go",
+    "line": 330,
+    "snippet": "// (-32601) means the method is absent. Args: method (required), params"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testhelper/derived.go",
+    "line": 191,
+    "snippet": "// getWbftExtraInfo.gasTip, istanbul_getValidators, a wemix_ reward query — are"
+   }
+  ]
+ },
+ {
+  "id": "H-09",
+  "area": "capability 모델과 preflight",
+  "current": [
+   "applicableChains가 비면 모든 체인에 적용된다. requires ⊆ provided일 때만 실행, 아니면 skip. skip 사유는 한 문장 고정이다.",
+   "provided: bare attach는 rpc(+--caps 수동), compose/워크스페이스는 manifest capabilities + ws + delayed-<fork>(override로 fork를 옮긴 경우) + overlay가 선언한 capabilities. handoff는 manifest capabilities만.",
+   "manifest capabilities는 세 체인 동일(process, rpc, ws, consensus)이라 체인 간 기능 차이를 표현하지 않는다.",
+   "tests/tc 현황: requires rpc 195, consensus 34, process 13, account-extra 4, short-expiry 2, ws 2. applicableChains는 stablenet 99, 미지정 63, stablenet+wbft 29, wbft 3, 세 체인 1. env.capabilities는 requires로 합쳐진다.",
+   "tx type/fork/RPC namespace/계정 상태(blacklist) 지원 여부를 검사하는 preflight가 없다. SDK SupportsTxType은 세 체인 동일하다."
+  ],
+  "configurable_today": [
+   "applicableChains, requires, env.capabilities, --caps, genesis overlay의 capabilities"
+  ],
+  "needs_implementation": [
+   "체인별 기능 capability(예: tx-0x04, p256, fee-delegation, istanbul-rpc, wemix-rpc, account-extra, blacklist)를 manifest 또는 실제 노드 probe로 제공하고 케이스가 requires로 선언하는 모델.",
+   "skip 사유에 '어느 capability가 없었는지'를 기록."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/capability.go",
+    "line": 11,
+    "snippet": "const attachCapability = \"rpc\""
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/capability.go",
+    "line": 19,
+    "snippet": "if len(list) == 0 {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/capability.go",
+    "line": 55,
+    "snippet": "return chainOK(s) && satisfies(s.Requires, provided)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/engine_impl.go",
+    "line": 131,
+    "snippet": "rec.Reason(\"does not apply to this target (chain or required capabilities)\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/steps_compose.go",
+    "line": 808,
+    "snippet": "caps = append(caps, \"ws\")"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/steps_compose.go",
+    "line": 815,
+    "snippet": "caps = append(caps, \"delayed-\"+strings.ToLower(fork))"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/verbs_steps.go",
+    "line": 345,
+    "snippet": "opts.Capabilities = overlay.Capabilities"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 552,
+    "snippet": "return p.Manifest().Capabilities"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chains/wemix/manifest.json",
+    "line": 21,
+    "snippet": "\"capabilities\": [\"process\", \"rpc\", \"ws\", \"consensus\"],"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/spec_v2.go",
+    "line": 398,
+    "snippet": "// The env's capabilities and the case's requires are both gating inputs, so"
+   }
+  ]
+ },
+ {
+  "id": "H-10",
+  "area": "실행 기록과 메타데이터",
+  "current": [
+   "session.json에 command/startedAt, env.json에 envId/fingerprint/dataPath/nodes, 테스트별 steps/assert/status/reason/artifacts.json이 남는다. report.json은 session/command/startedAt/summary/tests다.",
+   "fingerprint 입력은 binary 문자열, binaries, config, genesisOverlay, topology, hardforks, placement, resolved config다. 바이너리 SHA나 버전은 없다.",
+   "artifacts.json은 워크스페이스 compose에서 genesis 참조 하나만 기록한다. 워크스페이스 state는 Binary 경로, KeysDir, Capabilities, LaunchInputs 해시를 기록한다.",
+   "StepResult는 signer/nonce/gas/hash/receipt/error를, AssertResult는 expected/actual/provenance를 담는다. Scrub이 key/privateKey/saveKey/password 값을 지운다.",
+   "skip 사유는 고정 문장이라 어느 capability가 빠졌는지 남지 않는다."
+  ],
+  "configurable_today": [
+   "--json 요약, artifact-root, dashboard 스트림"
+  ],
+  "needs_implementation": [
+   "실행 행렬용 메타데이터: chain, chainId(RPC 확인값), 바이너리 경로+sha256+버전(web3_clientVersion), fork 활성 상태, signer 모드(node/local), attach 프로필 id, skip/blocked 사유 코드. 세 체인 결과를 같은 case id로 묶는 키.",
+   "bare attach와 handoff에도 artifacts 참조를 남기는 방법."
+  ],
+  "evidence": [
+   {
+    "repo": "chainbench",
+    "path": "internal/core/session/read.go",
+    "line": 16,
+    "snippet": "Command   string       `json:\"command\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/session/environment_impl.go",
+    "line": 144,
+    "snippet": "Fingerprint string      `json:\"fingerprint\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/interp/fingerprint.go",
+    "line": 18,
+    "snippet": "Binary         string            `json:\"binary\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/dsl/interp/fingerprint.go",
+    "line": 30,
+    "snippet": "// comes from resolved; the rest come from the spec. It never touches a chain."
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/suite.go",
+    "line": 455,
+    "snippet": "return []session.ArtifactRef{{Kind: \"genesis\", Ref: \"genesis.json\"}}"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/workspace.go",
+    "line": 61,
+    "snippet": "Binary       string        `json:\"binary,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/chainsetup/workspace.go",
+    "line": 75,
+    "snippet": "LaunchInputs map[string]string `json:\"launchInputs,omitempty\"`"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/session/record.go",
+    "line": 9,
+    "snippet": "Signer  string"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/session/scrub.go",
+    "line": 14,
+    "snippet": "secretField = regexp.MustCompile(`(\"(?:key|privateKey|saveKey|password|mnemonic|secret)\"\\s*:\\s*)\"[^\"]*\"`)"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/core/report/report.go",
+    "line": 33,
+    "snippet": "type Report struct {"
+   },
+   {
+    "repo": "chainbench",
+    "path": "internal/testengine/engine_impl.go",
+    "line": 131,
+    "snippet": "rec.Reason(\"does not apply to this target (chain or required capabilities)\")"
+   }
+  ]
+ }
+]

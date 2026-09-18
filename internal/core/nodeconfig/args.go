@@ -7,7 +7,6 @@ import "fmt"
 type entry struct {
 	value   string
 	boolean bool
-	layer   Layer
 }
 
 // Args is the accumulating command line. Emission order is first-set order —
@@ -40,7 +39,7 @@ func (a *Args) Set(k Key, v string, l Layer) {
 			fmt.Errorf("launchopt: %s (%q) is boolean; use Enable (layer %s)", name, k, l))
 		return
 	}
-	a.put(k, entry{value: v, layer: l})
+	a.put(k, entry{value: v})
 }
 
 // SetIfSupported records a valued knob only when the dialect has it. This is
@@ -67,7 +66,7 @@ func (a *Args) Enable(k Key, l Layer) {
 			fmt.Errorf("launchopt: %s (%q) takes a value; use Set (layer %s)", name, k, l))
 		return
 	}
-	a.put(k, entry{boolean: true, layer: l})
+	a.put(k, entry{boolean: true})
 }
 
 // EnableIfSupported is Enable under the harmless-absence rule (see
@@ -95,10 +94,6 @@ func (a *Args) Has(k Key) bool {
 // Value returns the recorded value for a valued knob ("" when unset or
 // boolean).
 func (a *Args) Value(k Key) string { return a.vals[k].value }
-
-// WonBy returns the layer that set the knob last ("" when unset). This is the
-// provenance surface for `chain status`.
-func (a *Args) WonBy(k Key) Layer { return a.vals[k].layer }
 
 // Problems returns every classified problem accumulated so far. The Builder
 // joins them into one error, so a broken assembly reports all defects at once.

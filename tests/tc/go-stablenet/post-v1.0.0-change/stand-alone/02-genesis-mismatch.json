@@ -8,25 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "genesis-mismatch-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable",
-      "mismatch": "${GSTABLE_MISMATCH_BIN:-gstable-genesis-mismatch}"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4",
   "steps": [
     {
       "do": "waitBlock",
@@ -40,11 +22,17 @@
     {
       "do": "swapNode",
       "on": "node4",
-      "binary": "mismatch",
       "purpose": "genesis-mismatch",
       "expect": "fail",
       "reason": "genesis",
-      "save": "mismatchEvidence"
+      "save": "mismatchEvidence",
+      "genesisOverlay": {
+        "alloc": {
+          "0x00000000000000000000000000000000000000ff": {
+            "balance": "0x1"
+          }
+        }
+      }
     },
     {
       "do": "readNodeLog",

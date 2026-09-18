@@ -41,15 +41,15 @@ type WorkspaceConfig struct {
 	BinaryAliases map[string]string `yaml:"binaryAliases,omitempty"`
 	// Control holds the paths local to the machine running chainbench.
 	Control Control `yaml:"control"`
-	// Inputs decides whether inputs are prepared (found on the target) or
-	// generated (built by the in-process Builders).
+	// Inputs decides whether a composition uses inputs that already exist on
+	// the target or generates its own with the in-process Builders.
 	Inputs Inputs `yaml:"inputs"`
 	// Execution decides how a chain is used: a fresh isolated composition, a
 	// matching one reused, or an already-running one attached to.
 	Execution Execution `yaml:"execution"`
-	// Presets are named bundles of prepared inputs (genesis, keyring, configs),
-	// referenced by Inputs.Preset when Inputs.Mode is prepared.
-	Presets map[string]InputPreset `yaml:"presets,omitempty"`
+	// ExistingInputs are the named bundles this file offers, referenced by
+	// Inputs.Name when Inputs.Mode is InputExisting.
+	ExistingInputs map[string]ExistingInputs `yaml:"existingInputs,omitempty"`
 
 	// dir is the directory this config was read from, used to resolve a
 	// relative local ArtifactRoot. It is not a YAML field.
@@ -79,13 +79,13 @@ type Control struct {
 	ArtifactRoot string `yaml:"artifactRoot"`
 }
 
-// Inputs selects how a composition's inputs are prepared.
+// Inputs selects where a composition's inputs come from.
 type Inputs struct {
-	// Mode is prepared or generated.
+	// Mode is existing or generated.
 	Mode InputMode `yaml:"mode"`
-	// Preset names the entry in Presets to use; required when Mode is prepared,
-	// forbidden when generated.
-	Preset string `yaml:"preset,omitempty"`
+	// Name is the ExistingInputs entry to use; required when Mode is
+	// InputExisting, forbidden when generated.
+	Name string `yaml:"name,omitempty"`
 }
 
 // Execution selects how the chain is used across runs.
@@ -94,13 +94,18 @@ type Execution struct {
 	Chain ChainMode `yaml:"chain"`
 }
 
-// InputPreset is a named bundle of prepared inputs — genesis, keyring, and
-// configs held together so a promised identity set is verified as a unit. The
-// name is deliberately not "Preset": keyring already owns that word for a key
-// SOURCE, and one concept keeps one name. Each reference is a server file
-// reference the resource layer resolves; the shapes it accepts are validated
-// where the reference is consumed, not here.
-type InputPreset struct {
+// ExistingInputs is a named bundle of inputs that are already on the target —
+// genesis, keyring, and configs held together so a promised identity set is
+// verified as a unit.
+//
+// It is "existing" rather than "prepared" because the only fact chainbench can
+// check is that the files are there and that it did not make them; who prepared
+// them, and when, is not something it knows. The name also stays off "preset",
+// which keyring owns for a key SOURCE.
+//
+// Each reference is a server file reference the resource layer resolves; the
+// shapes it accepts are validated where the reference is consumed, not here.
+type ExistingInputs struct {
 	Genesis string            `yaml:"genesis,omitempty"`
 	Keyring string            `yaml:"keyring,omitempty"`
 	Configs map[string]string `yaml:"configs,omitempty"`
@@ -110,9 +115,9 @@ type InputPreset struct {
 type InputMode string
 
 const (
-	// InputPrepared uses files already present on the target; a missing input
+	// InputExisting uses files already present on the target; a missing input
 	// is an error, never a silent fall back to generation.
-	InputPrepared InputMode = "prepared"
+	InputExisting InputMode = "existing"
 	// InputGenerated builds test keys and genesis/config with the in-process
 	// Builders. It does not build or download a chain binary.
 	InputGenerated InputMode = "generated"
@@ -232,37 +237,37 @@ func (c WorkspaceConfig) validate() error {
 	if strings.TrimSpace(c.Control.ArtifactRoot) == "" {
 		return fmt.Errorf("workspace-config: control.artifactRoot is required")
 	}
-	if err := c.Inputs.validate(len(c.Presets) > 0); err != nil {
+	if err := c.Inputs.validate(); err != nil {
 		return err
 	}
-	if _, ok := c.Inputs.presetName(); ok {
-		if _, found := c.Presets[c.Inputs.Preset]; !found {
-			return fmt.Errorf("workspace-config: inputs.preset %q has no entry in presets", c.Inputs.Preset)
+	if name, ok := c.Inputs.existingName(); ok {
+		if _, found := c.ExistingInputs[name]; !found {
+			return fmt.Errorf("workspace-config: inputs.name %q has no entry in existingInputs", name)
 		}
 	}
 	return c.Execution.validate()
 }
 
-func (in Inputs) validate(hasPresets bool) error {
+func (in Inputs) validate() error {
 	switch in.Mode {
-	case InputPrepared:
-		if in.Preset == "" {
-			return fmt.Errorf("workspace-config: inputs.mode prepared needs inputs.preset")
+	case InputExisting:
+		if in.Name == "" {
+			return fmt.Errorf("workspace-config: inputs.mode existing needs inputs.name")
 		}
 	case InputGenerated:
-		if in.Preset != "" {
-			return fmt.Errorf("workspace-config: inputs.preset is set but inputs.mode is generated — a generated run declares no preset")
+		if in.Name != "" {
+			return fmt.Errorf("workspace-config: inputs.name is set but inputs.mode is generated — a generated run names no existing inputs")
 		}
 	default:
-		return fmt.Errorf("workspace-config: inputs.mode %q is unknown (want %s or %s)", in.Mode, InputPrepared, InputGenerated)
+		return fmt.Errorf("workspace-config: inputs.mode %q is unknown (want %s or %s)", in.Mode, InputExisting, InputGenerated)
 	}
 	return nil
 }
 
-// presetName returns the preset to use, if inputs declares one.
-func (in Inputs) presetName() (string, bool) {
-	if in.Mode == InputPrepared && in.Preset != "" {
-		return in.Preset, true
+// existingName returns the ExistingInputs entry to use, if inputs names one.
+func (in Inputs) existingName() (string, bool) {
+	if in.Mode == InputExisting && in.Name != "" {
+		return in.Name, true
 	}
 	return "", false
 }

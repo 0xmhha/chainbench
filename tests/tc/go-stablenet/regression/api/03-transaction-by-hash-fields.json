@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "transaction-by-hash-fields",
   "description": "RT-G-1-03 — eth_getTransactionByHash (원본 regression/api/03-test-get-tx-by-hash)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "transaction-by-hash-fields-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -40,7 +25,7 @@
     {
       "compare": "EqualCI",
       "expect": "rpcCall",
-      "is": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "is": "node1",
       "method": "eth_getTransactionByHash",
       "params": [
         "$hash"

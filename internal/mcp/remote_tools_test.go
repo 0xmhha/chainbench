@@ -15,7 +15,7 @@ func TestRemoteRPCTool(t *testing.T) {
 	// save a network pointing at the mock endpoint (as attach would).
 	ns := node.NodeSet{
 		Chain: "wbft", Network: "prod",
-		Nodes: []node.Node{{Index: 1, Role: node.RoleEndpoint, RPCURL: srv.URL}},
+		Nodes: []node.Node{{Index: 1, Role: node.RoleEN, RPCURL: srv.URL}},
 	}
 	if err := session.SaveNetwork(dir, ns); err != nil {
 		t.Fatal(err)

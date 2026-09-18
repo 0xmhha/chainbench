@@ -2,6 +2,7 @@ package interp
 
 import (
 	"context"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -25,6 +26,16 @@ type Deps struct {
 	// processes — attach mode — and those actions then fail with a clear reason
 	// rather than silently doing nothing.
 	Nodes NodeControl
+	// Contracts are the chain's own contracts by the name that chain calls
+	// them, so a spec can name one instead of writing the address.
+	//
+	// The address alone does not identify a contract: the same one holds a
+	// different contract on different chains, so a spec that writes it says
+	// nothing about what it meant and calls something else when it moves. The
+	// table is resolved per run from the chain's manifest; a chain that deploys
+	// its contracts at run time supplies none, and naming one there fails rather
+	// than resolving to an address that means something else.
+	Contracts map[string]string
 }
 
 // Registry holds the action, assertion and reader implementations a run
@@ -95,6 +106,25 @@ type NodeLogReader interface {
 	// Log returns at most maxBytes from the end of n's captured log. A node
 	// that has never been launched returns an empty string and no error.
 	Log(ctx context.Context, n node.Node, maxBytes int) (string, error)
+}
+
+// ForkCrosser is an optional NodeControl capability: crossing the hardfork the
+// network was composed to cross.
+//
+// It exists so a case can choose the moment. A case that only needs a chain
+// past the fork says nothing and the composition crosses it; a case that has to
+// act BEFORE the fork — send a transaction, deploy a contract — names the step
+// and crosses when it is ready. Both reach the same implementation, so the two
+// timings cannot come to mean two different handovers.
+//
+// A control that owns the node processes implements it; plain attach does not,
+// and the crossFork action says so rather than reporting a fork it did not
+// cross.
+type ForkCrosser interface {
+	// CrossFork waits for the network to reach the block before its fork and
+	// relaunches the successors as producers, returning the whole node table:
+	// crossing changes the role and pid of every one of them.
+	CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error)
 }
 
 // NodeChange is what a swapNode applies: a new binary path (empty keeps the

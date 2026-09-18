@@ -93,9 +93,9 @@ func resourcePlanTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":      map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix); default stablenet"},
-				"validators": map[string]any{"type": "number", "description": "validator node count (default 4)"},
-				"endpoints":  map[string]any{"type": "number", "description": "endpoint node count"},
+				"chain": map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix); default stablenet"},
+				"bp":    map[string]any{"type": "number", "description": "bp (block-producing) node count (default 4)"},
+				"en":    map[string]any{"type": "number", "description": "en (endpoint, non-producing) node count"},
 				"serverSet": map[string]any{
 					"type":        "string",
 					"description": "server-set file (default: server-set.yaml when present)",
@@ -105,14 +105,14 @@ func resourcePlanTool() Tool {
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			validators := argInt(args, "validators", 0)
-			if validators == 0 {
-				validators = 4
+			bpCount := argInt(args, "bp", 0)
+			if bpCount == 0 {
+				bpCount = 4
 			}
 			res, err := app.NetPlan(ctx, app.Deps{}, app.NetPlanIn{
-				Chain:      argString(args, "chain", ""),
-				Validators: validators,
-				Endpoints:  argInt(args, "endpoints", 0),
+				Chain:   argString(args, "chain", ""),
+				BPCount: bpCount,
+				ENCount: argInt(args, "en", 0),
 				Server: app.ServerRef{
 					SetPath: argString(args, "serverSet", ""),
 					Name:    argString(args, "server", ""),

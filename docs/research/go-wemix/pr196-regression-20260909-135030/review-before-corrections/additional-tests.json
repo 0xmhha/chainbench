@@ -1,0 +1,272 @@
+[
+  {
+    "id": "N-001",
+    "priority": "P0",
+    "title": "블록 RLP 8 MiB 정확한 경계와 오류 우선순위",
+    "level": "L2",
+    "setup": "유효 부모·서명·txRoot·uncleRoot를 갖춘 후보 블록의 실제 RLP 길이를 8,388,607 / 8,388,608 / 8,388,609 byte로 조정한다. gas 한도를 충분히 높이고 tx당 262,144 byte 이내로 구성한다. 이미 알려진 과대블록, 부모 없는 과대블록도 별도 입력한다.",
+    "oracle": "독립 rlp.EncodeToBytes(block) 길이를 기준으로 <=8,388,608은 다른 유효성 조건 충족 시 삽입되고 +1만 ErrBlockOversized. 과대블록은 known/ancestor 검사보다 먼저 거부됨을 명시적으로 확인한다.",
+    "evidence": [
+      "sources/pr-head/core/block_validator.go:53",
+      "sources/pr-head/core/block_validator_test.go:407",
+      "sources/pr-head/core/types/block.go:405"
+    ],
+    "existing_coverage_gap": "PR TestValidateBodyBlockOversized는 genesis가 oversized 오류가 아닌지만 확인하고 경계 정상 블록의 실제 수락을 증명하지 않는다. 제공 시나리오의 단일 tx gas/size 거부는 총 블록 RLP 경계를 다루지 않는다.",
+    "before_after": "PR base에는 블록 크기 상한이 없고 PR head에는 무조건 상한이 있다. +1 블록은 다른 조건이 유효할 때 base 수락/head 거부를 비교한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-002",
+    "priority": "P0",
+    "title": "가격순·prefetch 두 생산 루프의 정확한 packing 경계",
+    "level": "L2",
+    "setup": "PrefetchCount=0 및 >0 각각에서 env.size+tx.Size()가 7,388,607 / 7,388,608 / 7,388,609가 되도록 후보를 만든다. gas/time/MaxTxsPerBlock 때문에 먼저 종료되지 않게 하고 여러 sender를 사용한다.",
+    "oracle": "<7,388,608만 포함된다. 크기 때문에 제외된 tx는 실행·nonce 변경·receipt 생성·committed 표시가 없어야 한다. 두 루프 모두 실제 최종 블록 RLP <=8,388,608.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:146",
+      "sources/pr-head/miner/worker.go:935",
+      "sources/pr-head/miner/worker.go:1065",
+      "sources/pr-head/miner/worker.go:1250"
+    ],
+    "existing_coverage_gap": "PR 생산 테스트 2개는 동일 크기 Legacy tx 묶음으로 stop 조건만 확인한다. 정확한 = 경계와 서로 다른 sender/orderer 동작은 없다.",
+    "before_after": "base는 추가 크기 조건 없이 계속 포함하고 head는 strict less-than에서 중단한다. 기존 gas/time/nonce 정책은 동일해야 한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-003",
+    "priority": "P0",
+    "title": "실제 WEMIX finalize·seal 이후 바이트 크기와 import 일치",
+    "level": "L2 → L3",
+    "setup": "실제 WEMIX 설정에서 크기 한도 가까운 tx 묶음을 commitWork→commitEx로 생산한다. Rewards/Extra 및 fee 필드가 실제 운영 값으로 채워지고 Brioche 전후 합법 높이도 포함한다. Croissant 이후 mining 중단은 정상 정책으로 분리한다.",
+    "oracle": "env.size가 아니라 sealedBlock의 RLP 길이 <=8 MiB 및 NewBlock 패킷 <=10 MiB. 생산자와 별도 검증자의 hash/stateRoot/receiptsRoot/보상 결과 일치, ValidateBody 및 InsertChain 수락.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:864",
+      "sources/pr-head/miner/worker.go:1743",
+      "sources/pr-head/miner/worker.go:1817",
+      "sources/pr-head/core/types/block.go:187",
+      "sources/pr-head/consensus/ethash/consensus.go:622"
+    ],
+    "existing_coverage_gap": "PR 테스트는 ethash.NewFaker + 내부 루프에서 끝난다. header.Size는 메모리 근사치이며 실제 finalize/seal 후 전체 RLP 상한을 검사하지 않는다. 기존 reward/finalize 시나리오는 크기 포화 조건이 없다.",
+    "before_after": "base/head 정상 소형 블록 상태·보상 결과는 동일. head 크기 포화 블록은 외부 검증자가 받아야 한다. 1,000,000 byte 여유의 충분성은 아직 실측되지 않았다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-004",
+    "priority": "P0",
+    "title": "과거 과대블록 재처리와 full/snap/import 정책 일치",
+    "level": "L2 → L3",
+    "setup": "먼저 실제 대상 체인 보존 구간의 RLP 크기를 조사한다. 존재 여부와 무관하게 유효한 8 MiB 초과 10 MiB 미만 블록이 들어 있는 base 생성 fixture를 만든다. 새 DB full sync, snap의 pivot 이전 receipt chain과 pivot block, 파일 import 및 기존 DB 재기동을 비교한다.",
+    "oracle": "배포 전에 과거 블록 수락 정책을 확정하고 각 경로가 그 정책과 일치해야 한다. 무조건 cap 정책이면 historical full은 ErrBlockOversized로 멈출 수 있음을 재현하고 rollout blocker로 기록한다. snap만 통과한 결과를 전체 호환성 PASS로 판정하지 않는다.",
+    "evidence": [
+      "sources/pr-head/core/block_validator.go:53",
+      "sources/pr-head/core/blockchain_insert.go:124",
+      "sources/pr-head/core/blockchain.go:917",
+      "sources/pr-head/eth/downloader/downloader.go:1548",
+      "sources/pr-head/eth/downloader/downloader.go:1736",
+      "sources/pr-head/eth/downloader/queue.go:767"
+    ],
+    "existing_coverage_gap": "기존 full/snap/restart는 일반 데이터의 height/root 비교. PR에는 fork activation 조건이 없고 InsertReceiptChain/DeliverBodies에는 MaxBlockSize 검사가 보이지 않는다. 실제 과거 과대블록 존재는 미확인.",
+    "before_after": "base가 수락한 과거 과대블록을 head full import는 거부할 수 있다. snap 데이터 경로는 별도 검증해야 하며 네트워크/피벗까지 실행 전 우회 취약점 확정 금지.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-005",
+    "priority": "P0",
+    "title": "구버전·패치 노드 혼합 배포 시 체인 분기",
+    "level": "L3",
+    "setup": "PR base와 PR head의 producer/수신자 조합을 구성한다. 공통 정상 블록과 base에서만 생산 가능한 8 MiB 초과 10 MiB 미만 블록을 보내고 head producer로 전환한다. 격리된 테스트 네트워크에서 수행한다.",
+    "oracle": "정상 블록은 모든 노드에서 동일 hash/root. 과대블록은 head가 거부하므로 mixed rollout이 안전하다고 오판하지 않는다. 정한 배포 절차로 동기화 정체·영구 분기 없이 모든 노드를 공통 head로 수렴시켜야 배포 가능.",
+    "evidence": [
+      "sources/pr-head/params/protocol_params.go:129",
+      "sources/pr-head/core/block_validator.go:53",
+      "sources/pr-head/eth/protocols/eth/protocol.go:51"
+    ],
+    "existing_coverage_gap": "기존 장애/리더 교체는 동일 바이너리 전제. 새 유효성 규칙과 메시지 한도 차이의 혼합 배포는 없다.",
+    "before_after": "base의 block acceptance 및 100 MiB 수신 한도와 head의 8 MiB/10 MiB 한도를 구분해 실패 원인을 수집한다. local HEAD와 base 차이는 별도 대조한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-006",
+    "priority": "P0",
+    "title": "ETH 메시지 10 MiB 경계와 정상 대형 블록 전파",
+    "level": "L2 → L3",
+    "setup": "ETH65/66/68에서 실제 인코딩 길이 10,485,759 / 10,485,760 / 10,485,761 byte 메시지를 핸들러로 전달한다. 크기 자체 테스트는 decode 성공 여부와 분리하고 정상 <=8 MiB 블록 NewBlock 전파도 실행한다.",
+    "oracle": ">10,485,760만 errMsgTooLarge. =는 size gate를 통과하되 유효하지 않은 packet이 다른 오류를 내는 것은 별도 판정. 정상 상한 블록은 peer 연결 유지·수락·head 전진.",
+    "evidence": [
+      "sources/pr-head/eth/protocols/eth/handler.go:248",
+      "sources/pr-head/eth/protocols/eth/protocol.go:51",
+      "sources/pr-head/eth/protocols/eth/handlers.go:520"
+    ],
+    "existing_coverage_gap": "PR에 프로토콜 제한 테스트가 없다. 기존 block-fetcher/full-sync는 경계 크기의 실제 wire packet 검증이 없다.",
+    "before_after": "10 MiB 초과 100 MiB 이하 유효 packet은 base에서 size gate 통과/head에서 차단. 소형 메시지와 합법 대형 블록은 동일해야 한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-007",
+    "priority": "P0",
+    "title": "크기 포화 후 etcd mining token 반환과 다음 블록 생존성",
+    "level": "L2 → L3",
+    "setup": "실제 WEMIX token 경로에서 size break를 발생시키고 다음 높이를 생산한다. 정상 반환, 생산 중 miner 종료, token TTL 경과를 나눠 실행한다. PrefetchCount 양쪽 모두 측정한다.",
+    "oracle": "정상 size break는 commitEx·seal·ReleaseMiningToken·DB write·broadcast로 이어지고 다음 생산자가 전진한다. 장애 때 정한 복구 시간 안에 token 회수와 공통 head 수렴. tx hash와 최종 nonce로 누락·중복 없음 확인.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:1627",
+      "sources/pr-head/miner/worker.go:1669",
+      "sources/pr-head/miner/worker.go:1812",
+      "sources/pr-head/wemix/sync.go:143",
+      "sources/pr-head/wemix/sync.go:163",
+      "sources/pr-head/wemix/etcdutil.go:1082"
+    ],
+    "existing_coverage_gap": "PR 테스트는 token 경로 없음. 기존 fault-txpool-leader-change는 sendTx receipt를 기다린 뒤 노드를 멈추므로 size break 시 미포함 pending을 증명하지 않는다. token 로직 자체 변경은 PR196의 변경이 아니다.",
+    "before_after": "head에서 새로 생긴 size break가 정상 완료 경로를 보존하는지 확인한다. token 누수가 발견됐다고 단정하지 않으며 base/head 동일 장애 시나리오를 대조한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-008",
+    "priority": "P1",
+    "title": "제외된 tx의 다음 블록 이월·nonce 연속성·교체",
+    "level": "L2 → L3",
+    "setup": "여러 sender의 연속 nonce를 넣고 첫 블록이 size cap에 닿게 한다. 제외된 첫 tx, 뒤 nonce, 이후 작은 tx를 식별한다. 미포함 tx를 높은 수수료로 교체한 변형과 miner 변경 변형도 둔다.",
+    "oracle": "미포함 tx는 receipt가 없고 pool에서 사라지지 않는다. 다음 블록들에서 nonce 순서대로 정확히 1회 포함; 교체는 최종 hash만 포함. 모든 노드의 상태와 receipt 일치. head-of-line 큰 tx 때문에 현재 블록이 덜 채워지는 것은 현 break 정책으로 기록한다.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:975",
+      "sources/pr-head/miner/worker.go:1108",
+      "sources/pr-head/miner/worker.go:1120",
+      "sources/pr-head/miner/worker.go:1250"
+    ],
+    "existing_coverage_gap": "기존 nonce/replacement 시나리오는 size cap 없는 조건. PR 테스트는 첫 블록 env.size만 본다.",
+    "before_after": "head에서 블록 배치가 달라지는 것은 의도된 변화. 동일 최종 실행 결과·순서·비손실을 비교하고 동일 블록 포함을 요구하지 않는다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-009",
+    "priority": "P1",
+    "title": "실행 거부와 EVM revert의 size·state·receipt 회계",
+    "level": "L2",
+    "setup": "cap 근처에서 nonce too low/high, 잔액 부족, block gas 부족, 지원하지 않는 type/fork tx와 정상 tx를 섞는다. 별도로 유효한 REVERT 및 실행 out-of-gas tx를 포함한다.",
+    "oracle": "ApplyTransaction error이면 env.size/txs/receipts/tcount가 증가하지 않고 state는 rollback된다. EVM revert/OOG라도 유효하게 포함된 tx이면 size는 증가하고 실패 receipt·gas·nonce가 반영된다. 무효 tx 처리 뒤 정상 tx가 불필요하게 배제되지 않아야 한다.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:920",
+      "sources/pr-head/miner/worker.go:1006",
+      "sources/pr-head/miner/worker.go:1134"
+    ],
+    "existing_coverage_gap": "기존 revert/gas/nonce 테스트는 receipt 결과만 확인하며 추가된 env.size와 실패 분류를 함께 보지 않는다.",
+    "before_after": "base의 실행·가스·nonce 정책 보존, head의 size는 실제 포함 tx만 합산. committedTxs는 실행 전 처리 표식이라는 기존 의미와 tx 포함을 혼동하지 않는다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-010",
+    "priority": "P1",
+    "title": "environment 복사·재생성·새 head 중단의 누적 size",
+    "level": "L2",
+    "setup": "여러 tx 적용 뒤 env.copy를 만들고 원본/복사본에 서로 다른 tx를 추가한다. interrupt new-head/recommit 및 새 makeEnv를 수행한다.",
+    "oracle": "복사 시 size 동일, 복사본 추가 시 원본 size/state/receipt 불변. 새 환경은 새 header 기준으로 초기화되어 이전 블록 크기 누적 없음. 폐기된 작업 tx가 다음 canonical block에서 소실되지 않음.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:111",
+      "sources/pr-head/miner/worker.go:864",
+      "sources/pr-head/miner/worker.go:935",
+      "sources/pr-head/miner/worker.go:1715",
+      "sources/pr-head/miner/worker_test.go:386"
+    ],
+    "existing_coverage_gap": "PR은 size 복사만 추가했으며 TestRegenerateMiningBlock 계열은 크기 누적과 상한을 확인하지 않는다.",
+    "before_after": "기존 worker 복사/interrupt 결과 보존과 head size 초기화 추가 불변식을 비교한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-011",
+    "priority": "P1",
+    "title": "지원 tx type과 decode cache별 실제 RLP 오차",
+    "level": "L1 → L2",
+    "setup": "Legacy, AccessList, DynamicFee, FeeDelegateDynamicFee(type22)를 해당 활성 fork에서 생성한다. 직접 생성/서명, MarshalBinary→UnmarshalBinary, RLP decode 경로의 동일 tx를 혼합한다. 작은 typed tx 대량과 최대 허용 tx 크기 인근을 포함한다.",
+    "oracle": "동일 tx hash/실행 결과가 보존되며 실제 완성 block RLP <=8 MiB. env.size 오차를 독립 인코더 길이로 기록한다. tx.Size와 outer typed RLP 길이가 반드시 같다는 잘못된 oracle을 쓰지 않는다.",
+    "evidence": [
+      "sources/pr-head/core/types/transaction.go:45",
+      "sources/pr-head/core/types/transaction.go:101",
+      "sources/pr-head/core/types/transaction.go:208",
+      "sources/pr-head/core/types/transaction.go:430",
+      "sources/pr-head/core/types/block.go:346"
+    ],
+    "existing_coverage_gap": "PR은 Legacy 한 종류만 사용. 기존 TestEIP2718TransactionEncode/TestTransactionCoding/TestEIP2718BlockEncoding은 packing safety를 결합하지 않는다.",
+    "before_after": "base/head의 tx encoding은 같고 head가 이 값으로 처음 packing을 제한한다. cache 경로별 값 차이와 1 MB 여유가 실제로 충분한지 검증한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-012",
+    "priority": "P1",
+    "title": "BlockBodies 응답 집계와 ETH66/68 envelope 여유",
+    "level": "L2",
+    "setup": "누적 body가 2 MiB 직전인 상태에서 다음 합법 <=8 MiB 블록 body가 추가되는 응답을 구성한다. ETH65/66/68 request ID envelope를 포함해 실제 wire 길이를 계산한다.",
+    "oracle": "정상 체인 응답은 10 MiB 수신 cap을 넘지 않고 모두 수락된다. 분할/잔여 fetch로 모든 요청 블록이 회수되어야 한다. 넘는 fixture가 생기면 실제 패킷과 구성 항목 길이를 보존한다.",
+    "evidence": [
+      "sources/pr-head/eth/protocols/eth/handler.go:36",
+      "sources/pr-head/eth/protocols/eth/handlers.go:354",
+      "sources/pr-head/eth/protocols/eth/peer.go:344"
+    ],
+    "existing_coverage_gap": "ServiceGetBlockBodiesQuery는 누적 body bytes <2 MiB일 때 마지막 body 1개를 추가하고 이후 종료한다. 각 block <=8 MiB이고 body는 block보다 작으므로 정상 body 원시 합계는 <10 MiB다. 따라서 이 항목은 overflow 재현이 아니라 ETH66/68 request ID와 RLP list wrapper까지 인코딩한 여유 확인이다. 기존 TestGetBlockBodies65/66/68에 이 조합을 추가한다.",
+    "before_after": "기존 100 MiB 한도에서 드러나지 않던 응답 경계다. base/head 같은 응답 bytes를 비교한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-013",
+    "priority": "P1",
+    "title": "대량 로그 receipt 응답과 snap catch-up",
+    "level": "L2 → L3",
+    "setup": "합법 <=8 MiB 블록에서 LOG 명령으로 receipt payload가 커지는 유효 workload를 gas 한도 안에서 생성한다. 단일 receipt-set 및 누적 2 MiB 직전+다음 항목을 GetReceipts로 요청하고 snap 동기화한다.",
+    "oracle": "실제 receipt 응답 RLP 크기와 10 MiB cap의 충돌 여부 측정. 정상 체인 동기화가 반복 disconnect/동일 요청 재시도에 갇히지 않아야 한다. 체인 gas 설정상 10 MiB에 도달 불가하면 수치와 도달 상한을 증거로 남긴다.",
+    "evidence": [
+      "sources/pr-head/eth/protocols/eth/handlers.go:470",
+      "sources/pr-head/eth/protocols/eth/handler.go:254",
+      "sources/pr-head/eth/downloader/downloader.go:1736"
+    ],
+    "existing_coverage_gap": "블록 크기 상한은 receipt/log 총 크기를 직접 제한하지 않는다. 기존 receipt/snap 테스트와 PR tests에 대형 로그 경계는 없다. 실제 초과 가능성은 gas 설정으로 검증해야 한다.",
+    "before_after": "base/head 동일 합법 실행의 receipt bytes로 비교. 새 message cap 때문에만 실패하는지 분리한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-014",
+    "priority": "P1",
+    "title": "Fetcher·Downloader·사이드체인 과대블록 거부 후 회복",
+    "level": "L2 → L3",
+    "setup": "유효 header/root를 갖춘 oversized body를 실시간 NewBlock 경로와 hash→body fetch, gap downloader 경로로 각각 전달한다. 이어서 정상 sibling/연속 블록을 보낸다.",
+    "oracle": "실행 import 경로는 과대블록을 canonical state에 반영하지 않는다. bad block 후 정상 peer/block으로 회복해 head와 stateRoot가 수렴한다. 거부된 block의 receipt·balance 변화 없음.",
+    "evidence": [
+      "sources/pr-head/core/blockchain_insert.go:124",
+      "sources/pr-head/core/blockchain.go:1380",
+      "sources/pr-head/eth/downloader/downloader.go:1548",
+      "sources/pr-head/eth/protocols/eth/handlers.go:520"
+    ],
+    "existing_coverage_gap": "기존 downloader/fetcher는 정상 진행만 검증. PR ValidateBody 직접 호출 테스트는 큐 처리·peer 회복·bad-block 이후 상태를 다루지 않는다.",
+    "before_after": "base 수락/head 거부가 의도된 차이. 거부 후 정상 네트워크 진행이 회귀하지 않아야 한다.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-015",
+    "priority": "P1",
+    "title": "크기 한도와 gas·tx count·build deadline 우선순위",
+    "level": "L2",
+    "setup": "동일 tx 묶음에서 gas가 먼저 소진/size가 먼저 소진/deadline 도달/MaxTxsPerBlock 도달 조건을 각각 만든다. PrefetchCount 두 모드에서 기존 정책 차이를 유지한다.",
+    "oracle": "어떤 중단 조건에서도 블록은 유효하고 기존 gas/count/time 한도를 지킨다. 크기 포화에서는 gas가 남아도 정상 완료. 각 루프에 원래 존재하는 제한만 요구하며 Simple에 없는 count 정책을 새 요구로 오인하지 않는다.",
+    "evidence": [
+      "sources/pr-head/miner/worker.go:935",
+      "sources/pr-head/miner/worker.go:978",
+      "sources/pr-head/miner/worker.go:1065",
+      "sources/pr-head/miner/worker.go:1112"
+    ],
+    "existing_coverage_gap": "PR tests는 다른 한도를 회피한 size 단독 조건. stress-tx-flood의 fillPercent=30 + blockAdvance는 경계의 중단 원인을 검증하지 않는다.",
+    "before_after": "base/head에서 size가 먼저 도달한 경우만 의도된 packing 감소, 나머지 기존 정책·실행 결과 동일.",
+    "status": "제안·미구현·미실행"
+  },
+  {
+    "id": "N-016",
+    "priority": "P2",
+    "title": "반복 대형 메시지 거부의 자원·연결 회복",
+    "level": "L2 → L3",
+    "setup": "10 MiB 초과 메시지를 제한된 횟수로 전송하는 peer와 정상 peer를 함께 둔다. 관측 구간·부하량·자원 허용치를 사전에 정하고 정상 트랜잭션도 유지한다.",
+    "oracle": "잘못된 peer 메시지는 decode 전 차단되고 정상 peer의 블록 진행이 유지된다. RSS/goroutine/file descriptor가 반복 횟수에 따라 무한 증가하지 않고 시험 종료 후 회복한다.",
+    "evidence": [
+      "sources/pr-head/eth/protocols/eth/handler.go:248"
+    ],
+    "existing_coverage_gap": "기존 stress/fault는 메시지 cap 거부 경로의 자원 회수를 검증하지 않는다.",
+    "before_after": "정상 소형 workload 기준선과 비교. 단순 cap 통과 여부가 아닌 장기 회복성 보조 검사이며 P0 종료 후 수행한다.",
+    "status": "제안·미구현·미실행"
+  }
+]

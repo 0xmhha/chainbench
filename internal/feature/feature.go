@@ -105,7 +105,7 @@ func Lookup(name string) (Registration, bool) {
 	return d, ok
 }
 
-// All returns every registered feature, by name.
+// Registered returns every registered feature, by name.
 func Registered() []Registration {
 	registry.RLock()
 	defer registry.RUnlock()

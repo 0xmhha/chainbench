@@ -10,7 +10,7 @@ import (
 // remoteRPCTool calls a JSON-RPC method on a saved attached network's endpoint,
 // dialing through the node's stored auth (api-key / JWT). It is the synergy of
 // the absorbed pieces: the named-network registry supplies the endpoint and auth
-// descriptor, pkg/core/remote turns the descriptor into an authenticated
+// descriptor, internal/core/remote turns the descriptor into an authenticated
 // http.Client, and the core rpc client makes the call.
 func remoteRPCTool() Tool {
 	return Tool{

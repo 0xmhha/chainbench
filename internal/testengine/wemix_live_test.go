@@ -70,7 +70,7 @@ func TestWemix_Live_BringUp(t *testing.T) {
 		DataDir:    ws,
 		Binary:     bin,
 		KeysDir:    filepath.Join(repoRoot(t), "keys", "preset"),
-		Validators: 4,
+		BPCount:    4,
 		WaitBlocks: 1,
 	})
 	if err != nil {

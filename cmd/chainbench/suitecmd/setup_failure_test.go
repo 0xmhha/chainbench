@@ -72,7 +72,9 @@ func TestRun_SetupFailureAnswersTheSameWayForOneSpecAndSeveral(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			args := append([]string{"run", "--workspace-dir", t.TempDir(), "--json", "--binary", noSuchBinary}, tc.specs...)
+			// The artifact root is named, so the test's own failure records do
+			// not land in the operator's ~/.chainbench.
+			args := append([]string{"run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json", "--binary", noSuchBinary}, tc.specs...)
 			stdout, _, err := runSplit(t, args...)
 
 			// A definition that could not run is code 2, not 1.
@@ -125,7 +127,7 @@ func carriesACause(doc map[string]any) bool {
 // TestRun_SetupFailureIsCodeTwoWithoutJSONToo: the code is about what happened,
 // not about how it is printed. Only the document is conditional on --json.
 func TestRun_SetupFailureIsCodeTwoWithoutJSONToo(t *testing.T) {
-	_, _, err := runSplit(t, "run", "--workspace-dir", t.TempDir(),
+	_, _, err := runSplit(t, "run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(),
 		"--binary", "/nonexistent/chainbench-test-binary", tcPath("01-basic-consensus.json"))
 	if got := codeOf(t, err); got != 2 {
 		t.Fatalf("exit code = %d, want 2 without --json as well: %v", got, err)
@@ -167,7 +169,7 @@ func TestRun_SetupFailureDocumentCarriesNoKeyMaterial(t *testing.T) {
 
 	// No --binary: the inline key is then the only thing wrong with this run, so
 	// a refusal for any other reason is a real signal rather than noise.
-	stdout, stderr, err := runSplit(t, "run", "--workspace-dir", dir, "--json", spec)
+	stdout, stderr, err := runSplit(t, "run", "--workspace-dir", dir, "--artifact-root", t.TempDir(), "--json", spec)
 	if err == nil {
 		t.Fatal("an inline node key must fail the run")
 	}

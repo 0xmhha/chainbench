@@ -63,20 +63,20 @@ func callMCP(t *testing.T, tool string, args map[string]any) string {
 
 // workspaceState reads a composed workspace's recorded state as a value.
 //
-// It names workspace.json rather than looking for "a JSON file": the directory
+// It names chain-record.json rather than looking for "a JSON file": the directory
 // also holds process.json, which is {"procs": []} for a freshly composed
 // network. An earlier version of this walked the directory and compared that
 // one instead, so it passed by comparing two empty documents and missed a
 // deliberately injected divergence.
 func workspaceState(t *testing.T, dir string) map[string]any {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
+	b, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
 	if err != nil {
-		t.Fatalf("no workspace.json under %s: the surface composed nothing (%v)", dir, err)
+		t.Fatalf("no chain-record.json under %s: the surface composed nothing (%v)", dir, err)
 	}
 	var v map[string]any
 	if err := json.Unmarshal(b, &v); err != nil {
-		t.Fatalf("workspace.json is not JSON: %v", err)
+		t.Fatalf("chain-record.json is not JSON: %v", err)
 	}
 	// Two runs land in two directories and happen at two instants, so the
 	// workspace path and the step timestamps are what must differ. Everything

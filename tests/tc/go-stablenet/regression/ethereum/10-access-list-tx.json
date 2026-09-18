@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "access-list-tx",
   "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다.",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "access-list-tx-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -49,7 +34,7 @@
       "method": "eth_createAccessList",
       "params": [
         {
-          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "from": "node1",
           "to": "0x00000000000000000000000000000000C0FFEE0D",
           "value": "0x1"
         },

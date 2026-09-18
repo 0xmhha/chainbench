@@ -1,0 +1,270 @@
+package testengine
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/0xmhha/chainbench/internal/testhelper"
+
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
+)
+
+// attachNetwork is the network label recorded for an attached NodeSet.
+const attachNetwork = "attached"
+
+// engineCommand is the invoking command recorded in session.json.
+const engineCommand = "chainbench"
+
+// busEmit returns an event sink publishing to bus, or nil when bus is nil so the
+// engine's emission stays a no-op.
+func busEmit(bus *collector.Bus) func(collector.Event) {
+	if bus == nil {
+		return nil
+	}
+	return bus.Publish
+}
+
+// AttachConfig configures an attach-mode Engine: it runs specs against an
+// already-running network addressed by RPC URLs, building and launching nothing.
+type AttachConfig struct {
+	// Chain is the chain label (used for spec applicability and fingerprinting).
+	Chain string
+	// RPCURLs are the endpoints of the running nodes; the first is the primary.
+	RPCURLs []string
+	// Nodes is the network as its composer recorded it, when the caller has
+	// that record. It wins over RPCURLs.
+	//
+	// The difference is the roles, and the roles are how a spec addresses a
+	// node: "en1" means the first node whose role is en, while "node1" means
+	// the first node by order. Attaching to endpoints alone chainbench cannot
+	// know which of someone else's nodes produce, so every node is called an
+	// endpoint and "en1" falls back to node 1. Attaching to a workspace the
+	// roles ARE known, and discarding them made "en1" name a producer.
+	Nodes node.NodeSet
+	// ArtifactRoot is the base directory for session artifacts.
+	ArtifactRoot string
+	// Caps are extra capabilities the operator asserts the attached network
+	// provides, beyond the implicit "rpc". An attached net that was launched
+	// with a genesis overlay (e.g. account-extra, short-expiry) carries caps
+	// that attach cannot detect from RPC alone, so the operator names them here
+	// to let the gated specs run instead of skipping.
+	Caps []string
+	// Clock supplies the session start time; nil uses time.Now.
+	Clock func() time.Time
+	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
+	// disables emission.
+	Bus *collector.Bus
+	// NodeSet, when non-nil, is the full node table of the network being
+	// attached to — a suite that composed the network itself passes the real
+	// nodes (indices, hosts, every endpoint) instead of bare RPC URLs.
+	NodeSet *node.NodeSet
+	// KeysDir is the key set the network was composed from. It is what makes an
+	// account label resolvable: a spec naming node1 has to reach the identity
+	// behind that name, and this is the only place the run learns where those
+	// identities live. Empty is plain attach, where the operator points at
+	// somebody else's network and there is no key set to speak of — labels
+	// then fail by name instead of resolving to something arbitrary.
+	KeysDir string
+	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
+	// act on the node processes. Nil is plain attach's default: the run does
+	// not own the processes, and those steps fail with a clear reason.
+	Control interp.NodeControl
+	// PreSpec, when non-nil, gates the network before each test (E6). A suite
+	// that owns the network passes a gate that waits on or restarts unfit nodes;
+	// plain attach leaves it nil (it does not own the processes to restart).
+	PreSpec func(ctx context.Context, env session.Environment) error
+	// OnFail, when non-nil, gathers failure evidence into a failed test's
+	// observations/ (E8). A suite that owns the network passes a gatherer over
+	// its nodes and workspace; plain attach leaves it nil.
+	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
+	// LogReader, when non-nil, is how the collector reads node logs — a remote
+	// target passes an SSH-backed reader so a remote node's log is captured (and
+	// reconnected on a dropped session, E8); nil reads the local filesystem.
+	LogReader collector.LogReader
+	// Artifacts is the manifest of composition inputs (genesis, config, command)
+	// the network was composed against, recorded into each test's artifacts.json
+	// for traceability (WA11). A suite that owns a workspace passes at least the
+	// genesis; plain attach leaves it nil (it composed nothing of its own).
+	Artifacts []session.ArtifactRef
+}
+
+// BuildEnvFunc provisions and brings up a network for a spec, returning the
+// node set and a teardown. It has the same shape as Deps.BuildEnv so a wiring
+// can be assigned to it directly.
+type BuildEnvFunc func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error)
+
+// NewRecordedBuildEnv returns a BuildEnv that hands back a node set its
+// composer already recorded, roles and all, launching nothing. Its teardown is
+// nil for the same reason attach's is: this run did not create the nodes.
+func NewRecordedBuildEnv(ns node.NodeSet) BuildEnvFunc {
+	return func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, TeardownFunc, error) {
+		return ns, nil, nil
+	}
+}
+
+// NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
+// RPC endpoints without provisioning or launching anything. Its teardown is nil:
+// attach did not create the nodes, so it must not stop them.
+func NewAttachBuildEnv(chain string, eps []node.RPCEndpoint) BuildEnvFunc {
+	return func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, TeardownFunc, error) {
+		ns, err := node.AttachedSet(chain, attachNetwork, eps)
+		if err != nil {
+			return node.NodeSet{}, nil, fmt.Errorf("engine: attach: %w", err)
+		}
+		return ns, nil, nil
+	}
+}
+
+// NewAttachEngine composes an Engine that runs specs against a running network.
+// No chain binary or preset is needed — only reachable RPC endpoints — so attach
+// runs anywhere the endpoints are reachable.
+func NewAttachEngine(cfg AttachConfig) (Engine, error) {
+	if cfg.Chain == "" || cfg.ArtifactRoot == "" {
+		return nil, fmt.Errorf("engine: attach config needs chain and artifactRoot")
+	}
+	if len(cfg.Nodes.Nodes) == 0 && len(cfg.RPCURLs) == 0 {
+		return nil, fmt.Errorf("engine: attach config needs a node set or at least one RPC URL")
+	}
+	eps := make([]node.RPCEndpoint, len(cfg.RPCURLs))
+	for i, u := range cfg.RPCURLs {
+		if u == "" {
+			return nil, fmt.Errorf("engine: attach RPC URL %d is empty", i+1)
+		}
+		eps[i] = node.RPCEndpoint{RPCURL: u}
+	}
+	clock := cfg.Clock
+	if clock == nil {
+		clock = time.Now
+	}
+	// The provider is what the interpreter signs and reads accounts with, and
+	// resolving it here is also what rejects a chain the accounts SDK does not
+	// know before a run gets far enough to fail obscurely. It no longer supplies
+	// identity derivation, which keyring does in process.
+	accts, err := accounts.ForChain(cfg.Chain)
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
+
+	keys, err := ringFor(cfg.KeysDir)
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
+	run := NewRunSpec(interp.Deps{
+		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions:  testhelper.Registry(),
+		Accounts: accts,
+		Keys:     keys,
+		Nodes:    cfg.Control,
+	})
+
+	build := NewAttachBuildEnv(cfg.Chain, eps)
+	if len(cfg.Nodes.Nodes) > 0 {
+		// The recorded set says which nodes produce and which serve RPC, so a
+		// spec that names "en1" reaches an endpoint rather than whichever URL
+		// happened to come first.
+		build = NewRecordedBuildEnv(cfg.Nodes)
+	}
+	if cfg.NodeSet != nil {
+		ns := *cfg.NodeSet
+		build = func(context.Context, session.Environment, dsl.Spec) (node.NodeSet, TeardownFunc, error) {
+			return ns, nil, nil
+		}
+	}
+
+	return New(Deps{
+		Command: engineCommand,
+		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
+			// Attach owns no node identities, but a spec may still generate keys
+			// mid-run, so the session gets a keyring rooted in its own keys/
+			// directory rather than nothing.
+			return session.New(cfg.ArtifactRoot, cmd, clock())
+		},
+		Fingerprint: func(s dsl.Spec) session.Fingerprint {
+			return interp.Fingerprint(s, nodeconfig.Values{})
+		},
+		BuildEnv:   withCollection(build, cfg.Bus, nil, cfg.LogReader),
+		RunSpec:    run,
+		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
+		PreSpec:    cfg.PreSpec,
+		OnFail:     cfg.OnFail,
+		Emit:       busEmit(cfg.Bus),
+		Network:    cfg.Chain,
+		Artifacts:  cfg.Artifacts,
+	}), nil
+}
+
+// ringFor opens the key set a run resolves account labels against.
+//
+// It reads the identities the network was composed from, which is what makes
+// "node1" mean the same account here as it does in the genesis and in that
+// node's keystore. A run with no key set gets no ring rather than an empty one:
+// a label then fails saying there is nothing to resolve against, which is the
+// truth, instead of failing as if the name were unknown.
+func ringFor(dir string) (*store.KeySet, error) {
+	if dir == "" {
+		return nil, nil
+	}
+	set, err := store.LoadPreset(dir)
+	if err != nil {
+		// A key set that is not there is not an error here. Attaching to a
+		// network somebody else composed is the ordinary case, and the compose
+		// path's default (keys/preset) is carried in even when nothing needs
+		// it. What must not happen is a label quietly resolving to nothing:
+		// with no ring, ResolveAccount says there is none, at the step that
+		// asked.
+		return nil, nil //nolint:nilerr // absence is a valid state, not a failure
+	}
+	ring := store.NewKeySet(dir)
+	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
+		return nil, err
+	}
+	// Beyond the numbered identities the preset index lists, a ring directory
+	// may hold entries a run created — the test accounts a spec declares. They
+	// are read back rather than regenerated so a label keeps meaning the same
+	// address across runs, which is the property that makes a label worth more
+	// than the address it replaced.
+	if err := loadEntries(ring, dir); err != nil {
+		return nil, err
+	}
+	return ring, nil
+}
+
+// loadEntries adds every on-disk entry the ring does not already hold. A
+// directory that does not look like an entry is skipped rather than refused:
+// a key set also holds files that are not identities.
+func loadEntries(ring *store.KeySet, dir string) error {
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return nil //nolint:nilerr // an unreadable ring dir is the caller's problem, not this scan's
+	}
+	for _, e := range ents {
+		if !e.IsDir() {
+			continue
+		}
+		label := keyring.Label(e.Name())
+		if _, held := ring.Get(label); held {
+			continue
+		}
+		path := filepath.Join(dir, e.Name(), "private")
+		if _, statErr := os.Stat(path); statErr != nil {
+			continue
+		}
+		if _, err := ring.Add(context.Background(), label, keyring.FileSource{Path: path}, derive.AccountOnly); err != nil {
+			return fmt.Errorf("key set entry %s: %w", e.Name(), err)
+		}
+	}
+	return nil
+}

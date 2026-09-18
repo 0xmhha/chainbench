@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/report"
@@ -30,6 +31,10 @@ type RunSuiteOut = testengine.RunSuiteOut
 func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 	return testengine.RunSuite(ctx, d.chainsetupDeps(), in)
 }
+
+// ComposePlan is the network a run is about to compose, after the declaration
+// and the request's overrides are merged.
+type ComposePlan = testengine.ComposePlan
 
 // RunSummary is a collected session result.
 type RunSummary = testengine.Summary
@@ -117,6 +122,82 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	return eng.Run(ctx, in.Specs)
 }
 
+// DeclaredAttach is the attach declaration the given specs share, or nil when
+// none of them declares one.
+//
+// One run runs against one network, so the specs have to agree about it — the
+// same rule sameComposition keeps for a composed network, for the same reason.
+// A run that took the first spec's endpoints and answered the rest from them
+// would report on a network those cases never named.
+//
+// Specs are read the way every surface reads them, so an env reference is
+// resolved here too and a case that names an attaching env behaves like one
+// that writes it inline.
+func DeclaredAttach(paths []string) (*AttachDecl, error) {
+	specs, err := dsl.ReadFiles(paths)
+	if err != nil {
+		return nil, err
+	}
+	var (
+		want *AttachDecl
+		from string
+	)
+	for i, raw := range specs {
+		sp, perr := dsl.Parse(raw)
+		if perr != nil {
+			// Not this function's verdict: the engine reports a spec that does
+			// not parse, per spec, with the reason.
+			continue
+		}
+		label := paths[i]
+		if sp.EnvAttach == nil {
+			if want != nil {
+				return nil, fmt.Errorf("app: %s declares an attach env and %s does not — one run runs against one network", from, label)
+			}
+			continue
+		}
+		got := &AttachDecl{
+			Chain:    sp.Chain.Name,
+			RPCURLs:  sp.EnvAttach.RPC,
+			KeysDir:  sp.EnvAttach.KeysDir,
+			Provides: sp.EnvAttach.Provides,
+		}
+		if want == nil {
+			if i > 0 {
+				return nil, fmt.Errorf("app: %s declares an attach env and %s does not — one run runs against one network", label, paths[0])
+			}
+			want, from = got, label
+			continue
+		}
+		if !slices.Equal(want.RPCURLs, got.RPCURLs) || want.Chain != got.Chain {
+			return nil, fmt.Errorf("app: %s and %s attach to different networks — split the run", from, label)
+		}
+	}
+	return want, nil
+}
+
+// AttachDecl is the network a case's own env names, in the terms a surface
+// needs: where it is, whose keys it was built from, and what it offers.
+//
+// It is app's type and not the DSL's on purpose. A surface reaches a feature
+// through app, so handing it a dsl type would make every caller of this
+// function name the module directly — which the architecture guard reports, and
+// which is how a surface comes to depend on a parse shape it has no business
+// knowing.
+type AttachDecl struct {
+	// Chain is the chain id the env declares. Required: a spec that names a
+	// contract needs the chain's table before the first call.
+	Chain string
+	// RPCURLs are the endpoints, still as written — "${VAR:-default}" is
+	// expanded by the surface, which owns the process environment.
+	RPCURLs []string
+	// KeysDir is the key set the running network was composed from, empty when
+	// the declaration does not say.
+	KeysDir string
+	// Provides is what the running network offers, for capability gating.
+	Provides []string
+}
+
 // SpecInfo is one test case as the catalog lists it.
 type SpecInfo = dsl.SpecInfo
 
@@ -137,13 +218,13 @@ func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)
 }
 
-// Validate runs the shared offline DSL validation for the MCP surface: the same
-// parse, name-resolution, selector, and capability checks the CLI `validate`
-// runs, so both surfaces reach the same verdict. It writes and composes nothing.
 // ValidateResult is one spec's verdict: whether it parses, and what is wrong
 // with it if not.
 type ValidateResult = testengine.ValidateResult
 
+// Validate runs the shared offline DSL validation for the MCP surface: the same
+// parse, name-resolution, selector, and capability checks the CLI `validate`
+// runs, so both surfaces reach the same verdict. It writes and composes nothing.
 func Validate(paths []string, chain string) ([]testengine.ValidateResult, error) {
 	return testengine.ValidateSpecs(paths, chain)
 }
@@ -158,15 +239,6 @@ func ValidateContent(raws [][]byte, labels []string, chain string) ([]testengine
 // one entry per test.
 type ReportDoc = report.Report
 
-// Report reads a run's report from a session directory, or from a root holding
-// several sessions, in which case the most recent is read.
-//
-// It answers with the report rather than with prose, because the two surfaces
-// lay it out differently — a table for a person, JSON for a program — and a
-// layer that renders is a layer each surface has to work around. Reading it is
-// what they share: prefer the persisted report.json, and fall back to building
-// it from session.json so a run recorded before report.json existed still
-// shows.
 // ReportIn names the session to read.
 type ReportIn struct {
 	Dir string `cb:"workspace-dir,required" help:"session directory, or a root holding sessions"`
@@ -176,6 +248,15 @@ type ReportIn struct {
 	All bool `cb:"all" help:"combine every session under the directory into one tally, instead of reading the most recent"`
 }
 
+// Report reads a run's report from a session directory, or from a root holding
+// several sessions, in which case the most recent is read.
+//
+// It answers with the report rather than with prose, because the two surfaces
+// lay it out differently — a table for a person, JSON for a program — and a
+// layer that renders is a layer each surface has to work around. Reading it is
+// what they share: prefer the persisted report.json, and fall back to building
+// it from session.json so a run recorded before report.json existed still
+// shows.
 func Report(_ context.Context, _ Deps, in ReportIn) (ReportDoc, error) {
 	dir := in.Dir
 	ids, _ := session.List(dir)

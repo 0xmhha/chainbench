@@ -22,14 +22,14 @@ func runTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":      map[string]any{"type": "string"},
-				"rpc":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"spec":       map[string]any{"type": "string"},
-				"specs":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"dataDir":    map[string]any{"type": "string"},
-				"binary":     map[string]any{"type": "string"},
-				"validators": map[string]any{"type": "integer"},
-				"keysDir":    map[string]any{"type": "string"},
+				"chain":   map[string]any{"type": "string"},
+				"rpc":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"spec":    map[string]any{"type": "string"},
+				"specs":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"dataDir": map[string]any{"type": "string"},
+				"binary":  map[string]any{"type": "string"},
+				"bp":      map[string]any{"type": "integer", "description": "bp node count, overriding what the specs declare"},
+				"keysDir": map[string]any{"type": "string"},
 				"attach": map[string]any{
 					"type":        "boolean",
 					"description": "the network in dataDir is already up: run against it, with the capabilities its composition advertised, instead of composing again",
@@ -120,7 +120,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 		DataDir:     dataDir,
 		Chain:       argString(args, "chain", ""),
 		Binary:      argString(args, "binary", ""),
-		Validators:  argInt(args, "validators", 0),
+		BPCount:     argInt(args, "bp", 0),
 		KeysDir:     argString(args, "keysDir", ""),
 		// Parity with the CLI `run` flags (WA3): leave the network up for
 		// follow-on dynamic actions, target a server set or docker, and wait for

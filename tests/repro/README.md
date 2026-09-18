@@ -46,7 +46,7 @@ GSTABLE_BIN=/path/to/gstable WEMIX_BIN=/path/to/gwemix WBFT_BIN=/path/to/gwbft \
   tests/repro/run-all.sh
 
 # a subset:
-GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-delayed-fork.sh
+WEMIX_BIN=/path/to/gwemix TEMPLATE=/path/to/template.json tests/repro/run-all.sh wemix-chain.sh
 ```
 
 Per-script logs land in `LOGDIR` (default `/tmp/chainbench-repro-logs`); a FAIL
@@ -58,13 +58,28 @@ to reuse a prebuilt binary.
 | Script | Reproduces | Needs | Notes |
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
-| `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
-| `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay internal/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
-| `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-02/03/04/05 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the external endpoint and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part
 of the runbook.
+
+### Retired (2026-09-18)
+
+`stablenet-delayed-fork.sh`, `stablenet-account-extra.sh` and
+`stablenet-basefee-dynamics.sh` are gone. They called `chainbench net up`, which
+was retired, so none of them could run.
+
+Their subjects live on as DSL cases under `tests/tc` — the delayed-boho
+transition, the account-Extra bitmap and the anzeon baseFee dynamics are all
+there. What the scripts added on top was a guard: they booted a network with a
+capability, ran the cases gated on it, and failed if any SKIPPED, because a
+silent skip means the capability never reached them.
+
+That guard is now the runner's, where every case list can have it:
+
+```sh
+chainbench run --workspace-dir <ws> --no-skips <cases>
+```
 
 ## Secrets
 
@@ -94,9 +109,6 @@ self-builds the CLI to `/tmp` if `CHAINBENCH` is unset:
 ```sh
 go build -o /tmp/chainbench ./cmd/chainbench   # optional; reused via CHAINBENCH
 
-GSTABLE_BIN=/path/to/gstable CHAINBENCH=/tmp/chainbench \
-  tests/repro/stablenet-delayed-fork.sh
-
-GSTABLE_BIN=/path/to/gstable FAUCET_PK=0x... CHAINBENCH=/tmp/chainbench \
-  tests/repro/stablenet-basefee-dynamics.sh
+WEMIX_BIN=/path/to/gwemix TEMPLATE=/path/to/template.json CHAINBENCH=/tmp/chainbench \
+  tests/repro/wemix-chain.sh
 ```

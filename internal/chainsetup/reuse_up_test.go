@@ -56,7 +56,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 	up := chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpStart,
 		Chain: "stablenet", KeysDir: keysAbs, Binary: binary,
-		Validators: 2, WorkspaceConfigPath: wc,
+		BPCount: 2, WorkspaceConfigPath: wc,
 	}
 
 	if _, err := chainsetup.NetUp(context.Background(), deps, up); err != nil {

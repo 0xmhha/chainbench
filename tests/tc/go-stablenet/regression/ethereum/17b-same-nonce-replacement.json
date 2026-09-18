@@ -2,27 +2,11 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "same-nonce-replacement",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "same-nonce-replacement-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -45,7 +29,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "1",
       "on": "en1",
@@ -57,7 +41,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "120000000000000",
+      "maxFeePerGas": "42000000000000",
       "maxPriorityFeePerGas": "36000000000000",
       "nonce": "1",
       "on": "en1",
@@ -69,7 +53,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "0",
       "on": "en1",

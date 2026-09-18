@@ -35,8 +35,13 @@ func ParsePeering(s string) (Peering, error) {
 }
 
 // RoleSupport answers whether a family can run a role. It is injected because
-// This package does not know chains: the poa family has no proxy tier — etcd occupies
-// that place — and only the family can say so.
+// this package does not know chains, and whether a family can run a role is the
+// family's answer to give.
+//
+// It said the poa family has no proxy tier. That has not been true since poa
+// gained one: poa.Family.SupportsRole accepts pn, and a wemix bp/pn/en network
+// comes up and produces blocks. Both families run all three roles today; the
+// question stays the family's because the next one may not.
 type RoleSupport func(Role) bool
 
 // Validate rejects a peering this network cannot express, before anything is

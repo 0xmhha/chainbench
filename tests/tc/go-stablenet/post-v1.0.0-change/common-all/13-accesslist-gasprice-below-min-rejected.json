@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "accesslist-gasprice-below-min-rejected",
   "description": "TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "accesslist-gasprice-below-min-rejected-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

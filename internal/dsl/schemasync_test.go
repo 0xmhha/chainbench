@@ -3,8 +3,11 @@ package dsl
 import (
 	"encoding/json"
 	"reflect"
+	"regexp"
 	"sort"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // The schema/parser agreement is already guarded for field names, field types and
@@ -137,5 +140,57 @@ func TestSchemaV2ConstrainsTheTimeoutKeys(t *testing.T) {
 	sort.Strings(want)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("the schema's timeout vocabulary differs from the parser's\n  schema: %v\n  parser: %v", got, want)
+	}
+}
+
+// TestSchemaV2ScopePatternsMatchTheVocabulary keeps the document from disagreeing
+// with the parser about which nodes a per-node value may name.
+//
+// Both were written out by hand and both went stale. The schema's launch pattern
+// still listed the role spellings that were retired, and its config pattern
+// allowed no role at all — so an editor validating against this file called a
+// retired word valid and a role scope invalid, which is the opposite of what the
+// parser does in each case. The parser asks node.ValidScope; this test makes the
+// document answer the same way rather than carry a second copy of the list.
+func TestSchemaV2ScopePatternsMatchTheVocabulary(t *testing.T) {
+	env, ok := schemaDefsRaw(t)["envSpec"]
+	if !ok {
+		t.Fatal("the schema declares no envSpec")
+	}
+	for _, field := range []string{"launch", "config"} {
+		raw, ok := env.Properties[field]
+		if !ok {
+			t.Errorf("envSpec has no %q property", field)
+			continue
+		}
+		var decl struct {
+			PropertyNames struct {
+				Pattern string `json:"pattern"`
+			} `json:"propertyNames"`
+		}
+		if err := json.Unmarshal(raw, &decl); err != nil {
+			t.Errorf("%s: %v", field, err)
+			continue
+		}
+		if decl.PropertyNames.Pattern == "" {
+			t.Errorf("%s declares no scope pattern, so any key validates", field)
+			continue
+		}
+		re, err := regexp.Compile(decl.PropertyNames.Pattern)
+		if err != nil {
+			t.Errorf("%s pattern %q does not compile: %v", field, decl.PropertyNames.Pattern, err)
+			continue
+		}
+		// The words either side of the boundary, so a pattern that is too loose
+		// and one that is too tight both fail.
+		for _, scope := range []string{
+			"all", "bp", "en", "pn", "node1", "node12",
+			"validator", "endpoint", "boot", "sideways", "node0", "node01", "node", "",
+		} {
+			if got, want := re.MatchString(scope), node.ValidScope(scope); got != want {
+				t.Errorf("%s pattern %q: %q matches=%v, but node.ValidScope says %v",
+					field, decl.PropertyNames.Pattern, scope, got, want)
+			}
+		}
 	}
 }

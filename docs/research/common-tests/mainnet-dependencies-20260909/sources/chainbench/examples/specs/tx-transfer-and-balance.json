@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "tx-transfer-and-balance",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "sendTx": { "from": "0x0000000000000000000000000000000000000001", "to": "0x0000000000000000000000000000000000000002", "value": "1000000000000000000" } },
+    { "waitBlock": { "target": 5 } }
+  ],
+  "assertions": [
+    { "assert": "balanceAt", "address": "0x0000000000000000000000000000000000000002", "expected": 0, "compare": "Greater" },
+    { "assert": "nonceAt", "address": "0x0000000000000000000000000000000000000001", "expected": 1, "compare": "GreaterOrEqual" }
+  ]
+}

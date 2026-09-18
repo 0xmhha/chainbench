@@ -53,7 +53,7 @@ func stateOf(t *testing.T, dir string, d chainsetup.Deps) chainsetup.State {
 func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 	// Every node rendered "full" before this: a snap-sync re-sync test composed
 	// through the steps was silently running full sync instead.
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1, EndpointSyncMode: "snap"})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2, ENCount: 1, EndpointSyncMode: "snap"})
 	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 	// A sealing node must hold full state, so the knob must not reach it even
 	// when the caller sets it.
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, EndpointSyncMode: "snap"})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2, EndpointSyncMode: "snap"})
 	for _, n := range stateOf(t, dir, d).Nodes {
 		if n.SyncMode != "full" {
 			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
@@ -91,7 +91,7 @@ func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 }
 
 func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 
 	out, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=10"},
@@ -113,7 +113,7 @@ func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
 }
 
 func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 
 	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=0"},
@@ -131,7 +131,7 @@ func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
 }
 
 func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 	overlay := filepath.Join(t.TempDir(), "overlay.json")
 	if err := os.WriteFile(overlay, []byte(`{"capabilities":["account-extra"],"genesis":{"config":{"chainId":4242}}}`), 0o644); err != nil {
 		t.Fatal(err)
@@ -153,7 +153,7 @@ func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
 }
 
 func TestNetGenesis_MalformedInputsAreRejected(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 	ctx := context.Background()
 
 	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
@@ -209,7 +209,7 @@ nodes:
     role: en
     sync_mode: archive
   - index: 3
-    role: validator
+    role: bp
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -241,8 +241,8 @@ nodes:
 	}
 	// The validator count comes from the resolved layout, not a requested
 	// number, so the genesis step sizes its validator set correctly.
-	if st.Validators != 2 {
-		t.Errorf("validators = %d, want 2 from the topology", st.Validators)
+	if st.BPCount != 2 {
+		t.Errorf("validators = %d, want 2 from the topology", st.BPCount)
 	}
 	if st.Bootnode != 1 {
 		t.Errorf("bootnode = %d, want 1", st.Bootnode)
@@ -262,7 +262,7 @@ func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 2, Endpoints: 3,
+		DataDir: dir, BPCount: 2, ENCount: 3,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -282,7 +282,7 @@ func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	// A network of 3 validators. A launch override scoped to the whole "bp" role
 	// reaches every node; a "node2" override reaches only node2's argv. This
 	// exercises the real verb path (place -> keys -> build), not a stub.
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 3})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 3})
 	ctx := context.Background()
 	out, err := chainsetup.NetLaunchOpts(ctx, d, chainsetup.NetLaunchOptsIn{
 		DataDir: dir,
@@ -385,7 +385,7 @@ nodes:
 }
 
 func TestNetAllocate_MissingTopologyFileIsAnError(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 1})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 1})
 	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
 		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
 	}); err == nil {
@@ -406,7 +406,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 	if err := os.WriteFile(manifest, []byte(`{
 		"id": "foonet", "binary": "gfoo", "chain_id": 9999, "network_id": 9999,
 		"miner_recommit": "duration", "bootstrap": {"type": "static"},
-		"consensus_family": "wbft", "protocol": "stablenet",
+		"consensus_family": "wbft", "dialect": "geth114", "protocol": "stablenet",
 		"genesis": {"template": "foonet-genesis"},
 		"consensus": {"rpc_namespace": "istanbul", "validators_method": "istanbul_getValidators"},
 		"probe": {"method": "istanbul_getValidators"}
@@ -430,7 +430,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 
 	// A later step must resolve the same plugin — registry.Get("foonet") would
 	// fail, since it is not an embedded chain.
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate on an external chain: %v", err)
 	}
 	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
@@ -451,7 +451,7 @@ func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
 func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
 	// network has to be readable through the same call a setup one is.
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2, ENCount: 1})
 	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -481,7 +481,7 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 }
 
 func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 
 	out, err := chainsetup.NetworkStop(context.Background(), d, chainsetup.NetworkStopIn{DataDir: dir})
 	if err != nil {

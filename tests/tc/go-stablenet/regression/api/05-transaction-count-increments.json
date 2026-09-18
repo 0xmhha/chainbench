@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "transaction-count-increments",
   "description": "RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "transaction-count-increments-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -33,7 +18,7 @@
       "do": "read",
       "method": "eth_getTransactionCount",
       "params": [
-        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "node1",
         "latest"
       ],
       "save": "before",
@@ -51,7 +36,7 @@
       "do": "read",
       "method": "eth_getTransactionCount",
       "params": [
-        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "node1",
         "latest"
       ],
       "save": "after",

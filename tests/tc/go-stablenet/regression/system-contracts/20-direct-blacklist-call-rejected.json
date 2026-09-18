@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "direct-blacklist-call-rejected",
   "description": "RT-F-5-05 — 비멤버가 AccountManager.blacklist 직접 호출 → revert (원본 regression/system-contracts/20-test-direct-blacklist-rejected)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "direct-blacklist-call-rejected-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -49,7 +34,7 @@
       "expect": "revert",
       "key": "$acctKey",
       "on": "en1",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
       "expect": "txStatus",

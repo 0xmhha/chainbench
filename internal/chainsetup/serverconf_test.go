@@ -44,7 +44,7 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 	}
 
 	out, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 2,
+		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
 	if err != nil {
@@ -64,7 +64,7 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 }
 
 func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
 	st := stateOf(t, dir, d)
 	if !strings.Contains(st.PortSource, "built-in") {
 		t.Errorf("port source = %q, want it to name the built-ins", st.PortSource)
@@ -94,7 +94,7 @@ ssh: {user: deploy, port: 2222}
 `)
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 1,
+		DataDir: dir, BPCount: 1,
 		Server: resource.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -144,7 +144,7 @@ ssh: {user: deploy}
 `)
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 3,
+		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -213,7 +213,7 @@ pool:
 ssh: {user: deploy}
 `)
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 2,
+		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)

@@ -7,12 +7,13 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -47,8 +48,8 @@ type RunSuiteIn struct {
 	Chain string
 	// Binary overrides the declared binary path for a single-binary network.
 	Binary string
-	// Validators overrides the declared validator count.
-	Validators int
+	// BPCount overrides the bp node count the specs declare.
+	BPCount int
 	// Server selects where the nodes run, from the operator's server set.
 	Server resource.ServerRef
 	// Docker treats the servers as local docker containers (the option is the
@@ -56,7 +57,7 @@ type RunSuiteIn struct {
 	Docker bool
 	// KeysDir overrides the declared key set (default keys/preset).
 	KeysDir string
-	// KeysSource overrides where node identities come from ("preset" or
+	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string
 	// ChainID overrides the manifest chain id in the built genesis.
@@ -85,6 +86,20 @@ type RunSuiteIn struct {
 	// endpoints sync slowly) raises it so the gate does not terminate a network
 	// that is merely still forming.
 	NodeMonitorTimeout time.Duration
+	// Env, when set, moves every case onto that chain declaration instead of
+	// the one it names. It is an env id, or a path to an env file.
+	//
+	// It is what lets one set of cases meet more than one chain: the steps say
+	// nothing about which mainnet they are on, so the only thing that has to
+	// change is which declaration they compose against. A case's own overrides
+	// survive the swap, because those belong to the test.
+	Env string
+	// OnPlan, when set, is handed the merged composition plan after the
+	// declaration and these overrides are resolved and before anything is
+	// written or launched. It is the seam the CLI prints through: a library
+	// that writes to a terminal cannot be used by one that does not have one.
+	// Nil runs silently.
+	OnPlan func(ComposePlan)
 	// WorkspaceConfigPath is the environment file (--workspace-config) that owns
 	// the target dataRoot and its purpose directories. When set, its dataRoot is
 	// the target's data root, so the same DSL runs across targets by swapping
@@ -144,6 +159,10 @@ type composed struct {
 	// keysDir is the key set the network was composed from, so a spec can name
 	// an account by label instead of by address.
 	keysDir string
+	// fork is what the readiness gate has to know about a network composed to
+	// cross a hardfork: where the fork is, and which nodes hand over at it.
+	// Zero for a network that crosses none.
+	fork forkGate
 }
 
 // workspaceNodes adapts the workspace's node verbs to the interpreter's
@@ -188,6 +207,22 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 	return out.Node, nil
 }
 
+// CrossFork waits for the network to reach the block before its declared
+// hardfork and hands production to the build that seals after it, satisfying
+// interp.ForkCrosser so the crossFork action reaches it.
+//
+// The whole table comes back: crossing gives every successor a new role and a
+// new pid, and a caller holding the old ones would stop the wrong process.
+func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error) {
+	out, err := chainsetup.NetCrossFork(ctx, w.sd, chainsetup.NetCrossForkIn{
+		DataDir: w.dataDir, Timeout: timeout,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out.Nodes.Nodes, nil
+}
+
 // Log returns the tail of one node's captured stdout/stderr, satisfying
 // interp.NodeLogReader. It is what lets a spec say WHY a node is not up: a node
 // that refuses its genesis prints the reason and exits, and the process manager
@@ -228,6 +263,86 @@ func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (strin
 	return string(buf[:read]), nil
 }
 
+// verifyAgainstPlan holds the launched network to the plan and refuses to test
+// one that is not it.
+//
+// Every other check in this package asks whether the declaration is coherent.
+// This is the only one that asks whether the network that came up is the one
+// described, which matters because the last word belongs to the command line:
+// an override naming no layer beats every document, so the merge can be right
+// and the nodes still run something else. A test against the wrong network
+// does not fail, it answers a question nobody asked.
+//
+// Reading the record rather than the in-memory state is deliberate: the record
+// is what a later reader sees, so a fact that never reached it is a fact the
+// run cannot show afterwards either.
+func verifyAgainstPlan(plan ComposePlan, dir string, out *RunSuiteOut) error {
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		// The compose error, if there is one, says more than this would.
+		return nil //nolint:nilerr // absence of a record is reported by the caller
+	}
+	bad := VerifyLaunched(plan, ws.State())
+	if len(bad) == 0 {
+		out.SetupSteps = append(out.SetupSteps, "verify: the launched network matches the plan")
+		return nil
+	}
+	lines := make([]string, 0, len(bad))
+	for _, m := range bad {
+		lines = append(lines, m.String())
+	}
+	out.SetupSteps = append(out.SetupSteps, "verify: "+strings.Join(lines, "; "))
+	return fmt.Errorf("engine: run suite: the launched network is not the one planned: %s", strings.Join(lines, "; "))
+}
+
+// resolveComposition is everything RunSuite does before it writes anything:
+// read the specs, parse them, refuse a set that cannot share one network, run
+// the pre-flight, and merge the declaration with the command's overrides.
+//
+// It is separate so that planning and running resolve the same way. A planner
+// that repeated these steps would eventually answer a different question than
+// the runner, which is the one thing a plan must never do.
+func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spec, composition, error) {
+	if in.DataDir == "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: a workspace directory is required")
+	}
+	specs := in.SpecContent
+	if len(specs) > 0 && in.Env != "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against")
+	}
+	if len(specs) == 0 {
+		var err error
+		if specs, err = dsl.ReadFilesWithEnv(in.SpecPaths, in.Env); err != nil {
+			return nil, nil, composition{}, err
+		}
+	}
+	parsed := make([]dsl.Spec, 0, len(specs))
+	for i, raw := range specs {
+		s, err := dsl.Parse(raw)
+		if err != nil {
+			return nil, nil, composition{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
+		}
+		parsed = append(parsed, s)
+	}
+	if err := sameChain(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	if err := sameComposition(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	// Pre-flight before anything is allocated or written: a spec that names an
+	// action/assertion/reader/reference that does not resolve, or a malformed
+	// node selector, fails here rather than after a network is composed.
+	if err := Precheck(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	comp, err := compositionOf(ctx, parsed[0], in)
+	if err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	return specs, parsed, comp, nil
+}
+
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
 // through chainsetup, run the tests, collect, and stop the network unless
 // asked to keep it. Setup failure aborts before any test runs; a test-phase
@@ -236,65 +351,63 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: no specs given")
 	}
-	if in.DataDir == "" {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: a workspace directory is required")
-	}
-	specs := in.SpecContent
-	if len(specs) == 0 {
-		var err error
-		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
-			return RunSuiteOut{}, err
-		}
-	}
-	parsed := make([]dsl.Spec, 0, len(specs))
-	for i, raw := range specs {
-		s, err := dsl.Parse(raw)
-		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
-		}
-		parsed = append(parsed, s)
-	}
-	if err := sameChain(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	if err := sameComposition(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	// Pre-flight before anything is allocated or written: a spec that names an
-	// action/assertion/reader/reference that does not resolve, or a malformed
-	// node selector, fails here rather than after a network is composed.
-	if err := Precheck(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	comp, err := compositionOf(ctx, parsed[0], in)
+	specs, parsed, comp, err := resolveComposition(ctx, in)
 	if err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+		return RunSuiteOut{}, err
 	}
-	if in.ArtifactRoot == "" {
-		// The session belongs with the workspace it tested.
-		in.ArtifactRoot = filepath.Join(in.DataDir, "sessions")
+	out := RunSuiteOut{}
+	// Announced before the first byte is written: the merge that produced this
+	// happened across three layers and none of them is the file the operator
+	// just named, so this is the only place the network can be seen whole
+	// while it is still cheap to stop.
+	plan := planOf(comp, parsed[0].Chain.Name)
+	if in.OnPlan != nil {
+		in.OnPlan(plan)
 	}
+	// And kept, so the question survives the run that answered it. A handoff
+	// composes from its profile into the same directory, so it is saved too.
+	if err := WritePlan(in.DataDir, plan); err != nil {
+		out.SetupSteps = append(out.SetupSteps, "plan: "+err.Error())
+	}
+	root, rerr := artifactRoot(in.ArtifactRoot, in.WorkspaceConfigPath, in.DataDir)
+	if rerr != nil {
+		return out, rerr
+	}
+	in.ArtifactRoot = root
 	chain := parsed[0].Chain.Name
 
-	out := RunSuiteOut{}
-	var net composed
-	if comp.handoff != nil {
-		ns, steps, teardown, err := handoffUp(ctx, *comp.handoff)
-		out.SetupSteps = steps
-		if err != nil {
-			return out, fmt.Errorf("engine: run suite: setup: %w", err)
-		}
-		out.Preflight = preflight.Compose.String()
-		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
-	} else {
-		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
-		if err != nil {
-			return out, err
-		}
+	// Before the network, not after. Everything from here on — including a
+	// network that never comes up — is this run, and a run that has nowhere to
+	// write is a run nobody can debug afterwards.
+	sess, serr := session.New(root, engineCommand, sd.Now())
+	if serr != nil {
+		return out, fmt.Errorf("engine: run suite: %w", serr)
+	}
+	out.SessionRoot = sess.Root()
+
+	net, err := composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
+	blocked := blockedRun{sess: sess, raw: specs, specs: parsed}
+	if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
+		return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr, blocked)
+	}
+	if err != nil {
+		return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err, blocked)
 	}
 	out.Endpoints = net.endpoints
 
 	runErr := func() error {
+		// The declared fork is crossed before anything else runs, because
+		// everything else assumes a producing chain: funding an account is a
+		// transaction, and a network sitting at the block before its fork seals
+		// none. A case that has to act BEFORE the fork says so by naming the
+		// crossFork step, and then this leaves the fork to it.
+		if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
+			res, cerr := chainsetup.NetCrossFork(ctx, sd, chainsetup.NetCrossForkIn{DataDir: comp.up.DataDir})
+			if cerr != nil {
+				return fmt.Errorf("engine: run suite: %w", cerr)
+			}
+			out.SetupSteps = append(out.SetupSteps, "cross-fork: "+res.Detail)
+		}
 		if in.WaitBlocks > 0 {
 			if err := waitForHead(ctx, net.endpoints[0], in.WaitBlocks); err != nil {
 				return fmt.Errorf("engine: run suite: %w", err)
@@ -319,6 +432,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		eng, err := wiredAttachEngine(sd, net, attachWiring{
 			Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
 			Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
+			Session: sess,
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -346,6 +460,122 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	return out, runErr
 }
 
+// blockedRun is the run a failed setup never got to: the session it would have
+// been recorded in, and the specs that will not run.
+type blockedRun struct {
+	sess  session.Session
+	raw   [][]byte
+	specs []dsl.Spec
+}
+
+// afterFailedSetup records the failure as the tests' own, gathers what the
+// network can still say, then takes it down, and returns the setup error either
+// way.
+//
+// Setting a network up is not all-or-nothing: the nodes launch and then a
+// readiness gate, or the plan check, refuses what came up. Two things used to go
+// wrong at once. Nothing was collected, because evidence gathering hung on a
+// test record and no test had started — so "1 node still not ready" was the
+// entire account of the failure, and which node, and why, was gone. And the
+// nodes were left running, holding the ports and the datadirs, so the next run
+// could not compose either.
+//
+// Order matters: gather first. The health probe needs the nodes answering, and
+// taking them down is exactly what stops them answering.
+//
+// --keep-up still keeps the network. A failure is when an operator wants to
+// look, and the flag says they will.
+func afterFailedSetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, keepUp bool, out *RunSuiteOut, setupErr error, blocked blockedRun) error {
+	recordBlockedBySetup(ctx, sd, dataDir, net, out, setupErr, blocked)
+	if keepUp || net.teardown == nil {
+		return setupErr
+	}
+	if err := net.teardown(ctx); err != nil {
+		return fmt.Errorf("%w (and the network could not be taken down: %v)", setupErr, err)
+	}
+	return setupErr
+}
+
+// recordBlockedBySetup writes the setup failure into the run's artifacts: every
+// spec that was going to run gets its folder, a blocked verdict naming the setup
+// error, and the gathered evidence under its observations/.
+//
+// Under the test, because a network is composed for the test that asked for it.
+// Five definitions given to one command are five attempts, each composing its
+// own network, and a failure filed anywhere else — a folder named after the
+// chain, a shared dump beside the workspace — severs the one link a reader
+// needs: which attempt this was. The evidence is copied per test for the same
+// reason, and it is bulky on purpose.
+func recordBlockedBySetup(ctx context.Context, sd chainsetup.Deps, dataDir string, net composed, out *RunSuiteOut, setupErr error, blocked blockedRun) {
+	if blocked.sess == nil || len(blocked.specs) == 0 {
+		return
+	}
+	ev := gatherFailureData(ctx, sd, dataDir, net.nodes)
+	for i, spec := range blocked.specs {
+		rec := blocked.sess.Test(i+1, spec.ID)
+		if i < len(blocked.raw) {
+			rec.Spec(blocked.raw[i])
+		}
+		rec.Status(session.StatusBlocked)
+		rec.Reason(setupErr.Error())
+		for _, e := range ev {
+			rec.Observation(e.Name, e.Data)
+		}
+	}
+	if err := blocked.sess.Save(); err != nil {
+		out.SetupSteps = append(out.SetupSteps, "evidence: "+err.Error())
+		return
+	}
+	out.SetupSteps = append(out.SetupSteps, "evidence: "+blocked.sess.Root())
+	if sum, serr := ReadSessionSummary(blocked.sess.Root()); serr == nil {
+		out.Summary = sum
+	}
+}
+
+// artifactRoot decides where the session lands, in the layers this track uses
+// everywhere else: the harness default, then what a declaration said, then what
+// the invocation said.
+//
+// The workspace-config layer was written and never read. The file requires
+// control.artifactRoot — an empty one is refused — and nothing called the
+// resolver, so an operator was told to name a path that was then ignored. That
+// is the failure this track keeps removing: a declaration that does not reach
+// the run.
+//
+// A configured root that cannot be created is an error rather than a fall back
+// to the default. Falling back would put the results somewhere the operator did
+// not ask for and say nothing, and they would go looking in the path they wrote.
+//
+// The harness default is ~/.chainbench/sessions, not a directory inside the
+// workspace. What a run produced and what it ran on have different lifetimes: a
+// workspace is scratch and gets removed to reclaim the disk or to force a clean
+// compose, and that used to take every verdict and every log with it. The
+// workspace is still where the chain is; this is where the record of testing it
+// is kept.
+func artifactRoot(explicit, configPath, _ string) (string, error) {
+	// The command names no layer and wins over every document.
+	if explicit != "" {
+		return explicit, nil
+	}
+	if configPath != "" {
+		wc, err := resource.LoadWorkspaceConfig(configPath)
+		if err != nil {
+			return "", fmt.Errorf("engine: run suite: %w", err)
+		}
+		root, err := wc.ArtifactRoot()
+		if err != nil {
+			return "", fmt.Errorf("engine: run suite: %w", err)
+		}
+		if root != "" {
+			if err := os.MkdirAll(root, 0o755); err != nil {
+				return "", fmt.Errorf("engine: run suite: workspace-config artifactRoot %q: %w", root, err)
+			}
+			return root, nil
+		}
+	}
+	return home.Sessions()
+}
+
 // attachWiring is the run-side wiring the compose path and the workspace-attach
 // path share: which workspace, where the session goes, extra capabilities, the
 // readiness-gate budget, and where to record the gate's steps.
@@ -356,6 +586,11 @@ type attachWiring struct {
 	Caps               []string
 	NodeMonitorTimeout time.Duration
 	SetupSteps         *[]string
+	// Session, when non-nil, is the session the caller already opened. The
+	// compose path opens one before it composes so a setup failure has a test
+	// folder to be recorded in; the attach path has nothing to record before
+	// the engine runs and leaves this nil.
+	Session session.Session
 }
 
 // wiredAttachEngine builds an attach engine over a composed network with the
@@ -368,12 +603,13 @@ func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine
 	return NewAttachEngine(AttachConfig{
 		Chain: w.Chain, RPCURLs: net.endpoints,
 		ArtifactRoot: w.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), w.Caps...), Clock: sd.Clock,
+		Session: w.Session,
 		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
 		Artifacts: composedArtifacts(net),
 		Bus:       collector.NewBus(),
 		LogReader: remoteLogReader(sd, w.DataDir),
 		PreSpec: func(ctx context.Context, _ session.Environment) error {
-			return gateReady(ctx, sd, w.DataDir, net.nodes, w.SetupSteps, w.NodeMonitorTimeout)
+			return gateReady(ctx, sd, w.DataDir, net.nodes, w.SetupSteps, w.NodeMonitorTimeout, net.fork)
 		},
 		OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
 			collectFailureData(ctx, sd, w.DataDir, net.nodes, rec)
@@ -422,9 +658,9 @@ func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorksp
 	if chain == "" {
 		return "", fmt.Errorf("engine: attach workspace: a chain is required to attach")
 	}
-	artifactRoot := in.ArtifactRoot
-	if artifactRoot == "" {
-		artifactRoot = filepath.Join(in.DataDir, "sessions")
+	artifactRoot, err := artifactRoot(in.ArtifactRoot, "", in.DataDir)
+	if err != nil {
+		return "", fmt.Errorf("engine: attach workspace: %w", err)
 	}
 	var setupSteps []string
 	net, err := readWorkspaceComposed(ctx, sd, in.DataDir, keysDir, &setupSteps, in.NodeMonitorTimeout)
@@ -533,10 +769,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	// The network is composed (or reused); gate it before any test runs on it —
 	// wait on nodes still coming up, restart dead ones within limits, terminate
 	// on a state that would need a destructive remedy (E6).
-	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget); err != nil {
-		return composed{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	return composed{
+	out := composed{
 		endpoints: endpoints,
 		caps:      caps,
 		teardown: func(ctx context.Context) error {
@@ -546,7 +779,32 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 		nodes:   nodes,
 		control: workspaceNodes{sd: sd, dataDir: dataDir},
 		keysDir: keysDir,
-	}, nil
+	}
+	// Where this network's declared fork is and who hands over at it. Read from
+	// the record, so attaching to a composed network knows it too.
+	if f, ferr := chainsetup.NetFork(ctx, sd, chainsetup.NetForkIn{DataDir: dataDir}); ferr == nil {
+		switch {
+		case f.Fork != nil:
+			out.fork = forkGate{at: f.Fork.At, restart: f.Fork.Restart, preFork: make(map[int]bool, len(f.PreFork))}
+			for _, i := range f.PreFork {
+				out.fork.preFork[i] = true
+			}
+		case f.HaltsAt > 0:
+			// A network whose genesis stops it stands at the same place a
+			// handover does — every node one block short, nothing advancing —
+			// and nobody hands over. Same gate, no pre-fork side.
+			out.fork = forkGate{at: f.HaltsAt}
+		}
+	}
+	// The gate can fail on a network that is already up — nodes launched, one
+	// of them not answering yet — so the way to take it down is returned WITH
+	// the error rather than dropped with it. Returning the zero value here left
+	// four nodes holding their ports after every readiness failure, and the
+	// next run on those ports could not compose at all.
+	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget, out.fork); err != nil {
+		return out, fmt.Errorf("engine: run suite: %w", err)
+	}
+	return out, nil
 }
 
 // remoteLogReader returns an SSH-backed log reader for a remote target's node
@@ -580,4 +838,24 @@ func preflightDecision(ctx context.Context, sd chainsetup.Deps, dir string, want
 		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
 	}
 	return ws.Compare(ctx, want)
+}
+
+// casesCrossFork reports whether any case names the step that crosses the
+// hardfork, which is how a case says the moment is its own.
+//
+// Read from the runtime statement list rather than the document, so a v1 spec
+// and a v2 case are read the same way and a step's spelling is resolved once.
+// A case that puts the step in its pre-actions is not counted and the
+// composition crosses first; the step is idempotent, so that case still runs —
+// it simply does not get to act before the fork, which is the thing it asked
+// for by putting it there.
+func casesCrossFork(specs []dsl.Spec) bool {
+	for _, sp := range specs {
+		for _, st := range sp.Sequence {
+			if st.Do == dsl.ActionCrossFork {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fee-delegated-feepayer-sig-invalid-rejected",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fee-delegated-feepayer-sig-invalid-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendRawTampered",
+      "feePayerKey": "$acctKey",
+      "on": "en1",
+      "senderKey": "$acctKey",
+      "to": "0x00000000000000000000000000000000C0FFEE23",
+      "value": "1",
+      "which": "feepayer"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "blockNumber",
+      "is": "1"
+    }
+  ]
+}

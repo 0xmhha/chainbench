@@ -49,8 +49,9 @@ local path — where run results and the final report land on the machine runnin
 chainbench (`~` expands locally).
 
 `inputs.mode` is `generated` (build test keys and genesis/config with the
-in-process builders) or `prepared` (use files already on the target, named by a
-`presets` bundle). `execution.chain` is `fresh`, `reuse-if-matching`, or
+in-process builders) or `existing` (use files already on the target, named by an
+`existingInputs` bundle through `inputs.name`). `execution.chain` is `fresh`,
+`reuse-if-matching`, or
 `attach` — see below.
 
 ## execution.chain: how a run treats an existing composition
@@ -106,23 +107,23 @@ file the same way.
 - `execution.chain` is live for `chain up`: `fresh` (default),
   `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
   up).
-- An existing (prepared) genesis is checked against the composed keys: for a
+- An existing genesis is checked against the composed keys: for a
   wbft-family chain, the validators the genesis names must be exactly the key
   set the network runs, or the compose is refused (block signing would stall
   consensus otherwise). A generated genesis is built from the keys and cannot
   disagree.
-- A prepared preset's `keyring` may name a key set on a server
+- An `existingInputs` bundle's `keyring` may name a key set on a server
   (`keyring: srv://server-01/...`): the keys step downloads it to a local
   directory (elevating through sudo where the server set permits it) and a node
   signs with keys at that local path. A local absolute keyring is used in place.
 - `chainbench file upload`/`download` move files between this machine and a
   server's data plane — a replacement binary onto `bin`, a node log or key back
   off — refusing a name collision on upload unless `--force-upload`.
-- A prepared preset's `configs` map is applied: a node table names its configs
-  logically (`config: validator`) and the preset says which file that name is on
-  this target (`configs: {validator: srv://.../v.toml}`), so one spec runs
-  against different targets by swapping the map. A config value that is not a
-  preset name stays a direct file reference.
+- An `existingInputs` bundle's `configs` map is applied: a node table names its
+  configs logically (`config: validator`) and the bundle says which file that
+  name is on this target (`configs: {validator: srv://.../v.toml}`), so one spec
+  runs against different targets by swapping the map. A config value that is not
+  a key in the map stays a direct file reference.
 - `binaryAliases` **는 이제 동작한다.** 대상에서 bare 이름으로 바이너리를 가리키면
   `dataRoot` + `paths.binaries` 아래에서 찾고, 그 이름에 별칭이 선언돼 있으면 별칭을 적용한다.
   즉 `upgrade run --all-servers` 에서 프로파일이 `binary: gwemix` 라고만 적어도 대상의
@@ -134,22 +135,22 @@ file the same way.
     gwemix: linux-arm64/gwemix
   ```
 
-- `paths` 와 나머지 `inputs`/`presets` 의 소비(용도 디렉터리 해석, 서버 파일 참조,
-  prepared/generated 배선)는 점진적으로 들어온다 — 인계 문서
+- `paths` 와 나머지 `inputs`/`existingInputs` 의 소비(용도 디렉터리 해석, 서버 파일 참조,
+  existing/generated 배선)는 점진적으로 들어온다 — 인계 문서
   `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`,
   `10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
   아직 아무 일도 하지 않는다.
-- **preset 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
+- **`existingInputs` 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
   디렉터리 아래를 가리키는 상대 파일명, 그리고 이 기계의 절대경로(로컬 키셋을 가리킬 때).
   객체형 참조(`{server, ref}`·`{serverIndex, ref}`·`{localPath}`)는 **계획을 철회했다
   (2026-09-12)**. 샘플에 "미구현" 딱지와 함께 예시로 남아 있던 것도 걷었다.
   - 철회한 이유는 표현력이 아니라 값이다. `srv://` 와 상대 파일명이 실제로 쓰이는 경우를
-    모두 덮고 있고, 객체형을 preset 에서 끝까지 나르려면 `KeysDir`·`GenesisExisting` 을
+    모두 덮고 있고, 객체형을 이 묶음에서 끝까지 나르려면 `KeysDir`·`GenesisExisting` 을
     문자열로 쓰는 **32개 파일 105곳**을 구조체로 바꿔야 하는데, 그 표현력을 요구하는
     호출자가 하나도 없다. 소비자 없는 구조를 넓게 배선하는 것은 이 저장소가 이미
     두 번(`Transport` 타입, health→inspector 재배선) 되돌린 모양이다.
   - **포기한 것은 하나다**: `serverIndex` — 서버를 이름이 아니라 **순번**으로 고르는 것은
-    문자열로 표현할 수 없다. 환경마다 서버 이름이 다른 곳에 같은 preset 을 쓰려면 필요해질
+    문자열로 표현할 수 없다. 환경마다 서버 이름이 다른 곳에 같은 묶음을 쓰려면 필요해질
     수 있고, 그때는 요구와 함께 다시 연다.
   - `resource.InputRef` 자체는 네 형식을 모두 구현·테스트한 채로 남는다. 내부에서 쓰이며,
     다시 열 때 배선만 하면 되는 상태다.

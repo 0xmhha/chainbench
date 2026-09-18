@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "prev-seals-quorum",
+  "description": "RT-B-11 — 블록 N+1의 PrevCommittedSeal이 블록 N의 committers를 포함 (원본 regression/wbft/11-test-prev-committed-seal)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "prev-seals-quorum-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "pollInterval": "1s",
+      "target": 3,
+      "timeout": "60s"
+    },
+    {
+      "do": "read",
+      "of": [
+        "4"
+      ],
+      "op": "quorum",
+      "save": "q",
+      "source": "derive"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "rpcCall",
+      "is": "$q",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "@latest"
+      ],
+      "select": "prevCommittedSeal.sealers.#"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "rpcCall",
+      "is": "$q",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "@latest"
+      ],
+      "select": "prevPreparedSeal.sealers.#"
+    }
+  ]
+}

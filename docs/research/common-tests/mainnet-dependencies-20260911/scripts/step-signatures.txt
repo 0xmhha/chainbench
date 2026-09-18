@@ -1,0 +1,821 @@
+#### basic/01-basic-consensus.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify blocks are being produced and all validators participate (원본 basic/consensus.sh)
+  [0] do:waitBlock target=20 timeout=180s
+  [1] expect:blockAdvance on=node1 timeout=60s pollInterval=2s
+  [2] expect:sameBlockHash block=latest
+#### basic/02-basic-peers.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify all nodes have proper peer connectivity (원본 basic/peers.sh)
+  [0] do:waitBlock target=2 timeout=120s
+  [1] expect:peerCount on=node1 compare=GreaterOrEqual is=1
+  [2] expect:peerCount on=node2 compare=GreaterOrEqual is=1
+  [3] expect:peerCount on=node3 compare=GreaterOrEqual is=1
+  [4] expect:peerCount on=node4 compare=GreaterOrEqual is=1
+  [5] expect:peerCount on=en1 compare=GreaterOrEqual is=1
+#### basic/03-basic-rpc-health.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify all node RPC endpoints are responding (원본 basic/rpc-health.sh)
+  [0] do:waitBlock target=2 timeout=120s
+  [1] expect:blockNumber on=node1 compare=GreaterOrEqual is=0
+  [2] expect:blockNumber on=node2 compare=GreaterOrEqual is=0
+  [3] expect:blockNumber on=node3 compare=GreaterOrEqual is=0
+  [4] expect:blockNumber on=node4 compare=GreaterOrEqual is=0
+  [5] expect:blockNumber on=en1 compare=GreaterOrEqual is=0
+#### basic/04-basic-sync.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify all running nodes have synchronized block heights (원본 basic/sync.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+#### basic/05-basic-tx-send.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Send a transaction and verify it gets included in a block (원본 basic/tx-send.sh)
+  [0] do:waitBlock target=2 timeout=120s
+  [1] do:newAccount save=r saveKey=rk
+  [2] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$r value=1
+  [3] expect:balanceAt on=node1 address=$r compare=Greater is=0
+#### basic/06-basic-txpool-propagation.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify TX propagation across nodes and txpool drain under load (원본 basic/txpool-propagation.sh)
+  [0] do:waitBlock target=2 timeout=120s
+  [1] do:newAccount save=r saveKey=rk
+  [2] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$r value=1
+  [3] expect:balanceAt on=node2 address=$r compare=Greater is=0
+#### basic/07-basic-wbft-consensus.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Verify WBFT protocol properties - validator participation, round stability, commit seals (원본 basic/wbft-consensus.sh)
+  [0] do:waitBlock target=5 timeout=120s
+  [1] expect:rpc method=istanbul_getValidators params=["latest"] select=# compare=GreaterOrEqual is=4
+  [2] expect:rpc method=istanbul_getWbftExtraInfo params=["@latest"] select=prevCommittedSeal.sealers.# compare=GreaterOrEqual is=3
+#### fault/01-fault-network-partition.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Simulate network partition via admin_removePeer - verify consensus halts and recovers after heal (원본 fault/network-partition.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+  [2] do:partition groups=[["node1", "node2"], ["node3", "node4"]]
+  [3] expect:peerCount on=node1 compare=LessOrEqual is=2
+  [4] expect:peerCount on=node3 compare=LessOrEqual is=2
+  [5] do:healPartition 
+  [6] do:waitBlock on=node3 target=8 timeout=150s
+  [7] expect:sameBlockHash block=latest
+#### fault/02-fault-node-crash.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Stop 1 validator and verify consensus continues with 3/4 (원본 fault/node-crash.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+  [2] do:stopNode on=node3
+  [3] expect:blockAdvance on=node1 timeout=90s pollInterval=2s
+  [4] do:restartNode on=node3
+  [5] do:waitBlock on=node3 target=8 timeout=120s
+  [6] expect:sameBlockHash block=latest
+#### fault/03-fault-node-recover.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Stop a node, wait, restart, and measure sync time (원본 fault/node-recover.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] do:stopNode on=node3
+  [2] do:waitBlock on=node1 target=12 timeout=150s
+  [3] do:restartNode on=node3
+  [4] do:waitBlock on=node3 target=12 timeout=150s
+  [5] expect:sameBlockHash block=latest
+#### fault/04-fault-p2p-topology.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Test consensus and TX propagation under restricted hub-spoke P2P topology (원본 fault/p2p-topology.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+  [2] do:partition groups=[["node2"], ["node3"], ["node4"]]
+  [3] expect:peerCount on=node1 compare=GreaterOrEqual is=2
+  [4] expect:blockAdvance on=node1 timeout=90s pollInterval=2s
+  [5] do:newAccount save=r saveKey=rk
+  [6] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$r value=1
+  [7] expect:balanceAt on=node1 address=$r compare=Greater is=0
+  [8] do:healPartition 
+  [9] expect:blockAdvance on=node4 timeout=90s pollInterval=2s
+  [10] expect:sameBlockHash block=latest
+#### fault/05-fault-two-down.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Stop 2/4 validators - consensus should halt, recover when 1 returns (원본 fault/two-down.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+  [2] do:stopNode on=node3
+  [3] do:stopNode on=node4
+  [4] expect:blockHalt on=node1 within=12s maxAdvance=1
+  [5] do:startNode on=node3
+  [6] expect:blockAdvance on=node1 timeout=90s pollInterval=2s
+  [7] do:startNode on=node4
+#### fault/06-fault-txpool-leader-change.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] do:newAccount save=acct saveKey=acctKey
+  [2] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$acct value=1
+  [3] do:stopNode on=node1
+  [4] expect:blockAdvance on=node2 timeout=90s pollInterval=2s
+  [5] expect:rpc on=node2 method=txpool_status select=pending compare=Equal is=0x0
+  [6] do:startNode on=node1
+#### go-stablenet/regression/anzeon/01-regular-account-gastip-forced.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨 (원본 regression/anzeon/01-test-regular-account-gastip-forced)
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=htip select=gasTip source=rpcCall
+  [2] do:read of=["$htip", "$htip", "$htip", "$htip", "$htip"] op=sum save=hightip source=derive
+  [3] do:sendTx from=node1 gas=21000 maxFeePerGas=1000000000000000 maxPriorityFeePerGas=$hightip save=hash to=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 value=1
+  [4] do:read method=eth_getTransactionReceipt params=["$hash"] save=egp select=effectiveGasPrice source=rpcCall
+  [5] do:read method=eth_getTransactionReceipt params=["$hash"] save=blk select=blockNumber source=rpcCall
+  [6] do:read method=eth_getBlockByNumber params=["$blk", false] save=base select=baseFeePerGas source=rpcCall
+  [7] do:read method=istanbul_getWbftExtraInfo params=["$blk"] save=itip select=gasTip source=rpcCall
+  [8] expect:derive compare=Equal is=$itip of=["$egp", "$base"] op=diff
+#### go-stablenet/regression/anzeon/02-authorized-account-gastip-free.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-C-02 — Authorized 계정은 tipCap을 자유롭게 설정할 수 있음 (원본 regression/anzeon/02-test-authorized-account-gastip-free)
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=30000000000000000000
+  [2] do:read of=["$acct"] op=abiCall save=authData selector=0x93a8bb99 source=derive
+  [3] do:sendTx data=$authData from=node1 gas=0x16e360 on=node1 save=authHash to=0x0000000000000000000000000000000000001004
+  [4] do:read hash=$authHash save=pid source=receiptLog topic=1 topic0=0x830652010a654c24b39890c16f53e6f6179becc6170…
+  [5] do:read of=["$pid"] op=abiCall save=approveData selector=0x98951b56 source=derive
+  [6] do:sendTx data=$approveData from=node2 gas=0x16e360 on=node2 save=apHash to=0x0000000000000000000000000000000000001004
+  [7] do:read of=["$acct"] op=abiCall save=isAuthData selector=0xfe9fbb80 source=derive
+  [8] do:waitFor compare=Equal data=$isAuthData expected=0x0000000000000000000000000000000000000000000… pollInterval=1s source=call timeout=60s to=0x0000000000000000000000000000000000B00003
+  [9] do:read method=eth_blockNumber save=n source=rpcCall
+  [10] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=htip select=gasTip source=rpcCall
+  [11] do:read of=["$htip", "$htip", "$htip"] op=sum save=customTip source=derive
+  [12] do:sendTx gas=21000 key=$acctKey maxFeePerGas=1000000000000000 maxPriorityFeePerGas=$customTip on=en1 save=hash to=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 value=1
+  [13] do:read method=eth_getTransactionReceipt params=["$hash"] save=egp select=effectiveGasPrice source=rpcCall
+  [14] do:read method=eth_getTransactionReceipt params=["$hash"] save=blk select=blockNumber source=rpcCall
+  [15] do:read method=eth_getBlockByNumber params=["$blk", false] save=base select=baseFeePerGas source=rpcCall
+  [16] expect:txStatus hash=$fundHash is=0x1
+  [17] expect:txStatus hash=$apHash is=0x1
+  [18] expect:txStatus hash=$hash is=0x1
+  [19] expect:derive compare=Equal is=$customTip of=["$egp", "$base"] op=diff
+  [20] expect:receiptLog hash=$hash is=0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3e… topic=0 topic0=0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3e…
+#### go-stablenet/regression/anzeon/03-anzeon-basefee-increase.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=60s
+  [1] do:read source=baseFee save=bf0
+  [2] do:load from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 fillPercent=25 blocks=6 timeout=60s
+  [3] expect:baseFee compare=Greater is=$bf0
+#### go-stablenet/regression/anzeon/04-anzeon-basefee-stable.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=60s
+  [1] do:read source=baseFee save=bf0
+  [2] do:load from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 fillPercent=10 blocks=6 timeout=60s
+  [3] expect:baseFee compare=Equal is=$bf0
+#### go-stablenet/regression/anzeon/05-anzeon-basefee-decrease.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=60s
+  [1] do:load from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 fillPercent=25 blocks=6 timeout=60s
+  [2] do:read source=baseFee save=peak
+  [3] do:waitBlock target=30 timeout=120s
+  [4] expect:baseFee compare=Less is=$peak
+#### go-stablenet/regression/anzeon/06-basefee-minimum.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-C-06 — baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음 (원본 regression/anzeon/06-test-min-basefee)
+  [0] expect:baseFee compare=GreaterOrEqual is=20000000000000
+#### go-stablenet/regression/anzeon/07-basefee-maximum.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-C-07 — baseFee가 MaxBaseFee(20,000,000 Gwei) 상한을 초과하지 않음 (원본 regression/anzeon/07-test-max-basefee)
+  [0] expect:baseFee compare=LessOrEqual is=20000000000000000
+#### go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$base", "$base", "$tip"] op=sum save=feecap source=derive
+  [4] do:sendTx from=node1 gas=21000 maxFeePerGas=$feecap maxPriorityFeePerGas=$tip save=hash to=0x00000000000000000000000000000000C0FFEE0E value=1
+  [5] expect:txStatus hash=$hash is=0x1
+#### go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$base", "$tip"] op=sum save=feecap source=derive
+  [4] do:sendTx from=node1 gas=21000 maxFeePerGas=$feecap maxPriorityFeePerGas=$tip save=hash to=0x00000000000000000000000000000000C0FFEE0E value=1
+  [5] expect:txStatus hash=$hash is=0x1
+#### go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$base", "$tip"] op=sum save=feecap source=derive
+  [4] do:read method=eth_getBlockByNumber params=["$n", false] save=gl select=gasLimit source=rpcCall
+  [5] do:read of=["$gl", "1"] op=sum save=over source=derive
+  [6] do:sendTx from=node1 gas=$over maxFeePerGas=$feecap maxPriorityFeePerGas=$tip to=0x00000000000000000000000000000000C0FFEE0E value=1
+  [7] expect:blockNumber compare=GreaterOrEqual is=0x1
+#### go-stablenet/regression/api/01-block-transactions-field.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-01 — eth_getBlockByNumber(latest) (원본 regression/api/01-test-get-block-by-number)
+  [0] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]+$ method=eth_getBlockByNumber params=["latest", false] select=number
+  [1] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]{64}$ method=eth_getBlockByNumber params=["latest", false] select=hash
+  [2] expect:rpcCall compare=NotNil is=null method=eth_getBlockByNumber params=["latest", false] select=transactions
+#### go-stablenet/regression/api/02-block-by-hash-consistency.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-02 — eth_getBlockByHash (원본 regression/api/02-test-get-block-by-hash)
+  [0] do:read method=eth_getBlockByNumber params=["latest", false] save=hash select=hash source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["latest", false] save=number select=number source=rpcCall
+  [2] expect:rpcCall is=$hash method=eth_getBlockByHash params=["$hash", false] select=hash
+  [3] expect:rpcCall is=$number method=eth_getBlockByHash params=["$hash", false] select=number
+#### go-stablenet/regression/api/03-transaction-by-hash-fields.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-03 — eth_getTransactionByHash (원본 regression/api/03-test-get-tx-by-hash)
+  [0] do:sendTx from=node1 gas=21000 save=hash to=0x00000000000000000000000000000000C0FFEE05 value=1
+  [1] expect:rpcCall compare=EqualCI is=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 method=eth_getTransactionByHash params=["$hash"] select=from
+  [2] expect:rpcCall compare=EqualCI is=0x00000000000000000000000000000000C0FFEE05 method=eth_getTransactionByHash params=["$hash"] select=to
+  [3] expect:rpcCall compare=NotNil method=eth_getTransactionByHash params=["$hash"] select=blockNumber
+  [4] expect:rpcCall compare=NotNil method=eth_getTransactionByHash params=["$hash"] select=value
+#### go-stablenet/regression/api/04-transaction-receipt-fields.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인) (원본 regression/api/04-test-get-tx-receipt)
+  [0] do:sendTx from=node1 gas=21000 save=hash to=0x00000000000000000000000000000000C0FFEE06 value=1
+  [1] expect:rpcCall compare=Equal is=0x1 method=eth_getTransactionReceipt params=["$hash"] select=status
+  [2] expect:rpcCall compare=NotNil method=eth_getTransactionReceipt params=["$hash"] select=effectiveGasPrice
+  [3] expect:rpcCall compare=NotNil method=eth_getTransactionReceipt params=["$hash"] select=logs
+#### go-stablenet/regression/api/05-transaction-count-increments.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count)
+  [0] do:read method=eth_getTransactionCount params=["0xc17d493883eaa3b4cceb0f214b273392d562f9d8"… save=before source=rpcCall
+  [1] do:sendTx from=node1 gas=21000 save=hash to=0x00000000000000000000000000000000C0FFEE04 value=1
+  [2] do:read method=eth_getTransactionCount params=["0xc17d493883eaa3b4cceb0f214b273392d562f9d8"… save=after source=rpcCall
+  [3] expect:txStatus hash=$hash is=0x1
+  [4] expect:derive compare=Equal is=1 of=["$after", "$before"] op=diff
+#### go-stablenet/regression/api/06-system-contracts-deployed.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-1-06 — eth_getCode on NativeCoinAdapter (0x1000) (원본 regression/api/06-test-get-code-system)
+  [0] expect:codeAt address=0x0000000000000000000000000000000000001000 compare=NotEqual is=0x
+  [1] expect:codeAt address=0x0000000000000000000000000000000000001001 compare=NotEqual is=0x
+  [2] expect:codeAt address=0x0000000000000000000000000000000000001002 compare=NotEqual is=0x
+  [3] expect:codeAt address=0x0000000000000000000000000000000000001003 compare=NotEqual is=0x
+  [4] expect:codeAt address=0x0000000000000000000000000000000000001004 compare=NotEqual is=0x
+#### go-stablenet/regression/api/07-gas-price-positive.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-2-01 — eth_gasPrice == baseFee + GasTip (원본 regression/api/07-test-gas-price)
+  [0] expect:gasPrice compare=Greater is=0
+#### go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read save=gp source=gasPrice
+  [1] do:read method=eth_getBlockByNumber params=["latest", false] save=n select=number source=rpcCall
+  [2] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [3] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [4] expect:derive compare=Equal is=$gp of=["$base", "$tip"] op=sum
+#### go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee)
+  [0] do:read method=eth_maxPriorityFeePerGas params=[] save=mpf source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["latest", false] save=n select=number source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$tip"] op=sum save=tipDec source=derive
+  [4] expect:derive compare=Equal is=$tipDec of=["$mpf"] op=sum
+#### go-stablenet/regression/api/09-fee-history-well-formed.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history)
+  [0] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]+$ method=eth_feeHistory params=["0x10", "latest", []] select=oldestBlock
+  [1] expect:rpcCall compare=NotNil is=null method=eth_feeHistory params=["0x10", "latest", []] select=baseFeePerGas
+#### go-stablenet/regression/api/10-estimate-gas-token-transfer.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-2-04 — eth_estimateGas (NativeCoinAdapter.transfer) (원본 regression/api/10-test-estimate-system-call)
+  [0] expect:estimateGas compare=GreaterOrEqual data=0xa9059cbb00000000000000000000000000000000000… from=node1 is=21001 to=0x0000000000000000000000000000000000001000
+#### go-stablenet/regression/api/11-node-address-returned.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-01 — istanbul_nodeAddress (원본 regression/api/11-test-node-address)
+  [0] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]{40}$ method=istanbul_nodeAddress onEach=["bp1", "bp2", "bp3", "bp4"]
+#### go-stablenet/regression/api/12-validator-set-nonempty.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-02 — istanbul_getValidators (원본 regression/api/12-test-get-validators)
+  [0] expect:rpcCall compare=NotNil is=null method=istanbul_getValidators params=["latest"]
+  [1] expect:rpcCall compare=Len is=4 method=istanbul_getValidators params=["latest"]
+#### go-stablenet/regression/api/12b-validator-set-count.json | chain= stablenet | applicable= stablenet | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitFor compare=GreaterOrEqual expected=1 pollInterval=1s source=blockNumber timeout=60s
+  [1] expect:rpcCall compare=GreaterOrEqual is=4 method=istanbul_getValidators params=["latest"] select=#
+#### go-stablenet/regression/api/13-commit-signers-quorum.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-03 — istanbul_getCommitSignersFromBlock (원본 regression/api/13-test-get-commit-signers)
+  [0] do:read method=istanbul_getValidators params=["latest"] save=validators source=rpcCall
+  [1] expect:rpcCall compare=NotNil is=null method=istanbul_getCommitSignersFromBlock params=["latest"]
+  [2] expect:rpcCall compare=Equal is=$validators method=istanbul_getValidators params=["latest"]
+#### go-stablenet/regression/api/14-wbft-extra-info-fields.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-04 — istanbul_getWbftExtraInfo (원본 regression/api/14-test-get-wbft-extra)
+  [0] do:read method=eth_blockNumber save=head source=rpcCall
+  [1] expect:rpcCall compare=NotNil is=null method=istanbul_getWbftExtraInfo params=["$head"] select=committedSeal
+  [2] expect:rpcCall compare=NotNil is=null method=istanbul_getWbftExtraInfo params=["$head"] select=preparedSeal
+#### go-stablenet/regression/api/15-istanbul-status-fields.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-05 — istanbul_status (원본 regression/api/15-test-istanbul-status)
+  [0] expect:rpcCall compare=NotNil is=null method=istanbul_status params=["0x1", "0x2"] select=sealerActivity
+  [1] expect:rpcCall compare=NotNil is=null method=istanbul_status params=["0x1", "0x2"] select=author
+  [2] expect:rpcCall compare=NotNil is=null method=istanbul_status params=["0x1", "0x2"] select=blockRange
+  [3] expect:rpcCall compare=NotNil is=null method=istanbul_status params=["0x1", "0x2"] select=roundStats
+#### go-stablenet/regression/api/16-is-validator-flags.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-3-06 — istanbul_isValidator (원본 regression/api/16-test-is-validator)
+  [0] expect:rpcCall is=true method=istanbul_isValidator onEach=["bp1", "bp2", "bp3", "bp4"] params=["latest"]
+#### go-stablenet/regression/api/18-txpool-status.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-4-02 — txpool_status: pending(연속 nonce) + queued(nonce gap) 분리 (원본 regression/api/18-test-txpool-status)
+  [0] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]+$ method=txpool_status select=pending
+  [1] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]+$ method=txpool_status select=queued
+#### go-stablenet/regression/api/19-txpool-content-well-formed.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-4-03 — txpool_content: pending/queued 분리 내용 확인 (원본 regression/api/19-test-txpool-content)
+  [0] expect:rpcCall compare=NotNil is=null method=txpool_content select=pending
+  [1] expect:rpcCall compare=NotNil is=null method=txpool_content select=queued
+#### go-stablenet/regression/api/20-admin-peers-populated.json | chain= stablenet | applicable= stablenet,wbft,wemix | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-1-05 — P2P 피어 연결 확인 (원본 regression/ethereum/05-test-p2p-peers)
+  [0] expect:rpcCall compare=GreaterOrEqual is=1 method=admin_peers select=#
+  [1] expect:rpcCall compare=NotEqual is= method=admin_peers select=0.id
+#### go-stablenet/regression/api/21-fee-delegate-sign-rpc-present.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-5-01 — eth_signRawFeeDelegateTransaction (원본 regression/api/21-test-sign-raw-fee-delegate)
+  [0] expect:methodPresent method=eth_signRawFeeDelegateTransaction params=[{"from": "0x00000000000000000000000000000000…
+#### go-stablenet/regression/api/22-token-total-supply-readable.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-5-02 — eth_call NativeCoinAdapter.totalSupply (원본 regression/api/22-test-total-supply)
+  [0] expect:call compare=NotEqual data=0x18160ddd is=0x to=0x0000000000000000000000000000000000001000
+#### go-stablenet/regression/api/23-token-approve-sets-allowance.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-G-5-03 — eth_call NativeCoinAdapter.allowance (원본 regression/api/23-test-allowance)
+  [0] do:sendTx data=0x095ea7b300000000000000000000000000000000000… from=node1 gas=100000 save=hash to=0x0000000000000000000000000000000000001000
+  [1] do:read method=eth_getTransactionReceipt params=["$hash"] save=blk select=blockNumber source=rpcCall
+  [2] expect:txStatus hash=$hash is=0x1
+  [3] expect:logs address=0x0000000000000000000000000000000000001000 compare=GreaterOrEqual fromBlock=$blk is=1 select=count toBlock=$blk topics=["0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f…
+  [4] expect:call compare=Equal data=0xdd62ed3e000000000000000000000000c17d493883e… is=0x0000000000000000000000000000000000000000000… to=0x0000000000000000000000000000000000001000
+#### go-stablenet/regression/api/24-chain-not-syncing.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] expect:rpcCall is=false method=eth_syncing
+#### go-stablenet/regression/ethereum/01-stablenet-chain-up.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=120s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=4
+  [4] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+  [5] expect:sameBlockHash block=0x0
+#### go-stablenet/regression/ethereum/08-legacy-transfer.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-01 — Legacy Tx (type 0x0) 발행 (원본 regression/ethereum/08-test-legacy-tx)
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$base", "$base", "$tip"] op=sum save=gp source=derive
+  [4] do:read method=eth_getBalance params=["0x00000000000000000000000000000000C0FFEE03"… save=before source=rpcCall
+  [5] do:sendTx from=node1 gas=21000 gasPrice=$gp save=hash to=0x00000000000000000000000000000000C0FFEE03 value=1000000000000000000
+  [6] do:read method=eth_getBalance params=["0x00000000000000000000000000000000C0FFEE03"… save=after source=rpcCall
+  [7] expect:txStatus hash=$hash is=0x1
+  [8] expect:rpcCall compare=Equal is=0x0 method=eth_getTransactionByHash params=["$hash"] select=type
+  [9] expect:derive compare=Equal is=1000000000000000000 of=["$after", "$before"] op=diff
+#### go-stablenet/regression/ethereum/09-dynamic-fee-tx.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-02 — EIP-1559 DynamicFeeTx (type 0x2) 발행 (원본 regression/ethereum/09-test-dynamic-fee-tx)
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=base select=baseFeePerGas source=rpcCall
+  [2] do:read method=istanbul_getWbftExtraInfo params=["$n"] save=tip select=gasTip source=rpcCall
+  [3] do:read of=["$base", "$base", "$tip"] op=sum save=feecap source=derive
+  [4] do:sendTx from=node1 gas=21000 maxFeePerGas=$feecap maxPriorityFeePerGas=$tip save=hash to=0x00000000000000000000000000000000C0FFEE0C value=1
+  [5] expect:txStatus hash=$hash is=0x1
+  [6] expect:rpcCall compare=Equal is=0x2 method=eth_getTransactionByHash params=["$hash"] select=type
+#### go-stablenet/regression/ethereum/10-access-list-tx.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다.
+  [0] do:read save=base source=baseFee
+  [1] do:read of=["$base", "$base"] op=sum save=gp source=derive
+  [2] do:read method=eth_createAccessList params=[{"from": "0xc17d493883eaa3b4cceb0f214b273392… save=createdList select=accessList source=rpcCall
+  [3] do:sendTx accessList=$createdList from=node1 gas=21000 gasPrice=$gp save=hash to=0x00000000000000000000000000000000C0FFEE0D value=1
+  [4] expect:txStatus hash=$hash is=0x1
+  [5] expect:rpcCall compare=Equal is=0x1 method=eth_getTransactionByHash params=["$hash"] select=type
+#### go-stablenet/regression/ethereum/11-nonce-ordering.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-04 — Nonce 순서 보장 (원본 regression/ethereum/11-test-nonce-ordering)
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=2 on=en1 to=0x00000000000000000000000000000000C0FFEE10 value=1 wait=false
+  [3] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=1 on=en1 to=0x00000000000000000000000000000000C0FFEE10 value=1 wait=false
+  [4] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=0 on=en1 to=0x00000000000000000000000000000000C0FFEE10 value=1 wait=false
+  [5] do:waitFor address=$acct compare=Equal expected=3 pollInterval=2s source=nonceAt timeout=90s
+  [6] expect:txStatus hash=$fundHash is=0x1
+  [7] expect:nonceAt address=$acct compare=Equal is=3
+#### go-stablenet/regression/ethereum/11b-out-of-order-nonces-mine.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=2 on=en1 to=0x00000000000000000000000000000000C0FFEE11 value=1 wait=false
+  [3] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=1 on=en1 to=0x00000000000000000000000000000000C0FFEE11 value=1 wait=false
+  [4] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=0 on=en1 to=0x00000000000000000000000000000000C0FFEE11 value=1 wait=false
+  [5] do:waitFor address=$acct compare=Equal expected=3 pollInterval=2s source=nonceAt timeout=90s
+  [6] expect:txStatus hash=$fundHash is=0x1
+  [7] expect:nonceAt address=$acct compare=Equal is=3
+#### go-stablenet/regression/ethereum/12-dynamic-fee-below-basefee-rejected.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced)
+  [0] do:sendTx from=node1 gas=21000 maxFeePerGas=1 maxPriorityFeePerGas=1 to=0x00000000000000000000000000000000C0FFEE10 value=1
+  [1] expect:blockNumber compare=GreaterOrEqual is=0x1
+#### go-stablenet/regression/ethereum/14-insufficient-funds-rejected.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds)
+  [0] do:read address=node1 save=bal source=balanceAt
+  [1] do:read of=["$bal", "1000000000000000000"] op=sum save=over source=derive
+  [2] do:sendTx from=node1 gas=21000 to=0x00000000000000000000000000000000C0FFEE07 value=$over
+  [3] expect:blockNumber compare=GreaterOrEqual is=0x1
+#### go-stablenet/regression/ethereum/15-gas-limit-exceeds-block-rejected.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-07 — Gas Limit 초과 tx 거부 (블록 gas limit 초과) (원본 regression/ethereum/15-test-gaslimit-exceeded)
+  [0] do:read method=eth_getBlockByNumber params=["latest", false] save=gl select=gasLimit source=rpcCall
+  [1] do:read of=["$gl", "1"] op=sum save=over source=derive
+  [2] do:sendTx from=node1 gas=$over to=0x00000000000000000000000000000000C0FFEE10 value=1
+  [3] expect:blockNumber compare=GreaterOrEqual is=0x1
+#### go-stablenet/regression/ethereum/16-effective-gas-price.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price)
+  [0] do:sendTx from=node1 gas=21000 save=hash to=0x00000000000000000000000000000000C0FFEE0B value=1
+  [1] expect:txStatus hash=$hash is=0x1
+  [2] expect:rpcCall compare=Greater is=0 method=eth_getTransactionReceipt params=["$hash"] select=effectiveGasPrice
+  [3] expect:rpcCall compare=GreaterOrEqual is=21000 method=eth_getTransactionReceipt params=["$hash"] select=gasUsed
+#### go-stablenet/regression/ethereum/17-replacement-tx.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx)
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=1 on=en1 save=tx1 to=0x00000000000000000000000000000000C0FFEE12 value=1 wait=false
+  [3] do:sendTx key=$acctKey maxFeePerGas=120000000000000 maxPriorityFeePerGas=36000000000000 nonce=1 on=en1 save=tx2 to=0x00000000000000000000000000000000C0FFEE12 value=1 wait=false
+  [4] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=0 on=en1 save=tx3 to=0x00000000000000000000000000000000C0FFEE12 value=1 wait=false
+  [5] do:waitFor compare=Equal expected=true hash=$tx2 pollInterval=2s source=txMined timeout=90s
+  [6] expect:txStatus hash=$fundHash is=0x1
+  [7] expect:txMined hash=$tx2 is=true
+  [8] expect:txMined hash=$tx1 is=false
+#### go-stablenet/regression/ethereum/17b-same-nonce-replacement.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=1 on=en1 save=tx1 to=0x00000000000000000000000000000000C0FFEE13 value=1 wait=false
+  [3] do:sendTx key=$acctKey maxFeePerGas=120000000000000 maxPriorityFeePerGas=36000000000000 nonce=1 on=en1 save=tx2 to=0x00000000000000000000000000000000C0FFEE13 value=1 wait=false
+  [4] do:sendTx key=$acctKey maxFeePerGas=100000000000000 maxPriorityFeePerGas=30000000000000 nonce=0 on=en1 save=tx3 to=0x00000000000000000000000000000000C0FFEE13 value=1 wait=false
+  [5] do:waitFor compare=Equal expected=true hash=$tx2 pollInterval=2s source=txMined timeout=90s
+  [6] expect:txStatus hash=$fundHash is=0x1
+  [7] expect:txMined hash=$tx2 is=true
+  [8] expect:txMined hash=$tx1 is=false
+#### go-stablenet/regression/ethereum/18-set-code-delegation.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx)
+  [0] do:newAccount save=sponsor saveKey=sponsorKey
+  [1] do:newAccount save=authority saveKey=authorityKey
+  [2] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$sponsor value=30000000000000000000
+  [3] do:sendSetCode authorityKey=$authorityKey delegate=0x1111111111111111111111111111111111111111 key=$sponsorKey on=en1 save=scHash
+  [4] do:waitFor address=$authority compare=Equal expected=0xef01001111111111111111111111111111111111111111 pollInterval=1s source=codeAt timeout=90s
+  [5] expect:txStatus hash=$fundHash is=0x1
+  [6] expect:txStatus hash=$scHash is=0x1
+  [7] expect:rpcCall compare=Equal is=0x4 method=eth_getTransactionByHash params=["$scHash"] select=type
+  [8] expect:codeAt address=$authority compare=Equal is=0xef01001111111111111111111111111111111111111111
+#### go-stablenet/regression/ethereum/19-contract-roundtrip.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-3-01 — 컨트랙트 배포 (원본 regression/ethereum/19-test-contract-deploy)
+  [0] do:deployContract bytecode=0x600a600c600039600a6000f3602a60005260206000f3 from=node1 gas=200000 save=contract
+  [1] expect:codeAt address=$contract compare=NotEqual is=0x
+  [2] expect:call compare=Equal data=0x is=0x0000000000000000000000000000000000000000000… to=$contract
+#### go-stablenet/regression/ethereum/22-estimate-gas.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-3-04 — eth_estimateGas 정상 동작 (원본 regression/ethereum/22-test-estimate-gas)
+  [0] expect:estimateGas compare=GreaterOrEqual data=0x is=21000 to=0x0000000000000000000000000000000000000001
+#### go-stablenet/regression/ethereum/23-eth-call-revert-returns-error.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-3-05 — eth_call로 revert하는 함수 호출 시 에러 반환 (원본 regression/ethereum/23-test-eth-call-revert)
+  [0] do:sendTx data=0x6080604052348015600e575f5ffd5b50606a80601a5… from=node1 gas=300000 on=node1 save=dhash
+  [1] do:read method=eth_getTransactionReceipt params=["$dhash"] save=addr select=contractAddress source=rpcCall
+  [2] do:waitFor address=$addr compare=NotEqual expected=0x pollInterval=1s source=codeAt timeout=60s
+  [3] expect:txStatus hash=$dhash is=0x1
+  [4] expect:callError data=0xa9cc4718 to=$addr
+#### go-stablenet/regression/ethereum/24-revert-tx-status-zero.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-3-06 — revert tx: receipt.status == 0x0, gasUsed만 차감 검증 (원본 regression/ethereum/24-test-revert-tx)
+  [0] do:sendTx data=0x600580600b6000396000f360006000fd from=node1 gas=200000 save=dhash
+  [1] do:read method=eth_getTransactionReceipt params=["$dhash"] save=addr select=contractAddress source=rpcCall
+  [2] do:sendTx from=node1 gas=100000 save=chash to=$addr
+  [3] expect:txStatus hash=$dhash is=0x1
+  [4] expect:rpcCall compare=Equal is=0x0 method=eth_getTransactionReceipt params=["$chash"] select=status
+#### go-stablenet/regression/ethereum/25-out-of-gas-consumes-all.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas)
+  [0] do:sendTx data=0x600480600b6000396000f35b600056 from=node1 gas=200000 save=dhash
+  [1] do:read method=eth_getTransactionReceipt params=["$dhash"] save=addr select=contractAddress source=rpcCall
+  [2] do:sendTx from=node1 gas=50000 save=chash to=$addr
+  [3] do:read method=eth_getTransactionReceipt params=["$chash"] save=used select=gasUsed source=rpcCall
+  [4] expect:txStatus hash=$dhash is=0x1
+  [5] expect:derive compare=Equal is=0 of=["$used", "50000"] op=diff
+#### go-stablenet/regression/ethereum/27-genesis-balance.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-4-02 — eth_getBalance 정상 조회 (원본 regression/ethereum/27-test-eth-get-balance)
+  [0] expect:balanceAt address=node1 compare=Greater is=0
+#### go-stablenet/regression/ethereum/27b-value-transfer.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-4-03 — eth_sendRawTransaction 서명된 tx 전파 (원본 regression/ethereum/28-test-send-raw-tx)
+  [0] do:read method=eth_getBalance params=["0x00000000000000000000000000000000C0FFEE01"… save=before source=rpcCall
+  [1] do:sendTx from=node1 gas=21000 save=hash to=0x00000000000000000000000000000000C0FFEE01 value=1000000000000000000
+  [2] do:read method=eth_getBalance params=["0x00000000000000000000000000000000C0FFEE01"… save=after source=rpcCall
+  [3] expect:txStatus hash=$hash is=0x1
+  [4] expect:derive compare=Equal is=1000000000000000000 of=["$after", "$before"] op=diff
+#### go-stablenet/regression/ethereum/29-logs-query-well-formed.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-4-04 — eth_getLogs 이벤트 로그 조회 (원본 regression/ethereum/29-test-eth-get-logs)
+  [0] expect:logs compare=GreaterOrEqual fromBlock=latest is=0 select=count toBlock=latest
+#### go-stablenet/regression/ethereum/30-chain-id.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init)
+  [0] expect:rpcCall compare=Regexp is=^0x[0-9a-fA-F]+$ method=eth_chainId
+  [1] expect:chainId compare=Greater is=0
+#### go-stablenet/regression/ethereum/31-ws-subscribe-new-heads.json | chain= stablenet | applicable= stablenet | requires= ['rpc', 'ws'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-4-06 — eth_subscribe(newHeads) WebSocket 구독 (원본 regression/ethereum/31-test-ws-subscribe-heads)
+  [0] expect:wsSubscribe count=1 event=newHeads on=bp1 timeout=30s
+#### go-stablenet/regression/ethereum/32-ws-subscribe-logs.json | chain= stablenet | applicable= stablenet | requires= ['rpc', 'ws'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-A-4-07 — eth_subscribe(logs) WebSocket 구독 (원본 regression/ethereum/32-test-ws-subscribe-logs)
+  [0] do:sendTx data=0x6027600c60003960276000f37f11111111111111111… from=node1 gas=200000 on=node1 save=dhash
+  [1] do:read method=eth_getTransactionReceipt params=["$dhash"] save=addr select=contractAddress source=rpcCall
+  [2] do:wsOpen address=$addr event=logs on=en1 save=logsub
+  [3] do:sendTx from=node1 gas=100000 on=node1 save=ehash to=$addr
+  [4] expect:txStatus hash=$dhash is=0x1
+  [5] expect:txStatus hash=$ehash is=0x1
+  [6] expect:wsCollected count=1 sub=$logsub timeout=30s
+#### go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 13, 'pn': 1, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=180s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=13
+  [4] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+#### go-stablenet/regression/ethereum/36-contract-event-emitted.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:sendTx data=0x6027600c60003960276000f37f11111111111111111… from=node1 gas=200000 save=dhash
+  [1] do:read method=eth_getTransactionReceipt params=["$dhash"] save=addr select=contractAddress source=rpcCall
+  [2] do:sendTx from=node1 gas=100000 save=ehash to=$addr
+  [3] do:read method=eth_getTransactionReceipt params=["$ehash"] save=blk select=blockNumber source=rpcCall
+  [4] expect:txStatus hash=$ehash is=0x1
+  [5] expect:logs address=$addr compare=Equal fromBlock=$blk is=0x1111111111111111111111111111111111111111111… select=topic0 toBlock=$blk topics=["0x11111111111111111111111111111111111111111…
+#### go-stablenet/regression/fee-delegation/01-fee-delegated-transfer.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)
+  [0] do:newAccount save=sender saveKey=senderKey
+  [1] do:newAccount save=feePayer saveKey=feePayerKey
+  [2] do:sendTx from=node1 gas=21000 on=node1 save=fundSenderHash to=$sender value=10000000000000000000
+  [3] do:sendTx from=node1 gas=21000 on=node1 save=fundFeeHash to=$feePayer value=10000000000000000000
+  [4] do:sendTx feePayerKey=$feePayerKey key=$senderKey on=en1 save=hash to=0x00000000000000000000000000000000C0FFEE02 value=1000000000000000000
+  [5] expect:txStatus hash=$fundSenderHash is=0x1
+  [6] expect:txStatus hash=$fundFeeHash is=0x1
+  [7] expect:txStatus hash=$hash is=0x1
+  [8] expect:balanceAt address=0x00000000000000000000000000000000C0FFEE02 compare=Equal is=1000000000000000000
+#### go-stablenet/regression/fee-delegation/02-fd-sender-sig-invalid-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: RT-D-03 — Sender 서명 변조 시 거부 (원본 regression/fee-delegation/02-test-sender-sig-invalid)
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendRawTampered feePayerKey=$acctKey on=en1 senderKey=$acctKey to=0x00000000000000000000000000000000C0FFEE20 value=1 which=sender
+  [3] expect:txStatus hash=$fundHash is=0x1
+  [4] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/fee-delegation/03-fd-feepayer-sig-invalid-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid)
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendRawTampered feePayerKey=$acctKey on=en1 senderKey=$acctKey to=0x00000000000000000000000000000000C0FFEE21 value=1 which=feepayer
+  [3] expect:txStatus hash=$fundHash is=0x1
+  [4] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/fee-delegation/04-feepayer-insufficient-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient)
+  [0] do:newAccount save=sender saveKey=senderKey
+  [1] do:newAccount save=feePayer saveKey=feePayerKey
+  [2] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$sender value=10000000000000000000
+  [3] do:sendTx feePayerKey=$feePayerKey key=$senderKey on=en1 to=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 value=1
+  [4] expect:txStatus hash=$fundHash is=0x1
+  [5] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/fee-delegation/05-fee-delegated-sender-sig-invalid-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: 
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendRawTampered feePayerKey=$acctKey on=en1 senderKey=$acctKey to=0x00000000000000000000000000000000C0FFEE22 value=1 which=sender
+  [3] expect:txStatus hash=$fundHash is=0x1
+  [4] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/fee-delegation/06-fee-delegated-feepayer-sig-invalid-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: 
+  [0] do:newAccount save=acct saveKey=acctKey
+  [1] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$acct value=10000000000000000000
+  [2] do:sendRawTampered feePayerKey=$acctKey on=en1 senderKey=$acctKey to=0x00000000000000000000000000000000C0FFEE23 value=1 which=feepayer
+  [3] expect:txStatus hash=$fundHash is=0x1
+  [4] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/fee-delegation/07-fee-delegated-unfunded-feepayer-rejected.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"applepieBlock": 0}}} | hardforks= None | accounts= None
+  desc: 
+  [0] do:newAccount save=sender saveKey=senderKey
+  [1] do:newAccount save=feePayer saveKey=feePayerKey
+  [2] do:sendTx from=node1 gas=21000 on=node1 save=fundHash to=$sender value=10000000000000000000
+  [3] do:sendTx feePayerKey=$feePayerKey key=$senderKey on=en1 to=0x00000000000000000000000000000000C0FFEE10 value=1
+  [4] expect:txStatus hash=$fundHash is=0x1
+  [5] expect:blockNumber compare=GreaterOrEqual is=1
+#### go-stablenet/regression/wbft/01-block-period-one-second.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] do:read method=eth_getBlockByNumber params=["$n", false] save=t1 select=timestamp source=rpcCall
+  [2] do:read method=eth_getBlockByNumber params=["$n", false] save=ph1 select=parentHash source=rpcCall
+  [3] do:read method=eth_getBlockByHash params=["$ph1", false] save=t0 select=timestamp source=rpcCall
+  [4] do:read method=eth_getBlockByHash params=["$ph1", false] save=ph0 select=parentHash source=rpcCall
+  [5] do:read method=eth_getBlockByHash params=["$ph0", false] save=tm1 select=timestamp source=rpcCall
+  [6] expect:derive compare=Equal is=1 of=["$t1", "$t0"] op=diff
+  [7] expect:derive compare=Equal is=1 of=["$t0", "$tm1"] op=diff
+#### go-stablenet/regression/wbft/02-wbft-seals-quorum.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-02 — WBFTExtra에 Committed Seal + Prepared Seal 모두 존재하고 quorum 이상 (원본 regression/wbft/02-test-wbft-extra-seal)
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] expect:rpcCall compare=NotEqual is=0x method=istanbul_getWbftExtraInfo params=["$n"] select=committedSeal.signature
+  [2] expect:rpcCall compare=NotEqual is=0x method=istanbul_getWbftExtraInfo params=["$n"] select=preparedSeal.signature
+#### go-stablenet/regression/wbft/03-epoch-transition-carries-epoch-info.json | chain= stablenet | applicable= stablenet | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-03 — 에폭 전환 — 검증자 집합 갱신 (원본 regression/wbft/03-test-epoch-transition)
+  [0] do:waitBlock pollInterval=2s target=140 timeout=240s
+  [1] expect:rpcCall compare=GreaterOrEqual is=1 method=istanbul_getWbftExtraInfo params=["0x8c"] select=epochInfo.validators.#
+#### go-stablenet/regression/wbft/04-validator-add-member-executes.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-04 — 신규 검증자 추가 및 에폭 합의 참여 확인 (원본 regression/wbft/04-test-add-validator)
+  [0] do:read of=["0x5400d8b543eaf6738c7b44799623bea88fd0f5ee"… op=abiCall save=propData selector=0x5c646aa6 source=derive
+  [1] do:sendTx data=$propData from=node1 gas=0x16e360 on=node1 save=propHash to=0x0000000000000000000000000000000000001001
+  [2] do:read hash=$propHash save=pid source=receiptLog topic=1 topic0=0x830652010a654c24b39890c16f53e6f6179becc6170…
+  [3] do:read of=["$pid"] op=abiCall save=approveData selector=0x98951b56 source=derive
+  [4] do:sendTx data=$approveData from=node2 gas=0x16e360 on=node2 save=apHash to=0x0000000000000000000000000000000000001001
+  [5] do:read data=0x08ae4b0c0000000000000000000000005400d8b543e… save=membersRet source=call to=0x0000000000000000000000000000000000001001
+  [6] expect:txStatus hash=$propHash is=0x1
+  [7] expect:txStatus hash=$apHash is=0x1
+  [8] expect:derive compare=Equal index=0 is=0x0000000000000000000000000000000000000000000… of=["$membersRet"] op=word
+#### go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4, 'en': 1} | genesis= {"overlay": {"config": {"anzeon": {"wbft": {"… | hardforks= None | accounts= None
+  desc: RT-B-04 — 멤버로 추가된 노드가 에폭 경계에서 실제 검증자 집합에 들어간다
+  [0] do:waitBlock target=3 timeout=120s
+  [1] do:read on=en1 source=rpcCall method=istanbul_nodeAddress params=[] save=candidate
+  [2] do:read on=node1 source=rpcCall method=istanbul_getValidators params=["latest"] select=# save=countBefore
+  [3] expect:rpc on=en1 method=istanbul_isValidator params=[] compare=Equal is=false
+  [4] do:read source=derive op=abiCall selector=0x5c646aa6 of=["$candidate", "4"] save=addData
+  [5] do:sendTx on=node1 from=node1 to=0x0000000000000000000000000000000000001001 gas=0x16e360 data=$addData save=addHash
+  [6] do:read source=receiptLog hash=$addHash topic0=0x830652010a654c24b39890c16f53e6f6179becc6170… topic=1 save=pid
+  [7] do:read source=derive op=abiCall selector=0x98951b56 of=["$pid"] save=approveData
+  [8] do:sendTx on=node2 from=node2 to=0x0000000000000000000000000000000000001001 gas=0x16e360 data=$approveData save=apHash
+  [9] do:waitBlock target=25 timeout=180s
+  [10] do:read source=derive op=sum of=["$countBefore", "1"] save=countExpected
+  [11] expect:rpc on=node1 method=istanbul_getValidators params=["latest"] select=# compare=Equal is=$countExpected
+  [12] expect:rpc on=en1 method=istanbul_isValidator params=[] compare=Equal is=true
+#### go-stablenet/regression/wbft/05-validator-remove-member-executes.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다.
+  [0] do:read of=["0x5400d8b543eaf6738c7b44799623bea88fd0f5ee"… op=abiCall save=addData selector=0x5c646aa6 source=derive
+  [1] do:sendTx data=$addData from=node1 gas=0x16e360 on=node1 save=addHash to=0x0000000000000000000000000000000000001001
+  [2] do:read hash=$addHash save=addPid source=receiptLog topic=1 topic0=0x830652010a654c24b39890c16f53e6f6179becc6170…
+  [3] do:read of=["$addPid"] op=abiCall save=addApprove selector=0x98951b56 source=derive
+  [4] do:sendTx data=$addApprove from=node2 gas=0x16e360 on=node2 save=addApHash to=0x0000000000000000000000000000000000001001
+  [5] do:read data=0x08ae4b0c0000000000000000000000005400d8b543e… save=memberAfterAdd source=call to=0x0000000000000000000000000000000000001001
+  [6] do:read of=["0x5400d8b543eaf6738c7b44799623bea88fd0f5ee"… op=abiCall save=rmData selector=0xbfbd7f4c source=derive
+  [7] do:sendTx data=$rmData from=node1 gas=0x16e360 on=node1 save=rmHash to=0x0000000000000000000000000000000000001001
+  [8] do:read hash=$rmHash save=rmPid source=receiptLog topic=1 topic0=0x830652010a654c24b39890c16f53e6f6179becc6170…
+  [9] do:read of=["$rmPid"] op=abiCall save=rmApprove selector=0x98951b56 source=derive
+  [10] do:sendTx data=$rmApprove from=node2 gas=0x16e360 on=node2 save=rmApHash to=0x0000000000000000000000000000000000001001
+  [11] do:read data=0x08ae4b0c0000000000000000000000005400d8b543e… save=memberAfterRemove source=call to=0x0000000000000000000000000000000000001001
+  [12] expect:txStatus hash=$addApHash is=0x1
+  [13] expect:txStatus hash=$rmHash is=0x1
+  [14] expect:txStatus hash=$rmApHash is=0x1
+  [15] expect:derive compare=Equal index=0 is=0x0000000000000000000000000000000000000000000… of=["$memberAfterAdd"] op=word
+  [16] expect:derive compare=Equal index=0 is=0x0000000000000000000000000000000000000000000… of=["$memberAfterRemove"] op=word
+#### go-stablenet/regression/wbft/11-prev-seals-quorum.json | chain= stablenet | applicable= stablenet | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: RT-B-11 — 블록 N+1의 PrevCommittedSeal이 블록 N의 committers를 포함 (원본 regression/wbft/11-test-prev-committed-seal)
+  [0] do:waitBlock pollInterval=1s target=3 timeout=60s
+  [1] do:read of=["4"] op=quorum save=q source=derive
+  [2] expect:rpcCall compare=GreaterOrEqual is=$q method=istanbul_getWbftExtraInfo params=["@latest"] select=prevCommittedSeal.sealers.#
+  [3] expect:rpcCall compare=GreaterOrEqual is=$q method=istanbul_getWbftExtraInfo params=["@latest"] select=prevPreparedSeal.sealers.#
+#### go-stablenet/regression/wbft/13-randao-and-mixdigest-present.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read method=eth_blockNumber save=n source=rpcCall
+  [1] expect:rpcCall compare=NotEqual is=0x method=istanbul_getWbftExtraInfo params=["$n"] select=randaoReveal
+  [2] expect:rpcCall compare=NotEqual is=0x0000000000000000000000000000000000000000000… method=eth_getBlockByNumber params=["$n", false] select=mixHash
+#### go-stablenet/regression/wbft/14-stablenet-gastip-field.json | chain= stablenet | applicable= stablenet | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:read method=eth_blockNumber save=head source=rpcCall
+  [1] expect:rpcCall compare=NotNil is=null method=istanbul_getWbftExtraInfo params=["$head"] select=gasTip
+#### go-stablenet/topology/01-proxied-pn-routing.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 3, 'pn': 1, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: Compose the proxied tier (bp <-> pn <-> en) and prove the endpoint stays in sync through the pn: under proxied peering an endpoint never dials a producer, so a rising head on en confirms the pn relays blocks to it (WA25)
+  [0] do:waitBlock target=2 timeout=180s
+  [1] do:waitFor source=blockNumber on=en1 compare=GreaterOrEqual expected=1 timeout=120s
+  [2] expect:blockNumber on=en1 compare=GreaterOrEqual is=1
+#### go-stablenet/tx/01-negative-tx-revert.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Negative path (WA25): deploy a contract whose runtime always reverts, then send it a transaction and require that it reverts (mined with status 0x0). Also send a plain value transfer and require it succeeds, so a false p
+  [0] do:waitBlock target=2 timeout=120s
+  [1] do:deployContract on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 bytecode=0x600580600b6000396000f360006000fd gas=300000 save=rv
+  [2] expect:codeAt on=node1 address=$rv compare=Equal is=0x60006000fd
+  [3] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$rv gas=100000
+#### go-stablenet/vocabulary/01-derived-address-and-checksum.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Exercise the pure-derivation vocabulary that no case used before (WA24): createAddress computes the CREATE address from a deployer and nonce, and contractChecksum hashes bytecode. Both are deterministic — the expected va
+  [0] do:waitBlock target=1 timeout=120s
+  [1] expect:createAddress deployer=0x1111111111111111111111111111111111111111 nonce=0 is=0x8f7a45ebde059392e46a46dcc14ab24681a961ea
+  [2] expect:contractChecksum bytecode=0x6001 is=sha256:9e67b12fd8c58953460459cad7a6d4dd7d6d57…
+#### go-stablenet/vocabulary/02-faucet-funds-account.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Exercise the faucet action (WA24): top up a freshly generated account and read back its balance. LIVE-UNVERIFIED: authored offline (passes validate), needs a fleet run to confirm the target node's coinbase funder is unlo
+  [0] do:waitBlock target=1 timeout=120s
+  [1] do:newAccount save=acct saveKey=acctKey
+  [2] do:faucet to=$acct amount=1000000000000000000 timeout=60s
+  [3] expect:balanceAt address=$acct compare=GreaterOrEqual is=1000000000000000000
+#### go-stablenet/vocabulary/03-metric-head-block.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Exercise the metric assertion (WA24): read the node's chain_head_block Prometheus metric once the chain has advanced. LIVE-VERIFIED 2026-09-11 on the 15-server docker fleet (4 bp, gstable 1.1.0). Restored once the three 
+  [0] do:waitBlock target=2 timeout=120s
+  [1] expect:metric name=chain_head_block compare=GreaterOrEqual is=1
+#### go-stablenet/vocabulary/03-register-contract.json | chain= stablenet | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Exercise the registerContract action (WA24): deploy a contract that accepts any call, then send an encoded call to it through registerContract and confirm the tx is mined without reverting.
+  [0] do:waitBlock target=2 timeout=120s
+  [1] do:deployContract on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 bytecode=0x600a600c600039600a6000f3602a60005260206000f3 gas=300000 save=c
+  [2] do:registerContract on=node1 to=$c data=0x01 gas=100000 save=reg
+  [3] expect:txStatus on=node1 hash=$reg is=0x1
+#### go-wbft/accounts/01-secp256r1-precompile-valid.json | chain= wbft | applicable= wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] expect:call compare=Equal data=0x4fc05e7c6fa9dcfc4d09b26e3352487de9f248699f9… is=0x0000000000000000000000000000000000000000000… to=0x0000000000000000000000000000000000000100
+#### go-wbft/accounts/02-secp256r1-precompile-invalid.json | chain= wbft | applicable= wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] expect:call compare=NotEqual data=0x0000000000000000000000000000000000000000000… is=0x0000000000000000000000000000000000000000000… to=0x0000000000000000000000000000000000000100
+#### go-wbft/accounts/03-secp256r1-precompile-short-input.json | chain= wbft | applicable= wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] expect:call compare=Equal data=0x0000000000000000000000000000000000000000000… is=0x to=0x0000000000000000000000000000000000000100
+  [1] expect:call compare=Equal data=0x is=0x to=0x0000000000000000000000000000000000000100
+#### go-wbft/chain-up/01-wbft-chain-up.json | chain= wbft | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=120s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=4
+  [4] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+#### go-wbft/chain-up/02-wbft-chain-up-15.json | chain= wbft | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 13, 'pn': 1, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=180s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=13
+  [4] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+#### go-wbft/consensus/01-e1-mixed-producers.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'nodes': [{'index': 1, 'role': 'en'}, {'index': 2, 'role': 'bp'}, {'index': 3, 'role': 'bp'}, {'index': 4, 'role': 'bp'}]} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=3
+  [2] expect:blockAdvance on=node1 timeout=60s pollInterval=2s
+#### go-wbft/fault/01-wbft-node-crash.json | chain= wbft | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Stop one wbft validator and verify consensus continues 3/4, then restart it (WA25 — wbft had no fault coverage).
+  [0] do:waitBlock target=3 timeout=180s
+  [1] do:stopNode on=node3
+  [2] expect:blockAdvance on=node1 timeout=120s pollInterval=2s
+  [3] do:restartNode on=node3
+#### go-wbft/network/01-wbft-proxied-routing.json | chain= wbft | applicable= None | requires= ['rpc'] | topo= {'bp': 2, 'pn': 1, 'en': 1} | genesis= - | hardforks= None | accounts= None
+  desc: WA25: verify the proxied peer graph's SHAPE — bp <-> bp direct, bp <-> pn and pn <-> en through the tier, and an endpoint that never learns a producer. Peer counts are the signature; a 4-node mesh gives the endpoint 3 pe
+  [0] do:waitBlock target=3 timeout=180s
+  [1] expect:peerCount on=en1 compare=Equal is=1
+  [2] expect:peerCount on=pn1 compare=Equal is=3
+  [3] expect:peerCount on=bp1 compare=Equal is=2
+  [4] expect:peerCount on=bp2 compare=Equal is=2
+  [5] expect:blockAdvance onEach=["bp1", "bp2", "pn1", "en1"] timeout=90s
+#### go-wbft/tx/01-wbft-tx-and-contract.json | chain= wbft | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"alloc": {"0xc17d493883eaa3b4cce… | hardforks= None | accounts= None
+  desc: wbft value transfer and contract deploy/call: fund a fresh account, deploy a returner contract, and read it back (WA25 — wbft had no tx coverage).
+  [0] do:waitBlock target=3 timeout=180s
+  [1] do:newAccount save=r saveKey=rk
+  [2] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$r value=1
+  [3] expect:balanceAt on=node1 address=$r compare=Greater is=0
+  [4] do:deployContract on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 bytecode=0x600a600c600039600a6000f3602a60005260206000f3 gas=300000 save=c
+  [5] expect:codeAt on=node1 address=$c compare=NotEqual is=0x
+  [6] expect:call on=node1 to=$c data=0x compare=Equal is=0x0000000000000000000000000000000000000000000…
+#### go-wbft/tx/02-wbft-insufficient-funds-rejected.json | chain= wbft | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: WA25: a transfer above the sender's balance is refused before it reaches a block. Proven on stablenet (regression/ethereum/14); go-wbft never exercised the rejection path, so a family-specific txpool guard could have reg
+  [0] do:read source=balanceAt address=node1 save=bal
+  [1] do:read source=derive op=sum of=["$bal", "1000000000000000000"] save=over
+  [2] do:sendTx from=node1 to=0x00000000000000000000000000000000C0FFEE07 value=$over gas=21000
+  [3] expect:blockAdvance timeout=90s
+#### go-wbft/tx/03-wbft-revert-status-zero.json | chain= wbft | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: WA25: a call into a contract whose code reverts is mined with status 0x0 rather than vanishing or failing the block. Deploy uses runtime bytecode that unconditionally reverts. Proven on stablenet (regression/ethereum/24)
+  [0] do:sendTx from=node1 gas=200000 data=0x600580600b6000396000f360006000fd save=dhash
+  [1] do:read source=rpcCall method=eth_getTransactionReceipt params=["$dhash"] select=contractAddress save=addr
+  [2] expect:txStatus hash=$dhash is=0x1
+  [3] do:sendTx from=node1 to=$addr gas=100000 save=chash
+  [4] expect:rpcCall method=eth_getTransactionReceipt params=["$chash"] select=status compare=Equal is=0x0
+  [5] expect:blockAdvance timeout=90s
+#### go-wemix/chain-up/01-wemix-chain-up.json | chain= wemix | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=180s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+#### go-wemix/chain-up/02-wemix-chain-up-15.json | chain= wemix | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 13, 'en': 2} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=300s
+  [1] expect:chainId compare=Greater is=0
+  [2] expect:blockNumber compare=GreaterOrEqual is=2
+  [3] expect:rpc method=net_peerCount compare=NotEqual is=0x0
+#### go-wemix/fault/01-wemix-node-crash.json | chain= wemix | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Stop one wemix (poa) producer and verify block production continues, then restart it (WA25 — wemix had no fault coverage).
+  [0] do:waitBlock target=3 timeout=300s
+  [1] do:stopNode on=node3
+  [2] expect:blockAdvance on=node1 timeout=180s pollInterval=3s
+  [3] do:restartNode on=node3
+#### go-wemix/handoff/01-wemix-wbft-handoff.json | chain= wbft | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=22 timeout=240s
+  [1] expect:blockNumber compare=Greater is=20
+  [2] expect:rpc method=eth_getBlockByNumber params=["0x15", false] select=miner compare=NotEqual is=0xf9593d358b373d354a348c00887b914b408f6984
+  [3] expect:rpc method=istanbul_getValidators params=["latest"] compare=Len is=4
+#### go-wemix/rpc/01-wemix-brioche-block-reward.json | chain= wemix | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"config": {"brioche": {"firstHal… | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=2 timeout=180s
+  [1] do:read source=rpcCall method=wemix_getBriocheBlockReward params=["0x5"] save=pre
+  [2] expect:rpc method=wemix_getBriocheBlockReward params=["0x5"] compare=Greater is=0
+  [3] expect:rpc method=wemix_getBriocheBlockReward params=["0xf"] compare=Less is=$pre
+#### go-wemix/tx/01-wemix-tx-and-contract.json | chain= wemix | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= {"overlay": {"alloc": {"0xc17d493883eaa3b4cce… | hardforks= None | accounts= None
+  desc: 
+  [0] do:waitBlock target=3 timeout=180s
+  [1] do:newAccount save=r saveKey=rk
+  [2] do:sendTx on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 to=$r value=1
+  [3] expect:balanceAt on=node1 address=$r compare=Greater is=0
+  [4] do:deployContract on=node1 from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 bytecode=0x600a600c600039600a6000f3602a60005260206000f3 gas=300000 save=c
+  [5] expect:codeAt on=node1 address=$c compare=NotEqual is=0x
+  [6] expect:call on=node1 to=$c data=0x compare=Equal is=0x0000000000000000000000000000000000000000000…
+#### go-wemix/tx/02-wemix-insufficient-funds-rejected.json | chain= wemix | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: WA25: a transfer above the sender's balance is refused before it reaches a block. Proven on stablenet (regression/ethereum/14); go-wemix never exercised the rejection path, so a family-specific txpool guard could have re
+  [0] do:read source=balanceAt address=node1 save=bal
+  [1] do:read source=derive op=sum of=["$bal", "1000000000000000000"] save=over
+  [2] do:sendTx from=node1 to=0x00000000000000000000000000000000C0FFEE07 value=$over gas=21000
+  [3] expect:blockAdvance timeout=90s
+#### go-wemix/tx/03-wemix-revert-status-zero.json | chain= wemix | applicable= None | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: WA25: a call into a contract whose code reverts is mined with status 0x0 rather than vanishing or failing the block. Deploy uses runtime bytecode that unconditionally reverts. Proven on stablenet (regression/ethereum/24)
+  [0] do:sendTx from=node1 gas=200000 data=0x600580600b6000396000f360006000fd save=dhash
+  [1] do:read source=rpcCall method=eth_getTransactionReceipt params=["$dhash"] select=contractAddress save=addr
+  [2] expect:txStatus hash=$dhash is=0x1
+  [3] do:sendTx from=node1 to=$addr gas=100000 save=chash
+  [4] expect:rpcCall method=eth_getTransactionReceipt params=["$chash"] select=status compare=Equal is=0x0
+  [5] expect:blockAdvance timeout=90s
+#### remote/01-remote-rpc-health.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다.
+  [0] expect:blockNumber compare=GreaterOrEqual is=0x0
+  [1] expect:rpcCall compare=NotEqual is= method=web3_clientVersion
+  [2] expect:rpcCall compare=NotEqual is= method=net_peerCount
+#### remote/02-remote-chain-info.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 레거시 remote/chain-info: 붙은 체인이 chainId 를 보고하고 동기화가 끝나 있다.
+  [0] expect:chainId compare=Greater is=0
+  [1] expect:rpcCall is=false method=eth_syncing
+  [2] expect:rpcCall compare=NotEqual is= method=eth_getBlockByNumber params=["latest", false] select=hash
+#### remote/03-remote-balance-check.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: 레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. 레거시 기본값과 같이 0 주소를 본다 — 어느 체인에나 있고 값이 변하지 않는다.
+  [0] expect:balanceAt address=0x0000000000000000000000000000000000000000 compare=GreaterOrEqual is=0
+  [1] expect:rpcCall compare=NotEqual is= method=eth_getBalance params=["0x0000000000000000000000000000000000000000"…
+#### samples/01-sample-minimal.json | chain= stablenet | applicable= stablenet,wbft | requires= ['rpc'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-minimal.json
+  [0] do:read address=node2 save=balBefore source=balanceAt
+  [1] do:sendTx from=node1 gas=$transferGas on=node1 save=txHash to=node2 value=1000000000000000000
+  [2] do:read method=eth_getTransactionReceipt params=["$txHash"] save=txBlock select=blockNumber source=rpcCall
+  [3] expect:txStatus hash=$txHash is=0x1
+  [4] expect:derive compare=Greater is=0 of=["$txBlock", "0"] op=diff
+  [5] expect:balanceAt address=node2 compare=Greater is=$balBefore
+#### samples/02-sample-lifecycle.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus', 'process'] | topo= {'bp': 4, 'en': 1} | genesis= {"overlay": {"config": {"bohoBlock": 6}}} | hardforks= None | accounts= {'dev1': {'fund': '0x8AC7230489E80000'}}
+  desc: 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md)
+  [0] do:waitBlock target=3 timeout=120s
+  [1] expect:sameBlockHash block=latest
+  [2] do:newAccount save=acct saveKey=acctKey
+  [3] do:sendTx on=node1 from=dev1 to=$acct value=1000000000000000000 gas=21000
+  [4] expect:balanceAt on=node1 address=$acct compare=Greater is=0
+  [5] do:stopNode on=en1
+  [6] expect:blockAdvance on=node1 timeout=60s pollInterval=2s
+  [7] do:startNode on=en1
+  [8] do:waitBlock on=en1 target=8 timeout=120s
+  [9] expect:sameBlockHash block=latest
+  [10] do:readNodeLog on=en1 maxBytes=4096 save=en1Log
+#### stress/01-stress-block-time.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Measure block production time statistics over last 100 blocks (원본 stress/block-time.sh)
+  [0] do:waitBlock target=20 timeout=180s
+  [1] expect:blockInterval on=node1 blocks=15 maxSeconds=60
+#### stress/02-stress-tx-flood.json | chain= stablenet | applicable= None | requires= ['rpc', 'consensus'] | topo= {'bp': 4} | genesis= - | hardforks= None | accounts= None
+  desc: Send N transactions rapidly and measure throughput (원본 stress/tx-flood.sh)
+  [0] do:waitBlock target=2 timeout=60s
+  [1] do:load from=0xc17d493883eaa3b4cceb0f214b273392d562f9d8 fillPercent=30 blocks=15 timeout=90s
+  [2] expect:blockAdvance on=node1 timeout=60s pollInterval=2s

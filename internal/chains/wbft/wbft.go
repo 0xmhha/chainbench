@@ -1,7 +1,10 @@
-// Package wbft registers the go-wbft chain plugin: the wbft consensus family +
-// the wbft accounts protocol + the wbft manifest and genesis template
-// (croissant), embedded from this folder. Importing it for side effects
-// registers the chain.
+// Package wbft composes the go-wbft chain: the wbft consensus family, the wbft
+// accounts protocol, and the manifest and genesis template embedded from this
+// folder. Importing it for side effects registers the chain.
+//
+// It composes the same consensus as stablenet and differs in its protocol, its
+// genesis template and its constants — which is the point of composing rather
+// than inheriting: the shared half is one implementation, named here.
 package wbft
 
 import (
@@ -19,17 +22,11 @@ var manifestJSON []byte
 //go:embed genesis.json
 var genesisTmpl []byte
 
-type plugin struct{ m registry.Manifest }
-
 func init() {
-	m, err := registry.ParseManifest(manifestJSON)
-	if err != nil {
-		panic(err)
-	}
-	registry.Register(plugin{m: m})
+	registry.Register(registry.StaticPlugin{
+		M:     registry.MustParseManifest(manifestJSON),
+		Fam:   wbftfam.New(),
+		Proto: protocol.WBFT(),
+		Tmpl:  genesisTmpl,
+	})
 }
-
-func (p plugin) Manifest() registry.Manifest      { return p.m }
-func (p plugin) Family() registry.ConsensusFamily { return wbftfam.New() }
-func (p plugin) Protocol() protocol.Protocol      { return protocol.WBFT() }
-func (p plugin) GenesisTemplate() []byte          { return genesisTmpl }

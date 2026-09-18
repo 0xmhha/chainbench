@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "estimategas-authorizationlist-cost",
   "description": "TC-4-2-01/03: EIP-7702 authorizationList 를 1건·2건 붙였을 때 eth_estimateGas 가 그만큼 늘어난다. 경계값은 preActions 에서 이름을 붙여 한 번씩만 적는다. 상한은 노드의 estimateGas 오차 1.5% 정책에서 나온다 — 절대 상한은 하한 x 1.015, 증가분 상한은 절대 상한에서 baseline(21000)을 뺀 값이다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "estimategas-authorizationlist-cost-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

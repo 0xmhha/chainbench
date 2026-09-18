@@ -4,7 +4,7 @@ package process_test
 // the local docker servers:
 //
 //	cd env/docker && ./gen-env.sh && docker compose -f build/docker-compose.yml up -d
-//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./internal/core/driver -run Live_ -v
+//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./internal/core/process -run Live_ -v
 
 import (
 	"context"

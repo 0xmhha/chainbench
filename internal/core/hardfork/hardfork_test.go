@@ -18,7 +18,7 @@ import (
 func nodeSet(chain string, n int) node.NodeSet {
 	ns := node.NodeSet{Chain: chain, Network: "local"}
 	for i := 1; i <= n; i++ {
-		ns.Nodes = append(ns.Nodes, node.Node{Index: i, Role: node.RoleValidator})
+		ns.Nodes = append(ns.Nodes, node.Node{Index: i, Role: node.RoleBP})
 	}
 	return ns
 }
@@ -61,7 +61,7 @@ func TestExecute_StopsAndRelaunches(t *testing.T) {
 	to, _ := registry.Get("wbft")
 	dir := t.TempDir()
 	ns := node.NodeSet{Chain: "wemix", Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, Ports: node.Endpoints{HTTP: 8501, P2P: 30301}, PID: oldPID},
+		{Index: 1, Role: node.RoleBP, Ports: node.Endpoints{HTTP: 8501, P2P: 30301}, PID: oldPID},
 	}}
 	plan, err := hardfork.PlanSwap(ns, from, to, 100, dir)
 	if err != nil {
@@ -77,7 +77,7 @@ func TestExecute_StopsAndRelaunches(t *testing.T) {
 	// Execute reuses the node's original launch spec (identity-bearing args) and
 	// swaps only the binary — mirror what setup persists to nodespecs.json.
 	specs := []process.NodeSpec{{
-		Index: 1, Role: node.RoleValidator, Host: "127.0.0.1",
+		Index: 1, Role: node.RoleBP, Host: "127.0.0.1",
 		Binary: "oldbin", DataDir: dir, LogPath: filepath.Join(dir, "node.log"),
 		Ports: node.Endpoints{HTTP: 8501, P2P: 30301},
 		Args:  []string{"--datadir", dir, "--nodekey", filepath.Join(dir, "nk")},

@@ -38,15 +38,15 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.handoff != nil || comp.up == nil {
+	if comp.up == nil {
 		t.Fatal("a single-binary env composes through the workspace")
 	}
 	up := comp.up
 	if up.Chain != "stablenet" || up.Binary != "gstable" || up.Stage != chainsetup.UpStart {
 		t.Errorf("chain/binary/stage = %q/%q/%q", up.Chain, up.Binary, up.Stage)
 	}
-	if up.Validators != 3 || up.Endpoints != 1 || up.EndpointSyncMode != "snap" {
-		t.Errorf("topology = %d/%d/%q, want 3/1/snap", up.Validators, up.Endpoints, up.EndpointSyncMode)
+	if up.BPCount != 3 || up.ENCount != 1 || up.EndpointSyncMode != "snap" {
+		t.Errorf("topology = %d/%d/%q, want 3/1/snap", up.BPCount, up.ENCount, up.EndpointSyncMode)
 	}
 	if up.KeysDir != "/keys/gen" || up.KeysSource != "generate" {
 		t.Errorf("keys = %q/%q", up.KeysDir, up.KeysSource)
@@ -74,18 +74,18 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 
 func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
-	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/gstable", Validators: 5, KeysDir: "/k"})
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/gstable", BPCount: 5, KeysDir: "/k"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if comp.up.Binary != "/opt/gstable" || comp.up.Validators != 5 || comp.up.KeysDir != "/k" {
+	if comp.up.Binary != "/opt/gstable" || comp.up.BPCount != 5 || comp.up.KeysDir != "/k" {
 		t.Errorf("overrides not applied: %+v", comp.up)
 	}
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if comp.up.Validators != suiteDefaultValidators || comp.up.KeysDir != defaultKeysDir || comp.up.OverlayPath != "" {
+	if comp.up.BPCount != suiteDefaultValidators || comp.up.KeysDir != defaultKeysDir || comp.up.OverlayPath != "" {
 		t.Errorf("defaults: %+v", comp.up)
 	}
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Chain: "wbft"}); err == nil {
@@ -93,39 +93,41 @@ func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 	}
 }
 
-func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
-	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/genesis-template.json")
-	t.Setenv("GWBFT_BIN", "")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"${GWBFT_BIN:-gwbft}"},
-	  "upgrade":{"profile":"profiles/wemix-upgrade.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
-	dir := t.TempDir()
-	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
+// TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork.
+//
+// It used to have a composer of its own, reached by leaving the topology out.
+// Now the node table is what says which build each node runs, so the fork is
+// scheduled on the genesis those nodes share and everything else is the
+// ordinary path.
+func TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
+	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"en","binary":"next"},
+	    {"index":2,"role":"bp"}
+	  ]}}`)
+	t.Chdir("../..")
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.up != nil || comp.handoff == nil {
-		t.Fatal("an upgrade env composes as a handoff")
+	if comp.up == nil {
+		t.Fatal("a hardfork composes through the workspace, like every other network")
 	}
-	h := comp.handoff
-	if h.FromBinary != "gwemix" || h.ToBinary != "gwbft" {
-		t.Errorf("binaries = %q -> %q (a ${VAR:-default} with the var unset takes the default)", h.FromBinary, h.ToBinary)
+	f := comp.up.GenesisFork
+	if f == nil {
+		t.Fatal("the composition schedules no fork")
 	}
-	if h.Template != "/tmpl/genesis-template.json" || h.ProfilePath != "profiles/wemix-upgrade.yaml" || h.DataDir != dir {
-		t.Errorf("handoff inputs = %+v", h)
-	}
-	if h.PresetDir != defaultKeysDir {
-		t.Errorf("preset = %q", h.PresetDir)
-	}
-	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, Binary: "/x"}); err == nil {
-		t.Error("--binary has no role in a handoff and must be refused")
+	if f.Name != "croissant" || f.At != 20 || f.Binary != "next" {
+		t.Errorf("fork = %+v", f)
 	}
 }
 
 func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	// Two binaries of the same family run side by side, declared per node.
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"stable":"/opt/gstable","wbft":"/opt/gwbft"},
+	  "binaries":{"stable":"gstable","wbft":"gwbft"},
 	  "topology":{"nodes":[
 	    {"role":"bp","binary":"stable"},
 	    {"role":"bp","binary":"wbft"},
@@ -135,7 +137,7 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.handoff != nil || comp.up == nil {
+	if comp.up == nil {
 		t.Fatal("a same-family node table composes through the workspace")
 	}
 	up := comp.up
@@ -145,15 +147,15 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	if up.Topology.Nodes[0].Binary != "stable" || up.Topology.Nodes[2].SyncMode != "snap" {
 		t.Errorf("per-node fields lost: %+v", up.Topology.Nodes)
 	}
-	if up.Binaries["stable"] != "/opt/gstable" || up.Binaries["wbft"] != "/opt/gwbft" {
+	if up.Binaries["stable"] != "gstable" || up.Binaries["wbft"] != "gwbft" {
 		t.Errorf("binaries not resolved: %v", up.Binaries)
 	}
 	// No count is set; the node table is the sizing.
-	if up.Validators != 0 || up.Endpoints != 0 {
-		t.Errorf("counts leaked with a node table: %d/%d", up.Validators, up.Endpoints)
+	if up.BPCount != 0 || up.ENCount != 0 {
+		t.Errorf("counts leaked with a node table: %d/%d", up.BPCount, up.ENCount)
 	}
 	// The fallback binary is the first node's, for any node naming none.
-	if up.Binary != "/opt/gstable" {
+	if up.Binary != "gstable" {
 		t.Errorf("fallback binary = %q, want the first node's", up.Binary)
 	}
 }
@@ -254,65 +256,65 @@ func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
 	}
 }
 
-// TestCompositionOf_PreparedPresetExpands pins W4's preset bundle: inputs.mode
-// prepared expands the named preset onto the composition — its finished genesis
+// TestCompositionOf_ExistingInputsExpand pins W4's bundle: inputs.mode
+// existing expands the named bundle onto the composition — its finished genesis
 // stands in for declaring one in the DSL — and a keyring on a server is refused
 // for now (keys are read locally).
-func TestCompositionOf_PreparedPresetExpands(t *testing.T) {
+func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 	dir := t.TempDir()
 	wcPath := filepath.Join(dir, "workspace-config.yaml")
 	base := "version: 1\ndataRoot: /data\n" +
 		"paths: {binaries: bin, configs: configs, genesis: genesis, keystore: keystore, keyrings: keys, nodes: node, runtime: runtime, logs: logs}\n" +
 		"control: {artifactRoot: ~/.chainbench}\n" +
-		"inputs: {mode: prepared, preset: regression}\nexecution: {chain: fresh}\n"
-	write := func(presetBody string) {
-		if err := os.WriteFile(wcPath, []byte(base+presetBody), 0o644); err != nil {
+		"inputs: {mode: existing, name: regression}\nexecution: {chain: fresh}\n"
+	write := func(bundleBody string) {
+		if err := os.WriteFile(wcPath, []byte(base+bundleBody), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 
-	// A preset genesis expands to an existing-genesis reference.
-	write("presets:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
+	// A genesis the bundle names expands to an existing-genesis reference.
+	write("existingInputs:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("preset genesis: %v", err)
+		t.Fatalf("bundle genesis: %v", err)
 	}
 	if comp.up.GenesisExisting != "srv://server-01/data/genesis/g.json" {
-		t.Fatalf("preset genesis not applied: %q", comp.up.GenesisExisting)
+		t.Fatalf("bundle genesis not applied: %q", comp.up.GenesisExisting)
 	}
 
-	// A preset genesis conflicts with a spec that already declares a genesis.
+	// A bundle genesis conflicts with a spec that already declares a genesis.
 	specG := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"genesis":{"set":{"config.chainId":9}}}`)
 	if _, err := compositionOf(context.Background(), specG, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
-		t.Fatal("a preset genesis over a declared genesis must conflict")
+		t.Fatal("a bundle genesis over a declared genesis must conflict")
 	}
 
 	// A keyring on a server is accepted onto KeysDir as a srv:// reference; the
 	// keys step downloads it to a local directory (materializeKeyring). compose
 	// only records the reference here.
-	write("presets:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
+	write("existingInputs:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("srv:// preset keyring: %v", err)
+		t.Fatalf("srv:// bundle keyring: %v", err)
 	}
-	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "preset" {
+	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "keyPreset" {
 		t.Fatalf("srv:// keyring not carried: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
 	}
 
 	// A bare relative name is neither a local path nor a srv:// reference.
-	write("presets:\n  regression:\n    keyring: just-a-name\n")
+	write("existingInputs:\n  regression:\n    keyring: just-a-name\n")
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
 		t.Fatal("a bare relative keyring name must be rejected")
 	}
 
 	// A local keyring becomes the key dir.
-	write("presets:\n  regression:\n    keyring: /opt/keys/regression\n")
+	write("existingInputs:\n  regression:\n    keyring: /opt/keys/regression\n")
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("local preset keyring: %v", err)
+		t.Fatalf("local bundle keyring: %v", err)
 	}
-	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "preset" {
+	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "keyPreset" {
 		t.Fatalf("local keyring not applied: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
 	}
 }
@@ -413,13 +415,13 @@ func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
 	if unset.up.KeysDir != explicit.up.KeysDir || unset.up.KeysDir != "keys/preset" {
 		t.Errorf("keys default diverges: unset=%q explicit=%q", unset.up.KeysDir, explicit.up.KeysDir)
 	}
-	if unset.up.Validators != suiteDefaultValidators {
-		t.Errorf("validators default = %d, want %d", unset.up.Validators, suiteDefaultValidators)
+	if unset.up.BPCount != suiteDefaultValidators {
+		t.Errorf("validators default = %d, want %d", unset.up.BPCount, suiteDefaultValidators)
 	}
 }
 
 func TestInlineTopologyOf_Rejects(t *testing.T) {
-	bins := map[string]string{"wbft": "/opt/gwbft"}
+	bins := map[string]string{"wbft": "gwbft"}
 	cases := map[string]string{
 		"undeclared binary": `{"nodes":[{"role":"bp","binary":"ghost"}]}`,
 		"missing role":      `{"nodes":[{"binary":"wbft"}]}`,
@@ -430,7 +432,7 @@ func TestInlineTopologyOf_Rejects(t *testing.T) {
 	for name, topoJSON := range cases {
 		t.Run(name, func(t *testing.T) {
 			spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-			  "binaries":{"wbft":"/opt/gwbft"},"topology":`+topoJSON+`}`)
+			  "binaries":{"wbft":"gwbft"},"topology":`+topoJSON+`}`)
 			_ = bins
 			if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
 				t.Fatalf("topology %s accepted", topoJSON)
@@ -442,6 +444,8 @@ func TestInlineTopologyOf_Rejects(t *testing.T) {
 func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 	cases := map[string]map[string]any{
 		"unknown key":  {"boot": 1},
+		"retired bp":   {"validators": 4},
+		"retired en":   {"endpoints": 2},
 		"fraction":     {"bp": 2.5},
 		"negative":     {"en": -1},
 		"not a number": {"bp": "four"},
@@ -454,7 +458,7 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 			}
 		})
 	}
-	v, e, p, m, auto, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
+	v, e, p, m, auto, err := topologyOf(map[string]any{"bp": float64(4), "en": float64(2), "pn": float64(1), "sync_mode": "archive"})
 	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" || auto {
 		t.Fatalf("got %d/%d/%d/%q auto=%v (%v)", v, e, p, m, auto, err)
 	}
@@ -513,20 +517,6 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 	  "binaries":{"default":"gstable"},"target":"srv://"}`)
 	if _, err := compositionOf(context.Background(), bad, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
 		t.Fatal("a malformed env target must fail composition")
-	}
-}
-
-// TestCompositionOf_HandoffRejectsEnvComposeFields pins WA20: a handoff composes
-// from its profile and template, so env-level topology/hardforks/launch/config
-// have nowhere to go and are refused rather than silently dropped.
-func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
-	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/g.json")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"gwbft"},
-	  "topology":{"validators":4},
-	  "upgrade":{"profile":"p.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
-	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
-		t.Fatal("a handoff env that also declares a topology must be refused, not silently dropped")
 	}
 }
 

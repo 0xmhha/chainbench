@@ -234,7 +234,7 @@ func TestValidateCmd_ChainCases(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validate tests/tc: %v\n%s", err, got)
 	}
-	for _, want := range []string{"wemix-wbft-handoff", "stablenet-chain-up"} {
+	for _, want := range []string{"croissant-successors-take-over", "stablenet-chain-up"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output should mention %q:\n%s", want, got)
 		}

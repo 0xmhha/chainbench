@@ -5,7 +5,7 @@ import "math/big"
 // DefaultEnv is the governance policy a standalone wemix network starts from.
 //
 // These are the values the verified handoff profile uses
-// (profiles/wemix-upgrade.yaml). They live here rather than only in a profile
+// (presets/hardfork/wemix-upgrade.yaml). They live here rather than only in a preset
 // because a network has to be composable without one: requiring an operator to
 // supply thirteen governance parameters before a chain can start is how "bring
 // up wemix" stayed a manual procedure. A profile or an explicit config still

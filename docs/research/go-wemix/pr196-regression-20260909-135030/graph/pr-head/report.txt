@@ -1,0 +1,70 @@
+## Module sizes (top by LOC)
+
+| module | files | loc | types | funcs | languages |
+|---|---|---|---|---|---|
+| signer/fourbyte | 7 | 147893 | 7 | 45 | go |
+| core | 45 | 24598 | 75 | 856 | go |
+| wemix/bind | 8 | 23170 | 278 | 1549 | go |
+| les | 37 | 13045 | 118 | 560 | go |
+| trie | 24 | 9415 | 44 | 421 | go |
+| eth/downloader | 20 | 9106 | 45 | 356 | go |
+| core/rawdb | 27 | 8874 | 31 | 373 | go |
+| core/state/snapshot | 21 | 8312 | 38 | 250 | go |
+| core/vm | 26 | 7665 | 56 | 378 | go |
+| accounts/abi | 23 | 7374 | 22 | 143 | go |
+| les/downloader | 13 | 6967 | 38 | 309 | go |
+| core/types | 29 | 6638 | 57 | 371 | go |
+| crypto/bls12381 | 23 | 6518 | 20 | 343 | go |
+| cmd/geth | 20 | 6288 | 12 | 136 | go |
+| metrics | 53 | 6033 | 61 | 515 | go |
+| eth/protocols/snap | 10 | 6025 | 44 | 160 | go |
+| rpc | 29 | 5947 | 62 | 272 | go |
+| p2p/discover | 12 | 5474 | 34 | 248 | go |
+| wemix | 8 | 5357 | 15 | 147 | go |
+| accounts/abi/bind | 9 | 5294 | 23 | 68 | go |
+| wemix/governance-contract/test | 5 | 5187 | 10 | 67 | go |
+| p2p | 15 | 5135 | 50 | 200 | go |
+| rlp | 16 | 5053 | 54 | 202 | go |
+| cmd/puppeth | 22 | 5019 | 28 | 79 | go |
+| eth | 16 | 5010 | 33 | 243 | go |
+
+## Fan-in (most-imported internal modules)
+
+| module | imported by N modules |
+|---|---|
+| common | 98 |
+| log | 88 |
+| crypto | 79 |
+| core/types | 71 |
+| params | 57 |
+| common/math | 55 |
+| common/hexutil | 55 |
+| rlp | 47 |
+| core/rawdb | 40 |
+| ethdb | 36 |
+| core/vm/runtime | 35 |
+| rpc | 32 |
+| p2p/enode | 32 |
+| metrics | 28 |
+| event | 26 |
+| node | 26 |
+| p2p | 25 |
+| core/state | 24 |
+| core/vm | 24 |
+| trie | 24 |
+| accounts | 21 |
+| eth/ethconfig | 18 |
+| common/mclock | 17 |
+| accounts/keystore | 17 |
+| consensus | 16 |
+
+## Top supertypes / adopted interfaces
+
+| supertype | adoption count |
+|---|---|
+| (ServerTransport) | 2 |
+| (http.server.BaseHTTPRequestHandler) | 1 |
+
+## Totals
+
+- modules: 181, files: 1187, loc: 518247, types: 2522, type_edges: 3

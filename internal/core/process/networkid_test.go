@@ -11,14 +11,14 @@ import (
 	"testing"
 )
 
-// TestNodeLaunchArgs_EmitsTheManifestNetworkID: the devp2p network id was never
+// TestNodeConfigArgv_EmitsTheManifestNetworkID: the devp2p network id was never
 // on the command line. A chain whose network id differs from its genesis chain
 // id — which the handoff produces, because it forces the chain id — ran on
 // whichever the binary inferred, and two networks that should not see each
 // other could agree to.
 func TestNodeConfigArgv_EmitsTheManifestNetworkID(t *testing.T) {
 	plugin := registry.StaticPlugin{
-		M: registry.Manifest{
+		M: registry.Manifest{Dialect: "geth114",
 			ID: "stablenet", Binary: "go-stablenet", NetworkID: 8283,
 			Consensus: registry.ConsensusSpec{RPCNamespace: "istanbul"},
 		},

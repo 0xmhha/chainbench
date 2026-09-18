@@ -86,7 +86,8 @@ internal/netmap/         server set, placement, and the one dial-wiring point
 internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
 internal/testkit/        test-case framework
-profiles/                local network profiles
+profiles/                remote-chain connection profiles
+presets/hardfork/        hardfork presets
 tests/                   Go test cases (tests/all) + reproduction scripts (tests/repro)
 ```
 

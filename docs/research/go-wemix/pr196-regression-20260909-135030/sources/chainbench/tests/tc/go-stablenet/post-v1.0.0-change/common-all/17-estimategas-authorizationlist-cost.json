@@ -1,0 +1,280 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "estimategas-authorizationlist-cost",
+  "description": "TC-4-2-01/03: EIP-7702 authorizationList 를 1건·2건 붙였을 때 eth_estimateGas 가 그만큼 늘어난다. 경계값은 preActions 에서 이름을 붙여 한 번씩만 적는다. 상한은 노드의 estimateGas 오차 1.5% 정책에서 나온다 — 절대 상한은 하한 x 1.015, 증가분 상한은 절대 상한에서 baseline(21000)을 뺀 값이다.",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "estimategas-authorizationlist-cost-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "hooks": {
+    "pre": [
+      {
+        "do": "read",
+        "of": [
+          "21000"
+        ],
+        "op": "sum",
+        "save": "gasBaselineExpected",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "46000"
+        ],
+        "op": "sum",
+        "save": "gas1AuthMin",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "46690"
+        ],
+        "op": "sum",
+        "save": "gas1AuthMax",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "71000"
+        ],
+        "op": "sum",
+        "save": "gas2AuthMin",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "72065"
+        ],
+        "op": "sum",
+        "save": "gas2AuthMax",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "25000"
+        ],
+        "op": "sum",
+        "save": "authCost1Min",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "25690"
+        ],
+        "op": "sum",
+        "save": "authCost1Max",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "50000"
+        ],
+        "op": "sum",
+        "save": "authCost2Min",
+        "source": "derive"
+      },
+      {
+        "do": "read",
+        "of": [
+          "51065"
+        ],
+        "op": "sum",
+        "save": "authCost2Max",
+        "source": "derive"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "delegate",
+      "saveKey": "delegateKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority1",
+      "saveKey": "authority1Key"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority2",
+      "saveKey": "authority2Key"
+    },
+    {
+      "do": "read",
+      "method": "eth_coinbase",
+      "params": [],
+      "save": "sponsor",
+      "source": "rpcCall"
+    },
+    {
+      "authorityKey": "$authority1Key",
+      "delegate": "$delegate",
+      "do": "signAuthorization",
+      "save": "auth1"
+    },
+    {
+      "authorityKey": "$authority2Key",
+      "delegate": "$delegate",
+      "do": "signAuthorization",
+      "save": "auth2"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gasBaseline",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "authorizationList": [
+            "$auth1"
+          ],
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gas1Auth",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "authorizationList": [
+            "$auth1",
+            "$auth2"
+          ],
+          "from": "$sponsor",
+          "to": "$sponsor"
+        }
+      ],
+      "save": "gas2Auth",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$gasBaselineExpected",
+      "of": [
+        "$gasBaseline"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$gas1AuthMin",
+      "of": [
+        "$gas1Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$gas1AuthMax",
+      "of": [
+        "$gas1Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$gas2AuthMin",
+      "of": [
+        "$gas2Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$gas2AuthMax",
+      "of": [
+        "$gas2Auth"
+      ],
+      "op": "sum"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$authCost1Min",
+      "of": [
+        "$gas1Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$authCost1Max",
+      "of": [
+        "$gas1Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "derive",
+      "is": "$authCost2Min",
+      "of": [
+        "$gas2Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "LessOrEqual",
+      "expect": "derive",
+      "is": "$authCost2Max",
+      "of": [
+        "$gas2Auth",
+        "$gasBaseline"
+      ],
+      "op": "diff"
+    }
+  ]
+}

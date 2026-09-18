@@ -14,6 +14,12 @@
 // unit-testable.
 package nodeconfig
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 // Key is the chain-agnostic name of one launch knob. Typed so a knob is never
 // a magic string; the Dialect maps it to (or refuses) a concrete flag.
 type Key string
@@ -159,16 +165,40 @@ const (
 	KeyMinerGasTarget    Key = "miner.gastarget"          // gwemix --miner.gastarget
 )
 
-// Layer names one precedence level of the value stack. A later layer setting
-// the same Key wins; Args records the winner so `chain status` can show which
-// layer produced each flag (mirrors config's flag > file > default rule).
+// Layer names one precedence level of the value stack: a later layer setting
+// the same Key wins.
+//
+// It travels so a refusal can say WHO asked for a knob the binary does not
+// have, which is the difference between "this dialect has no such flag" and
+// "the case you wrote asked for a flag this dialect has no such flag". The
+// winner used to be stored alongside each value as well, for a `chain status`
+// display that was never built — nothing read it in the two years it existed,
+// so the value went and the diagnostic stayed.
+//
+// These four are not the three tiers a declaration is merged through
+// (chain-preset, then the case's own override, then the command). The first
+// two name who COMPUTED a value and the last two which document SUPPLIED one,
+// and the first two tiers both arrive already merged as LayerEnv. That is on
+// purpose: which tier a declared value came from is answered by reading the
+// case file, not by the argv assembler.
 type Layer string
 
 const (
-	LayerFamily Layer = "family"     // consensus-family defaults
-	LayerRole   Layer = "role"       // role-derived (validator mines, ...)
-	LayerEnv    Layer = "env.launch" // DSL environment launch block
-	LayerCase   Layer = "case"       // per-test-case override — always wins
+	// LayerHarness is what the harness itself turns on for every node it
+	// composes, regardless of chain or role. It is not a consensus-family
+	// choice — the three knobs here (insecure unlock, the two legacy RPC
+	// permissions) are what a test network needs and what the dialect then
+	// filters by whether the binary has the flag at all.
+	LayerHarness Layer = "harness"
+	// LayerRole is derived from the node's own facts: where its data lives,
+	// which ports it holds, which key files it opens, whether it mines.
+	LayerRole Layer = "role"
+	// LayerEnv is what a declaration asked for, after the chain-preset and the
+	// case's own overrides have been merged into one document.
+	LayerEnv Layer = "env.launch"
+	// LayerCommand is what the invocation overrode, from the CLI or from MCP.
+	// It is also where an override that names no layer lands, and it wins.
+	LayerCommand Layer = "command"
 )
 
 // flagSpec is one dialect row: concrete spelling plus whether the flag is
@@ -337,12 +367,35 @@ func Geth110Wemix() Dialect {
 	return Dialect{ID: "geth110-wemix", flags: f}
 }
 
-// DialectFor selects the dialect for a chain manifest's binary generation.
-// The mapping is a measured fact (flag-graph §1.1): gstable and gwbft share
-// one surface; gwemix is the older generation.
-func DialectFor(chainID string) Dialect {
-	if chainID == "wemix" {
-		return Geth110Wemix()
+// dialects are the flag vocabularies this build knows, by the id a chain
+// manifest names. Which one a chain speaks is the chain's answer; what each one
+// contains is this package's, and that split is the point: the mapping used to
+// be an `if chainID == "wemix"` here, so a chain on the older generation under
+// any other name silently got the modern vocabulary.
+var dialects = map[string]func() Dialect{
+	"geth114":       Geth114,
+	"geth110-wemix": Geth110Wemix,
+}
+
+// DialectFor returns the flag vocabulary named by a manifest's dialect field.
+//
+// An unknown name is an error rather than a fallback. A fallback here is a node
+// that launches with flags its binary does not have and dies at boot saying so
+// about the flag, which tells nobody that a manifest named a vocabulary this
+// build does not carry.
+func DialectFor(name string) (Dialect, error) {
+	if f, ok := dialects[name]; ok {
+		return f(), nil
 	}
-	return Geth114()
+	return Dialect{}, fmt.Errorf("launchopt: unknown dialect %q (this build has %s)", name, strings.Join(DialectNames(), ", "))
+}
+
+// DialectNames returns the sorted ids of the vocabularies this build carries.
+func DialectNames() []string {
+	names := make([]string, 0, len(dialects))
+	for n := range dialects {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
 }

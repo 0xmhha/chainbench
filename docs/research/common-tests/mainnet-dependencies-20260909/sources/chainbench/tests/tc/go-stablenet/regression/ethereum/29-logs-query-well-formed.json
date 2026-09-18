@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "logs-query-well-formed",
+  "description": "RT-A-4-04 — eth_getLogs 이벤트 로그 조회 (원본 regression/ethereum/29-test-eth-get-logs)",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "logs-query-well-formed-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "latest",
+      "is": "0",
+      "select": "count",
+      "toBlock": "latest"
+    }
+  ]
+}

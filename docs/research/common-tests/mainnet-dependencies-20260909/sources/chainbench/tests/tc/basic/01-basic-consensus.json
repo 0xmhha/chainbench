@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "basic-consensus",
+  "description": "Verify blocks are being produced and all validators participate (원본 basic/consensus.sh)",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "basic-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 20,
+      "timeout": "180s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
+  ]
+}

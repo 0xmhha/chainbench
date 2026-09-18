@@ -1,0 +1,499 @@
+package chainsetup_test
+
+import (
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
+
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// The step stack has to be able to compose every network the setup stack can,
+// or it cannot replace it. These cover the customizations setup supported and
+// the steps did not: per-role sync mode, genesis config overrides, and the
+// genesis overlay with its capability claims.
+
+// composed runs new + allocate + keys on a fresh workspace and returns it.
+func composed(t *testing.T, alloc chainsetup.NetAllocateIn) (dir string, d chainsetup.Deps) {
+	t.Helper()
+	dir = t.TempDir()
+	d = chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	alloc.DataDir = dir
+	if _, err := chainsetup.NetAllocate(ctx, d, alloc); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	return dir, d
+}
+
+// stateOf reads the persisted composition state.
+func stateOf(t *testing.T, dir string, d chainsetup.Deps) chainsetup.State {
+	t.Helper()
+	out, err := chainsetup.NetStatus(context.Background(), d, chainsetup.NetStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	return out.State
+}
+
+func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
+	// Every node rendered "full" before this: a snap-sync re-sync test composed
+	// through the steps was silently running full sync instead.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1, EndpointSyncMode: "snap"})
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+	if _, err := chainsetup.NetConfig(context.Background(), d, chainsetup.NetConfigIn{DataDir: dir}); err != nil {
+		t.Fatalf("config: %v", err)
+	}
+
+	for _, n := range stateOf(t, dir, d).Nodes {
+		want := "full"
+		if node.Is(node.Role(n.Role), node.RoleEN) {
+			want = "snap"
+		}
+		if n.SyncMode != want {
+			t.Errorf("node%d (%s) sync mode = %q, want %q", n.Index, n.Role, n.SyncMode, want)
+		}
+		body, err := os.ReadFile(n.ConfigPath)
+		if err != nil {
+			t.Fatalf("read node%d config: %v", n.Index, err)
+		}
+		if !strings.Contains(string(body), `SyncMode = "`+want+`"`) {
+			t.Errorf("node%d config does not render SyncMode %q", n.Index, want)
+		}
+	}
+}
+
+func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
+	// A sealing node must hold full state, so the knob must not reach it even
+	// when the caller sets it.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, EndpointSyncMode: "snap"})
+	for _, n := range stateOf(t, dir, d).Nodes {
+		if n.SyncMode != "full" {
+			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
+		}
+	}
+}
+
+func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+
+	out, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
+		DataDir: dir, Set: []string{"bohoBlock=10"},
+	})
+	if err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+	if !strings.Contains(out.Detail, "override") {
+		t.Errorf("detail should mention the overrides, got %q", out.Detail)
+	}
+	cfg := genesisConfig(t, filepath.Join(dir, "genesis.json"))
+	if got := cfg["bohoBlock"]; got != float64(10) {
+		t.Errorf("bohoBlock = %v, want 10", got)
+	}
+	// A fork moved off genesis is advertised so the fork-transition cases run.
+	if !hasCapability(stateOf(t, dir, d).Capabilities, "delayed-boho") {
+		t.Errorf("capabilities = %v, want delayed-boho", stateOf(t, dir, d).Capabilities)
+	}
+}
+
+func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
+		DataDir: dir, Set: []string{"bohoBlock=0"},
+	}); err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+	caps := stateOf(t, dir, d).Capabilities
+	if hasCapability(caps, "delayed-boho") {
+		t.Errorf("block 0 is genesis, not a delay: %v", caps)
+	}
+	// The baseline capabilities are still there.
+	if !hasCapability(caps, "ws") {
+		t.Errorf("capabilities = %v, want ws", caps)
+	}
+}
+
+func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	overlay := filepath.Join(t.TempDir(), "overlay.json")
+	if err := os.WriteFile(overlay, []byte(`{"capabilities":["account-extra"],"genesis":{"config":{"chainId":4242}}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: overlay})
+	if err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+	if !strings.Contains(out.Detail, "overlay") {
+		t.Errorf("detail should mention the overlay, got %q", out.Detail)
+	}
+	if got := genesisConfig(t, filepath.Join(dir, "genesis.json"))["chainId"]; got != float64(4242) {
+		t.Errorf("overlay did not merge: chainId = %v", got)
+	}
+	if !hasCapability(stateOf(t, dir, d).Capabilities, "account-extra") {
+		t.Errorf("overlay capability not advertised: %v", stateOf(t, dir, d).Capabilities)
+	}
+}
+
+func TestNetGenesis_MalformedInputsAreRejected(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+	ctx := context.Background()
+
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
+		t.Error("want an error for an override without a value")
+	}
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: "/nonexistent/overlay.json"}); err == nil {
+		t.Error("want an error for a missing overlay file")
+	}
+	bad := filepath.Join(t.TempDir(), "bad.json")
+	if err := os.WriteFile(bad, []byte(`{not json`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: bad}); err == nil {
+		t.Error("want an error for an unparseable overlay")
+	}
+}
+
+// genesisConfig reads the `config` object out of a written genesis.
+func genesisConfig(t *testing.T, path string) map[string]any {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read genesis: %v", err)
+	}
+	var gen struct {
+		Config map[string]any `json:"config"`
+	}
+	if err := json.Unmarshal(raw, &gen); err != nil {
+		t.Fatalf("parse genesis: %v", err)
+	}
+	return gen.Config
+}
+
+func TestNetAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+
+	topo := filepath.Join(t.TempDir(), "topology.yaml")
+	if err := os.WriteFile(topo, []byte(`chain: stablenet
+nodes:
+  - index: 1
+    role: bp
+    bootnode: true
+  - index: 2
+    role: en
+    sync_mode: archive
+  - index: 3
+    role: validator
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, TopologyPath: topo})
+	if err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	if !strings.Contains(out.Detail, "topology") {
+		t.Errorf("detail should say the layout came from a topology, got %q", out.Detail)
+	}
+
+	// NM6: the composition records the canonical vocabulary whatever the
+	// topology said. node3 above is declared with the legacy word on purpose,
+	// so this also pins that the file's spelling never reaches the state.
+	st := stateOf(t, dir, d)
+	want := []struct{ role, sync string }{
+		{"bp", "full"},
+		{"en", "archive"},
+		{"bp", "full"},
+	}
+	if len(st.Nodes) != len(want) {
+		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))
+	}
+	for i, w := range want {
+		if st.Nodes[i].Role != w.role || st.Nodes[i].SyncMode != w.sync {
+			t.Errorf("node%d = %s/%s, want %s/%s", i+1, st.Nodes[i].Role, st.Nodes[i].SyncMode, w.role, w.sync)
+		}
+	}
+	// The validator count comes from the resolved layout, not a requested
+	// number, so the genesis step sizes its validator set correctly.
+	if st.Validators != 2 {
+		t.Errorf("validators = %d, want 2 from the topology", st.Validators)
+	}
+	if st.Bootnode != 1 {
+		t.Errorf("bootnode = %d, want 1", st.Bootnode)
+	}
+}
+
+func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
+	// A generated set for a network with endpoints must declare exactly the
+	// topology's validators, not one per node. When it claimed every node a
+	// validator, a 4-bp + 11-en network failed genesis ("members and validators
+	// must be the same"). The allocated validator count is the authority.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	ctx := context.Background()
+	genKeys := filepath.Join(t.TempDir(), "gen")
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Validators: 2, Endpoints: 3,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	out, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir, Source: "generate"})
+	if err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	if !strings.Contains(out.Detail, "5 identities") {
+		t.Errorf("expected 5 identities, got %q", out.Detail)
+	}
+	if !strings.Contains(out.Detail, "2 declared validators") {
+		t.Errorf("generate must declare the topology's 2 validators, got %q", out.Detail)
+	}
+}
+
+func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
+	// A network of 3 validators. A launch override scoped to the whole "bp" role
+	// reaches every node; a "node2" override reaches only node2's argv. This
+	// exercises the real verb path (place -> keys -> build), not a stub.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 3})
+	ctx := context.Background()
+	out, err := chainsetup.NetLaunchOpts(ctx, d, chainsetup.NetLaunchOptsIn{
+		DataDir: dir,
+		ScopedSet: map[string][]string{
+			"bp":    {"metrics"},
+			"node2": {"metrics.port=6161"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("launchopts: %v", err)
+	}
+	if len(out.Nodes) != 3 {
+		t.Fatalf("got %d nodes", len(out.Nodes))
+	}
+	for _, n := range out.Nodes {
+		argv := strings.Join(n.Args, " ")
+		if !strings.Contains(argv, "--metrics") {
+			t.Errorf("node%d argv missing the role-scoped --metrics: %s", n.Index, argv)
+		}
+		hasPort := strings.Contains(argv, "--metrics.port")
+		if n.Index == 2 && !hasPort {
+			t.Errorf("node2 argv missing its node-scoped --metrics.port: %s", argv)
+		}
+		if n.Index != 2 && hasPort {
+			t.Errorf("node%d argv has --metrics.port that was scoped to node2: %s", n.Index, argv)
+		}
+	}
+}
+
+func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
+	// A topology naming a per-node binary, plus the name→path map, records the
+	// binary on each node and stores the map on the workspace for launch.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Binary: "stable"},
+		{Index: 2, Role: "bp", Binary: "wbft"},
+		{Index: 3, Role: "en", Binary: "wbft"},
+	}}
+	bins := map[string]string{"stable": "/opt/gstable", "wbft": "/opt/gwbft"}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Topology: topo, Binaries: bins,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	st := stateOf(t, dir, d)
+	want := []string{"stable", "wbft", "wbft"}
+	if len(st.Nodes) != len(want) {
+		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))
+	}
+	for i, w := range want {
+		if st.Nodes[i].Binary != w {
+			t.Errorf("node%d binary = %q, want %q", i+1, st.Nodes[i].Binary, w)
+		}
+	}
+	if st.Binaries["stable"] != "/opt/gstable" || st.Binaries["wbft"] != "/opt/gwbft" {
+		t.Errorf("state binaries = %v", st.Binaries)
+	}
+}
+
+func TestNetAllocate_TopologyCannotMakeAValidatorStateless(t *testing.T) {
+	// A sealing node must hold full state; a topology asking otherwise is
+	// overridden rather than silently producing a network that cannot seal.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	topo := filepath.Join(t.TempDir(), "topology.yaml")
+	if err := os.WriteFile(topo, []byte(`chain: stablenet
+nodes:
+  - index: 1
+    role: bp
+    sync_mode: snap
+  - index: 2
+    role: bp
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	for _, n := range stateOf(t, dir, d).Nodes {
+		if n.SyncMode != "full" {
+			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
+		}
+	}
+}
+
+func TestNetAllocate_MissingTopologyFileIsAnError(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 1})
+	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
+		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
+	}); err == nil {
+		t.Error("want an error for a missing topology file")
+	}
+}
+
+func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
+	// A project-supplied chain has to resolve on every later step, not just at
+	// `new`: the workspace records the manifest, not only the id.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+
+	manifestDir := t.TempDir()
+	manifest := filepath.Join(manifestDir, "manifest.json")
+	if err := os.WriteFile(manifest, []byte(`{
+		"id": "foonet", "binary": "gfoo", "chain_id": 9999, "network_id": 9999,
+		"miner_recommit": "duration", "bootstrap": {"type": "static"},
+		"consensus_family": "wbft", "protocol": "stablenet",
+		"genesis": {"template": "foonet-genesis"},
+		"consensus": {"rpc_namespace": "istanbul", "validators_method": "istanbul_getValidators"},
+		"probe": {"method": "istanbul_getValidators"}
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	template := filepath.Join(manifestDir, "genesis.json")
+	if err := os.WriteFile(template, []byte(`{"config":{"chainId":9999},"extraData":"0x0"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{
+		DataDir: dir, KeysDir: keysAbs, ManifestPath: manifest, TemplatePath: template,
+	}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	// The manifest's own id is recorded, so status reports a real chain.
+	if got := stateOf(t, dir, d).Chain; got != "foonet" {
+		t.Errorf("chain = %q, want foonet from the manifest", got)
+	}
+
+	// A later step must resolve the same plugin — registry.Get("foonet") would
+	// fail, since it is not an embedded chain.
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+		t.Fatalf("allocate on an external chain: %v", err)
+	}
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis on an external chain: %v", err)
+	}
+	if got := genesisConfig(t, filepath.Join(dir, "genesis.json"))["chainId"]; got != float64(9999) {
+		t.Errorf("genesis chainId = %v, want the manifest's 9999", got)
+	}
+}
+
+func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
+	if _, err := chainsetup.NetNew(context.Background(), chainsetup.Deps{Clock: fixedClock()},
+		chainsetup.NetNewIn{DataDir: t.TempDir()}); err == nil {
+		t.Error("want an error with neither a chain nor a manifest")
+	}
+}
+
+func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
+	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
+	// network has to be readable through the same call a setup one is.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1})
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+
+	out, err := chainsetup.NetworkStatus(context.Background(), d, chainsetup.NetworkStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("chainsetup.NetworkStatus: %v", err)
+	}
+	if out.Nodes.Chain != "stablenet" || len(out.Nodes.Nodes) != 3 {
+		t.Fatalf("node set = %+v", out.Nodes)
+	}
+	first := out.Nodes.Nodes[0]
+	if first.RPCURL == "" || !strings.HasPrefix(first.RPCURL, "http://127.0.0.1:") {
+		t.Errorf("node1 rpc url = %q", first.RPCURL)
+	}
+	if first.Ports.HTTP == 0 || first.Ports.P2P == 0 {
+		t.Errorf("node1 ports not carried over: %+v", first.Ports)
+	}
+	// A network that has never been started reports no PIDs, the same
+	// convention as an attached node chainbench did not launch.
+	if first.PID != 0 {
+		t.Errorf("node1 PID = %d, want 0 before start", first.PID)
+	}
+	if !hasCapability(out.Nodes.Capabilities, "ws") {
+		t.Errorf("capabilities did not survive the bridge: %v", out.Nodes.Capabilities)
+	}
+}
+
+func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
+
+	out, err := chainsetup.NetworkStop(context.Background(), d, chainsetup.NetworkStopIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("chainsetup.NetworkStop: %v", err)
+	}
+	if out.Stopped != 0 {
+		t.Errorf("stopped = %d, want 0 (nothing was started)", out.Stopped)
+	}
+}
+
+// hasCapability reports whether want is among caps.
+func hasCapability(caps []string, want string) bool {
+	for _, c := range caps {
+		if c == want {
+			return true
+		}
+	}
+	return false
+}

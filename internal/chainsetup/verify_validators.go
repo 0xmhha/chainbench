@@ -48,7 +48,7 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	if err != nil {
 		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: load keys: %w", err)
 	}
-	expected := preset.NetworkFor(w.state.Validators).Validators
+	expected := preset.NetworkFor(w.state.BPCount).Validators
 
 	url, err := w.nodeHTTPURL(w.state.Nodes[0])
 	if err != nil {

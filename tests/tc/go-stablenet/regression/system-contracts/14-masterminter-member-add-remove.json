@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "masterminter-member-add-remove",
   "description": "RT-F-4-03 — GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember) (원본 regression/system-contracts/14-test-masterminter-self-member)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMasterMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "masterminter-member-add-remove-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -52,7 +37,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "addHash",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "do": "read",
@@ -79,14 +64,14 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "addApHash",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "data": "0x6ad89315",
       "do": "read",
       "save": "ver1",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "do": "read",
@@ -104,14 +89,14 @@
       "do": "read",
       "save": "isMem1",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "data": "0x1703a018",
       "do": "read",
       "save": "q1",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "do": "read",
@@ -131,7 +116,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "rmHash",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "do": "read",
@@ -158,7 +143,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "rmApHash2",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "data": "$rmApprove",
@@ -167,14 +152,14 @@
       "gas": "0x16e360",
       "on": "node3",
       "save": "rmApHash3",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "data": "0x6ad89315",
       "do": "read",
       "save": "ver2",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "do": "read",
@@ -192,14 +177,14 @@
       "do": "read",
       "save": "isMem2",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "data": "0x1703a018",
       "do": "read",
       "save": "q2",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "expect": "txStatus",

@@ -10,7 +10,7 @@ import (
 func baseManifest(extra string) string {
 	return `{
 		"id": "x", "binary": "gx", "chain_id": 1,
-		"network_id": 1, "miner_recommit": "duration",
+		"network_id": 1, "miner_recommit": "duration", "dialect": "geth114",
 		"bootstrap": {"type": "static"}, "consensus_family": "wbft"` + extra + `}`
 }
 
@@ -34,11 +34,14 @@ func TestParseManifest_Rejects(t *testing.T) {
 			`{"id":"x","binary":"gx","chain_id":1,"miner_recommit":"nanos","bootstrap":{"type":"static"},"consensus_family":"poa"}`,
 			"network_id"},
 		{"bad miner_recommit",
-			`{"id":"x","binary":"gx","chain_id":1,"network_id":1,"miner_recommit":"secs","bootstrap":{"type":"static"},"consensus_family":"poa"}`,
+			`{"id":"x","binary":"gx","chain_id":1,"network_id":1,"dialect":"geth114","miner_recommit":"secs","bootstrap":{"type":"static"},"consensus_family":"poa"}`,
 			"miner_recommit"},
 		{"bad bootstrap type",
-			`{"id":"x","binary":"gx","chain_id":1,"network_id":1,"miner_recommit":"nanos","bootstrap":{"type":"magic"},"consensus_family":"poa"}`,
+			`{"id":"x","binary":"gx","chain_id":1,"network_id":1,"dialect":"geth114","miner_recommit":"nanos","bootstrap":{"type":"magic"},"consensus_family":"poa"}`,
 			"bootstrap.type"},
+		{"missing dialect",
+			`{"id":"x","binary":"gx","chain_id":1,"network_id":1,"miner_recommit":"nanos","bootstrap":{"type":"static"},"consensus_family":"poa"}`,
+			"missing dialect"},
 		{"incomplete upgrade",
 			baseManifest(`,"upgrade":{"to_chain":"wbft"}`),
 			"upgrade requires"},

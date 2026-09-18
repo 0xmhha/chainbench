@@ -54,6 +54,11 @@ func runSuite(t *testing.T, in RunSuiteIn) error {
 	if in.DataDir == "" && in.SpecContent != nil {
 		in.DataDir = t.TempDir()
 	}
+	// Named, so a refusal that gets as far as opening a session writes into the
+	// test's own directory rather than the operator's ~/.chainbench.
+	if in.ArtifactRoot == "" {
+		in.ArtifactRoot = t.TempDir()
+	}
 	_, err := RunSuite(context.Background(), chainsetupDepsForTest(), in)
 	return err
 }
@@ -68,7 +73,7 @@ func TestRunSuite_RefusesWithoutSpecsOrWorkspace(t *testing.T) {
 		t.Errorf("a run with no specs should say so: %v", err)
 	}
 	spec := caseSpec(t, "a", "wbft", "gwbft", nil)
-	_, err := RunSuite(context.Background(), chainsetupDepsForTest(), RunSuiteIn{SpecContent: [][]byte{spec}})
+	_, err := RunSuite(context.Background(), chainsetupDepsForTest(), RunSuiteIn{SpecContent: [][]byte{spec}, ArtifactRoot: t.TempDir()})
 	if err == nil || !strings.Contains(err.Error(), "workspace directory is required") {
 		t.Errorf("a run with no workspace should say so: %v", err)
 	}

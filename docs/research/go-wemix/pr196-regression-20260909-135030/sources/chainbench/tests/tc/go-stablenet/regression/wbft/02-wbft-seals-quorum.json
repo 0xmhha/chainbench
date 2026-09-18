@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-seals-quorum",
+  "description": "RT-B-02 — WBFTExtra에 Committed Seal + Prepared Seal 모두 존재하고 quorum 이상 (원본 regression/wbft/02-test-wbft-extra-seal)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-seals-quorum-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "0x",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "select": "committedSeal.signature"
+    },
+    {
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "0x",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "select": "preparedSeal.signature"
+    }
+  ]
+}

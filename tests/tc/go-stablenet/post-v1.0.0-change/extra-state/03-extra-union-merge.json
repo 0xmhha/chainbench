@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "extra-union-merge",
   "description": "TC-4-5-05/06: alloc.Extra 와 GovCouncil params 가 서로 다른 계정을 인가하면 합집합이 되고, 양쪽에 다 있는 계정은 중복 없이 한 번만 센다 (3개, 4개가 아님).",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "extra-union-merge-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "alloc": {
@@ -89,28 +75,28 @@
       "data": "$allocOnly",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
       "compare": "Equal",
       "data": "$paramOnly",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
       "compare": "Equal",
       "data": "$bothSides",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
       "compare": "Equal",
       "data": "0x6a6debd7",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000003",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     }
   ]
 }

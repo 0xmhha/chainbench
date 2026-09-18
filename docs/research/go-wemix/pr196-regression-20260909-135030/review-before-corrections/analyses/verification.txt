@@ -1,0 +1,14 @@
+Source completeness: 45 Common rows + 29 Dual rows + 189 JSON files = 263 records.
+TC paths: 189 unique, exact match against captured directory.
+Document raw rows: 74 exact source-line matches.
+Crosswalk: 74 records.
+Additional tests: 16 proposals (P0 7, P1 8, P2 1).
+Captured source hashes: 4305 verified unchanged.
+Citations: 1530 references across 14 markdown documents, all resolve.
+Mermaid: 3 diagrams structurally validated; not a browser-render validation.
+Analysis helper Python syntax: checked in memory.
+Project model: valid (8 selected target modules, 279 capabilities/scenarios); wemix context module has no assigned scenario capability.
+Workflow: valid, analysis submitted, no implementation approval recorded.
+PR head/base: unchanged on final read-only observation.
+Application tests/build/runtime experiments: NOT RUN.
+Verification time: 2026-09-09T05:01:47.135433+00:00

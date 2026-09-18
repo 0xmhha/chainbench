@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "sender-blacklisted-rejected",
   "description": "RT-E-01 — 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount) (원본 regression/blacklist-authorized/01-test-sender-blacklisted)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "sender-blacklisted-rejected-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -60,7 +45,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "addHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -87,7 +72,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "addApHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "sendTx",

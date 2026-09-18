@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "authorized-accounts-empty",
   "description": "TC-4-3-06: GovCouncil authorizedAccounts splitAndTrim — 빈 문자열 \"\" → 0",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon",
+    "contract:govCouncil"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "authorized-accounts-empty-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {
@@ -49,7 +35,7 @@
       "data": "0x6a6debd7",
       "expect": "call",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     }
   ]
 }

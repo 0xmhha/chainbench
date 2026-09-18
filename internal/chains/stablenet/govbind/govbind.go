@@ -2,7 +2,7 @@
 // proposal lifecycle (propose -> approve -> execute), the MintProof encoder, and
 // the two decoders needed to drive it (the proposalId from a ProposalCreated log
 // and the status from the proposals() getter). This is stablenet-specific chain
-// knowledge, so it lives under pkg/chains/stablenet — the generic pkg/accounts
+// knowledge, so it lives under internal/chains/stablenet — the generic internal/accounts
 // package holds only the chain-agnostic ABI/event/tx helpers these build on.
 // A live signer path (node-side eth_sendTransaction from unlocked validators,
 // for the multi-signer quorum) is a separate concern, so everything here is

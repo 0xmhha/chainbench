@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -36,7 +38,7 @@ type runReport struct {
 	app.RunSummary
 }
 
-// newRunCmd runs DSL test specs through the test engine. With --workspace-dir
+// NewRun runs DSL test specs through the test engine. With --workspace-dir
 // it composes the network the specs declare through the workspace steps (a
 // handoff env composes the handoff) and runs against that; with --rpc it
 // attaches to a running network. The engine's self-assembly build path is
@@ -49,12 +51,13 @@ func NewRun() *cobra.Command {
 		keysDir         string
 		keysSource      string
 		artifactRoot    string
-		validators      int
+		bpCount         int
 		chainID         int64
 		networkID       int64
 		launchOpts      []string
 		dashboardURL    string
 		jsonOut         bool
+		noSkips         bool
 		workspaceDir    string
 		workspaceConfig string
 		keepUp          bool
@@ -62,6 +65,8 @@ func NewRun() *cobra.Command {
 		nodeMonitorT    time.Duration
 		docker          bool
 		attach          bool
+		planOnly        bool
+		envRef          string
 		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -79,16 +84,37 @@ func NewRun() *cobra.Command {
 				// composition advertised, which is what lets a gated spec run
 				// against the network the operator set up rather than a fresh
 				// one built to satisfy the gate.
-				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut)
+				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			case len(rpcURLs) > 0 && workspaceDir != "":
 				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc (use --attach to run against the network it already composed)")
 			case len(rpcURLs) > 0:
-				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut)
+				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			case workspaceDir == "":
-				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
+				// Nothing on the command line said which network. Ask the
+				// specs: an env may declare that it attaches to one that is
+				// already up, and that is the only form that needs no flag.
+				//
+				// Asked here and not earlier because the command line wins
+				// (§2.5 override order): --rpc, --attach and --workspace-dir
+				// are all decided above, so reaching this point means the
+				// operator named no network at all.
+				at, aerr := app.DeclaredAttach(args)
+				if aerr != nil {
+					return aerr
+				}
+				if at == nil {
+					return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one) — or declare env.attach in the specs")
+				}
+				if chain == "" {
+					chain = at.Chain
+				}
+				if !cmd.Flags().Changed("keys") {
+					keysDir = at.KeysDir
+				}
+				return runAttachDeclared(cmd, args, chain, at, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			}
 			in := app.RunSuiteIn{
-				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
+				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
 				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 				NodeMonitorTimeout: nodeMonitorT,
@@ -99,8 +125,8 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("keys-source") {
 				in.KeysSource = keysSource
 			}
-			if cmd.Flags().Changed("validators") {
-				in.Validators = validators
+			if cmd.Flags().Changed("bp") {
+				in.BPCount = bpCount
 			}
 			if cmd.Flags().Changed("artifact-root") {
 				in.ArtifactRoot = artifactRoot
@@ -108,18 +134,26 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("workspace-config") {
 				in.WorkspaceConfigPath = workspaceConfig
 			}
+			if planOnly {
+				return showPlan(cmd, in, jsonOut)
+			}
+			// The plan goes to stderr, not stdout: --json promises a document
+			// and a run that printed prose above it would break every reader.
+			in.OnPlan = planPrinter(cmd.ErrOrStderr())
 			if len(args) > 1 {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
 				// preflight decides whether to reuse it.
-				return runComposedSequence(cmd, in, jsonOut)
+				return runComposedSequence(cmd, in, jsonOut, noSkips)
 			}
-			return runComposed(cmd, in, jsonOut)
+			return runComposed(cmd, in, jsonOut, noSkips)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
+	cmd.Flags().StringVar(&envRef, "env", "", "compose: run every case on this chain declaration instead of the one it names (an env id, or a path to an env file); what a case overrode is kept")
+	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")
@@ -128,11 +162,13 @@ func NewRun() *cobra.Command {
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
-	cmd.Flags().StringVar(&keysSource, "keys-source", "preset",
-		"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
+	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
+		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
-		"session artifact base directory (compose default: the workspace's sessions directory)")
-	cmd.Flags().IntVar(&validators, "validators", 4, "compose: validator node count, overriding what the specs declare")
+		"session artifact base directory; overrides workspace-config's control.artifactRoot "+
+			"(default: ~/.chainbench/sessions — outside the workspace, so removing the workspace "+
+			"does not remove the record of what was tested)")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "compose: bp node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
@@ -142,15 +178,21 @@ func NewRun() *cobra.Command {
 		"compose: the server set's hosts are local docker containers — translate this tool's dials via the localmap next to the server set (addresses only; docker itself is untouched)")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "attach: chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
+	cmd.Flags().BoolVar(&noSkips, "no-skips", false,
+		"treat a skipped case as a failure — for a run whose point is that the cases were ELIGIBLE, "+
+			"such as one booting a network with a capability the cases gate on. A silent skip there means the "+
+			"capability never reached them, and the run says pass=0 skip=N and exits 0 without it")
 	return cmd
 }
 
-// defaultArtifactRoot is where a run's session lands when no root is named.
+// defaultArtifactRoot is where a run's artifacts land when no root is named.
 //
-// A composed run keeps its sessions beside its workspace; this is the answer
-// for attaching to a network somebody else is running, which has no workspace
-// to keep them beside. It used to be the relative "chainbench-out", which
-// scattered sessions across the filesystem one working directory at a time.
+// One answer for every run, composed or attached. A composed run used to keep
+// its artifacts beside its workspace, which tied the record of what was tested
+// to the scratch directory it was tested in: removing the workspace to reclaim
+// disk, or to force a clean compose, took every verdict and every log with it.
+// Before that it was the relative "chainbench-out", which scattered them across
+// the filesystem one working directory at a time.
 func defaultArtifactRoot() string {
 	d, err := home.Sessions()
 	if err != nil {
@@ -164,7 +206,7 @@ func defaultArtifactRoot() string {
 //
 // The reading, the engine and the event stream all live in app: this is the
 // binding and the rendering, which is all a surface owes.
-func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
+func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -178,7 +220,54 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	if err != nil {
 		return err
 	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut)
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
+}
+
+// runAttachDeclared runs the specs against the network their own env names.
+//
+// It is runAttach with the endpoints read from the declaration rather than
+// typed, plus the capabilities the declaration claims for that network: nothing
+// composed it, so nothing advertised anything, and the operator who set it up is
+// the only one who knows. Without them a gated case attached and skipped, which
+// looks exactly like a case that ran.
+func runAttachDeclared(cmd *cobra.Command, args []string, chain string, at *app.AttachDecl, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
+	specs, err := app.ReadSpecFiles(args)
+	if err != nil {
+		return err
+	}
+	bus, flush := dashboard.Stream(dashboardURL)
+	defer flush()
+	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
+		Chain: chain, RPCURLs: expandEach(at.RPCURLs), ArtifactRoot: artifactRoot,
+		KeysDir: keysDir, Caps: at.Provides, Specs: specs, Bus: bus,
+	})
+	if err != nil {
+		return err
+	}
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
+}
+
+// expandEach resolves ${VAR} and ${VAR:-default} in each endpoint, the same
+// expansion a declared binary path gets. An endpoint is a fact about a machine,
+// and a committed case must not have to carry one.
+func expandEach(in []string) []string {
+	out := make([]string, len(in))
+	for i, s := range in {
+		out[i] = os.Expand(s, envOrDefault)
+	}
+	return out
+}
+
+// envOrDefault expands NAME or NAME:-fallback from the process environment.
+func envOrDefault(spec string) string {
+	name, fallback, hasDefault := strings.Cut(spec, ":-")
+	if v, ok := os.LookupEnv(name); ok && v != "" {
+		return v
+	}
+	if hasDefault {
+		return fallback
+	}
+	return ""
 }
 
 // runAttachWorkspace runs the specs against the network a workspace composed.
@@ -189,7 +278,7 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 // the proposal-expiry regression needs "short-expiry", granted by a genesis
 // overlay — can only run this way. Given endpoints alone the gate has nothing
 // to check against and the spec skips.
-func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
+func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -203,12 +292,12 @@ func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, 
 	if err != nil {
 		return err
 	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut)
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
 }
 
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
-func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
 	// Under --json the whole of stdout is the document; the setup narration is
 	// progress, so it goes to stderr. Without it, both share stdout as before.
 	notes := progressWriter(cmd, jsonOut)
@@ -222,7 +311,7 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 	if err != nil {
 		return setupFailure(cmd.OutOrStdout(), err, jsonOut)
 	}
-	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut)
+	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut, noSkips)
 }
 
 // setupFailure reports a run that never got as far as a session.
@@ -263,7 +352,7 @@ func progressWriter(cmd *cobra.Command, jsonOut bool) io.Writer {
 // same path a single one takes, and prints each definition's setup, preflight
 // and session under its own heading. It ends with one line per definition so a
 // long run's outcome is readable without scrolling back.
-func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
 	notes := progressWriter(cmd, jsonOut)
 	res, err := app.RunSuites(cmd.Context(), surface.Deps(cmd), in)
 	if err != nil {
@@ -291,7 +380,7 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) er
 		if r.Err == "" {
 			// A failed definition is reported in the tally below, so its own
 			// verdict must not stop the remaining ones from printing.
-			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false)
+			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false, false)
 		}
 	}
 
@@ -313,7 +402,7 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) er
 			fmt.Fprintf(cmd.OutOrStdout(), "%d. %s — %s\n", i+1, r.Spec, status)
 		}
 	}
-	return sequenceExit(res)
+	return sequenceExit(res, noSkips)
 }
 
 // sequenceRunReport is one definition's entry in the --json document. It carries
@@ -334,8 +423,12 @@ type sequenceReport struct {
 // 1 a test failed, 2 blocked or an infrastructure error. A definition that could
 // not run at all is infrastructure, which outranks a plain test failure — losing
 // that distinction is what a single generic error did.
-func sequenceExit(res app.RunSuitesOut) error {
+func sequenceExit(res app.RunSuitesOut, noSkips bool) error {
 	setupErrors, failed, blocked := res.Totals()
+	if skipped := res.Skipped(); noSkips && skipped > 0 {
+		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
+			"run: %d test(s) skipped and --no-skips was given — the run answered nothing about them", skipped)}
+	}
 	switch {
 	case setupErrors > 0 || blocked > 0:
 		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
@@ -349,7 +442,7 @@ func sequenceExit(res app.RunSuitesOut) error {
 
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
-func printSession(out io.Writer, root string, jsonOut bool) error {
+func printSession(out io.Writer, root string, jsonOut, noSkips bool) error {
 	doc, err := app.SessionSummary(root)
 	if err != nil {
 		return err
@@ -373,6 +466,14 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 		fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
 			doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
 	}
+	// A skip is not a failure, and with --no-skips it is: the caller said the
+	// point of this run was that the cases could run at all. It maps to 2 for
+	// the same reason blocked does — the run answered nothing, which is a
+	// different thing from answering "no".
+	if noSkips && doc.Summary.Skip > 0 {
+		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
+			"run: %d test(s) skipped and --no-skips was given — the run answered nothing about them", doc.Summary.Skip)}
+	}
 	if doc.Failed() {
 		// Blocked/infrastructure errors are more severe than a plain test
 		// failure, so they map to exit code 2 (F16-O5).
@@ -381,6 +482,43 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 			code = 2
 		}
 		return &exitcode.Error{Code: code, Err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
+	}
+	return nil
+}
+
+// planPrinter returns a sink that writes each compose plan to w, skipping one
+// that repeats the last.
+//
+// A run of many definitions composes once and reuses the network, so printing
+// every definition's plan would bury the one thing worth seeing: the moment the
+// network changes between definitions. Repetition is silence; a difference is a
+// new block.
+func planPrinter(w io.Writer) func(app.ComposePlan) {
+	var last string
+	return func(p app.ComposePlan) {
+		s := p.String()
+		if s == last {
+			return
+		}
+		last = s
+		fmt.Fprintf(w, "composing:\n%s", s)
+	}
+}
+
+// showPlan resolves what the run would compose and prints it without composing.
+func showPlan(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+	plans, err := app.PlanSuites(cmd.Context(), in)
+	if err != nil {
+		return err
+	}
+	out := cmd.OutOrStdout()
+	if jsonOut {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(plans)
+	}
+	for _, p := range plans {
+		fmt.Fprintf(out, "%s\n%s\n", p.Spec, p.Plan.String())
 	}
 	return nil
 }

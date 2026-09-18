@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "boho-crossed-by-restart",
+  "description": "The ordinary hardfork: one chain, one build at a time. Four stablenet producers run the pre-fork build, every node is stopped well before the boho block, and all four come back on the build that knows boho \u2014 same chain, same databases, same work, a different executable. The fork then swaps govMinter to v2, which is what proves the restarted network crossed rather than merely bounced. It also proves the new build was needed: with the pre-fork build on both sides the network does not start at all, because that build has no BohoBlock to configure. The go-wemix cases prove the other shape, where two sets of nodes run at once and production changes hands.",
+  "requires": [
+    "rpc",
+    "fork:boho",
+    "contract:govMinter"
+  ],
+  "env": "stablenet-restart-at-boho",
+  "steps": [
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x1"
+      ],
+      "save": "govMinterPreBoho"
+    },
+    {
+      "do": "waitBlock",
+      "target": 202,
+      "timeout": "420s"
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "Greater",
+      "is": "200"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x1"
+      ],
+      "compare": "NotEqual",
+      "is": "0x"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "latest"
+      ],
+      "compare": "NotEqual",
+      "is": "$govMinterPreBoho"
+    }
+  ]
+}

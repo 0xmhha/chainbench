@@ -25,7 +25,7 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs,
-		Validators: 2, Endpoints: 1,
+		BPCount: 2, ENCount: 1,
 		LaunchSet: []string{"networkid=4242"},
 	})
 	if err != nil {
@@ -72,7 +72,7 @@ func TestNetUp_CarriesTheGenesisAndLayoutCustomizations(t *testing.T) {
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs,
-		Validators: 2, Endpoints: 1, EndpointSyncMode: "snap",
+		BPCount: 2, ENCount: 1, EndpointSyncMode: "snap",
 		ChainID: 7777, GenesisSet: []string{"bohoBlock=10"},
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func TestNetUp_StartStageNeedsABinary(t *testing.T) {
 	// The stage that runs processes cannot guess the executable, and for a
 	// remote target it would not be a local path anyway.
 	_, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
-		DataDir: t.TempDir(), Chain: "stablenet", Validators: 1,
+		DataDir: t.TempDir(), Chain: "stablenet", BPCount: 1,
 	})
 	if err == nil {
 		t.Fatal("want an error without a binary")
@@ -113,7 +113,7 @@ func TestNetUp_StopsAtTheFirstFailingStepAndReportsProgress(t *testing.T) {
 
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy,
-		Chain: "stablenet", KeysDir: keysAbs, Validators: 2,
+		Chain: "stablenet", KeysDir: keysAbs, BPCount: 2,
 		GenesisSet: []string{"malformed-no-value"},
 	})
 	if err == nil {

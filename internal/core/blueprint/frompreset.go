@@ -15,10 +15,10 @@ type FromPresetIn struct {
 	// Chain names the chain plugin, or Manifest names an external one.
 	Chain    string
 	Manifest string
-	// Producers and Endpoints size the network. Producers defaults to every
-	// identity the set declares as a validator, Endpoints to zero.
-	Producers int
-	Endpoints int
+	// BPCount and ENCount size the network. BPCount defaults to every identity
+	// the set declares as a validator, ENCount to zero.
+	BPCount int
+	ENCount int
 	// Binary is the node executable, when the caller knows it.
 	Binary string
 	// Peering is the peer graph; empty leaves it at the default.
@@ -48,13 +48,13 @@ func FromPreset(set keyring.Preset, in FromPresetIn) (Blueprint, error) {
 		return Blueprint{}, fmt.Errorf("blueprint: from preset: %s holds no identities", in.Dir)
 	}
 
-	producers := in.Producers
+	producers := in.BPCount
 	if producers <= 0 {
 		// Every identity the set declares as a validator. A set that declares
 		// none is a set of endpoints, and saying so beats inventing a producer.
 		producers = len(set.Network.Validators)
 	}
-	total := producers + in.Endpoints
+	total := producers + in.ENCount
 	if total > len(set.Nodes) {
 		return Blueprint{}, fmt.Errorf("blueprint: from preset: %d nodes were asked for and %s holds %d identities", total, in.Dir, len(set.Nodes))
 	}

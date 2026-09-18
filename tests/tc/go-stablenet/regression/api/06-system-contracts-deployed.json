@@ -3,58 +3,47 @@
   "kind": "case",
   "id": "system-contracts-deployed",
   "description": "RT-G-1-06 — eth_getCode on NativeCoinAdapter (0x1000) (원본 regression/api/06-test-get-code-system)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil",
+    "contract:govMasterMinter",
+    "contract:govMinter",
+    "contract:govValidator",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "system-contracts-deployed-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
   },
   "steps": [
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001001",
+      "address": "govValidator",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001002",
+      "address": "govMasterMinter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001004",
+      "address": "govCouncil",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"

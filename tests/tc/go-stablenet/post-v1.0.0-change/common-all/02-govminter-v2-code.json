@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "govminter-v2-code",
   "description": "TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "govminter-v2-code-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4-boho-at-10",
     "capabilities": [
       "rpc"
     ]
@@ -58,7 +43,7 @@
       "timeout": "120s"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"

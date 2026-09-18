@@ -1,0 +1,3738 @@
+[
+  {
+    "catalog_id": "DOC-C-001",
+    "title": "Legacy Tx (Type 0x0) 전송 및 실행",
+    "document_source": "sources/common_test_scenarios.md:29",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json",
+        "steps_line": 31,
+        "case_id": "legacy-transfer",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x0",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "type"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1000000000000000000",
+            "of": [
+              "$after",
+              "$before"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "타입0·상태1·수신액은 검사하지만 gasPrice 준비에 istanbul_getWbftExtraInfo를 호출하고 effectiveGasPrice==gasPrice는 검사하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-002",
+    "title": "Dynamic Fee Tx (Type 0x2, EIP-1559)",
+    "document_source": "sources/common_test_scenarios.md:30",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/09-dynamic-fee-tx.json",
+        "steps_line": 31,
+        "case_id": "dynamic-fee-tx",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x2",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "type"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "타입2·성공만 검사한다. WBFT tip으로 fee를 만들며 문서의 effectiveGasPrice 산식은 검사하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-003",
+    "title": "Access List Tx (Type 0x1, EIP-2930)",
+    "document_source": "sources/common_test_scenarios.md:31",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/10-access-list-tx.json",
+        "steps_line": 31,
+        "case_id": "access-list-tx",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x1",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "type"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "createAccessList 후 타입1·성공 검사. 일반 수신자라 accessList가 비어도 통과하며 주소·storage key 포함/할인 검증은 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-004",
+    "title": "수수료 대납 Tx (Type 0x16) 정상 처리",
+    "document_source": "sources/common_test_scenarios.md:32",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/01-fee-delegated-transfer.json",
+        "steps_line": 38,
+        "case_id": "fee-delegated-transfer",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundSenderHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$fundFeeHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "address": "0x00000000000000000000000000000000C0FFEE02",
+            "compare": "Equal",
+            "expect": "balanceAt",
+            "is": "1000000000000000000"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "sender/feePayer 분리 전송과 수신액을 확인하지만 두 지불 계정의 value·gas 차감 내역은 비교하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-005",
+    "title": "대납 Tx Sender 서명 변조 거부",
+    "document_source": "sources/common_test_scenarios.md:33",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/02-fd-sender-sig-invalid-rejected.json",
+        "steps_line": 38,
+        "case_id": "fd-sender-sig-invalid-rejected",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/05-fee-delegated-sender-sig-invalid-rejected.json",
+        "steps_line": 37,
+        "case_id": "fee-delegated-sender-sig-invalid-rejected",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "sendRawTampered(which=sender) 액션을 호출한다. JSON에 invalid sender/signature 오류 종류 단언이 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-006",
+    "title": "대납 Tx FeePayer 서명 변조 거부",
+    "document_source": "sources/common_test_scenarios.md:34",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/03-fd-feepayer-sig-invalid-rejected.json",
+        "steps_line": 38,
+        "case_id": "fd-feepayer-sig-invalid-rejected",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/06-fee-delegated-feepayer-sig-invalid-rejected.json",
+        "steps_line": 37,
+        "case_id": "fee-delegated-feepayer-sig-invalid-rejected",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "sendRawTampered(which=feepayer) 액션을 호출한다. JSON에 feePayer 서명 오류 종류 단언이 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-007",
+    "title": "FeePayer 잔액 부족시 실행 실패",
+    "document_source": "sources/common_test_scenarios.md:35",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/04-feepayer-insufficient-rejected.json",
+        "steps_line": 38,
+        "case_id": "feepayer-insufficient-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "feePayerKey": "$feePayerKey",
+            "key": "$senderKey",
+            "on": "en1",
+            "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "value": "1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/fee-delegation/07-fee-delegated-unfunded-feepayer-rejected.json",
+        "steps_line": 37,
+        "case_id": "fee-delegated-unfunded-feepayer-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "feePayerKey": "$feePayerKey",
+            "key": "$senderKey",
+            "on": "en1",
+            "to": "0x00000000000000000000000000000000C0FFEE10",
+            "value": "1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "새 feePayer를 미충전한 채 reject를 요구한다. 부족 잔액 오류 종류를 특정하지 않아 다른 거부 원인도 분리해야 한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-008",
+    "title": "Nonce 순서 보장 (Nonce Ordering)",
+    "document_source": "sources/common_test_scenarios.md:43",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/11-nonce-ordering.json",
+        "steps_line": 31,
+        "case_id": "nonce-ordering",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "address": "$acct",
+            "compare": "Equal",
+            "expect": "nonceAt",
+            "is": "3"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/11b-out-of-order-nonces-mine.json",
+        "steps_line": 30,
+        "case_id": "out-of-order-nonces-mine",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "address": "$acct",
+            "compare": "Equal",
+            "expect": "nonceAt",
+            "is": "3"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "2,1,0 제출 후 최종 nonce==3을 검사한다. 각 tx의 receipt·blockNumber·transactionIndex로 실제 포함 순서를 직접 대조하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-009",
+    "title": "TipCap 미달 (Underpriced) 거부",
+    "document_source": "sources/common_test_scenarios.md:44",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/12-dynamic-fee-below-basefee-rejected.json",
+        "steps_line": 31,
+        "case_id": "dynamic-fee-below-basefee-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "from": "node1",
+            "gas": "21000",
+            "maxFeePerGas": "1",
+            "maxPriorityFeePerGas": "1",
+            "to": "0x00000000000000000000000000000000C0FFEE10",
+            "value": "1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/14-feecap-below-min-rejected.json",
+        "steps_line": 31,
+        "case_id": "feecap-below-min-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "from": "node1",
+            "gas": "21000",
+            "maxFeePerGas": "1",
+            "maxPriorityFeePerGas": "1",
+            "to": "0x00000000000000000000000000000000C0FFEE0E",
+            "value": "1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "feeCap/tipCap 낮은 값으로 reject를 검사한다. baseFee 미달과 최소 tip 미달을 분리하지 않으며 로컬·원격 정책별 오류 단언이 없다.",
+    "go_wemix_applicability": "conditional",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-010",
+    "title": "잔액 부족 (Insufficient Funds) 거부",
+    "document_source": "sources/common_test_scenarios.md:45",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/14-insufficient-funds-rejected.json",
+        "steps_line": 31,
+        "case_id": "insufficient-funds-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "from": "node1",
+            "gas": "21000",
+            "to": "0x00000000000000000000000000000000C0FFEE07",
+            "value": "$over"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "잔액+1 ETH 값의 전송 거부는 검사하나 insufficient funds 오류 종류를 특정하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-011",
+    "title": "Gas Limit 초과 거부",
+    "document_source": "sources/common_test_scenarios.md:46",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/15-gas-limit-exceeds-block-rejected.json",
+        "steps_line": 31,
+        "case_id": "gas-limit-exceeds-block-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "from": "node1",
+            "gas": "$over",
+            "to": "0x00000000000000000000000000000000C0FFEE10",
+            "value": "1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json",
+        "steps_line": 30,
+        "case_id": "gaslimit-exceeded-rejected",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "reject",
+            "from": "node1",
+            "gas": "$over",
+            "maxFeePerGas": "$feecap",
+            "maxPriorityFeePerGas": "$tip",
+            "to": "0x00000000000000000000000000000000C0FFEE0E",
+            "value": "1"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "헤더 gasLimit+1 제출 거부 패턴이지만 오류 원인을 특정하지 않는다. anzeon/11은 WBFTExtra tip 의존을 제거해야 한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-012",
+    "title": "Effective GasPrice 노드 간 일관성",
+    "document_source": "sources/common_test_scenarios.md:47",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/16-effective-gas-price.json",
+        "steps_line": 31,
+        "case_id": "effective-gas-price",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Greater",
+            "expect": "rpcCall",
+            "is": "0",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "effectiveGasPrice"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "21000",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "gasUsed"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02b-effective-gas-price-regular-bp-en.json",
+        "steps_line": 29,
+        "case_id": "effective-gas-price-regular-bp-en",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "node1",
+            "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "value": "1",
+            "gas": "21000",
+            "save": "txHash",
+            "expect": "receipt"
+          },
+          {
+            "expect": "rpc",
+            "on": "en1",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$txHash"
+            ],
+            "select": "effectiveGasPrice",
+            "compare": "Equal",
+            "is": "$egpBP"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json",
+        "steps_line": 31,
+        "case_id": "effective-gas-price-regular",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "$egp",
+            "of": [
+              "$base",
+              "$tip"
+            ],
+            "op": "sum"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "16은 단일 노드 EGP>0이고 02b는 BP/EN EGP equality이나 baseFee 하한을 검사하지 않는다. 02는 WBFT GasTip 산식 의존으로 go-wemix 적용 불가.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-013",
+    "title": "Queued/Pending 트랜잭션 교체 (Replacement Tx)",
+    "document_source": "sources/common_test_scenarios.md:48",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/17-replacement-tx.json",
+        "steps_line": 31,
+        "case_id": "replacement-tx",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txMined",
+            "hash": "$tx2",
+            "is": "true"
+          },
+          {
+            "expect": "txMined",
+            "hash": "$tx1",
+            "is": "false"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/17b-same-nonce-replacement.json",
+        "steps_line": 30,
+        "case_id": "same-nonce-replacement",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txMined",
+            "hash": "$tx2",
+            "is": "true"
+          },
+          {
+            "expect": "txMined",
+            "hash": "$tx1",
+            "is": "false"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "nonce gap·20% fee 인상·tx2 mined 및 tx1 unmined 검증. 교체 tx2의 status==1은 JSON에서 별도 확인하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-014",
+    "title": "스마트 컨트랙트 배포",
+    "document_source": "sources/common_test_scenarios.md:56",
+    "coverage": "exact",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/19-contract-roundtrip.json",
+        "steps_line": 31,
+        "case_id": "contract-roundtrip",
+        "assertions": [
+          {
+            "address": "$contract",
+            "compare": "NotEqual",
+            "expect": "codeAt",
+            "is": "0x"
+          },
+          {
+            "compare": "Equal",
+            "data": "0x",
+            "expect": "call",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a",
+            "to": "$contract"
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/tx/01-wemix-tx-and-contract.json",
+        "steps_line": 35,
+        "case_id": "wemix-tx-and-contract",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$r",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node1",
+            "address": "$r",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "codeAt",
+            "on": "node1",
+            "address": "$c",
+            "compare": "NotEqual",
+            "is": "0x"
+          },
+          {
+            "expect": "call",
+            "on": "node1",
+            "to": "$c",
+            "data": "0x",
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      }
+    ],
+    "differences": "배포 후 얻은 주소의 codeAt!=0x를 직접 검사해 문서 핵심 기대값을 충족한다. 체인 환경 이식·실행 확인은 별개다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-015",
+    "title": "컨트랙트 상태 변경 함수 호출",
+    "document_source": "sources/common_test_scenarios.md:57",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "범용 setter 호출 후 getter 상태 변경을 확인하는 동일 fixture는 찾지 못했다. 시스템 컨트랙트 approve/거버넌스 사례는 체인 전용이므로 대체하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-016",
+    "title": "`eth_call` View/Pure 함수 조회",
+    "document_source": "sources/common_test_scenarios.md:58",
+    "coverage": "exact",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/19-contract-roundtrip.json",
+        "steps_line": 31,
+        "case_id": "contract-roundtrip",
+        "assertions": [
+          {
+            "address": "$contract",
+            "compare": "NotEqual",
+            "expect": "codeAt",
+            "is": "0x"
+          },
+          {
+            "compare": "Equal",
+            "data": "0x",
+            "expect": "call",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a",
+            "to": "$contract"
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/tx/01-wemix-tx-and-contract.json",
+        "steps_line": 35,
+        "case_id": "wemix-tx-and-contract",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$r",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node1",
+            "address": "$r",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "codeAt",
+            "on": "node1",
+            "address": "$c",
+            "compare": "NotEqual",
+            "is": "0x"
+          },
+          {
+            "expect": "call",
+            "on": "node1",
+            "to": "$c",
+            "data": "0x",
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      }
+    ],
+    "differences": "배포한 returner에 읽기 call을 수행해 정확한 32-byte 값 42를 확인한다. 상태 변경 트랜잭션 없이 조회하는 핵심 기대를 충족한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-017",
+    "title": "`eth_estimateGas` 가스 추정",
+    "document_source": "sources/common_test_scenarios.md:59",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/22-estimate-gas.json",
+        "steps_line": 30,
+        "case_id": "estimate-gas",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "data": "0x",
+            "expect": "estimateGas",
+            "is": "21000",
+            "to": "0x0000000000000000000000000000000000000001"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "주소0x1에 빈 data estimateGas>=21000만 요구한다. 컨트랙트 실제 실행 gasUsed와 추정치를 비교하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-018",
+    "title": "`eth_call` 실행 중 Revert 메세지 반환",
+    "document_source": "sources/common_test_scenarios.md:60",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/23-eth-call-revert-returns-error.json",
+        "steps_line": 31,
+        "case_id": "eth-call-revert-returns-error",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$dhash",
+            "is": "0x1"
+          },
+          {
+            "data": "0xa9cc4718",
+            "expect": "callError",
+            "to": "$addr"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "callError만 단언하여 Revert Reason 내용을 디코딩·대조하지 않는다. fixture의 PUSH0 지원도 go-wemix에서 확인해야 한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-019",
+    "title": "Revert 트랜잭션 (상태 롤백 & 가스 환불)",
+    "document_source": "sources/common_test_scenarios.md:61",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/24-revert-tx-status-zero.json",
+        "steps_line": 31,
+        "case_id": "revert-tx-status-zero",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "revert",
+            "from": "node1",
+            "gas": "100000",
+            "save": "chash",
+            "to": "$addr"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$dhash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x0",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$chash"
+            ],
+            "select": "status"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/tx/01-negative-tx-revert.json",
+        "steps_line": 13,
+        "case_id": "stablenet-negative-tx-revert",
+        "assertions": [
+          {
+            "expect": "codeAt",
+            "on": "node1",
+            "address": "$rv",
+            "compare": "Equal",
+            "is": "0x60006000fd"
+          },
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$rv",
+            "gas": "100000",
+            "expect": "revert"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "실패 status0/revert는 확인하지만 상태 rollback과 미사용 gas 환불·잔액 차감 계산은 검사하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-020",
+    "title": "Out-of-Gas 트랜잭션 (가스 Limit 전액 소모)",
+    "document_source": "sources/common_test_scenarios.md:62",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/25-out-of-gas-consumes-all.json",
+        "steps_line": 31,
+        "case_id": "out-of-gas-consumes-all",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "expect": "revert",
+            "from": "node1",
+            "gas": "50000",
+            "save": "chash",
+            "to": "$addr"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$dhash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "0",
+            "of": [
+              "$used",
+              "50000"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "expect=revert와 gasUsed=50000을 검사한다. OOG를 다른 EVM 실패와 구분하는 오류 원인·잔액 환불 오라클은 보강 필요.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-021",
+    "title": "`eth_blockNumber`",
+    "document_source": "sources/common_test_scenarios.md:70",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/basic/01-basic-consensus.json",
+        "steps_line": 29,
+        "case_id": "basic-consensus",
+        "assertions": [
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "60s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/basic/03-basic-rpc-health.json",
+        "steps_line": 28,
+        "case_id": "basic-rpc-health",
+        "assertions": [
+          {
+            "expect": "blockNumber",
+            "on": "node1",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "on": "node2",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "on": "node3",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "on": "node4",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "on": "en1",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/remote/01-remote-rpc-health.json",
+        "steps_line": 31,
+        "case_id": "remote-rpc-health",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "blockNumber",
+            "is": "0x0"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "",
+            "method": "web3_clientVersion"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "",
+            "method": "net_peerCount"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "basic consensus는 blockAdvance를 검사하나 연속 RPC 비감소 관측과 동일하지 않다. 나머지는 단일 높이 범위만 검사하여 정지를 탐지하지 못한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-022",
+    "title": "`eth_getBalance`",
+    "document_source": "sources/common_test_scenarios.md:71",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/27-genesis-balance.json",
+        "steps_line": 31,
+        "case_id": "genesis-balance",
+        "assertions": [
+          {
+            "address": "node1",
+            "compare": "Greater",
+            "expect": "balanceAt",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/remote/03-remote-balance-check.json",
+        "steps_line": 31,
+        "case_id": "remote-balance-check",
+        "assertions": [
+          {
+            "address": "0x0000000000000000000000000000000000000000",
+            "compare": "GreaterOrEqual",
+            "expect": "balanceAt",
+            "is": "0"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "",
+            "method": "eth_getBalance",
+            "params": [
+              "0x0000000000000000000000000000000000000000",
+              "latest"
+            ]
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/27b-value-transfer.json",
+        "steps_line": 31,
+        "case_id": "value-transfer",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1000000000000000000",
+            "of": [
+              "$after",
+              "$before"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "잔액>0 또는 문자열 비어있지 않음/전송 증분은 확인한다. genesis의 정확한 알려진 잔액과 비교하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-023",
+    "title": "`eth_sendRawTransaction`",
+    "document_source": "sources/common_test_scenarios.md:72",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/27b-value-transfer.json",
+        "steps_line": 31,
+        "case_id": "value-transfer",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1000000000000000000",
+            "of": [
+              "$after",
+              "$before"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/basic/05-basic-tx-send.json",
+        "steps_line": 28,
+        "case_id": "basic-tx-send",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$r",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node1",
+            "address": "$r",
+            "compare": "Greater",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/tx/01-wemix-tx-and-contract.json",
+        "steps_line": 35,
+        "case_id": "wemix-tx-and-contract",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$r",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node1",
+            "address": "$r",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "codeAt",
+            "on": "node1",
+            "address": "$c",
+            "compare": "NotEqual",
+            "is": "0x"
+          },
+          {
+            "expect": "call",
+            "on": "node1",
+            "to": "$c",
+            "data": "0x",
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "sendTx 후 성공·잔액은 검사하지만 원시 RLP 입력과 채굴 전 txpool 관측을 독립 검증하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-024",
+    "title": "`eth_getLogs`",
+    "document_source": "sources/common_test_scenarios.md:73",
+    "coverage": "exact",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/29-logs-query-well-formed.json",
+        "steps_line": 30,
+        "case_id": "logs-query-well-formed",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "logs",
+            "fromBlock": "latest",
+            "is": "0",
+            "select": "count",
+            "toBlock": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/36-contract-event-emitted.json",
+        "steps_line": 30,
+        "case_id": "contract-event-emitted",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$ehash",
+            "is": "0x1"
+          },
+          {
+            "address": "$addr",
+            "compare": "Equal",
+            "expect": "logs",
+            "fromBlock": "$blk",
+            "is": "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "select": "topic0",
+            "toBlock": "$blk",
+            "topics": [
+              "0x1111111111111111111111111111111111111111111111111111111111111111"
+            ]
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/23-token-approve-sets-allowance.json",
+        "steps_line": 31,
+        "case_id": "token-approve-sets-allowance",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "address": "0x0000000000000000000000000000000000001000",
+            "compare": "GreaterOrEqual",
+            "expect": "logs",
+            "fromBlock": "$blk",
+            "is": "1",
+            "select": "count",
+            "toBlock": "$blk",
+            "topics": [
+              "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+              null,
+              "0x00000000000000000000000000000000000000000000000000000000c0ffee05"
+            ]
+          },
+          {
+            "compare": "Equal",
+            "data": "0xdd62ed3e000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d800000000000000000000000000000000000000000000000000000000c0ffee05",
+            "expect": "call",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000064",
+            "to": "0x0000000000000000000000000000000000001000"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "36은 이벤트 발생 후 address/topics/fromBlock/toBlock으로 조회하고 topic0를 대조하여 문서의 양성 조건을 충족한다. 29는 count>=0뿐이며 23은 StableNet 시스템 토큰 의존이다. 각 match의 개별 coverage를 구분했다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-025",
+    "title": "`eth_chainId`",
+    "document_source": "sources/common_test_scenarios.md:74",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/30-chain-id.json",
+        "steps_line": 31,
+        "case_id": "chain-id",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "eth_chainId"
+          },
+          {
+            "compare": "Greater",
+            "expect": "chainId",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/remote/02-remote-chain-info.json",
+        "steps_line": 31,
+        "case_id": "remote-chain-info",
+        "assertions": [
+          {
+            "compare": "Greater",
+            "expect": "chainId",
+            "is": "0"
+          },
+          {
+            "expect": "rpcCall",
+            "is": false,
+            "method": "eth_syncing"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "latest",
+              false
+            ],
+            "select": "hash"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/chain-up/01-wemix-chain-up.json",
+        "steps_line": 26,
+        "case_id": "wemix-chain-up",
+        "assertions": [
+          {
+            "expect": "chainId",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "compare": "GreaterOrEqual",
+            "is": "2"
+          },
+          {
+            "expect": "rpc",
+            "method": "net_peerCount",
+            "compare": "NotEqual",
+            "is": "0x0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "chainId>0 또는 hex 형식만 검사한다. genesis 설정값과 정확히 같음을 단언하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-026",
+    "title": "WebSocket `eth_subscribe(\"newHeads\")`",
+    "document_source": "sources/common_test_scenarios.md:75",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/31-ws-subscribe-new-heads.json",
+        "steps_line": 33,
+        "case_id": "ws-subscribe-new-heads",
+        "assertions": [
+          {
+            "count": 1,
+            "event": "newHeads",
+            "expect": "wsSubscribe",
+            "on": "bp1",
+            "timeout": "30s"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "30초 내 newHeads 1건을 요구한다. 매 블록 이벤트의 누락·순서·헤더 일관성은 검사하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-027",
+    "title": "WebSocket `eth_subscribe(\"logs\")`",
+    "document_source": "sources/common_test_scenarios.md:76",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/32-ws-subscribe-logs.json",
+        "steps_line": 33,
+        "case_id": "ws-subscribe-logs",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$dhash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$ehash",
+            "is": "0x1"
+          },
+          {
+            "count": 1,
+            "expect": "wsCollected",
+            "sub": "$logsub",
+            "timeout": "30s"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "주소 필터 구독 후 이벤트 tx를 보내 1건 수신한다. topic 필터 및 이벤트 payload 전체 대조는 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-028",
+    "title": "`eth_getBlockByNumber`",
+    "document_source": "sources/common_test_scenarios.md:77",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/01-block-transactions-field.json",
+        "steps_line": 30,
+        "case_id": "block-transactions-field",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "latest",
+              false
+            ],
+            "select": "number"
+          },
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]{64}$",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "latest",
+              false
+            ],
+            "select": "hash"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "latest",
+              false
+            ],
+            "select": "transactions"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "number/hash 형식과 transactions nonnil만 검사한다. fullTx=true와 parentHash 및 tx 상세는 검사하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-029",
+    "title": "`eth_getBlockByHash`",
+    "document_source": "sources/common_test_scenarios.md:78",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/02-block-by-hash-consistency.json",
+        "steps_line": 30,
+        "case_id": "block-by-hash-consistency",
+        "assertions": [
+          {
+            "expect": "rpcCall",
+            "is": "$hash",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              false
+            ],
+            "select": "hash"
+          },
+          {
+            "expect": "rpcCall",
+            "is": "$number",
+            "method": "eth_getBlockByHash",
+            "params": [
+              "$hash",
+              false
+            ],
+            "select": "number"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "hash·number만 비교하고 Block 객체 전체 equality는 없다. latest를 두 번 읽어 경합할 수 있다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-030",
+    "title": "`eth_getTransactionByHash`",
+    "document_source": "sources/common_test_scenarios.md:79",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/03-transaction-by-hash-fields.json",
+        "steps_line": 31,
+        "case_id": "transaction-by-hash-fields",
+        "assertions": [
+          {
+            "compare": "EqualCI",
+            "expect": "rpcCall",
+            "is": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "from"
+          },
+          {
+            "compare": "EqualCI",
+            "expect": "rpcCall",
+            "is": "0x00000000000000000000000000000000C0FFEE05",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "to"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "blockNumber"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$hash"
+            ],
+            "select": "value"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "from/to 및 blockNumber/value 존재를 확인한다. nonce/input과 모든 상세값은 검증하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-031",
+    "title": "`eth_getTransactionReceipt`",
+    "document_source": "sources/common_test_scenarios.md:80",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/04-transaction-receipt-fields.json",
+        "steps_line": 31,
+        "case_id": "transaction-receipt-fields",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x1",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "status"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "effectiveGasPrice"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "logs"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/16-effective-gas-price.json",
+        "steps_line": 31,
+        "case_id": "effective-gas-price",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Greater",
+            "expect": "rpcCall",
+            "is": "0",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "effectiveGasPrice"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "21000",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$hash"
+            ],
+            "select": "gasUsed"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "status·EGP·logs 또는 gasUsed 일부만 검사한다. 원문의 모든 receipt 필드를 한 번에 정합성 대조하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-032",
+    "title": "`eth_getTransactionCount`",
+    "document_source": "sources/common_test_scenarios.md:81",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/05-transaction-count-increments.json",
+        "steps_line": 31,
+        "case_id": "transaction-count-increments",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$hash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1",
+            "of": [
+              "$after",
+              "$before"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "전송 전후 nonce +1과 성공을 비교한다. 기존 총 트랜잭션 수 재계산은 하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-033",
+    "title": "`eth_gasPrice`",
+    "document_source": "sources/common_test_scenarios.md:82",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/07-gas-price-positive.json",
+        "steps_line": 30,
+        "case_id": "gas-price-positive",
+        "assertions": [
+          {
+            "compare": "Greater",
+            "expect": "gasPrice",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json",
+        "steps_line": 30,
+        "case_id": "gas-price-equals-basefee-plus-tip",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "$gp",
+            "of": [
+              "$base",
+              "$tip"
+            ],
+            "op": "sum"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "07은 gasPrice>0만, 07b는 WBFTExtra tip 산식이다. go-wemix oracle 결과 검증을 새로 연결해야 한다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-034",
+    "title": "`eth_maxPriorityFeePerGas`",
+    "document_source": "sources/common_test_scenarios.md:83",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json",
+        "steps_line": 31,
+        "case_id": "max-priority-fee-equals-gastip",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "$tipDec",
+            "of": [
+              "$mpf"
+            ],
+            "op": "sum"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "WBFTExtra.GasTip과 완전 일치를 요구하여 go-wemix oracle 검증으로 대체할 수 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-035",
+    "title": "`eth_feeHistory`",
+    "document_source": "sources/common_test_scenarios.md:84",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/09-fee-history-well-formed.json",
+        "steps_line": 30,
+        "case_id": "fee-history-well-formed",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "eth_feeHistory",
+            "params": [
+              "0x10",
+              "latest",
+              []
+            ],
+            "select": "oldestBlock"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "eth_feeHistory",
+            "params": [
+              "0x10",
+              "latest",
+              []
+            ],
+            "select": "baseFeePerGas"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "oldestBlock/baseFeePerGas만 검사하고 percentile=[]로 호출한다. gasUsedRatio와 percentile tip 검증이 빠졌다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-036",
+    "title": "`txpool_status`",
+    "document_source": "sources/common_test_scenarios.md:85",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/18-txpool-status.json",
+        "steps_line": 30,
+        "case_id": "txpool-status",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "txpool_status",
+            "select": "pending"
+          },
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "txpool_status",
+            "select": "queued"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "pending/queued hex 형식만 검사하며 두 종류의 트랜잭션을 주입하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-037",
+    "title": "`txpool_content`",
+    "document_source": "sources/common_test_scenarios.md:86",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/19-txpool-content-well-formed.json",
+        "steps_line": 30,
+        "case_id": "txpool-content-well-formed",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "txpool_content",
+            "select": "pending"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "txpool_content",
+            "select": "queued"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "pending/queued nonnil만 검사하며 계정별 주입 tx와 실제 내용을 대조하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-038",
+    "title": "FeePayer 서명 RPC 헬스체크 (`eth_signRawFeeDelegateTransaction`)",
+    "document_source": "sources/common_test_scenarios.md:87",
+    "coverage": "exact",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/21-fee-delegate-sign-rpc-present.json",
+        "steps_line": 31,
+        "case_id": "fee-delegate-sign-rpc-present",
+        "assertions": [
+          {
+            "expect": "methodPresent",
+            "method": "eth_signRawFeeDelegateTransaction",
+            "params": [
+              {
+                "from": "0x00000000000000000000000000000000C0FFEE08"
+              },
+              "0x00"
+            ]
+          }
+        ],
+        "source_coverage": "exact",
+        "execution_verified": false
+      }
+    ],
+    "differences": "잘못된 인자를 methodPresent로 검사하는 동일 smoke 목적이다. 서명 기능 성공을 의미하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-039",
+    "title": "제네시스 초기화 (Genesis Initialization)",
+    "document_source": "sources/common_test_scenarios.md:95",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/30-chain-id.json",
+        "steps_line": 31,
+        "case_id": "chain-id",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]+$",
+            "method": "eth_chainId"
+          },
+          {
+            "compare": "Greater",
+            "expect": "chainId",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/04-genesis-block-hash-consistent.json",
+        "steps_line": 31,
+        "case_id": "genesis-block-hash-consistent",
+        "assertions": [
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "0x",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "0x0",
+              false
+            ],
+            "select": "hash"
+          },
+          {
+            "block": "0x0",
+            "expect": "sameBlockHash"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "0x0",
+              false
+            ],
+            "select": "parentHash"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/chain-up/01-wemix-chain-up.json",
+        "steps_line": 26,
+        "case_id": "wemix-chain-up",
+        "assertions": [
+          {
+            "expect": "chainId",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "compare": "GreaterOrEqual",
+            "is": "2"
+          },
+          {
+            "expect": "rpc",
+            "method": "net_peerCount",
+            "compare": "NotEqual",
+            "is": "0x0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "chainId 양수·노드 간 genesis hash 일치는 있으나 주어진 genesis 기준 고정 hash·chainId 동시 대조는 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-040",
+    "title": "Full Sync 동기화",
+    "document_source": "sources/common_test_scenarios.md:96",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/basic/04-basic-sync.json",
+        "steps_line": 29,
+        "case_id": "basic-sync",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/fault/03-fault-node-recover.json",
+        "steps_line": 29,
+        "case_id": "fault-node-recover",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "sameBlockHash 및 재시작 catchup은 검사하나 full sync 경로와 상태 재실행/stateRoot를 직접 관측하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-041",
+    "title": "Snap Sync 동기화",
+    "document_source": "sources/common_test_scenarios.md:97",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02b-effective-gas-price-regular-bp-en.json",
+        "steps_line": 29,
+        "case_id": "effective-gas-price-regular-bp-en",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "node1",
+            "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            "value": "1",
+            "gas": "21000",
+            "save": "txHash",
+            "expect": "receipt"
+          },
+          {
+            "expect": "rpc",
+            "on": "en1",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$txHash"
+            ],
+            "select": "effectiveGasPrice",
+            "compare": "Equal",
+            "is": "$egpBP"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/basic/04-basic-sync.json",
+        "steps_line": 29,
+        "case_id": "basic-sync",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "EN receipt equality·sameBlockHash는 snap pivot/state 경로 완료 증거가 아니다. syncmode·snap 경로 및 stateRoot 확인 필요.",
+    "go_wemix_applicability": "conditional",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-042",
+    "title": "노드 재기동 후 동기화 유지",
+    "document_source": "sources/common_test_scenarios.md:98",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/03-fault-node-recover.json",
+        "steps_line": 29,
+        "case_id": "fault-node-recover",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/fault/02-fault-node-crash.json",
+        "steps_line": 29,
+        "case_id": "fault-node-crash",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/fault/01-wemix-node-crash.json",
+        "steps_line": 13,
+        "case_id": "wemix-node-crash",
+        "assertions": [
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "180s",
+            "pollInterval": "3s"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/samples/02-sample-lifecycle.json",
+        "steps_line": 42,
+        "case_id": "sample-lifecycle-node-restart",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "dev1",
+            "to": "$acct",
+            "value": "1000000000000000000",
+            "gas": "21000",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node1",
+            "address": "$acct",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "60s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "공통 fault/recover는 재시작 이후 catchup/hash 확인. go-wemix 전용 crash는 restart 호출로 끝나 재합류 확인이 없다. DB 손상/보존 증거 보강 필요.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-043",
+    "title": "P2P Bootnode 피어 연결",
+    "document_source": "sources/common_test_scenarios.md:99",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/basic/02-basic-peers.json",
+        "steps_line": 28,
+        "case_id": "basic-peers",
+        "assertions": [
+          {
+            "expect": "peerCount",
+            "on": "node1",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          },
+          {
+            "expect": "peerCount",
+            "on": "node2",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          },
+          {
+            "expect": "peerCount",
+            "on": "node3",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          },
+          {
+            "expect": "peerCount",
+            "on": "node4",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          },
+          {
+            "expect": "peerCount",
+            "on": "en1",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/20-admin-peers-populated.json",
+        "steps_line": 31,
+        "case_id": "admin-peers-populated",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "1",
+            "method": "admin_peers",
+            "select": "#"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "",
+            "method": "admin_peers",
+            "select": "0.id"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/chain-up/01-wemix-chain-up.json",
+        "steps_line": 26,
+        "case_id": "wemix-chain-up",
+        "assertions": [
+          {
+            "expect": "chainId",
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "blockNumber",
+            "compare": "GreaterOrEqual",
+            "is": "2"
+          },
+          {
+            "expect": "rpc",
+            "method": "net_peerCount",
+            "compare": "NotEqual",
+            "is": "0x0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "peer count 또는 admin_peers 일부를 확인하나 bootnodes로 연결되었는지와 양쪽 RPC 정보의 연계 확인은 없다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-044",
+    "title": "Block Downloader 경로 동기화",
+    "document_source": "sources/common_test_scenarios.md:100",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/03-fault-node-recover.json",
+        "steps_line": 29,
+        "case_id": "fault-node-recover",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "노드 중단 후 높이12 catchup/hash만 검사한다. downloader 큐 경로 및 gap>=10 조건을 명시 보장하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-C-045",
+    "title": "Block Fetcher 경로 동기화",
+    "document_source": "sources/common_test_scenarios.md:101",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/basic/04-basic-sync.json",
+        "steps_line": 29,
+        "case_id": "basic-sync",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/basic/06-basic-txpool-propagation.json",
+        "steps_line": 28,
+        "case_id": "basic-txpool-propagation",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$r",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "balanceAt",
+            "on": "node2",
+            "address": "$r",
+            "compare": "Greater",
+            "is": "0"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "노드 간 hash/잔액 동기화 결과만 확인하며 NewBlock/NewBlockHashes 및 block fetcher 진입은 관측하지 않는다.",
+    "go_wemix_applicability": "applicable",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-001",
+    "title": "`wemix_getBriocheBlockReward` 하위 호환성",
+    "document_source": "sources/dual_chain_test_scenarios.md:42",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json",
+        "steps_line": 39,
+        "case_id": "wemix-brioche-block-reward",
+        "assertions": [
+          {
+            "expect": "rpc",
+            "method": "wemix_getBriocheBlockReward",
+            "params": [
+              "0x5"
+            ],
+            "compare": "Greater",
+            "is": "0"
+          },
+          {
+            "expect": "rpc",
+            "method": "wemix_getBriocheBlockReward",
+            "params": [
+              "0xf"
+            ],
+            "compare": "Less",
+            "is": "$pre"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "높이5 보상>0과 높이15 보상이 더 작음을 검사한다. 모든 halving 경계·정확 보상 산식은 대조하지 않는다.",
+    "go_wemix_applicability": "conditional",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-002",
+    "title": "블록 생산 주기 1초",
+    "document_source": "sources/dual_chain_test_scenarios.md:52",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/01-block-period-one-second.json",
+        "steps_line": 31,
+        "case_id": "block-period-one-second",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1",
+            "of": [
+              "$t1",
+              "$t0"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "1",
+            "of": [
+              "$t0",
+              "$tm1"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "연속3개 블록의 timestamp 차이1을 직접 확인하지만 WBFT 주기 기준으로 go-wemix 대상이 아니다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-003",
+    "title": "블록 Finalize 및 CommittedSeal 존재",
+    "document_source": "sources/dual_chain_test_scenarios.md:53",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/02-wbft-seals-quorum.json",
+        "steps_line": 33,
+        "case_id": "wbft-seals-quorum",
+        "assertions": [
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "0x",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$n"
+            ],
+            "select": "committedSeal.signature"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "0x",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$n"
+            ],
+            "select": "preparedSeal.signature"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/basic/07-basic-wbft-consensus.json",
+        "steps_line": 29,
+        "case_id": "basic-wbft-consensus",
+        "assertions": [
+          {
+            "expect": "rpc",
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ],
+            "select": "#",
+            "compare": "GreaterOrEqual",
+            "is": "4"
+          },
+          {
+            "expect": "rpc",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "@latest"
+            ],
+            "select": "prevCommittedSeal.sealers.#",
+            "compare": "GreaterOrEqual",
+            "is": "3"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "02는 서명 nonempty만, basic07은 prevCommittedSeal 개수>=3이다. 현재 committed/prepared의 quorum·검증과 동일하지 않다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-004",
+    "title": "에폭 전환 시 검증자 집합 갱신",
+    "document_source": "sources/dual_chain_test_scenarios.md:54",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/03-epoch-transition-carries-epoch-info.json",
+        "steps_line": 33,
+        "case_id": "epoch-transition-carries-epoch-info",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "1",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "0x8c"
+            ],
+            "select": "epochInfo.validators.#"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json",
+        "steps_line": 40,
+        "case_id": "validator-add-member-epoch-activates",
+        "assertions": [
+          {
+            "expect": "rpc",
+            "on": "en1",
+            "method": "istanbul_isValidator",
+            "params": [],
+            "compare": "Equal",
+            "is": false
+          },
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "node1",
+            "to": "0x0000000000000000000000000000000000001001",
+            "gas": "0x16e360",
+            "data": "$addData",
+            "save": "addHash",
+            "expect": "receipt"
+          },
+          {
+            "do": "sendTx",
+            "on": "node2",
+            "from": "node2",
+            "to": "0x0000000000000000000000000000000000001001",
+            "gas": "0x16e360",
+            "data": "$approveData",
+            "save": "apHash",
+            "expect": "receipt"
+          },
+          {
+            "expect": "rpc",
+            "on": "node1",
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ],
+            "select": "#",
+            "compare": "Equal",
+            "is": "$countExpected"
+          },
+          {
+            "expect": "rpc",
+            "on": "en1",
+            "method": "istanbul_isValidator",
+            "params": [],
+            "compare": "Equal",
+            "is": true
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "epochInfo 존재 및 validator 추가·활성 검사이나 WBFT 거버넌스/epoch 전용이다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-005",
+    "title": "블록 헤더 WBFTExtra 필드 반영",
+    "document_source": "sources/dual_chain_test_scenarios.md:55",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/system-contracts/10-gastip-governance-updates-header.json",
+        "steps_line": 31,
+        "case_id": "gastip-governance-updates-header",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$propHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$apHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$restoreHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$apHash2",
+            "is": "0x1"
+          },
+          {
+            "address": "0x0000000000000000000000000000000000001001",
+            "compare": "GreaterOrEqual",
+            "expect": "logs",
+            "fromBlock": "earliest",
+            "is": "1",
+            "select": "count",
+            "toBlock": "latest",
+            "topics": [
+              "0x535d54b8a14e2287f10efd7add38eca14bcf44eb31651abf8eec2499eba393a3"
+            ]
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/14-stablenet-gastip-field.json",
+        "steps_line": 30,
+        "case_id": "stablenet-gastip-field",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$head"
+            ],
+            "select": "gasTip"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "StableNet 거버넌스·WBFT GasTip의 변경/존재 검사다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-006",
+    "title": "View Change / 라운드 체인지",
+    "document_source": "sources/dual_chain_test_scenarios.md:56",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/02-fault-node-crash.json",
+        "steps_line": 29,
+        "case_id": "fault-node-crash",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/fault/06-fault-txpool-leader-change.json",
+        "steps_line": 29,
+        "case_id": "fault-txpool-leader-change",
+        "assertions": [
+          {
+            "do": "sendTx",
+            "on": "node1",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "to": "$acct",
+            "value": "1",
+            "expect": "receipt"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node2",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "rpc",
+            "on": "node2",
+            "method": "txpool_status",
+            "select": "pending",
+            "compare": "Equal",
+            "is": "0x0"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wbft/fault/01-wbft-node-crash.json",
+        "steps_line": 13,
+        "case_id": "wbft-node-crash",
+        "assertions": [
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "120s",
+            "pollInterval": "2s"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "고정 노드 중단 후 blockAdvance만 검사한다. 현재 proposer 식별·실제 round change·새 proposer 전환을 확인하지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-007",
+    "title": "라운드 체인지 후 블록 연결",
+    "document_source": "sources/dual_chain_test_scenarios.md:57",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/02-fault-node-crash.json",
+        "steps_line": 29,
+        "case_id": "fault-node-crash",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "재시작 후 동일 hash를 비교하나 round change 발생 확인 및 N/N+1 parentHash 연결 대조가 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-008",
+    "title": "RoundRobin Proposer 정책",
+    "document_source": "sources/dual_chain_test_scenarios.md:58",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "연속 proposer 균등 순환을 단언하는 JSON을 찾지 못했다. basic-consensus 제목의 참여 문구만으로 대응시키지 않았다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-009",
+    "title": "PrevCommittedSeal 수집",
+    "document_source": "sources/dual_chain_test_scenarios.md:59",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/11-prev-seals-quorum.json",
+        "steps_line": 33,
+        "case_id": "prev-seals-quorum",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "$q",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "@latest"
+            ],
+            "select": "prevCommittedSeal.sealers.#"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "$q",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "@latest"
+            ],
+            "select": "prevPreparedSeal.sealers.#"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "prevCommittedSeal 수>=quorum은 있으나 이전 블록 committer 집합과 동일 구성원을 포함하는지 비교하지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-010",
+    "title": "PrevPreparedSeal 수집",
+    "document_source": "sources/dual_chain_test_scenarios.md:60",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/11-prev-seals-quorum.json",
+        "steps_line": 33,
+        "case_id": "prev-seals-quorum",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "$q",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "@latest"
+            ],
+            "select": "prevCommittedSeal.sealers.#"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "$q",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "@latest"
+            ],
+            "select": "prevPreparedSeal.sealers.#"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "prevPreparedSeal 수>=quorum은 있으나 이전 블록 prepare signer와 구성원 대조가 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-011",
+    "title": "RandaoReveal / MixDigest",
+    "document_source": "sources/dual_chain_test_scenarios.md:61",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/wbft/13-randao-and-mixdigest-present.json",
+        "steps_line": 30,
+        "case_id": "randao-and-mixdigest-present",
+        "assertions": [
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "0x",
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$n"
+            ],
+            "select": "randaoReveal"
+          },
+          {
+            "compare": "NotEqual",
+            "expect": "rpcCall",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "method": "eth_getBlockByNumber",
+            "params": [
+              "$n",
+              false
+            ],
+            "select": "mixHash"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "WBFT randaoReveal·mixHash nonempty 검사이며 암호학적 생성/검증은 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-012",
+    "title": "쿼럼 미달 블록 수락 거부",
+    "document_source": "sources/dual_chain_test_scenarios.md:62",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "서명이 quorum 미만인 블록을 만들고 수락 거부를 확인하는 JSON은 없다. 노드 중단과는 다른 검증이다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-013",
+    "title": "1/3 미만 장애 시 합의 지속",
+    "document_source": "sources/dual_chain_test_scenarios.md:63",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/02-fault-node-crash.json",
+        "steps_line": 29,
+        "case_id": "fault-node-crash",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          },
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-wbft/fault/01-wbft-node-crash.json",
+        "steps_line": 13,
+        "case_id": "wbft-node-crash",
+        "assertions": [
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "120s",
+            "pollInterval": "2s"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "1노드 중단과 진행은 있지만 원문의 6/7·quorum5 구성을 쓰지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-014",
+    "title": "1/3 이상 장애 시 합의 중단",
+    "document_source": "sources/dual_chain_test_scenarios.md:64",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/fault/05-fault-two-down.json",
+        "steps_line": 29,
+        "case_id": "fault-two-down",
+        "assertions": [
+          {
+            "expect": "sameBlockHash",
+            "block": "latest"
+          },
+          {
+            "expect": "blockHalt",
+            "on": "node1",
+            "within": "12s",
+            "maxAdvance": 1
+          },
+          {
+            "expect": "blockAdvance",
+            "on": "node1",
+            "timeout": "90s",
+            "pollInterval": "2s"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "2/4 중단 후 blockHalt와 복구는 있으나 원문의 4/7·quorum5 구성과 다르다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-015",
+    "title": "쿼럼 계산 — validator 3개 (전원 필요)",
+    "document_source": "sources/dual_chain_test_scenarios.md:65",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "validator3의 1장애·전원 필요 조건을 명시한 JSON은 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-016",
+    "title": "쿼럼 계산 — validator 6개, 1개 장애",
+    "document_source": "sources/dual_chain_test_scenarios.md:66",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "validator6 중1장애 및 CommitSigners==5 조건을 명시한 JSON은 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-017",
+    "title": "쿼럼 계산 — validator 6개, 2개 장애",
+    "document_source": "sources/dual_chain_test_scenarios.md:67",
+    "coverage": "no_match",
+    "matches": [],
+    "differences": "validator6 중2장애에서 halt를 명시한 JSON은 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-018",
+    "title": "`istanbul_nodeAddress`",
+    "document_source": "sources/dual_chain_test_scenarios.md:73",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/11-node-address-returned.json",
+        "steps_line": 33,
+        "case_id": "node-address-returned",
+        "assertions": [
+          {
+            "compare": "Regexp",
+            "expect": "rpcCall",
+            "is": "^0x[0-9a-fA-F]{40}$",
+            "method": "istanbul_nodeAddress",
+            "onEach": [
+              "bp1",
+              "bp2",
+              "bp3",
+              "bp4"
+            ]
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "주소 regex만 검사하여 각 노드 실제 signing address와 대조하지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-019",
+    "title": "`istanbul_getValidators`",
+    "document_source": "sources/dual_chain_test_scenarios.md:74",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/12-validator-set-nonempty.json",
+        "steps_line": 33,
+        "case_id": "validator-set-nonempty",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ]
+          },
+          {
+            "compare": "Len",
+            "expect": "rpcCall",
+            "is": 4,
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ]
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/12b-validator-set-count.json",
+        "steps_line": 32,
+        "case_id": "validator-set-count",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "rpcCall",
+            "is": "4",
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ],
+            "select": "#"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "validator 목록 존재·개수만 확인하며 지정 블록의 정확한 집합을 대조하지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-020",
+    "title": "`istanbul_getCommitSignersFromBlock`",
+    "document_source": "sources/dual_chain_test_scenarios.md:75",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/13-commit-signers-quorum.json",
+        "steps_line": 33,
+        "case_id": "commit-signers-quorum",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_getCommitSignersFromBlock",
+            "params": [
+              "latest"
+            ]
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "$validators",
+            "method": "istanbul_getValidators",
+            "params": [
+              "latest"
+            ]
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "commit signers nonnil만 요구한다. quorum 개수·validator 부분집합 여부가 빠졌다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-021",
+    "title": "`istanbul_getWbftExtraInfo`",
+    "document_source": "sources/dual_chain_test_scenarios.md:76",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/14-wbft-extra-info-fields.json",
+        "steps_line": 31,
+        "case_id": "wbft-extra-info-fields",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$head"
+            ],
+            "select": "committedSeal"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_getWbftExtraInfo",
+            "params": [
+              "$head"
+            ],
+            "select": "preparedSeal"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "committed/prepared 존재만 검사하며 일반 블록 EpochInfo null·Randao·PrevSeal 전체를 확인하지 않는다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-022",
+    "title": "`istanbul_status`",
+    "document_source": "sources/dual_chain_test_scenarios.md:77",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json",
+        "steps_line": 31,
+        "case_id": "istanbul-status-fields",
+        "assertions": [
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_status",
+            "params": [
+              "0x1",
+              "0x2"
+            ],
+            "select": "sealerActivity"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_status",
+            "params": [
+              "0x1",
+              "0x2"
+            ],
+            "select": "author"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_status",
+            "params": [
+              "0x1",
+              "0x2"
+            ],
+            "select": "blockRange"
+          },
+          {
+            "compare": "NotNil",
+            "expect": "rpcCall",
+            "is": null,
+            "method": "istanbul_status",
+            "params": [
+              "0x1",
+              "0x2"
+            ],
+            "select": "roundStats"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "WBFT status의 sealerActivity/author/blockRange/roundStats 존재 검사다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-023",
+    "title": "`istanbul_isValidator`",
+    "document_source": "sources/dual_chain_test_scenarios.md:78",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/api/16-is-validator-flags.json",
+        "steps_line": 33,
+        "case_id": "is-validator-flags",
+        "assertions": [
+          {
+            "expect": "rpcCall",
+            "is": true,
+            "method": "istanbul_isValidator",
+            "onEach": [
+              "bp1",
+              "bp2",
+              "bp3",
+              "bp4"
+            ],
+            "params": [
+              "latest"
+            ]
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "노드별 true만 확인하며 비validator false 조건이 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-024",
+    "title": "SetCode Tx (Type 0x4, EIP-7702)",
+    "document_source": "sources/dual_chain_test_scenarios.md:84",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+        "steps_line": 38,
+        "case_id": "set-code-delegation",
+        "assertions": [
+          {
+            "expect": "txStatus",
+            "hash": "$fundHash",
+            "is": "0x1"
+          },
+          {
+            "expect": "txStatus",
+            "hash": "$scHash",
+            "is": "0x1"
+          },
+          {
+            "compare": "Equal",
+            "expect": "rpcCall",
+            "is": "0x4",
+            "method": "eth_getTransactionByHash",
+            "params": [
+              "$scHash"
+            ],
+            "select": "type"
+          },
+          {
+            "address": "$authority",
+            "compare": "Equal",
+            "expect": "codeAt",
+            "is": "0xef01001111111111111111111111111111111111111111"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "type4·status1·delegation code를 확인하지만 go-wemix에서 해당 타입은 미지원이다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-025",
+    "title": "EIP-7702 AuthorizationList estimateGas 비용",
+    "document_source": "sources/dual_chain_test_scenarios.md:85",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost.json",
+        "steps_line": 116,
+        "case_id": "estimategas-authorizationlist-cost",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "$gasBaselineExpected",
+            "of": [
+              "$gasBaseline"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$gas1AuthMin",
+            "of": [
+              "$gas1Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$gas1AuthMax",
+            "of": [
+              "$gas1Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$gas2AuthMin",
+            "of": [
+              "$gas2Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$gas2AuthMax",
+            "of": [
+              "$gas2Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$authCost1Min",
+            "of": [
+              "$gas1Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$authCost1Max",
+            "of": [
+              "$gas1Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$authCost2Min",
+            "of": [
+              "$gas2Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$authCost2Max",
+            "of": [
+              "$gas2Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "auth1/auth2 비용 증가와 범위를 직접 검사하지만 EIP-7702 미지원으로 go-wemix에서 실행 불가다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-026",
+    "title": "EIP-7702 estimateGas baseline",
+    "document_source": "sources/dual_chain_test_scenarios.md:86",
+    "coverage": "partial",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost.json",
+        "steps_line": 116,
+        "case_id": "estimategas-authorizationlist-cost",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "expect": "derive",
+            "is": "$gasBaselineExpected",
+            "of": [
+              "$gasBaseline"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$gas1AuthMin",
+            "of": [
+              "$gas1Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$gas1AuthMax",
+            "of": [
+              "$gas1Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$gas2AuthMin",
+            "of": [
+              "$gas2Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$gas2AuthMax",
+            "of": [
+              "$gas2Auth"
+            ],
+            "op": "sum"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$authCost1Min",
+            "of": [
+              "$gas1Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$authCost1Max",
+            "of": [
+              "$gas1Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "GreaterOrEqual",
+            "expect": "derive",
+            "is": "$authCost2Min",
+            "of": [
+              "$gas2Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          },
+          {
+            "compare": "LessOrEqual",
+            "expect": "derive",
+            "is": "$authCost2Max",
+            "of": [
+              "$gas2Auth",
+              "$gasBaseline"
+            ],
+            "op": "diff"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      },
+      {
+        "file": "sources/chainbench/tests/tc/go-stablenet/regression/ethereum/22-estimate-gas.json",
+        "steps_line": 30,
+        "case_id": "estimate-gas",
+        "assertions": [
+          {
+            "compare": "GreaterOrEqual",
+            "data": "0x",
+            "expect": "estimateGas",
+            "is": "21000",
+            "to": "0x0000000000000000000000000000000000000001"
+          }
+        ],
+        "source_coverage": "partial",
+        "execution_verified": false
+      }
+    ],
+    "differences": "17에 일반 전송 baseline21000 단언이 있으나 파일 전체는7702 의존이다. baseline 단계만 추출해야 하며 22는 >=21000만 검사한다.",
+    "go_wemix_applicability": "conditional",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-027",
+    "title": "secp256r1 프리컴파일 — 유효 서명",
+    "document_source": "sources/dual_chain_test_scenarios.md:87",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-wbft/accounts/01-secp256r1-precompile-valid.json",
+        "steps_line": 30,
+        "case_id": "secp256r1-precompile-valid",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "data": "0x4fc05e7c6fa9dcfc4d09b26e3352487de9f248699f930af99fc652c7374dc89cc1e7730e0dd29f6e231649b948bf9dfa73b48f94e904615c3a6573fe05c3b6bf68781757cc58563fb2ea9243822fcb3b973461be164b8d57f986146d16f2ee5e1ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9",
+            "expect": "call",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "to": "0x0000000000000000000000000000000000000100"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "유효 fixture의 32byte 1 반환을 확인하지만 go-wemix 0x100 precompile 미지원이다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-028",
+    "title": "secp256r1 프리컴파일 — 무효 서명",
+    "document_source": "sources/dual_chain_test_scenarios.md:88",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-wbft/accounts/02-secp256r1-precompile-invalid.json",
+        "steps_line": 30,
+        "case_id": "secp256r1-precompile-invalid",
+        "assertions": [
+          {
+            "compare": "NotEqual",
+            "data": "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f56db78ca460b055c500064824bed999a25aaf48ebb519ef40f49be5a3fb1549ee6e408c2e9e2b85b02b48a2f4f63f1a53ad77ce3de7b8d7a1d4aac39d82",
+            "expect": "call",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "to": "0x0000000000000000000000000000000000000100"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "반환!=1만 확인해 원문의 빈 반환보다 약하다. go-wemix 미지원 주소의 빈 응답을 성공으로 오인하면 안 된다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  },
+  {
+    "catalog_id": "DOC-D-029",
+    "title": "secp256r1 프리컴파일 — 잘못된 입력 길이",
+    "document_source": "sources/dual_chain_test_scenarios.md:89",
+    "coverage": "chain_specific",
+    "matches": [
+      {
+        "file": "sources/chainbench/tests/tc/go-wbft/accounts/03-secp256r1-precompile-short-input.json",
+        "steps_line": 30,
+        "case_id": "secp256r1-precompile-short-input",
+        "assertions": [
+          {
+            "compare": "Equal",
+            "data": "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "expect": "call",
+            "is": "0x",
+            "to": "0x0000000000000000000000000000000000000100"
+          },
+          {
+            "compare": "Equal",
+            "data": "0x",
+            "expect": "call",
+            "is": "0x",
+            "to": "0x0000000000000000000000000000000000000100"
+          }
+        ],
+        "source_coverage": "chain_specific",
+        "execution_verified": false
+      }
+    ],
+    "differences": "짧은 입력·빈 입력에서0x 반환을 확인하지만 go-wemix 미지원 주소의 응답으로 대체할 수 없다.",
+    "go_wemix_applicability": "excluded",
+    "meaning": "Coverage describes source assertions, not passing execution or zero-change portability."
+  }
+]

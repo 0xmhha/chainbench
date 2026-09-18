@@ -10,7 +10,7 @@
 //
 //	CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2222 \
 //	CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
-//	go test -tags e2e -run TestRemoteDriver_E2E -v ./pkg/core/driver/
+//	go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/process/
 package process_test
 
 import (

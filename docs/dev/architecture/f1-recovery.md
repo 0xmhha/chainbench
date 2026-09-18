@@ -19,7 +19,7 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 
 | 파일 | 소유자 | 무엇이 남나 | 복구에서의 쓸모 |
 |---|---|---|---|
-| `workspace.json` | `session.Composition` | 체인·바이너리·키셋·타깃·노드 레코드(경로·포트·argv·pid)·단계별 완료 표시(`steps`) | **진행 상황의 정본.** 어느 단계까지 끝났는지, 노드가 무엇으로 떴는지 |
+| `chain-record.json` | `session.Composition` | 체인·바이너리·키셋·타깃·노드 레코드(경로·포트·argv·pid)·단계별 완료 표시(`steps`) | **진행 상황의 정본.** 어느 단계까지 끝났는지, 노드가 무엇으로 떴는지 |
 | `process.json` | `process.Ledger` | 라벨별 pid·호스트·바이너리·명령줄 | 어느 프로세스를 우리가 띄웠는지 |
 | `workspace.lock` | `session` | 잡은 프로세스의 pid·호스트·명령 | 죽은 실행의 흔적(`LockStale`) — 이미 인수 처리한다 |
 | `runs/<stamp>/` | `chainsetup.recordRun` | 기동 한 번의 manifest·genesis·노드별 명령 | 사후 진단. 복구가 읽지는 않는다 |
@@ -34,7 +34,7 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 
 ## 2. 무엇이 없나 — 세 가지 구멍
 
-1. **요청이 남지 않는다.** `workspace.json` 은 결과(노드 4개, 포트 이것)를 적지,
+1. **요청이 남지 않는다.** `chain-record.json` 은 결과(노드 4개, 포트 이것)를 적지,
    요청(`--validators 4 --set bohoBlock=10 --overlay x.json --launch-opt ...`)을 적지
    않는다. genesis 단계가 끝났으면 결과가 요청을 대신하지만, **genesis 전에 죽으면**
    다시 실행할 때 요청을 다시 받아야 한다. 이어받기가 아니라 다시 시작이다.
@@ -52,7 +52,7 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 
 ### 3.1 요청을 기록한다 (구멍 1)
 
-`workspace.json` 에 `request` 를 더한다. `net up` 이 받은 `NetUpIn` 에서 **비밀이 아닌
+`chain-record.json` 에 `request` 를 더한다. `net up` 이 받은 `NetUpIn` 에서 **비밀이 아닌
 것**(체인·바이너리·키셋 경로·노드 수·동기화 모드·피어링·서버 참조·genesis set/overlay
 경로·launch set)을 `new` 단계에서 적는다. 이것은 사본이 아니다 — 요청은 지금 어디에도
 남지 않는 새 사실이다. `run --workspace-dir` 가 선언(env)에서 만든 요청도 같은 자리에
@@ -104,7 +104,7 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 - 조립 도중(`genesis` 뒤, `start` 도중 노드 2/4 기동 뒤) 프로세스를 죽이고 `net resume`
   하면 **남은 단계만** 돌고 노드 4개가 모두 뜬다. 단위 테스트는 stub 드라이버로
   `steps` 와 pid 판정을 검사하고, 라이브(gstable)로 실제 kill → resume 을 한 번 증명한다.
-- `workspace.json` 의 `request` 만으로 같은 네트워크를 다시 조립할 수 있다(플래그 없이).
+- `chain-record.json` 의 `request` 만으로 같은 네트워크를 다시 조립할 수 있다(플래그 없이).
 - 같은 세트에 두 프로세스가 동시에 `net allocate` 해도 슬롯이 겹치지 않는다(잠금 테스트).
 - 사본 검사: 파일에 적힌 사실 중 다른 파일에도 있는 것이 **0** — `request` 는 결과와
   다른 사실이고, 잠금은 사실이 아니라 신호다.
@@ -113,7 +113,7 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 
 | # | 질문 | 제안 | 대안 |
 |---|---|---|---|
-| 1 | 요청을 `workspace.json` 에 기록하나 | **기록한다**(3.1). genesis 전 실패를 이어받는 유일한 길 | 기록하지 않고 재실행 시 플래그를 다시 받는다 — "다시 시작" 이지 복구가 아니다 |
+| 1 | 요청을 `chain-record.json` 에 기록하나 | **기록한다**(3.1). genesis 전 실패를 이어받는 유일한 길 | 기록하지 않고 재실행 시 플래그를 다시 받는다 — "다시 시작" 이지 복구가 아니다 |
 | 2 | 복구 진입점 | **`net resume` 한 verb**(3.2). 되짚기는 명시적으로 | 모든 `net <step>` 이 stale lock 을 보면 자동으로 되짚는다 — 사용자가 모르는 새 pid 를 지우거나 입양하게 되어 놀랄 수 있다 |
 | 3 | 인벤토리 동시성 | **세트 잠금**(3.3). 파일 정본을 만들지 않는다 | `inventory.json` 정본 — 사본 금지 원칙과 충돌 |
 | 4 | 주인 없는 프로세스 | 명령줄이 ledger 의 것과 같으면 **입양**, 아니면 지금처럼 거부 | 항상 거부(안전하지만, 죽기 직전 띄운 우리 노드를 손으로 죽여야 한다) |
@@ -128,7 +128,7 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 
 | 조각 | 어디에 | 무엇 |
 |---|---|---|
-| 요청 기록 | `chainsetup.State.Request` (`workspace.json` 의 `request`) | `net up` 의 `new` 단계 직후 `NetUpIn` 을 적는다(`DataDir` 은 비움). `NetUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
+| 요청 기록 | `chainsetup.State.Request` (`chain-record.json` 의 `request`) | `net up` 의 `new` 단계 직후 `NetUpIn` 을 적는다(`DataDir` 은 비움). `NetUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
 | 되짚기 | `chainsetup.NetResume` (`verbs_resume.go`), CLI `net resume --workspace-dir [--binary]`, MCP `chainbench_net_resume`, `app.NetResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
 | 단계 목록 | `upStepNames` (`verbs_up.go`) | `net up` 과 `resume` 이 같은 순서 하나를 쓴다 |
 | 세트 잠금 | `chainsetup/setlock.go` + `session.AcquireLock` | `NetAllocate` 가 `~/.chainbench/<set>.lock`(내장 풀은 `local.lock`)을 잡고 워크스페이스를 저장한 뒤 놓는다. live 홀더는 10초까지 기다린다. `session.AcquireLock` 은 워크스페이스 잠금과 같은 코드다(stale 인수·같은 프로세스 중첩) |

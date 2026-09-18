@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "authorized-tx-executed-event",
   "description": "RT-E-09 — AuthorizedTxExecuted 이벤트 발생 검증 (원본 regression/blacklist-authorized/09-test-authorized-tx-executed)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "authorized-tx-executed-event-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -60,7 +45,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "authHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -87,7 +72,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "authApHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "sendTx",

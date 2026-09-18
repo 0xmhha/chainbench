@@ -3,7 +3,7 @@
 // of chainbench does not couple to the SDK's concrete types; the default
 // implementation is backed by the SDK's per-chain protocol profiles and its
 // account/wallet packages (decision D3 — interface boundary + SDK default
-// impl). This provider is the replacement for network/internal/signer +
+// impl). This provider is the replacement for the retired network module's signer +
 // abiutil; those are retired when the tx handlers are absorbed (G2–G3).
 package accounts
 

@@ -79,26 +79,25 @@ func TestFamily_StaticFacts(t *testing.T) {
 // live: a wemix bp/pn/en network comes up and produces blocks).
 func TestSupportsRole_PoaAcceptsProxyTier(t *testing.T) {
 	f := Family{}
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleEN, node.RolePN, node.RoleBoot} {
+	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN} {
 		if !f.SupportsRole(role) {
 			t.Errorf("poa should run %q", role)
 		}
 	}
 }
 
-// TestStartFlags_MineFollowsTheRoleNotItsSpelling mirrors the wbft case: the
-// producer and the bootstrap node both seal, under either spelling.
-func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
+// TestLaunchPolicy_OnlyAProducerSeals mirrors the wbft case: bp seals and
+// nothing else does. The flag used to be gated on one spelling of the role,
+// which is how a producer recorded under the other word launched without
+// --mine and the chain stalled with every node reporting healthy.
+func TestLaunchPolicy_OnlyAProducerSeals(t *testing.T) {
 	f := Family{}
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleBoot} {
-		found := false
-		for _, fl := range f.StartFlags(role) {
-			if fl == "--mine" {
-				found = true
-			}
-		}
-		if !found {
-			t.Fatalf("role %q must seal: %v", role, f.StartFlags(role))
+	if !f.LaunchPolicy(node.RoleBP).Mine {
+		t.Error("a bp must seal")
+	}
+	for _, role := range []node.Role{node.RoleEN, node.RolePN, node.Role("sideways")} {
+		if f.LaunchPolicy(role).Mine {
+			t.Errorf("role %q must not seal", role)
 		}
 	}
 }
