@@ -309,11 +309,13 @@ tests/tc/
 | `01-wemix-chain-up.json` | — | wemix | `default=${GWEMIX_BIN:-gwemix}` | bp=4 | — |
 | `02-wemix-chain-up-15.json` | — | wemix | `default=/data/chainbench/bin/gwemix` | bp=13, en=2 | — |
 
-### `go-wemix/handoff` (1)
+### `go-wemix/hardfork` (3)
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
-| `01-wemix-wbft-handoff.json` | — | wbft | `producer=${GWEMIX_BIN:-gwemix}, validator=${GWBFT_BIN:-gwbft}` | bp=4 | — |
+| `01-croissant-successors-take-over.json` | 구성이 포크를 넘긴다 | wemix | `default=${GWEMIX_BIN:-gwemix}, next=${GWBFT_BIN:-gwbft}` | bp=1, en=4 (노드별) | — |
+| `02-state-written-before-the-fork-survives-it.json` | 케이스가 포크를 넘긴다 · 포크 이전 상태가 남는다 | wemix | 같음 | 같음 | — |
+| `03-two-producers-hand-over.json` | 생산자 둘이 etcd 군집을 이루고 함께 넘긴다 | wemix | 같음 | bp=2, en=4 (노드별) | — |
 
 ### `go-wemix/rpc` (1)
 

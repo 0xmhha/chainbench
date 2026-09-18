@@ -19,7 +19,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -153,9 +152,8 @@ func countFrom(from map[PlanField]PlanSource, f PlanField, count int) {
 // candidates: once the merge is done, a value that came from the command and
 // one that came from the document are the same string.
 type composition struct {
-	up      *chainsetup.NetUpIn
-	handoff *upgrade.HandoffInputs
-	from    map[PlanField]PlanSource
+	up   *chainsetup.NetUpIn
+	from map[PlanField]PlanSource
 }
 
 // compositionOf reads the network a spec declares and applies the caller's
@@ -219,71 +217,23 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// is scheduled on the one genesis they all initialize from. One without a
 	// table still goes to the handoff composer, which sizes the network from its
 	// preset's roles.
-	if u := spec.EnvUpgrade; u != nil && len(spec.Topology) > 0 {
+	// A hardfork is composed like any other network: the nodes say which build
+	// each of them runs, and the fork's configuration is scheduled on the one
+	// genesis they all initialize from. It used to have a composer of its own —
+	// its own plan, its own launcher, its own peer mesh — which is what this
+	// track removed.
+	if u := spec.EnvUpgrade; u != nil {
+		if len(spec.Topology) == 0 {
+			return composition{}, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])")
+		}
 		fork, ferr := forkOf(u)
 		if ferr != nil {
 			return composition{}, ferr
 		}
-		upgradeFork = fork
-	} else if u := spec.EnvUpgrade; u != nil {
-		if in.Binary != "" {
-			return composition{}, fmt.Errorf("a handoff names its binaries by role in the env; --binary does not apply")
-		}
-		if in.ChainID != 0 || in.NetworkID != 0 || len(in.LaunchOpts) > 0 || in.KeysSource != "" {
-			return composition{}, fmt.Errorf("a handoff composes from its declaration; genesis, launch, and key-source overrides do not apply")
-		}
-		// A handoff composes its network from the profile and template, so
-		// env-level hardforks, topology, launch, and config have nowhere to go.
-		// Refuse them loudly rather than parse an upgrade env that carries them
-		// and silently drop half its declaration.
-		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
-			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply — the network's size lives in the profile's roles (producers, validators), together with the identity order, validator addresses and extradata that have to agree with it, so run a different profile to run a different size")
-		}
-		from, to := u.From, u.To
-		if from == "" {
-			from = dsl.BinaryFrom
-		}
-		if to == "" {
-			to = dsl.BinaryTo
-		}
-		hi := upgrade.HandoffInputs{
-			ProfilePath:    upgradePresetPath(u),
-			Template:       expand(u.Template),
-			KeysDir:        keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[from]),
-			ToBinary:       expand(spec.Chain.Binaries[to]),
-			GenesisOverlay: overlayPath,
-			DataDir:        in.DataDir,
-		}
-		// What the case says about the fork is checked against the preset that
-		// decides it. A case naming the wrong fork or the wrong block would
-		// otherwise run happily against another one and report a pass.
-		if err := checkDeclaredFork(u, hi.ProfilePath); err != nil {
+		if err := checkDeclaredFork(u, upgradePresetPath(u)); err != nil {
 			return composition{}, err
 		}
-		// Where its nodes run, through the same resolver `chainbench upgrade`
-		// uses. A handoff is a network like any other in this respect: it is
-		// placed on a server set or on this machine, and which one is the
-		// caller's to say. This surface used to fill seven fields and stop, so
-		// a case declaring a handoff ran locally whatever the operator asked
-		// for, and said nothing about the server, the target or the environment
-		// file it had been given.
-		wc, terr := upgradeTarget(in).Apply(&hi, handoffNodes(hi.ProfilePath))
-		if terr != nil {
-			return composition{}, terr
-		}
-		// And which file the binary names point at over there, the same way the
-		// composition path places its own.
-		if wc != nil {
-			for _, b := range []*string{&hi.FromBinary, &hi.ToBinary} {
-				placed, perr := chainsetup.PlaceBinary(*b, wc)
-				if perr != nil {
-					return composition{}, perr
-				}
-				*b = placed
-			}
-		}
-		return composition{handoff: &hi}, nil
+		upgradeFork = fork
 	}
 
 	// A node table (topology.nodes[]) declares each node's role and binary
@@ -848,28 +798,6 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	return nil
 }
 
-// upgradeTarget is where a handoff's nodes run, read from the same request
-// fields the composition path reads them from.
-func upgradeTarget(in RunSuiteIn) upgrade.Target {
-	return upgrade.Target{
-		Server:              in.Server,
-		AllServers:          in.Server.All,
-		WorkspaceConfigPath: in.WorkspaceConfigPath,
-		Docker:              in.Docker,
-	}
-}
-
-// handoffNodes is how many nodes the profile places, which the placement needs
-// before the handoff is built. A profile that cannot be read yields zero and
-// lets NewHandoff report it, so one unreadable profile is not two errors.
-func handoffNodes(profilePath string) int {
-	prof, err := upgrade.LoadProfile(profilePath)
-	if err != nil {
-		return 0
-	}
-	return prof.Roles.Producers + prof.Roles.Validators
-}
-
 // writeOverlays renders one overlay file per binary, the same way the network's
 // own overlay is rendered, and returns where each landed.
 func writeOverlays(ctx context.Context, dataDir string, per map[string]map[string]any) (map[string]string, error) {
@@ -885,99 +813,6 @@ func writeOverlays(ctx context.Context, dataDir string, per map[string]map[strin
 		out[name] = path
 	}
 	return out, nil
-}
-
-// handoffUp composes a mixed-binary network: the handoff's steps in order,
-// each recorded, up to a successor sealing past the fork. It returns the
-// running nodes and a teardown. A failure after the nodes launched stops
-// them, because a handoff has no workspace a later command could reach them
-// through; their logs stay under the data dir.
-func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []string, func(context.Context) error, error) {
-	var steps []string
-	record := func(name, detail string) { steps = append(steps, name+": "+detail) }
-	fail := func(name string, err error) (node.NodeSet, []string, func(context.Context) error, error) {
-		return node.NodeSet{}, steps, nil, fmt.Errorf("handoff: %s: %w", name, err)
-	}
-
-	h, err := upgrade.NewHandoff(in)
-	if err != nil {
-		return fail("prepare", err)
-	}
-	record("prepare", h.Describe())
-	cfg, err := h.WriteConfig(ctx)
-	if err != nil {
-		return fail("config", err)
-	}
-	record("config", cfg)
-	base, err := h.BaseGenesis(ctx)
-	if err != nil {
-		return fail("base-genesis", err)
-	}
-	record("base-genesis", base)
-	if err := h.ComposePlan(ctx, base); err != nil {
-		return fail("plan", err)
-	}
-	record("plan", fmt.Sprintf("%d node(s); fork section %q merged", len(h.Plan.Nodes), h.Plan.AtFork))
-	detail, err := h.ApplyOverlay()
-	if err != nil {
-		return fail("overlay", err)
-	}
-	record("overlay", detail)
-
-	// One bring-up, the family's. This path used to launch every node at once
-	// and deploy governance afterwards, which is the order a poa cluster cannot
-	// form in: it forms only while the producer is alone. It worked because the
-	// profile has one producer and the four successors run the other binary.
-	ns, err := h.BringUp(ctx, record)
-	if err != nil {
-		return fail("bring-up", err)
-	}
-	teardown := func(ctx context.Context) error {
-		_, errs := process.StopNodeSet(ctx, process.NewLocalDriver(), ns)
-		if len(errs) > 0 {
-			return fmt.Errorf("handoff: teardown: %v", errs)
-		}
-		return nil
-	}
-	producer := ns.Nodes[0]
-	record("producer", producer.RPCURL)
-	live := func(name string, fn func() (string, error)) error {
-		detail, err := fn()
-		if err != nil {
-			_ = teardown(ctx)
-			return fmt.Errorf("handoff: %s: %w", name, err)
-		}
-		record(name, detail)
-		return nil
-	}
-	if err := live("verify-etcd", func() (string, error) {
-		info, err := h.VerifyEtcd(ctx, producer, etcdFormWait)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("governance %s, etcd cluster %q", info.Governance, info.Cluster()), nil
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("await-fork", func() (string, error) { return h.AwaitFork(ctx, ns, forkWait) }); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	return ns, steps, teardown, nil
-}
-
-// handoffEndpoints orders a handoff network's RPC URLs successors first: the
-// producer cannot import post-fork blocks, so it must not be the primary the
-// tests read from.
-func handoffEndpoints(ns node.NodeSet) []string {
-	var successors, producers []string
-	for _, n := range ns.Nodes {
-		if n.Index == 0 {
-			producers = append(producers, n.RPCURL)
-			continue
-		}
-		successors = append(successors, n.RPCURL)
-	}
-	return append(successors, producers...)
 }
 
 // sameComposition checks that every spec in a suite declares the SAME network,

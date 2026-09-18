@@ -557,20 +557,21 @@ func sortedKeys(m map[string]bool) []string {
 	return out
 }
 
-// TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork: a handoff declaration carries
-// through to the executable spec, and one that leaves a side out is refused
-// rather than composed as a single-binary network.
+// TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork: a hardfork declaration
+// carries through to the executable spec, and one that leaves a side out is
+// refused rather than composed as a single-binary network.
 func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
+	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
 	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
 	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"p.yaml","template":"t.json"}},
+	  "binaries":{"from":"gwemix","to":"gwbft"}` + table + `,
+	  "upgrade":{"profile":"p.yaml"}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" || s.EnvUpgrade.Template != "t.json" {
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
 	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
@@ -578,9 +579,9 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	}
 
 	bad := map[string]string{
-		"missing the to side":  `"binaries":{"from":"gwemix"},"upgrade":{"profile":"p","template":"t"}`,
-		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"},"upgrade":{"profile":"p","template":"t"}`,
-		"no template":          `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"profile":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"profile":"p"}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"profile":"p"}`,
+		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"profile":"p"}`,
 	}
 	for name, env := range bad {
 		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},
@@ -863,8 +864,8 @@ func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 	spec := func(carry string) string {
 		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
 		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-		  "binaries":{"from":"gwemix","to":"gwbft"},
-		  "upgrade":{"profile":"p.yaml","template":"t.json"` + carry + `}},
+		  "binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
+		  "upgrade":{"profile":"p.yaml"` + carry + `}},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	for _, want := range []string{"", CarryGenesis, CarryConfig} {
@@ -899,8 +900,8 @@ func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft"` + env + `},
 		  "steps":[` + steps + `]}`
 	}
-	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"p.yaml","template":"t.json"}`
+	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
+	  "upgrade":{"profile":"p.yaml"}`
 	cross := `{"do":"crossFork","timeout":"120s"}`
 	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
 
@@ -919,5 +920,35 @@ func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 	// And a case that says nothing is untouched: the composition crosses.
 	if _, err := Parse([]byte(spec(fork, check))); err != nil {
 		t.Fatalf("a case that leaves the fork to the composition was refused: %v", err)
+	}
+}
+
+// TestV2_AHardforkNeedsANodeTableAndNoTemplate.
+//
+// A hardfork says which build each node runs, and the node table is the only
+// place that says it. It used to be optional: an upgrade env without one went
+// to a composer of its own, which sized the network from its preset and
+// generated the pre-fork genesis by running the producer's binary against a
+// template the case named. That composer is gone, so both of those are now
+// errors rather than a path.
+func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
+	spec := func(env string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+		  "binaries":{"default":"gwemix","to":{"binary":"gwbft","chain":"wbft"}}` + env + `},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
+	upgrade := `,"upgrade":{"preset":"wemix-upgrade","from":"default"}`
+
+	if _, err := Parse([]byte(spec(table + upgrade))); err != nil {
+		t.Fatalf("a hardfork with a node table was refused: %v", err)
+	}
+	if _, err := Parse([]byte(spec(upgrade))); err == nil {
+		t.Error("a hardfork with no node table was accepted")
+	}
+	withTemplate := `,"upgrade":{"preset":"wemix-upgrade","from":"default","template":"t.json"}`
+	if _, err := Parse([]byte(spec(table + withTemplate))); err == nil {
+		t.Error("a hardfork naming a genesis template was accepted")
 	}
 }

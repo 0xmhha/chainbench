@@ -1,13 +1,14 @@
 package upgrade
 
 import (
-	"fmt"
 	"math/big"
+	"strings"
+
+	"fmt"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"os"
 
 	"go.yaml.in/yaml/v3"
-
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 )
 
 // Profile is a hardfork preset (presets/hardfork/*.yaml) decoded.
@@ -120,39 +121,31 @@ func LoadProfile(path string) (Profile, error) {
 	return p, nil
 }
 
-// Inputs maps the profile to BuildPlan Inputs. fromGenesis is the from-chain's
-// base genesis (a bootstrap artifact, produced out-of-band), which the profile
-// deliberately does not carry. It validates that the profile is internally
-// complete rather than silently defaulting anything.
-func (p Profile) Inputs(fromGenesis []byte) (Inputs, error) {
-	if p.Upgrade.ForkBlock < 0 {
-		return Inputs{}, fmt.Errorf("upgrade profile: fork_block must be >= 0")
+// GovernanceEnv is the governance policy the preset declares, in the terms the
+// poa genesis source takes.
+//
+// It is here rather than on the composition because the preset is the only
+// thing that has ever declared one, and because a test holds it against
+// poa.DefaultEnv: as long as the two agree, a hardfork needs no governance
+// declaration to compose the same chain.
+func (p Profile) GovernanceEnv() poa.Env {
+	g := p.Producers.Governance
+	return poa.Env{
+		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
+		StakingMin: dec(g.StakingMin), StakingMax: dec(g.StakingMax),
+		MaxIdleBlockInterval: g.MaxIdleBlockInterval, BlockCreationTime: g.BlockCreationTime,
+		BlockRewardAmount: dec(g.BlockRewardAmount), MaxPriorityFeePerGas: dec(g.MaxPriorityFeePerGas),
+		RewardDistribution: g.RewardDistribution, MaxBaseFee: dec(g.MaxBaseFee),
+		BlockGasLimit: g.BlockGasLimit, BaseFeeMaxChangeRate: g.BaseFeeMaxChangeRate,
+		GasTargetPercentage: g.GasTargetPercentage,
 	}
-	if p.Upgrade.NetworkID <= 0 {
-		return Inputs{}, fmt.Errorf("upgrade profile: network_id must be set")
+}
+
+// dec parses a decimal wei string; empty or malformed is zero.
+func dec(s string) *big.Int {
+	n, ok := new(big.Int).SetString(strings.TrimSpace(s), 10)
+	if !ok {
+		return big.NewInt(0)
 	}
-	if len(p.Validators.Addresses) != len(p.Validators.BLSPublicKeys) {
-		return Inputs{}, fmt.Errorf("upgrade profile: %d validator addresses but %d bls keys",
-			len(p.Validators.Addresses), len(p.Validators.BLSPublicKeys))
-	}
-	if len(p.Producers.Members) == 0 {
-		return Inputs{}, fmt.Errorf("upgrade profile: no producer members")
-	}
-	return Inputs{
-		Roles:       Roles{Producers: p.Roles.Producers, Validators: p.Roles.Validators},
-		NetworkID:   p.Upgrade.NetworkID,
-		ForkBlock:   big.NewInt(p.Upgrade.ForkBlock),
-		FromGenesis: fromGenesis,
-		ToGenesis: genesis.Inputs{
-			Validators: p.Validators.Addresses,
-			BLSKeys:    p.Validators.BLSPublicKeys,
-			Members:    p.Validators.Members,
-			ExtraData:  p.Validators.ExtraData,
-		},
-		ProducerAddrs: p.Producers.Members,
-		P2PBase:       p.Ports.BaseP2P,
-		P2PStep:       p.Ports.StepP2P,
-		RPCBase:       p.Ports.BaseRPC,
-		RPCStep:       p.Ports.StepRPC,
-	}, nil
+	return n
 }

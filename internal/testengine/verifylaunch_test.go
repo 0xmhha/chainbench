@@ -141,16 +141,6 @@ func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
 	}
 }
 
-// TestVerifyLaunched_SaysNothingAboutAHandoff: a handoff plans no layout, so
-// there is nothing here to hold it to.
-func TestVerifyLaunched_SaysNothingAboutAHandoff(t *testing.T) {
-	p := planFor()
-	p.Handoff = &testengine.PlanHandoff{Profile: "profiles/p.yaml"}
-	if got := testengine.VerifyLaunched(p, recorded()); len(got) != 0 {
-		t.Fatalf("a handoff reported %v", got)
-	}
-}
-
 // TestVerifyLaunched_CatchesAWorkspaceComposedWithAnotherBinary is the reuse
 // case. A workspace is composed once and run against many times, so the plan is
 // this run's and the record may be an earlier run's. A network built from

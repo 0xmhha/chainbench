@@ -8,11 +8,15 @@ import (
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
-// upgradeEnv builds an env declaring a handoff, with extra fields folded in.
+// upgradeEnv builds an env declaring a hardfork, with extra fields folded in.
 func upgradeEnv(extra string) string {
-	return `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"template":"t.json"` + extra + `}}`
+	return `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix","to":{"binary":"gwbft","chain":"wbft"}},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"en","binary":"to"},
+	    {"index":2,"role":"bp"}
+	  ]},
+	  "upgrade":{"from":"default"` + extra + `}}`
 }
 
 // TestUpgradeDecl_TheCaseIsHeldToTheForkItNames.

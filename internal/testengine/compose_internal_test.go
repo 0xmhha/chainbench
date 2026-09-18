@@ -38,7 +38,7 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.handoff != nil || comp.up == nil {
+	if comp.up == nil {
 		t.Fatal("a single-binary env composes through the workspace")
 	}
 	up := comp.up
@@ -93,32 +93,34 @@ func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 	}
 }
 
-func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
-	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/genesis-template.json")
-	t.Setenv("GWBFT_BIN", "")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"${GWBFT_BIN:-gwbft}"},
-	  "upgrade":{"profile":"presets/hardfork/wemix-upgrade.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
-	dir := t.TempDir()
-	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
+// TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork.
+//
+// It used to have a composer of its own, reached by leaving the topology out.
+// Now the node table is what says which build each node runs, so the fork is
+// scheduled on the genesis those nodes share and everything else is the
+// ordinary path.
+func TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
+	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"en","binary":"next"},
+	    {"index":2,"role":"bp"}
+	  ]}}`)
+	t.Chdir("../..")
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.up != nil || comp.handoff == nil {
-		t.Fatal("an upgrade env composes as a handoff")
+	if comp.up == nil {
+		t.Fatal("a hardfork composes through the workspace, like every other network")
 	}
-	h := comp.handoff
-	if h.FromBinary != "gwemix" || h.ToBinary != "gwbft" {
-		t.Errorf("binaries = %q -> %q (a ${VAR:-default} with the var unset takes the default)", h.FromBinary, h.ToBinary)
+	f := comp.up.GenesisFork
+	if f == nil {
+		t.Fatal("the composition schedules no fork")
 	}
-	if h.Template != "/tmpl/genesis-template.json" || h.ProfilePath != "presets/hardfork/wemix-upgrade.yaml" || h.DataDir != dir {
-		t.Errorf("handoff inputs = %+v", h)
-	}
-	if h.KeysDir != defaultKeysDir {
-		t.Errorf("preset = %q", h.KeysDir)
-	}
-	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, Binary: "/x"}); err == nil {
-		t.Error("--binary has no role in a handoff and must be refused")
+	if f.Name != "croissant" || f.At != 20 || f.Binary != "next" {
+		t.Errorf("fork = %+v", f)
 	}
 }
 
@@ -135,7 +137,7 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("compositionOf: %v", err)
 	}
-	if comp.handoff != nil || comp.up == nil {
+	if comp.up == nil {
 		t.Fatal("a same-family node table composes through the workspace")
 	}
 	up := comp.up
@@ -515,20 +517,6 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 	  "binaries":{"default":"gstable"},"target":"srv://"}`)
 	if _, err := compositionOf(context.Background(), bad, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
 		t.Fatal("a malformed env target must fail composition")
-	}
-}
-
-// TestCompositionOf_HandoffRejectsEnvComposeFields pins WA20: a handoff composes
-// from its profile and template, so env-level topology/hardforks/launch/config
-// have nowhere to go and are refused rather than silently dropped.
-func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
-	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/g.json")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "topology":{"validators":4},
-	  "upgrade":{"profile":"p.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
-	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
-		t.Fatal("a handoff env that also declares a topology must be refused, not silently dropped")
 	}
 }
 

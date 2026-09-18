@@ -109,44 +109,11 @@ func PlanBands(index int, b Bands, res node.Reservation) (node.Endpoints, error)
 // ValidatePorts confirms no two ports collide, including the derived etcd ports.
 // Any duplicate is a silent bind failure waiting to happen, so this errors.
 //
-// It treats every node as being on ONE machine, which is what a single-host plan
-// is. For a network spread across a server set, use [ValidatePortsPerHost]: two
-// nodes on different machines may hold the same port, and calling this on such a
-// plan reports a collision that does not exist.
+// It treats every node as being on ONE machine, which is what a slot plan is:
+// the bands are laid out per machine, and two nodes on different machines may
+// hold the same port without colliding.
 func ValidatePorts(ports []node.Endpoints) error {
 	return validatePortsOn("", ports)
-}
-
-// ValidatePortsPerHost confirms no two nodes ON THE SAME MACHINE collide.
-//
-// A port is only contended within a machine. A 30-node network over 15 servers
-// puts node1 and node2 on different hosts at the same p2p port, which is correct
-// and must not be refused; node1 and node16 share a host and are separated by
-// their slot's port band instead. hosts[i] is node i's address, and an empty one
-// means the single host every node shares.
-func ValidatePortsPerHost(hosts []string, ports []node.Endpoints) error {
-	if len(hosts) != len(ports) {
-		return fmt.Errorf("portplan: %d host(s) but %d port set(s)", len(hosts), len(ports))
-	}
-	byHost := map[string][]node.Endpoints{}
-	idxByHost := map[string][]int{}
-	for i, p := range ports {
-		byHost[hosts[i]] = append(byHost[hosts[i]], p)
-		idxByHost[hosts[i]] = append(idxByHost[hosts[i]], i+1)
-	}
-	for host, ps := range byHost {
-		if err := validatePortsOn(host, ps); err != nil {
-			return fmt.Errorf("portplan: on %s (node%v): %w", hostLabel(host), idxByHost[host], err)
-		}
-	}
-	return nil
-}
-
-func hostLabel(h string) string {
-	if h == "" {
-		return "this machine"
-	}
-	return h
 }
 
 func validatePortsOn(_ string, ports []node.Endpoints) error {

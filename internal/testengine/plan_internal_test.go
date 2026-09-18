@@ -126,27 +126,33 @@ func TestPlan_KeysSourceDefaultsToTheRecordedSet(t *testing.T) {
 	}
 }
 
-// TestPlan_HandoffSaysWhichBinaryTakesOver: an upgrade env composes no layout,
-// so the plan answers a different set of questions. It must not print a network
-// of zero nodes.
-func TestPlan_HandoffSaysWhichBinaryTakesOver(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"profiles/p.yaml","template":"t.json"}}`
+// TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork.
+//
+// An upgrade env used to plan as a handoff: no layout, a profile, and the size
+// read out of that profile. Now its nodes are declared, so the plan shows the
+// network the way it shows every other one — which is also the fix for X7, the
+// case whose size lived in a document the composer refused to read.
+func TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
+	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "topology":{"nodes":[
+	    {"index":1,"role":"en","binary":"next"},
+	    {"index":2,"role":"en","binary":"next"},
+	    {"index":3,"role":"bp"}
+	  ]}}`
+	t.Chdir("../..")
 	p := planFor(t, env, RunSuiteIn{})
 
-	if p.Handoff == nil {
-		t.Fatal("an upgrade env must plan as a handoff")
-	}
-	if p.Handoff.FromBinary != "gwemix" || p.Handoff.ToBinary != "gwbft" {
-		t.Fatalf("binaries = %+v", p.Handoff)
+	if p.Nodes.BP != 1 || p.Nodes.EN != 2 {
+		t.Fatalf("nodes = %+v, want the declared 1 bp + 2 en", p.Nodes)
 	}
 	rendered := p.String()
-	if strings.Contains(rendered, "bp 0") {
-		t.Errorf("a handoff plan must not print a layout it does not have:\n%s", rendered)
+	if !strings.Contains(rendered, "next=gwbft") {
+		t.Errorf("the plan must name the build that seals after the fork:\n%s", rendered)
 	}
-	if !strings.Contains(rendered, "from gwemix -> to gwbft") {
-		t.Errorf("rendering:\n%s", rendered)
+	if strings.Contains(rendered, "bp 0") {
+		t.Errorf("the plan printed a layout it does not have:\n%s", rendered)
 	}
 }
 
@@ -163,53 +169,6 @@ func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
 	in.Server.Name = "server-01"
 	if got := planFor(t, env, in).Target; got != "server server-01 (docker)" {
 		t.Errorf("target = %q", got)
-	}
-}
-
-// TestPlan_HandoffTakesItsSizeFromTheProfile is the fix for X7.
-//
-// The handoff case carried "topology": {"bp": 4} and the composer refused it,
-// so the case could not run at all. The number was wrong as well as unused: the
-// profile sizes that network at one producer plus four validators, five nodes,
-// and 4 was the validator count copied into a field that means something else.
-//
-// Removing it from the case leaves the size visible in exactly one place, and
-// the plan is where a reader finds it.
-func TestPlan_HandoffTakesItsSizeFromTheProfile(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"../../presets/hardfork/wemix-upgrade.yaml","template":"t.json"}}`
-	p := planFor(t, env, RunSuiteIn{})
-
-	if p.Handoff.Producers != 1 || p.Handoff.Validators != 4 {
-		t.Fatalf("roles = producers %d validators %d, want 1/4 from the profile",
-			p.Handoff.Producers, p.Handoff.Validators)
-	}
-	if p.Handoff.AtFork != "croissant" || p.Handoff.ForkBlock != 20 {
-		t.Errorf("fork = %s at %d", p.Handoff.AtFork, p.Handoff.ForkBlock)
-	}
-	if got := p.String(); !strings.Contains(got, "producers 1 · validators 4") {
-		t.Errorf("the size must be on the plan:\n%s", got)
-	}
-}
-
-// TestPlan_HandoffSurvivesAnUnreadableProfile: the plan is a display, and a
-// display that fails for a reason the run is about to report more clearly only
-// hides the real message.
-func TestPlan_HandoffSurvivesAnUnreadableProfile(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"from":"gwemix","to":"gwbft"},
-	  "upgrade":{"profile":"no/such/profile.yaml","template":"t.json"}}`
-	p := planFor(t, env, RunSuiteIn{})
-
-	if p.Handoff == nil || p.Handoff.Profile != "no/such/profile.yaml" {
-		t.Fatalf("handoff = %+v", p.Handoff)
-	}
-	if p.Handoff.Producers != 0 || p.Handoff.Validators != 0 {
-		t.Error("an unread profile must leave the size unstated, not guessed")
-	}
-	if got := p.String(); strings.Contains(got, "producers") {
-		t.Errorf("an unknown size must be omitted, not printed as zero:\n%s", got)
 	}
 }
 

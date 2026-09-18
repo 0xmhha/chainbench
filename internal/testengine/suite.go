@@ -385,24 +385,13 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	}
 	out.SessionRoot = sess.Root()
 
-	var net composed
-	if comp.handoff != nil {
-		ns, steps, teardown, err := handoffUp(ctx, *comp.handoff)
-		out.SetupSteps = steps
-		if err != nil {
-			return out, fmt.Errorf("engine: run suite: setup: %w", err)
-		}
-		out.Preflight = preflight.Compose.String()
-		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
-	} else {
-		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
-		blocked := blockedRun{sess: sess, raw: specs, specs: parsed}
-		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
-			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr, blocked)
-		}
-		if err != nil {
-			return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err, blocked)
-		}
+	net, err := composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
+	blocked := blockedRun{sess: sess, raw: specs, specs: parsed}
+	if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
+		return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, verr, blocked)
+	}
+	if err != nil {
+		return out, afterFailedSetup(ctx, sd, comp.up.DataDir, net, in.KeepUp, &out, err, blocked)
 	}
 	out.Endpoints = net.endpoints
 
@@ -412,7 +401,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		// transaction, and a network sitting at the block before its fork seals
 		// none. A case that has to act BEFORE the fork says so by naming the
 		// crossFork step, and then this leaves the fork to it.
-		if comp.handoff == nil && comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
+		if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
 			res, cerr := chainsetup.NetCrossFork(ctx, sd, chainsetup.NetCrossForkIn{DataDir: comp.up.DataDir})
 			if cerr != nil {
 				return fmt.Errorf("engine: run suite: %w", cerr)

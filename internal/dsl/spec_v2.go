@@ -178,8 +178,14 @@ type UpgradeV2 struct {
 	// Profile is a hardfork preset by path, for one that is not under
 	// presets/hardfork. Preset names one that is.
 	Profile string `json:"profile,omitempty"`
-	// Template is the producer chain's own genesis template.
-	Template string `json:"template"`
+	// Template named the producer chain's own genesis template, for the handoff
+	// composer that generated the pre-fork genesis by running that binary
+	// against it. The ordinary path builds the genesis from the chain plugin's
+	// template, so a declaration naming one is refused (see checkUpgrade)
+	// rather than quietly composed from a different document.
+	//
+	// Deprecated: has no effect, and naming it is an error.
+	Template string `json:"template,omitempty"`
 	// Fork is the hardfork's name and At is the block it activates on. Given,
 	// they are checked against the preset rather than replacing it: a case
 	// saying which fork it tests and being wrong about it is worse than a case
@@ -315,12 +321,21 @@ func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 	if u.Preset != "" && u.Profile != "" {
 		return fmt.Errorf("dsl: case %s: upgrade names both a preset (%s) and a profile (%s) — name one", caseID, u.Preset, u.Profile)
 	}
-	// A node table composes like any other network, from the chain's own genesis
-	// template. Naming one is for the handoff composer, which generates the
-	// pre-fork genesis by running the producer's binary against a template that
-	// binary ships rather than one chainbench holds.
-	if u.Template == "" && len(env.Topology) == 0 {
-		return fmt.Errorf("dsl: case %s: upgrade needs a \"template\", or a node table to compose from", caseID)
+	// A hardfork says which build each node runs, and the node table is where it
+	// says it. Without one nothing decides which side of the fork a node is on,
+	// and the fork's own configuration is read out of the chain the post-fork
+	// nodes run — so there is nothing to build it from either.
+	if len(env.Topology) == 0 {
+		return fmt.Errorf("dsl: case %s: upgrade needs a node table (topology.nodes[]) saying which build each node runs", caseID)
+	}
+	// The template was the handoff composer's: it generated the pre-fork genesis
+	// by running the producer's binary against a template that binary ships.
+	// The ordinary path builds it from the chain plugin's own template, so a
+	// declaration naming one is describing a composer that no longer exists.
+	// Refused rather than ignored, because a case that names a template and
+	// gets another one is composing a network it did not ask for.
+	if u.Template != "" {
+		return fmt.Errorf("dsl: case %s: upgrade names a genesis template (%s), and the chain supplies its own — remove it", caseID, u.Template)
 	}
 	// The two sides, by the names the env's own binaries use.
 	from, to := u.From, u.To

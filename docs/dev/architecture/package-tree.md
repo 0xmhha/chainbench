@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 48 | 53,001 |
-| `cmd/` | 19 | 5,142 |
+| `internal/` | 48 | 50,132 |
+| `cmd/` | 19 | 4,981 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **70** | **58,933** |
+| **합계** | **70** | **55,903** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -76,7 +76,7 @@ internal/core/
 ├── report         214  [L3] 실행 전체 report 의 집계자 — 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를
 │                            모아 report.json(Build·Generate·Write·Read). 판정을 다시 하지 않는다
 └── hardfork       136  [L3] 바이너리 교체(swap) 업그레이드 계획/실행 — 같은 데이터디렉토리를 멈췄다 fork 를 켠 새
-                             바이너리로 재기동(합의 엔진 불변). consensus/upgrade 의 핸드오프와 의도적으로 별개
+                             바이너리로 재기동(합의 엔진 불변). 합의 엔진이 바뀌는 하드포크는 env.upgrade 로 선언한다
 ```
 
 `registry` 가 L1 인 것이 이 층 구조의 핵심이다. **인터페이스는 아래, 구현은 위(L2)** 에 있어서
@@ -192,8 +192,8 @@ cmd/chainbench           270  main. 사용자용 CLI(요구 15) 루트 조립
 ├── txcmd                212  체인에 일을 맡기고 결과를 기다리기 — send·wait·deploy·call
 ├── accountcmd           177  노드나 체인이 아니라 ACCOUNT 에 가하는 것 — 상태 읽기, 자금 공급
 ├── keyringcmd         1,073  키 재료 CLI — new·add·list·show·export·import·derive
-├── upgradecmd           229  체인을 다른 바이너리·다른 fork 로 옮기기 — upgrade run(wemix→wbft 핸드오프)·
-│                             hardfork(구성된 체인에 fork 적용) + 둘이 함께 쓰는 genesis 파생
+├── upgradecmd            69  hardfork — 구성된 체인을 fork 블록에서 다른 바이너리로 옮긴다.
+│                             wemix→wbft 핸드오프는 이제 보통 케이스로 돈다(upgrade run 은 없어졌다)
 ├── reportcmd            137  실행을 되읽기 — report(세션이 기록한 verdict 와 증적)·log(수집한 노드 로그)
 ├── networkcmd           215  이름 붙인 네트워크 레지스트리 — MCP chainbench_network_*·chainbench_remote_rpc 의 CLI 거울
 ├── resourcecmd          237  네트워크가 무엇으로 구성될 수 있는지를 질문으로 — 서버·포트 슬롯·용량

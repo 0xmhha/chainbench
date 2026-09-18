@@ -28,8 +28,7 @@ func TestProfile_TheGovernancePolicyIsTheDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}
-	h := &Handoff{Profile: prof}
-	declared := h.governanceEnv()
+	declared := prof.GovernanceEnv()
 
 	if diff := envDiff(declared, poa.DefaultEnv()); diff != "" {
 		t.Errorf("the profile's governance policy is no longer the default:\n%s\n"+

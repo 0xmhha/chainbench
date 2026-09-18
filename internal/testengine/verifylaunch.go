@@ -51,12 +51,7 @@ func (m LaunchMismatch) String() string {
 // workspace is reused, so the plan is this run's and the record may be an
 // earlier run's: a network composed with another binary, or on another machine,
 // answers the suite happily and answers it about something else.
-//
-// A handoff plans no layout of its own, so there is nothing here to hold it to.
 func VerifyLaunched(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
-	if plan.Handoff != nil {
-		return nil
-	}
 	var out []LaunchMismatch
 	if st.Chain != plan.Chain {
 		out = append(out, LaunchMismatch{Want: "chain " + plan.Chain, Got: "chain " + st.Chain})
