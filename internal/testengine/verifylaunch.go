@@ -62,11 +62,8 @@ func VerifyLaunched(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
 			Got:  "binary " + st.Binary,
 		})
 	}
-	if plan.Placement != (resource.Spec{}) && st.Target != plan.Placement {
-		out = append(out, LaunchMismatch{
-			Want: "nodes on " + plan.Placement.Describe() + askedBy(plan, FieldTarget),
-			Got:  "nodes on " + st.Target.Describe(),
-		})
+	if m, bad := placementMismatch(plan, st); bad {
+		out = append(out, m)
 	}
 	if plan.Keys.Dir != "" && st.KeysDir != plan.Keys.Dir {
 		out = append(out, LaunchMismatch{
@@ -220,4 +217,45 @@ func sortedScopes[T any](m map[string][]T) []string {
 		return out[i] < out[j]
 	})
 	return out
+}
+
+// placementMismatch compares where the plan asked for the nodes against where
+// the record says they went.
+//
+// The two do not always speak about the same thing. A placement is what the
+// ENV declared, and a machine chosen on the command line is a separate field —
+// so a run placed with --server or --all-servers has a placement that names no
+// machine, while the record always names the one the workspace composed on. A
+// spread network cannot name one at all: --all-servers puts node1 on server1
+// and node2 on server2, and the record keeps the first.
+//
+// Measured: a hardfork composed across the docker server set passed every step
+// including start, and was then refused with "asked for nodes on local
+// /data/chainbench, launched with nodes on server server1:/data/chainbench" —
+// a difference between two ways of saying the same placement.
+//
+// So a placement that names a machine is held to that machine, and one that
+// does not is held to the data root, which is what it actually asked for.
+func placementMismatch(plan ComposePlan, st chainsetup.State) (LaunchMismatch, bool) {
+	want := plan.Placement
+	if want == (resource.Spec{}) {
+		return LaunchMismatch{}, false
+	}
+	got := st.Target
+	if want.Server == "" && want.Host == "" {
+		if got.DataRoot == want.DataRoot {
+			return LaunchMismatch{}, false
+		}
+		return LaunchMismatch{
+			Want: "nodes under " + want.DataRoot + askedBy(plan, FieldTarget),
+			Got:  "nodes under " + got.DataRoot,
+		}, true
+	}
+	if got == want {
+		return LaunchMismatch{}, false
+	}
+	return LaunchMismatch{
+		Want: "nodes on " + want.Describe() + askedBy(plan, FieldTarget),
+		Got:  "nodes on " + got.Describe(),
+	}, true
 }

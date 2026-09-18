@@ -247,3 +247,39 @@ func TestStopAfterFailedSetup_SaysWhenItCouldNotStop(t *testing.T) {
 		t.Fatalf("both failures must be named: %v", err)
 	}
 }
+
+// TestVerifyLaunched_APlacementIsHeldToWhatItNamed.
+//
+// A placement is what the ENV declared; a machine chosen on the command line is
+// a separate field. So a run placed with --server or --all-servers has a
+// placement naming no machine, while the record always names the one the
+// workspace composed on — and a spread network cannot name one at all.
+//
+// Measured: a hardfork composed across the docker server set passed every step
+// including start, then was refused with "asked for nodes on local
+// /data/chainbench, launched with nodes on server server1:/data/chainbench".
+// Two ways of saying the same placement.
+func TestVerifyLaunched_APlacementIsHeldToWhatItNamed(t *testing.T) {
+	// Named no machine, only a data root: the server the record kept is not a
+	// contradiction, and the data root is what was asked.
+	p := planFor()
+	p.Placement = resource.Spec{DataRoot: "/data/chainbench"}
+	st := recorded(bp(1), bp(2), en(3))
+	st.Target = resource.Spec{Server: "server1", DataRoot: "/data/chainbench"}
+	if got := testengine.VerifyLaunched(p, st); len(got) != 0 {
+		t.Errorf("a spread placement was reported as a mismatch: %v", got)
+	}
+
+	// The same placement against another data root is still a mismatch.
+	st.Target = resource.Spec{Server: "server1", DataRoot: "/elsewhere"}
+	if got := testengine.VerifyLaunched(p, st); len(got) == 0 {
+		t.Error("a network composed under another data root passed")
+	}
+
+	// A placement that DOES name a machine is still held to that machine.
+	p.Placement = resource.Spec{Server: "server9", DataRoot: "/data/chainbench"}
+	st.Target = resource.Spec{Server: "server1", DataRoot: "/data/chainbench"}
+	if got := testengine.VerifyLaunched(p, st); len(got) == 0 {
+		t.Error("a network composed on a machine the env did not name passed")
+	}
+}

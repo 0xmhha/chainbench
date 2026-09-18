@@ -504,29 +504,64 @@ await-fork: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4
 pass=1
 ```
 
-`chainbench upgrade run` 쪽도 같이 돌린다. 두 표면이 같은 코드를 부르므로 한쪽만
-보면 다른 쪽의 회귀를 놓친다.
+### 5.1 흡수 뒤의 기준선 (2026-09-18)
+
+전용 컴포저가 없어졌으므로 기준선도 보통 경로의 것이다. 환경변수는 두 개면
+된다 — `GOWEMIX_TEMPLATE` 은 아무도 읽지 않는다(체인 플러그인이 자기 템플릿을
+들고 있다).
+
+```
+GWEMIX_BIN=... GWBFT_BIN=... go run ./cmd/chainbench run \
+  --workspace-dir <ws> --artifact-root <out> \
+  tests/tc/go-wemix/hardfork/*.json
+```
+
+통과 기준선(실측):
+
+```
+cross-fork: croissant at 20: head 19, 4 successor(s) now produce
+cross-fork: croissant at 30: head 29, 4 successor(s) now produce
+01-croissant-successors-take-over            pass=1
+02-state-written-before-the-fork-survives-it pass=1
+03-two-producers-hand-over                   pass=1
+```
+
+`chainbench upgrade run` 은 없어졌다. 두 표면이 같은 코드를 부르던 구조가 이
+트랙에서 계속 문제였고, 한쪽이 없어지면 그 값을 더는 내지 않는다.
 
 ---
 
-## 6. 확인하지 않은 것
+## 6. 확인한 것과 남은 것
 
-- **생산자가 둘 이상인 핸드오프.** `etcd-join` 과 단계별 순차 기동은 이제 돌 수
-  있지만 **도는 것을 못 봤다.** `presets/hardfork/wemix-upgrade-15.yaml` 이 생산자
-  15로 있는데 프리셋 노드를 30개 요구해서 `keys/preset`(5개)로는 못 돈다. 서버셋이
-  필요하다. 4단계에서 작은 다중 생산자 preset 을 만들어 돌려 보는 편이 빠르다.
+### 확인됐다 (2026-09-18)
 
-  **그 15 프로필이 §11.2.12 의 미확인 하나를 지웠다.** `plan_order` 가
-  `[16..30, 1..15]` 이고, 생산자 15 · 후계자 15 다. "생산자가 프리셋의 뒤쪽 슬롯을
-  가져간다" 는 규칙이 생산자 1이 아닌 경우에도 성립한다.
-- **메시가 필요한지.** 1단계로 static peers 가 config 에 들어갔다(실측). 그래도
-  `WireMesh` 를 뺀 채로는 **돌려 보지 않았다.** 빼고 돌려 봐야 안다.
-- **`w.plugin()` 10곳의 분류.** 넷이 노드별이라는 것은 **읽고 내린 판단**이다.
-  2단계에서 컴파일러가 확인한다.
-- **원격 핸드오프.** `Target` 배선은 오늘 넣었지만 서버셋으로 **돌려 보지
-  않았다.**
-- **restart 방식 전체.** 문법만 열고 만들지 않는다. §2.3 의 config 경로는 체인
-  코드를 읽어 확인했을 뿐, **chainbench 로 돌려 보지 않았다.**
+- **생산자가 둘 이상인 핸드오프.** 노드 표로 선언하니 프리셋 30개가 필요 없다.
+  생성한 6노드 키셋으로 생산자 2 · 후계자 4 를 띄웠고, 두 생산자가 etcd 군집을
+  이루어 번갈아 봉인했다(`admin_wemixInfo` 의 `etcd.members` 2, `miners` 가
+  `node5/up node6/up/*`). 생산자가 하나면 부트 노드가 혼자 군집을 만들고 끝나서
+  합류 단계 자체가 돌지 않았다.
+- **메시가 필요한지.** 필요 없다. `WireMesh` 를 지운 채로 세 케이스가 통과한다.
+  static peers 는 config 의 `P2P.StaticNodes` 로 간다.
+- **`w.plugin()` 10곳의 분류.** 2단계에서 컴파일러가 확인했다 — 넷이 아니라
+  셋이었다.
+
+- **원격 하드포크.** docker 서버셋(`env/docker`, 15 컨테이너)에 `--all-servers
+  --docker` 로 돌렸다. 노드 다섯이 server1~server5 에 하나씩 놓였고, 포크를
+  넘어 통과했다(`pass=1`).
+
+  **그 실행이 결함 하나를 드러냈다.** 계획의 placement 는 **env 가 선언한** 것이고
+  명령줄로 고른 서버는 별개의 항목이라, `--server`·`--all-servers` 로 놓은 실행은
+  placement 가 기계를 안 적는다. 그런데 기록은 항상 구성한 기계를 적는다. 그래서
+  `VerifyLaunched` 가 "asked for nodes on local /data/chainbench, launched with
+  nodes on server server1:/data/chainbench" 로 거부했다 — 같은 배치를 두 가지로
+  말한 것이다. 기계를 적은 placement 는 그 기계에, 안 적은 것은 데이터 루트에
+  묶도록 고쳤다. **`chainbench run` 으로 원격을 돌리면 항상 걸리던 것이라,
+  하드포크만의 문제가 아니었다.**
+
+### 아직 아니다
+
+- **restart 방식 전체.** 문법에 자리만 있고 이름을 대며 거부한다. §2.3b 에서
+  실측한 대로 config 캐리어가 재init 없이 동작하므로 재료는 있다.
 
 ---
 
