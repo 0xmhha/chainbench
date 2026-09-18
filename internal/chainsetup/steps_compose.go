@@ -730,6 +730,9 @@ type GenesisOpts struct {
 	// target, instead of building one from a template. Overrides/Overlay do not
 	// apply to it. Empty builds as usual.
 	Existing string
+	// Fork, when set, schedules a hardfork whose consensus configuration comes
+	// from another chain's own genesis. See GenesisFork.
+	Fork *GenesisFork
 	// Variants are extra genesis documents, one per binary name, each a JSON
 	// fragment deep-merged onto the built genesis. The nodes running that
 	// binary initialize from the result; every other node keeps the network's.
@@ -743,6 +746,30 @@ type GenesisOpts struct {
 	// and a family whose genesis its own binary generates is not generated
 	// twice.
 	Variants map[string][]byte
+}
+
+// GenesisFork schedules a hardfork this network crosses, taking the fork's
+// consensus configuration from the chain that seals after it.
+//
+// The section is not a constant and cannot be written down. It is the to-chain's
+// own genesis, built from its own template with the real post-fork validator
+// set, with the fork's config section lifted out of it. A literal overlay could
+// carry today's values and would be wrong the moment the key set changed — the
+// validators, their BLS keys and the RLP extra-data that encodes them all come
+// from the ring.
+type GenesisFork struct {
+	// Name is the fork ("croissant"); At is the block it activates on. The
+	// activation key follows the "<name>Block" convention the chains use.
+	Name string
+	At   int64
+	// Binary names the binary that seals after the fork. Its chain supplies the
+	// section, and the nodes running it are the post-fork validators.
+	//
+	// By binary rather than by role: before the fork these nodes are endpoints,
+	// and after it they produce. Which side of the fork a node is on is which
+	// build it runs, which is the same question binaryFor, genesisFor and
+	// pluginFor each answer.
+	Binary string
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -782,6 +809,12 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// The genesis is a generated file, so it sits under the composition's
 	// runtime directory when isolated (flat otherwise). The path is derived the
 	// one way, per machine, so a set writes each server the same relative path.
+	if opts.Fork != nil {
+		if gen, err = w.mergeForkSection(gen, *opts.Fork); err != nil {
+			return "", err
+		}
+		art.Genesis = gen
+	}
 	lay, err := w.layout()
 	if err != nil {
 		return "", err
@@ -830,6 +863,72 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	}
 	w.markStep("genesis", detail)
 	return detail, nil
+}
+
+// mergeForkSection schedules the fork on the built genesis, taking its
+// consensus configuration from the chain that seals after it.
+//
+// Three steps, all of them existing pieces: build the to-chain's genesis from
+// the key set with the post-fork validators, lift its fork section out, and set
+// that section plus the activation block on this genesis. The fork order is
+// re-validated, so a fork scheduled before one it must follow fails here rather
+// than at the boot of every node.
+func (w *Workspace) mergeForkSection(base []byte, f GenesisFork) ([]byte, error) {
+	if f.Name == "" {
+		return nil, fmt.Errorf("chainsetup: genesis: a fork needs a name")
+	}
+	id := w.state.BinaryChains[f.Binary]
+	if id == "" {
+		return nil, fmt.Errorf("chainsetup: genesis: the %q fork seals on binary %q, which names no chain of its own — the fork's configuration comes from that chain's genesis", f.Name, f.Binary)
+	}
+	p, err := external.ResolveChain(id, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: fork chain %q: %w", id, err)
+	}
+	// The nodes that run it are the validators it will hand over to.
+	var indices []int
+	for _, ns := range w.state.Nodes {
+		if ns.Binary == f.Binary {
+			indices = append(indices, ns.Index)
+		}
+	}
+	if len(indices) == 0 {
+		return nil, fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name)
+	}
+	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: %w", err)
+	}
+	net, err := preset.NetworkForNodes(indices)
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: the %q fork's validators: %w", f.Name, err)
+	}
+	toGen, err := genesis.Build(p, genesis.Inputs{
+		Validators: net.Validators, BLSKeys: net.BLSKeys, ExtraData: net.ExtraData,
+		Members: net.Members, Alloc: net.Alloc,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: build the %q genesis the fork hands over to: %w", id, err)
+	}
+	section, err := genesis.ExtractConfigSection(toGen, f.Name)
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: read the %q section from the %q genesis: %w", f.Name, id, err)
+	}
+	if len(section) == 0 {
+		return nil, fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name)
+	}
+	merged, err := genesis.SetConfigSection(base, f.Name, section)
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: set the %q section: %w", f.Name, err)
+	}
+	merged, err = genesis.SetConfigSection(merged, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: set %sBlock: %w", f.Name, err)
+	}
+	if err := genesis.ValidateForks(merged); err != nil {
+		return nil, fmt.Errorf("chainsetup: genesis: with the %q fork at %d: %w", f.Name, f.At, err)
+	}
+	return merged, nil
 }
 
 // writeGenesisVariants builds and writes the per-binary genesis documents, each

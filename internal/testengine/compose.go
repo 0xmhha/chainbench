@@ -204,6 +204,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		from[FieldKeysDir] = SourceHarness
 	}
+	var upgradeFork *chainsetup.GenesisFork
 	perBinaryOverlay, err := writeOverlays(ctx, in.DataDir, spec.Chain.GenesisPerBinary)
 	if err != nil {
 		return composition{}, err
@@ -213,7 +214,18 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{}, err
 	}
 
-	if u := spec.EnvUpgrade; u != nil {
+	// An upgrade env that declares a node table composes like any other network:
+	// the nodes say which build each of them runs, and the fork's configuration
+	// is scheduled on the one genesis they all initialize from. One without a
+	// table still goes to the handoff composer, which sizes the network from its
+	// preset's roles.
+	if u := spec.EnvUpgrade; u != nil && len(spec.Topology) > 0 {
+		fork, ferr := forkOf(u)
+		if ferr != nil {
+			return composition{}, ferr
+		}
+		upgradeFork = fork
+	} else if u := spec.EnvUpgrade; u != nil {
 		if in.Binary != "" {
 			return composition{}, fmt.Errorf("a handoff names its binaries by role in the env; --binary does not apply")
 		}
@@ -385,7 +397,8 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		BPCount: validators, ENCount: endpoints, PNCount: proxies, EndpointSyncMode: syncMode,
 		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins, BinaryChains: spec.Chain.BinaryChains,
-		Server: in.Server, Docker: in.Docker,
+		GenesisFork: upgradeFork,
+		Server:      in.Server, Docker: in.Docker,
 		ChainID:          in.ChainID,
 		GenesisSet:       hardforkSets(spec.Hardforks),
 		OverlayPath:      overlayPath,
@@ -756,6 +769,34 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 		return "", fmt.Errorf("write genesis overlay: %w", err)
 	}
 	return path, nil
+}
+
+// forkOf reads the fork a declaration schedules, taking from the preset what the
+// case did not say.
+//
+// The preset decides the fork and the block; a case may repeat them and is held
+// to the repetition (see checkDeclaredFork). Here the two are folded into the
+// one instruction the genesis step acts on.
+func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
+	prof, err := upgrade.LoadProfile(upgradePresetPath(u))
+	if err != nil {
+		return nil, fmt.Errorf("upgrade preset: %w", err)
+	}
+	name, at := prof.Upgrade.AtFork, prof.Upgrade.ForkBlock
+	if u.Fork != "" {
+		name = u.Fork
+	}
+	if u.At != nil {
+		at = *u.At
+	}
+	if name == "" {
+		return nil, fmt.Errorf("upgrade: neither the case nor its preset names a fork")
+	}
+	to := u.To
+	if to == "" {
+		to = dsl.BinaryTo
+	}
+	return &chainsetup.GenesisFork{Name: name, At: at, Binary: to}, nil
 }
 
 // hardforkPresetDir is where a named hardfork preset lives.

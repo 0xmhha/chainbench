@@ -89,6 +89,9 @@ type NetUpIn struct {
 	ChainID     int64    `json:"chainID,omitempty"`
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
+	// GenesisFork, when set, schedules a hardfork whose consensus configuration
+	// comes from the chain that seals after it.
+	GenesisFork *GenesisFork `json:"genesisFork,omitempty"`
 	// BinaryChains names, per binary, the chain that binary runs when it is not
 	// the composition's. It travels beside Binaries because it answers the same
 	// question about the same name.
@@ -241,6 +244,7 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
 				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
+				Fork: in.GenesisFork,
 			})
 			return r.Detail, err
 		},
@@ -358,7 +362,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			gopts, gerr := genesisOpts(NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
-				PerBinary: in.GenesisPerBinary,
+				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
 			})
 			if gerr != nil {
 				return out, gerr

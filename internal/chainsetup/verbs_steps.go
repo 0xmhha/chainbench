@@ -257,6 +257,9 @@ type NetGenesisIn struct {
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"); empty builds from the template.
 	GenesisExisting string
+	// Fork, when set, schedules a hardfork whose consensus configuration comes
+	// from the chain that seals after it.
+	Fork *GenesisFork
 	// PerBinary names, per binary, an overlay file in the same shape as
 	// OverlayPath. Its genesis fragment is merged onto the built genesis to
 	// make that binary's own document.
@@ -327,7 +330,7 @@ func (o GenesisOpts) checkExistingIsUnchanged() error {
 }
 
 func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
-	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting}
+	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting, Fork: in.Fork}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")
 		if !ok || k == "" {
