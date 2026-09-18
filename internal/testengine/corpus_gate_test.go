@@ -43,11 +43,18 @@ var (
 // the declaration could be swapped at run time nobody ran a stablenet case
 // against wbft. This is the guard for that.
 //
-// Two things count as saying which. applicableChains names the chains outright.
-// A contract requirement says it better: it gates on the chain HAVING the
-// contract, so it follows the manifests rather than a list someone maintains.
-// The address a case writes and the contract it requires have to be the same
-// one, or the gate is about something other than what the case touches.
+// Three things count as saying which. applicableChains names the chains
+// outright. A contract requirement says it better: it gates on the chain HAVING
+// the contract, so it follows the manifests rather than a list someone
+// maintains. The address a case writes and the contract it requires have to be
+// the same one, or the gate is about something other than what the case
+// touches.
+//
+// An engine requirement counts too, and only for the address no chain declares.
+// Such an address is usually a precompile rather than a chain's own contract,
+// and a precompile is the engine's: engine:anzeon pins the chain as firmly as
+// naming it did. Nothing weaker is accepted here — family: and fork: each admit
+// two chains, and a raw address can mean different things on the two.
 func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 	var offenders []string
 	err := filepath.WalkDir(corpusRoot, func(p string, d fs.DirEntry, err error) error {
@@ -75,7 +82,10 @@ func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 		name, known := contractNameAt(addr)
 		switch {
 		case !known:
-			offenders = append(offenders, fmt.Sprintf("%s names %s, which no chain declares, and declares no applicableChains", p, addr))
+			if requiresEngine(doc) {
+				return nil
+			}
+			offenders = append(offenders, fmt.Sprintf("%s names %s, which no chain declares, and declares neither applicableChains nor an engine requirement", p, addr))
 		case !requiresContract(doc, name):
 			offenders = append(offenders, fmt.Sprintf("%s names %s and declares neither applicableChains nor requires %q", p, addr, registry.CapContract+name))
 		}
@@ -177,4 +187,15 @@ func sortedKeys(m map[string]any) []string {
 		}
 	}
 	return out
+}
+
+// requiresEngine reports whether the case gates on a chain's consensus engine.
+func requiresEngine(doc map[string]any) bool {
+	reqs, _ := doc["requires"].([]any)
+	for _, r := range reqs {
+		if s, _ := r.(string); strings.HasPrefix(s, registry.CapEngine) {
+			return true
+		}
+	}
+	return false
 }

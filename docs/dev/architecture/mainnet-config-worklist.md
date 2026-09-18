@@ -402,7 +402,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 문법은 이미 있고 118개 파일이 쓴다(`internal/dsl/interp/binding.go:23`). 값의 출처가 실행 중 `read` 결과뿐이다 | P2 | 미착수 |
 | P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
 | P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
-| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **진행 중 (2026-09-18): 66 → 36** — §P5-L1 참조 |
+| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **진행 중 (2026-09-18): 66 → 7** — §P5-L1 참조 |
 | P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
 | P6 | 실행 시점에 체인 선언을 주입한다 | 완료 조건 3번. `suite run --env <id\|경로>` 가 케이스의 참조를 갈아끼우고, 케이스가 덮은 것은 남긴다. §P1 아래 참조 | ~~P1~~ | **완료 (2026-09-15)** |
 
@@ -447,9 +447,59 @@ stablenet,wbft,wemix   1   ← 이번에 처리
 따로 돌리니 다섯 다 통과했다. 이 종류의 라이브 스윕은 **나눠서 돌려야** 판정을
 믿을 수 있다.
 
-**남은 36건.** `stablenet` 32 와 `wbft` 4 다. 둘 다 "한 체인에만 해당" 이라고
-적혀 있으므로, 각각이 **왜** 그런지를 능력으로 표현할 수 있는지 한 건씩 봐야
-한다.
+### 남은 36건도 올려 봤다 (2026-09-18)
+
+`applicableChains` 자체가 스킵을 일으키므로 **그것만 뗀 사본**을 만들어 올렸다.
+
+**`stablenet` 32건 — wbft 와 wemix 양쪽에.**
+
+| 결과 | 수 | 옮긴 곳 |
+|---|---|---|
+| 세 체인 다 통과 | 14 | 게이트 삭제 |
+| stablenet·wbft 통과, wemix 실패 | 7 | `family:wbft` |
+| stablenet 전용 동작 | 7 | `engine:anzeon` |
+| 빌드 기본값 탓 | 4 | **그대로 둔다** |
+
+**가장 큰 발견은 수수료 대납 7건이다.** `stablenet` 전용이라고 적혀 있었는데
+**세 체인에서 전부 통과한다.** 게이트가 사실이 아니었다.
+
+**stablenet 전용 7건의 이유는 두 갈래다.** 최소 가스값 정책 — wbft 는 stablenet
+이 거부하는 것을 받는다(`legacy`·`accesslist`·`feecap` 셋). 그리고 wbft 헤더에
+`gasTip` 이 없다(`11-gaslimit-exceeded`). 여기에 `06-basefee-minimum` 과
+블랙리스트 둘(0 주소·프리컴파일로의 전송이 wbft 에서는 성공한다)이 붙는다.
+
+**표현할 수 없는 4건은 체인 차이가 아니라 빌드 기본값이다.**
+
+```
+gstable  RPCTxFeeCap = 0      (상한 없음)
+gwbft    RPCTxFeeCap = 1e+00  (1 ether)
+```
+
+`nonce-ordering`·`out-of-order-nonces-mine`·`replacement-tx`·
+`same-nonce-replacement` 이 2.1 ether 수수료를 만드는데 gwbft 가 막는다. 능력으로
+표현할 수 있는 종류가 아니라 `applicableChains: stablenet` 으로 남긴다.
+
+**`wbft` 4건 — stablenet 에.** `01-wbft-govcontracts-at-genesis` 는
+`contract:govConfig`·`contract:govStaking` 으로 옮겼다(wbft 만 선언한다. stablenet
+에서 스킵, wbft 에서 통과 실측). 나머지 셋(secp256r1 프리컴파일)은 **남긴다** —
+"이 체인은 RIP-7212 프리컴파일이 있다" 를 말할 능력이 매니페스트에 없다. 셋 중
+둘은 stablenet 에서 "통과" 하는데, 프리컴파일이 없어서 부정 케이스가 우연히
+맞는 것이라 **넓히면 안 된다.**
+
+**가드 하나를 넓혔다.** `TestCorpus_ACaseNamingASystemContractSaysWhereItRuns`
+가 `applicableChains` 만 알고 있어서, 프리컴파일 주소를 쓰는 케이스가 게이트를
+`engine:anzeon` 으로 바꾸자 걸렸다. 어느 체인도 선언하지 않은 주소는 대개
+프리컴파일이고 프리컴파일은 엔진의 것이므로, `engine:` 요구를 받아들이게 했다.
+`family:`·`fork:` 는 안 받는다 — 둘 다 체인 둘을 허용하고, 생주소는 그 둘에서
+다른 것을 뜻할 수 있다.
+
+**곁가지 — wemix 매니페스트가 부정확하다.** `tx_types` 에 `0x04`(setCode)를
+적어 놨는데 `18-set-code-delegation` 이 wemix 에서
+`transaction type not supported` 로 떨어진다. 그래서 이 케이스를 tx 타입 능력으로
+게이트할 수 없어 `family:wbft` 로 뒀다. 매니페스트를 고치는 것이 맞는 순서다.
+
+**남은 7건.** `stablenet` 4(수수료 상한) + `wbft` 3(secp256r1). 둘 다 왜 남는지가
+위에 적혀 있다.
 
 ### P1 이 한 것과 하지 않은 것
 

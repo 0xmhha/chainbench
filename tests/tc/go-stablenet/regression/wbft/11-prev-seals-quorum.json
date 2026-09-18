@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "prev-seals-quorum",
   "description": "RT-B-11 — 블록 N+1의 PrevCommittedSeal이 블록 N의 committers를 포함 (원본 regression/wbft/11-test-prev-committed-seal)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

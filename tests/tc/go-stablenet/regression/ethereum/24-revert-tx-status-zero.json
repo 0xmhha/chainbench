@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "revert-tx-status-zero",
   "description": "RT-A-3-06 — revert tx: receipt.status == 0x0, gasUsed만 차감 검증 (원본 regression/ethereum/24-test-revert-tx)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

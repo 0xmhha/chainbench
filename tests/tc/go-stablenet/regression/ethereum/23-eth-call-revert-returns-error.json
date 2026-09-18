@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "eth-call-revert-returns-error",
   "description": "RT-A-3-05 — eth_call로 revert하는 함수 호출 시 에러 반환 (원본 regression/ethereum/23-test-eth-call-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "fee-delegate-sign-rpc-present",
   "description": "RT-G-5-01 — eth_signRawFeeDelegateTransaction (원본 regression/api/21-test-sign-raw-fee-delegate)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

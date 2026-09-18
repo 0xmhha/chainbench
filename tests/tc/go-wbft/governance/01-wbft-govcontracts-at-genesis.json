@@ -3,10 +3,11 @@
   "kind": "case",
   "id": "wbft-govcontracts-at-genesis",
   "description": "A fresh wbft chain carries its governance contracts from genesis, and nobody has staked in them. The empty staker set is not an incidental detail: it is what keeps every chain this repo builds inside the stabilization stage, where the epoch copies the previous validator set instead of deciding one (worklist R7).",
-  "applicableChains": "wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "contract:govConfig",
+    "contract:govStaking"
   ],
   "env": "wbft-bp4",
   "steps": [

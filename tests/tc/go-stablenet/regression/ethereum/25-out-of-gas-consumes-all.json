@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "out-of-gas-consumes-all",
   "description": "RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

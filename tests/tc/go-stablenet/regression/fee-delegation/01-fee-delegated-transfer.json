@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "fee-delegated-transfer",
   "description": "RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

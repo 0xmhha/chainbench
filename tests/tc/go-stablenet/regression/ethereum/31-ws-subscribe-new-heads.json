@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "ws-subscribe-new-heads",
   "description": "RT-A-4-06 — eth_subscribe(newHeads) WebSocket 구독 (원본 regression/ethereum/31-test-ws-subscribe-heads)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
     "ws"

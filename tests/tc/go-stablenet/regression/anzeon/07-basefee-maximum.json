@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "basefee-maximum",
   "description": "RT-C-07 — baseFee가 MaxBaseFee(20,000,000 Gwei) 상한을 초과하지 않음 (원본 regression/anzeon/07-test-max-basefee)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "extra-balance-preserved",
   "description": "TC-4-5-08 — 동기화 시 무관 계정 잔액 보존 (원본 post-v1.0.0-change/extra-state/05-test-extra-balance-preserved)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
     "account-extra"

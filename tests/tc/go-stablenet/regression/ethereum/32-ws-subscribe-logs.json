@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "ws-subscribe-logs",
   "description": "RT-A-4-07 — eth_subscribe(logs) WebSocket 구독 (원본 regression/ethereum/32-test-ws-subscribe-logs)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
     "ws"

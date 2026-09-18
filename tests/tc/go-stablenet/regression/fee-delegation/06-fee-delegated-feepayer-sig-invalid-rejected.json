@@ -2,7 +2,6 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fee-delegated-feepayer-sig-invalid-rejected",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],

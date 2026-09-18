@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "validator-equal-power",
   "description": "Every validator carries the same weight: each one takes proposing turns, and each one's vote is counted on every block. The two specs beside this one assert that the validator set is non-empty and large enough; neither says anything about what a member is worth, so a scheme that never gave one validator a turn, or that reached quorum from a subset every time, would leave both of them green. No RPC returns a weight, so this pins the two observable consequences of equality and says which one it is pinning. Turns: the policy is round robin (proposerPolicy 0 = RoundRobin, consensus/wbft/config.go:40), so waiting for each of the four preset validators to appear as the latest block's proposer proves none of them is skipped — a validator with no slot never appears and the wait fails on its timeout. Votes: prevCommittedSeal.sealers must hold the whole set, not merely a quorum, which is what one-seal-per-validator looks like from the outside; measured at 4 of 4 on thirty consecutive blocks. What this does NOT assert is that turn counts are equal within one cycle. The DSL cannot address a block relative to a height it learned at runtime (eth_getBlockByNumber needs hex and derive emits decimal), and fixed heights are unsafe here: a validator that is still syncing when the readiness gate passes is skipped by the rotation until it catches up — observed live, the fourth validator first proposed at block 31 while the gate had reported all four ready before block 2. That gap is recorded in the worklist rather than papered over with a sleep.",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

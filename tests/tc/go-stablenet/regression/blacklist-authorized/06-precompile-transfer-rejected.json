@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "precompile-transfer-rejected",
   "description": "RT-E-06: 프리컴파일·시스템 컨트랙트 주소로의 값 전송은 5개 주소 모두 EVM 실행에서 거부된다 — 트랜잭션은 채굴되고 영수증 status 가 0 이다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4-boho",

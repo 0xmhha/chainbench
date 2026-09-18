@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "set-code-delegation",
   "description": "RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -2,10 +2,10 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "validator-set-count",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

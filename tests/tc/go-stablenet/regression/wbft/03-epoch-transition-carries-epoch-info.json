@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "epoch-transition-carries-epoch-info",
   "description": "RT-B-03 — 에폭 전환 — 검증자 집합 갱신 (원본 regression/wbft/03-test-epoch-transition)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",
