@@ -209,8 +209,10 @@ genesis 블록을 이루는 값은 그대로여야 하고, **chain config 의 �
 하드포크 테스트는 0번이 아니다.
 
 **런타임 플래그로는 안 된다.** `ChainOverrides` 에 `OverrideCancun` 과
-`OverrideVerkle` 뿐이라 boho·applepie·croissant 는 못 덮는다. **config 파일이
-유일한 길이다.**
+`OverrideVerkle` 뿐이라 boho·applepie·croissant 는 못 덮는다.
+
+**앞서 여기에 "config 파일이 유일한 길이다" 라고 적었는데 틀렸다.** 데이터
+디렉토리의 genesis 파일을 바꿔도 된다. 실측한 내용은 §2.3b 에 있다.
 
 그래서 restart 는 이렇게 돈다.
 
@@ -223,9 +225,44 @@ genesis 블록을 이루는 값은 그대로여야 하고, **chain config 의 �
 이것이 §2.2 의 두 번째 거부 이유다.
 
 **chainbench 쪽에 필요한 것 하나.** 지금 config 렌더러가 내는 섹션은 `[Eth]`,
-`[Eth.Miner]`, `[Node]`, `[Node.P2P]`, `[Metrics]` 이다. **`[Eth.Genesis]` 를 안
-낸다.** restart 를 만들 때 이것이 추가할 한 가지다. 멈추고 config 를 다시 쓰고
-재기동하는 동작 자체는 `swapNode` 에 이미 있다.
+`[Eth.Miner]`, `[Node]`, `[Node.P2P]`, `[Metrics]` 이다. `[Eth.Genesis]` 는
+`nodeconfig.Spec.Genesis` 가 채워진 노드에만 붙는다(2026-09-18 추가). 멈추고
+config 를 다시 쓰고 재기동하는 동작 자체는 `swapNode` 에 이미 있다.
+
+### 2.3b 포크 설정은 genesis 로도 가고 config 로도 간다 (실측 2026-09-18)
+
+go-wemix 4대와 go-wbft 4대로 chainId 1111 망을 띄워 croissant 를 블록 100 에
+걸고 실제로 넘겨 보았다. 확인한 것은 다음과 같다.
+
+**genesis 로 나르기 (기본값).** 포크 구간은 genesis 의 `croissant` 절에 넣는다.
+go-wemix 는 자기 config 에 없는 절을 무시한다. genesis 의 JSON 디코더가 못 붙이는
+키를 건너뛰기 때문이다. 대신 망에 genesis 가 두 벌이 된다.
+
+**config 로 나르기.** genesis 에는 `croissantBlock` 만 두고, 절은 go-wbft 노드의
+config `[Eth.Genesis]` 에 싣는다. 망의 genesis 는 한 벌이 되고 config 가 두 벌이
+된다. 조건이 넷 붙는다.
+
+1. `[Eth.Genesis]` 는 **genesis 전체**여야 한다. 일부만 실으면 저장된 genesis 와
+   해시가 달라져 `database contains incompatible genesis` 로 거부된다.
+2. TOML 은 **Go 필드 이름을 그대로** 맞춘다(`chainId` → `ChainID`,
+   `eip155Block` → `EIP155Block`, `blsPublicKeys` → `BLSPublicKeys`). geth 의
+   `NormFieldName` 이 항등 함수라서 그렇다.
+3. 타입마다 표기가 다르다. `uint64` 는 정수, `[]byte` 는 정수 배열, `*big.Int`
+   는 문자열이다. null 은 뺀다.
+4. `core.Genesis` 에 없는 키는 **치명적**이다. go-wemix 가 쓰는
+   `minerNodeId`·`minerNodeSig`·`rewards` 가 그렇다. JSON 은 무시하고 TOML 은
+   죽는다. 그래서 체인이 manifest 의 `genesis.config_omit` 으로 선언한다.
+
+`Params` 같은 표의 키는 **필드 이름이 아니라 데이터**다. 대문자로 바꾸면
+config 는 읽히고 블록 실행에서 `invalid gov config params` 로 죽는다. 부팅 실패
+보다 나쁘다.
+
+**두 벌은 어느 쪽이든 피할 수 없다.** genesis 가 두 벌이 아니면 config 가 두
+벌이 된다. genesis 쪽이 훨씬 단순하므로 기본값이다.
+
+**공유 genesis 는 양쪽 init 을 통과해야 한다.** go-wbft 는 `petersburgBlock`
+없이는 init 자체를 거부한다(`unsupported fork ordering`). 넣으면 go-wemix 도
+받고 genesis 해시는 `4435de..383445` 로 동일하다.
 
 ### 2.4 프로필을 하드포크 preset 으로
 
