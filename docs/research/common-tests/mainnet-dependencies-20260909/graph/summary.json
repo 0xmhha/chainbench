@@ -1,0 +1,62 @@
+[
+  {
+    "project": "go-wemix",
+    "profile": "darwin/arm64",
+    "go_files": 630,
+    "packages": 120,
+    "ast_types": 1936,
+    "ast_functions": 10195,
+    "exact_import_edges": 890,
+    "ast_type_edges": 0
+  },
+  {
+    "project": "go-wemix",
+    "profile": "linux/amd64",
+    "go_files": 630,
+    "packages": 120,
+    "ast_types": 1941,
+    "ast_functions": 10236,
+    "exact_import_edges": 891,
+    "ast_type_edges": 0
+  },
+  {
+    "project": "go-wbft",
+    "profile": "darwin/arm64",
+    "go_files": 685,
+    "packages": 135,
+    "ast_types": 1824,
+    "ast_functions": 9899,
+    "exact_import_edges": 964,
+    "ast_type_edges": 0
+  },
+  {
+    "project": "go-wbft",
+    "profile": "linux/amd64",
+    "go_files": 685,
+    "packages": 135,
+    "ast_types": 1824,
+    "ast_functions": 9903,
+    "exact_import_edges": 964,
+    "ast_type_edges": 0
+  },
+  {
+    "project": "go-stablenet",
+    "profile": "darwin/arm64",
+    "go_files": 668,
+    "packages": 129,
+    "ast_types": 1528,
+    "ast_functions": 8305,
+    "exact_import_edges": 901,
+    "ast_type_edges": 0
+  },
+  {
+    "project": "go-stablenet",
+    "profile": "linux/amd64",
+    "go_files": 668,
+    "packages": 129,
+    "ast_types": 1528,
+    "ast_functions": 8309,
+    "exact_import_edges": 901,
+    "ast_type_edges": 0
+  }
+]

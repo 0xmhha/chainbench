@@ -1,0 +1,63 @@
+{
+  "go-wemix": {
+    "packages": 120,
+    "go_files": 630,
+    "profile": "darwin-arm64",
+    "linux": {
+      "packages": 120,
+      "go_files": 630,
+      "added_vs_darwin": [
+        "common/fdlimit/fdlimit_unix.go",
+        "consensus/ethash/mmap_help_linux.go",
+        "crypto/blake2b/blake2bAVX2_amd64.go",
+        "ethdb/rocksdb/rocksdb.go",
+        "metrics/disk_linux.go"
+      ],
+      "removed_vs_darwin": [
+        "common/fdlimit/fdlimit_darwin.go",
+        "consensus/ethash/mmap_help_other.go",
+        "crypto/blake2b/blake2b_ref.go",
+        "ethdb/rocksdb/norocksdb.go",
+        "metrics/disk_nop.go"
+      ]
+    }
+  },
+  "go-wbft": {
+    "packages": 135,
+    "go_files": 685,
+    "profile": "darwin-arm64-release",
+    "linux": {
+      "packages": 135,
+      "go_files": 685,
+      "added_vs_darwin": [
+        "common/fdlimit/fdlimit_unix.go",
+        "crypto/blake2b/blake2bAVX2_amd64.go",
+        "metrics/disk_linux.go"
+      ],
+      "removed_vs_darwin": [
+        "common/fdlimit/fdlimit_darwin.go",
+        "crypto/blake2b/blake2b_ref.go",
+        "metrics/disk_nop.go"
+      ]
+    }
+  },
+  "go-stablenet": {
+    "packages": 129,
+    "go_files": 668,
+    "profile": "darwin-arm64-release",
+    "linux": {
+      "packages": 129,
+      "go_files": 668,
+      "added_vs_darwin": [
+        "common/fdlimit/fdlimit_unix.go",
+        "crypto/blake2b/blake2bAVX2_amd64.go",
+        "metrics/disk_linux.go"
+      ],
+      "removed_vs_darwin": [
+        "common/fdlimit/fdlimit_darwin.go",
+        "crypto/blake2b/blake2b_ref.go",
+        "metrics/disk_nop.go"
+      ]
+    }
+  }
+}

@@ -1,0 +1,478 @@
+# 레이어 아키텍처 — 모듈 배치 · 의존 규칙 · 상태 소유
+
+> **[현행 설계]** 레이어·상태·이름 세 규칙.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 모듈 경계·표면 경로는 2026-08-25 재편이 덮는다: [[architecture-v2]](architecture-v2.md) (worklist §1h).
+
+> 목적: 코드 복잡도를 **규칙으로** 낮춘다. 레이어를 명시하고, 의존을 단방향으로 고정하고,
+> 상태를 쓸 수 있는 곳을 한정한다.
+>
+> 실측 기준: 2026-08-18, 내부 패키지 **57개** / 패키지 간 의존 엣지 전수 조사(`go list`).
+> 관련: [[family-bringup-design]](../family-bringup-design.md) · [[server-set]](../server-set.md) · [[code-graph]](code-graph.md)
+
+---
+
+## 1. 진단 — 복잡도가 어디서 오는가
+
+레이어 자체는 지켜지고 있다. **상향 의존은 0건이다** — §3 의 배치를 정본으로 삼아
+`internal/` 52개 패키지의 import 그래프를 대조한 결과이며, 그 대조는 이제 테스트다
+(A1, `internal/arch`).
+
+> 이 숫자는 두 번 잘못 보고됐다. 두 번 다 원인이 같다 — 검사하는 쪽이 **이 문서를 읽지 않고
+> 자기 배치 맵을 따로 들고 있었고**, 그 맵이 문서와 달랐다. 한 번은 없는 위반을 만들어냈고
+> (`testkit` 을 L5 로 잘못 두어 `core/pipeline/testrun`→`testkit` 이 상향으로 보였다),
+> 한 번은 맵에 없는 패키지를 조용히 건너뛰었다.
+>
+> 그래서 A1 은 배치를 코드에 복제하지 않고 **이 문서의 §3 표를 파싱한다.** 정본이 하나면
+> 검사와 문서가 어긋날 수 없다. 표에 없는 패키지는 통과가 아니라 실패다.
+
+문제는 두 가지다.
+
+1. **규칙이 문서에 없다.** 그래서 새 코드가 어느 층에 속하는지 매번 판단해야 하고,
+   판단이 갈리면 조용히 무너진다. 실제로 지난주 `serverset`(L1)이 `place`를 참조하며
+   경계가 애매해졌다.
+2. **상태를 쓰는 곳이 14개 패키지로 흩어져 있다.** 이것이 실질 복잡도의 본체다 —
+   "이 파일을 누가 썼는가"에 답하려면 14곳을 봐야 한다.
+
+```
+파일을 쓰는 패키지 14개:
+  app · chainsetup · consensus/upgrade
+  core/process · core/keyring · core/collector · core/filestore
+  core/session (R1: netreg 의 쓰기는 session 으로, obs 의 쓰기는 collector 로 흡수)
+```
+
+---
+
+## 2. 레이어 정의와 의존 규칙
+
+**규칙: 의존은 아래로만 흐른다. 같은 층 참조는 허용하되 순환은 금지한다.**
+
+| 층 | 이름 | 역할 | 아는 것 / 모르는 것 |
+|---|---|---|---|
+| **L6** | 표면 (surface) | CLI · MCP · 대시보드. 플래그 바인딩과 렌더링만. | cobra/MCP 타입을 안다. 도메인 규칙은 모른다. |
+| **L5** | 유스케이스 (use case) | 유스케이스 1개 = 함수 1개. 입출력은 평범한 struct. | 표면 타입을 **모른다**. 렌더링하지 않는다. |
+| **L4** | 오케스트레이션 | 서비스들을 하나의 실행으로 조립. 순서·재시도·teardown. | 어떤 체인인지 모른다(주입받는다). |
+| **L3** | 도메인 서비스 | 정책. 세션·수집·헬스·배치·검증. | 프로세스/SSH/파일을 직접 다루지 않는다. |
+| **L2b** | 체인 어댑터 | 체인 1개(stablenet/wbft/wemix)의 특화. | 자기 체인만 안다. |
+| **L2a** | 합의 패밀리 | 패밀리 1개(wbft/poa)의 특화. | 체인 id 를 모른다. |
+| **L1** | 프리미티브 | 바깥세계와의 접점(프로세스·SSH·RPC·파일·키) + 순수 계산. | 정책이 없다. |
+| **L0** | 커널 | 공용 어휘(타입). 정책도 I/O 도 없다. | 아무것도 모른다. |
+
+```mermaid
+flowchart TD
+    L6["L6 표면<br/>cmd · mcp · dashboard"]
+    L5["L5 유스케이스<br/>app"]
+    L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
+    L3["L3 도메인 서비스<br/>session · collector · health · dsl · dsl/interp"]
+    L2b["L2b 체인 어댑터<br/>chains/*"]
+    L2a["L2a 합의 패밀리<br/>consensus/*"]
+    L1["L1 프리미티브<br/>process · remote · rpc · filestore · keys · registry · resource"]
+    L0["L0 커널<br/>node · config · obs · capability"]
+
+    L6 --> L5 --> L4 --> L3 --> L2b --> L2a --> L1 --> L0
+    L4 -.주입.-> L2b
+    L3 -.-> L1
+    L2a --> L1
+```
+
+점선은 **주입**이다. L4 는 체인 패키지를 import 하지 않고, L6/L5 가 조립해 넘긴 인터페이스를 받는다.
+이것이 core 가 어떤 체인도 import 하지 않는다는 C6 ACL 을 유지하는 방법이다.
+
+---
+
+> **보정 있음**: 이 문서는 *패키지가 어느 층인지*만 답한다. *관심사의 주인이 누구인지*와
+> 3체인 실행 추적은 [[module-responsibilities]](module-responsibilities.md) 에 있고,
+> 거기서 이 문서의 보정 3건(B1 `testspec` 분할 · B2 노드 생명주기 소유자 · B3 관심사 열)을 제기한다.
+
+## 3. 모듈 배치 (43개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01)
+
+### L0 커널 — 공용 어휘
+
+| 패키지 | 담는 것 |
+|---|---|
+| `core/home` | **약속된 위치의 소유자** — `~/.chainbench`. 경로를 안 대면 키 세트·세션·구성이 전부 여기로 모인다(요구 ⑦). 세 곳이 각자 기본값을 들고 있어 `keys/default`·`chainbench-out` 이 **cwd 기준**이었던 것을 한 답으로 모은다 |
+| `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
+| `testsupport` | **테스트 게이트**(제품 코드 없음) — 여러 패키지의 _test.go 가 공유하는 스킵 헬퍼(`ServersBuildDir`·`EnvDockerServers`). 패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0 |
+
+### L1 프리미티브 — 바깥세계 접점 + 순수 계산
+
+| 패키지 | 담는 것 |
+|---|---|
+| `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
+| `core/rpc` | JSON-RPC 클라이언트 |
+| `core/process` | **실행** — 프로세스 기동/정지/provision(`Initializer`·`LogReader`, 옛 `core/driver`)·PID 추적·검증된 종료(run ledger)와 **기동 정책**(`Direct`: arm·materialize·init·launch / `Launcher`: 헬스 게이트·진단·재시도·teardown, 옛 `core/launcher` L3). 실행 메커니즘과 정책이 한 모듈 — 층 경계는 파일 경계로 내려간다(R3, 2026-09-01) |
+| `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
+| `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
+| `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
+| `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
+| `core/blueprint` | **네트워크 선언** — 하나의 문서가 네트워크의 전부를 말한다(`Blueprint` 파싱·왕복·문서 내부 검증). 구성 정보가 네 조각(topology·serverset·preset·패밀리 config)으로 흩어져 어느 것도 전체를 말하지 못하던 것을 한 선언으로 모은다([[network-blueprint-design]] §1.1). **해석하지 않는다** — 빠진 값을 인벤토리·키셋·플러그인·패밀리에서 채우는 일은 한 층 위의 `Resolve` 몫이고(§3.4), 둘을 갈라 두어야 부분 선언이 왕복한다. 미지 필드는 거부한다: 선언에서는 오타가 증상을 남기지 않고 다른 값으로 조용히 대체되기 때문이다 |
+| `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
+| `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
+| `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run` 이 같은 경계를 쓴다, P6.1·R4) |
+| `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
+| `accounts` | tx 서명(외부 SDK 래핑) |
+| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
+| `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
+| `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
+
+> `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
+> 그래서 L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
+
+### L2a 합의 패밀리 — 패밀리 특화
+
+| 패키지 | 담는 것 |
+|---|---|
+| `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
+| `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
+| `consensus/upgrade` | 체인 핸드오프 — 계획(`BuildPlan`)·기동(`Launch`)·메시(`WireMesh`)와 **한 번의 핸드오프 본문**(`Handoff`: config → base genesis → plan → overlay → launch → mesh → governance → etcd → verify → fork 대기; P6.3). `chain up --case handoff` 와 `upgrade run` 은 그 위의 표면이다 |
+
+### L2b 체인 어댑터 — 체인 특화
+
+| 패키지 | 담는 것 |
+|---|---|
+| `chains/stablenet` · `chains/wbft` · `chains/wemix` | 체인 플러그인 |
+| `chains/stablenet/govbind` | 체인 특화 하위 기능 |
+| `chains/external` | 외부 매니페스트 |
+| `chains/all` · `chains/common` | 등록 집합 · 공통 헬퍼 |
+
+### L3 도메인 서비스 — 정책
+
+| 패키지 | 담는 것 |
+|---|---|
+| `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션, 그리고 이름 붙인 네트워크 레지스트리(`SaveNetwork`·`LoadNetwork`·`ListNetworks`·`RemoveNetwork`, 옛 `core/netreg` — 영속 상태의 소유자에 합류, R1 2026-08-31) |
+| `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
+| `core/report` | **실행 전체 report 의 집계자(E0A).** 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를 모아 `report.json` 을 만든다(`Build`·`Generate`·`Write`·`Read`). 판정을 다시 하지 않고 `core/session` 만 읽는다 — testengine 이 저장 뒤 호출하고 CLI/MCP(app 경유)가 읽는다 |
+| `core/health` | 블록 전진 판정 |
+| `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
+| `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
+| `dsl/interp` | **DSL 런타임** — 실행 계약(`Action`·`Assertion`·`Registry`·`Reader`·`Deps`·`ActionCtx`·`AssertCtx`·`NodeControl`)과 해석기(`NewInterpreter`·`Run`)·바인딩(`$ref`/`save`)·`Fingerprint`(환경 재사용 키)·`Unresolved`(오프라인 이름 검증). 계약이 여기 사는 것이 핵심 — `testhelper`(L3)가 구현하므로 `testengine`(L4)으로 올릴 수 없다. 옛 `testspec` 의 실행 절반(R2, 2026-09-01) |
+| `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). `dsl/interp` 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 그 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
+| `validatorset` | 검증자셋 계산 |
+
+### L4 오케스트레이션
+
+| 패키지 | 담는 것 |
+|---|---|
+| `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
+| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/cases/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
+| `nodemonitor` | 테스트 실행 허가 판정 + 제한 복구(E6). `health`·`collector`·`inspector`·`process/inspect`·`preflight` 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 을 판정하고(`Classify`), WAITABLE 은 `MaxNodeMonitorTimeout` 까지 대기·RESTARTABLE 은 `MaxRestarts` 상한으로 재시작·FATAL 은 파괴적 조치 없이 즉시 종료한다(`Gate`). 관측과 재시작은 재구현하지 않고 seam(`Observer`·`Restarter`)으로 기존 함수를 주입받는다. `testengine`(재사용 전·각 테스트 전)과 app/MCP 가 소비한다 |
+
+### L5 유스케이스
+
+| 패키지 | 담는 것 |
+|---|---|
+| `app` | 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다 |
+| `feature` | **기능 등록의 한 자리** — `Descriptor`·`Register[In,Out]`·`Stage`·`ReadOnly`, 그리고 **입력 struct 태그 하나가 만드는 두 바인딩**(`Flags` 는 cobra 플래그를, `Schema` 는 MCP JSON 스키마를). 기능 하나를 세 곳에 쓰던 것을 한 곳에 등록하는 일이고, 소비자가 이미 셋이라 예측이 아니라 중복 제거다([[surface-unification-design]] §3.1). **명령을 생성하지 않는다** — 이름·계층·도움말 문구는 사람이 정하는 편이 낫고, 태그에서 만드는 것은 플래그 바인딩뿐이다(§3.4) |
+
+### L6 표면
+
+| 패키지 | 담는 것 |
+|---|---|
+| `mcp` | MCP 도구 — 스키마 바인딩과 렌더링 |
+| `dashboard` | 대시보드 데몬 |
+
+### 규칙 자체
+
+| 패키지 | 담는 것 |
+|---|---|
+| `arch` | 이 문서의 규칙을 강제하는 테스트. 프로덕션 코드가 없고 무엇도 import 하지 않으므로 층이 없다 |
+
+> `cmd/{chainbench,chainbench-mcp,chainbench-dashboard}` 도 L6 이지만 표에 없다. 배치 검사는
+> `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고, 무엇이든 import 할 수 있다.
+
+---
+
+## 4. 실측 결과
+
+```
+상향 의존(위 레이어를 import): 0건 — A1 이 매 테스트마다 재확인한다
+```
+
+같은 층 참조 31건은 전부 정당한 하위 구조다.
+
+| 층 | 같은 층 엣지 | 성격 |
+|---|---:|---|
+| L1 | 10 | `resource→node`, `driver→remote` 등 — 프리미티브 간 세분화 |
+| L2 | 11 | `chains/*→consensus/*` (L2b→L2a, 실제로는 하향) + 등록 집합 |
+| L3 | 4 | `dsl/interp→collector/session` |
+| L4 | 3 | `testengine→chainsetup` — 러너가 환경 구축을 셋업 모듈에 위탁 (V6.2 에서 워크플로가 위에서 조립하면 소멸 검토) |
+| L6 | 3 | `cmd→mcp/dashboard` |
+
+**L2 의 11건 중 7건은 L2b→L2a 로 사실상 하향이다.** 그래서 L2 를 a/b 로 쪼개 표기했다.
+
+---
+
+## 5. 상태 소유 규칙 — 복잡도의 본체
+
+> **규칙: 상태를 쓰는 곳은 두 곳뿐이다.**
+> **컨트롤 플레인은 `core/session`, 데이터 플레인은 `core/filestore.FileSink`.**
+> 나머지 모든 패키지는 **바이트를 만들어 넘길 뿐, 어디에 쓸지 결정하지 않는다.**
+
+### 두 개의 플레인
+
+| | 컨트롤 플레인 | 데이터 플레인 |
+|---|---|---|
+| 무엇 | 실행 기록 · 판정 · 컴포지션 상태 | genesis · config.toml · datadir · 로그 |
+| 어디 | **항상 조작자의 로컬 머신** | 타깃(이 머신 또는 원격 SSH 호스트) |
+| 소유 | `core/session` | `core/filestore.FileSink` |
+| 예 | `session.json` · `env.json` · `workspace.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
+
+이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
+
+### 파일을 쓰는 패키지 (A2 가 이 표를 강제한다)
+
+| 패키지 | 무엇을 쓰나 | 판정 |
+|---|---|---|
+| `core/session` | 세션·컴포지션 매니페스트 | ✅ 소유자 |
+| `core/filestore` | 타깃 파일 | ✅ 소유자 |
+| `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
+| `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
+| `core/process` | 실행 대장(`process.json`) · config·log(LocalDriver, 옛 `core/driver`) | ✅ 프로세스·전송 계층 소유자(R3) |
+| `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
+| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
+**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
+같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
+`filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다. `consensus/poa` 도 원격 실행
+(R6, 2026-09-02)에서 genesis 생성의 임시 작업 파일을 주입된 `filestore.Store` 로 쓰게 되어
+이 표에서 내려갔다 — 로컬은 `filestore.Local`, 원격은 타깃 저장소.
+
+`os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
+만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.
+남은 읽기(`os.ReadDir`/`os.ReadFile`)는 조작자 머신의 키 preset 을 읽는 쪽이라 그대로다 —
+`copyFiles` 가 **로컬에서 읽어 boundary 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
+
+`app`(A3)·`chains/wemix/deploy`(A4, 그 뒤 폐기) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
+
+### A3 이 드러낸 것 — 원격 프로비전이 로컬에 쓰고 있었다
+
+`app` 이 파일 경로를 아는 것은 층 위반이자 **동작 결함**이었다. 원격 타깃으로 네트워크를
+구성하면 이렇게 갈렸다.
+
+| 무엇 | 어디로 갔나 |
+|---|---|
+| 신원(nodekey·keystore·password) | 원격 — 런처가 드라이버에게 직접 보낸다 |
+| **genesis · config.toml · topology.yaml** | **로컬** — 파일 인터페이스 에 저장소가 주어진 적이 없어 기본값(이 머신)이 쓰였다 |
+
+원격 노드는 genesis 없는 datadir 로 기동하게 된다. `app.Deps` 에 `Files` boundary 을 더하고,
+저장소를 명시하지 않았지만 드라이버가 파일을 보낼 수 있으면 **그 드라이버가 저장소**가 되게
+했다 — 프로세스를 원격으로 보내면서 파일에 대해 아무 말도 하지 않았다면, 파일도 따라가라는
+뜻이다.
+
+> `testengine`(구 engine) 은 A2 가 찾아냈다. 이전 실측이 `os.WriteFile`·`os.MkdirAll` 만 세고 `os.Create` 를
+> 빠뜨려서, 표에 오르지 못한 채 3주를 지났다. 사람이 고른 패턴으로 한 번 세는 것과 매 테스트
+> 재는 것의 차이가 이것이다.
+>
+> 이 표는 목록이 아니라 **허용목록**이다. 표에 없는 패키지가 파일을 쓰면 A2 가 실패한다.
+> ❌ 는 알려진 위반이므로 통과하지만, 지워질 때 표에서도 지워야 한다 — 남아 있으면 A2 가
+> "존재하지 않는 패키지"로 잡는다.
+
+### 인메모리 가변 상태
+
+| 패키지 | 상태 | 판정 |
+|---|---|---|
+| `core/process` | PID 테이블 | ✅ 프로세스 소유자 |
+| `core/obs` | 이벤트 버퍼(bounded) | ✅ |
+| `core/collector` | 샘플 윈도우 | ✅ |
+| `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |
+| `testengine` | 조립 시 캐시 | ◐ 검토 |
+
+---
+
+## 5b. 이름 규칙 — 세 번째 규칙
+
+> **규칙: 한 개념은 한 이름, 다른 개념은 다른 이름, 식별자는 명명된 타입.**
+
+의존 방향과 상태 소유를 정해도, 이름이 겹치면 읽는 사람이 매번 문맥을 추론해야 한다.
+이 프로젝트가 "유사하면서 다른 코드"를 반복 생산한 원인 중 하나가 이름이다.
+
+### 5b.1 실측 — 지금 무엇이 겹치는가
+
+| 겹치는 이름 | 개수 | 서로 다른 것들 |
+|---|---:|---|
+| `Node` | 2 | `node.Node`(런타임 노드) · `topology.Node`(선언). `keygen.Node` 는 `keyring.Entry` 로 통합됨 |
+| `Plan` | 4 | `driver.Plan`(기동) · `hardfork.Plan`(스왑) · `upgrade.Plan`(핸드오프) · … |
+| `Config` | 3 | `poa.Config`(거버넌스) · `place.Config`(포트 밴드) · `serverset.Config`(인벤토리) |
+| `Step` | 4 | `session.Step`(스탬프) · `poa.Step`(부트스트랩 단계) · … |
+| `capability` | 2 **패키지** | `testengine/capability`(DSL 게이팅) · `core/capability`(표면 카탈로그) |
+| `Name string` | **12 필드** | 노드 라벨 · 키 이름 · 서버 이름 · 테스트 이름 · 기능 이름 … |
+
+`Name string` 12곳이 가장 나쁘다. **전부 무명 `string`** 이라 타입이 아무것도 구분해 주지 않고,
+호출부에서 노드 라벨 자리에 계정 라벨을 넣어도 컴파일러가 잡지 못한다.
+
+### 5b.2 규칙
+
+1. **경계를 넘거나 map 키가 되는 식별자는 명명 타입으로 만든다.**
+   구조체 안에 머물며 통째로만 쓰이면 `Name` 도 무방하다 — `Server.Name` 은 문맥 안에서 모호하지 않다.
+   **문제는 단어가 아니라 무명 `string`** 이다: 값이 홀로 돌아다니는 순간 무엇의 이름인지 사라진다.
+
+   ```go
+   func Endpoint(s string) …      // 무엇의 string 인가
+   func Endpoint(n NodeLabel) …   // 명확
+   Fund(node NodeLabel, acct AcctLabel)   // 뒤바꾸면 컴파일 실패
+   ```
+
+   이 기준으로 실측 12곳을 나누면 — `place.NodeReq.Name`(netmap 으로 넘어가고 키가 됨) ·
+   `serverset.Server.Name`(`--server` 조회 키) · `capability.Name`(레지스트리 키)은 **타입 필요**,
+   `session.record.Name`(기록 안에 머묾)은 **그대로 둬도 된다.**
+2. **한 개념 = 한 단어.** 같은 것을 `Name`/`Label`/`ID` 로 번갈아 부르지 않는다.
+3. **다른 개념 = 다른 단어.** `Plan` 이 셋을 뜻하면 각각 무엇의 계획인지 이름에 넣는다.
+4. **`Config`·`Options`·`Data` 처럼 아무것도 말하지 않는 이름을 피한다.**
+   `poa.Config` 가 거버넌스 설정이면 `poa.Governance`.
+5. **패키지 이름이 역할을 말한다.** `core`·`testspec` 처럼 무엇인지 모르는 이름은 리팩토링 대상이다.
+
+### 5b.3 리팩토링에서의 개명 (제안)
+
+| 지금 | 제안 | 왜 |
+|---|---|---|
+| `place.NodeReq.Name` · `NodePlacement.Name` | `netmap.NodeLabel` | 노드를 지칭하는 유일한 이름. 계정 라벨과 타입으로 구분 |
+| (없음) | `netmap.AcctLabel` | `account1`·`faucet` — tx 의 from/to 에 쓰인다 |
+| `hardfork.Plan` + `upgrade.Plan` | `hardfork.Plan` 하나 | 아래 §5b.3a·b |
+| ~~`keygen.Node`~~ | `keyring.Entry` | ☑ **완료** — 신원 타입 5개가 하나로 |
+| `topology.Node` | `blueprint.NodeSpec` | 선언이지 실행 중 노드가 아니다 |
+| `driver.Plan` | `driver.LaunchPlan` | 무엇의 계획인지 |
+| `hardfork.Plan` · `upgrade.Plan` | **`hardfork.Plan` 하나로 통합** | `upgrade` 는 hardfork 의 한 종류다 (§5b.3a·b) |
+| `poa.Config` | `poa.Governance` | 거버넌스 설정이다 |
+| `place.Config` | `place.Bands` | 포트 밴드다 |
+| `serverset.Config` | `serverset.Inventory` | 파일 이름과도 맞는다 |
+| `poa.Step` | `poa.BootstrapStep` | `session.Step` 과 구분 |
+| `core/capability` | `feature`(카탈로그) | `testengine/capability`(게이팅)와 무관하다 |
+| `testspec` | `dsl` + `dsl/interp` | 언어와 엔진 |
+
+#### 5b.3a `hardfork` 는 상위 범주다 — `upgrade` 는 그 한 종류 (정정)
+
+**앞서 나는 `hardfork` 를 "같은 체인"으로 좁히자고 적었다. 틀렸다.**
+바이너리가 바뀌고 그 시점부터 합의가 달라지면 **전부 하드포크**이고,
+go-wemix → go-wbft 도 그중 하나다.
+
+**이것은 새 판단이 아니다 — 이 프로젝트의 요구 문서가 처음부터 그렇게 정의했다:**
+
+```
+chainbench-requirements-review.md §D-2.8
+  "하드포크 2종: ① 체인 업그레이드(go-wemix→go-wbft, 서로 다른 바이너리 동시=handoff)
+                ② 동일체인 하드포크(fork 블록 전에 fork-aware 바이너리로 교체)"
+  "환경은 node→(binary, buildVersion) 집합"
+
+chainbench-feature-spec.md
+  "type-1(체인 업그레이드) / type-2(동일체인, launcher.ForkSwaps)"
+```
+
+코드 주석도 같다:
+
+```go
+// consensus/upgrade/plan.go — 패키지 자신의 설명
+// "a single, validated launch plan for a hardfork handoff"
+
+// launcher.go
+// ForkSwaps schedules same-chain (type-2) binary swaps before a fork block.
+// Type-1 (a chain upgrade / handoff) needs no swap — those nodes run
+// different binaries from the start.
+```
+
+| 종류 | 무엇이 바뀌나 | 재기동 | 사전조건 |
+|---|---|---|---|
+| **type-2 스왑** | 같은 노드가 바이너리 교체 | **필요** — 포크 블록 **전에** 끝나야 하고, 늦으면 실패다 | — |
+| **type-1 핸드오프** | 후계자가 **처음부터 다른 바이너리**로 동시 기동, 포크에서 생산 주체가 넘어감 | 없음 | 후계자가 동기화 + unlock |
+| *(설정만)* | 바이너리 그대로, genesis 의 포크 블록만 이동 | 없음 | — |
+
+세 번째는 `hardfork:` 선언 대상이 아니다 — **하나의 바이너리가 양쪽 규칙을 다 알기 때문**이고,
+`genesis.overrides.<fork>Block` 이 이미 그 자리다.
+
+#### 5b.3b 통합안 — 선언은 하나, 메커니즘은 파생
+
+실행 방식은 실제로 다르지만 그것은 **선언이 아니라 실행의 차이**다.
+이 프로젝트는 같은 문제를 `Family.BringUpPhases` 로 이미 풀었다 — **데이터로 선언하고 페이즈를 파생**한다.
+
+```go
+type Hardfork struct {
+    Name    string                       // "croissant" · "boho"
+    AtBlock uint64
+    BinaryAfter    map[NodeLabel]string  // 포크 이후 바이너리. 전과 같으면 스왑 없음
+    ProducersAfter []NodeLabel           // 포크 이후 생산 주체. 비면 순수 스왑
+}
+
+// 메커니즘은 파생이다 — 선언하지 않는다.
+func (h Hardfork) Swaps(pre map[NodeLabel]string) []Swap
+func (h Hardfork) IsHandoff() bool
+```
+
+실제 사례 대입:
+
+| 사례 | `BinaryAfter` | `ProducersAfter` | 파생 |
+|---|---|---|---|
+| gstable v1→v2 @N | `{bp01..04: v2}` | 없음 | type-2 스왑 |
+| wemix→wbft @100 | 없음(v01 이 처음부터 gwbft) | `[v01..04]` | type-1 핸드오프 |
+| boho @10 | 없음 | 없음 | 하드포크 선언 대상 아님 → genesis 설정 |
+
+아래 통합안은 **새 제안이 아니라 §D-2.8 을 자료구조로 옮긴 것**이다.
+`node→(binary, buildVersion)` 집합이 곧 `BinaryAfter` 이고, handoff/swap 구분이 곧 파생 규칙이다.
+
+**통합이 낫다고 보는 근거 넷**: (1) 선언이 하나로 접힌다 — 지금은 명령 둘에 플래그가 다르다.
+(2) 파생 로직이 "바이너리가 바뀌나 / 생산자가 바뀌나" 두 질문뿐이라 작고 테스트 가능하다.
+(3) 코드 자신의 표현과 일치한다. (4) `hardfork --to-chain` 은 겹침이 아니라
+**같은 것의 두 모습**이었으므로 겹침 자체가 소멸한다.
+
+실행 분기는 남지만 **다른 모든 패밀리 분기가 이미 가 있는 자리(페이즈 목록)로** 옮겨갈 뿐이다.
+
+> 개명은 **한 번에 하지 않는다.** 각 리팩토링 항목이 자기 범위의 이름을 함께 고친다 —
+> 개명만 하는 커밋은 리뷰가 어렵고, 동작 변경과 섞이면 더 어렵다.
+
+### 5b.4 강제
+
+이름 규칙은 의미를 다루므로 완전 자동화는 안 된다. 다만 **겹침 검출은 가능하다**:
+
+```
+exported 식별자가 2개 이상 패키지에 같은 이름으로 존재하면 보고한다.
+허용 목록(New · Deps · Options 등 관용)은 명시한다.
+```
+
+A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
+
+---
+
+## 6. 패밀리 기동 설계가 앉는 자리
+
+[[family-bringup-design]] 의 4 boundary 을 레이어에 매핑하면 **새 패키지가 왜 0개인지** 드러난다.
+
+| boundary | 층 | 왜 그 층인가 |
+|---|---|---|
+| `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
+| `PortReservation` | **L1** (`core/registry` 선언 / `core/node` 소유 · `resource` 사용) | 순수 계산 |
+| `launcher.Deps.Action` | **L1** (`core/process`) | 실행 시점·타임아웃·진단은 정책 |
+| 액션 구현(거버넌스·etcd) | **L2a** (`consensus/poa`) | 이미 존재 |
+| `GenesisArtifacts` | **L4** (`engine`) | 조립 산출물 |
+| 유스케이스 수렴(3곳→1곳) | **L5** (`app`) | 유스케이스 1개 = 함수 1개 |
+
+**층이 정해지면 배선이 정해진다.** L3 launcher 는 `Action` 을 이름으로만 알고,
+L5 app 이 L2a 구현을 주입한다 — L3 는 여전히 wemix 를 모른다.
+
+---
+
+## 7. 규칙을 어떻게 지킬 것인가
+
+문서만으로는 무너진다. **레이어 검사를 테스트로 만든다.**
+
+```go
+// internal/architecture/layers_test.go (제안)
+// TestLayering asserts that no package imports one above it. The layer map is
+// the design; this test is what keeps the design and the code the same thing.
+func TestLayering(t *testing.T) { ... }
+```
+
+`go list` 로 엣지를 뽑아 위 배치표와 대조하면 된다(이 문서의 수치가 그 방식으로 나왔다).
+새 패키지가 배치표에 없으면 **실패**시킨다 — 그래야 "어느 층인가"를 미루지 못한다.
+
+동일하게 **상태 규칙도 검사 가능하다**: `os.WriteFile`/`os.MkdirAll` 을 호출하는 패키지가
+허용 목록 밖이면 실패.
+
+---
+
+## 8. 정리 순서
+
+> **작업 순서와 상태는 [[chainbench-worklist]](../chainbench-worklist.md) §1g 에서 관리한다.**
+> 이 문서는 *무엇을 왜* 를 정하고, 트래커는 *언제 어디까지* 를 기록한다.
+> 순서를 여기 두면 두 곳이 갈라진다.
+
+> A1(레이어 검사 테스트)·A2(상태 쓰기 허용목록 테스트)가 이 문서를 실행 가능하게 만든다 —
+> 그것이 없으면 "상향 의존 1건"은 오늘의 측정일 뿐 내일의 보증이 아니며, 측정 자체가
+> 자기 맵에 없는 패키지를 조용히 건너뛴다.

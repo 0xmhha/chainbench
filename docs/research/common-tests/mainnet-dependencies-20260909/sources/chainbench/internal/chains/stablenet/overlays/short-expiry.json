@@ -1,0 +1,17 @@
+{
+  "_comment": "Genesis overlay for the proposal-expiry case (regression h-hardfork/f-system-contracts f3-06). It shortens GovValidator's proposal expiry from the 604800s (7 day) default to 30s so a proposal can be observed transitioning to Expired within a test. Deep-merged into the built stablenet genesis by `chainbench setup --genesis-overlay`; declares the short-expiry capability so the gated case runs.",
+  "capabilities": ["short-expiry"],
+  "genesis": {
+    "config": {
+      "anzeon": {
+        "systemContracts": {
+          "govValidator": {
+            "params": {
+              "expiry": "30"
+            }
+          }
+        }
+      }
+    }
+  }
+}

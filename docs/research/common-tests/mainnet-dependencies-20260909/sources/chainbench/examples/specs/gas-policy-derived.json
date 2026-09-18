@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1",
+  "id": "gas-policy-derived",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "baseFee", "save": "base" } },
+    {
+      "read": {
+        "source": "rpcCall",
+        "method": "istanbul_getWbftExtraInfo",
+        "params": ["latest"],
+        "select": "gasTip",
+        "save": "tip"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "gasPrice",
+      "compare": "GreaterOrEqual",
+      "expected": "$base"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": ["latest"],
+      "select": "gasTip",
+      "compare": "Equal",
+      "expected": "$tip"
+    }
+  ]
+}

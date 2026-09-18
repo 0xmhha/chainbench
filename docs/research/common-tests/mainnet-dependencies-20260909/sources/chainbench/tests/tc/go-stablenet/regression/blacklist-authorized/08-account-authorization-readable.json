@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "account-authorization-readable",
+  "description": "RT-E-08 — AccountManager.isAuthorized() 조회 검증 (원본 regression/blacklist-authorized/08-test-is-authorized)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "account-authorization-readable-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "NotEqual",
+      "data": "0xfe9fbb80000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "expect": "call",
+      "is": "0x",
+      "to": "0x0000000000000000000000000000000000B00003"
+    }
+  ]
+}

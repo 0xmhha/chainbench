@@ -1,0 +1,29 @@
+{
+  "source_counts": {
+    "common_document": 45,
+    "dual_document": 29,
+    "json_files": 189,
+    "total": 263
+  },
+  "commonality_counts": {
+    "adapter-required": 96,
+    "chain-specific": 124,
+    "exact-config": 42,
+    "unknown": 1
+  },
+  "wemix_counts": {
+    "port-required": 132,
+    "conditional": 7,
+    "not-applicable": 119,
+    "existing-case": 5
+  },
+  "wemix_candidates": 144,
+  "family_count": 21,
+  "sources_identical_to_previous": true,
+  "runtime_test_executed": false,
+  "common_candidates": 138,
+  "counter_review_changes": [
+    "TC-028/029/131: exact-config -> adapter-required (Istanbul GasTip dependency)",
+    "TC-128: adapter-required -> chain-specific (WBFT has no max baseFee clamp)"
+  ]
+}

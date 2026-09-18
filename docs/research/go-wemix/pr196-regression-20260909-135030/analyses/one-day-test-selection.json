@@ -1,0 +1,348 @@
+{
+  "selection_count": 33,
+  "priority_counts": {
+    "P0": 11,
+    "P1": 17,
+    "P2": 4,
+    "P3": 1
+  },
+  "all_p0_retained": true,
+  "selected": [
+    {
+      "analysis_id": "DOC-C-008",
+      "display_id": "RT-A-2-04 / TX-010",
+      "priority": "P0",
+      "title": "Nonce 순서 보장 (Nonce Ordering)"
+    },
+    {
+      "analysis_id": "DOC-C-040",
+      "display_id": "RT-A-1-02 / NODE-003",
+      "priority": "P0",
+      "title": "Full Sync 동기화"
+    },
+    {
+      "analysis_id": "DOC-C-044",
+      "display_id": "RT-A-1-06",
+      "priority": "P0",
+      "title": "Block Downloader 경로 동기화"
+    },
+    {
+      "analysis_id": "DOC-C-045",
+      "display_id": "RT-A-1-07",
+      "priority": "P0",
+      "title": "Block Fetcher 경로 동기화"
+    },
+    {
+      "analysis_id": "TC-052",
+      "display_id": "wemix-chain-up",
+      "priority": "P1",
+      "title": "wemix-chain-up"
+    },
+    {
+      "analysis_id": "TC-054",
+      "display_id": "wemix-node-crash",
+      "priority": "P1",
+      "title": "wemix-node-crash"
+    },
+    {
+      "analysis_id": "TC-029",
+      "display_id": "RT-A-2-02",
+      "priority": "P1",
+      "title": "dynamic-fee-tx"
+    },
+    {
+      "analysis_id": "TC-034",
+      "display_id": "RT-A-2-06",
+      "priority": "P1",
+      "title": "insufficient-funds-rejected"
+    },
+    {
+      "analysis_id": "TC-039",
+      "display_id": "RT-A-3-01",
+      "priority": "P1",
+      "title": "contract-roundtrip"
+    },
+    {
+      "analysis_id": "TC-041",
+      "display_id": "RT-A-3-06",
+      "priority": "P1",
+      "title": "revert-tx-status-zero"
+    },
+    {
+      "analysis_id": "TC-042",
+      "display_id": "RT-A-3-07",
+      "priority": "P1",
+      "title": "out-of-gas-consumes-all"
+    },
+    {
+      "analysis_id": "TC-045",
+      "display_id": "RT-D-01",
+      "priority": "P1",
+      "title": "fee-delegated-transfer"
+    },
+    {
+      "analysis_id": "DOC-C-041",
+      "display_id": "RT-A-1-03 / NODE-004",
+      "priority": "P1",
+      "title": "Snap Sync 동기화"
+    },
+    {
+      "analysis_id": "TC-055",
+      "display_id": "BRIOCHE-02 / RPC-008",
+      "priority": "P2",
+      "title": "wemix-brioche-block-reward"
+    },
+    {
+      "analysis_id": "DOC-C-017",
+      "display_id": "RT-A-3-04",
+      "priority": "P2",
+      "title": "`eth_estimateGas` 가스 추정"
+    },
+    {
+      "analysis_id": "DOC-C-036",
+      "display_id": "RT-G-4-02 / RPC-018",
+      "priority": "P2",
+      "title": "`txpool_status`"
+    },
+    {
+      "analysis_id": "DOC-C-037",
+      "display_id": "RT-G-4-03",
+      "priority": "P2",
+      "title": "`txpool_content`"
+    },
+    {
+      "analysis_id": "DOC-C-025",
+      "display_id": "RT-A-4-05 / RPC-013",
+      "priority": "P3",
+      "title": "`eth_chainId`"
+    },
+    {
+      "analysis_id": "N-001",
+      "display_id": "N-001",
+      "priority": "P0",
+      "title": "블록 RLP 8 MiB 정확한 경계와 오류 우선순위"
+    },
+    {
+      "analysis_id": "N-002",
+      "display_id": "N-002",
+      "priority": "P0",
+      "title": "가격순·prefetch 두 생산 루프의 정확한 packing 경계"
+    },
+    {
+      "analysis_id": "N-003",
+      "display_id": "N-003",
+      "priority": "P0",
+      "title": "실제 WEMIX finalize·seal 이후 바이트 크기와 import 일치"
+    },
+    {
+      "analysis_id": "N-004",
+      "display_id": "N-004",
+      "priority": "P0",
+      "title": "과거 과대블록 재처리와 full/snap/import 정책 일치"
+    },
+    {
+      "analysis_id": "N-005",
+      "display_id": "N-005",
+      "priority": "P0",
+      "title": "구버전·패치 노드 혼합 배포 시 체인 분기"
+    },
+    {
+      "analysis_id": "N-006",
+      "display_id": "N-006",
+      "priority": "P0",
+      "title": "ETH 메시지 10 MiB 경계와 정상 대형 블록 전파"
+    },
+    {
+      "analysis_id": "N-007",
+      "display_id": "N-007",
+      "priority": "P0",
+      "title": "크기 포화 후 etcd mining token 반환과 다음 블록 생존성"
+    },
+    {
+      "analysis_id": "N-008",
+      "display_id": "N-008",
+      "priority": "P1",
+      "title": "제외된 tx의 다음 블록 이월·nonce 연속성·교체"
+    },
+    {
+      "analysis_id": "N-009",
+      "display_id": "N-009",
+      "priority": "P1",
+      "title": "실행 거부와 EVM revert의 size·state·receipt 회계"
+    },
+    {
+      "analysis_id": "N-010",
+      "display_id": "N-010",
+      "priority": "P1",
+      "title": "environment 복사·재생성·새 head 중단의 누적 size"
+    },
+    {
+      "analysis_id": "N-011",
+      "display_id": "N-011",
+      "priority": "P1",
+      "title": "지원 tx type과 decode cache별 실제 RLP 오차"
+    },
+    {
+      "analysis_id": "N-012",
+      "display_id": "N-012",
+      "priority": "P1",
+      "title": "BlockBodies 응답 집계와 ETH66/68 envelope 여유"
+    },
+    {
+      "analysis_id": "N-013",
+      "display_id": "N-013",
+      "priority": "P1",
+      "title": "대량 로그 receipt 응답과 snap catch-up"
+    },
+    {
+      "analysis_id": "N-014",
+      "display_id": "N-014",
+      "priority": "P1",
+      "title": "Fetcher·Downloader·사이드체인 과대블록 거부 후 회복"
+    },
+    {
+      "analysis_id": "N-015",
+      "display_id": "N-015",
+      "priority": "P1",
+      "title": "크기 한도와 gas·tx count·build deadline 우선순위"
+    }
+  ],
+  "deferred_ids": [
+    "TC-053",
+    "TC-056",
+    "TC-001",
+    "TC-002",
+    "TC-003",
+    "TC-004",
+    "TC-005",
+    "TC-006",
+    "TC-007",
+    "TC-008",
+    "TC-009",
+    "TC-010",
+    "TC-011",
+    "TC-012",
+    "TC-013",
+    "TC-014",
+    "TC-015",
+    "TC-016",
+    "TC-017",
+    "TC-018",
+    "TC-019",
+    "TC-020",
+    "TC-021",
+    "TC-022",
+    "TC-023",
+    "TC-024",
+    "TC-025",
+    "TC-026",
+    "TC-028",
+    "TC-030",
+    "TC-031",
+    "TC-032",
+    "TC-033",
+    "TC-035",
+    "TC-036",
+    "TC-037",
+    "TC-038",
+    "TC-040",
+    "TC-043",
+    "TC-044",
+    "TC-046",
+    "TC-047",
+    "TC-048",
+    "TC-049",
+    "TC-050",
+    "TC-051",
+    "TC-057",
+    "TC-058",
+    "TC-105",
+    "TC-124",
+    "TC-125",
+    "TC-126",
+    "TC-127",
+    "TC-128",
+    "TC-129",
+    "TC-130",
+    "TC-131",
+    "DOC-C-001",
+    "DOC-C-002",
+    "DOC-C-003",
+    "DOC-C-004",
+    "DOC-C-005",
+    "DOC-C-006",
+    "DOC-C-007",
+    "DOC-C-010",
+    "DOC-C-011",
+    "DOC-C-012",
+    "DOC-C-013",
+    "DOC-C-014",
+    "DOC-C-015",
+    "DOC-C-019",
+    "DOC-C-020",
+    "DOC-C-021",
+    "DOC-C-023",
+    "DOC-C-028",
+    "DOC-C-029",
+    "DOC-C-031",
+    "DOC-C-032",
+    "DOC-C-042",
+    "DOC-C-009",
+    "TC-059",
+    "TC-060",
+    "TC-061",
+    "TC-062",
+    "TC-063",
+    "TC-064",
+    "TC-065",
+    "TC-066",
+    "TC-068",
+    "TC-069",
+    "TC-070",
+    "TC-072",
+    "TC-073",
+    "TC-074",
+    "TC-075",
+    "TC-076",
+    "TC-077",
+    "TC-079",
+    "TC-080",
+    "TC-081",
+    "TC-082",
+    "TC-083",
+    "TC-133",
+    "TC-178",
+    "DOC-C-016",
+    "DOC-C-018",
+    "DOC-C-022",
+    "DOC-C-024",
+    "DOC-C-026",
+    "DOC-C-027",
+    "DOC-C-030",
+    "DOC-C-033",
+    "DOC-C-034",
+    "DOC-C-035",
+    "DOC-C-039",
+    "DOC-C-043",
+    "DOC-D-001",
+    "DOC-D-026",
+    "TC-071",
+    "TC-078",
+    "TC-027",
+    "TC-067",
+    "TC-084",
+    "TC-086",
+    "DOC-C-038",
+    "TC-085",
+    "N-016"
+  ],
+  "deferred_count": 127,
+  "execution_status": "not-run",
+  "time_budget_is_estimate": true,
+  "estimated_total_minutes": [
+    604,
+    1166
+  ],
+  "time_review": "one-day-time-review.md",
+  "one_day_completion_verified": false
+}

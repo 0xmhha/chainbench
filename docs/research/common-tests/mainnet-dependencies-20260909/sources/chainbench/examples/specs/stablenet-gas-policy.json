@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-gas-policy",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "applicableChains": "stablenet",
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "baseFee", "expected": "20000000000000", "compare": "GreaterOrEqual" },
+    { "assert": "baseFee", "expected": "20000000000000000", "compare": "LessOrEqual" }
+  ]
+}

@@ -1,0 +1,3285 @@
+[
+ {
+  "file": "tests/tc/basic/01-basic-consensus.json",
+  "runtime_id": "basic-consensus",
+  "spec_ids": [],
+  "display_id": "basic-consensus",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/02-basic-peers.json",
+  "runtime_id": "basic-peers",
+  "spec_ids": [],
+  "display_id": "basic-peers",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/03-basic-rpc-health.json",
+  "runtime_id": "basic-rpc-health",
+  "spec_ids": [],
+  "display_id": "basic-rpc-health",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/04-basic-sync.json",
+  "runtime_id": "basic-sync",
+  "spec_ids": [],
+  "display_id": "basic-sync",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/05-basic-tx-send.json",
+  "runtime_id": "basic-tx-send",
+  "spec_ids": [],
+  "display_id": "basic-tx-send",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/06-basic-txpool-propagation.json",
+  "runtime_id": "basic-txpool-propagation",
+  "spec_ids": [],
+  "display_id": "basic-txpool-propagation",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/basic/07-basic-wbft-consensus.json",
+  "runtime_id": "basic-wbft-consensus",
+  "spec_ids": [],
+  "display_id": "basic-wbft-consensus",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/01-fault-network-partition.json",
+  "runtime_id": "fault-network-partition",
+  "spec_ids": [],
+  "display_id": "fault-network-partition",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/02-fault-node-crash.json",
+  "runtime_id": "fault-node-crash",
+  "spec_ids": [],
+  "display_id": "fault-node-crash",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/03-fault-node-recover.json",
+  "runtime_id": "fault-node-recover",
+  "spec_ids": [],
+  "display_id": "fault-node-recover",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/04-fault-p2p-topology.json",
+  "runtime_id": "fault-p2p-topology",
+  "spec_ids": [],
+  "display_id": "fault-p2p-topology",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/05-fault-two-down.json",
+  "runtime_id": "fault-two-down",
+  "spec_ids": [],
+  "display_id": "fault-two-down",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/fault/06-fault-txpool-leader-change.json",
+  "runtime_id": "fault-txpool-leader-change",
+  "spec_ids": [],
+  "display_id": "fault-txpool-leader-change",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json",
+  "runtime_id": "stablenet-delayed-fork",
+  "spec_ids": [],
+  "display_id": "stablenet-delayed-fork",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json",
+  "runtime_id": "govminter-v2-code",
+  "spec_ids": [
+   "TC-5-2-05"
+  ],
+  "display_id": "TC-5-2-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-5-2-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/03-burn-cancel-refundable.json",
+  "runtime_id": "burn-cancel-refundable",
+  "spec_ids": [
+   "TC-1-1-01",
+   "TC-1-1-10"
+  ],
+  "display_id": "TC-1-1-01 / TC-1-1-10",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-1-1-10",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/04-burn-reject-refundable.json",
+  "runtime_id": "burn-reject-refundable",
+  "spec_ids": [
+   "TC-1-1-02"
+  ],
+  "display_id": "TC-1-1-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/05-burn-expire-refundable.json",
+  "runtime_id": "burn-expire-refundable",
+  "spec_ids": [
+   "TC-1-1-03"
+  ],
+  "display_id": "TC-1-1-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/06-burn-execute-no-refundable.json",
+  "runtime_id": "burn-execute-no-refundable",
+  "spec_ids": [
+   "TC-1-1-04"
+  ],
+  "display_id": "TC-1-1-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/07-claim-burn-refund-succeeds.json",
+  "runtime_id": "claim-burn-refund-succeeds",
+  "spec_ids": [
+   "TC-1-1-05",
+   "TC-1-1-09"
+  ],
+  "display_id": "TC-1-1-05 / TC-1-1-09",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-1-1-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/08-claim-zero-refund-reverts.json",
+  "runtime_id": "claim-zero-refund-reverts",
+  "spec_ids": [
+   "TC-1-1-06"
+  ],
+  "display_id": "TC-1-1-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/09-claim-burn-refund-double-reverts.json",
+  "runtime_id": "claim-burn-refund-double-reverts",
+  "spec_ids": [
+   "TC-1-1-07"
+  ],
+  "display_id": "TC-1-1-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/10-prealloc-preserved-across-boho.json",
+  "runtime_id": "prealloc-preserved-across-boho",
+  "spec_ids": [
+   "TC-1-1-11",
+   "TC-1-1-12"
+  ],
+  "display_id": "TC-1-1-11 / TC-1-1-12",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-11",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-1-1-12",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/12-legacy-gasprice-below-min-rejected.json",
+  "runtime_id": "legacy-gasprice-below-min-rejected",
+  "spec_ids": [
+   "TC-1-3-04"
+  ],
+  "display_id": "TC-1-3-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-3-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/13-accesslist-gasprice-below-min-rejected.json",
+  "runtime_id": "accesslist-gasprice-below-min-rejected",
+  "spec_ids": [
+   "TC-1-3-05"
+  ],
+  "display_id": "TC-1-3-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-3-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/14-feecap-below-min-rejected.json",
+  "runtime_id": "feecap-below-min-rejected",
+  "spec_ids": [
+   "TC-1-3-06"
+  ],
+  "display_id": "TC-1-3-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-1-3-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/15-boho-chain-config-active.json",
+  "runtime_id": "boho-chain-config-active",
+  "spec_ids": [
+   "TC-4-1-01"
+  ],
+  "display_id": "TC-4-1-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/16-anzeon-active-before-boho.json",
+  "runtime_id": "anzeon-active-before-boho",
+  "spec_ids": [
+   "TC-4-1-02"
+  ],
+  "display_id": "TC-4-1-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-1-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost.json",
+  "runtime_id": "estimategas-authorizationlist-cost",
+  "spec_ids": [
+   "TC-4-2-01",
+   "TC-4-2-03"
+  ],
+  "display_id": "TC-4-2-01 / TC-4-2-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-2-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/19-upgrade-registry-order.json",
+  "runtime_id": "upgrade-registry-order",
+  "spec_ids": [
+   "TC-5-2-01",
+   "TC-5-2-02"
+  ],
+  "display_id": "TC-5-2-01 / TC-5-2-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-5-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-5-2-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/20-v1-params-init-storage.json",
+  "runtime_id": "v1-params-init-storage",
+  "spec_ids": [
+   "TC-5-2-04"
+  ],
+  "display_id": "TC-5-2-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-5-2-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/common-all/21-burn-refund-events.json",
+  "runtime_id": "burn-refund-events",
+  "spec_ids": [
+   "TC-1-1-09",
+   "TC-1-1-10"
+  ],
+  "display_id": "TC-1-1-09 / TC-1-1-10",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "취소·환불 청구 뒤 두 이벤트 topic 검사.",
+  "spec_sources": [
+   {
+    "id": "TC-1-1-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-1-1-10",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/01-effective-gas-price-authorized-bp-en.json",
+  "runtime_id": "effective-gas-price-authorized-bp-en",
+  "spec_ids": [
+   "TC-4-6-01"
+  ],
+  "display_id": "TC-4-6-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-6-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json",
+  "runtime_id": "effective-gas-price-regular",
+  "spec_ids": [
+   "TC-4-6-02"
+  ],
+  "display_id": "TC-4-6-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-6-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02b-effective-gas-price-regular-bp-en.json",
+  "runtime_id": "effective-gas-price-regular-bp-en",
+  "spec_ids": [
+   "TC-4-6-02"
+  ],
+  "display_id": "TC-4-6-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-6-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/03-auth-tx-event-last-bp-en.json",
+  "runtime_id": "auth-tx-event-last-bp-en",
+  "spec_ids": [
+   "TC-4-6-04"
+  ],
+  "display_id": "TC-4-6-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-6-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/01-authorized-extra-bit-synced.json",
+  "runtime_id": "authorized-extra-bit-synced",
+  "spec_ids": [
+   "TC-4-5-01",
+   "TC-4-5-02"
+  ],
+  "display_id": "TC-4-5-01 / TC-4-5-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-5-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/01b-blacklisted-extra-bit-synced.json",
+  "runtime_id": "blacklisted-extra-bit-synced",
+  "spec_ids": [
+   "TC-4-5-02"
+  ],
+  "display_id": "TC-4-5-02",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "AccountManager blacklist 조회만 검사. GovCouncil 목록 동기화 전체 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/02-stablenet-account-extra.json",
+  "runtime_id": "stablenet-account-extra",
+  "spec_ids": [
+   "TC-4-5-01",
+   "TC-4-5-02",
+   "TC-4-5-07"
+  ],
+  "display_id": "TC-4-5-01 / TC-4-5-02 / TC-4-5-07",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "alloc extra의 authorized/blacklist 이중 상태 조회. GovCouncil 양쪽 목록 전체 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-5-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-5-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/03-extra-union-merge.json",
+  "runtime_id": "extra-union-merge",
+  "spec_ids": [
+   "TC-4-5-05",
+   "TC-4-5-06"
+  ],
+  "display_id": "TC-4-5-05 / TC-4-5-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-5-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/04-dual-status-extra.json",
+  "runtime_id": "dual-status-extra",
+  "spec_ids": [
+   "TC-4-5-07"
+  ],
+  "display_id": "TC-4-5-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/05-extra-balance-preserved.json",
+  "runtime_id": "extra-balance-preserved",
+  "spec_ids": [
+   "TC-4-5-08"
+  ],
+  "display_id": "TC-4-5-08",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-08",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/06-invalid-extra-reject.json",
+  "runtime_id": "invalid-extra-reject",
+  "spec_ids": [
+   "TC-4-5-09"
+  ],
+  "display_id": "TC-4-5-09",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/extra-state/07b-extra-state-across-delayed-boho.json",
+  "runtime_id": "extra-state-across-delayed-boho",
+  "spec_ids": [
+   "TC-4-5-10",
+   "TC-4-5-11"
+  ],
+  "display_id": "TC-4-5-10 / TC-4-5-11",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-5-10",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   },
+   {
+    "id": "TC-4-5-11",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json",
+  "runtime_id": "signature-compat-across-swap",
+  "spec_ids": [
+   "TC-3-1-04"
+  ],
+  "display_id": "TC-3-1-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-3-1-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/02-genesis-mismatch.json",
+  "runtime_id": "genesis-mismatch-refuses-to-start",
+  "spec_ids": [
+   "TC-4-1-03"
+  ],
+  "display_id": "TC-4-1-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-1-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/03-unsupported-version.json",
+  "runtime_id": "unsupported-system-contract-version",
+  "spec_ids": [
+   "TC-5-2-06"
+  ],
+  "display_id": "TC-5-2-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-5-2-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/04-genesis-block-hash-consistent.json",
+  "runtime_id": "genesis-block-hash-consistent",
+  "spec_ids": [
+   "TC-5-3-01"
+  ],
+  "display_id": "TC-5-3-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-5-3-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/01-authorized-accounts-no-space.json",
+  "runtime_id": "authorized-accounts-no-space",
+  "spec_ids": [
+   "TC-4-3-01"
+  ],
+  "display_id": "TC-4-3-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/02-authorized-accounts-space.json",
+  "runtime_id": "authorized-accounts-space",
+  "spec_ids": [
+   "TC-4-3-02"
+  ],
+  "display_id": "TC-4-3-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/03-authorized-accounts-trim.json",
+  "runtime_id": "authorized-accounts-trim",
+  "spec_ids": [
+   "TC-4-3-03"
+  ],
+  "display_id": "TC-4-3-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/04-authorized-accounts-empty-item.json",
+  "runtime_id": "authorized-accounts-empty-item",
+  "spec_ids": [
+   "TC-4-3-04"
+  ],
+  "display_id": "TC-4-3-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/05-authorized-accounts-single.json",
+  "runtime_id": "authorized-accounts-single",
+  "spec_ids": [
+   "TC-4-3-05"
+  ],
+  "display_id": "TC-4-3-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/post-v1.0.0-change/string-handling/06-authorized-accounts-empty.json",
+  "runtime_id": "authorized-accounts-empty",
+  "spec_ids": [
+   "TC-4-3-06"
+  ],
+  "display_id": "TC-4-3-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "TC-4-3-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/01-regular-account-gastip-forced.json",
+  "runtime_id": "regular-account-gastip-forced",
+  "spec_ids": [
+   "RT-C-01"
+  ],
+  "display_id": "RT-C-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-C-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/02-authorized-account-gastip-free.json",
+  "runtime_id": "authorized-account-gastip-free",
+  "spec_ids": [
+   "RT-C-02"
+  ],
+  "display_id": "RT-C-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-C-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/03-anzeon-basefee-increase.json",
+  "runtime_id": "anzeon-basefee-increase",
+  "spec_ids": [
+   "RT-C-03"
+  ],
+  "display_id": "RT-C-03",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "25% 부하 뒤 증가 여부만 검사. 블록별 정확한 2%는 검사하지 않음.",
+  "spec_sources": [
+   {
+    "id": "RT-C-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/04-anzeon-basefee-stable.json",
+  "runtime_id": "anzeon-basefee-stable",
+  "spec_ids": [
+   "RT-C-04"
+  ],
+  "display_id": "RT-C-04",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "10% 부하 전후 baseFee 동일 여부 검사.",
+  "spec_sources": [
+   {
+    "id": "RT-C-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/05-anzeon-basefee-decrease.json",
+  "runtime_id": "anzeon-basefee-decrease",
+  "spec_ids": [
+   "RT-C-05"
+  ],
+  "display_id": "RT-C-05",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "부하 후 대기하여 감소 여부만 검사. 블록별 정확한 2%는 검사하지 않음.",
+  "spec_sources": [
+   {
+    "id": "RT-C-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/06-basefee-minimum.json",
+  "runtime_id": "basefee-minimum",
+  "spec_ids": [
+   "RT-C-06"
+  ],
+  "display_id": "RT-C-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-C-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/07-basefee-maximum.json",
+  "runtime_id": "basefee-maximum",
+  "spec_ids": [
+   "RT-C-07"
+  ],
+  "display_id": "RT-C-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-C-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json",
+  "runtime_id": "feecap-above-min-accepted",
+  "spec_ids": [
+   "TC-1-3-03"
+  ],
+  "display_id": "TC-1-3-03",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "현재 baseFee 두 배 + tip 사용. 설정 minBaseFee와의 경계 일치 보장은 없음.",
+  "spec_sources": [
+   {
+    "id": "TC-1-3-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json",
+  "runtime_id": "feecap-exact-min-accepted",
+  "spec_ids": [
+   "TC-1-3-02"
+  ],
+  "display_id": "TC-1-3-02",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "현재 baseFee + tip 사용. 설정 minBaseFee와 같다는 전제는 별도 검증 필요.",
+  "spec_sources": [
+   {
+    "id": "TC-1-3-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2614231162/1st+Test+Cases+v1.0.0"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json",
+  "runtime_id": "gaslimit-exceeded-rejected",
+  "spec_ids": [
+   "RT-A-2-07",
+   "TX-012"
+  ],
+  "display_id": "RT-A-2-07 / TX-012",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "블록 gasLimit+1 tx 제출 거부 검사.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "TX-012",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/01-block-transactions-field.json",
+  "runtime_id": "block-transactions-field",
+  "spec_ids": [
+   "RT-G-1-01"
+  ],
+  "display_id": "RT-G-1-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/02-block-by-hash-consistency.json",
+  "runtime_id": "block-by-hash-consistency",
+  "spec_ids": [
+   "RT-G-1-02"
+  ],
+  "display_id": "RT-G-1-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/03-transaction-by-hash-fields.json",
+  "runtime_id": "transaction-by-hash-fields",
+  "spec_ids": [
+   "RT-G-1-03"
+  ],
+  "display_id": "RT-G-1-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/04-transaction-receipt-fields.json",
+  "runtime_id": "transaction-receipt-fields",
+  "spec_ids": [
+   "RT-G-1-04"
+  ],
+  "display_id": "RT-G-1-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/05-transaction-count-increments.json",
+  "runtime_id": "transaction-count-increments",
+  "spec_ids": [
+   "RT-G-1-05"
+  ],
+  "display_id": "RT-G-1-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/06-system-contracts-deployed.json",
+  "runtime_id": "system-contracts-deployed",
+  "spec_ids": [
+   "RT-G-1-06"
+  ],
+  "display_id": "RT-G-1-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-1-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/07-gas-price-positive.json",
+  "runtime_id": "gas-price-positive",
+  "spec_ids": [
+   "RT-G-2-01"
+  ],
+  "display_id": "RT-G-2-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json",
+  "runtime_id": "gas-price-equals-basefee-plus-tip",
+  "spec_ids": [
+   "RT-G-2-01"
+  ],
+  "display_id": "RT-G-2-01",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "gasPrice와 baseFee+header gasTip 합 비교.",
+  "spec_sources": [
+   {
+    "id": "RT-G-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json",
+  "runtime_id": "max-priority-fee-equals-gastip",
+  "spec_ids": [
+   "RT-G-2-02"
+  ],
+  "display_id": "RT-G-2-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-2-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/09-fee-history-well-formed.json",
+  "runtime_id": "fee-history-well-formed",
+  "spec_ids": [
+   "RT-G-2-03"
+  ],
+  "display_id": "RT-G-2-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-2-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/10-estimate-gas-token-transfer.json",
+  "runtime_id": "estimate-gas-token-transfer",
+  "spec_ids": [
+   "RT-G-2-04"
+  ],
+  "display_id": "RT-G-2-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-2-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/11-node-address-returned.json",
+  "runtime_id": "node-address-returned",
+  "spec_ids": [
+   "RT-G-3-01"
+  ],
+  "display_id": "RT-G-3-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/12-validator-set-nonempty.json",
+  "runtime_id": "validator-set-nonempty",
+  "spec_ids": [
+   "RT-G-3-02"
+  ],
+  "display_id": "RT-G-3-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/12b-validator-set-count.json",
+  "runtime_id": "validator-set-count",
+  "spec_ids": [
+   "RT-B-07"
+  ],
+  "display_id": "RT-B-07",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "검증자 수 하한만 검사. 전체 주소 목록 일치는 검사하지 않음.",
+  "spec_sources": [
+   {
+    "id": "RT-B-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/13-commit-signers-quorum.json",
+  "runtime_id": "commit-signers-quorum",
+  "spec_ids": [
+   "RT-G-3-03"
+  ],
+  "display_id": "RT-G-3-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/14-wbft-extra-info-fields.json",
+  "runtime_id": "wbft-extra-info-fields",
+  "spec_ids": [
+   "RT-G-3-04"
+  ],
+  "display_id": "RT-G-3-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json",
+  "runtime_id": "istanbul-status-fields",
+  "spec_ids": [
+   "RT-G-3-05"
+  ],
+  "display_id": "RT-G-3-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/16-is-validator-flags.json",
+  "runtime_id": "is-validator-flags",
+  "spec_ids": [
+   "RT-G-3-06"
+  ],
+  "display_id": "RT-G-3-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-3-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/18-txpool-status.json",
+  "runtime_id": "txpool-status",
+  "spec_ids": [
+   "RT-G-4-02"
+  ],
+  "display_id": "RT-G-4-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-4-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/19-txpool-content-well-formed.json",
+  "runtime_id": "txpool-content-well-formed",
+  "spec_ids": [
+   "RT-G-4-03"
+  ],
+  "display_id": "RT-G-4-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-4-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/20-admin-peers-populated.json",
+  "runtime_id": "admin-peers-populated",
+  "spec_ids": [
+   "RT-A-1-05"
+  ],
+  "display_id": "RT-A-1-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-1-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/21-fee-delegate-sign-rpc-present.json",
+  "runtime_id": "fee-delegate-sign-rpc-present",
+  "spec_ids": [
+   "RT-G-5-01"
+  ],
+  "display_id": "RT-G-5-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-5-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/22-token-total-supply-readable.json",
+  "runtime_id": "token-total-supply-readable",
+  "spec_ids": [
+   "RT-G-5-02"
+  ],
+  "display_id": "RT-G-5-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-5-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/23-token-approve-sets-allowance.json",
+  "runtime_id": "token-approve-sets-allowance",
+  "spec_ids": [
+   "RT-G-5-03"
+  ],
+  "display_id": "RT-G-5-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-G-5-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/api/24-chain-not-syncing.json",
+  "runtime_id": "chain-not-syncing",
+  "spec_ids": [],
+  "display_id": "chain-not-syncing",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/01-sender-blacklisted-rejected.json",
+  "runtime_id": "sender-blacklisted-rejected",
+  "spec_ids": [
+   "RT-E-01"
+  ],
+  "display_id": "RT-E-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/02-recipient-blacklisted-rejected.json",
+  "runtime_id": "recipient-blacklisted-rejected",
+  "spec_ids": [
+   "RT-E-02"
+  ],
+  "display_id": "RT-E-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/03-feepayer-blacklisted-rejected.json",
+  "runtime_id": "feepayer-blacklisted-rejected",
+  "spec_ids": [
+   "RT-E-03"
+  ],
+  "display_id": "RT-E-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/04-address-unblacklisted-event.json",
+  "runtime_id": "address-unblacklisted-event",
+  "spec_ids": [
+   "RT-E-04"
+  ],
+  "display_id": "RT-E-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/05-zero-address-transfer-rejected.json",
+  "runtime_id": "zero-address-transfer-rejected",
+  "spec_ids": [
+   "RT-E-05"
+  ],
+  "display_id": "RT-E-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/06-precompile-transfer-rejected.json",
+  "runtime_id": "precompile-transfer-rejected",
+  "spec_ids": [
+   "RT-E-06"
+  ],
+  "display_id": "RT-E-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/07-account-blacklist-readable.json",
+  "runtime_id": "account-blacklist-readable",
+  "spec_ids": [
+   "RT-E-07"
+  ],
+  "display_id": "RT-E-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/08-account-authorization-readable.json",
+  "runtime_id": "account-authorization-readable",
+  "spec_ids": [
+   "RT-E-08"
+  ],
+  "display_id": "RT-E-08",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-08",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/blacklist-authorized/09-authorized-tx-executed-event.json",
+  "runtime_id": "authorized-tx-executed-event",
+  "spec_ids": [
+   "RT-E-09"
+  ],
+  "display_id": "RT-E-09",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-E-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json",
+  "runtime_id": "stablenet-chain-up",
+  "spec_ids": [],
+  "display_id": "stablenet-chain-up",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json",
+  "runtime_id": "legacy-transfer",
+  "spec_ids": [
+   "RT-A-2-01"
+  ],
+  "display_id": "RT-A-2-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/09-dynamic-fee-tx.json",
+  "runtime_id": "dynamic-fee-tx",
+  "spec_ids": [
+   "RT-A-2-02"
+  ],
+  "display_id": "RT-A-2-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/10-access-list-tx.json",
+  "runtime_id": "access-list-tx",
+  "spec_ids": [
+   "RT-A-2-03"
+  ],
+  "display_id": "RT-A-2-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/11-nonce-ordering.json",
+  "runtime_id": "nonce-ordering",
+  "spec_ids": [
+   "RT-A-2-04"
+  ],
+  "display_id": "RT-A-2-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/11b-out-of-order-nonces-mine.json",
+  "runtime_id": "out-of-order-nonces-mine",
+  "spec_ids": [
+   "TX-010"
+  ],
+  "display_id": "TX-010",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "역순 nonce 제출 및 최종 nonce만 검사. 실제 블록 포함 순서 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "TX-010",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/12-dynamic-fee-below-basefee-rejected.json",
+  "runtime_id": "dynamic-fee-below-basefee-rejected",
+  "spec_ids": [
+   "RT-A-2-05a"
+  ],
+  "display_id": "RT-A-2-05a",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-05a",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/14-insufficient-funds-rejected.json",
+  "runtime_id": "insufficient-funds-rejected",
+  "spec_ids": [
+   "RT-A-2-06"
+  ],
+  "display_id": "RT-A-2-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/15-gas-limit-exceeds-block-rejected.json",
+  "runtime_id": "gas-limit-exceeds-block-rejected",
+  "spec_ids": [
+   "RT-A-2-07"
+  ],
+  "display_id": "RT-A-2-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/16-effective-gas-price.json",
+  "runtime_id": "effective-gas-price",
+  "spec_ids": [
+   "RT-A-2-08"
+  ],
+  "display_id": "RT-A-2-08",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-08",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/17-replacement-tx.json",
+  "runtime_id": "replacement-tx",
+  "spec_ids": [
+   "RT-A-2-09"
+  ],
+  "display_id": "RT-A-2-09",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/17b-same-nonce-replacement.json",
+  "runtime_id": "same-nonce-replacement",
+  "spec_ids": [
+   "TX-013"
+  ],
+  "display_id": "TX-013",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "queued 동일 nonce 교체와 신구 tx 채굴 여부를 검사.",
+  "spec_sources": [
+   {
+    "id": "TX-013",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+  "runtime_id": "set-code-delegation",
+  "spec_ids": [
+   "RT-A-2-10"
+  ],
+  "display_id": "RT-A-2-10",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-2-10",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/19-contract-roundtrip.json",
+  "runtime_id": "contract-roundtrip",
+  "spec_ids": [
+   "RT-A-3-01"
+  ],
+  "display_id": "RT-A-3-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-3-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/22-estimate-gas.json",
+  "runtime_id": "estimate-gas",
+  "spec_ids": [
+   "RT-A-3-04"
+  ],
+  "display_id": "RT-A-3-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-3-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/23-eth-call-revert-returns-error.json",
+  "runtime_id": "eth-call-revert-returns-error",
+  "spec_ids": [
+   "RT-A-3-05"
+  ],
+  "display_id": "RT-A-3-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-3-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/24-revert-tx-status-zero.json",
+  "runtime_id": "revert-tx-status-zero",
+  "spec_ids": [
+   "RT-A-3-06"
+  ],
+  "display_id": "RT-A-3-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-3-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/25-out-of-gas-consumes-all.json",
+  "runtime_id": "out-of-gas-consumes-all",
+  "spec_ids": [
+   "RT-A-3-07"
+  ],
+  "display_id": "RT-A-3-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-3-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/27-genesis-balance.json",
+  "runtime_id": "genesis-balance",
+  "spec_ids": [
+   "RT-A-4-02"
+  ],
+  "display_id": "RT-A-4-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/27b-value-transfer.json",
+  "runtime_id": "value-transfer",
+  "spec_ids": [
+   "RT-A-4-03"
+  ],
+  "display_id": "RT-A-4-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/29-logs-query-well-formed.json",
+  "runtime_id": "logs-query-well-formed",
+  "spec_ids": [
+   "RT-A-4-04"
+  ],
+  "display_id": "RT-A-4-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/30-chain-id.json",
+  "runtime_id": "chain-id",
+  "spec_ids": [
+   "RT-A-1-01"
+  ],
+  "display_id": "RT-A-1-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/31-ws-subscribe-new-heads.json",
+  "runtime_id": "ws-subscribe-new-heads",
+  "spec_ids": [
+   "RT-A-4-06"
+  ],
+  "display_id": "RT-A-4-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/32-ws-subscribe-logs.json",
+  "runtime_id": "ws-subscribe-logs",
+  "spec_ids": [
+   "RT-A-4-07"
+  ],
+  "display_id": "RT-A-4-07",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-07",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json",
+  "runtime_id": "stablenet-chain-up-15",
+  "spec_ids": [],
+  "display_id": "stablenet-chain-up-15",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/ethereum/36-contract-event-emitted.json",
+  "runtime_id": "contract-event-emitted",
+  "spec_ids": [
+   "RT-A-4-04",
+   "RPC-014"
+  ],
+  "display_id": "RT-A-4-04 / RPC-014",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "배포 컨트랙트 이벤트를 주소·topic으로 조회.",
+  "spec_sources": [
+   {
+    "id": "RT-A-4-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "RPC-014",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/01-fee-delegated-transfer.json",
+  "runtime_id": "fee-delegated-transfer",
+  "spec_ids": [
+   "RT-D-01"
+  ],
+  "display_id": "RT-D-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-D-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/02-fd-sender-sig-invalid-rejected.json",
+  "runtime_id": "fd-sender-sig-invalid-rejected",
+  "spec_ids": [
+   "RT-D-03"
+  ],
+  "display_id": "RT-D-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-D-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/03-fd-feepayer-sig-invalid-rejected.json",
+  "runtime_id": "fd-feepayer-sig-invalid-rejected",
+  "spec_ids": [
+   "RT-D-04"
+  ],
+  "display_id": "RT-D-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-D-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/04-feepayer-insufficient-rejected.json",
+  "runtime_id": "feepayer-insufficient-rejected",
+  "spec_ids": [
+   "RT-D-05"
+  ],
+  "display_id": "RT-D-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-D-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/05-fee-delegated-sender-sig-invalid-rejected.json",
+  "runtime_id": "fee-delegated-sender-sig-invalid-rejected",
+  "spec_ids": [
+   "RT-D-03",
+   "TX-014"
+  ],
+  "display_id": "RT-D-03 / TX-014",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "sender 서명 변조 helper 사용. helper의 거부 판정에 의존.",
+  "spec_sources": [
+   {
+    "id": "RT-D-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "TX-014",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/06-fee-delegated-feepayer-sig-invalid-rejected.json",
+  "runtime_id": "fee-delegated-feepayer-sig-invalid-rejected",
+  "spec_ids": [
+   "RT-D-04",
+   "TX-015"
+  ],
+  "display_id": "RT-D-04 / TX-015",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "fee payer 서명 변조 helper 사용. helper의 거부 판정에 의존.",
+  "spec_sources": [
+   {
+    "id": "RT-D-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "TX-015",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/fee-delegation/07-fee-delegated-unfunded-feepayer-rejected.json",
+  "runtime_id": "fee-delegated-unfunded-feepayer-rejected",
+  "spec_ids": [
+   "RT-D-05",
+   "TX-016"
+  ],
+  "display_id": "RT-D-05 / TX-016",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "잔액 없는 fee payer의 제출 거부를 검사. 명세의 블록 실행 단계 실패까지 동등하지 않음.",
+  "spec_sources": [
+   {
+    "id": "RT-D-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "TX-016",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/01-native-coin-adapter-code.json",
+  "runtime_id": "native-coin-adapter-code",
+  "spec_ids": [
+   "RT-F-1-01"
+  ],
+  "display_id": "RT-F-1-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/01b-token-transfer-emits-event.json",
+  "runtime_id": "token-transfer-emits-event",
+  "spec_ids": [
+   "RT-F-1-01"
+  ],
+  "display_id": "RT-F-1-01",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "NativeCoinAdapter transfer 이벤트 검사. 수신자 eth_getBalance 증가까지 검사하지 않음.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/02-token-balance-readable.json",
+  "runtime_id": "token-balance-readable",
+  "spec_ids": [
+   "RT-F-1-02"
+  ],
+  "display_id": "RT-F-1-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/03-token-transfer-from-moves-balance.json",
+  "runtime_id": "token-transfer-from-moves-balance",
+  "spec_ids": [
+   "RT-F-1-03"
+  ],
+  "display_id": "RT-F-1-03",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "approve/transferFrom 후 수신자 balanceOf 검사. allowance 감소·Transfer 이벤트 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/04-mint-transfer-event.json",
+  "runtime_id": "mint-transfer-event",
+  "spec_ids": [
+   "RT-F-1-04"
+  ],
+  "display_id": "RT-F-1-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/05-burn-transfer-event.json",
+  "runtime_id": "burn-transfer-event",
+  "spec_ids": [
+   "RT-F-1-05"
+  ],
+  "display_id": "RT-F-1-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-1-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/06-mint-proposal-executes.json",
+  "runtime_id": "mint-proposal-executes",
+  "spec_ids": [
+   "RT-F-2-01"
+  ],
+  "display_id": "RT-F-2-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-2-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/07-burn-proposal-executes.json",
+  "runtime_id": "burn-proposal-executes",
+  "spec_ids": [
+   "RT-F-2-02"
+  ],
+  "display_id": "RT-F-2-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-2-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/08-quorum-deficient-stays-voting.json",
+  "runtime_id": "quorum-deficient-stays-voting",
+  "spec_ids": [
+   "RT-F-2-03"
+  ],
+  "display_id": "RT-F-2-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-2-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/09-validator-metadata-readable.json",
+  "runtime_id": "validator-metadata-readable",
+  "spec_ids": [
+   "RT-F-3-04"
+  ],
+  "display_id": "RT-F-3-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-3-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/10-gastip-governance-updates-header.json",
+  "runtime_id": "gastip-governance-updates-header",
+  "spec_ids": [
+   "RT-B-06"
+  ],
+  "display_id": "RT-B-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/11-proposal-expiry-transitions.json",
+  "runtime_id": "proposal-expiry-transitions",
+  "spec_ids": [
+   "RT-F-3-06"
+  ],
+  "display_id": "RT-F-3-06",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-3-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/12-configure-minter-proposal-executes.json",
+  "runtime_id": "configure-minter-proposal-executes",
+  "spec_ids": [
+   "RT-F-4-01"
+  ],
+  "display_id": "RT-F-4-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-4-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/13-remove-minter-executes.json",
+  "runtime_id": "remove-minter-executes",
+  "spec_ids": [
+   "RT-F-4-02"
+  ],
+  "display_id": "RT-F-4-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-4-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/14-masterminter-member-add-remove.json",
+  "runtime_id": "masterminter-member-add-remove",
+  "spec_ids": [
+   "RT-F-4-03"
+  ],
+  "display_id": "RT-F-4-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-4-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/15-non-member-configure-minter-rejected.json",
+  "runtime_id": "non-member-configure-minter-rejected",
+  "spec_ids": [
+   "RT-F-4-04"
+  ],
+  "display_id": "RT-F-4-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-4-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/16-blacklist-proposal-executes.json",
+  "runtime_id": "blacklist-proposal-executes",
+  "spec_ids": [
+   "RT-F-5-01"
+  ],
+  "display_id": "RT-F-5-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-5-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/18-authorize-proposal-executes.json",
+  "runtime_id": "authorize-proposal-executes",
+  "spec_ids": [
+   "RT-F-5-03"
+  ],
+  "display_id": "RT-F-5-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-5-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/19-unauthorize-proposal-executes.json",
+  "runtime_id": "unauthorize-proposal-executes",
+  "spec_ids": [
+   "RT-F-5-04",
+   "RT-F-5-09"
+  ],
+  "display_id": "RT-F-5-04 / RT-F-5-09",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "unAuthorize 제안 승인 후 isAuthorized=false 및 해제 이벤트 검사.",
+  "spec_sources": [
+   {
+    "id": "RT-F-5-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   },
+   {
+    "id": "RT-F-5-09",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/20-direct-blacklist-call-rejected.json",
+  "runtime_id": "direct-blacklist-call-rejected",
+  "spec_ids": [
+   "RT-F-5-05"
+  ],
+  "display_id": "RT-F-5-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-5-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/23-authorized-account-added-event.json",
+  "runtime_id": "authorized-account-added-event",
+  "spec_ids": [
+   "RT-F-5-08"
+  ],
+  "display_id": "RT-F-5-08",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-F-5-08",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/25-token-metadata.json",
+  "runtime_id": "token-metadata",
+  "spec_ids": [],
+  "display_id": "token-metadata",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/system-contracts/28-minter-status-readable.json",
+  "runtime_id": "minter-status-readable",
+  "spec_ids": [],
+  "display_id": "minter-status-readable",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/01-block-period-one-second.json",
+  "runtime_id": "block-period-one-second",
+  "spec_ids": [
+   "RT-B-01"
+  ],
+  "display_id": "RT-B-01",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-01",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/02-wbft-seals-quorum.json",
+  "runtime_id": "wbft-seals-quorum",
+  "spec_ids": [
+   "RT-B-02"
+  ],
+  "display_id": "RT-B-02",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/03-epoch-transition-carries-epoch-info.json",
+  "runtime_id": "epoch-transition-carries-epoch-info",
+  "spec_ids": [
+   "RT-B-03"
+  ],
+  "display_id": "RT-B-03",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-03",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/04-validator-add-member-executes.json",
+  "runtime_id": "validator-add-member-executes",
+  "spec_ids": [
+   "RT-B-04"
+  ],
+  "display_id": "RT-B-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json",
+  "runtime_id": "validator-add-member-epoch-activates",
+  "spec_ids": [
+   "RT-B-04"
+  ],
+  "display_id": "RT-B-04",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-04",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/05-validator-remove-member-executes.json",
+  "runtime_id": "validator-remove-member-executes",
+  "spec_ids": [
+   "RT-B-05"
+  ],
+  "display_id": "RT-B-05",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-05",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/11-prev-seals-quorum.json",
+  "runtime_id": "prev-seals-quorum",
+  "spec_ids": [
+   "RT-B-11"
+  ],
+  "display_id": "RT-B-11",
+  "mapping_status": "confluence-verified",
+  "mapping_note": "원문 참조 ID의 존재를 Confluence에서 확인. 구현이 명세 전체를 충족한다는 판정은 아님.",
+  "spec_sources": [
+   {
+    "id": "RT-B-11",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/13-randao-and-mixdigest-present.json",
+  "runtime_id": "randao-and-mixdigest-present",
+  "spec_ids": [
+   "WBFT-010"
+  ],
+  "display_id": "WBFT-010",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "randaoReveal·mixHash 존재만 확인. 서명 유효성·XOR 연쇄 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "WBFT-010",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/regression/wbft/14-stablenet-gastip-field.json",
+  "runtime_id": "stablenet-gastip-field",
+  "spec_ids": [
+   "RT-B-06"
+  ],
+  "display_id": "RT-B-06",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "gasTip 필드 존재만 확인. 거버넌스 변경·헤더 반영·불일치 거부 검사는 없음.",
+  "spec_sources": [
+   {
+    "id": "RT-B-06",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2599813145/Regression+Test+Case"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-stablenet/topology/01-proxied-pn-routing.json",
+  "runtime_id": "stablenet-proxied-pn-routing",
+  "spec_ids": [],
+  "display_id": "stablenet-proxied-pn-routing",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/tx/01-negative-tx-revert.json",
+  "runtime_id": "stablenet-negative-tx-revert",
+  "spec_ids": [],
+  "display_id": "stablenet-negative-tx-revert",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/vocabulary/01-derived-address-and-checksum.json",
+  "runtime_id": "stablenet-derived-vocabulary",
+  "spec_ids": [],
+  "display_id": "stablenet-derived-vocabulary",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/vocabulary/02-faucet-funds-account.json",
+  "runtime_id": "stablenet-faucet-funds",
+  "spec_ids": [],
+  "display_id": "stablenet-faucet-funds",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/vocabulary/03-metric-head-block.json",
+  "runtime_id": "stablenet-metric-head-block",
+  "spec_ids": [],
+  "display_id": "stablenet-metric-head-block [명세 ID 미확인]",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "하네스 어휘 테스트. 명세 ID 없음",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-stablenet/vocabulary/03-register-contract.json",
+  "runtime_id": "stablenet-register-contract",
+  "spec_ids": [],
+  "display_id": "stablenet-register-contract",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/accounts/01-secp256r1-precompile-valid.json",
+  "runtime_id": "secp256r1-precompile-valid",
+  "spec_ids": [
+   "TX-009"
+  ],
+  "display_id": "TX-009",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "유효 P-256 입력의 성공값 검사.",
+  "spec_sources": [
+   {
+    "id": "TX-009",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wbft/accounts/02-secp256r1-precompile-invalid.json",
+  "runtime_id": "secp256r1-precompile-invalid",
+  "spec_ids": [
+   "TX-019"
+  ],
+  "display_id": "TX-019",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "무효 입력의 성공값 아님만 검사. 명세 반환값과 정확한 동등성은 별도 검증 필요.",
+  "spec_sources": [
+   {
+    "id": "TX-019",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wbft/accounts/03-secp256r1-precompile-short-input.json",
+  "runtime_id": "secp256r1-precompile-short-input",
+  "spec_ids": [
+   "TX-020"
+  ],
+  "display_id": "TX-020",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "짧은 입력과 빈 입력의 빈 반환값 검사.",
+  "spec_sources": [
+   {
+    "id": "TX-020",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wbft/chain-up/01-wbft-chain-up.json",
+  "runtime_id": "wbft-chain-up",
+  "spec_ids": [],
+  "display_id": "wbft-chain-up",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/chain-up/02-wbft-chain-up-15.json",
+  "runtime_id": "wbft-chain-up-15",
+  "spec_ids": [],
+  "display_id": "wbft-chain-up-15",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/consensus/01-e1-mixed-producers.json",
+  "runtime_id": "e1-mixed-producers",
+  "spec_ids": [],
+  "display_id": "e1-mixed-producers",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/fault/01-wbft-node-crash.json",
+  "runtime_id": "wbft-node-crash",
+  "spec_ids": [],
+  "display_id": "wbft-node-crash",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/network/01-wbft-proxied-routing.json",
+  "runtime_id": "wbft-proxied-routing",
+  "spec_ids": [],
+  "display_id": "wbft-proxied-routing [명세 ID 미확인]",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "peer graph 형태 검증. 명세 ID 없음",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/tx/01-wbft-tx-and-contract.json",
+  "runtime_id": "wbft-tx-and-contract",
+  "spec_ids": [],
+  "display_id": "wbft-tx-and-contract",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wbft/tx/02-wbft-insufficient-funds-rejected.json",
+  "runtime_id": "wbft-insufficient-funds-rejected",
+  "spec_ids": [
+   "RT-A-2-06",
+   "TX-011"
+  ],
+  "display_id": "RT-A-2-06 / TX-011 [부분 대응]",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "stablenet regression/ethereum/14 이식본. 명세 흐름 중 거부 여부만 대응",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wbft/tx/03-wbft-revert-status-zero.json",
+  "runtime_id": "wbft-revert-status-zero",
+  "spec_ids": [
+   "RT-A-3-06",
+   "TX-017"
+  ],
+  "display_id": "RT-A-3-06 / TX-017 [부분 대응]",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "stablenet regression/ethereum/24 이식본. status 0x0만 대응(가스 환불 미검증)",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wemix/chain-up/01-wemix-chain-up.json",
+  "runtime_id": "wemix-chain-up",
+  "spec_ids": [],
+  "display_id": "wemix-chain-up",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wemix/chain-up/02-wemix-chain-up-15.json",
+  "runtime_id": "wemix-chain-up-15",
+  "spec_ids": [],
+  "display_id": "wemix-chain-up-15",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wemix/fault/01-wemix-node-crash.json",
+  "runtime_id": "wemix-node-crash",
+  "spec_ids": [],
+  "display_id": "wemix-node-crash",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json",
+  "runtime_id": "wemix-wbft-handoff",
+  "spec_ids": [],
+  "display_id": "wemix-wbft-handoff",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (2026-09-11 #384 이후 파일 변경, steps 재확인)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json",
+  "runtime_id": "wemix-brioche-block-reward",
+  "spec_ids": [
+   "BRIOCHE-02",
+   "RPC-008"
+  ],
+  "display_id": "BRIOCHE-02 / RPC-008",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "두 높이의 보상 양수·감소만 확인. 정확한 50% 및 종료 후 0은 검사하지 않음.",
+  "spec_sources": [
+   {
+    "id": "BRIOCHE-02",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2918252564/WEMIX3.0"
+   },
+   {
+    "id": "RPC-008",
+    "url": "https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2636711400/WEMIX4.0+Test"
+   }
+  ],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wemix/tx/01-wemix-tx-and-contract.json",
+  "runtime_id": "wemix-tx-and-contract",
+  "spec_ids": [],
+  "display_id": "wemix-tx-and-contract",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/go-wemix/tx/02-wemix-insufficient-funds-rejected.json",
+  "runtime_id": "wemix-insufficient-funds-rejected",
+  "spec_ids": [
+   "RT-A-2-06",
+   "TX-011"
+  ],
+  "display_id": "RT-A-2-06 / TX-011 [부분 대응]",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "stablenet regression/ethereum/14 이식본",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/go-wemix/tx/03-wemix-revert-status-zero.json",
+  "runtime_id": "wemix-revert-status-zero",
+  "spec_ids": [
+   "RT-A-3-06",
+   "TX-017"
+  ],
+  "display_id": "RT-A-3-06 / TX-017 [부분 대응]",
+  "mapping_status": "confluence-verified-partial",
+  "mapping_note": "stablenet regression/ethereum/24 이식본",
+  "spec_sources": [],
+  "basis": "2026-09-11 신규 대응",
+  "confluence_check_20260911": "all spec ids found on fetched pages"
+ },
+ {
+  "file": "tests/tc/remote/01-remote-rpc-health.json",
+  "runtime_id": "remote-rpc-health",
+  "spec_ids": [],
+  "display_id": "remote-rpc-health",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/remote/02-remote-chain-info.json",
+  "runtime_id": "remote-chain-info",
+  "spec_ids": [],
+  "display_id": "remote-chain-info",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/remote/03-remote-balance-check.json",
+  "runtime_id": "remote-balance-check",
+  "spec_ids": [],
+  "display_id": "remote-balance-check",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/samples/01-sample-minimal.json",
+  "runtime_id": "sample-minimal-value-transfer",
+  "spec_ids": [],
+  "display_id": "sample-minimal-value-transfer",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (description만 변경, steps 동일 확인)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/samples/02-sample-lifecycle.json",
+  "runtime_id": "sample-lifecycle-node-restart",
+  "spec_ids": [],
+  "display_id": "sample-lifecycle-node-restart",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (description만 변경, steps 동일 확인)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/stress/01-stress-block-time.json",
+  "runtime_id": "stress-block-time",
+  "spec_ids": [],
+  "display_id": "stress-block-time",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ },
+ {
+  "file": "tests/tc/stress/02-stress-tx-flood.json",
+  "runtime_id": "stress-tx-flood",
+  "spec_ids": [],
+  "display_id": "stress-tx-flood",
+  "mapping_status": "unconfirmed",
+  "mapping_note": "기존 명세 ID의 직접 대응을 확인하지 못함. 실행 ID를 표시하며 새 명세 ID를 발급하지 않음.",
+  "spec_sources": [],
+  "basis": "2026-09-09 대응표 승계 (파일 해시 동일)",
+  "confluence_check_20260911": "no spec id (runtime-only case)"
+ }
+]

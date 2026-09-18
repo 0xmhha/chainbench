@@ -1,0 +1,134 @@
+{
+ "validated_at": "2026-09-11T07:29:34.592592+00:00",
+ "checks": {
+  "tc_json_count": {
+   "expected": 195,
+   "catalog": 195,
+   "dependencies": 195,
+   "crosswalk": 195,
+   "ok": true
+  },
+  "doc_rows": {
+   "count": 74,
+   "common_doc": 45,
+   "dual_doc": 29
+  },
+  "tc_hash_current": {
+   "stale": [],
+   "ok": true
+  },
+  "scope_counts": {
+   "json": {
+    "three-chain": 99,
+    "two-chain:wbft+stablenet": 17,
+    "stablenet-only": 75,
+    "two-chain:wemix+stablenet": 1,
+    "harness-only": 1,
+    "transition-only": 1,
+    "two-chain:wemix+wbft": 1
+   },
+   "doc": {
+    "three-chain": 45,
+    "two-chain:wemix+wbft": 1,
+    "two-chain:wbft+stablenet": 27,
+    "stablenet-only": 1
+   },
+   "three_chain_separation": {
+    "config+oracle": 54,
+    "config-only": 74,
+    "adapter": 16
+   }
+  },
+  "reason_present": {
+   "missing": [],
+   "ok": true
+  },
+  "citations": {
+   "checked": 470,
+   "ok": 470,
+   "fail": 0,
+   "outside_build_selection": 0,
+   "chain_diff_items": 18,
+   "chain_diff_evidence": 318,
+   "harness_items": 10,
+   "harness_evidence": 152
+  },
+  "mirror_vs_tree": {
+   "go-wemix": {
+    "go_files": 630,
+    "packages": 120,
+    "golist_errors": 0,
+    "changed_since_mirror": [],
+    "head_now": "902f9fce85c108cf24cdeb77bc70a622049748ce"
+   },
+   "go-wbft": {
+    "go_files": 685,
+    "packages": 135,
+    "golist_errors": 0,
+    "changed_since_mirror": [
+     "core/blockchain.go",
+     "core/blockchain_reader.go"
+    ],
+    "head_now": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505"
+   },
+   "go-stablenet": {
+    "go_files": 668,
+    "packages": 129,
+    "golist_errors": 0,
+    "changed_since_mirror": [],
+    "head_now": "0937ac5c93d4f56ded5b24899f381d3d1f208c02"
+   }
+  },
+  "graph": {
+   "go-wemix": {
+    "modules": 120,
+    "types": 1936,
+    "source_files_logged": 630,
+    "errors_in_log": 0
+   },
+   "go-wbft": {
+    "modules": 135,
+    "types": 1824,
+    "source_files_logged": 685,
+    "errors_in_log": 0
+   },
+   "go-stablenet": {
+    "modules": 129,
+    "types": 1528,
+    "source_files_logged": 668,
+    "errors_in_log": 0
+   }
+  },
+  "spec_id_mapping": {
+   "unconfirmed": 43,
+   "confluence-verified": 122,
+   "confluence-verified-partial": 30
+  },
+  "confluence": {
+   "fetched_this_run": true,
+   "pages": 29,
+   "chars": 352862,
+   "spec_ids_judged": 330,
+   "scope_counts": {
+    "two-chain:wemix+wbft": 4,
+    "wemix-only": 17,
+    "wbft-only": 28,
+    "three-chain": 104,
+    "transition-only": 2,
+    "two-chain:wbft+stablenet": 58,
+    "stablenet-only": 105,
+    "two-chain:wemix+stablenet": 1,
+    "excluded-unit-or-build": 11
+   },
+   "id_diff_vs_20260909": "identical for the 6 previously transcribed pages (see sources/confluence/id-diff-vs-20260909.json)",
+   "internal_ip_redacted": true
+  },
+  "prior_run_citations_recheck": {
+   "same": 89,
+   "moved": 10,
+   "line-exists": 19,
+   "snippet-missing": 6
+  }
+ },
+ "overall_ok": true
+}

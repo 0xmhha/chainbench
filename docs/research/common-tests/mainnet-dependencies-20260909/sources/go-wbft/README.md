@@ -1,0 +1,782 @@
+## WBFT Protocol Specification
+
+[![dev-ci](https://github.com/wemixarchive/go-wbft/actions/workflows/dev-ci.yml/badge.svg)](https://github.com/wemixarchive/go-wbft/actions/workflows/dev-ci.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wemixarchive/go-wbft)
+
+WBFT(WEMIX Byzantine Fault Tolerant) is a consensus algorithm that emphasizes decentralization, adapting Istanbul BFT(https://github.com/ethereum/EIPs/issues/650) and QBFT(https://github.com/Consensys/qbft-formal-spec-and-verification) for use in public blockchains. The following improvements have been implemented:
+
+- Adoption of DPoS(Delegated Proof of Stake): Allows anyone to participate as a validator through staking.
+- Validator selection: Chosen via randao(randomness dao) based on staking amount and validation diligence. (to do in v4.5)
+- Reward system and diligence metrics.
+- Concept of epoch: Defines a unit where the validator set changes.
+- Inclusion of consensus proof in the agreement process.
+- Apply BLS signature aggregation at the consensus proof to reduce the size of the seals.
+- Simple and fully-trustless built-in governance contract system.
+- Improved miner worker operations.
+- Enhanced block header verification.
+- Improved defences against malicious validators for more powerful byzantine tolerance.
+
+### Terminology
+- `Staker`: A participant who stakes an amount exceeding the minimum staking threshold. Candidates for validators during an epoch.
+- `Validator`: Block validation participant(Same as Validator in IBFT). Must be a staker to become a validator.
+- `Proposer`: A block validation participant that is chosen to propose block in a consensus round(Same as Proposer in IBFT).
+- `Epoch`: The duration during which a fixed validator set remains active, represented in the number of blocks.
+- `Epoch block`: The last block of an epoch. It records cumulative diligence for all stakers and defines the validator set for the next epoch.
+- `Sequence`: Sequence number of a proposal. A sequence number should be greater than all previous sequence numbers. Currently each proposed block height is its associated sequence number(Same as Sequence in IBFT).
+- `Round`: Consensus round. A round starts with the proposer creating a block proposal and ends with a block commitment or round change(Same as Round in IBFT).
+- `Diligence`: Measures validation activity based on the total number of previous seals (previous prepare and commit seals) recorded in the epoch block during an epoch
+- `Round state`: Consensus messages of a specific sequence and round, including pre-prepare message, prepare message, and commit message(Same as Round state in IBFT).
+- `Backlog`: The storage to keep future consensus messages(Same as Backlog in IBFT).
+- `Consensus proof`: The commitment signatures of a block that can prove the block has gone through the consensus process in IBFT. Unlike IBFT, which only had commit seals, WBFT includes prepare seals and seals for previous block verification. Previous seals are part of the consensus process.
+
+Removed from IBFT
+- `Snapshot`
+- `Validator voting`
+
+### Adoption of DPoS(Delegated Proof of Stake)
+In IBFT or QBFT, new validators could be added or removed via validator set voting, which is suitable for PoA chains but not for public blockchains. WBFT allows anyone to participate as a validator through staking. By staking at least the minimum amount, one can become a staker. Stakers have the following attributes:
+
+- `Staker node address`: The nodekey address used in consensus if selected as a validator.
+- `Staker BLS public key`: The BLS public key used in verifing WBFT seal by others.
+- `Staker operator address`: The wallet address for performing stake/unstake operations.
+- `Staker rewardee address`: The address of the GovRewardee contract for receiving block rewards.
+- `Staker fee recipient`: The address for receiving fees from delegators.
+- `Staker fee rate`: The fee rate for delegators.
+- `BLS public key`: The BLS public key used in verifying WBFT seals.
+- `Staking amount`: The amount staked, which must exceed the minimum staking amount.
+- `Delegated amount`: The amount received from delegations.
+
+Rules related to staking:
+- Staking/Unstaking
+  - First staking must exceed the minimum staking threshold and then it becomes a staker.
+  - No restrictions on amounts for additional staking.
+  - Staking amount is staker's own staking amount + delegated amount.
+  - Staker's own staking amount should be greater than or equal to the minimum staking threshold.
+  - When unstaking, if the remaining staking amount falls below the minimum threshold and is not zero, the unstaking will fail.  
+  - If the own staking amount reaches under minimum staking threshold by unstaking or slashing, it is removed from staker set.
+  - If a staker is removed from staker set, its remaining own staking amounts are unstaked but its delegated amounts are remained as dangling delegated.
+  - Unstaked funds can be claimed by the _staker operator address_ after the unbonding period (1 weeks).
+- Slashing (to do in v4.5)
+  - Stakers considered as malicious may be slashed, paying their some own staked amounts to WEMIX ecosystem.
+  - Funds in the unbonding state can still be slashed.
+- Delegation
+  - Anyone can delegate funds to the staker with no amount limit.
+  - Delegated amounts are credited to the recipient staker's staking amount.
+  - Undelegated funds can be claimed by the _delegator address_ after the unbonding period (72 hours).
+  - The delegation rewards are not accumulating for the dangling delegated amounts.
+  - Delegator can undelegate dangling delegated amount at any time and claim some accumulated rewards before being dangled. 
+
+### Validator Selection
+In WBFT, the proposer of the last block in an epoch (referred to as the epoch block) selects the validator set for the next epoch and records it in the block. Validator selection rules:
+- Stabilization stage
+  - The stabilization stage is the period from the first epoch until just before the first epoch when the number of stakers reaches the minimum(`stabilizingStakersThreshold`) required.
+  - If current epoch is in a stabilization stage and the number of stakers is below the minimum stakers in last block of an epoch, next epoch will be in a stabilization stage.
+  - An epoch in a stabilization stage has the validator set which is same to the previous epoch.
+  - The very first validator set is defined in genesis.json, and validators in the genesis block initially have a staking amount of zero.
+- After stabilization stage, validator selection follows below rules
+  - `minimum stakers <= number of stakers <= target validators`: every stakers become validators.
+  - `number of stakers > target validators`: 
+    - (as-is) top `target validators` stakers are selected as validators based on their staking amount.
+    - (to-be) validators are selected using randao, considering staking amount and diligence.
+  - `number of stakers < minimum stakers`: all remaining stakers become validators, which should not occur in a public network after stabilization stage for the sake of network security.
+
+Validators are selected to act as proposers in a round-robin manner and the order is _shuffled_ at every epoch.
+
+### Randao system
+WBFT uses a randao system to select validators and to order them based on their staking amount and diligence. The randao system is designed to be secure against manipulation by validators, ensuring that the selection process is fair and transparent.
+WBFT blocks include a `RandaoReveal` fields in the extra data and use a legacy field `MixDigest` of the header as the randao mix, which is used to generate a random value for validator selection and shuffled ordering.
+- `MixDigest`: a xor value of the previous block header's `MixDigest` and the current block's `RandaoReveal`
+- `RandaoReveal`: is a ECDSA signature of the proposer on some data(chainId, hard fork version, block height) using big-endian encoding.
+
+(Note: The randao system is implemented in current WBFT, but selection of validators using randao system will be added in a future version.)
+
+### Reward System and Diligence Metrics
+WBFT rewards consist of two types:
+- `Transaction Gas Fees`: Granted to the block proposer.
+- `Block Minting Rewards`: Distributed to validators proportionally to their staking power.
+  - The minting amount is defined in the WBFT configuration.
+  - After the "brioche" hard fork, block minting rewards follow a halving cycle.
+
+Diligence influences validator selection directly, encouraging validators to perform their roles sincerely.
+Block minting rewards play an important role in BFT. In public network BFTs, if validators do not faithfully 
+perform block validation, round changes can occur, leading to longer block generation times. Therefore, it is necessary 
+to provide rewards for the validation role as well. However, direct coin rewards based on validation actions are avoided 
+due to potential misuse (e.g., block proposers deliberately omitting a specific validator's consensus proof). 
+Instead, validation rewards are indirectly tied to validator selection. Validators who diligently perform their 
+validation duties have a better chance of being selected and can earn greater rewards in this structure.
+
+Diligence is calculated at the end of each epoch:
+- Let `e` be the number of blocks in the epoch.
+- Let `v` be the number of validators.
+- Let `w` be the number of times a validator is selected as a proposer during an epoch(including times by round change).
+- Let `p` be the total seals (prepare and commit) included in the proposed blocks by a validator.
+  - p can be equal to `2*v*w` at most. (prepare seal and commit seal for each block)
+- Let `s` be the seals submitted by the validator during the epoch.
+  - s can be equal to `2*e` at most.
+- Diligence `d = p / (2*v*w) + s / (2*e)`.
+  - The maximum value of `d` is 2.
+  - The minimum value of `d` is 0 (no proposals or seals).
+- ex) if `e=200, v=20, w=10` then `d = p / 400 + s / 400`.
+
+When a proposer writes the diligence in a epoch block, it uses cumulative diligence for each staker.
+
+Cumulative diligence `D(n) = D(n-1) * 0.9 + d(n) * 0.1`.
+- `D(n)` is the cumulative diligence until the n-th epoch.
+- `d(n)` is the diligence of the n-th epoch.
+- `D(n-1)` is the cumulative diligence until the (n-1)th epoch. If it becomes a staker at first, its `D(n-1) = 1.9` (default. 95% of the maximum value of diligence).
+  - If the default value is too low, the probability of being selected as a validator when first becoming a staker will be low. Conversely, if it is too high, it may be advantageous to become a new staker again after even minor mistakes. Therefore, an appropriate value is necessary.
+
+Exception rules:
+- `w` is not counted for the first block(this may not have any previous seals).
+- In the case where it was not a validator in the previous epoch but is a validator in the current epoch:
+  - `d = p / (2*v*w) + s / (2*(e-1))`
+  - `D(n) = D(n-1) * (9*e+1)/(10*e) + d(n) * (e-1)/(10*e)`
+- In the case where it was a validator in the previous epoch but is not a validator in the current epoch:
+  - `d = p / (2*v*w) + s / 2`
+  - `D(n) = D(n-1) * (10*e-1)/(10*e) + d(n) * 1/(10*e)`
+
+### Concept of Epoch
+The WBFT configuration allows defining the size of an epoch. An epoch represents the period (in terms of block count) during which a predetermined validator set remains active. The last block of an epoch is referred to as an epoch block. The genesis block is considered an epoch block; hence, the first epoch starts from block 1. When the proposer suggests a block that is an epoch block, the following steps are performed:
+
+- Reflect the diligence shown by the current staker set during this epoch in their cumulative diligence and record it in the extra field of the block header (if an staker was not part of the validator set during this epoch, its cumulative diligence is not updated).
+- Select a new validator set and record it in the extra field:
+  - Retrieve stakers from the GovStaking contract.
+  - Select validators based on their staking power and diligence.
+
+#### Epoch Rule:
+
+- Genesis block is an epoch block
+- Starting from the genesis, every `EpochLength` of WBFT config is an epoch block.
+- A block defining `EpochLength` transition is an epoch block.
+
+### Inclusion of Consensus Proof in the Consensus Process
+Traditional IBFT and QBFT protocols only included and stored the minimum necessary consensus proof (commit seal) collected locally by each validator for the finalized block. Since these commit seals could vary by validator, they were not part of the block hash. However, to select validators based on consensus proof, it must be included in the consensus process. The consensus proofs included in WBFT blocks are as follows:
+
+- `Previous Prepare Seal`: The prepare seal for the previous block. It is included in the block hash and consensus.
+- `Previous Commit Seal`: The commit seal for the previous block. It is included in the block hash and consensus.
+- `Prepare Seal`: The prepare seal for the current block. It is included neither in the block hash nor in the consensus.
+- `Commit Seal`: The commit seal for the current block. It is included neither in the block hash nor in the consensus.
+
+When a validator becomes the proposer, they create the current block by combining the prepare and commit seals stored in the previous block with any additional prepare and commit messages received. These are recorded in the current block as the `Previous Prepare Seal` and `Previous Commit Seal`.
+
+The prepare and commit seals stored in the previous block are messages collected from peers just before the block is finalized. However, before the next block is created, the block period allows additional prepare and commit messages to be received. WBFT improves upon IBFT/QBFT by aiming to collect as many of these messages as possible, rather than stopping at just two-third.
+
+This approach incentivizes proposers to include as many previous seals as possible in the block, which enhances their diligence score. It also encourages sealers whose seals are included to improve their diligence scores.
+
+Since each seal is 65 bytes in size and seals are recorded for all validators, block headers could become excessively large. To address this issue, BLS signature aggregation is utilized to reduce the size of the seals.
+
+### Improved Miner Worker Operations
+The existing miner worker is designed to be fit to the ethash algorithm. When a new block is received, the worker starts new work and enters a loop to find the nonce. After a certain time (recommit time), it starts new work to include newly in-came transactions in the block. However, this behavior is not suitable for the IBFT algorithm. While it is correct to start work when a new block is received, starting new work at each recommit time is inefficient. Instead, it is more appropriate to start new work when a new round begins. In IBFT, there are cases where consensus fails in a round, and in such cases, a new proposer must start new work. The timing for this should be determined by a round change, not by recommit time. Therefore, in WBFT, the worker is modified to start work at the beginning of each round. The following protocol is applied:
+- When the worker receives a new block, it notifies the WBFT engine to perform the final commit (Same to IBFT).
+- The WBFT engine notifies the worker to start new work whenever a new round starts.
+- The WBFT engine waits for the block period before notifying the worker(In the existing IBFT, the block period was waited for when sealing the block).
+- When new work starts, the worker begins the process of preparing the block.
+
+### Croissant hard fork
+WBFT is not only implemented to run a WBFT chain from genesis but is also designed and implemented to enable a hard fork from a legacy chain to the WBFT chain. This hard fork is named the `Croissant` hard fork.
+You should define the Croissant hard fork in genesis.json to run a WBFT chain. Two chain configs are added for Croissant hard fork; `croissantBlock` and `croissant`.
+- `croissantBlock`: Defines the block height at which the Croissant hard fork occurs. You can set it to zero for the genesis block.
+- `croissant`: Defines the WBFT consensus configuration. It consists of three sections: `wBFT`, `init`, and `govContracts`.
+
+Setting `croissantBlock` to 0 triggers WBFT-related initialization in the genesis block when executing the `gwemix init` command. Conversely, if `croissantBlock` is set to 1 or greater, WBFT-related initialization occurs when the Croissant block is created and finalized.
+The Croissant hard fork protocols are as follows:
+- WBFT validator nodes just imports blocks from legacy chain miners before Croissant hard fork.
+- WBFT validator nodes supposes that legacy miners would stop block creation when it is time to create the Croissant block (i.e., they create blocks up to just before the Croissant hard fork).
+- WBFT validator nodes recognize the Croissant hard fork and can obtain the validator set from the WBFT config when it is their turn to create this block.
+- WBFT validator nodes can create blocks and proceed with consensus once they can obtain the validator set.
+- The Croissant block is a special block. Validators that receive this block perform additional tasks to deploy and initialize the governance contracts.
+- The Croissant block is the first epoch block of WBFT. Therefore, the first validator set is recorded.
+- The first epoch starts from the block after the Croissant block, during which stakers start staking from zero.
+- If the number of stakers is equal to or greater than the minimum stakers during the first epoch, these stakers become validators from the next epoch.
+- If the number of stakers is less than the minimum stakers during the first epoch, the initial validator set is maintained.
+
+#### Compatibility with Ethereum hard forks
+- Croissant hard fork includes all feature of the `London` hard fork and priors.
+- Croissant hard fork includes new evm instructions of the `Shanghai` and `Cancun` hard forks.
+  - EIP-3855 (PUSH0 opcode)
+  - EIP-3860 (Limit and meter initcode)
+  - EIP-1153 (Transient Storage)
+  - EIP-5656 (MCOPY opcode)
+  - EIP-6780 SELFDESTRUCT only in same transaction
+  - EIP-4339 (PREVRANDAO opcode)
+
+### Modified Structures
+The existing WBFT Config was revised by removing unnecessary fields and adding required ones, resulting in the following structure.
+If you want to use the WBFT consensus, you should use the following chain config in genesis.json.
+```
+"croissantBlock": 1000000,
+"croissant": {
+  "wBFT": {
+    "requestTimeoutSeconds": 2,
+    "blockPeriodSeconds": 1,
+    "proposerPolicy": 0,
+    "epochLength": 10,
+    "blockReward": "0xde0b6b3a7640000",
+    "targetValidators": 0,
+    "maxRequestTimeoutSeconds": null,
+    "stabilizingStakersThreshold": 1,
+    "useNCP": true
+  },
+  "init": {
+    "validators": [
+      "0xaa5faa65e9cc0f74a85b6fdfb5f6991f5c094697"
+    ],
+    "blsPublicKeys": [
+      "0xaec493af8fa358a1c6f05499f2dd712721ade88c477d21b799d38e9b84582b6fbe4f4adc21e1e454bc37522eb3478b9b"
+    ]
+  },
+  "govContracts": {
+    "govConfig": {
+      "address": "0x0000000000000000000000000000000000001000",
+      "version": "v1",
+      "params": {
+        "changeFeeDelay": "604800",
+        "feePrecision": "10000",
+        "maximumStaking": "100000000000000000000000000",
+        "minimumStaking": "10000000000000000000000000",
+        "unbondingPeriodDelegator": "259200",
+        "unbondingPeriodStaker": "604800",
+        "govCouncil": "0x0000000000000000000000000000000000001003"
+      }
+    },
+    "govStaking": {
+      "address": "0x0000000000000000000000000000000000001001",
+      "version": "v1",
+      "params": null
+    },
+    "govRewardeeImp": {
+      "address": "0x0000000000000000000000000000000000001002",
+      "version": "v1",
+      "params": null
+    },
+    "govNCP": {
+      "address": "0x0000000000000000000000000000000000001003",
+      "version": "v1",
+      "params": {
+        "ncps": "0xaA5FAA65e9cC0F74a85b6fDfb5f6991f5C094697"
+      }
+    }
+  },
+  "upgrades": null
+}
+```
+- `croissantBlock` defines the block height at which the Croissant hard fork occurs. You can set it to zero for the genesis block.
+- `croissant` defines the WBFT consensus configuration. It consists of three sections: `wBFT`, `init`, and `govContracts`.
+- `wBFT` defines the WBFT consensus engine parameters:
+- `blockRewardBeneficiary` defines the address that will receive the block minting rewards consistently.
+- `targetValidators` should be less than or equals to `epochLength`.
+- `validators` defines initial validator set. order is matter.
+- `blsPublicKeys` defines initial validator's bls key signing BFT messages. order must be same to `validators`.
+- `stabilizingStakersThreshold` defines the minimum number of stakers to quit stabilization stage. It must be greater than or equals to 1.
+- `useNCP` defines whether to use NCP system or not. If it is true, the NCP contract address must be defined in `govNCP` field.
+- `init` defines the initial validator set and BLS public keys for the first epoch.
+- `govContracts` defines the governance contract addresses and their initialization parameters. 
+```
+type Staker struct {
+    Addr      common.Address
+    Diligence uint64
+}
+type EpochInfo struct {
+    Stakers       []*Staker
+    Validators    []uint32
+	BLSPublicKeys [][]byte
+	Stabilizing   bool 
+}
+type WBFTAggregatedSeal struct {
+	Sealers   SealerSet
+	Signature []byte
+}
+type WBFTExtra struct {
+	VanityData        []byte
+	RandaoReveal      []byte
+	PrevRound         uint32
+	PrevPreparedSeal  *WBFTAggregatedSeal
+	PrevCommittedSeal *WBFTAggregatedSeal
+	Round             uint32
+	PreparedSeal      *WBFTAggregatedSeal
+	CommittedSeal     *WBFTAggregatedSeal
+	EpochInfo         *EpochInfo
+}
+```
+
+#### NCP
+
+WBFT was designed and implemented for use on public chains, but it is not yet at the stage of having a complete specification (slashing will be implemented later). Therefore, we enabled the use of an NCP governance contract to configure the chain like a Proof-of-Authority (PoA) model. In other words, NCP governance can be used as an intermediate step before transitioning to a full public chain. By using NCP, authorized validators can operate the chain, and later, this contract can be disabled to convert it into an open public chain. The addition/removal of members to the NCP is determined by a vote of the NCP members.
+
+During the period when NCP is in use, the rules for selecting the validator set are as follows:
+- Retrieve stakers from the GovStaking contract.
+- Among these stakers, nodes that are NCPs are selected for the validator set.
+- Stakers who are not NCPs are not included in the validator set.
+
+The process of obtaining the validator set at any block height is as follows (replacing the snapshot function in the existing IBFT):
+- If the current block is an epoch block, obtain the validator set from the current block.
+- If the current block is not an epoch block, traverse blocks backward from the height - 1 block to find the most recent epoch block and obtain the validator set.
+- It should meet the Croissant hard fork block or the genesis block during traversing, otherwise it is a failure.
+
+Node that NCP system is optional for use of a private chain and can be disabled by setting `useNCP` to false in the genesis.json. If it is set to false, the all stakers can be validators if the number of stakers is less than or equal to the target validators.
+
+#### Not implemented in WBFT v1.0
+- Slashing: The NCP system is used to ensure the safety of the chain during the transition period, and the slashing mechanism is not necessary.
+- validator random selection based on staking amount and diligence.
+
+## Building the source
+
+Building `gwemix` requires both a Go (version 1.23.0 or later) and a C compiler. You can install
+them using your favourite package manager. Once the dependencies are installed, run
+
+```shell
+make gwemix
+```
+
+or, to build the full suite of utilities:
+
+```shell
+make all
+```
+
+Built binaries are placed in `./build/bin/`.
+
+## Executables
+
+The go-wemix-wbft project comes with several wrappers/executables found in the `cmd`
+directory.
+
+|       Command       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|:-------------------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    **`gwemix`**     | Main WEMIX CLI client. Entry point into the WEMIX network, capable of running as a full node (default) or archive node (retaining all historical state). Exposes JSON-RPC endpoints over HTTP, WebSocket, and/or IPC transports. Use `gwemix --help` for command line options. |
+| `genesis_generator` | Genesis generator tool. Generates a genesis.json interactively by prompting for consensus engine, validator addresses, BLS public keys, pre-funded accounts, and chain ID. |
+|       `clef`        | Stand-alone signing tool, which can be used as a backend signer for `gwemix`.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|      `devp2p`       | Utilities to interact with nodes on the networking layer, without running a full blockchain.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|      `abigen`       | Source code generator to convert Ethereum contract definitions into easy-to-use, compile-time type-safe Go packages. It operates on plain [Ethereum contract ABIs](https://docs.soliditylang.org/en/develop/abi-spec.html) with expanded functionality if the contract bytecode is also available. However, it also accepts Solidity source files, making development much more streamlined. |
+|     `abidump`       | ABI dump utility for inspecting contract ABI data. |
+|     `bootnode`      | Stripped down version of the client implementation that only takes part in the network node discovery protocol, but does not run any of the higher level application protocols. It can be used as a lightweight bootstrap node to aid in finding peers in private networks.                                                                                                                                                                                                                                                  |
+|      `ethkey`       | Key management utility for Ethereum-compatible accounts (generate, inspect, sign, verify). |
+|        `evm`        | Developer utility version of the EVM (Ethereum Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode. Its purpose is to allow isolated, fine-grained debugging of EVM opcodes (e.g. `evm --code 60ff60ff --debug run`).                                                                                                                                                                                                                                                  |
+|      `rlpdump`      | Developer utility tool to convert binary RLP ([Recursive Length Prefix](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp)) dumps (data encoding used by the Ethereum protocol both network as well as consensus wise) to user-friendlier hierarchical representation (e.g. `rlpdump --hex CE0183FFFFFFC4C304050583616263`).                                                                                                                                                                                   |
+
+## Running `gwemix`
+
+Going through all the possible command line flags is out of scope here (please consult our
+[CLI Wiki page](https://geth.ethereum.org/docs/fundamentals/command-line-options)),
+but we've enumerated a few common parameter combos to get you up to speed quickly
+on how you can run your own `gwemix` instance.
+
+### Hardware Requirements
+
+Minimum:
+
+* CPU with 2+ cores
+* 4GB RAM
+* 1TB free storage space to sync the Mainnet
+* 8 MBit/sec download Internet service
+
+Recommended:
+
+* Fast CPU with 4+ cores
+* 16GB+ RAM
+* High-performance SSD with at least 1TB of free space
+* 25+ MBit/sec download Internet service
+
+### Full node on the WEMIX network
+
+By far the most common scenario is people wanting to simply interact with the WEMIX
+network: create accounts; transfer funds; deploy and interact with contracts. For this
+particular use case, the user doesn't care about years-old historical data, so we can
+sync quickly to the current state of the network. To do so:
+
+```shell
+$ gwemix console
+```
+
+This command will:
+ * Start `gwemix` in full sync mode (default, can be changed with the `--syncmode` flag),
+   downloading and re-executing all blocks from genesis to fully verify the entire history
+   of the WEMIX network.
+ * Start the built-in interactive [JavaScript console](https://geth.ethereum.org/docs/interacting-with-geth/javascript-console),
+   (via the trailing `console` subcommand) through which you can interact using [`web3` methods](https://github.com/ChainSafe/web3.js/blob/0.20.7/DOCUMENTATION.md)
+   (note: the `web3` version bundled within `gwemix` is very old, and not up to date with official docs),
+   as well as `gwemix`'s own [management APIs](https://geth.ethereum.org/docs/interacting-with-geth/rpc).
+   This tool is optional and if you leave it out you can always attach it to an already running
+   `gwemix` instance with `gwemix attach`.
+
+### Configuration
+
+As an alternative to passing the numerous flags to the `gwemix` binary, you can also pass a
+configuration file via:
+
+```shell
+$ gwemix --config /path/to/your_config.toml
+```
+
+To get an idea of how the file should look like you can use the `dumpconfig` subcommand to
+export your existing configuration:
+
+```shell
+$ gwemix --your-favourite-flags dumpconfig
+```
+
+### Programmatically interfacing `gwemix` nodes
+
+As a developer, sooner rather than later you'll want to start interacting with `gwemix` and the
+WEMIX network via your own programs and not manually through the console. To aid
+this, `gwemix` has built-in support for a JSON-RPC based APIs ([standard APIs](https://ethereum.github.io/execution-apis/api-documentation/)
+and [`gwemix` specific APIs](https://geth.ethereum.org/docs/interacting-with-geth/rpc)).
+These can be exposed via HTTP, WebSockets and IPC (UNIX sockets on UNIX based
+platforms, and named pipes on Windows).
+
+The IPC interface is enabled by default and exposes all the APIs supported by `gwemix`,
+whereas the HTTP and WS interfaces need to manually be enabled and only expose a
+subset of APIs due to security reasons. These can be turned on/off and configured as
+you'd expect.
+
+HTTP based JSON-RPC API options:
+
+  * `--http` Enable the HTTP-RPC server
+  * `--http.addr` HTTP-RPC server listening interface (default: `localhost`)
+  * `--http.port` HTTP-RPC server listening port (default: `8545`)
+  * `--http.api` API's offered over the HTTP-RPC interface (default: `eth,net,web3`)
+  * `--http.corsdomain` Comma separated list of domains from which to accept cross origin requests (browser enforced)
+  * `--ws` Enable the WS-RPC server
+  * `--ws.addr` WS-RPC server listening interface (default: `localhost`)
+  * `--ws.port` WS-RPC server listening port (default: `8546`)
+  * `--ws.api` API's offered over the WS-RPC interface (default: `eth,net,web3`)
+  * `--ws.origins` Origins from which to accept WebSocket requests
+  * `--ipcdisable` Disable the IPC-RPC server
+  * `--ipcapi` API's offered over the IPC-RPC interface (default: `admin,debug,eth,miner,net,personal,txpool,web3`)
+  * `--ipcpath` Filename for IPC socket/pipe within the datadir (explicit paths escape it)
+
+You'll need to use your own programming environments' capabilities (libraries, tools, etc) to
+connect via HTTP, WS or IPC to a `gwemix` node configured with the above flags and you'll
+need to speak [JSON-RPC](https://www.jsonrpc.org/specification) on all transports. You
+can reuse the same connection for multiple requests!
+
+**Note: Please understand the security implications of opening up an HTTP/WS based
+transport before doing so! Hackers on the internet are actively trying to subvert
+nodes with exposed APIs! Further, all browser tabs can access locally
+running web servers, so malicious web pages could try to subvert locally available
+APIs!**
+
+### Operating a private network
+
+Maintaining your own private network is more involved as a lot of configurations taken for
+granted in the official networks need to be manually set up. 
+
+#### Generating nodekey
+To generate a nodekey, you can use the `bootnode` tool. This will create a new nodekey file in the current directory:
+
+```
+> bootnode -genkey mynodekey
+```
+
+And you can see the public key, address, and a bls public key derived from the nodekey:
+```
+> bootnode -nodekey mynodekey -writeaddress
+
+public key: 0x9afad81eb6c7807b2f0edd2e4b55e07084d3ee66f28b563fa8ef1ca7147534f6acc734d069636263de70aa09f9f235398146684927fd147d75dcabb9c0762998
+address: 0x6e817a2b618bdcabcf15587af4f04b787a8894bc
+derived bls public key: 0xb7cfb997db1ccb18f4d84c5754ed0cbf1126791dec2ffa490c402c88bb0d5ea67df67a6d83c25dd047796376b59ac7b3
+```
+
+Use these information to define the genesis file. The address and bls key are used to define the `validators` and `blsPublicKeys` in the genesis file.
+
+#### Generating genesis.json
+First, you'll need to create the genesis state of your networks, which all nodes need to be
+aware of and agree upon. This consists of a small JSON file (e.g. call it `genesis.json`):
+```json
+{
+  "config": {
+    "chainId": 1111,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
+    "croissantBlock": 0,
+    "croissant": {
+      "wBFT": {
+        "requestTimeoutSeconds": 2,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "blockReward": "0xde0b6b3a7640000",
+        "proposerPolicy": 0,
+        "targetValidators": 1,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 1,
+        "useNCP": false
+      },
+      "init": {
+        "validators": [
+          "0xaa5faa65e9cc0f74a85b6fdfb5f6991f5c094697"
+        ],
+        "blsPublicKeys": [
+          "0xaec493af8fa358a1c6f05499f2dd712721ade88c477d21b799d38e9b84582b6fbe4f4adc21e1e454bc37522eb3478b9b"
+        ]
+      },
+      "govContracts": {
+        "govConfig": {
+          "address": "0x0000000000000000000000000000000000001000",
+          "version": "v1",
+          "params": {
+            "changeFeeDelay": "604800",
+            "feePrecision": "10000",
+            "maximumStaking": "100000000000000000000000000",
+            "minimumStaking": "10000000000000000000000000",
+            "unbondingPeriodDelegator": "259200",
+            "unbondingPeriodStaker": "604800"
+          }
+        },
+        "govStaking": {
+          "address": "0x0000000000000000000000000000000000001001",
+          "version": "v1",
+          "params": null
+        },
+        "govRewardeeImp": {
+          "address": "0x0000000000000000000000000000000000001002",
+          "version": "v1",
+          "params": null
+        },
+        "govNCP": null
+      }
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x68535fb8",
+  "extraData": "0x",
+  "gasLimit": "0x47b760",
+  "difficulty": "0x1",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "0xaa5faa65e9cc0f74a85b6fdfb5f6991f5c094697": {
+      "balance": "0x200000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "baseFeePerGas": null,
+  "fees": null,
+  "excessBlobGas": null,
+  "blobGasUsed": null
+}
+```
+
+The genesis file determines which consensus engine will be used, which hardfork changes will be supported, and other key configurations. 
+Instead of wandering through countless docs to find a suitable Genesis file for the chain you want to create, you may just use **genesis_generator**
+
+Make sure you built every debian packages by `make all`
+
+```shell 
+$ genesis_generator
+```
+
+This will help you generate genesis file by simply choosing the options it gives like below : 
+``` shell
+Which consensus engine to use? (default = Wbft)
+ 1. WBFT (wemix-byzantine-fault-tolerance)
+ 2. Ethash (proof-of-work)
+ 3. Beacon (proof-of-stake), merging/merged from Ethash (proof-of-work)
+ 4. Clique (proof-of-authority)
+ 5. Beacon (proof-of-stake), merging/merged from Clique (proof-of-authority)
+```
+
+If you want more specific genesis file settings, simply modify the desired fields after it has been generated.
+
+
+With the genesis state defined in the above JSON file, you'll need to initialize **every**
+`gwemix` node with it prior to starting it up to ensure all blockchain parameters are correctly
+set:
+
+```shell
+$ gwemix init path/to/genesis.json
+```
+
+#### Setting local private chain with wbft engine
+
+Here's a simple example running single node for private chain with wbft engine.  
+Note that this setting is not recommended for production.
+ 
+1. Make `working directory`  
+  <br>
+2. Make gwemix folder inside `working directory`
+
+    ```shell
+    $ mkdir {working directory}/gwemix
+    ```
+
+2. Clone `go-wemix-wbft` inside `working directory` ( not mandatory. you can clone wherever you want. ) and move to `go-wemix-wbft`
+
+    ```shell
+    $ cd {path you clone go-wemix-wbft}/go-wemix-wbft
+    ```
+
+3. Make build file
+
+    ```shell
+    $ make all
+    ```
+
+4. Make `nodekey` inside `gwemix`
+
+    ```shell
+    $ ./build/bin/bootnode --genkey {working directory}/gwemix/nodekey
+    ```
+
+5. Check your enode address
+
+    ```shell
+    $ ./build/bin/bootnode -nodekey {working directory}/gwemix/nodekey
+    
+    Example)
+    enode://adc70110af20a4e06b63c1b7c94bcaf61cd91f610afbdaf15d16cd279279438eded69763da2c7f861eb682594150d76900c126a15e50ccfb7989d1028fe26baf@127.0.0.1:0?discport=30301
+    Note: you're using cmd/bootnode, a developer tool.
+    We recommend using a regular node as bootstrap node for production deployments.
+    INFO [12-20|10:53:21.527] New local node record                    seq=1,734,659,601,526 id=02148abb6456716e ip=<nil> udp=0 tcp=0
+    ^C
+    ```
+
+6. Make genesis file (  From the following instructions, we assume that the genesis file has been created under the `working directory`. We also recommend you to create `config.toml` file)
+
+    ```shell
+   Example) 
+
+    Which consensus engine to use? (default = Wbft)
+     1. WBFT (wemix-byzantine-fault-tolerance)
+     2. Ethash (proof-of-work)
+     3. Beacon (proof-of-stake), merging/merged from Ethash (proof-of-work)
+     4. Clique (proof-of-authority)
+     5. Beacon (proof-of-stake), merging/merged from Clique (proof-of-authority)
+    > 1
+
+    Which accounts are allowed to seal? (mandatory at least one)
+    > 0xaA5FAA65e9cC0F74a85b6fDfb5f6991f5C094697
+    └> BLS Public Key : 0xaec493af8fa358a1c6f05499f2dd712721ade88c477d21b799d38e9b84582b6fbe4f4adc21e1e454bc37522eb3478b9b
+    > 0x
+    
+    Want to generate config.toml file to configure static nodes to connect?
+    Else you have to manage peer node manually (default true)
+    > no
+    
+    Which accounts should be pre-funded? (advisable at least one)
+    > 0xaA5FAA65e9cC0F74a85b6fDfb5f6991f5C094697
+    > 0x
+    
+    Specify your chain/network ID if you want an explicit one (default = random)
+    >
+    
+    Do you want to export generated genesis file?
+    If not it will be just printed (default true)
+    >
+    
+    Which folder to save the genesis spec into? (default = current)
+    It will create genesis.json
+    >
+
+    ```
+
+7. init genesis block
+
+    ```shell
+    $ ./build/bin/gwemix --datadir {working directory} init {working directory}/genesis.json
+    ```
+
+8. run gwemix
+
+    ```shell
+    $ ./build/bin/gwemix --datadir {working directory} --http --http.addr "0.0.0.0" --http.port {httpPortNum}  --syncmode full --port {portNum}  --mine 
+    ```
+
+#### Creating the rendezvous point
+
+With all nodes that you want to run initialized to the desired genesis state, you'll need to
+start a bootstrap node that others can use to find each other in your network and/or over
+the internet. The clean way is to configure and run a dedicated bootnode:
+
+```shell
+$ bootnode --genkey=boot.key
+$ bootnode --nodekey=boot.key
+```
+
+With the bootnode online, it will display an [`enode` URL](https://ethereum.org/en/developers/docs/networking-layer/network-addresses/#enode)
+that other nodes can use to connect to it and exchange peer information. Make sure to
+replace the displayed IP address information (most probably `[::]`) with your externally
+accessible IP to get the actual `enode` URL.
+
+*Note: You could also use a full-fledged `gwemix` node as a bootnode, but it's the less
+recommended way.*
+
+#### Starting up your member nodes
+
+With the bootnode operational and externally reachable (you can try
+`telnet <ip> <port>` to ensure it's indeed reachable), start every subsequent `gwemix`
+node pointed to the bootnode for peer discovery via the `--bootnodes` flag. It will
+probably also be desirable to keep the data directory of your private network separated, so
+do also specify a custom `--datadir` flag.
+
+```shell
+$ gwemix --datadir=path/to/custom/data/folder --bootnodes=<bootnode-enode-url-from-above>
+```
+
+*Note: Since your network will be completely cut off from the main and test networks, you'll
+also need to configure a miner to process transactions and create new blocks for you.*
+
+#### Running a private miner
+
+In a private network setting a single CPU miner instance is more than enough for
+practical purposes as it can produce a stable stream of blocks at the correct intervals
+without needing heavy resources (consider running on a single thread, no need for multiple
+ones either). To start a `gwemix` instance for mining, run it with all your usual flags, extended
+by:
+
+```shell
+$ gwemix <usual-flags> --mine --miner.threads=1 --miner.etherbase=0x0000000000000000000000000000000000000000
+```
+
+Which will start mining blocks and transactions on a single CPU thread, crediting all
+proceedings to the account specified by `--miner.etherbase`. You can further tune the mining
+by changing the default gas limit blocks converge to (`--miner.targetgaslimit`) and the price
+transactions are accepted at (`--miner.gasprice`).
+
+## Contribution
+
+Thank you for considering helping out with the source code! We welcome contributions
+from anyone on the internet, and are grateful for even the smallest of fixes!
+
+If you'd like to contribute to go-wemix-wbft, please fork, fix, commit and send a pull request
+for the maintainers to review and merge into the main code base. If you wish to submit
+more complex changes though, please check up with the core devs first on [our team](mailto:developer@wemix.com)
+to ensure those changes are in line with the general philosophy of the project and/or get
+some early feedback which can make both your efforts much lighter as well as our review
+and merge procedures quick and simple.
+
+Please make sure your contributions adhere to our coding guidelines:
+
+ * Code must adhere to the official Go [formatting](https://golang.org/doc/effective_go.html#formatting)
+   guidelines (i.e. uses [gofmt](https://golang.org/cmd/gofmt/)).
+ * Code must be documented adhering to the official Go [commentary](https://golang.org/doc/effective_go.html#commentary)
+   guidelines.
+ * Pull requests need to be based on and opened against the `dev` branch.
+ * Commit messages should be prefixed with the package(s) they modify.
+   * E.g. "eth, rpc: make trace configs optional"
+
+Please see the [Developers' Guide](https://geth.ethereum.org/docs/developers/geth-developer/dev-guide)
+for more details on configuring your environment, managing project dependencies, and
+testing procedures.
+
+## License
+
+The go-wemix-wbft library (i.e. all code outside of the `cmd` directory) is licensed under the
+[GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html),
+also included in our repository in the `COPYING.LESSER` file.
+
+The go-wemix-wbft binaries (i.e. all code inside of the `cmd` directory) are licensed under the
+[GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html), also
+included in our repository in the `COPYING` file.

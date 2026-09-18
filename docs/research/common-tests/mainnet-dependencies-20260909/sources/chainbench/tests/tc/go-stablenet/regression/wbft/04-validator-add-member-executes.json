@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "validator-add-member-executes",
+  "description": "RT-B-04 — 신규 검증자 추가 및 에폭 합의 참여 확인 (원본 regression/wbft/04-test-add-validator)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "validator-add-member-executes-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+        "4"
+      ],
+      "op": "abiCall",
+      "save": "propData",
+      "selector": "0x5c646aa6",
+      "source": "derive"
+    },
+    {
+      "data": "$propData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "propHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "hash": "$propHash",
+      "save": "pid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$pid"
+      ],
+      "op": "abiCall",
+      "save": "approveData",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$approveData",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "apHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "do": "read",
+      "save": "membersRet",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$propHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$apHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "of": [
+        "$membersRet"
+      ],
+      "op": "word"
+    }
+  ]
+}

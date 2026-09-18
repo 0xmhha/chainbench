@@ -1,0 +1,4252 @@
+[
+  {
+    "analysis_id": "DOC-C-001",
+    "runtime_id": null,
+    "display_id": "RT-A-2-01 / TX-006",
+    "existing_spec_id_expressions": [
+      "RT-A-2-01",
+      "TX-006"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 29,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-002",
+    "runtime_id": null,
+    "display_id": "RT-A-2-02 / TX-003",
+    "existing_spec_id_expressions": [
+      "RT-A-2-02",
+      "TX-003"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 30,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-003",
+    "runtime_id": null,
+    "display_id": "RT-A-2-03 / TX-007",
+    "existing_spec_id_expressions": [
+      "RT-A-2-03",
+      "TX-007"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 31,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-004",
+    "runtime_id": null,
+    "display_id": "RT-D-01 / TX-004",
+    "existing_spec_id_expressions": [
+      "RT-D-01",
+      "TX-004"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 32,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-005",
+    "runtime_id": null,
+    "display_id": "RT-D-03 / TX-014",
+    "existing_spec_id_expressions": [
+      "RT-D-03",
+      "TX-014"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 33,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-006",
+    "runtime_id": null,
+    "display_id": "RT-D-04 / TX-015",
+    "existing_spec_id_expressions": [
+      "RT-D-04",
+      "TX-015"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 34,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-007",
+    "runtime_id": null,
+    "display_id": "RT-D-05 / TX-016",
+    "existing_spec_id_expressions": [
+      "RT-D-05",
+      "TX-016"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 35,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-008",
+    "runtime_id": null,
+    "display_id": "RT-A-2-04 / TX-010",
+    "existing_spec_id_expressions": [
+      "RT-A-2-04",
+      "TX-010"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 43,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-009",
+    "runtime_id": null,
+    "display_id": "RT-A-2-05a",
+    "existing_spec_id_expressions": [
+      "RT-A-2-05a"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 44,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-010",
+    "runtime_id": null,
+    "display_id": "RT-A-2-06 / TX-011",
+    "existing_spec_id_expressions": [
+      "RT-A-2-06",
+      "TX-011"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 45,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-011",
+    "runtime_id": null,
+    "display_id": "RT-A-2-07 / TX-012",
+    "existing_spec_id_expressions": [
+      "RT-A-2-07",
+      "TX-012"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 46,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-012",
+    "runtime_id": null,
+    "display_id": "RT-A-2-08",
+    "existing_spec_id_expressions": [
+      "RT-A-2-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 47,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-013",
+    "runtime_id": null,
+    "display_id": "RT-A-2-09 / TX-013",
+    "existing_spec_id_expressions": [
+      "RT-A-2-09",
+      "TX-013"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 48,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-014",
+    "runtime_id": null,
+    "display_id": "RT-A-3-01 / TX-005",
+    "existing_spec_id_expressions": [
+      "RT-A-3-01",
+      "TX-005"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 56,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-015",
+    "runtime_id": null,
+    "display_id": "RT-A-3-02",
+    "existing_spec_id_expressions": [
+      "RT-A-3-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 57,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-016",
+    "runtime_id": null,
+    "display_id": "RT-A-3-03",
+    "existing_spec_id_expressions": [
+      "RT-A-3-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 58,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-017",
+    "runtime_id": null,
+    "display_id": "RT-A-3-04",
+    "existing_spec_id_expressions": [
+      "RT-A-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 59,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-018",
+    "runtime_id": null,
+    "display_id": "RT-A-3-05",
+    "existing_spec_id_expressions": [
+      "RT-A-3-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 60,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-019",
+    "runtime_id": null,
+    "display_id": "RT-A-3-06 / TX-017",
+    "existing_spec_id_expressions": [
+      "RT-A-3-06",
+      "TX-017"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 61,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-020",
+    "runtime_id": null,
+    "display_id": "RT-A-3-07 / TX-018",
+    "existing_spec_id_expressions": [
+      "RT-A-3-07",
+      "TX-018"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 62,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-021",
+    "runtime_id": null,
+    "display_id": "RT-A-4-01 / RPC-001",
+    "existing_spec_id_expressions": [
+      "RT-A-4-01",
+      "RPC-001"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 70,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-022",
+    "runtime_id": null,
+    "display_id": "RT-A-4-02 / RPC-012",
+    "existing_spec_id_expressions": [
+      "RT-A-4-02",
+      "RPC-012"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 71,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-023",
+    "runtime_id": null,
+    "display_id": "RT-A-4-03",
+    "existing_spec_id_expressions": [
+      "RT-A-4-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 72,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-024",
+    "runtime_id": null,
+    "display_id": "RT-A-4-04 / RPC-014",
+    "existing_spec_id_expressions": [
+      "RT-A-4-04",
+      "RPC-014"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 73,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-025",
+    "runtime_id": null,
+    "display_id": "RT-A-4-05 / RPC-013",
+    "existing_spec_id_expressions": [
+      "RT-A-4-05",
+      "RPC-013"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 74,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-026",
+    "runtime_id": null,
+    "display_id": "RT-A-4-06 / RPC-020",
+    "existing_spec_id_expressions": [
+      "RT-A-4-06",
+      "RPC-020"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 75,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-027",
+    "runtime_id": null,
+    "display_id": "RT-A-4-07 / RPC-021",
+    "existing_spec_id_expressions": [
+      "RT-A-4-07",
+      "RPC-021"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 76,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-028",
+    "runtime_id": null,
+    "display_id": "RT-G-1-01 / RPC-002",
+    "existing_spec_id_expressions": [
+      "RT-G-1-01",
+      "RPC-002"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 77,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-029",
+    "runtime_id": null,
+    "display_id": "RT-G-1-02 / RPC-002",
+    "existing_spec_id_expressions": [
+      "RT-G-1-02",
+      "RPC-002"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 78,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-030",
+    "runtime_id": null,
+    "display_id": "RT-G-1-03",
+    "existing_spec_id_expressions": [
+      "RT-G-1-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 79,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-031",
+    "runtime_id": null,
+    "display_id": "RT-G-1-04 / RPC-007",
+    "existing_spec_id_expressions": [
+      "RT-G-1-04",
+      "RPC-007"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 80,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-032",
+    "runtime_id": null,
+    "display_id": "RT-G-1-05 / RPC-015",
+    "existing_spec_id_expressions": [
+      "RT-G-1-05",
+      "RPC-015"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 81,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-033",
+    "runtime_id": null,
+    "display_id": "RT-G-2-01 / RPC-016",
+    "existing_spec_id_expressions": [
+      "RT-G-2-01",
+      "RPC-016"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 82,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-034",
+    "runtime_id": null,
+    "display_id": "RT-G-2-02",
+    "existing_spec_id_expressions": [
+      "RT-G-2-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 83,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-035",
+    "runtime_id": null,
+    "display_id": "RT-G-2-03 / RPC-017",
+    "existing_spec_id_expressions": [
+      "RT-G-2-03",
+      "RPC-017"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 84,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-036",
+    "runtime_id": null,
+    "display_id": "RT-G-4-02 / RPC-018",
+    "existing_spec_id_expressions": [
+      "RT-G-4-02",
+      "RPC-018"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 85,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-037",
+    "runtime_id": null,
+    "display_id": "RT-G-4-03",
+    "existing_spec_id_expressions": [
+      "RT-G-4-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 86,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-038",
+    "runtime_id": null,
+    "display_id": "RT-G-5-01",
+    "existing_spec_id_expressions": [
+      "RT-G-5-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 87,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-039",
+    "runtime_id": null,
+    "display_id": "RT-A-1-01",
+    "existing_spec_id_expressions": [
+      "RT-A-1-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 95,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-040",
+    "runtime_id": null,
+    "display_id": "RT-A-1-02 / NODE-003",
+    "existing_spec_id_expressions": [
+      "RT-A-1-02",
+      "NODE-003"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 96,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-041",
+    "runtime_id": null,
+    "display_id": "RT-A-1-03 / NODE-004",
+    "existing_spec_id_expressions": [
+      "RT-A-1-03",
+      "NODE-004"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 97,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-042",
+    "runtime_id": null,
+    "display_id": "RT-A-1-04 / NODE-005",
+    "existing_spec_id_expressions": [
+      "RT-A-1-04",
+      "NODE-005"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 98,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-043",
+    "runtime_id": null,
+    "display_id": "RT-A-1-05",
+    "existing_spec_id_expressions": [
+      "RT-A-1-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 99,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-044",
+    "runtime_id": null,
+    "display_id": "RT-A-1-06",
+    "existing_spec_id_expressions": [
+      "RT-A-1-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 100,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-C-045",
+    "runtime_id": null,
+    "display_id": "RT-A-1-07",
+    "existing_spec_id_expressions": [
+      "RT-A-1-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/common_test_scenarios.md",
+        "line": 101,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-001",
+    "runtime_id": null,
+    "display_id": "RPC-008",
+    "existing_spec_id_expressions": [
+      "RPC-008"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 42,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-002",
+    "runtime_id": null,
+    "display_id": "RT-B-01 / WBFT-002",
+    "existing_spec_id_expressions": [
+      "RT-B-01",
+      "WBFT-002"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 52,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-003",
+    "runtime_id": null,
+    "display_id": "RT-B-02 / WBFT-001",
+    "existing_spec_id_expressions": [
+      "RT-B-02",
+      "WBFT-001"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 53,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-004",
+    "runtime_id": null,
+    "display_id": "RT-B-03 / WBFT-005",
+    "existing_spec_id_expressions": [
+      "RT-B-03",
+      "WBFT-005"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 54,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-005",
+    "runtime_id": null,
+    "display_id": "RT-B-06",
+    "existing_spec_id_expressions": [
+      "RT-B-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 55,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-006",
+    "runtime_id": null,
+    "display_id": "RT-B-09 / WBFT-003",
+    "existing_spec_id_expressions": [
+      "RT-B-09",
+      "WBFT-003"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 56,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-007",
+    "runtime_id": null,
+    "display_id": "RT-B-10 / WBFT-003",
+    "existing_spec_id_expressions": [
+      "RT-B-10",
+      "WBFT-003"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 57,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-008",
+    "runtime_id": null,
+    "display_id": "RT-B-06 / WBFT-006",
+    "existing_spec_id_expressions": [
+      "RT-B-06",
+      "WBFT-006"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 58,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-009",
+    "runtime_id": null,
+    "display_id": "RT-B-11 / WBFT-009",
+    "existing_spec_id_expressions": [
+      "RT-B-11",
+      "WBFT-009"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 59,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-010",
+    "runtime_id": null,
+    "display_id": "RT-B-12 / WBFT-009",
+    "existing_spec_id_expressions": [
+      "RT-B-12",
+      "WBFT-009"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 60,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-011",
+    "runtime_id": null,
+    "display_id": "WBFT-010",
+    "existing_spec_id_expressions": [
+      "WBFT-010"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 61,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-012",
+    "runtime_id": null,
+    "display_id": "RT-B-08",
+    "existing_spec_id_expressions": [
+      "RT-B-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 62,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-013",
+    "runtime_id": null,
+    "display_id": "WBFT-007",
+    "existing_spec_id_expressions": [
+      "WBFT-007"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 63,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-014",
+    "runtime_id": null,
+    "display_id": "WBFT-008",
+    "existing_spec_id_expressions": [
+      "WBFT-008"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 64,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-015",
+    "runtime_id": null,
+    "display_id": "WBFT-011",
+    "existing_spec_id_expressions": [
+      "WBFT-011"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 65,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-016",
+    "runtime_id": null,
+    "display_id": "WBFT-012",
+    "existing_spec_id_expressions": [
+      "WBFT-012"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 66,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-017",
+    "runtime_id": null,
+    "display_id": "WBFT-013",
+    "existing_spec_id_expressions": [
+      "WBFT-013"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 67,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-018",
+    "runtime_id": null,
+    "display_id": "RT-G-3-01 / RPC-010",
+    "existing_spec_id_expressions": [
+      "RT-G-3-01",
+      "RPC-010"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 73,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-019",
+    "runtime_id": null,
+    "display_id": "RT-G-3-02 / RPC-003",
+    "existing_spec_id_expressions": [
+      "RT-G-3-02",
+      "RPC-003"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 74,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-020",
+    "runtime_id": null,
+    "display_id": "RT-G-3-03 / RPC-004",
+    "existing_spec_id_expressions": [
+      "RT-G-3-03",
+      "RPC-004"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 75,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-021",
+    "runtime_id": null,
+    "display_id": "RT-G-3-04 / RPC-005",
+    "existing_spec_id_expressions": [
+      "RT-G-3-04",
+      "RPC-005"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 76,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-022",
+    "runtime_id": null,
+    "display_id": "RT-G-3-05 / RPC-006",
+    "existing_spec_id_expressions": [
+      "RT-G-3-05",
+      "RPC-006"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 77,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-023",
+    "runtime_id": null,
+    "display_id": "RT-G-3-06 / RPC-011",
+    "existing_spec_id_expressions": [
+      "RT-G-3-06",
+      "RPC-011"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 78,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-024",
+    "runtime_id": null,
+    "display_id": "RT-A-2-10 / TX-008",
+    "existing_spec_id_expressions": [
+      "RT-A-2-10",
+      "TX-008"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 84,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-025",
+    "runtime_id": null,
+    "display_id": "TC-4-2-01 / TC-4-2-03",
+    "existing_spec_id_expressions": [
+      "TC-4-2-01",
+      "TC-4-2-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 85,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-026",
+    "runtime_id": null,
+    "display_id": "TC-4-2-02",
+    "existing_spec_id_expressions": [
+      "TC-4-2-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 86,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-027",
+    "runtime_id": null,
+    "display_id": "TC-1-2-01~06 / TX-009",
+    "existing_spec_id_expressions": [
+      "TC-1-2-01~06",
+      "TX-009"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 87,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-028",
+    "runtime_id": null,
+    "display_id": "TC-1-2-01~06 / TX-019",
+    "existing_spec_id_expressions": [
+      "TC-1-2-01~06",
+      "TX-019"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 88,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "DOC-D-029",
+    "runtime_id": null,
+    "display_id": "TC-1-2-01~06 / TX-020",
+    "existing_spec_id_expressions": [
+      "TC-1-2-01~06",
+      "TX-020"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/docs/research/common-tests/mainnet-dependencies-20260909/sources/dual_chain_test_scenarios.md",
+        "line": 89,
+        "status": "scenario document references; no one-to-one execution assumption"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-001",
+    "runtime_id": "basic-consensus",
+    "display_id": "basic-consensus",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-002",
+    "runtime_id": "basic-peers",
+    "display_id": "basic-peers",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-003",
+    "runtime_id": "basic-rpc-health",
+    "display_id": "basic-rpc-health",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-004",
+    "runtime_id": "basic-sync",
+    "display_id": "basic-sync",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-005",
+    "runtime_id": "basic-tx-send",
+    "display_id": "basic-tx-send",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-006",
+    "runtime_id": "basic-txpool-propagation",
+    "display_id": "basic-txpool-propagation",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-007",
+    "runtime_id": "fault-network-partition",
+    "display_id": "fault-network-partition",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-008",
+    "runtime_id": "fault-node-crash",
+    "display_id": "fault-node-crash",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-009",
+    "runtime_id": "fault-node-recover",
+    "display_id": "fault-node-recover",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-010",
+    "runtime_id": "fault-p2p-topology",
+    "display_id": "fault-p2p-topology",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-011",
+    "runtime_id": "fault-two-down",
+    "display_id": "fault-two-down",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-012",
+    "runtime_id": "fault-txpool-leader-change",
+    "display_id": "fault-txpool-leader-change",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-013",
+    "runtime_id": "legacy-gasprice-below-min-rejected",
+    "display_id": "TC-1-3-04",
+    "existing_spec_id_expressions": [
+      "TC-1-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/12-legacy-gasprice-below-min-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-014",
+    "runtime_id": "accesslist-gasprice-below-min-rejected",
+    "display_id": "TC-1-3-05",
+    "existing_spec_id_expressions": [
+      "TC-1-3-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/13-accesslist-gasprice-below-min-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-015",
+    "runtime_id": "feecap-below-min-rejected",
+    "display_id": "TC-1-3-06",
+    "existing_spec_id_expressions": [
+      "TC-1-3-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/14-feecap-below-min-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-016",
+    "runtime_id": "effective-gas-price-regular-bp-en",
+    "display_id": "TC-4-6-02",
+    "existing_spec_id_expressions": [
+      "TC-4-6-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02b-effective-gas-price-regular-bp-en.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-017",
+    "runtime_id": "signature-compat-across-swap",
+    "display_id": "TC-3-1-04",
+    "existing_spec_id_expressions": [
+      "TC-3-1-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-018",
+    "runtime_id": "genesis-mismatch-refuses-to-start",
+    "display_id": "TC-4-1-03",
+    "existing_spec_id_expressions": [
+      "TC-4-1-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/02-genesis-mismatch.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-019",
+    "runtime_id": "genesis-block-hash-consistent",
+    "display_id": "TC-5-3-01",
+    "existing_spec_id_expressions": [
+      "TC-5-3-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/04-genesis-block-hash-consistent.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-020",
+    "runtime_id": "block-transactions-field",
+    "display_id": "RT-G-1-01",
+    "existing_spec_id_expressions": [
+      "RT-G-1-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/01-block-transactions-field.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-021",
+    "runtime_id": "block-by-hash-consistency",
+    "display_id": "RT-G-1-02",
+    "existing_spec_id_expressions": [
+      "RT-G-1-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/02-block-by-hash-consistency.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-022",
+    "runtime_id": "transaction-by-hash-fields",
+    "display_id": "RT-G-1-03",
+    "existing_spec_id_expressions": [
+      "RT-G-1-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/03-transaction-by-hash-fields.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-023",
+    "runtime_id": "transaction-receipt-fields",
+    "display_id": "RT-G-1-04",
+    "existing_spec_id_expressions": [
+      "RT-G-1-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/04-transaction-receipt-fields.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-024",
+    "runtime_id": "transaction-count-increments",
+    "display_id": "RT-G-1-05",
+    "existing_spec_id_expressions": [
+      "RT-G-1-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/05-transaction-count-increments.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-025",
+    "runtime_id": "txpool-status",
+    "display_id": "RT-G-4-02",
+    "existing_spec_id_expressions": [
+      "RT-G-4-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/18-txpool-status.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-026",
+    "runtime_id": "txpool-content-well-formed",
+    "display_id": "RT-G-4-03",
+    "existing_spec_id_expressions": [
+      "RT-G-4-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/19-txpool-content-well-formed.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-027",
+    "runtime_id": "fee-delegate-sign-rpc-present",
+    "display_id": "RT-G-5-01",
+    "existing_spec_id_expressions": [
+      "RT-G-5-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/21-fee-delegate-sign-rpc-present.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-028",
+    "runtime_id": "legacy-transfer",
+    "display_id": "RT-A-2-01",
+    "existing_spec_id_expressions": [
+      "RT-A-2-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-029",
+    "runtime_id": "dynamic-fee-tx",
+    "display_id": "RT-A-2-02",
+    "existing_spec_id_expressions": [
+      "RT-A-2-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/09-dynamic-fee-tx.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-030",
+    "runtime_id": "access-list-tx",
+    "display_id": "RT-A-2-03",
+    "existing_spec_id_expressions": [
+      "RT-A-2-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/10-access-list-tx.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-031",
+    "runtime_id": "nonce-ordering",
+    "display_id": "RT-A-2-04",
+    "existing_spec_id_expressions": [
+      "RT-A-2-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/11-nonce-ordering.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-032",
+    "runtime_id": "out-of-order-nonces-mine",
+    "display_id": "out-of-order-nonces-mine",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-033",
+    "runtime_id": "dynamic-fee-below-basefee-rejected",
+    "display_id": "RT-A-2-05a",
+    "existing_spec_id_expressions": [
+      "RT-A-2-05a"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/12-dynamic-fee-below-basefee-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-034",
+    "runtime_id": "insufficient-funds-rejected",
+    "display_id": "RT-A-2-06",
+    "existing_spec_id_expressions": [
+      "RT-A-2-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/14-insufficient-funds-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-035",
+    "runtime_id": "gas-limit-exceeds-block-rejected",
+    "display_id": "RT-A-2-07",
+    "existing_spec_id_expressions": [
+      "RT-A-2-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/15-gas-limit-exceeds-block-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-036",
+    "runtime_id": "effective-gas-price",
+    "display_id": "RT-A-2-08",
+    "existing_spec_id_expressions": [
+      "RT-A-2-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/16-effective-gas-price.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-037",
+    "runtime_id": "replacement-tx",
+    "display_id": "RT-A-2-09",
+    "existing_spec_id_expressions": [
+      "RT-A-2-09"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/17-replacement-tx.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-038",
+    "runtime_id": "same-nonce-replacement",
+    "display_id": "same-nonce-replacement",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-039",
+    "runtime_id": "contract-roundtrip",
+    "display_id": "RT-A-3-01",
+    "existing_spec_id_expressions": [
+      "RT-A-3-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/19-contract-roundtrip.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-040",
+    "runtime_id": "eth-call-revert-returns-error",
+    "display_id": "RT-A-3-05",
+    "existing_spec_id_expressions": [
+      "RT-A-3-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/23-eth-call-revert-returns-error.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-041",
+    "runtime_id": "revert-tx-status-zero",
+    "display_id": "RT-A-3-06",
+    "existing_spec_id_expressions": [
+      "RT-A-3-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/24-revert-tx-status-zero.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-042",
+    "runtime_id": "out-of-gas-consumes-all",
+    "display_id": "RT-A-3-07",
+    "existing_spec_id_expressions": [
+      "RT-A-3-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/25-out-of-gas-consumes-all.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-043",
+    "runtime_id": "value-transfer",
+    "display_id": "RT-A-4-03",
+    "existing_spec_id_expressions": [
+      "RT-A-4-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/27b-value-transfer.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-044",
+    "runtime_id": "contract-event-emitted",
+    "display_id": "contract-event-emitted",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-045",
+    "runtime_id": "fee-delegated-transfer",
+    "display_id": "RT-D-01",
+    "existing_spec_id_expressions": [
+      "RT-D-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/fee-delegation/01-fee-delegated-transfer.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-046",
+    "runtime_id": "fd-sender-sig-invalid-rejected",
+    "display_id": "RT-D-03",
+    "existing_spec_id_expressions": [
+      "RT-D-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/fee-delegation/02-fd-sender-sig-invalid-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-047",
+    "runtime_id": "fd-feepayer-sig-invalid-rejected",
+    "display_id": "RT-D-04",
+    "existing_spec_id_expressions": [
+      "RT-D-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/fee-delegation/03-fd-feepayer-sig-invalid-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-048",
+    "runtime_id": "feepayer-insufficient-rejected",
+    "display_id": "RT-D-05",
+    "existing_spec_id_expressions": [
+      "RT-D-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/fee-delegation/04-feepayer-insufficient-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-049",
+    "runtime_id": "fee-delegated-sender-sig-invalid-rejected",
+    "display_id": "fee-delegated-sender-sig-invalid-rejected",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-050",
+    "runtime_id": "fee-delegated-feepayer-sig-invalid-rejected",
+    "display_id": "fee-delegated-feepayer-sig-invalid-rejected",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-051",
+    "runtime_id": "fee-delegated-unfunded-feepayer-rejected",
+    "display_id": "fee-delegated-unfunded-feepayer-rejected",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-052",
+    "runtime_id": "wemix-chain-up",
+    "display_id": "wemix-chain-up",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-053",
+    "runtime_id": "wemix-chain-up-15",
+    "display_id": "wemix-chain-up-15",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-054",
+    "runtime_id": "wemix-node-crash",
+    "display_id": "wemix-node-crash",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-055",
+    "runtime_id": "wemix-brioche-block-reward",
+    "display_id": "wemix-brioche-block-reward",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-056",
+    "runtime_id": "wemix-tx-and-contract",
+    "display_id": "wemix-tx-and-contract",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-057",
+    "runtime_id": "stress-block-time",
+    "display_id": "stress-block-time",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-058",
+    "runtime_id": "stress-tx-flood",
+    "display_id": "stress-tx-flood",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-059",
+    "runtime_id": "gas-price-positive",
+    "display_id": "RT-G-2-01",
+    "existing_spec_id_expressions": [
+      "RT-G-2-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/07-gas-price-positive.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-060",
+    "runtime_id": "fee-history-well-formed",
+    "display_id": "RT-G-2-03",
+    "existing_spec_id_expressions": [
+      "RT-G-2-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/09-fee-history-well-formed.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-061",
+    "runtime_id": "admin-peers-populated",
+    "display_id": "RT-A-1-05",
+    "existing_spec_id_expressions": [
+      "RT-A-1-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/20-admin-peers-populated.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-062",
+    "runtime_id": "chain-not-syncing",
+    "display_id": "chain-not-syncing",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-063",
+    "runtime_id": "stablenet-chain-up",
+    "display_id": "stablenet-chain-up",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-064",
+    "runtime_id": "estimate-gas",
+    "display_id": "RT-A-3-04",
+    "existing_spec_id_expressions": [
+      "RT-A-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/22-estimate-gas.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-065",
+    "runtime_id": "genesis-balance",
+    "display_id": "RT-A-4-02",
+    "existing_spec_id_expressions": [
+      "RT-A-4-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/27-genesis-balance.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-066",
+    "runtime_id": "logs-query-well-formed",
+    "display_id": "RT-A-4-04",
+    "existing_spec_id_expressions": [
+      "RT-A-4-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/29-logs-query-well-formed.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-067",
+    "runtime_id": "chain-id",
+    "display_id": "RT-A-1-01",
+    "existing_spec_id_expressions": [
+      "RT-A-1-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/30-chain-id.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-068",
+    "runtime_id": "ws-subscribe-new-heads",
+    "display_id": "RT-A-4-06",
+    "existing_spec_id_expressions": [
+      "RT-A-4-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/31-ws-subscribe-new-heads.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-069",
+    "runtime_id": "ws-subscribe-logs",
+    "display_id": "RT-A-4-07",
+    "existing_spec_id_expressions": [
+      "RT-A-4-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/32-ws-subscribe-logs.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-070",
+    "runtime_id": "stablenet-chain-up-15",
+    "display_id": "stablenet-chain-up-15",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-071",
+    "runtime_id": "stablenet-proxied-pn-routing",
+    "display_id": "stablenet-proxied-pn-routing",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-072",
+    "runtime_id": "stablenet-negative-tx-revert",
+    "display_id": "stablenet-negative-tx-revert",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-073",
+    "runtime_id": "wbft-chain-up",
+    "display_id": "wbft-chain-up",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-074",
+    "runtime_id": "wbft-chain-up-15",
+    "display_id": "wbft-chain-up-15",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-075",
+    "runtime_id": "e1-mixed-producers",
+    "display_id": "e1-mixed-producers",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-076",
+    "runtime_id": "wbft-node-crash",
+    "display_id": "wbft-node-crash",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-077",
+    "runtime_id": "wbft-tx-and-contract",
+    "display_id": "wbft-tx-and-contract",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-078",
+    "runtime_id": "wemix-wbft-handoff",
+    "display_id": "wemix-wbft-handoff",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-079",
+    "runtime_id": "remote-rpc-health",
+    "display_id": "remote-rpc-health",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-080",
+    "runtime_id": "remote-chain-info",
+    "display_id": "remote-chain-info",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-081",
+    "runtime_id": "remote-balance-check",
+    "display_id": "remote-balance-check",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-082",
+    "runtime_id": "sample-minimal-value-transfer",
+    "display_id": "sample-minimal-value-transfer",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-083",
+    "runtime_id": "sample-lifecycle-node-restart",
+    "display_id": "sample-lifecycle-node-restart",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-084",
+    "runtime_id": "stablenet-derived-vocabulary",
+    "display_id": "stablenet-derived-vocabulary",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-085",
+    "runtime_id": "stablenet-faucet-funds",
+    "display_id": "stablenet-faucet-funds",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-086",
+    "runtime_id": "stablenet-register-contract",
+    "display_id": "stablenet-register-contract",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-087",
+    "runtime_id": "basic-wbft-consensus",
+    "display_id": "basic-wbft-consensus",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-088",
+    "runtime_id": "stablenet-delayed-fork",
+    "display_id": "stablenet-delayed-fork",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-089",
+    "runtime_id": "govminter-v2-code",
+    "display_id": "TC-5-2-05",
+    "existing_spec_id_expressions": [
+      "TC-5-2-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/02-govminter-v2-code.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-090",
+    "runtime_id": "burn-cancel-refundable",
+    "display_id": "TC-1-1-01 / TC-1-1-10",
+    "existing_spec_id_expressions": [
+      "TC-1-1-01",
+      "TC-1-1-10"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/03-burn-cancel-refundable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-091",
+    "runtime_id": "burn-reject-refundable",
+    "display_id": "TC-1-1-02",
+    "existing_spec_id_expressions": [
+      "TC-1-1-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/04-burn-reject-refundable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-092",
+    "runtime_id": "burn-expire-refundable",
+    "display_id": "TC-1-1-03",
+    "existing_spec_id_expressions": [
+      "TC-1-1-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/05-burn-expire-refundable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-093",
+    "runtime_id": "burn-execute-no-refundable",
+    "display_id": "TC-1-1-04",
+    "existing_spec_id_expressions": [
+      "TC-1-1-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/06-burn-execute-no-refundable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-094",
+    "runtime_id": "claim-burn-refund-succeeds",
+    "display_id": "TC-1-1-05 / TC-1-1-09",
+    "existing_spec_id_expressions": [
+      "TC-1-1-05",
+      "TC-1-1-09"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/07-claim-burn-refund-succeeds.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-095",
+    "runtime_id": "claim-zero-refund-reverts",
+    "display_id": "TC-1-1-06",
+    "existing_spec_id_expressions": [
+      "TC-1-1-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/08-claim-zero-refund-reverts.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-096",
+    "runtime_id": "claim-burn-refund-double-reverts",
+    "display_id": "TC-1-1-07",
+    "existing_spec_id_expressions": [
+      "TC-1-1-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/09-claim-burn-refund-double-reverts.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-097",
+    "runtime_id": "prealloc-preserved-across-boho",
+    "display_id": "TC-1-1-11/12",
+    "existing_spec_id_expressions": [
+      "TC-1-1-11/12"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/10-prealloc-preserved-across-boho.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-098",
+    "runtime_id": "boho-chain-config-active",
+    "display_id": "TC-4-1-01",
+    "existing_spec_id_expressions": [
+      "TC-4-1-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/15-boho-chain-config-active.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-099",
+    "runtime_id": "anzeon-active-before-boho",
+    "display_id": "TC-4-1-02",
+    "existing_spec_id_expressions": [
+      "TC-4-1-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/16-anzeon-active-before-boho.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-100",
+    "runtime_id": "estimategas-authorizationlist-cost",
+    "display_id": "TC-4-2-01/03",
+    "existing_spec_id_expressions": [
+      "TC-4-2-01/03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-101",
+    "runtime_id": "upgrade-registry-order",
+    "display_id": "TC-5-2-01/02",
+    "existing_spec_id_expressions": [
+      "TC-5-2-01/02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/19-upgrade-registry-order.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-102",
+    "runtime_id": "v1-params-init-storage",
+    "display_id": "TC-5-2-04",
+    "existing_spec_id_expressions": [
+      "TC-5-2-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/common-all/20-v1-params-init-storage.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-103",
+    "runtime_id": "burn-refund-events",
+    "display_id": "burn-refund-events",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-104",
+    "runtime_id": "effective-gas-price-authorized-bp-en",
+    "display_id": "TC-4-6-01",
+    "existing_spec_id_expressions": [
+      "TC-4-6-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/01-effective-gas-price-authorized-bp-en.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-105",
+    "runtime_id": "effective-gas-price-regular",
+    "display_id": "TC-4-6-02",
+    "existing_spec_id_expressions": [
+      "TC-4-6-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-106",
+    "runtime_id": "auth-tx-event-last-bp-en",
+    "display_id": "TC-4-6-04",
+    "existing_spec_id_expressions": [
+      "TC-4-6-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/03-auth-tx-event-last-bp-en.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-107",
+    "runtime_id": "authorized-extra-bit-synced",
+    "display_id": "TC-4-5-01 / TC-4-5-02",
+    "existing_spec_id_expressions": [
+      "TC-4-5-01",
+      "TC-4-5-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/01-authorized-extra-bit-synced.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-108",
+    "runtime_id": "blacklisted-extra-bit-synced",
+    "display_id": "blacklisted-extra-bit-synced",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-109",
+    "runtime_id": "stablenet-account-extra",
+    "display_id": "stablenet-account-extra",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-110",
+    "runtime_id": "extra-union-merge",
+    "display_id": "TC-4-5-05/06",
+    "existing_spec_id_expressions": [
+      "TC-4-5-05/06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/03-extra-union-merge.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-111",
+    "runtime_id": "dual-status-extra",
+    "display_id": "TC-4-5-07",
+    "existing_spec_id_expressions": [
+      "TC-4-5-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/04-dual-status-extra.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-112",
+    "runtime_id": "extra-balance-preserved",
+    "display_id": "TC-4-5-08",
+    "existing_spec_id_expressions": [
+      "TC-4-5-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/05-extra-balance-preserved.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-113",
+    "runtime_id": "invalid-extra-reject",
+    "display_id": "TC-4-5-09",
+    "existing_spec_id_expressions": [
+      "TC-4-5-09"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/06-invalid-extra-reject.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-114",
+    "runtime_id": "extra-state-across-delayed-boho",
+    "display_id": "TC-4-5-10/11",
+    "existing_spec_id_expressions": [
+      "TC-4-5-10/11"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/extra-state/07b-extra-state-across-delayed-boho.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-115",
+    "runtime_id": "unsupported-system-contract-version",
+    "display_id": "TC-5-2-06",
+    "existing_spec_id_expressions": [
+      "TC-5-2-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/stand-alone/03-unsupported-version.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-116",
+    "runtime_id": "authorized-accounts-no-space",
+    "display_id": "TC-4-3-01",
+    "existing_spec_id_expressions": [
+      "TC-4-3-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/01-authorized-accounts-no-space.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-117",
+    "runtime_id": "authorized-accounts-space",
+    "display_id": "TC-4-3-02",
+    "existing_spec_id_expressions": [
+      "TC-4-3-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/02-authorized-accounts-space.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-118",
+    "runtime_id": "authorized-accounts-trim",
+    "display_id": "TC-4-3-03",
+    "existing_spec_id_expressions": [
+      "TC-4-3-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/03-authorized-accounts-trim.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-119",
+    "runtime_id": "authorized-accounts-empty-item",
+    "display_id": "TC-4-3-04",
+    "existing_spec_id_expressions": [
+      "TC-4-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/04-authorized-accounts-empty-item.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-120",
+    "runtime_id": "authorized-accounts-single",
+    "display_id": "TC-4-3-05",
+    "existing_spec_id_expressions": [
+      "TC-4-3-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/05-authorized-accounts-single.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-121",
+    "runtime_id": "authorized-accounts-empty",
+    "display_id": "TC-4-3-06",
+    "existing_spec_id_expressions": [
+      "TC-4-3-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/post-v1.0.0-change/string-handling/06-authorized-accounts-empty.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-122",
+    "runtime_id": "regular-account-gastip-forced",
+    "display_id": "RT-C-01",
+    "existing_spec_id_expressions": [
+      "RT-C-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/anzeon/01-regular-account-gastip-forced.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-123",
+    "runtime_id": "authorized-account-gastip-free",
+    "display_id": "RT-C-02",
+    "existing_spec_id_expressions": [
+      "RT-C-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/anzeon/02-authorized-account-gastip-free.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-124",
+    "runtime_id": "anzeon-basefee-increase",
+    "display_id": "anzeon-basefee-increase",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-125",
+    "runtime_id": "anzeon-basefee-stable",
+    "display_id": "anzeon-basefee-stable",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-126",
+    "runtime_id": "anzeon-basefee-decrease",
+    "display_id": "anzeon-basefee-decrease",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-127",
+    "runtime_id": "basefee-minimum",
+    "display_id": "RT-C-06",
+    "existing_spec_id_expressions": [
+      "RT-C-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/anzeon/06-basefee-minimum.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-128",
+    "runtime_id": "basefee-maximum",
+    "display_id": "RT-C-07",
+    "existing_spec_id_expressions": [
+      "RT-C-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/anzeon/07-basefee-maximum.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-129",
+    "runtime_id": "feecap-above-min-accepted",
+    "display_id": "feecap-above-min-accepted",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-130",
+    "runtime_id": "feecap-exact-min-accepted",
+    "display_id": "feecap-exact-min-accepted",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-131",
+    "runtime_id": "gaslimit-exceeded-rejected",
+    "display_id": "gaslimit-exceeded-rejected",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-132",
+    "runtime_id": "system-contracts-deployed",
+    "display_id": "RT-G-1-06",
+    "existing_spec_id_expressions": [
+      "RT-G-1-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/06-system-contracts-deployed.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-133",
+    "runtime_id": "gas-price-equals-basefee-plus-tip",
+    "display_id": "gas-price-equals-basefee-plus-tip",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-134",
+    "runtime_id": "max-priority-fee-equals-gastip",
+    "display_id": "RT-G-2-02",
+    "existing_spec_id_expressions": [
+      "RT-G-2-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-135",
+    "runtime_id": "estimate-gas-token-transfer",
+    "display_id": "RT-G-2-04",
+    "existing_spec_id_expressions": [
+      "RT-G-2-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/10-estimate-gas-token-transfer.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-136",
+    "runtime_id": "node-address-returned",
+    "display_id": "RT-G-3-01",
+    "existing_spec_id_expressions": [
+      "RT-G-3-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/11-node-address-returned.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-137",
+    "runtime_id": "validator-set-nonempty",
+    "display_id": "RT-G-3-02",
+    "existing_spec_id_expressions": [
+      "RT-G-3-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/12-validator-set-nonempty.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-138",
+    "runtime_id": "validator-set-count",
+    "display_id": "validator-set-count",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-139",
+    "runtime_id": "commit-signers-quorum",
+    "display_id": "RT-G-3-03",
+    "existing_spec_id_expressions": [
+      "RT-G-3-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/13-commit-signers-quorum.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-140",
+    "runtime_id": "wbft-extra-info-fields",
+    "display_id": "RT-G-3-04",
+    "existing_spec_id_expressions": [
+      "RT-G-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/14-wbft-extra-info-fields.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-141",
+    "runtime_id": "istanbul-status-fields",
+    "display_id": "RT-G-3-05",
+    "existing_spec_id_expressions": [
+      "RT-G-3-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-142",
+    "runtime_id": "is-validator-flags",
+    "display_id": "RT-G-3-06",
+    "existing_spec_id_expressions": [
+      "RT-G-3-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/16-is-validator-flags.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-143",
+    "runtime_id": "token-total-supply-readable",
+    "display_id": "RT-G-5-02",
+    "existing_spec_id_expressions": [
+      "RT-G-5-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/22-token-total-supply-readable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-144",
+    "runtime_id": "token-approve-sets-allowance",
+    "display_id": "RT-G-5-03",
+    "existing_spec_id_expressions": [
+      "RT-G-5-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/api/23-token-approve-sets-allowance.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-145",
+    "runtime_id": "sender-blacklisted-rejected",
+    "display_id": "RT-E-01",
+    "existing_spec_id_expressions": [
+      "RT-E-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/01-sender-blacklisted-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-146",
+    "runtime_id": "recipient-blacklisted-rejected",
+    "display_id": "RT-E-02",
+    "existing_spec_id_expressions": [
+      "RT-E-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/02-recipient-blacklisted-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-147",
+    "runtime_id": "feepayer-blacklisted-rejected",
+    "display_id": "RT-E-03",
+    "existing_spec_id_expressions": [
+      "RT-E-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/03-feepayer-blacklisted-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-148",
+    "runtime_id": "address-unblacklisted-event",
+    "display_id": "RT-E-04",
+    "existing_spec_id_expressions": [
+      "RT-E-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/04-address-unblacklisted-event.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-149",
+    "runtime_id": "zero-address-transfer-rejected",
+    "display_id": "RT-E-05",
+    "existing_spec_id_expressions": [
+      "RT-E-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/05-zero-address-transfer-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-150",
+    "runtime_id": "precompile-transfer-rejected",
+    "display_id": "RT-E-06",
+    "existing_spec_id_expressions": [
+      "RT-E-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/06-precompile-transfer-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-151",
+    "runtime_id": "account-blacklist-readable",
+    "display_id": "RT-E-07",
+    "existing_spec_id_expressions": [
+      "RT-E-07"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/07-account-blacklist-readable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-152",
+    "runtime_id": "account-authorization-readable",
+    "display_id": "RT-E-08",
+    "existing_spec_id_expressions": [
+      "RT-E-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/08-account-authorization-readable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-153",
+    "runtime_id": "authorized-tx-executed-event",
+    "display_id": "RT-E-09",
+    "existing_spec_id_expressions": [
+      "RT-E-09"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/blacklist-authorized/09-authorized-tx-executed-event.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-154",
+    "runtime_id": "set-code-delegation",
+    "display_id": "RT-A-2-10",
+    "existing_spec_id_expressions": [
+      "RT-A-2-10"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-155",
+    "runtime_id": "native-coin-adapter-code",
+    "display_id": "RT-F-1-01",
+    "existing_spec_id_expressions": [
+      "RT-F-1-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/01-native-coin-adapter-code.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-156",
+    "runtime_id": "token-transfer-emits-event",
+    "display_id": "token-transfer-emits-event",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-157",
+    "runtime_id": "token-balance-readable",
+    "display_id": "RT-F-1-02",
+    "existing_spec_id_expressions": [
+      "RT-F-1-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/02-token-balance-readable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-158",
+    "runtime_id": "token-transfer-from-moves-balance",
+    "display_id": "token-transfer-from-moves-balance",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-159",
+    "runtime_id": "mint-transfer-event",
+    "display_id": "RT-F-1-04",
+    "existing_spec_id_expressions": [
+      "RT-F-1-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/04-mint-transfer-event.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-160",
+    "runtime_id": "burn-transfer-event",
+    "display_id": "RT-F-1-05",
+    "existing_spec_id_expressions": [
+      "RT-F-1-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/05-burn-transfer-event.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-161",
+    "runtime_id": "mint-proposal-executes",
+    "display_id": "RT-F-2-01",
+    "existing_spec_id_expressions": [
+      "RT-F-2-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/06-mint-proposal-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-162",
+    "runtime_id": "burn-proposal-executes",
+    "display_id": "RT-F-2-02",
+    "existing_spec_id_expressions": [
+      "RT-F-2-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/07-burn-proposal-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-163",
+    "runtime_id": "quorum-deficient-stays-voting",
+    "display_id": "RT-F-2-03",
+    "existing_spec_id_expressions": [
+      "RT-F-2-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/08-quorum-deficient-stays-voting.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-164",
+    "runtime_id": "validator-metadata-readable",
+    "display_id": "RT-F-3-04",
+    "existing_spec_id_expressions": [
+      "RT-F-3-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/09-validator-metadata-readable.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-165",
+    "runtime_id": "gastip-governance-updates-header",
+    "display_id": "RT-B-06",
+    "existing_spec_id_expressions": [
+      "RT-B-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/10-gastip-governance-updates-header.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-166",
+    "runtime_id": "proposal-expiry-transitions",
+    "display_id": "RT-F-3-06",
+    "existing_spec_id_expressions": [
+      "RT-F-3-06"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/11-proposal-expiry-transitions.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-167",
+    "runtime_id": "configure-minter-proposal-executes",
+    "display_id": "RT-F-4-01",
+    "existing_spec_id_expressions": [
+      "RT-F-4-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/12-configure-minter-proposal-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-168",
+    "runtime_id": "remove-minter-executes",
+    "display_id": "RT-F-4-02",
+    "existing_spec_id_expressions": [
+      "RT-F-4-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/13-remove-minter-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-169",
+    "runtime_id": "masterminter-member-add-remove",
+    "display_id": "RT-F-4-03",
+    "existing_spec_id_expressions": [
+      "RT-F-4-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/14-masterminter-member-add-remove.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-170",
+    "runtime_id": "non-member-configure-minter-rejected",
+    "display_id": "RT-F-4-04",
+    "existing_spec_id_expressions": [
+      "RT-F-4-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/15-non-member-configure-minter-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-171",
+    "runtime_id": "blacklist-proposal-executes",
+    "display_id": "RT-F-5-01",
+    "existing_spec_id_expressions": [
+      "RT-F-5-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/16-blacklist-proposal-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-172",
+    "runtime_id": "authorize-proposal-executes",
+    "display_id": "RT-F-5-03",
+    "existing_spec_id_expressions": [
+      "RT-F-5-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/18-authorize-proposal-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-173",
+    "runtime_id": "unauthorize-proposal-executes",
+    "display_id": "unauthorize-proposal-executes",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-174",
+    "runtime_id": "direct-blacklist-call-rejected",
+    "display_id": "RT-F-5-05",
+    "existing_spec_id_expressions": [
+      "RT-F-5-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/20-direct-blacklist-call-rejected.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-175",
+    "runtime_id": "authorized-account-added-event",
+    "display_id": "RT-F-5-08",
+    "existing_spec_id_expressions": [
+      "RT-F-5-08"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/system-contracts/23-authorized-account-added-event.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-176",
+    "runtime_id": "token-metadata",
+    "display_id": "token-metadata",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-177",
+    "runtime_id": "minter-status-readable",
+    "display_id": "minter-status-readable",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-178",
+    "runtime_id": "block-period-one-second",
+    "display_id": "RT-B-01",
+    "existing_spec_id_expressions": [
+      "RT-B-01"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/01-block-period-one-second.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-179",
+    "runtime_id": "wbft-seals-quorum",
+    "display_id": "RT-B-02",
+    "existing_spec_id_expressions": [
+      "RT-B-02"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/02-wbft-seals-quorum.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-180",
+    "runtime_id": "epoch-transition-carries-epoch-info",
+    "display_id": "RT-B-03",
+    "existing_spec_id_expressions": [
+      "RT-B-03"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/03-epoch-transition-carries-epoch-info.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-181",
+    "runtime_id": "validator-add-member-executes",
+    "display_id": "RT-B-04",
+    "existing_spec_id_expressions": [
+      "RT-B-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/04-validator-add-member-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-182",
+    "runtime_id": "validator-add-member-epoch-activates",
+    "display_id": "RT-B-04",
+    "existing_spec_id_expressions": [
+      "RT-B-04"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-183",
+    "runtime_id": "validator-remove-member-executes",
+    "display_id": "RT-B-05",
+    "existing_spec_id_expressions": [
+      "RT-B-05"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/05-validator-remove-member-executes.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-184",
+    "runtime_id": "prev-seals-quorum",
+    "display_id": "RT-B-11",
+    "existing_spec_id_expressions": [
+      "RT-B-11"
+    ],
+    "local_evidence": [
+      {
+        "file": "/Users/wm-it-25_0220/Work/github/chainbench/tests/tc/go-stablenet/regression/wbft/11-prev-seals-quorum.json",
+        "field": "description",
+        "status": "explicit_id_reference; original scope equivalence not verified"
+      }
+    ],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-185",
+    "runtime_id": "randao-and-mixdigest-present",
+    "display_id": "randao-and-mixdigest-present",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-186",
+    "runtime_id": "stablenet-gastip-field",
+    "display_id": "stablenet-gastip-field",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-187",
+    "runtime_id": "secp256r1-precompile-valid",
+    "display_id": "secp256r1-precompile-valid",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-188",
+    "runtime_id": "secp256r1-precompile-invalid",
+    "display_id": "secp256r1-precompile-invalid",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  },
+  {
+    "analysis_id": "TC-189",
+    "runtime_id": "secp256r1-precompile-short-input",
+    "display_id": "secp256r1-precompile-short-input",
+    "existing_spec_id_expressions": [],
+    "local_evidence": [],
+    "confluence_status": "pending-authentication",
+    "confluence_folder": "https://wemade.atlassian.net/wiki/spaces/platfomDev/folder/2914091137",
+    "mapping_rule": "직접 기재된 원래 ID 표현 보존; tracker 유사기능 대응을 공식 ID로 자동 승격하지 않음"
+  }
+]

@@ -1,0 +1,1385 @@
+[
+  {
+    "family": "evm-contract",
+    "source_count": 18,
+    "common_candidate_count": 18,
+    "source_ids": [
+      "DOC-C-014",
+      "DOC-C-015",
+      "DOC-C-016",
+      "DOC-C-017",
+      "DOC-C-018",
+      "DOC-C-019",
+      "DOC-C-020",
+      "DOC-D-026",
+      "TC-039",
+      "TC-040",
+      "TC-041",
+      "TC-042",
+      "TC-044",
+      "TC-056",
+      "TC-064",
+      "TC-072",
+      "TC-077",
+      "TC-086"
+    ],
+    "common_source_ids": [
+      "DOC-C-014",
+      "DOC-C-015",
+      "DOC-C-016",
+      "DOC-C-017",
+      "DOC-C-018",
+      "DOC-C-019",
+      "DOC-C-020",
+      "DOC-D-026",
+      "TC-039",
+      "TC-040",
+      "TC-041",
+      "TC-042",
+      "TC-044",
+      "TC-056",
+      "TC-064",
+      "TC-072",
+      "TC-077",
+      "TC-086"
+    ],
+    "commonality_counts": {
+      "adapter-required": 8,
+      "exact-config": 10
+    },
+    "oracle_scope": "공통 fork에서 실행 가능한 fixture bytecode를 배포하여 상태/eth_call/estimateGas/revert/OOG를 검사한다. 최신 compiler 기본 opcode를 세 체인 모두 지원한다고 가정하지 않는다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-08",
+      "CD-09"
+    ],
+    "evidence": [
+      "sources/go-stablenet/internal/ethapi/api.go:1253",
+      "sources/go-wbft/internal/ethapi/api.go:1248",
+      "sources/go-wemix/internal/ethapi/api.go:1218"
+    ],
+    "source_display_ids": [
+      "RT-A-3-01 / TX-005",
+      "RT-A-3-02",
+      "RT-A-3-03",
+      "RT-A-3-04",
+      "RT-A-3-05",
+      "RT-A-3-06 / TX-017",
+      "RT-A-3-07 / TX-018",
+      "TC-4-2-02",
+      "RT-A-3-01",
+      "RT-A-3-05",
+      "RT-A-3-06",
+      "RT-A-3-07",
+      "RT-A-4-04 / RPC-014",
+      "wemix-tx-and-contract",
+      "RT-A-3-04",
+      "stablenet-negative-tx-revert",
+      "wbft-tx-and-contract",
+      "stablenet-register-contract"
+    ],
+    "common_source_display_ids": [
+      "RT-A-3-01 / TX-005",
+      "RT-A-3-02",
+      "RT-A-3-03",
+      "RT-A-3-04",
+      "RT-A-3-05",
+      "RT-A-3-06 / TX-017",
+      "RT-A-3-07 / TX-018",
+      "TC-4-2-02",
+      "RT-A-3-01",
+      "RT-A-3-05",
+      "RT-A-3-06",
+      "RT-A-3-07",
+      "RT-A-4-04 / RPC-014",
+      "wemix-tx-and-contract",
+      "RT-A-3-04",
+      "stablenet-negative-tx-revert",
+      "wbft-tx-and-contract",
+      "stablenet-register-contract"
+    ]
+  },
+  {
+    "family": "external-faucet",
+    "source_count": 1,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "TC-085"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "unknown": 1
+    },
+    "oracle_scope": "각 네트워크 faucet 서비스와 자금 지원 여부를 확인하기 전 공통 수행 가능 여부를 확정하지 않는다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "stablenet-faucet-funds"
+    ],
+    "common_source_display_ids": []
+  },
+  {
+    "family": "fault-topology",
+    "source_count": 10,
+    "common_candidate_count": 10,
+    "source_ids": [
+      "TC-007",
+      "TC-008",
+      "TC-009",
+      "TC-010",
+      "TC-011",
+      "TC-012",
+      "TC-054",
+      "TC-071",
+      "TC-076",
+      "TC-083"
+    ],
+    "common_source_ids": [
+      "TC-007",
+      "TC-008",
+      "TC-009",
+      "TC-010",
+      "TC-011",
+      "TC-012",
+      "TC-054",
+      "TC-071",
+      "TC-076",
+      "TC-083"
+    ],
+    "commonality_counts": {
+      "adapter-required": 10
+    },
+    "oracle_scope": "격리 환경에서 각 합의가 허용하는 장애수·membership을 적용한 뒤 회복/블록진행/고정높이hash를 검사한다. PoA와 WBFT quorum 수치를 동일하게 강제하지 않는다.",
+    "implementation_items": [
+      "PoA/etcd와 WBFT membership/quorum별 허용 장애수 설정; latest hash만으로 특정 downloader/fetcher 경로 검증했다고 보지 않음",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "장애 주입과 leader 교체를 PoA/etcd 또는 WBFT별로 처리한다.",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-10"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "fault-network-partition",
+      "fault-node-crash",
+      "fault-node-recover",
+      "fault-p2p-topology",
+      "fault-two-down",
+      "fault-txpool-leader-change",
+      "wemix-node-crash",
+      "stablenet-proxied-pn-routing",
+      "wbft-node-crash",
+      "sample-lifecycle-node-restart"
+    ],
+    "common_source_display_ids": [
+      "fault-network-partition",
+      "fault-node-crash",
+      "fault-node-recover",
+      "fault-p2p-topology",
+      "fault-two-down",
+      "fault-txpool-leader-change",
+      "wemix-node-crash",
+      "stablenet-proxied-pn-routing",
+      "wbft-node-crash",
+      "sample-lifecycle-node-restart"
+    ]
+  },
+  {
+    "family": "fee-delegation",
+    "source_count": 13,
+    "common_candidate_count": 13,
+    "source_ids": [
+      "DOC-C-004",
+      "DOC-C-005",
+      "DOC-C-006",
+      "DOC-C-007",
+      "DOC-C-038",
+      "TC-027",
+      "TC-045",
+      "TC-046",
+      "TC-047",
+      "TC-048",
+      "TC-049",
+      "TC-050",
+      "TC-051"
+    ],
+    "common_source_ids": [
+      "DOC-C-004",
+      "DOC-C-005",
+      "DOC-C-006",
+      "DOC-C-007",
+      "DOC-C-038",
+      "TC-027",
+      "TC-045",
+      "TC-046",
+      "TC-047",
+      "TC-048",
+      "TC-049",
+      "TC-050",
+      "TC-051"
+    ],
+    "commonality_counts": {
+      "adapter-required": 13
+    },
+    "oracle_scope": "세 체인 공통 type 0x16의 sender/feePayer 서명·잔액 책임을 검사한다. RPC 존재 검사와 성공 서명·실제 무효서명 거부를 구별한다.",
+    "implementation_items": [
+      "type 0x16 sender/feePayer 서명, 실제 무효 서명 fixture, 잔액 차감 주체와 RPC 서명 권한 준비",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-03",
+      "CD-06",
+      "CD-07"
+    ],
+    "evidence": [
+      "sources/go-stablenet/core/types/transaction.go:53",
+      "sources/go-stablenet/internal/ethapi/api.go:634",
+      "sources/go-wbft/core/types/transaction.go:53",
+      "sources/go-wbft/internal/ethapi/api.go:639",
+      "sources/go-wemix/core/types/transaction.go:48",
+      "sources/go-wemix/internal/ethapi/api.go:2342"
+    ],
+    "source_display_ids": [
+      "RT-D-01 / TX-004",
+      "RT-D-03 / TX-014",
+      "RT-D-04 / TX-015",
+      "RT-D-05 / TX-016",
+      "RT-G-5-01",
+      "RT-G-5-01",
+      "RT-D-01",
+      "RT-D-03",
+      "RT-D-04",
+      "RT-D-05",
+      "RT-D-03 / TX-014",
+      "RT-D-04 / TX-015",
+      "RT-D-05 / TX-016"
+    ],
+    "common_source_display_ids": [
+      "RT-D-01 / TX-004",
+      "RT-D-03 / TX-014",
+      "RT-D-04 / TX-015",
+      "RT-D-05 / TX-016",
+      "RT-G-5-01",
+      "RT-G-5-01",
+      "RT-D-01",
+      "RT-D-03",
+      "RT-D-04",
+      "RT-D-05",
+      "RT-D-03 / TX-014",
+      "RT-D-04 / TX-015",
+      "RT-D-05 / TX-016"
+    ]
+  },
+  {
+    "family": "fee-observation",
+    "source_count": 10,
+    "common_candidate_count": 10,
+    "source_ids": [
+      "DOC-C-012",
+      "DOC-C-033",
+      "DOC-C-034",
+      "DOC-C-035",
+      "TC-016",
+      "TC-036",
+      "TC-059",
+      "TC-060",
+      "TC-105",
+      "TC-133"
+    ],
+    "common_source_ids": [
+      "DOC-C-012",
+      "DOC-C-033",
+      "DOC-C-034",
+      "DOC-C-035",
+      "TC-016",
+      "TC-036",
+      "TC-059",
+      "TC-060",
+      "TC-105",
+      "TC-133"
+    ],
+    "commonality_counts": {
+      "adapter-required": 6,
+      "exact-config": 4
+    },
+    "oracle_scope": "같은 tx와 포함 블록의 receipt 값을 노드 간 비교하거나 실제 tx type의 fee 계산식을 적용한다. StableNet header GasTip/authorized 정책은 별도 oracle이다.",
+    "implementation_items": [
+      "Istanbul GasTip 직접 조회를 체인별 fee observation으로 분리; 동일 포함 블록에서 실제 tx type에 맞는 영수증 비교",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-06"
+    ],
+    "evidence": [
+      "sources/go-stablenet/internal/ethapi/api.go:71",
+      "sources/go-wbft/internal/ethapi/api.go:72",
+      "sources/go-wemix/internal/ethapi/api.go:92"
+    ],
+    "source_display_ids": [
+      "RT-A-2-08",
+      "RT-G-2-01 / RPC-016",
+      "RT-G-2-02",
+      "RT-G-2-03 / RPC-017",
+      "TC-4-6-02",
+      "RT-A-2-08",
+      "RT-G-2-01",
+      "RT-G-2-03",
+      "TC-4-6-02",
+      "RT-G-2-01"
+    ],
+    "common_source_display_ids": [
+      "RT-A-2-08",
+      "RT-G-2-01 / RPC-016",
+      "RT-G-2-02",
+      "RT-G-2-03 / RPC-017",
+      "TC-4-6-02",
+      "RT-A-2-08",
+      "RT-G-2-01",
+      "RT-G-2-03",
+      "TC-4-6-02",
+      "RT-G-2-01"
+    ]
+  },
+  {
+    "family": "fee-policy",
+    "source_count": 12,
+    "common_candidate_count": 11,
+    "source_ids": [
+      "DOC-C-009",
+      "TC-013",
+      "TC-014",
+      "TC-015",
+      "TC-033",
+      "TC-124",
+      "TC-125",
+      "TC-126",
+      "TC-127",
+      "TC-128",
+      "TC-129",
+      "TC-130"
+    ],
+    "common_source_ids": [
+      "DOC-C-009",
+      "TC-013",
+      "TC-014",
+      "TC-015",
+      "TC-033",
+      "TC-124",
+      "TC-125",
+      "TC-126",
+      "TC-127",
+      "TC-129",
+      "TC-130"
+    ],
+    "commonality_counts": {
+      "adapter-required": 11,
+      "chain-specific": 1
+    },
+    "oracle_scope": "부모 블록 gasUsed/target/최저·최고 baseFee 및 pool local/remote 정책에 따라 기대값을 계산한다. feeCap<baseFee라는 사실만으로 submit 즉시 reject를 요구하지 않는다. TC128의 최대 clamp는 WBFT post-Croissant에 없어 공통 제외. TC127 하한은 WBFT의 0을 허용하는 profile로 분리하며 양의 최소값을 요구하지 않는다.",
+    "implementation_items": [
+      "WBFT의 baseFee 하한은 0이며 양의 protocol minimum을 요구하지 않는다. profile별 하한 비교는 상한/하한 도달 경계 검증을 대신하지 않는다.",
+      "수수료 하한·local/remote·pool rejection 대 pending·target gasUsed·min/max baseFee oracle 분리; 하드코딩 비율/금액 그대로 쓰지 않음",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-06"
+    ],
+    "evidence": [
+      "sources/go-stablenet/consensus/misc/eip1559/eip1559.go:56",
+      "sources/go-wbft/consensus/misc/eip1559/eip1559.go:57",
+      "sources/go-wbft/consensus/misc/eip1559/eip1559.go:74",
+      "sources/go-wemix/consensus/misc/eip1559.go:66"
+    ],
+    "source_display_ids": [
+      "RT-A-2-05a",
+      "TC-1-3-04",
+      "TC-1-3-05",
+      "TC-1-3-06",
+      "RT-A-2-05a",
+      "RT-C-03",
+      "RT-C-04",
+      "RT-C-05",
+      "RT-C-06",
+      "RT-C-07",
+      "TC-1-3-03",
+      "TC-1-3-02"
+    ],
+    "common_source_display_ids": [
+      "RT-A-2-05a",
+      "TC-1-3-04",
+      "TC-1-3-05",
+      "TC-1-3-06",
+      "RT-A-2-05a",
+      "RT-C-03",
+      "RT-C-04",
+      "RT-C-05",
+      "RT-C-06",
+      "TC-1-3-03",
+      "TC-1-3-02"
+    ]
+  },
+  {
+    "family": "genesis-upgrade",
+    "source_count": 4,
+    "common_candidate_count": 4,
+    "source_ids": [
+      "DOC-C-039",
+      "TC-017",
+      "TC-018",
+      "TC-019"
+    ],
+    "common_source_ids": [
+      "DOC-C-039",
+      "TC-017",
+      "TC-018",
+      "TC-019"
+    ],
+    "commonality_counts": {
+      "adapter-required": 4
+    },
+    "oracle_scope": "각 구현체의 genesis fixture를 준비하고 같은 체인 이전/이후 바이너리의 DB/서명 조회 보존을 검사한다. 서로 다른 세 프로젝트 바이너리의 무조건 상호 교환 테스트가 아니다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/core/genesis.go:278",
+      "sources/go-wbft/core/genesis.go:264",
+      "sources/go-wemix/core/genesis.go:235"
+    ],
+    "source_display_ids": [
+      "RT-A-1-01",
+      "TC-3-1-04",
+      "TC-4-1-03",
+      "TC-5-3-01"
+    ],
+    "common_source_display_ids": [
+      "RT-A-1-01",
+      "TC-3-1-04",
+      "TC-4-1-03",
+      "TC-5-3-01"
+    ]
+  },
+  {
+    "family": "handoff-specific",
+    "source_count": 1,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "TC-078"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "chain-specific": 1
+    },
+    "oracle_scope": "WEMIX3에서 WEMIX4로의 전환 시나리오이며 세 독립 체인의 공통 기능 테스트가 아니다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-10",
+      "CD-11"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "wemix-wbft-handoff"
+    ],
+    "common_source_display_ids": []
+  },
+  {
+    "family": "harness-vocabulary",
+    "source_count": 1,
+    "common_candidate_count": 1,
+    "source_ids": [
+      "TC-084"
+    ],
+    "common_source_ids": [
+      "TC-084"
+    ],
+    "commonality_counts": {
+      "exact-config": 1
+    },
+    "oracle_scope": "주소 파생/checksum/등록 참조 자체는 하네스 공통 기능이다. 체인 합의 또는 EVM 실행 검증으로 세지 않는다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "stablenet-derived-vocabulary"
+    ],
+    "common_source_display_ids": [
+      "stablenet-derived-vocabulary"
+    ]
+  },
+  {
+    "family": "invalid-transaction",
+    "source_count": 5,
+    "common_candidate_count": 5,
+    "source_ids": [
+      "DOC-C-010",
+      "DOC-C-011",
+      "TC-034",
+      "TC-035",
+      "TC-131"
+    ],
+    "common_source_ids": [
+      "DOC-C-010",
+      "DOC-C-011",
+      "TC-034",
+      "TC-035",
+      "TC-131"
+    ],
+    "commonality_counts": {
+      "adapter-required": 3,
+      "exact-config": 2
+    },
+    "oracle_scope": "잔액 부족 또는 블록 gasLimit 초과라는 준비 조건이 실제로 성립함을 확인하고 제출 실패와 nonce/state 불변을 검사한다. 기존 JSON이 이 모든 조건을 검사한다는 뜻은 아니다.",
+    "implementation_items": [
+      "원문 steps의 istanbul_getWbftExtraInfo GasTip 조회를 제거하고 체인별 수수료 공급 adapter로 대체한다. WEMIX3에서 원문 그대로 실행되지 않는다.",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/core/state_transition.go:349",
+      "sources/go-wbft/core/state_transition.go:334",
+      "sources/go-wemix/core/state_transition.go:253"
+    ],
+    "source_display_ids": [
+      "RT-A-2-06 / TX-011",
+      "RT-A-2-07 / TX-012",
+      "RT-A-2-06",
+      "RT-A-2-07",
+      "RT-A-2-07 / TX-012"
+    ],
+    "common_source_display_ids": [
+      "RT-A-2-06 / TX-011",
+      "RT-A-2-07 / TX-012",
+      "RT-A-2-06",
+      "RT-A-2-07",
+      "RT-A-2-07 / TX-012"
+    ]
+  },
+  {
+    "family": "logs-subscription",
+    "source_count": 6,
+    "common_candidate_count": 6,
+    "source_ids": [
+      "DOC-C-024",
+      "DOC-C-026",
+      "DOC-C-027",
+      "TC-066",
+      "TC-068",
+      "TC-069"
+    ],
+    "common_source_ids": [
+      "DOC-C-024",
+      "DOC-C-026",
+      "DOC-C-027",
+      "TC-066",
+      "TC-068",
+      "TC-069"
+    ],
+    "commonality_counts": {
+      "adapter-required": 3,
+      "exact-config": 3
+    },
+    "oracle_scope": "동일 배포 계약·event topic·block 범위로 eth_getLogs와 WS 수신을 검사한다. WS endpoint와 event trigger 및 재연결 종료 처리가 필요하다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/eth/filters/api.go:340",
+      "sources/go-wbft/eth/filters/api.go:340",
+      "sources/go-wemix/eth/filters/api.go:327"
+    ],
+    "source_display_ids": [
+      "RT-A-4-04 / RPC-014",
+      "RT-A-4-06 / RPC-020",
+      "RT-A-4-07 / RPC-021",
+      "RT-A-4-04",
+      "RT-A-4-06",
+      "RT-A-4-07"
+    ],
+    "common_source_display_ids": [
+      "RT-A-4-04 / RPC-014",
+      "RT-A-4-06 / RPC-020",
+      "RT-A-4-07 / RPC-021",
+      "RT-A-4-04",
+      "RT-A-4-06",
+      "RT-A-4-07"
+    ]
+  },
+  {
+    "family": "modern-evm-specific",
+    "source_count": 10,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "DOC-D-024",
+      "DOC-D-025",
+      "DOC-D-027",
+      "DOC-D-028",
+      "DOC-D-029",
+      "TC-100",
+      "TC-154",
+      "TC-187",
+      "TC-188",
+      "TC-189"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "chain-specific": 10
+    },
+    "oracle_scope": "7702/P256 원문의 성공 기대값은 WEMIX3에 그대로 적용되지 않는다. WEMIX4와 StableNet도 활성 fork 조건이 다르다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-04",
+      "CD-05"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "RT-A-2-10 / TX-008",
+      "TC-4-2-01 / TC-4-2-03",
+      "TC-1-2-01 / TC-1-2-02 / TC-1-2-03 / TC-1-2-04 / TC-1-2-05 / TC-1-2-06 / TX-009",
+      "TC-1-2-01 / TC-1-2-02 / TC-1-2-03 / TC-1-2-04 / TC-1-2-05 / TC-1-2-06 / TX-019",
+      "TC-1-2-01 / TC-1-2-02 / TC-1-2-03 / TC-1-2-04 / TC-1-2-05 / TC-1-2-06 / TX-020",
+      "TC-4-2-01 / TC-4-2-03",
+      "RT-A-2-10",
+      "TX-009",
+      "TX-019",
+      "TX-020"
+    ],
+    "common_source_display_ids": []
+  },
+  {
+    "family": "nonce-replacement",
+    "source_count": 6,
+    "common_candidate_count": 6,
+    "source_ids": [
+      "DOC-C-008",
+      "DOC-C-013",
+      "TC-031",
+      "TC-032",
+      "TC-037",
+      "TC-038"
+    ],
+    "common_source_ids": [
+      "DOC-C-008",
+      "DOC-C-013",
+      "TC-031",
+      "TC-032",
+      "TC-037",
+      "TC-038"
+    ],
+    "commonality_counts": {
+      "adapter-required": 2,
+      "exact-config": 4
+    },
+    "oracle_scope": "동일 계정 nonce 순서와 동일 nonce 교체의 한 번 포함을 검사한다. 미래 nonce queue와 replacement 가격상승 policy는 profile로 분리한다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/core/txpool/legacypool/legacypool.go:652",
+      "sources/go-wbft/core/txpool/legacypool/legacypool.go:640",
+      "sources/go-wemix/core/tx_pool.go:645"
+    ],
+    "source_display_ids": [
+      "RT-A-2-04 / TX-010",
+      "RT-A-2-09 / TX-013",
+      "RT-A-2-04",
+      "TX-010",
+      "RT-A-2-09",
+      "TX-013"
+    ],
+    "common_source_display_ids": [
+      "RT-A-2-04 / TX-010",
+      "RT-A-2-09 / TX-013",
+      "RT-A-2-04",
+      "TX-010",
+      "RT-A-2-09",
+      "TX-013"
+    ]
+  },
+  {
+    "family": "reward-compatibility",
+    "source_count": 2,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "DOC-D-001",
+      "TC-055"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "chain-specific": 2
+    },
+    "oracle_scope": "Brioche reward는 WEMIX3/4 전용 비교이며 StableNet의 다른 보상을 같은 함수/값으로 취급하지 않는다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-11"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "RPC-008",
+      "BRIOCHE-02 / RPC-008"
+    ],
+    "common_source_display_ids": []
+  },
+  {
+    "family": "rpc-basics",
+    "source_count": 21,
+    "common_candidate_count": 21,
+    "source_ids": [
+      "DOC-C-021",
+      "DOC-C-022",
+      "DOC-C-023",
+      "DOC-C-025",
+      "DOC-C-028",
+      "DOC-C-029",
+      "DOC-C-030",
+      "DOC-C-031",
+      "DOC-C-032",
+      "TC-003",
+      "TC-005",
+      "TC-020",
+      "TC-021",
+      "TC-022",
+      "TC-023",
+      "TC-024",
+      "TC-065",
+      "TC-067",
+      "TC-079",
+      "TC-080",
+      "TC-081"
+    ],
+    "common_source_ids": [
+      "DOC-C-021",
+      "DOC-C-022",
+      "DOC-C-023",
+      "DOC-C-025",
+      "DOC-C-028",
+      "DOC-C-029",
+      "DOC-C-030",
+      "DOC-C-031",
+      "DOC-C-032",
+      "TC-003",
+      "TC-005",
+      "TC-020",
+      "TC-021",
+      "TC-022",
+      "TC-023",
+      "TC-024",
+      "TC-065",
+      "TC-067",
+      "TC-079",
+      "TC-080",
+      "TC-081"
+    ],
+    "commonality_counts": {
+      "adapter-required": 9,
+      "exact-config": 12
+    },
+    "oracle_scope": "같은 고정 block/tx/address를 대상으로 원문 JSON에 명시된 필드·형식·일치 조건만 공통화한다. latest를 동시에 조회한 것만으로 동기화 완료를 증명하지 않는다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/internal/ethapi/api.go:721",
+      "sources/go-wbft/internal/ethapi/api.go:726",
+      "sources/go-wemix/internal/ethapi/api.go:843"
+    ],
+    "source_display_ids": [
+      "RT-A-4-01 / RPC-001",
+      "RT-A-4-02 / RPC-012",
+      "RT-A-4-03",
+      "RT-A-4-05 / RPC-013",
+      "RT-G-1-01 / RPC-002",
+      "RT-G-1-02 / RPC-002",
+      "RT-G-1-03",
+      "RT-G-1-04 / RPC-007",
+      "RT-G-1-05 / RPC-015",
+      "basic-rpc-health",
+      "basic-tx-send",
+      "RT-G-1-01",
+      "RT-G-1-02",
+      "RT-G-1-03",
+      "RT-G-1-04",
+      "RT-G-1-05",
+      "RT-A-4-02",
+      "RT-A-1-01",
+      "remote-rpc-health",
+      "remote-chain-info",
+      "remote-balance-check"
+    ],
+    "common_source_display_ids": [
+      "RT-A-4-01 / RPC-001",
+      "RT-A-4-02 / RPC-012",
+      "RT-A-4-03",
+      "RT-A-4-05 / RPC-013",
+      "RT-G-1-01 / RPC-002",
+      "RT-G-1-02 / RPC-002",
+      "RT-G-1-03",
+      "RT-G-1-04 / RPC-007",
+      "RT-G-1-05 / RPC-015",
+      "basic-rpc-health",
+      "basic-tx-send",
+      "RT-G-1-01",
+      "RT-G-1-02",
+      "RT-G-1-03",
+      "RT-G-1-04",
+      "RT-G-1-05",
+      "RT-A-4-02",
+      "RT-A-1-01",
+      "remote-rpc-health",
+      "remote-chain-info",
+      "remote-balance-check"
+    ]
+  },
+  {
+    "family": "stablenet-specific",
+    "source_count": 72,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "TC-087",
+      "TC-088",
+      "TC-089",
+      "TC-090",
+      "TC-091",
+      "TC-092",
+      "TC-093",
+      "TC-094",
+      "TC-095",
+      "TC-096",
+      "TC-097",
+      "TC-098",
+      "TC-099",
+      "TC-101",
+      "TC-102",
+      "TC-103",
+      "TC-104",
+      "TC-106",
+      "TC-107",
+      "TC-108",
+      "TC-109",
+      "TC-110",
+      "TC-111",
+      "TC-112",
+      "TC-113",
+      "TC-114",
+      "TC-115",
+      "TC-116",
+      "TC-117",
+      "TC-118",
+      "TC-119",
+      "TC-120",
+      "TC-121",
+      "TC-122",
+      "TC-123",
+      "TC-132",
+      "TC-134",
+      "TC-135",
+      "TC-143",
+      "TC-144",
+      "TC-145",
+      "TC-146",
+      "TC-147",
+      "TC-148",
+      "TC-149",
+      "TC-150",
+      "TC-151",
+      "TC-152",
+      "TC-153",
+      "TC-155",
+      "TC-156",
+      "TC-157",
+      "TC-158",
+      "TC-159",
+      "TC-160",
+      "TC-161",
+      "TC-162",
+      "TC-163",
+      "TC-164",
+      "TC-165",
+      "TC-166",
+      "TC-167",
+      "TC-168",
+      "TC-169",
+      "TC-170",
+      "TC-171",
+      "TC-172",
+      "TC-173",
+      "TC-174",
+      "TC-175",
+      "TC-176",
+      "TC-177"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "chain-specific": 72
+    },
+    "oracle_scope": "native coin adapter·거버넌스·blacklist/authorized·Boho/Anzeon 원래 의미를 유지한 테스트는 StableNet 전용이다. ERC20 일반 테스트로 바꾸면 별도 파생 시나리오다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-07",
+      "CD-09",
+      "CD-11"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "basic-wbft-consensus",
+      "stablenet-delayed-fork",
+      "TC-5-2-05",
+      "TC-1-1-01 / TC-1-1-10",
+      "TC-1-1-02",
+      "TC-1-1-03",
+      "TC-1-1-04",
+      "TC-1-1-05 / TC-1-1-09",
+      "TC-1-1-06",
+      "TC-1-1-07",
+      "TC-1-1-11 / TC-1-1-12",
+      "TC-4-1-01",
+      "TC-4-1-02",
+      "TC-5-2-01 / TC-5-2-02",
+      "TC-5-2-04",
+      "TC-1-1-09 / TC-1-1-10",
+      "TC-4-6-01",
+      "TC-4-6-04",
+      "TC-4-5-01 / TC-4-5-02",
+      "TC-4-5-02",
+      "TC-4-5-01 / TC-4-5-02 / TC-4-5-07",
+      "TC-4-5-05 / TC-4-5-06",
+      "TC-4-5-07",
+      "TC-4-5-08",
+      "TC-4-5-09",
+      "TC-4-5-10 / TC-4-5-11",
+      "TC-5-2-06",
+      "TC-4-3-01",
+      "TC-4-3-02",
+      "TC-4-3-03",
+      "TC-4-3-04",
+      "TC-4-3-05",
+      "TC-4-3-06",
+      "RT-C-01",
+      "RT-C-02",
+      "RT-G-1-06",
+      "RT-G-2-02",
+      "RT-G-2-04",
+      "RT-G-5-02",
+      "RT-G-5-03",
+      "RT-E-01",
+      "RT-E-02",
+      "RT-E-03",
+      "RT-E-04",
+      "RT-E-05",
+      "RT-E-06",
+      "RT-E-07",
+      "RT-E-08",
+      "RT-E-09",
+      "RT-F-1-01",
+      "RT-F-1-01",
+      "RT-F-1-02",
+      "RT-F-1-03",
+      "RT-F-1-04",
+      "RT-F-1-05",
+      "RT-F-2-01",
+      "RT-F-2-02",
+      "RT-F-2-03",
+      "RT-F-3-04",
+      "RT-B-06",
+      "RT-F-3-06",
+      "RT-F-4-01",
+      "RT-F-4-02",
+      "RT-F-4-03",
+      "RT-F-4-04",
+      "RT-F-5-01",
+      "RT-F-5-03",
+      "RT-F-5-04 / RT-F-5-09",
+      "RT-F-5-05",
+      "RT-F-5-08",
+      "token-metadata",
+      "minter-status-readable"
+    ],
+    "common_source_display_ids": []
+  },
+  {
+    "family": "stress",
+    "source_count": 2,
+    "common_candidate_count": 2,
+    "source_ids": [
+      "TC-057",
+      "TC-058"
+    ],
+    "common_source_ids": [
+      "TC-057",
+      "TC-058"
+    ],
+    "commonality_counts": {
+      "adapter-required": 2
+    },
+    "oracle_scope": "block time 또는 gas 부하를 profile 예산으로 검사한다. gas fill은 byte-size flood와 다르며 성공receipt를 기다린 거래는 pending 복구 근거가 아니다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/miner/worker.go:985",
+      "sources/go-wbft/miner/worker.go:938",
+      "sources/go-wemix/miner/worker.go:922"
+    ],
+    "source_display_ids": [
+      "stress-block-time",
+      "stress-tx-flood"
+    ],
+    "common_source_display_ids": [
+      "stress-block-time",
+      "stress-tx-flood"
+    ]
+  },
+  {
+    "family": "sync-lifecycle",
+    "source_count": 18,
+    "common_candidate_count": 18,
+    "source_ids": [
+      "DOC-C-040",
+      "DOC-C-041",
+      "DOC-C-042",
+      "DOC-C-043",
+      "DOC-C-044",
+      "DOC-C-045",
+      "TC-001",
+      "TC-002",
+      "TC-004",
+      "TC-052",
+      "TC-053",
+      "TC-061",
+      "TC-062",
+      "TC-063",
+      "TC-070",
+      "TC-073",
+      "TC-074",
+      "TC-178"
+    ],
+    "common_source_ids": [
+      "DOC-C-040",
+      "DOC-C-041",
+      "DOC-C-042",
+      "DOC-C-043",
+      "DOC-C-044",
+      "DOC-C-045",
+      "TC-001",
+      "TC-002",
+      "TC-004",
+      "TC-052",
+      "TC-053",
+      "TC-061",
+      "TC-062",
+      "TC-063",
+      "TC-070",
+      "TC-073",
+      "TC-074",
+      "TC-178"
+    ],
+    "commonality_counts": {
+      "adapter-required": 18
+    },
+    "oracle_scope": "프로필에 정의한 생산/피어연결/재기동/동기화 관측을 공유한다. 특정 full/snap/downloader/fetcher 경로는 경로 관측과 fixture 추가가 필요하다.",
+    "implementation_items": [
+      "PoA/etcd와 WBFT membership/quorum별 허용 장애수 설정; latest hash만으로 특정 downloader/fetcher 경로 검증했다고 보지 않음",
+      "고정 1초 차이를 공통 불변조건으로 두지 않고 합의/생산 profile에 맞는 timestamp 기대 범위로 분리한다.",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-10"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "RT-A-1-02 / NODE-003",
+      "RT-A-1-03 / NODE-004",
+      "RT-A-1-04 / NODE-005",
+      "RT-A-1-05",
+      "RT-A-1-06",
+      "RT-A-1-07",
+      "basic-consensus",
+      "basic-peers",
+      "basic-sync",
+      "wemix-chain-up",
+      "wemix-chain-up-15",
+      "RT-A-1-05",
+      "chain-not-syncing",
+      "stablenet-chain-up",
+      "stablenet-chain-up-15",
+      "wbft-chain-up",
+      "wbft-chain-up-15",
+      "RT-B-01"
+    ],
+    "common_source_display_ids": [
+      "RT-A-1-02 / NODE-003",
+      "RT-A-1-03 / NODE-004",
+      "RT-A-1-04 / NODE-005",
+      "RT-A-1-05",
+      "RT-A-1-06",
+      "RT-A-1-07",
+      "basic-consensus",
+      "basic-peers",
+      "basic-sync",
+      "wemix-chain-up",
+      "wemix-chain-up-15",
+      "RT-A-1-05",
+      "chain-not-syncing",
+      "stablenet-chain-up",
+      "stablenet-chain-up-15",
+      "wbft-chain-up",
+      "wbft-chain-up-15",
+      "RT-B-01"
+    ]
+  },
+  {
+    "family": "transaction-types",
+    "source_count": 8,
+    "common_candidate_count": 8,
+    "source_ids": [
+      "DOC-C-001",
+      "DOC-C-002",
+      "DOC-C-003",
+      "TC-028",
+      "TC-029",
+      "TC-030",
+      "TC-043",
+      "TC-082"
+    ],
+    "common_source_ids": [
+      "DOC-C-001",
+      "DOC-C-002",
+      "DOC-C-003",
+      "TC-028",
+      "TC-029",
+      "TC-030",
+      "TC-043",
+      "TC-082"
+    ],
+    "commonality_counts": {
+      "adapter-required": 5,
+      "exact-config": 3
+    },
+    "oracle_scope": "세 체인 공통 type 0/1/2에 대해 송신자·수신자·nonce·receipt status를 검사한다. 입력 tip/feeCap과 fork 활성화는 profile로 제공한다.",
+    "implementation_items": [
+      "원문 steps의 istanbul_getWbftExtraInfo GasTip 조회를 제거하고 체인별 수수료 공급 adapter로 대체한다. WEMIX3에서 원문 그대로 실행되지 않는다.",
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-02",
+      "CD-06",
+      "CD-07"
+    ],
+    "evidence": [
+      "sources/go-stablenet/core/types/transaction.go:48",
+      "sources/go-wbft/core/types/transaction.go:48",
+      "sources/go-wemix/core/types/transaction.go:45"
+    ],
+    "source_display_ids": [
+      "RT-A-2-01 / TX-006",
+      "RT-A-2-02 / TX-003",
+      "RT-A-2-03 / TX-007",
+      "RT-A-2-01",
+      "RT-A-2-02",
+      "RT-A-2-03",
+      "RT-A-4-03",
+      "sample-minimal-value-transfer"
+    ],
+    "common_source_display_ids": [
+      "RT-A-2-01 / TX-006",
+      "RT-A-2-02 / TX-003",
+      "RT-A-2-03 / TX-007",
+      "RT-A-2-01",
+      "RT-A-2-02",
+      "RT-A-2-03",
+      "RT-A-4-03",
+      "sample-minimal-value-transfer"
+    ]
+  },
+  {
+    "family": "txpool",
+    "source_count": 5,
+    "common_candidate_count": 5,
+    "source_ids": [
+      "DOC-C-036",
+      "DOC-C-037",
+      "TC-006",
+      "TC-025",
+      "TC-026"
+    ],
+    "common_source_ids": [
+      "DOC-C-036",
+      "DOC-C-037",
+      "TC-006",
+      "TC-025",
+      "TC-026"
+    ],
+    "commonality_counts": {
+      "adapter-required": 2,
+      "exact-config": 3
+    },
+    "oracle_scope": "원문 status/content 형식 또는 실제 전달 검사를 구별한다. pending/queued·local/remote·최소 fee·pool 정책을 고정한다.",
+    "implementation_items": [
+      "원문 명세 DSL 구현 또는 체인별 policy/capability adapter",
+      "환경 구성·사전조건 검증"
+    ],
+    "chain_difference_refs": [
+      "CD-01",
+      "CD-08"
+    ],
+    "evidence": [
+      "sources/go-stablenet/internal/ethapi/api.go:173",
+      "sources/go-wbft/internal/ethapi/api.go:178",
+      "sources/go-wemix/internal/ethapi/api.go:191"
+    ],
+    "source_display_ids": [
+      "RT-G-4-02 / RPC-018",
+      "RT-G-4-03",
+      "basic-txpool-propagation",
+      "RT-G-4-02",
+      "RT-G-4-03"
+    ],
+    "common_source_display_ids": [
+      "RT-G-4-02 / RPC-018",
+      "RT-G-4-03",
+      "basic-txpool-propagation",
+      "RT-G-4-02",
+      "RT-G-4-03"
+    ]
+  },
+  {
+    "family": "wbft-specific",
+    "source_count": 38,
+    "common_candidate_count": 0,
+    "source_ids": [
+      "DOC-D-002",
+      "DOC-D-003",
+      "DOC-D-004",
+      "DOC-D-005",
+      "DOC-D-006",
+      "DOC-D-007",
+      "DOC-D-008",
+      "DOC-D-009",
+      "DOC-D-010",
+      "DOC-D-011",
+      "DOC-D-012",
+      "DOC-D-013",
+      "DOC-D-014",
+      "DOC-D-015",
+      "DOC-D-016",
+      "DOC-D-017",
+      "DOC-D-018",
+      "DOC-D-019",
+      "DOC-D-020",
+      "DOC-D-021",
+      "DOC-D-022",
+      "DOC-D-023",
+      "TC-075",
+      "TC-136",
+      "TC-137",
+      "TC-138",
+      "TC-139",
+      "TC-140",
+      "TC-141",
+      "TC-142",
+      "TC-179",
+      "TC-180",
+      "TC-181",
+      "TC-182",
+      "TC-183",
+      "TC-184",
+      "TC-185",
+      "TC-186"
+    ],
+    "common_source_ids": [],
+    "commonality_counts": {
+      "chain-specific": 38
+    },
+    "oracle_scope": "WBFT header seal/Istanbul validator RPC의 원래 기대값은 WEMIX3 PoA에서 충족되지 않는다. 일반 블록 진행만 남긴 파생 테스트와 분리한다.",
+    "implementation_items": [],
+    "chain_difference_refs": [
+      "CD-10"
+    ],
+    "evidence": [],
+    "source_display_ids": [
+      "RT-B-01 / WBFT-002",
+      "RT-B-02 / WBFT-001",
+      "RT-B-03 / WBFT-005",
+      "RT-B-06",
+      "RT-B-09 / WBFT-003",
+      "RT-B-10 / WBFT-003",
+      "RT-B-06 / WBFT-006",
+      "RT-B-11 / WBFT-009",
+      "RT-B-12 / WBFT-009",
+      "WBFT-010",
+      "RT-B-08",
+      "WBFT-007",
+      "WBFT-008",
+      "WBFT-011",
+      "WBFT-012",
+      "WBFT-013",
+      "RT-G-3-01 / RPC-010",
+      "RT-G-3-02 / RPC-003",
+      "RT-G-3-03 / RPC-004",
+      "RT-G-3-04 / RPC-005",
+      "RT-G-3-05 / RPC-006",
+      "RT-G-3-06 / RPC-011",
+      "e1-mixed-producers",
+      "RT-G-3-01",
+      "RT-G-3-02",
+      "RT-B-07",
+      "RT-G-3-03",
+      "RT-G-3-04",
+      "RT-G-3-05",
+      "RT-G-3-06",
+      "RT-B-02",
+      "RT-B-03",
+      "RT-B-04",
+      "RT-B-04",
+      "RT-B-05",
+      "RT-B-11",
+      "WBFT-010",
+      "RT-B-06"
+    ],
+    "common_source_display_ids": []
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "records": 263,
+  "mapping_status_counts": {
+    "source-reference-confirmed": 196,
+    "reviewed-partial-correspondence": 26,
+    "unconfirmed": 41
+  },
+  "changed_files": [
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/common-candidates.json",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/all-tests.json",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/wemix-candidates.json",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/document-catalog.json",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/all-tests.json",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/source-crosswalk.json",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/wemix-prioritized.json",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/configuration-and-change-scope.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/dependency-index.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/counter-review.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/common-candidates.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/README.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/wemix-candidates.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/common-families.md",
+    "docs/research/common-tests/mainnet-dependencies-20260909/analyses/all-tests.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/source-crosswalk.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/recheck-document-findings.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/recheck-summary.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/recheck-tc-findings.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/document-catalog.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/02-wemix-priority.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/tc-catalog.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/01-all-tests.md",
+    "docs/research/go-wemix/pr196-regression-20260909-135030/analyses/doc-applicability-notes.md"
+  ],
+  "internal_catalog_ids_preserved": true,
+  "source_code_or_test_edits": false,
+  "existing_json_values_preserved": true,
+  "validated_json_files": 22,
+  "catalog_counts": {
+    "all": 263,
+    "common": 138,
+    "wemix": 144
+  },
+  "source_hash_checks": 263,
+  "all_spec_ids_found_in_page_index": true,
+  "note": "기존 분류·우선순위·기대값·내부 연결 키를 보존했다. ID 대응 검증이며 테스트 실행 결과가 아니다.",
+  "markdown_local_links_missing": 0,
+  "markdown_table_counts": {
+    "all-tests": 263,
+    "common-candidates": 138,
+    "wemix-candidates": 144
+  },
+  "remaining_unexpanded_analysis_shorthand": 0
+}

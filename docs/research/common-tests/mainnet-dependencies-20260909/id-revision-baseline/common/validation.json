@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-09-09T06:01:32.676522+00:00",
+  "checks": {
+    "source_hashes_preserved": true,
+    "263_unique_records": true,
+    "189_json_records": true,
+    "74_document_records": true,
+    "138_common": true,
+    "42_config_96_adapter": true,
+    "144_wemix": true,
+    "common_exact_subset": true,
+    "wemix_exact_subset": true,
+    "all_family_ids_once": true,
+    "code_evidence_in_selected_builds": true,
+    "ast_selection_exact": true,
+    "source_document_rows_preserved": true,
+    "tc_all_files_complete": true
+  },
+  "source_files_hashed": 6017,
+  "live_files_changed_since_capture": [
+    "chainbench/cmd/chainbench/resourcecmd/resource_test.go",
+    "chainbench/internal/chainsetup/new.go",
+    "chainbench/internal/chainsetup/steps_compose.go",
+    "chainbench/internal/chainsetup/verbs.go",
+    "chainbench/internal/chainsetup/verbs_up.go",
+    "chainbench/internal/chainsetup/workspace.go",
+    "chainbench/internal/testengine/compose.go"
+  ],
+  "build_profiles": {
+    "go-wbft": {
+      "selected_files": 685,
+      "ast_files": 685,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    },
+    "go-wemix": {
+      "selected_files": 630,
+      "ast_files": 630,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    },
+    "go-wemix-linux-amd64": {
+      "selected_files": 630,
+      "ast_files": 630,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    },
+    "go-stablenet": {
+      "selected_files": 668,
+      "ast_files": 668,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    },
+    "go-wbft-linux-amd64": {
+      "selected_files": 685,
+      "ast_files": 685,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    },
+    "go-stablenet-linux-amd64": {
+      "selected_files": 668,
+      "ast_files": 668,
+      "file_set_exact": true,
+      "contains_tests": false,
+      "selected_hashes_match": true,
+      "dependency_errors": 0
+    }
+  },
+  "ast_parse_validation": "graph/parse-validation.json",
+  "citations": {
+    "checked": 130,
+    "documents": 13,
+    "all_resolve": true
+  },
+  "mermaid": {
+    "blocks": 3,
+    "structural_validation": "passed"
+  },
+  "application_code_modified": false,
+  "application_tests_run": false,
+  "nodes_started": false,
+  "build_binaries_linked": false
+}

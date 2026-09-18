@@ -1,0 +1,222 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "burn-expire-refundable",
+  "description": "TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다.",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "short-expiry"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "burn-expire-refundable-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "short-expiry"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+      ],
+      "op": "abiCall",
+      "save": "refBalCall",
+      "selector": "0xb03d36cd",
+      "source": "derive"
+    },
+    {
+      "data": "$refBalCall",
+      "do": "read",
+      "save": "refBefore",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001003",
+      "do": "read",
+      "save": "govBefore",
+      "source": "balanceAt"
+    },
+    {
+      "data": "0x64e2a8fc000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001800000000000000000000000008c4a10b9108d49b9d23f764464090831d9c177640000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000006553f20000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000977642d6578706972650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a7265662d6578706972650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000106275726e2d6578706972652d7465737400000000000000000000000000000000",
+      "do": "sendTx",
+      "from": "node3",
+      "gas": "0xb71b0",
+      "on": "node3",
+      "save": "burnHash",
+      "to": "0x0000000000000000000000000000000000001003",
+      "value": "0xde0b6b3a7640000"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001003",
+      "do": "read",
+      "save": "govAfterBurn",
+      "source": "balanceAt"
+    },
+    {
+      "do": "read",
+      "hash": "$burnHash",
+      "save": "burnPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "@latest",
+        false
+      ],
+      "save": "t0",
+      "select": "timestamp",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$t0",
+        "40"
+      ],
+      "op": "sum",
+      "save": "expiryTarget",
+      "source": "derive"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "$expiryTarget",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "@latest",
+        false
+      ],
+      "pollInterval": "2s",
+      "select": "timestamp",
+      "source": "rpcCall",
+      "timeout": "90s"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$burnPid"
+      ],
+      "op": "abiCall",
+      "save": "expData",
+      "selector": "0xe1b526b0",
+      "source": "derive"
+    },
+    {
+      "data": "$expData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0xb71b0",
+      "on": "node1",
+      "save": "expHash",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$expHash"
+      ],
+      "save": "expBlk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$burnPid"
+      ],
+      "op": "abiCall",
+      "save": "proposalsCall",
+      "selector": "0x013cf08b",
+      "source": "derive"
+    },
+    {
+      "data": "$proposalsCall",
+      "do": "read",
+      "save": "proposalsRet",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "data": "$refBalCall",
+      "do": "read",
+      "save": "refAfter",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$burnHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$expHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1000000000000000000",
+      "of": [
+        "$govAfterBurn",
+        "$govBefore"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 9,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "of": [
+        "$proposalsRet"
+      ],
+      "op": "word"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1000000000000000000",
+      "of": [
+        "$refAfter",
+        "$refBefore"
+      ],
+      "op": "diff"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001003",
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "$expBlk",
+      "is": "1",
+      "select": "count",
+      "toBlock": "$expBlk",
+      "topics": [
+        "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062"
+      ]
+    }
+  ]
+}
