@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "wbft-extra-info-fields",
   "description": "RT-G-3-04 — istanbul_getWbftExtraInfo (원본 regression/api/14-test-get-wbft-extra)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

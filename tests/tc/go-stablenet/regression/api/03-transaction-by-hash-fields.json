@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "transaction-by-hash-fields",
   "description": "RT-G-1-03 — eth_getTransactionByHash (원본 regression/api/03-test-get-tx-by-hash)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

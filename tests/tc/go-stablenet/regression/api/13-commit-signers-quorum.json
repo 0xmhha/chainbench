@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "commit-signers-quorum",
   "description": "RT-G-3-03 — istanbul_getCommitSignersFromBlock (원본 regression/api/13-test-get-commit-signers)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

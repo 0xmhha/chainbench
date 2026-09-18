@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "istanbul-status-fields",
   "description": "RT-G-3-05 — istanbul_status (원본 regression/api/15-test-istanbul-status)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

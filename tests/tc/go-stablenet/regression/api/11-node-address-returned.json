@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "node-address-returned",
   "description": "RT-G-3-01 — istanbul_nodeAddress (원본 regression/api/11-test-node-address)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

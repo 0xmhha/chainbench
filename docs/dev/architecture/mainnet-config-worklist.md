@@ -402,9 +402,54 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 문법은 이미 있고 118개 파일이 쓴다(`internal/dsl/interp/binding.go:23`). 값의 출처가 실행 중 `read` 결과뿐이다 | P2 | 미착수 |
 | P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
 | P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
-| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | 35건이 남았고 둘로 갈린다. **`family:wbft` 14건**은 wbft 로, **게이트 불필요 21건**은 세 체인 전부로 넓어진다. `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **라이브 대기** |
+| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **진행 중 (2026-09-18): 66 → 36** — §P5-L1 참조 |
 | P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
 | P6 | 실행 시점에 체인 선언을 주입한다 | 완료 조건 3번. `suite run --env <id\|경로>` 가 케이스의 참조를 갈아끼우고, 케이스가 덮은 것은 남긴다. §P1 아래 참조 | ~~P1~~ | **완료 (2026-09-15)** |
+
+### P5-L1 진행 (2026-09-18)
+
+**낡은 내역을 버리고 다시 셌다.** "35건, `family:wbft` 14 / 게이트 불필요 21" 로
+적혀 있었는데 맞지 않았다. 실제로 `applicableChains` 를 들고 있는 케이스는
+**66건**이고 이렇게 갈렸다.
+
+```
+stablenet             32
+stablenet,wbft        29   ← 이번에 처리
+wbft                   4
+stablenet,wbft,wemix   1   ← 이번에 처리
+```
+
+**`stablenet,wbft` 29건을 wbft 망에 올려 봤다.** 선언이 맞는지는 돌려 봐야만
+안다 — P5-L2 가 이미 한 건에서 선언이 거짓인 것을 찾았다.
+
+| 결과 | 수 | 옮긴 곳 |
+|---|---|---|
+| wbft 에서 실제로 통과 | 25 | `family:wbft` |
+| wbft 에서 돌지 않음 | 4 | `engine:anzeon` |
+
+**돌지 않는 넷의 이유는 넷 다 달랐다**(전부 새 망에서 재확인).
+
+- `08-legacy-transfer`·`09-dynamic-fee-tx` — `istanbul_getWbftExtraInfo` 에
+  `gasTip` 이 없다. P5-L2 가 잰 그대로다
+- `12-dynamic-fee-below-basefee-rejected` — stablenet 이 거부하는 것을 wbft 는
+  받는다
+- `15-gas-limit-exceeds-block-rejected` — 거부하긴 하는데 다른 이유로 거부한다
+
+**확인한 것.** 넷은 이제 wbft 에서 실패가 아니라 **스킵**된다(실측). 25건은 wbft
+에서 통과한다(실측). 그리고 29건 전부 stablenet 에서 `--no-skips` 로 통과한다 —
+**과도하게 막힌 것이 없다**는 뜻이다.
+
+`stablenet,wbft,wemix` 1건(`20-admin-peers-populated`)은 게이트가 아무 말도 하지
+않으므로 지웠다. 한 번도 안 올려 본 wemix 에서 실제로 통과하는 것을 확인했다.
+
+**곁가지로 나온 사실 하나.** 정의서 29개를 한 망에 연속으로 올리면 **망이
+나빠진다.** 긴 실행에서 다섯 건이 영수증 대기 시간 초과로 떨어졌는데, 새 망에서
+따로 돌리니 다섯 다 통과했다. 이 종류의 라이브 스윕은 **나눠서 돌려야** 판정을
+믿을 수 있다.
+
+**남은 36건.** `stablenet` 32 와 `wbft` 4 다. 둘 다 "한 체인에만 해당" 이라고
+적혀 있으므로, 각각이 **왜** 그런지를 능력으로 표현할 수 있는지 한 건씩 봐야
+한다.
 
 ### P1 이 한 것과 하지 않은 것
 

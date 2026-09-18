@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "validator-set-nonempty",
   "description": "RT-G-3-02 — istanbul_getValidators (원본 regression/api/12-test-get-validators)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

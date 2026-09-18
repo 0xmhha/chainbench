@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "remote-chain-info",
   "description": "레거시 remote/chain-info: 붙은 체인이 chainId 를 보고하고 동기화가 끝나 있다.",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

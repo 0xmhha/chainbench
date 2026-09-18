@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "admin-peers-populated",
   "description": "RT-A-1-05 — P2P 피어 연결 확인 (원본 regression/ethereum/05-test-p2p-peers)",
-  "applicableChains": "stablenet,wbft,wemix",
   "requires": [
     "rpc"
   ],

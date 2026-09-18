@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "randao-and-mixdigest-present",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

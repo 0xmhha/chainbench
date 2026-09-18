@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "contract-roundtrip",
   "description": "RT-A-3-01 — 컨트랙트 배포 (원본 regression/ethereum/19-test-contract-deploy)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "is-validator-flags",
   "description": "RT-G-3-06 — istanbul_isValidator (원본 regression/api/16-test-is-validator)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",
