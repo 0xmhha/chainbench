@@ -3,7 +3,6 @@
   "kind": "case",
   "id": "nonce-ordering",
   "description": "RT-A-2-04 — Nonce 순서 보장 (원본 regression/ethereum/11-test-nonce-ordering)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
@@ -31,7 +30,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "2",
       "on": "en1",
@@ -42,7 +41,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "1",
       "on": "en1",
@@ -53,7 +52,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "0",
       "on": "en1",

@@ -2,7 +2,6 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "out-of-order-nonces-mine",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
@@ -30,7 +29,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "2",
       "on": "en1",
@@ -41,7 +40,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "1",
       "on": "en1",
@@ -52,7 +51,7 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "100000000000000",
+      "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
       "nonce": "0",
       "on": "en1",
