@@ -64,6 +64,20 @@ func (w *Workspace) genesisFor(ns node.Record) string {
 	return w.state.GenesisPath
 }
 
+// genesisConfigFor resolves the genesis one node reads from its config file:
+// the one recorded for its binary when the composition carried a fork there,
+// and otherwise nothing — the ordinary node's config says nothing about the
+// genesis, because it initialized from the genesis document like every other.
+//
+// It mirrors genesisFor, and for the same reason: a node's binary decides both,
+// and two shapes of answer is how they come apart.
+func (w *Workspace) genesisConfigFor(ns node.Record) string {
+	if ns.Binary != "" {
+		return w.state.GenesisConfigPaths[ns.Binary]
+	}
+	return ""
+}
+
 // pluginFor resolves the chain one node runs: the one recorded for its binary
 // when that binary is a different chain, otherwise the composition's.
 //
@@ -79,9 +93,10 @@ func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
 	return w.plugin()
 }
 
-// genesisPaths is every genesis document this composition wrote, deduplicated,
-// with the network's first. Used by the steps that have to act on all of them:
-// removing them, recording them, checking they are still there.
+// genesisPaths is every genesis this composition wrote, deduplicated, with the
+// network's first: the documents nodes initialize from, then the configs a
+// build reads its genesis from instead. Used by the steps that have to act on
+// all of them: removing them, recording them, checking they are still there.
 func (w *Workspace) genesisPaths() []string {
 	var out []string
 	seen := map[string]bool{}
@@ -95,6 +110,9 @@ func (w *Workspace) genesisPaths() []string {
 	add(w.state.GenesisPath)
 	for _, name := range slices.Sorted(maps.Keys(w.state.GenesisPaths)) {
 		add(w.state.GenesisPaths[name])
+	}
+	for _, name := range slices.Sorted(maps.Keys(w.state.GenesisConfigPaths)) {
+		add(w.state.GenesisConfigPaths[name])
 	}
 	return out
 }
@@ -671,6 +689,7 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	}
 	w.state.GenesisPath = ""
 	w.state.GenesisPaths = nil
+	w.state.GenesisConfigPaths = nil
 	w.state.Nodes = nil
 	detail := fmt.Sprintf("%d path(s) removed; node table cleared", removed)
 	w.markStep("rm", detail)

@@ -89,6 +89,17 @@ type Spec struct {
 	// HTTPHost binds the HTTP and WS endpoints; empty is 0.0.0.0 in the file
 	// and unset on the command line.
 	HTTPHost string
+	// Genesis is the genesis this node's build reads from its config file,
+	// already rendered as the TOML tables under [Eth.Genesis] (see
+	// genesis.ConfigTOML). Empty for the ordinary case, where every node initializes
+	// from genesis.json and the config says nothing about the genesis.
+	//
+	// It carries a fork whose configuration the pre-fork build would refuse in
+	// a genesis document. Rendered rather than structured because the shape it
+	// has to take is the reading binary's Go types, which is a fact about that
+	// build and not something this package models.
+	Genesis []byte
+
 	// MetricsHost binds the metrics endpoint; empty is 0.0.0.0, the same as
 	// HTTPHost.
 	//
@@ -166,6 +177,15 @@ func TOML(s Spec) []byte {
 	fmt.Fprintf(&b, "Port = %d\n", s.Ports.Metrics)
 	b.WriteString("EnableInfluxDB = false\n")
 	b.WriteString("EnableInfluxDBV2 = false\n")
+
+	// Last, because it is a set of [Eth.*] tables and everything above has
+	// already closed [Eth]. TOML lets a table's sub-tables appear anywhere
+	// after it, so this reads correctly and keeps the hand-written part of the
+	// file first, where a reader looks.
+	if len(s.Genesis) > 0 {
+		b.WriteString("\n")
+		b.Write(s.Genesis)
+	}
 
 	return []byte(b.String())
 }

@@ -143,6 +143,16 @@ type GenesisSpec struct {
 	EngineField string   `json:"engine_field"`
 	Hardforks   []string `json:"hardforks"`
 	Template    string   `json:"template"` // "" = no static template (poa)
+	// ConfigOmit names the genesis keys this chain writes that core.Genesis has
+	// no Go field for. They are harmless in genesis.json, whose JSON decoder
+	// ignores what it cannot place, and fatal in a config file, whose TOML
+	// decoder refuses it by name.
+	//
+	// It only matters to a network that carries its genesis in the node config
+	// rather than in genesis.json (a fork whose configuration travels by
+	// config). The chain that writes the key declares it, because that is where
+	// a reader editing the template would look.
+	ConfigOmit []string `json:"config_omit,omitempty"`
 }
 
 // ConsensusSpec holds the RPC-facing consensus facts used by verify/consensus.

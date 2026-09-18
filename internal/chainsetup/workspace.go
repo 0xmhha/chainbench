@@ -94,6 +94,11 @@ type State struct {
 	// declaration already makes — a node says which binary it runs, and its
 	// genesis follows from that.
 	GenesisPaths map[string]string `json:"genesisPaths,omitempty"`
+	// GenesisConfigPaths maps a binary name to the genesis its nodes read from
+	// their config file rather than from a genesis document. It is the other
+	// half of GenesisPaths: a fork carried by config leaves one genesis for the
+	// whole network and puts what the post-fork build needs here.
+	GenesisConfigPaths map[string]string `json:"genesisConfigPaths,omitempty"`
 	// LaunchInputs is what each launch input hashed to when this workspace
 	// wrote it, keyed by path on the target.
 	//

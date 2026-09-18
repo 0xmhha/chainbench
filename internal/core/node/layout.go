@@ -99,6 +99,18 @@ func (l Layout) GenesisVariantPath(binary string) string {
 	return filepath.Join(filepath.Dir(l.GenesisPath()), "genesis-"+binary+".json")
 }
 
+// GenesisConfigPath is the genesis for the nodes running one named binary,
+// written in the spelling a config file takes rather than as a genesis
+// document, beside the network's genesis.
+//
+// It is the other way a network can run two binaries that do not accept the
+// same genesis: instead of a second genesis document, every node initializes
+// from the one genesis and the build that needs more reads the rest from its
+// own config. The extension says which of the two a reader is looking at.
+func (l Layout) GenesisConfigPath(binary string) string {
+	return filepath.Join(filepath.Dir(l.GenesisPath()), "genesis-"+binary+".toml")
+}
+
 // NodekeyPath is the node's devp2p private key inside its datadir — where a
 // geth-family binary looks for it.
 func (l Layout) NodekeyPath(label Label) string {

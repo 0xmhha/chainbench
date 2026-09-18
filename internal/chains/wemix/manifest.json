@@ -21,7 +21,12 @@
       "applepie",
       "brioche"
     ],
-    "template": "wemix"
+    "template": "wemix",
+    "config_omit": [
+      "minerNodeId",
+      "minerNodeSig",
+      "rewards"
+    ]
   },
   "consensus": {
     "rpc_namespace": "wemix",

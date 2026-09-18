@@ -198,7 +198,26 @@ type UpgradeV2 struct {
 	// binary, then is stopped and relaunched on the post-fork one. Empty is
 	// concurrent, which is what every upgrade declaration written so far means.
 	Style string `json:"style,omitempty"`
+	// Carry is which file brings the fork's configuration to the nodes that
+	// need it: CarryGenesis (the default) gives the network two genesis
+	// documents and one shape of config, CarryConfig one genesis document and
+	// two shapes of config.
+	//
+	// It is a property of the network under test, not of the harness: a chain
+	// team ships a hardfork one way or the other, and a case that pins the way
+	// is testing the thing they will actually do.
+	Carry string `json:"carry,omitempty"`
 }
+
+// Which file a fork's configuration travels in.
+const (
+	// CarryGenesis writes the fork's section into a second genesis document,
+	// read by the nodes running the post-fork binary.
+	CarryGenesis = "genesis"
+	// CarryConfig leaves the genesis alone and writes the whole genesis, the
+	// fork's section included, into those nodes' config file.
+	CarryConfig = "config"
+)
 
 // How a network crosses a hardfork.
 const (
@@ -284,6 +303,11 @@ func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 		return fmt.Errorf("dsl: case %s: upgrade style %q is not built yet — the ordinary hardfork, where every node is relaunched on the post-fork binary, has no case to run it against", caseID, u.Style)
 	default:
 		return fmt.Errorf("dsl: case %s: unknown upgrade style %q (want %s or %s)", caseID, u.Style, UpgradeConcurrent, UpgradeRestart)
+	}
+	switch u.Carry {
+	case "", CarryGenesis, CarryConfig:
+	default:
+		return fmt.Errorf("dsl: case %s: unknown upgrade carry %q (want %s or %s)", caseID, u.Carry, CarryGenesis, CarryConfig)
 	}
 	if u.Preset == "" && u.Profile == "" {
 		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\" or a \"profile\"", caseID)

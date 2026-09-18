@@ -776,7 +776,9 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 //
 // The preset decides the fork and the block; a case may repeat them and is held
 // to the repetition (see checkDeclaredFork). Here the two are folded into the
-// one instruction the genesis step acts on.
+// one instruction the genesis step acts on, along with which file the case
+// wants the fork carried in — empty meaning the genesis, which is the step's
+// own default.
 func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	prof, err := upgrade.LoadProfile(upgradePresetPath(u))
 	if err != nil {
@@ -796,7 +798,10 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	if to == "" {
 		to = dsl.BinaryTo
 	}
-	return &chainsetup.GenesisFork{Name: name, At: at, Binary: to}, nil
+	return &chainsetup.GenesisFork{
+		Name: name, At: at, Binary: to,
+		Carrier: chainsetup.ForkCarrier(u.Carry),
+	}, nil
 }
 
 // hardforkPresetDir is where a named hardfork preset lives.

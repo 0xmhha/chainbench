@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
@@ -58,10 +59,16 @@ func WantOf(in NetUpIn) preflight.Want {
 // implementation is how the comparison silently stops matching.
 //
 // The digest covers the chain id, the overlay file, the dot-path genesis set, an
-// existing genesis used verbatim, and the template and manifest that supply the
-// base document. It deliberately does NOT cover the keys or the validator count:
-// those are compared on their own, and folding them in here would report "genesis
-// differs" for a difference the reader can already see named.
+// existing genesis used verbatim, the template and manifest that supply the base
+// document, and the hardfork the request schedules. It deliberately does NOT
+// cover the keys or the validator count: those are compared on their own, and
+// folding them in here would report "genesis differs" for a difference the
+// reader can already see named.
+//
+// The fork is in because it decides the genesis every node initializes from and
+// which file the post-fork build reads the rest of it out of. Without it a
+// composed network would be reused for a request that schedules a different
+// fork, a different block, or the same fork carried the other way.
 func GenesisDeclared(in NetUpIn) string {
 	h := sha256.New()
 	write := func(parts ...string) {
@@ -74,6 +81,9 @@ func GenesisDeclared(in NetUpIn) string {
 	// Order matters: the set is applied in order and a later key wins, so two
 	// different orders can produce two different genesis documents.
 	write(in.GenesisSet...)
+	if f := in.GenesisFork; f != nil {
+		write("fork", f.Name, strconv.FormatInt(f.At, 10), f.Binary, string(f.carrier()))
+	}
 	return hex.EncodeToString(h.Sum(nil))
 }
 

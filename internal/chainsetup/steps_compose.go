@@ -770,6 +770,48 @@ type GenesisFork struct {
 	// build it runs, which is the same question binaryFor, genesisFor and
 	// pluginFor each answer.
 	Binary string
+	// Carrier is which file carries the fork's configuration to the nodes that
+	// need it. Empty means ForkInGenesis.
+	Carrier ForkCarrier
+}
+
+// ForkCarrier is which file a fork's configuration travels in.
+//
+// Both routes end with the same chain: the pre-fork build stops sealing at the
+// fork block and the post-fork build takes over. They differ in which file the
+// second build reads its extra configuration from, and therefore in which file
+// the network has two of.
+type ForkCarrier string
+
+const (
+	// ForkInGenesis writes the fork's section into the genesis. The network
+	// then has two genesis documents — the post-fork build's is the other one
+	// plus its section — and one config per node.
+	//
+	// The cheaper of the two: a genesis document is JSON, so it is written the
+	// way it is read, and a build whose config has no field for the section
+	// ignores it rather than refusing it.
+	ForkInGenesis ForkCarrier = "genesis"
+	// ForkInConfig leaves the fork's section out of the genesis and writes the
+	// whole genesis, section included, into the config of the nodes running the
+	// post-fork build. The network then has one genesis document and two shapes
+	// of config.
+	//
+	// The costlier of the two. A config file is read by a TOML decoder that has
+	// none of the genesis document's conversions and refuses a key it cannot
+	// place, so the genesis has to be respelled (genesis.ConfigTOML) and the chain
+	// has to declare the keys its binary has no field for
+	// (registry.GenesisSpec.ConfigOmit). In exchange, every node initializes
+	// from one genesis.
+	ForkInConfig ForkCarrier = "config"
+)
+
+// carrier is the route this fork takes, defaulting to the genesis.
+func (f GenesisFork) carrier() ForkCarrier {
+	if f.Carrier == "" {
+		return ForkInGenesis
+	}
+	return f.Carrier
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -809,8 +851,9 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// The genesis is a generated file, so it sits under the composition's
 	// runtime directory when isolated (flat otherwise). The path is derived the
 	// one way, per machine, so a set writes each server the same relative path.
+	var forkConfigs map[string][]byte
 	if opts.Fork != nil {
-		if gen, err = w.mergeForkSection(gen, *opts.Fork); err != nil {
+		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
 			return "", err
 		}
 		art.Genesis = gen
@@ -846,6 +889,9 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err := w.writeGenesisVariants(ctx, lay, gen, opts.Variants); err != nil {
 		return "", err
 	}
+	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
+		return "", err
+	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), opts)
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
@@ -861,19 +907,71 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if n := len(opts.Variants); n > 0 {
 		detail += fmt.Sprintf(", %d binary-specific genesis", n)
 	}
+	if opts.Fork != nil {
+		detail += fmt.Sprintf(", %s fork at %d carried by %s", opts.Fork.Name, opts.Fork.At, opts.Fork.carrier())
+	}
 	w.markStep("genesis", detail)
 	return detail, nil
 }
 
-// mergeForkSection schedules the fork on the built genesis, taking its
-// consensus configuration from the chain that seals after it.
+// applyFork schedules the fork on the built genesis, taking its consensus
+// configuration from the chain that seals after it.
 //
 // Three steps, all of them existing pieces: build the to-chain's genesis from
 // the key set with the post-fork validators, lift its fork section out, and set
 // that section plus the activation block on this genesis. The fork order is
 // re-validated, so a fork scheduled before one it must follow fails here rather
 // than at the boot of every node.
-func (w *Workspace) mergeForkSection(base []byte, f GenesisFork) ([]byte, error) {
+//
+// Where the section lands is the carrier's choice. Both routes put the
+// activation block on the network's genesis — that is what makes the pre-fork
+// build stop sealing, and every node needs it. The section itself either goes
+// beside it (ForkInGenesis) or into the config of the nodes running the
+// post-fork build (ForkInConfig), and the second return is that config, by
+// binary, empty for the genesis route.
+func (w *Workspace) applyFork(base []byte, f GenesisFork) ([]byte, map[string][]byte, error) {
+	section, err := w.forkSection(f)
+	if err != nil {
+		return nil, nil, err
+	}
+	withBlock, err := genesis.SetConfigSection(base, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
+	if err != nil {
+		return nil, nil, fmt.Errorf("chainsetup: genesis: set %sBlock: %w", f.Name, err)
+	}
+	full, err := genesis.SetConfigSection(withBlock, f.Name, section)
+	if err != nil {
+		return nil, nil, fmt.Errorf("chainsetup: genesis: set the %q section: %w", f.Name, err)
+	}
+	// Validated on the document that holds everything, so an ordering the
+	// post-fork build would refuse fails here on either route.
+	if err := genesis.ValidateForks(full); err != nil {
+		return nil, nil, fmt.Errorf("chainsetup: genesis: with the %q fork at %d: %w", f.Name, f.At, err)
+	}
+	if f.carrier() == ForkInGenesis {
+		return full, nil, nil
+	}
+	p, err := w.plugin()
+	if err != nil {
+		return nil, nil, err
+	}
+	toml, err := genesis.ConfigTOML(full, forkConfigTable, p.Manifest().Genesis.ConfigOmit)
+	if err != nil {
+		return nil, nil, fmt.Errorf("chainsetup: genesis: render the %q fork for binary %q's config: %w", f.Name, f.Binary, err)
+	}
+	return withBlock, map[string][]byte{f.Binary: toml}, nil
+}
+
+// forkConfigTable is where a geth-family binary reads a genesis it is given in
+// its config file.
+const forkConfigTable = "Eth.Genesis"
+
+// forkSection is the fork's consensus configuration, read out of the genesis of
+// the chain that seals after it.
+//
+// The section is not a constant and cannot be written down: the validators,
+// their BLS keys and the RLP extra-data that encodes them all come from the
+// ring, so it is built from the ring every time.
+func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 	if f.Name == "" {
 		return nil, fmt.Errorf("chainsetup: genesis: a fork needs a name")
 	}
@@ -917,18 +1015,45 @@ func (w *Workspace) mergeForkSection(base []byte, f GenesisFork) ([]byte, error)
 	if len(section) == 0 {
 		return nil, fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name)
 	}
-	merged, err := genesis.SetConfigSection(base, f.Name, section)
-	if err != nil {
-		return nil, fmt.Errorf("chainsetup: genesis: set the %q section: %w", f.Name, err)
+	return section, nil
+}
+
+// writeGenesisConfigs writes the per-binary genesis configs — the whole
+// genesis in the spelling a config file takes — and records where they landed,
+// so the config step can hand each node the one its build reads.
+//
+// Beside the genesis rather than inside each node's config file, for the same
+// reason a genesis variant is its own document: one file per binary, written
+// once, that a reader can open and compare against the network's genesis.
+func (w *Workspace) writeGenesisConfigs(ctx context.Context, lay node.Layout, configs map[string][]byte) error {
+	if len(configs) == 0 {
+		w.state.GenesisConfigPaths = nil
+		return nil
 	}
-	merged, err = genesis.SetConfigSection(merged, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
-	if err != nil {
-		return nil, fmt.Errorf("chainsetup: genesis: set %sBlock: %w", f.Name, err)
+	paths := make(map[string]string, len(configs))
+	for _, name := range slices.Sorted(maps.Keys(configs)) {
+		if w.state.Binaries[name] == "" {
+			return fmt.Errorf("chainsetup: genesis: a genesis config is declared for binary %q, which no node runs — name one of the declared binaries", name)
+		}
+		body := configs[name]
+		path := lay.GenesisConfigPath(name)
+		err := w.eachMachine(func(t *resource.Access, _ []node.Record) error {
+			ml := lay
+			ml.Root = t.DataRoot
+			p := ml.GenesisConfigPath(name)
+			if werr := t.Files.Write(ctx, p, body, 0o644); werr != nil {
+				return fmt.Errorf("chainsetup: genesis: write %s: %w", p, werr)
+			}
+			w.recordInput(p, body)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		paths[name] = path
 	}
-	if err := genesis.ValidateForks(merged); err != nil {
-		return nil, fmt.Errorf("chainsetup: genesis: with the %q fork at %d: %w", f.Name, f.At, err)
-	}
-	return merged, nil
+	w.state.GenesisConfigPaths = paths
+	return nil
 }
 
 // writeGenesisVariants builds and writes the per-binary genesis documents, each
@@ -1097,6 +1222,21 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
 	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+	}
+	// A node whose build reads its genesis from the config carries it here. The
+	// file was written by the genesis step beside the network's genesis, and is
+	// read back rather than rebuilt so the config holds exactly what that step
+	// produced.
+	if path := w.genesisConfigFor(ns); path != "" {
+		t, terr := w.machineFor(ns)
+		if terr != nil {
+			return nil, terr
+		}
+		gen, rerr := t.Files.Read(ctx, path)
+		if rerr != nil {
+			return nil, fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr)
+		}
+		spec.Genesis = gen
 	}
 	return nodeconfig.TOML(spec), nil
 }

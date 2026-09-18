@@ -851,3 +851,38 @@ func TestInlineEnv_MergedResultIsStillParsedStrictly(t *testing.T) {
 		t.Error("a misspelled field must be refused by the parse")
 	}
 }
+
+// TestV2_UpgradeSaysWhichFileCarriesTheFork.
+//
+// A hardfork reaches the post-fork build either through a second genesis
+// document or through that build's own config file. Both are real: a chain team
+// ships one or the other, and a case that pins which one is testing what they
+// will actually do. Empty means the genesis, which is what every declaration
+// written before this meant.
+func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
+	spec := func(carry string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+		  "binaries":{"from":"gwemix","to":"gwbft"},
+		  "upgrade":{"profile":"p.yaml","template":"t.json"` + carry + `}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	for _, want := range []string{"", CarryGenesis, CarryConfig} {
+		field := ""
+		if want != "" {
+			field = `,"carry":"` + want + `"`
+		}
+		s, err := Parse([]byte(spec(field)))
+		if err != nil {
+			t.Fatalf("carry %q: %v", want, err)
+		}
+		if s.EnvUpgrade.Carry != want {
+			t.Errorf("carry = %q, want %q", s.EnvUpgrade.Carry, want)
+		}
+	}
+	// Refused by name rather than accepted and quietly carried the default way,
+	// which would run a different hardfork from the one the case asked for.
+	if _, err := Parse([]byte(spec(`,"carry":"sidecar"`))); err == nil {
+		t.Error("an unknown carry was accepted")
+	}
+}
