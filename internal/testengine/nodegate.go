@@ -52,6 +52,17 @@ type forkGate struct {
 	at int64
 	// preFork are the node indices running the build that hands over.
 	preFork map[int]bool
+	// restart says the whole network crosses together rather than handing
+	// production from one set of nodes to another.
+	//
+	// Neither of the states below happens on a restart, and reading them there
+	// is worse than useless. An ordinary fork does not halt the chain, so a
+	// restarted network is never parked — and calling it parked let the gate
+	// pass at height 0, before a single block was sealed. Nor does a restart
+	// leave anyone behind: every node moves, so none of them is retired, and
+	// treating them all as retired would report a network where nothing runs
+	// as ready.
+	restart bool
 }
 
 // parked reports whether every node stands at the block before the fork,
@@ -59,7 +70,7 @@ type forkGate struct {
 // syncing is a network that has not arrived, and it is exactly the node the
 // handover would leave behind.
 func (g forkGate) parked(rep health.Report) bool {
-	if g.at <= 0 || len(rep.Nodes) == 0 {
+	if g.restart || g.at <= 0 || len(rep.Nodes) == 0 {
 		return false
 	}
 	want := uint64(g.at - 1) //nolint:gosec // a declared block height, checked positive above
@@ -74,7 +85,7 @@ func (g forkGate) parked(rep health.Report) bool {
 // retired reports whether one node has finished its part: it runs the pre-fork
 // build and the network has produced the fork block, so it will not move again.
 func (g forkGate) retired(index int, networkHead uint64) bool {
-	if g.at <= 0 || !g.preFork[index] {
+	if g.restart || g.at <= 0 || !g.preFork[index] {
 		return false
 	}
 	return networkHead >= uint64(g.at) //nolint:gosec // a declared block height, checked positive above

@@ -61,22 +61,22 @@ func TestUpgradeDecl_TheCaseIsHeldToTheForkItNames(t *testing.T) {
 	}
 }
 
-// TestUpgradeDecl_RestartIsRefusedByName: the ordinary hardfork, where every
-// node is relaunched on the post-fork binary, has a place in the grammar and no
-// implementation. Accepting it and quietly running the other style is the shape
-// this track keeps removing.
-func TestUpgradeDecl_RestartIsRefusedByName(t *testing.T) {
-	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` +
-		upgradeEnv(`,"preset":"wemix-upgrade","style":"restart"`) + `,
-	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
-	_, err := dsl.Parse([]byte(raw))
-	if err == nil {
-		t.Fatal("an unbuilt style was accepted")
+// TestUpgradeDecl_ARestartComposesAsAForkThatMovesTheWholeNetwork.
+//
+// The ordinary hardfork of one chain: every node runs the pre-fork build, and
+// at the fork every one of them is relaunched on the build that knows what
+// happens there. The declaration reaches the composition as a fork that moves
+// the whole network rather than one that hands production to another set.
+func TestUpgradeDecl_ARestartComposesAsAForkThatMovesTheWholeNetwork(t *testing.T) {
+	spec := caseWithEnv(t, upgradeEnv(`,"style":"restart","fork":"boho","at":200`))
+	t.Chdir("../..")
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("a restart was refused: %v", err)
 	}
-	for _, want := range []string{"restart", "not built yet"} {
-		if !strings.Contains(err.Error(), want) {
-			t.Errorf("the refusal should name it and say why: %v", err)
-		}
+	f := comp.up.GenesisFork
+	if f == nil || !f.Restart {
+		t.Fatalf("the composition does not know the fork moves the whole network: %+v", f)
 	}
 }
 

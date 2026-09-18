@@ -242,17 +242,26 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if err != nil {
 		return composition{}, err
 	}
-	// The count form has no node table to resolve names against, and the names
-	// were being dropped with it. A declaration that names binaries is not only
-	// talking about the nodes it composes: a case swaps one node onto a name
-	// mid-test, and a name nothing resolved reaches exec as a path. That is how
-	// "upgrade" became `exec: "upgrade": executable file not found`, with the
-	// declaration saying plainly that upgrade means gstable.
-	if inlineTopo == nil && len(spec.Chain.Binaries) > 0 {
-		resolvedBins = map[string]string{}
+	// Every name the declaration gives, whether or not a node is running it.
+	//
+	// A declaration that names binaries is not only talking about the nodes it
+	// composes: a case swaps one node onto a name mid-test, and a restart moves
+	// the WHOLE network onto one no node has yet. A name nothing resolved
+	// reaches exec as a path — that is how "upgrade" became `exec: "upgrade":
+	// executable file not found`, with the declaration saying plainly that
+	// upgrade means gstable.
+	//
+	// The node table's own resolutions win, because a node may name a binary
+	// the env's map does not.
+	if len(spec.Chain.Binaries) > 0 {
+		merged := make(map[string]string, len(spec.Chain.Binaries)+len(resolvedBins))
 		for name, path := range spec.Chain.Binaries {
-			resolvedBins[name] = expand(path)
+			merged[name] = expand(path)
 		}
+		for name, path := range resolvedBins {
+			merged[name] = path
+		}
+		resolvedBins = merged
 	}
 
 	binary := in.Binary
@@ -730,16 +739,23 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 // wants the fork carried in — empty meaning the genesis, which is the step's
 // own default.
 func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
-	prof, err := upgrade.LoadProfile(upgradePresetPath(u))
-	if err != nil {
-		return nil, fmt.Errorf("upgrade preset: %w", err)
-	}
-	name, at := prof.Upgrade.AtFork, prof.Upgrade.ForkBlock
-	if u.Fork != "" {
-		name = u.Fork
-	}
+	name, at := u.Fork, int64(0)
 	if u.At != nil {
 		at = *u.At
+	}
+	// The preset is read only for what the case left out. A declaration that
+	// says both says everything, and a restart has no preset to read at all.
+	if u.Fork == "" || u.At == nil {
+		prof, err := upgrade.LoadProfile(upgradePresetPath(u))
+		if err != nil {
+			return nil, fmt.Errorf("upgrade preset: %w", err)
+		}
+		if name == "" {
+			name = prof.Upgrade.AtFork
+		}
+		if u.At == nil {
+			at = prof.Upgrade.ForkBlock
+		}
 	}
 	if name == "" {
 		return nil, fmt.Errorf("upgrade: neither the case nor its preset names a fork")
@@ -751,6 +767,7 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	return &chainsetup.GenesisFork{
 		Name: name, At: at, Binary: to,
 		Carrier: chainsetup.ForkCarrier(u.Carry),
+		Restart: u.Style == dsl.UpgradeRestart,
 	}, nil
 }
 
@@ -773,6 +790,10 @@ func upgradePresetPath(u *dsl.UpgradeV2) string {
 // claims. Saying nothing is fine — the preset answers.
 func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Fork == "" && u.At == nil {
+		return nil
+	}
+	// A restart names no preset, so there is nothing to hold it to.
+	if u.Style == dsl.UpgradeRestart {
 		return nil
 	}
 	prof, err := upgrade.LoadProfile(presetPath)

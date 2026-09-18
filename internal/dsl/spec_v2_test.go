@@ -952,3 +952,33 @@ func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 		t.Error("a hardfork naming a genesis template was accepted")
 	}
 }
+
+// TestV2_ARestartSaysItsForkItselfAndNamesNoPreset.
+//
+// A preset describes a HANDOVER environment: which chain hands to which, at
+// which fork, and how many nodes stand on each side. A restart has no such
+// environment — one chain, one build at a time — so it says its own fork and
+// block, and a preset would have nothing to add.
+func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
+	spec := func(upgrade string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"r","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		  "binaries":{"default":"gstable","postfork":"gstable-next"},
+		  "topology":{"nodes":[{"index":1,"role":"bp"},{"index":2,"role":"bp"}]},
+		  "upgrade":{"style":"restart","from":"default","to":"postfork"` + upgrade + `}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	if _, err := Parse([]byte(spec(`,"fork":"boho","at":200`))); err != nil {
+		t.Fatalf("a restart naming its own fork was refused: %v", err)
+	}
+	for name, u := range map[string]string{
+		"no fork":     `,"at":200`,
+		"no block":    `,"fork":"boho"`,
+		"nothing":     ``,
+		"with preset": `,"fork":"boho","at":200,"preset":"wemix-upgrade"`,
+	} {
+		if _, err := Parse([]byte(spec(u))); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}

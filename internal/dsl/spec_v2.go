@@ -230,9 +230,15 @@ const (
 	// UpgradeConcurrent runs both binaries from genesis; the sealing set
 	// changes at the fork.
 	UpgradeConcurrent = "concurrent"
-	// UpgradeRestart runs one binary, then relaunches every node on the other.
-	// Declared but not implemented: no case uses it, so there is nothing to run
-	// it against, and it is refused by name rather than accepted and ignored.
+	// UpgradeRestart is the ordinary hardfork of ONE chain: the nodes run the
+	// pre-fork build, and at the fork every one of them is relaunched on the
+	// build that knows what happens there.
+	//
+	// Nothing about the network changes but the executable. The chain is the
+	// same chain, the nodes keep their databases and their work, and the fork's
+	// own configuration is in the genesis from block 0 — a build that does not
+	// know the fork simply never acts on it, which is why the build has to
+	// change.
 	UpgradeRestart = "restart"
 )
 
@@ -304,9 +310,7 @@ type GenesisSideV2 struct {
 // wrong build, an unbuilt style as a handoff that quietly did the other thing.
 func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 	switch u.Style {
-	case "", UpgradeConcurrent:
-	case UpgradeRestart:
-		return fmt.Errorf("dsl: case %s: upgrade style %q is not built yet — the ordinary hardfork, where every node is relaunched on the post-fork binary, has no case to run it against", caseID, u.Style)
+	case "", UpgradeConcurrent, UpgradeRestart:
 	default:
 		return fmt.Errorf("dsl: case %s: unknown upgrade style %q (want %s or %s)", caseID, u.Style, UpgradeConcurrent, UpgradeRestart)
 	}
@@ -315,7 +319,18 @@ func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 	default:
 		return fmt.Errorf("dsl: case %s: unknown upgrade carry %q (want %s or %s)", caseID, u.Carry, CarryGenesis, CarryConfig)
 	}
-	if u.Preset == "" && u.Profile == "" {
+	// A preset describes a HANDOVER environment: which chain hands to which, at
+	// which fork, and how many nodes stand on each side. A restart has no such
+	// environment — one chain, one build at a time — so it says its fork and
+	// its block itself, and there is no preset with anything to add.
+	if u.Style == UpgradeRestart {
+		if u.Preset != "" || u.Profile != "" {
+			return fmt.Errorf("dsl: case %s: a %s hardfork names no preset — a preset describes a handover between two chains, and this is one chain crossing its own fork", caseID, UpgradeRestart)
+		}
+		if u.Fork == "" || u.At == nil {
+			return fmt.Errorf("dsl: case %s: a %s hardfork says which fork it crosses and at which block (\"fork\" and \"at\")", caseID, UpgradeRestart)
+		}
+	} else if u.Preset == "" && u.Profile == "" {
 		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\" or a \"profile\"", caseID)
 	}
 	if u.Preset != "" && u.Profile != "" {

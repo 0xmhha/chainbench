@@ -94,7 +94,7 @@ func TestCrossFork_ANetworkAlreadyAcrossIsLeftAlone(t *testing.T) {
 
 	// One left behind is not "already crossed".
 	w.state.Nodes[3].Role = string(node.RoleEN)
-	if w.alreadyCrossed(w.forkSuccessors(*w.state.Fork)) {
+	if w.alreadyCrossed(*w.state.Fork, w.forkSuccessors(*w.state.Fork)) {
 		t.Error("a network with one successor still an endpoint read as fully crossed")
 	}
 }
@@ -119,5 +119,74 @@ func TestForkObserver_TheHeadIsReadFromThePreForkSide(t *testing.T) {
 	w.state.Nodes[0].PID = 0
 	if _, ok := w.forkObserver(*w.state.Fork); ok {
 		t.Error("a stopped node was chosen to read the fork boundary from")
+	}
+}
+
+// restartWorkspace is a network composed to cross its OWN chain's fork: every
+// node runs the pre-fork build, and at the fork every one of them moves to the
+// post-fork one.
+func restartWorkspace(t *testing.T) *Workspace {
+	t.Helper()
+	w := crossWorkspace(t)
+	w.state.Fork = &GenesisFork{Name: "boho", At: 200, Binary: "postfork", Restart: true}
+	w.state.Binaries = map[string]string{"default": "/b/gstable", "postfork": "/b/gstable-next"}
+	w.state.Nodes = []node.Record{
+		{Index: 1, Role: string(node.RoleBP), PID: 11},
+		{Index: 2, Role: string(node.RoleBP), PID: 12},
+		{Index: 3, Role: string(node.RoleBP), PID: 13},
+	}
+	return w
+}
+
+// TestForkSuccessors_ARestartMovesEveryNode.
+//
+// A handover names the nodes already running the post-fork build. A restart
+// cannot: none of them is running it yet, which is the whole point. So every
+// node is on the list.
+func TestForkSuccessors_ARestartMovesEveryNode(t *testing.T) {
+	w := restartWorkspace(t)
+	if got := w.forkSuccessors(*w.state.Fork); len(got) != len(w.state.Nodes) {
+		t.Fatalf("successors = %v, want every node", got)
+	}
+}
+
+// TestAlreadyCrossed_ARestartIsReadFromTheBuildNotTheRole.
+//
+// Crossing changes what a node IS, and the two shapes change different things:
+// the work it does on a handover, the build it runs on a restart. Reading the
+// role on a restart would report a crossed network as uncrossed forever, since
+// a restart leaves every role exactly where it was.
+func TestAlreadyCrossed_ARestartIsReadFromTheBuildNotTheRole(t *testing.T) {
+	w := restartWorkspace(t)
+	f := *w.state.Fork
+	if w.alreadyCrossed(f, w.forkSuccessors(f)) {
+		t.Error("a network still on the pre-fork build read as crossed")
+	}
+	for i := range w.state.Nodes {
+		w.state.Nodes[i].Binary = f.Binary
+	}
+	if !w.alreadyCrossed(f, w.forkSuccessors(f)) {
+		t.Error("a network already on the post-fork build read as uncrossed")
+	}
+	// One left behind is not crossed: it would meet the fork on the old build.
+	w.state.Nodes[1].Binary = ""
+	if w.alreadyCrossed(f, w.forkSuccessors(f)) {
+		t.Error("a network with one node still on the pre-fork build read as crossed")
+	}
+}
+
+// TestForkObserver_ARestartReadsAnyRunningNode: before a restart every node is
+// on the pre-fork side, so the first one that answers is the one to read.
+func TestForkObserver_ARestartReadsAnyRunningNode(t *testing.T) {
+	w := restartWorkspace(t)
+	obs, ok := w.forkObserver(*w.state.Fork)
+	if !ok || obs.Index != 1 {
+		t.Fatalf("observer = %+v (%v), want the first running node", obs, ok)
+	}
+	for i := range w.state.Nodes {
+		w.state.Nodes[i].PID = 0
+	}
+	if _, ok := w.forkObserver(*w.state.Fork); ok {
+		t.Error("a stopped network offered a node to read the head from")
 	}
 }

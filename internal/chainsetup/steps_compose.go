@@ -773,6 +773,16 @@ type GenesisFork struct {
 	// Carrier is which file carries the fork's configuration to the nodes that
 	// need it. Empty means ForkInGenesis.
 	Carrier ForkCarrier `json:"carrier,omitempty"`
+	// Restart says every node moves to Binary at the fork, rather than some of
+	// them already running it.
+	//
+	// The two shapes differ in who is standing where. In the ordinary one the
+	// successors are up from the start, syncing, and take over when the fork
+	// arrives; in a restart there is one build at a time and every node crosses
+	// together, the producers still producing afterwards. So the post-fork
+	// validators are read differently: by which build a node runs, or — when no
+	// node runs it yet — by which nodes produce.
+	Restart bool `json:"restart,omitempty"`
 }
 
 // ForkCarrier is which file a fork's configuration travels in.
@@ -936,13 +946,28 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 // post-fork build (ForkInConfig), and the second return is that config, by
 // binary, empty for the genesis route.
 func (w *Workspace) applyFork(base []byte, f GenesisFork) ([]byte, map[string][]byte, error) {
-	section, err := w.forkSection(f)
-	if err != nil {
-		return nil, nil, err
+	if f.Name == "" {
+		return nil, nil, fmt.Errorf("chainsetup: genesis: a fork needs a name")
 	}
 	withBlock, err := genesis.SetConfigSection(base, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
 	if err != nil {
 		return nil, nil, fmt.Errorf("chainsetup: genesis: set %sBlock: %w", f.Name, err)
+	}
+	// A restart's fork is a block, and what happens at it is the post-fork
+	// build's to know. Whatever configuration the fork needs is in the genesis
+	// already — the declaration puts it there like any other genesis content —
+	// so there is no second chain to lift a section out of and nothing to carry
+	// anywhere. The block is written here so the declaration, not an overlay,
+	// is the one place that says when.
+	if f.Restart {
+		if err := genesis.ValidateForks(withBlock); err != nil {
+			return nil, nil, fmt.Errorf("chainsetup: genesis: with the %q fork at %d: %w", f.Name, f.At, err)
+		}
+		return withBlock, nil, nil
+	}
+	section, err := w.forkSection(f)
+	if err != nil {
+		return nil, nil, err
 	}
 	full, err := genesis.SetConfigSection(withBlock, f.Name, section)
 	if err != nil {
@@ -978,9 +1003,6 @@ const forkConfigTable = "Eth.Genesis"
 // their BLS keys and the RLP extra-data that encodes them all come from the
 // ring, so it is built from the ring every time.
 func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
-	if f.Name == "" {
-		return nil, fmt.Errorf("chainsetup: genesis: a fork needs a name")
-	}
 	id := w.state.BinaryChains[f.Binary]
 	if id == "" {
 		return nil, fmt.Errorf("chainsetup: genesis: the %q fork seals on binary %q, which names no chain of its own — the fork's configuration comes from that chain's genesis", f.Name, f.Binary)
@@ -989,15 +1011,9 @@ func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: genesis: fork chain %q: %w", id, err)
 	}
-	// The nodes that run it are the validators it will hand over to.
-	var indices []int
-	for _, ns := range w.state.Nodes {
-		if ns.Binary == f.Binary {
-			indices = append(indices, ns.Index)
-		}
-	}
-	if len(indices) == 0 {
-		return nil, fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name)
+	indices, err := w.forkValidators(f)
+	if err != nil {
+		return nil, err
 	}
 	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
@@ -1022,6 +1038,26 @@ func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 		return nil, fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name)
 	}
 	return section, nil
+}
+
+// forkValidators is which of this network's nodes seal after the fork, by node
+// index: the ones running the build that takes over.
+//
+// Before the fork they are endpoints and after it they produce, which is what
+// binaryFor, genesisFor and pluginFor each ask in their turn. Only a handover
+// asks this at all — a restart hands production to nobody, because the nodes
+// that produced before the fork go on producing after it.
+func (w *Workspace) forkValidators(f GenesisFork) ([]int, error) {
+	var indices []int
+	for _, ns := range w.state.Nodes {
+		if ns.Binary == f.Binary {
+			indices = append(indices, ns.Index)
+		}
+	}
+	if len(indices) == 0 {
+		return nil, fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name)
+	}
+	return indices, nil
 }
 
 // writeGenesisConfigs writes the per-binary genesis configs — the whole

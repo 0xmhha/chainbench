@@ -309,6 +309,12 @@ tests/tc/
 | `01-wemix-chain-up.json` | — | wemix | `default=${GWEMIX_BIN:-gwemix}` | bp=4 | — |
 | `02-wemix-chain-up-15.json` | — | wemix | `default=/data/chainbench/bin/gwemix` | bp=13, en=2 | — |
 
+### `go-stablenet/hardfork` (1)
+
+| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
+|---|---|---|---|---|---|
+| `01-boho-crossed-by-restart.json` | 같은 체인의 하드포크 — 포크 전에 모든 노드가 포크 이후 바이너리로 교체된다 | stablenet | `default=${GSTABLE_BIN:-gstable}, postfork=${GSTABLE_POSTFORK_BIN:-gstable}` | bp=4 (노드별) | 있음 |
+
 ### `go-wemix/hardfork` (3)
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
