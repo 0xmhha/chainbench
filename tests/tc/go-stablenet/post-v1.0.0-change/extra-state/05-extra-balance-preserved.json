@@ -7,13 +7,7 @@
     "rpc",
     "account-extra"
   ],
-  "env": {
-    "extends": "stablenet-bp4",
-    "capabilities": [
-      "rpc",
-      "account-extra"
-    ]
-  },
+  "env": "stablenet-bp4-account-extra",
   "steps": [
     {
       "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",

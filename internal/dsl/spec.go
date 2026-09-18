@@ -21,6 +21,9 @@ type ChainSpec struct {
 	BinaryChains   map[string]string `json:"binaryChains,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// GenesisProvides is what the genesis makes the network able to do, which
+	// the composed network advertises so a case gating on it runs.
+	GenesisProvides []string `json:"genesisProvides,omitempty"`
 	// GenesisPerBinary is, per binary name, what that binary's own genesis
 	// needs on top of the network's. The nodes running it initialize from the
 	// network's genesis merged with this; every other node gets the network's

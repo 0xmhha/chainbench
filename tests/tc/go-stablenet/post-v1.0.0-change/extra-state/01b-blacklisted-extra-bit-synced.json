@@ -7,13 +7,7 @@
     "account-extra",
     "contract:accountManager"
   ],
-  "env": {
-    "extends": "stablenet-bp4",
-    "capabilities": [
-      "rpc",
-      "account-extra"
-    ]
-  },
+  "env": "stablenet-bp4-account-extra",
   "steps": [
     {
       "do": "read",

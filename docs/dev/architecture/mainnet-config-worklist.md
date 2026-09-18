@@ -1168,8 +1168,31 @@ H1 · H3 · H4(1단계) · X1~X3 · X4 · X6~X8 · X10 · X12 · X13 · X15, 그
 
 | 항목 | 무엇 | 상태 |
 |---|---|---|
-| **D-A** | 선언이 overlay 파일을 가리킬 수 없다 | `env.genesis.overlay` 는 인라인 조각만 받는다. 능력을 부여하는 것은 overlay 파일의 `capabilities` 절인데 DSL 에 그 파일을 가리키는 키가 없다. 하부에는 `OverlayPath` 가 이미 있다. **스킵 6건이 여기 막혀 있다** |
+| ~~**D-A**~~ | ~~선언이 망의 능력을 말할 수 없다~~ | **완료 (2026-09-18).** 진단이 반쯤 틀렸었다. overlay 파일을 가리킬 키가 없는 것이 아니라 — 하니스가 그 파일을 이미 쓰고 있다 — `{capabilities, genesis}` 문서의 **genesis 쪽만** 쓰고 있었다. env 의 `capabilities` 는 요구 목록으로 `spec.Requires` 에 합쳐지므로(142개 파일이 그 뜻으로 쓴다) 거기에 얹을 수 없었고, `genesis.provides` 를 새로 뒀다. 스킵 6건이 전부 통과한다(실측) |
 | **D-B** | 케이스가 "이 망은 멈춘다" 를 말할 수 없다 | `unsupported-system-contract-version` 은 체인이 멈추는 것이 정답인데 준비 판정이 진행을 요구해 시작조차 못 한다. **사용자가 테스트 자체를 검토 중** |
+
+**D-A 를 푼 방법과 그 과정에서 나온 것 (2026-09-18).**
+
+스킵 6건은 `capabilities: ["rpc", "account-extra"]` 를 env 에 적고 있었다. 그런데
+env 의 `capabilities` 는 **요구**이고 `spec.Requires` 로 합쳐진다. 즉 여섯 케이스는
+"이 능력이 필요하다" 를 두 번 적고 있었을 뿐, 망에 그 능력을 준 적이 없다. 그래서
+영영 스킵됐다. 그 뜻은 142개 파일이 쓰고 있어서 바꿀 수 없으므로 광고하는 자리를
+`genesis.provides` 로 새로 뒀고, 하니스가 이미 쓰고 있던 overlay 문서의
+`capabilities` 절에 실어 보낸다.
+
+env 는 셋이 됐다. `stablenet-bp4-account-extra` 는 alloc 세 계정에 `extra` 비트를
+심고(권한 62번, 차단 63번, 둘 다), `stablenet-bp4-short-expiry` 는 네 거버넌스
+컨트랙트의 `expiry` 를 604800 에서 30 으로 낮춘다. 소각 환불 케이스만 셋째
+`stablenet-bp4-boho-short-expiry` 를 쓴다 — `refundableBalance(address)` 는
+**GovMinter v2** 에만 있어서 boho 가 켜져 있지 않으면 읽기부터 revert 한다.
+
+**그리고 케이스 하나가 깨져 있었다.** `05-burn-expire-refundable` 의 `proposeBurn`
+calldata 가 **447바이트**였다 — 32의 배수가 아니다. 어느 워드의 패딩에서 0 바이트
+하나가 빠져 그 뒤가 전부 한 칸씩 밀려 있었고, 문자열 길이 워드가 문자열 첫 글자를
+물고 있었다. 스킵되는 케이스는 아무도 실행하지 않으므로 **아무도 못 봤다.** 잘
+도는 형제 케이스(`03-burn-cancel-refundable`)의 배치대로 다시 인코딩했다.
+정의서 전체를 훑어 같은 결함이 더 있는지 봤고, 32의 배수가 아닌 나머지 넷은 전부
+ABI 호출이 아니라 배포 바이트코드였다.
 
 ### 11.2.2 내가 모르는 것 (2026-09-17, 정직한 기록)
 
@@ -1180,10 +1203,14 @@ H1 · H3 · H4(1단계) · X1~X3 · X4 · X6~X8 · X10 · X12 · X13 · X15, 그
   것으로 봤다. 후보 목록과 합의 검증자 집합이 다른 것도 사용자가 짚어 줘서 알았다.
 - 정족수가 genesis 의 `govValidator.params.quorum` 에서 오고 제안 생성 시점의
   값을 스냅숏한다는 것을 뒤늦게 확인했다.
-- **`short-expiry` 와 `account-extra` 를 "genesis 문제" 로 읽었다.** 지금 overlay
-  파일이 genesis 경로에 값을 심고 있어서 그렇게 보였을 뿐이고, 사용자는 만료
-  기한이 거버넌스 컨트랙트 파라미터이며 계정 부가 상태는 config 로 주입할 수
-  있다고 지적했다. **그렇다면 지금 overlay 가 잘못된 층에 값을 심고 있다.**
+- **`short-expiry` 와 `account-extra` 를 "genesis 문제" 로 읽었다.** 사용자는 만료
+  기한이 거버넌스 컨트랙트 파라미터이고 계정 부가 상태는 config 로 주입할 수 있다고
+  짚었다. 2026-09-18 에 go-stablenet 코드로 확인해 보니 **절반씩 맞았다.** 만료
+  기한은 컨트랙트 파라미터가 맞아서 `config.anzeon.systemContracts.*.params.expiry`
+  로 심었다(`GovBase.sol` 이 초기화 때 한 번 읽고 이후 바꾸지 못한다). 계정 부가
+  상태는 `types.Account.Extra` 라는 **genesis alloc 전용 필드**이고 `core/genesis.go`
+  가 `statedb.SetExtra` 로 심는다 — config 경로가 없다. 그래서 `alloc[addr].extra`
+  에 남겼다.
 
 **이 목록은 다음에 이 영역을 건드리기 전에 먼저 배워야 할 것이다.** 증상만 쫓아
 고치면 또 틀린다.

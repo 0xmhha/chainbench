@@ -207,7 +207,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if err != nil {
 		return composition{}, err
 	}
-	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
+	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay, spec.Chain.GenesisProvides)
 	if err != nil {
 		return composition{}, err
 	}
@@ -714,11 +714,19 @@ func hardforkSets(forks map[string]int) []string {
 // overlays from: a file under the workspace, written through the file seam
 // like everything else the workspace holds. No overlay writes nothing and
 // returns no path.
-func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (string, error) {
-	if len(overlay) == 0 {
+func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, provides []string) (string, error) {
+	if len(overlay) == 0 && len(provides) == 0 {
 		return "", nil
 	}
-	b, err := json.MarshalIndent(map[string]any{"genesis": overlay}, "", "  ")
+	// The same {capabilities, genesis} document `chain up --genesis-overlay`
+	// takes. Writing only the genesis half is why a DSL env had no way to make
+	// its network advertise anything, and why cases that needed a capability
+	// declared it as a requirement instead and skipped for good.
+	doc := map[string]any{"genesis": overlay}
+	if len(provides) > 0 {
+		doc["capabilities"] = provides
+	}
+	b, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("render genesis overlay: %w", err)
 	}
@@ -827,7 +835,7 @@ func writeOverlays(ctx context.Context, dataDir string, per map[string]map[strin
 	}
 	out := make(map[string]string, len(per))
 	for _, name := range slices.Sorted(maps.Keys(per)) {
-		path, err := writeOverlay(ctx, dataDir, per[name])
+		path, err := writeOverlay(ctx, dataDir, per[name], nil)
 		if err != nil {
 			return nil, fmt.Errorf("binary %s: %w", name, err)
 		}

@@ -283,6 +283,20 @@ type GenesisV2 struct {
 	Set map[string]any `json:"set,omitempty"`
 	// Overlay deep-merges into the built genesis.
 	Overlay map[string]any `json:"overlay,omitempty"`
+	// Provides names what this genesis makes the network ABLE to do, for cases
+	// that gate on it.
+	//
+	// It belongs here because the genesis is what makes it true: seeding three
+	// accounts with Extra bits is what gives a network the account-extra
+	// capability, and shortening a governance expiry is what gives it
+	// short-expiry. A capability declared anywhere else would be a claim with
+	// nothing behind it.
+	//
+	// It is NOT the env's "capabilities" field, which says what a case REQUIRES
+	// — the two read alike and mean opposite things. Cases that wrote their
+	// capability there ended up requiring something no network offered and
+	// skipped forever.
+	Provides []string `json:"provides,omitempty"`
 	// PerBinary is, per binary name (the keys "binaries" declares), what that
 	// binary's own genesis needs on top of the network's, in the same two forms
 	// the network's genesis takes.
@@ -731,6 +745,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 			if len(overlay) > 0 {
 				spec.Chain.GenesisOverlay = overlay
 			}
+			spec.Chain.GenesisProvides = g.Provides
 			for name, side := range g.PerBinary {
 				if _, ok := env.Binaries[name]; !ok {
 					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)

@@ -8,13 +8,7 @@
     "short-expiry",
     "contract:govValidator"
   ],
-  "env": {
-    "extends": "stablenet-bp4",
-    "capabilities": [
-      "rpc",
-      "short-expiry"
-    ]
-  },
+  "env": "stablenet-bp4-short-expiry",
   "steps": [
     {
       "do": "read",
