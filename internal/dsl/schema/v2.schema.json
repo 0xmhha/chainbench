@@ -160,6 +160,36 @@
             },
             "additionalProperties": false
           }
+        },
+        "attach": {
+          "type": "object",
+          "description": "Run against a network that is already up instead of composing one. Exclusive with every field that describes a network to build.",
+          "additionalProperties": false,
+          "required": [
+            "rpc"
+          ],
+          "properties": {
+            "rpc": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Node RPC endpoints, in the order node selectors address them. ${VAR:-default} is expanded."
+            },
+            "keysDir": {
+              "type": "string",
+              "description": "Key set the running network was composed from, so a spec can name an account by label."
+            },
+            "provides": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What the running network offers, for capability-gated cases. Not \"capabilities\", which is a requirement."
+            }
+          }
         }
       }
     },

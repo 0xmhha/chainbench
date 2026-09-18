@@ -4,6 +4,7 @@ basic/05-basic-tx-send.json	.steps[3]	address	$r
 basic/06-basic-txpool-propagation.json	.steps[2]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 basic/06-basic-txpool-propagation.json	.steps[2]	to	$r
 basic/06-basic-txpool-propagation.json	.steps[3]	address	$r
+basic/08-attached-chain-produces.json	.steps[3]	address	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 fault/04-fault-p2p-topology.json	.steps[6]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 fault/04-fault-p2p-topology.json	.steps[6]	to	$r
 fault/04-fault-p2p-topology.json	.steps[7]	address	$r

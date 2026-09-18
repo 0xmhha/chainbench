@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -88,7 +90,28 @@ func NewRun() *cobra.Command {
 			case len(rpcURLs) > 0:
 				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			case workspaceDir == "":
-				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
+				// Nothing on the command line said which network. Ask the
+				// specs: an env may declare that it attaches to one that is
+				// already up, and that is the only form that needs no flag.
+				//
+				// Asked here and not earlier because the command line wins
+				// (§2.5 override order): --rpc, --attach and --workspace-dir
+				// are all decided above, so reaching this point means the
+				// operator named no network at all.
+				at, aerr := app.DeclaredAttach(args)
+				if aerr != nil {
+					return aerr
+				}
+				if at == nil {
+					return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one) — or declare env.attach in the specs")
+				}
+				if chain == "" {
+					chain = at.Chain
+				}
+				if !cmd.Flags().Changed("keys") {
+					keysDir = at.KeysDir
+				}
+				return runAttachDeclared(cmd, args, chain, at, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
@@ -198,6 +221,53 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 		return err
 	}
 	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
+}
+
+// runAttachDeclared runs the specs against the network their own env names.
+//
+// It is runAttach with the endpoints read from the declaration rather than
+// typed, plus the capabilities the declaration claims for that network: nothing
+// composed it, so nothing advertised anything, and the operator who set it up is
+// the only one who knows. Without them a gated case attached and skipped, which
+// looks exactly like a case that ran.
+func runAttachDeclared(cmd *cobra.Command, args []string, chain string, at *app.AttachDecl, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
+	specs, err := app.ReadSpecFiles(args)
+	if err != nil {
+		return err
+	}
+	bus, flush := dashboard.Stream(dashboardURL)
+	defer flush()
+	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
+		Chain: chain, RPCURLs: expandEach(at.RPCURLs), ArtifactRoot: artifactRoot,
+		KeysDir: keysDir, Caps: at.Provides, Specs: specs, Bus: bus,
+	})
+	if err != nil {
+		return err
+	}
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
+}
+
+// expandEach resolves ${VAR} and ${VAR:-default} in each endpoint, the same
+// expansion a declared binary path gets. An endpoint is a fact about a machine,
+// and a committed case must not have to carry one.
+func expandEach(in []string) []string {
+	out := make([]string, len(in))
+	for i, s := range in {
+		out[i] = os.Expand(s, envOrDefault)
+	}
+	return out
+}
+
+// envOrDefault expands NAME or NAME:-fallback from the process environment.
+func envOrDefault(spec string) string {
+	name, fallback, hasDefault := strings.Cut(spec, ":-")
+	if v, ok := os.LookupEnv(name); ok && v != "" {
+		return v
+	}
+	if hasDefault {
+		return fallback
+	}
+	return ""
 }
 
 // runAttachWorkspace runs the specs against the network a workspace composed.

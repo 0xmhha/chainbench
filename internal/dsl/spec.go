@@ -85,6 +85,10 @@ type Spec struct {
 	// the network as a mixed-binary handoff. Nil is a single-binary network.
 	// Runtime-only.
 	EnvUpgrade *UpgradeV2 `json:"-"`
+	// EnvAttach is the v2 env's attach declaration: this case runs against a
+	// network that is already up, not one this run composes. Nil composes.
+	// Runtime-only.
+	EnvAttach *AttachV2 `json:"-"`
 	// EnvConfig are the v2 env.config knob overrides by scope ("all" /
 	// "node<N>"), each a list of dot-path "key=value". Runtime-only.
 	EnvConfig map[string][]string `json:"-"`

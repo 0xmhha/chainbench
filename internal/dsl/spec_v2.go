@@ -93,6 +93,39 @@ type EnvV2 struct {
 	// producer's binary and forks to the validators'. With it, Binaries names
 	// the two roles ("producer", "validator") rather than a default.
 	Upgrade *UpgradeV2 `json:"upgrade,omitempty"`
+	// Attach says this environment does not compose a network: it runs against
+	// one that is already up.
+	//
+	// Every other field above describes a network to build. Without this one a
+	// case could only ever say "compose this", and attaching existed solely as
+	// command-line flags — so a case that is only meaningful against a network
+	// somebody else set up had no way to say so, and `validate` could not tell
+	// the two apart.
+	//
+	// It is exclusive with the composition fields. A declaration that both
+	// builds a network and attaches to one has not said which network its
+	// assertions are about.
+	Attach *AttachV2 `json:"attach,omitempty"`
+}
+
+// AttachV2 names the running network an env attaches to.
+type AttachV2 struct {
+	// RPC are the endpoints, in the order a spec's node selectors address them.
+	// "${VAR:-default}" works here as it does for a binary, which is what keeps
+	// a machine's address out of a committed case.
+	RPC []string `json:"rpc"`
+	// KeysDir is the key set the running network was composed from. Without it
+	// a spec attached to a network cannot turn "node1" into an address — the
+	// run holds no key set of its own.
+	KeysDir string `json:"keysDir,omitempty"`
+	// Provides is what the running network offers, for capability-gated cases.
+	//
+	// Nothing composed this network, so nothing advertised anything about it;
+	// the operator who set it up is the only one who knows. It is "provides"
+	// and not "capabilities" for the reason genesis.provides is: the env's
+	// "capabilities" is a REQUIREMENT, and two opposite meanings under one word
+	// is how six cases came to skip forever.
+	Provides []string `json:"provides,omitempty"`
 }
 
 // AccountV2 is one declared test account.
@@ -661,6 +694,9 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if env.Chain == "" {
 		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
+	if err := checkAttach(c.ID, env); err != nil {
+		return Spec{}, err
+	}
 	// Timeout values are durations; reject an unparsable one here so a typo
 	// fails at parse time rather than being silently ignored at run time.
 	//
@@ -689,6 +725,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		Placement:        env.Target,
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
+		EnvAttach:        env.Attach,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the
@@ -1099,4 +1136,56 @@ func mergeEnv(base, over map[string]any) map[string]any {
 		base[k] = v
 	}
 	return base
+}
+
+// checkAttach holds an attaching env to saying only what attaching needs.
+//
+// The two forms are exclusive on purpose. Every composition field describes a
+// network to build, and a declaration that both builds one and attaches to
+// another has not said which network its assertions are about — it would build
+// a network, run nothing against it, and report on a different one. That is the
+// kind of wrong answer that reads as a pass.
+//
+// "chain" stays required. The direction recorded for this work was to read the
+// chain's identity over RPC after attaching, and that is still right, but it
+// cannot be done first: a spec that names a contract ("govMinter") needs the
+// chain's table before the first call, and the table comes from the manifest.
+func checkAttach(caseID string, env EnvV2) error {
+	if env.Attach == nil {
+		return nil
+	}
+	if len(env.Attach.RPC) == 0 {
+		return fmt.Errorf("dsl: case %s: env.attach needs \"rpc\" (the endpoints of the network to run against)", caseID)
+	}
+	for i, u := range env.Attach.RPC {
+		if strings.TrimSpace(u) == "" {
+			return fmt.Errorf("dsl: case %s: env.attach.rpc[%d] is empty", caseID, i)
+		}
+	}
+	var composing []string
+	for name, set := range map[string]bool{
+		"binaries":        len(env.Binaries) > 0,
+		"keys":            env.Keys != nil,
+		"blueprint":       env.Blueprint != "",
+		"genesis":         env.Genesis != nil,
+		"topology":        len(env.Topology) > 0,
+		"hardforks":       len(env.Hardforks) > 0,
+		"launch":          len(env.Launch) > 0,
+		"config":          len(env.Config) > 0,
+		"accounts":        len(env.Accounts) > 0,
+		"upgrade":         env.Upgrade != nil,
+		"target":          env.Target != "",
+		"manifest":        env.Manifest != "",
+		"genesisTemplate": env.GenesisTemplate != "",
+	} {
+		if set {
+			composing = append(composing, name)
+		}
+	}
+	if len(composing) > 0 {
+		sort.Strings(composing)
+		return fmt.Errorf("dsl: case %s: env.attach runs against a network that is already up, so it cannot also compose one — drop %s",
+			caseID, strings.Join(composing, ", "))
+	}
+	return nil
 }
