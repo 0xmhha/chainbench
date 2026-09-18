@@ -10,7 +10,41 @@
 
 ---
 
-## 1. 지금 막고 있는 것
+## 0. 상태 — 끝났다 (2026-09-18)
+
+**이 문서는 이제 계획이 아니라 기록이다.** §1·§3·§4 는 무엇을 하려 했는지이고,
+§2·§5·§6 이 무엇이 됐는지다.
+
+`internal/consensus/upgrade` 는 2,422줄에서 **118줄** 이 됐다. 남은 것은 하드포크
+preset 로더 하나다. 핸드오프 본체·계획·기동·메시·타깃 해석이 전부 없어졌고,
+`upgrade run`·`upgrade genesis` 명령과 `chainbench_upgrade` MCP 도구도 같이
+내렸다. 합쳐서 4,894줄이 지워졌다.
+
+하드포크는 이제 보통 경로로 구성된다. 선언 자리는 `env.upgrade` 하나이고,
+방식이 둘이다.
+
+| | concurrent | restart |
+|---|---|---|
+| 무엇이 바뀌나 | 누가 블록을 만드는가 | 어느 빌드가 도는가 |
+| 노드 | 두 빌드가 동시에 | 한 빌드씩, 시간에 따라 |
+| 포크 순간 | 후계자만 재기동 | 전부 재기동 |
+| 포크 설정 | genesis (기본) 또는 config | **config** (§2.3) |
+| 체인 | 둘 (wemix → wbft) | 하나 (stablenet boho) |
+
+**라이브 통과 케이스 넷.**
+
+```
+go-wemix/hardfork/01-croissant-successors-take-over            구성이 넘긴다
+go-wemix/hardfork/02-state-written-before-the-fork-survives-it 케이스가 넘긴다
+go-wemix/hardfork/03-two-producers-hand-over                   생산자 둘
+go-stablenet/hardfork/01-boho-crossed-by-restart               같은 체인, 빌드 교체
+```
+
+01 은 docker 서버셋 15대에도 올려 통과했다(§6).
+
+---
+
+## 1. 무엇이 막고 있었나 (착수 시점의 판정)
 
 워크리스트가 흡수를 막는다고 적었던 넷은 **전부 정리됐다**(§11.2.9~12). 셋은
 프로필이 **선택이 아니라 사실을 다시 적고** 있었고, 하나는 내가 거꾸로 읽었다.
@@ -91,7 +125,7 @@ config 파일의 genesis 섹션이 이기고, **genesis 블록 해시는 같아�
 config 의 포크 블록만 달라질 수 있다.** chainbench 의 config 렌더러는 아직
 `[Eth.Genesis]` 를 내지 않는다.
 
-### 지금 구현과 다른 점
+### 착수 시점의 구현과 다른 점
 
 **chainbench 의 핸드오프는 이 절차를 밟지 않는다.** croissant 를 처음부터
 genesis 에 넣고 한 번에 띄운다 — 중단도 재실행도 없다. 통과는 한다(블록 21-30 을
@@ -180,7 +214,28 @@ genesis 에 넣고 한 번에 띄운다 — 중단도 재실행도 없다. 통�
 거부를 하나 더 건다. `style: restart` 인데 `genesis.perBinary` 가 적혀 있으면
 받지 않는다. 이유는 §2.3 이다.
 
-### 2.3 restart 는 왜 genesis 가 하나인가 (체인 코드 확인)
+### 2.3 restart 의 포크 설정은 config 로 간다 (실측 2026-09-18)
+
+**두 번 틀리고 세 번째에 맞췄다.** 먼저 "config 파일이 유일한 길" 이라고 적었다가
+(틀렸다 — genesis 로도 간다, §2.3b), restart 에서는 아예 필요 없다고 했다가
+(틀렸다), 실측이 이유를 알려 줬다.
+
+**진짜 이유는 누가 `init` 했느냐다.** 포크를 모르는 빌드가 init 하면, 그 빌드가
+써 놓은 chain config 가 DB 에 남는다. **이후 모든 실행은 genesis.json 이 아니라
+그것을 읽는다** — genesis 문서는 빈 DB 에만 들어간다. 그래서 새 빌드로 갈아타도
+포크가 안 켜진다.
+
+go-stablenet 을 boho 커밋 앞뒤로 빌드해 재 봤다.
+
+```
+체인이 블록 202 까지 감
+저장된 chain config:  bohoBlock ABSENT
+govMinter:            v1 그대로
+```
+
+config 파일은 **매 실행마다 읽힌다.** 그것이 이미 init 된 노드에 닿는 길이다.
+
+### 2.3a 체인 코드에서 확인한 것 (읽음)
 
 **세 체인 저장소를 읽고 확인했다.** go-stablenet `core/genesis.go`
 `LoadChainConfigWithOverride`:
@@ -210,9 +265,6 @@ genesis 블록을 이루는 값은 그대로여야 하고, **chain config 의 �
 
 **런타임 플래그로는 안 된다.** `ChainOverrides` 에 `OverrideCancun` 과
 `OverrideVerkle` 뿐이라 boho·applepie·croissant 는 못 덮는다.
-
-**앞서 여기에 "config 파일이 유일한 길이다" 라고 적었는데 틀렸다.** 데이터
-디렉토리의 genesis 파일을 바꿔도 된다. 실측한 내용은 §2.3b 에 있다.
 
 그래서 restart 는 이렇게 돈다.
 
@@ -287,7 +339,7 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 
 ---
 
-## 3. 1,959줄이 어떻게 갈리나 (읽음)
+## 3. 1,959줄이 어떻게 갈리나 — 착수 시점의 예측 (읽음)
 
 | 파일 | 줄 | 판정 |
 |---|---|---|
@@ -299,11 +351,14 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 | `launch.go` | 53 | 사라진다 |
 | `target.go` | 약 240 | **남는다.** 오늘 만들었고 두 표면이 쓴다. 보통 경로의 배치 해석과 합칠 여지가 있다 |
 
-**이 표는 읽고 만든 것이다.** 각 항목은 4장의 순서를 밟으며 실제로 확인된다.
+**이 표는 읽고 만든 것이다.** 각 항목은 4장의 순서를 밟으며 실제로 확인됐고,
+**예측이 맞았다** — `profile.go` 만 남았고(158 → 118줄) 나머지는 전부 없어졌다.
+하나만 빗나갔다: `target.go` 를 "남는다" 로 봤는데, 그것을 쓰던 표면이 같이
+내려가면서 지워졌다.
 
 ---
 
-## 4. 순서 — 매 단계 끝에서 라이브로 통과해야 한다
+## 4. 순서 — 매 단계 끝에서 라이브로 통과해야 한다 (전부 완료)
 
 중간에 깨진 채로 있는 구간을 두지 않는다. 각 단계마다 §5 를 돌린다.
 
@@ -487,15 +542,10 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 
 ## 5. 라이브 검증 (실측 기준선)
 
-환경변수 셋이 있어야 돈다 — `GWEMIX_BIN`, `GWBFT_BIN`,
-**`GOWEMIX_TEMPLATE`**(go-wemix 의 `wemix/scripts/genesis-template.json`).
+### 5.0 흡수 전의 기준선 (2026-09-17, 역사)
 
-```
-go run ./cmd/chainbench run --workspace-dir <ws> --artifact-root <out> \
-  tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json
-```
-
-통과 기준선(2026-09-17 실측):
+전용 컴포저를 돌리던 시절의 것이다. 그 케이스도 컴포저도 없어졌으므로 재현할 수
+없고, 무엇을 지키며 옮겼는지를 말하기 위해 남긴다.
 
 ```
 launch:boot: 1 node(s) → deploy-governance → etcd-init → verify-etcd
@@ -504,19 +554,18 @@ await-fork: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4
 pass=1
 ```
 
-### 5.1 흡수 뒤의 기준선 (2026-09-18)
+### 5.1 흡수 뒤의 기준선 (2026-09-18, 현행)
 
-전용 컴포저가 없어졌으므로 기준선도 보통 경로의 것이다. 환경변수는 두 개면
-된다 — `GOWEMIX_TEMPLATE` 은 아무도 읽지 않는다(체인 플러그인이 자기 템플릿을
-들고 있다).
+보통 경로의 것이다. `GOWEMIX_TEMPLATE` 은 아무도 읽지 않는다 — 체인 플러그인이
+자기 템플릿을 들고 있다.
+
+**concurrent — 두 체인, 두 빌드가 동시에.**
 
 ```
 GWEMIX_BIN=... GWBFT_BIN=... go run ./cmd/chainbench run \
   --workspace-dir <ws> --artifact-root <out> \
   tests/tc/go-wemix/hardfork/*.json
 ```
-
-통과 기준선(실측):
 
 ```
 cross-fork: croissant at 20: head 19, 4 successor(s) now produce
@@ -525,6 +574,24 @@ cross-fork: croissant at 30: head 29, 4 successor(s) now produce
 02-state-written-before-the-fork-survives-it pass=1
 03-two-producers-hand-over                   pass=1
 ```
+
+**restart — 한 체인, 빌드를 갈아탄다.** 두 빌드가 필요하고, 만드는 법은 케이스
+description 에 적혀 있다(go-stablenet 의 `bf17c9607` 앞뒤).
+
+```
+GSTABLE_BIN=<gstable-ad0122> GSTABLE_POSTFORK_BIN=<gstable-740526> \
+  go run ./cmd/chainbench run --workspace-dir <ws> --artifact-root <out> \
+  tests/tc/go-stablenet/hardfork/01-boho-crossed-by-restart.json
+```
+
+```
+cross-fork: boho at 200: 4 node(s) relaunched on postfork at head 5, before the fork
+pass=1
+```
+
+**대조군도 같이 돌린다.** `GSTABLE_POSTFORK_BIN` 을 이전 빌드로 두면 망이 뜨지
+않아야 한다(`field 'BohoBlock' is not defined`). 통과하면 그 케이스는 새 빌드가
+필요하다는 것을 더는 증명하지 못한다.
 
 `chainbench upgrade run` 은 없어졌다. 두 표면이 같은 코드를 부르던 구조가 이
 트랙에서 계속 문제였고, 한쪽이 없어지면 그 값을 더는 내지 않는다.

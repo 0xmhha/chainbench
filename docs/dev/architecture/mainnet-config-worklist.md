@@ -1264,6 +1264,14 @@ deploy, await fork)가 phase 액션으로 다 표현되는지도 보지 않았�
 
 ### 11.2.8 `upgrade` 를 흡수할 수 있나 — 판정 (2026-09-17)
 
+> **완료 (2026-09-18).** 흡수했다. `internal/consensus/upgrade` 는 2,422줄에서
+> **118줄**(하드포크 preset 로더)이 됐고, `upgrade run`·`upgrade genesis` 명령과
+> `chainbench_upgrade` MCP 도구도 같이 내렸다 — 합쳐서 4,894줄. 하드포크는
+> `env.upgrade` 로 선언하고 보통 경로로 구성되며, 방식이 둘이다(concurrent /
+> restart). 라이브 케이스 넷이 통과하고, 그중 하나는 docker 서버셋 15대에도
+> 올렸다. 전 과정과 실측은
+> [`handoff-absorption-design.md`](handoff-absorption-design.md) §0 에 있다.
+
 **할 수 있다. 막는 것은 구조가 아니라 작고 구체적인 사실 넷이었고, 넷 다
 2026-09-17 에 정리됐다.** 남은 것은 §11.2.9 가 지목한 **config 단계** 하나다.
 
@@ -1535,7 +1543,7 @@ ConfigPath leaves the auth port to the file"), 그 override 들이 파일 쪽으
 
 | 순위 | 항목 | 크기 | 왜 이 자리인가 |
 |---|---|---|---|
-| **1** | **X11** repro 스크립트 3종 | 소 | 은퇴한 `net up` 을 부른다. 옮길지 지울지 **결정이 먼저다** |
+| **1** | **X11** repro 스크립트 3종 | 소 | 은퇴한 `net up` 을 부른다. 옮길지 지울지 **결정이 먼저다**. **2026-09-18 조사**: 깨진 것은 `stablenet-delayed-fork.sh`·`stablenet-account-extra.sh`·`stablenet-basefee-dynamics.sh` 셋이고, 셋 다 `tests/tc` 에 같은 주제의 DSL 케이스가 있다. 나머지 셋(`attach-external`·`wemix-chain`·`run-all`)은 은퇴한 명령을 안 부른다. `tests/e2e/README.md` 는 "이 스크립트들을 대체한다" 고 적는다 — **지우는 쪽이 근거가 있다** |
 | 2 | **H3-b** 비교값의 계정 라벨 14곳 | 소 | 못 풀 때 오류인지 그대로 두는지 **규칙 결정이 먼저다** |
 | 3 | **N1** attach 선언 | 대 | 신규 기능. P 묶음 뒤로 미뤄 둔 그대로다 |
 
@@ -1554,7 +1562,7 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 
 | 순위 | 항목 | 무엇 |
 |---|---|---|
-| 1 | **P5-L1** | 남은 게이트 35건 — `family:wbft` 14, 게이트 불필요 21. **방법은 증명됐다**: `--env <체인>` 으로 올려 통과/실패를 본다(P5-L2 에서 그대로 했다) |
+| 1 | **P5-L1** | 남은 게이트 35건 — `family:wbft` 14, 게이트 불필요 21. **방법은 증명됐다**: `--env <체인>` 으로 올려 통과/실패를 본다(P5-L2 에서 그대로 했다). **2026-09-18 재측정: `family:` 게이트는 이제 하나도 없다.** 현재 쓰이는 게이트는 `rpc` 208, `consensus` 45, `contract:*` 82, `process` 15, `engine:anzeon` 15, `fork:boho` 6, 기타 소수다. 이 항목의 35건 내역은 낡았으니 다시 세고 시작해야 한다 |
 | 2 | **X5 라이브 절반** | 기준선의 Stablenet 간헐 실패. **단발 실행으로는 판정 불가** — 기준선 자신이 재실행 PASS 를 기록한다. §B1~B6 의 동시 관측이 필요하다 |
 | 3 | **X14** | e2e 간헐 실패. **다음에 실패할 때** 문구를 잡아 분석한다 |
 | 4 | R2 → R3 → R5 → R4 → R6 | 실제 망 대응 |
@@ -1569,7 +1577,7 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 |---|---|
 | Z1 | 모든 테스트를 DSL 문법으로 (별도 트랙) |
 | Z3 + C2 | `V` 버전 표기 제거, v1 재정리, 주석 전수 감사 |
-| X9 | stablenet 매니페스트의 포크 목록. **go-stablenet 확인이 필요해 이 저장소만으로는 못 닫는다** |
+| ~~X9~~ | **완료 (2026-09-18).** go-stablenet 을 읽어 닫았다. 그 체인의 고유 포크는 `applepie` 와 `boho` 둘인데 매니페스트에는 `boho` 만 있었다. `applepie` 는 죽은 이름이 아니다 — `IsApplepie` 가 수수료 대납 tx 타입을 막는 게이트다(`core/state_transition.go`, `core/txpool/validation.go`). 매니페스트에 넣었다. **`fork:applepie` 를 요구하는 케이스는 아직 없다**: 수수료 대납 케이스 여섯은 `requires: ["rpc"]` 뿐이라, applepie 가 없는 망에서는 건너뛰지 않고 실패한다 |
 
 ### 11.6 라이브를 돌리는 전제 (2026-09-16 실측)
 

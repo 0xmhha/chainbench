@@ -17,6 +17,7 @@
     "engine_field": "anzeon",
     "hardforks": [
       "istanbul",
+      "applepie",
       "boho"
     ],
     "template": "stablenet"
