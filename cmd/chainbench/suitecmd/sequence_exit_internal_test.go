@@ -45,7 +45,7 @@ func TestSequenceExit_MapsTheThreeOutcomesToCodes(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := sequenceExit(app.RunSuitesOut{Runs: tc.runs})
+			err := sequenceExit(app.RunSuitesOut{Runs: tc.runs}, false)
 			if tc.want == 0 {
 				if err != nil {
 					t.Fatalf("a clean sequence must not error: %v", err)
@@ -63,5 +63,38 @@ func TestSequenceExit_MapsTheThreeOutcomesToCodes(t *testing.T) {
 				t.Fatalf("exit code = %d, want %d (%v)", ec.Code, tc.want, err)
 			}
 		})
+	}
+}
+
+// TestSequenceExit_ASkipIsOnlyAFailureWhenTheCallerSaysSo.
+//
+// A skipped case asked for something the network does not offer and was never
+// run, so by default it is neither a pass nor a failure and the run exits 0.
+//
+// That is wrong for a run whose whole point is that the cases were eligible —
+// one that boots a network with a capability precisely so the cases gated on it
+// will run. A silent skip there means the capability never reached them, and
+// the run reports pass=0 skip=N and exits 0. Three repro scripts each carried
+// their own guard against exactly that; --no-skips is that guard, once.
+func TestSequenceExit_ASkipIsOnlyAFailureWhenTheCallerSaysSo(t *testing.T) {
+	skipped := func(n int) app.RunSuitesOut {
+		var r app.SuiteRunResult
+		r.Out.Summary.Summary.Skip = n
+		return app.RunSuitesOut{Runs: []app.SuiteRunResult{r}}
+	}
+	if err := sequenceExit(skipped(2), false); err != nil {
+		t.Errorf("a skip is not a failure by default: %v", err)
+	}
+	err := sequenceExit(skipped(2), true)
+	if err == nil {
+		t.Fatal("--no-skips accepted a run that skipped everything")
+	}
+	var ec *exitcode.Error
+	if !errors.As(err, &ec) || ec.Code != 2 {
+		t.Errorf("a run that answered nothing maps to 2, got %v", err)
+	}
+	// And a clean run is still clean with the flag on.
+	if err := sequenceExit(skipped(0), true); err != nil {
+		t.Errorf("--no-skips failed a run that skipped nothing: %v", err)
 	}
 }

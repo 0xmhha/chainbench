@@ -56,6 +56,22 @@ func (o RunSuitesOut) Totals() (setupErrors, failed, blocked int) {
 	return setupErrors, failed, blocked
 }
 
+// Skipped is how many tests across the run were not eligible.
+//
+// It is counted apart from the others because a skip is not a verdict: the case
+// asked for something the network does not offer and was never run. A caller
+// who booted the network FOR those cases wants that counted as a failure (see
+// the run command's --no-skips), and everyone else wants it ignored.
+func (o RunSuitesOut) Skipped() int {
+	skipped := 0
+	for _, r := range o.Runs {
+		if r.Err == "" {
+			skipped += r.Out.Summary.Summary.Skip
+		}
+	}
+	return skipped
+}
+
 // Failed reports whether anything went wrong, for a caller that needs only the
 // verdict and not the breakdown.
 func (o RunSuitesOut) Failed() bool {

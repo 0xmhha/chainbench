@@ -55,6 +55,7 @@ func NewRun() *cobra.Command {
 		launchOpts      []string
 		dashboardURL    string
 		jsonOut         bool
+		noSkips         bool
 		workspaceDir    string
 		workspaceConfig string
 		keepUp          bool
@@ -81,11 +82,11 @@ func NewRun() *cobra.Command {
 				// composition advertised, which is what lets a gated spec run
 				// against the network the operator set up rather than a fresh
 				// one built to satisfy the gate.
-				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut)
+				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			case len(rpcURLs) > 0 && workspaceDir != "":
 				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc (use --attach to run against the network it already composed)")
 			case len(rpcURLs) > 0:
-				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut)
+				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			case workspaceDir == "":
 				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
 			}
@@ -120,9 +121,9 @@ func NewRun() *cobra.Command {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
 				// preflight decides whether to reuse it.
-				return runComposedSequence(cmd, in, jsonOut)
+				return runComposedSequence(cmd, in, jsonOut, noSkips)
 			}
-			return runComposed(cmd, in, jsonOut)
+			return runComposed(cmd, in, jsonOut, noSkips)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
@@ -154,6 +155,10 @@ func NewRun() *cobra.Command {
 		"compose: the server set's hosts are local docker containers — translate this tool's dials via the localmap next to the server set (addresses only; docker itself is untouched)")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "attach: chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
+	cmd.Flags().BoolVar(&noSkips, "no-skips", false,
+		"treat a skipped case as a failure — for a run whose point is that the cases were ELIGIBLE, "+
+			"such as one booting a network with a capability the cases gate on. A silent skip there means the "+
+			"capability never reached them, and the run says pass=0 skip=N and exits 0 without it")
 	return cmd
 }
 
@@ -178,7 +183,7 @@ func defaultArtifactRoot() string {
 //
 // The reading, the engine and the event stream all live in app: this is the
 // binding and the rendering, which is all a surface owes.
-func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
+func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -192,7 +197,7 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	if err != nil {
 		return err
 	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut)
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
 }
 
 // runAttachWorkspace runs the specs against the network a workspace composed.
@@ -203,7 +208,7 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 // the proposal-expiry regression needs "short-expiry", granted by a genesis
 // overlay — can only run this way. Given endpoints alone the gate has nothing
 // to check against and the spec skips.
-func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
+func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -217,12 +222,12 @@ func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, 
 	if err != nil {
 		return err
 	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut)
+	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
 }
 
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
-func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
 	// Under --json the whole of stdout is the document; the setup narration is
 	// progress, so it goes to stderr. Without it, both share stdout as before.
 	notes := progressWriter(cmd, jsonOut)
@@ -236,7 +241,7 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 	if err != nil {
 		return setupFailure(cmd.OutOrStdout(), err, jsonOut)
 	}
-	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut)
+	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut, noSkips)
 }
 
 // setupFailure reports a run that never got as far as a session.
@@ -277,7 +282,7 @@ func progressWriter(cmd *cobra.Command, jsonOut bool) io.Writer {
 // same path a single one takes, and prints each definition's setup, preflight
 // and session under its own heading. It ends with one line per definition so a
 // long run's outcome is readable without scrolling back.
-func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
 	notes := progressWriter(cmd, jsonOut)
 	res, err := app.RunSuites(cmd.Context(), surface.Deps(cmd), in)
 	if err != nil {
@@ -305,7 +310,7 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) er
 		if r.Err == "" {
 			// A failed definition is reported in the tally below, so its own
 			// verdict must not stop the remaining ones from printing.
-			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false)
+			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false, false)
 		}
 	}
 
@@ -327,7 +332,7 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) er
 			fmt.Fprintf(cmd.OutOrStdout(), "%d. %s — %s\n", i+1, r.Spec, status)
 		}
 	}
-	return sequenceExit(res)
+	return sequenceExit(res, noSkips)
 }
 
 // sequenceRunReport is one definition's entry in the --json document. It carries
@@ -348,8 +353,12 @@ type sequenceReport struct {
 // 1 a test failed, 2 blocked or an infrastructure error. A definition that could
 // not run at all is infrastructure, which outranks a plain test failure — losing
 // that distinction is what a single generic error did.
-func sequenceExit(res app.RunSuitesOut) error {
+func sequenceExit(res app.RunSuitesOut, noSkips bool) error {
 	setupErrors, failed, blocked := res.Totals()
+	if skipped := res.Skipped(); noSkips && skipped > 0 {
+		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
+			"run: %d test(s) skipped and --no-skips was given — the run answered nothing about them", skipped)}
+	}
 	switch {
 	case setupErrors > 0 || blocked > 0:
 		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
@@ -363,7 +372,7 @@ func sequenceExit(res app.RunSuitesOut) error {
 
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
-func printSession(out io.Writer, root string, jsonOut bool) error {
+func printSession(out io.Writer, root string, jsonOut, noSkips bool) error {
 	doc, err := app.SessionSummary(root)
 	if err != nil {
 		return err
@@ -386,6 +395,14 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 		}
 		fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
 			doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
+	}
+	// A skip is not a failure, and with --no-skips it is: the caller said the
+	// point of this run was that the cases could run at all. It maps to 2 for
+	// the same reason blocked does — the run answered nothing, which is a
+	// different thing from answering "no".
+	if noSkips && doc.Summary.Skip > 0 {
+		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
+			"run: %d test(s) skipped and --no-skips was given — the run answered nothing about them", doc.Summary.Skip)}
 	}
 	if doc.Failed() {
 		// Blocked/infrastructure errors are more severe than a plain test
