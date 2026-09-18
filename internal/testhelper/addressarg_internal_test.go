@@ -14,21 +14,29 @@ import (
 // addressShapedKeys are the argument names that hold an account or a contract.
 // A spec may write a name in any of them, so whatever reads one has to resolve
 // it before use.
+//
+// "expected" and "params" joined the list when the comparison side was opened
+// to labels. They are not address-ONLY — both carry numbers, hex and block tags
+// too, and an element that does not resolve is left alone — but that is a rule
+// about what resolving does, not about who has to call it. Both were being read
+// straight off the spec by four assertions, one of which resolved the spec
+// first and then read the unresolved original anyway.
 var addressShapedKeys = map[string]bool{
 	"to": true, "address": true, "from": true, "deployer": true, "funder": true,
+	"expected": true, "params": true,
 }
 
 // resolvers are the functions that turn a written name into an address. funder
 // counts: it resolves "from" through ResolveAccount on the caller's behalf.
 var resolvers = map[string]bool{
 	"ResolveAccount": true, "ResolveAddress": true,
-	"resolveAddressArgs": true, "resolveAddressList": true, "funder": true,
+	"resolveAddressArgs": true, "resolveNames": true, "funder": true,
 }
 
 // alwaysResolved are the resolvers themselves: they read the keys in order to
 // resolve them.
 var alwaysResolved = map[string]bool{
-	"resolveAddressArgs": true, "resolveAddressList": true,
+	"resolveAddressArgs": true, "resolveNames": true,
 	"ResolveAccount": true, "ResolveAddress": true,
 }
 

@@ -92,7 +92,7 @@
       "source": "rpcCall",
       "method": "eth_getBalance",
       "params": [
-        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "node1",
         "0x1"
       ],
       "save": "preallocPreBoho"
@@ -101,7 +101,7 @@
       "expect": "rpc",
       "method": "eth_getBalance",
       "params": [
-        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "node1",
         "latest"
       ],
       "compare": "Equal",

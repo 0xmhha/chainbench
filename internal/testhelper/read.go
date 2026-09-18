@@ -244,7 +244,10 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if !ok {
 		return fmt.Errorf("dsl: waitFor: unknown comparator %q", op)
 	}
-	expected := ac.Args["expected"]
+	// From the resolved copy, not from ac.Args. Resolving and then reading the
+	// original is the shape that made "to": "govMinter" work in an assertion and
+	// die in sendTx — the work is done and thrown away.
+	expected := args["expected"]
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -354,7 +357,16 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}
-	expected := ac.Spec["expected"]
+	// Once, before the loop. resolveAddressArgs does not modify its input, so
+	// the per-target call inside the loop was resolving the same spec again and
+	// — because "expected" was read from ac.Spec — leaving the compared value
+	// unresolved however many times it ran.
+	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
+	}
+	expected := spec["expected"]
 	res.Expected = expected
 
 	targets := assertTargets(ac)
@@ -372,11 +384,6 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
-		}
-		spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
-		if rerr != nil {
-			res.Pass, res.Actual = false, rerr.Error()
-			return res, rerr
 		}
 		actual, err := a.read(ctx, c, spec)
 		if err != nil {

@@ -132,12 +132,16 @@ func contractsOf(chain string) map[string]string {
 }
 
 // stepKeys mark a map as a step. Only steps are resolved, because only steps
-// are what the resolver is handed at run time: an address inside "params" is
-// raw JSON-RPC and stays a literal.
+// are what the resolver is handed at run time.
 var stepKeys = []string{"do", "expect"}
 
 // opaqueKeys are the values the resolver never walks into, so neither does this.
-var opaqueKeys = []string{"params", "args", "is", "expected", "env", "hooks"}
+//
+// "params", "is" and "expected" used to be here, on the ground that an address
+// inside raw JSON-RPC stays a literal. That stopped being true when the
+// comparison side was opened to labels, and a record that still skipped them
+// would not have noticed the substitution it exists to check.
+var opaqueKeys = []string{"args", "env", "hooks"}
 
 // addressesIn resolves every address position in the document and returns them
 // as "<step path>\t<key>\t<address>" lines.
@@ -240,20 +244,46 @@ func positionsOf(raw, resolved map[string]any, path string, declared map[string]
 		}
 		out = append(out, fmt.Sprintf("%s\t%s\t%s", path, key, normalizeAddr(resolved[key])))
 	}
-	for _, key := range addressListArgs {
-		list, ok := resolved[key].([]any)
+	for _, key := range append(append([]string{}, addressListArgs...), valueArgs...) {
+		v, ok := resolved[key]
 		if !ok {
 			continue
 		}
-		for i, v := range list {
-			s, isStr := v.(string)
-			if !isStr || !addressLiteral.MatchString(s) {
-				continue
-			}
-			out = append(out, fmt.Sprintf("%s\t%s[%d]\t%s", path, key, i, normalizeAddr(s)))
-		}
+		out = append(out, addressesUnder(v, path+"\t"+key)...)
 	}
 	return out
+}
+
+// addressesUnder records every address anywhere inside a value, keyed by the
+// path that reaches it. The resolver walks lists and objects, so this does too:
+// recording only the top level would miss the one inside the transaction object
+// eth_createAccessList takes.
+func addressesUnder(v any, path string) []string {
+	switch t := v.(type) {
+	case string:
+		// An address, not merely something starting with 0x. These positions
+		// also carry block numbers and calldata blobs, and recording those
+		// would churn the file on every unrelated edit while saying nothing
+		// about which account a name points at.
+		if !addressLiteral.MatchString(t) || len(t) != 42 {
+			return nil
+		}
+		return []string{path + "\t" + normalizeAddr(t)}
+	case []any:
+		var out []string
+		for i, e := range t {
+			out = append(out, addressesUnder(e, fmt.Sprintf("%s[%d]", path, i))...)
+		}
+		return out
+	case map[string]any:
+		var out []string
+		for _, k := range sortedKeys(t) {
+			out = append(out, addressesUnder(t[k], path+"."+k)...)
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 // normalizeAddr lowercases an address so the record compares identity rather

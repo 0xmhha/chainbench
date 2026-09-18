@@ -22,20 +22,25 @@
     {
       "expect": "rpc",
       "method": "eth_getBlockByNumber",
-      "params": ["0x15", false],
+      "params": [
+        "0x15",
+        false
+      ],
       "select": "miner",
       "compare": "In",
       "is": [
-        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
-        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
-        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
-        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+        "node1",
+        "node2",
+        "node3",
+        "node4"
       ]
     },
     {
       "expect": "rpc",
       "method": "istanbul_getValidators",
-      "params": ["latest"],
+      "params": [
+        "latest"
+      ],
       "compare": "Len",
       "is": 4
     }

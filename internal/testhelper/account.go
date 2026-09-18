@@ -159,6 +159,12 @@ func knownContracts(d *interp.Deps) string {
 // reserved name included so a reader learns it exists at the moment they need
 // it.
 func knownLabels(d *interp.Deps) []string {
+	// A run with no key set is ordinary (attach mode, a unit test); building the
+	// error message must not be the thing that crashes. ResolveAddress already
+	// guards the lookup itself, so only this half was left dereferencing.
+	if d == nil || d.Keys == nil {
+		return []string{"no key set for this run"}
+	}
 	labels := d.Keys.Labels()
 	out := make([]string, 0, len(labels)+1)
 	for _, l := range labels {
@@ -205,6 +211,24 @@ var signerArgs = []string{"from", "deployer", "funder"}
 // expected. Resolving here can only turn what was an error into an address.
 var addressListArgs = []string{"of"}
 
+// valueArgs are the arguments that hold a value a spec COMPARES against, and
+// the raw JSON-RPC argument list.
+//
+// They take the same rule as "of" — resolve a name the key set knows, leave
+// everything else exactly as written — for the same reason: they legitimately
+// carry numbers, hex, booleans, block tags and already-substituted bindings, so
+// a failure to resolve is not a mistake here.
+//
+// It is the rule and not the position that does the work. A raw params list
+// puts the address wherever the method wants it (eth_getBalance first,
+// eth_createAccessList inside the transaction object), so nothing here knows
+// which slot to look at — and nothing has to. "node1" cannot be a block tag, a
+// quantity or a hash, so a value that resolves was meant as an account.
+//
+// Walking into nested lists and objects is what reaches the transaction object
+// eth_createAccessList takes.
+var valueArgs = []string{"expected", "params"}
+
 // resolveAddressArgs returns spec with every address-shaped argument resolved,
 // leaving everything else untouched. The input map is not modified: a spec is
 // read more than once (an assertion runs against each target node), and
@@ -244,12 +268,12 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 		copyOnce()
 		out[key] = addr
 	}
-	for _, key := range addressListArgs {
-		list, ok := spec[key].([]any)
+	for _, key := range append(addressListArgs, valueArgs...) {
+		v, ok := spec[key]
 		if !ok {
 			continue
 		}
-		resolved, changed := resolveAddressList(d, list)
+		resolved, changed := resolveNames(d, v)
 		if !changed {
 			continue
 		}
@@ -262,25 +286,64 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 	return out, nil
 }
 
-// resolveAddressList resolves the account labels in a value list, reporting
-// whether any element changed so an unchanged list is not copied.
+// resolveNames returns v with every name the key set or the chain's contract
+// table knows replaced by its address, reporting whether anything changed so an
+// unchanged value is not copied.
 //
-// A failure to resolve is not an error here: see addressListArgs.
-func resolveAddressList(d *interp.Deps, list []any) ([]any, bool) {
-	var out []any
-	for i, v := range list {
-		ref, ok := v.(string)
-		if !ok || ref == "" || addressLiteral.MatchString(ref) {
-			continue
+// It walks lists and objects because the address is not always at the top: a
+// params list holds it where the method wants it, and eth_createAccessList puts
+// it inside a transaction object. Nothing here decides which position is an
+// address — only whether the string resolves.
+//
+// A failure to resolve is not an error: see addressListArgs and valueArgs. The
+// input is never modified; a spec is read more than once.
+func resolveNames(d *interp.Deps, v any) (any, bool) {
+	switch t := v.(type) {
+	case string:
+		if t == "" || addressLiteral.MatchString(t) {
+			return v, false
 		}
-		addr, err := ResolveAddress(d, ref)
+		addr, err := ResolveAddress(d, t)
 		if err != nil {
-			continue
+			return v, false
+		}
+		return addr, true
+	case []any:
+		var out []any
+		for i, e := range t {
+			r, changed := resolveNames(d, e)
+			if !changed {
+				continue
+			}
+			if out == nil {
+				out = append(out, t...)
+			}
+			out[i] = r
 		}
 		if out == nil {
-			out = append(out, list...)
+			return v, false
 		}
-		out[i] = addr
+		return out, true
+	case map[string]any:
+		var out map[string]any
+		for k, e := range t {
+			r, changed := resolveNames(d, e)
+			if !changed {
+				continue
+			}
+			if out == nil {
+				out = make(map[string]any, len(t))
+				for kk, vv := range t {
+					out[kk] = vv
+				}
+			}
+			out[k] = r
+		}
+		if out == nil {
+			return v, false
+		}
+		return out, true
+	default:
+		return v, false
 	}
-	return out, out != nil
 }

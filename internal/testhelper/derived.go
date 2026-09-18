@@ -63,6 +63,10 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
+	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	if aerr != nil {
+		return aerr
+	}
 	event, _ := ac.Args["event"].(string)
 	if event == "" {
 		event = "logs"
@@ -75,7 +79,7 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if filter != nil {
 		params = append(params, filter)
 	}
-	if extra, ok := ac.Args["params"].([]any); ok {
+	if extra, ok := args["params"].([]any); ok {
 		params = append(params, extra...)
 	}
 	sub, err := rpc.Subscribe(ctx, wsURL, params...)
@@ -329,15 +333,20 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	if event == "" {
 		event = "newHeads"
 	}
+	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
+	}
 	params := []any{event}
-	if extra, ok := ac.Spec["params"].([]any); ok {
+	if extra, ok := spec["params"].([]any); ok {
 		params = append(params, extra...)
 	}
 	want := 1
 	if n, ok := uintArg(ac.Spec["count"]); ok && n > 0 {
 		want = int(n)
 	}
-	res.Expected = ac.Spec["expected"]
+	res.Expected = spec["expected"]
 	if res.Expected == nil {
 		res.Expected = strconv.Itoa(want)
 	}

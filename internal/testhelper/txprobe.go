@@ -48,7 +48,12 @@ type txMinedAssertion struct{}
 
 func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertTxMined, Provenance: ac.Spec, Pass: true}
-	expected := ac.Spec["expected"]
+	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
+	}
+	expected := spec["expected"]
 	res.Expected = expected
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -350,8 +355,13 @@ func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 		return res, err
 	}
 	res.Expected = method + " is a registered method"
+	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
+	}
 	var params []any
-	if raw, ok := ac.Spec["params"].([]any); ok {
+	if raw, ok := spec["params"].([]any); ok {
 		params = raw
 	}
 	targets := assertTargets(ac)
