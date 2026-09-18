@@ -329,6 +329,11 @@ type NetForkOut struct {
 	// the fork block and stops there. After the handover they stay where they
 	// stopped: they cannot validate what the successors produce.
 	PreFork []int `json:"preFork,omitempty"`
+	// HaltsAt is the block this network's genesis makes it stop one short of,
+	// and 0 when it keeps producing. A network can halt without crossing a
+	// fork — a genesis naming a system-contract version the build does not have
+	// is one — so it is answered even when Fork is nil.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
 }
 
 // NetFork reads the hardfork a composition is built to cross.
@@ -342,6 +347,7 @@ func NetFork(_ context.Context, d Deps, in NetForkIn) (NetForkOut, error) {
 	}
 	var out NetForkOut
 	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		out.HaltsAt = ws.state.HaltsAt
 		out.Fork = ws.state.Fork
 		if out.Fork == nil {
 			return "", nil

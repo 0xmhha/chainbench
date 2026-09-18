@@ -207,7 +207,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if err != nil {
 		return composition{}, err
 	}
-	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay, spec.Chain.GenesisProvides)
+	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay, spec.Chain.GenesisProvides, spec.Chain.GenesisHaltsAt)
 	if err != nil {
 		return composition{}, err
 	}
@@ -714,8 +714,8 @@ func hardforkSets(forks map[string]int) []string {
 // overlays from: a file under the workspace, written through the file seam
 // like everything else the workspace holds. No overlay writes nothing and
 // returns no path.
-func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, provides []string) (string, error) {
-	if len(overlay) == 0 && len(provides) == 0 {
+func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, provides []string, haltsAt int64) (string, error) {
+	if len(overlay) == 0 && len(provides) == 0 && haltsAt == 0 {
 		return "", nil
 	}
 	// The same {capabilities, genesis} document `chain up --genesis-overlay`
@@ -725,6 +725,9 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, p
 	doc := map[string]any{"genesis": overlay}
 	if len(provides) > 0 {
 		doc["capabilities"] = provides
+	}
+	if haltsAt > 0 {
+		doc["haltsAt"] = haltsAt
 	}
 	b, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
@@ -835,7 +838,7 @@ func writeOverlays(ctx context.Context, dataDir string, per map[string]map[strin
 	}
 	out := make(map[string]string, len(per))
 	for _, name := range slices.Sorted(maps.Keys(per)) {
-		path, err := writeOverlay(ctx, dataDir, per[name], nil)
+		path, err := writeOverlay(ctx, dataDir, per[name], nil, 0)
 		if err != nil {
 			return nil, fmt.Errorf("binary %s: %w", name, err)
 		}

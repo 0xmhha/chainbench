@@ -297,6 +297,19 @@ type GenesisV2 struct {
 	// capability there ended up requiring something no network offered and
 	// skipped forever.
 	Provides []string `json:"provides,omitempty"`
+	// HaltsAt is the block this genesis makes the network stop one short of,
+	// and 0 for a genesis that keeps producing.
+	//
+	// A network is gated ready by "is it advancing", and for a chain that is
+	// meant to stop that question has the wrong answer. Declaring an
+	// unsupported system-contract version is exactly such a chain: it seals up
+	// to the block before the fork, refuses that one, and the gate then waits
+	// out its whole budget and reports a correct network as unfit — the case
+	// could not start, which is not the same as failing.
+	//
+	// Saying it here makes standing at haltsAt-1 a ready network, the way a
+	// hardfork's handover block already does.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
 	// PerBinary is, per binary name (the keys "binaries" declares), what that
 	// binary's own genesis needs on top of the network's, in the same two forms
 	// the network's genesis takes.
@@ -746,6 +759,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 				spec.Chain.GenesisOverlay = overlay
 			}
 			spec.Chain.GenesisProvides = g.Provides
+			spec.Chain.GenesisHaltsAt = g.HaltsAt
 			for name, side := range g.PerBinary {
 				if _, ok := env.Binaries[name]; !ok {
 					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)

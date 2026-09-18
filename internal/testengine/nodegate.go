@@ -36,8 +36,15 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 	return factsFromReport(rep, o.nodes, o.fork), nil
 }
 
-// forkGate is what the readiness gate has to know about a network composed to
-// cross a hardfork: where the fork is, and which nodes hand over at it.
+// forkGate is what the readiness gate has to know about a network that stops on
+// purpose: where it stops, and which nodes hand over there.
+//
+// Two things put a network in that shape. One is a hardfork: the pre-fork build
+// refuses to seal the fork block and the successors take over. The other is a
+// genesis the build cannot execute past — one naming a system-contract version
+// it does not have — where the chain seals up to that block and stays. The gate
+// treats them alike because from the outside they are alike; only the second
+// has no successor, which is a preFork set with nothing in it.
 //
 // Such a network passes through two states no other network has, and in both of
 // them the ordinary question — is every node keeping up? — has the wrong answer.
@@ -48,7 +55,8 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 // The zero value is a network that crosses no fork, and every check below is
 // then inert.
 type forkGate struct {
-	// at is the block the fork activates on.
+	// at is the block the network stops one short of: the fork's activation
+	// block, or the block a halting genesis cannot commit.
 	at int64
 	// preFork are the node indices running the build that hands over.
 	preFork map[int]bool

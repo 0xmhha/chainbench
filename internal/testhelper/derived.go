@@ -424,6 +424,12 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 // op (sum | diff), of (values or "$bindings"; hex 0x or decimal strings, or
 // numbers). diff subtracts the rest from the first. The result is a decimal
 // string, comparable with the numeric assert primitives.
+//
+// format: "hex" returns a 0x-hex quantity instead. A block-scoped RPC method
+// takes its block as 0x-hex and rejects a decimal string, so without it a spec
+// could read a receipt's block number but not ask anything about the block
+// after it — which is the only way to check a rule stated over a block and its
+// child, such as the base fee an in-band block hands on unchanged.
 func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)
 	if op == "abiCall" {
@@ -458,7 +464,17 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum or diff)", op)
 		}
 	}
-	return acc.String(), nil
+	switch f, _ := spec["format"].(string); f {
+	case "", "dec":
+		return acc.String(), nil
+	case "hex":
+		if acc.Sign() < 0 {
+			return nil, fmt.Errorf("dsl: derive: format hex needs a non-negative result, got %s", acc)
+		}
+		return "0x" + acc.Text(16), nil
+	default:
+		return nil, fmt.Errorf("dsl: derive: unknown format %q (want dec or hex)", f)
+	}
 }
 
 // deriveQuorum computes the BFT quorum ceil(2n/3) for a validator count n — the
@@ -484,14 +500,24 @@ func deriveQuorum(spec map[string]any) (any, error) {
 	return new(big.Int).Div(num, big.NewInt(3)).String(), nil
 }
 
-// deriveAbiCall builds contract calldata from a 4-byte selector and a list of
-// scalar arguments, each ABI-encoded as a left-padded 32-byte word. It closes
-// the governance gap the migration ledger recorded: approve/execute calldata
-// splices a proposalId that is only known at run time (extracted from a
-// ProposalCreated log via the receiptLog source) into the call. Addresses and
-// uint256 both encode as a right-aligned 32-byte word, so both flow through
-// parseBigValue. Spec: op ("abiCall"), selector (0x + 8 hex chars), of (the
-// argument values or "$bindings"). The result is 0x-hex calldata for sendTx.
+// deriveAbiCall builds contract calldata from a 4-byte selector and an argument
+// list. It closes the governance gap the migration ledger recorded:
+// approve/execute calldata splices a proposalId that is only known at run time
+// (extracted from a ProposalCreated log via the receiptLog source) into the
+// call. Addresses and uint256 both encode as a right-aligned 32-byte word, so
+// both flow through parseBigValue.
+//
+// An argument written as {"bytes": "0x…"} is a dynamic `bytes` instead: an
+// offset in the head, length and padded data in the tail. Without it a case
+// could not call configureValidator(address, bytes blsKey, bytes blsSig) at
+// all — the one call that puts a node in the consensus validator set — and the
+// only way to reach such a signature was to paste a whole hand-encoded blob,
+// which is how 05-burn-expire-refundable ended up one byte short of a word
+// boundary and reverting.
+//
+// Spec: op ("abiCall"), selector (0x + 8 hex chars), of (the argument values,
+// "$bindings", or {"bytes": …} entries). The result is 0x-hex calldata for
+// sendTx.
 func deriveAbiCall(spec map[string]any) (any, error) {
 	sel := strings.TrimPrefix(strings.TrimSpace(fmt.Sprint(spec["selector"])), "0x")
 	if len(sel) != 8 {
@@ -508,6 +534,12 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 	if raw, ok := spec["of"].([]any); ok {
 		args = make([]accounts.Arg, 0, len(raw))
 		for i, v := range raw {
+			if b, ok, err := abiBytesArg(v); err != nil {
+				return nil, fmt.Errorf("dsl: derive abiCall: of[%d]: %w", i, err)
+			} else if ok {
+				args = append(args, b)
+				continue
+			}
 			n, err := parseBigValue(v)
 			if err != nil {
 				return nil, fmt.Errorf("dsl: derive abiCall: of[%d]: %w", i, err)
@@ -519,6 +551,31 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 		}
 	}
 	return "0x" + hex.EncodeToString(append(selBytes, accounts.EncodeABI(args...)...)), nil
+}
+
+// abiBytesArg reads one {"bytes": "0x…"} entry of an abiCall argument list. It
+// reports false for anything else so the caller falls through to the scalar
+// path; a value under the key that is not whole hex bytes is an error rather
+// than a silent skip, because a truncated key encodes fine and only fails in
+// the contract.
+func abiBytesArg(v any) (accounts.Arg, bool, error) {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return accounts.Arg{}, false, nil
+	}
+	raw, ok := m["bytes"]
+	if !ok {
+		return accounts.Arg{}, false, nil
+	}
+	h := strings.TrimPrefix(strings.TrimSpace(fmt.Sprint(raw)), "0x")
+	if len(h)%2 != 0 {
+		return accounts.Arg{}, false, fmt.Errorf("bytes value has an odd number of hex digits (%d)", len(h))
+	}
+	b, err := hex.DecodeString(h)
+	if err != nil {
+		return accounts.Arg{}, false, fmt.Errorf("bytes value is not hex: %w", err)
+	}
+	return accounts.Bytes(b), true, nil
 }
 
 // deriveWord extracts the index-th 32-byte (64-hex) word from a 0x-hex blob —

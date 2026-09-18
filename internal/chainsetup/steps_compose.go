@@ -725,6 +725,10 @@ type GenesisOpts struct {
 	// Capabilities are advertised alongside the network so capability-gated
 	// cases run — an overlay declares what it enables.
 	Capabilities []string
+	// HaltsAt is the block this genesis makes the network stop one short of, 0
+	// for one that keeps producing. It is recorded so the readiness gate reads
+	// a chain that is meant to stop as ready instead of waiting it out.
+	HaltsAt int64
 	// Existing is a reference to a finished genesis file used verbatim (genesis
 	// mode "existing"): the file is read on its machine and written to each
 	// target, instead of building one from a template. Overrides/Overlay do not
@@ -923,6 +927,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), opts)
+	w.state.HaltsAt = opts.HaltsAt
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
 	if opts.ChainID != 0 {

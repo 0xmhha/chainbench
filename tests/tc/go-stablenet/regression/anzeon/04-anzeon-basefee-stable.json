@@ -13,21 +13,100 @@
       "timeout": "60s"
     },
     {
-      "do": "read",
-      "source": "baseFee",
-      "save": "bf0"
-    },
-    {
       "do": "load",
       "from": "node1",
       "fillPercent": 10,
       "blocks": 6,
+      "timeout": "60s",
+      "save": "burnHash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$burnHash"
+      ],
+      "select": "blockNumber",
+      "save": "loadedBlock"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$loadedBlock",
+        "1"
+      ],
+      "format": "hex",
+      "save": "nextBlock"
+    },
+    {
+      "do": "waitBlock",
+      "target": "$nextBlock",
       "timeout": "60s"
     },
     {
-      "expect": "baseFee",
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$loadedBlock",
+        false
+      ],
+      "select": "gasUsed",
+      "save": "usedAt"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$loadedBlock",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "bfAt"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$nextBlock",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "bfNext"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$usedAt"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "1200001"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$usedAt"
+      ],
+      "compare": "LessOrEqual",
+      "is": "4000000"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$bfNext",
+        "$bfAt"
+      ],
       "compare": "Equal",
-      "is": "$bf0"
+      "is": "0"
     }
-  ]
+  ],
+  "description": "RT-A-04 — 사용량이 안정 구간(6% < 사용량 ≤ 20%) 인 블록은 base fee 를 그대로 다음 블록에 넘긴다. 부하를 건 뒤 마지막 소각 트랜잭션이 담긴 블록과 그 다음 블록을 짝으로 견준다. \"부하를 걸고 나중에 한 번 읽는\" 방식은 사이에 빈 블록이 하나만 끼어도 2% 씩 떨어져 어긋난다 (빈 블록은 사용량 0 이라 하락 구간이다). 짝으로 보면 그 경합이 사라진다."
 }

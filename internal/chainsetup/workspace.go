@@ -145,6 +145,11 @@ type State struct {
 	// The genesis step derives it, since that is where the customizations that
 	// change what the network can do are applied.
 	Capabilities []string `json:"capabilities,omitempty"`
+	// HaltsAt is the block this network's genesis makes it stop one short of,
+	// and 0 when it keeps producing. Recorded beside the capabilities because
+	// the genesis step is what learns it, and read back by the readiness gate:
+	// a chain that is meant to stop is not a chain that is failing to start.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
 	// ConfigSet holds per-scope config-knob overrides, keyed by scope: "all"
 	// for every node, "node<N>" for one. Each value is a list of dot-path
 	// "key=value" strings applied at config render (all first, then the node's

@@ -601,7 +601,17 @@ func uintArg(v any) (uint64, bool) {
 		}
 		return uint64(x), true
 	case string:
-		n, err := strconv.ParseUint(strings.TrimSpace(x), 10, 64)
+		// Decimal or 0x-hex. Every block number, gas figure and nonce the chain
+		// hands back is 0x-hex, so decimal-only made a value read from the chain
+		// unusable in the very args that take one — waitBlock could not be given
+		// a receipt's block number. parseBigValue has always taken both; this is
+		// the same rule, not a new one.
+		t := strings.TrimSpace(x)
+		if h, ok := strings.CutPrefix(t, "0x"); ok {
+			n, err := strconv.ParseUint(h, 16, 64)
+			return n, err == nil
+		}
+		n, err := strconv.ParseUint(t, 10, 64)
 		return n, err == nil
 	default:
 		return 0, false

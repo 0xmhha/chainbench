@@ -13,6 +13,7 @@
   "env": {
     "extends": "stablenet-bp4",
     "genesis": {
+      "haltsAt": 6,
       "overlay": {
         "config": {
           "bohoBlock": 6,

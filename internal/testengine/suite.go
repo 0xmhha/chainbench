@@ -782,10 +782,18 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	}
 	// Where this network's declared fork is and who hands over at it. Read from
 	// the record, so attaching to a composed network knows it too.
-	if f, ferr := chainsetup.NetFork(ctx, sd, chainsetup.NetForkIn{DataDir: dataDir}); ferr == nil && f.Fork != nil {
-		out.fork = forkGate{at: f.Fork.At, restart: f.Fork.Restart, preFork: make(map[int]bool, len(f.PreFork))}
-		for _, i := range f.PreFork {
-			out.fork.preFork[i] = true
+	if f, ferr := chainsetup.NetFork(ctx, sd, chainsetup.NetForkIn{DataDir: dataDir}); ferr == nil {
+		switch {
+		case f.Fork != nil:
+			out.fork = forkGate{at: f.Fork.At, restart: f.Fork.Restart, preFork: make(map[int]bool, len(f.PreFork))}
+			for _, i := range f.PreFork {
+				out.fork.preFork[i] = true
+			}
+		case f.HaltsAt > 0:
+			// A network whose genesis stops it stands at the same place a
+			// handover does — every node one block short, nothing advancing —
+			// and nobody hands over. Same gate, no pre-fork side.
+			out.fork = forkGate{at: f.HaltsAt}
 		}
 	}
 	// The gate can fail on a network that is already up — nodes launched, one

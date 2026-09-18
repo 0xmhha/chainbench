@@ -352,6 +352,10 @@ func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 		if len(overlay.Capabilities) > 0 {
 			return opts, fmt.Errorf("chainsetup: genesis: the overlay for binary %q declares capabilities, which describe the whole network — declare them on the network's own overlay", name)
 		}
+		// Same reason: whether the chain stops is one answer for the network.
+		if overlay.HaltsAt != 0 {
+			return opts, fmt.Errorf("chainsetup: genesis: the overlay for binary %q declares haltsAt, which describes the whole network — declare it on the network's own overlay", name)
+		}
 		if opts.Variants == nil {
 			opts.Variants = map[string][]byte{}
 		}
@@ -366,6 +370,7 @@ func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 	}
 	opts.Overlay = overlay.Genesis
 	opts.Capabilities = overlay.Capabilities
+	opts.HaltsAt = overlay.HaltsAt
 	return opts, nil
 }
 
@@ -375,6 +380,8 @@ func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 type genesisOverlayFile struct {
 	Capabilities []string        `json:"capabilities"`
 	Genesis      json.RawMessage `json:"genesis"`
+	// HaltsAt is the block this genesis makes the network stop one short of.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
 }
 
 func readGenesisOverlay(path string) (genesisOverlayFile, error) {
