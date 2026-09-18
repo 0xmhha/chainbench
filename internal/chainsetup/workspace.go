@@ -99,6 +99,9 @@ type State struct {
 	// half of GenesisPaths: a fork carried by config leaves one genesis for the
 	// whole network and puts what the post-fork build needs here.
 	GenesisConfigPaths map[string]string `json:"genesisConfigPaths,omitempty"`
+	// Fork is the hardfork this network is composed to cross, recorded by the
+	// genesis step. Nil for a network that crosses none.
+	Fork *GenesisFork `json:"fork,omitempty"`
 	// LaunchInputs is what each launch input hashed to when this workspace
 	// wrote it, keyed by path on the target.
 	//

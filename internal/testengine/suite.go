@@ -159,6 +159,10 @@ type composed struct {
 	// keysDir is the key set the network was composed from, so a spec can name
 	// an account by label instead of by address.
 	keysDir string
+	// fork is what the readiness gate has to know about a network composed to
+	// cross a hardfork: where the fork is, and which nodes hand over at it.
+	// Zero for a network that crosses none.
+	fork forkGate
 }
 
 // workspaceNodes adapts the workspace's node verbs to the interpreter's
@@ -201,6 +205,22 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 		return n, err
 	}
 	return out.Node, nil
+}
+
+// CrossFork waits for the network to reach the block before its declared
+// hardfork and hands production to the build that seals after it, satisfying
+// interp.ForkCrosser so the crossFork action reaches it.
+//
+// The whole table comes back: crossing gives every successor a new role and a
+// new pid, and a caller holding the old ones would stop the wrong process.
+func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error) {
+	out, err := chainsetup.NetCrossFork(ctx, w.sd, chainsetup.NetCrossForkIn{
+		DataDir: w.dataDir, Timeout: timeout,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out.Nodes.Nodes, nil
 }
 
 // Log returns the tail of one node's captured stdout/stderr, satisfying
@@ -387,6 +407,18 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	out.Endpoints = net.endpoints
 
 	runErr := func() error {
+		// The declared fork is crossed before anything else runs, because
+		// everything else assumes a producing chain: funding an account is a
+		// transaction, and a network sitting at the block before its fork seals
+		// none. A case that has to act BEFORE the fork says so by naming the
+		// crossFork step, and then this leaves the fork to it.
+		if comp.handoff == nil && comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
+			res, cerr := chainsetup.NetCrossFork(ctx, sd, chainsetup.NetCrossForkIn{DataDir: comp.up.DataDir})
+			if cerr != nil {
+				return fmt.Errorf("engine: run suite: %w", cerr)
+			}
+			out.SetupSteps = append(out.SetupSteps, "cross-fork: "+res.Detail)
+		}
 		if in.WaitBlocks > 0 {
 			if err := waitForHead(ctx, net.endpoints[0], in.WaitBlocks); err != nil {
 				return fmt.Errorf("engine: run suite: %w", err)
@@ -588,7 +620,7 @@ func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine
 		Bus:       collector.NewBus(),
 		LogReader: remoteLogReader(sd, w.DataDir),
 		PreSpec: func(ctx context.Context, _ session.Environment) error {
-			return gateReady(ctx, sd, w.DataDir, net.nodes, w.SetupSteps, w.NodeMonitorTimeout)
+			return gateReady(ctx, sd, w.DataDir, net.nodes, w.SetupSteps, w.NodeMonitorTimeout, net.fork)
 		},
 		OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
 			collectFailureData(ctx, sd, w.DataDir, net.nodes, rec)
@@ -759,12 +791,20 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 		control: workspaceNodes{sd: sd, dataDir: dataDir},
 		keysDir: keysDir,
 	}
+	// Where this network's declared fork is and who hands over at it. Read from
+	// the record, so attaching to a composed network knows it too.
+	if f, ferr := chainsetup.NetFork(ctx, sd, chainsetup.NetForkIn{DataDir: dataDir}); ferr == nil && f.Fork != nil {
+		out.fork = forkGate{at: f.Fork.At, preFork: make(map[int]bool, len(f.PreFork))}
+		for _, i := range f.PreFork {
+			out.fork.preFork[i] = true
+		}
+	}
 	// The gate can fail on a network that is already up — nodes launched, one
 	// of them not answering yet — so the way to take it down is returned WITH
 	// the error rather than dropped with it. Returning the zero value here left
 	// four nodes holding their ports after every readiness failure, and the
 	// next run on those ports could not compose at all.
-	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget); err != nil {
+	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget, out.fork); err != nil {
 		return out, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return out, nil
@@ -801,4 +841,24 @@ func preflightDecision(ctx context.Context, sd chainsetup.Deps, dir string, want
 		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
 	}
 	return ws.Compare(ctx, want)
+}
+
+// casesCrossFork reports whether any case names the step that crosses the
+// hardfork, which is how a case says the moment is its own.
+//
+// Read from the runtime statement list rather than the document, so a v1 spec
+// and a v2 case are read the same way and a step's spelling is resolved once.
+// A case that puts the step in its pre-actions is not counted and the
+// composition crosses first; the step is idempotent, so that case still runs —
+// it simply does not get to act before the fork, which is the thing it asked
+// for by putting it there.
+func casesCrossFork(specs []dsl.Spec) bool {
+	for _, sp := range specs {
+		for _, st := range sp.Sequence {
+			if st.Do == dsl.ActionCrossFork {
+				return true
+			}
+		}
+	}
+	return false
 }

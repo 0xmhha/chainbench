@@ -760,8 +760,8 @@ type GenesisOpts struct {
 type GenesisFork struct {
 	// Name is the fork ("croissant"); At is the block it activates on. The
 	// activation key follows the "<name>Block" convention the chains use.
-	Name string
-	At   int64
+	Name string `json:"name"`
+	At   int64  `json:"at"`
 	// Binary names the binary that seals after the fork. Its chain supplies the
 	// section, and the nodes running it are the post-fork validators.
 	//
@@ -769,10 +769,10 @@ type GenesisFork struct {
 	// and after it they produce. Which side of the fork a node is on is which
 	// build it runs, which is the same question binaryFor, genesisFor and
 	// pluginFor each answer.
-	Binary string
+	Binary string `json:"binary"`
 	// Carrier is which file carries the fork's configuration to the nodes that
 	// need it. Empty means ForkInGenesis.
-	Carrier ForkCarrier
+	Carrier ForkCarrier `json:"carrier,omitempty"`
 }
 
 // ForkCarrier is which file a fork's configuration travels in.
@@ -852,11 +852,17 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// runtime directory when isolated (flat otherwise). The path is derived the
 	// one way, per machine, so a set writes each server the same relative path.
 	var forkConfigs map[string][]byte
+	w.state.Fork = nil
 	if opts.Fork != nil {
 		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
 			return "", err
 		}
 		art.Genesis = gen
+		// Recorded because crossing the fork is a later step's work: it has to
+		// know which block the pre-fork build stops at and which nodes take
+		// over, and the request that said so is gone by then.
+		fork := *opts.Fork
+		w.state.Fork = &fork
 	}
 	lay, err := w.layout()
 	if err != nil {

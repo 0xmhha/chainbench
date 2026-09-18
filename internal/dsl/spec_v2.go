@@ -799,7 +799,48 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if expects == 0 {
 		return Spec{}, fmt.Errorf("dsl: case %s verifies nothing — at least one expect statement is required", c.ID)
 	}
+	if err := checkCrossFork(c.ID, spec); err != nil {
+		return Spec{}, err
+	}
 	return spec, nil
+}
+
+// ActionCrossFork is the step that crosses the hardfork a network is composed
+// to cross.
+//
+// The name lives in the grammar because the grammar checks it and because the
+// composer reads a case's steps for it: a case that names the step crosses the
+// fork itself, and one that does not gets a network already past it. Three
+// places have to mean the same word, so there is one.
+const ActionCrossFork = "crossFork"
+
+// checkCrossFork holds a case to what it said about crossing the fork.
+//
+// A case that names the step on a network with no hardfork is refused. The step
+// would fail at run time with the same reason, but by then the network is up
+// and the case has usually done something first — and the likeliest cause is an
+// env that was meant to declare an upgrade and does not.
+//
+// Naming it twice is refused for the same kind of reason. The step is
+// idempotent, so the second one reports "already crossed" and the case passes
+// while reading as though it crossed twice.
+func checkCrossFork(caseID string, spec Spec) error {
+	crossings := 0
+	for _, st := range spec.Sequence {
+		if st.Do == ActionCrossFork {
+			crossings++
+		}
+	}
+	if crossings == 0 {
+		return nil
+	}
+	if spec.EnvUpgrade == nil {
+		return fmt.Errorf("dsl: case %s names the %s step, but its env declares no hardfork to cross — declare one under env.upgrade", caseID, ActionCrossFork)
+	}
+	if crossings > 1 {
+		return fmt.Errorf("dsl: case %s names the %s step %d times, and a network crosses its fork once", caseID, ActionCrossFork, crossings)
+	}
+	return nil
 }
 
 // expectAliases maps proposal-vocabulary source names onto registered

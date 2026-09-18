@@ -92,6 +92,7 @@ func Register(r interp.Registry) {
 	r.RegisterAction(actionSignAuth, signAuthorizationAction{})
 	r.RegisterAction(actionLoad, loadAction{})
 	seedFaultBuiltins(r)
+	seedCrossForkBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -270,3 +271,90 @@ var (
 	// ErrNoDataDirAndIndex refuses a per-node verb missing its workspace or index.
 	ErrNoDataDirAndIndex = errors.New("chainsetup: a workspace directory and a 1-based node index are required")
 )
+
+// NetCrossForkIn names the composition whose declared hardfork is to be crossed.
+type NetCrossForkIn struct {
+	DataDir string
+	// Timeout bounds the wait for the network to reach the block before the
+	// fork; zero takes the step's own default.
+	Timeout time.Duration
+}
+
+// NetCrossForkOut is the network as it stands once the successors produce.
+type NetCrossForkOut struct {
+	// Detail is what the step recorded.
+	Detail string `json:"detail"`
+	// Nodes is the whole node table, because crossing changes more than one
+	// node: every successor has a new role and a new pid.
+	Nodes node.NodeSet `json:"nodes"`
+}
+
+// NetCrossFork waits for the network to reach the block before its declared
+// hardfork and hands production to the build that seals after it.
+//
+// The whole table comes back rather than the nodes that changed. A caller holds
+// a table and has to write the result into it, and returning only the changed
+// ones makes every caller re-derive which those were — from the same fact the
+// step already knows.
+func NetCrossFork(ctx context.Context, d Deps, in NetCrossForkIn) (NetCrossForkOut, error) {
+	if in.DataDir == "" {
+		return NetCrossForkOut{}, ErrNoDataDir
+	}
+	var out NetCrossForkOut
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		detail, err := ws.CrossFork(ctx, CrossForkOpts{Timeout: in.Timeout})
+		if err != nil {
+			return "", err
+		}
+		out.Detail, out.Nodes = detail, ws.NodeSet()
+		return detail, nil
+	})
+	if err != nil {
+		return NetCrossForkOut{}, err
+	}
+	return out, nil
+}
+
+// NetForkIn identifies the composition to read the declared hardfork from.
+type NetForkIn struct {
+	DataDir string
+}
+
+// NetForkOut is the hardfork a composition is built to cross and which of its
+// nodes stand on each side of it.
+type NetForkOut struct {
+	// Fork is the declared hardfork, nil when the network crosses none.
+	Fork *GenesisFork `json:"fork,omitempty"`
+	// PreFork are the indices of the nodes running the build that seals up to
+	// the fork block and stops there. After the handover they stay where they
+	// stopped: they cannot validate what the successors produce.
+	PreFork []int `json:"preFork,omitempty"`
+}
+
+// NetFork reads the hardfork a composition is built to cross.
+//
+// It is read from the record rather than carried from the request because the
+// two callers are not the same run: a network is composed once and attached to
+// afterwards, and the second one has no request to read.
+func NetFork(_ context.Context, d Deps, in NetForkIn) (NetForkOut, error) {
+	if in.DataDir == "" {
+		return NetForkOut{}, ErrNoDataDir
+	}
+	var out NetForkOut
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		out.Fork = ws.state.Fork
+		if out.Fork == nil {
+			return "", nil
+		}
+		for _, ns := range ws.state.Nodes {
+			if ns.Binary != out.Fork.Binary {
+				out.PreFork = append(out.PreFork, ns.Index)
+			}
+		}
+		return "", nil
+	})
+	if err != nil {
+		return NetForkOut{}, err
+	}
+	return out, nil
+}

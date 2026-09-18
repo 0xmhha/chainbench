@@ -25,6 +25,7 @@ import (
 // pid-recorded-but-rpc-down, which classifies RESTARTABLE all the same.
 type healthObserver struct {
 	nodes node.NodeSet
+	fork  forkGate
 }
 
 func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error) {
@@ -32,7 +33,51 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 	if err != nil {
 		return nil, err
 	}
-	return factsFromReport(rep, o.nodes), nil
+	return factsFromReport(rep, o.nodes, o.fork), nil
+}
+
+// forkGate is what the readiness gate has to know about a network composed to
+// cross a hardfork: where the fork is, and which nodes hand over at it.
+//
+// Such a network passes through two states no other network has, and in both of
+// them the ordinary question — is every node keeping up? — has the wrong answer.
+// Before the handover nothing advances, because the pre-fork build refuses to
+// seal the fork block. After it the pre-fork nodes stop for good, because they
+// cannot validate what the successors produce.
+//
+// The zero value is a network that crosses no fork, and every check below is
+// then inert.
+type forkGate struct {
+	// at is the block the fork activates on.
+	at int64
+	// preFork are the node indices running the build that hands over.
+	preFork map[int]bool
+}
+
+// parked reports whether every node stands at the block before the fork,
+// waiting to be handed over. Every node, not the highest: one successor still
+// syncing is a network that has not arrived, and it is exactly the node the
+// handover would leave behind.
+func (g forkGate) parked(rep health.Report) bool {
+	if g.at <= 0 || len(rep.Nodes) == 0 {
+		return false
+	}
+	want := uint64(g.at - 1) //nolint:gosec // a declared block height, checked positive above
+	for _, n := range rep.Nodes {
+		if !n.OK || n.BlockNumber != want {
+			return false
+		}
+	}
+	return true
+}
+
+// retired reports whether one node has finished its part: it runs the pre-fork
+// build and the network has produced the fork block, so it will not move again.
+func (g forkGate) retired(index int, networkHead uint64) bool {
+	if g.at <= 0 || !g.preFork[index] {
+		return false
+	}
+	return networkHead >= uint64(g.at) //nolint:gosec // a declared block height, checked positive above
 }
 
 // factsFromReport maps a health report to per-node facts, taking PIDAlive from
@@ -62,7 +107,7 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 // make a fatal verdict depend on iteration order. It stays unset until there is
 // a real source, and the genesis a composition was built from is compared by
 // preflight instead.
-func factsFromReport(rep health.Report, ns node.NodeSet) []nodemonitor.Facts {
+func factsFromReport(rep health.Report, ns node.NodeSet, fork forkGate) []nodemonitor.Facts {
 	pid := make(map[int]int, len(ns.Nodes))
 	for _, n := range ns.Nodes {
 		pid[n.Index] = n.PID
@@ -109,17 +154,28 @@ func factsFromReport(rep health.Report, ns node.NodeSet) []nodemonitor.Facts {
 	// possible — every node at a different head during bring-up, say — and
 	// reading that as a fork would terminate a healthy run.
 	forked := rep.Agreement.Checked && !rep.Agreement.Agreed
+	// A network composed to cross a hardfork stands one block short of it until
+	// it is handed over: the pre-fork build refuses to seal the fork block and
+	// the successors do not produce until they are told to. The height is not
+	// advancing, and reporting only that would have the gate wait out its whole
+	// budget and call a correct network unfit.
+	//
+	// So it is reported as what it is. Every node has to be there, not the
+	// highest: one successor still syncing is a network that has not arrived,
+	// and it is exactly the node the handover would leave behind.
+	advancing := rep.Producing || fork.parked(rep)
 	facts := make([]nodemonitor.Facts, 0, len(rep.Nodes))
 	for _, ni := range rep.Nodes {
 		facts = append(facts, nodemonitor.Facts{
 			Node:       ni.Index,
 			Label:      "node" + strconv.Itoa(ni.Index),
 			Wanted:     true,
+			Retired:    fork.retired(ni.Index, head),
 			PIDAlive:   pid[ni.Index] > 0,
 			RPCUp:      ni.OK,
 			ChainID:    ni.ChainID,
 			Height:     ni.BlockNumber,
-			Advancing:  rep.Producing,
+			Advancing:  advancing,
 			WantHeight: head,
 			WantPeers:  wantPeers,
 			Forked:     forked,
@@ -196,12 +252,12 @@ func joinReasons(rs []string) string {
 // error when the network cannot be made fit (a FATAL node, or a budget/cap
 // reached) so the caller does not run tests against it. A nil or empty node set
 // (an attach to bare URLs) is not gated here.
-func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes *node.NodeSet, steps *[]string, waitBudget time.Duration) error {
+func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes *node.NodeSet, steps *[]string, waitBudget time.Duration, fork forkGate) error {
 	if nodes == nil || len(nodes.Nodes) == 0 {
 		return nil
 	}
 	res, err := nodemonitor.Gate(ctx,
-		healthObserver{nodes: *nodes},
+		healthObserver{nodes: *nodes, fork: fork},
 		restartAdapter{deps: deps, dataDir: dataDir},
 		ctxClock{},
 		stepSink{steps: steps},

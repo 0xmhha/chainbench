@@ -23,7 +23,7 @@ func TestFactsFromReport_MapsAndClassifies(t *testing.T) {
 			{Index: 2, ChainID: 1000, BlockNumber: 0, PeerCount: 0, Syncing: false, OK: false},
 		},
 	}
-	facts := factsFromReport(rep, ns)
+	facts := factsFromReport(rep, ns, forkGate{})
 	if len(facts) != 2 {
 		t.Fatalf("got %d facts, want 2", len(facts))
 	}
@@ -56,7 +56,7 @@ func TestFactsFromReport_NotProducingIsWaitable(t *testing.T) {
 		Producing: false,
 		Nodes:     []health.NodeInfo{{Index: 1, OK: true, BlockNumber: 0}},
 	}
-	f := factsFromReport(rep, ns)[0]
+	f := factsFromReport(rep, ns, forkGate{})[0]
 	if v := nodemonitor.Classify(f).Verdict; v != nodemonitor.Waitable {
 		t.Fatalf("verdict = %s, want WAITABLE when alive but not producing", v)
 	}

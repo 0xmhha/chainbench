@@ -2,6 +2,7 @@ package interp
 
 import (
 	"context"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -105,6 +106,25 @@ type NodeLogReader interface {
 	// Log returns at most maxBytes from the end of n's captured log. A node
 	// that has never been launched returns an empty string and no error.
 	Log(ctx context.Context, n node.Node, maxBytes int) (string, error)
+}
+
+// ForkCrosser is an optional NodeControl capability: crossing the hardfork the
+// network was composed to cross.
+//
+// It exists so a case can choose the moment. A case that only needs a chain
+// past the fork says nothing and the composition crosses it; a case that has to
+// act BEFORE the fork — send a transaction, deploy a contract — names the step
+// and crosses when it is ready. Both reach the same implementation, so the two
+// timings cannot come to mean two different handovers.
+//
+// A control that owns the node processes implements it; plain attach does not,
+// and the crossFork action says so rather than reporting a fork it did not
+// cross.
+type ForkCrosser interface {
+	// CrossFork waits for the network to reach the block before its fork and
+	// relaunches the successors as producers, returning the whole node table:
+	// crossing changes the role and pid of every one of them.
+	CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error)
 }
 
 // NodeChange is what a swapNode applies: a new binary path (empty keeps the

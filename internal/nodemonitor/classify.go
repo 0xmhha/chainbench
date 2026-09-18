@@ -20,7 +20,17 @@ type Facts struct {
 	Node  int
 	Label string
 
-	Wanted          bool // this node belongs in the target topology (preflight)
+	Wanted bool // this node belongs in the target topology (preflight)
+	// Retired says this node has finished its part and is no longer expected to
+	// follow the network. It is not the same as unwanted: the node belongs to
+	// the topology, is running, and is meant to be exactly where it is.
+	//
+	// A network that hands production from one build to another leaves the first
+	// one standing at the handover point by design — it cannot validate what
+	// comes after, so it stops there and its peers drop it. Without this the
+	// gate reads that as a node falling behind and waits out its budget on a
+	// network doing precisely what it was composed to do.
+	Retired         bool
 	WantChainID     uint64
 	WantPeers       int
 	WantParticipate bool // a validator/producer expected to seal
@@ -73,6 +83,14 @@ func Classify(f Facts) NodeReport {
 	// decides whether to tear it down. It never blocks readiness.
 	if !f.Wanted {
 		return reason(Ready, "not part of the target topology")
+	}
+
+	// A node that has finished its part is where it is meant to be. Judged
+	// before the liveness checks below for the same reason the unwanted one is:
+	// every one of them asks whether the node is keeping up, and this one is not
+	// supposed to.
+	if f.Retired {
+		return reason(Ready, "retired: no longer expected to follow the network")
 	}
 
 	// FATAL — clearing it would need a destructive remedy, never auto-applied.

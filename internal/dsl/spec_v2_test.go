@@ -886,3 +886,38 @@ func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 		t.Error("an unknown carry was accepted")
 	}
 }
+
+// TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross.
+//
+// Naming the step is how a case says the moment is its own: it acts before the
+// fork and crosses when it is ready. On a network that crosses no fork the step
+// has nothing to do, and finding that out at run time means finding it out
+// after the network is up and the case has already acted.
+func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
+	spec := func(env, steps string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft"` + env + `},
+		  "steps":[` + steps + `]}`
+	}
+	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},
+	  "upgrade":{"profile":"p.yaml","template":"t.json"}`
+	cross := `{"do":"crossFork","timeout":"120s"}`
+	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
+
+	if _, err := Parse([]byte(spec(fork, cross+","+check))); err != nil {
+		t.Fatalf("a case crossing its own declared fork was refused: %v", err)
+	}
+	if _, err := Parse([]byte(spec("", cross+","+check))); err == nil {
+		t.Error("a case crossed a fork its env never declared")
+	}
+	// Twice reads as though the network crossed twice. The step is idempotent,
+	// so the second would report "already crossed" and the case would pass
+	// while saying something that did not happen.
+	if _, err := Parse([]byte(spec(fork, cross+","+cross+","+check))); err == nil {
+		t.Error("a case crossed the same fork twice")
+	}
+	// And a case that says nothing is untouched: the composition crosses.
+	if _, err := Parse([]byte(spec(fork, check))); err != nil {
+		t.Fatalf("a case that leaves the fork to the composition was refused: %v", err)
+	}
+}
