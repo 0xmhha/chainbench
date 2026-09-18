@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "two-producers-hand-over",
+  "description": "A hardfork handed over by a network with TWO producers. The one-producer case never reaches the poa bring-up's join phase: with a single producer the boot node forms the etcd cluster alone and there is nobody to join it, so everything about a second producer taking its turn \u2014 etcd-join, the sealing rotation, and then both of them stopping at the fork together \u2014 is untested. This is also the first check that the successors take over from a set rather than from one node.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": "wemix-to-wbft-bp2",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 32,
+      "timeout": "300s"
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "Greater",
+      "is": "30"
+    },
+    {
+      "expect": "rpc",
+      "on": "bp1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "etcd.members",
+      "compare": "Len",
+      "is": 2
+    },
+    {
+      "expect": "rpc",
+      "on": "bp1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "miners",
+      "compare": "NotContains",
+      "is": "down"
+    },
+    {
+      "expect": "rpc",
+      "on": "bp1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "nodes",
+      "compare": "Len",
+      "is": 2
+    },
+    {
+      "expect": "rpc",
+      "on": "bp2",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "etcd.members",
+      "compare": "Len",
+      "is": 2
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "compare": "Len",
+      "is": 4
+    }
+  ]
+}
