@@ -33,6 +33,8 @@
 | `node{1..5}/bls_pubkey` | BLS public key (public). |
 | `node{1..5}/nodekey` | secp256k1 **private** key (test-only, public-equivalent). |
 | `node{1..4}/keystore/UTC--*` | Ethereum keystore (encrypted with password `1`). |
+| `dev1/address` | Dev account address (public). |
+| `dev1/private` | secp256k1 **private** key (test-only, public-equivalent). |
 
 ## Funding a test account
 
@@ -45,6 +47,20 @@ separate faucet key to keep anywhere.
 `metadata.json` `alloc` also carries one extra account
 (`0x71562b71999873db5b286df957af199ec94617f7`) that nothing spends from: tests
 read it as a prealloc balance that must survive a fork or a re-sync.
+
+## The `dev1` account
+
+A spec that declares `accounts: {"dev1": {"fund": …}}` gets an account the
+harness holds the key for and signs with itself, funded at bring-up from the
+network's funded account. It is not in the genesis `alloc` — it starts at zero
+and the run funds it.
+
+`accountSource` (`internal/testengine/accounts.go`) mints the key on the first
+run that asks for one and reads it back afterwards, so the label keeps naming
+the same address. Committing it extends that from one machine to all of them:
+without the file, `dev1` is a different address in every checkout, which is the
+drift labels exist to remove. It is a test fixture on exactly the terms above —
+a plaintext private key, public-equivalent, never to be funded anywhere real.
 
 ## How chainbench consumes these
 
