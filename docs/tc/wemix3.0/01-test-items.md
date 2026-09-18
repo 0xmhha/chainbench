@@ -1,0 +1,58 @@
+# [WEMIX3.0] 테스트 항목
+
+> 출처: Confluence [[WEMIX3.0] 테스트 항목](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2918154299) (페이지 ID 2918154299, 버전 1, 최종 수정 2026-08-20)  
+> 상위 페이지: [WEMIX3.0] Test  
+> 가져온 날짜: 2026-09-18 (본문은 Confluence markdown 변환 결과를 그대로 옮김)
+
+---
+
+## 1. etcd & Work/Token
+
+- **1.1 Work Key 삭제 시 자동 복구 (**`admin.etcdDeleteWork`)
+    - etcd의 `work` 키를 삭제하면 30초 후 `syncCheck`가 과반 합의 헤드로 `work` 키를 자동 재구성하여 채굴을 복구하는지 검증.
+- **1.2 Work Key 오염(손상/미래) 덮어쓰기 복구 (**`admin.etcdPut`)
+    - etcd `work` 키에 손상된 JSON 또는 로컬 Head보다 앞선 미래 높이 주입 시, `syncCheck`가 과반 합의 헤드로 자동 덮어써서 복구하는지 검증.
+- **1.3 Work Key Behind 오염 시 체인 정지 및 Rewind 거부**
+    - etcd `work` 키에 과거 높이 주입 시 노드가 역행(Rewind)을 거부하고 체인을 정지(Stall)시키며, `admin.etcdDeleteWork()` 수동 삭제 후 30초 내 복구되는지 검증.
+- **1.4 손상 Token Key 30초 syncCheck 복구 (**`admin.etcdPut`)
+    - 손상된 JSON 포맷 `token` 주입 시 30초 후 `syncCheck`가 훼손된 토큰을 자동 삭제/리셋하여 채굴을 정상화하는지 검증.
+- **1.5 만료 TTL Token Key 즉시 복구 (**`admin.etcdPut`)
+    - 과거 TTL(`Till < now`)이 명시된 유효 JSON `token` 주입 시, 다음 마이너의 `acquireMiningToken` 호출 단계에서 만료 토큰을 즉시 자동 삭제(`OpDelete`) 및 재획득하여 즉시 복구되는지 검증.
+
+---
+
+## 2. 블록 생산, 타임스탬프 보정 및 합의 규칙
+
+- **2.1 생산자 블록 타임스탬프 단조 증가**
+    - 생산자측 보정 패치(floor = `parent.Time`)에 따라, 생성되는 블록 헤더 타임스탬프(`eth_getBlockByNumber(n).timestamp`)가 항상 직전 블록 이상(`timestamp[n] >= timestamp[n-1]`)으로 단조 증가하는지 검증.
+- **2.2 노드 재개 시 Time-It Fast Catch-up**
+    - `miner_stop/start`, `SIGSTOP/CONT`, 노드 재기동 후 `timeIt behind` 감지로 최단 시간(`BlockMinBuildTime`) 속성 채굴 후 설정된 `blockInterval` 주기로 복귀하는지 검증.
+- **2.3 Miner Limit 중복 채굴 금지**
+    - BP 멤버 수 N(≥3)일 때 동일 노드가 최근 `N/2` 블록 윈도우 이내에 중복으로 채굴하지 않는지 검증.
+
+---
+
+## 3. Brioche 하드포크 및 반감기 보상
+
+- **3.1 Brioche API 스케줄 조회 (**`wemix_briocheConfig`, `wemix_halvingSchedule`)
+    - Brioche 반감기 설정, 회차별 시작/종료 블록 및 보상 스케줄 정보가 API로 정상 조회되는지 검증.
+- **3.2 높이별 Brioche 블록 보상 쿼리 (**`wemix_getBriocheBlockReward`)
+    - 반감기 전/후 및 완료 높이를 파라미터로 보상액 쿼리 시 50% 감축 및 0원 반환이 정확한지 검증.
+- **3.3 Brioche 반감기 실제 보상 감축·배분**
+    - Brioche 적용 체인에서 거버넌스 보상액 설정은 무시되고, 반감기 높이(`FirstHalvingBlock`) 도달 시 블록 보상이 50% 자동 감축되어 온체인 수혜 계정들에 설정 비율대로 배분되는지 관측.
+
+---
+
+## 4. 온체인 거버넌스-노드 런타임 동적 연동
+
+- **4.1 거버넌스 멤버 add/remove 시 BP·피어 동적 갱신**
+    - 거버넌스 안건 가결로 멤버(BP)가 추가/제거되어 `modifiedBlock`이 변경되면 노드가 이를 감지하여 BP 노드 목록(`nodes`), 마이너 피어 상태(`admin.miners()`)를 갱신하고 신규 BP 피어를 자동 추가(`addPeer`)하는지 검증.
+
+---
+
+## 5. WEMIX 3.0 API
+
+- **5.1 WEMIX 통합 상태 조회 (**`admin.wemixInfo`)
+    - `admin.wemixInfo` 호출 시 최신 거버넌스/etcd/레지스트리 통합 상태 및 런타임 파라미터 응답이 정상 반환되는지 검증.
+- **5.2 WEMIX 커스텀 헤더 필드 조회**
+    - `eth_getBlockByNumber` 응답에 WEMIX 전용 필드인 `rewards`, `fees`, `minerNodeSig`, `baseFeePerGas`가 정상적으로 포함되어 반환되는지 검증.

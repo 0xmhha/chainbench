@@ -1,0 +1,141 @@
+{
+  "config": {
+    "chainId": 8283,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "applepieBlock": 0,
+    "bohoBlock": 10,
+    "anzeon": {
+      "wbft": {
+        "requestTimeoutSeconds": 2,
+        "blockPeriodSeconds": 1,
+        "epochLength": 140,
+        "proposerPolicy": 0,
+        "maxRequestTimeoutSeconds": null
+      },
+      "init": {
+        "validators": [
+          "0xd9e3aab7c714fdba968701b7e06a7bea755ff193"
+        ],
+        "blsPublicKeys": [
+          "0xb3ed64c51de406a68caa0f1bcb9d6e052ebadfbecf7ee58d8ad966d9b9cb44f3458c5a67e275f9909968ce1faddf5250"
+        ]
+      },
+      "systemContracts": {
+        "govValidator": {
+          "address": "0x0000000000000000000000000000000000001001",
+          "version": "v1",
+          "params": {
+            "blsPublicKeys": "0xb3ed64c51de406a68caa0f1bcb9d6e052ebadfbecf7ee58d8ad966d9b9cb44f3458c5a67e275f9909968ce1faddf5250",
+            "expiry": "604800",
+            "gasTip": "27600000000000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "members": "0xD9E3aaB7C714fdba968701B7e06a7beA755Ff193",
+            "quorum": "1",
+            "validators": "0xD9E3aaB7C714fdba968701B7e06a7beA755Ff193"
+          }
+        },
+        "nativeCoinAdapter": {
+          "address": "0x0000000000000000000000000000000000001000",
+          "version": "v1",
+          "params": {
+            "currency": "KRW",
+            "decimals": "18",
+            "masterMinter": "0x0000000000000000000000000000000000001002",
+            "minterAllowed": "100000000000000000000000000000",
+            "minters": "0x0000000000000000000000000000000000001003",
+            "name": "WKRC",
+            "symbol": "WKRC"
+          }
+        },
+        "govMinter": {
+          "address": "0x0000000000000000000000000000000000001003",
+          "version": "v1",
+          "params": {
+            "expiry": "604800",
+            "fiatToken": "0x0000000000000000000000000000000000001000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "members": "0xD9E3aaB7C714fdba968701B7e06a7beA755Ff193,0xFFa643319efAd0A92a29823076C55AD66098DD14,0x68E88468101BFa6b1c437601deF99694A9F07a0f",
+            "quorum": "2"
+          }
+        },
+        "govMasterMinter": {
+          "address": "0x0000000000000000000000000000000000001002",
+          "version": "v1",
+          "params": {
+            "expiry": "604800",
+            "fiatToken": "0x0000000000000000000000000000000000001000",
+            "maxMinterAllowance": "100000000000000000000000000000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "members": "0xD9E3aaB7C714fdba968701B7e06a7beA755Ff193",
+            "minters": "0x0000000000000000000000000000000000001003",
+            "quorum": "1"
+          }
+        },
+        "govCouncil": {
+          "address": "0x0000000000000000000000000000000000001004",
+          "version": "v1",
+          "params": {
+            "expiry": "604800",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "members": "0xD9E3aaB7C714fdba968701B7e06a7beA755Ff193",
+            "quorum": "1"
+          }
+        }
+      }
+    },
+    "boho": {
+      "wbft": null,
+      "init": null,
+      "systemContracts": {
+        "govValidator": null,
+        "nativeCoinAdapter": null,
+        "govMinter": {
+          "address": "0x0000000000000000000000000000000000001003",
+          "version": "v2",
+          "params": null
+        }
+      }
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x0",
+  "extraData": "0xf860808080c0c080c0c086191a20322000f84fdad994d9e3aab7c714fdba968701b7e06a7bea755ff193831cfde0c180f1b0b3ed64c51de406a68caa0f1bcb9d6e052ebadfbecf7ee58d8ad966d9b9cb44f3458c5a67e275f9909968ce1faddf5250",
+  "gasLimit": "0x0",
+  "difficulty": "0x1",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "68e88468101bfa6b1c437601def99694a9f07a0f": {
+      "balance": "0x52b7d2dcc80cd2e4000000"
+    },
+    "d9e3aab7c714fdba968701b7e06a7bea755ff193": {
+      "balance": "0x52b7d2dcc80cd2e4000000"
+    },
+    "ee6bb8829ffe20e9bc5225a0cfad377183d9c3b8": {
+      "balance": "0x52b7d2dcc80cd2e4000000"
+    },
+    "ffa643319efad0a92a29823076c55ad66098dd14": {
+      "balance": "0x52b7d2dcc80cd2e4000000"
+    }
+  },
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "baseFeePerGas": null,
+  "excessBlobGas": null,
+  "blobGasUsed": null
+}
