@@ -12,6 +12,12 @@
 # shared network. The inline keys in test source are the upstream go-ethereum
 # test keys, already public in every geth fork.
 #
+# That covers both kinds of key under keys/preset/: the node identities, which
+# were generated once and committed, and the dev accounts (keys/preset/dev1/),
+# which the harness mints at run time and reads back so a label keeps naming one
+# address. Both are plaintext, both are disposable, and neither may ever hold
+# anything on a real network.
+#
 # Two of the paths no longer exist in the tree. They are listed because the
 # history scan still reaches them: `network/` was an earlier binary and
 # `docs/superpowers/plans/` held planning notes that quoted test keys.

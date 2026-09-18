@@ -57,6 +57,30 @@
       "is": false
     },
     {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x1703a018",
+      "save": "quorumCall"
+    },
+    {
+      "do": "read",
+      "source": "call",
+      "to": "govValidator",
+      "data": "$quorumCall",
+      "save": "quorumRet"
+    },
+    {
+      "expect": "derive",
+      "op": "word",
+      "index": 0,
+      "of": [
+        "$quorumRet"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000002"
+    },
+    {
       "do": "newAccount",
       "save": "operator",
       "saveKey": "operatorKey"
@@ -77,7 +101,7 @@
       "selector": "0x5c646aa6",
       "of": [
         "$operator",
-        "4"
+        "2"
       ],
       "save": "addData"
     },

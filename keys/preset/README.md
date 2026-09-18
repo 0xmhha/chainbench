@@ -19,8 +19,24 @@
 > immediately. Likewise, if any validator slot in a real network is ever
 > bound to one of these addresses, anyone can forge votes from it.
 >
+> **NEVER use anything in this directory on a production, mainnet, testnet,
+> staging, or shared network. Not to hold value, not to seal a block, not to
+> sign anything, not once, not "just to try it."** This is not a precaution
+> against a key leaking — the key is already published, here, in this file
+> tree. Rotating it afterwards does not undo what was signed in the meantime.
+>
+> The rule is the same for every file here, whatever produced it: the node
+> identities under `node{1..5}/`, generated once and committed, and the dev
+> accounts under `dev1/`, minted by the harness on its first run and committed
+> so a label keeps naming one address.
+>
 > Use `keys.mode: generate` in your profile (or override the `source` to a
 > directory outside of git) when you need keys that are not public.
+>
+> The repository's secret scanner is configured to stay quiet about this
+> directory ([`.betterleaks.toml`](../../.betterleaks.toml)), because every
+> finding here would be a true positive about a key that is public on purpose.
+> That silence is scoped to these paths and nowhere else.
 
 ## Contents
 
