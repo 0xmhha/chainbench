@@ -832,9 +832,19 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
 		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)
 	}
-	if u.At != nil && *u.At != prof.Upgrade.ForkBlock {
-		return fmt.Errorf("the case says the fork is at block %d and %s schedules block %d", *u.At, presetPath, prof.Upgrade.ForkBlock)
-	}
+	// The block is NOT held to the preset, and the fork's name is.
+	//
+	// They are different kinds of fact. The name says which change is under
+	// test, and a case wrong about that reports a pass for a fork it never
+	// exercised — the worst failure there is. The block is a schedule this run
+	// chooses: how far in it puts the fork. A case that has to act while the
+	// pre-fork build is still sealing needs the fork far enough out to get the
+	// work done, and the preset's height is the handoff environment's, not
+	// every case's.
+	//
+	// Measured: with the preset's block 20 the chain reaches the fork and stops
+	// during bring-up, so a case sending a transaction beforehand submits it to
+	// a network that seals nothing and waits out its receipt.
 	return nil
 }
 

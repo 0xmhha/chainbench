@@ -548,6 +548,10 @@ go-wemix/governance/01-wemix-governance-staking-deposit.json	.steps[4]	from	0xc1
 go-wemix/governance/01-wemix-governance-staking-deposit.json	.steps[4]	to	$staking
 go-wemix/governance/01-wemix-governance-staking-deposit.json	.steps[5]	to	$staking
 go-wemix/governance/01-wemix-governance-staking-deposit.json	.steps[6]	to	$staking
+go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json	.steps[1]	from	0xf9593d358b373d354a348c00887b914b408f6984
+go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json	.steps[1]	to	$before
+go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json	.steps[2]	address	$before
+go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json	.steps[6]	address	$before
 go-wemix/tx/01-wemix-tx-and-contract.json	.steps[2]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 go-wemix/tx/01-wemix-tx-and-contract.json	.steps[2]	to	$r
 go-wemix/tx/01-wemix-tx-and-contract.json	.steps[3]	address	$r

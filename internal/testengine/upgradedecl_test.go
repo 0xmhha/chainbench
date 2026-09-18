@@ -15,19 +15,26 @@ func upgradeEnv(extra string) string {
 	  "upgrade":{"template":"t.json"` + extra + `}}`
 }
 
-// TestUpgradeDecl_TheCaseIsHeldToWhatItSaysAboutTheFork.
+// TestUpgradeDecl_TheCaseIsHeldToTheForkItNames.
 //
-// The preset decides which fork and which block. A case may repeat them, and a
-// repetition that disagrees is a case testing something other than what it
-// claims — which reads as a pass, against the wrong fork.
-func TestUpgradeDecl_TheCaseIsHeldToWhatItSaysAboutTheFork(t *testing.T) {
+// The name of the fork and the block it sits on are different kinds of fact,
+// and only one of them is the preset's.
+//
+// The name says which change is under test. A case wrong about that exercises
+// one fork and reports a pass for another, so it is refused.
+//
+// The block is a schedule this run chooses. A case that has to write state
+// while the pre-fork build is still sealing needs the fork far enough out to
+// finish — with the preset's block 20 the chain reaches the fork and stops
+// during bring-up — so it sets its own and is not contradicted.
+func TestUpgradeDecl_TheCaseIsHeldToTheForkItNames(t *testing.T) {
 	cases := []struct {
 		name, extra, want string
 	}{
 		{"the right fork and block", `,"preset":"wemix-upgrade","fork":"croissant","at":20`, ""},
 		{"saying nothing is fine", `,"preset":"wemix-upgrade"`, ""},
 		{"the wrong fork", `,"preset":"wemix-upgrade","fork":"boho"`, `says it tests the "boho" fork`},
-		{"the wrong block", `,"preset":"wemix-upgrade","at":99`, "at block 99"},
+		{"its own block", `,"preset":"wemix-upgrade","at":120`, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
