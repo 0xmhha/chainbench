@@ -580,11 +580,30 @@ cross-fork: croissant at 30: head 29, 4 successor(s) now produce
   적용했더니 높이 0에서 게이트가 통과했고, retired 를 적용하면 아무것도 안 도는
   망이 ready 로 읽힌다. 둘 다 핸드오버 전용으로 막았다.
 
-### 아직 아니다
+  **두 빌드로 확인했다.** go-stablenet 의 boho 커밋(`bf17c9607`) 앞뒤로 빌드했다 —
+  `gstable-ad0122`(부모, `BohoBlock` 이 아예 없다)와 `gstable-740526`. 두 커밋의
+  `params/config.go` 차이는 **정확히 `Boho`·`BohoBlock` 둘뿐**이라 다른 변수가
+  섞이지 않는다.
 
-- **두 빌드로 돌린 restart.** 지금 케이스는 `from`·`to` 가 같은 gstable 이라,
-  망이 재시작해 포크를 넘는 것까지는 보이지만 **새 빌드가 필요했다는 것은
-  안 보인다.** 포크 이전 빌드가 따로 있어야 확인된다.
+  ```
+  두 빌드      pass=1, govMinter 가 v2 로 바뀐다
+  이전 빌드만  망이 뜨지도 않는다 — field 'BohoBlock' is not defined in params.ChainConfig
+  ```
+
+  대조군이 실패하는 방식이 더 강하다. 포크가 조용히 안 일어나는 것이 아니라,
+  **이전 빌드가 그 설정을 아예 거부한다.**
+
+  **그리고 restart 가 왜 config 로 날라야 하는지가 여기서 드러났다.** 처음엔
+  "섹션을 늦게 나른다" 로 잘못 짚었다가 아예 빼 버렸는데, 다시 넣어야 했다.
+  진짜 이유는 이것이다 — **노드를 init 한 것이 포크를 모르는 빌드**다. 그 빌드가
+  써 놓은 chain config 가 DB에 남고, 이후 모든 실행은 genesis.json 이 아니라 그것을
+  읽는다. 실측: 블록 202 까지 갔는데 저장된 config 에 `bohoBlock` 이 없고 govMinter
+  는 v1 그대로였다.
+
+  **변환기에서 셋을 더 고쳤다**(전부 stablenet genesis 가 드러냈다). `baseFeePerGas`
+  의 Go 필드는 `BaseFee` 다. alloc 주소를 `0x` 없이 적는 문서가 있는데 그 키는
+  자유 문자열이 아니라 주소 타입이라 접두사가 필요하다. 엔진 섹션을 `wbft` 로
+  적는 템플릿과 `wBFT` 로 적는 템플릿이 있고 Go 필드는 하나다.
 
 ---
 

@@ -44,8 +44,17 @@ var goFieldNames = map[string]string{
 	"daoForkBlock":   "DAOForkBlock",
 	"daoForkSupport": "DAOForkSupport",
 	"blsPublicKeys":  "BLSPublicKeys",
-	"wBFT":           "WBFT",
-	"mixhash":        "Mixhash",
+	// The same engine section is spelled two ways by two chains' templates, and
+	// both mean the one Go field.
+	"wbft": "WBFT",
+	"wBFT": "WBFT",
+	// And the few whose Go name is not the key at all. core.Genesis calls the
+	// base fee BaseFee and writes it as baseFeePerGas; its mix hash is spelled
+	// one way in the document and another in the struct, and documents in the
+	// wild use both.
+	"mixhash":       "Mixhash",
+	"mixHash":       "Mixhash",
+	"baseFeePerGas": "BaseFee",
 }
 
 // The Go kind of a genesis field, by its Go field name. JSON carries all three
@@ -67,13 +76,25 @@ var (
 
 // mapTables are the genesis tables whose keys are data rather than Go field
 // names: an allocation is keyed by address, a contract's params by the name the
-// contract looks them up under. Their keys are written exactly as the document
-// spells them.
+// contract looks them up under.
 //
 // Only their immediate keys. One level below an allocation is a types.Account,
 // whose keys are field names again — lower-casing Balance there is a config the
 // binary loads and a chain it then refuses to extend.
 var mapTables = map[string]bool{"Alloc": true, "Params": true, "Storage": true}
+
+// hexKeyTables are the map tables whose keys are a TYPE rather than a free
+// string: an allocation is keyed by common.Address, a slot by common.Hash. Both
+// decode through UnmarshalText, which requires the 0x form.
+//
+// The distinction matters because the other map tables must NOT be touched. A
+// contract's params are looked up by the exact name the contract uses, so
+// anything done to those keys changes the value.
+//
+// Measured: the stablenet genesis writes its allocation addresses without the
+// prefix — JSON reads them anyway, and every node died at config load with "hex
+// string without 0x prefix".
+var hexKeyTables = map[string]bool{"Alloc": true, "Storage": true}
 
 // ConfigTOML renders a genesis document as the TOML tables a geth-family binary reads
 // from its config file, rooted at the given table path (normally "Eth.Genesis").
@@ -102,7 +123,7 @@ func ConfigTOML(genesisJSON []byte, table string, omit []string) ([]byte, error)
 		delete(doc, k)
 	}
 	var b strings.Builder
-	if err := writeTable(&b, strings.Split(table, "."), doc, false); err != nil {
+	if err := writeTable(&b, strings.Split(table, "."), doc, false, false); err != nil {
 		return nil, err
 	}
 	return []byte(b.String()), nil
@@ -122,7 +143,7 @@ func decodeObject(raw []byte) (map[string]any, error) {
 
 // writeTable renders one table: its scalars, then its sub-tables. verbatim says
 // this table's own keys are data and are not renamed.
-func writeTable(b *strings.Builder, path []string, obj map[string]any, verbatim bool) error {
+func writeTable(b *strings.Builder, path []string, obj map[string]any, verbatim, hexKeys bool) error {
 	keys := slices.Sorted(maps.Keys(obj))
 	var scalars, tables []string
 	for _, k := range keys {
@@ -137,7 +158,11 @@ func writeTable(b *strings.Builder, path []string, obj map[string]any, verbatim 
 	fmt.Fprintf(b, "[%s]\n", strings.Join(path, "."))
 	for _, k := range scalars {
 		name := k
-		if !verbatim {
+		switch {
+		case hexKeys:
+			name = hexKey(k)
+		case verbatim:
+		default:
 			name = goFieldName(k)
 		}
 		v, err := scalarTOML(goFieldName(k), obj[k])
@@ -149,11 +174,15 @@ func writeTable(b *strings.Builder, path []string, obj map[string]any, verbatim 
 	b.WriteString("\n")
 	for _, k := range tables {
 		name := k
-		if !verbatim {
+		switch {
+		case hexKeys:
+			name = hexKey(k)
+		case verbatim:
+		default:
 			name = goFieldName(k)
 		}
 		sub := obj[k].(map[string]any)
-		if err := writeTable(b, append(path, tomlKey(name)), sub, mapTables[name]); err != nil {
+		if err := writeTable(b, append(path, tomlKey(name)), sub, mapTables[name], hexKeyTables[name]); err != nil {
 			return err
 		}
 	}
@@ -285,4 +314,13 @@ func hexBytes(v any) ([]byte, error) {
 		return nil, fmt.Errorf("not hex: %w", err)
 	}
 	return raw, nil
+}
+
+// hexKey is a map key that decodes as an address or a hash: the document may
+// write it bare, and UnmarshalText takes only the 0x form.
+func hexKey(k string) string {
+	if strings.HasPrefix(k, "0x") || strings.HasPrefix(k, "0X") {
+		return k
+	}
+	return "0x" + k
 }

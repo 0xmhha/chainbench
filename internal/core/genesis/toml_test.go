@@ -134,3 +134,32 @@ func TestTOML_RefusesWhatItCannotSpell(t *testing.T) {
 		t.Fatal("a render with no table path was accepted")
 	}
 }
+
+// TestConfigTOML_TheFieldsWhoseGoNameIsNotTheKey.
+//
+// Most genesis keys become their Go field by upper-casing the first letter, and
+// the initialisms are the obvious exceptions. These two are not obvious at all:
+// core.Genesis calls the base fee BaseFee and writes it as baseFeePerGas, and
+// its mix hash is spelled one way in the struct and another in most documents.
+//
+// Measured: a stablenet genesis carrying baseFeePerGas rendered as
+// "BaseFeePerGas" and every node died at config load naming the field.
+func TestConfigTOML_TheFieldsWhoseGoNameIsNotTheKey(t *testing.T) {
+	out, err := ConfigTOML([]byte(`{
+	  "baseFeePerGas": "0x3b9aca00",
+	  "mixHash": "0x00",
+	  "gasLimit": "0x64"
+	}`), "Eth.Genesis", nil)
+	if err != nil {
+		t.Fatalf("ConfigTOML: %v", err)
+	}
+	got := string(out)
+	for _, want := range []string{`BaseFee = "1000000000"`, "Mixhash ="} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "BaseFeePerGas") || strings.Contains(got, "MixHash") {
+		t.Errorf("a key was rendered under its document spelling\n%s", got)
+	}
+}

@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "boho-crossed-by-restart",
-  "description": "The ordinary hardfork: one chain, one build at a time. Four stablenet producers run the pre-fork build to the block before boho, every node is stopped, and all four come back on the post-fork build \u2014 same chain, same databases, same work, a different executable. The fork then activates and swaps govMinter to v2, which is what proves the restarted network crossed rather than merely bounced. The go-wemix cases prove the other shape, where two sets of nodes run at once and production changes hands.",
+  "description": "The ordinary hardfork: one chain, one build at a time. Four stablenet producers run the pre-fork build, every node is stopped well before the boho block, and all four come back on the build that knows boho \u2014 same chain, same databases, same work, a different executable. The fork then swaps govMinter to v2, which is what proves the restarted network crossed rather than merely bounced. It also proves the new build was needed: with the pre-fork build on both sides the network does not start at all, because that build has no BohoBlock to configure. The go-wemix cases prove the other shape, where two sets of nodes run at once and production changes hands.",
   "requires": [
     "rpc",
     "fork:boho",

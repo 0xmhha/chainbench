@@ -816,12 +816,26 @@ const (
 	ForkInConfig ForkCarrier = "config"
 )
 
-// carrier is the route this fork takes, defaulting to the genesis.
+// carrier is the route this fork takes.
+//
+// The genesis is the default and the cheaper route. A restart takes the config,
+// and not as a preference: its nodes were initialized by a build that did not
+// know the fork, so the chain config stored in their databases does not mention
+// it — and that stored config is what every later start reads. A genesis
+// document is read only into an empty database.
+//
+// Measured: four nodes initialized by a pre-boho gstable, relaunched on a build
+// that knows boho, ran past block 200 with bohoBlock absent from the stored
+// config and govMinter still v1. The fork never happened. The config file is
+// read on every launch, which is the route that reaches an initialized node.
 func (f GenesisFork) carrier() ForkCarrier {
-	if f.Carrier == "" {
-		return ForkInGenesis
+	if f.Carrier != "" {
+		return f.Carrier
 	}
-	return f.Carrier
+	if f.Restart {
+		return ForkInConfig
+	}
+	return ForkInGenesis
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -956,14 +970,29 @@ func (w *Workspace) applyFork(base []byte, f GenesisFork) ([]byte, map[string][]
 	// A restart's fork is a block, and what happens at it is the post-fork
 	// build's to know. Whatever configuration the fork needs is in the genesis
 	// already — the declaration puts it there like any other genesis content —
-	// so there is no second chain to lift a section out of and nothing to carry
-	// anywhere. The block is written here so the declaration, not an overlay,
-	// is the one place that says when.
+	// so there is no second chain to lift a section out of. The block is
+	// written here so the declaration, not an overlay, is the one place that
+	// says when.
+	//
+	// It still has to be carried, because by the time it matters the nodes are
+	// initialized and nothing reads a genesis document into a database that is
+	// not empty.
 	if f.Restart {
 		if err := genesis.ValidateForks(withBlock); err != nil {
 			return nil, nil, fmt.Errorf("chainsetup: genesis: with the %q fork at %d: %w", f.Name, f.At, err)
 		}
-		return withBlock, nil, nil
+		if f.carrier() == ForkInGenesis {
+			return withBlock, nil, nil
+		}
+		p, err := w.plugin()
+		if err != nil {
+			return nil, nil, err
+		}
+		toml, err := genesis.ConfigTOML(withBlock, forkConfigTable, p.Manifest().Genesis.ConfigOmit)
+		if err != nil {
+			return nil, nil, fmt.Errorf("chainsetup: genesis: render the %q fork for binary %q's config: %w", f.Name, f.Binary, err)
+		}
+		return withBlock, map[string][]byte{f.Binary: toml}, nil
 	}
 	section, err := w.forkSection(f)
 	if err != nil {
