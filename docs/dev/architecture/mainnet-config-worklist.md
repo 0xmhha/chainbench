@@ -458,7 +458,7 @@ stablenet,wbft,wemix   1   ← 이번에 처리
 | 세 체인 다 통과 | 14 | 게이트 삭제 |
 | stablenet·wbft 통과, wemix 실패 | 7 | `family:wbft` |
 | stablenet 전용 동작 | 7 | `engine:anzeon` |
-| 빌드 기본값 탓 | 4 | **그대로 둔다** |
+| 케이스에 박힌 수수료 탓 | 4 | **그대로 둔다** — 게이트 문제가 아니다 |
 
 **가장 큰 발견은 수수료 대납 7건이다.** `stablenet` 전용이라고 적혀 있었는데
 **세 체인에서 전부 통과한다.** 게이트가 사실이 아니었다.
@@ -468,16 +468,47 @@ stablenet,wbft,wemix   1   ← 이번에 처리
 `gasTip` 이 없다(`11-gaslimit-exceeded`). 여기에 `06-basefee-minimum` 과
 블랙리스트 둘(0 주소·프리컴파일로의 전송이 wbft 에서는 성공한다)이 붙는다.
 
-**표현할 수 없는 4건은 체인 차이가 아니라 빌드 기본값이다.**
+**남는 4건은 게이트 문제가 아니다** (세 저장소 코드로 확인, 2026-09-18).
 
-```
-gstable  RPCTxFeeCap = 0      (상한 없음)
-gwbft    RPCTxFeeCap = 1e+00  (1 ether)
-```
+처음엔 "빌드 기본값 탓" 으로 적었는데 **절반만 맞았다.** gwbft 의 상한이 방아쇠일
+뿐, 원인은 **케이스에 박아 넣은 stablenet 수수료 값**이다.
 
 `nonce-ordering`·`out-of-order-nonces-mine`·`replacement-tx`·
-`same-nonce-replacement` 이 2.1 ether 수수료를 만드는데 gwbft 가 막는다. 능력으로
-표현할 수 있는 종류가 아니라 `applicableChains: stablenet` 으로 남긴다.
+`same-nonce-replacement` 이 이렇게 적고 있다.
+
+```json
+"maxFeePerGas":         "100000000000000",   // 100,000 gwei
+"maxPriorityFeePerGas":  "30000000000000"    // 30,000 gwei
+```
+
+**그 값은 stablenet 의 고정 tip 을 넘기려고 고른 것이다.** go-stablenet
+`core/state_transition.go`:
+
+```go
+// If Anzeon is enabled, and the sender is authorized, use the tx's tx.GasTipCap()
+// Otherwise, use the header's gas tip
+if statedb != nil && !statedb.IsAuthorized(from) {
+    gasTipCap = new(big.Int).Set(headerGasTip)
+}
+msg.GasPrice = min(GasTipCap + baseFee, GasFeeCap)
+```
+
+비인가 계정은 **tx 가 요청한 tip 이 버려지고 헤더 값이 강제된다.** 그 값이 genesis
+템플릿의 `gasTip: 27600000000000`(27,600 gwei)이다. baseFee 쪽은 한산하면 바닥까지
+계속 내려가므로(`CalcBaseFee` 의 `parent.GasUsed < decreasingTarget` 가지),
+stablenet 에서 비용을 지배하는 것은 baseFee 가 아니라 **고정 tip** 이다. 그래서
+케이스가 10만 gwei 를 적어 둔다.
+
+wbft 에는 그 구조가 아예 없다 — `TransactionToMessage` 에 `headerGasTip` 인자가
+없고 tx 자신의 tip 을 쓴다. 필요한 수수료가 ~1 gwei 인데 케이스는 **10만 배**를
+적고 있고, `checkTxFee` 가 `gasPrice × gas` 로 보므로 2.1 ether 가 되어 gwbft 의
+상한 1 ether 에 걸린다.
+
+**그러니 이 넷은 체인 전용 테스트가 아니다.** nonce 순서와 tx 교체는 어느 EVM
+에서나 같다. stablenet 에 묶어 놓은 것은 **케이스에 박힌 수수료 값 하나**이고,
+이 트랙이 없애려는 바로 그것이다. 항목이 **P5(게이트)가 아니라 H·P2·P3(값)**
+쪽이라는 뜻이다. 실행 중에 헤더의 `gasTip` 을 읽어 계산하거나(`read` + `$바인딩`),
+체인 선언이 값을 공급하면(P2 의 preset `values`) 게이트 없이 세 체인 다 돈다.
 
 **`wbft` 4건 — stablenet 에.** `01-wbft-govcontracts-at-genesis` 는
 `contract:govConfig`·`contract:govStaking` 으로 옮겼다(wbft 만 선언한다. stablenet
@@ -500,22 +531,41 @@ gwbft    RPCTxFeeCap = 1e+00  (1 ether)
 
 ### 남은 둘을 마저 풀었다 (2026-09-18) — 7 → 4
 
-**wemix 매니페스트의 tx 타입이 틀렸다.** go-wemix 가 실제로 정의하는 것은 넷뿐이다.
+**wemix 매니페스트의 tx 타입이 틀렸다.** go-wemix 가 실제로 정의하는 것은 넷뿐이고,
+디코더가 그 밖을 거부한다.
 
 ```go
+// core/types/transaction.go — 상수
 LegacyTxType = iota               // 0x00
 AccessListTxType                  // 0x01
 DynamicFeeTxType                  // 0x02
 FeeDelegateDynamicFeeTxType = 22  // 0x16
+
+// decodeTyped — 받는 것이 전부다
+switch b[0] {
+case AccessListTxType, DynamicFeeTxType, FeeDelegateDynamicFeeTxType: ...
+default: return nil, ErrTxTypeNotSupported
+}
 ```
 
-매니페스트는 여섯을 적고 `0x03`(blob)·`0x04`(setCode)를 넣고 있었다. 그래서
-`18-set-code-delegation` 이 wemix 에서 `transaction type not supported` 로
-떨어졌다. 둘을 뺐다. stablenet·wbft 는 실제로 갖고 있어 그대로 둔다.
+`BlobTx`·`SetCodeTx` 는 **타입 정의 자체가 `core/types/` 어디에도 없다.**
+stablenet·wbft 는 둘 다 `case BlobTxType:`·`case SetCodeTxType:` 를 갖고 있다.
+매니페스트는 여섯을 적고 있었고, 그래서 `18-set-code-delegation` 이 wemix 에서
+`transaction type not supported` 로 떨어졌다. 둘을 뺐다.
 
 **secp256r1 셋은 프리컴파일 능력을 만들어 풀었다.** 저장소를 읽어 보니 두 체인
-**다** `p256Verify` 를 빌드하는데, 각자 **자기 포크에서** 켠다 — stablenet 은
-`PrecompiledContractsBoho`, wbft 는 `PrecompiledContractsCroissant`. 그리고 기본
+**다** `p256Verify` 를 빌드하는데, EVM 이 **포크에 따라 다른 세트를 고른다**.
+
+```go
+// go-stablenet core/vm/evm.go
+case evm.chainRules.IsBoho:      precompiles = PrecompiledContractsBoho      // 0x100 있음
+case evm.chainRules.IsAnzeon:    precompiles = PrecompiledContractsAnzeon    // 0x100 없음
+// go-wbft
+case evm.chainRules.IsCroissant: precompiles = PrecompiledContractsCroissant // 0x100 있음
+```
+
+`PrecompiledContractsAnzeon` 에 `0x100` 이 없는 것을 직접 셌다(0건). boho 가 꺼진
+기본 stablenet 망은 anzeon 세트로 떨어지므로 프리컴파일이 없다. 그리고 기본
 genesis 는 이렇다.
 
 ```
@@ -533,10 +583,10 @@ stablenet  bohoBlock 없음      → 안 산다
 `precompile:` 이 가장 정확한 답이다 — 그 자리에 사는 바로 그것을 지목한다.
 `engine:` 도 계속 받는다.
 
-**남은 4건.** `stablenet` 넷, 전부 tx 수수료 상한이다. 체인의 성질이 아니라
-**빌드 기본값**(gstable 0, gwbft 1 ether)이라 능력으로 표현할 종류가 아니다.
-케이스가 만드는 수수료를 낮추거나 실행 옵션으로 상한을 올리는 것이 답이지,
-게이트를 고치는 것이 답이 아니다.
+**남은 4건.** `stablenet` 넷. **게이트로 풀 수 있는 것은 다 풀었다** — 이 넷은
+케이스에 박힌 stablenet 수수료 값에 묶여 있고, 그 값이 체인에서 오게 되면 게이트
+없이 세 체인 다 돈다. 근거와 코드는 위 §"남는 4건은 게이트 문제가 아니다" 에 있다.
+**P5-L1 은 여기까지이고, 나머지는 P2·P3 이 열어야 한다.**
 
 ### P1 이 한 것과 하지 않은 것
 
