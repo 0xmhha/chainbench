@@ -402,7 +402,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 문법은 이미 있고 118개 파일이 쓴다(`internal/dsl/interp/binding.go:23`). 값의 출처가 실행 중 `read` 결과뿐이다 | P2 | 미착수 |
 | P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
 | P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
-| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **진행 중 (2026-09-18): 66 → 7** — §P5-L1 참조 |
+| P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **진행 중 (2026-09-18): 66 → 4** — §P5-L1 참조 |
 | P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
 | P6 | 실행 시점에 체인 선언을 주입한다 | 완료 조건 3번. `suite run --env <id\|경로>` 가 케이스의 참조를 갈아끼우고, 케이스가 덮은 것은 남긴다. §P1 아래 참조 | ~~P1~~ | **완료 (2026-09-15)** |
 
@@ -498,8 +498,45 @@ gwbft    RPCTxFeeCap = 1e+00  (1 ether)
 `transaction type not supported` 로 떨어진다. 그래서 이 케이스를 tx 타입 능력으로
 게이트할 수 없어 `family:wbft` 로 뒀다. 매니페스트를 고치는 것이 맞는 순서다.
 
-**남은 7건.** `stablenet` 4(수수료 상한) + `wbft` 3(secp256r1). 둘 다 왜 남는지가
-위에 적혀 있다.
+### 남은 둘을 마저 풀었다 (2026-09-18) — 7 → 4
+
+**wemix 매니페스트의 tx 타입이 틀렸다.** go-wemix 가 실제로 정의하는 것은 넷뿐이다.
+
+```go
+LegacyTxType = iota               // 0x00
+AccessListTxType                  // 0x01
+DynamicFeeTxType                  // 0x02
+FeeDelegateDynamicFeeTxType = 22  // 0x16
+```
+
+매니페스트는 여섯을 적고 `0x03`(blob)·`0x04`(setCode)를 넣고 있었다. 그래서
+`18-set-code-delegation` 이 wemix 에서 `transaction type not supported` 로
+떨어졌다. 둘을 뺐다. stablenet·wbft 는 실제로 갖고 있어 그대로 둔다.
+
+**secp256r1 셋은 프리컴파일 능력을 만들어 풀었다.** 저장소를 읽어 보니 두 체인
+**다** `p256Verify` 를 빌드하는데, 각자 **자기 포크에서** 켠다 — stablenet 은
+`PrecompiledContractsBoho`, wbft 는 `PrecompiledContractsCroissant`. 그리고 기본
+genesis 는 이렇다.
+
+```
+wbft       croissantBlock: 0   → 산다
+stablenet  bohoBlock 없음      → 안 산다
+```
+
+**빌드가 가진 것과 망에서 사는 것이 다르다.** `fork:croissant` 로 적으면
+"크로아상이 필요하다" 는 거짓말이 된다 — 필요한 것은 프리컴파일이다. 그래서
+`precompile:` 접두사를 만들고 wbft 매니페스트가 선언하게 했다. 실측: wbft 에서
+`pass=1` 셋, stablenet 에서 `skip=1` 셋. boho 를 켠 stablenet 망은 env 의
+`capabilities` 로 직접 알릴 수 있고, 그 통로는 이미 있다.
+
+**가드를 한 번 더 넓혔다.** 어느 체인도 컨트랙트로 선언하지 않은 주소에 대해
+`precompile:` 이 가장 정확한 답이다 — 그 자리에 사는 바로 그것을 지목한다.
+`engine:` 도 계속 받는다.
+
+**남은 4건.** `stablenet` 넷, 전부 tx 수수료 상한이다. 체인의 성질이 아니라
+**빌드 기본값**(gstable 0, gwbft 1 ether)이라 능력으로 표현할 종류가 아니다.
+케이스가 만드는 수수료를 낮추거나 실행 옵션으로 상한을 올리는 것이 답이지,
+게이트를 고치는 것이 답이 아니다.
 
 ### P1 이 한 것과 하지 않은 것
 

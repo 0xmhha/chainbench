@@ -50,11 +50,15 @@ var (
 // the same one, or the gate is about something other than what the case
 // touches.
 //
-// An engine requirement counts too, and only for the address no chain declares.
-// Such an address is usually a precompile rather than a chain's own contract,
-// and a precompile is the engine's: engine:anzeon pins the chain as firmly as
-// naming it did. Nothing weaker is accepted here — family: and fork: each admit
-// two chains, and a raw address can mean different things on the two.
+// Two more count, and only for the address no chain declares as a contract of
+// its own. Such an address is usually a precompile.
+//
+// precompile: is the precise answer — it names the very thing living there, so
+// a network either answers at that address or the case does not run. engine: is
+// the blunt one, and enough: a precompile is the engine's, so engine:anzeon
+// pins the chain as firmly as naming it did. Nothing weaker is accepted —
+// family: and fork: each admit two chains, and a raw address can mean different
+// things on the two.
 func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 	var offenders []string
 	err := filepath.WalkDir(corpusRoot, func(p string, d fs.DirEntry, err error) error {
@@ -82,10 +86,10 @@ func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 		name, known := contractNameAt(addr)
 		switch {
 		case !known:
-			if requiresEngine(doc) {
+			if requiresAny(doc, registry.CapPrecompile, registry.CapEngine) {
 				return nil
 			}
-			offenders = append(offenders, fmt.Sprintf("%s names %s, which no chain declares, and declares neither applicableChains nor an engine requirement", p, addr))
+			offenders = append(offenders, fmt.Sprintf("%s names %s, which no chain declares, and declares neither applicableChains nor a precompile/engine requirement", p, addr))
 		case !requiresContract(doc, name):
 			offenders = append(offenders, fmt.Sprintf("%s names %s and declares neither applicableChains nor requires %q", p, addr, registry.CapContract+name))
 		}
@@ -189,12 +193,16 @@ func sortedKeys(m map[string]any) []string {
 	return out
 }
 
-// requiresEngine reports whether the case gates on a chain's consensus engine.
-func requiresEngine(doc map[string]any) bool {
+// requiresAny reports whether the case carries a requirement with one of the
+// given prefixes.
+func requiresAny(doc map[string]any, prefixes ...string) bool {
 	reqs, _ := doc["requires"].([]any)
 	for _, r := range reqs {
-		if s, _ := r.(string); strings.HasPrefix(s, registry.CapEngine) {
-			return true
+		s, _ := r.(string)
+		for _, p := range prefixes {
+			if strings.HasPrefix(s, p) {
+				return true
+			}
 		}
 	}
 	return false

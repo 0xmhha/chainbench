@@ -43,7 +43,8 @@
     "process",
     "rpc",
     "ws",
-    "consensus"
+    "consensus",
+    "precompile:secp256r1"
   ],
   "system_contracts": {
     "govConfig": "0x0000000000000000000000000000000000001000",

@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "secp256r1-precompile-short-input",
-  "applicableChains": "wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "precompile:secp256r1"
   ],
   "env": {
     "extends": "wbft-bp4",

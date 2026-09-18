@@ -32,11 +32,21 @@ const (
 	CapFamily = "family:"
 	// CapTx asks for an EIP-2718 transaction type the chain accepts.
 	CapTx = "tx:"
+	// CapPrecompile asks for a precompiled contract the chain's EVM answers at.
+	//
+	// It is declared rather than derived, because whether a precompile is LIVE
+	// is not a fact about the chain alone: go-stablenet and go-wbft both build
+	// p256Verify, and each activates it at its own fork — boho and croissant.
+	// A default wbft network has croissant at block 0 and answers; a default
+	// stablenet network declares no bohoBlock at all and does not. So the
+	// manifest says what its ordinary network provides, and a network that
+	// turns the fork on declares the capability alongside its overlay.
+	CapPrecompile = "precompile:"
 )
 
 // CapabilityPrefixes is every prefix a requirement may carry, for the message
 // that refuses one it does not know.
-var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx}
+var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile}
 
 // DerivedCapabilities is what this manifest's own data says the chain provides.
 //
