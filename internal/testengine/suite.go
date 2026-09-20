@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/home"
@@ -817,16 +816,6 @@ func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
 		return nil
 	}
 	return process.NewRemoteLogReader(runner)
-}
-
-// chainCaps is what a chain advertises by its manifest: what a handoff
-// network, which has no workspace record, tells capability-gated specs.
-func chainCaps(chain string) []string {
-	p, err := external.ResolveChain(chain, "", "")
-	if err != nil {
-		return nil
-	}
-	return p.Manifest().Capabilities
 }
 
 // preflightDecision asks the workspace, when there is one, how much of what it

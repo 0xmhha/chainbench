@@ -12,7 +12,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
@@ -34,21 +33,6 @@ import (
 // suiteDefaultValidators sizes a network whose env declares no topology: the
 // BFT floor that tolerates one fault.
 const suiteDefaultValidators = 4
-
-// Handoff composition timing.
-const (
-	// etcdFormWait bounds the wait for the producer's etcd cluster to form.
-	etcdFormWait = 60 * time.Second
-	// forkWait bounds the wait for the successor set to produce past the fork.
-	// It is not the wait for one block: AwaitFork now requires ten, so a chain
-	// with a one-second block period needs that much more headroom.
-	//
-	// The comment below is the original one, kept because the bound it chose is
-	// still the bound: the wait for a successor to seal the first post-fork
-	// block. The profile's fork height and block time decide the real figure;
-	// this is the ceiling.
-	forkWait = 180 * time.Second
-)
 
 // overlayFilePrefix names the file a declared genesis overlay is written to for
 // the genesis step, which reads overlays from a file. The content's digest is

@@ -1,8 +1,8 @@
 package chainsetup_test
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
