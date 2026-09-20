@@ -927,7 +927,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
 		return "", err
 	}
-	w.state.Capabilities = networkCapabilities(p.Manifest(), opts)
+	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts)
 	w.state.HaltsAt = opts.HaltsAt
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
@@ -1194,17 +1194,33 @@ const delayedForkSuffix = "Block"
 // boho fork — instead of naming the chain it was written on. The chain's name
 // is not one of them on purpose: a case that gates on a name has to be edited
 // to meet a second chain, which is the thing being removed.
-func networkCapabilities(m registry.Manifest, opts GenesisOpts) []string {
+func networkCapabilities(m registry.Manifest, genesisTemplate []byte, opts GenesisOpts) []string {
 	caps := append([]string(nil), m.Capabilities...)
-	caps = append(caps, m.DerivedCapabilities()...)
+	caps = append(caps, m.DerivedCapabilities(genesisTemplate)...)
 	caps = append(caps, "ws")
 	for _, key := range slices.Sorted(maps.Keys(opts.Overrides)) {
 		fork, ok := strings.CutSuffix(key, delayedForkSuffix)
 		if !ok || fork == "" {
 			continue
 		}
-		if n, err := strconv.Atoi(opts.Overrides[key]); err == nil && n > 0 {
+		n, err := strconv.Atoi(opts.Overrides[key])
+		if err != nil {
+			continue
+		}
+		// The override switches the fork on, whether at genesis or later, so
+		// this network answers for it. Only a later one is also "delayed".
+		caps = append(caps, registry.CapFork+strings.ToLower(fork))
+		if n > 0 {
 			caps = append(caps, "delayed-"+strings.ToLower(fork))
+		}
+	}
+	// An overlay carries a fork the same way the template does — as a block
+	// number or as an engine section — and a network built from one answers for
+	// it however it arrived. Without this the capability depended on which of
+	// the three routes a spec happened to take.
+	for _, fork := range m.Genesis.Hardforks {
+		if registry.ForkActiveIn(opts.Overlay, fork) && len(opts.Overlay) > 0 {
+			caps = append(caps, registry.CapFork+fork)
 		}
 	}
 	return append(caps, opts.Capabilities...)

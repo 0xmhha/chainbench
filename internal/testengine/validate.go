@@ -37,7 +37,7 @@ func ValidateSpecs(paths []string, chain string) ([]ValidateResult, error) {
 			return nil, fmt.Errorf("validate: --chain: %w", err)
 		}
 		m := plugin.Manifest()
-		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities()...)
+		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities(plugin.GenesisTemplate())...)
 	}
 	reg := testhelper.Registry()
 
@@ -67,7 +67,7 @@ func ValidateContent(raws [][]byte, labels []string, chain string) ([]ValidateRe
 			return nil, fmt.Errorf("validate: --chain: %w", err)
 		}
 		m := plugin.Manifest()
-		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities()...)
+		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities(plugin.GenesisTemplate())...)
 	}
 	reg := testhelper.Registry()
 	results := make([]ValidateResult, 0, len(raws))

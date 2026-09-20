@@ -44,6 +44,40 @@ const (
 	CapPrecompile = "precompile:"
 )
 
+// ForkActiveIn reports whether a genesis template switches the named fork on.
+//
+// Genesis.Hardforks is the list of forks a chain KNOWS, in activation order —
+// that is what `chains hardforks` prints and what it should keep meaning. It is
+// not the list a default network HAS. stablenet knows applepie and boho and its
+// template turns on neither, so deriving a capability from the list advertised
+// two forks no ordinary stablenet network answers for.
+//
+// Measured 2026-09-19: boho-crossed-by-restart requires fork:boho, the gate let
+// it through on a network whose genesis has no bohoBlock, and it failed on an
+// assertion about govMinter instead of skipping. The same file already takes the
+// opposite care with CapPrecompile, and for this exact fork — so the rule was in
+// the room, applied to one capability and not its neighbour.
+//
+// A network that does turn a fork on says so itself: an override moves it off
+// genesis and is advertised as delayed-<fork>, and an overlay declares what it
+// provides. Nothing here has to guess.
+//
+// The template is read as text rather than decoded. A fork appears either as
+// "<fork>Block" (a block number) or as "<fork>": { ... } (an engine section),
+// the shapes the chains actually use, and a decoder would need a config struct
+// per chain generation to see either.
+func ForkActiveIn(genesisTemplate []byte, fork string) bool {
+	if len(genesisTemplate) == 0 || fork == "" {
+		// No static template: the family writes the genesis, and what it turns
+		// on is not knowable here. Advertising the declared list is what this
+		// did before, and the chains in that position (poa) declare only forks
+		// their genesis carries.
+		return true
+	}
+	t := string(genesisTemplate)
+	return strings.Contains(t, `"`+fork+`Block"`) || strings.Contains(t, `"`+fork+`"`)
+}
+
 // CapabilityPrefixes is every prefix a requirement may carry, for the message
 // that refuses one it does not know.
 var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile}
@@ -57,12 +91,18 @@ var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, Ca
 //
 // The result is sorted so a composed network's advertised set is the same on
 // every run, which is what lets a run record be compared with another.
-func (m Manifest) DerivedCapabilities() []string {
+// genesisTemplate is the chain's template bytes (ChainPlugin.GenesisTemplate).
+// Only the forks that template actually switches on are advertised; nil means a
+// chain with no static template, whose forks its family writes at genesis time.
+func (m Manifest) DerivedCapabilities(genesisTemplate []byte) []string {
 	out := make([]string, 0, len(m.SystemContracts)+len(m.Genesis.Hardforks)+len(m.TxTypes)+2)
 	for name := range m.SystemContracts {
 		out = append(out, CapContract+name)
 	}
 	for _, fork := range m.Genesis.Hardforks {
+		if !ForkActiveIn(genesisTemplate, fork) {
+			continue
+		}
 		out = append(out, CapFork+fork)
 	}
 	if m.Genesis.EngineField != "" {
