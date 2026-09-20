@@ -1,9 +1,22 @@
 # 목표 아키텍처 — 다이어그램
 
-> **[현행 설계]** 목표 다이어그램.
-> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
-> 모듈 경계·표면 경로는 2026-08-25 재편이 덮는다: [[architecture-v2]](architecture-v2.md) (worklist §1h).
+> **[이력] 2026-08-26 의 목표 다이어그램.** 이 문서는 **현행 설계가 아니다** — 그리고 있는
+> 구조는 코드에 없다.
+>
+> **실측 (2026-09-20).** 여기 L1 로 그려진 모듈 이름 일곱(`driver`·`netmap`·`place`·
+> `portplan`·`target`·`serverset`·`peering`)이 **전부 `internal/` 에 없다.** 흡수된 자리는
+> `netmap`·`place`·`peering` → `internal/core/node`, `driver` → `internal/core/process`,
+> `serverset`·`portplan`·`target` → `internal/resource` 다. 반대로 지금 쓰는
+> `internal/resource` 는 이 문서에 **0회** 나온다.
+>
+> 등급 규칙상 [현행 설계]는 코드를 이기므로, 이 문서를 [현행 설계]로 두면 읽는 사람이
+> **존재하지 않는 구조를 향해 만든다.** 그래서 [이력]로 내린다 — 다이어그램이 틀렸다는 뜻이
+> 아니라 **그때의 목표였다**는 뜻이고, 근거로 인용할 수 없다는 뜻이다.
+>
+> **지금 향하는 구조는** 모듈 경계가 [[architecture-v2]](architecture-v2.md),
+> 레이어·의존 규칙이 [[layers]](layers.md)(`internal/arch` 가 기계로 강제한다),
+> 관심사별 소유가 [[module-responsibilities]](module-responsibilities.md) 다.
+> 패키지 전수는 [[package-tree]](package-tree.md) 가 측정으로 들고 있다.
 
 > 산문으로 흩어진 결정을 **그림 하나로 검토**하기 위한 문서.
 > 각 결정의 근거와 실측은 아래 문서에 있고, 여기서는 반복하지 않는다.
