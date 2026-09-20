@@ -33,7 +33,7 @@ func TestEveryVerbDeclaresWhatItNeeds(t *testing.T) {
 			undeclared = append(undeclared, name)
 			continue
 		}
-		if need.step == "" && need.run == anyRun && need.why == "" {
+		if need.step == "" && need.run == anyRun && len(need.node) == 0 && need.why == "" {
 			unexplained = append(unexplained, name)
 		}
 	}
@@ -129,5 +129,73 @@ func TestAllowRefusesAnUndeclaredVerb(t *testing.T) {
 	w := &Workspace{}
 	if err := w.allow("NotAVerb"); err == nil {
 		t.Fatal("an undeclared verb was allowed")
+	}
+}
+
+// TestAllowNodeRefusesANodeThatNeverRan covers the condition that used to be
+// written out in three places — start-node, swap-node and hardfork each had
+// their own copy of the same sentence.
+func TestAllowNodeRefusesANodeThatNeverRan(t *testing.T) {
+	w := &Workspace{}
+	w.state.Nodes = []node.Record{{Index: 1, Args: []string{"gstable", "--x"}}, {Index: 2}}
+
+	if err := w.allowNode("StartNode", 1); err != nil {
+		t.Errorf("a stopped node with recorded argv was refused: %v", err)
+	}
+	err := w.allowNode("StartNode", 2)
+	if err == nil {
+		t.Fatal("a node that never ran was allowed to relaunch")
+	}
+	if !strings.Contains(err.Error(), "node2") || !strings.Contains(err.Error(), "chain start") {
+		t.Errorf("the refusal does not name the node or what to run: %v", err)
+	}
+	// The same node, asked for by a different verb, gets the same sentence.
+	swap := w.allowNode("SwapNode", 2)
+	if swap == nil || !strings.Contains(swap.Error(), "no recorded argv") {
+		t.Errorf("swap-node does not refuse the same way: %v", swap)
+	}
+}
+
+// TestAllowNodeRefusesARunningNode is the other half of start-node's condition.
+func TestAllowNodeRefusesARunningNode(t *testing.T) {
+	w := &Workspace{}
+	w.state.Nodes = []node.Record{{Index: 1, PID: 77, Args: []string{"gstable"}}}
+	err := w.allowNode("StartNode", 1)
+	if err == nil {
+		t.Fatal("a running node was allowed to start again")
+	}
+	if !strings.Contains(err.Error(), "already running") || !strings.Contains(err.Error(), "77") {
+		t.Errorf("the refusal does not say why: %v", err)
+	}
+	// Swapping a running node is legal — it stops it itself — so the same node
+	// must pass there. A condition list per verb is what makes that possible.
+	if err := w.allowNode("SwapNode", 1); err != nil {
+		t.Errorf("swap-node was held to start-node's condition: %v", err)
+	}
+}
+
+// TestAllowNodeNamesAnUnknownIndex keeps the per-node path answering for an
+// index the table does not hold.
+func TestAllowNodeNamesAnUnknownIndex(t *testing.T) {
+	w := &Workspace{}
+	w.state.Nodes = []node.Record{{Index: 1, Args: []string{"gstable"}}}
+	err := w.allowNode("StartNode", 9)
+	if err == nil || !strings.Contains(err.Error(), "no node9") {
+		t.Errorf("an unknown index was not named: %v", err)
+	}
+}
+
+// TestHardforkNeedsEveryNodeLaunched pins the table-wide form of the same
+// condition, which hardfork wrote as its own loop.
+func TestHardforkNeedsEveryNodeLaunched(t *testing.T) {
+	w := &Workspace{}
+	w.state.Nodes = []node.Record{{Index: 1, Args: []string{"gwemix"}}, {Index: 2}}
+	err := w.allow("Hardfork")
+	if err == nil || !strings.Contains(err.Error(), "node2") {
+		t.Errorf("hardfork ran with a node that never started: %v", err)
+	}
+	w.state.Nodes[1].Args = []string{"gwemix"}
+	if err := w.allow("Hardfork"); err != nil {
+		t.Errorf("a fully launched network was refused: %v", err)
 	}
 }

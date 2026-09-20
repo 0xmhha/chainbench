@@ -1,6 +1,10 @@
 package chainsetup
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+)
 
 // What a verb needs before it may run.
 //
@@ -38,6 +42,25 @@ const (
 	stopped
 )
 
+// nodeNeed is what a verb needs of ONE node, for the verbs that act by index.
+//
+// It is a third word rather than a variant of runNeed because it answers about a
+// node, not about the network: "every node is down" and "node 3 is down" are
+// different questions, and a verb that relaunches one node must not be held to
+// the first.
+type nodeNeed int
+
+const (
+	// anyNode asks nothing of the node beyond its existing.
+	anyNode nodeNeed = iota
+	// launched needs the node to carry a recorded argv — it has been started at
+	// least once, so there is a command to run again. Relaunching a node that
+	// never ran has nothing to relaunch.
+	launched
+	// down needs the node to be stopped.
+	down
+)
+
 // verbNeed is one verb's declaration.
 type verbNeed struct {
 	// step names this verb's composition step, when it is one. Its own
@@ -45,6 +68,16 @@ type verbNeed struct {
 	step string
 	// run is the state the network must be in.
 	run runNeed
+	// node is what the verb's own node must satisfy. A verb that takes an index
+	// declares these; they are checked by allowNode. It is a list because the
+	// conditions are independent — relaunching a node needs it both stopped and
+	// previously started, and neither implies the other.
+	node []nodeNeed
+	// nodeAll applies node to every node in the table rather than to one. A verb
+	// that acts on the whole network but needs what a per-node condition asks —
+	// hardfork needs every node's argv — says so here instead of writing the
+	// loop again.
+	nodeAll bool
 	// why explains a declaration that asks for nothing. An empty need with no
 	// reason is what the ratchet refuses: "this verb checks nothing" has to be a
 	// decision someone wrote down, not a gap nobody noticed.
@@ -72,7 +105,7 @@ var verbNeeds = map[string]verbNeed{
 	// Verbs that read or act on the node table.
 	"Health":           {run: placed},
 	"Preflight":        {run: placed},
-	"Hardfork":         {run: placed},
+	"Hardfork":         {run: placed, node: []nodeNeed{launched}, nodeAll: true},
 	"VerifyValidators": {run: placed},
 
 	// Destructive.
@@ -98,8 +131,8 @@ var verbNeeds = map[string]verbNeed{
 	"LogExcerpt":      {why: "same as Logs, which it calls"},
 	"Stop":            {why: "stopping what is already stopped is the outcome the caller asked for"},
 	"StopNode":        {why: "same as Stop, for one node"},
-	"StartNode":       {why: "refuses a running node and an unknown index by name, which is finer than a table-wide state"},
-	"SwapNode":        {why: "same as StartNode: it names the node it cannot swap"},
+	"StartNode":       {node: []nodeNeed{down, launched}},
+	"SwapNode":        {node: []nodeNeed{launched}},
 	"Restart":         {why: "delegates to StopNode and StartNode, which each answer for themselves"},
 	"CrossFork":       {why: "names the node or binary the fork has nobody to run on, which a table-wide state cannot"},
 	"Compare":         {why: "reads a baseline file, not the network"},
@@ -121,6 +154,13 @@ func (w *Workspace) allow(verb string) error {
 			return err
 		}
 	}
+	if need.nodeAll {
+		for _, ns := range w.state.Nodes {
+			if err := checkNode(verb, need.node, ns); err != nil {
+				return err
+			}
+		}
+	}
 	switch need.run {
 	case placed:
 		if len(w.state.Nodes) == 0 {
@@ -130,6 +170,41 @@ func (w *Workspace) allow(verb string) error {
 		for _, ns := range w.state.Nodes {
 			if ns.PID > 0 {
 				return fmt.Errorf("chainsetup: %s: node%d is running (pid %d) — run `chain stop` first", lower(verb), ns.Index, ns.PID)
+			}
+		}
+	}
+	return nil
+}
+
+// allowNode reports whether verb may run against one node, naming what is
+// missing. It is allow's per-node half: the verb's table-wide requirements are
+// checked first, then the node's own.
+func (w *Workspace) allowNode(verb string, index int) error {
+	if err := w.allow(verb); err != nil {
+		return err
+	}
+	need := verbNeeds[verb]
+	for _, ns := range w.state.Nodes {
+		if ns.Index == index {
+			return checkNode(verb, need.node, ns)
+		}
+	}
+	return fmt.Errorf("chainsetup: %s: no node%d in the table", lower(verb), index)
+}
+
+// checkNode holds one node to one condition. One function, so the refusal reads
+// the same wherever it comes from — this replaced the same "no recorded argv"
+// sentence written out in three places.
+func checkNode(verb string, needs []nodeNeed, ns node.Record) error {
+	for _, need := range needs {
+		switch need {
+		case launched:
+			if len(ns.Args) == 0 {
+				return fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index)
+			}
+		case down:
+			if ns.PID > 0 {
+				return fmt.Errorf("chainsetup: %s: node%d is already running (pid %d)", lower(verb), ns.Index, ns.PID)
 			}
 		}
 	}

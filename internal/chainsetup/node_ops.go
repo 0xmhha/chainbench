@@ -61,17 +61,14 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 // argv it started with — and records the new pid. A node that is already
 // running is refused rather than doubled.
 func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
+	if err := w.allowNode("StartNode", index); err != nil {
+		return "", err
+	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
 		return "", err
 	}
 	ns := w.state.Nodes[ni]
-	if ns.PID > 0 {
-		return "", fmt.Errorf("chainsetup: node%d is already running (pid %d)", index, ns.PID)
-	}
-	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
-	}
 	bin, err := w.binary("")
 	if err != nil {
 		return "", err
@@ -139,14 +136,14 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
 		return "", fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index)
 	}
+	if err := w.allowNode("SwapNode", index); err != nil {
+		return "", err
+	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
 		return "", err
 	}
 	ns := w.state.Nodes[ni]
-	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
-	}
 	bin, err := w.binary("")
 	if err != nil {
 		return "", err
