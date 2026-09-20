@@ -102,12 +102,12 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 등급 | 내용 |
 |---|---|---|
-| [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (검토 중, PR #419 에서 머지).** 분석·근거·CLI 우선 검토·검증 계획과 목표 구조·P0~P5 일정. **등급 밖이다** — 현행 설계를 대체하지 않고, 목표 구조와 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). 분석과 측정은 인용할 수 있다. |
+| [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (2026-09, 검토 중).** **새 설계의 입력이 아니다 (2026-09-20)** — 목표 구조와 P0~P5 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). **측정·분석 부분만 인용할 수 있고, 그것도 날짜를 확인하고 다시 잴 것.** |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |
 | [`module-responsibilities.md`](dev/architecture/module-responsibilities.md) | [현행 설계] | **관심사별 소유 모듈** 16개 · 소유자 부재 실측 · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할. |
-| [`module-plan.md`](dev/architecture/module-plan.md) | [현행 설계] | **모듈 재편 계획** — 자원·노드정보·프로세스 3모듈 + genesis·nodeconfig·dsl 빌더 3종 · 합칠 것과 지울 것 · P1~P8 단계와 게이트. |
-| [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | [현행 설계] | **통폐합 계획 (2026-08-31 확정) — 실행됐고 닫히지 않았다.** 흡수 14건 완료, 3건은 이후 반대로 결정, 3건은 측정이 반대 근거를 냈다(하나는 import 순환이라 불가능). **목표 수 "약 20" 은 산술적으로 낡았다** — 상세는 문서 §5. 열린 판단은 정본 §0 의 "통폐합 — 닫을지 판단". |
+| [`module-plan.md`](dev/architecture/module-plan.md) | **[이력]** | **모듈 재편 계획 (2026-08-27) — 2026-09-20 에 닫혔다.** 이름으로 부르는 모듈 다섯(`testspec`·`netmap`·`netmapcmd`·`deploy`·`supervisor`)이 코드에 없고, 기준 패키지 수 75/71 이 오늘 48 이다. **근거로 인용하지 않는다.** P1~P8 은 재개 대상이 아니다. |
+| [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | **[이력]** | **통폐합 계획 (2026-08-31 ~ 2026-09-20) — 완료로 닫혔다.** 진단("작은 형제 24개")이 7개로 해소됐고, 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다. 인용하는 수치는 닫을 당시의 것이라 이미 낡았다(`chainsetup` 6,585줄 → 8,406줄). **근거로 인용하지 않는다.** |
 | [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
 | [`terminology-map.md`](dev/architecture/terminology-map.md) | [측정] | **용어 지도 (2026-09-14)** — 한 낱말이 몇 뜻으로 쓰이는지, 뜻마다 주인이 우리인지 체인인지. `validator` 6뜻 · `boot` 4뜻 · `workspace` 4뜻 · `preset` 3뜻. **새 낱말을 쓰기 전에 본다.** |
 | [`target-architecture.md`](dev/architecture/target-architecture.md) | **[이력]** | **2026-08-26 의 목표 다이어그램 8종.** 그리는 L1 모듈 이름 일곱이 코드에 없다(2026-09-20 실측) — 근거로 인용하지 않는다. 지금 향하는 구조는 `architecture-v2`·`layers`·`module-responsibilities`. |
