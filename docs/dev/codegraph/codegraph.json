@@ -112,6 +112,7 @@
       "name": "filecmd",
       "files": 3,
       "imports": [
+        "cmd/chainbench/surface",
         "internal/app"
       ],
       "types": [],
@@ -179,6 +180,7 @@
       "name": "nodecmd",
       "files": 1,
       "imports": [
+        "cmd/chainbench/surface",
         "internal/app"
       ],
       "types": [],
@@ -227,6 +229,7 @@
       "imports": [
         "cmd/chainbench/exitcode",
         "cmd/chainbench/resourcecmd",
+        "cmd/chainbench/surface",
         "internal/app",
         "internal/core/home",
         "internal/dashboard"
@@ -241,10 +244,13 @@
     {
       "path": "cmd/chainbench/surface",
       "name": "surface",
-      "files": 1,
-      "imports": [],
+      "files": 2,
+      "imports": [
+        "internal/app"
+      ],
       "types": [],
       "funcs": [
+        "Deps",
         "IsReadOnly",
         "ReadOnly"
       ]
@@ -278,13 +284,13 @@
     {
       "path": "cmd/chainbench/upgradecmd",
       "name": "upgradecmd",
-      "files": 3,
+      "files": 1,
       "imports": [
+        "cmd/chainbench/surface",
         "internal/app"
       ],
       "types": [],
       "funcs": [
-        "New",
         "NewHardfork"
       ]
     },
@@ -352,12 +358,11 @@
     {
       "path": "internal/app",
       "name": "app",
-      "files": 20,
+      "files": 21,
       "imports": [
         "internal/accounts",
         "internal/chains/external",
         "internal/chainsetup",
-        "internal/consensus/upgrade",
         "internal/core/blueprint",
         "internal/core/collector",
         "internal/core/filestore",
@@ -381,6 +386,7 @@
       "types": [
         "AccountStateIn",
         "AccountStateOut",
+        "AttachDecl",
         "AttachRunIn",
         "BlueprintFromPresetIn",
         "BlueprintFromPresetOut",
@@ -388,6 +394,7 @@
         "Capability",
         "ChainPlugin",
         "ChainRef",
+        "ComposePlan",
         "ContractCallIn",
         "ContractDeployIn",
         "ContractDeployOut",
@@ -483,6 +490,7 @@
         "SpecInfo",
         "State",
         "StepOut",
+        "SuitePlan",
         "SuiteRunResult",
         "TargetSpec",
         "TransferServer",
@@ -490,11 +498,6 @@
         "TxSendIn",
         "TxWaitIn",
         "UpStage",
-        "UpgradeGenesisOut",
-        "UpgradeNodeOut",
-        "UpgradePlanOut",
-        "UpgradeRunIn",
-        "UpgradeRunOut",
         "UploadIn",
         "UploadOut",
         "ValidateResult",
@@ -511,9 +514,14 @@
         "(Deps).keyringDeps",
         "(Deps).now",
         "(RunSuitesOut).Failed",
+        "(RunSuitesOut).Skipped",
         "(RunSuitesOut).Totals",
         "(TxReceipt).Succeeded",
         "AccountState",
+        "ArgBool",
+        "ArgInt",
+        "ArgString",
+        "ArgStrings",
         "AttachNetwork",
         "AttachRun",
         "BaselineApprove",
@@ -529,6 +537,7 @@
         "Chains",
         "ContractCall",
         "ContractDeploy",
+        "DeclaredAttach",
         "DefaultKeySetDir",
         "DefaultWorkspaceDir",
         "DeriveIdentity",
@@ -588,10 +597,12 @@
         "ParseTarget",
         "PeersOf",
         "PeersOfNode",
+        "PlanSuites",
         "ReadNode",
         "ReadSpecFiles",
         "RegisterCapability",
         "Report",
+        "ReportSessions",
         "ResolveBinary",
         "ResolveChain",
         "ResolveKey",
@@ -606,8 +617,6 @@
         "TargetForWorkspaceConfig",
         "TxSend",
         "TxWait",
-        "UpgradeGenesis",
-        "UpgradeRun",
         "Upload",
         "Validate",
         "ValidateContent",
@@ -622,10 +631,11 @@
     {
       "path": "internal/arch",
       "name": "arch",
-      "files": 5,
+      "files": 6,
       "imports": [],
       "types": [
         "Collision",
+        "CommentClaim",
         "Decl",
         "Entry",
         "Reachable",
@@ -638,6 +648,7 @@
         "(Entry).ReachesPastApp",
         "(Entry).Via",
         "Collisions",
+        "CommentClaims",
         "Decls",
         "Entries",
         "Reach"
@@ -651,7 +662,9 @@
         "internal/chains/common",
         "internal/chains/stablenet",
         "internal/chains/wbft",
-        "internal/chains/wemix"
+        "internal/chains/wemix",
+        "internal/consensus/poa",
+        "internal/consensus/wbft"
       ],
       "types": [],
       "funcs": []
@@ -671,8 +684,6 @@
       "name": "external",
       "files": 1,
       "imports": [
-        "internal/consensus/poa",
-        "internal/consensus/wbft",
         "internal/core/registry"
       ],
       "types": [],
@@ -692,12 +703,7 @@
         "internal/core/rpc"
       ],
       "types": [],
-      "funcs": [
-        "(plugin).Family",
-        "(plugin).GenesisTemplate",
-        "(plugin).Manifest",
-        "(plugin).Protocol"
-      ]
+      "funcs": []
     },
     {
       "path": "internal/chains/stablenet/govbind",
@@ -732,12 +738,7 @@
         "internal/core/registry"
       ],
       "types": [],
-      "funcs": [
-        "(plugin).Family",
-        "(plugin).GenesisTemplate",
-        "(plugin).Manifest",
-        "(plugin).Protocol"
-      ]
+      "funcs": []
     },
     {
       "path": "internal/chains/wemix",
@@ -748,21 +749,17 @@
         "internal/core/registry"
       ],
       "types": [],
-      "funcs": [
-        "(plugin).Family",
-        "(plugin).GenesisTemplate",
-        "(plugin).Manifest",
-        "(plugin).Protocol"
-      ]
+      "funcs": []
     },
     {
       "path": "internal/chainsetup",
       "name": "chainsetup",
-      "files": 21,
+      "files": 35,
       "imports": [
         "internal/chains/external",
         "internal/consensus/poa",
         "internal/core/blueprint",
+        "internal/core/collector",
         "internal/core/filestore",
         "internal/core/genesis",
         "internal/core/hardfork",
@@ -784,7 +781,10 @@
         "AllocateOpts",
         "BaselineCheck",
         "ConfigProvenance",
+        "CrossForkOpts",
         "Deps",
+        "ForkCarrier",
+        "GenesisFork",
         "GenesisOpts",
         "HardforkExecuteIn",
         "HardforkExecuteOut",
@@ -795,9 +795,13 @@
         "NetBaselineIn",
         "NetBaselineOut",
         "NetConfigIn",
+        "NetCrossForkIn",
+        "NetCrossForkOut",
         "NetEndpointsIn",
         "NetEnodesIn",
         "NetEnodesOut",
+        "NetForkIn",
+        "NetForkOut",
         "NetGenesisIn",
         "NetHealthIn",
         "NetHealthOut",
@@ -849,6 +853,7 @@
         "(*Workspace).CheckBaseline",
         "(*Workspace).Compare",
         "(*Workspace).Config",
+        "(*Workspace).CrossFork",
         "(*Workspace).Dir",
         "(*Workspace).Genesis",
         "(*Workspace).Hardfork",
@@ -858,7 +863,9 @@
         "(*Workspace).Keys",
         "(*Workspace).LaunchOpts",
         "(*Workspace).Lock",
+        "(*Workspace).LogExcerpt",
         "(*Workspace).Logs",
+        "(*Workspace).MarkStepFailed",
         "(*Workspace).Netmap",
         "(*Workspace).New",
         "(*Workspace).NodeSet",
@@ -880,7 +887,11 @@
         "(*Workspace).StopNode",
         "(*Workspace).SwapNode",
         "(*Workspace).VerifyValidators",
+        "(*Workspace).addConfigProvenance",
+        "(*Workspace).alreadyCrossed",
         "(*Workspace).applyConfigOverrides",
+        "(*Workspace).applyFork",
+        "(*Workspace).awaitForkBoundary",
         "(*Workspace).binary",
         "(*Workspace).binaryFor",
         "(*Workspace).binaryNamesOn",
@@ -891,18 +902,30 @@
         "(*Workspace).checkVacant",
         "(*Workspace).clearPID",
         "(*Workspace).configOverridesFor",
+        "(*Workspace).confirmBeforeFork",
         "(*Workspace).declaredKeys",
         "(*Workspace).eachMachine",
         "(*Workspace).firstUndone",
+        "(*Workspace).forkMoment",
+        "(*Workspace).forkObserver",
+        "(*Workspace).forkSection",
+        "(*Workspace).forkSuccessors",
+        "(*Workspace).forkValidators",
         "(*Workspace).genesisArtifacts",
         "(*Workspace).genesisBytes",
+        "(*Workspace).genesisConfigFor",
+        "(*Workspace).genesisFor",
+        "(*Workspace).genesisPaths",
+        "(*Workspace).handOver",
         "(*Workspace).indexName",
         "(*Workspace).introspectRunning",
         "(*Workspace).keysBase",
         "(*Workspace).launchOverridesFor",
         "(*Workspace).layout",
+        "(*Workspace).livePIDs",
         "(*Workspace).liveness",
         "(*Workspace).machineFor",
+        "(*Workspace).manifestBinary",
         "(*Workspace).markStep",
         "(*Workspace).materializeKeyring",
         "(*Workspace).mergeRunning",
@@ -913,7 +936,10 @@
         "(*Workspace).opener",
         "(*Workspace).orphanOf",
         "(*Workspace).peerPlan",
+        "(*Workspace).phasePlan",
+        "(*Workspace).placeBinary",
         "(*Workspace).plugin",
+        "(*Workspace).pluginFor",
         "(*Workspace).readInputRef",
         "(*Workspace).reconcileReuse",
         "(*Workspace).recordConfigSet",
@@ -928,7 +954,6 @@
         "(*Workspace).resolveTarget",
         "(*Workspace).runPhaseActions",
         "(*Workspace).scanPorts",
-        "(*Workspace).setConfigProvenance",
         "(*Workspace).setNodeBinary",
         "(*Workspace).shipIdentities",
         "(*Workspace).snapshotForReuse",
@@ -938,16 +963,21 @@
         "(*Workspace).verifyExistingGenesisKeys",
         "(*Workspace).wc",
         "(*Workspace).writeConfigFile",
+        "(*Workspace).writeGenesisConfigs",
+        "(*Workspace).writeGenesisVariants",
         "(*Workspace).writeNodeConfig",
         "(AllocateOpts).autoValidators",
         "(AllocateOpts).placements",
+        "(Deps).Now",
         "(Deps).command",
         "(Deps).logf",
+        "(GenesisFork).carrier",
         "(GenesisOpts).checkExistingIsUnchanged",
         "Allocations",
         "DefaultRoot",
         "DefaultWorkspaceDir",
         "Discover",
+        "GenesisDeclared",
         "HardforkExecute",
         "HardforkPlan",
         "Inventory",
@@ -955,8 +985,10 @@
         "NetBaselineApprove",
         "NetBaselineCheck",
         "NetConfig",
+        "NetCrossFork",
         "NetEndpoints",
         "NetEnodes",
+        "NetFork",
         "NetGenesis",
         "NetHealth",
         "NetInit",
@@ -982,6 +1014,8 @@
         "NodeSwap",
         "Open",
         "ParseOverrides",
+        "PlaceBinary",
+        "PlaceRequest",
         "WantOf"
       ]
     },
@@ -996,7 +1030,8 @@
         "internal/core/keyring/store",
         "internal/core/node",
         "internal/core/process",
-        "internal/core/registry"
+        "internal/core/registry",
+        "internal/core/wait"
       ],
       "types": [
         "Account",
@@ -1022,11 +1057,13 @@
         "(Family).BuildGenesis",
         "(Family).GenesisSource",
         "(Family).ID",
+        "(Family).LaunchPolicy",
         "(Family).PortReservation",
         "(Family).RPCNamespace",
+        "(Family).RingAccounts",
         "(Family).RuntimeValidators",
-        "(Family).StartFlags",
         "(Family).SupportsRole",
+        "(Family).ValidatorsCarryBLS",
         "(Family).ValidatorsMethod",
         "(GenesisSource).Genesis",
         "(GenesisSource).config",
@@ -1048,6 +1085,7 @@
         "VerifyEtcd",
         "WaitEtcdCluster",
         "WaitForIPC",
+        "WaitForIPCOn",
         "WaitForMember",
         "WaitProducing",
         "WaitSelf"
@@ -1056,80 +1094,19 @@
     {
       "path": "internal/consensus/upgrade",
       "name": "upgrade",
-      "files": 6,
+      "files": 1,
       "imports": [
-        "internal/consensus/poa",
-        "internal/core/filestore",
-        "internal/core/genesis",
-        "internal/core/inspector",
-        "internal/core/keyring",
-        "internal/core/keyring/store",
-        "internal/core/node",
-        "internal/core/nodeconfig",
-        "internal/core/process",
-        "internal/core/registry",
-        "internal/core/rpc",
-        "internal/resource"
+        "internal/consensus/poa"
       ],
       "types": [
         "ChainBinding",
         "Governance",
-        "Handoff",
-        "HandoffInputs",
-        "Inputs",
-        "LaunchOptions",
-        "NetworkPlan",
-        "NodeSpec",
-        "PeerCaller",
-        "Plan",
-        "Profile",
-        "Roles"
+        "Profile"
       ],
       "funcs": [
-        "(*Handoff).ApplyOverlay",
-        "(*Handoff).AwaitFork",
-        "(*Handoff).BaseGenesis",
-        "(*Handoff).ComposePlan",
-        "(*Handoff).DeployGovernance",
-        "(*Handoff).Describe",
-        "(*Handoff).EtcdInit",
-        "(*Handoff).ForkBlock",
-        "(*Handoff).Launch",
-        "(*Handoff).LaunchPhase",
-        "(*Handoff).ProducerAccount",
-        "(*Handoff).ProducerIPC",
-        "(*Handoff).Run",
-        "(*Handoff).VerifyEtcd",
-        "(*Handoff).WireMesh",
-        "(*Handoff).WriteConfig",
-        "(*Handoff).checkVacant",
-        "(*Handoff).label",
-        "(*Handoff).launch",
-        "(*Handoff).overrides",
-        "(*Handoff).phases",
-        "(*Handoff).poaConfig",
-        "(*Handoff).provisionKeys",
-        "(HandoffInputs).driver",
-        "(HandoffInputs).exec",
-        "(HandoffInputs).files",
-        "(HandoffInputs).host",
-        "(LaunchOptions).files",
-        "(LaunchOptions).host",
-        "(LaunchOptions).wants",
-        "(NetworkPlan).validate",
-        "(Plan).Enodes",
-        "(Profile).Inputs",
+        "(Profile).GovernanceEnv",
         "(Profile).PlanOrderOrDefault",
-        "(rpcPeerCaller).AddPeer",
-        "BuildNodeSpecs",
-        "BuildPlan",
-        "DefaultPeerCaller",
-        "Launch",
-        "LaunchArgs",
-        "LoadProfile",
-        "NewHandoff",
-        "WaitEndpointsReady",
-        "WireMesh"
+        "LoadProfile"
       ]
     },
     {
@@ -1149,10 +1126,12 @@
         "(Family).BuildGenesis",
         "(Family).GenesisValidators",
         "(Family).ID",
+        "(Family).LaunchPolicy",
         "(Family).PortReservation",
         "(Family).RPCNamespace",
-        "(Family).StartFlags",
+        "(Family).RingAccounts",
         "(Family).SupportsRole",
+        "(Family).ValidatorsCarryBLS",
         "(Family).ValidatorsMethod",
         "BuildGenesis",
         "ExtraData",
@@ -1214,7 +1193,8 @@
       "files": 16,
       "imports": [
         "internal/core/registry",
-        "internal/core/session"
+        "internal/core/session",
+        "internal/core/wait"
       ],
       "types": [
         "Bus",
@@ -1261,6 +1241,7 @@
         "IsInputError",
         "LogEvent",
         "MetricsURL",
+        "MetricsURLOn",
         "New",
         "NewBus",
         "NewFileStore",
@@ -1275,7 +1256,7 @@
     {
       "path": "internal/core/filestore",
       "name": "filestore",
-      "files": 2,
+      "files": 3,
       "imports": [],
       "types": [
         "File",
@@ -1290,7 +1271,10 @@
         "(Local).Checksum",
         "(Local).Exists",
         "(Local).Read",
+        "(Local).Remove",
         "(Local).Write",
+        "CheckRemovable",
+        "CheckWithin",
         "Hash",
         "New"
       ]
@@ -1298,7 +1282,7 @@
     {
       "path": "internal/core/genesis",
       "name": "genesis",
-      "files": 4,
+      "files": 5,
       "imports": [
         "internal/core/filestore",
         "internal/core/keyring",
@@ -1325,6 +1309,7 @@
         "Build",
         "BuildNetwork",
         "Compose",
+        "ConfigTOML",
         "Customize",
         "ExtractConfigSection",
         "MergeOverride",
@@ -1361,6 +1346,8 @@
         "internal/core/rpc"
       ],
       "types": [
+        "Agreement",
+        "BlockHasher",
         "NodeInfo",
         "Options",
         "Participation",
@@ -1392,9 +1379,10 @@
     {
       "path": "internal/core/inspector",
       "name": "inspector",
-      "files": 4,
+      "files": 5,
       "imports": [
-        "internal/core/filestore"
+        "internal/core/filestore",
+        "internal/core/process"
       ],
       "types": [
         "Addr",
@@ -1408,6 +1396,7 @@
         "(Host).HostPort",
         "(Path).String",
         "Hosts",
+        "OnPath",
         "Paths",
         "Ports"
       ]
@@ -1437,6 +1426,7 @@
         "StaticPassword"
       ],
       "funcs": [
+        "(Entry).SealingAccount",
         "(Entry).Verify",
         "(FilePassword).Password",
         "(FileSource).Resolve",
@@ -1455,7 +1445,7 @@
     {
       "path": "internal/core/keyring/derive",
       "name": "derive",
-      "files": 3,
+      "files": 4,
       "imports": [
         "internal/accounts"
       ],
@@ -1480,7 +1470,7 @@
     {
       "path": "internal/core/keyring/operation",
       "name": "operation",
-      "files": 1,
+      "files": 2,
       "imports": [
         "internal/core/filestore",
         "internal/core/keyring",
@@ -1528,7 +1518,7 @@
     {
       "path": "internal/core/keyring/store",
       "name": "store",
-      "files": 7,
+      "files": 8,
       "imports": [
         "internal/core/filestore",
         "internal/core/home",
@@ -1577,16 +1567,22 @@
         "GenerateAt",
         "ImportAt",
         "ImportRing",
+        "KeystoreAccount",
         "LoadPreset",
         "LoadPresetAt",
+        "LoadPresetWithAccounts",
+        "LoadPresetWithAccountsAt",
+        "LoadPresetWithKeys",
+        "LoadPresetWithKeysAt",
         "Locate",
-        "NewKeySet"
+        "NewKeySet",
+        "NodeKeyAt"
       ]
     },
     {
       "path": "internal/core/node",
       "name": "node",
-      "files": 12,
+      "files": 13,
       "imports": [],
       "types": [
         "Auth",
@@ -1612,14 +1608,14 @@
         "(*Map).Labels",
         "(*Map).Lookup",
         "(*Map).Placements",
-        "(*Node).UnmarshalJSON",
-        "(*Record).UnmarshalJSON",
         "(Entry).EffectiveSyncMode",
         "(Entry).NodeRole",
         "(Label).Index",
         "(Layout).ConfigPath",
         "(Layout).DataDir",
+        "(Layout).GenesisConfigPath",
         "(Layout).GenesisPath",
+        "(Layout).GenesisVariantPath",
         "(Layout).IPCPath",
         "(Layout).KeystoreDir",
         "(Layout).LogPath",
@@ -1649,7 +1645,12 @@
         "ParsePeering",
         "ParseRoleLabel",
         "PeerList",
-        "RoleLabel"
+        "RoleLabel",
+        "ScopeFor",
+        "ScopeIndex",
+        "ScopeRank",
+        "ScopeWords",
+        "ValidScope"
       ]
     },
     {
@@ -1667,7 +1668,6 @@
         "Chain",
         "ChainExt",
         "Dialect",
-        "FamilyPolicy",
         "HTTPRPC",
         "Identity",
         "Key",
@@ -1693,7 +1693,6 @@
         "(*Args).Set",
         "(*Args).SetIfSupported",
         "(*Args).Value",
-        "(*Args).WonBy",
         "(*Args).put",
         "(*Builder).Build",
         "(*Builder).WithOverrides",
@@ -1729,6 +1728,7 @@
         "ChainOf",
         "Defaults",
         "DialectFor",
+        "DialectNames",
         "Flatten",
         "Geth110Wemix",
         "Geth114",
@@ -1736,7 +1736,6 @@
         "New",
         "NewArgs",
         "ParseArgv",
-        "ParseFamilyFlags",
         "Resolve",
         "String",
         "TOML"
@@ -1769,6 +1768,7 @@
       "name": "process",
       "files": 16,
       "imports": [
+        "internal/core/filestore",
         "internal/core/keyring",
         "internal/core/node",
         "internal/core/nodeconfig",
@@ -1829,6 +1829,7 @@
         "(RemoteFileStore).Checksum",
         "(RemoteFileStore).Exists",
         "(RemoteFileStore).Read",
+        "(RemoteFileStore).Remove",
         "(RemoteFileStore).Write",
         "(RemoteLogReader).ReadFrom",
         "Alive",
@@ -1845,6 +1846,8 @@
         "ProcFor",
         "SSHRunner",
         "SSHSudoRunner",
+        "ShellCommand",
+        "ShellRunner",
         "SpecOf",
         "StopNodeSet"
       ]
@@ -1852,7 +1855,7 @@
     {
       "path": "internal/core/registry",
       "name": "registry",
-      "files": 6,
+      "files": 8,
       "imports": [
         "internal/core/node"
       ],
@@ -1870,11 +1873,14 @@
         "GenesisSpec",
         "GenesisValidatorReader",
         "Handler",
+        "LaunchPolicy",
         "Manifest",
         "NodeComposition",
         "Param",
         "Phase",
         "ProbeSpec",
+        "RingAccount",
+        "RingAccountReader",
         "RuntimeValidatorReader",
         "StaticPlugin",
         "UpgradeSpec"
@@ -1882,6 +1888,7 @@
       "funcs": [
         "(Descriptor).Address",
         "(Descriptor).ToolName",
+        "(Manifest).DerivedCapabilities",
         "(Manifest).validate",
         "(StaticPlugin).Family",
         "(StaticPlugin).GenesisTemplate",
@@ -1889,16 +1896,24 @@
         "(StaticPlugin).Protocol",
         "All",
         "ArgBigInt",
+        "ArgBool",
         "ArgInt",
         "ArgString",
+        "ArgStrings",
+        "FamilyByName",
+        "FamilyNames",
         "For",
+        "ForkActiveIn",
         "Get",
         "GetByAddress",
         "LoadCatalog",
         "Lookup",
+        "MalformedCapability",
+        "MustParseManifest",
         "Names",
         "ParseManifest",
         "Register",
+        "RegisterFamily",
         "RegisterFlat",
         "RegisterHandler",
         "RunningValidators",
@@ -1934,6 +1949,7 @@
         "LoadPrivateKey",
         "ReadFile",
         "ReadFileCommand",
+        "ShellQuote",
         "TransportFromAuth",
         "ValidateAuth"
       ]
@@ -1951,6 +1967,7 @@
       ],
       "funcs": [
         "Build",
+        "Combine",
         "Generate",
         "Read",
         "Write"
@@ -1972,6 +1989,7 @@
         "(*Client).AddPeer",
         "(*Client).BalanceAt",
         "(*Client).BlockByNumber",
+        "(*Client).BlockHashAt",
         "(*Client).BlockMiner",
         "(*Client).BlockNumber",
         "(*Client).Call",
@@ -2021,6 +2039,7 @@
         "Session",
         "Step",
         "StepResult",
+        "StepState",
         "TestArtifacts",
         "TestRecord",
         "TestResult",
@@ -2062,12 +2081,15 @@
         "(Composition).Load",
         "(Composition).Lock",
         "(Composition).Save",
+        "(Composition).StepBegin",
+        "(Composition).StepEnd",
         "(Composition).StepMark",
         "(Lock).Describe",
         "AcquireLock",
+        "ChainRecordPath",
         "ChainstatePaths",
-        "CompositionFilePath",
         "EnvID",
+        "IDFor",
         "IsReservedNetworkName",
         "IsValidNetworkName",
         "List",
@@ -2075,7 +2097,10 @@
         "LoadDir",
         "LoadNetwork",
         "New",
+        "NoRecordError",
         "OpenComposition",
+        "ProcessDir",
+        "ProcessID",
         "RemoveNetwork",
         "SaveNetwork",
         "Scrub",
@@ -2084,6 +2109,16 @@
         "SessionID",
         "TestDir",
         "WriteFileAtomic"
+      ]
+    },
+    {
+      "path": "internal/core/wait",
+      "name": "wait",
+      "files": 1,
+      "imports": [],
+      "types": [],
+      "funcs": [
+        "Sleep"
       ]
     },
     {
@@ -2117,13 +2152,18 @@
     {
       "path": "internal/dsl",
       "name": "dsl",
-      "files": 7,
-      "imports": [],
+      "files": 9,
+      "imports": [
+        "internal/core/node"
+      ],
       "types": [
         "AccountV2",
+        "AttachV2",
+        "BinaryRefV2",
         "CaseV2",
         "ChainSpec",
         "EnvV2",
+        "GenesisSideV2",
         "GenesisV2",
         "HooksV2",
         "KeySourceV2",
@@ -2134,6 +2174,7 @@
         "UpgradeV2"
       ],
       "funcs": [
+        "(*BinaryRefV2).UnmarshalJSON",
         "(Spec).Get",
         "(Spec).validate",
         "(Spec).validateSequence",
@@ -2148,9 +2189,11 @@
         "ParseEnv",
         "ParseV2",
         "ReadFiles",
+        "ReadFilesWithEnv",
         "SequenceOf",
         "StatementAssertion",
-        "StatementStep"
+        "StatementStep",
+        "UseEnv"
       ]
     },
     {
@@ -2170,6 +2213,7 @@
         "Greater",
         "GreaterOrEqual",
         "HashesEqual",
+        "In",
         "InDelta",
         "Len",
         "Less",
@@ -2186,7 +2230,7 @@
     {
       "path": "internal/dsl/interp",
       "name": "interp",
-      "files": 6,
+      "files": 7,
       "imports": [
         "internal/accounts",
         "internal/core/collector",
@@ -2204,6 +2248,7 @@
         "Assertion",
         "Bindings",
         "Deps",
+        "ForkCrosser",
         "Interpreter",
         "NodeChange",
         "NodeControl",
@@ -2252,7 +2297,7 @@
     {
       "path": "internal/mcp",
       "name": "mcp",
-      "files": 19,
+      "files": 18,
       "imports": [
         "internal/app"
       ],
@@ -2304,7 +2349,7 @@
     {
       "path": "internal/resource",
       "name": "resource",
-      "files": 13,
+      "files": 17,
       "imports": [
         "internal/core/filestore",
         "internal/core/node",
@@ -2323,12 +2368,12 @@
         "Control",
         "Defaults",
         "Execution",
+        "ExistingInputs",
         "Holder",
         "Host",
         "HostPorts",
         "HostSpec",
         "InputMode",
-        "InputPreset",
         "InputRef",
         "Inputs",
         "Inventory",
@@ -2390,7 +2435,7 @@
         "(InputRef).Resolve",
         "(InputRef).forms",
         "(InputRef).serverRefLocation",
-        "(Inputs).presetName",
+        "(Inputs).existingName",
         "(Inputs).validate",
         "(Opener).AddrMap",
         "(Opener).HTTPEndpoint",
@@ -2452,15 +2497,15 @@
     {
       "path": "internal/testengine",
       "name": "testengine",
-      "files": 15,
+      "files": 23,
       "imports": [
         "internal/accounts",
-        "internal/chains/external",
         "internal/chainsetup",
         "internal/consensus/upgrade",
         "internal/core/collector",
         "internal/core/filestore",
         "internal/core/health",
+        "internal/core/home",
         "internal/core/keyring",
         "internal/core/keyring/derive",
         "internal/core/keyring/store",
@@ -2482,8 +2527,16 @@
         "AttachConfig",
         "AttachWorkspaceIn",
         "BuildEnvFunc",
+        "ComposePlan",
         "Deps",
         "Engine",
+        "LaunchMismatch",
+        "PlanField",
+        "PlanGenesis",
+        "PlanKeys",
+        "PlanKnob",
+        "PlanNodes",
+        "PlanSource",
         "RunSpecFunc",
         "RunSuiteIn",
         "RunSuiteOut",
@@ -2494,12 +2547,21 @@
       ],
       "funcs": [
         "(*engine).Run",
+        "(ComposePlan).String",
+        "(ComposePlan).binaryLine",
+        "(ComposePlan).chosenByLine",
+        "(LaunchMismatch).String",
+        "(PlanGenesis).line",
+        "(PlanKeys).line",
+        "(PlanKnob).String",
+        "(PlanNodes).line",
         "(Summary).Failed",
         "(ctxClock).Sleep",
         "(healthObserver).Observe",
         "(restartAdapter).Restart",
         "(stepSink).Recovery",
         "(stepSink).Verdict",
+        "(workspaceNodes).CrossFork",
         "(workspaceNodes).Log",
         "(workspaceNodes).Start",
         "(workspaceNodes).Stop",
@@ -2510,17 +2572,21 @@
         "NewAttachEngine",
         "NewRecordedBuildEnv",
         "NewRunSpec",
+        "PlanSuite",
         "Precheck",
+        "ReadPlan",
         "ReadSessionSummary",
         "RunSuite",
         "ValidateContent",
-        "ValidateSpecs"
+        "ValidateSpecs",
+        "VerifyLaunched",
+        "WritePlan"
       ]
     },
     {
       "path": "internal/testhelper",
       "name": "testhelper",
-      "files": 11,
+      "files": 18,
       "imports": [
         "internal/accounts",
         "internal/core/collector",
@@ -2529,6 +2595,7 @@
         "internal/core/node",
         "internal/core/rpc",
         "internal/core/session",
+        "internal/dsl",
         "internal/dsl/assert",
         "internal/dsl/interp"
       ],
@@ -2542,6 +2609,7 @@
         "(blockIntervalAssertion).Check",
         "(blockStalledAssertion).Check",
         "(callErrorAssertion).Check",
+        "(crossForkAction).Do",
         "(deployContractAction).Do",
         "(faucetAction).Do",
         "(healPartitionAction).Do",
@@ -2569,9 +2637,11 @@
         "(wsCollectedAssertion).Check",
         "(wsOpenAction).Do",
         "(wsSubscribeAssertion).Check",
+        "ComparedAsWritten",
         "Register",
         "Registry",
-        "ResolveAccount"
+        "ResolveAccount",
+        "ResolveAddress"
       ]
     },
     {
@@ -2768,12 +2838,6 @@
       "fromPkg": "cmd/chainbench",
       "fromFunc": "newRootCmd",
       "toPkg": "cmd/chainbench/upgradecmd",
-      "toSel": "New"
-    },
-    {
-      "fromPkg": "cmd/chainbench",
-      "fromFunc": "newRootCmd",
-      "toPkg": "cmd/chainbench/upgradecmd",
       "toSel": "NewHardfork"
     },
     {
@@ -2821,6 +2885,12 @@
     {
       "fromPkg": "cmd/chainbench/accountcmd",
       "fromFunc": "NewFaucet",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/accountcmd",
+      "fromFunc": "NewFaucet",
       "toPkg": "internal/app",
       "toSel": "ChainRef"
     },
@@ -2838,12 +2908,6 @@
     },
     {
       "fromPkg": "cmd/chainbench/accountcmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
-      "toSel": "Deps"
-    },
-    {
-      "fromPkg": "cmd/chainbench/accountcmd",
       "fromFunc": "newFundCmd",
       "toPkg": "cmd/chainbench/keyringcmd",
       "toSel": "PasswordFlags"
@@ -2853,6 +2917,12 @@
       "fromFunc": "newFundCmd",
       "toPkg": "cmd/chainbench/keyringcmd",
       "toSel": "SourceFlags"
+    },
+    {
+      "fromPkg": "cmd/chainbench/accountcmd",
+      "fromFunc": "newFundCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/accountcmd",
@@ -2876,6 +2946,12 @@
       "fromPkg": "cmd/chainbench/accountcmd",
       "fromFunc": "newStateCmd",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/accountcmd",
+      "fromFunc": "newStateCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
     },
     {
@@ -2889,6 +2965,12 @@
       "fromFunc": "newStateCmd",
       "toPkg": "internal/app",
       "toSel": "AccountStateIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/catalogcmd",
+      "fromFunc": "NewCapabilities",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/catalogcmd",
@@ -2912,6 +2994,12 @@
       "fromPkg": "cmd/chainbench/catalogcmd",
       "fromFunc": "NewChains",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/catalogcmd",
+      "fromFunc": "NewChains",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
     },
     {
@@ -2928,8 +3016,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/catalogcmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newCallCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -2959,13 +3047,19 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "defaultWorkspaceDir",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "defaultWorkspaceDir",
       "toPkg": "internal/app",
       "toSel": "DefaultWorkspaceDir"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newBlueprintCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -3007,6 +3101,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetAllocateCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetAllocateCmd",
       "toPkg": "internal/app",
       "toSel": "NetAllocate"
     },
@@ -3019,6 +3119,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetConfigCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetConfigCmd",
       "toPkg": "internal/app",
       "toSel": "NetConfig"
     },
@@ -3027,6 +3133,12 @@
       "fromFunc": "newNetConfigCmd",
       "toPkg": "internal/app",
       "toSel": "NetConfigIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetEnodeCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3049,6 +3161,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetGenesisCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetGenesisCmd",
       "toPkg": "internal/app",
       "toSel": "NetGenesis"
     },
@@ -3057,6 +3175,12 @@
       "fromFunc": "newNetGenesisCmd",
       "toPkg": "internal/app",
       "toSel": "NetGenesisIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetHealthCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3079,6 +3203,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetInitCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetInitCmd",
       "toPkg": "internal/app",
       "toSel": "NetInit"
     },
@@ -3087,6 +3217,12 @@
       "fromFunc": "newNetInitCmd",
       "toPkg": "internal/app",
       "toSel": "NetInitIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetKeysCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3103,6 +3239,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetLaunchOptsCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetLaunchOptsCmd",
       "toPkg": "internal/app",
       "toSel": "NetLaunchOpts"
     },
@@ -3111,6 +3253,12 @@
       "fromFunc": "newNetLaunchOptsCmd",
       "toPkg": "internal/app",
       "toSel": "NetLaunchOptsIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetLogsCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3133,6 +3281,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetNewCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetNewCmd",
       "toPkg": "internal/app",
       "toSel": "NetNew"
     },
@@ -3151,6 +3305,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetProvisionCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetProvisionCmd",
       "toPkg": "internal/app",
       "toSel": "NetProvision"
     },
@@ -3159,6 +3319,12 @@
       "fromFunc": "newNetProvisionCmd",
       "toPkg": "internal/app",
       "toSel": "NetProvisionIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetRestartCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3175,6 +3341,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetResumeCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetResumeCmd",
       "toPkg": "internal/app",
       "toSel": "NetResume"
     },
@@ -3183,6 +3355,12 @@
       "fromFunc": "newNetResumeCmd",
       "toPkg": "internal/app",
       "toSel": "NetResumeIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetRmCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3229,6 +3407,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetStartCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetStartCmd",
       "toPkg": "internal/app",
       "toSel": "NetStart"
     },
@@ -3237,6 +3421,12 @@
       "fromFunc": "newNetStartCmd",
       "toPkg": "internal/app",
       "toSel": "NetStartIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetStatusCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3259,6 +3449,12 @@
     {
       "fromPkg": "cmd/chainbench/chaincmd",
       "fromFunc": "newNetStopCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetStopCmd",
       "toPkg": "internal/app",
       "toSel": "NetStop"
     },
@@ -3273,6 +3469,12 @@
       "fromFunc": "newNetUpCmd",
       "toPkg": "cmd/chainbench/resourcecmd",
       "toSel": "ServerFlags"
+    },
+    {
+      "fromPkg": "cmd/chainbench/chaincmd",
+      "fromFunc": "newNetUpCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/chaincmd",
@@ -3312,8 +3514,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/filecmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newDownloadCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -3333,6 +3535,12 @@
       "fromFunc": "newDownloadCmd",
       "toPkg": "internal/app",
       "toSel": "TransferServer"
+    },
+    {
+      "fromPkg": "cmd/chainbench/filecmd",
+      "fromFunc": "newUploadCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/filecmd",
@@ -3426,15 +3634,15 @@
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
-      "toSel": "Deps"
-    },
-    {
-      "fromPkg": "cmd/chainbench/keyringcmd",
       "fromFunc": "newKeyringAddCmd",
       "toPkg": "internal/app",
       "toSel": "KeyringAdd"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newKeyringExportCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3447,6 +3655,12 @@
       "fromFunc": "newKeyringExportCmd",
       "toPkg": "internal/app",
       "toSel": "RingEntryIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newKeyringImportCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3465,6 +3679,12 @@
       "fromFunc": "newKeyringImportCmd",
       "toPkg": "internal/app",
       "toSel": "RingImportIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newKeyringListCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3494,6 +3714,12 @@
       "fromPkg": "cmd/chainbench/keyringcmd",
       "fromFunc": "newKeyringShowCmd",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newKeyringShowCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
     },
     {
@@ -3510,9 +3736,27 @@
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newValidatorImportCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newValidatorNewCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
       "fromFunc": "newValidatorNewCmd",
       "toPkg": "internal/app",
       "toSel": "GenerateKey"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newValidatorRosterCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3525,6 +3769,12 @@
       "fromFunc": "newValidatorRosterCmd",
       "toPkg": "internal/app",
       "toSel": "ValidatorSetOf"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "newValidatorSetCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3543,6 +3793,18 @@
       "fromFunc": "newValidatorSetCmd",
       "toPkg": "internal/app",
       "toSel": "WithBLS"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "runRingCreate",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/keyringcmd",
+      "fromFunc": "runValidator",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/keyringcmd",
@@ -3579,6 +3841,12 @@
       "fromFunc": "NewClean",
       "toPkg": "internal/app",
       "toSel": "NetworkRemoveIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/lifecyclecmd",
+      "fromFunc": "NewConsensus",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/lifecyclecmd",
@@ -3633,6 +3901,12 @@
       "fromFunc": "NewStop",
       "toPkg": "internal/app",
       "toSel": "NetworkStopIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/lifecyclecmd",
+      "fromFunc": "NewVerify",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/lifecyclecmd",
@@ -3702,8 +3976,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/lifecyclecmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newBaselineApproveCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -3717,6 +3991,12 @@
       "fromFunc": "newBaselineApproveCmd",
       "toPkg": "internal/app",
       "toSel": "NetBaselineIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/lifecyclecmd",
+      "fromFunc": "newBaselineShowCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/lifecyclecmd",
@@ -3858,8 +4138,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/nodecmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newRPCCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -3914,6 +4194,12 @@
       "fromPkg": "cmd/chainbench/reportcmd",
       "fromFunc": "NewLog",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/reportcmd",
+      "fromFunc": "NewLog",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
     },
     {
@@ -3938,7 +4224,19 @@
       "fromPkg": "cmd/chainbench/reportcmd",
       "fromFunc": "NewReport",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/reportcmd",
+      "fromFunc": "NewReport",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
+    },
+    {
+      "fromPkg": "cmd/chainbench/reportcmd",
+      "fromFunc": "NewReport",
+      "toPkg": "internal/app",
+      "toSel": "CombinedSession"
     },
     {
       "fromPkg": "cmd/chainbench/reportcmd",
@@ -3954,9 +4252,9 @@
     },
     {
       "fromPkg": "cmd/chainbench/reportcmd",
-      "fromFunc": "deps",
+      "fromFunc": "NewReport",
       "toPkg": "internal/app",
-      "toSel": "Deps"
+      "toSel": "ReportSessions"
     },
     {
       "fromPkg": "cmd/chainbench/resourcecmd",
@@ -3972,8 +4270,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/resourcecmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newPlanCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -3993,6 +4291,12 @@
       "fromFunc": "newPlanCmd",
       "toPkg": "internal/app",
       "toSel": "NetPlanIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/resourcecmd",
+      "fromFunc": "newPoolCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/resourcecmd",
@@ -4034,6 +4338,12 @@
       "fromPkg": "cmd/chainbench/suitecmd",
       "fromFunc": "NewRun",
       "toPkg": "internal/app",
+      "toSel": "DeclaredAttach"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "NewRun",
+      "toPkg": "internal/app",
       "toSel": "RunSuiteIn"
     },
     {
@@ -4044,9 +4354,9 @@
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
-      "fromFunc": "deps",
+      "fromFunc": "planPrinter",
       "toPkg": "internal/app",
-      "toSel": "Deps"
+      "toSel": "ComposePlan"
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
@@ -4059,6 +4369,12 @@
       "fromFunc": "printSession",
       "toPkg": "internal/app",
       "toSel": "SessionSummary"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttach",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
@@ -4083,6 +4399,42 @@
       "fromFunc": "runAttach",
       "toPkg": "internal/dashboard",
       "toSel": "Stream"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachDeclared",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachDeclared",
+      "toPkg": "internal/app",
+      "toSel": "AttachRun"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachDeclared",
+      "toPkg": "internal/app",
+      "toSel": "AttachRunIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachDeclared",
+      "toPkg": "internal/app",
+      "toSel": "ReadSpecFiles"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachDeclared",
+      "toPkg": "internal/dashboard",
+      "toSel": "Stream"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runAttachWorkspace",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
@@ -4111,8 +4463,20 @@
     {
       "fromPkg": "cmd/chainbench/suitecmd",
       "fromFunc": "runComposed",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runComposed",
       "toPkg": "internal/app",
       "toSel": "RunSuite"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "runComposedSequence",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
@@ -4134,6 +4498,12 @@
     },
     {
       "fromPkg": "cmd/chainbench/suitecmd",
+      "fromFunc": "showPlan",
+      "toPkg": "internal/app",
+      "toSel": "PlanSuites"
+    },
+    {
+      "fromPkg": "cmd/chainbench/suitecmd",
       "fromFunc": "validateSpecs",
       "toPkg": "cmd/chainbench/exitcode",
       "toSel": "Error"
@@ -4145,6 +4515,12 @@
       "toSel": "Validate"
     },
     {
+      "fromPkg": "cmd/chainbench/surface",
+      "fromFunc": "Deps",
+      "toPkg": "internal/app",
+      "toSel": "Deps"
+    },
+    {
       "fromPkg": "cmd/chainbench/testcmd",
       "fromFunc": "newListCmd",
       "toPkg": "internal/app",
@@ -4152,8 +4528,8 @@
     },
     {
       "fromPkg": "cmd/chainbench/txcmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
+      "fromFunc": "newCallCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "Deps"
     },
     {
@@ -4177,6 +4553,12 @@
     {
       "fromPkg": "cmd/chainbench/txcmd",
       "fromFunc": "newDeployCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/txcmd",
+      "fromFunc": "newDeployCmd",
       "toPkg": "internal/app",
       "toSel": "ChainRef"
     },
@@ -4191,6 +4573,12 @@
       "fromFunc": "newDeployCmd",
       "toPkg": "internal/app",
       "toSel": "ContractDeployIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/txcmd",
+      "fromFunc": "newSendCmd",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/txcmd",
@@ -4214,6 +4602,12 @@
       "fromPkg": "cmd/chainbench/txcmd",
       "fromFunc": "newWaitCmd",
       "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
+    },
+    {
+      "fromPkg": "cmd/chainbench/txcmd",
+      "fromFunc": "newWaitCmd",
+      "toPkg": "cmd/chainbench/surface",
       "toSel": "ReadOnly"
     },
     {
@@ -4227,6 +4621,12 @@
       "fromFunc": "newWaitCmd",
       "toPkg": "internal/app",
       "toSel": "TxWaitIn"
+    },
+    {
+      "fromPkg": "cmd/chainbench/upgradecmd",
+      "fromFunc": "NewHardfork",
+      "toPkg": "cmd/chainbench/surface",
+      "toSel": "Deps"
     },
     {
       "fromPkg": "cmd/chainbench/upgradecmd",
@@ -4257,30 +4657,6 @@
       "fromFunc": "NewHardfork",
       "toPkg": "internal/app",
       "toSel": "ResolveBinary"
-    },
-    {
-      "fromPkg": "cmd/chainbench/upgradecmd",
-      "fromFunc": "deps",
-      "toPkg": "internal/app",
-      "toSel": "Deps"
-    },
-    {
-      "fromPkg": "cmd/chainbench/upgradecmd",
-      "fromFunc": "newGenesisCmd",
-      "toPkg": "internal/app",
-      "toSel": "UpgradeGenesis"
-    },
-    {
-      "fromPkg": "cmd/chainbench/upgradecmd",
-      "fromFunc": "newRunCmd",
-      "toPkg": "internal/app",
-      "toSel": "UpgradeRun"
-    },
-    {
-      "fromPkg": "cmd/chainbench/upgradecmd",
-      "fromFunc": "newRunCmd",
-      "toPkg": "internal/app",
-      "toSel": "UpgradeRunIn"
     },
     {
       "fromPkg": "internal/app",
@@ -4323,6 +4699,30 @@
       "fromFunc": "AccountState",
       "toPkg": "internal/core/rpc",
       "toSel": "Dial"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "ArgBool",
+      "toPkg": "internal/core/registry",
+      "toSel": "ArgBool"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "ArgInt",
+      "toPkg": "internal/core/registry",
+      "toSel": "ArgInt"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "ArgString",
+      "toPkg": "internal/core/registry",
+      "toSel": "ArgString"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "ArgStrings",
+      "toPkg": "internal/core/registry",
+      "toSel": "ArgStrings"
     },
     {
       "fromPkg": "internal/app",
@@ -4473,6 +4873,18 @@
       "fromFunc": "ContractCall",
       "toPkg": "internal/core/rpc",
       "toSel": "Dial"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "DeclaredAttach",
+      "toPkg": "internal/dsl",
+      "toSel": "Parse"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "DeclaredAttach",
+      "toPkg": "internal/dsl",
+      "toSel": "ReadFiles"
     },
     {
       "fromPkg": "internal/app",
@@ -4836,6 +5248,12 @@
     },
     {
       "fromPkg": "internal/app",
+      "fromFunc": "PlanSuites",
+      "toPkg": "internal/testengine",
+      "toSel": "PlanSuite"
+    },
+    {
+      "fromPkg": "internal/app",
       "fromFunc": "ReadNode",
       "toPkg": "internal/core/rpc",
       "toSel": "Dial"
@@ -4851,18 +5269,6 @@
       "fromFunc": "RegisterCapability",
       "toPkg": "internal/core/registry",
       "toSel": "RegisterFlat"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "Report",
-      "toPkg": "internal/core/report",
-      "toSel": "Build"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "Report",
-      "toPkg": "internal/core/report",
-      "toSel": "Read"
     },
     {
       "fromPkg": "internal/app",
@@ -4950,36 +5356,6 @@
     },
     {
       "fromPkg": "internal/app",
-      "fromFunc": "UpgradeGenesis",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "BuildPlan"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "UpgradeGenesis",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "LoadProfile"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "UpgradeRun",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "HandoffInputs"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "UpgradeRun",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "LoadProfile"
-    },
-    {
-      "fromPkg": "internal/app",
-      "fromFunc": "UpgradeRun",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "NewHandoff"
-    },
-    {
-      "fromPkg": "internal/app",
       "fromFunc": "Validate",
       "toPkg": "internal/testengine",
       "toSel": "ValidateSpecs"
@@ -5052,6 +5428,24 @@
     },
     {
       "fromPkg": "internal/app",
+      "fromFunc": "combinedReport",
+      "toPkg": "internal/core/report",
+      "toSel": "Combine"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "combinedReport",
+      "toPkg": "internal/core/report",
+      "toSel": "Report"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "combinedReport",
+      "toPkg": "internal/core/session",
+      "toSel": "SessionDir"
+    },
+    {
+      "fromPkg": "internal/app",
       "fromFunc": "derivationFor",
       "toPkg": "internal/core/keyring/derive",
       "toSel": "AccountOnly"
@@ -5111,6 +5505,18 @@
       "toSel": "WorkspaceConfig"
     },
     {
+      "fromPkg": "internal/app",
+      "fromFunc": "readReport",
+      "toPkg": "internal/core/report",
+      "toSel": "Build"
+    },
+    {
+      "fromPkg": "internal/app",
+      "fromFunc": "readReport",
+      "toPkg": "internal/core/report",
+      "toSel": "Read"
+    },
+    {
       "fromPkg": "internal/chains/common",
       "fromFunc": "chainsHardforks",
       "toPkg": "internal/core/registry",
@@ -5168,6 +5574,12 @@
       "fromPkg": "internal/chains/external",
       "fromFunc": "Load",
       "toPkg": "internal/core/registry",
+      "toSel": "FamilyByName"
+    },
+    {
+      "fromPkg": "internal/chains/external",
+      "fromFunc": "Load",
+      "toPkg": "internal/core/registry",
       "toSel": "ParseManifest"
     },
     {
@@ -5181,24 +5593,6 @@
       "fromFunc": "ResolveChain",
       "toPkg": "internal/core/registry",
       "toSel": "Get"
-    },
-    {
-      "fromPkg": "internal/chains/external",
-      "fromFunc": "familyByName",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "New"
-    },
-    {
-      "fromPkg": "internal/chains/external",
-      "fromFunc": "familyByName",
-      "toPkg": "internal/consensus/wbft",
-      "toSel": "New"
-    },
-    {
-      "fromPkg": "internal/chains/stablenet",
-      "fromFunc": "(plugin).Family",
-      "toPkg": "internal/consensus/wbft",
-      "toSel": "New"
     },
     {
       "fromPkg": "internal/chains/stablenet",
@@ -5251,6 +5645,12 @@
     {
       "fromPkg": "internal/chains/stablenet",
       "fromFunc": "init",
+      "toPkg": "internal/consensus/wbft",
+      "toSel": "New"
+    },
+    {
+      "fromPkg": "internal/chains/stablenet",
+      "fromFunc": "init",
       "toPkg": "internal/core/registry",
       "toSel": "Handler"
     },
@@ -5264,7 +5664,7 @@
       "fromPkg": "internal/chains/stablenet",
       "fromFunc": "init",
       "toPkg": "internal/core/registry",
-      "toSel": "ParseManifest"
+      "toSel": "MustParseManifest"
     },
     {
       "fromPkg": "internal/chains/stablenet",
@@ -5277,6 +5677,12 @@
       "fromFunc": "init",
       "toPkg": "internal/core/registry",
       "toSel": "RegisterHandler"
+    },
+    {
+      "fromPkg": "internal/chains/stablenet",
+      "fromFunc": "init",
+      "toPkg": "internal/core/registry",
+      "toSel": "StaticPlugin"
     },
     {
       "fromPkg": "internal/chains/stablenet",
@@ -5532,7 +5938,7 @@
     },
     {
       "fromPkg": "internal/chains/wbft",
-      "fromFunc": "(plugin).Family",
+      "fromFunc": "init",
       "toPkg": "internal/consensus/wbft",
       "toSel": "New"
     },
@@ -5540,7 +5946,7 @@
       "fromPkg": "internal/chains/wbft",
       "fromFunc": "init",
       "toPkg": "internal/core/registry",
-      "toSel": "ParseManifest"
+      "toSel": "MustParseManifest"
     },
     {
       "fromPkg": "internal/chains/wbft",
@@ -5549,16 +5955,22 @@
       "toSel": "Register"
     },
     {
-      "fromPkg": "internal/chains/wemix",
-      "fromFunc": "(plugin).Family",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "New"
+      "fromPkg": "internal/chains/wbft",
+      "fromFunc": "init",
+      "toPkg": "internal/core/registry",
+      "toSel": "StaticPlugin"
     },
     {
       "fromPkg": "internal/chains/wemix",
       "fromFunc": "bootstrapPlan",
       "toPkg": "internal/consensus/poa",
       "toSel": "BootstrapPlan"
+    },
+    {
+      "fromPkg": "internal/chains/wemix",
+      "fromFunc": "init",
+      "toPkg": "internal/consensus/poa",
+      "toSel": "New"
     },
     {
       "fromPkg": "internal/chains/wemix",
@@ -5570,7 +5982,7 @@
       "fromPkg": "internal/chains/wemix",
       "fromFunc": "init",
       "toPkg": "internal/core/registry",
-      "toSel": "ParseManifest"
+      "toSel": "MustParseManifest"
     },
     {
       "fromPkg": "internal/chains/wemix",
@@ -5583,6 +5995,12 @@
       "fromFunc": "init",
       "toPkg": "internal/core/registry",
       "toSel": "RegisterHandler"
+    },
+    {
+      "fromPkg": "internal/chains/wemix",
+      "fromFunc": "init",
+      "toPkg": "internal/core/registry",
+      "toSel": "StaticPlugin"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -5606,7 +6024,25 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).Allocate",
       "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Allocate",
+      "toPkg": "internal/core/node",
       "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Allocate",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleEN"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Allocate",
+      "toPkg": "internal/core/node",
+      "toSel": "RolePN"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -5868,9 +6304,21 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Rm",
+      "toPkg": "internal/core/filestore",
+      "toSel": "CheckWithin"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Rm",
+      "toPkg": "internal/resource",
+      "toSel": "Access"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).Start",
       "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPreset"
+      "toSel": "LoadPresetWithAccounts"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -5893,8 +6341,20 @@
     {
       "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).Stop",
+      "toPkg": "internal/core/node",
+      "toSel": "Record"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Stop",
       "toPkg": "internal/core/process",
       "toSel": "Handle"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).Stop",
+      "toPkg": "internal/resource",
+      "toSel": "Access"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -5934,9 +6394,51 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).alreadyCrossed",
+      "toPkg": "internal/core/node",
+      "toSel": "Is"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).alreadyCrossed",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).alreadyCrossed",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).applyConfigOverrides",
       "toPkg": "internal/core/nodeconfig",
       "toSel": "ApplyConfigOverride"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).applyFork",
+      "toPkg": "internal/core/genesis",
+      "toSel": "ConfigTOML"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).applyFork",
+      "toPkg": "internal/core/genesis",
+      "toSel": "SetConfigSection"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).applyFork",
+      "toPkg": "internal/core/genesis",
+      "toSel": "ValidateForks"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).awaitForkBoundary",
+      "toPkg": "internal/core/rpc",
+      "toSel": "Dial"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -5979,6 +6481,18 @@
       "fromFunc": "(*Workspace).checkVacant",
       "toPkg": "internal/core/inspector",
       "toSel": "Addr"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).configOverridesFor",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeFor"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).confirmBeforeFork",
+      "toPkg": "internal/core/rpc",
+      "toSel": "Dial"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6030,6 +6544,48 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkMoment",
+      "toPkg": "internal/core/rpc",
+      "toSel": "Dial"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkObserver",
+      "toPkg": "internal/core/node",
+      "toSel": "Record"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkSection",
+      "toPkg": "internal/chains/external",
+      "toSel": "ResolveChain"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkSection",
+      "toPkg": "internal/core/genesis",
+      "toSel": "Build"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkSection",
+      "toPkg": "internal/core/genesis",
+      "toSel": "ExtractConfigSection"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkSection",
+      "toPkg": "internal/core/genesis",
+      "toSel": "Inputs"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).forkSection",
+      "toPkg": "internal/core/keyring/store",
+      "toSel": "LoadPresetWithAccounts"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).genesisArtifacts",
       "toPkg": "internal/core/genesis",
       "toSel": "Artifacts"
@@ -6078,6 +6634,48 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/node",
+      "toSel": "PeerList"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/nodeconfig",
+      "toSel": "Argv"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/process",
+      "toSel": "Handle"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/process",
+      "toSel": "LaunchAndRecord"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/process",
+      "toSel": "NodeConfig"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).handOver",
+      "toPkg": "internal/core/process",
+      "toSel": "SpecOf"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).indexName",
       "toPkg": "internal/resource",
       "toSel": "LoadSet"
@@ -6122,13 +6720,25 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).launchOverridesFor",
       "toPkg": "internal/core/node",
-      "toSel": "NormalizeRole"
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).launchOverridesFor",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeFor"
     },
     {
       "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).layout",
       "toPkg": "internal/core/node",
       "toSel": "Layout"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).livePIDs",
+      "toPkg": "internal/core/process",
+      "toSel": "ProcessInspector"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6183,6 +6793,12 @@
       "fromFunc": "(*Workspace).nodeConfigBytes",
       "toPkg": "internal/core/node",
       "toSel": "PeerList"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).nodeConfigBytes",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6314,7 +6930,7 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).peerPlan",
       "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPreset"
+      "toSel": "LoadPresetWithAccounts"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6324,7 +6940,31 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).phasePlan",
+      "toPkg": "internal/core/process",
+      "toSel": "NodeSpec"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).phasePlan",
+      "toPkg": "internal/core/process",
+      "toSel": "Plan"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).phasePlan",
+      "toPkg": "internal/core/process",
+      "toSel": "SpecOf"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(*Workspace).plugin",
+      "toPkg": "internal/chains/external",
+      "toSel": "ResolveChain"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).pluginFor",
       "toPkg": "internal/chains/external",
       "toSel": "ResolveChain"
     },
@@ -6345,6 +6985,18 @@
       "fromFunc": "(*Workspace).readInputRef",
       "toPkg": "internal/resource",
       "toSel": "Spec"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).recordConfigSet",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeWords"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).recordConfigSet",
+      "toPkg": "internal/core/node",
+      "toSel": "ValidScope"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6375,6 +7027,18 @@
       "fromFunc": "(*Workspace).recordLaunch",
       "toPkg": "internal/core/process",
       "toSel": "SpecOf"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).recordLaunchSet",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeWords"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).recordLaunchSet",
+      "toPkg": "internal/core/node",
+      "toSel": "ValidScope"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6429,24 +7093,6 @@
       "fromFunc": "(*Workspace).runPhaseActions",
       "toPkg": "internal/core/process",
       "toSel": "Commander"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "(*Workspace).runPhaseActions",
-      "toPkg": "internal/core/process",
-      "toSel": "NodeSpec"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "(*Workspace).runPhaseActions",
-      "toPkg": "internal/core/process",
-      "toSel": "Plan"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "(*Workspace).runPhaseActions",
-      "toPkg": "internal/core/process",
-      "toSel": "SpecOf"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6534,6 +7180,48 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisConfigs",
+      "toPkg": "internal/core/node",
+      "toSel": "Record"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisConfigs",
+      "toPkg": "internal/resource",
+      "toSel": "Access"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisVariants",
+      "toPkg": "internal/core/genesis",
+      "toSel": "Customize"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisVariants",
+      "toPkg": "internal/core/genesis",
+      "toSel": "NetworkOptions"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisVariants",
+      "toPkg": "internal/core/node",
+      "toSel": "Record"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeGenesisVariants",
+      "toPkg": "internal/resource",
+      "toSel": "Access"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "(*Workspace).writeNodeConfig",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "(AllocateOpts).placements",
       "toPkg": "internal/core/node",
       "toSel": "LaunchReq"
@@ -6578,7 +7266,7 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "Discover",
       "toPkg": "internal/core/session",
-      "toSel": "CompositionFilePath"
+      "toSel": "ChainRecordPath"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6630,6 +7318,12 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "NetConfig",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeAll"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "NetEnodes",
       "toPkg": "internal/core/keyring/store",
       "toSel": "LoadPreset"
@@ -6650,13 +7344,13 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "NetworkRemove",
       "toPkg": "internal/core/session",
-      "toSel": "CompositionFilePath"
+      "toSel": "NoRecordError"
     },
     {
       "fromPkg": "internal/chainsetup",
       "fromFunc": "NetworkStatus",
       "toPkg": "internal/core/session",
-      "toSel": "CompositionFilePath"
+      "toSel": "NoRecordError"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6738,6 +7432,18 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "checkBinary",
+      "toPkg": "internal/core/inspector",
+      "toSel": "OnPath"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "commanderRunner",
+      "toPkg": "internal/core/process",
+      "toSel": "ShellRunner"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "firstProducer",
       "toPkg": "internal/core/node",
       "toSel": "Is"
@@ -6764,19 +7470,19 @@
       "fromPkg": "internal/chainsetup",
       "fromFunc": "isComposition",
       "toPkg": "internal/core/session",
-      "toSel": "CompositionFilePath"
+      "toSel": "ChainRecordPath"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "metricsURLOf",
+      "toPkg": "internal/core/collector",
+      "toSel": "MetricsURLOn"
     },
     {
       "fromPkg": "internal/chainsetup",
       "fromFunc": "netUpFrom",
       "toPkg": "internal/core/session",
       "toSel": "LockStale"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "netUpFrom",
-      "toPkg": "internal/resource",
-      "toSel": "ChainAttach"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6789,6 +7495,18 @@
       "fromFunc": "netmapRequests",
       "toPkg": "internal/resource",
       "toSel": "Request"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "networkCapabilities",
+      "toPkg": "internal/core/registry",
+      "toSel": "CapFork"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "networkCapabilities",
+      "toPkg": "internal/core/registry",
+      "toSel": "ForkActiveIn"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6822,6 +7540,18 @@
     },
     {
       "fromPkg": "internal/chainsetup",
+      "fromFunc": "placeUpRequest",
+      "toPkg": "internal/resource",
+      "toSel": "LoadWorkspaceConfig"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "planUp",
+      "toPkg": "internal/resource",
+      "toSel": "ChainAttach"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
       "fromFunc": "readBlueprint",
       "toPkg": "internal/core/blueprint",
       "toSel": "Parse"
@@ -6831,6 +7561,12 @@
       "fromFunc": "recordByIndex",
       "toPkg": "internal/core/node",
       "toSel": "Record"
+    },
+    {
+      "fromPkg": "internal/chainsetup",
+      "fromFunc": "sortedScopes",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeRank"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6855,36 +7591,6 @@
       "fromFunc": "upChainMode",
       "toPkg": "internal/resource",
       "toSel": "LoadWorkspaceConfig"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "validLaunchScope",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBP"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "validLaunchScope",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBoot"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "validLaunchScope",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleEN"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "validLaunchScope",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleEndpoint"
-    },
-    {
-      "fromPkg": "internal/chainsetup",
-      "fromFunc": "validLaunchScope",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleValidator"
     },
     {
       "fromPkg": "internal/chainsetup",
@@ -6918,21 +7624,27 @@
     },
     {
       "fromPkg": "internal/consensus/poa",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/node",
+      "toSel": "Is"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/registry",
+      "toSel": "LaunchPolicy"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
       "fromFunc": "(Family).PortReservation",
       "toPkg": "internal/core/node",
       "toSel": "Reservation"
-    },
-    {
-      "fromPkg": "internal/consensus/poa",
-      "fromFunc": "(Family).StartFlags",
-      "toPkg": "internal/core/node",
-      "toSel": "NormalizeRole"
-    },
-    {
-      "fromPkg": "internal/consensus/poa",
-      "fromFunc": "(Family).StartFlags",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBP"
     },
     {
       "fromPkg": "internal/consensus/poa",
@@ -6974,7 +7686,7 @@
       "fromPkg": "internal/consensus/poa",
       "fromFunc": "(GenesisSource).Genesis",
       "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPreset"
+      "toSel": "LoadPresetWithAccounts"
     },
     {
       "fromPkg": "internal/consensus/poa",
@@ -6987,6 +7699,48 @@
       "fromFunc": "(GenesisSource).config",
       "toPkg": "internal/core/node",
       "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "VerifyEtcd",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitEtcdCluster",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitForIPC",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitForIPCOn",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitForMember",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitProducing",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
+      "fromFunc": "WaitSelf",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
     },
     {
       "fromPkg": "internal/consensus/poa",
@@ -7014,6 +7768,12 @@
     },
     {
       "fromPkg": "internal/consensus/poa",
+      "fromFunc": "init",
+      "toPkg": "internal/core/registry",
+      "toSel": "RegisterFamily"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
       "fromFunc": "isProducer",
       "toPkg": "internal/core/node",
       "toSel": "Is"
@@ -7026,375 +7786,21 @@
     },
     {
       "fromPkg": "internal/consensus/poa",
+      "fromFunc": "joinOne",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/consensus/poa",
       "fromFunc": "planSpecFor",
       "toPkg": "internal/core/process",
       "toSel": "NodeSpec"
     },
     {
       "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).ApplyOverlay",
-      "toPkg": "internal/core/genesis",
-      "toSel": "MergeOverride"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).AwaitFork",
-      "toPkg": "internal/core/rpc",
-      "toSel": "Dial"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).BaseGenesis",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "GenerateGenesis"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).DeployGovernance",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "DeployGovernance"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).DeployGovernance",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "WaitForIPC"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).DeployGovernance",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "WaitProducing"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).DeployGovernance",
-      "toPkg": "internal/core/node",
-      "toSel": "Layout"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).EtcdInit",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "EtcdInit"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).EtcdInit",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "WaitSelf"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).ProducerIPC",
-      "toPkg": "internal/core/node",
-      "toSel": "Layout"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).Run",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "Info"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).Run",
-      "toPkg": "internal/core/node",
-      "toSel": "NodeSet"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).VerifyEtcd",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "WaitEtcdCluster"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).checkVacant",
-      "toPkg": "internal/core/inspector",
-      "toSel": "Addr"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).checkVacant",
-      "toPkg": "internal/core/inspector",
-      "toSel": "Ports"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).label",
-      "toPkg": "internal/core/node",
-      "toSel": "LabelFor"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).launch",
-      "toPkg": "internal/core/node",
-      "toSel": "NodeSet"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "KeyEtherbase"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "KeyHTTPAPI"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "KeyNAT"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "KeyPassword"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "KeyUnlock"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).overrides",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "Override"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).phases",
-      "toPkg": "internal/core/node",
-      "toSel": "Role"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).phases",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBP"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).phases",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleEN"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).poaConfig",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "Account"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).poaConfig",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "Config"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).poaConfig",
+      "fromFunc": "(Profile).GovernanceEnv",
       "toPkg": "internal/consensus/poa",
       "toSel": "Env"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).poaConfig",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "Member"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(*Handoff).provisionKeys",
-      "toPkg": "internal/core/process",
-      "toSel": "NodeSpec"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(HandoffInputs).driver",
-      "toPkg": "internal/core/process",
-      "toSel": "NewLocalDriver"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(HandoffInputs).exec",
-      "toPkg": "internal/consensus/poa",
-      "toSel": "ExecRunner"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(HandoffInputs).files",
-      "toPkg": "internal/core/filestore",
-      "toSel": "Local"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(LaunchOptions).files",
-      "toPkg": "internal/core/filestore",
-      "toSel": "Local"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(NetworkPlan).validate",
-      "toPkg": "internal/core/genesis",
-      "toSel": "ValidateForks"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(NetworkPlan).validate",
-      "toPkg": "internal/resource",
-      "toSel": "ValidatePorts"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(NetworkPlan).validate",
-      "toPkg": "internal/resource",
-      "toSel": "ValidateUniform"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(Plan).Enodes",
-      "toPkg": "internal/core/node",
-      "toSel": "Enode"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(Profile).Inputs",
-      "toPkg": "internal/core/genesis",
-      "toSel": "Inputs"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "(rpcPeerCaller).AddPeer",
-      "toPkg": "internal/core/rpc",
-      "toSel": "Dial"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildNodeSpecs",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "Override"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildNodeSpecs",
-      "toPkg": "internal/core/process",
-      "toSel": "NodeSpec"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/genesis",
-      "toSel": "Build"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/genesis",
-      "toSel": "ExtractConfigSection"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/genesis",
-      "toSel": "SetConfigSection"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/genesis",
-      "toSel": "ValidateForks"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/node",
-      "toSel": "DefaultReservation"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/node",
-      "toSel": "Endpoints"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBP"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "BuildPlan",
-      "toPkg": "internal/resource",
-      "toSel": "Plan"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "Launch",
-      "toPkg": "internal/core/node",
-      "toSel": "NodeSet"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "Launch",
-      "toPkg": "internal/core/process",
-      "toSel": "InitDatadir"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "Launch",
-      "toPkg": "internal/core/process",
-      "toSel": "NodeOf"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "LaunchArgs",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "Argv"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "LaunchArgs",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "Chain"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "LaunchArgs",
-      "toPkg": "internal/core/nodeconfig",
-      "toSel": "Spec"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "NewHandoff",
-      "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPreset"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "NewHandoff",
-      "toPkg": "internal/core/registry",
-      "toSel": "Get"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "WaitEndpointsReady",
-      "toPkg": "internal/core/rpc",
-      "toSel": "Dial"
-    },
-    {
-      "fromPkg": "internal/consensus/upgrade",
-      "fromFunc": "forkPrereqs",
-      "toPkg": "internal/core/genesis",
-      "toSel": "SetConfigSection"
     },
     {
       "fromPkg": "internal/consensus/wbft",
@@ -7404,21 +7810,45 @@
     },
     {
       "fromPkg": "internal/consensus/wbft",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/node",
+      "toSel": "Is"
+    },
+    {
+      "fromPkg": "internal/consensus/wbft",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/consensus/wbft",
+      "fromFunc": "(Family).LaunchPolicy",
+      "toPkg": "internal/core/registry",
+      "toSel": "LaunchPolicy"
+    },
+    {
+      "fromPkg": "internal/consensus/wbft",
       "fromFunc": "(Family).PortReservation",
       "toPkg": "internal/core/node",
       "toSel": "Reservation"
     },
     {
       "fromPkg": "internal/consensus/wbft",
-      "fromFunc": "(Family).StartFlags",
-      "toPkg": "internal/core/node",
-      "toSel": "NormalizeRole"
+      "fromFunc": "(Family).RingAccounts",
+      "toPkg": "internal/core/registry",
+      "toSel": "AccountGovernance"
     },
     {
       "fromPkg": "internal/consensus/wbft",
-      "fromFunc": "(Family).StartFlags",
-      "toPkg": "internal/core/node",
-      "toSel": "RoleBP"
+      "fromFunc": "(Family).RingAccounts",
+      "toPkg": "internal/core/registry",
+      "toSel": "AccountValidator"
+    },
+    {
+      "fromPkg": "internal/consensus/wbft",
+      "fromFunc": "(Family).RingAccounts",
+      "toPkg": "internal/core/registry",
+      "toSel": "RingAccount"
     },
     {
       "fromPkg": "internal/consensus/wbft",
@@ -7443,6 +7873,12 @@
       "fromFunc": "(Family).SupportsRole",
       "toPkg": "internal/core/node",
       "toSel": "RolePN"
+    },
+    {
+      "fromPkg": "internal/consensus/wbft",
+      "fromFunc": "init",
+      "toPkg": "internal/core/registry",
+      "toSel": "RegisterFamily"
     },
     {
       "fromPkg": "internal/core/blueprint",
@@ -7614,6 +8050,12 @@
     },
     {
       "fromPkg": "internal/core/collector",
+      "fromFunc": "(*collector).WaitLog",
+      "toPkg": "internal/core/wait",
+      "toSel": "Sleep"
+    },
+    {
+      "fromPkg": "internal/core/collector",
       "fromFunc": "isKnownOverride",
       "toPkg": "internal/core/registry",
       "toSel": "Get"
@@ -7719,6 +8161,12 @@
       "fromFunc": "(Entry).Verify",
       "toPkg": "internal/core/keyring/derive",
       "toSel": "Derive"
+    },
+    {
+      "fromPkg": "internal/core/keyring",
+      "fromFunc": "(Entry).Verify",
+      "toPkg": "internal/core/keyring/derive",
+      "toSel": "PrivateKey"
     },
     {
       "fromPkg": "internal/core/keyring",
@@ -7910,7 +8358,7 @@
       "fromPkg": "internal/core/keyring/operation",
       "fromFunc": "ImportSet",
       "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPresetAt"
+      "toSel": "LoadPresetWithKeysAt"
     },
     {
       "fromPkg": "internal/core/keyring/operation",
@@ -7956,15 +8404,21 @@
     },
     {
       "fromPkg": "internal/core/keyring/operation",
-      "fromFunc": "openSet",
+      "fromFunc": "openSetWithKeys",
       "toPkg": "internal/core/keyring",
       "toSel": "Preset"
     },
     {
       "fromPkg": "internal/core/keyring/operation",
-      "fromFunc": "openSet",
+      "fromFunc": "openSetWithKeys",
       "toPkg": "internal/core/keyring/store",
       "toSel": "LoadPresetAt"
+    },
+    {
+      "fromPkg": "internal/core/keyring/operation",
+      "fromFunc": "openSetWithKeys",
+      "toPkg": "internal/core/keyring/store",
+      "toSel": "LoadPresetWithKeysAt"
     },
     {
       "fromPkg": "internal/core/keyring/store",
@@ -8118,12 +8572,6 @@
     },
     {
       "fromPkg": "internal/core/keyring/store",
-      "fromFunc": "(presetFile).entries",
-      "toPkg": "internal/core/keyring/derive",
-      "toSel": "ParsePrivateKey"
-    },
-    {
-      "fromPkg": "internal/core/keyring/store",
       "fromFunc": "DefaultKeySetDir",
       "toPkg": "internal/core/home",
       "toSel": "KeySets"
@@ -8202,6 +8650,24 @@
     },
     {
       "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "LoadPresetWithAccountsAt",
+      "toPkg": "internal/core/keyring",
+      "toSel": "Preset"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "LoadPresetWithKeysAt",
+      "toPkg": "internal/core/filestore",
+      "toSel": "Local"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "LoadPresetWithKeysAt",
+      "toPkg": "internal/core/keyring",
+      "toSel": "Preset"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
       "fromFunc": "NewKeySet",
       "toPkg": "internal/core/keyring",
       "toSel": "Entry"
@@ -8211,6 +8677,24 @@
       "fromFunc": "NewKeySet",
       "toPkg": "internal/core/keyring",
       "toSel": "Label"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "NodeKeyAt",
+      "toPkg": "internal/core/filestore",
+      "toSel": "Local"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "NodeKeyAt",
+      "toPkg": "internal/core/keyring/derive",
+      "toSel": "ParsePrivateKey"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "NodeKeyAt",
+      "toPkg": "internal/core/keyring/derive",
+      "toSel": "PrivateKey"
     },
     {
       "fromPkg": "internal/core/keyring/store",
@@ -8241,6 +8725,18 @@
       "fromFunc": "generateEntry",
       "toPkg": "internal/core/keyring/derive",
       "toSel": "NewPrivateKey"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "legacyIndexKeys",
+      "toPkg": "internal/core/keyring/derive",
+      "toSel": "ParsePrivateKey"
+    },
+    {
+      "fromPkg": "internal/core/keyring/store",
+      "fromFunc": "legacyIndexKeys",
+      "toPkg": "internal/core/keyring/derive",
+      "toSel": "PrivateKey"
     },
     {
       "fromPkg": "internal/core/keyring/store",
@@ -8304,6 +8800,48 @@
     },
     {
       "fromPkg": "internal/core/process",
+      "fromFunc": "(*RemoteDriver).FindBinary",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(*RemoteDriver).InitDatadir",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(*RemoteDriver).ProbePorts",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(*RemoteDriver).Provision",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(*RemoteDriver).ProvisionFile",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(RemoteFileStore).Checksum",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(RemoteFileStore).Exists",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
       "fromFunc": "(RemoteFileStore).Read",
       "toPkg": "internal/core/remote",
       "toSel": "DecodeReadFile"
@@ -8313,6 +8851,24 @@
       "fromFunc": "(RemoteFileStore).Read",
       "toPkg": "internal/core/remote",
       "toSel": "ReadFileCommand"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(RemoteFileStore).Remove",
+      "toPkg": "internal/core/filestore",
+      "toSel": "CheckRemovable"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(RemoteFileStore).Remove",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "(RemoteLogReader).ReadFrom",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
     },
     {
       "fromPkg": "internal/core/process",
@@ -8376,6 +8932,12 @@
     },
     {
       "fromPkg": "internal/core/process",
+      "fromFunc": "ShellCommand",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
       "fromFunc": "SpecOf",
       "toPkg": "internal/core/node",
       "toSel": "Role"
@@ -8385,6 +8947,18 @@
       "fromFunc": "StopNodeSet",
       "toPkg": "internal/core/node",
       "toSel": "Node"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "launchCommand",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
+      "fromPkg": "internal/core/process",
+      "fromFunc": "sudoWrap",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
     },
     {
       "fromPkg": "internal/core/report",
@@ -8493,6 +9067,18 @@
       "fromFunc": "Stream",
       "toPkg": "internal/core/collector",
       "toSel": "NewBus"
+    },
+    {
+      "fromPkg": "internal/dsl",
+      "fromFunc": "lowerEnvDeclarations",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeWords"
+    },
+    {
+      "fromPkg": "internal/dsl",
+      "fromFunc": "lowerEnvDeclarations",
+      "toPkg": "internal/core/node",
+      "toSel": "ValidScope"
     },
     {
       "fromPkg": "internal/dsl/interp",
@@ -8823,6 +9409,30 @@
       "fromFunc": "accountStateTool",
       "toPkg": "internal/app",
       "toSel": "Deps"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "argBool",
+      "toPkg": "internal/app",
+      "toSel": "ArgBool"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "argInt",
+      "toPkg": "internal/app",
+      "toSel": "ArgInt"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "argString",
+      "toPkg": "internal/app",
+      "toSel": "ArgString"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "argStrings",
+      "toPkg": "internal/app",
+      "toSel": "ArgStrings"
     },
     {
       "fromPkg": "internal/mcp",
@@ -9740,6 +10350,18 @@
       "fromPkg": "internal/mcp",
       "fromFunc": "reportTool",
       "toPkg": "internal/app",
+      "toSel": "ArgBool"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "reportTool",
+      "toPkg": "internal/app",
+      "toSel": "CombinedSession"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "reportTool",
+      "toPkg": "internal/app",
       "toSel": "Deps"
     },
     {
@@ -9753,6 +10375,12 @@
       "fromFunc": "reportTool",
       "toPkg": "internal/app",
       "toSel": "ReportIn"
+    },
+    {
+      "fromPkg": "internal/mcp",
+      "fromFunc": "reportTool",
+      "toPkg": "internal/app",
+      "toSel": "ReportSessions"
     },
     {
       "fromPkg": "internal/mcp",
@@ -9978,24 +10606,6 @@
     },
     {
       "fromPkg": "internal/mcp",
-      "fromFunc": "upgradeTool",
-      "toPkg": "internal/app",
-      "toSel": "Deps"
-    },
-    {
-      "fromPkg": "internal/mcp",
-      "fromFunc": "upgradeTool",
-      "toPkg": "internal/app",
-      "toSel": "UpgradeRun"
-    },
-    {
-      "fromPkg": "internal/mcp",
-      "fromFunc": "upgradeTool",
-      "toPkg": "internal/app",
-      "toSel": "UpgradeRunIn"
-    },
-    {
-      "fromPkg": "internal/mcp",
       "fromFunc": "validateTool",
       "toPkg": "internal/app",
       "toSel": "ValidateContent"
@@ -10205,6 +10815,12 @@
       "toSel": "InsecureFilePerm"
     },
     {
+      "fromPkg": "internal/resource",
+      "fromFunc": "runFind",
+      "toPkg": "internal/core/remote",
+      "toSel": "ShellQuote"
+    },
+    {
       "fromPkg": "internal/testengine",
       "fromFunc": "(*engine).Run",
       "toPkg": "internal/core/collector",
@@ -10305,6 +10921,18 @@
       "fromFunc": "(restartAdapter).Restart",
       "toPkg": "internal/chainsetup",
       "toSel": "NetRestartIn"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "(workspaceNodes).CrossFork",
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetCrossFork"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "(workspaceNodes).CrossFork",
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetCrossForkIn"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10543,26 +11171,20 @@
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "RunSuite",
-      "toPkg": "internal/core/preflight",
-      "toSel": "Compose"
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetCrossFork"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "RunSuite",
-      "toPkg": "internal/dsl",
-      "toSel": "Parse"
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetCrossForkIn"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "RunSuite",
-      "toPkg": "internal/dsl",
-      "toSel": "ReadFiles"
-    },
-    {
-      "fromPkg": "internal/testengine",
-      "fromFunc": "RunSuite",
-      "toPkg": "internal/dsl",
-      "toSel": "Spec"
+      "toPkg": "internal/core/session",
+      "toSel": "New"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10620,9 +11242,21 @@
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "applyPreset",
+      "fromFunc": "applyExistingInputs",
       "toPkg": "internal/resource",
-      "toSel": "InputPrepared"
+      "toSel": "InputExisting"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "artifactRoot",
+      "toPkg": "internal/core/home",
+      "toSel": "Sessions"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "artifactRoot",
+      "toPkg": "internal/resource",
+      "toSel": "LoadWorkspaceConfig"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10632,33 +11266,27 @@
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "chainCaps",
-      "toPkg": "internal/chains/external",
-      "toSel": "ResolveChain"
+      "fromFunc": "casesCrossFork",
+      "toPkg": "internal/dsl",
+      "toSel": "ActionCrossFork"
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "collectFailureData",
-      "toPkg": "internal/chainsetup",
-      "toSel": "Open"
+      "fromFunc": "chainContracts",
+      "toPkg": "internal/core/registry",
+      "toSel": "Get"
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "collectFailureData",
-      "toPkg": "internal/core/health",
-      "toSel": "Options"
+      "fromFunc": "checkDeclaredFork",
+      "toPkg": "internal/consensus/upgrade",
+      "toSel": "LoadProfile"
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "collectFailureData",
-      "toPkg": "internal/core/health",
-      "toSel": "Run"
-    },
-    {
-      "fromPkg": "internal/testengine",
-      "fromFunc": "collectFailureData",
-      "toPkg": "internal/core/process",
-      "toSel": "OpenLedger"
+      "fromFunc": "checkDeclaredFork",
+      "toPkg": "internal/dsl",
+      "toSel": "UpgradeRestart"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10676,6 +11304,18 @@
       "fromPkg": "internal/testengine",
       "fromFunc": "composeWorkspace",
       "toPkg": "internal/chainsetup",
+      "toSel": "NetStop"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "composeWorkspace",
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetStopIn"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "composeWorkspace",
+      "toPkg": "internal/chainsetup",
       "toSel": "NetUp"
     },
     {
@@ -10683,6 +11323,12 @@
       "fromFunc": "composeWorkspace",
       "toPkg": "internal/chainsetup",
       "toSel": "WantOf"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "composeWorkspace",
+      "toPkg": "internal/core/preflight",
+      "toSel": "RebuildAll"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10706,19 +11352,25 @@
       "fromPkg": "internal/testengine",
       "fromFunc": "compositionOf",
       "toPkg": "internal/chainsetup",
+      "toSel": "GenesisFork"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "compositionOf",
+      "toPkg": "internal/chainsetup",
       "toSel": "NetUpIn"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "compositionOf",
       "toPkg": "internal/chainsetup",
-      "toSel": "UpStart"
+      "toSel": "PlaceRequest"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "compositionOf",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "HandoffInputs"
+      "toPkg": "internal/chainsetup",
+      "toSel": "UpStart"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10735,14 +11387,14 @@
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "compositionOf",
-      "toPkg": "internal/dsl",
-      "toSel": "BinaryAfter"
+      "toPkg": "internal/core/registry",
+      "toSel": "Get"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "compositionOf",
       "toPkg": "internal/dsl",
-      "toSel": "BinaryBefore"
+      "toSel": "BinaryDefault"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10758,9 +11410,75 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "compositionOf",
+      "toPkg": "internal/resource",
+      "toSel": "WorkspaceConfig"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "declaredRoles",
+      "toPkg": "internal/core/node",
+      "toSel": "NormalizeRole"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "declaredRoles",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "declaredRoles",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleEN"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "declaredRoles",
+      "toPkg": "internal/core/node",
+      "toSel": "RolePN"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "describeTarget",
+      "toPkg": "internal/resource",
+      "toSel": "Spec"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "factsFromReport",
       "toPkg": "internal/nodemonitor",
       "toSel": "Facts"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "forkOf",
+      "toPkg": "internal/chainsetup",
+      "toSel": "ForkCarrier"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "forkOf",
+      "toPkg": "internal/chainsetup",
+      "toSel": "GenesisFork"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "forkOf",
+      "toPkg": "internal/consensus/upgrade",
+      "toSel": "LoadProfile"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "forkOf",
+      "toPkg": "internal/dsl",
+      "toSel": "BinaryTo"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "forkOf",
+      "toPkg": "internal/dsl",
+      "toSel": "UpgradeRestart"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10788,27 +11506,27 @@
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "handoffUp",
-      "toPkg": "internal/consensus/upgrade",
-      "toSel": "NewHandoff"
+      "fromFunc": "gatherFailureData",
+      "toPkg": "internal/chainsetup",
+      "toSel": "Open"
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "handoffUp",
-      "toPkg": "internal/core/node",
-      "toSel": "NodeSet"
+      "fromFunc": "gatherFailureData",
+      "toPkg": "internal/core/health",
+      "toSel": "Options"
     },
     {
       "fromPkg": "internal/testengine",
-      "fromFunc": "handoffUp",
+      "fromFunc": "gatherFailureData",
+      "toPkg": "internal/core/health",
+      "toSel": "Run"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "gatherFailureData",
       "toPkg": "internal/core/process",
-      "toSel": "NewLocalDriver"
-    },
-    {
-      "fromPkg": "internal/testengine",
-      "fromFunc": "handoffUp",
-      "toPkg": "internal/core/process",
-      "toSel": "StopNodeSet"
+      "toSel": "OpenLedger"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10842,15 +11560,57 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "malformedRequires",
+      "toPkg": "internal/core/registry",
+      "toSel": "MalformedCapability"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "malformedSelectors",
       "toPkg": "internal/dsl",
       "toSel": "SequenceOf"
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "mergeScopes",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeAll"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "misdirectedSends",
       "toPkg": "internal/dsl",
       "toSel": "SequenceOf"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "placementMismatch",
+      "toPkg": "internal/resource",
+      "toSel": "Spec"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "planNodes",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "planNodes",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "planNodes",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleEN"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "planNodes",
+      "toPkg": "internal/core/node",
+      "toSel": "RolePN"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10916,6 +11676,18 @@
       "fromPkg": "internal/testengine",
       "fromFunc": "readWorkspaceComposed",
       "toPkg": "internal/chainsetup",
+      "toSel": "NetFork"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "readWorkspaceComposed",
+      "toPkg": "internal/chainsetup",
+      "toSel": "NetForkIn"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "readWorkspaceComposed",
+      "toPkg": "internal/chainsetup",
       "toSel": "NetStop"
     },
     {
@@ -10950,6 +11722,12 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "recordBlockedBySetup",
+      "toPkg": "internal/core/session",
+      "toSel": "StatusBlocked"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "remoteLogReader",
       "toPkg": "internal/chainsetup",
       "toSel": "NetRunner"
@@ -10962,15 +11740,57 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "resolveComposition",
+      "toPkg": "internal/dsl",
+      "toSel": "Parse"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "resolveComposition",
+      "toPkg": "internal/dsl",
+      "toSel": "ReadFilesWithEnv"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "resolveComposition",
+      "toPkg": "internal/dsl",
+      "toSel": "Spec"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "ringFor",
       "toPkg": "internal/core/keyring/store",
-      "toSel": "LoadPreset"
+      "toSel": "LoadPresetWithKeys"
     },
     {
       "fromPkg": "internal/testengine",
       "fromFunc": "ringFor",
       "toPkg": "internal/core/keyring/store",
       "toSel": "NewKeySet"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "roleCountMismatches",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "roleCountMismatches",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleBP"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "roleCountMismatches",
+      "toPkg": "internal/core/node",
+      "toSel": "RoleEN"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "roleCountMismatches",
+      "toPkg": "internal/core/node",
+      "toSel": "RolePN"
     },
     {
       "fromPkg": "internal/testengine",
@@ -10986,9 +11806,27 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "scopeCovers",
+      "toPkg": "internal/core/node",
+      "toSel": "Role"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "scopeCovers",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeFor"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "selectorWellFormed",
       "toPkg": "internal/core/node",
       "toSel": "NormalizeRole"
+    },
+    {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "sortedScopes",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeRank"
     },
     {
       "fromPkg": "internal/testengine",
@@ -11058,6 +11896,12 @@
     },
     {
       "fromPkg": "internal/testengine",
+      "fromFunc": "verifyAgainstPlan",
+      "toPkg": "internal/chainsetup",
+      "toSel": "Open"
+    },
+    {
+      "fromPkg": "internal/testengine",
       "fromFunc": "waitForHead",
       "toPkg": "internal/core/rpc",
       "toSel": "Dial"
@@ -11105,6 +11949,12 @@
       "toSel": "Local"
     },
     {
+      "fromPkg": "internal/testengine",
+      "fromFunc": "writeScopes",
+      "toPkg": "internal/core/node",
+      "toSel": "ScopeRank"
+    },
+    {
       "fromPkg": "internal/testhelper",
       "fromFunc": "(blockAdvanceAssertion).Check",
       "toPkg": "internal/core/session",
@@ -11133,6 +11983,18 @@
       "fromFunc": "(callErrorAssertion).Check",
       "toPkg": "internal/core/session",
       "toSel": "AssertResult"
+    },
+    {
+      "fromPkg": "internal/testhelper",
+      "fromFunc": "(crossForkAction).Do",
+      "toPkg": "internal/dsl",
+      "toSel": "ActionCrossFork"
+    },
+    {
+      "fromPkg": "internal/testhelper",
+      "fromFunc": "(crossForkAction).Do",
+      "toPkg": "internal/dsl/interp",
+      "toSel": "ForkCrosser"
     },
     {
       "fromPkg": "internal/testhelper",
@@ -11316,6 +12178,24 @@
     },
     {
       "fromPkg": "internal/testhelper",
+      "fromFunc": "ResolveAddress",
+      "toPkg": "internal/core/keyring",
+      "toSel": "Label"
+    },
+    {
+      "fromPkg": "internal/testhelper",
+      "fromFunc": "abiBytesArg",
+      "toPkg": "internal/accounts",
+      "toSel": "Arg"
+    },
+    {
+      "fromPkg": "internal/testhelper",
+      "fromFunc": "abiBytesArg",
+      "toPkg": "internal/accounts",
+      "toSel": "Bytes"
+    },
+    {
+      "fromPkg": "internal/testhelper",
       "fromFunc": "assertTargets",
       "toPkg": "internal/core/node",
       "toSel": "LabelFor"
@@ -11418,6 +12298,12 @@
     },
     {
       "fromPkg": "internal/testhelper",
+      "fromFunc": "seedCrossForkBuiltins",
+      "toPkg": "internal/dsl",
+      "toSel": "ActionCrossFork"
+    },
+    {
+      "fromPkg": "internal/testhelper",
       "fromFunc": "sendTxLocalKey",
       "toPkg": "internal/accounts",
       "toSel": "DynamicTxArgs"
@@ -11432,7 +12318,19 @@
       "fromPkg": "internal/validatorset",
       "fromFunc": "Load",
       "toPkg": "internal/core/registry",
+      "toSel": "AccountNode"
+    },
+    {
+      "fromPkg": "internal/validatorset",
+      "fromFunc": "Load",
+      "toPkg": "internal/core/registry",
       "toSel": "Get"
+    },
+    {
+      "fromPkg": "internal/validatorset",
+      "fromFunc": "Load",
+      "toPkg": "internal/core/registry",
+      "toSel": "RingAccountReader"
     }
   ]
 }
