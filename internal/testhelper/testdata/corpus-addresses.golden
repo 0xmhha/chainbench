@@ -96,6 +96,9 @@ go-stablenet/post-v1.0.0-change/common-all/13-accesslist-gasprice-below-min-reje
 go-stablenet/post-v1.0.0-change/common-all/13-accesslist-gasprice-below-min-rejected.json	.steps[0]	to	0x00000000000000000000000000000000c0ffee0e
 go-stablenet/post-v1.0.0-change/common-all/14-feecap-below-min-rejected.json	.steps[0]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 go-stablenet/post-v1.0.0-change/common-all/14-feecap-below-min-rejected.json	.steps[0]	to	0x00000000000000000000000000000000c0ffee0e
+go-stablenet/post-v1.0.0-change/common-all/15-boho-chain-config-active.json	.steps[1]	of[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/post-v1.0.0-change/common-all/15-boho-chain-config-active.json	.steps[2]	params[0].to	0x0000000000000000000000000000000000001003
+go-stablenet/post-v1.0.0-change/common-all/15-boho-chain-config-active.json	.steps[3]	params[0].to	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/16-anzeon-active-before-boho.json	.steps[1]	params[0]	0x0000000000000000000000000000000000001001
 go-stablenet/post-v1.0.0-change/common-all/19-upgrade-registry-order.json	.steps[1]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/19-upgrade-registry-order.json	.steps[2]	params[0]	0x0000000000000000000000000000000000001003
