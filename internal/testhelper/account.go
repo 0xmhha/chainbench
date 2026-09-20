@@ -229,6 +229,26 @@ var addressListArgs = []string{"of"}
 // eth_createAccessList takes.
 var valueArgs = []string{"expected", "params"}
 
+// ComparedAsWritten reports whether a resolved comparison value should be
+// dropped in favour of the name the spec wrote.
+//
+// valueArgs resolves a name wherever one appears, on the ground that "node1"
+// cannot be a block tag, a quantity or a hash. That list left one thing out: it
+// can be a node's NAME. admin_wemixInfo answers self.name with "node1" itself,
+// so resolving there compares an address against a name and fails on a network
+// that is behaving correctly — measured 2026-09-19 on a 15-node wemix network,
+// where default-on-routes-every-step failed with expected=0x23222a98… and
+// actual=node1.
+//
+// The chain's own answer settles it. An address can never equal a bare name, so
+// when the value read back is not hex the name was meant as a name. The five
+// sites that do compare against an address — a block's miner, a transaction's
+// from — read back 0x… and keep the resolved form.
+func ComparedAsWritten(actual any) bool {
+	s, ok := actual.(string)
+	return ok && s != "" && !addressLiteral.MatchString(s)
+}
+
 // resolveAddressArgs returns spec with every address-shaped argument resolved,
 // leaving everything else untouched. The input map is not modified: a spec is
 // read more than once (an assertion runs against each target node), and

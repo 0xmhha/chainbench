@@ -248,6 +248,7 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	// original is the shape that made "to": "govMinter" work in an assertion and
 	// die in sendTx — the work is done and thrown away.
 	expected := args["expected"]
+	written := ac.Args["expected"] // see ComparedAsWritten
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -261,7 +262,11 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	for {
 		if v, rerr := read(ctx, c, args); rerr == nil {
 			lastActual, lastErr = v, nil
-			if pass, _ := cmp(v, expected); pass {
+			want := expected
+			if ComparedAsWritten(v) {
+				want = written
+			}
+			if pass, _ := cmp(v, want); pass {
 				ac.Value = v
 				return nil
 			}
@@ -367,6 +372,10 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 		return res, rerr
 	}
 	expected := spec["expected"]
+	// The name the spec wrote, kept beside the resolved form: a comparison value
+	// is only an account when the chain answers with an address. See
+	// ComparedAsWritten.
+	written := ac.Spec["expected"]
 	res.Expected = expected
 
 	targets := assertTargets(ac)
@@ -391,7 +400,11 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 			return res, err
 		}
 		actuals[tgt.name] = actual
-		if pass, detail := fn(actual, expected); !pass {
+		want := expected
+		if ComparedAsWritten(actual) {
+			want, res.Expected = written, written
+		}
+		if pass, detail := fn(actual, want); !pass {
 			res.Pass = false
 			if detail == "" {
 				detail = "mismatch"
