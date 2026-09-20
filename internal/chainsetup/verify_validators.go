@@ -42,8 +42,8 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	if err != nil {
 		return ValidatorCheck{}, err
 	}
-	if len(w.state.Nodes) == 0 {
-		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: no node table")
+	if err := w.allow("VerifyValidators"); err != nil {
+		return ValidatorCheck{}, err
 	}
 	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {

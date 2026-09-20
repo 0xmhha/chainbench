@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 48 | 51,549 |
+| `internal/` | 48 | 51,699 |
 | `cmd/` | 19 | 5,068 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **70** | **57,407** |
+| **합계** | **70** | **57,557** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -134,12 +134,12 @@ internal/testhelper 3,717 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 2,892 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,384 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 6,585 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 8,556 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
                           NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
                           NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·
@@ -223,7 +223,7 @@ scripts/inventory/
 
 ## 6. 이 트리에서 눈에 보이는 것
 
-**가장 큰 덩어리에 구조가 가장 없다.** `chainsetup` 6,585줄이 한 패키지 22파일이고, 축은 파일명
+**가장 큰 덩어리에 구조가 가장 없다.** `chainsetup` 8,556줄이 한 패키지 36파일이고, 축은 파일명
 접두사로만 암시된다(`steps_*` 단계 / `verbs_*` 진입점 / `workspace.go`·`reuse.go` 상태). 위 트리에서
 한 줄로 압축된 자리가 실제로는 전체에서 가장 읽기 어려운 자리다. `testhelper`(3,717) · `resource`(3,080) ·
 `app`(2,943) · `testengine`(2,892) · `mcp`(2,874) 도 같은 모양이다.

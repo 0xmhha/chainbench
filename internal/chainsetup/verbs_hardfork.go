@@ -114,8 +114,8 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 // Hardfork swaps every node onto binary at the plan's fork, continuing the
 // same chain data, and records the new pids, binary and chain.
 func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary string) (node.NodeSet, error) {
-	if len(w.state.Nodes) == 0 {
-		return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: no node table — compose the network first")
+	if err := w.allow("Hardfork"); err != nil {
+		return node.NodeSet{}, err
 	}
 	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
 	for _, rec := range w.state.Nodes {

@@ -350,10 +350,8 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 // nodeAt finds a node's position in the table by its index.
 
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
-	for _, ns := range w.state.Nodes {
-		if ns.PID > 0 {
-			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `chain stop` first", ns.Index, ns.PID)
-		}
+	if err := w.allow("Rm"); err != nil {
+		return "", err
 	}
 	// Removal goes through the target's file store, the same boundary that wrote
 	// these paths. That is what makes a remote data plane removable at all: this

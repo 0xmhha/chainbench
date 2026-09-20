@@ -119,8 +119,8 @@ type NodeHealth struct {
 // Health probes every node's HTTP RPC for its latest block height. It does not
 // mark a step — it is a read, re-runnable at any time.
 func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
-	if len(w.state.Nodes) == 0 {
-		return nil, fmt.Errorf("chainsetup: health: no node table — run `chain place` first")
+	if err := w.allow("Health"); err != nil {
+		return nil, err
 	}
 	out := make([]NodeHealth, len(w.state.Nodes))
 	for i, ns := range w.state.Nodes {

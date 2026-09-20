@@ -24,8 +24,8 @@ import (
 // names a port rather than the composition that took it.
 
 func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
-	if len(w.state.Nodes) == 0 {
-		return fmt.Errorf("chainsetup: preflight: no node table — run `chain place` first")
+	if err := w.allow("Preflight"); err != nil {
+		return err
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
