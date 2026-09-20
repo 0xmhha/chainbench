@@ -2,7 +2,7 @@ package app
 
 import "github.com/0xmhha/chainbench/internal/core/registry"
 
-// Argument decoding, relayed for the surfaces that cannot reach core.
+// This file relays argument decoding for the surfaces that cannot reach core.
 //
 // A capability or MCP tool call arrives as a JSON object decoded into
 // map[string]any, and the rules for reading one value out of it belong to one
@@ -17,6 +17,8 @@ import "github.com/0xmhha/chainbench/internal/core/registry"
 // These four one-line pass-throughs are that relay — the app layer doing for
 // argument decoding exactly what it does for every other core capability MCP
 // needs. The decoding itself still lives in exactly one place.
+
+// ArgString returns a string argument, or def when it is absent or not a string.
 func ArgString(args map[string]any, key, def string) string {
 	return registry.ArgString(args, key, def)
 }

@@ -34,7 +34,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	// in for a start that launched nodes and was then interrupted.
 	boom := errors.New("the step failed after starting something")
 	_, err = withWorkspace(Deps{}, dir, func(ws *Workspace) (string, error) {
-		if _, aerr := ws.Allocate(AllocateOpts{Validators: 2}); aerr != nil {
+		if _, aerr := ws.Allocate(AllocateOpts{BPCount: 2}); aerr != nil {
 			return "", aerr
 		}
 		return "", boom
@@ -51,7 +51,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 		t.Fatalf("the reopened workspace has %d node(s); what the step did was discarded with its error", n)
 	}
 
-	if _, err := os.Stat(filepath.Join(dir, "workspace.json")); err != nil {
+	if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); err != nil {
 		t.Fatalf("workspace file missing: %v", err)
 	}
 }

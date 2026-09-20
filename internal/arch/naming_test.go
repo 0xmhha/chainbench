@@ -62,7 +62,6 @@ var nameCollisionDebt = map[string]string{
 	"GenerateKey": "accounts 것은 저장하지 않는 테스트용이라 같은 이름을 쓰면 안 된다",
 	"Identity":    "derive 는 드러내도 되는 파생 신원을, nodeconfig 는 노드가 누구인지를 가리킨다",
 	"Node":        "app 은 core/node 의 별칭이지만 preflight 것은 '원하는 역할을 낼 수 있는가'의 판정 대상이다",
-	"NodeSpec":    "upgrade 는 확정된 기동 배정을, process 는 프로비전·기동에 필요한 것을 가리킨다",
 	"NodeSwap":    "chainsetup 은 노드를 바꾸는 동작이고 hardfork 는 그 교체를 적은 구조체다",
 	"Step":        "chainsetup 은 session.Step 의 별칭인데 poa 것은 부트스트랩의 한 동작이다",
 	"Entry":       "arch 는 등록된 기능을, keyring 은 키 항목을, node 는 부트 항목을 가리킨다",

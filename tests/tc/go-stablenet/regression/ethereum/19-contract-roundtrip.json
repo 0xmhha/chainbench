@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "contract-roundtrip",
   "description": "RT-A-3-01 — 컨트랙트 배포 (원본 regression/ethereum/19-test-contract-deploy)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "contract-roundtrip-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

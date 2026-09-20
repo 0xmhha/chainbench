@@ -23,7 +23,7 @@ func TestFactsFromReport_MapsAndClassifies(t *testing.T) {
 			{Index: 2, ChainID: 1000, BlockNumber: 0, PeerCount: 0, Syncing: false, OK: false},
 		},
 	}
-	facts := factsFromReport(rep, ns)
+	facts := factsFromReport(rep, ns, forkGate{})
 	if len(facts) != 2 {
 		t.Fatalf("got %d facts, want 2", len(facts))
 	}
@@ -56,7 +56,7 @@ func TestFactsFromReport_NotProducingIsWaitable(t *testing.T) {
 		Producing: false,
 		Nodes:     []health.NodeInfo{{Index: 1, OK: true, BlockNumber: 0}},
 	}
-	f := factsFromReport(rep, ns)[0]
+	f := factsFromReport(rep, ns, forkGate{})[0]
 	if v := nodemonitor.Classify(f).Verdict; v != nodemonitor.Waitable {
 		t.Fatalf("verdict = %s, want WAITABLE when alive but not producing", v)
 	}
@@ -68,5 +68,37 @@ func TestClampCount(t *testing.T) {
 	}
 	if got := clampCount(1 << 40); got != (1<<31)-1 {
 		t.Errorf("clampCount(large) = %d, want MaxInt32", got)
+	}
+}
+
+// TestForkGate_ARestartIsNeitherParkedNorRetired.
+//
+// Both states belong to a handover and neither happens on a restart, where the
+// whole network crosses together.
+//
+// Measured: reading "parked" on a restart let the readiness gate pass at height
+// 0, before a single block was sealed, because every node was trivially sitting
+// at the block before a fork declared at 1. And every node on a restart is on
+// the pre-fork side at compose time, so reading "retired" would call them all
+// finished once the chain passed the fork — a network where nothing runs,
+// reported as ready.
+func TestForkGate_ARestartIsNeitherParkedNorRetired(t *testing.T) {
+	rep := health.Report{Nodes: []health.NodeInfo{
+		{Index: 1, OK: true, BlockNumber: 0},
+		{Index: 2, OK: true, BlockNumber: 0},
+	}}
+	handover := forkGate{at: 1, preFork: map[int]bool{1: true, 2: true}}
+	if !handover.parked(rep) {
+		t.Fatal("a handover standing at the block before its fork is parked")
+	}
+	restart := forkGate{at: 1, restart: true, preFork: map[int]bool{1: true, 2: true}}
+	if restart.parked(rep) {
+		t.Error("a restart was read as parked; an ordinary fork does not halt the chain")
+	}
+	if !handover.retired(1, 5) {
+		t.Fatal("a pre-fork node past the fork has finished its part")
+	}
+	if restart.retired(1, 5) {
+		t.Error("a restarted node was read as retired; every node moves and none is left behind")
 	}
 }

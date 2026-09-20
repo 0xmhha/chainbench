@@ -3,12 +3,15 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
@@ -22,6 +25,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -43,19 +48,81 @@ func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
 	return fallback
 }
 
-func (w *Workspace) binary(arg string) (string, error) {
-	if arg != "" {
-		return arg, nil
+// genesisFor resolves the genesis one node initializes from: the one recorded
+// for its binary when the composition built a separate document for that
+// binary, otherwise the network's.
+//
+// It mirrors binaryFor deliberately. A node's binary and its genesis are the
+// same question asked twice — which of the network's builds is this node — and
+// two different answers to it is how they come apart.
+func (w *Workspace) genesisFor(ns node.Record) string {
+	if ns.Binary != "" {
+		if p := w.state.GenesisPaths[ns.Binary]; p != "" {
+			return p
+		}
 	}
-	if w.state.Binary != "" {
-		return w.state.Binary, nil
+	return w.state.GenesisPath
+}
+
+// genesisConfigFor resolves the genesis one node reads from its config file:
+// the one recorded for its binary when the composition carried a fork there,
+// and otherwise nothing — the ordinary node's config says nothing about the
+// genesis, because it initialized from the genesis document like every other.
+//
+// It mirrors genesisFor, and for the same reason: a node's binary decides both,
+// and two shapes of answer is how they come apart.
+func (w *Workspace) genesisConfigFor(ns node.Record) string {
+	if ns.Binary != "" {
+		return w.state.GenesisConfigPaths[ns.Binary]
 	}
-	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `chain new`)")
+	return ""
+}
+
+// pluginFor resolves the chain one node runs: the one recorded for its binary
+// when that binary is a different chain, otherwise the composition's.
+//
+// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
+// same question: which of this network's builds is this node. Keeping them the
+// same shape is what stops one of them answering differently from the others.
+func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
+	if ns.Binary != "" {
+		if id := w.state.BinaryChains[ns.Binary]; id != "" {
+			return external.ResolveChain(id, "", "")
+		}
+	}
+	return w.plugin()
+}
+
+// genesisPaths is every genesis this composition wrote, deduplicated, with the
+// network's first: the documents nodes initialize from, then the configs a
+// build reads its genesis from instead. Used by the steps that have to act on
+// all of them: removing them, recording them, checking they are still there.
+func (w *Workspace) genesisPaths() []string {
+	var out []string
+	seen := map[string]bool{}
+	add := func(p string) {
+		if p == "" || seen[p] {
+			return
+		}
+		seen[p] = true
+		out = append(out, p)
+	}
+	add(w.state.GenesisPath)
+	for _, name := range slices.Sorted(maps.Keys(w.state.GenesisPaths)) {
+		add(w.state.GenesisPaths[name])
+	}
+	for _, name := range slices.Sorted(maps.Keys(w.state.GenesisConfigPaths)) {
+		add(w.state.GenesisConfigPaths[name])
+	}
+	return out
 }
 
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
+	if err := w.require("init"); err != nil {
+		return "", err
+	}
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("chainsetup: init: no node table — run `chain place` first")
 	}
@@ -80,11 +147,21 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 		if !ok {
 			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
 		}
-		// GenesisPath is a path on the machine: the genesis step wrote it
-		// through each machine's file store, so it is read back the same way.
-		gen, err := t.Files.Read(ctx, w.state.GenesisPath)
-		if err != nil {
-			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
+		// A path on the machine: the genesis step wrote it through each
+		// machine's file store, so it is read back the same way. Read once per
+		// document rather than once per node — a network of one binary has one
+		// document and this is the same single read it always was.
+		byPath := map[string][]byte{}
+		readGenesis := func(p string) ([]byte, error) {
+			if gen, ok := byPath[p]; ok {
+				return gen, nil
+			}
+			gen, err := t.Files.Read(ctx, p)
+			if err != nil {
+				return nil, fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err)
+			}
+			byPath[p] = gen
+			return gen, nil
 		}
 		for _, ns := range nodes {
 			// A running node's datadir is not re-initialized: reuse-if-matching
@@ -95,6 +172,31 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			}
 			spec := process.SpecOf(ns)
 			spec.Binary = w.binaryFor(ns, bin)
+			// Clear the datadir first, so "init" means what it says.
+			//
+			// The binary refuses to init over a chain database that holds a
+			// different genesis ("mismatching Boho fork block in database"),
+			// which is exactly the case a rebuild is for: preflight says
+			// "rebuild-all: genesis differs", the network is stopped, a new
+			// genesis is written — and then init hands the old database to the
+			// binary and the whole composition dies. Measured: 12 of 161 cases
+			// declared a genesis overlay and none of them could run.
+			//
+			// Nothing else lives here. The genesis and the configs are shared
+			// files at the workspace root, the identities are passed by path
+			// from the key set (--nodekey), and a node that is still running is
+			// skipped above — so what is removed is the chain this node built,
+			// which is what a rebuild discards.
+			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
+				return fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err)
+			}
+			// The genesis this node's binary accepts, which is not always the
+			// network's: two builds in one network need not take the same
+			// document.
+			gen, err := readGenesis(w.genesisFor(ns))
+			if err != nil {
+				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
+			}
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
@@ -118,6 +220,9 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 // it ran; otherwise it is assembled here through the same single site
 // (nodeconfig.Argv) with no overrides.
 func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
+	if err := w.require("start"); err != nil {
+		return "", err
+	}
 	p, err := w.plugin()
 	if err != nil {
 		return "", err
@@ -129,7 +234,9 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	// With accounts: a producer unlocks the account its keystore holds, which is
+	// not always the address its nodekey derives.
+	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start: %w", err)
 	}
@@ -181,26 +288,70 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
+//
+// Every node is attempted. A node whose machine cannot be resolved used to end
+// the whole loop, so one unreachable server left every node after it running —
+// and the caller was told "stop failed", which reads as "nothing stopped" when
+// the truth was "some stopped, and I do not know which". Now each node's
+// failure is collected and the rest are still stopped; the error names them all.
+//
+// The nodes are stopped concurrently because stopping one is mostly waiting:
+// the driver sends SIGTERM and gives the process up to process.StopGrace to
+// close its database. Done in sequence, five nodes take five grace periods —
+// measured at 15s each, so a network that will not go down quietly held the
+// next run's ports for over a minute. Done together they take one.
 func (w *Workspace) Stop(ctx context.Context) (string, error) {
-	stopped := 0
-	var errs []string
+	type outcome struct {
+		i   int
+		err error
+	}
+	var (
+		mu       sync.Mutex
+		results  []outcome
+		wg       sync.WaitGroup
+		attempts int
+	)
 	for i, ns := range w.state.Nodes {
 		if ns.PID <= 0 {
 			continue
 		}
+		attempts++
+		// Resolving the machine touches the workspace's memoized map, so it is
+		// done here, one at a time, and only the wait runs concurrently.
 		t, err := w.machineFor(ns)
 		if err != nil {
-			return "", err
-		}
-		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
-			errs = append(errs, fmt.Sprintf("node%d: %v", ns.Index, err))
+			mu.Lock()
+			results = append(results, outcome{i: i, err: fmt.Errorf("resolve machine: %w", err)})
+			mu.Unlock()
 			continue
 		}
-		w.clearPID(i)
+		wg.Add(1)
+		go func(i int, ns node.Record, t *resource.Access) {
+			defer wg.Done()
+			err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID})
+			mu.Lock()
+			results = append(results, outcome{i: i, err: err})
+			mu.Unlock()
+		}(i, ns, t)
+	}
+	wg.Wait()
+
+	// Sorted so the same failure reads the same way twice: goroutines finish in
+	// whatever order the processes happen to die.
+	sort.Slice(results, func(a, b int) bool { return results[a].i < results[b].i })
+	stopped := 0
+	var errs []string
+	for _, r := range results {
+		if r.err != nil {
+			errs = append(errs, fmt.Sprintf("node%d: %v", w.state.Nodes[r.i].Index, r.err))
+			continue
+		}
+		w.clearPID(r.i)
 		stopped++
 	}
 	if len(errs) > 0 {
-		return "", fmt.Errorf("chainsetup: stop: %s", strings.Join(errs, "; "))
+		return "", fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
+			stopped, attempts, strings.Join(errs, "; "))
 	}
 	detail := fmt.Sprintf("%d node(s) stopped", stopped)
 	w.markStep("stop", detail)
@@ -292,14 +443,6 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
-// SwapNode stops node index and relaunches it with a different binary and/or
-// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
-// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
-// command are kept as a ledger revision (recordSwap); the node's per-node
-// binary and config provenance are updated so a later restart uses the swapped
-// ones. binary is a path (empty keeps the current one); config is a set of
-// key=value config overrides (empty keeps the current config); purpose names the
-// config fixture in provenance.
 // SwapNodeOpts is what one node is relaunched with. Every field is optional on
 // its own, but at least one must be set — a swap that changes nothing is a
 // restart, and saying so is clearer than doing it silently.
@@ -320,6 +463,12 @@ type SwapNodeOpts struct {
 	Purpose string
 }
 
+// SwapNode stops node index and relaunches it with a different binary and/or
+// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
+// command are kept as a ledger revision (recordSwap); the node's per-node
+// binary and config provenance are updated so a later restart uses the swapped
+// ones.
 func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
@@ -407,12 +556,33 @@ func (w *Workspace) reinitNodeGenesis(ctx context.Context, t *resource.Access, s
 
 // setNodeBinary registers binary under a per-node key and points node ni at it,
 // so binaryFor resolves the swapped binary for this and any later launch.
+//
+// binary may be a path or a name the declaration gave one ("upgrade",
+// "mismatch"), because that is what a case writes: it says which of the
+// binaries the env declared a node should swap onto, not where that binary
+// lives. A name is resolved here, once, so everything downstream holds a path.
+// Storing the name instead handed it to exec, and a case that swapped onto
+// "upgrade" died with `exec: "upgrade": executable file not found in $PATH`
+// while the declaration said plainly what upgrade meant.
 func (w *Workspace) setNodeBinary(ni int, binary string) {
 	if w.state.Binaries == nil {
 		w.state.Binaries = map[string]string{}
 	}
+	name := binary
+	if path := w.state.Binaries[binary]; path != "" {
+		binary = path
+	}
 	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
+	// The chain travels with the name. Without this a swap onto another build
+	// kept its path and lost which chain it is, so the node relaunched with the
+	// other build's flag vocabulary.
+	if id := w.state.BinaryChains[name]; id != "" {
+		if w.state.BinaryChains == nil {
+			w.state.BinaryChains = map[string]string{}
+		}
+		w.state.BinaryChains[key] = id
+	}
 	w.state.Nodes[ni].Binary = key
 }
 
@@ -434,7 +604,11 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 		w.state.ConfigSet = map[string][]string{}
 	}
 	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], config...)
-	prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
+	np, err := w.pluginFor(w.state.Nodes[ni])
+	if err != nil {
+		return err
+	}
+	prov, err := w.writeNodeConfig(ctx, np, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
 	if err != nil {
 		return err
 	}
@@ -504,14 +678,18 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 				return "", err
 			}
 		}
-		if w.state.GenesisPath != "" && !genesisDone[ns.Server] {
-			if err := remove(acc, w.state.GenesisPath); err != nil {
-				return "", err
+		if !genesisDone[ns.Server] {
+			for _, p := range w.genesisPaths() {
+				if err := remove(acc, p); err != nil {
+					return "", err
+				}
 			}
 			genesisDone[ns.Server] = true
 		}
 	}
 	w.state.GenesisPath = ""
+	w.state.GenesisPaths = nil
+	w.state.GenesisConfigPaths = nil
 	w.state.Nodes = nil
 	detail := fmt.Sprintf("%d path(s) removed; node table cleared", removed)
 	w.markStep("rm", detail)
@@ -546,6 +724,72 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 		return strings.Join(lines, "\n"), nil
 	}
 	return "", fmt.Errorf("chainsetup: logs: no node %d in the table", index)
+}
+
+// LogExcerpt returns the first head lines and the last tail lines of one node's
+// log, with a line in between saying how much was left out.
+//
+// The tail alone is not enough for the failure this exists to explain. A node
+// that refuses its genesis, or cannot bind a port, says so in its first few
+// lines and then exits; a node that dies after an hour says so in its last. At
+// one block per second a geth-family node writes several lines a second, so a
+// 200-line tail is the last half minute — which is exactly the window that does
+// NOT contain a startup failure.
+//
+// A log shorter than head+tail is returned whole: eliding nothing is not worth
+// a marker saying so.
+func (w *Workspace) LogExcerpt(ctx context.Context, index, head, tail int) (string, error) {
+	full, err := w.Logs(ctx, index, 0)
+	if err != nil {
+		return "", err
+	}
+	return excerpt(full, head, tail), nil
+}
+
+// excerpt keeps both ends of s and says what it dropped.
+func excerpt(s string, head, tail int) string {
+	if head <= 0 && tail <= 0 {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	if len(lines) <= head+tail {
+		return s
+	}
+	out := make([]string, 0, head+tail+1)
+	out = append(out, lines[:head]...)
+	out = append(out, fmt.Sprintf("... %d line(s) elided ...", len(lines)-head-tail))
+	out = append(out, lines[len(lines)-tail:]...)
+	return strings.Join(out, "\n")
+}
+
+// livePIDs asks each node's machine whether its recorded pid is still a
+// process, for the nodes that have one.
+//
+// Best effort, and deliberately silent about its own failures: this answers
+// "what is running", and a machine that cannot be reached has not told us the
+// node is gone. Absent from the map means "not asked or could not ask", which
+// a caller must not read as "dead" — the map only ever carries answers.
+func (w *Workspace) livePIDs(ctx context.Context) map[int]bool {
+	out := map[int]bool{}
+	for _, ns := range w.state.Nodes {
+		if ns.PID <= 0 {
+			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			continue
+		}
+		insp, ok := t.Driver.(process.ProcessInspector)
+		if !ok {
+			continue
+		}
+		alive, err := insp.PIDAlive(ctx, ns.PID)
+		if err != nil {
+			continue
+		}
+		out[ns.Index] = alive
+	}
+	return out
 }
 
 // NodeHealth is one node's health probe result.
@@ -583,17 +827,6 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	return out, nil
 }
 
-// startPhase launches one phase's nodes, or every stopped node when the phase
-// names none. A node already running is left alone: `chain restart` bounces one,
-// and re-running `chain start` should not double-launch the rest.
-// checkVacant refuses to launch onto ports something is already listening on.
-//
-// Without it the collision is discovered by the node, which dies with "address
-// already in use" partway through a bring-up, and the operator has to work out
-// which of three situations they are in. This says which: a port held by a node
-// this workspace recorded is its own leftover and `chain stop` clears it; anything
-// else belongs to something this workspace did not start, and guessing would be
-// worse than refusing.
 // Preflight is the check-only entry: the same pre-launch inspection Start
 // runs, callable without composing anything. It answers "may a network of
 // this shape start here right now?" with the refusal Start would give — port
@@ -651,6 +884,14 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, na
 	return nil
 }
 
+// checkVacant refuses to launch onto ports something is already listening on.
+//
+// Without it the collision is discovered by the node, which dies with "address
+// already in use" partway through a bring-up, and the operator has to work out
+// which of three situations they are in. This says which: a port held by a node
+// this workspace recorded is its own leftover and `chain stop` clears it; anything
+// else belongs to something this workspace did not start, and guessing would be
+// worse than refusing.
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
 	var addrs []inspector.Addr
 	for _, ns := range w.state.Nodes {
@@ -815,6 +1056,9 @@ type owner struct {
 	pid  int
 }
 
+// startPhase launches one phase's nodes, or every stopped node when the phase
+// names none. A node already running is left alone: `chain restart` bounces one,
+// and re-running `chain start` should not double-launch the rest.
 func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
@@ -839,7 +1083,14 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d peers: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
+			// This node's own chain, which is not always the composition's: a
+			// network can run two builds, and the chain is what says which flag
+			// vocabulary the binary accepts and which RPC namespace it serves.
+			np, perr := w.pluginFor(ns)
+			if perr != nil {
+				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, perr)
+			}
+			args, err := nodeconfig.Argv(process.NodeConfig(np, preset, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
@@ -861,19 +1112,20 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 // phase that named it expects it to have happened, and a bootstrap quietly
 // skipped is a network that starts and then does nothing.
 func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
-	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
-	for _, ns := range w.state.Nodes {
-		spec := process.SpecOf(ns)
-		spec.Binary = bin
-		specs = append(specs, spec)
-	}
-	plan := process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
+	plan := w.phasePlan(bin)
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
-	exec := poa.Bootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	// No Binary override: the executor already prefers the plan's own entry for
+	// the node it runs on, and that is the node's binary. Naming one here
+	// overrode it with the network's single binary, which is wrong the moment
+	// the network runs more than one — and it runs more than one on purpose,
+	// for a swap and for a handoff across a fork. The socket the bootstrap
+	// attaches to is derived from the binary, so a node running the other one
+	// was waited for at a path it never creates.
+	exec := poa.Bootstrap{KeysDir: w.state.KeysDir}
 	// A remote target runs the bootstrap where the node is: the binary, its IPC
 	// socket, the governance config and the keystore all live on the target, so
 	// route the runner and the file probes through that node's access — the same
@@ -911,6 +1163,23 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		}
 	}
 	return nil
+}
+
+// phasePlan is the launch plan a phase's actions run against: every node, each
+// with the binary IT runs.
+//
+// Per node, not per network. A network can run more than one binary on purpose
+// — a case swaps a node onto another build, a handoff puts the pre-fork and
+// post-fork binaries in one network from genesis — and a bring-up action that
+// assumed one of them addressed the others through the wrong binary.
+func (w *Workspace) phasePlan(bin string) process.Plan {
+	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		spec := process.SpecOf(ns)
+		spec.Binary = w.binaryFor(ns, bin)
+		specs = append(specs, spec)
+	}
+	return process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
 }
 
 // recordByIndex returns the node record with the given 1-based index.
@@ -987,9 +1256,14 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 		if err != nil {
 			return err
 		}
+		// The binary is asked for separately because a name is not a path: a
+		// bare name is whatever the target's PATH resolves, and stating it
+		// would report a binary the launch will find as missing.
+		if err := checkBinary(ctx, t, bin); err != nil {
+			lines = append(lines, "  "+err.Error())
+		}
 		want := []inspector.Path{
-			{Path: bin, Purpose: "binary"},
-			{Path: w.state.GenesisPath, Purpose: "genesis"},
+			{Path: w.genesisFor(ns), Purpose: "genesis"},
 			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
 			{Path: ns.ConfigPath, Node: ns.Index, Purpose: "config"},
 		}
@@ -1008,8 +1282,41 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	if len(lines) == 0 {
 		return nil
 	}
-	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
+	return fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
+}
+
+// checkBinary reports the binary as missing when the target cannot produce it,
+// whether it was named as a path or as a command.
+//
+// It is the one pre-launch check that cannot be a file lookup. A workspace-
+// config places the binary under the data root and the answer is a path; with
+// no workspace-config the name is the target's to resolve on PATH, and asking
+// the file store about it stats it against the working directory and answers
+// no for a binary the launch would have found.
+func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
+	if bin == "" {
+		return fmt.Errorf("binary: none is set")
+	}
+	if strings.ContainsRune(bin, '/') {
+		ok, err := t.Files.Exists(ctx, bin)
+		if err != nil {
+			return fmt.Errorf("binary %s: %v", bin, err)
+		}
+		if !ok {
+			return fmt.Errorf("binary %s: not on the target", bin)
+		}
+		return nil
+	}
+	path, ok, err := inspector.OnPath(ctx, t.Runner, bin)
+	if err != nil {
+		return fmt.Errorf("binary %s: %v", bin, err)
+	}
+	if !ok {
+		return fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin)
+	}
+	_ = path
+	return nil
 }
 
 // uniq drops repeated lines, keeping first occurrence order — the binary and

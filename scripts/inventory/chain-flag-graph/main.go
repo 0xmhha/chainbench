@@ -57,9 +57,9 @@ func main() {
 	root, bin := os.Args[1], os.Args[2]
 	g := Graph{Repo: filepath.Base(root), Binary: bin, Groups: map[string][]string{}}
 
-	// cmd/utils holds the shared flag declarations, cmd/<bin> the binary's
-	// command tree and flag groups, and internal/debug the logging/pprof group
-	// that app.Flags merges in but that lives outside cmd/.
+	// In the analysed repo, cmd/utils holds the shared flag declarations,
+	// cmd/<bin> the binary's command tree and flag groups, and internal/debug
+	// the logging/pprof group that app.Flags merges in but lives outside cmd/.
 	dirs := []string{
 		filepath.Join(root, "cmd", "utils"),
 		filepath.Join(root, "cmd", bin),

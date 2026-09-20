@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1",
+  "id": "fault-partition-fork",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc", "process"],
+  "topology": { "bp": 4 },
+  "steps": [
+    {
+      "partition": {
+        "groups": [
+          ["bp1", "bp2"],
+          ["bp3", "bp4"]
+        ]
+      }
+    },
+    { "waitBlock": { "on": "bp1", "target": 5, "timeout": "60s" } }
+  ],
+  "assertions": [
+    {
+      "assert": "sameBlockHash",
+      "onEach": ["bp1", "bp3"],
+      "block": "0x0"
+    }
+  ],
+  "postActions": [{ "healPartition": {} }]
+}

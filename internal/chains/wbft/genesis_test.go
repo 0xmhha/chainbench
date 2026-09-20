@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -25,7 +26,7 @@ func builtFor(t *testing.T, n int) []byte {
 		vals[i] = "0x" + strings.Repeat("0", 39) + string(rune('1'+i%9))
 		keys[i] = "0x" + strings.Repeat("a", 95) + string(rune('1'+i%9))
 	}
-	out, err := plugin{}.Family().BuildGenesis(genesisTmpl, registry.GenesisParams{
+	out, err := wbftfam.New().BuildGenesis(genesisTmpl, registry.GenesisParams{
 		ChainID: 8285, Validators: vals, BLSKeys: keys, Members: vals,
 	})
 	if err != nil {

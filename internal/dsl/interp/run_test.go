@@ -66,7 +66,7 @@ func testEnv(t *testing.T) session.Environment {
 	if err != nil {
 		t.Fatal(err)
 	}
-	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"}}})
+	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"}}})
 	return env
 }
 

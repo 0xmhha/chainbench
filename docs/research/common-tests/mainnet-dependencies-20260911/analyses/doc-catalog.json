@@ -1,0 +1,2516 @@
+[
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 29,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-A-2-01",
+   "TX-006"
+  ],
+  "scripts": [
+   "ethereum/08-legacy-tx.sh",
+   "wemix4/TX/tx-006-legacy-tx.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Legacy Tx (Type 0x0) 전송 및 실행",
+  "purpose": "Legacy 타입 트랜잭션의 서명, 전파, 블록 포함 및 Receipt 처리 검증",
+  "flow": "1. `gasPrice` 필드를 사용하는 Type 0x0 서명 트랜잭션 생성 후 전송.<br>2. 블록 포함 확인 및 Receipt(`eth_getTransactionReceipt`) 조회.",
+  "expected": "- **표준 EVM / WEMIX 3.0**: `receipt.status == 0x1`, `effectiveGasPrice == gasPrice`<br>- **StableNet (Anzeon)**: `receipt.status == 0x1`, `effectiveGasPrice >= baseFee` (비인증 계정의 tip이 헤더 GasTip으로 강제 고정)",
+  "doc_id": "DOC-C-001",
+  "family": "transaction-types",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "Legacy tx. effectiveGasPrice==gasPrice는 표준, StableNet 비인증 계정은 헤더 GasTip 강제라 기대식이 다르다",
+  "configuration_items": [
+   "fee 입력 프로필"
+  ],
+  "implementation_items": [
+   "수수료 기대값을 체인별 FeePolicy oracle로 (CD-A-06)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 30,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-A-2-02",
+   "TX-003"
+  ],
+  "scripts": [
+   "ethereum/09-dynamic-fee-tx.sh",
+   "wemix4/TX/tx-003-dynamic-fee-tx.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Dynamic Fee Tx (Type 0x2, EIP-1559)",
+  "purpose": "EIP-1559 동적 수수료 트랜잭션 정상 실행 및 수수료 산출 검증",
+  "flow": "1. `maxFeePerGas` $\\ge$ `baseFee + maxPriorityFeePerGas` 조건의 Type 0x2 트랜잭션 전송.<br>2. Receipt 검증.",
+  "expected": "- **공통**: `receipt.status == 0x1`<br>- **산출 수수료**: `effectiveGasPrice == baseFee + min(maxPriorityFeePerGas, maxFeePerGas - baseFee)`",
+  "doc_id": "DOC-C-002",
+  "family": "transaction-types",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "Dynamic fee tx. effectiveGasPrice 공식이 StableNet 일반 계정에서 다르다",
+  "configuration_items": [
+   "fee 입력 프로필"
+  ],
+  "implementation_items": [
+   "수수료 기대값을 체인별 FeePolicy oracle로 (CD-A-06)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 31,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-A-2-03",
+   "TX-007"
+  ],
+  "scripts": [
+   "ethereum/10-access-list-tx.sh",
+   "wemix4/TX/tx-007-accesslist-tx.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Access List Tx (Type 0x1, EIP-2930)",
+  "purpose": "Access List가 포함된 트랜잭션의 정상 실행 및 가스 할인 적용 검증",
+  "flow": "1. `accessList` 필드에 접근 대상 주소 및 스토리지 키를 포함하여 전송.<br>2. 실행 결과 확인.",
+  "expected": "- **공통**: Type 0x1 트랜잭션이 성공적으로 블록에 포함 및 실행 (`receipt.status == 0x1`)",
+  "doc_id": "DOC-C-003",
+  "family": "transaction-types",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "Access list tx. 세 클라이언트 모두 type 0x1과 eth_createAccessList 지원",
+  "configuration_items": [
+   "fee 입력 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 32,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-D-01",
+   "TX-004"
+  ],
+  "scripts": [
+   "fee-delegation/01-fee-delegate-normal.sh",
+   "wemix4/TX/tx-004-fee-delegation.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "수수료 대납 Tx (Type 0x16) 정상 처리",
+  "purpose": "Sender와 FeePayer가 분리된 수수료 대납 트랜잭션 처리 검증",
+  "flow": "1. Sender 및 FeePayer 서명이 포함된 Type 0x16 RLP 트랜잭션 전송.<br>2. 계정 잔액 변화 확인.",
+  "expected": "- **Sender**: 잔액 미차감 (전송 금액만 차감)<br>- **FeePayer**: 가스비 차감 및 트랜잭션 정상 실행 (`status == 0x1`)",
+  "doc_id": "DOC-C-004",
+  "family": "fee-delegation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "type 0x16. 세 클라이언트 구현. fee payer 잔액 검사·오류 문자열·fork gate(WBFT Croissant 분기, StableNet Anzeon blacklist)가 다르다",
+  "configuration_items": [
+   "sender/feePayer 계정 프로필",
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fee payer 정책·거부 사유 oracle (CD-A-03)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 33,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-D-03",
+   "TX-014"
+  ],
+  "scripts": [
+   "fee-delegation/02-sender-sig-invalid.sh",
+   "wemix4/TX/tx-014-fd-sender-sig-invalid.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "대납 Tx Sender 서명 변조 거부",
+  "purpose": "Sender 서명이 위조/조작된 대납 트랜잭션의 거부 검증",
+  "flow": "1. Sender 서명 필드(V/R/S)를 임의 조작한 대납 트랜잭션 제출.",
+  "expected": "- **결과**: `eth_sendRawTransaction` 전송 시점에 `invalid sender` / `invalid signature` 에러 응답 반환 및 전송 거부",
+  "doc_id": "DOC-C-005",
+  "family": "fee-delegation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "type 0x16. 세 클라이언트 구현. fee payer 잔액 검사·오류 문자열·fork gate(WBFT Croissant 분기, StableNet Anzeon blacklist)가 다르다",
+  "configuration_items": [
+   "sender/feePayer 계정 프로필",
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fee payer 정책·거부 사유 oracle (CD-A-03)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 34,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-D-04",
+   "TX-015"
+  ],
+  "scripts": [
+   "fee-delegation/03-feepayer-sig-invalid.sh",
+   "wemix4/TX/tx-015-fd-feepayer-sig-invalid.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "대납 Tx FeePayer 서명 변조 거부",
+  "purpose": "FeePayer 서명이 위조/조작된 대납 트랜잭션의 거부 검증",
+  "flow": "1. FeePayer 서명 필드(FV/FR/FS)를 임의 조작한 대납 트랜잭션 제출.",
+  "expected": "- **결과**: `eth_sendRawTransaction` 전송 시점에 `invalid feePayer` / `invalid signature` 에러 응답 반환 및 전송 거부",
+  "doc_id": "DOC-C-006",
+  "family": "fee-delegation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "type 0x16. 세 클라이언트 구현. fee payer 잔액 검사·오류 문자열·fork gate(WBFT Croissant 분기, StableNet Anzeon blacklist)가 다르다",
+  "configuration_items": [
+   "sender/feePayer 계정 프로필",
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fee payer 정책·거부 사유 oracle (CD-A-03)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 35,
+  "section": "1. 트랜잭션 타입 (Transaction Types)",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-D-05",
+   "TX-016"
+  ],
+  "scripts": [
+   "fee-delegation/04-feepayer-insufficient.sh",
+   "wemix4/TX/tx-016-fd-feepayer-insufficient.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "FeePayer 잔액 부족시 실행 실패",
+  "purpose": "FeePayer 계정의 잔액이 가스비보다 부족할 때 거부 처리 검증",
+  "flow": "1. 잔액 0인 계정을 FeePayer로 지정하여 대납 트랜잭션 전송.<br>2. 전송 응답 확인.",
+  "expected": "- **결과**: `eth_sendRawTransaction` 전송 시점에 `insufficient funds` 에러 반환 및 즉시 전송 거부",
+  "doc_id": "DOC-C-007",
+  "family": "fee-delegation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "type 0x16. 세 클라이언트 구현. fee payer 잔액 검사·오류 문자열·fork gate(WBFT Croissant 분기, StableNet Anzeon blacklist)가 다르다",
+  "configuration_items": [
+   "sender/feePayer 계정 프로필",
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fee payer 정책·거부 사유 oracle (CD-A-03)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 43,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [
+   "RT-A-2-04",
+   "TX-010"
+  ],
+  "scripts": [
+   "ethereum/11-nonce-ordering.sh",
+   "wemix4/TX/tx-010-nonce-ordering.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Nonce 순서 보장 (Nonce Ordering)",
+  "purpose": "동일 계정에서 제출된 트랜잭션의 오름차순 순서 포함 검증",
+  "flow": "1. 동일 계정에서 Nonce N+2, N+1, N 역순으로 트랜잭션 전송 (gap 대기).<br>2. Nonce N 주입으로 gap 해소 후 블록 포함 순서 대조.",
+  "expected": "- **공통**: Nonce가 낮은 순서(N, N+1, N+2 오름차순)대로 차례대로 블록에 포함",
+  "doc_id": "DOC-C-008",
+  "family": "nonce-replacement",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "nonce 순서. 표준 txpool 동작",
+  "configuration_items": [
+   "fee 입력 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 44,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [],
+  "scripts": [
+   "ethereum/12-tipcap-underpriced.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "TipCap 미달 (Underpriced) 거부",
+  "purpose": "노드 최소 수용 우선 수수료(Tip) 미달 트랜잭션의 거부 검증",
+  "flow": "1. 최소 팁 수용 임계값 미만인 `maxPriorityFeePerGas` 지정 트랜잭션 전송.<br>2. 거부 메시지 확인.",
+  "expected": "- **표준 EVM / WEMIX 3.0**: 노드 로컬 설정(`pool.gasPrice`) 미만 시 `underpriced` 에러 반환<br>- **StableNet (Anzeon)**: 온체인 헤더 최소 팁(`MinTip`) 미만 시 `underpriced` 에러 반환",
+  "doc_id": "DOC-C-009",
+  "family": "fee-policy",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "underpriced 거부. WEMIX3 pool.gasPrice, WBFT pricelimit/baseFee, StableNet MinTip으로 기준이 다르다",
+  "configuration_items": [
+   "minTip/pricelimit 프로필"
+  ],
+  "implementation_items": [
+   "수수료 기대값을 체인별 FeePolicy oracle로 (CD-A-06)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 45,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [
+   "RT-A-2-06",
+   "TX-011"
+  ],
+  "scripts": [
+   "ethereum/14-insufficient-funds.sh",
+   "wemix4/TX/tx-011-insufficient-funds.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "잔액 부족 (Insufficient Funds) 거부",
+  "purpose": "계정 잔액을 초과하는 전송 요청의 txpool 즉시 거부 검증",
+  "flow": "1. `value + (gasLimit * gasPrice)`가 계정 잔액을 초과하는 트랜잭션 제출.",
+  "expected": "- **공통**: `eth_sendRawTransaction` 전송 시 `insufficient funds for transfer` 에러 반환",
+  "doc_id": "DOC-C-010",
+  "family": "invalid-transaction",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "잔액 부족·gasLimit 초과 거부. 동작은 공통, 오류 문자열은 클라이언트 버전별로 다를 수 있어 문자열 완전일치 대신 거부 여부로 판정",
+  "configuration_items": [],
+  "implementation_items": [
+   "오류 문자열 비교를 거부 여부 판정으로 통일 (CD-A-08)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 46,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [
+   "RT-A-2-07",
+   "TX-012"
+  ],
+  "scripts": [
+   "ethereum/15-gaslimit-exceeded.sh",
+   "wemix4/TX/tx-012-gaslimit-exceeded.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Gas Limit 초과 거부",
+  "purpose": "블록의 가스 한도를 초과하는 트랜잭션의 거부 검증",
+  "flow": "1. `gasLimit`을 현재 블록의 gas limit보다 크게 설정하여 제출.",
+  "expected": "- **공통**: `eth_sendRawTransaction` 전송 시 `exceeds block gas limit` 에러 반환",
+  "doc_id": "DOC-C-011",
+  "family": "invalid-transaction",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "잔액 부족·gasLimit 초과 거부. 동작은 공통, 오류 문자열은 클라이언트 버전별로 다를 수 있어 문자열 완전일치 대신 거부 여부로 판정",
+  "configuration_items": [],
+  "implementation_items": [
+   "오류 문자열 비교를 거부 여부 판정으로 통일 (CD-A-08)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 47,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [
+   "RT-A-2-08"
+  ],
+  "scripts": [
+   "ethereum/16-effective-gas-price.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "Effective GasPrice 노드 간 일관성",
+  "purpose": "BP/EN 노드 간 Receipt 내 `effectiveGasPrice` 일관성 검증 (PR #70 회귀 방지)",
+  "flow": "1. BP 노드에 트랜잭션 전송 후 Receipt 조회.<br>2. EN 노드 동기화 대기 후 EN Receipt 조회.<br>3. 두 Receipt의 `effectiveGasPrice` 비교.",
+  "expected": "- **공통**: BP 및 EN 노드의 Receipt 내 `effectiveGasPrice`가 null이 아님<br>- **일관성**: `bp_egp == en_egp` (노드 간 값 완전 동일)<br>- **하한선**: `effectiveGasPrice >= baseFee`",
+  "doc_id": "DOC-C-012",
+  "family": "fee-observation",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "BP/EN effectiveGasPrice 일치·baseFee 이상",
+  "configuration_items": [
+   "노드 역할(BP/EN) 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 48,
+  "section": "2. 메모리풀 & 트랜잭션 검증 (Mempool & Tx Validation)",
+  "category": "Mempool",
+  "spec_ids": [
+   "RT-A-2-09",
+   "TX-013"
+  ],
+  "scripts": [
+   "ethereum/17-replacement-tx.sh",
+   "wemix4/TX/tx-013-queued-tx-replacement.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Queued/Pending 트랜잭션 교체 (Replacement Tx)",
+  "purpose": "동일 Nonce + 높은 가스비 트랜잭션으로 txpool 교체 검증",
+  "flow": "1. Nonce Gap(미래 Nonce)으로 tx1 전송 (txpool queued 대기).<br>2. 동일 Nonce, 가스비 10%+ 인상하여 tx2 전송 (tx1 교체).<br>3. Nonce gap 채우기 tx 전송으로 queued 해소.<br>4. tx2 블록 포함 및 tx1 드롭(receipt null) 확인.",
+  "expected": "- **공통**: 가스비 10%+ 인상된 tx2만 txpool 교체 후 블록 포함 (`status == 0x1`), 기존 tx1은 receipt null",
+  "doc_id": "DOC-C-013",
+  "family": "nonce-replacement",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "replacement 10%+ 인상. PriceBump는 노드 설정값",
+  "configuration_items": [
+   "priceBump 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 56,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-01",
+   "TX-005"
+  ],
+  "scripts": [
+   "ethereum/19-contract-deploy.sh",
+   "wemix4/TX/tx-005-contract-deploy.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "스마트 컨트랙트 배포",
+  "purpose": "EVM 바이트코드의 성공적 배포 및 주소 생성 검증",
+  "flow": "1. Contract Creation 트랜잭션(`to=null`) 전송.<br>2. Receipt `contractAddress` 추출 후 `eth_getCode` 쿼리.",
+  "expected": "- **결과**: `contractAddress`에 배포된 EVM 바이트코드가 정상 존재",
+  "doc_id": "DOC-C-014",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 57,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-02"
+  ],
+  "scripts": [
+   "ethereum/20-contract-call.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "컨트랙트 상태 변경 함수 호출",
+  "purpose": "State를 변경하는 함수 호출 트랜잭션 전송 및 갱신 검증",
+  "flow": "1. 배포된 컨트랙트의 setter 함수 실행 트랜잭션 전송.<br>2. 블록 확정 후 `eth_call`로 getter 함수 쿼리.",
+  "expected": "- **결과**: 트랜잭션 성공(`status == 0x1`), 변경된 상태값이 온체인에 정상 반영됨",
+  "doc_id": "DOC-C-015",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 58,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-03"
+  ],
+  "scripts": [
+   "ethereum/21-eth-call-view.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_call View/Pure 함수 조회",
+  "purpose": "트랜잭션 전송 없이 `eth_call`을 이용한 View 함수 조회 및 반환값 검증",
+  "flow": "1. `eth_call` JSON-RPC를 이용해 `x()` view 함수 호출 (트랜잭션 미전송).",
+  "expected": "- **결과**: 트랜잭션 생성 및 상태 변경 없이 정확한 32-byte Hex 반환값 수신",
+  "doc_id": "DOC-C-016",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 59,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-04"
+  ],
+  "scripts": [
+   "ethereum/22-estimate-gas.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_estimateGas 가스 추정",
+  "purpose": "트랜잭션 실행 전 필요한 가스 소비량 측정 정확성 검증",
+  "flow": "1. 컨트랙트 호출 데이터로 `eth_estimateGas` RPC 실행.<br>2. 실제 실행 시 사용된 `gasUsed`와 비교.",
+  "expected": "- **결과**: 실제 실행 시 소비되는 가스량 이상의 적정 추정치 반환",
+  "doc_id": "DOC-C-017",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 60,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-05"
+  ],
+  "scripts": [
+   "ethereum/23-eth-call-revert.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_call 실행 중 Revert 메세지 반환",
+  "purpose": "`eth_call` 수행 중 Revert 발생 시 에러 사유 전달 검증",
+  "flow": "1. 조건 미충족 시 `revert(\"Reason\")`을 발생시키는 함수를 `eth_call`로 호출.",
+  "expected": "- **결과**: `execution reverted` 에러 및 디코딩 가능한 Revert Reason 반환",
+  "doc_id": "DOC-C-018",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 61,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-06",
+   "TX-017"
+  ],
+  "scripts": [
+   "ethereum/24-revert-tx.sh",
+   "wemix4/TX/tx-017-contract-revert.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Revert 트랜잭션 (상태 롤백 & 가스 환불)",
+  "purpose": "트랜잭션 실행 중 Revert 시 상태 롤백 및 사용 가스만 차감 검증",
+  "flow": "1. `revert()`를 발생하는 함수 호출 트랜잭션 전송.<br>2. Receipt `status` 및 계정 잔액/상태 확인.",
+  "expected": "- **상태**: `receipt.status == 0x0`<br>- **가스**: 사용 가스만 차감되고 미사용 가스는 환불, 상태 롤백",
+  "doc_id": "DOC-C-019",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 62,
+  "section": "3. 스마트 컨트랙트 (Smart Contracts / EVM Execution)",
+  "category": "Contract",
+  "spec_ids": [
+   "RT-A-3-07",
+   "TX-018"
+  ],
+  "scripts": [
+   "ethereum/25-out-of-gas.sh",
+   "wemix4/TX/tx-018-contract-out-of-gas.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Out-of-Gas 트랜잭션 (가스 Limit 전액 소모)",
+  "purpose": "실행 가스 부족 시 트랜잭션 실패 및 `gasLimit` 전액 소모 검증",
+  "flow": "1. `gasLimit`을 실제 필요 가스보다 적게 지정하여 전송.<br>2. Receipt 검증.",
+  "expected": "- **상태**: `receipt.status == 0x0`<br>- **가스**: `gasUsed == gasLimit` (가스 환불 없음)",
+  "doc_id": "DOC-C-020",
+  "family": "evm-contract",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "배포/호출/eth_call/estimateGas/revert/OOG. fixture bytecode를 세 체인 공통 EVM revision으로 컴파일해야 한다",
+  "configuration_items": [
+   "fixture bytecode·ABI 프로필"
+  ],
+  "implementation_items": [
+   "EVM revision별 fixture 검증 (CD-B-05)",
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 70,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-01",
+   "RPC-001"
+  ],
+  "scripts": [
+   "ethereum/26-eth-block-number.sh",
+   "wemix4/RPC/rpc-001-block-number.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_blockNumber",
+  "purpose": "최신 블록 번호 조회 및 지속적인 증가 검증",
+  "flow": "1. 일정 시간 간격으로 `eth_blockNumber` 연속 호출.",
+  "expected": "- **결과**: 블록 번호가 이전 호출 결과 이상으로 지속 증가(Monotonic Increase)",
+  "doc_id": "DOC-C-021",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 71,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-02",
+   "RPC-012"
+  ],
+  "scripts": [
+   "ethereum/27-eth-get-balance.sh",
+   "wemix4/RPC/rpc-012-get-balance.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getBalance",
+  "purpose": "특정 계정의 Native 코인 잔액 조회 검증",
+  "flow": "1. 알려진 계정에 대해 `eth_getBalance(\"latest\")` 쿼리.",
+  "expected": "- **결과**: Hex Wei 단위의 정확한 수량 반환",
+  "doc_id": "DOC-C-022",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 72,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-03"
+  ],
+  "scripts": [
+   "ethereum/28-send-raw-tx.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_sendRawTransaction",
+  "purpose": "RLP 직렬화된 서명 트랜잭션 전송 및 전파 검증",
+  "flow": "1. 로컬에서 서명한 트랜잭션 RLP 헥사 문자열 전송.",
+  "expected": "- **결과**: 트랜잭션 해시 반환, 마이닝 전 `txpool`에서 조회 가능",
+  "doc_id": "DOC-C-023",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "eth_sendRawTransaction + txpool 조회",
+  "configuration_items": [
+   "txpool namespace 노출"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 73,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-04",
+   "RPC-014"
+  ],
+  "scripts": [
+   "ethereum/29-eth-get-logs.sh",
+   "wemix4/RPC/rpc-014-get-logs.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getLogs",
+  "purpose": "조건별 이벤트 로그(Event Log) 조회 검증",
+  "flow": "1. 이벤트를 뿜는 컨트랙트 실행 후 `eth_getLogs` 쿼리 (`fromBlock`, `toBlock`, `address`, `topics`).",
+  "expected": "- **결과**: 조건에 부합하는 Log 객체 배열 반환",
+  "doc_id": "DOC-C-024",
+  "family": "logs-subscription",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "eth_getLogs",
+  "configuration_items": [],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 74,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-05",
+   "RPC-013"
+  ],
+  "scripts": [
+   "ethereum/30-eth-chain-id.sh",
+   "wemix4/RPC/rpc-013-chain-id.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_chainId",
+  "purpose": "EIP-155 체인 ID 조회 검증",
+  "flow": "1. `eth_chainId` RPC 호출.",
+  "expected": "- **결과**: Genesis에 설정된 Hex Chain ID 반환",
+  "doc_id": "DOC-C-025",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 75,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-06",
+   "RPC-020"
+  ],
+  "scripts": [
+   "ethereum/31-ws-subscribe-heads.sh",
+   "wemix4/RPC/rpc-020-subscribe-heads.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "WebSocket eth_subscribe(\"newHeads\")",
+  "purpose": "WebSocket 기반 블록 생성 실시간 구독 검증",
+  "flow": "1. WS 연결 후 `eth_subscribe(\"newHeads\")` 요청.<br>2. 블록 생성 시 수신 프레임 모니터링.",
+  "expected": "- **결과**: 새 블록 마이닝 시마다 real-time 헤더 이벤트 데이터 수신",
+  "doc_id": "DOC-C-026",
+  "family": "logs-subscription",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "WS 구독. 세 클라이언트 filters API 구현",
+  "configuration_items": [
+   "WS endpoint 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 76,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (Ethereum)",
+  "spec_ids": [
+   "RT-A-4-07",
+   "RPC-021"
+  ],
+  "scripts": [
+   "ethereum/32-ws-subscribe-logs.sh",
+   "wemix4/RPC/rpc-021-subscribe-logs.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "WebSocket eth_subscribe(\"logs\")",
+  "purpose": "WebSocket 기반 이벤트 로그 실시간 구독 검증",
+  "flow": "1. WS 연결 후 특정 주소/토픽 로그 구독.<br>2. 해당 이벤트 발생 트랜잭션 전송.",
+  "expected": "- **결과**: 조건 부합 이벤트 발생 즉시 real-time 로그 프레임 수신",
+  "doc_id": "DOC-C-027",
+  "family": "logs-subscription",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "WS 구독. 세 클라이언트 filters API 구현",
+  "configuration_items": [
+   "WS endpoint 프로필"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 77,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-1-01",
+   "RPC-002"
+  ],
+  "scripts": [
+   "api/01-get-block-by-number.sh",
+   "wemix4/RPC/rpc-002-get-block.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getBlockByNumber",
+  "purpose": "블록 번호 기준 블록 객체 상세 조회 검증",
+  "flow": "1. `eth_getBlockByNumber(\"latest\", true)` 호출.",
+  "expected": "- **결과**: 블록 번호, 해시, Parent Hash(`parentHash`) 및 트랜잭션 목록을 포함한 Block 객체 반환",
+  "doc_id": "DOC-C-028",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 78,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-1-02",
+   "RPC-002"
+  ],
+  "scripts": [
+   "api/02-get-block-by-hash.sh",
+   "wemix4/RPC/rpc-002-get-block.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getBlockByHash",
+  "purpose": "블록 해시 기준 블록 객체 상세 조회 검증",
+  "flow": "1. `eth_getBlockByNumber`로 구한 해시로 `eth_getBlockByHash` 호출.",
+  "expected": "- **결과**: `eth_getBlockByNumber`와 완전히 동일한 Block 객체 반환",
+  "doc_id": "DOC-C-029",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 79,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-1-03"
+  ],
+  "scripts": [
+   "api/03-get-tx-by-hash.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getTransactionByHash",
+  "purpose": "트랜잭션 해시 기준 트랜잭션 상세 조회 검증",
+  "flow": "1. 마이닝된 트랜잭션 해시로 `eth_getTransactionByHash` 쿼리.",
+  "expected": "- **결과**: Transaction 객체(`from`, `to`, `value`, `nonce`, `input` 등) 반환",
+  "doc_id": "DOC-C-030",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 80,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-1-04",
+   "RPC-007"
+  ],
+  "scripts": [
+   "api/04-get-tx-receipt.sh",
+   "wemix4/RPC/rpc-007-receipt.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getTransactionReceipt",
+  "purpose": "트랜잭션 Receipt 조회 검증",
+  "flow": "1. 마이닝된 트랜잭션 해시로 `eth_getTransactionReceipt` 쿼리.",
+  "expected": "- **결과**: `status`, `blockNumber`, `gasUsed`, `effectiveGasPrice`, `logs` 수록 Receipt 반환",
+  "doc_id": "DOC-C-031",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 81,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-1-05",
+   "RPC-015"
+  ],
+  "scripts": [
+   "api/05-get-tx-count.sh",
+   "wemix4/RPC/rpc-015-tx-count.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_getTransactionCount",
+  "purpose": "계정의 현재 Nonce (트랜잭션 수) 조회 검증",
+  "flow": "1. 트랜잭션 전송 계정에 대해 `eth_getTransactionCount` 쿼리.",
+  "expected": "- **결과**: 해당 계정이 전송하여 온체인에 포함된 총 트랜잭션 수와 일치하는 Nonce 반환",
+  "doc_id": "DOC-C-032",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 82,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-2-01",
+   "RPC-016"
+  ],
+  "scripts": [
+   "api/07-gas-price.sh",
+   "wemix4/RPC/rpc-016-gas-price.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_gasPrice",
+  "purpose": "기준 가스 가격 조회 검증",
+  "flow": "1. `eth_gasPrice` RPC 호출.",
+  "expected": "- **표준 EVM**: Oracle 알고리즘 기반 권장 가스 가격 반환<br>- **StableNet (WBFT/Anzeon)**: `gasPrice == baseFee + WBFTExtra.GasTip` (블록 헤더 GasTip 고정 공식 일치)",
+  "doc_id": "DOC-C-033",
+  "family": "fee-observation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "eth_gasPrice / eth_maxPriorityFeePerGas. StableNet은 헤더 GasTip 고정식, 나머지는 oracle 추정",
+  "configuration_items": [],
+  "implementation_items": [
+   "수수료 기대값을 체인별 FeePolicy oracle로 (CD-A-06)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 83,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-2-02"
+  ],
+  "scripts": [
+   "api/08-max-priority-fee.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "eth_maxPriorityFeePerGas",
+  "purpose": "우선 수수료(Tip) 조회 검증",
+  "flow": "1. `eth_maxPriorityFeePerGas` RPC 호출.",
+  "expected": "- **표준 EVM**: 권장 우선 수수료(Tip) 반환<br>- **StableNet (Anzeon)**: `maxPriorityFeePerGas == WBFTExtra.GasTip` (추정값이 아닌 헤더 GasTip 값과 정확히 일치)",
+  "doc_id": "DOC-C-034",
+  "family": "fee-observation",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "eth_gasPrice / eth_maxPriorityFeePerGas. StableNet은 헤더 GasTip 고정식, 나머지는 oracle 추정",
+  "configuration_items": [],
+  "implementation_items": [
+   "수수료 기대값을 체인별 FeePolicy oracle로 (CD-A-06)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 84,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-2-03",
+   "RPC-017"
+  ],
+  "scripts": [
+   "api/09-fee-history.sh",
+   "wemix4/RPC/rpc-017-fee-history.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "eth_feeHistory",
+  "purpose": "최근 N개 블록 수수료 이력 조회 검증",
+  "flow": "1. `eth_feeHistory(N, \"latest\", [10, 50])` 호출.",
+  "expected": "- **결과**: `baseFeePerGas` 배열, 가스 사용 비율 및 백분위 Tip 배열 반환",
+  "doc_id": "DOC-C-035",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "표준 eth_* 조회",
+  "configuration_items": [
+   "expectedChainId·알려진 계정 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 85,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-4-02",
+   "RPC-018"
+  ],
+  "scripts": [
+   "api/18-txpool-status.sh",
+   "wemix4/RPC/rpc-018-txpool-status.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "txpool_status",
+  "purpose": "메모리풀 트랜잭션 수량 조회 검증",
+  "flow": "1. pending 및 queued 트랜잭션을 txpool에 주입 후 쿼리.",
+  "expected": "- **결과**: `pending` 및 `queued` 정수 건수 반환",
+  "doc_id": "DOC-C-036",
+  "family": "txpool",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "txpool_status/content",
+  "configuration_items": [
+   "txpool namespace 노출"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 86,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-4-03"
+  ],
+  "scripts": [
+   "api/19-txpool-content.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "txpool_content",
+  "purpose": "메모리풀 상세 트랜잭션 목록 조회 검증",
+  "flow": "1. txpool 트랜잭션 주입 후 `txpool_content` 쿼리.",
+  "expected": "- **결과**: 계정별 pending/queued 트랜잭션 상세 객체 트리 반환",
+  "doc_id": "DOC-C-037",
+  "family": "txpool",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "txpool_status/content",
+  "configuration_items": [
+   "txpool namespace 노출"
+  ],
+  "implementation_items": [
+   "로컬 서명 sender로 raw tx 전송 (H-05)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 87,
+  "section": "4. 표준 JSON-RPC API (Standard JSON-RPC APIs)",
+  "category": "RPC (API)",
+  "spec_ids": [
+   "RT-G-5-01"
+  ],
+  "scripts": [
+   "api/21-sign-raw-fee-delegate.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "FeePayer 서명 RPC 헬스체크 (eth_signRawFeeDelegateTransaction)",
+  "purpose": "`eth_signRawFeeDelegateTransaction` RPC 엔드포인트 존재 여부 검증 (Smoke Test)",
+  "flow": "1. 의도적으로 잘못된 파라미터로 `eth_signRawFeeDelegateTransaction` 호출.",
+  "expected": "- **결과**: 응답 에러 메시지가 `method not found` 계열이 아님을 확인 (= RPC 엔드포인트 존재 확인)",
+  "doc_id": "DOC-C-038",
+  "family": "fee-delegation",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "eth_signRawFeeDelegateTransaction 존재. 세 클라이언트 internal/ethapi에 구현",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 95,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-01"
+  ],
+  "scripts": [
+   "ethereum/01-genesis-init.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "제네시스 초기화 (Genesis Initialization)",
+  "purpose": "제네시스 파일로 노드 DB 초기화 및 0번 블록 해시 검증",
+  "flow": "1. `genesis.json` 설정 기반 노드 데이터 디렉터리 초기화.<br>2. 노드 기동 후 블록 0 해시 및 `eth_chainId` 조회.",
+  "expected": "- **결과**: 블록 0 해시가 설정과 일치하며 `chainId` 정상 인식",
+  "doc_id": "DOC-C-039",
+  "family": "sync-lifecycle",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "genesis 초기화·block 0 해시. WEMIX3 genesis는 바이너리가 governance 설정에서 생성, WBFT/StableNet은 template",
+  "configuration_items": [
+   "genesis 원본·expectedGenesisHash 프로필"
+  ],
+  "implementation_items": [
+   "family별 genesis 생성 경로 (H-04)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 96,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-02",
+   "NODE-003"
+  ],
+  "scripts": [
+   "ethereum/02-full-sync.sh",
+   "wemix4/NODE/node-003-full-sync.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Full Sync 동기화",
+  "purpose": "블록 헤더와 모든 트랜잭션을 실행하며 동기화 검증",
+  "flow": "1. `--syncmode full`로 동기화 노드 기동.<br>2. 동기화 제공 노드의 높이가 2 이상 높은 상태에서 추격 동기화 관찰.",
+  "expected": "- **결과**: 동기화 노드의 헤드 블록 번호 및 `stateRoot`가 제공 노드와 완전히 일치",
+  "doc_id": "DOC-C-040",
+  "family": "sync-lifecycle",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "full/snap sync. 세 클라이언트 모두 downloader에 SnapSync가 있으나 기본 syncmode가 다르다(go-wemix snap, go-wbft/go-stablenet full). WBFT 계열 snap sync 가능 여부는 실행 확인 필요",
+  "configuration_items": [
+   "syncmode launch 프로필"
+  ],
+  "implementation_items": [
+   "동기화 노드 추가·진행 관측 구현 (H-04)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 97,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-03",
+   "NODE-004"
+  ],
+  "scripts": [
+   "ethereum/03-snap-sync.sh",
+   "wemix4/NODE/node-004-snap-sync.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "Snap Sync 동기화",
+  "purpose": "State 피벗 기반의 고속 스냅샷 동기화 검증",
+  "flow": "1. `--syncmode snap` 설정 후 대량 블록이 생성된 체인에서 동기화 진행.<br>2. 동기화 완료 후 잔액 조회.",
+  "expected": "- **결과**: state 동기화 완료 후 `eth_getBalance` 정상 조회 및 `stateRoot` 일치",
+  "doc_id": "DOC-C-041",
+  "family": "sync-lifecycle",
+  "common_scope": "three-chain",
+  "separation": "config+oracle",
+  "reason": "full/snap sync. 세 클라이언트 모두 downloader에 SnapSync가 있으나 기본 syncmode가 다르다(go-wemix snap, go-wbft/go-stablenet full). WBFT 계열 snap sync 가능 여부는 실행 확인 필요",
+  "configuration_items": [
+   "syncmode launch 프로필"
+  ],
+  "implementation_items": [
+   "동기화 노드 추가·진행 관측 구현 (H-04)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 98,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-04",
+   "NODE-005"
+  ],
+  "scripts": [
+   "ethereum/04-node-restart.sh",
+   "wemix4/NODE/node-005-node-restart.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "노드 재기동 후 동기화 유지",
+  "purpose": "노드 프로세스 재시작 시 체인 DB 보존 및 생성 재개 검증",
+  "flow": "1. 정상 운영 중인 노드 프로세스를 종료(`kill`).<br>2. 재기동 후 블록 생성을 모니터링.",
+  "expected": "- **결과**: DB 손상 없이 노드가 정상 재기동되고 블록 동기화/생성 재개",
+  "doc_id": "DOC-C-042",
+  "family": "fault-topology",
+  "common_scope": "three-chain",
+  "separation": "adapter",
+  "reason": "노드 재기동",
+  "configuration_items": [],
+  "implementation_items": [
+   "프로세스 제어 (H-07)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 99,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "P2P",
+  "spec_ids": [
+   "RT-A-1-05"
+  ],
+  "scripts": [
+   "ethereum/05-p2p-peers.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "P2P Bootnode 피어 연결",
+  "purpose": "`--bootnodes` 설정을 통한 P2P 메시 네트워크 구성 검증",
+  "flow": "1. Bootnode ENode 주소를 지정하여 노드 기동.<br>2. `net_peerCount` 및 `admin_peers` 쿼리.",
+  "expected": "- **결과**: `net_peerCount` $\\ge 1$, `admin_peers`에 피어 연결 정보 반환",
+  "doc_id": "DOC-C-043",
+  "family": "rpc-basics",
+  "common_scope": "three-chain",
+  "separation": "config-only",
+  "reason": "bootnodes/peers",
+  "configuration_items": [
+   "bootnode·정적 peer 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 100,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-06"
+  ],
+  "scripts": [
+   "ethereum/06-downloader-path.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "Block Downloader 경로 동기화",
+  "purpose": "큰 블록 Gap($\\ge 10$) 발생 시 Downloader 수집 검증",
+  "flow": "1. 제공 노드와 요청 노드 간 높이 차이를 10 이상 발생시킴.<br>2. Downloader 헤더/바디 큐 수집 추적.",
+  "expected": "- **결과**: Downloader가 누락 블록을 순서대로 수집하여 체인에 정상 반영",
+  "doc_id": "DOC-C-044",
+  "family": "sync-lifecycle",
+  "common_scope": "three-chain",
+  "separation": "adapter",
+  "reason": "downloader/fetcher 경로. 경로 증명에는 노드 로그·metrics 관측이 필요",
+  "configuration_items": [],
+  "implementation_items": [
+   "경로 관측기 구현 (readNodeLog/metric) (H-08)"
+  ]
+ },
+ {
+  "doc": "common",
+  "source_file": "sources/common_test_scenarios.md",
+  "source_line": 101,
+  "section": "5. 노드 동기화 & P2P 네트워크 (Node Sync & P2P)",
+  "category": "Sync",
+  "spec_ids": [
+   "RT-A-1-07"
+  ],
+  "scripts": [
+   "ethereum/07-block-fetcher-path.sh"
+  ],
+  "chains_named": [
+   "StableNet"
+  ],
+  "no_script_notes": [],
+  "title": "Block Fetcher 경로 동기화",
+  "purpose": "P2P 전파(`NewBlock`/`NewBlockHashes`)를 통한 실시간 수집 검증",
+  "flow": "1. 실시간 블록 생성 중인 네트워크에 요청 노드 참가.<br>2. P2P 브로드캐스트 수신 관찰.",
+  "expected": "- **결과**: Block Fetcher가 브로드캐스트 블록을 수신 즉시 체인 탑재",
+  "doc_id": "DOC-C-045",
+  "family": "sync-lifecycle",
+  "common_scope": "three-chain",
+  "separation": "adapter",
+  "reason": "downloader/fetcher 경로. 경로 증명에는 노드 로그·metrics 관측이 필요",
+  "configuration_items": [],
+  "implementation_items": [
+   "경로 관측기 구현 (readNodeLog/metric) (H-08)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 42,
+  "section": "그룹 A — WEMIX3.0 + WEMIX4.0 공통",
+  "category": "RPC",
+  "spec_ids": [
+   "RPC-008"
+  ],
+  "scripts": [
+   "wemix4/RPC/rpc-008-brioche-reward.sh"
+  ],
+  "chains_named": [
+   "WEMIX3.0",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX3.0",
+    "전용 스크립트 없음 / `go-wemix` 코드 지원 확인"
+   ]
+  ],
+  "title": "wemix_getBriocheBlockReward 하위 호환성",
+  "purpose": "Brioche 하드포크 블록 보상 산출 및 halving 스케줄 조회 검증",
+  "flow": "1. `wemix_getBriocheBlockReward` 호출.<br>2. 블록 높이 기준 보상·halving 결과 확인.",
+  "expected": "- **공통(WEMIX3.0 / WEMIX4)**: Brioche 규칙에 따른 블록 보상 값 반환<br>- **StableNet**: 미지원 (RPC 부재)",
+  "doc_id": "DOC-D-001",
+  "family": "reward",
+  "common_scope": "two-chain:wemix+wbft",
+  "separation": "config+oracle",
+  "reason": "wemix_getBriocheBlockReward. go-wemix eth/api.go, go-wbft eth/api_wemix.go 구현. StableNet 없음",
+  "configuration_items": [
+   "brioche fork 프로필"
+  ],
+  "implementation_items": [
+   "보상 기대값 oracle (CD-B-06)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 52,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-01",
+   "WBFT-002"
+  ],
+  "scripts": [
+   "wbft/01-block-period.sh",
+   "wemix4/WBFT/wbft-002-block-period.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "블록 생산 주기 1초",
+  "purpose": "WBFT 합의의 고정 블록 주기(1초) 준수 검증",
+  "flow": "1. 연속 블록의 timestamp 차이 측정.<br>2. 블록 주기가 1초로 유지되는지 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 연속 블록 간 timestamp 차 == 1초",
+  "doc_id": "DOC-D-002",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "블록 주기 1초. blockPeriod 프로필로 두면 WEMIX3에도 확장 가능",
+  "configuration_items": [
+   "blockPeriod 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 53,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-02",
+   "WBFT-001"
+  ],
+  "scripts": [
+   "wbft/02-wbft-extra-seal.sh",
+   "wemix4/WBFT/wbft-001-finalize.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "블록 Finalize 및 CommittedSeal 존재",
+  "purpose": "정상 블록 생성·확정 시 WBFTExtra에 CommittedSeal(BLS 서명)이 quorum 이상 존재하는지 검증",
+  "flow": "1. 연속 블록 생성 대기.<br>2. 블록별 WBFTExtra의 CommittedSeal(및 PreparedSeal) 존재·수량 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 각 블록의 CommittedSeal이 quorum 이상 존재, Finalize 정상 동작",
+  "doc_id": "DOC-D-003",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "WBFTExtra seal/epoch/prevSeal/randao",
+  "configuration_items": [
+   "epoch·topology 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 54,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-03",
+   "WBFT-005"
+  ],
+  "scripts": [
+   "wbft/03-epoch-transition.sh",
+   "wemix4/WBFT/wbft-005-epoch-transition.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "에폭 전환 시 검증자 집합 갱신",
+  "purpose": "에폭 경계에서 밸리데이터 세트가 재구성되는지 검증",
+  "flow": "1. 에폭 마지막 블록 도달.<br>2. 다음 에폭의 밸리데이터 집합 갱신 확인.",
+  "expected": "- **공통**: 에폭 전환 블록에서 밸리데이터 세트 갱신, WBFTExtra에 EpochInfo 포함",
+  "doc_id": "DOC-D-004",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "WBFTExtra seal/epoch/prevSeal/randao",
+  "configuration_items": [
+   "epoch·topology 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 55,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-06"
+  ],
+  "scripts": [
+   "wbft/06-gastip-header-sync.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX4",
+    "전용 스크립트 없음 / `go-wbft` 코드 지원 확인"
+   ]
+  ],
+  "title": "블록 헤더 WBFTExtra 필드 반영",
+  "purpose": "거버넌스 변경값이 블록 헤더 WBFTExtra에 반영되는지 검증 (StableNet은 GasTip 필드)",
+  "flow": "1. 헤더 WBFTExtra 필드 조회.<br>2. 블록 간 값 반영·동기화 확인.",
+  "expected": "- **StableNet**: GasTip 거버넌스 변경 → WBFTExtra.GasTip 반영<br>- **WEMIX4**: WBFTExtra 필드 반영 (GasTip 필드는 부재)",
+  "doc_id": "DOC-D-005",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "WBFTExtra 필드 반영. GasTip 필드는 StableNet 전용이므로 WEMIX4는 다른 필드로 판정",
+  "configuration_items": [],
+  "implementation_items": [
+   "체인별 헤더 필드 oracle (CD-B-03)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 56,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-09",
+   "WBFT-003"
+  ],
+  "scripts": [
+   "wbft/09-round-change.sh",
+   "wemix4/WBFT/wbft-003-view-change.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "View Change / 라운드 체인지",
+  "purpose": "제안자 노드 중단 시 라운드 체인지 발생 검증",
+  "flow": "1. 현재 라운드 제안자 노드 중단.<br>2. 라운드 체인지 후 새 제안자가 블록 생성 확인.",
+  "expected": "- **공통**: 라운드 체인지 후 새 제안자가 블록 정상 생성",
+  "doc_id": "DOC-D-006",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "round change·proposer 순환. 제안자 정지에 프로세스 제어 필요",
+  "configuration_items": [],
+  "implementation_items": [
+   "프로세스 제어 (H-07)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 57,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-10",
+   "WBFT-003"
+  ],
+  "scripts": [
+   "wbft/10-post-round-change.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX4",
+    "전용 스크립트 없음 / `WBFT-003` 후속 검증에 포함"
+   ]
+  ],
+  "title": "라운드 체인지 후 블록 연결",
+  "purpose": "라운드 체인지 이후 생성된 블록의 체인 연속성 검증",
+  "flow": "1. 라운드 체인지 발생 후 신규 블록 생성.<br>2. parentHash 체인 정상 연결 확인.",
+  "expected": "- **공통**: 라운드 체인지 후 블록의 parentHash가 직전 블록과 정상 연결",
+  "doc_id": "DOC-D-007",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "round change·proposer 순환. 제안자 정지에 프로세스 제어 필요",
+  "configuration_items": [],
+  "implementation_items": [
+   "프로세스 제어 (H-07)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 58,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-06",
+   "WBFT-006"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-006-roundrobin-proposer.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "RoundRobin Proposer 정책",
+  "purpose": "제안자가 RoundRobin 정책에 따라 균등 순환하는지 검증",
+  "flow": "1. 연속 블록의 miner(Proposer) 주소 수집.<br>2. Proposer 다양성·균등 분배 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 제안자가 밸리데이터 집합을 RoundRobin으로 균등 순환 (StableNet도 `go-stablenet` RoundRobin 정책 지원)",
+  "doc_id": "DOC-D-008",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "round change·proposer 순환. 제안자 정지에 프로세스 제어 필요",
+  "configuration_items": [],
+  "implementation_items": [
+   "프로세스 제어 (H-07)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 59,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-11",
+   "WBFT-009"
+  ],
+  "scripts": [
+   "wbft/11-prev-committed-seal.sh",
+   "wemix4/WBFT/wbft-009-prev-seal.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "PrevCommittedSeal 수집",
+  "purpose": "블록 N+1의 PrevCommittedSeal이 블록 N의 committer를 포함하는지 검증",
+  "flow": "1. 블록 N의 committer 집합 수집.<br>2. 블록 N+1의 WBFTExtra.PrevCommittedSeal 확인.",
+  "expected": "- **공통**: 블록 N+1의 PrevCommittedSeal이 블록 N committer를 quorum 이상 포함",
+  "doc_id": "DOC-D-009",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "WBFTExtra seal/epoch/prevSeal/randao",
+  "configuration_items": [
+   "epoch·topology 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 60,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-12",
+   "WBFT-009"
+  ],
+  "scripts": [
+   "wbft/12-prev-prepared-seal.sh",
+   "wemix4/WBFT/wbft-009-prev-seal.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "PrevPreparedSeal 수집",
+  "purpose": "블록 N+1의 PrevPreparedSeal이 블록 N의 prepare 서명자를 포함하는지 검증",
+  "flow": "1. 블록 N의 prepare 서명자 집합 수집.<br>2. 블록 N+1의 WBFTExtra.PrevPreparedSeal 확인.",
+  "expected": "- **공통**: 블록 N+1의 PrevPreparedSeal이 블록 N prepare 서명자를 포함",
+  "doc_id": "DOC-D-010",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "WBFTExtra seal/epoch/prevSeal/randao",
+  "configuration_items": [
+   "epoch·topology 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 61,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-010"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-010-randao-mixdigest.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / `go-stablenet` RandaoMix 지원 확인"
+   ]
+  ],
+  "title": "RandaoReveal / MixDigest",
+  "purpose": "블록 헤더의 RandaoReveal 및 MixDigest 생성·검증",
+  "flow": "1. 연속 블록의 RandaoReveal·MixDigest(mixHash) 조회.<br>2. 필드 존재·검증.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 각 블록에 RandaoReveal·MixDigest 존재 (StableNet도 `go-stablenet` CalculateRandaoMix 지원)",
+  "doc_id": "DOC-D-011",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "WBFTExtra seal/epoch/prevSeal/randao",
+  "configuration_items": [
+   "epoch·topology 프로필"
+  ],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 62,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "RT-B-08"
+  ],
+  "scripts": [
+   "wbft/08-quorum-deficient.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX4",
+    "해당 없음 — StableNet 전용 관점"
+   ]
+  ],
+  "title": "쿼럼 미달 블록 수락 거부",
+  "purpose": "서명이 쿼럼에 미달하는 블록을 노드가 거부하는지 검증",
+  "flow": "1. 쿼럼 미달 서명 블록 유도.<br>2. 블록 수락 여부 확인.",
+  "expected": "- **StableNet**: 쿼럼 미달 블록 수락 거부",
+  "doc_id": "DOC-D-012",
+  "family": "consensus-wbft",
+  "common_scope": "stablenet-only",
+  "separation": "not-common",
+  "reason": "쿼럼 미달 블록 유도는 문서상 StableNet 전용 관점",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 63,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-007"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-007-fault-under-third.sh"
+  ],
+  "chains_named": [
+   "WEMIX4",
+   "StableNet"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / WBFT 쿼럼 로직 동일"
+   ]
+  ],
+  "title": "1/3 미만 장애 시 합의 지속",
+  "purpose": "밸리데이터 1/3 미만 장애 시에도 쿼럼 충족으로 합의가 지속되는지 검증",
+  "flow": "1. 밸리데이터 1개 종료(6/7 운영, 쿼럼 5 충족).<br>2. 합의 지속 및 재기동 후 동기화 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 쿼럼 충족 시 합의 지속, 재기동 노드 동기화",
+  "doc_id": "DOC-D-013",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "검증자 장애 수별 합의 지속/중단. 프로세스 제어·quorum 계산",
+  "configuration_items": [
+   "validator 수 프로필"
+  ],
+  "implementation_items": [
+   "프로세스 제어 (H-07)",
+   "quorum oracle (CD-B-01)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 64,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-008"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-008-fault-over-third.sh"
+  ],
+  "chains_named": [
+   "WEMIX4",
+   "StableNet"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / WBFT 쿼럼 로직 동일"
+   ]
+  ],
+  "title": "1/3 이상 장애 시 합의 중단",
+  "purpose": "밸리데이터 1/3 이상 장애 시 쿼럼 미달로 합의가 중단되는지 검증",
+  "flow": "1. 밸리데이터 3개 종료(4/7 운영, 쿼럼 5 미달).<br>2. 합의 중단 확인 후 재기동 시 합의 재개.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 쿼럼 미달 시 합의 중단, 재기동 후 재개",
+  "doc_id": "DOC-D-014",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "검증자 장애 수별 합의 지속/중단. 프로세스 제어·quorum 계산",
+  "configuration_items": [
+   "validator 수 프로필"
+  ],
+  "implementation_items": [
+   "프로세스 제어 (H-07)",
+   "quorum oracle (CD-B-01)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 65,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-011"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-011-quorum-3-validators.sh"
+  ],
+  "chains_named": [
+   "WEMIX4",
+   "StableNet"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / WBFT 쿼럼 로직 동일"
+   ]
+  ],
+  "title": "쿼럼 계산 — validator 3개 (전원 필요)",
+  "purpose": "밸리데이터 3개 구성에서 쿼럼(3, 전원)이 요구되는지 검증",
+  "flow": "1. validator 3개 구성.<br>2. 1개 종료 시 쿼럼 미달 → 합의 중단, 재기동 후 재개 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: validator 3개는 전원 필요, 1개 장애 시 합의 중단",
+  "doc_id": "DOC-D-015",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "검증자 장애 수별 합의 지속/중단. 프로세스 제어·quorum 계산",
+  "configuration_items": [
+   "validator 수 프로필"
+  ],
+  "implementation_items": [
+   "프로세스 제어 (H-07)",
+   "quorum oracle (CD-B-01)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 66,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-012"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-012-quorum-6-val-1-fault.sh"
+  ],
+  "chains_named": [
+   "WEMIX4",
+   "StableNet"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / WBFT 쿼럼 로직 동일"
+   ]
+  ],
+  "title": "쿼럼 계산 — validator 6개, 1개 장애",
+  "purpose": "밸리데이터 6개 구성에서 1개 장애 시 쿼럼(5) 충족으로 합의 지속 검증",
+  "flow": "1. validator 6개 구성.<br>2. 1개 종료(5/6 운영) 시 CommitSigners == 5 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 6개 중 1개 장애 시 쿼럼 5 충족, 합의 지속",
+  "doc_id": "DOC-D-016",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "검증자 장애 수별 합의 지속/중단. 프로세스 제어·quorum 계산",
+  "configuration_items": [
+   "validator 수 프로필"
+  ],
+  "implementation_items": [
+   "프로세스 제어 (H-07)",
+   "quorum oracle (CD-B-01)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 67,
+  "section": "B-1. WBFT 합의 (Consensus)",
+  "category": "WBFT",
+  "spec_ids": [
+   "WBFT-013"
+  ],
+  "scripts": [
+   "wemix4/WBFT/wbft-013-quorum-6-val-2-fault.sh"
+  ],
+  "chains_named": [
+   "WEMIX4",
+   "StableNet"
+  ],
+  "no_script_notes": [
+   [
+    "StableNet",
+    "전용 스크립트 없음 / WBFT 쿼럼 로직 동일"
+   ]
+  ],
+  "title": "쿼럼 계산 — validator 6개, 2개 장애",
+  "purpose": "밸리데이터 6개 구성에서 2개 장애 시 쿼럼(5) 미달로 합의 중단 검증",
+  "flow": "1. validator 6개 구성.<br>2. 2개 종료(4/6 운영, 쿼럼 5 미달) 시 합의 중단 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 6개 중 2개 장애 시 쿼럼 미달, 합의 중단",
+  "doc_id": "DOC-D-017",
+  "family": "consensus-wbft",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "adapter",
+  "reason": "검증자 장애 수별 합의 지속/중단. 프로세스 제어·quorum 계산",
+  "configuration_items": [
+   "validator 수 프로필"
+  ],
+  "implementation_items": [
+   "프로세스 제어 (H-07)",
+   "quorum oracle (CD-B-01)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 73,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-01",
+   "RPC-010"
+  ],
+  "scripts": [
+   "api/11-node-address.sh",
+   "wemix4/RPC/rpc-010-node-address.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_nodeAddress",
+  "purpose": "노드 자신의 서명 주소 조회 검증",
+  "flow": "1. `istanbul_nodeAddress` 호출.<br>2. 반환 주소가 노드 서명 주소와 일치하는지 확인.",
+  "expected": "- **공통**: 노드의 밸리데이터 서명 주소 반환",
+  "doc_id": "DOC-D-018",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 74,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-02",
+   "RPC-003"
+  ],
+  "scripts": [
+   "api/12-get-validators.sh",
+   "wemix4/RPC/rpc-003-get-validators.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_getValidators",
+  "purpose": "특정 블록 기준 밸리데이터 집합 조회 검증",
+  "flow": "1. `istanbul_getValidators` 호출.<br>2. 반환된 밸리데이터 목록 확인.",
+  "expected": "- **공통**: 해당 블록 시점의 밸리데이터 주소 배열 반환",
+  "doc_id": "DOC-D-019",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 75,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-03",
+   "RPC-004"
+  ],
+  "scripts": [
+   "api/13-get-commit-signers.sh",
+   "wemix4/RPC/rpc-004-commit-signers.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_getCommitSignersFromBlock",
+  "purpose": "블록의 커밋 서명자 목록 조회 검증",
+  "flow": "1. `istanbul_getCommitSignersFromBlock` 호출.<br>2. 서명자 목록이 밸리데이터 부분집합인지 확인.",
+  "expected": "- **공통**: 블록의 CommittedSeal 서명자 주소 목록 반환 (quorum 이상)",
+  "doc_id": "DOC-D-020",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 76,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-04",
+   "RPC-005"
+  ],
+  "scripts": [
+   "api/14-get-wbft-extra.sh",
+   "wemix4/RPC/rpc-005-wbft-extra-normal.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_getWbftExtraInfo",
+  "purpose": "블록 헤더 WBFTExtra 구조 조회 검증",
+  "flow": "1. `istanbul_getWbftExtraInfo` 호출.<br>2. RandaoReveal·PrevSeal·CommittedSeal 필드 확인.",
+  "expected": "- **공통**: 일반 블록은 EpochInfo null, WBFTExtra 필드 정상 반환",
+  "doc_id": "DOC-D-021",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 77,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-05",
+   "RPC-006"
+  ],
+  "scripts": [
+   "api/15-istanbul-status.sh",
+   "wemix4/RPC/rpc-006-istanbul-status.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_status",
+  "purpose": "합의 상태(서명 카운트) 조회 검증",
+  "flow": "1. `istanbul_status` 호출.<br>2. 밸리데이터별 서명 통계 확인.",
+  "expected": "- **공통**: 밸리데이터별 sealer 활동 통계 반환",
+  "doc_id": "DOC-D-022",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 78,
+  "section": "B-2. Istanbul/WBFT 전용 RPC (`istanbul_*`)",
+  "category": "RPC",
+  "spec_ids": [
+   "RT-G-3-06",
+   "RPC-011"
+  ],
+  "scripts": [
+   "api/16-is-validator.sh",
+   "wemix4/RPC/rpc-011-is-validator.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "istanbul_isValidator",
+  "purpose": "지정 주소의 밸리데이터 여부 판정 검증",
+  "flow": "1. 밸리데이터/비밸리데이터 주소로 `istanbul_isValidator` 호출.<br>2. 판정 결과 확인.",
+  "expected": "- **공통**: 밸리데이터 → `true`, 비밸리데이터 → `false`",
+  "doc_id": "DOC-D-023",
+  "family": "consensus-rpc-istanbul",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config-only",
+  "reason": "istanbul_* RPC",
+  "configuration_items": [],
+  "implementation_items": []
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 84,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Tx Type",
+  "spec_ids": [
+   "RT-A-2-10",
+   "TX-008"
+  ],
+  "scripts": [
+   "ethereum/18-setcode-tx.sh",
+   "wemix4/TX/tx-008-setcode-tx.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "SetCode Tx (Type 0x4, EIP-7702)",
+  "purpose": "EOA에 계정 코드를 위임하는 EIP-7702 트랜잭션 정상 동작 검증",
+  "flow": "1. AuthorizationList가 포함된 Type 0x4 트랜잭션 전송.<br>2. 대상 EOA의 코드 위임 결과 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: `receipt.status == 0x1`, 대상 EOA에 위임 코드(delegation designator) 설정",
+  "doc_id": "DOC-D-024",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "EIP-7702. go-wemix 미지원. WBFT Croissant/StableNet Anzeon gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-04)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 85,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Tx Type",
+  "spec_ids": [
+   "TC-4-2-01",
+   "TC-4-2-03"
+  ],
+  "scripts": [
+   "common-all/18-estimategas-authorizationlist-cost.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX4",
+    "전용 스크립트 없음 / `go-wbft` EIP-7702 지원 확인"
+   ]
+  ],
+  "title": "EIP-7702 AuthorizationList estimateGas 비용",
+  "purpose": "AuthorizationList 항목 수에 따른 `eth_estimateGas` 비용 반영 검증",
+  "flow": "1. AuthorizationList 1건·2건 포함 트랜잭션의 estimateGas 조회.<br>2. 항목 수에 비례한 가스 비용 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: AuthorizationList 항목당 per-auth 가스 비용이 estimateGas에 반영",
+  "doc_id": "DOC-D-025",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "EIP-7702. go-wemix 미지원. WBFT Croissant/StableNet Anzeon gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-04)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 86,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Tx Type",
+  "spec_ids": [
+   "TC-4-2-02"
+  ],
+  "scripts": [
+   "common-all/19-estimategas-no-authorizationlist.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [
+   [
+    "WEMIX4",
+    "전용 스크립트 없음 / `go-wbft` EIP-7702 지원 확인"
+   ]
+  ],
+  "title": "EIP-7702 estimateGas baseline",
+  "purpose": "AuthorizationList가 없는 일반 전송의 estimateGas baseline 검증",
+  "flow": "1. AuthorizationList 없는 일반 전송의 estimateGas 조회.<br>2. baseline 가스 비용 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: AuthorizationList 미포함 시 baseline 가스만 산출",
+  "doc_id": "DOC-D-026",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "EIP-7702. go-wemix 미지원. WBFT Croissant/StableNet Anzeon gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-04)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 87,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Precompile",
+  "spec_ids": [
+   "TC-1-2-01~06",
+   "TX-009"
+  ],
+  "scripts": [
+   "common-all/12-all-secp256r1-precompile.sh",
+   "wemix4/TX/tx-009-secp256r1-valid.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "secp256r1 프리컴파일 — 유효 서명",
+  "purpose": "주소 `0x100` P256VERIFY 프리컴파일의 유효 서명 검증",
+  "flow": "1. 유효한 P-256 서명·공개키·메시지 해시 입력.<br>2. 프리컴파일 호출 결과 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 유효 서명 → 성공 반환(`0x...01`)",
+  "doc_id": "DOC-D-027",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "P256VERIFY. go-wemix 미지원. WBFT Croissant/StableNet Boho gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-05)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 88,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Precompile",
+  "spec_ids": [
+   "TC-1-2-01~06",
+   "TX-019"
+  ],
+  "scripts": [
+   "common-all/12-all-secp256r1-precompile.sh",
+   "wemix4/TX/tx-019-secp256r1-invalid.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "secp256r1 프리컴파일 — 무효 서명",
+  "purpose": "무효 서명 입력 시 프리컴파일이 실패(빈 반환)하는지 검증",
+  "flow": "1. 무효한 P-256 서명 입력.<br>2. 프리컴파일 호출 결과 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 무효 서명 → 빈 반환/검증 실패",
+  "doc_id": "DOC-D-028",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "P256VERIFY. go-wemix 미지원. WBFT Croissant/StableNet Boho gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-05)"
+  ]
+ },
+ {
+  "doc": "dual",
+  "source_file": "sources/dual_chain_test_scenarios.md",
+  "source_line": 89,
+  "section": "B-3. 특수 트랜잭션 및 프리컴파일",
+  "category": "Precompile",
+  "spec_ids": [
+   "TC-1-2-01~06",
+   "TX-020"
+  ],
+  "scripts": [
+   "common-all/12-all-secp256r1-precompile.sh",
+   "wemix4/TX/tx-020-secp256r1-short-input.sh"
+  ],
+  "chains_named": [
+   "StableNet",
+   "WEMIX4"
+  ],
+  "no_script_notes": [],
+  "title": "secp256r1 프리컴파일 — 잘못된 입력 길이",
+  "purpose": "규격보다 짧은 입력 길이일 때 프리컴파일 처리 검증",
+  "flow": "1. 규격 미달(짧은) 입력 전달.<br>2. 프리컴파일 호출 결과 확인.",
+  "expected": "- **공통(WEMIX4 / StableNet)**: 잘못된 입력 길이 → 빈 반환/검증 실패",
+  "doc_id": "DOC-D-029",
+  "family": "modern-evm",
+  "common_scope": "two-chain:wbft+stablenet",
+  "separation": "config+oracle",
+  "reason": "P256VERIFY. go-wemix 미지원. WBFT Croissant/StableNet Boho gate",
+  "configuration_items": [
+   "fork 활성 프로필"
+  ],
+  "implementation_items": [
+   "fork gate preflight (CD-A-05)"
+  ]
+ }
+]

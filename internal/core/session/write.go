@@ -30,7 +30,7 @@ func WriteFileAtomic(path string, b []byte, perm fs.FileMode) error {
 // secrets first — it is the seam every JSON evidence artifact (the per-test
 // records, env.json, session.json) goes through, so redaction is not
 // re-implemented per record. The functional files a node reads do not go
-// through here: workspace.json is written straight through WriteFileAtomic, and
+// through here: chain-record.json is written straight through WriteFileAtomic, and
 // genesis/config land in the node's datadir via the filestore.
 func writeJSON(path string, v any) error {
 	b, err := json.MarshalIndent(v, "", "  ")

@@ -103,7 +103,7 @@ func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("chain status: %v", err)
 	}
-	raw, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
+	raw, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,27 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "secp256r1-precompile-invalid",
-  "applicableChains": "wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "precompile:secp256r1"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "secp256r1-precompile-invalid-env",
-    "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "wbft-bp4",
     "capabilities": [
       "rpc"
     ]

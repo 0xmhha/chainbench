@@ -6,18 +6,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -32,21 +33,6 @@ import (
 // suiteDefaultValidators sizes a network whose env declares no topology: the
 // BFT floor that tolerates one fault.
 const suiteDefaultValidators = 4
-
-// Handoff composition timing.
-const (
-	// etcdFormWait bounds the wait for the producer's etcd cluster to form.
-	etcdFormWait = 60 * time.Second
-	// forkWait bounds the wait for the successor set to produce past the fork.
-	// It is not the wait for one block: AwaitFork now requires ten, so a chain
-	// with a one-second block period needs that much more headroom.
-	//
-	// The comment below is the original one, kept because the bound it chose is
-	// still the bound: the wait for a successor to seal the first post-fork
-	// block. The profile's fork height and block time decide the real figure;
-	// this is the ceiling.
-	forkWait = 180 * time.Second
-)
 
 // overlayFilePrefix names the file a declared genesis overlay is written to for
 // the genesis step, which reads overlays from a file. The content's digest is
@@ -64,8 +50,12 @@ const overlayFilePrefix = "env-genesis-overlay"
 const defaultKeysDir = "keys/preset"
 
 // keySourceGenerate is the key source that creates a fresh set rather than
-// reading a recorded one.
-const keySourceGenerate = "generate"
+// reading a recorded one; keySourceKeyPreset reads the recorded one and is what
+// a declaration that names no source gets.
+const (
+	keySourceGenerate  = "generate"
+	keySourceKeyPreset = "keyPreset"
+)
 
 // generatedKeysSubdir is where a generated set with no ref lands, under the
 // workspace, so generate does not reuse the shared preset by default.
@@ -88,11 +78,66 @@ func expand(s string) string {
 	})
 }
 
+// refuseMachineConflict stops a run whose declaration and command name
+// different machines.
+//
+// The data root already works this way: WorkspaceConfig.AdoptDataRoot refuses
+// two answers rather than picking one, and names the line to change. The
+// machine had no such rule, so a case declaring srv://alpha and a command
+// passing --server beta composed on beta and said nothing — the plan printed
+// "server beta" and credited the command, and alpha was gone. A test that runs
+// on the wrong machine does not fail; it answers a question nobody asked.
+//
+// --docker is not a machine and is not checked here: it says how the server
+// set's entries are reached (as local containers), not which entry to use.
+func refuseMachineConflict(in RunSuiteIn, declared resource.Spec, placement string) error {
+	commanded := in.Server.Name
+	switch {
+	case in.Server.All:
+		commanded = "every server in the set"
+	case commanded == "":
+		return nil
+	}
+	// Which machine a spec names is resource's to say, not this one's: it owns
+	// the locality rule (architecture-v2 §4). Server first, then a host; neither
+	// means the declaration named a path and there is nothing to disagree with.
+	named := declared.Server
+	if named == "" {
+		named = declared.Host
+	}
+	if named == "" {
+		return nil
+	}
+	if named == commanded {
+		return nil
+	}
+	return fmt.Errorf(
+		"testengine: machine conflict: the env target %q says %q but --server says %q — name the machine in one place",
+		placement, named, commanded)
+}
+
+// countFrom records that the declaration asked for a node count.
+//
+// A count left at zero records nothing. Zero means the role is absent, and
+// nobody chose that — a later branch may still fill it, and that branch says so
+// itself. Recording zero as a harness choice put two rows nobody asked about in
+// front of every reader.
+func countFrom(from map[PlanField]PlanSource, f PlanField, count int) {
+	if count > 0 {
+		from[f] = SourceDeclaration
+	}
+}
+
 // composition is what one suite composes: a single-binary network through
 // the workspace steps, or a mixed-binary handoff. Exactly one is set.
+//
+// from records who chose each value that had more than one candidate. It is
+// filled here rather than derived later because only this function sees the
+// candidates: once the merge is done, a value that came from the command and
+// one that came from the document are the same string.
 type composition struct {
-	up      *chainsetup.NetUpIn
-	handoff *upgrade.HandoffInputs
+	up   *chainsetup.NetUpIn
+	from map[PlanField]PlanSource
 }
 
 // compositionOf reads the network a spec declares and applies the caller's
@@ -103,17 +148,29 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if in.Chain != "" && in.Chain != chain {
 		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
 	}
+	from := map[PlanField]PlanSource{}
 	keysDir := in.KeysDir
 	keysSource := in.KeysSource
+	if keysSource != "" {
+		from[FieldKeysSource] = SourceCommand
+	}
+	if keysDir != "" {
+		from[FieldKeysDir] = SourceCommand
+	}
 	keysValidators := 0
 	if k := spec.EnvKeys; k != nil {
-		if keysSource == "" {
+		if keysSource == "" && k.Source != "" {
 			keysSource = k.Source
+			from[FieldKeysSource] = SourceDeclaration
 		}
-		if keysDir == "" {
+		if keysDir == "" && k.Ref != "" {
 			keysDir = expand(k.Ref)
+			from[FieldKeysDir] = SourceDeclaration
 		}
 		keysValidators = k.Validators
+	}
+	if keysSource == "" {
+		from[FieldKeysSource] = SourceHarness
 	}
 	if keysDir == "" {
 		// A generated set — or a node table that pins per-node keys — goes to a
@@ -127,35 +184,40 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		} else {
 			keysDir = defaultKeysDir
 		}
+		from[FieldKeysDir] = SourceHarness
 	}
-	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
+	var upgradeFork *chainsetup.GenesisFork
+	perBinaryOverlay, err := writeOverlays(ctx, in.DataDir, spec.Chain.GenesisPerBinary)
+	if err != nil {
+		return composition{}, err
+	}
+	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay, spec.Chain.GenesisProvides, spec.Chain.GenesisHaltsAt)
 	if err != nil {
 		return composition{}, err
 	}
 
+	// An upgrade env that declares a node table composes like any other network:
+	// the nodes say which build each of them runs, and the fork's configuration
+	// is scheduled on the one genesis they all initialize from. One without a
+	// table still goes to the handoff composer, which sizes the network from its
+	// preset's roles.
+	// A hardfork is composed like any other network: the nodes say which build
+	// each of them runs, and the fork's configuration is scheduled on the one
+	// genesis they all initialize from. It used to have a composer of its own —
+	// its own plan, its own launcher, its own peer mesh — which is what this
+	// track removed.
 	if u := spec.EnvUpgrade; u != nil {
-		if in.Binary != "" {
-			return composition{}, fmt.Errorf("a handoff names its binaries by role in the env; --binary does not apply")
+		if len(spec.Topology) == 0 {
+			return composition{}, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])")
 		}
-		if in.ChainID != 0 || in.NetworkID != 0 || len(in.LaunchOpts) > 0 || in.KeysSource != "" {
-			return composition{}, fmt.Errorf("a handoff composes from its declaration; genesis, launch, and key-source overrides do not apply")
+		fork, ferr := forkOf(u)
+		if ferr != nil {
+			return composition{}, ferr
 		}
-		// A handoff composes its network from the profile and template, so
-		// env-level hardforks, topology, launch, and config have nowhere to go.
-		// Refuse them loudly rather than parse an upgrade env that carries them
-		// and silently drop half its declaration.
-		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
-			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply")
+		if err := checkDeclaredFork(u, upgradePresetPath(u)); err != nil {
+			return composition{}, err
 		}
-		return composition{handoff: &upgrade.HandoffInputs{
-			ProfilePath:    expand(u.Profile),
-			Template:       expand(u.Template),
-			PresetDir:      keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryBefore]),
-			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryAfter]),
-			GenesisOverlay: overlayPath,
-			DataDir:        in.DataDir,
-		}}, nil
+		upgradeFork = fork
 	}
 
 	// A node table (topology.nodes[]) declares each node's role and binary
@@ -164,18 +226,66 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if err != nil {
 		return composition{}, err
 	}
+	// Every name the declaration gives, whether or not a node is running it.
+	//
+	// A declaration that names binaries is not only talking about the nodes it
+	// composes: a case swaps one node onto a name mid-test, and a restart moves
+	// the WHOLE network onto one no node has yet. A name nothing resolved
+	// reaches exec as a path — that is how "upgrade" became `exec: "upgrade":
+	// executable file not found`, with the declaration saying plainly that
+	// upgrade means gstable.
+	//
+	// The node table's own resolutions win, because a node may name a binary
+	// the env's map does not.
+	if len(spec.Chain.Binaries) > 0 {
+		merged := make(map[string]string, len(spec.Chain.Binaries)+len(resolvedBins))
+		for name, path := range spec.Chain.Binaries {
+			merged[name] = expand(path)
+		}
+		for name, path := range resolvedBins {
+			merged[name] = path
+		}
+		resolvedBins = merged
+	}
 
 	binary := in.Binary
+	from[FieldBinary] = SourceCommand
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)
+		from[FieldBinary] = SourceDeclaration
 	}
 	if binary == "" {
-		// With a node table but no single binary, launch falls back per node to
-		// the first node's binary; a node names its own binary over this.
+		// The declaration's own word for what the rest of the network runs. A
+		// node table that assigns binaries to SOME nodes leaves the others on
+		// this; before it was read, they were put on whichever binary the first
+		// assigned node happened to name — so a four-node network with two on
+		// the successor ran all four on the successor, and the plan said so
+		// without anything looking wrong.
+		// Expanded like every other binary reference. A declaration writes
+		// ${GSTABLE_BIN:-gstable} here as readily as anywhere else, and this
+		// lookup read it raw — so the plan showed the placeholder and exec would
+		// have been handed it.
+		binary = expand(spec.Chain.Binaries[dsl.BinaryDefault])
+	}
+	if binary == "" {
+		// No default declared: fall back per node to the first node's binary, as
+		// before. A node names its own binary over this.
 		binary = topoBinary
 	}
 	if binary == "" {
-		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
+		from[FieldBinary] = SourceHarness
+		// Neither the run nor the declaration named one, so the chain does. A
+		// definition that repeats the chain's own name for its binary is how
+		// one binary came to be spelled two ways across the specs; leaving it
+		// out is now the normal case, and chainsetup places the name.
+		p, err := registry.Get(chain)
+		if err != nil {
+			return composition{}, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err)
+		}
+		binary = p.Manifest().Binary
+	}
+	if binary == "" {
+		return composition{}, fmt.Errorf("no binary was given and chain %q names none", chain)
 	}
 
 	var validators, endpoints, proxies int
@@ -186,11 +296,15 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if err != nil {
 			return composition{}, err
 		}
-		// An explicit --validators is a named count: it turns dynamic sizing off
-		// rather than being filled over.
-		if in.Validators > 0 {
-			validators = in.Validators
+		countFrom(from, FieldNodesBP, validators)
+		countFrom(from, FieldNodesEN, endpoints)
+		countFrom(from, FieldNodesPN, proxies)
+		// An explicit --bp is a named count: it turns dynamic sizing off rather
+		// than being filled over.
+		if in.BPCount > 0 {
+			validators = in.BPCount
 			autoBP = false
+			from[FieldNodesBP] = SourceCommand
 		}
 		if autoBP {
 			// The unified model's default shape: one pn (the discovery hub on the
@@ -198,14 +312,20 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			// fills the rest with validators once it knows the server count.
 			if proxies == 0 {
 				proxies = 1
+				from[FieldNodesPN] = SourceHarness
 			}
 			if endpoints == 0 {
 				endpoints = 1
+				from[FieldNodesEN] = SourceHarness
 			}
 		} else if validators <= 0 {
 			validators = suiteDefaultValidators
+			from[FieldNodesBP] = SourceHarness
 		}
 	}
+	// A node table is not recorded here: it names every node, and the nodes row
+	// already prints "declared per node". Saying it twice is not saying it
+	// better.
 	// The request's flat launch opts and the network id join the "all" scope;
 	// the env's scoped launch (per role or node) travels in LaunchScopedSet.
 	launch := append([]string(nil), in.LaunchOpts...)
@@ -217,17 +337,19 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
-		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
+		BPCount: validators, ENCount: endpoints, PNCount: proxies, EndpointSyncMode: syncMode,
 		AutoSize: autoBP,
-		Topology: inlineTopo, Binaries: resolvedBins,
-		Server: in.Server, Docker: in.Docker,
-		ChainID:         in.ChainID,
-		GenesisSet:      hardforkSets(spec.Hardforks),
-		OverlayPath:     overlayPath,
-		GenesisExisting: spec.Chain.GenesisExisting,
-		LaunchSet:       launch,
-		LaunchScoped:    spec.EnvLaunch,
-		ConfigSet:       spec.EnvConfig,
+		Topology: inlineTopo, Binaries: resolvedBins, BinaryChains: spec.Chain.BinaryChains,
+		GenesisFork: upgradeFork,
+		Server:      in.Server, Docker: in.Docker,
+		ChainID:          in.ChainID,
+		GenesisSet:       hardforkSets(spec.Hardforks),
+		OverlayPath:      overlayPath,
+		GenesisPerBinary: perBinaryOverlay,
+		GenesisExisting:  spec.Chain.GenesisExisting,
+		LaunchSet:        launch,
+		LaunchScoped:     spec.EnvLaunch,
+		ConfigSet:        spec.EnvConfig,
 	}
 	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
 	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
@@ -241,17 +363,28 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// server-set entry, or an ssh host). It fed only the reuse fingerprint
 	// before, so a declared target shifted the key without moving the nodes;
 	// thread it to the composition so it actually places them.
+	from[FieldTarget] = SourceHarness
+	if in.Server.All || in.Server.Name != "" || in.Server.SetPath != "" || in.Docker {
+		from[FieldTarget] = SourceCommand
+	}
 	if spec.Placement != "" {
 		tgt, perr := resource.Parse(spec.Placement)
 		if perr != nil {
 			return composition{}, fmt.Errorf("testengine: env target %q: %w", spec.Placement, perr)
 		}
+		if err := refuseMachineConflict(in, tgt, spec.Placement); err != nil {
+			return composition{}, err
+		}
 		up.Target = tgt
+		if from[FieldTarget] == SourceHarness {
+			from[FieldTarget] = SourceDeclaration
+		}
 	}
 	// The workspace-config owns the target data root (it moved off the server
 	// set). Setting it here means `new` records it and every later step — and a
 	// server selection through Retarget, which keeps a data root already set —
 	// resolves paths under the root the environment named, not the workspace dir.
+	var wcOrNil *resource.WorkspaceConfig
 	if in.WorkspaceConfigPath != "" {
 		wc, werr := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
 		if werr != nil {
@@ -267,60 +400,71 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target = target
 		up.WorkspaceConfigPath = in.WorkspaceConfigPath
-		if err := applyPreset(up, wc, spec); err != nil {
+		if err := applyExistingInputs(up, wc, spec); err != nil {
 			return composition{}, err
 		}
+		wcOrNil = &wc
 	}
-	return composition{up: up}, nil
+	// Once, here, because this path asks two questions about the launch before
+	// the launch runs: the plan it prints, and the preflight comparison that
+	// decides whether to reuse what is composed. Both were asking in the other
+	// language. chainsetup places again on the way in, which is harmless.
+	if err := chainsetup.PlaceRequest(up, wcOrNil); err != nil {
+		return composition{}, err
+	}
+	return composition{up: up, from: from}, nil
 }
 
-// applyPreset expands a prepared input preset onto the composition: the
-// preset's finished genesis and its keyring stand in for declaring them in the
-// DSL, which is the point of naming a bundle. A field the DSL already declared
-// is a conflict rather than a silent override. It runs only for inputs.mode
-// prepared; a generated run has no preset (workspace-config validation ensures
-// that).
-func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
-	if wc.Inputs.Mode != resource.InputPrepared {
+// applyExistingInputs expands a named bundle of inputs that are already on the
+// target onto the composition: the bundle's finished genesis and its keyring
+// stand in for declaring them in the DSL, which is the point of naming a
+// bundle. A field the DSL already declared is a conflict rather than a silent
+// override. It runs only for inputs.mode existing; a generated run names no
+// bundle (workspace-config validation ensures that).
+func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+	if wc.Inputs.Mode != resource.InputExisting {
 		return nil
 	}
-	name := wc.Inputs.Preset
-	preset := wc.Presets[name] // validated to exist at parse time
-	if preset.Genesis != "" {
+	name := wc.Inputs.Name
+	existing := wc.ExistingInputs[name] // validated to exist at parse time
+	if existing.Genesis != "" {
 		if up.GenesisExisting != "" || len(spec.Chain.GenesisOverlay) > 0 {
-			return fmt.Errorf("testengine: preset %q sets a genesis, but the spec already declares one — declare it in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a genesis, but the spec already declares one — declare it in one place", name)
 		}
-		up.GenesisExisting = preset.Genesis
+		up.GenesisExisting = existing.Genesis
 	}
-	if preset.Keyring != "" {
+	if existing.Keyring != "" {
 		if spec.EnvKeys != nil {
-			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a keyring, but the spec already declares keys — declare them in one place", name)
 		}
 		// A local key set is used in place; a keyring on a server (srv://) is
 		// downloaded to a local directory by the keys step (materializeKeyring)
 		// so the ring is read the one local way and a node signs with keys at a
 		// known local path. A bare relative name is neither, and is rejected here
 		// rather than mistaken for a local directory.
-		if !strings.HasPrefix(preset.Keyring, "srv://") && !filepath.IsAbs(preset.Keyring) {
-			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path or a srv:// reference", name, preset.Keyring)
+		if !strings.HasPrefix(existing.Keyring, "srv://") && !filepath.IsAbs(existing.Keyring) {
+			return fmt.Errorf("testengine: existing inputs %q keyring %q must be a local absolute path or a srv:// reference", name, existing.Keyring)
 		}
-		up.KeysDir = preset.Keyring
-		up.KeysSource = "preset"
+		up.KeysDir = existing.Keyring
+		// The key SOURCE is a different preset: it says the ring is read as
+		// recorded rather than generated. Naming the bundle "existing inputs"
+		// is what keeps these two readable in one function.
+		up.KeysSource = "keyPreset"
 	}
-	applyPresetConfigs(up, preset)
+	applyExistingConfigs(up, existing)
 	return nil
 }
 
-// applyPresetConfigs resolves each node's logical config name to the preset's
-// file. A node table's config value is a logical name when it is a key in the
-// preset's configs map: the DSL names a config, and the environment's preset
-// says which file that name is on this target, so one spec runs against
-// different targets by swapping the map. A config value that is not a preset
-// key is left as a direct file reference, which is how a node named its config
-// before presets existed. With no node table there is nothing to map onto, and
-// the map is simply unused.
-func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
-	if len(preset.Configs) == 0 || up.Topology == nil {
+// applyExistingConfigs resolves each node's logical config name to the file the
+// bundle names. A node table's config value is a logical name when it is a key
+// in the bundle's configs map: the DSL names a config, and the environment says
+// which file that name is on this target, so one spec runs against different
+// targets by swapping the map. A config value that is not a key is left as a
+// direct file reference, which is how a node named its config before bundles
+// existed. With no node table there is nothing to map onto, and the map is
+// simply unused.
+func applyExistingConfigs(up *chainsetup.NetUpIn, existing resource.ExistingInputs) {
+	if len(existing.Configs) == 0 || up.Topology == nil {
 		return
 	}
 	for i := range up.Topology.Nodes {
@@ -328,7 +472,7 @@ func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
 		if logical == "" {
 			continue
 		}
-		if file, ok := preset.Configs[logical]; ok {
+		if file, ok := existing.Configs[logical]; ok {
 			up.Topology.Nodes[i].Config = file
 		}
 	}
@@ -468,9 +612,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 
 // Topology keys a declaration may use for its node counts.
 const (
-	topoValidators   = "validators"
 	topoBP           = "bp"
-	topoEndpoints    = "endpoints"
 	topoEN           = "en"
 	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
@@ -489,7 +631,7 @@ const (
 func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, autoBP bool, err error) {
 	for k, v := range t {
 		switch k {
-		case topoValidators, topoBP:
+		case topoBP:
 			if s, ok := v.(string); ok {
 				if s != topoMax {
 					return 0, 0, 0, "", false, fmt.Errorf("topology.%s must be a number or %q, got %q", k, topoMax, s)
@@ -498,7 +640,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 				break
 			}
 			validators, err = countOf(k, v)
-		case topoEndpoints, topoEN:
+		case topoEN:
 			endpoints, err = countOf(k, v)
 		case topoPN:
 			proxies, err = countOf(k, v)
@@ -509,7 +651,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
+			err = fmt.Errorf("topology.%s is not a key the composer knows (bp, en, pn, syncMode)", k)
 		}
 		if err != nil {
 			return 0, 0, 0, "", false, err
@@ -556,11 +698,22 @@ func hardforkSets(forks map[string]int) []string {
 // overlays from: a file under the workspace, written through the file seam
 // like everything else the workspace holds. No overlay writes nothing and
 // returns no path.
-func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (string, error) {
-	if len(overlay) == 0 {
+func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, provides []string, haltsAt int64) (string, error) {
+	if len(overlay) == 0 && len(provides) == 0 && haltsAt == 0 {
 		return "", nil
 	}
-	b, err := json.MarshalIndent(map[string]any{"genesis": overlay}, "", "  ")
+	// The same {capabilities, genesis} document `chain up --genesis-overlay`
+	// takes. Writing only the genesis half is why a DSL env had no way to make
+	// its network advertise anything, and why cases that needed a capability
+	// declared it as a requirement instead and skipped for good.
+	doc := map[string]any{"genesis": overlay}
+	if len(provides) > 0 {
+		doc["capabilities"] = provides
+	}
+	if haltsAt > 0 {
+		doc["haltsAt"] = haltsAt
+	}
+	b, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("render genesis overlay: %w", err)
 	}
@@ -572,111 +725,110 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 	return path, nil
 }
 
-// handoffUp composes a mixed-binary network: the handoff's steps in order,
-// each recorded, up to a successor sealing past the fork. It returns the
-// running nodes and a teardown. A failure after the nodes launched stops
-// them, because a handoff has no workspace a later command could reach them
-// through; their logs stay under the data dir.
-func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []string, func(context.Context) error, error) {
-	var steps []string
-	record := func(name, detail string) { steps = append(steps, name+": "+detail) }
-	fail := func(name string, err error) (node.NodeSet, []string, func(context.Context) error, error) {
-		return node.NodeSet{}, steps, nil, fmt.Errorf("handoff: %s: %w", name, err)
+// forkOf reads the fork a declaration schedules, taking from the preset what the
+// case did not say.
+//
+// The preset decides the fork and the block; a case may repeat them and is held
+// to the repetition (see checkDeclaredFork). Here the two are folded into the
+// one instruction the genesis step acts on, along with which file the case
+// wants the fork carried in — empty meaning the genesis, which is the step's
+// own default.
+func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
+	name, at := u.Fork, int64(0)
+	if u.At != nil {
+		at = *u.At
 	}
-
-	h, err := upgrade.NewHandoff(in)
-	if err != nil {
-		return fail("prepare", err)
-	}
-	record("prepare", h.Describe())
-	cfg, err := h.WriteConfig(ctx)
-	if err != nil {
-		return fail("config", err)
-	}
-	record("config", cfg)
-	base, err := h.BaseGenesis(ctx)
-	if err != nil {
-		return fail("base-genesis", err)
-	}
-	record("base-genesis", base)
-	if err := h.ComposePlan(ctx, base); err != nil {
-		return fail("plan", err)
-	}
-	record("plan", fmt.Sprintf("%d node(s); fork section %q merged", len(h.Plan.Nodes), h.Plan.AtFork))
-	detail, err := h.ApplyOverlay()
-	if err != nil {
-		return fail("overlay", err)
-	}
-	record("overlay", detail)
-
-	ns, err := h.Launch(ctx)
-	if err != nil {
-		return fail("launch", err)
-	}
-	if len(ns.Nodes) == 0 {
-		return fail("launch", fmt.Errorf("no nodes launched"))
-	}
-	teardown := func(ctx context.Context) error {
-		_, errs := process.StopNodeSet(ctx, process.NewLocalDriver(), ns)
-		if len(errs) > 0 {
-			return fmt.Errorf("handoff: teardown: %v", errs)
-		}
-		return nil
-	}
-	producer := ns.Nodes[0]
-	record("launch", fmt.Sprintf("%d node(s); producer %s", len(ns.Nodes), producer.RPCURL))
-	live := func(name string, fn func() (string, error)) error {
-		detail, err := fn()
+	// The preset is read only for what the case left out. A declaration that
+	// says both says everything, and a restart has no preset to read at all.
+	if u.Fork == "" || u.At == nil {
+		prof, err := upgrade.LoadProfile(upgradePresetPath(u))
 		if err != nil {
-			_ = teardown(ctx)
-			return fmt.Errorf("handoff: %s: %w", name, err)
+			return nil, fmt.Errorf("upgrade preset: %w", err)
 		}
-		record(name, detail)
-		return nil
-	}
-	if err := live("mesh", func() (string, error) {
-		return fmt.Sprintf("%d endpoint(s) meshed", len(ns.Nodes)), h.WireMesh(ctx, ns)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("governance", func() (string, error) {
-		return "deployed (effect checked by verify-etcd)", h.DeployGovernance(ctx, producer)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("etcd-init", func() (string, error) {
-		return "called (effect checked by verify-etcd)", h.EtcdInit(ctx, producer)
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
-	}
-	if err := live("verify-etcd", func() (string, error) {
-		info, err := h.VerifyEtcd(ctx, producer, etcdFormWait)
-		if err != nil {
-			return "", err
+		if name == "" {
+			name = prof.Upgrade.AtFork
 		}
-		return fmt.Sprintf("governance %s, etcd cluster %q", info.Governance, info.Cluster()), nil
-	}); err != nil {
-		return node.NodeSet{}, steps, nil, err
+		if u.At == nil {
+			at = prof.Upgrade.ForkBlock
+		}
 	}
-	if err := live("await-fork", func() (string, error) { return h.AwaitFork(ctx, ns, forkWait) }); err != nil {
-		return node.NodeSet{}, steps, nil, err
+	if name == "" {
+		return nil, fmt.Errorf("upgrade: neither the case nor its preset names a fork")
 	}
-	return ns, steps, teardown, nil
+	to := u.To
+	if to == "" {
+		to = dsl.BinaryTo
+	}
+	return &chainsetup.GenesisFork{
+		Name: name, At: at, Binary: to,
+		Carrier: chainsetup.ForkCarrier(u.Carry),
+		Restart: u.Style == dsl.UpgradeRestart,
+	}, nil
 }
 
-// handoffEndpoints orders a handoff network's RPC URLs successors first: the
-// producer cannot import post-fork blocks, so it must not be the primary the
-// tests read from.
-func handoffEndpoints(ns node.NodeSet) []string {
-	var successors, producers []string
-	for _, n := range ns.Nodes {
-		if n.Index == 0 {
-			producers = append(producers, n.RPCURL)
-			continue
-		}
-		successors = append(successors, n.RPCURL)
+// hardforkPresetDir is where a named hardfork preset lives.
+const hardforkPresetDir = "presets/hardfork"
+
+// upgradePresetPath is the preset file this declaration names: a path when it
+// gave one, and otherwise the named preset under presets/hardfork.
+func upgradePresetPath(u *dsl.UpgradeV2) string {
+	if u.Profile != "" {
+		return expand(u.Profile)
 	}
-	return append(successors, producers...)
+	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
+}
+
+// checkDeclaredFork holds a case to what it said about the fork.
+//
+// The preset decides which fork and which block; a case may repeat them, and a
+// repetition that disagrees is the case testing something other than what it
+// claims. Saying nothing is fine — the preset answers.
+func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
+	if u.Fork == "" && u.At == nil {
+		return nil
+	}
+	// A restart names no preset, so there is nothing to hold it to.
+	if u.Style == dsl.UpgradeRestart {
+		return nil
+	}
+	prof, err := upgrade.LoadProfile(presetPath)
+	if err != nil {
+		return fmt.Errorf("upgrade preset: %w", err)
+	}
+	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
+		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)
+	}
+	// The block is NOT held to the preset, and the fork's name is.
+	//
+	// They are different kinds of fact. The name says which change is under
+	// test, and a case wrong about that reports a pass for a fork it never
+	// exercised — the worst failure there is. The block is a schedule this run
+	// chooses: how far in it puts the fork. A case that has to act while the
+	// pre-fork build is still sealing needs the fork far enough out to get the
+	// work done, and the preset's height is the handoff environment's, not
+	// every case's.
+	//
+	// Measured: with the preset's block 20 the chain reaches the fork and stops
+	// during bring-up, so a case sending a transaction beforehand submits it to
+	// a network that seals nothing and waits out its receipt.
+	return nil
+}
+
+// writeOverlays renders one overlay file per binary, the same way the network's
+// own overlay is rendered, and returns where each landed.
+func writeOverlays(ctx context.Context, dataDir string, per map[string]map[string]any) (map[string]string, error) {
+	if len(per) == 0 {
+		return nil, nil
+	}
+	out := make(map[string]string, len(per))
+	for _, name := range slices.Sorted(maps.Keys(per)) {
+		path, err := writeOverlay(ctx, dataDir, per[name], nil, 0)
+		if err != nil {
+			return nil, fmt.Errorf("binary %s: %w", name, err)
+		}
+		out[name] = path
+	}
+	return out, nil
 }
 
 // sameComposition checks that every spec in a suite declares the SAME network,

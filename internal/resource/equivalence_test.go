@@ -59,7 +59,7 @@ func TestAssign_ReproducesTheSetGolden(t *testing.T) {
 func requests(n int) []resource.Request {
 	out := make([]resource.Request, n)
 	for i := range out {
-		out[i] = resource.Request{Role: node.RoleValidator}
+		out[i] = resource.Request{Role: node.RoleBP}
 	}
 	return out
 }

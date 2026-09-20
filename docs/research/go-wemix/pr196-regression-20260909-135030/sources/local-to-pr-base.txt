@@ -1,0 +1,7 @@
+M	cmd/geth/governancedeploy.go
+M	miner/worker.go
+M	miner/worker_test.go
+M	wemix/admin.go
+M	wemix/etcdutil.go
+A	wemix/etcdutil.go.new
+M	wemix/sync.go

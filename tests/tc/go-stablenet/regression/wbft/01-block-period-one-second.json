@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "block-period-one-second",
   "description": "RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "block-period-one-second-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

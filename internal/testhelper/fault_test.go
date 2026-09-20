@@ -60,7 +60,7 @@ func envWithNodes(t *testing.T, n int, url string) session.Environment {
 	}
 	nodes := make([]node.Node, 0, n)
 	for i := 1; i <= n; i++ {
-		nodes = append(nodes, node.Node{Index: i, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: url})
+		nodes = append(nodes, node.Node{Index: i, Role: node.RoleBP, Host: "127.0.0.1", RPCURL: url})
 	}
 	env.PopulateNodeTable(node.NodeSet{Nodes: nodes})
 	return env
@@ -190,7 +190,7 @@ func envFromURLs(t *testing.T, urls []string) session.Environment {
 	}
 	nodes := make([]node.Node, 0, len(urls))
 	for i, u := range urls {
-		nodes = append(nodes, node.Node{Index: i + 1, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: u})
+		nodes = append(nodes, node.Node{Index: i + 1, Role: node.RoleBP, Host: "127.0.0.1", RPCURL: u})
 	}
 	env.PopulateNodeTable(node.NodeSet{Nodes: nodes})
 	return env

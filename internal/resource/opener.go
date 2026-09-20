@@ -1,4 +1,6 @@
-// Package netmap is the module that knows where things run: it manages the
+// Opening a placement. The package comment is in doc.go.
+//
+// This file is the module that knows where things run: it manages the
 // server set, allocates hosts and ports to nodes, composes enode addresses
 // from placements, and — through Opener — is the one place a server name is
 // bound to a live connection.

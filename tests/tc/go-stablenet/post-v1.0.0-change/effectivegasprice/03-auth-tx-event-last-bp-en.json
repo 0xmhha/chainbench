@@ -4,28 +4,10 @@
   "id": "auth-tx-event-last-bp-en",
   "description": "TC-4-6-04 — AuthorizedTxExecuted 가 영수증 로그의 마지막이고, 두 노드가 같은 값을 보고한다",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "egp-snap-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4,
-      "en": 1,
-      "syncMode": "snap"
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4-en1-snap",
   "steps": [
     {
       "do": "waitBlock",
@@ -60,7 +42,7 @@
       "do": "sendTx",
       "on": "node1",
       "from": "node1",
-      "to": "0x0000000000000000000000000000000000001004",
+      "to": "govCouncil",
       "gas": "0x16e360",
       "data": "$authData",
       "save": "authHash",
@@ -88,7 +70,7 @@
       "do": "sendTx",
       "on": "node2",
       "from": "node2",
-      "to": "0x0000000000000000000000000000000000001004",
+      "to": "govCouncil",
       "gas": "0x16e360",
       "data": "$authApprove",
       "save": "authApHash",

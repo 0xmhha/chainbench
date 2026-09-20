@@ -2,27 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "feecap-exact-min-accepted",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "feecap-exact-min-accepted-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

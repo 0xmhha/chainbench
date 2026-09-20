@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "state-written-before-the-fork-survives-it",
+  "description": "State written while the PRE-fork binary was sealing must still be there once the successors produce. The case crosses the fork itself, because everything it has to do comes first: a network the composition already took across gives it no pre-fork chain to write to. It is also the only check that the handover keeps the chain rather than starting one \u2014 a successor set that began a fresh chain would pass every assertion about who seals.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "extends": "wemix-to-wbft",
+    "upgrade": {
+      "preset": "wemix-upgrade",
+      "fork": "croissant",
+      "at": 120,
+      "from": "default",
+      "to": "next",
+      "style": "concurrent"
+    }
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "before",
+      "saveKey": "beforeKey"
+    },
+    {
+      "do": "sendTx",
+      "on": "bp1",
+      "from": "0xf9593d358b373d354a348c00887b914b408f6984",
+      "to": "$before",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "balanceAt",
+      "address": "$before",
+      "compare": "Equal",
+      "expected": "10000000000000000000",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "crossFork",
+      "timeout": "300s"
+    },
+    {
+      "do": "waitBlock",
+      "target": 122,
+      "timeout": "240s"
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "Greater",
+      "is": "120"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "en1",
+      "address": "$before",
+      "compare": "Equal",
+      "is": "10000000000000000000"
+    },
+    {
+      "expect": "rpc",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "compare": "Len",
+      "is": 4
+    }
+  ]
+}

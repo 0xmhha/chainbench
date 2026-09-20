@@ -4,12 +4,15 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // SchemaV2 is the canonical v2 grammar (schema/v2.schema.json). The strict
@@ -66,10 +69,10 @@ type EnvV2 struct {
 	// Manifest is an external, project-supplied chain manifest JSON, run on the
 	// built-in family named by Chain; GenesisTemplate is its genesis template.
 	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
-	Manifest        string            `json:"manifest,omitempty"`
-	GenesisTemplate string            `json:"genesisTemplate,omitempty"`
-	Binaries        map[string]string `json:"binaries,omitempty"`
-	Keys            *KeysV2           `json:"keys,omitempty"`
+	Manifest        string                 `json:"manifest,omitempty"`
+	GenesisTemplate string                 `json:"genesisTemplate,omitempty"`
+	Binaries        map[string]BinaryRefV2 `json:"binaries,omitempty"`
+	Keys            *KeysV2                `json:"keys,omitempty"`
 	// Blueprint is a network declaration file — the layout AND the node keys in
 	// one document. With it, no topology or key set is needed; it is the DSL
 	// equivalent of the CLI's --blueprint.
@@ -90,6 +93,39 @@ type EnvV2 struct {
 	// producer's binary and forks to the validators'. With it, Binaries names
 	// the two roles ("producer", "validator") rather than a default.
 	Upgrade *UpgradeV2 `json:"upgrade,omitempty"`
+	// Attach says this environment does not compose a network: it runs against
+	// one that is already up.
+	//
+	// Every other field above describes a network to build. Without this one a
+	// case could only ever say "compose this", and attaching existed solely as
+	// command-line flags — so a case that is only meaningful against a network
+	// somebody else set up had no way to say so, and `validate` could not tell
+	// the two apart.
+	//
+	// It is exclusive with the composition fields. A declaration that both
+	// builds a network and attaches to one has not said which network its
+	// assertions are about.
+	Attach *AttachV2 `json:"attach,omitempty"`
+}
+
+// AttachV2 names the running network an env attaches to.
+type AttachV2 struct {
+	// RPC are the endpoints, in the order a spec's node selectors address them.
+	// "${VAR:-default}" works here as it does for a binary, which is what keeps
+	// a machine's address out of a committed case.
+	RPC []string `json:"rpc"`
+	// KeysDir is the key set the running network was composed from. Without it
+	// a spec attached to a network cannot turn "node1" into an address — the
+	// run holds no key set of its own.
+	KeysDir string `json:"keysDir,omitempty"`
+	// Provides is what the running network offers, for capability-gated cases.
+	//
+	// Nothing composed this network, so nothing advertised anything about it;
+	// the operator who set it up is the only one who knows. It is "provides"
+	// and not "capabilities" for the reason genesis.provides is: the env's
+	// "capabilities" is a REQUIREMENT, and two opposite meanings under one word
+	// is how six cases came to skip forever.
+	Provides []string `json:"provides,omitempty"`
 }
 
 // AccountV2 is one declared test account.
@@ -104,26 +140,140 @@ type AccountV2 struct {
 
 // The two binaries an upgrade env names, by the key it names them under.
 //
-// They are spelled Binary rather than Role because they are not node roles.
-// A handoff names the binary that seals up to the fork and the one that takes
-// over after it, and calling that a "role" put a third meaning on a word that
-// already meant a node's job and an account's function (A7).
+// They are named for the fork rather than for a role, because that is what
+// tells them apart. Both binaries run nodes of several roles; what differs is
+// which side of the fork each one seals.
+//
+// They used to be spelled "producer" and "validator". Both words were wrong in
+// the same way: "producer" reads as the bp role, and "validator" names what a
+// bp does while another bp proposes — neither describes a binary. The names
+// also disagreed with the rest of the handoff, which already says From and To
+// in the code (upgrade.HandoffInputs) and on the command line
+// (--from-binary/--to-binary, --from-genesis/--to-chain).
+//
+// Concretely, on the handoff this harness runs: BinaryFrom is go-wemix, which
+// seals under poa up to the fork block; BinaryTo is go-wbft, which syncs those
+// blocks as an endpoint until the fork and produces under the new consensus
+// after it.
 const (
-	// BinaryBefore seals up to the fork.
-	BinaryBefore = "producer"
-	// BinaryAfter takes over after it.
-	BinaryAfter = "validator"
+	// BinaryFrom seals up to the fork.
+	BinaryFrom = "from"
+	// BinaryTo takes over after it.
+	BinaryTo = "to"
+	// BinaryDefault is what a node that names no binary runs. A declaration of
+	// one binary calls it that, and a declaration of several says which of them
+	// the rest of the network runs.
+	BinaryDefault = "default"
 )
+
+// BinaryRefV2 is one entry of an env's "binaries": which binary the name means
+// and, when it differs from the environment's, which chain that binary runs.
+//
+// A bare string is the shorthand and means "this environment's chain", which is
+// every declaration that runs one build. Chain is for a network that runs two
+// that are not the same chain — a handoff across a fork is the case — because
+// the chain is what says the binary's flag vocabulary, its RPC namespace and
+// what its consensus asks of a launch. A per-node binary without it left every
+// node assembling argv against the other build's answers.
+type BinaryRefV2 struct {
+	Binary string `json:"binary"`
+	Chain  string `json:"chain,omitempty"`
+}
+
+// UnmarshalJSON accepts both forms: "gwbft" and {"binary":"gwbft","chain":"wbft"}.
+func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
+	var name string
+	if err := json.Unmarshal(data, &name); err == nil {
+		b.Binary = name
+		return nil
+	}
+	type ref BinaryRefV2
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	var r ref
+	if err := dec.Decode(&r); err != nil {
+		return fmt.Errorf("dsl: a binaries entry is a name or {binary, chain}: %w", err)
+	}
+	if r.Binary == "" {
+		return fmt.Errorf("dsl: a binaries entry needs a binary")
+	}
+	*b = BinaryRefV2(r)
+	return nil
+}
 
 // UpgradeV2 declares a handoff composition: which golden profile shapes it
 // and which genesis template the producer's binary generates from. It is a
 // declaration only; the composer that runs it lives above the grammar.
 type UpgradeV2 struct {
-	// Profile is the golden upgrade profile (profiles/*.yaml).
-	Profile string `json:"profile"`
-	// Template is the producer chain's own genesis template.
-	Template string `json:"template"`
+	// Preset names a hardfork preset under presets/hardfork, without the
+	// directory or the extension.
+	Preset string `json:"preset,omitempty"`
+	// Profile is a hardfork preset by path, for one that is not under
+	// presets/hardfork. Preset names one that is.
+	Profile string `json:"profile,omitempty"`
+	// Template named the producer chain's own genesis template, for the handoff
+	// composer that generated the pre-fork genesis by running that binary
+	// against it. The ordinary path builds the genesis from the chain plugin's
+	// template, so a declaration naming one is refused (see checkUpgrade)
+	// rather than quietly composed from a different document.
+	//
+	// Deprecated: has no effect, and naming it is an error.
+	Template string `json:"template,omitempty"`
+	// Fork is the hardfork's name and At is the block it activates on. Given,
+	// they are checked against the preset rather than replacing it: a case
+	// saying which fork it tests and being wrong about it is worse than a case
+	// that does not say.
+	Fork string `json:"fork,omitempty"`
+	At   *int64 `json:"at,omitempty"`
+	// From and To name the binaries — the keys of "binaries" — that handle
+	// before and after the fork. They default to "from" and "to".
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
+	// Style is how the network crosses the fork.
+	//
+	// UpgradeConcurrent is the unusual one and the one this harness runs: both
+	// binaries are up from genesis and the nodes that seal change at the fork.
+	// UpgradeRestart is the ordinary hardfork — every node runs the pre-fork
+	// binary, then is stopped and relaunched on the post-fork one. Empty is
+	// concurrent, which is what every upgrade declaration written so far means.
+	Style string `json:"style,omitempty"`
+	// Carry is which file brings the fork's configuration to the nodes that
+	// need it: CarryGenesis (the default) gives the network two genesis
+	// documents and one shape of config, CarryConfig one genesis document and
+	// two shapes of config.
+	//
+	// It is a property of the network under test, not of the harness: a chain
+	// team ships a hardfork one way or the other, and a case that pins the way
+	// is testing the thing they will actually do.
+	Carry string `json:"carry,omitempty"`
 }
+
+// Which file a fork's configuration travels in.
+const (
+	// CarryGenesis writes the fork's section into a second genesis document,
+	// read by the nodes running the post-fork binary.
+	CarryGenesis = "genesis"
+	// CarryConfig leaves the genesis alone and writes the whole genesis, the
+	// fork's section included, into those nodes' config file.
+	CarryConfig = "config"
+)
+
+// How a network crosses a hardfork.
+const (
+	// UpgradeConcurrent runs both binaries from genesis; the sealing set
+	// changes at the fork.
+	UpgradeConcurrent = "concurrent"
+	// UpgradeRestart is the ordinary hardfork of ONE chain: the nodes run the
+	// pre-fork build, and at the fork every one of them is relaunched on the
+	// build that knows what happens there.
+	//
+	// Nothing about the network changes but the executable. The chain is the
+	// same chain, the nodes keep their databases and their work, and the fork's
+	// own configuration is in the genesis from block 0 — a build that does not
+	// know the fork simply never acts on it, which is why the build has to
+	// change.
+	UpgradeRestart = "restart"
+)
 
 // KeysV2 declares where node identities come from (background 1.4/1.5,
 // algorithm steps 2-3 — gap G1's grammar side).
@@ -166,6 +316,122 @@ type GenesisV2 struct {
 	Set map[string]any `json:"set,omitempty"`
 	// Overlay deep-merges into the built genesis.
 	Overlay map[string]any `json:"overlay,omitempty"`
+	// Provides names what this genesis makes the network ABLE to do, for cases
+	// that gate on it.
+	//
+	// It belongs here because the genesis is what makes it true: seeding three
+	// accounts with Extra bits is what gives a network the account-extra
+	// capability, and shortening a governance expiry is what gives it
+	// short-expiry. A capability declared anywhere else would be a claim with
+	// nothing behind it.
+	//
+	// It is NOT the env's "capabilities" field, which says what a case REQUIRES
+	// — the two read alike and mean opposite things. Cases that wrote their
+	// capability there ended up requiring something no network offered and
+	// skipped forever.
+	Provides []string `json:"provides,omitempty"`
+	// HaltsAt is the block this genesis makes the network stop one short of,
+	// and 0 for a genesis that keeps producing.
+	//
+	// A network is gated ready by "is it advancing", and for a chain that is
+	// meant to stop that question has the wrong answer. Declaring an
+	// unsupported system-contract version is exactly such a chain: it seals up
+	// to the block before the fork, refuses that one, and the gate then waits
+	// out its whole budget and reports a correct network as unfit — the case
+	// could not start, which is not the same as failing.
+	//
+	// Saying it here makes standing at haltsAt-1 a ready network, the way a
+	// hardfork's handover block already does.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
+	// PerBinary is, per binary name (the keys "binaries" declares), what that
+	// binary's own genesis needs on top of the network's, in the same two forms
+	// the network's genesis takes.
+	//
+	// A network can run two builds that do not accept the same genesis. The
+	// nodes running a named binary initialize from the network's genesis merged
+	// with its entry here; every other node gets the network's unchanged.
+	PerBinary map[string]GenesisSideV2 `json:"perBinary,omitempty"`
+}
+
+// GenesisSideV2 is the extra one binary's genesis needs, in the same two forms
+// the network's genesis takes.
+type GenesisSideV2 struct {
+	// Set applies dot-path single values (e.g. "config.croissantBlock": 20).
+	Set map[string]any `json:"set,omitempty"`
+	// Overlay deep-merges into the built genesis.
+	Overlay map[string]any `json:"overlay,omitempty"`
+}
+
+// checkUpgrade refuses an upgrade declaration that contradicts itself or the
+// environment around it.
+//
+// Every refusal here is one the runtime would otherwise meet as something else:
+// a missing preset as a file-not-found, a misspelled side as a node running the
+// wrong build, an unbuilt style as a handoff that quietly did the other thing.
+func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
+	switch u.Style {
+	case "", UpgradeConcurrent, UpgradeRestart:
+	default:
+		return fmt.Errorf("dsl: case %s: unknown upgrade style %q (want %s or %s)", caseID, u.Style, UpgradeConcurrent, UpgradeRestart)
+	}
+	switch u.Carry {
+	case "", CarryGenesis, CarryConfig:
+	default:
+		return fmt.Errorf("dsl: case %s: unknown upgrade carry %q (want %s or %s)", caseID, u.Carry, CarryGenesis, CarryConfig)
+	}
+	// A preset describes a HANDOVER environment: which chain hands to which, at
+	// which fork, and how many nodes stand on each side. A restart has no such
+	// environment — one chain, one build at a time — so it says its fork and
+	// its block itself, and there is no preset with anything to add.
+	if u.Style == UpgradeRestart {
+		if u.Preset != "" || u.Profile != "" {
+			return fmt.Errorf("dsl: case %s: a %s hardfork names no preset — a preset describes a handover between two chains, and this is one chain crossing its own fork", caseID, UpgradeRestart)
+		}
+		if u.Fork == "" || u.At == nil {
+			return fmt.Errorf("dsl: case %s: a %s hardfork says which fork it crosses and at which block (\"fork\" and \"at\")", caseID, UpgradeRestart)
+		}
+	} else if u.Preset == "" && u.Profile == "" {
+		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\" or a \"profile\"", caseID)
+	}
+	if u.Preset != "" && u.Profile != "" {
+		return fmt.Errorf("dsl: case %s: upgrade names both a preset (%s) and a profile (%s) — name one", caseID, u.Preset, u.Profile)
+	}
+	// A hardfork says which build each node runs, and the node table is where it
+	// says it. Without one nothing decides which side of the fork a node is on,
+	// and the fork's own configuration is read out of the chain the post-fork
+	// nodes run — so there is nothing to build it from either.
+	if len(env.Topology) == 0 {
+		return fmt.Errorf("dsl: case %s: upgrade needs a node table (topology.nodes[]) saying which build each node runs", caseID)
+	}
+	// The template was the handoff composer's: it generated the pre-fork genesis
+	// by running the producer's binary against a template that binary ships.
+	// The ordinary path builds it from the chain plugin's own template, so a
+	// declaration naming one is describing a composer that no longer exists.
+	// Refused rather than ignored, because a case that names a template and
+	// gets another one is composing a network it did not ask for.
+	if u.Template != "" {
+		return fmt.Errorf("dsl: case %s: upgrade names a genesis template (%s), and the chain supplies its own — remove it", caseID, u.Template)
+	}
+	// The two sides, by the names the env's own binaries use.
+	from, to := u.From, u.To
+	if from == "" {
+		from = BinaryFrom
+	}
+	if to == "" {
+		to = BinaryTo
+	}
+	if from == to {
+		return fmt.Errorf("dsl: case %s: upgrade names %q on both sides of the fork", caseID, from)
+	}
+	for _, name := range []string{from, to} {
+		if env.Binaries[name].Binary == "" {
+			return fmt.Errorf("dsl: case %s: upgrade runs %q across the fork but binaries.%s is missing", caseID, name, name)
+		}
+	}
+	if len(env.Binaries) != 2 {
+		return fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", caseID, from, to)
+	}
+	return nil
 }
 
 // HooksV2 are the case hooks. Override hooks (gap G5) are deliberately not
@@ -266,11 +532,12 @@ func ParseEnv(raw []byte) (EnvV2, error) {
 //	                                             named fields overridden.
 //	"env": { …a full env object… }             — inline, no lookup.
 //
-// The override form is a shallow top-level merge: each field the case names
-// replaces that field of the canonical env whole (topology, hardforks, keys),
-// so a test declares only what differs. A case with an inline env (or a v1
-// spec) passes through untouched. lookup receives the env id and returns the
-// env file's bytes; the caller owns where env files live.
+// The override form is a deep merge: an object meets an object by key, a null
+// removes the key, and anything else replaces — so a case declares what differs
+// and keeps the rest of the shared env. See mergeEnv for why each rule is what
+// it is. A case with an inline env (or a v1 spec) passes through untouched.
+// lookup receives the env id and returns the env file's bytes; the caller owns
+// where env files live.
 func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if !IsV2(raw) {
 		return raw, nil
@@ -306,23 +573,19 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 			if err != nil {
 				return nil, err
 			}
-			var base map[string]json.RawMessage
-			if err := json.Unmarshal(baseRaw, &base); err != nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: %w", baseID, err)
+			base, err := objectOf(baseRaw, baseID)
+			if err != nil {
+				return nil, err
 			}
-			// JSON null unmarshals into a nil map without error, and the
-			// override loop below would then assign into it and panic. A null
-			// env is not an object either, so it fails the way the line above
-			// already promises.
-			if base == nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: it is null", baseID)
+			if _, chained := base["extends"]; chained {
+				return nil, fmt.Errorf("dsl: env %q extends another env; a shared env is the base, not a step in a chain", baseID)
 			}
-			// Shallow override: each field the case names replaces the base's.
-			delete(envObj, "extends")
-			for k, v := range envObj {
-				base[k] = v
+			over, err := objectOf(probe.Env, "the case's env")
+			if err != nil {
+				return nil, err
 			}
-			merged, err := json.Marshal(base)
+			delete(over, "extends")
+			merged, err := json.Marshal(mergeEnv(base, over))
 			if err != nil {
 				return nil, fmt.Errorf("dsl: merge env %q: %w", baseID, err)
 			}
@@ -330,6 +593,61 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 		}
 	}
 	return raw, nil // inline env object (or malformed — ParseV2 reports it)
+}
+
+// UseEnv rewrites a case so it runs on the env named envID, keeping whatever
+// the case itself overrode.
+//
+// It is how one case runs on more than one chain without being edited. A case
+// names its network, and that name is the last mainnet-specific thing left in
+// the common cases; replacing it at read time is what lets the same steps meet
+// a different chain.
+//
+// The two reference forms are rewritten; an inline env object is refused. An
+// inline object IS the case's declaration, and swapping it would discard what
+// the case asked for with no way to tell which parts mattered. Such a case is
+// converted to the extends form first, which says out loud what it keeps.
+//
+// A non-case document, or a case with no env, passes through untouched.
+func UseEnv(raw []byte, envID string) ([]byte, error) {
+	if envID == "" || !IsV2(raw) {
+		return raw, nil
+	}
+	var probe struct {
+		Kind string          `json:"kind"`
+		ID   string          `json:"id"`
+		Env  json.RawMessage `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil, fmt.Errorf("dsl: use env: %w", err)
+	}
+	if probe.Kind != KindCase || len(probe.Env) == 0 {
+		return raw, nil
+	}
+	var id string
+	if json.Unmarshal(probe.Env, &id) == nil && id != "" {
+		return replaceEnv(raw, mustQuote(envID))
+	}
+	over, err := objectOf(probe.Env, "the case's env")
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := over["extends"]; !ok {
+		return nil, fmt.Errorf("dsl: case %s declares its env inline, so it cannot be moved onto env %q — give it \"extends\" and keep only what differs", probe.ID, envID)
+	}
+	over["extends"] = envID
+	merged, err := json.Marshal(over)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: use env %q: %w", envID, err)
+	}
+	return replaceEnv(raw, merged)
+}
+
+// mustQuote renders a string as a JSON scalar. The input is an env id that has
+// already round-tripped through the resolver, so encoding cannot fail.
+func mustQuote(s string) []byte {
+	b, _ := json.Marshal(s)
+	return b
 }
 
 // resolveEnv looks up a canonical env by id, requiring a resolver.
@@ -376,6 +694,9 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if env.Chain == "" {
 		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
+	if err := checkAttach(c.ID, env); err != nil {
+		return Spec{}, err
+	}
 	// Timeout values are durations; reject an unparsable one here so a typo
 	// fails at parse time rather than being silently ignored at run time.
 	//
@@ -404,6 +725,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		Placement:        env.Target,
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
+		EnvAttach:        env.Attach,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the
@@ -426,26 +748,36 @@ func lowerCase(c CaseV2) (Spec, error) {
 	spec.Chain.ManifestPath = env.Manifest
 	spec.Chain.TemplatePath = env.GenesisTemplate
 
-	// Binaries: "default" is every node's binary; other keys are per-role.
-	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
-		spec.Chain.Binary = b
-	} else if len(env.Binaries) > 0 {
-		spec.Chain.Binaries = env.Binaries
+	// A definition names a binary; it does not place one. A path here is a
+	// fact about one machine, and a case that carries it runs nowhere else.
+	names := map[string]string{}
+	for key, ref := range env.Binaries {
+		if err := binaryRefIsAName(ref.Binary); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref.Binary, err)
+		}
+		names[key] = ref.Binary
+		if ref.Chain == "" {
+			continue
+		}
+		if spec.Chain.BinaryChains == nil {
+			spec.Chain.BinaryChains = map[string]string{}
+		}
+		spec.Chain.BinaryChains[key] = ref.Chain
 	}
 
-	// An upgrade names its two binaries by role, and nothing else: a default
-	// would mean every node runs one binary, which is not a handoff.
+	// Binaries: "default" is every node's binary; other keys are per-role.
+	if b, ok := names[BinaryDefault]; ok && len(names) == 1 {
+		spec.Chain.Binary = b
+	} else if len(names) > 0 {
+		spec.Chain.Binaries = names
+	}
+
+	// An upgrade names its two binaries by which side of the fork each seals,
+	// and nothing else: a default would mean every node runs one binary, which
+	// is not a handoff.
 	if u := env.Upgrade; u != nil {
-		if u.Profile == "" || u.Template == "" {
-			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
-		}
-		for _, role := range []string{BinaryBefore, BinaryAfter} {
-			if env.Binaries[role] == "" {
-				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
-			}
-		}
-		if len(env.Binaries) != 2 {
-			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryBefore, BinaryAfter)
+		if err := checkUpgrade(c.ID, u, env); err != nil {
+			return Spec{}, err
 		}
 		spec.EnvUpgrade = u
 	}
@@ -462,6 +794,25 @@ func lowerCase(c CaseV2) (Spec, error) {
 			}
 			if len(overlay) > 0 {
 				spec.Chain.GenesisOverlay = overlay
+			}
+			spec.Chain.GenesisProvides = g.Provides
+			spec.Chain.GenesisHaltsAt = g.HaltsAt
+			for name, side := range g.PerBinary {
+				if _, ok := env.Binaries[name]; !ok {
+					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)
+				}
+				one := map[string]any{}
+				maps.Copy(one, side.Overlay)
+				for path, v := range side.Set {
+					mergeDotPath(one, path, v)
+				}
+				if len(one) == 0 {
+					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary.%s says nothing — give it a set or an overlay, or drop it", c.ID, name)
+				}
+				if spec.Chain.GenesisPerBinary == nil {
+					spec.Chain.GenesisPerBinary = map[string]map[string]any{}
+				}
+				spec.Chain.GenesisPerBinary[name] = one
 			}
 		case "existing":
 			// A finished genesis is used verbatim, so set/overlay — which edit a
@@ -491,8 +842,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
-			if !launchScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", c.ID, scope)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
@@ -502,8 +853,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Config) > 0 {
 		spec.EnvConfig = map[string][]string{}
 		for scope, kvs := range env.Config {
-			if scope != "all" && !nodeScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be \"all\" or \"node<N>\"", c.ID, scope)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
@@ -544,7 +895,48 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if expects == 0 {
 		return Spec{}, fmt.Errorf("dsl: case %s verifies nothing — at least one expect statement is required", c.ID)
 	}
+	if err := checkCrossFork(c.ID, spec); err != nil {
+		return Spec{}, err
+	}
 	return spec, nil
+}
+
+// ActionCrossFork is the step that crosses the hardfork a network is composed
+// to cross.
+//
+// The name lives in the grammar because the grammar checks it and because the
+// composer reads a case's steps for it: a case that names the step crosses the
+// fork itself, and one that does not gets a network already past it. Three
+// places have to mean the same word, so there is one.
+const ActionCrossFork = "crossFork"
+
+// checkCrossFork holds a case to what it said about crossing the fork.
+//
+// A case that names the step on a network with no hardfork is refused. The step
+// would fail at run time with the same reason, but by then the network is up
+// and the case has usually done something first — and the likeliest cause is an
+// env that was meant to declare an upgrade and does not.
+//
+// Naming it twice is refused for the same kind of reason. The step is
+// idempotent, so the second one reports "already crossed" and the case passes
+// while reading as though it crossed twice.
+func checkCrossFork(caseID string, spec Spec) error {
+	crossings := 0
+	for _, st := range spec.Sequence {
+		if st.Do == ActionCrossFork {
+			crossings++
+		}
+	}
+	if crossings == 0 {
+		return nil
+	}
+	if spec.EnvUpgrade == nil {
+		return fmt.Errorf("dsl: case %s names the %s step, but its env declares no hardfork to cross — declare one under env.upgrade", caseID, ActionCrossFork)
+	}
+	if crossings > 1 {
+		return fmt.Errorf("dsl: case %s names the %s step %d times, and a network crosses its fork once", caseID, ActionCrossFork, crossings)
+	}
+	return nil
 }
 
 // expectAliases maps proposal-vocabulary source names onto registered
@@ -659,10 +1051,141 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 	return out, nil
 }
 
-// nodeScopeRE matches a per-node config scope key ("node1", "node12").
-var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
+// envDefaultRE matches the ${VAR:-default} form and captures the default, which
+// is the only part of an expansion this file can judge.
+var envDefaultRE = regexp.MustCompile(`^\$\{[A-Za-z_][A-Za-z0-9_]*:-(.*)\}$`)
 
-// launchScopeRE matches a launch scope key: "all", a role token, or "node<N>".
-// Launch is scoped more widely than config because a launch flag often applies
-// to a whole role (every producer mines), not just one node.
-var launchScopeRE = regexp.MustCompile(`^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$`)
+// binaryRefIsAName reports why a declared binary reference is not one.
+//
+// A definition says WHICH binary; a workspace-config says WHERE binaries live
+// on the target (dataRoot plus paths.binaries) and binaryAliases says which
+// file this environment calls that name. Writing the path in the definition
+// says both at once, in the document that is supposed to travel: five specs
+// carried /data/chainbench/bin/... and ran on one docker environment and
+// nowhere else, while the environment file beside them already produced the
+// same path from the name.
+//
+// An expansion is judged by its default, because that is the part the
+// definition wrote. ${GWBFT_BIN:-gwbft} is a name with a machine-local escape
+// hatch; ${GWBFT_BIN:-/opt/gwbft} is the path problem wearing a variable. A
+// bare $VAR names nothing this file can see, so it passes and placeBinary
+// judges what it expands to.
+func binaryRefIsAName(ref string) error {
+	if strings.TrimSpace(ref) == "" {
+		return errors.New("is empty — name the binary, or leave it out and let the chain name it")
+	}
+	lit := ref
+	if m := envDefaultRE.FindStringSubmatch(ref); m != nil {
+		lit = m[1]
+	} else if strings.Contains(ref, "$") {
+		return nil // an expansion with no default: only the machine knows
+	}
+	switch {
+	case strings.HasPrefix(lit, "~"):
+		return errors.New("starts at a home directory, which is a fact about one machine")
+	case strings.ContainsRune(lit, '/'):
+		return errors.New("is a path — name the binary, and let a workspace-config say where binaries live on the target")
+	}
+	return nil
+}
+
+// objectOf decodes a JSON object, naming what failed. A null decodes into a nil
+// map without error, and a caller that then assigns into it panics — so it is
+// refused here with the same words a non-object gets.
+func objectOf(raw []byte, what string) (map[string]any, error) {
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: %w", what, err)
+	}
+	if m == nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: it is null", what)
+	}
+	return m, nil
+}
+
+// mergeEnv lays a case's overrides over a shared env and returns the result.
+//
+// Three rules, and each exists because the alternative loses something the
+// author wrote:
+//
+//   - An object meets an object by KEY, recursively. Replacing the whole object
+//     was the old rule, and under it a case that wanted node2 to differ wrote
+//     config.node2 and silently dropped the shared env's "all" scope and every
+//     other node's — the case ran, and only the result was different.
+//   - null REMOVES the key. Deep merge alone can only add and overwrite, so
+//     there would be no way to switch off something the shared env turned on.
+//     That is not hypothetical: the commonest difference between the 205 inline
+//     envs and the shape they share is a capability list that is absent.
+//   - An array REPLACES. Unioning reads as generous and takes away the only way
+//     to drop an entry, which is the same hole as having no delete.
+//
+// The merged object is parsed strictly afterwards, so a key neither side should
+// have is refused there rather than checked twice here.
+func mergeEnv(base, over map[string]any) map[string]any {
+	for k, v := range over {
+		if v == nil {
+			delete(base, k)
+			continue
+		}
+		bo, baseIsObject := base[k].(map[string]any)
+		oo, overIsObject := v.(map[string]any)
+		if baseIsObject && overIsObject {
+			base[k] = mergeEnv(bo, oo)
+			continue
+		}
+		base[k] = v
+	}
+	return base
+}
+
+// checkAttach holds an attaching env to saying only what attaching needs.
+//
+// The two forms are exclusive on purpose. Every composition field describes a
+// network to build, and a declaration that both builds one and attaches to
+// another has not said which network its assertions are about — it would build
+// a network, run nothing against it, and report on a different one. That is the
+// kind of wrong answer that reads as a pass.
+//
+// "chain" stays required. The direction recorded for this work was to read the
+// chain's identity over RPC after attaching, and that is still right, but it
+// cannot be done first: a spec that names a contract ("govMinter") needs the
+// chain's table before the first call, and the table comes from the manifest.
+func checkAttach(caseID string, env EnvV2) error {
+	if env.Attach == nil {
+		return nil
+	}
+	if len(env.Attach.RPC) == 0 {
+		return fmt.Errorf("dsl: case %s: env.attach needs \"rpc\" (the endpoints of the network to run against)", caseID)
+	}
+	for i, u := range env.Attach.RPC {
+		if strings.TrimSpace(u) == "" {
+			return fmt.Errorf("dsl: case %s: env.attach.rpc[%d] is empty", caseID, i)
+		}
+	}
+	var composing []string
+	for name, set := range map[string]bool{
+		"binaries":        len(env.Binaries) > 0,
+		"keys":            env.Keys != nil,
+		"blueprint":       env.Blueprint != "",
+		"genesis":         env.Genesis != nil,
+		"topology":        len(env.Topology) > 0,
+		"hardforks":       len(env.Hardforks) > 0,
+		"launch":          len(env.Launch) > 0,
+		"config":          len(env.Config) > 0,
+		"accounts":        len(env.Accounts) > 0,
+		"upgrade":         env.Upgrade != nil,
+		"target":          env.Target != "",
+		"manifest":        env.Manifest != "",
+		"genesisTemplate": env.GenesisTemplate != "",
+	} {
+		if set {
+			composing = append(composing, name)
+		}
+	}
+	if len(composing) > 0 {
+		sort.Strings(composing)
+		return fmt.Errorf("dsl: case %s: env.attach runs against a network that is already up, so it cannot also compose one — drop %s",
+			caseID, strings.Join(composing, ", "))
+	}
+	return nil
+}

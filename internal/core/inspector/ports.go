@@ -73,7 +73,7 @@ func localBusy(host string, port int) bool {
 	return false
 }
 
-// Scan reports which of the given addresses already have a listener.
+// Ports reports which of the given addresses already have a listener.
 //
 // A successful connection is the evidence. Not being able to connect is not
 // reported as free-with-certainty and not reported as an error either: a

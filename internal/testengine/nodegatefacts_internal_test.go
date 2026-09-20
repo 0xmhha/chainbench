@@ -27,7 +27,7 @@ func TestFactsFromReport_FillsTheWantsTheClassifierChecks(t *testing.T) {
 			{Index: 4, OK: true, BlockNumber: 0, PeerCount: 0},
 		},
 	}
-	facts := factsFromReport(rep, ns)
+	facts := factsFromReport(rep, ns, forkGate{})
 	if len(facts) != 4 {
 		t.Fatalf("got %d facts, want 4", len(facts))
 	}
@@ -57,6 +57,7 @@ func TestFactsFromReport_ASingleNodeNetworkWantsNoPeer(t *testing.T) {
 	facts := factsFromReport(
 		health.Report{Producing: true, Nodes: []health.NodeInfo{{Index: 1, OK: true, BlockNumber: 5}}},
 		node.NodeSet{Nodes: []node.Node{{Index: 1, PID: 1}}},
+		forkGate{},
 	)
 	if len(facts) != 1 {
 		t.Fatalf("got %d facts, want 1", len(facts))
@@ -76,6 +77,7 @@ func TestFactsFromReport_TheHeadIsTheMaximumNotTheFirst(t *testing.T) {
 			{Index: 2, OK: true, BlockNumber: 41},
 		}},
 		node.NodeSet{Nodes: []node.Node{{Index: 1, PID: 1}, {Index: 2, PID: 2}}},
+		forkGate{},
 	)
 	for _, f := range facts {
 		if f.WantHeight != 41 {
@@ -107,7 +109,7 @@ func TestFactsFromReport_ACheckedDisagreementIsAFork(t *testing.T) {
 		"unchecked beats the agreed flag": {health.Agreement{Checked: false, Agreed: false}, false},
 	} {
 		t.Run(name, func(t *testing.T) {
-			facts := factsFromReport(health.Report{Producing: true, Agreement: tc.agree, Nodes: nodes}, ns)
+			facts := factsFromReport(health.Report{Producing: true, Agreement: tc.agree, Nodes: nodes}, ns, forkGate{})
 			for _, f := range facts {
 				if f.Forked != tc.want {
 					t.Errorf("node%d: Forked = %v, want %v", f.Node, f.Forked, tc.want)

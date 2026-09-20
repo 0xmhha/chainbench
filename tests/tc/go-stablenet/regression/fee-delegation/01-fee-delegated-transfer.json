@@ -3,27 +3,11 @@
   "kind": "case",
   "id": "fee-delegated-transfer",
   "description": "RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "fee-delegated-transfer-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {
@@ -65,6 +49,20 @@
       "value": "10000000000000000000"
     },
     {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundFeeHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "do": "sendTx",
       "feePayerKey": "$feePayerKey",
       "key": "$senderKey",
@@ -72,6 +70,20 @@
       "save": "hash",
       "to": "0x00000000000000000000000000000000C0FFEE02",
       "value": "1000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "expect": "txStatus",

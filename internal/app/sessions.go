@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -68,6 +69,13 @@ func GCSessions(_ context.Context, d Deps, in GCSessionsIn) (GCSessionsOut, erro
 			return GCSessionsOut{Removed: removed}, fmt.Errorf("app: session gc: remove %s: %w", id, err)
 		}
 		removed = append(removed, id)
+		// A run sits under the directory of the process that produced it.
+		// Removing the last run of a finished process leaves that directory
+		// empty, and a root slowly filling with empty directories is the mess
+		// the gc exists to prevent.
+		if dir := filepath.Dir(id); dir != "." {
+			_ = os.Remove(session.SessionDir(in.Root, dir))
+		}
 	}
 	return GCSessionsOut{Removed: removed}, nil
 }

@@ -3,28 +3,12 @@
   "kind": "case",
   "id": "ws-subscribe-new-heads",
   "description": "RT-A-4-06 — eth_subscribe(newHeads) WebSocket 구독 (원본 regression/ethereum/31-test-ws-subscribe-heads)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
     "ws"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "ws-subscribe-new-heads-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "ws"

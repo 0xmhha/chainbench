@@ -20,7 +20,7 @@ import (
 func TestTOML_MetricsBindsWhereTheHarnessCanReachIt(t *testing.T) {
 	toml := string(TOML(Spec{
 		Chain: Chain{RPCNamespace: "istanbul"},
-		Role:  node.RoleValidator,
+		Role:  node.RoleBP,
 		Ports: node.Endpoints{P2P: 30301, HTTP: 8501, Metrics: 6061},
 	}))
 	for _, want := range []string{"[Metrics]", "Enabled = true", `HTTP = "0.0.0.0"`, "Port = 6061"} {
@@ -38,7 +38,7 @@ func TestTOML_MetricsBindsWhereTheHarnessCanReachIt(t *testing.T) {
 func TestTOML_MetricsHostNarrowsTheBind(t *testing.T) {
 	toml := string(TOML(Spec{
 		Chain:       Chain{RPCNamespace: "istanbul"},
-		Role:        node.RoleValidator,
+		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, Metrics: 6061},
 		MetricsHost: "127.0.0.1",
 	}))
@@ -53,8 +53,8 @@ func TestTOML_MetricsHostNarrowsTheBind(t *testing.T) {
 // and not after.
 func TestArgv_SaysMetricsOnTheCommandLine(t *testing.T) {
 	argv, err := Argv(Spec{
-		Chain:       Chain{ID: "stablenet", NetworkID: 8283},
-		Role:        node.RoleValidator,
+		Chain:       Chain{ID: "stablenet", Dialect: "geth114", NetworkID: 8283},
+		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Metrics: 6061},
 		DataDir:     "/data/node1",
 		NodekeyPath: "/data/node1/nodekey",
@@ -75,8 +75,8 @@ func TestArgv_SaysMetricsOnTheCommandLine(t *testing.T) {
 // allocated one must not get half the pair.
 func TestArgv_NoMetricsPortMeansNoMetricsFlags(t *testing.T) {
 	argv, err := Argv(Spec{
-		Chain:       Chain{ID: "stablenet", NetworkID: 8283},
-		Role:        node.RoleValidator,
+		Chain:       Chain{ID: "stablenet", Dialect: "geth114", NetworkID: 8283},
+		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501},
 		DataDir:     "/data/node1",
 		NodekeyPath: "/data/node1/nodekey",

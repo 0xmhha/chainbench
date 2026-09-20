@@ -6,25 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "basic-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4-en1",
   "steps": [
     {
       "do": "waitBlock",
@@ -39,7 +21,7 @@
     {
       "do": "sendTx",
       "on": "node1",
-      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "from": "node1",
       "to": "$r",
       "value": "1",
       "expect": "receipt"

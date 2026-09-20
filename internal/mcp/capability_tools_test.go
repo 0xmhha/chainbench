@@ -9,8 +9,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
-// serverWithCaps builds a Default server; features/all is imported above so the
-// capability tools are registered.
+// TestCapabilityToolsGenerated builds a Default server and checks the
+// capability tools are exposed; features/all is imported above so they register.
 func TestCapabilityToolsGenerated(t *testing.T) {
 	s := mcp.Default("chainbench", "test")
 

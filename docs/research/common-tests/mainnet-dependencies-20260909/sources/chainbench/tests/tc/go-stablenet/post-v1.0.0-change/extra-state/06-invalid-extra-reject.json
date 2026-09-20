@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "invalid-extra-reject",
+  "description": "TC-4-5-09 — 미정의 Extra 비트를 가진 genesis 를 받은 노드는 부팅에 실패한다",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "invalid-extra-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "NotEqual",
+      "is": null
+    },
+    {
+      "do": "swapNode",
+      "on": "en1",
+      "purpose": "invalid-extra",
+      "genesisOverlay": {
+        "alloc": {
+          "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {
+            "balance": "0xDE0B6B3A7640000",
+            "extra": "0x0000000000000001"
+          }
+        }
+      },
+      "expect": "fail",
+      "save": "rejectEvidence"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "en1",
+      "save": "victimLog"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    }
+  ]
+}

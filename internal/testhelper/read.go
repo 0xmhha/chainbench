@@ -244,7 +244,11 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if !ok {
 		return fmt.Errorf("dsl: waitFor: unknown comparator %q", op)
 	}
-	expected := ac.Args["expected"]
+	// From the resolved copy, not from ac.Args. Resolving and then reading the
+	// original is the shape that made "to": "govMinter" work in an assertion and
+	// die in sendTx — the work is done and thrown away.
+	expected := args["expected"]
+	written := ac.Args["expected"] // see ComparedAsWritten
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -258,7 +262,11 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	for {
 		if v, rerr := read(ctx, c, args); rerr == nil {
 			lastActual, lastErr = v, nil
-			if pass, _ := cmp(v, expected); pass {
+			want := expected
+			if ComparedAsWritten(v) {
+				want = written
+			}
+			if pass, _ := cmp(v, want); pass {
 				ac.Value = v
 				return nil
 			}
@@ -354,7 +362,20 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}
-	expected := ac.Spec["expected"]
+	// Once, before the loop. resolveAddressArgs does not modify its input, so
+	// the per-target call inside the loop was resolving the same spec again and
+	// — because "expected" was read from ac.Spec — leaving the compared value
+	// unresolved however many times it ran.
+	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	if rerr != nil {
+		res.Pass, res.Actual = false, rerr.Error()
+		return res, rerr
+	}
+	expected := spec["expected"]
+	// The name the spec wrote, kept beside the resolved form: a comparison value
+	// is only an account when the chain answers with an address. See
+	// ComparedAsWritten.
+	written := ac.Spec["expected"]
 	res.Expected = expected
 
 	targets := assertTargets(ac)
@@ -373,18 +394,17 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
-		spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
-		if rerr != nil {
-			res.Pass, res.Actual = false, rerr.Error()
-			return res, rerr
-		}
 		actual, err := a.read(ctx, c, spec)
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
 		actuals[tgt.name] = actual
-		if pass, detail := fn(actual, expected); !pass {
+		want := expected
+		if ComparedAsWritten(actual) {
+			want, res.Expected = written, written
+		}
+		if pass, detail := fn(actual, want); !pass {
 			res.Pass = false
 			if detail == "" {
 				detail = "mismatch"

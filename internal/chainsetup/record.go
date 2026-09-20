@@ -125,12 +125,27 @@ func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin strin
 	// what ran; a record that quietly lacks the genesis looks complete and is
 	// not, and finding that out later costs more than the note costs here.
 	var missing []string
-	if w.state.GenesisPath == "" {
+	paths := w.genesisPaths()
+	if len(paths) == 0 {
 		missing = append(missing, "genesis (no genesis step has run)")
-	} else if g, err := t.Files.Read(ctx, w.state.GenesisPath); err != nil {
-		missing = append(missing, fmt.Sprintf("genesis (%s): %v", w.state.GenesisPath, err))
-	} else if werr := files.Write(ctx, filepath.Join(dir, "genesis.json"), g, 0o644); werr != nil {
-		return "", fmt.Errorf("chainsetup: record: %w", werr)
+	}
+	// Every document, because a network can run two binaries that do not accept
+	// the same one, and a record holding only the first answers for half the
+	// nodes. The network's keeps the name a reader expects; the rest are named
+	// for the file they came from.
+	for i, p := range paths {
+		name := "genesis.json"
+		if i > 0 {
+			name = "genesis-" + filepath.Base(p)
+		}
+		g, err := t.Files.Read(ctx, p)
+		if err != nil {
+			missing = append(missing, fmt.Sprintf("genesis (%s): %v", p, err))
+			continue
+		}
+		if werr := files.Write(ctx, filepath.Join(dir, name), g, 0o644); werr != nil {
+			return "", fmt.Errorf("chainsetup: record: %w", werr)
+		}
 	}
 
 	// Each node's config, from the machine that node runs on. A run record

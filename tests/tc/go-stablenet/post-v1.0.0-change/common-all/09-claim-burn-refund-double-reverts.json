@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "claim-burn-refund-double-reverts",
   "description": "TC-1-1-07 — claimBurnRefund 중복 호출 revert 검증 (원본 post-v1.0.0-change/common-all/09-test-claim-refund-double-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "claim-burn-refund-double-reverts-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4-boho",
     "capabilities": [
       "rpc"
     ]
@@ -36,7 +21,7 @@
       "gas": "0xb71b0",
       "on": "node2",
       "save": "burnHash",
-      "to": "0x0000000000000000000000000000000000001003",
+      "to": "govMinter",
       "value": "0xde0b6b3a7640000"
     },
     {
@@ -64,7 +49,7 @@
       "gas": "0xb71b0",
       "on": "node2",
       "save": "cancelHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "data": "0x936834b9",
@@ -73,7 +58,7 @@
       "gas": "0xb71b0",
       "on": "node2",
       "save": "claim1Hash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "data": "0x936834b9",
@@ -83,7 +68,7 @@
       "gas": "0xb71b0",
       "on": "node2",
       "save": "claim2Hash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",

@@ -2,6 +2,7 @@ package dsl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -209,7 +210,7 @@ func TestGenesisExistingMode(t *testing.T) {
 	}
 }
 
-// TestInlineEnv_Extends pins S6's override form: a case extends a canonical env
+// TestInlineEnv_NonObjectBaseIsAnError pins S6's override form: a case extends a canonical env
 // and names only what differs. The named fields replace the canonical env's
 // whole; everything else is inherited.
 // TestInlineEnv_NonObjectBaseIsAnError: a referenced env that is not an object
@@ -258,6 +259,8 @@ func TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused(t *testing.T) {
 	}
 }
 
+// TestInlineEnv_Extends pins S6's override form on the merge rule that replaced
+// the shallow one: a case names what differs and inherits the rest, key by key.
 func TestInlineEnv_Extends(t *testing.T) {
 	canonical := `{"schemaVersion":"2","kind":"env","id":"stablenet-15","chain":"stablenet",
 		"binaries":{"default":"gstable"},"topology":{"bp":"max","pn":1,"en":1}}`
@@ -282,13 +285,31 @@ func TestInlineEnv_Extends(t *testing.T) {
 	if s.Chain.Name != "stablenet" {
 		t.Fatalf("chain not inherited: %+v", s.Chain)
 	}
-	// Overridden whole: the case's topology replaces the canonical "max" form.
+	// Merged by key: the case's bp replaces the shared env's "max" form, and
+	// what the case did not name stays. A case that wanted no proxy tier used
+	// to get it by naming the whole field; it says so now.
 	bp, ok := s.Topology["bp"]
 	if !ok || bp != float64(3) {
 		t.Fatalf("topology.bp = %v, want the overriding 3", s.Topology["bp"])
 	}
+	if pn, hasPN := s.Topology["pn"]; !hasPN || pn != float64(1) {
+		t.Fatalf("topology.pn = %v, want the shared env's 1 to survive: %v", s.Topology["pn"], s.Topology)
+	}
+
+	// And the way to drop it.
+	dropped := `{"schemaVersion":"2","kind":"case","id":"c1",
+		"env":{"extends":"stablenet-15","topology":{"bp":3,"pn":null}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	out, err = InlineEnv([]byte(dropped), func(string) ([]byte, error) { return []byte(canonical), nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err = Parse(out)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, hasPN := s.Topology["pn"]; hasPN {
-		t.Fatalf("topology should be replaced whole, not merged: %v", s.Topology)
+		t.Fatalf("a null must remove the key: %v", s.Topology)
 	}
 
 	// extends with a non-string id is rejected.
@@ -536,30 +557,31 @@ func sortedKeys(m map[string]bool) []string {
 	return out
 }
 
-// TestV2_UpgradeEnvNamesItsBinariesByRole: a handoff declaration carries
-// through to the executable spec, and one that leaves a role out is refused
-// rather than composed as a single-binary network.
-func TestV2_UpgradeEnvNamesItsBinariesByRole(t *testing.T) {
+// TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork: a hardfork declaration
+// carries through to the executable spec, and one that leaves a side out is
+// refused rather than composed as a single-binary network.
+func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
+	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
 	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
 	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"gwbft"},
-	  "upgrade":{"profile":"p.yaml","template":"t.json"}},
+	  "binaries":{"from":"gwemix","to":"gwbft"}` + table + `,
+	  "upgrade":{"profile":"p.yaml"}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" || s.EnvUpgrade.Template != "t.json" {
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
-	if s.Chain.Binaries[BinaryBefore] != "gwemix" || s.Chain.Binaries[BinaryAfter] != "gwbft" || s.Chain.Binary != "" {
+	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
 		t.Fatalf("binaries = %v / %q", s.Chain.Binaries, s.Chain.Binary)
 	}
 
 	bad := map[string]string{
-		"missing validator":    `"binaries":{"producer":"gwemix"},"upgrade":{"profile":"p","template":"t"}`,
-		"default with upgrade": `"binaries":{"producer":"gwemix","validator":"gwbft","default":"x"},"upgrade":{"profile":"p","template":"t"}`,
-		"no template":          `"binaries":{"producer":"gwemix","validator":"gwbft"},"upgrade":{"profile":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"profile":"p"}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"profile":"p"}`,
+		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"profile":"p"}`,
 	}
 	for name, env := range bad {
 		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},
@@ -652,6 +674,311 @@ func TestSchemaV2StatementOnEachIsArray(t *testing.T) {
 		}
 		if oe["type"] != "array" {
 			t.Errorf("%s.onEach type = %v, want array (the parser reads []any)", name, oe["type"])
+		}
+	}
+}
+
+// TestV2_BinaryReferenceMustBeAName is the rule that keeps a definition
+// portable.
+//
+// Five specs carried /data/chainbench/bin/... and ran on one docker environment
+// and nowhere else, while the environment file passed on the same command line
+// already produced that exact path from the binary's name. A definition says
+// WHICH binary; a workspace-config says WHERE binaries live.
+func TestV2_BinaryReferenceMustBeAName(t *testing.T) {
+	caseWith := func(binaries string) []byte {
+		return []byte(`{"schemaVersion":"2","kind":"case","id":"b","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		  "binaries":` + binaries + `,"topology":{"bp":4}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
+	}
+
+	for _, ok := range []string{
+		`{"default":"gstable"}`,
+		`{"default":"${GSTABLE_BIN:-gstable}"}`, // a name with a machine-local escape hatch
+		`{"default":"$GSTABLE_BIN"}`,            // only the machine knows; placeBinary judges it
+		`{"default":"${GSTABLE_BIN}"}`,          // same
+		`{"default":"gstable-2.1.0"}`,           // a version in the name is still a name
+	} {
+		if _, err := Parse(caseWith(ok)); err != nil {
+			t.Errorf("binaries %s must parse: %v", ok, err)
+		}
+	}
+
+	for _, bad := range []struct{ binaries, why string }{
+		{`{"default":"/data/chainbench/bin/gstable"}`, "an absolute path"},
+		{`{"default":"build/gstable"}`, "a relative path"},
+		{`{"default":"~/bin/gstable"}`, "a home directory"},
+		{`{"default":"${GSTABLE_BIN:-/opt/gstable}"}`, "a path wearing a variable"},
+		{`{"default":""}`, "empty"},
+	} {
+		_, err := Parse(caseWith(bad.binaries))
+		if err == nil {
+			t.Errorf("binaries %s (%s) must be refused", bad.binaries, bad.why)
+			continue
+		}
+		// The refusal has to say where the path belongs instead, or the author
+		// has nowhere to put it.
+		if bad.binaries != `{"default":""}` && !strings.Contains(err.Error(), "workspace-config") &&
+			!strings.Contains(err.Error(), "machine") {
+			t.Errorf("binaries %s: error %q says nothing about where a path belongs", bad.binaries, err)
+		}
+	}
+}
+
+// mergeCase builds a case whose env extends "base" with the given override.
+func mergeCase(override string) []byte {
+	return []byte(`{"schemaVersion":"2","kind":"case","id":"m","env":` + override + `,
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
+}
+
+// sharedEnv is the shape a case extends in these tests: two scopes of config
+// and a capability list, which is where the old shallow rule lost things.
+const sharedEnv = `{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet",
+  "topology":{"bp":4,"en":1},
+  "config":{"all":{"metricsHost":"0.0.0.0"},"node1":{"syncMode":"archive"}},
+  "capabilities":["rpc","consensus"]}`
+
+func lookupShared(id string) ([]byte, error) {
+	if id != "base" {
+		return nil, errors.New("no such env")
+	}
+	return []byte(sharedEnv), nil
+}
+
+// TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName is the defect the rule
+// change exists to remove.
+//
+// The override used to replace a whole field. A case that wanted one node to
+// differ wrote config.node2, and the shared env's "all" scope and node1's went
+// with it — the case ran, and only the result was different.
+func TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","config":{"node2":{"syncMode":"snap"}}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env struct {
+			Config   map[string]map[string]any `json:"config"`
+			Topology map[string]any            `json:"topology"`
+		} `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	for _, scope := range []string{"all", "node1", "node2"} {
+		if _, ok := got.Env.Config[scope]; !ok {
+			t.Errorf("config scope %q was dropped: %v", scope, got.Env.Config)
+		}
+	}
+	if got.Env.Config["node2"]["syncMode"] != "snap" {
+		t.Errorf("the case's own value did not land: %v", got.Env.Config["node2"])
+	}
+	// A field the case did not mention is untouched.
+	if got.Env.Topology["bp"] != float64(4) {
+		t.Errorf("topology = %v, want the shared env's", got.Env.Topology)
+	}
+}
+
+// TestInlineEnv_NullRemoves: deep merge alone can only add and overwrite, so
+// without this there is no way to switch off what the shared env turned on. The
+// commonest difference among the inline envs is exactly an absent capability
+// list.
+func TestInlineEnv_NullRemoves(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":null,"config":{"node1":null}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env map[string]any `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if _, present := got.Env["capabilities"]; present {
+		t.Errorf("capabilities survived a null: %v", got.Env)
+	}
+	cfg, _ := got.Env["config"].(map[string]any)
+	if _, present := cfg["node1"]; present {
+		t.Errorf("config.node1 survived a null: %v", cfg)
+	}
+	if _, present := cfg["all"]; !present {
+		t.Errorf("removing one scope took another with it: %v", cfg)
+	}
+}
+
+// TestInlineEnv_ArraysReplace: unioning reads as generous and takes away the
+// only way to drop an entry, which is the same hole as having no delete.
+func TestInlineEnv_ArraysReplace(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":["rpc"]}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env struct {
+			Capabilities []string `json:"capabilities"`
+		} `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Env.Capabilities) != 1 || got.Env.Capabilities[0] != "rpc" {
+		t.Errorf("capabilities = %v, want the case's list alone", got.Env.Capabilities)
+	}
+}
+
+// TestInlineEnv_RefusesAChainOfExtends: a shared env is the base, not a step in
+// a chain. Following one would make "what does this case actually declare"
+// answerable only by reading a sequence of files, which is the thing the shared
+// env exists to avoid.
+func TestInlineEnv_RefusesAChainOfExtends(t *testing.T) {
+	chained := func(string) ([]byte, error) {
+		return []byte(`{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet","extends":"other"}`), nil
+	}
+	if _, err := InlineEnv(mergeCase(`{"extends":"base"}`), chained); err == nil {
+		t.Error("an env that extends another must be refused")
+	}
+}
+
+// TestInlineEnv_MergedResultIsStillParsedStrictly: the merge does not check for
+// keys neither side should have, because the parse that follows does. A typo
+// that survives the merge has to fail there.
+func TestInlineEnv_MergedResultIsStillParsedStrictly(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","toplogy":{"bp":9}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	if _, err := Parse(raw); err == nil {
+		t.Error("a misspelled field must be refused by the parse")
+	}
+}
+
+// TestV2_UpgradeSaysWhichFileCarriesTheFork.
+//
+// A hardfork reaches the post-fork build either through a second genesis
+// document or through that build's own config file. Both are real: a chain team
+// ships one or the other, and a case that pins which one is testing what they
+// will actually do. Empty means the genesis, which is what every declaration
+// written before this meant.
+func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
+	spec := func(carry string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+		  "binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
+		  "upgrade":{"profile":"p.yaml"` + carry + `}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	for _, want := range []string{"", CarryGenesis, CarryConfig} {
+		field := ""
+		if want != "" {
+			field = `,"carry":"` + want + `"`
+		}
+		s, err := Parse([]byte(spec(field)))
+		if err != nil {
+			t.Fatalf("carry %q: %v", want, err)
+		}
+		if s.EnvUpgrade.Carry != want {
+			t.Errorf("carry = %q, want %q", s.EnvUpgrade.Carry, want)
+		}
+	}
+	// Refused by name rather than accepted and quietly carried the default way,
+	// which would run a different hardfork from the one the case asked for.
+	if _, err := Parse([]byte(spec(`,"carry":"sidecar"`))); err == nil {
+		t.Error("an unknown carry was accepted")
+	}
+}
+
+// TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross.
+//
+// Naming the step is how a case says the moment is its own: it acts before the
+// fork and crosses when it is ready. On a network that crosses no fork the step
+// has nothing to do, and finding that out at run time means finding it out
+// after the network is up and the case has already acted.
+func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
+	spec := func(env, steps string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft"` + env + `},
+		  "steps":[` + steps + `]}`
+	}
+	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
+	  "upgrade":{"profile":"p.yaml"}`
+	cross := `{"do":"crossFork","timeout":"120s"}`
+	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
+
+	if _, err := Parse([]byte(spec(fork, cross+","+check))); err != nil {
+		t.Fatalf("a case crossing its own declared fork was refused: %v", err)
+	}
+	if _, err := Parse([]byte(spec("", cross+","+check))); err == nil {
+		t.Error("a case crossed a fork its env never declared")
+	}
+	// Twice reads as though the network crossed twice. The step is idempotent,
+	// so the second would report "already crossed" and the case would pass
+	// while saying something that did not happen.
+	if _, err := Parse([]byte(spec(fork, cross+","+cross+","+check))); err == nil {
+		t.Error("a case crossed the same fork twice")
+	}
+	// And a case that says nothing is untouched: the composition crosses.
+	if _, err := Parse([]byte(spec(fork, check))); err != nil {
+		t.Fatalf("a case that leaves the fork to the composition was refused: %v", err)
+	}
+}
+
+// TestV2_AHardforkNeedsANodeTableAndNoTemplate.
+//
+// A hardfork says which build each node runs, and the node table is the only
+// place that says it. It used to be optional: an upgrade env without one went
+// to a composer of its own, which sized the network from its preset and
+// generated the pre-fork genesis by running the producer's binary against a
+// template the case named. That composer is gone, so both of those are now
+// errors rather than a path.
+func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
+	spec := func(env string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+		  "binaries":{"default":"gwemix","to":{"binary":"gwbft","chain":"wbft"}}` + env + `},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
+	upgrade := `,"upgrade":{"preset":"wemix-upgrade","from":"default"}`
+
+	if _, err := Parse([]byte(spec(table + upgrade))); err != nil {
+		t.Fatalf("a hardfork with a node table was refused: %v", err)
+	}
+	if _, err := Parse([]byte(spec(upgrade))); err == nil {
+		t.Error("a hardfork with no node table was accepted")
+	}
+	withTemplate := `,"upgrade":{"preset":"wemix-upgrade","from":"default","template":"t.json"}`
+	if _, err := Parse([]byte(spec(table + withTemplate))); err == nil {
+		t.Error("a hardfork naming a genesis template was accepted")
+	}
+}
+
+// TestV2_ARestartSaysItsForkItselfAndNamesNoPreset.
+//
+// A preset describes a HANDOVER environment: which chain hands to which, at
+// which fork, and how many nodes stand on each side. A restart has no such
+// environment — one chain, one build at a time — so it says its own fork and
+// block, and a preset would have nothing to add.
+func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
+	spec := func(upgrade string) string {
+		return `{"schemaVersion":"2","kind":"case","id":"r","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		  "binaries":{"default":"gstable","postfork":"gstable-next"},
+		  "topology":{"nodes":[{"index":1,"role":"bp"},{"index":2,"role":"bp"}]},
+		  "upgrade":{"style":"restart","from":"default","to":"postfork"` + upgrade + `}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	}
+	if _, err := Parse([]byte(spec(`,"fork":"boho","at":200`))); err != nil {
+		t.Fatalf("a restart naming its own fork was refused: %v", err)
+	}
+	for name, u := range map[string]string{
+		"no fork":     `,"at":200`,
+		"no block":    `,"fork":"boho"`,
+		"nothing":     ``,
+		"with preset": `,"fork":"boho","at":200,"preset":"wemix-upgrade"`,
+	} {
+		if _, err := Parse([]byte(spec(u))); err == nil {
+			t.Errorf("%s: accepted", name)
 		}
 	}
 }

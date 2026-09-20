@@ -3,27 +3,13 @@
   "kind": "case",
   "id": "mint-transfer-event",
   "description": "RT-F-1-04 — Mint 실행 시 Transfer(0x0 → beneficiary) 이벤트 발생 (원본 regression/system-contracts/04-test-mint-transfer-event)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "mint-transfer-event-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -52,7 +38,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -79,7 +65,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -107,7 +93,7 @@
       "is": "$want"
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$apBlk",

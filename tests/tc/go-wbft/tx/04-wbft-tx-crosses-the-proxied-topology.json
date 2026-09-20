@@ -2,30 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "wbft-tx-crosses-the-proxied-topology",
-  "description": "A transaction submitted at the EDGE of a 15-node proxied network must reach the producers and come back as state every node agrees on. The 15-node specs only brought a chain up and the tx specs only ran on four mesh-peered nodes, so nothing checked that a tx crosses en -> pn -> bp at scale (WA25 depth). The sender is an account this harness holds a key for, because a node can only sign for keys it has: asking en1 to send from the faucet fails with \"unknown account\", which is about the keystore and not the topology. The waitFor between the two sends is not padding -- the edge is two hops from the producers and does not have the funding block the moment bp1 reports its receipt, so sending immediately fails with balance 0.",
+  "description": "A transaction submitted at the EDGE of the standard 15-node proxied network must reach the producers and come back as state every node agrees on. The chain-up specs only bring such a network up and the other tx specs run on four mesh-peered nodes, so nothing else checks that a tx crosses the pn in both directions: in to the producers that seal it, out to the endpoint that reads the result.",
   "requires": [
     "rpc",
     "consensus"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wbft-docker15-tx",
-    "chain": "wbft",
-    "binaries": {
-      "default": "/data/chainbench/bin/gwbft"
-    },
-    "topology": {
-      "bp": 13,
-      "pn": 1,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "generate"
-      }
-    }
-  },
+  "env": "wbft-bp7-en7-pn1",
   "steps": [
     {
       "do": "waitBlock",

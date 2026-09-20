@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newAccountCmd is the account group — the ON-CHAIN side of an account: its
+// New is the account group — the ON-CHAIN side of an account: its
 // balance and nonce (state), and funding it from the faucet. Key material —
 // creating, importing, listing, exporting keys — lives under `keyring`, one
 // group for every kind of key; the generation/import verbs this group used to

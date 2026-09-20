@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "claim-zero-refund-reverts",
   "description": "TC-1-1-06 — refundableBalance 0 계정 claimBurnRefund revert 검증 (원본 post-v1.0.0-change/common-all/08-test-claim-refund-zero-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "claim-zero-refund-reverts-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -44,6 +29,20 @@
       "value": "100000000000000000000"
     },
     {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "data": "0x936834b9",
       "do": "sendTx",
       "expect": "revert",
@@ -51,7 +50,7 @@
       "key": "$acctKey",
       "on": "en1",
       "save": "claimHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",

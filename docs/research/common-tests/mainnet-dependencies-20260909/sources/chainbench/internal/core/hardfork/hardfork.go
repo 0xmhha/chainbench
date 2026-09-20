@@ -1,0 +1,136 @@
+// Package hardfork plans a binary-SWAP upgrade: the same node data directories
+// are stopped and re-run with a different binary that activates a fork at a
+// given block. This fits a homogeneous fork where every node upgrades in place
+// and the consensus engine is unchanged across the fork.
+//
+// It does NOT fit a consensus-family handoff such as go-wemix+etcd (poa) ->
+// go-wbft (bft), where the two binaries must run CONCURRENTLY with disjoint
+// roles (producers mine up to the fork; separately-launched validators sync the
+// pre-fork chain and take over after it). That verified model lives in
+// pkg/consensus/upgrade (BuildPlan/Launch); use it for engine-changing handoffs.
+package hardfork
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/registry"
+)
+
+// NodeSwap is one node's binary swap, keeping its data directory. It carries
+// enough to stop the running node (PID) and relaunch it on the new binary
+// (datadir/config/ports/role).
+type NodeSwap struct {
+	Index      int
+	Role       node.Role
+	DataDir    string
+	ConfigPath string
+	LogPath    string
+	Ports      node.Endpoints
+	PID        int
+	FromBinary string
+	ToBinary   string
+}
+
+// Plan is a full hardfork upgrade description.
+// SwapPlan is which nodes to stop and relaunch on a different binary, and at
+// which block the fork activates.
+//
+// Named SwapPlan rather than Plan because upgrade.Plan is a different thing and
+// the shared word said otherwise (A7, A7b). This one acts on a network that is
+// already composed: the genesis is untouched, the data directories are kept,
+// and each node comes back on a new executable. upgrade.Plan builds a genesis
+// and composes a network from scratch, running two binaries at once.
+type SwapPlan struct {
+	FromChain  string
+	ToChain    string
+	FromBinary string
+	ToBinary   string
+	Block      int64
+	Swaps      []NodeSwap
+}
+
+// PlanSwap builds the swap from a running from-chain NodeSet to a target chain,
+// activating at block. dataRoot locates each node's datadir
+// (dataRoot/node<index>), which is preserved across the swap.
+func PlanSwap(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (SwapPlan, error) {
+	if len(ns.Nodes) == 0 {
+		return SwapPlan{}, fmt.Errorf("hardfork: empty node set")
+	}
+	if block < 0 {
+		return SwapPlan{}, fmt.Errorf("hardfork: negative block %d", block)
+	}
+	fromBin := from.Manifest().Binary
+	toBin := to.Manifest().Binary
+	// Note: from and to may share a manifest binary name — a same-chain version
+	// swap (e.g. a pre-fork gstable -> a post-fork gstable) is a valid hardfork.
+	// What must differ is the actual binary the nodes are relaunched on; the CLI
+	// enforces that (a same-chain swap requires an explicit --to-binary path).
+
+	swaps := make([]NodeSwap, 0, len(ns.Nodes))
+	for _, n := range ns.Nodes {
+		swaps = append(swaps, NodeSwap{
+			Index:      n.Index,
+			Role:       n.Role,
+			DataDir:    filepath.Join(dataRoot, fmt.Sprintf("node%d", n.Index)),
+			ConfigPath: filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", n.Index)),
+			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", n.Index)),
+			Ports:      n.Ports,
+			PID:        n.PID,
+			FromBinary: fromBin,
+			ToBinary:   toBin,
+		})
+	}
+	return SwapPlan{
+		FromChain:  from.Manifest().ID,
+		ToChain:    to.Manifest().ID,
+		FromBinary: fromBin,
+		ToBinary:   toBin,
+		Block:      block,
+		Swaps:      swaps,
+	}, nil
+}
+
+// Execute performs the upgrade: it stops each running node (by PID) and
+// relaunches it on binary (the resolved to-chain binary) over the same data
+// directory, reusing the node's ORIGINAL launch spec (from setup's
+// nodespecs.json) and swapping only the binary. It continues the same chain
+// data — no re-init — so the fork activates at the plan's block. It returns the
+// new NodeSet (with new PIDs and the to-chain id).
+//
+// Reusing the original spec is load-bearing: those args carry the node's
+// validator identity (--nodekey, --unlock, keystore dir) and its static-nodes
+// peering. A homogeneous fork keeps that identity; regenerating generic start
+// flags would drop it and the relaunched node would rejoin WBFT consensus as an
+// unauthorized address, halting block production.
+func (p SwapPlan) Execute(ctx context.Context, d process.Driver, specs []process.NodeSpec, binary string) (node.NodeSet, error) {
+	byIndex := make(map[int]process.NodeSpec, len(specs))
+	for _, s := range specs {
+		byIndex[s.Index] = s
+	}
+	ns := node.NodeSet{Chain: p.ToChain, Network: "local"}
+	for _, s := range p.Swaps {
+		if s.PID > 0 {
+			// Best-effort stop; a node that already exited is fine.
+			_ = d.Stop(ctx, process.Handle{Index: s.Index, PID: s.PID})
+		}
+		orig, ok := byIndex[s.Index]
+		if !ok {
+			return ns, fmt.Errorf("hardfork: no saved spec for node%d; run setup so nodespecs.json exists", s.Index)
+		}
+		orig.Binary = binary // swap the binary; keep identity/config/peering args
+		h, err := d.Launch(ctx, orig)
+		if err != nil {
+			return ns, fmt.Errorf("hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
+		}
+		// The saved spec is the node: its host, ports and role come from it
+		// rather than being re-typed here, where a loopback literal used to
+		// be — a remote node relaunched on a fork would have reported the
+		// wrong address.
+		ns.Nodes = append(ns.Nodes, process.NodeOf(orig, h.PID))
+	}
+	return ns, nil
+}

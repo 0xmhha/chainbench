@@ -1,0 +1,65 @@
+[
+  {
+    "file": "internal/chains/wemix/genesis.json",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "d1f3671727d8bade63e67ae50eeaf3f89f904d60e41a6604470f08f3e806d993",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/chains/wemix/genesis.json"
+  },
+  {
+    "file": "internal/chains/wemix/wemix.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "4439838e6533811868abc2b60e657d047746d18fecd99fabf9d057f5b42e9ecf",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/chains/wemix/wemix.go"
+  },
+  {
+    "file": "internal/testengine/capability.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "222712a7966915423b4ed8ade595f2d4c6761634bee78d97ee4ed1e210b3fd1f",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/testengine/capability.go"
+  },
+  {
+    "file": "internal/testengine/validate.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "ac0a601b251e860b5216fdb6c715d726782da6c50f3e308c08d6dd8aca10a6fb",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/testengine/validate.go"
+  },
+  {
+    "file": "internal/testhelper/builtins.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "2bcfff8646f283860186768816775b4aabf10fab674332350924e22449a2db24",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/testhelper/builtins.go"
+  },
+  {
+    "file": "internal/testhelper/txprobe.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "6e503f1b9c33b06bffb56847a479e75914f11e32149afe7708a38be9c3ae937f",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/testhelper/txprobe.go"
+  },
+  {
+    "file": "internal/accounts/tamper.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "f8fa3db2fd7e85a776b12335d2305a67c32b109685a345617ca1864d9a7c794f",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/accounts/tamper.go"
+  },
+  {
+    "file": "internal/accounts/wallet.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "0d1b4bd406f43343fca63c97e8f51244ef850841922eb030808a8b1e63c695e4",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/accounts/wallet.go"
+  },
+  {
+    "file": "internal/chains/all/all_test.go",
+    "captured_at": "2026-09-09T05:06:04.992132+00:00",
+    "sha256": "0ce83c0259861f65710103c82122cff51186dd2c8669fc3a9dd7ea48446656a0",
+    "source_kind": "current_worktree_read_not_original_snapshot",
+    "original_path": "/Users/wm-it-25_0220/Work/github/chainbench/internal/chains/all/all_test.go"
+  }
+]

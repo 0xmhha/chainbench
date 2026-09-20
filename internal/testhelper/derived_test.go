@@ -254,7 +254,7 @@ func envWithWS(t *testing.T, host string, wsPort int) session.Environment {
 		t.Fatalf("NewEnvironment: %v", err)
 	}
 	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, Host: host, Ports: node.Endpoints{WS: wsPort}},
+		{Index: 1, Role: node.RoleBP, Host: host, Ports: node.Endpoints{WS: wsPort}},
 	}})
 	return env
 }

@@ -6,26 +6,14 @@
   "requires": [
     "rpc",
     "consensus",
-    "process"
+    "process",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "unsupported-version-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
+      "haltsAt": 6,
       "overlay": {
         "config": {
           "bohoBlock": 6,

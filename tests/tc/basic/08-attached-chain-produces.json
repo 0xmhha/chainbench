@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "attached-chain-produces",
+  "description": "이미 떠 있는 망에 선언만으로 붙어서 블록이 나오는지 본다. 명령행에 망을 가리키는 플래그가 하나도 없고, env.attach 가 그 자리를 대신한다.",
+  "requires": ["rpc", "consensus"],
+  "env": "stablenet-attached",
+  "steps": [
+    { "do": "read", "source": "blockNumber", "save": "before" },
+    { "do": "waitFor", "source": "blockNumber", "compare": "Greater", "expected": "$before", "timeout": "60s", "pollInterval": "1s" },
+    { "expect": "blockNumber", "compare": "Greater", "is": "$before" },
+    { "expect": "balanceAt", "address": "node1", "compare": "Greater", "is": "0" }
+  ]
+}

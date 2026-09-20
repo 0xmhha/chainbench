@@ -2,27 +2,11 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fee-delegated-unfunded-feepayer-rejected",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "fee-delegated-unfunded-feepayer-rejected-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {
@@ -53,6 +37,20 @@
       "save": "fundHash",
       "to": "$sender",
       "value": "10000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "do": "sendTx",

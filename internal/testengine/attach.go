@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -64,6 +65,17 @@ type AttachConfig struct {
 	Caps []string
 	// Clock supplies the session start time; nil uses time.Now.
 	Clock func() time.Time
+	// Session, when non-nil, is the artifact session this run writes into,
+	// already created by the caller. The engine then records into it instead of
+	// opening one of its own.
+	//
+	// It exists because a run can fail before the engine starts. Composing the
+	// network comes first, and a network that will not come up used to leave
+	// nothing behind at all: the session was created by the engine, the engine
+	// had not run, so there was no test folder for the evidence and no verdict
+	// saying the test was blocked. The caller creates the session up front and
+	// hands it in, and the failure has somewhere to be recorded.
+	Session session.Session
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
 	// disables emission.
 	Bus *collector.Bus
@@ -163,11 +175,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 	run := NewRunSpec(interp.Deps{
-		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions:  testhelper.Registry(),
-		Accounts: accts,
-		Keys:     keys,
-		Nodes:    cfg.Control,
+		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions:   testhelper.Registry(),
+		Accounts:  accts,
+		Keys:      keys,
+		Nodes:     cfg.Control,
+		Contracts: chainContracts(cfg.Chain),
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
@@ -187,6 +200,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	return New(Deps{
 		Command: engineCommand,
 		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
+			// The caller's session wins: it is the one already holding whatever
+			// was recorded before the engine started.
+			if cfg.Session != nil {
+				return cfg.Session, nil
+			}
 			// Attach owns no node identities, but a spec may still generate keys
 			// mid-run, so the session gets a keyring rooted in its own keys/
 			// directory rather than nothing.
@@ -271,4 +289,20 @@ func loadEntries(ring *store.KeySet, dir string) error {
 		}
 	}
 	return nil
+}
+
+// chainContracts is the named-contract table for a chain, or nil when there is
+// none to be had.
+//
+// A missing table is not an error here. The chain may deploy its contracts at
+// run time and so declare none, or the run may be attached to something this
+// build does not know. Either way a spec that names a contract fails where it
+// names it, saying what the chain declares, rather than here where the message
+// would be about wiring.
+func chainContracts(chain string) map[string]string {
+	p, err := registry.Get(chain)
+	if err != nil {
+		return nil
+	}
+	return p.Manifest().SystemContracts
 }

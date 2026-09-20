@@ -1,7 +1,5 @@
 package node
 
-import "encoding/json"
-
 // Record is what is known about one composed node — the fact record the
 // composition writes and every later step reads. One node has exactly one
 // Record; everything else that speaks about a node is either a view derived
@@ -12,7 +10,7 @@ import "encoding/json"
 // It exists because the same facts used to live in ten types across seven
 // packages, none holding all of them, and the copies drifted — the etcd port
 // vanished between the plan and the running network twice. The JSON tags are
-// the workspace.json contract: changing one is a migration, not a rename.
+// the chain-record.json contract: changing one is a migration, not a rename.
 type Record struct {
 	Index int `json:"index"`
 	// Label is the node's identity: the name its datadir, config and log file
@@ -78,25 +76,4 @@ func (r Record) NodeLabel() Label {
 		return Label(r.Label)
 	}
 	return LabelFor(r.Index)
-}
-
-// UnmarshalJSON folds Role onto the canonical vocabulary as the record is read,
-// the same way [Node.UnmarshalJSON] does for the hand-off object.
-//
-// Both boundaries are needed because a workspace keeps two tables: Record is
-// what the composition persists in workspace.json, Node is what the phases pass
-// around. A fold on only one of them would leave a workspace written before NM6
-// reporting "validator" in `chain status` and "bp" everywhere else, which is
-// how one vocabulary becomes two.
-func (r *Record) UnmarshalJSON(b []byte) error {
-	type raw Record // shed the method, or this recurses
-	var v raw
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	*r = Record(v)
-	if canonical, err := NormalizeRole(r.Role); err == nil {
-		r.Role = string(canonical)
-	}
-	return nil
 }

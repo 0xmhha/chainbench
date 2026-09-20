@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -48,7 +49,7 @@ func TestWorkspace_DockerWithoutLocalmapRefusesLoudly(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 	// A minimal node table so Health reaches the address resolution.
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 1}); err != nil {
 		t.Fatalf("Allocate: %v", err)
 	}
 	_, err = ws.Health(context.Background())
@@ -76,7 +77,7 @@ func TestNodeSet_MetricsURLIsTranslatedLikeTheRPCURL(t *testing.T) {
 	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 1}); err != nil {
 		t.Fatalf("Allocate: %v", err)
 	}
 	ns := ws.NodeSet()
@@ -103,5 +104,50 @@ func TestNodeSet_MetricsURLIsTranslatedLikeTheRPCURL(t *testing.T) {
 	}
 	if n.RPCURL == n.MetricsURL {
 		t.Errorf("the metrics endpoint must not be the RPC one: %s", n.MetricsURL)
+	}
+}
+
+// TestNodeSet_WSURLIsTranslatedLikeTheRPCURL is the metrics test's twin, for
+// the endpoint that was still composing Host+Ports by hand.
+//
+// Measured 2026-09-19 on the docker fleet: ws-subscribe-new-heads dialled
+// ws://172.30.0.11:8701 — the container's own address — and timed out, while
+// every HTTP dial in the same run reached the published loopback port. The
+// composition records the reachable form now, so a subscription asks for it
+// instead of building one.
+func TestNodeSet_WSURLIsTranslatedLikeTheRPCURL(t *testing.T) {
+	dir := t.TempDir()
+	ws, err := chainsetup.Open(dir, fixedClock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 1}); err != nil {
+		t.Fatalf("Allocate: %v", err)
+	}
+	ns := ws.NodeSet()
+	if len(ns.Nodes) != 1 {
+		t.Fatalf("got %d nodes", len(ns.Nodes))
+	}
+	n := ns.Nodes[0]
+	if n.Ports.WS == 0 {
+		t.Fatal("placement assigned no ws port, so there is nothing to reach")
+	}
+	if n.WSURL == "" {
+		t.Fatal("the composition recorded no ws endpoint; a subscription would have to build one from Host+Ports, which is the bug")
+	}
+	// Without docker the translation is identity, so the recorded value is the
+	// node's own address — which is exactly what makes the docker case the one
+	// that can differ, and the reason it must come from the opener either way.
+	if want := fmt.Sprintf("ws://%s:%d", n.Host, n.Ports.WS); n.WSURL != want {
+		t.Errorf("WSURL = %q, want %q", n.WSURL, want)
+	}
+	if !strings.HasPrefix(n.WSURL, "ws://") {
+		t.Errorf("WSURL is not a WebSocket URL: %q", n.WSURL)
+	}
+	if n.WSURL == n.RPCURL {
+		t.Errorf("the ws endpoint must not be the RPC one: %s", n.WSURL)
 	}
 }

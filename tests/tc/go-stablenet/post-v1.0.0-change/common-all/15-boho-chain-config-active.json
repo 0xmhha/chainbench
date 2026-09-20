@@ -2,26 +2,27 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "boho-chain-config-active",
-  "description": "TC-4-1-01 — Boho hardfork chain config verification (원본 post-v1.0.0-change/common-all/15-test-chain-config-boho)",
-  "applicableChains": "stablenet",
+  "description": "TC-4-1-01 — Boho 가 genesis 부터 켜진 망은 블록 1 에 이미 v2 GovMinter 를 들고 있다. v2 전용 함수 refundableBalance(0xb03d36cd) 가 답하는지로 가른다 — v1 에는 그 함수가 없어 이 호출이 실패한다. 형제 케이스들(01-delayed-fork·02-govminter-v2-code·16-anzeon-active-before-boho)은 전부 *지연된* 포크를 건너는 쪽을 보므로, genesis 활성은 여기서만 확인된다. (원본 post-v1.0.0-change/common-all/15-test-chain-config-boho)",
   "requires": [
-    "rpc"
+    "rpc",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "boho-chain-config-active-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
+    "extends": "stablenet-bp4",
+    "genesis": {
+      "overlay": {
+        "config": {
+          "bohoBlock": 0,
+          "boho": {
+            "systemContracts": {
+              "govMinter": {
+                "address": "0x0000000000000000000000000000000000001003",
+                "version": "v2"
+              }
+            }
+          }
+        }
       }
     },
     "capabilities": [
@@ -30,18 +31,49 @@
   },
   "steps": [
     {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xb03d36cd",
+      "of": [
+        "node1"
+      ],
+      "save": "refBalCall"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "0x0000000000000000000000000000000000001003",
+          "data": "$refBalCall"
+        },
+        "0x1"
+      ],
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "to": "0x0000000000000000000000000000000000001003",
+          "data": "$refBalCall"
+        },
+        "latest"
+      ],
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
       "compare": "Greater",
       "expect": "blockNumber",
-      "is": "0"
-    },
-    {
-      "compare": "Greater",
-      "expect": "chainId",
-      "is": "0"
-    },
-    {
-      "compare": "Greater",
-      "expect": "baseFee",
       "is": "0"
     }
   ]

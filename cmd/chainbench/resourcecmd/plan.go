@@ -14,7 +14,7 @@ import (
 // and tested — without composing a network.
 func newPlanCmd() *cobra.Command {
 	var chain string
-	var validators, endpoints int
+	var bpCount, enCount int
 	var asJSON bool
 	var sf ServerFlags
 	cmd := &cobra.Command{
@@ -27,7 +27,7 @@ func newPlanCmd() *cobra.Command {
 			"Nothing is written: no workspace, no files on any server.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out, err := app.NetPlan(cmd.Context(), surface.Deps(cmd), app.NetPlanIn{
-				Chain: chain, Validators: validators, Endpoints: endpoints, Server: sf.Ref(),
+				Chain: chain, BPCount: bpCount, ENCount: enCount, Server: sf.Ref(),
 			})
 			if err != nil {
 				return err
@@ -40,8 +40,8 @@ func newPlanCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "stablenet", "chain id (stablenet|wbft|wemix) — sets the family's per-node port reservation")
-	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
-	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "bp (block-producing) node count")
+	cmd.Flags().IntVar(&enCount, "en", 0, "en (endpoint, non-producing) node count")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the plan as JSON")
 	sf.Bind(cmd)
 	return surface.ReadOnly(cmd)

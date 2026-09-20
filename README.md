@@ -26,16 +26,28 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 >
 > **NEVER use any key, keystore, or address that appears in this repository — in
 > `keys/preset/`, in profiles, in manifests, or in tests — on any production,
-> mainnet, testnet, staging, or shared network.** They are for disposable, local
-> throwaway networks ONLY. Any funds or authority assigned to them are
-> unrecoverable and controllable by anyone.
+> mainnet, testnet, staging, or shared network. Not to hold value, not to seal a
+> block, not to sign anything, not once, not "just to try it".** They are for
+> disposable, local throwaway networks ONLY. Anyone who can read this repository
+> can sign as any of them, so any funds or authority given to one is already
+> gone, and no rotation afterwards undoes what was signed in the meantime.
 >
-> This includes **plaintext private keys written inline in test source** (the
-> genesis-funded faucet key is the upstream go-ethereum test key, already public
-> in every geth fork). A secret scanner run over this repository **will report
-> findings, and those findings are expected** — every one of them is a fixture,
-> and the fixtures are public by design so local runs stay reproducible. Treat a
-> finding as real only if it is outside `keys/preset/` and outside test code.
+> This covers every key in the tree, whatever produced it:
+>
+> - the node identities under `keys/preset/node{1..5}/`, generated once and
+>   committed so a local network comes up with the same validators every time;
+> - the dev accounts under `keys/preset/dev1/`, which the harness mints on the
+>   first run that asks for one and reads back afterwards so a label keeps naming
+>   one address;
+> - **plaintext private keys written inline in test source** — the genesis-funded
+>   faucet key is the upstream go-ethereum test key, already public in every geth
+>   fork.
+>
+> A secret scanner reports nothing on this repository, and that is a decision,
+> not an accident: [`.betterleaks.toml`](.betterleaks.toml) allowlists exactly
+> these paths and leaves every rule of the default set on. **Treat a finding as
+> real if it is outside `keys/preset/` and outside test code** — the allowlist is
+> not to be widened to quiet one.
 >
 > See [`keys/preset/README.md`](keys/preset/README.md) and
 > [`docs/SECURITY_KEY_HANDLING.md`](docs/SECURITY_KEY_HANDLING.md).
@@ -172,13 +184,13 @@ profile** as the single source of truth.
 
 ```bash
 chainbench upgrade run \
-  --profile profiles/wemix-upgrade.yaml \
+  --profile presets/hardfork/wemix-upgrade.yaml \
   --from-binary /path/to/gwemix \
   --to-binary   /path/to/gwbft \
   --wait 60
 ```
 
-See [`profiles/wemix-upgrade.yaml`](profiles/wemix-upgrade.yaml) for the encoded
+See [`presets/hardfork/wemix-upgrade.yaml`](presets/hardfork/wemix-upgrade.yaml) for the encoded
 conditions (uniform network id, disjoint producers/validators, BFT quorum,
 paired fork sections). `upgrade genesis` builds just the merged handoff genesis.
 
@@ -291,7 +303,8 @@ chainbench/
 │   ├── mcp/              # MCP tool handlers (through the app layer)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
 │   └── testkit/          # test-case framework (Case / T / Report)
-├── profiles/             # network + golden upgrade profiles (YAML)
+├── profiles/             # remote-chain connection profiles (YAML)
+├── presets/hardfork/     # hardfork presets: fork block, roles, binaries (YAML)
 ├── keys/preset/          # preset validator keys (TEST FIXTURE ONLY)
 ├── tests/                # Go test cases (tests/all) + repro scripts (tests/repro)
 └── web/                  # dashboard SPA source (Svelte + Vite)

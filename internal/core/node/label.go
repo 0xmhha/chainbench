@@ -54,8 +54,8 @@ func RoleLabel(role Role, ord int) Label {
 	return Label(string(role) + strconv.Itoa(ord))
 }
 
-// ParseRoleLabel splits a role-scoped alias into its canonical role and 1-based
-// ordinal. Legacy spellings fold like everywhere else ("validator1" is bp 1).
+// ParseRoleLabel splits a role-scoped alias into its role and 1-based ordinal:
+// "en2" is en 2. The role part is the vocabulary and nothing else.
 //
 // An indexed identity label ("node7") is not a role alias: "node" is not a
 // role, so it returns an error here and is resolved through Index instead.

@@ -1,0 +1,114 @@
+package interp
+
+import (
+	"sort"
+
+	"github.com/0xmhha/chainbench/internal/dsl"
+)
+
+// Unresolved returns the references a spec makes that nothing satisfies:
+// action and assertion names not registered in reg (prefixed "action:" /
+// "assert:"), read sources that name no reader (prefixed "source:"), and
+// binding references no earlier step saved (prefixed "ref:"). Results are
+// sorted and de-duplicated.
+//
+// A spec names its steps, assertions, and saved values by string, so every one
+// of these would otherwise fail only at run time — against a live chain, after a
+// network has been brought up. Unresolved surfaces them offline instead, which
+// is what `chainbench validate` reports.
+//
+// Binding references are checked in execution order (pre-actions, then steps,
+// then assertions, then post-actions), so a reference to a value saved *later*
+// is reported too — the interpreter would not have it bound yet.
+func Unresolved(s dsl.Spec, reg Registry) []string {
+	seen := map[string]bool{}
+	bound := map[string]bool{}
+
+	// checkAction validates one action entry and records what it saves.
+	checkAction := func(entry map[string]any) {
+		name := dsl.ActionName(entry)
+		if name == "" {
+			seen["action:(empty)"] = true
+			return
+		}
+		if _, ok := reg.Action(name); !ok {
+			seen["action:"+name] = true
+		}
+		args := dsl.ArgsOf(entry[name])
+		checkRefs(args, bound, seen)
+		// read and waitFor both name their source by string, so an unknown or
+		// missing one would only surface once a network is up. Catch it here with
+		// the rest.
+		if name == ActionRead || name == ActionWaitFor {
+			source, _ := args["source"].(string)
+			if source == "" {
+				seen["source:(missing)"] = true
+			} else if _, ok := reg.Reader(source); !ok {
+				seen["source:"+source] = true
+			}
+		}
+		if save := saveName(args); save != "" {
+			bound[save] = true
+		}
+		// newAccount binds a second name (the generated private key) via "saveKey".
+		if sk, _ := args["saveKey"].(string); sk != "" {
+			bound[sk] = true
+		}
+	}
+
+	for _, a := range s.PreActions {
+		checkAction(a)
+	}
+	if len(s.Sequence) > 0 {
+		// v2: do steps and expect statements are one interleaved sequence. Walk
+		// it in order so a value a do step saves is bound before a later expect
+		// statement references it — the v1 two-pass split below binds nothing
+		// from a step for the assertions, and would miss that cross-reference.
+		for _, st := range s.Sequence {
+			if st.Do != "" {
+				checkAction(dsl.StatementStep(st))
+				continue
+			}
+			if st.Expect == "" {
+				seen["assert:(missing)"] = true
+			} else if _, ok := reg.Assertion(st.Expect); !ok {
+				seen["assert:"+st.Expect] = true
+			}
+			checkRefs(dsl.StatementAssertion(st), bound, seen)
+		}
+	} else {
+		// v1: separate step and assertion lists — steps run first, then
+		// assertions.
+		for _, st := range s.Steps {
+			checkAction(st)
+		}
+		for _, as := range s.Assertions {
+			name, _ := as["assert"].(string)
+			if name == "" {
+				seen["assert:(missing)"] = true
+			} else if _, ok := reg.Assertion(name); !ok {
+				seen["assert:"+name] = true
+			}
+			checkRefs(as, bound, seen)
+		}
+	}
+	for _, po := range s.PostActions {
+		checkAction(po)
+	}
+
+	out := make([]string, 0, len(seen))
+	for name := range seen {
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// checkRefs records every binding reference in v that is not yet bound.
+func checkRefs(v any, bound, seen map[string]bool) {
+	for _, name := range refNames(v) {
+		if !bound[name] {
+			seen["ref:"+name] = true
+		}
+	}
+}

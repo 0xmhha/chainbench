@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "proposal-expiry-transitions",
+  "description": "RT-F-3-06 — proposal expiry 초과 → Expired 상태 전환 → execute 불가 (원본 regression/system-contracts/11-test-proposal-expiry)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "short-expiry"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "proposal-expiry-transitions-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "short-expiry"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "30000000000001"
+      ],
+      "op": "abiCall",
+      "save": "propData",
+      "selector": "0xeeaf6816",
+      "source": "derive"
+    },
+    {
+      "data": "$propData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "propHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "hash": "$propHash",
+      "save": "pid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "@latest",
+        false
+      ],
+      "save": "t0",
+      "select": "timestamp",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$t0",
+        "40"
+      ],
+      "op": "sum",
+      "save": "expiryTarget",
+      "source": "derive"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "$expiryTarget",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "@latest",
+        false
+      ],
+      "pollInterval": "2s",
+      "select": "timestamp",
+      "source": "rpcCall",
+      "timeout": "90s"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$pid"
+      ],
+      "op": "abiCall",
+      "save": "expData",
+      "selector": "0xe1b526b0",
+      "source": "derive"
+    },
+    {
+      "data": "$expData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "expHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$pid"
+      ],
+      "op": "abiCall",
+      "save": "proposalsCall",
+      "selector": "0x013cf08b",
+      "source": "derive"
+    },
+    {
+      "data": "$proposalsCall",
+      "do": "read",
+      "save": "proposalsRet",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$propHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$expHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 9,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "of": [
+        "$proposalsRet"
+      ],
+      "op": "word"
+    }
+  ]
+}

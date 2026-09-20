@@ -22,7 +22,7 @@ func showWorkspace(t *testing.T) string {
 	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2, Endpoints: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{BPCount: 2, ENCount: 1}); err != nil {
 		t.Fatal(err)
 	}
 	if err := ws.Save(); err != nil {

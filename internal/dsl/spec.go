@@ -11,11 +11,33 @@ import (
 // test. A single Binary applies to all nodes; Binaries maps roles to binaries
 // for mixed (handoff) environments.
 type ChainSpec struct {
-	Name           string            `json:"name"`
-	Binary         string            `json:"binary,omitempty"`
-	Binaries       map[string]string `json:"binaries,omitempty"`
+	Name     string            `json:"name"`
+	Binary   string            `json:"binary,omitempty"`
+	Binaries map[string]string `json:"binaries,omitempty"`
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the one Name says. A network running two builds of two different chains
+	// needs it: the chain is what supplies each node's flag vocabulary, its RPC
+	// namespace and what its consensus asks of a launch.
+	BinaryChains   map[string]string `json:"binaryChains,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// GenesisProvides is what the genesis makes the network able to do, which
+	// the composed network advertises so a case gating on it runs.
+	GenesisProvides []string `json:"genesisProvides,omitempty"`
+	// GenesisHaltsAt is the block this genesis makes the network stop one short
+	// of, so the readiness gate reads a chain that is meant to stop as ready
+	// rather than waiting out its budget. 0 means it keeps producing.
+	GenesisHaltsAt int64 `json:"genesisHaltsAt,omitempty"`
+	// GenesisPerBinary is, per binary name, what that binary's own genesis
+	// needs on top of the network's. The nodes running it initialize from the
+	// network's genesis merged with this; every other node gets the network's
+	// unchanged.
+	//
+	// It exists because two builds in one network need not accept the same
+	// genesis — a handoff across a fork is the case — and which of them tolerates
+	// the other's settings is a fact about those builds, not one a composer can
+	// assume.
+	GenesisPerBinary map[string]map[string]any `json:"genesisPerBinary,omitempty"`
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"), instead of building one from a template.
 	GenesisExisting string `json:"genesisExisting,omitempty"`
@@ -63,6 +85,10 @@ type Spec struct {
 	// the network as a mixed-binary handoff. Nil is a single-binary network.
 	// Runtime-only.
 	EnvUpgrade *UpgradeV2 `json:"-"`
+	// EnvAttach is the v2 env's attach declaration: this case runs against a
+	// network that is already up, not one this run composes. Nil composes.
+	// Runtime-only.
+	EnvAttach *AttachV2 `json:"-"`
 	// EnvConfig are the v2 env.config knob overrides by scope ("all" /
 	// "node<N>"), each a list of dot-path "key=value". Runtime-only.
 	EnvConfig map[string][]string `json:"-"`

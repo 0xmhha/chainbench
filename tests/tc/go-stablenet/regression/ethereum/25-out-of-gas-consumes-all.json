@@ -3,27 +3,11 @@
   "kind": "case",
   "id": "out-of-gas-consumes-all",
   "description": "RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "out-of-gas-consumes-all-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

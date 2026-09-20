@@ -28,8 +28,8 @@ func envWithNodes(t *testing.T, nodes ...node.Node) session.Environment {
 
 func TestCollector_SnapshotFromProbe(t *testing.T) {
 	env := envWithNodes(t,
-		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
-		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
+		node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"},
+		node.Node{Index: 2, Role: node.RoleBP, RPCURL: "http://n2"},
 	)
 	states := map[string]collector.Sample{
 		"http://n1": {Height: 100, Peers: 3},
@@ -65,7 +65,7 @@ func TestCollector_SnapshotFromProbe(t *testing.T) {
 }
 
 func TestCollector_ProbeErrorIsSkipped(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://down"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://down"})
 	c := collector.New(collector.Deps{
 		Interval: 10 * time.Millisecond,
 		Probe: func(_ context.Context, _ string) (collector.Sample, error) {
@@ -82,7 +82,7 @@ func TestCollector_ProbeErrorIsSkipped(t *testing.T) {
 }
 
 func TestCollector_WaitLog(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 	// Write the node's log with a matching line.
 	if err := os.WriteFile(env.LogPath("node1"), []byte("boot\nblock reward 100 paid\ndone\n"), 0o644); err != nil {
 		t.Fatal(err)

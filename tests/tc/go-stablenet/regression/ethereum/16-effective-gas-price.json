@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "effective-gas-price",
   "description": "RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "effective-gas-price-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

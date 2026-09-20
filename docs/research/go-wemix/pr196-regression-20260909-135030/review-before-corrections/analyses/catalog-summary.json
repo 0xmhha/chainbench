@@ -1,0 +1,19 @@
+{
+  "document_rows": 74,
+  "json_cases": 189,
+  "all_source_records": 263,
+  "selected_source_records": 133,
+  "selected_status_counts": {
+    "applicable": 43,
+    "direct": 5,
+    "adapt": 78,
+    "conditional": 7
+  },
+  "selected_priority_counts": {
+    "P0": 4,
+    "P1": 82,
+    "P2": 42,
+    "P3": 5
+  },
+  "excluded_records": 130
+}

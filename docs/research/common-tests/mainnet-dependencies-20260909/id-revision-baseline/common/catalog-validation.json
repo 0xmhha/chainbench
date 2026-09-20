@@ -1,0 +1,54 @@
+{
+  "raw_document_rows": 74,
+  "raw_row_mismatches": [],
+  "source_records": 263,
+  "unique_ids": 263,
+  "json_source_records": 189,
+  "unique_code_references": 40,
+  "code_refs_missing_build_selection": [],
+  "runtime_tests_executed": false,
+  "selected_internal_files": 1983,
+  "release_profile_counts": {
+    "go-wemix": 630,
+    "go-wbft": 685,
+    "go-stablenet": 668
+  },
+  "build_selection_basis": "build/{project}-selected.json: actual Makefile tags, darwin-arm64-release; not untagged go list",
+  "helper_source_scope": "원본 테스트 189 JSON 및 문서74행은 이전 스냅샷과 동일. chainbench helper는 현재 dirty working tree에서 보존한 내용으로, 이전 helper snapshot과 동일하다고 주장하지 않는다.",
+  "counter_review_reclassified_ids": [
+    "TC-028",
+    "TC-029",
+    "TC-131",
+    "TC-128"
+  ],
+  "common_counts": {
+    "adapter-required": 96,
+    "chain-specific": 124,
+    "exact-config": 42,
+    "unknown": 1
+  },
+  "dependency_field_review": {
+    "method": "exact JSON keys + enclosing step context; no substring regex over full paths",
+    "records": 263,
+    "value_classes": [
+      "literal",
+      "binding",
+      "role",
+      "config-reference"
+    ],
+    "values_exported": false,
+    "capabilities_separate": true,
+    "checks": {
+      "TC-001_no_rpc_schema_or_description": [
+        "steps[1].on",
+        "steps[2].expect"
+      ],
+      "TC-028_no_send_to_contract": [],
+      "TC-128_basefee_expectation_traced": [
+        "steps[0].compare",
+        "steps[0].expect",
+        "steps[0].is"
+      ]
+    }
+  }
+}

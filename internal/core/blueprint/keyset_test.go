@@ -33,7 +33,7 @@ func rawNetwork(t *testing.T, roles ...node.Role) ResolvedNetwork {
 	return r
 }
 
-// TestKeySet_StandsUpWithoutAPreset is N3's premise.
+// TestPresetFrom_StandsUpWithoutAPreset is N3's premise.
 //
 // Before this, store.LoadPreset was the only way a keyring.Preset came into
 // being, so "the preset is optional" was untrue whatever the documents said. A
@@ -74,7 +74,7 @@ func TestPresetFrom_StandsUpWithoutAPreset(t *testing.T) {
 	}
 }
 
-// TestKeySet_IsDeterministic: the same document yields the same ring, which is
+// TestPresetFrom_IsDeterministic: the same document yields the same ring, which is
 // what lets a genesis built from it be rebuilt.
 func TestPresetFrom_IsDeterministic(t *testing.T) {
 	r := rawNetwork(t, node.RoleBP, node.RoleEN)
@@ -96,7 +96,7 @@ func TestPresetFrom_IsDeterministic(t *testing.T) {
 	}
 }
 
-// TestKeySet_DerivesBLSOnlyWhenAsked: BLS material costs real computation and
+// TestPresetFrom_DerivesBLSOnlyWhenAsked: BLS material costs real computation and
 // only wbft consumes it, so absence has to stay distinguishable from zeroes.
 func TestPresetFrom_DerivesBLSOnlyWhenAsked(t *testing.T) {
 	r := rawNetwork(t, node.RoleBP)
@@ -116,7 +116,7 @@ func TestPresetFrom_DerivesBLSOnlyWhenAsked(t *testing.T) {
 	}
 }
 
-// TestKeySet_ReadsAKeyNamedByPath covers the other spelling, including the
+// TestPresetFrom_ReadsAKeyNamedByPath covers the other spelling, including the
 // trailing newline geth writes. Trimming it is not leniency; it is the format.
 func TestPresetFrom_ReadsAKeyNamedByPath(t *testing.T) {
 	r, err := Resolve(
@@ -150,7 +150,7 @@ func TestPresetFrom_ReadsAKeyNamedByPath(t *testing.T) {
 	}
 }
 
-// TestKeySet_Refuses covers what must not become an empty identity: a node
+// TestPresetFrom_Refuses covers what must not become an empty identity: a node
 // launched with one joins nothing and reports nothing wrong.
 func TestPresetFrom_Refuses(t *testing.T) {
 	r := rawNetwork(t, node.RoleBP)
@@ -172,7 +172,7 @@ func TestPresetFrom_Refuses(t *testing.T) {
 	}
 }
 
-// TestKeySet_MatchesThePresetPath is the proof that the raw path is not a
+// TestPresetFrom_MatchesThePresetPath is the proof that the raw path is not a
 // second, slightly different way to build a network.
 //
 // It takes the committed preset's own nodekeys, writes them into a blueprint,

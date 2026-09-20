@@ -15,10 +15,10 @@ func TestNetworkTopologyTool(t *testing.T) {
 	ns := node.NodeSet{
 		Chain: "wbft", Network: "grid",
 		Nodes: []node.Node{
-			{Index: 1, Role: node.RoleValidator, RPCURL: up.URL},
-			{Index: 2, Role: node.RoleValidator, RPCURL: up.URL},
+			{Index: 1, Role: node.RoleBP, RPCURL: up.URL},
+			{Index: 2, Role: node.RoleBP, RPCURL: up.URL},
 			// unreachable endpoint -> reported down
-			{Index: 3, Role: node.RoleEndpoint, RPCURL: "http://127.0.0.1:1"},
+			{Index: 3, Role: node.RoleEN, RPCURL: "http://127.0.0.1:1"},
 		},
 	}
 	if err := session.SaveNetwork(dir, ns); err != nil {

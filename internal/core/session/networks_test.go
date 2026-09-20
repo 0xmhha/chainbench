@@ -12,7 +12,7 @@ func sampleNet(name string) node.NodeSet {
 	return node.NodeSet{
 		Chain: "wbft", Network: name,
 		Nodes: []node.Node{{
-			Index: 1, Role: node.RoleEndpoint, Host: "10.0.0.1",
+			Index: 1, Role: node.RoleEN, Host: "10.0.0.1",
 			RPCURL: "http://10.0.0.1:8545",
 			Auth:   map[string]any{"type": "api-key", "env": "K"},
 		}},

@@ -51,7 +51,7 @@ func newNetKeysCmd() *cobra.Command {
 			})
 			return out.Detail, err
 		})
-	cmd.Flags().StringVar(&source, "keys-source", "preset", "preset (use the recorded key set) | generate (create a fresh set)")
+	cmd.Flags().StringVar(&source, "keys-source", "keyPreset", "keyPreset (use the recorded key set) | generate (create a fresh set)")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
 	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().IntVar(&nodes, "nodes", 0, "identities the set must cover (default: the allocated node count)")
@@ -60,7 +60,7 @@ func newNetKeysCmd() *cobra.Command {
 }
 
 func newNetAllocateCmd() *cobra.Command {
-	var validators, endpoints, proxies int
+	var bpCount, enCount, pnCount int
 	var endpointSyncMode, topologyPath, peering string
 	var binaries []string
 	var sf resourcecmd.ServerFlags
@@ -71,17 +71,17 @@ func newNetAllocateCmd() *cobra.Command {
 				return "", err
 			}
 			out, err := app.NetAllocate(cmd.Context(), surface.Deps(cmd), app.NetAllocateIn{
-				DataDir: dataDir, Validators: validators, Endpoints: endpoints, Proxies: proxies,
+				DataDir: dataDir, BPCount: bpCount, ENCount: enCount, PNCount: pnCount,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Binaries: bins, Server: sf.Ref(),
 			})
 			return out.Detail, err
 		})
-	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
-	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
-	cmd.Flags().IntVar(&proxies, "proxies", 0, "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "bp (block-producing) node count")
+	cmd.Flags().IntVar(&enCount, "en", 0, "en (endpoint, non-producing) node count")
+	cmd.Flags().IntVar(&pnCount, "pn", 0, "pn (proxy-tier) node count; a family with no proxy tier refuses it")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
-	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --bp/--en/--pn")
 	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")
 	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
 	sf.Bind(cmd)

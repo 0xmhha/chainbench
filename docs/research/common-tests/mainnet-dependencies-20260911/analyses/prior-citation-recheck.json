@@ -1,0 +1,1242 @@
+[
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 19,
+  "project": "chainbench",
+  "path": "internal/dsl/spec_v2.go",
+  "line": 56,
+  "snippet": "SchemaVersion string ",
+  "status": "same",
+  "current_line": 56
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 20,
+  "project": "chainbench",
+  "path": "internal/dsl/spec_v2.go",
+  "line": 263,
+  "snippet": "// The override form is a shallow top-level merge: each field the case names",
+  "status": "moved",
+  "current_line": 268
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 21,
+  "project": "chainbench",
+  "path": "internal/dsl/files.go",
+  "line": 30,
+  "snippet": "b, err = InlineEnv(b, func(id string) ([]byte, error) {",
+  "status": "same",
+  "current_line": 30
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 22,
+  "project": "chainbench",
+  "path": "internal/testengine/compose.go",
+  "line": 88,
+  "snippet": "if in.Chain != \"\" && in.Chain != chain {",
+  "status": "moved",
+  "current_line": 93
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 32,
+  "project": "chainbench",
+  "path": "internal/testengine/capability.go",
+  "line": 17,
+  "snippet": "return func(s dsl.Spec) bool {",
+  "status": "same",
+  "current_line": 17
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 33,
+  "project": "chainbench",
+  "path": "internal/testengine/capability.go",
+  "line": 52,
+  "snippet": "func applicableWithCaps(chain string, provided []string) func(dsl.Spec) bool {",
+  "status": "same",
+  "current_line": 52
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 34,
+  "project": "chainbench",
+  "path": "internal/dsl/spec_v2.go",
+  "line": 386,
+  "snippet": "// The env's capabilities and the case's requires are both gating inputs, so",
+  "status": "moved",
+  "current_line": 398
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 35,
+  "project": "chainbench",
+  "path": "internal/testengine/attach.go",
+  "line": 201,
+  "snippet": "PreSpec:    cfg.PreSpec,",
+  "status": "same",
+  "current_line": 201
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 36,
+  "project": "chainbench",
+  "path": "internal/chains/wemix/manifest.json",
+  "line": 20,
+  "snippet": "\"probe\": { \"method\": \"wemix_getReward\" },",
+  "status": "same",
+  "current_line": 20
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 46,
+  "project": "chainbench",
+  "path": "internal/testhelper/account.go",
+  "line": 71,
+  "snippet": "func ResolveAccount(d *interp.Deps, ref string) (Account, error) {",
+  "status": "same",
+  "current_line": 71
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 47,
+  "project": "chainbench",
+  "path": "internal/testhelper/account.go",
+  "line": 82,
+  "snippet": "label := ref",
+  "status": "same",
+  "current_line": 82
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 48,
+  "project": "chainbench",
+  "path": "internal/testhelper/builtins.go",
+  "line": 177,
+  "snippet": "if sender.SignsLocally() {",
+  "status": "same",
+  "current_line": 177
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 49,
+  "project": "chainbench",
+  "path": "tests/tc/basic/05-basic-tx-send.json",
+  "line": 42,
+  "snippet": "주소 등 literal 필드 존재(값 생략)",
+  "status": "line-exists",
+  "current_line": 42
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 59,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 190,
+  "snippet": "func funder(ctx context.Context, c *rpc.Client, d *interp.Deps, args map[string]any) (string, error) {",
+  "status": "same",
+  "current_line": 190
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 60,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 210,
+  "snippet": "func sendAndConfirm(ctx context.Context, c *rpc.Client, args rpc.SendTxArgs, opts map[string]any) (map[string]any, string, error) {",
+  "status": "same",
+  "current_line": 210
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 61,
+  "project": "chainbench",
+  "path": "internal/core/rpc/client.go",
+  "line": 371,
+  "snippet": "func (c *Client) SendTransaction(ctx context.Context, args SendTxArgs) (string, error) {",
+  "status": "same",
+  "current_line": 371
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 62,
+  "project": "chainbench",
+  "path": "internal/testhelper/load.go",
+  "line": 70,
+  "snippet": "if err := applyFeeArgs(&args, ac.Args); err != nil {",
+  "status": "same",
+  "current_line": 70
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 63,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 160,
+  "snippet": "if g, ok := hexQuantity(ac.Args[\"gas\"]); ok {",
+  "status": "same",
+  "current_line": 160
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 73,
+  "project": "chainbench",
+  "path": "cmd/chainbench/suitecmd/run.go",
+  "line": 114,
+  "snippet": "\"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)\")",
+  "status": "moved",
+  "current_line": 125
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 74,
+  "project": "chainbench",
+  "path": "internal/testengine/attach.go",
+  "line": 51,
+  "snippet": "// node: \"en1\" means the first node whose role is en, while \"node1\" means",
+  "status": "same",
+  "current_line": 51
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 75,
+  "project": "chainbench",
+  "path": "internal/testengine/attach.go",
+  "line": 174,
+  "snippet": "if len(cfg.Nodes.Nodes) > 0 {",
+  "status": "same",
+  "current_line": 174
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 76,
+  "project": "chainbench",
+  "path": "internal/testhelper/derived.go",
+  "line": 398,
+  "snippet": "func wsTargetURL(nodes []node.Node) (string, error) {",
+  "status": "same",
+  "current_line": 398
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 86,
+  "project": "chainbench",
+  "path": "internal/chains/wemix/manifest.json",
+  "line": 3,
+  "snippet": "\"binary\": \"gwemix\",",
+  "status": "same",
+  "current_line": 3
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 87,
+  "project": "chainbench",
+  "path": "internal/chains/wbft/manifest.json",
+  "line": 3,
+  "snippet": "\"binary\": \"gwbft\",",
+  "status": "same",
+  "current_line": 3
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 88,
+  "project": "chainbench",
+  "path": "internal/chains/stablenet/manifest.json",
+  "line": 3,
+  "snippet": "\"binary\": \"gstable\",",
+  "status": "same",
+  "current_line": 3
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 89,
+  "project": "chainbench",
+  "path": "cmd/chainbench/suitecmd/run.go",
+  "line": 127,
+  "snippet": "return cmd",
+  "status": "moved",
+  "current_line": 138
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 90,
+  "project": "chainbench",
+  "path": "tests/tc/remote/02-remote-chain-info.json",
+  "line": 35,
+  "snippet": "\"is\": \"0\"",
+  "status": "same",
+  "current_line": 35
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 91,
+  "project": "go-wbft",
+  "path": "Makefile",
+  "line": 17,
+  "snippet": "gwemix:",
+  "status": "same",
+  "current_line": 17
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 92,
+  "project": "go-wbft",
+  "path": "Makefile",
+  "line": 20,
+  "snippet": "@echo \"Run \\\"$(GOBIN)/gwemix\\\" to launch gwemix.\"",
+  "status": "same",
+  "current_line": 20
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 93,
+  "project": "chainbench",
+  "path": "internal/chains/wbft/manifest.json",
+  "line": 8,
+  "snippet": "\"build\": { \"repo\": \"go-wbft\", \"make_target\": \"gwbft\" },",
+  "status": "same",
+  "current_line": 8
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 94,
+  "project": "chainbench",
+  "path": "cmd/chainbench/suitecmd/run.go",
+  "line": 29,
+  "snippet": "// handoff env composes the handoff) and runs against that; with --rpc it",
+  "status": "moved",
+  "current_line": 34
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 95,
+  "project": "chainbench",
+  "path": "internal/testengine/compose.go",
+  "line": 153,
+  "snippet": "binary := in.Binary",
+  "status": "moved",
+  "current_line": 158
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 96,
+  "project": "chainbench",
+  "path": "internal/testengine/compose.go",
+  "line": 155,
+  "snippet": "binary = expand(spec.Chain.Binary)",
+  "status": "moved",
+  "current_line": 160
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 97,
+  "project": "chainbench",
+  "path": "internal/app/upgrade.go",
+  "line": 123,
+  "snippet": "path, err := exec.LookPath(name)",
+  "status": "moved",
+  "current_line": 239
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 98,
+  "project": "chainbench",
+  "path": "internal/chainsetup/steps_lifecycle.go",
+  "line": 38,
+  "snippet": "if path := w.state.Binaries[ns.Binary]; path != \"\" {",
+  "status": "same",
+  "current_line": 38
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 108,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 85,
+  "snippet": "func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {",
+  "status": "same",
+  "current_line": 85
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 109,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 141,
+  "snippet": "func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {",
+  "status": "same",
+  "current_line": 141
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 110,
+  "project": "chainbench",
+  "path": "internal/dsl/interp/binding.go",
+  "line": 73,
+  "snippet": "func resolveString(s string, b Bindings) (any, error) {",
+  "status": "same",
+  "current_line": 73
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 111,
+  "project": "chainbench",
+  "path": "internal/testhelper/derived.go",
+  "line": 487,
+  "snippet": "func deriveAbiCall(spec map[string]any) (any, error) {",
+  "status": "same",
+  "current_line": 487
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 112,
+  "project": "chainbench",
+  "path": "internal/chains/stablenet/caps.go",
+  "line": 2,
+  "snippet": "// stablenet chain (its governance system contracts), separate from the common",
+  "status": "same",
+  "current_line": 2
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 122,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 234,
+  "snippet": "func applyFeeArgs(args *rpc.SendTxArgs, in map[string]any) error {",
+  "status": "same",
+  "current_line": 234
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 123,
+  "project": "chainbench",
+  "path": "internal/testhelper/builtins.go",
+  "line": 278,
+  "snippet": "// account signs as the sender (moves value) while feePayerKey covers the gas.",
+  "status": "same",
+  "current_line": 278
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 124,
+  "project": "chainbench",
+  "path": "internal/testhelper/builtins.go",
+  "line": 294,
+  "snippet": "return fmt.Errorf(\"dsl: sendTx: data: %w\", derr)",
+  "status": "same",
+  "current_line": 294
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 125,
+  "project": "chainbench",
+  "path": "internal/testhelper/builtins.go",
+  "line": 318,
+  "snippet": "주소 등 literal 필드 존재(값 생략)",
+  "status": "line-exists",
+  "current_line": 318
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 135,
+  "project": "chainbench",
+  "path": "internal/chains/wemix/wemix.go",
+  "line": 34,
+  "snippet": "func (p plugin) Family() registry.ConsensusFamily { return poa.New() }",
+  "status": "same",
+  "current_line": 34
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 136,
+  "project": "chainbench",
+  "path": "internal/chains/wbft/wbft.go",
+  "line": 33,
+  "snippet": "func (p plugin) Family() registry.ConsensusFamily { return wbftfam.New() }",
+  "status": "same",
+  "current_line": 33
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 137,
+  "project": "chainbench",
+  "path": "internal/chains/stablenet/stablenet.go",
+  "line": 34,
+  "snippet": "func (p plugin) Family() registry.ConsensusFamily { return wbft.New() }",
+  "status": "same",
+  "current_line": 34
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 138,
+  "project": "chainbench",
+  "path": "internal/consensus/poa/poa.go",
+  "line": 42,
+  "snippet": "\"poa: a wemix genesis is generated by the binary from a governance config, not substituted from a template — use the wemix genesis source (PrepareTemplate then GenerateGenesis)\")",
+  "status": "same",
+  "current_line": 42
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 139,
+  "project": "chainbench",
+  "path": "internal/consensus/poa/bootstrap.go",
+  "line": 19,
+  "snippet": "func BootstrapPlan() []Step {",
+  "status": "same",
+  "current_line": 19
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 140,
+  "project": "chainbench",
+  "path": "internal/consensus/wbft/wbft.go",
+  "line": 25,
+  "snippet": "func (Family) BuildGenesis(template []byte, p registry.GenesisParams) ([]byte, error) {",
+  "status": "moved",
+  "current_line": 30
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 150,
+  "project": "chainbench",
+  "path": "internal/testhelper/blockprobe.go",
+  "line": 43,
+  "snippet": "func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {",
+  "status": "same",
+  "current_line": 43
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 151,
+  "project": "chainbench",
+  "path": "internal/testhelper/derived.go",
+  "line": 462,
+  "snippet": "func deriveQuorum(spec map[string]any) (any, error) {",
+  "status": "same",
+  "current_line": 462
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 152,
+  "project": "chainbench",
+  "path": "internal/consensus/poa/poa.go",
+  "line": 26,
+  "snippet": "func (Family) RPCNamespace() string     { return \"wemix\" }",
+  "status": "same",
+  "current_line": 26
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 153,
+  "project": "chainbench",
+  "path": "internal/consensus/wbft/wbft.go",
+  "line": 20,
+  "snippet": "func (Family) RPCNamespace() string     { return \"istanbul\" }",
+  "status": "same",
+  "current_line": 20
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 163,
+  "project": "chainbench",
+  "path": "internal/testhelper/fault.go",
+  "line": 341,
+  "snippet": "func faultTarget(ac *interp.ActionCtx, action string) (node.Node, interp.NodeControl, error) {",
+  "status": "same",
+  "current_line": 341
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 164,
+  "project": "chainbench",
+  "path": "internal/testengine/attach.go",
+  "line": 81,
+  "snippet": "// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)",
+  "status": "same",
+  "current_line": 81
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 165,
+  "project": "chainbench",
+  "path": "internal/testhelper/fault.go",
+  "line": 370,
+  "snippet": "// left alone.",
+  "status": "same",
+  "current_line": 370
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 166,
+  "project": "chainbench",
+  "path": "internal/testhelper/fault.go",
+  "line": 397,
+  "snippet": "if err := c.RemovePeer(ctx, enodes[to.Index]); err != nil {",
+  "status": "same",
+  "current_line": 397
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 176,
+  "project": "chainbench",
+  "path": "internal/testhelper/load.go",
+  "line": 63,
+  "snippet": "var lastHash string",
+  "status": "same",
+  "current_line": 63
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 177,
+  "project": "chainbench",
+  "path": "internal/testhelper/load.go",
+  "line": 74,
+  "snippet": "if err != nil {",
+  "status": "same",
+  "current_line": 74
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 178,
+  "project": "chainbench",
+  "path": "tests/tc/stress/02-stress-tx-flood.json",
+  "line": 40,
+  "snippet": "},",
+  "status": "same",
+  "current_line": 40
+ },
+ {
+  "doc": "harness-dependencies.md",
+  "doc_line": 179,
+  "project": "chainbench",
+  "path": "internal/testhelper/blockprobe.go",
+  "line": 26,
+  "snippet": "defaultBlockHaltMaxAdv = 1",
+  "status": "same",
+  "current_line": 26
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 31,
+  "project": "go-wemix",
+  "path": "params/config.go",
+  "line": 146,
+  "snippet": "ChainID: big.NewInt(1111)",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 32,
+  "project": "go-wbft",
+  "path": "params/config.go",
+  "line": 47,
+  "snippet": "ChainID: big.NewInt(1111)",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 33,
+  "project": "go-wbft",
+  "path": "params/config.go",
+  "line": 71,
+  "snippet": "CroissantBlock: big.NewInt(200_000_000), // TODO",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 34,
+  "project": "go-stablenet",
+  "path": "params/config.go",
+  "line": 45,
+  "snippet": "ChainID: big.NewInt(8282)",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 46,
+  "project": "go-wemix",
+  "path": "core/types/transaction.go",
+  "line": 45,
+  "snippet": "LegacyTxType = iota",
+  "status": "same",
+  "current_line": 45
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 47,
+  "project": "go-wbft",
+  "path": "core/types/transaction.go",
+  "line": 50,
+  "snippet": "DynamicFeeTxType = 0x02",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 48,
+  "project": "go-stablenet",
+  "path": "core/types/transaction.go",
+  "line": 50,
+  "snippet": "DynamicFeeTxType = 0x02",
+  "status": "snippet-missing",
+  "current_line": null
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 60,
+  "project": "go-wemix",
+  "path": "core/types/transaction.go",
+  "line": 48,
+  "snippet": "FeeDelegateDynamicFeeTxType = 22",
+  "status": "same",
+  "current_line": 48
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 61,
+  "project": "go-wbft",
+  "path": "core/types/transaction.go",
+  "line": 53,
+  "snippet": "FeeDelegateDynamicFeeTxType = 0x16",
+  "status": "same",
+  "current_line": 53
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 62,
+  "project": "go-stablenet",
+  "path": "core/types/tx_fee_delegation.go",
+  "line": 117,
+  "snippet": "return FeeDelegateDynamicFeeTxType",
+  "status": "same",
+  "current_line": 117
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 63,
+  "project": "go-wbft",
+  "path": "core/state_transition.go",
+  "line": 267,
+  "snippet": "!st.evm.ChainConfig().CroissantEnabled()",
+  "status": "same",
+  "current_line": 267
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 64,
+  "project": "go-stablenet",
+  "path": "core/txpool/validation.go",
+  "line": 284,
+  "snippet": "opts.Config.AnzeonEnabled() && opts.State.IsBlacklisted(feePayer)",
+  "status": "same",
+  "current_line": 284
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 76,
+  "project": "go-wemix",
+  "path": "core/types/transaction.go",
+  "line": 189,
+  "snippet": "case AccessListTxType:",
+  "status": "same",
+  "current_line": 189
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 77,
+  "project": "go-wbft",
+  "path": "core/txpool/validation.go",
+  "line": 78,
+  "snippet": "!opts.Config.IsCroissant(head.Number) && tx.Type() == types.SetCodeTxType",
+  "status": "same",
+  "current_line": 78
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 78,
+  "project": "go-stablenet",
+  "path": "core/txpool/validation.go",
+  "line": 78,
+  "snippet": "!opts.Config.AnzeonEnabled() && tx.Type() == types.SetCodeTxType",
+  "status": "same",
+  "current_line": 78
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 79,
+  "project": "go-stablenet",
+  "path": "params/config.go",
+  "line": 1085,
+  "snippet": "func (c *ChainConfig) AnzeonEnabled() bool",
+  "status": "same",
+  "current_line": 1085
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 91,
+  "project": "go-wbft",
+  "path": "core/vm/contracts.go",
+  "line": 127,
+  "snippet": "var PrecompiledContractsCroissant",
+  "status": "same",
+  "current_line": 127
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 92,
+  "project": "go-wbft",
+  "path": "core/vm/contracts.go",
+  "line": 140,
+  "snippet": "common.BytesToAddress([]byte{0x1, 0x00}): &p256Verify{}",
+  "status": "same",
+  "current_line": 140
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 93,
+  "project": "go-wbft",
+  "path": "core/vm/contracts.go",
+  "line": 182,
+  "snippet": "case rules.IsCroissant:",
+  "status": "same",
+  "current_line": 182
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 94,
+  "project": "go-stablenet",
+  "path": "core/vm/contracts.go",
+  "line": 127,
+  "snippet": "var PrecompiledContractsAnzeon",
+  "status": "same",
+  "current_line": 127
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 95,
+  "project": "go-stablenet",
+  "path": "core/vm/contracts.go",
+  "line": 141,
+  "snippet": "var PrecompiledContractsBoho",
+  "status": "same",
+  "current_line": 141
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 96,
+  "project": "go-stablenet",
+  "path": "core/vm/contracts.go",
+  "line": 200,
+  "snippet": "case rules.IsBoho:",
+  "status": "same",
+  "current_line": 200
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 108,
+  "project": "go-wemix",
+  "path": "consensus/misc/eip1559.go",
+  "line": 81,
+  "snippet": "wemixminer.GetBlockBuildParameters(parent.Number)",
+  "status": "same",
+  "current_line": 81
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 109,
+  "project": "go-wbft",
+  "path": "eth/gasprice/gasprice.go",
+  "line": 155,
+  "snippet": "!oracle.backend.ChainConfig().IsCroissant(head.Number)",
+  "status": "same",
+  "current_line": 155
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 110,
+  "project": "go-stablenet",
+  "path": "consensus/misc/eip1559/eip1559.go",
+  "line": 62,
+  "snippet": "if config.AnzeonEnabled()",
+  "status": "same",
+  "current_line": 62
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 111,
+  "project": "go-stablenet",
+  "path": "core/state_transition.go",
+  "line": 169,
+  "snippet": "!statedb.IsAuthorized(from)",
+  "status": "same",
+  "current_line": 169
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 123,
+  "project": "go-stablenet",
+  "path": "core/state_transition.go",
+  "line": 506,
+  "snippet": "if rules.IsAnzeon",
+  "status": "same",
+  "current_line": 506
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 124,
+  "project": "go-stablenet",
+  "path": "core/state_transition.go",
+  "line": 592,
+  "snippet": "rules.IsAnzeon && st.state.IsAuthorized(msg.From)",
+  "status": "same",
+  "current_line": 592
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 125,
+  "project": "go-stablenet",
+  "path": "core/txpool/validation.go",
+  "line": 253,
+  "snippet": "opts.State.IsBlacklisted(from)",
+  "status": "same",
+  "current_line": 253
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 137,
+  "project": "go-wemix",
+  "path": "eth/backend.go",
+  "line": 297,
+  "snippet": "Namespace: \"wemix\"",
+  "status": "same",
+  "current_line": 297
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 138,
+  "project": "go-wbft",
+  "path": "eth/backend.go",
+  "line": 336,
+  "snippet": "Namespace: \"wemix\"",
+  "status": "same",
+  "current_line": 336
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 139,
+  "project": "go-stablenet",
+  "path": "eth/backend.go",
+  "line": 335,
+  "snippet": "Namespace: \"eth\"",
+  "status": "same",
+  "current_line": 335
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 140,
+  "project": "go-wbft",
+  "path": "consensus/wbft/backend/engine.go",
+  "line": 253,
+  "snippet": "Namespace: \"istanbul\"",
+  "status": "same",
+  "current_line": 253
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 141,
+  "project": "go-stablenet",
+  "path": "consensus/wbft/backend/engine.go",
+  "line": 234,
+  "snippet": "Namespace: \"istanbul\"",
+  "status": "same",
+  "current_line": 234
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 153,
+  "project": "go-wemix",
+  "path": "wemix/bind/structs.go",
+  "line": 253,
+  "snippet": "func GetRegistryByOwner",
+  "status": "same",
+  "current_line": 253
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 154,
+  "project": "go-wemix",
+  "path": "wemix/admin.go",
+  "line": 335,
+  "snippet": "contracts.Registry.GetContractAddress",
+  "status": "same",
+  "current_line": 335
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 155,
+  "project": "go-wbft",
+  "path": "params/config_wbft.go",
+  "line": 183,
+  "snippet": "type GovContracts struct",
+  "status": "same",
+  "current_line": 183
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 156,
+  "project": "go-stablenet",
+  "path": "params/config_wbft.go",
+  "line": 146,
+  "snippet": "type SystemContracts struct",
+  "status": "same",
+  "current_line": 146
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 168,
+  "project": "go-wbft",
+  "path": "eth/ethconfig/config.go",
+  "line": 195,
+  "snippet": "if config.CroissantEnabled()",
+  "status": "same",
+  "current_line": 195
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 169,
+  "project": "go-wbft",
+  "path": "eth/ethconfig/config.go",
+  "line": 204,
+  "snippet": "wemix.NewCroissantEngine",
+  "status": "same",
+  "current_line": 204
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 170,
+  "project": "go-stablenet",
+  "path": "eth/ethconfig/config.go",
+  "line": 192,
+  "snippet": "if config.AnzeonEnabled()",
+  "status": "same",
+  "current_line": 192
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 171,
+  "project": "go-stablenet",
+  "path": "consensus/wbft/backend/api.go",
+  "line": 132,
+  "snippet": "func (api *API) GetValidators",
+  "status": "same",
+  "current_line": 132
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 183,
+  "project": "go-wemix",
+  "path": "params/config.go",
+  "line": 162,
+  "snippet": "BriocheBlock:",
+  "status": "same",
+  "current_line": 162
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 184,
+  "project": "go-wbft",
+  "path": "params/config_wbft.go",
+  "line": 229,
+  "snippet": "BlockReward",
+  "status": "same",
+  "current_line": 229
+ },
+ {
+  "doc": "chain-differences.md",
+  "doc_line": 185,
+  "project": "go-stablenet",
+  "path": "eth/ethconfig/config.go",
+  "line": 265,
+  "snippet": "wbftCfg.SystemContractUpgrades = append",
+  "status": "same",
+  "current_line": 265
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 15,
+  "project": "chainbench",
+  "path": "tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json",
+  "line": 51,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 51
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 15,
+  "project": "chainbench",
+  "path": "tests/tc/go-stablenet/regression/ethereum/09-dynamic-fee-tx.json",
+  "line": 51,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 51
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 15,
+  "project": "chainbench",
+  "path": "tests/tc/go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json",
+  "line": 50,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 50
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 15,
+  "project": "go-wbft",
+  "path": "consensus/wbft/backend/api.go",
+  "line": 417,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 417
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 15,
+  "project": "go-stablenet",
+  "path": "consensus/wbft/backend/api.go",
+  "line": 416,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 416
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 23,
+  "project": "chainbench",
+  "path": "tests/tc/go-stablenet/regression/anzeon/07-basefee-maximum.json",
+  "line": 33,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 33
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 23,
+  "project": "go-wbft",
+  "path": "consensus/misc/eip1559/eip1559.go",
+  "line": 83,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 83
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 23,
+  "project": "go-stablenet",
+  "path": "consensus/misc/eip1559/eip1559.go",
+  "line": 72,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 72
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 39,
+  "project": "go-wemix",
+  "path": "consensus/misc/eip1559.go",
+  "line": 140,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 140
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 39,
+  "project": "go-wbft",
+  "path": "consensus/misc/eip1559/eip1559.go",
+  "line": 93,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 93
+ },
+ {
+  "doc": "counter-review.md",
+  "doc_line": 39,
+  "project": "go-stablenet",
+  "path": "consensus/misc/eip1559/eip1559.go",
+  "line": 81,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 81
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 24,
+  "project": "chainbench",
+  "path": "internal/dsl/spec_v2.go",
+  "line": 54,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 54
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 24,
+  "project": "chainbench",
+  "path": "internal/dsl/spec_v2.go",
+  "line": 263,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 263
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 38,
+  "project": "chainbench",
+  "path": "internal/testhelper/assets.go",
+  "line": 210,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 210
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 38,
+  "project": "chainbench",
+  "path": "internal/testhelper/builtins.go",
+  "line": 315,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 315
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 63,
+  "project": "chainbench",
+  "path": "internal/testengine/attach.go",
+  "line": 81,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 81
+ },
+ {
+  "doc": "configuration-and-change-scope.md",
+  "doc_line": 63,
+  "project": "chainbench",
+  "path": "internal/testhelper/fault.go",
+  "line": 341,
+  "snippet": null,
+  "status": "line-exists",
+  "current_line": 341
+ }
+]

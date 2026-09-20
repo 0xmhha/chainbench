@@ -51,7 +51,7 @@ func envWithNode(t *testing.T, url string) session.Environment {
 		t.Fatalf("NewEnvironment: %v", err)
 	}
 	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
-		{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: url},
+		{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", RPCURL: url},
 	}})
 	return env
 }

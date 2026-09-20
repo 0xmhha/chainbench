@@ -48,9 +48,9 @@ type NetUpIn struct {
 	Binary string `json:"binary,omitempty"`
 
 	// Layout (step: allocate).
-	Validators       int    `json:"validators,omitempty"`
-	Endpoints        int    `json:"endpoints,omitempty"`
-	Proxies          int    `json:"proxies,omitempty"`
+	BPCount          int    `json:"bp,omitempty"`
+	ENCount          int    `json:"en,omitempty"`
+	PNCount          int    `json:"pn,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
 	// AutoSize fills the validator count to the server set (bp: "max"): one node
@@ -89,6 +89,17 @@ type NetUpIn struct {
 	ChainID     int64    `json:"chainID,omitempty"`
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
+	// GenesisFork, when set, schedules a hardfork whose consensus configuration
+	// comes from the chain that seals after it.
+	GenesisFork *GenesisFork `json:"genesisFork,omitempty"`
+	// BinaryChains names, per binary, the chain that binary runs when it is not
+	// the composition's. It travels beside Binaries because it answers the same
+	// question about the same name.
+	BinaryChains map[string]string `json:"binaryChains,omitempty"`
+	// GenesisPerBinary names, per binary, an overlay file whose genesis
+	// fragment is merged onto the built genesis to make that binary's own
+	// document. The nodes running it initialize from the result.
+	GenesisPerBinary map[string]string `json:"genesisPerBinary,omitempty"`
 	// GenesisExisting is a reference to a finished genesis file used verbatim
 	// (genesis mode "existing"); empty builds from the template as usual.
 	GenesisExisting string `json:"genesisExisting,omitempty"`
@@ -114,6 +125,20 @@ type NetUpOut struct {
 	// Nodes is the composed network. Its PIDs are set only when the run reached
 	// UpStart.
 	Nodes NetworkStatusOut
+}
+
+// markStepFailed writes a failed step into the composition record.
+//
+// Best effort on purpose, and silent when it cannot write: this runs while a
+// composition is already failing, and a second error about the bookkeeping
+// would bury the first one — which is the error the operator came for.
+func markStepFailed(d Deps, dataDir, name string, cause error) {
+	ws, err := Open(dataDir, d.Clock)
+	if err != nil {
+		return
+	}
+	ws.MarkStepFailed(name, cause)
+	_ = ws.Save()
 }
 
 // upStepNames is the composition order — the one list resume and up share.
@@ -154,7 +179,7 @@ func planUp(in NetUpIn) (upPlan, error) {
 	// into node records. That is too late for this path: `up` writes the request
 	// itself onto the workspace first (it is what a resume composes from), and
 	// the request carries the topology whole — so an inline key was already in
-	// workspace.json by the time place refused it. Nothing is written until this
+	// chain-record.json by the time place refused it. Nothing is written until this
 	// returns.
 	if err := checkTopologyKeyRefs(in.Topology); err != nil {
 		return upPlan{}, err
@@ -199,10 +224,10 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 		// node table, so the layout has to exist first.
 		"place": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
-				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints, Proxies: in.Proxies,
+				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
-				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,
+				Topology:      in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains, Peering: in.Peering,
 				Server:   in.Server,
 				AutoSize: in.AutoSize,
 			})
@@ -218,7 +243,8 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 		"genesis": func() (string, error) {
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
-				GenesisExisting: in.GenesisExisting,
+				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
+				Fork: in.GenesisFork,
 			})
 			return r.Detail, err
 		},
@@ -253,6 +279,11 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, error) {
 	up, err := planUp(in)
 	if err != nil {
+		return NetUpOut{}, err
+	}
+	// Before the workspace is opened, so what this request records, compares
+	// and launches with is one form of the same reference.
+	if err := placeUpRequest(&in); err != nil {
 		return NetUpOut{}, err
 	}
 	stage, mode := up.stage, up.mode
@@ -290,10 +321,18 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	var out NetUpOut
 	// record runs one step and appends its detail, stopping the whole run on the
 	// first failure so a later step never composes on top of a broken one.
+	//
+	// A failure is written into the record before it is returned. The step verbs
+	// mark themselves only on success, which meant a composition that died left
+	// the record saying nothing at all about the step it died in: the reader saw
+	// the last step that WORKED and had to guess what came next. Now the record
+	// names the step, the time, and the error.
 	record := func(name string, fn func() (string, error)) error {
 		detail, err := fn()
 		if err != nil {
-			return fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
+			werr := fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
+			markStepFailed(d, in.DataDir, name, werr)
+			return werr
 		}
 		out.Steps = append(out.Steps, name+": "+detail)
 		return nil
@@ -323,6 +362,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			gopts, gerr := genesisOpts(NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
+				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
 			})
 			if gerr != nil {
 				return out, gerr
@@ -344,6 +384,19 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// placeUpRequest places the request's binary references through the environment
+// file it names, if it names one.
+func placeUpRequest(in *NetUpIn) error {
+	if in.WorkspaceConfigPath == "" {
+		return PlaceRequest(in, nil)
+	}
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return fmt.Errorf("chainsetup: chain up: %w", err)
+	}
+	return PlaceRequest(in, &wc)
 }
 
 // upChainMode reads how this up should treat an existing composition from the

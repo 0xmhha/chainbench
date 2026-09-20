@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
@@ -48,7 +49,7 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	if err != nil {
 		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: load keys: %w", err)
 	}
-	expected := preset.NetworkFor(w.state.Validators).Validators
+	expected := preset.NetworkFor(w.state.BPCount).Validators
 
 	url, err := w.nodeHTTPURL(w.state.Nodes[0])
 	if err != nil {
@@ -144,4 +145,24 @@ func metricsURLOf(w *Workspace, ns node.Record) string {
 	// the URL a scraper can use unchanged, or the path becomes something every
 	// caller has to remember — and the first one did not.
 	return collector.MetricsURLOn(base)
+}
+
+// wsURLOf is metricsURLOf for the WebSocket endpoint: the same opener, so a
+// docker node's subscription dials the published port rather than the
+// container-internal one. It is here rather than left to the caller because a
+// caller holding Host and Ports has no way to know the translation exists —
+// which is how the ws dial came to be the one endpoint that skipped it.
+func wsURLOf(w *Workspace, ns node.Record) string {
+	if ns.WS == 0 {
+		return ""
+	}
+	host := ns.Host
+	if host == "" {
+		host = w.RPCHost()
+	}
+	base, err := w.opener().HTTPEndpoint(host, ns.WS)
+	if err != nil {
+		return ""
+	}
+	return "ws://" + strings.TrimPrefix(base, "http://")
 }

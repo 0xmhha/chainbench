@@ -1,24 +1,52 @@
 {
   "id": "wemix",
   "binary": "gwemix",
+  "dialect": "geth110-wemix",
   "chain_id": 8285,
   "network_id": 8285,
   "miner_recommit": "nanos",
-  "bootstrap": { "type": "governance-etcd" },
-  "build": { "repo": "go-wemix", "make_target": "gwemix" },
+  "bootstrap": {
+    "type": "governance-etcd"
+  },
+  "build": {
+    "repo": "go-wemix",
+    "make_target": "gwemix"
+  },
   "consensus_family": "poa",
   "genesis": {
     "engine_field": "",
-    "hardforks": ["istanbul", "pangyo", "applepie", "brioche"],
-    "template": "wemix"
+    "hardforks": [
+      "istanbul",
+      "pangyo",
+      "applepie",
+      "brioche"
+    ],
+    "template": "wemix",
+    "config_omit": [
+      "minerNodeId",
+      "minerNodeSig",
+      "rewards"
+    ]
   },
   "consensus": {
     "rpc_namespace": "wemix",
     "validators_method": "wemix_getValidators"
   },
-  "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
-  "probe": { "method": "wemix_getReward" },
-  "capabilities": ["process", "rpc", "ws", "consensus"],
+  "tx_types": [
+    "0x00",
+    "0x01",
+    "0x02",
+    "0x16"
+  ],
+  "probe": {
+    "method": "wemix_getReward"
+  },
+  "capabilities": [
+    "process",
+    "rpc",
+    "ws",
+    "consensus"
+  ],
   "upgrade": {
     "to_chain": "wbft",
     "at_fork": "croissant",

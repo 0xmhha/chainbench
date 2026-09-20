@@ -13,7 +13,7 @@ import (
 // TestCollector_BPParticipation drives the sampler through a sequence of head
 // blocks with known producers and asserts the tally counts blocks per producer.
 func TestCollector_BPParticipation(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 
 	// Heights 1..4 produced by A, B, A, A.
 	miners := []string{"0xA", "0xB", "0xA", "0xA"}
@@ -66,7 +66,7 @@ func TestCollector_BPParticipation(t *testing.T) {
 // TestCollector_BPWindowPrunesOldHeights checks the tally only spans the recent
 // window, so a long-running producer set does not grow unbounded.
 func TestCollector_BPWindowPrunesOldHeights(t *testing.T) {
-	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleBP, RPCURL: "http://n1"})
 
 	var mu sync.Mutex
 	var h uint64

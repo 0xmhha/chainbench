@@ -15,7 +15,7 @@ import (
 // substitutes into a chain's template. It is the union of what the families
 // need — the wbft family uses the validator set / BLS / extra-data / members /
 // alloc; the poa family uses only ChainID / Coinbase (its membership is set at
-// bootstrap). Defined here (not in pkg/core/genesis) so the ConsensusFamily
+// bootstrap). Defined here (not in internal/core/genesis) so the ConsensusFamily
 // contract stays the single dispatch boundary and core need not import a family.
 type GenesisParams struct {
 	ChainID    int64
@@ -39,8 +39,27 @@ type ConsensusFamily interface {
 	// ValidatorsMethod is the RPC method returning the validator/producer
 	// set.
 	ValidatorsMethod() string
-	// StartFlags returns the node launch flags for a given role.
-	StartFlags(role node.Role) []string
+	// ValidatorsCarryBLS reports whether a validator identity of this family
+	// holds BLS material beyond its account key.
+	//
+	// It is asked rather than derived from the family's name because the name
+	// was being compared in the app layer to decide what a key derivation
+	// produces. A family registered after that comparison was written would
+	// have fallen into its else branch and produced identities missing the
+	// material its own genesis then asks for — a silent wrong answer, found
+	// later as a chain that will not seal.
+	ValidatorsCarryBLS() bool
+	// LaunchPolicy is what the consensus asks of one node's launch.
+	//
+	// It used to be StartFlags, a []string the launch parsed back into a typed
+	// value, and the two families differed in it by exactly two entries:
+	// --rpc.enabledeprecatedpersonal and --rpc.allow-unprotected-txs. Neither is
+	// a consensus fact. They are flags one binary generation accepts and another
+	// does not, which is the dialect's question, and go-wemix's generation is
+	// missing the first — so a family was deciding a thing it cannot know.
+	//
+	// What is left is what the consensus actually requires: a producer seals.
+	LaunchPolicy(role node.Role) LaunchPolicy
 	// BringUpPhases orders the launch: which nodes start together, and what
 	// must complete between one group and the next.
 	//
@@ -60,15 +79,32 @@ type ConsensusFamily interface {
 	// differs: a wemix node's embedded etcd listens on two ports beyond p2p,
 	// and a global rule sized for one of them is wrong for the other.
 	PortReservation() node.Reservation
-	// SupportsRole reports whether this family can run a role. The proxy tier
-	// (pn) is the case that matters: poa has no such tier — etcd occupies that
-	// place — so a topology declaring one is asking for something that will not
-	// exist, and only the family can say so (netmap-design 2.6).
+	// SupportsRole reports whether this family can run a role, so a topology
+	// declaring one the family cannot run is refused before anything is placed
+	// rather than launched into a tier that will not exist.
+	//
+	// Both families answer yes to all three today; poa gained a proxy tier and
+	// this comment kept saying it had none. The question stays the family's
+	// because the next family may answer differently, not because one does now.
 	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
 	// params and returns the genesis.json bytes. This is the dispatch boundary that
-	// lets pkg/core/genesis build a genesis without importing any family.
+	// lets internal/core/genesis build a genesis without importing any family.
 	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
+}
+
+// LaunchPolicy is what a consensus family requires of one node's launch, as
+// facts rather than as flag spellings.
+//
+// Spellings belong to the binary: two generations of geth name the same knob
+// differently, and one of them does not have it at all. A family that emitted
+// strings was answering for both, and the launch then had to read the strings
+// back to find out what was meant.
+type LaunchPolicy struct {
+	// Mine asks the node to seal blocks. It is the producing role's whole
+	// consensus requirement: a producer launched without it leaves the chain
+	// stalled while every node reports healthy.
+	Mine bool
 }
 
 // Phase is one ordered group of a bring-up: nodes that start together, then
@@ -184,11 +220,27 @@ type ChainPlugin interface {
 	GenesisTemplate() []byte
 }
 
-// StaticPlugin is a ChainPlugin assembled from already-resolved parts. It backs
-// a chain whether its manifest came from the embedded set or an external file,
-// so both paths produce the same object. The family and protocol are supplied by
-// the composition layer (which may import concrete families), keeping this core
-// type free of any consensus/chain import.
+// StaticPlugin is a ChainPlugin assembled from already-resolved parts, and it
+// is where a chain is put together.
+//
+// A chain is four choices and two files. The choices are which consensus it
+// runs, which accounts protocol its transactions and system contracts follow,
+// which flag vocabulary its binary accepts (in the manifest, since it is data),
+// and the chain constants; the files are that manifest and a genesis template.
+// Stating them as one literal is what makes a chain's own folder the place to
+// read what it is — the three built-in chains each hand-wrote an identical
+// four-method type around the same four values before this.
+//
+// A chain that must differ from the implementation it composes embeds it and
+// overrides the one method, which is Go's answer to inheritance here:
+//
+//	type family struct{ wbft.Family }
+//	func (family) PortReservation() node.Reservation { ... }
+//
+// Nothing is copied — the embedded value answers everything else.
+//
+// The family and protocol are supplied by the caller (which may import concrete
+// families), keeping this core type free of any consensus/chain import.
 type StaticPlugin struct {
 	M     Manifest
 	Fam   ConsensusFamily
@@ -204,11 +256,21 @@ func (p StaticPlugin) GenesisTemplate() []byte     { return p.Tmpl }
 var chains = map[string]ChainPlugin{}
 
 // Register adds a chain plugin. Intended to be called from a chain package's
-// init(); panics on duplicate id so a wiring mistake fails loudly at startup.
+// init(); panics on a duplicate or half-wired plugin so a wiring mistake fails
+// at startup rather than as a nil dereference in the middle of a composition.
 func Register(p ChainPlugin) {
+	if p == nil {
+		panic("registry: nil chain plugin")
+	}
 	id := p.Manifest().ID
 	if id == "" {
 		panic("registry: plugin with empty manifest id")
+	}
+	if p.Family() == nil {
+		panic(fmt.Sprintf("registry: chain %q composes no consensus family", id))
+	}
+	if p.Protocol().Name == "" {
+		panic(fmt.Sprintf("registry: chain %q composes no accounts protocol", id))
 	}
 	if _, dup := chains[id]; dup {
 		panic(fmt.Sprintf("registry: duplicate chain plugin %q", id))

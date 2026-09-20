@@ -25,13 +25,33 @@ func NewStatus() *cobra.Command {
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "chain: %s   network: %s   nodes: %d\n", ns.Chain, ns.Network, len(ns.Nodes))
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NODE\tROLE\tRPC\tPID")
+			fmt.Fprintln(w, "NODE\tROLE\tRPC\tPID\tPROCESS")
 			for _, n := range ns.Nodes {
-				fmt.Fprintf(w, "%d\t%s\t%s\t%d\n", n.Index, n.Role, n.RPCURL, n.PID)
+				fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\n", n.Index, n.Role, n.RPCURL, n.PID, processState(res.Alive, n.Index, n.PID))
 			}
 			return w.Flush()
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	return surface.ReadOnly(cmd)
+}
+
+// processState says what the machine answered about a node's recorded pid.
+//
+// "unknown" is a real answer and not a nicer word for dead: a machine that
+// could not be asked has not told us the node is gone, and reporting that as
+// stopped would send an operator to restart something that is running.
+func processState(alive map[int]bool, index, pid int) string {
+	if pid <= 0 {
+		return "not started"
+	}
+	live, asked := alive[index]
+	switch {
+	case !asked:
+		return "unknown"
+	case live:
+		return "running"
+	default:
+		return "gone"
+	}
 }

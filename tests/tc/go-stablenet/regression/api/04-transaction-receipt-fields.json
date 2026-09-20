@@ -3,27 +3,12 @@
   "kind": "case",
   "id": "transaction-receipt-fields",
   "description": "RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인) (원본 regression/api/04-test-get-tx-receipt)",
-  "applicableChains": "stablenet,wbft",
   "requires": [
-    "rpc"
+    "rpc",
+    "family:wbft"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "transaction-receipt-fields-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]

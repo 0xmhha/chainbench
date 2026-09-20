@@ -131,7 +131,7 @@ flowchart TD
 |---|---|
 | `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
 | `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
-| `consensus/upgrade` | 체인 핸드오프 — 계획(`BuildPlan`)·기동(`Launch`)·메시(`WireMesh`)와 **한 번의 핸드오프 본문**(`Handoff`: config → base genesis → plan → overlay → launch → mesh → governance → etcd → verify → fork 대기; P6.3). `chain up --case handoff` 와 `upgrade run` 은 그 위의 표면이다 |
+| `consensus/upgrade` | 하드포크 preset 로더 하나(`Profile`) — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 ### L2b 체인 어댑터 — 체인 특화
 
@@ -222,7 +222,7 @@ flowchart TD
 | 무엇 | 실행 기록 · 판정 · 컴포지션 상태 | genesis · config.toml · datadir · 로그 |
 | 어디 | **항상 조작자의 로컬 머신** | 타깃(이 머신 또는 원격 SSH 호스트) |
 | 소유 | `core/session` | `core/filestore.FileSink` |
-| 예 | `session.json` · `env.json` · `workspace.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
+| 예 | `session.json` · `env.json` · `chain-record.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
 
 이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
 

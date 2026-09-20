@@ -7,24 +7,7 @@
     "rpc"
   ],
   "on": "node3",
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wemix-vocab",
-    "chain": "wemix",
-    "binaries": {
-      "default": "gwemix"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "wemix-bp4",
   "hooks": {
     "pre": [
       {

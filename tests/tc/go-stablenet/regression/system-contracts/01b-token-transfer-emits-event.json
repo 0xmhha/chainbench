@@ -2,27 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "token-transfer-emits-event",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "token-transfer-emits-event-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -34,7 +19,7 @@
       "from": "node1",
       "gas": "100000",
       "save": "hash",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "do": "read",
@@ -52,7 +37,7 @@
       "is": "0x1"
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$blk",
@@ -66,7 +51,7 @@
       ]
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "Equal",
       "expect": "logs",
       "fromBlock": "$blk",

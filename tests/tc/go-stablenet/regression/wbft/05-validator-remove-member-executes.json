@@ -2,28 +2,13 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "validator-remove-member-executes",
-  "description": "RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다.",
-  "applicableChains": "stablenet",
+  "description": "RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다. 정족수는 2로 둔다 — 승인이 node1, node2 둘뿐이므로 추가할 때 정족수를 올려 두면 제거 제안이 통과하지 못한다.",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "validator-remove-member-executes-env",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "preset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"
     ]
@@ -32,8 +17,8 @@
     {
       "do": "read",
       "of": [
-        "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
-        "4"
+        "node5",
+        "2"
       ],
       "op": "abiCall",
       "save": "addData",
@@ -47,7 +32,21 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "addHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$addHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "do": "read",
@@ -74,20 +73,34 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "addApHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$addApHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
       "do": "read",
       "save": "memberAfterAdd",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
       "of": [
-        "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
-        "4"
+        "node5",
+        "2"
       ],
       "op": "abiCall",
       "save": "rmData",
@@ -101,7 +114,21 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "rmHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rmHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "do": "read",
@@ -128,14 +155,28 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "rmApHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rmApHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
       "do": "read",
       "save": "memberAfterRemove",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "expect": "txStatus",

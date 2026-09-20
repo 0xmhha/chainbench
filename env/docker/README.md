@@ -37,7 +37,7 @@ ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server
 ## 15대에 테스트 돌리기
 
 `--all-servers` 는 노드를 서버당 하나씩 15대에 퍼뜨리고, `--docker` 는 dial 을
-localmap 으로 번역한다. 15노드(4 bp + 11 en) 스모크 테스트:
+localmap 으로 번역한다. 표준 15노드(bp 7 · en 7 · pn 1) 스모크 테스트:
 
 ```bash
 # 각 컨테이너 /data/chainbench/bin/ 에 대상 체인 바이너리(Linux)가 있어야 한다.
@@ -50,14 +50,18 @@ bin/chainbench run \
   tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
 ```
 
-`chain-up-15` 의 env 블록(정의서 안에 인라인, id `stablenet-docker15`)이 15노드
-topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 필요해 preset(5개)
-대신 generate 로 만든다 — 생성 세트는 topology 의 validator 수(4)만 validator 로
-선언한다.
+`chain-up-15` 의 env 블록이 15노드 topology 를 선언한다. 바이너리 경로는 선언하지
+않는다 — 어느 바이너리인지는 체인 매니페스트가 이름으로 답하고, 그 이름이 어디
+있는지는 위에서 넘기는 `workspace-config.yaml` 의 `dataRoot` 와 `paths.binaries`
+가 답한다. 둘을 합치면 `/data/chainbench/bin/gstable` 이 나온다. 정의서가 그 경로를
+직접 적으면 그 케이스는 이 도커 환경에서만 돈다.
+
+키는 15개가 필요해 preset(5개) 대신 generate 로 만든다 — 생성 세트는 topology 의
+bp 수(7)만 validator 로 선언한다.
 
 ### 세 체인 패밀리 15대 스모크 (stablenet · wbft · go-wemix)
 
-세 패밀리 모두 15대(4 bp + 11 en)에서 검증됐다:
+세 패밀리 모두 15대에서 검증됐다(검증 당시 4 bp + 11 en, 지금 표준은 bp 7 · en 7 · pn 1):
 
 ```bash
 # stablenet (wbft 패밀리)  — server-set.yaml, 기본 게이트

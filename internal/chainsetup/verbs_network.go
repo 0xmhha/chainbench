@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -23,30 +24,47 @@ type NetworkStatusIn struct {
 	DataDir string
 }
 
-// NetworkStatusOut is the recorded node set.
+// NetworkStatusOut is the recorded node set, with what the machines say about
+// the pids in it.
 type NetworkStatusOut struct {
 	Nodes node.NodeSet
+	// Alive maps a node index to whether its recorded pid is a live process on
+	// the machine that node runs on. A node with no recorded pid is absent from
+	// the map, and so is one whose machine could not be asked — "not asked" and
+	// "asked and gone" are different answers and the second one is the news.
+	Alive map[int]bool
 }
 
-// NetworkStatus reads a network's node set from its workspace. Read-only.
-func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
+// NetworkStatus reads a network's node set from its workspace and asks each
+// node's machine whether the recorded pid is still a process.
+//
+// The record says a node was started; it cannot say the node is running. A pid
+// outlives nothing — the process it named can be gone, or replaced by an
+// unrelated one — so a status built from the record alone reports a network
+// that may have died an hour ago. The check is what the ProcessInspector
+// capability is for, and every other lifecycle path already asks it; status was
+// the one that did not, and its signature said so: it took the context and
+// discarded it.
+func NetworkStatus(ctx context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
 	if in.DataDir == "" {
 		return NetworkStatusOut{}, ErrNoDataDir
 	}
 	if !isComposition(in.DataDir) {
-		return NetworkStatusOut{}, fmt.Errorf("chainsetup: %s holds no workspace (no %s)", in.DataDir, session.CompositionFilePath(in.DataDir))
+		return NetworkStatusOut{}, fmt.Errorf("chainsetup: %w", session.NoRecordError(in.DataDir))
 	}
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetworkStatusOut{}, err
 	}
-	return NetworkStatusOut{Nodes: ws.NodeSet()}, nil
+	ws.SetEnv(d.Env)
+	ws.SetDriver(d.Driver)
+	return NetworkStatusOut{Nodes: ws.NodeSet(), Alive: ws.livePIDs(ctx)}, nil
 }
 
-// isComposition reports whether dir holds a workspace. Its state manifest is
+// isComposition reports whether dir holds a composed chain. Its chain record is
 // the marker, and session owns where that lives.
 func isComposition(dir string) bool {
-	_, err := os.Stat(session.CompositionFilePath(dir))
+	_, err := os.Stat(session.ChainRecordPath(dir))
 	return err == nil
 }
 
@@ -235,8 +253,7 @@ func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemo
 		return NetworkRemoveOut{}, ErrNoDataDir
 	}
 	if !isComposition(in.DataDir) {
-		return NetworkRemoveOut{}, fmt.Errorf(
-			"chainsetup: %q does not look like a chainbench workspace (no %s); refusing to remove", in.DataDir, session.CompositionFilePath(in.DataDir))
+		return NetworkRemoveOut{}, fmt.Errorf("chainsetup: refusing to remove %q: %w", in.DataDir, session.NoRecordError(in.DataDir))
 	}
 	stop, err := NetworkStop(ctx, d, NetworkStopIn(in))
 	if err != nil {
@@ -254,3 +271,96 @@ var (
 	// ErrNoDataDirAndIndex refuses a per-node verb missing its workspace or index.
 	ErrNoDataDirAndIndex = errors.New("chainsetup: a workspace directory and a 1-based node index are required")
 )
+
+// NetCrossForkIn names the composition whose declared hardfork is to be crossed.
+type NetCrossForkIn struct {
+	DataDir string
+	// Timeout bounds the wait for the network to reach the block before the
+	// fork; zero takes the step's own default.
+	Timeout time.Duration
+}
+
+// NetCrossForkOut is the network as it stands once the successors produce.
+type NetCrossForkOut struct {
+	// Detail is what the step recorded.
+	Detail string `json:"detail"`
+	// Nodes is the whole node table, because crossing changes more than one
+	// node: every successor has a new role and a new pid.
+	Nodes node.NodeSet `json:"nodes"`
+}
+
+// NetCrossFork waits for the network to reach the block before its declared
+// hardfork and hands production to the build that seals after it.
+//
+// The whole table comes back rather than the nodes that changed. A caller holds
+// a table and has to write the result into it, and returning only the changed
+// ones makes every caller re-derive which those were — from the same fact the
+// step already knows.
+func NetCrossFork(ctx context.Context, d Deps, in NetCrossForkIn) (NetCrossForkOut, error) {
+	if in.DataDir == "" {
+		return NetCrossForkOut{}, ErrNoDataDir
+	}
+	var out NetCrossForkOut
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		detail, err := ws.CrossFork(ctx, CrossForkOpts{Timeout: in.Timeout})
+		if err != nil {
+			return "", err
+		}
+		out.Detail, out.Nodes = detail, ws.NodeSet()
+		return detail, nil
+	})
+	if err != nil {
+		return NetCrossForkOut{}, err
+	}
+	return out, nil
+}
+
+// NetForkIn identifies the composition to read the declared hardfork from.
+type NetForkIn struct {
+	DataDir string
+}
+
+// NetForkOut is the hardfork a composition is built to cross and which of its
+// nodes stand on each side of it.
+type NetForkOut struct {
+	// Fork is the declared hardfork, nil when the network crosses none.
+	Fork *GenesisFork `json:"fork,omitempty"`
+	// PreFork are the indices of the nodes running the build that seals up to
+	// the fork block and stops there. After the handover they stay where they
+	// stopped: they cannot validate what the successors produce.
+	PreFork []int `json:"preFork,omitempty"`
+	// HaltsAt is the block this network's genesis makes it stop one short of,
+	// and 0 when it keeps producing. A network can halt without crossing a
+	// fork — a genesis naming a system-contract version the build does not have
+	// is one — so it is answered even when Fork is nil.
+	HaltsAt int64 `json:"haltsAt,omitempty"`
+}
+
+// NetFork reads the hardfork a composition is built to cross.
+//
+// It is read from the record rather than carried from the request because the
+// two callers are not the same run: a network is composed once and attached to
+// afterwards, and the second one has no request to read.
+func NetFork(_ context.Context, d Deps, in NetForkIn) (NetForkOut, error) {
+	if in.DataDir == "" {
+		return NetForkOut{}, ErrNoDataDir
+	}
+	var out NetForkOut
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		out.HaltsAt = ws.state.HaltsAt
+		out.Fork = ws.state.Fork
+		if out.Fork == nil {
+			return "", nil
+		}
+		for _, ns := range ws.state.Nodes {
+			if ns.Binary != out.Fork.Binary {
+				out.PreFork = append(out.PreFork, ns.Index)
+			}
+		}
+		return "", nil
+	})
+	if err != nil {
+		return NetForkOut{}, err
+	}
+	return out, nil
+}

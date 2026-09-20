@@ -92,7 +92,7 @@ func TestGenesisDeclared_IsStableAndIgnoresWhatIsComparedElsewhere(t *testing.T)
 	}
 	for name, mutate := range map[string]func(*chainsetup.NetUpIn){
 		"keys dir":   func(i *chainsetup.NetUpIn) { i.KeysDir = "keys/other" },
-		"validators": func(i *chainsetup.NetUpIn) { i.Validators = 15 },
+		"validators": func(i *chainsetup.NetUpIn) { i.BPCount = 15 },
 		"binary":     func(i *chainsetup.NetUpIn) { i.Binary = "/other/gstable" },
 		"peering":    func(i *chainsetup.NetUpIn) { i.Peering = "proxied" },
 	} {

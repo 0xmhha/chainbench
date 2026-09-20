@@ -51,7 +51,6 @@ func newRootCmd() *cobra.Command {
 		networkcmd.New(),
 		lifecyclecmd.NewConsensus(),
 		upgradecmd.NewHardfork(),
-		upgradecmd.New(),
 		reportcmd.NewReport(),
 		accountcmd.NewFaucet(),
 		reportcmd.NewLog(),
