@@ -31,7 +31,7 @@ import (
 // justified here in front of a reviewer rather than in a diff nobody re-reads.
 var targetBranches = map[string]string{
 	"new.go:New":                         "a local target defaults its data root to the workspace; a remote one was given one",
-	"steps_compose.go:Allocate":          "only a remote pool has host names distinct from addresses, so only then is there a name to record",
+	"steps_place.go:Allocate":            "only a remote pool has host names distinct from addresses, so only then is there a name to record",
 	"steps_compose.go:genesisArtifacts":  "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
 	"steps_compose.go:shipIdentities":    "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
 	"steps_lifecycle.go:scanPorts":       "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
