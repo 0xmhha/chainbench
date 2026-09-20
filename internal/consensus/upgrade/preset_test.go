@@ -9,20 +9,20 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// goldenProfilePath resolves the repo's golden upgrade profile from this test's
+// goldenPresetPath resolves the repo's golden upgrade profile from this test's
 // package dir (internal/consensus/upgrade -> repo root).
-func goldenProfilePath() string {
+func goldenPresetPath() string {
 	return filepath.Join("..", "..", "..", "presets", "hardfork", "wemix-upgrade.yaml")
 }
 
-// TestGoldenProfile_SaysWhichForkAndHowManyOfEachSide.
+// TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide.
 //
 // What a hardfork preset still decides, now that the composition is the
 // ordinary one: which chain hands over to which, at which fork, and how many
 // nodes stand on each side. Everything else it used to drive — the plan, the
 // ports, the launch — belongs to the composition steps.
-func TestGoldenProfile_SaysWhichForkAndHowManyOfEachSide(t *testing.T) {
-	p, err := upgrade.LoadProfile(goldenProfilePath())
+func TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide(t *testing.T) {
+	p, err := upgrade.LoadHardforkPreset(goldenPresetPath())
 	if err != nil {
 		t.Fatal(err)
 	}

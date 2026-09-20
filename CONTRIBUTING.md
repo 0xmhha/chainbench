@@ -62,7 +62,7 @@ Open an issue with the `enhancement` label. Describe:
    ```
    feat: add new stress test for large transactions
    fix: resolve port conflict detection on macOS
-   docs: update profile schema reference
+   docs: update preset schema reference
    refactor: simplify genesis template substitution
    ```
 7. **Push** and open a Pull Request against `main`
@@ -117,7 +117,7 @@ tests/                   Go test cases (tests/all) + reproduction scripts (tests
 - **Shell scripts**: Use `bash` with `set -euo pipefail`. Follow existing patterns in `scripts/` and `env/docker/`.
 - **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/) format
 - **Branch names**: `feat/`, `fix/`, `docs/`, `refactor/` prefixes
-- **No breaking changes** to profile schema without migration path
+- **No breaking changes** to the DSL or preset schema without a migration path
 
 ## License
 

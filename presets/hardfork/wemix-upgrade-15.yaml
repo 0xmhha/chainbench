@@ -1,4 +1,4 @@
-# chainbench profile: wemix-upgrade-15 (15 producers + 15 successors)
+# chainbench hardfork preset: wemix-upgrade-15 (15 producers + 15 successors)
 #
 # The same croissant handoff as the golden wemix-upgrade profile, at the scale the
 # docker environment is built for: 15 wemix producers and 15 go-wbft successors on

@@ -1,13 +1,13 @@
-# chainbench profile: wemix-upgrade (golden)
+# chainbench hardfork preset: wemix-upgrade (golden)
 #
 # Hardfork handoff: go-wemix + etcd (poa) produces blocks up to the croissant
 # fork, then go-wbft (bft) validators — which synced the pre-fork chain — take
-# over producing after it. This is a GOLDEN profile: it records the exact,
+# over producing after it. This is a GOLDEN preset: it records the exact,
 # verified-live environment (1 producer + 4 validators, fork at block 20). It
 # is the single source of truth for what was tested; there are NO code defaults,
 # so a change to any value here is a visible, traceable change of environment.
 #
-# Verified conditions this profile encodes (each caused a silent failure once):
+# Verified conditions this preset encodes (each caused a silent failure once):
 #   - network_id is uniform across every node (go-wemix otherwise defaults its
 #     own id, independent of chain id; go-wbft derives it from chain id).
 #   - producers and validators are disjoint (a wbft validator listed as a wemix

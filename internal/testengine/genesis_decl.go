@@ -83,7 +83,7 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	// The preset is read only for what the case left out. A declaration that
 	// says both says everything, and a restart has no preset to read at all.
 	if u.Fork == "" || u.At == nil {
-		prof, err := upgrade.LoadProfile(upgradePresetPath(u))
+		prof, err := upgrade.LoadHardforkPreset(upgradePresetPath(u))
 		if err != nil {
 			return nil, fmt.Errorf("upgrade preset: %w", err)
 		}
@@ -130,7 +130,7 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Style == dsl.UpgradeRestart {
 		return nil
 	}
-	prof, err := upgrade.LoadProfile(presetPath)
+	prof, err := upgrade.LoadHardforkPreset(presetPath)
 	if err != nil {
 		return fmt.Errorf("upgrade preset: %w", err)
 	}

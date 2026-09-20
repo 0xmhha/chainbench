@@ -24,9 +24,9 @@ import (
 // through the ordinary path: there is nothing in it the key set does not
 // already know.
 
-// TestProfile_TheValidatorSetIsWhatTheKeySetDerives.
-func TestProfile_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
-	prof, err := LoadProfile("../../../presets/hardfork/wemix-upgrade.yaml")
+// TestHardforkPreset_TheValidatorSetIsWhatTheKeySetDerives.
+func TestHardforkPreset_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
+	prof, err := LoadHardforkPreset("../../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}

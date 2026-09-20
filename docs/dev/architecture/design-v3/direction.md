@@ -32,7 +32,7 @@
 
 | 지금 | 제안 | 왜 |
 |---|---|---|
-| `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | 파일도 타입도 함수도 **preset** 으로 | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 한다 |
+| `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | ~~preset 으로~~ **완료 (2026-09-21): `upgrade.HardforkPreset` · `LoadHardforkPreset`** | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 했다 |
 | `dsl.UpgradeV2.Profile` 필드 | ~~삭제~~ **완료 (2026-09-21)** | 정의서 209개 중 쓰는 것이 0개였다. 지우면서 스키마의 `upgrade` 블록도 실제 구조에 맞췄다 — `required: [profile, template]` 에 `additionalProperties: false` 라 **실제로 쓰는 `preset` 을 거부하는 상태**였고, `fork`·`at`·`from`·`to`·`style`·`carry` 여섯 필드가 통째로 빠져 있었다 |
 | `profiles/` 디렉터리 | ~~삭제~~ **완료 (2026-09-21)** | 측정 §4 |
 | `keys/preset/` | **`keys/fixture/`** 로 | 키는 골든 설정이 아니라 테스트 픽스처다. `keyring.Preset` 타입도 같이 본다 |
@@ -101,7 +101,7 @@
 |---|---|---|---|
 | ~~1~~ | ~~`dsl.UpgradeV2.Profile` 삭제 + 스키마·문서 경로 오기 정정~~ | — | **완료 2026-09-21** |
 | ~~2~~ | ~~`profiles/`·`state/` 삭제 + `.gitignore` + README·CONTRIBUTING~~ | — | **완료 2026-09-21** |
-| 3 | `upgrade.Profile`/`LoadProfile` → preset 어휘로 개명 | 중 | 기계적 |
+| ~~3~~ | ~~`upgrade.Profile`/`LoadProfile` 개명~~ | — | **완료 2026-09-21** |
 | 4 | 실행 조건 어휘를 만들고 동사 몇 개를 옮긴 뒤 래칫을 건다 | 중 | 래칫이 지킨다 |
 | 5 | 남은 동사를 옮긴다 | 대 | 4 가 끝나야 의미 있다 |
 | 6 | `keys/preset` → `keys/fixture` | 중 | 참조 71곳. 따로 판단 |
@@ -127,3 +127,34 @@
   `internal/testkit/`. 같은 문단이라 함께 걷어냈다.
 - **아직 남은 고아 둘**: `scripts/extract_json.py` · `scripts/json_backend.py` 도 외부 참조가
   0건이다. `profiles`/`state` 와 무관해 이번 범위 밖으로 두었다.
+
+## 8. 3번을 하면서 정한 것 — 왜 `chainPreset` 이 아닌가 (2026-09-21)
+
+`chainPreset` 이 후보로 나왔다. 그 문서가 담은 것을 읽고 **`HardforkPreset`** 으로 정했다.
+
+`presets/hardfork/wemix-upgrade.yaml` 은 **두 체인과 그 사이의 포크**를 적는다 — `upgrade.from`
+(wemix) · `upgrade.to`(wbft) · `at_fork`(croissant) · `fork_block` · 양쪽 바이너리 · 역할 수 ·
+거버넌스 · 검증자 주소와 BLS 키 · 포트 계획. 한 체인의 설정이 아니라 **핸드오프 환경 전체**다.
+
+그래서 `chainPreset` 은 두 가지가 어긋난다. 첫째, 단수로 읽혀 **주어가 틀린다** — 이 문서의
+주제는 한 체인이 아니라 둘 사이의 이행이다. 둘째, 그 이름이 **정말 어울리는 자리가 따로 있다**:
+`tests/tc/env/*.env.json` 이 한 체인 + 모양을 적고, 메인넷 워크리스트가 그것을 이미 "preset" 이라
+부른다. 여기서 `chainPreset` 을 쓰면 겹침을 없애는 대신 **한 칸 옮기는** 셈이다.
+
+`Preset` 만 쓰지 않은 이유도 측정이다. `keyring.Preset` 이 이미 그 낱말을 갖고 있어
+`arch.TestNamesDoNotCollide` 의 새 빚이 된다. 그 목록은 **줄기만 한다**고 선언돼 있다.
+6번(`keys/preset` → `keys/fixture`)이 낱말을 비우면 그때 `upgrade.Preset` 으로 줄일 수 있다.
+
+## 9. 3번을 하면서 드러난 것
+
+- **README 가 없는 명령을 안내하고 있었다.** `chainbench upgrade run --profile …` 과
+  `upgrade genesis` 인데, `root.go` 가 등록하는 그룹에 `upgrade` 가 없다(있는 것은 `hardfork`).
+  낱말만 바꾸면 거짓이 남으므로, 실제로 도는 경로(정의서 + `suite run`, 그리고
+  `chainbench hardfork --workspace-dir …`)로 다시 썼다.
+- **e2e 테스트 셋이 같은 죽은 명령을 부른다** — `cmd/chainbench/upgrade_run_e2e_test.go`,
+  `upgrade_data_migration_e2e_test.go`, `upgrade_gov_ncp_lifecycle_e2e_test.go` 가
+  `"upgrade", "run", "--profile", …` 를 넘긴다. `e2e` 태그 뒤에 있고 환경변수가 없으면
+  건너뛰므로 **컴파일은 되고 아무도 실패를 보지 못한다.** 이번 범위 밖으로 두었다 — 고치는 일은
+  이름이 아니라 없어진 명령의 문제다.
+- **여섯째 `profile` 이 있다** — `internal/accounts` 의 "accounts SDK protocol profile".
+  상류 SDK 의 어휘라 건드리지 않는다.

@@ -85,7 +85,7 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
   runner skips the rest and reports `coverage = ran / applicable`, so a chain
   that gates most cases out reads as under-tested rather than green.
 - **Concurrent hardfork handoff** — reproduce a live PoA→BFT upgrade from a
-  golden profile, with the from-chain producing up to the fork and the successor
+  golden hardfork preset, with the from-chain producing up to the fork and the successor
   validators taking over after it.
 - **Local or remote nodes** — a `Driver` abstraction launches nodes as local
   subprocesses or over SSH. No Docker; runs on macOS and Linux.
@@ -180,19 +180,26 @@ to a running `chainbench-dashboard` over SSE.
 (`wemix` + etcd) produces blocks up to a fork height, then the successor
 validators (`wbft`) — which synced the pre-fork chain — take over producing
 after it. The exact, verified-live environment is captured in a **golden
-profile** as the single source of truth.
+hardfork preset** as the single source of truth.
+
+A test declaration names the preset and the runner composes the handoff:
 
 ```bash
-chainbench upgrade run \
-  --profile presets/hardfork/wemix-upgrade.yaml \
-  --from-binary /path/to/gwemix \
-  --to-binary   /path/to/gwbft \
-  --wait 60
+chainbench suite run tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json
+```
+
+The declaration it reads is [`tests/tc/env/wemix-to-wbft.env.json`](tests/tc/env/wemix-to-wbft.env.json),
+whose `upgrade` block names the preset:
+
+```json
+"upgrade": { "preset": "wemix-upgrade", "fork": "croissant", "at": 20,
+             "from": "default", "to": "next", "style": "concurrent" }
 ```
 
 See [`presets/hardfork/wemix-upgrade.yaml`](presets/hardfork/wemix-upgrade.yaml) for the encoded
 conditions (uniform network id, disjoint producers/validators, BFT quorum,
-paired fork sections). `upgrade genesis` builds just the merged handoff genesis.
+paired fork sections). To plan a binary swap against a workspace that is already
+running, `chainbench hardfork --workspace-dir <dir> --to-chain <id> --block <n>`.
 
 ### MCP server
 
