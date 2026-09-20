@@ -43,85 +43,44 @@
 "specs 가 선언한 것과 **일치해야 한다**" 는 검사로 쓰인다. 같은 플래그가 경로에 따라 검사이기도
 하고 덮어쓰기이기도 하면 설명할 수 없다.
 
-## 3. 판정 규칙 — 손으로 쓴 목록이 아니라 유도된다
+## 3. 적용 대상 — 공통 TC 만이다 (2026-09-21 정정)
 
-> **env override 가 체인 고유 이름을 부르면, 그 케이스의 `requires` 가 그것을 이름으로
-> 선언해야 한다.**
+**§3~§5 를 다시 썼다. 처음 쓴 것은 대상을 틀렸다.**
 
-체인 고유 이름은 포크 이름 · 엔진 섹션 · 시스템 컨트랙트 · upgrade preset 이다. 이 규칙이
-있으면 거절 목록을 손으로 유지하지 않아도 되고, 규칙을 어긴 케이스가 **들어오는 시점에** 잡힌다.
+처음에는 지금 저장소에 있는 케이스 209개를 교체 대상으로 보고, 체인 고유 override 를 든 28건을
+전수 분류해 "거절 목록" 을 만들었다. **틀린 전제였다.** 그 209개는 `go-stablenet`·`go-wbft`·
+`go-wemix` 아래 있고, 각자 한 프로젝트의 것이라 거기 남는다. 체인 교체가 그것들을 방문하지 않는다.
 
-세 체인이 아는 포크(`manifest.genesis.hardforks`)와 기본 genesis 템플릿이 켜는 것:
+교체 대상은 **공통 TC 76개**이고, 그 집합은 **이미 예외가 없게 만들어져 있다.** 선별이 끝나 있기
+때문이다:
 
-| 포크 | stablenet | wbft | wemix |
-|---|---|---|---|
-| `istanbul` · `applepie` | 안다 (템플릿은 안 켬) | 안다, 템플릿 0 | 안다, 템플릿 0 |
-| `boho` | 안다 (템플릿은 안 켬) | — | — |
-| `anzeon` (엔진 섹션) | 템플릿에 있다 | — | — |
-| `pangyo` · `brioche` | — | 템플릿 0 | 템플릿 0 |
-| `croissant` | — | 템플릿 0 + 엔진 섹션 | — |
+- **부록 A** — 계정 코드 위임(EIP-7702)·P256 을 쓰는 것은 WEMIX3.0 이 지원하지 않아 두 체인
+  전용으로 뺐다.
+- **부록 B** — 한 체인에만 있는 것은 뺐다. StableNet 전용만 105개다.
+- 남은 것이 **세 체인에서 같은 목적으로 도는 76개**다.
 
-## 4. 28건 판정 결과 (2026-09-20 전수)
+그래서 공통 TC 에는 **넘을 포크 예외도, 없는 tx 타입도 없다.** `tx:0x04` 를 어떻게 게이트할지는
+공통 TC 의 문제가 아니라 애초에 공통에서 빠진 것이다. 판정 규칙도, 거절 목록도, 두 체인 env 를
+못 박는 래칫도 이 설계에 필요 없다 — 전부 되돌렸다(`ab206fd3`).
 
-케이스 209개 중 `genesis`·`hardforks`·`upgrade`·`accounts` 를 인라인 override 로 든 것이
-28개다. 셋으로 갈린다.
+## 4. 그래서 남는 일
 
-### 거절 — 3건
-
-override 가 체인 고유 이름을 부르는데 `requires` 가 그것을 말하지 않는다. 체인 교체를 주면
-게이트를 통과한 뒤 다른 체인에 뜻 없는 overlay 가 얹힌다. **이름을 대고 거절한다.**
-
-| 케이스 | override | 왜 고유한가 | 지금 `requires` |
-|---|---|---|---|
-| `wemix-brioche-block-reward` | `config.brioche.{firstHalvingBlock,halvingPeriod,…}` | `brioche` 는 wbft·wemix 에만 있다 | `rpc` |
-| `state-written-before-the-fork-survives-it` | `upgrade.preset="wemix-upgrade"`, `fork="croissant"` | `croissant` 는 wbft 에만, preset 은 wemix 전용 | `rpc`, `consensus` |
-| `sample-lifecycle-node-restart` | `config.bohoBlock: 6` | `boho` 는 stablenet 만 안다 | `rpc`, `consensus`, `process` |
-
-### 게이트가 이미 막는다 — 15건
-
-`requires` 가 체인 고유 능력을 이미 이름으로 말한다. 체인을 바꾸면 **override 가 적용되기 전에
-SKIP** 된다. 거절 장치가 따로 필요 없다.
-
-| 무엇을 요구하나 | 건수 | 케이스 |
+| # | 무엇 | 어디 |
 |---|---|---|
-| `fork:boho` (+`contract:govMinter`/`govValidator`) | 5 | `stablenet-delayed-fork` · `prealloc-preserved-across-boho` · `boho-chain-config-active` · `anzeon-active-before-boho` · `unsupported-system-contract-version` |
-| `engine:anzeon` + `contract:govCouncil` | 6 | `authorized-accounts-{no-space,space,trim,empty-item,single,empty}` |
-| `engine:anzeon` + `contract:govValidator` | 1 | `validator-add-member-epoch-activates` |
-| `contract:accountManager` | 3 | `stablenet-account-extra` · `extra-union-merge` · `extra-state-across-delayed-boho` |
+| 1 | 공통 TC 정의서 76개를 **모양만 부르고 체인은 부르지 않게** 쓴다 | `tests/tc/common/`(신설) |
+| 2 | 실행 시점에 체인을 고른다 | `suite run` 표면 + `dsl` 의 env 해석 |
+| 3 | 정의서가 필요로 하는 프리미티브를 더한다 | `testhelper` |
+| 4 | 세 체인을 이어 돌리고 결과를 한 표로 모은다 | `testengine` (레포트 책임) |
 
-### 중립 — 10건 (그중 8건은 선언이 부족하다)
+공통 TC 문서 §2 의 도구 기능 8개가 여기 떨어진다 — 다섯이 `testhelper`, 하나가 `dsl`, 둘이
+`testengine` 이다(§1).
 
-override 가 세 체인 모두에서 뜻이 있다. 교체 가능하다.
+## 5. 열린 것
 
-| 케이스 | override | 판정 |
-|---|---|---|
-| `wbft-tx-and-contract` · `wemix-tx-and-contract` | `alloc.<addr>.balance` 뿐 | 그대로 교체 가능 |
-| 대납 7건 (`fee-delegated-*` · `fd-*` · `feepayer-insufficient-rejected`) | `config.applepieBlock: 0` | **교체 가능하나 `tx:0x16` 선언이 없다** |
-| `set-code-delegation` | `config.applepieBlock: 0` | **`family:wbft` 보다 `tx:0x04` 가 정확하다** |
-
-`applepie` 는 세 체인이 **모두 아는** 포크다(wbft·wemix 는 템플릿이 0 으로 켠다). 그래서 이
-override 는 다른 체인에서 무해하다 — 문제는 override 가 아니라 **시험 대상을 선언하지 않은
-것**이다. 대납 7건은 `requires` 가 `rpc` 뿐인데, 매니페스트를 보면 대납 타입 `0x16` 은 세 체인이
-다 받고 EIP-7702 의 `0x04` 는 **wemix 에 없다**(stablenet·wbft `["0x00","0x01","0x02","0x03","0x04","0x16"]`,
-wemix `["0x00","0x01","0x02","0x16"]`). 선언이 없으면 체인이 타입을 빼는 날 **SKIP 이 아니라
-단언 실패**로 나타난다 — `manifest_capability.go:55` 가 기록한 것과 같은 실패다.
-
-## 5. 단점
-
-- ~~키 파생이 우연에 기대고 있다~~ — **철회 (2026-09-20). 단점이 아니다.** 검토에서 나온 지적이
-  맞았다: wemix 에서는 만들어진 BLS 키를 **쓰지 않으면 그만**이다. 근거 둘. ① `derive.Derive`
-  는 주소와 devp2p 공개키를 개인키에서 똑같이 계산하고 `WithBLS` 는 `Identity.BLS` 를 **더할
-  뿐**이다 — 키 자체도 주소도 달라지지 않는다. ② 공유 모양들이 쓰는 `source: "keyPreset"` 은
-  저장소에 커밋된 픽스처 `keys/preset` 을 **읽기만 한다**(각 노드 디렉터리에 `bls`·`bls_pubkey`·
-  `pop` 이 이미 있다). 그 경로에서는 체인별로 파생하는 일 자체가 없다. 따라서 모양은 파생 정책과
-  무관하게 체인 독립이다.
-
-  남은 N3 빚의 성격은 **표현**이다. `derive/identity.go` 가 *"a wemix node has no BLS key, and
-  modelling that as absence rather than as zeroes keeps the two cases distinguishable downstream"*
-  라고 적는데, `chainsetup/steps_keys.go:159·206·228` 이 패밀리를 묻지 않고 늘 `WithBLS` 를
-  넘겨 그 의도를 어긴다. `generate`·`declared` 경로에서 BLS 를 읽지 않는 체인의 기록에 BLS 가
-  남는다. 계산 비용도 CGO 도 걸림돌이 아니다 — `deriveBLS` 는 순수 Go(`kilic/bls12-381`)이고
-  주석이 "CGO 를 꺼도 돈다" 고 적는다. **이 설계의 선행 조건이 아니다.**
-- **`requires` 보강 8건은 이 설계의 선행 작업이다.** 지금 상태로 교체하면 대납 7건이 조용히
-  다른 뜻으로 돈다.
-- **새 플래그 이름이 어휘를 하나 늘린다.** `--chain` 과의 차이를 문서로 설명해야 한다.
+- **모양이 세 체인에 다 있어야 한다.** 지금 모양 21종 중 세 체인이 다 갖춘 것은 `bp4` 와
+  `bp7-en7-pn1` 둘뿐이다. 공통 TC 76개가 실제로 몇 가지 모양을 요구하는지 세지 않았고, 그 수가
+  채워야 할 env 파일 수를 정한다.
+- **플래그 이름.** `--chain` 은 attach 경로에서 "specs 가 선언한 것과 일치해야 한다" 는 검사로
+  이미 쓰인다. 같은 이름이 경로에 따라 검사이기도 하고 덮어쓰기이기도 하면 설명할 수 없다.
+- **`tests/tc/basic`·`fault`·`stress`·`samples` 19건의 처지.** 체인 디렉터리 밖에 있으면서
+  stablenet env 를 extends 한다. 공통으로 옮길 후보인지, 그냥 stablenet 것인지 읽지 않았다.
