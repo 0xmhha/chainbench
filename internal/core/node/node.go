@@ -96,6 +96,14 @@ type Node struct {
 	// and time out. Empty when the composition did not record one (an attached
 	// node, or a node with no metrics port).
 	MetricsURL string `json:"metrics_url,omitempty"`
+	// WSURL is the WebSocket endpoint a subscription dials, recorded for the
+	// same reason MetricsURL is: composing ws://Host:Ports.WS by hand reaches
+	// the node's OWN address, which under docker is the container-internal one
+	// this tool cannot route to. Measured 2026-09-19: ws-subscribe-new-heads
+	// timed out on ws://172.30.0.11:8701 while every HTTP dial in the same run
+	// went to the published 127.0.0.1 port. Empty when the composition recorded
+	// none (an attached node, or a node with no ws port).
+	WSURL string `json:"ws_url,omitempty"`
 	// Ports holds the node's port map (empty for pure-attach nodes whose
 	// ports are unknown/irrelevant).
 	Ports Endpoints `json:"ports"`

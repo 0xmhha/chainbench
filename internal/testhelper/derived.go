@@ -417,6 +417,14 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 		return "", fmt.Errorf("dsl: no target node for a WebSocket subscription")
 	}
 	n := nodes[0]
+	// The recorded endpoint wins. Host and Ports hold the node's OWN address,
+	// which under docker is the container-internal one this tool cannot route
+	// to; the composition already resolved the reachable form through the same
+	// opener every HTTP dial uses. Building from Host+Ports is what made this
+	// the one dial that skipped the translation.
+	if n.WSURL != "" {
+		return n.WSURL, nil
+	}
 	if n.Ports.WS == 0 {
 		return "", fmt.Errorf("dsl: node%d has no WebSocket port (an attached node's ports are unknown)", n.Index)
 	}

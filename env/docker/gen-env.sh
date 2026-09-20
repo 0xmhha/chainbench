@@ -24,17 +24,24 @@ ADDR_OFFSET=10
 SSH_PORT=10022                    # sshd inside every server (the real servers' port)
 SSH_PUB_BASE=2200                 # server i's sshd published at 127.0.0.1:$((base+i))
 RPC_PUB_BASE=18600                # slot s of server i published at $((base + 100*s + i))
+WS_PUB_BASE=15600                 # the ws band, published the same way as rpc
+# The server set declares a ws band, so the compose file has to publish it or
+# the two disagree: a subscription resolves to a port nothing on this machine
+# answers. Measured 2026-09-19 — ws-subscribe-new-heads timed out because 8701
+# was in the set and in no container's published list.
 # The port scheme mirrors the Wemix3.5 test servers' firewall: each purpose
 # has its own band (auth 85xx, http 86xx, ws 87xx, p2p 303xx, one metrics
 # port), and firewall.sh opens exactly these inside every container.
 P2P_PORT=30301; P2P_STEP=1
+# The wemix (poa) family needs two consecutive p2p-side ports per node, so it
+# gets its own set off the same body: one node per host, p2p ports 3 apart.
+# These come first because P2P_SPAN is sized from WEMIX_SLOTS, and `set -u`
+# makes reading it one line too early a fatal error rather than a zero.
+WEMIX_SLOTS="${WEMIX_SLOTS:-1}"
+WEMIX_P2P_STEP="${WEMIX_P2P_STEP:-3}"
 # How many p2p-side ports the firewall opens above the base: slots x step, plus
 # the etcd port each poa node reserves beside its own.
 P2P_SPAN="${P2P_SPAN:-$(( (SLOTS > WEMIX_SLOTS ? SLOTS : WEMIX_SLOTS) * 3 ))}"
-# The wemix (poa) family needs two consecutive p2p-side ports per node, so it
-# gets its own set off the same body: one node per host, p2p ports 3 apart.
-WEMIX_SLOTS="${WEMIX_SLOTS:-1}"
-WEMIX_P2P_STEP="${WEMIX_P2P_STEP:-3}"
 RPC_PORT=8601;  RPC_STEP=1        # http band; slot s listens on base + step*s
 WS_PORT=8701;   WS_STEP=1
 AUTH_PORT=8501; AUTH_STEP=1
@@ -118,6 +125,9 @@ EOF
 EOF
         for s in $(seq 0 $((SLOTS - 1))); do
             echo "      - \"127.0.0.1:$((RPC_PUB_BASE + 100 * s + i)):$((RPC_PORT + RPC_STEP * s))\""
+        done
+        for s in $(seq 0 $((SLOTS - 1))); do
+            echo "      - \"127.0.0.1:$((WS_PUB_BASE + 100 * s + i)):$((WS_PORT + WS_STEP * s))\""
         done
         echo "      - \"127.0.0.1:$((METRICS_PUB_BASE + i)):${METRICS_PORT}\""
         cat <<EOF
@@ -245,6 +255,9 @@ EOF
         ports="${SSH_PORT}: $((SSH_PUB_BASE + i))"
         for s in $(seq 0 $((SLOTS - 1))); do
             ports="${ports}, $((RPC_PORT + RPC_STEP * s)): $((RPC_PUB_BASE + 100 * s + i))"
+        done
+        for s in $(seq 0 $((SLOTS - 1))); do
+            ports="${ports}, $((WS_PORT + WS_STEP * s)): $((WS_PUB_BASE + 100 * s + i))"
         done
         ports="${ports}, ${METRICS_PORT}: $((METRICS_PUB_BASE + i))"
         cat <<EOF

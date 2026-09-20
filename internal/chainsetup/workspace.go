@@ -643,6 +643,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 			Host:       nodeHost,
 			RPCURL:     rpcURLOf(w, n),
 			MetricsURL: metricsURLOf(w, n),
+			WSURL:      wsURLOf(w, n),
 			// The record's embedded Endpoints, whole: copying fields one by one
 			// is how the etcd port went missing between the plan and the
 			// running network before.
