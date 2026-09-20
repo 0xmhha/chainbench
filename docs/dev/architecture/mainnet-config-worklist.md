@@ -2017,7 +2017,7 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 
 | | 값 |
 |---|---|
-| 저장소 | `~/Work/github/chain/{go-stablenet,go-wbft,go-wemix}` |
+| 저장소 | `$CHAIN/{go-stablenet,go-wbft,go-wemix}`. **경로는 기계마다 다르다** — 2026-09-16 실측 기계는 `~/Work/github/chain`, 2026-09-19 기계는 `~/work/github/wemade` 였다 |
 | stablenet | `GSTABLE_BIN=<go-stablenet>/build/bin/gstable` |
 | wbft | `WBFT_BIN` 또는 `GWBFT_BIN=<go-wbft>/build/bin/gwemix` — **이름이 `gwemix` 다**(X4) |
 | wemix | `WEMIX_BIN=<go-wemix>/build/bin/gwemix` |

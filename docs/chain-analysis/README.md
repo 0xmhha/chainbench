@@ -47,8 +47,12 @@ scripts/chain-analysis/verify-docs.sh <binary> docs/chain-analysis/<chain>
 
 ## 재생성
 
+세 저장소를 담은 디렉터리를 `CHAIN` 에 넣는다. **기계마다 다르다** — 아래는 예시이고,
+자기 기계의 경로로 바꿔 넣는다(`cli-surface.txt` 머리의 `chain repo:` 는 그때 그 기계의
+경로를 적은 **기록**이지 지시가 아니다).
+
 ```sh
-CHAIN=~/work/github/0xmhha/chain
+CHAIN=${CHAIN:-~/work/github/wemade}   # 예시. 자기 기계의 경로로 바꾼다
 scripts/chain-analysis/capture-cli.sh $CHAIN/go-stablenet $CHAIN/go-stablenet/build/bin/gstable docs/chain-analysis/gstable
 scripts/chain-analysis/capture-cli.sh $CHAIN/go-wbft      $CHAIN/go-wbft/build/bin/gwemix      docs/chain-analysis/gwbft
 scripts/chain-analysis/capture-cli.sh $CHAIN/go-wemix     $CHAIN/go-wemix/build/bin/gwemix     docs/chain-analysis/gwemix
