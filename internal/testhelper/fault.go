@@ -12,8 +12,17 @@ import (
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
+
+// Taking a node out and putting it back: stop, start, restart, swap, and
+// reading the log it left.
+//
+// Stopping is the one with a question behind it — a node that stops answering
+// may be down or merely busy, so the step confirms rather than assumes, and
+// keeps what it saw as evidence when it cannot.
+//
+// The action names stay here with seedFaultBuiltins, beside the registration
+// that reads them. Partitioning a network is in partition.go.
 
 // Fault and node-lifecycle action names (design §3.2). These are what a
 // destructive test uses: stop a validator to probe quorum, restart it to check
@@ -372,161 +381,3 @@ func faultTarget(ac *interp.ActionCtx, action string) (node.Node, interp.NodeCon
 // Note: this severs current connections. A network with peer discovery enabled
 // may re-establish them; chainbench networks peer through static-nodes, so the
 // split holds until healPartition (or a node restart) restores it.
-type partitionAction struct{}
-
-func (partitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
-	groups, err := partitionGroups(ac)
-	if err != nil {
-		return err
-	}
-	enodes, err := enodesFor(ctx, ac, flatten(groups))
-	if err != nil {
-		return err
-	}
-	for i, a := range groups {
-		for j, b := range groups {
-			if i == j {
-				continue
-			}
-			for _, from := range a {
-				for _, to := range b {
-					c, err := clientFor(ac.Deps, from.RPCURL)
-					if err != nil {
-						return err
-					}
-					if err := c.RemovePeer(ctx, enodes[to.Index]); err != nil {
-						return fmt.Errorf("dsl: partition: node%d drop node%d: %w", from.Index, to.Index, err)
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// healPartitionAction restores full connectivity by re-adding every pair. With
-// no "groups" it heals across the whole environment, which is what a post-action
-// wants after a fault test.
-type healPartitionAction struct{}
-
-func (healPartitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
-	if ac.Env == nil {
-		return fmt.Errorf("dsl: healPartition: no environment")
-	}
-	nodes := ac.Env.Nodes()
-	if raw, ok := ac.Args["groups"]; ok {
-		groups, err := resolveGroups(ac, raw)
-		if err != nil {
-			return err
-		}
-		nodes = flatten(groups)
-	}
-	if len(nodes) < 2 {
-		return fmt.Errorf("dsl: healPartition needs at least 2 nodes, got %d", len(nodes))
-	}
-	enodes, err := enodesFor(ctx, ac, nodes)
-	if err != nil {
-		return err
-	}
-	for _, from := range nodes {
-		c, err := clientFor(ac.Deps, from.RPCURL)
-		if err != nil {
-			return err
-		}
-		for _, to := range nodes {
-			if from.Index == to.Index {
-				continue
-			}
-			if err := c.AddPeer(ctx, enodes[to.Index]); err != nil {
-				return fmt.Errorf("dsl: healPartition: node%d add node%d: %w", from.Index, to.Index, err)
-			}
-		}
-	}
-	return nil
-}
-
-// partitionGroups resolves and validates the action's "groups" argument.
-func partitionGroups(ac *interp.ActionCtx) ([][]node.Node, error) {
-	raw, ok := ac.Args["groups"]
-	if !ok {
-		return nil, fmt.Errorf("dsl: partition requires \"groups\" (two or more lists of node selectors)")
-	}
-	groups, err := resolveGroups(ac, raw)
-	if err != nil {
-		return nil, err
-	}
-	if len(groups) < 2 {
-		return nil, fmt.Errorf("dsl: partition needs at least 2 groups, got %d", len(groups))
-	}
-	for i, g := range groups {
-		if len(g) == 0 {
-			return nil, fmt.Errorf("dsl: partition: group %d is empty", i)
-		}
-	}
-	return groups, nil
-}
-
-// resolveGroups turns the DSL's [[selector...]...] into resolved node groups.
-func resolveGroups(ac *interp.ActionCtx, raw any) ([][]node.Node, error) {
-	if ac.Env == nil {
-		return nil, fmt.Errorf("dsl: partition: no environment")
-	}
-	list, ok := raw.([]any)
-	if !ok {
-		return nil, fmt.Errorf("dsl: partition: \"groups\" must be a list of node-selector lists")
-	}
-	out := make([][]node.Node, 0, len(list))
-	for gi, g := range list {
-		sels, ok := g.([]any)
-		if !ok {
-			return nil, fmt.Errorf("dsl: partition: group %d must be a list of node selectors", gi)
-		}
-		nodes := make([]node.Node, 0, len(sels))
-		for _, s := range sels {
-			sel, ok := s.(string)
-			if !ok {
-				return nil, fmt.Errorf("dsl: partition: group %d has a non-string selector", gi)
-			}
-			n, err := ac.Env.Resolve(sel)
-			if err != nil {
-				return nil, fmt.Errorf("dsl: partition: %w", err)
-			}
-			nodes = append(nodes, n)
-		}
-		out = append(out, nodes)
-	}
-	return out, nil
-}
-
-// enodesFor asks each node for its own enode (admin_nodeInfo), keyed by index.
-// Peers are named by enode, and only the node itself knows its own.
-func enodesFor(ctx context.Context, ac *interp.ActionCtx, nodes []node.Node) (map[int]string, error) {
-	out := make(map[int]string, len(nodes))
-	for _, n := range nodes {
-		if _, done := out[n.Index]; done {
-			continue
-		}
-		c, err := clientFor(ac.Deps, n.RPCURL)
-		if err != nil {
-			return nil, err
-		}
-		enode, err := c.Enode(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("dsl: enode of node%d: %w", n.Index, err)
-		}
-		out[n.Index] = enode
-	}
-	return out, nil
-}
-
-// flatten concatenates node groups, preserving order.
-func flatten(groups [][]node.Node) []node.Node {
-	var out []node.Node
-	for _, g := range groups {
-		out = append(out, g...)
-	}
-	return out
-}
-
-// compile-time assertion that the RPC client satisfies what the actions need.
-var _ = func(c *rpc.Client) { _ = c.AddPeer }

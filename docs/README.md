@@ -30,6 +30,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 |---|---|---|
 | **[정본]** | *무엇을 만들어야 하는가* — 요구·계약·인터페이스·작업 순서 | **정본이 이긴다.** 설계 제안을 고친다. |
 | **[현행 설계]** | *지금 어떻게 만들 것인가* — 목표 구조 | 정본에 진다. 코드에 이긴다(코드가 아직 안 따라온 것). |
+| **[제안]** | *이렇게 하면 어떨까* — 아직 결정이 아니다 | **등급 밖이다.** 현행 설계를 대체하지 않고 이기지도 진다고도 할 수 없다. 채택하려면 검토를 끝내고 등급을 올린다. 분석·측정은 인용 가능, 목표 구조·일정은 인용 금지. |
 | **[측정]** | *언제 재보니 이랬다* | 기준 커밋이 붙는다. 다시 뽑으면 갱신된다 — **어긋나면 코드가 이긴다.** |
 | **[이력]** | *그때 무엇을 측정·결정했는가* | **현재 상태를 말하지 않는다.** 근거로 인용할 수 없다. |
 | **[대체됨]** | 제안이 구현됐거나 다른 문서로 옮겨감 | [`dev/archive/`](dev/archive/README.md) 로 이동. 새 작업의 근거 금지. |
@@ -101,14 +102,15 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 등급 | 내용 |
 |---|---|---|
+| [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (검토 중, PR #419 에서 머지).** 분석·근거·CLI 우선 검토·검증 계획과 목표 구조·P0~P5 일정. **등급 밖이다** — 현행 설계를 대체하지 않고, 목표 구조와 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). 분석과 측정은 인용할 수 있다. |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |
 | [`module-responsibilities.md`](dev/architecture/module-responsibilities.md) | [현행 설계] | **관심사별 소유 모듈** 16개 · 소유자 부재 실측 · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할. |
 | [`module-plan.md`](dev/architecture/module-plan.md) | [현행 설계] | **모듈 재편 계획** — 자원·노드정보·프로세스 3모듈 + genesis·nodeconfig·dsl 빌더 3종 · 합칠 것과 지울 것 · P1~P8 단계와 게이트. |
-| [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | [현행 설계] | **통폐합 계획 (2026-08-31 사용자 확정)** — `core` 아래 평평한 형제들을 관심사 단위로. 확정된 목표 구조와 이동표. |
+| [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | [현행 설계] | **통폐합 계획 (2026-08-31 확정) — 실행됐고 닫히지 않았다.** 흡수 14건 완료, 3건은 이후 반대로 결정, 3건은 측정이 반대 근거를 냈다(하나는 import 순환이라 불가능). **목표 수 "약 20" 은 산술적으로 낡았다** — 상세는 문서 §5. 열린 판단은 정본 §0 의 "통폐합 — 닫을지 판단". |
 | [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
 | [`terminology-map.md`](dev/architecture/terminology-map.md) | [측정] | **용어 지도 (2026-09-14)** — 한 낱말이 몇 뜻으로 쓰이는지, 뜻마다 주인이 우리인지 체인인지. `validator` 6뜻 · `boot` 4뜻 · `workspace` 4뜻 · `preset` 3뜻. **새 낱말을 쓰기 전에 본다.** |
-| [`target-architecture.md`](dev/architecture/target-architecture.md) | [현행 설계] | **목표 아키텍처 다이어그램 8종** — 디렉토리/호출 두 축 분리 · 레이어 · 청사진 파이프라인 · 패밀리 분기 · 키 파생 · 피어링 그래프 · 표면 통일. |
+| [`target-architecture.md`](dev/architecture/target-architecture.md) | **[이력]** | **2026-08-26 의 목표 다이어그램 8종.** 그리는 L1 모듈 이름 일곱이 코드에 없다(2026-09-20 실측) — 근거로 인용하지 않는다. 지금 향하는 구조는 `architecture-v2`·`layers`·`module-responsibilities`. |
 | [`f1-recovery.md`](dev/architecture/f1-recovery.md) | [현행 설계] | **F1 파일 영속·복구** — 프로세스가 죽어도 다시 실행하면 이전 진행을 이어받는다. §0 원칙: 복구용 사본을 만들지 않는다. |
 | [`code-graph.md`](dev/architecture/code-graph.md) | [측정] | **AST 실측 패키지 그래프** — 2026-09-11 재측정(70패키지 · 225엣지 · 51,151줄 · **층 위반 0**), 레이어별 규모와 fan-in/out, 자원 소유자로의 수렴. 다시 뽑기: `go run ./scripts/inventory/code-graph .` |
 | [`code-health-review-2026-09-10.md`](dev/architecture/code-health-review-2026-09-10.md) | [측정] | **코드 건강도 검토** — 같은 수치 위에서 함수 길이·분기·중첩·완전 중복까지. `shellQuote` 4중복 등 **네 갈래 중복**과 패키지 문서 공백 17개. 수정은 아직 하지 않았다(worklist §1s). |
