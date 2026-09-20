@@ -4,8 +4,7 @@
   "id": "fd-feepayer-sig-invalid-rejected",
   "description": "RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid)",
   "requires": [
-    "rpc",
-    "tx:0x16"
+    "rpc"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,8 +3,7 @@
   "kind": "case",
   "id": "wemix-brioche-block-reward",
   "requires": [
-    "rpc",
-    "fork:brioche"
+    "rpc"
   ],
   "env": {
     "extends": "wemix-bp4-binvar",

@@ -5,7 +5,7 @@
   "description": "RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx)",
   "requires": [
     "rpc",
-    "tx:0x04"
+    "family:wbft"
   ],
   "env": {
     "extends": "stablenet-bp4",

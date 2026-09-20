@@ -4,8 +4,7 @@
   "id": "feepayer-insufficient-rejected",
   "description": "RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient)",
   "requires": [
-    "rpc",
-    "tx:0x16"
+    "rpc"
   ],
   "env": {
     "extends": "stablenet-bp4",
