@@ -183,13 +183,14 @@ func (w *Workspace) allowNode(verb string, index int) error {
 	if err := w.allow(verb); err != nil {
 		return err
 	}
-	need := verbNeeds[verb]
-	for _, ns := range w.state.Nodes {
-		if ns.Index == index {
-			return checkNode(verb, need.node, ns)
-		}
+	// The lookup goes through nodeAt so an unknown index is refused in one
+	// place. Writing the sentence again here is the very duplication this file
+	// exists to remove, and it silently changed the wording a test pins.
+	ni, err := w.nodeAt(index)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("chainsetup: %s: no node%d in the table", lower(verb), index)
+	return checkNode(verb, verbNeeds[verb].node, w.state.Nodes[ni])
 }
 
 // checkNode holds one node to one condition. One function, so the refusal reads

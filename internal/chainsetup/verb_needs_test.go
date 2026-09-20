@@ -180,7 +180,7 @@ func TestAllowNodeNamesAnUnknownIndex(t *testing.T) {
 	w := &Workspace{}
 	w.state.Nodes = []node.Record{{Index: 1, Args: []string{"gstable"}}}
 	err := w.allowNode("StartNode", 9)
-	if err == nil || !strings.Contains(err.Error(), "no node9") {
+	if err == nil || !strings.Contains(err.Error(), "no node 9") {
 		t.Errorf("an unknown index was not named: %v", err)
 	}
 }
