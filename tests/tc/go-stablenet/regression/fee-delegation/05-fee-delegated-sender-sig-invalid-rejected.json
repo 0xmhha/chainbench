@@ -3,7 +3,8 @@
   "kind": "case",
   "id": "fee-delegated-sender-sig-invalid-rejected",
   "requires": [
-    "rpc"
+    "rpc",
+    "tx:0x16"
   ],
   "env": {
     "extends": "stablenet-bp4",

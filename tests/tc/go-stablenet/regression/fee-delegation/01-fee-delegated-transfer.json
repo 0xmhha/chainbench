@@ -4,7 +4,8 @@
   "id": "fee-delegated-transfer",
   "description": "RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)",
   "requires": [
-    "rpc"
+    "rpc",
+    "tx:0x16"
   ],
   "env": {
     "extends": "stablenet-bp4",

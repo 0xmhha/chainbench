@@ -66,16 +66,21 @@
 케이스 209개 중 `genesis`·`hardforks`·`upgrade`·`accounts` 를 인라인 override 로 든 것이
 28개다. 셋으로 갈린다.
 
-### 거절 — 3건
+### 거절 — 케이스 수준에는 없다. env 수준에 2건 (2026-09-21 정정)
 
-override 가 체인 고유 이름을 부르는데 `requires` 가 그것을 말하지 않는다. 체인 교체를 주면
-게이트를 통과한 뒤 다른 체인에 뜻 없는 overlay 가 얹힌다. **이름을 대고 거절한다.**
+처음에 3건을 거절 대상으로 적었는데 **틀렸다.** 게이트를 다시 읽어 보니 overlay 가 포크를 켜면
+`networkCapabilities`(`chainsetup/steps_genesis.go:537-541`)가 그 `fork:<name>` 을 **제공한다** —
+override 의 `<fork>Block` 으로도, overlay 안의 엔진 섹션으로도. 그래서 셋 중 둘은 거절이 아니라
+**선언이 빠진 것**이었고, 요구를 달면 15건과 똑같이 게이트가 알아서 건너뛴다.
 
-| 케이스 | override | 왜 고유한가 | 지금 `requires` |
-|---|---|---|---|
-| `wemix-brioche-block-reward` | `config.brioche.{firstHalvingBlock,halvingPeriod,…}` | `brioche` 는 wbft·wemix 에만 있다 | `rpc` |
-| `state-written-before-the-fork-survives-it` | `upgrade.preset="wemix-upgrade"`, `fork="croissant"` | `croissant` 는 wbft 에만, preset 은 wemix 전용 | `rpc`, `consensus` |
-| `sample-lifecycle-node-restart` | `config.bohoBlock: 6` | `boho` 는 stablenet 만 안다 | `rpc`, `consensus`, `process` |
+진짜 거절은 **케이스가 아니라 env** 에 있다. `wemix-to-wbft` 는 `chain: "wemix"` 인데
+`binaries.next` 가 `{"binary": "${GWBFT_BIN}", "chain": "wbft"}` 다 — **구조상 두 체인을 이름으로
+부른다.** 같은 모양이 `wemix-to-wbft-bp2` 까지 둘이고, 이들을 extends 하는 케이스는 교체 대상이
+아니다. 거절은 여기 한 곳에 두면 된다.
+
+| 교체 불가 env | 왜 |
+|---|---|
+| `wemix-to-wbft` · `wemix-to-wbft-bp2` | `chain` 과 `binaries.next.chain` 이 서로 다른 체인이다. 핸드오프 자체가 시험 대상이라 다른 체인으로 옮길 수 없다 |
 
 ### 게이트가 이미 막는다 — 15건
 
@@ -96,8 +101,22 @@ override 가 세 체인 모두에서 뜻이 있다. 교체 가능하다.
 | 케이스 | override | 판정 |
 |---|---|---|
 | `wbft-tx-and-contract` · `wemix-tx-and-contract` | `alloc.<addr>.balance` 뿐 | 그대로 교체 가능 |
-| 대납 7건 (`fee-delegated-*` · `fd-*` · `feepayer-insufficient-rejected`) | `config.applepieBlock: 0` | **교체 가능하나 `tx:0x16` 선언이 없다** |
-| `set-code-delegation` | `config.applepieBlock: 0` | **`family:wbft` 보다 `tx:0x04` 가 정확하다** |
+| 대납 7건 (`fee-delegated-*` · `fd-*` · `feepayer-insufficient-rejected`) | `config.applepieBlock: 0` | ~~`tx:0x16` 선언 없음~~ **달았다 (2026-09-21)** |
+| `set-code-delegation` | `config.applepieBlock: 0` | ~~`family:wbft`~~ → **`tx:0x04` 로 교체 (2026-09-21)** |
+
+### 선언 보강 10건 — 완료 (2026-09-21)
+
+실제 레지스트리로 제공 여부를 확인한 결과다(`networkCapabilities` 에 각 케이스의 overlay 를 넣어 계산).
+
+| 요구 | stablenet | wbft | wemix | 뜻 |
+|---|---|---|---|---|
+| `tx:0x16` (대납 7건) | 제공 | 제공 | 제공 | 지금은 어디서도 안 걸린다. 체인이 타입을 빼는 날 **실패가 아니라 SKIP** 이 되는 것이 값이다 |
+| `tx:0x04` (set-code 1건) | 제공 | 제공 | **없음** | 옛 `family:wbft` 와 판정이 같고, 의존을 이름으로 정확히 말한다 |
+| `fork:brioche` (1건) | **없음** | 제공 | 제공 | wbft 도 brioche 를 안다. wemix 전용이 아니라 stablenet 만 제외된다 |
+| `fork:boho` (1건) | 제공 | **없음** | **없음** | overlay 의 `bohoBlock` 이 켜서 제공된다 |
+
+`tx:` 둘은 지금 아무 체인도 걸러내지 않는다 — 그래서 **게이트가 아니라 선언**이다. 값은
+`manifest_capability.go:55` 가 기록한 실패(게이트를 통과한 뒤 단언에서 깨짐)를 미리 막는 데 있다.
 
 `applepie` 는 세 체인이 **모두 아는** 포크다(wbft·wemix 는 템플릿이 0 으로 켠다). 그래서 이
 override 는 다른 체인에서 무해하다 — 문제는 override 가 아니라 **시험 대상을 선언하지 않은

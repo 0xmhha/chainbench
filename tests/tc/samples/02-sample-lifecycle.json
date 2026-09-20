@@ -6,7 +6,8 @@
   "requires": [
     "rpc",
     "consensus",
-    "process"
+    "process",
+    "fork:boho"
   ],
   "env": {
     "extends": "stablenet-bp4-en1-binvar",
