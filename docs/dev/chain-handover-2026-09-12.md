@@ -376,7 +376,7 @@ chainbench 는 **클라이언트 쪽에서 태그를 풀어** 우회하고 있�
 wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 
 - W1 · B1: wemix→wbft 핸드오프, producer 15 + successor 15. 프로파일과 검증된 호출은
-  [`profiles/wemix-upgrade-15.yaml`](../../profiles/wemix-upgrade-15.yaml) 머리말에 그대로
+  [`presets/hardfork/wemix-upgrade-15.yaml`](../../presets/hardfork/wemix-upgrade-15.yaml) 머리말에 그대로
   적혀 있다(`chainbench upgrade run --profile … --all-servers --docker`).
 - W2: poa(wemix) 단독 원격 브링업, 14 bp + 1 en. chainbench 워크리스트 R6.
 

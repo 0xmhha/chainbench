@@ -83,8 +83,8 @@ func TestUpgradeDecl_ARestartComposesAsAForkThatMovesTheWholeNetwork(t *testing.
 // TestUpgradeDecl_RefusesADeclarationThatContradictsItself.
 func TestUpgradeDecl_RefusesADeclarationThatContradictsItself(t *testing.T) {
 	cases := []struct{ name, extra, want string }{
-		{"no preset and no profile", ``, `needs a "preset" or a "profile"`},
-		{"both", `,"preset":"a","profile":"b.yaml"`, "name one"},
+		{"no preset", ``, `needs a "preset"`},
+		{"the retired profile spelling", `,"preset":"a","profile":"b.yaml"`, "profile"},
 		{"an unknown style", `,"preset":"a","style":"rolling"`, "unknown upgrade style"},
 		{"one side twice", `,"preset":"a","from":"to"`, "on both sides"},
 		{"a side no binary declares", `,"preset":"a","from":"old"`, "binaries.old is missing"},

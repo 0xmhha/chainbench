@@ -131,19 +131,47 @@
         "upgrade": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "profile",
-            "template"
-          ],
-          "description": "a mixed-binary handoff: the network starts on binaries.from and forks to binaries.to, shaped by a golden profile",
+          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to, shaped by a preset under presets/hardfork; a restart crosses one chain's own fork on one binary at a time and names the fork itself.",
           "properties": {
-            "profile": {
+            "preset": {
               "type": "string",
-              "description": "golden upgrade profile (profiles/*.yaml)"
+              "description": "a hardfork preset under presets/hardfork, without the directory or the .yaml extension"
             },
             "template": {
               "type": "string",
               "description": "the from-chain's own genesis template"
+            },
+            "fork": {
+              "type": "string",
+              "description": "which fork is crossed. Required for a restart; for a handoff the preset answers, and a repetition that disagrees is refused."
+            },
+            "at": {
+              "type": "integer",
+              "description": "the block the fork activates at. Required for a restart; for a handoff the preset answers."
+            },
+            "from": {
+              "type": "string",
+              "description": "the binaries entry the network starts on (default \"from\")"
+            },
+            "to": {
+              "type": "string",
+              "description": "the binaries entry it ends on (default \"to\")"
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "concurrent",
+                "restart"
+              ],
+              "description": "concurrent: two builds run side by side across the fork. restart: one build at a time, every node relaunched on the successor."
+            },
+            "carry": {
+              "type": "string",
+              "enum": [
+                "genesis",
+                "config"
+              ],
+              "description": "where the successor reads the fork settings from"
             }
           }
         },

@@ -2424,7 +2424,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   바꿔** slot 2 를 준다(plan 1~15 = p2p 30301/http 8601, plan 16~30 = p2p 30304/http 8602).
   제네시스는 **1개 파일**이다: wemix 제네시스를 base 로 `config.croissant` 섹션만 병합한
   것으로, 15대 전 서버에서 md5 동일(`340b27d7…`), croissant.init 에 validator 15명과 BLS
-  키 15개. `profiles/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
+  키 15개. `presets/hardfork/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
   - **확인한 결과** — `handoff confirmed: head 50; blocks 21-50 all sealed by the
     successor set, across 15 of 15 validator(s)`. RPC 로 따로 읽은 것: 블록 19 는 boot
     wemix producer `0xfa119c06…`, 블록 20 부터는 wbft validator, **producer 자신의 head 는
@@ -2800,7 +2800,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 | 검증 | 덮은 사이트 | 결과 |
 |---|---|---|
 | **15노드 wemix 브링업** (docker 15대, 13 bp + 2 en, `tests/tc/go-wemix/chain-up/02`) | poa 8곳 — `WaitForIPC`·`WaitForIPCOn`·`WaitSelf`·`VerifyEtcd`·`WaitForMember`·`joinOne`·`WaitProducing`·`WaitEtcdCluster` | **pass.** 직렬 내림차순 브링업 완주, 13 bp 전부 etcd 형성, 블록 생산 |
-| **golden 5노드 핸드오프** (로컬, `profiles/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
+| **golden 5노드 핸드오프** (로컬, `presets/hardfork/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
 | 단위 테스트 | `collector.WaitLog` 1곳 | 타임아웃 경로(`"nonexistent"`, 100ms)가 그 루프를 실제로 돈다. **프로덕션 호출자는 없다** — 인터페이스 계약이다 |
 
 - **8곳이 어디서 쓰이는지 먼저 확인하고 실행을 골랐다.** 각 사이트의 함수를 AST 가 아니라

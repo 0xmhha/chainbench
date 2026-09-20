@@ -82,11 +82,8 @@ internal/chains/         chain plugins (stablenet, wbft, wemix, external) + mani
                          genesis templates, and capability catalogs
 internal/chainsetup/     composes a chain up to producing blocks
 internal/testengine/     runs tests on an already-composed chain
-internal/netmap/         server set, placement, and the one dial-wiring point
 internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
-internal/testkit/        test-case framework
-profiles/                remote-chain connection profiles
 presets/hardfork/        hardfork presets
 tests/                   Go test cases (tests/all) + reproduction scripts (tests/repro)
 ```
@@ -105,12 +102,6 @@ tests/                   Go test cases (tests/all) + reproduction scripts (tests
 
 1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
 2. Run with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
-
-### Adding a Profile
-
-1. Create YAML in `profiles/` or `profiles/custom/`
-2. Use `inherits: default` to extend the base profile
-3. Only override fields that differ
 
 ### Modifying the MCP Server
 

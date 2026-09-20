@@ -33,8 +33,8 @@
 | 지금 | 제안 | 왜 |
 |---|---|---|
 | `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | 파일도 타입도 함수도 **preset** 으로 | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 한다 |
-| `dsl.UpgradeV2.Profile` 필드 | **삭제** | 정의서 209개 중 쓰는 것이 0개다. 소비자가 없는 필드가 스키마에 살아 남의 이름을 쓰고 있다 |
-| `profiles/` 디렉터리 | **삭제** | 측정 §4 |
+| `dsl.UpgradeV2.Profile` 필드 | ~~삭제~~ **완료 (2026-09-21)** | 정의서 209개 중 쓰는 것이 0개였다. 지우면서 스키마의 `upgrade` 블록도 실제 구조에 맞췄다 — `required: [profile, template]` 에 `additionalProperties: false` 라 **실제로 쓰는 `preset` 을 거부하는 상태**였고, `fork`·`at`·`from`·`to`·`style`·`carry` 여섯 필드가 통째로 빠져 있었다 |
+| `profiles/` 디렉터리 | ~~삭제~~ **완료 (2026-09-21)** | 측정 §4 |
 | `keys/preset/` | **`keys/fixture/`** 로 | 키는 골든 설정이 아니라 테스트 픽스처다. `keyring.Preset` 타입도 같이 본다 |
 | 메인넷 워크리스트의 "preset" (env 선언) | **env 로 통일** | 코드·파일·스키마가 이미 `env` 라 부른다. 문서만 다르다 |
 
@@ -99,8 +99,8 @@
 
 | # | 무엇 | 크기 | 되돌리기 |
 |---|---|---|---|
-| 1 | `dsl.UpgradeV2.Profile` 삭제 + 스키마·문서 경로 오기 정정 | 소 | 쉽다. 소비자 0 |
-| 2 | `profiles/`·`state/` 삭제 + `.gitignore` 13줄 + README·CONTRIBUTING | 소 | 쉽다 |
+| ~~1~~ | ~~`dsl.UpgradeV2.Profile` 삭제 + 스키마·문서 경로 오기 정정~~ | — | **완료 2026-09-21** |
+| ~~2~~ | ~~`profiles/`·`state/` 삭제 + `.gitignore` + README·CONTRIBUTING~~ | — | **완료 2026-09-21** |
 | 3 | `upgrade.Profile`/`LoadProfile` → preset 어휘로 개명 | 중 | 기계적 |
 | 4 | 실행 조건 어휘를 만들고 동사 몇 개를 옮긴 뒤 래칫을 건다 | 중 | 래칫이 지킨다 |
 | 5 | 남은 동사를 옮긴다 | 대 | 4 가 끝나야 의미 있다 |
@@ -108,3 +108,22 @@
 | 7 | 큰 덩어리 | — | 요구가 생기면 |
 
 1·2 는 서로 독립이고 오늘 끝난다. 3 은 1 뒤다. 4 가 이 설계의 본체다.
+
+---
+
+## 7. 1·2 를 하면서 드러난 것 (2026-09-21)
+
+- **스키마의 `upgrade` 블록은 `profile` 하나가 아니라 통째로 낡아 있었다.** `required: [profile,
+  template]` + `additionalProperties: false` 였으므로, 강제되는 자리였다면 지금 쓰는 `preset`
+  선언을 전부 거부했을 것이다. 강제되지 않아서 **아무도 몰랐다.** 스키마↔파서 동기화 테스트
+  (`TestSchemaV2MatchesParsedFields`)는 `envSpec`·`caseSpec` 의 **최상위 속성만** 본다. 중첩
+  객체는 사정거리 밖이다 — 다음에 갚을 빚으로 적어 둔다.
+- **`chainbench remote` 명령은 없다.** `profiles/remote-example.yaml` 이 `chainbench remote add`
+  사용법을 안내하고 있었는데, `root.go` 가 등록하는 27개 그룹에 `remote` 가 없다.
+- **`scripts/merge_profile.py` 는 호출자가 0이다.** `lib/profile.sh` 에서 추출했다고 적혀 있는데
+  `lib/` 자체가 없고, `profiles/` 와 `state/local-config.yaml` 을 읽는다 — 둘 다 이번에 지웠다.
+  같이 지웠다.
+- **README·CONTRIBUTING 의 트리에 없는 패키지 둘이 더 있었다** — `internal/netmap/` 과
+  `internal/testkit/`. 같은 문단이라 함께 걷어냈다.
+- **아직 남은 고아 둘**: `scripts/extract_json.py` · `scripts/json_backend.py` 도 외부 참조가
+  0건이다. `profiles`/`state` 와 무관해 이번 범위 밖으로 두었다.

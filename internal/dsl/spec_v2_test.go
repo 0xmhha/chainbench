@@ -565,13 +565,13 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
 	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
 	  "binaries":{"from":"gwemix","to":"gwbft"}` + table + `,
-	  "upgrade":{"profile":"p.yaml"}},
+	  "upgrade":{"preset":"p"}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" {
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Preset != "p" {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
 	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
@@ -579,9 +579,9 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	}
 
 	bad := map[string]string{
-		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"profile":"p"}`,
-		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"profile":"p"}`,
-		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"profile":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"preset":"p"}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"preset":"p"}`,
+		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"preset":"p"}`,
 	}
 	for name, env := range bad {
 		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},
@@ -865,7 +865,7 @@ func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
 		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
 		  "binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-		  "upgrade":{"profile":"p.yaml"` + carry + `}},
+		  "upgrade":{"preset":"p"` + carry + `}},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	for _, want := range []string{"", CarryGenesis, CarryConfig} {
@@ -901,7 +901,7 @@ func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 		  "steps":[` + steps + `]}`
 	}
 	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-	  "upgrade":{"profile":"p.yaml"}`
+	  "upgrade":{"preset":"p"}`
 	cross := `{"do":"crossFork","timeout":"120s"}`
 	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
 

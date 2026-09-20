@@ -25,7 +25,7 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 > private keys are effectively public knowledge.
 >
 > **NEVER use any key, keystore, or address that appears in this repository — in
-> `keys/preset/`, in profiles, in manifests, or in tests — on any production,
+> `keys/preset/`, in presets, in manifests, or in tests — on any production,
 > mainnet, testnet, staging, or shared network. Not to hold value, not to seal a
 > block, not to sign anything, not once, not "just to try it".** They are for
 > disposable, local throwaway networks ONLY. Anyone who can read this repository
@@ -297,13 +297,10 @@ chainbench/
 │   │                     #   bindings + capabilities (stablenet, wbft, wemix, external)
 │   ├── chainsetup/       # composes a chain up to producing blocks
 │   ├── testengine/       # runs tests on a chain something else composed
-│   ├── netmap/           # server set, placement, and the one dial-wiring point
 │   ├── app/              # workflow layer MCP reaches (DSL → setup → test → report)
 │   ├── accounts/         # account/tx/ABI boundary over the accounts SDK
 │   ├── mcp/              # MCP tool handlers (through the app layer)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
-│   └── testkit/          # test-case framework (Case / T / Report)
-├── profiles/             # remote-chain connection profiles (YAML)
 ├── presets/hardfork/     # hardfork presets: fork block, roles, binaries (YAML)
 ├── keys/preset/          # preset validator keys (TEST FIXTURE ONLY)
 ├── tests/                # Go test cases (tests/all) + repro scripts (tests/repro)

@@ -111,12 +111,9 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 // hardforkPresetDir is where a named hardfork preset lives.
 const hardforkPresetDir = "presets/hardfork"
 
-// upgradePresetPath is the preset file this declaration names: a path when it
-// gave one, and otherwise the named preset under presets/hardfork.
+// upgradePresetPath is the preset file this declaration names, under
+// presets/hardfork.
 func upgradePresetPath(u *dsl.UpgradeV2) string {
-	if u.Profile != "" {
-		return expand(u.Profile)
-	}
 	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
 }
 
