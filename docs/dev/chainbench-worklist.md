@@ -44,8 +44,17 @@
       `partial` 로 읽혔다.
 - [ ] **메인넷 설정 트랙 — 라이브 잔여 셋** — 근거: [`architecture/mainnet-config-worklist.md`](architecture/mainnet-config-worklist.md).
       결과는 그 문서 §11.4.1(L1)·§11.4.2(L2). 오프라인 잔여는 2026-09-18 에 0 이 됐고, L1 전체 회귀와 L2 경합 전수는 2026-09-20 에
-      닫혔다(§11.4.1·§11.4.2). 남은 것은 **HEAD 바이너리로 L1 재실행**(위 실행은 2026-08-10
-      빌드로 돌았다) · `restart-at-boho` 1건(pre-boho linux 빌드 필요) · 실제 망 대응 R2~R6.
+      닫혔다(§11.4.1·§11.4.2). `restart-at-boho` 도 2026-09-20 에 닫혔다 — pre/post 두 바이너리를
+      golang 컨테이너 안에서 네이티브로 빌드해 쌍으로 돌렸다. 남은 것은 **HEAD 바이너리로 L1 재실행**
+      (위 실행은 2026-08-10 빌드로 돌았다. `PlaceBinary` 는 절대 경로를 *대상 위의* 경로로 읽으므로
+      로컬 빌드가 함대에 올라가지 않았다) · 실제 망 대응 R2~R6.
+- [ ] **공통 TC 가 요구하는 도구 기능 둘이 어느 항목도 아니다** — 근거: [`architecture/mainnet-config-worklist.md` §8](architecture/mainnet-config-worklist.md) 의 대응표(2026-09-20 신설)와
+      [`docs/tc/common/03-separate-implementation-items.md`](../tc/common/03-separate-implementation-items.md) §2.
+      여덟 중 여섯은 R2~R6 이 덮지만 **동기화 경로 관찰**(어느 경로로 블록을 받았는지)과
+      **준비물 공유**(한 케이스 파일이 저장한 값을 다른 파일이 이름으로 읽기)는 R 에도 V 에도 P 에도 없다.
+      P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
+      **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
+
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
 
@@ -53,11 +62,11 @@
       [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) §R1(소형 모듈 흡수).
       같은 `R1`~`R5/R6` 이 **서로 다른 것**을 가리키고 둘 다 살아 있는 문서다. 이번 검토에서 제가
       "R1 완료" 를 통폐합으로 읽을 뻔했다. 한쪽을 개명해야 한다(`C1~C5` 또는 `D1~D6`).
-- [ ] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — 최종수정
-      2026-08-26(17일 정체)이고 모듈을 **`netmap`** 으로 부른다(3회). 그 모듈은 통합되어 지금
-      `internal/resource` 이며 문서에 `internal/resource` 는 **0회** 나온다. 등급 규칙상
-      [현행 설계]는 **코드를 이기므로**, 읽는 사람이 없는 구조를 향해 만든다. 갱신하거나 [이력]로 내린다.
-      (`dsl/engine`·`app/feature` 는 *거부된 선택지*로 인용된 것이라 낡지 않았다 — 확인했다.)
+- [x] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — **완료 (2026-09-20).** [이력]로 내렸다. 내린 근거는 실측이다: 그 문서가 L1 로 그리는 모듈 이름 일곱
+      (`driver`·`netmap`·`place`·`portplan`·`target`·`serverset`·`peering`)이 **전부 `internal/` 에 없고**,
+      지금 쓰는 `internal/resource` 는 **0회** 나온다. 흡수된 자리를 문서 머리에 적었고, 인덱스 행도 바꿨다.
+      같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
+      `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은

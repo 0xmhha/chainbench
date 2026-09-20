@@ -88,3 +88,15 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 | [용어집](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2986868908) | 이 문서에서 쓰는 용어 |
 | [부록 A. 두 체인에서만 가능한 테스트](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2986901809/A.) | 기존 ID로 정리 |
 | [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189/B.) | 기존 ID로 정리 |
+
+---
+
+## 이 저장소가 더한 것 (Confluence 본문 아님)
+
+> 위 본문은 Confluence 를 그대로 옮긴 것이고, 이 절만 chainbench 저장소가 더했다.
+
+[03-separate-implementation-items.md](03-separate-implementation-items.md) §2 "실행 도구에
+추가해야 하는 것" 여덟 가지가 실제로 어디서 추적되는지는
+[`docs/dev/architecture/mainnet-config-worklist.md` §8](../../dev/architecture/mainnet-config-worklist.md)
+의 대응표에 있다. 여섯은 R2~R6 이 덮고, **동기화 경로 관찰과 준비물 공유 둘은 아직 어느
+항목도 아니다.**

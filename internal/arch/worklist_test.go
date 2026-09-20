@@ -93,7 +93,7 @@ func TestWorklistOpenWorkPointsSomewhere(t *testing.T) {
 		if !strings.HasPrefix(strings.TrimSpace(line), "- [ ] ") {
 			continue
 		}
-		refs := sectionRef.FindAllStringSubmatch(line, -1)
+		refs := sectionRef.FindAllStringSubmatch(withoutForeignLinks(line), -1)
 		if len(refs) == 0 {
 			// An item may point at a file instead of a section; require one or
 			// the other, because an item with neither cannot be followed.
@@ -119,6 +119,41 @@ func TestWorklistOpenWorkPointsSomewhere(t *testing.T) {
 			}
 		}
 	}
+}
+
+// withoutForeignLinks drops every markdown link that points at another document,
+// text and all. A §-number written inside such a link belongs to that document,
+// not this one, and reading it as a local section makes the check reject a
+// correct reference — which is how it first rejected the common-TC item pointing
+// at mainnet-config-worklist §8.
+func withoutForeignLinks(line string) string {
+	var b strings.Builder
+	for {
+		open := strings.Index(line, "[")
+		if open < 0 {
+			break
+		}
+		close := strings.Index(line[open:], "](")
+		if close < 0 {
+			break
+		}
+		close += open
+		end := strings.Index(line[close:], ")")
+		if end < 0 {
+			break
+		}
+		end += close
+		target := line[close+2 : end]
+		// A same-document anchor still refers here, so keep its text.
+		if strings.HasPrefix(target, "#") {
+			b.WriteString(line[:end+1])
+		} else {
+			b.WriteString(line[:open])
+		}
+		line = line[end+1:]
+	}
+	b.WriteString(line)
+	return b.String()
 }
 
 // sectionContains reports whether token appears inside section §name — the span
