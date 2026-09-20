@@ -22,28 +22,50 @@ import (
 // what the older spelling maps onto.
 
 func lowerCase(c CaseV2) (Spec, error) {
+	env, err := caseEnv(c)
+	if err != nil {
+		return Spec{}, err
+	}
+	spec := newSpec(c, env)
+	for _, step := range []func(CaseV2, EnvV2, *Spec) error{
+		lowerChain, lowerEnvDeclarations, lowerHooks, lowerStatements,
+	} {
+		if err := step(c, env, &spec); err != nil {
+			return Spec{}, err
+		}
+	}
+	return spec, nil
+}
+
+// caseEnv reads the env a case carries and refuses one the case cannot run on.
+//
+// Everything here fails the case rather than the run. An env named rather than
+// inlined has not been resolved yet, and a timeout key outside the vocabulary
+// is a typo that would otherwise be validated as a duration and then ignored —
+// leaving a spec that looks like it set a budget when no budget exists.
+func caseEnv(c CaseV2) (EnvV2, error) {
 	if c.ID == "" {
-		return Spec{}, fmt.Errorf("dsl: v2 case needs \"id\"")
+		return EnvV2{}, fmt.Errorf("dsl: v2 case needs \"id\"")
 	}
 	if len(c.Env) == 0 {
-		return Spec{}, fmt.Errorf("dsl: v2 case %s needs \"env\" (an env id or an inline env object)", c.ID)
+		return EnvV2{}, fmt.Errorf("dsl: v2 case %s needs \"env\" (an env id or an inline env object)", c.ID)
 	}
 	var envID string
 	if json.Unmarshal(c.Env, &envID) == nil {
-		return Spec{}, fmt.Errorf("dsl: case %s references env %q — resolve it with InlineEnv before parsing", c.ID, envID)
+		return EnvV2{}, fmt.Errorf("dsl: case %s references env %q — resolve it with InlineEnv before parsing", c.ID, envID)
 	}
 	var env EnvV2
 	if err := parseStrict(c.Env, &env); err != nil {
-		return Spec{}, fmt.Errorf("dsl: case %s: env: %w", c.ID, err)
+		return EnvV2{}, fmt.Errorf("dsl: case %s: env: %w", c.ID, err)
 	}
 	if env.Kind != "" && env.Kind != KindEnv {
-		return Spec{}, fmt.Errorf("dsl: case %s: env kind is %q, want %q", c.ID, env.Kind, KindEnv)
+		return EnvV2{}, fmt.Errorf("dsl: case %s: env kind is %q, want %q", c.ID, env.Kind, KindEnv)
 	}
 	if env.Chain == "" {
-		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
+		return EnvV2{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
 	if err := checkAttach(c.ID, env); err != nil {
-		return Spec{}, err
+		return EnvV2{}, err
 	}
 	// Timeout values are durations; reject an unparsable one here so a typo
 	// fails at parse time rather than being silently ignored at run time.
@@ -55,13 +77,19 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// vocabulary is a typo, not a feature request.
 	for name, v := range c.Timeouts {
 		if !timeoutKeys[name] {
-			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s is not a known timeout (want %s)", c.ID, name, timeoutKeyList())
+			return EnvV2{}, fmt.Errorf("dsl: case %s: timeouts.%s is not a known timeout (want %s)", c.ID, name, timeoutKeyList())
 		}
 		if _, err := time.ParseDuration(v); err != nil {
-			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
+			return EnvV2{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
 		}
 	}
+	return env, nil
+}
 
+// newSpec builds the lowered shape from the parts that carry straight across,
+// and unions the two gating inputs: a case listing its own requires must not
+// lose the capabilities its env declares.
+func newSpec(c CaseV2, env EnvV2) Spec {
 	spec := Spec{
 		SchemaVersion:    supportedSchemaVersion, // lowered form IS the executable v1 shape
 		ID:               c.ID,
@@ -90,7 +118,12 @@ func lowerCase(c CaseV2) (Spec, error) {
 			}
 		}
 	}
+	return spec
+}
 
+// lowerChain fills what a composer needs to build the network: the manifest it
+// runs on, the binaries, an upgrade, and the genesis.
+func lowerChain(c CaseV2, env EnvV2, spec *Spec) error {
 	// An external manifest (and its genesis template) runs on the family named
 	// by chain; both travel on the chain spec for the composer to thread.
 	spec.Chain.ManifestPath = env.Manifest
@@ -101,7 +134,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	names := map[string]string{}
 	for key, ref := range env.Binaries {
 		if err := binaryRefIsAName(ref.Binary); err != nil {
-			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref.Binary, err)
+			return fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref.Binary, err)
 		}
 		names[key] = ref.Binary
 		if ref.Chain == "" {
@@ -125,7 +158,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// is not a handoff.
 	if u := env.Upgrade; u != nil {
 		if err := checkUpgrade(c.ID, u, env); err != nil {
-			return Spec{}, err
+			return err
 		}
 		spec.EnvUpgrade = u
 	}
@@ -147,7 +180,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 			spec.Chain.GenesisHaltsAt = g.HaltsAt
 			for name, side := range g.PerBinary {
 				if _, ok := env.Binaries[name]; !ok {
-					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)
+					return fmt.Errorf("dsl: case %s: genesis.perBinary names %q, which binaries does not declare", c.ID, name)
 				}
 				one := map[string]any{}
 				maps.Copy(one, side.Overlay)
@@ -155,7 +188,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 					mergeDotPath(one, path, v)
 				}
 				if len(one) == 0 {
-					return Spec{}, fmt.Errorf("dsl: case %s: genesis.perBinary.%s says nothing — give it a set or an overlay, or drop it", c.ID, name)
+					return fmt.Errorf("dsl: case %s: genesis.perBinary.%s says nothing — give it a set or an overlay, or drop it", c.ID, name)
 				}
 				if spec.Chain.GenesisPerBinary == nil {
 					spec.Chain.GenesisPerBinary = map[string]map[string]any{}
@@ -167,17 +200,22 @@ func lowerCase(c CaseV2) (Spec, error) {
 			// built one — have nothing to act on and are refused rather than
 			// silently ignored.
 			if g.Ref == "" {
-				return Spec{}, fmt.Errorf("dsl: case %s: genesis mode existing needs a ref", c.ID)
+				return fmt.Errorf("dsl: case %s: genesis mode existing needs a ref", c.ID)
 			}
 			if len(g.Set) > 0 || len(g.Overlay) > 0 {
-				return Spec{}, fmt.Errorf("dsl: case %s: genesis mode existing uses the file verbatim — set/overlay do not apply", c.ID)
+				return fmt.Errorf("dsl: case %s: genesis mode existing uses the file verbatim — set/overlay do not apply", c.ID)
 			}
 			spec.Chain.GenesisExisting = g.Ref
 		default:
-			return Spec{}, fmt.Errorf("dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template, existing)", c.ID, g.Mode)
+			return fmt.Errorf("dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template, existing)", c.ID, g.Mode)
 		}
 	}
+	return nil
+}
 
+// lowerEnvDeclarations carries the declarations a surface folds into the
+// engine's construction boundaries: accounts, keys, blueprint, launch, config.
+func lowerEnvDeclarations(c CaseV2, env EnvV2, spec *Spec) error {
 	// Keys/launch declarations carry through for the surface (cmd run) to fold
 	// into the engine's construction boundaries.
 	if len(env.Accounts) > 0 {
@@ -191,7 +229,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
 			if !node.ValidScope(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
+				return fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
@@ -202,37 +240,47 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.EnvConfig = map[string][]string{}
 		for scope, kvs := range env.Config {
 			if !node.ValidScope(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
+				return fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
 			}
 		}
 	}
+	return nil
+}
 
+// lowerHooks lowers the three hook lists a case may declare.
+func lowerHooks(c CaseV2, _ EnvV2, spec *Spec) error {
 	// Hooks.
 	if h := c.Hooks; h != nil {
 		var err error
 		if spec.PreActions, err = lowerHookActions(c.ID, "pre", h.Pre); err != nil {
-			return Spec{}, err
+			return err
 		}
 		if spec.PostActions, err = lowerHookActions(c.ID, "post", h.Post); err != nil {
-			return Spec{}, err
+			return err
 		}
 		if spec.OnFailActions, err = lowerHookActions(c.ID, "onFail", h.OnFail); err != nil {
-			return Spec{}, err
+			return err
 		}
 	}
+	return nil
+}
 
+// lowerStatements lowers the steps, and refuses a case that verifies nothing —
+// a sequence with no expect runs and proves nothing, which is worse than one
+// that fails.
+func lowerStatements(c CaseV2, _ EnvV2, spec *Spec) error {
 	// Statements.
 	if len(c.Steps) == 0 {
-		return Spec{}, fmt.Errorf("dsl: case %s has no steps", c.ID)
+		return fmt.Errorf("dsl: case %s has no steps", c.ID)
 	}
 	expects := 0
 	for i, raw := range c.Steps {
 		st, err := lowerStatement(raw)
 		if err != nil {
-			return Spec{}, fmt.Errorf("dsl: case %s: step %d: %w", c.ID, i+1, err)
+			return fmt.Errorf("dsl: case %s: step %d: %w", c.ID, i+1, err)
 		}
 		if st.Expect != "" {
 			expects++
@@ -241,12 +289,12 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.Sequence = append(spec.Sequence, st)
 	}
 	if expects == 0 {
-		return Spec{}, fmt.Errorf("dsl: case %s verifies nothing — at least one expect statement is required", c.ID)
+		return fmt.Errorf("dsl: case %s verifies nothing — at least one expect statement is required", c.ID)
 	}
-	if err := checkCrossFork(c.ID, spec); err != nil {
-		return Spec{}, err
+	if err := checkCrossFork(c.ID, *spec); err != nil {
+		return err
 	}
-	return spec, nil
+	return nil
 }
 
 // ActionCrossFork is the step that crosses the hardfork a network is composed
