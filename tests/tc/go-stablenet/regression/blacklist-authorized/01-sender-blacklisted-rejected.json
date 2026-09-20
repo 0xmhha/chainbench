@@ -48,6 +48,20 @@
       "to": "govCouncil"
     },
     {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$addHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "do": "read",
       "hash": "$addHash",
       "save": "addPid",
@@ -73,6 +87,20 @@
       "on": "node2",
       "save": "addApHash",
       "to": "govCouncil"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$addApHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "do": "sendTx",

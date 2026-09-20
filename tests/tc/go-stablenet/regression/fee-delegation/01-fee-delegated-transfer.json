@@ -49,6 +49,20 @@
       "value": "10000000000000000000"
     },
     {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundFeeHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "do": "sendTx",
       "feePayerKey": "$feePayerKey",
       "key": "$senderKey",
@@ -56,6 +70,20 @@
       "save": "hash",
       "to": "0x00000000000000000000000000000000C0FFEE02",
       "value": "1000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
     },
     {
       "expect": "txStatus",

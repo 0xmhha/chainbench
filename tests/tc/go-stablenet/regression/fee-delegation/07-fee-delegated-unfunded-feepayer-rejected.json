@@ -39,6 +39,20 @@
       "value": "10000000000000000000"
     },
     {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "do": "sendTx",
       "expect": "reject",
       "feePayerKey": "$feePayerKey",
