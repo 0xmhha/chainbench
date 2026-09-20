@@ -487,11 +487,17 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleBP})
 		modes = append(modes, syncModeFull)
 	}
-	// Order differs by path. A named count keeps bp, pn, en — the ordering
-	// existing specs address by index. AutoSize instead ends on the pn, so the
-	// last node lands on the last server: that node is the discovery hub the
-	// unified model puts at the highest index (and, on wemix, still leaves the
-	// etcd seed as the highest-index bp, which comes before it either way).
+	// Both paths order bp, en, pn, so the network ends on the pn and that node
+	// lands on the last server: the pn is the discovery hub every other node
+	// dials, and the unified model puts it at the highest index. On wemix the
+	// etcd seed stays the highest-index bp, which comes before it either way.
+	//
+	// The named-count path used to order bp, pn, en instead, on the ground that
+	// existing specs address nodes by index. Measured 2026-09-19: of the seven
+	// cases that compose a pn, none names a node as "nodeN" — they address the
+	// tier by its role label (pn1, en1, bp1), which is stable under either
+	// order. Two orders for one question is a fact in two places, so there is
+	// one now.
 	appendProxies := func() {
 		for i := 0; i < o.PNCount; i++ {
 			reqs = append(reqs, node.LaunchReq{Role: node.RolePN})
@@ -504,13 +510,8 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 			modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
 		}
 	}
-	if o.AutoSize {
-		appendEndpoints()
-		appendProxies()
-	} else {
-		appendProxies()
-		appendEndpoints()
-	}
+	appendEndpoints()
+	appendProxies()
 	return reqs, modes, nil
 }
 

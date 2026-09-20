@@ -117,14 +117,17 @@ func TestPlacements_TopologyCarriesPerNodeConfig(t *testing.T) {
 	}
 }
 
-// TestPlacements_NamedCountKeepsBpPnEnOrder: without AutoSize the ordering the
-// existing specs address by index is unchanged (bp, then pn, then en).
-func TestPlacements_NamedCountKeepsBpPnEnOrder(t *testing.T) {
+// TestPlacements_NamedCountEndsOnThePn: a named count orders bp, en, pn — the
+// same order AutoSize uses, so the pn is the last node and lands on the last
+// server whichever path sized the network. It used to end on the en instead,
+// which put the discovery hub in the middle of the index range and gave the
+// two paths different answers to one question.
+func TestPlacements_NamedCountEndsOnThePn(t *testing.T) {
 	reqs, _, err := AllocateOpts{BPCount: 2, PNCount: 1, ENCount: 1}.placements()
 	if err != nil {
 		t.Fatalf("placements: %v", err)
 	}
-	want := []node.Role{node.RoleBP, node.RoleBP, node.RolePN, node.RoleEN}
+	want := []node.Role{node.RoleBP, node.RoleBP, node.RoleEN, node.RolePN}
 	if len(reqs) != len(want) {
 		t.Fatalf("node count = %d, want %d", len(reqs), len(want))
 	}
