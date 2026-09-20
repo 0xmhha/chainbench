@@ -40,7 +40,11 @@
       `internal/chainsetup/steps_place.go:195` 가 무시하지 않고 `not wired yet (N3)` 로 거절한다.
       ②**BLS 를 패밀리에 묻지 않고 늘 파생** — `internal/chainsetup/steps_keys.go:159·206·228` 이
       `derive.WithBLS` 를 박아 써서 wbft 가 아닌 체인도 BLS 를 파생한다. 패밀리를 아는 선택은
-      `internal/app/keyring.go:186-188` 에 이미 있다.
+      `internal/app/keyring.go:186-188` 에 이미 있다. **성격은 표현이지 정합성이 아니다 (2026-09-20 확인)**:
+      `Derive` 는 `WithBLS` 일 때 `Identity.BLS` 를 더할 뿐 주소도 개인키도 바꾸지 않고,
+      `deriveBLS` 는 순수 Go 라 CGO 도 필요 없다. 어긋나는 것은 `derive/identity.go` 가 선언한
+      "BLS 없음을 0 이 아니라 부재로 표현한다" 는 의도이고, 새는 자리는 `generate`·`declared`
+      경로다(`keyPreset` 은 커밋된 픽스처를 읽기만 한다).
 - [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. **막힘이 풀렸다 (2026-09-20)** — N1~N6 이 전부 끝난
       것으로 확인돼 3단계의 선행 조건이 충족됐다. 3단계는 A8 을 다시 재고 이어서 A7b 를 결정하는 일이다.
 - [x] **통폐합 — 닫을지 판단** — **완료 (2026-09-20). 닫았다.**

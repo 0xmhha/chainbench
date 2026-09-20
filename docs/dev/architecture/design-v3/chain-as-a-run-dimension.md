@@ -108,9 +108,20 @@ wemix `["0x00","0x01","0x02","0x16"]`). 선언이 없으면 체인이 타입을 
 
 ## 5. 단점
 
-- **키 파생이 우연에 기대고 있다.** 세 체인의 `keys` 블록이 같아서 모양이 체인 독립으로 보이는데,
-  그 일부는 `chainsetup/steps_keys.go:159·206·228` 이 패밀리를 묻지 않고 늘 `derive.WithBLS`
-  를 쓰기 때문이다(§0 의 N3 빚). 그 빚을 갚을 때 **이 경로가 거기 의존한다는 것을 알고** 고쳐야 한다.
+- ~~키 파생이 우연에 기대고 있다~~ — **철회 (2026-09-20). 단점이 아니다.** 검토에서 나온 지적이
+  맞았다: wemix 에서는 만들어진 BLS 키를 **쓰지 않으면 그만**이다. 근거 둘. ① `derive.Derive`
+  는 주소와 devp2p 공개키를 개인키에서 똑같이 계산하고 `WithBLS` 는 `Identity.BLS` 를 **더할
+  뿐**이다 — 키 자체도 주소도 달라지지 않는다. ② 공유 모양들이 쓰는 `source: "keyPreset"` 은
+  저장소에 커밋된 픽스처 `keys/preset` 을 **읽기만 한다**(각 노드 디렉터리에 `bls`·`bls_pubkey`·
+  `pop` 이 이미 있다). 그 경로에서는 체인별로 파생하는 일 자체가 없다. 따라서 모양은 파생 정책과
+  무관하게 체인 독립이다.
+
+  남은 N3 빚의 성격은 **표현**이다. `derive/identity.go` 가 *"a wemix node has no BLS key, and
+  modelling that as absence rather than as zeroes keeps the two cases distinguishable downstream"*
+  라고 적는데, `chainsetup/steps_keys.go:159·206·228` 이 패밀리를 묻지 않고 늘 `WithBLS` 를
+  넘겨 그 의도를 어긴다. `generate`·`declared` 경로에서 BLS 를 읽지 않는 체인의 기록에 BLS 가
+  남는다. 계산 비용도 CGO 도 걸림돌이 아니다 — `deriveBLS` 는 순수 Go(`kilic/bls12-381`)이고
+  주석이 "CGO 를 꺼도 돈다" 고 적는다. **이 설계의 선행 조건이 아니다.**
 - **`requires` 보강 8건은 이 설계의 선행 작업이다.** 지금 상태로 교체하면 대납 7건이 조용히
   다른 뜻으로 돈다.
 - **새 플래그 이름이 어휘를 하나 늘린다.** `--chain` 과의 차이를 문서로 설명해야 한다.
