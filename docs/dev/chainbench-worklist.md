@@ -42,6 +42,10 @@
 - [ ] **요구 19개의 충분성** — 근거: §1s. `arch.TestEveryRequirementNamesEvidence` 가 *연결*은
       지키지만 그 테스트가 요구를 **증명하는지**는 사람이 읽어야 한다. 표본 6개 중 R14·R15·R19 가
       `partial` 로 읽혔다.
+- [ ] **메인넷 설정 트랙 — 라이브 잔여 셋** — 근거: [`architecture/mainnet-config-worklist.md`](architecture/mainnet-config-worklist.md).
+      결과는 그 문서 §11.4.1(L1)·§11.4.2(L2). 오프라인 잔여는 2026-09-18 에 0 이 됐고, L1 전체 회귀와 L2 경합 전수는 2026-09-20 에
+      닫혔다(§11.4.1·§11.4.2). 남은 것은 **HEAD 바이너리로 L1 재실행**(위 실행은 2026-08-10
+      빌드로 돌았다) · `restart-at-boho` 1건(pre-boho linux 빌드 필요) · 실제 망 대응 R2~R6.
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
 
