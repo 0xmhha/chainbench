@@ -24,7 +24,10 @@ ADDR_OFFSET=10
 SSH_PORT=10022                    # sshd inside every server (the real servers' port)
 SSH_PUB_BASE=2200                 # server i's sshd published at 127.0.0.1:$((base+i))
 RPC_PUB_BASE=18600                # slot s of server i published at $((base + 100*s + i))
-WS_PUB_BASE=15600                 # the ws band, published the same way as rpc
+WS_PUB_BASE="${WS_PUB_BASE:-21600}"  # the ws band, published the same way as rpc
+# It spans base+1 .. base+SLOTS*100+SERVERS, so it has to miss whatever else on
+# this machine listens on loopback. 15600 did not: an unrelated app held 16115
+# and two containers would not start. Overridable for the same reason.
 # The server set declares a ws band, so the compose file has to publish it or
 # the two disagree: a subscription resolves to a port nothing on this machine
 # answers. Measured 2026-09-19 — ws-subscribe-new-heads timed out because 8701
