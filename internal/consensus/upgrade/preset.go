@@ -11,18 +11,24 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// HardforkPreset is one golden hardfork preset (presets/hardfork/*.yaml) decoded.
+// ChainPreset is one golden chain preset (presets/<kind>/*.yaml) decoded.
 //
-// The name says which kind of preset it is. The word alone is taken twice over
-// in this repository -- keys/preset holds a key fixture, keyring.Preset is a key
-// set -- and this document is neither: it records a HANDOFF, two chains and the
-// fork between them, with every node-level value the plan needs. It was called
-// Profile, which matched neither the directory it lives in nor the DSL field
-// that names it.
+// Presets come in two families, and the name says which this is. A CHAIN preset
+// declares how a network is configured; a KEY preset declares the identities it
+// runs as (keys/preset, decoded by keyring.Preset). Naming this one after the
+// family rather than after the kind is deliberate: of its eleven sections only
+// "upgrade" is about a hardfork, and the other ten — chains, roles, identities,
+// producers, validators, data, ports, nodes — are ordinary chain configuration
+// that a preset of another kind would declare the same way. presets/hardfork is
+// one kind; the directory layout is presets/<kind>/ and more may follow.
+//
 // It is the single, declarative record of the environment under test: every
 // value BuildPlan needs comes from here, so there are no code defaults to hide
 // what was actually run.
-type HardforkPreset struct {
+//
+// It was called Profile, which named neither family nor kind, and matched
+// neither the directory it lives in nor the DSL field that selects it.
+type ChainPreset struct {
 	Name    string `yaml:"name"`
 	Upgrade struct {
 		From      string `yaml:"from"`
@@ -103,7 +109,7 @@ type Governance struct {
 
 // PlanOrderOrDefault returns the plan-node -> preset-node mapping, defaulting to
 // identity order (plan node k = preset node k) when the preset omits it.
-func (p HardforkPreset) PlanOrderOrDefault() []int {
+func (p ChainPreset) PlanOrderOrDefault() []int {
 	if len(p.Identities.PlanOrder) != 0 {
 		return p.Identities.PlanOrder
 	}
@@ -115,15 +121,15 @@ func (p HardforkPreset) PlanOrderOrDefault() []int {
 	return order
 }
 
-// LoadHardforkPreset reads and decodes a golden hardfork preset.
-func LoadHardforkPreset(path string) (HardforkPreset, error) {
+// LoadChainPreset reads and decodes a golden hardfork preset.
+func LoadChainPreset(path string) (ChainPreset, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return HardforkPreset{}, fmt.Errorf("upgrade: read preset: %w", err)
+		return ChainPreset{}, fmt.Errorf("upgrade: read preset: %w", err)
 	}
-	var p HardforkPreset
+	var p ChainPreset
 	if err := yaml.Unmarshal(b, &p); err != nil {
-		return HardforkPreset{}, fmt.Errorf("upgrade: parse preset %s: %w", path, err)
+		return ChainPreset{}, fmt.Errorf("upgrade: parse preset %s: %w", path, err)
 	}
 	return p, nil
 }
@@ -135,7 +141,7 @@ func LoadHardforkPreset(path string) (HardforkPreset, error) {
 // thing that has ever declared one, and because a test holds it against
 // poa.DefaultEnv: as long as the two agree, a hardfork needs no governance
 // declaration to compose the same chain.
-func (p HardforkPreset) GovernanceEnv() poa.Env {
+func (p ChainPreset) GovernanceEnv() poa.Env {
 	g := p.Producers.Governance
 	return poa.Env{
 		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,

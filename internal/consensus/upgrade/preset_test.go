@@ -22,7 +22,7 @@ func goldenPresetPath() string {
 // nodes stand on each side. Everything else it used to drive — the plan, the
 // ports, the launch — belongs to the composition steps.
 func TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide(t *testing.T) {
-	p, err := upgrade.LoadHardforkPreset(goldenPresetPath())
+	p, err := upgrade.LoadChainPreset(goldenPresetPath())
 	if err != nil {
 		t.Fatal(err)
 	}

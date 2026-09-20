@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// TestHardforkPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal.
+// TestChainPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal.
 //
 // plan_order remaps which preset identity each plan node takes, and the reason
 // is one slot: the preset's node5 carries a keystore for an account that is NOT
@@ -26,8 +26,8 @@ import (
 // express: it exists because a handoff plan puts its producers FIRST while the
 // preset's producer-capable entry is LAST. A node table chooses its own order,
 // so it can put the producer on node5 and need no remap at all.
-func TestHardforkPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
-	prof, err := LoadHardforkPreset("../../../presets/hardfork/wemix-upgrade.yaml")
+func TestChainPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
+	prof, err := LoadChainPreset("../../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden profile: %v", err)
 	}

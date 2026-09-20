@@ -32,7 +32,7 @@
 
 | 지금 | 제안 | 왜 |
 |---|---|---|
-| `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | ~~preset 으로~~ **완료 (2026-09-21): `upgrade.HardforkPreset` · `LoadHardforkPreset`** | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 했다 |
+| `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | ~~preset 으로~~ **완료 (2026-09-21): `upgrade.ChainPreset` · `LoadChainPreset`** | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 했다 |
 | `dsl.UpgradeV2.Profile` 필드 | ~~삭제~~ **완료 (2026-09-21)** | 정의서 209개 중 쓰는 것이 0개였다. 지우면서 스키마의 `upgrade` 블록도 실제 구조에 맞췄다 — `required: [profile, template]` 에 `additionalProperties: false` 라 **실제로 쓰는 `preset` 을 거부하는 상태**였고, `fork`·`at`·`from`·`to`·`style`·`carry` 여섯 필드가 통째로 빠져 있었다 |
 | `profiles/` 디렉터리 | ~~삭제~~ **완료 (2026-09-21)** | 측정 §4 |
 | `keys/preset/` | **`keys/fixture/`** 로 | 키는 골든 설정이 아니라 테스트 픽스처다. `keyring.Preset` 타입도 같이 본다 |
@@ -128,22 +128,30 @@
 - **아직 남은 고아 둘**: `scripts/extract_json.py` · `scripts/json_backend.py` 도 외부 참조가
   0건이다. `profiles`/`state` 와 무관해 이번 범위 밖으로 두었다.
 
-## 8. 3번을 하면서 정한 것 — 왜 `chainPreset` 이 아닌가 (2026-09-21)
+## 8. 3번을 하면서 정한 이름 (2026-09-21)
 
-`chainPreset` 이 후보로 나왔다. 그 문서가 담은 것을 읽고 **`HardforkPreset`** 으로 정했다.
+**preset 은 두 갈래다: 체인에 대한 것과 키에 대한 것.** 이름은 그 갈래를 말해야 한다.
 
-`presets/hardfork/wemix-upgrade.yaml` 은 **두 체인과 그 사이의 포크**를 적는다 — `upgrade.from`
-(wemix) · `upgrade.to`(wbft) · `at_fork`(croissant) · `fork_block` · 양쪽 바이너리 · 역할 수 ·
-거버넌스 · 검증자 주소와 BLS 키 · 포트 계획. 한 체인의 설정이 아니라 **핸드오프 환경 전체**다.
+| 갈래 | 문서 | 타입 | 읽는 함수 |
+|---|---|---|---|
+| **체인** | `presets/<종류>/*.yaml` (지금은 `hardfork` 하나) | `upgrade.ChainPreset` | `upgrade.LoadChainPreset` |
+| **키** | `keys/preset/` | `keyring.Preset` | `store.LoadPreset` |
 
-그래서 `chainPreset` 은 두 가지가 어긋난다. 첫째, 단수로 읽혀 **주어가 틀린다** — 이 문서의
-주제는 한 체인이 아니라 둘 사이의 이행이다. 둘째, 그 이름이 **정말 어울리는 자리가 따로 있다**:
-`tests/tc/env/*.env.json` 이 한 체인 + 모양을 적고, 메인넷 워크리스트가 그것을 이미 "preset" 이라
-부른다. 여기서 `chainPreset` 을 쓰면 겹침을 없애는 대신 **한 칸 옮기는** 셈이다.
+**`HardforkPreset` 으로 갔다가 되돌렸다.** 종류(hardfork)로 이름을 좁혔는데, 그럴 이유가 없다 —
+하드포크는 체인 설정 preset 의 **한 종류**일 뿐이고 다른 종류가 더 생긴다. 실측이 그것을 보인다:
+`wemix-upgrade.yaml` 의 최상위 키 11개 중 하드포크 고유는 **`upgrade` 하나**이고, 나머지 열
+(`chains`·`roles`·`identities`·`producers`·`validators`·`data`·`ports`·`nodes`)은 다른 종류의
+preset 도 똑같이 적을 **일반 체인 설정**이다. 디렉터리도 이미 `presets/<종류>/` 다.
 
-`Preset` 만 쓰지 않은 이유도 측정이다. `keyring.Preset` 이 이미 그 낱말을 갖고 있어
-`arch.TestNamesDoNotCollide` 의 새 빚이 된다. 그 목록은 **줄기만 한다**고 선언돼 있다.
-6번(`keys/preset` → `keys/fixture`)이 낱말을 비우면 그때 `upgrade.Preset` 으로 줄일 수 있다.
+되돌리면서 내 반대 근거 둘도 틀렸음을 확인했다. "두 체인을 부르니 단수형 `chain` 이 맞지 않는다"
+는 **어느 체인을 언급하는가(카디널리티)를 어떤 갈래인가(범주)와 섞은 것**이다. `chains:` 는
+이 문서의 필드 이름 그대로다. "`chainPreset` 은 env 선언에 어울리므로 겹침을 한 칸 옮긴다" 도
+성립하지 않는다 — env 선언은 코드·파일·스키마가 이미 `env`(`kind: "env"`)라 부르고, §2 가
+문서 쪽 표기도 `env` 로 통일하자고 적고 있다.
+
+**다음 차례는 키 쪽의 비대칭이다.** 체인 쪽은 갈래를 이름에 달았는데 키 쪽은 `Preset`·
+`LoadPreset` 으로 안 달았다. 6번에서 `keys/preset` 을 옮길 때 `KeyPreset`·`LoadKeyPreset` 으로
+맞추면 둘이 짝이 된다.
 
 ## 9. 3번을 하면서 드러난 것
 
