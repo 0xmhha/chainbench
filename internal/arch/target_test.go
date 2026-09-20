@@ -30,15 +30,15 @@ import (
 // shrink. A new entry means a step learned to do two things, and it has to be
 // justified here in front of a reviewer rather than in a diff nobody re-reads.
 var targetBranches = map[string]string{
-	"new.go:New":                         "a local target defaults its data root to the workspace; a remote one was given one",
-	"steps_place.go:Allocate":            "only a remote pool has host names distinct from addresses, so only then is there a name to record",
-	"steps_compose.go:genesisArtifacts":  "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
-	"steps_compose.go:shipIdentities":    "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
-	"steps_lifecycle.go:scanPorts":       "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
-	"steps_lifecycle.go:runPhaseActions": "the bootstrap's keystore, socket and config are on the target, so the paths point there",
-	"verbs_network.go:NetRunner":         "there is a command runner only when there is a machine to run commands on",
-	"workspace.go:keysBase":              "where the keys are: under the target's data root when remote, the key set itself when local",
-	"workspace.go:RPCHost":               "which host answers RPC",
+	"new.go:New":                        "a local target defaults its data root to the workspace; a remote one was given one",
+	"steps_place.go:Allocate":           "only a remote pool has host names distinct from addresses, so only then is there a name to record",
+	"steps_compose.go:genesisArtifacts": "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
+	"steps_compose.go:shipIdentities":   "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
+	"occupancy.go:scanPorts":            "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
+	"phases.go:runPhaseActions":         "the bootstrap's keystore, socket and config are on the target, so the paths point there",
+	"verbs_network.go:NetRunner":        "there is a command runner only when there is a machine to run commands on",
+	"workspace.go:keysBase":             "where the keys are: under the target's data root when remote, the key set itself when local",
+	"workspace.go:RPCHost":              "which host answers RPC",
 
 	// The list is exhausted: every entry left is a fact about the target, not a
 	// branch around a missing capability.
