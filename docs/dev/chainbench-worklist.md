@@ -30,34 +30,53 @@
 - [ ] **b-5 `setup` → `net up` 전환 — 재검토 필요** — 근거: §1f 표 `b-5` 행. 전제가 바뀌었다.
 - [ ] **S2. MCP 를 레지스트리 소비로 전환 — 스키마 감축의 근거가 약하다** — 근거: §1g 표 `S2` 행.
       조회 전용 목록은 2026-09-08 에 끝났고, 감축분을 측정할 근거가 없는 것이 남았다.
-- [ ] **N2~N6. blueprint 흡수가 중간 상태다** — 근거: §1m 표 `N2~N6` 행. 다섯 중 둘(해석·preset)이
-      들어갔고 나머지 셋(raw 경로·물질화·topology)은 **측정하지 않았다**. 여는 사람이 먼저 잴 것.
-- [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. 3단계는 N1~N6 뒤이므로 위 항목에 막혀 있다.
-- [ ] **통폐합 — 닫을지 판단** — 근거: §1j. 정본은
-      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) **§5(2026-09-12 재측정)**.
-      "다음은 R2" 는 **틀린 기록이었다**: R2·R4·R5 는 끝났고 R3 만 2/3 다. 흡수 14건 완료, 3건은
-      이후 반대로 결정, **남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행**이다.
-      진단("작은 형제 24개")도 7개로 해소됐다. 판단 대상은 "재개/종료" 가 아니라 **①계획을 완료로
-      닫을지** 와 **②방향을 뒤집어 큰 덩어리(`chainsetup` 6,585줄·fanOut 20 등)를 볼지**다.
+- [x] **N2~N6. blueprint 흡수가 중간 상태다** — **완료 (2026-09-20). 항목의 전제가 틀렸다.**
+      §1m 의 `◐` 는 "`chainsetup` 이 `blueprint.X` 를 부르는가" 로 판정한 것인데, **그건 N3·N4·N6 어느 것의
+      게이트도 아니다.** §1g 가 다섯 전부를 2026-09-07 라이브 게이트와 함께 `☑` 로 적고 있고, 셋을 코드로
+      다시 확인했다: N4 는 `chainsetup` 직접 파일 쓰기 **0곳**, N6 은 `verbs_steps.go:149` 가 혼용을 거부
+      (병존은 **설계된 이관 기간 동작**이지 미완성이 아니다), N5 는 `chaincmd/blueprint.go` 의 두 플래그.
+      `placements()` 의 세 갈래도 N6 이 의도한 병존이다. §1m 의 `◐` 를 `☑` 로 고쳤다. 실제 잔여는 아래 한 줄.
+- [ ] **N3 의 빚 둘** — 근거: §1g 표 `N3` 행이 이름을 대고 적어 둔 둘이다. ①**노드별 `server:` 배치** —
+      `internal/chainsetup/steps_place.go:195` 가 무시하지 않고 `not wired yet (N3)` 로 거절한다.
+      ②**BLS 를 패밀리에 묻지 않고 늘 파생** — `internal/chainsetup/steps_keys.go:159·206·228` 이
+      `derive.WithBLS` 를 박아 써서 wbft 가 아닌 체인도 BLS 를 파생한다. 패밀리를 아는 선택은
+      `internal/app/keyring.go:186-188` 에 이미 있다.
+- [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. **막힘이 풀렸다 (2026-09-20)** — N1~N6 이 전부 끝난
+      것으로 확인돼 3단계의 선행 조건이 충족됐다. 3단계는 A8 을 다시 재고 이어서 A7b 를 결정하는 일이다.
+- [x] **통폐합 — 닫을지 판단** — **완료 (2026-09-20). 닫았다.**
+      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) 을 `[이력]` 으로 내렸다.
+      진단("작은 형제 24개")이 7개로 해소됐고, 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다.
+      **방향 뒤집기(큰 덩어리)는 이 문서를 이어받지 않고 백지에서 새로 설계한다** — 이 계획은 "조각이 너무 많다"
+      는 진단 위에 서 있어 이어받으면 반대 방향으로 끌린다. 제약 셋은 문서가 아니라 코드가 지킨다
+      (`filestore/doc.go` + `arch.TestCommentsDoNotContradictTheCode`, `arch.TestNoUpwardDependency`, Go 의 순환 금지).
 - [ ] **요구 19개의 충분성** — 근거: §1s. `arch.TestEveryRequirementNamesEvidence` 가 *연결*은
       지키지만 그 테스트가 요구를 **증명하는지**는 사람이 읽어야 한다. 표본 6개 중 R14·R15·R19 가
       `partial` 로 읽혔다.
 - [ ] **메인넷 설정 트랙 — 라이브 잔여 셋** — 근거: [`architecture/mainnet-config-worklist.md`](architecture/mainnet-config-worklist.md).
       결과는 그 문서 §11.4.1(L1)·§11.4.2(L2). 오프라인 잔여는 2026-09-18 에 0 이 됐고, L1 전체 회귀와 L2 경합 전수는 2026-09-20 에
-      닫혔다(§11.4.1·§11.4.2). 남은 것은 **HEAD 바이너리로 L1 재실행**(위 실행은 2026-08-10
-      빌드로 돌았다) · `restart-at-boho` 1건(pre-boho linux 빌드 필요) · 실제 망 대응 R2~R6.
+      닫혔다(§11.4.1·§11.4.2). `restart-at-boho` 도 2026-09-20 에 닫혔다 — pre/post 두 바이너리를
+      golang 컨테이너 안에서 네이티브로 빌드해 쌍으로 돌렸다. 남은 것은 **HEAD 바이너리로 L1 재실행**
+      (위 실행은 2026-08-10 빌드로 돌았다. `PlaceBinary` 는 절대 경로를 *대상 위의* 경로로 읽으므로
+      로컬 빌드가 함대에 올라가지 않았다) · 실제 망 대응 R2~R6.
+- [ ] **공통 TC 가 요구하는 도구 기능 둘이 어느 항목도 아니다** — 근거: [`architecture/mainnet-config-worklist.md` §8](architecture/mainnet-config-worklist.md) 의 대응표(2026-09-20 신설)와
+      [`docs/tc/common/03-separate-implementation-items.md`](../tc/common/03-separate-implementation-items.md) §2.
+      여덟 중 여섯은 R2~R6 이 덮지만 **동기화 경로 관찰**(어느 경로로 블록을 받았는지)과
+      **준비물 공유**(한 케이스 파일이 저장한 값을 다른 파일이 이름으로 읽기)는 R 에도 V 에도 P 에도 없다.
+      P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
+      **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
+
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
 
-- [ ] **`R` 접두사가 두 계획에서 충돌한다** — 근거: §1n 표 `R1` 행(원격 트랙의 `AddrMap` 경계)과
-      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) §R1(소형 모듈 흡수).
-      같은 `R1`~`R5/R6` 이 **서로 다른 것**을 가리키고 둘 다 살아 있는 문서다. 이번 검토에서 제가
-      "R1 완료" 를 통폐합으로 읽을 뻔했다. 한쪽을 개명해야 한다(`C1~C5` 또는 `D1~D6`).
-- [ ] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — 최종수정
-      2026-08-26(17일 정체)이고 모듈을 **`netmap`** 으로 부른다(3회). 그 모듈은 통합되어 지금
-      `internal/resource` 이며 문서에 `internal/resource` 는 **0회** 나온다. 등급 규칙상
-      [현행 설계]는 **코드를 이기므로**, 읽는 사람이 없는 구조를 향해 만든다. 갱신하거나 [이력]로 내린다.
-      (`dsl/engine`·`app/feature` 는 *거부된 선택지*로 인용된 것이라 낡지 않았다 — 확인했다.)
+- [x] **`R` 접두사가 두 계획에서 충돌한다** — **해소 (2026-09-20). 개명하지 않고 한쪽을 닫아서 풀었다.**
+      근거: §1n 표 `R1` 행(원격 트랙)과 [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) §R1(소형 모듈 흡수)이
+      같은 `R1`~`R5/R6` 으로 다른 것을 가리켰다. 통폐합 계획이 `[이력]` 이 되면서 **살아 있는 `R` 은 원격 트랙 하나뿐**이다.
+      새 리팩토링은 백지에서 번호 체계를 새로 잡으므로 재충돌하지 않는다.
+- [x] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — **완료 (2026-09-20).** [이력]로 내렸다. 내린 근거는 실측이다: 그 문서가 L1 로 그리는 모듈 이름 일곱
+      (`driver`·`netmap`·`place`·`portplan`·`target`·`serverset`·`peering`)이 **전부 `internal/` 에 없고**,
+      지금 쓰는 `internal/resource` 는 **0회** 나온다. 흡수된 자리를 문서 머리에 적었고, 인덱스 행도 바꿨다.
+      같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
+      `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은
@@ -769,7 +788,13 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☑ **완료 2026-09-07 (#357).** 남은 것은 문법 갭이 아니라 **낡은 기록**이었다 — 막혔다던 19건 중 15건에 이미 스펙이 있었고 122개 전부 `validate` 를 통과한다. 문서를 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다. 진짜 남은 8건은 이유가 유효하다(SDK 가드 2 · 조작자 공급 키 2 · 다른 빌드가 필요한 4) |
 | **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
-### 1j. 사용자 주도 통폐합 (2026-08-31 확정 — 정본: `docs/dev/architecture/consolidation-plan.md`)
+### 1j. 사용자 주도 통폐합 (2026-08-31 ~ 2026-09-20 — **닫혔다**)
+
+> **완료로 닫혔다 (2026-09-20).** 정본이던 `docs/dev/architecture/consolidation-plan.md` 은
+> `[이력]` 이고, 같은 날 그 선행 계획 `module-plan.md` 도 닫혔다. 진단("작은 형제 24개")이
+> 7개로 해소됐고 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다.
+> **다음 리팩토링은 이 절도 그 문서들도 이어받지 않는다** — 백지에서 다시 설계한다.
+> 아래는 그때의 기록이고, 인용하는 수치는 전부 2026-09-12 이전이다.
 
 §1i 의 표는 F1 까지 전부 끝났다. 이후는 **사용자가 주도**한다. 확정된 방향:
 모듈을 관심사 단위로 통폐합(internal 55 → 약 20, R1~R5), 그다음 표면 재정리
@@ -1154,7 +1179,7 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 다만 **불안정 두 건의 상태는 이 한 판으로 알 수 없다** — `WbftQuorum6of6Halts2`(원래 5판 중 2판 실패)와
 `StablenetProposalExpiry`(5판 중 1판 실패)가 통과했지만 한 판 통과는 예상 범위 안이다.
 | **N1** 선언 스키마와 파서 | ☑ `internal/core/blueprint`. `steps_compose.go` 를 건드리지 않는 새 패키지라 앞의 둘과 파일이 겹치지 않았다 |
-| **N2~N6** 해석·raw 경로·물질화·preset·topology 흡수 | ◐ **경고가 그대로 실현됐다 (2026-09-12 실측).** "다섯이 한 덩어리라 절반만 넣으면 중간 상태로 남는다" 고 적어 두고 **절반이 들어갔다** — `steps_compose.go:161-179` 가 `blueprint.Resolve` 와 `blueprint.PresetFrom` 을 쓴다(해석·preset). 나머지 셋(raw 경로·물질화·topology 흡수)이 흡수됐는지는 **측정하지 않았다**. 다음에 이 항목을 여는 사람이 먼저 재야 할 것이 그 셋이다 |
+| **N2~N6** 해석·raw 경로·물질화·preset·topology 흡수 | ☑ **정정 2026-09-20 — 이 칸의 `◐` 가 틀렸다.** 판정에 쓴 잣대가 "`chainsetup` 이 `blueprint.X` 를 부르는가" 였는데 **그건 N3·N4·N6 어느 것의 게이트도 아니다.** 각 게이트는 §1g 표에 있고 다섯 전부 2026-09-07 에 라이브로 통과했다. 셋을 코드로 다시 확인: N4(로컬/원격 분기 없음) — `chainsetup` 직접 파일 쓰기 **0곳**; N6(혼용 거부) — `verbs_steps.go:149`, 그리고 **두 형식 병존은 "이관 기간 병존" 이라고 게이트가 명시한 설계 동작**이다; N5 — `chaincmd/blueprint.go` 의 `--from-preset`/`--from-topology` 가 서로 배타. `placements()`(`steps_place.go:72`)의 세 갈래는 미완성이 아니라 그 병존이다. **잘못 판정한 방식이 문제였다** — 흡수 여부를 호출 관계로 물었고, 게이트는 동작으로 묻는다. 실제 잔여는 §1g `N3` 행이 이름을 대고 적은 빚 둘(노드별 `server:` 배치, BLS 항상 파생)뿐이다 |
 
 **3단계 ☐.** A8 을 다시 재고, 이어서 A7b 를 결정한다. N1~N6 뒤다.
 

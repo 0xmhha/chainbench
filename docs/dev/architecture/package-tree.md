@@ -5,7 +5,7 @@
 
 - **레이어 축**(어느 패키지가 L0~L6 중 어디이고 의존이 어느 방향으로 흐르는지) — [[layers]](layers.md) §2·§3
 - **관심사 축**(어떤 관심사의 주인이 누구인지) — [[module-responsibilities]](module-responsibilities.md)
-- **통폐합 판단** — [[consolidation-plan]](consolidation-plan.md)
+- **통폐합 판단** — 닫혔다 (2026-09-20). 이력은 [[consolidation-plan]](consolidation-plan.md)
 
 숫자는 **비테스트 줄 수**다. `[L0]`~`[L6]` 은 `layers.md` §2 의 레이어이고, 그 배치는
 `internal/arch/layers_test.go` 가 강제한다.
@@ -208,7 +208,7 @@ cmd/chainbench-dashboard  37  main. 대시보드 데몬(요구 19) — obs 이�
 ## 5. `scripts/inventory/` — 3패키지 790줄
 
 측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` 의 숫자가
-여기서 나온다.
+여기서 나온다. (`consolidation-plan.md` 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
 
 ```
 scripts/inventory/
@@ -230,7 +230,9 @@ scripts/inventory/
 
 **깊이가 있는 곳은 `core` 와 `dsl` 뿐이다.** `core` 22패키지 depth 3, `dsl` 3패키지, `consensus` 3,
 `chains` 7(depth 3). 나머지 최상위는 자식이 없다. 즉 트리를 더 읽기 쉽게 만드는 여지는 "최상위를
-줄이는" 쪽보다 "큰 최상위에 자식을 만드는" 쪽에 있다 — 판단은 [[consolidation-plan]](consolidation-plan.md) §5 에서 한다.
+줄이는" 쪽보다 "큰 최상위에 자식을 만드는" 쪽에 있다. **판단은 2026-09-20 에 닫혔다** —
+[[consolidation-plan]](consolidation-plan.md) 은 이력이고, 다음 리팩토링은 그것을 이어받지 않고
+백지에서 다시 설계한다. 그때 이 문서의 수치는 **다시 잰다.**
 
 **층과 디렉토리가 어긋나는 자리가 셋 있다.** `core` 안의 L3 다섯 개(`session`·`collector`·`health`·
 `report`·`hardfork`)는 이름이 core 인데 정책이고, `core` 밖의 L3 넷(`dsl`·`dsl/assert`·`dsl/interp` 계약
