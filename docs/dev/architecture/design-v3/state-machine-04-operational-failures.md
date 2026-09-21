@@ -92,7 +92,7 @@ steps_keys.go:50  체인이 안 정해졌다 — `chain new` 먼저
 steps_config.go:119·125·129·143·158·164·168   고정 config 읽기 · 피어 · 렌더 · 읽기 확인
 provenance.go:28                              config override 가 key=value 가 아니다
 steps_compose.go:227                          node%d: %w
-inputref.go:146                               %s 참조 %q 읽기
+workspace_refs.go:146                         %s 참조 %q 읽기
 ```
 
 이미 **조립의 `ChainBuildNodeConfig` 가 가진 실패 셋과 같은 자리**다
@@ -103,7 +103,7 @@ inputref.go:146                               %s 참조 %q 읽기
 ```
 node_ops.go:34    표에 node %d 가 없다        (restart · stop · swap)
 node_ops.go:54    stop node%d: %w             (restart · stop)
-inputref.go:27    workspace-config: %w        (restart · swap · cross-fork)
+workspace_refs.go:27  workspace-config: %w      (restart · swap · cross-fork)
 ```
 
 ---

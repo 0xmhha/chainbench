@@ -49,7 +49,7 @@
 
 ### MON-009 — 구성 격리가 보호해 주지 않는다
 
-`compositionId`는 워크스페이스 디렉터리의 해시이고(`internal/chainsetup/new.go`) 한 번
+`compositionId`는 워크스페이스 디렉터리의 해시이고(`internal/chainsetup/workspace_new.go`) 한 번
 정해지면 바뀌지 않는다. reuse-if-matching은 정의상 **같은 워크스페이스**를 다시 up 하므로
 격리 경로가 이전 실행과 동일하다. 따라서 genesis·config 쓰기는 실행 중인 노드가 쓰던
 바로 그 파일을 덮어쓴다. 격리는 서로 다른 워크스페이스를 갈라줄 뿐, 같은 워크스페이스의

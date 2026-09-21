@@ -143,11 +143,6 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	return out, nil
 }
 
-// Preflight is the check-only entry: the same pre-launch inspection Start
-// runs, callable without composing anything. It answers "may a network of
-// this shape start here right now?" with the refusal Start would give — port
-// occupancy plus unmanaged copies of the binary already on the resource.
-
 // Endpoints is every node's reachable RPC URL, in node order.
 //
 // The resolution is one helper shared with NodeSet and Health, so the three
