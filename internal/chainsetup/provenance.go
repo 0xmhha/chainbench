@@ -1,6 +1,7 @@
 package chainsetup
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -14,6 +15,10 @@ import (
 // command, or from the harness's own default, and the one that surprises a
 // reader is the third — nothing they wrote chose it. Keeping the source beside
 // the value is what lets a plan say so.
+
+// errBuildBadOption is the one way the command stage fails: a launch knob the
+// vocabulary does not take, or a --set that is not one.
+var errBuildBadOption = errors.New("a launch option is not one this accepts")
 
 func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, index int) error {
 	for _, kv := range w.configOverridesFor(role, index) {
@@ -82,10 +87,11 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords())
+		return ofKind(errBuildBadOption,
+			fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords()))
 	}
 	if _, err := ParseOverrides(sets); err != nil {
-		return err
+		return ofKind(errBuildBadOption, err)
 	}
 	if w.state.LaunchSet == nil {
 		w.state.LaunchSet = map[string][]string{}

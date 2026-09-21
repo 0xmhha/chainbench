@@ -21,10 +21,9 @@ type NetProvisionIn struct {
 // NetProvision verifies the launch inputs are present on the target
 // (skip-if-exists semantics: present files are reused, missing ones are named).
 func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Provision(ctx)
 	})
-	return StepOut{Detail: detail}, err
 }
 
 // NetInitIn initializes datadirs.

@@ -56,6 +56,8 @@ func (r *recorder) run(step string) ([]lifecycle.Status, error) {
 			lifecycle.ChainLaunchNodesPhaseLaunching,
 			lifecycle.ChainLaunchNodesPhaseDone,
 		}, nil
+	case "deploy":
+		return []lifecycle.Status{lifecycle.ChainDeployNodesVerifiedLocal}, nil
 	}
 	return nil, nil
 }
@@ -143,6 +145,8 @@ func TestAStageWalksThePathItsStepReports(t *testing.T) {
 				lifecycle.ChainBuildGenesisVariantsWritten}}},
 		// A wbft network declares one phase; a poa network declares a boot and
 		// one join per producer, and the boot phase carries actions.
+		{"a deploy that shipped to a remote target", map[string][]lifecycle.Status{
+			"deploy": {lifecycle.ChainDeployNodesShippedRemote}}},
 		{"a launch of one phase", map[string][]lifecycle.Status{
 			"start": {
 				lifecycle.ChainLaunchNodesPhaseLaunching,
@@ -173,7 +177,7 @@ func TestAStageWalksThePathItsStepReports(t *testing.T) {
 // whose work has moved in reports where it went; silence is a report that was
 // lost, and filling one in is what these stages stopped doing.
 func TestAMovedStageRefusesAStepThatSaysNothing(t *testing.T) {
-	for _, step := range []string{"keys", "genesis", "start"} {
+	for _, step := range []string{"keys", "genesis", "start", "deploy"} {
 		silent := func(s string) ([]lifecycle.Status, error) { return nil, nil }
 		at := lifecycle.ChainEnsureKeys
 		switch step {
@@ -181,6 +185,8 @@ func TestAMovedStageRefusesAStepThatSaysNothing(t *testing.T) {
 			at = lifecycle.ChainBuildGenesis
 		case "start":
 			at = lifecycle.ChainLaunchNodes
+		case "deploy":
+			at = lifecycle.ChainDeployNodes
 		}
 		m, err := lifecycle.New(at, lifecycle.ChainVerify, upHandlers(silent))
 		if err != nil {
@@ -234,6 +240,12 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 			lifecycle.ChainLaunchNodesFailPhaseEmpty},
 		{"something the driver refused", "start", errors.New("no"), nil, lifecycle.FailStageUnclassified},
 
+		{"an input that is not there", "deploy", ofKind(errDeployInputMissing, errors.New("x")), nil, lifecycle.ChainDeployNodesFailInputMissing},
+		{"an input somebody else wrote", "deploy", ofKind(errDeployInputForeign, errors.New("x")), nil, lifecycle.ChainDeployNodesFailInputForeign},
+
+		{"no chain named", "new", ofKind(errNewNoChain, errors.New("x")), nil, lifecycle.ChainOpenWorkspaceFailNoChain},
+		{"a bad launch option", "build", ofKind(errBuildBadOption, errors.New("x")), nil, lifecycle.ChainBuildNodeCommandFailBadOption},
+
 		{"a layout given twice", "place", ofKind(errPlaceTwoLayouts, errors.New("x")), nil, lifecycle.ChainBuildNodeTableFailTwoLayouts},
 		{"a contended server set", "place", ofKind(errPlaceSetContended, errors.New("x")), nil, lifecycle.ChainBuildNodeTableFailSetContended},
 		{"a layout that cannot exist", "place", errors.New("no validator"), nil, lifecycle.FailStageUnclassified},
@@ -250,8 +262,8 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 		{"a config that did not read back", "config", ofKind(errConfigReadback, errors.New("x")), nil, lifecycle.ChainBuildNodeConfigFailReadback},
 		{"a pinned input that cannot be read", "config", ofKind(errConfigPinUnreadable, errors.New("x")), nil, lifecycle.ChainBuildNodeConfigFailPinUnreadable},
 
-		// A stage that has not moved in reports the debt state whatever failed.
-		{"a stage still owing", "build", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
+		// A kind that belongs to another stage is not this stage's failure.
+		{"a failure with no state here", "build", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
 	} {
 		r := &recorder{failAt: c.step, fail: c.err, failPath: c.got}
 		m, err := walk(t, "", UpStart, r)
@@ -264,16 +276,38 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 	}
 }
 
-// TestADebtStateSaysWhyItIsOne pins that the two halves are read together: the
-// state says the stage is not classified, and the error says why it cannot be.
+// TestADebtStateSaysWhyItIsOne holds the rule that reaching the debt state is
+// never silent.
+//
+// No stage owes a whole classification any more, so the first case drives the
+// shape a stage added later starts in, and the second is the one that happens
+// today: a stage that classifies and met a failure none of its states covers.
 func TestADebtStateSaysWhyItIsOne(t *testing.T) {
-	r := &recorder{failAt: "build"}
-	_, err := walk(t, "", UpStart, r)
-	if err == nil {
-		t.Fatal("the walk did not stop")
-	}
-	if !strings.Contains(err.Error(), "every bad option") {
-		t.Errorf("the error does not say why build cannot classify: %v", err)
+	for _, c := range []struct {
+		name  string
+		stage composeStage
+		says  string
+	}{
+		{"a stage with no classifier",
+			composeStage{step: "example", at: lifecycle.ChainOpenWorkspace,
+				owed: "the verb returns a string"},
+			"example: the verb returns a string"},
+		{"a stage whose classifier has no state for this",
+			composeStage{step: "build", at: lifecycle.ChainBuildNodeCommand,
+				classify: buildFailure},
+			"build: this failure has no state of its own"},
+	} {
+		m, err := lifecycle.New(c.stage.at, lifecycle.ChainVerify, upHandlers((&recorder{}).run))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := c.stage.failed(m, nil, errors.New("something went wrong"))
+		if !strings.Contains(got.Error(), c.says) {
+			t.Errorf("%s: %v", c.name, got)
+		}
+		if m.At() != lifecycle.FailStageUnclassified {
+			t.Errorf("%s: at %s", c.name, m.At())
+		}
 	}
 }
 
@@ -352,6 +386,25 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	}
 	if got := genesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
 		t.Errorf("the real refusal classified as %s, want ChainBuildGenesisFailForkUnresolved", got)
+	}
+
+	// A workspace opened without naming a chain.
+	var w3 Workspace
+	_, nerr := w3.New(NewOpts{})
+	if nerr == nil {
+		t.Fatal("a workspace with no chain was accepted")
+	}
+	if got := newFailure(nerr); got != lifecycle.ChainOpenWorkspaceFailNoChain {
+		t.Errorf("the real refusal classified as %s, want ChainOpenWorkspaceFailNoChain", got)
+	}
+
+	// A --set that is not one.
+	_, operr := ParseOverrides([]string{"=novalue"})
+	if operr == nil {
+		t.Fatal("a --set with no key was accepted")
+	}
+	if got := buildFailure(ofKind(errBuildBadOption, operr)); got != lifecycle.ChainBuildNodeCommandFailBadOption {
+		t.Errorf("the real refusal classified as %s, want ChainBuildNodeCommandFailBadOption", got)
 	}
 
 	// A blueprint and a topology at once, refused before any workspace opens.

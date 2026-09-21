@@ -325,7 +325,9 @@ func TestDetailedIsTheTableAndNotAGuess(t *testing.T) {
 		{ChainEnsureKeys, true, "its three sources are the only ways out"},
 		{ChainBuildGenesis, true, "it must say where the genesis came from"},
 		{ChainLaunchNodes, true, "it must walk at least one phase"},
-		{ChainDeployNodes, false, "its two detail states say what the target was, and it may move on without either"},
+		// It was false while nothing could say which of the two a deploy did.
+		// The step counts the shipping, so the way round them is gone.
+		{ChainDeployNodes, true, "it must say whether it shipped anything"},
 		{ChainOpenWorkspace, false, "it has no states of its own"},
 		{ChainBuildNodeConfig, false, "same"},
 		{CompareChain, true, "the four verdicts are the only ways out"},

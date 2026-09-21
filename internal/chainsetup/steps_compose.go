@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -43,9 +45,23 @@ const (
 	minValidatorsForPlacement = 1
 )
 
-func (w *Workspace) Provision(ctx context.Context) (string, error) {
+// The kinds of failure the deploy stage has.
+//
+// Both are about a launch input that is not what this workspace expects, and
+// the difference is the one that matters to whoever has to fix it: a file that
+// is not there needs an earlier step re-run, and a file that is there but is
+// somebody else's needs a decision about which is right.
+var (
+	// errDeployInputMissing: a launch input is not on the target.
+	errDeployInputMissing = errors.New("a launch input is missing on the target")
+	// errDeployInputForeign: a launch input is there and is not the one this
+	// workspace built.
+	errDeployInputForeign = errors.New("a launch input on the target is not this workspace's")
+)
+
+func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 	if err := w.require("deploy"); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	present, shipped := 0, 0
 	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
@@ -55,7 +71,8 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 				return err
 			}
 			if !exists {
-				return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
+				return ofKind(errDeployInputMissing,
+					fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path))
 			}
 			// Present is not the same as ours. A genesis someone edited, or a
 			// config left by a previous composition, is present and would be
@@ -66,9 +83,10 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 					return err
 				}
 				if have != want {
-					return fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
-						"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
-						"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have))
+					return ofKind(errDeployInputForeign,
+						fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
+							"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
+							"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have)))
 				}
 			}
 			present++
@@ -87,14 +105,21 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 		return err
 	})
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	detail := fmt.Sprintf("%d launch input(s) present on the target (reused, not rewritten)", present)
 	if shipped > 0 {
 		detail += fmt.Sprintf(", %d identity file(s) shipped to %s", shipped, w.keysBase())
 	}
 	w.markStep("deploy", detail)
-	return detail, nil
+	// Which of the two the deploy did, said by the step that counted it.
+	// Nothing outside can: whether anything was shipped is the difference
+	// between a local target and a remote one, and it is counted here.
+	at := lifecycle.ChainDeployNodesVerifiedLocal
+	if shipped > 0 {
+		at = lifecycle.ChainDeployNodesShippedRemote
+	}
+	return StepOut{Detail: detail, Passed: []lifecycle.Status{at}}, nil
 }
 
 // shipIdentities uploads each node's identity files — the devp2p nodekey, the
@@ -172,7 +197,8 @@ func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
 	for _, s := range sets {
 		k, v, _ := strings.Cut(s, "=")
 		if k == "" {
-			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
+			return nil, ofKind(errBuildBadOption,
+				fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s))
 		}
 		out = append(out, nodeconfig.Override{Key: nodeconfig.OptionKey(k), Value: v})
 	}

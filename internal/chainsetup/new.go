@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -16,6 +17,12 @@ import (
 // id — so a resume keeps the id it was composed under rather than minting a new
 // one from the run time or a pid, and two workspaces never collide on one data
 // root.
+// errNewNoChain is the one way this stage fails: nothing said which chain.
+//
+// The stage has no branches — it opens the workspace and records the request —
+// so one kind is the whole of it.
+var errNewNoChain = errors.New("no chain was named")
+
 func compositionID(dir string) string {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -63,7 +70,7 @@ type NewOpts struct {
 // data root defaults to the workspace directory.
 func (w *Workspace) New(opts NewOpts) (string, error) {
 	if opts.Chain == "" && opts.ManifestPath == "" {
-		return "", fmt.Errorf("chainsetup: --chain or --manifest is required")
+		return "", ofKind(errNewNoChain, fmt.Errorf("chainsetup: --chain or --manifest is required"))
 	}
 	p, err := external.ResolveChain(opts.Chain, opts.ManifestPath, opts.TemplatePath)
 	if err != nil {

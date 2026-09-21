@@ -64,7 +64,8 @@ func reprovision(t *testing.T, dir string) (string, error) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ws.Provision(context.Background())
+	out, err := ws.Provision(context.Background())
+	return out.Detail, err
 }
 
 // TestDeploy_RefusesAGenesisSomethingElseWrote: a genesis at the expected path

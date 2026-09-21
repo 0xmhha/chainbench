@@ -146,13 +146,12 @@ var allowed = map[Status][]Status{
 
 	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption},
 
-	// The two detail states say what the target was, not which way the walk
-	// went, so a deploy that cannot say which it did still moves on. The stage
-	// cannot say yet: whether anything was shipped is counted inside
-	// Workspace.Provision and does not come back out, and a handler that
-	// guessed from the request would call a local server set remote.
-	ChainDeployNodes: {ChainInitNodes,
-		ChainDeployNodesVerifiedLocal, ChainDeployNodesShippedRemote,
+	// The two detail states say what the target was. The table let a deploy
+	// move on without naming either for as long as nothing could name it:
+	// whether anything was shipped is counted inside Workspace.Provision, and a
+	// handler guessing from the request would call a local server set remote.
+	// The step says so now, so the way round them is gone.
+	ChainDeployNodes: {ChainDeployNodesVerifiedLocal, ChainDeployNodesShippedRemote,
 		ChainDeployNodesFailInputMissing, ChainDeployNodesFailInputForeign},
 	ChainDeployNodesVerifiedLocal: {ChainInitNodes},
 	ChainDeployNodesShippedRemote: {ChainInitNodes},

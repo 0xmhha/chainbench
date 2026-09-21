@@ -59,7 +59,7 @@ type composeStage struct {
 var composition = []composeStage{
 	{
 		step: "new", at: lifecycle.ChainOpenWorkspace, next: lifecycle.ChainBuildNodeTable,
-		owed: "NetNew reports a missing chain and a bad request the same way",
+		classify: newFailure,
 	},
 	{
 		step: "place", at: lifecycle.ChainBuildNodeTable, next: lifecycle.ChainEnsureKeys,
@@ -87,11 +87,11 @@ var composition = []composeStage{
 	},
 	{
 		step: "build", at: lifecycle.ChainBuildNodeCommand, next: lifecycle.ChainDeployNodes,
-		owed: "NetLaunchOpts reports every bad option the same way",
+		classify: buildFailure,
 	},
 	{
 		step: "deploy", at: lifecycle.ChainDeployNodes, next: lifecycle.ChainInitNodes,
-		owed: "NetProvision reports a missing input and a foreign one the same way",
+		classify: deployFailure,
 	},
 	{
 		step: "init", at: lifecycle.ChainInitNodes, next: lifecycle.ChainLaunchNodes,
@@ -113,8 +113,10 @@ const (
 	// a stage with states of its own reports the ones it went through, and one
 	// with none goes straight on.
 	stagesStillAssuming = 0
-	// stagesStillOwing report every failure as one sentence.
-	stagesStillOwing = 3
+	// stagesStillOwing report every failure as one sentence. None do. The list
+	// is kept because the shape is what a stage added later starts in, and a
+	// count of zero is the thing a reader should see stay at zero.
+	stagesStillOwing = 0
 )
 
 // composeRun is one step of the composition: it runs the verb, appends the
@@ -249,8 +251,17 @@ func (s composeStage) failed(m *lifecycle.Machine, passed []lifecycle.Status, er
 	if rerr := m.Request(at); rerr != nil {
 		return rerr
 	}
-	if at == lifecycle.FailStageUnclassified && s.owed != "" {
-		return fmt.Errorf("%w (%s: %s)", err, s.step, s.owed)
+	// Reaching the debt state has to say why, either way. A stage with no
+	// classifier says what it cannot tell apart; a stage that has one and fell
+	// to its default says that this particular failure has no state — which is
+	// the case a reader would otherwise take for a stage nobody has moved in.
+	if at == lifecycle.FailStageUnclassified {
+		switch {
+		case s.owed != "":
+			return fmt.Errorf("%w (%s: %s)", err, s.step, s.owed)
+		case s.classify != nil:
+			return fmt.Errorf("%w (%s: this failure has no state of its own)", err, s.step)
+		}
 	}
 	return err
 }
@@ -377,6 +388,46 @@ func placeFailure(err error) lifecycle.Status {
 		return lifecycle.ChainBuildNodeTableFailTwoLayouts
 	case errors.Is(err, errPlaceSetContended):
 		return lifecycle.ChainBuildNodeTableFailSetContended
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// deployFailure is which of the deploy stage's two failures this error is.
+//
+// The default is the shipping itself: a file store that will not read the local
+// key or will not write it to the machine. That is the store's refusal, and the
+// two named here are about what is on the target rather than about getting
+// there.
+func deployFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errDeployInputMissing):
+		return lifecycle.ChainDeployNodesFailInputMissing
+	case errors.Is(err, errDeployInputForeign):
+		return lifecycle.ChainDeployNodesFailInputForeign
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// newFailure is the one failure the workspace stage has a state for.
+//
+// The default is everything else opening a workspace can hit: a chain that
+// resolves to nothing, a manifest that will not parse, a directory that cannot
+// be made. Those are the chain registry's and the filesystem's refusals.
+func newFailure(err error) lifecycle.Status {
+	if errors.Is(err, errNewNoChain) {
+		return lifecycle.ChainOpenWorkspaceFailNoChain
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// buildFailure is the one failure the command stage has a state for.
+//
+// The default is assembling itself: a peer list that cannot be built, a node
+// whose plugin cannot be resolved. A bad option is a line somebody wrote; the
+// rest are the composition disagreeing with itself.
+func buildFailure(err error) lifecycle.Status {
+	if errors.Is(err, errBuildBadOption) {
+		return lifecycle.ChainBuildNodeCommandFailBadOption
 	}
 	return lifecycle.FailStageUnclassified
 }
