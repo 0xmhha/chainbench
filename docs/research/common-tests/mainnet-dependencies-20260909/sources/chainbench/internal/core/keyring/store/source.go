@@ -34,7 +34,7 @@ type KeySource interface {
 	Dir() string
 	// Ensure materializes (or loads) the key set for at least n nodes and
 	// returns it decoded.
-	Ensure(ctx context.Context, n int) (keyring.Preset, error)
+	Ensure(ctx context.Context, n int) (keyring.KeyPreset, error)
 	// Describe names the source for artifacts and error messages.
 	Describe() string
 }
@@ -54,13 +54,13 @@ func (s PresetKeys) Dir() string { return s.Path }
 func (s PresetKeys) Describe() string { return "preset:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
-func (s PresetKeys) Ensure(_ context.Context, n int) (keyring.Preset, error) {
+func (s PresetKeys) Ensure(_ context.Context, n int) (keyring.KeyPreset, error) {
 	p, err := LoadPreset(s.Path)
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: key source: %w", err)
 	}
 	if len(p.Nodes) < n {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: preset %s has %d node identities, need %d",
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: key source: preset %s has %d node identities, need %d",
 			s.Path, len(p.Nodes), n)
 	}
 	return p, nil
@@ -97,12 +97,12 @@ func (s GeneratedKeys) Describe() string { return "generated:" + s.Path }
 
 // Ensure generates the key set on first call and loads it on later ones, so a
 // re-run keeps the identities the first run created (and therefore its genesis).
-func (s GeneratedKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error) {
+func (s GeneratedKeys) Ensure(ctx context.Context, n int) (keyring.KeyPreset, error) {
 	if _, err := os.Stat(filepath.Join(s.Path, "metadata.json")); err == nil {
 		return PresetKeys{Path: s.Path}.Ensure(ctx, n)
 	}
 	if err := ctx.Err(); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	opts := GenerateOpts{
 		Nodes: n,
@@ -116,7 +116,7 @@ func (s GeneratedKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
 	if _, err := Generate(opts, nil); err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: generate: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: key source: generate: %w", err)
 	}
 	return PresetKeys{Path: s.Path}.Ensure(ctx, n)
 }
@@ -146,7 +146,7 @@ func orDefault(v, def string) string {
 // produces a chain whose genesis registers one address while the node signs
 // with another — a failure that otherwise surfaces much later as an unexplained
 // consensus stall.
-func (r *KeySet) Register(ctx context.Context, set keyring.Preset, n int) error {
+func (r *KeySet) Register(ctx context.Context, set keyring.KeyPreset, n int) error {
 	if r == nil {
 		return nil
 	}

@@ -24,7 +24,7 @@ func TestNodeConfigArgv_EmitsTheManifestNetworkID(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa", Address: "0x1"}}}}
+	preset := keyring.KeyPreset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa", Address: "0x1"}}}}
 	spec := process.NodeSpec{Index: 1, Role: node.RoleEN, Host: "127.0.0.1", DataDir: "/d/node1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}}
 
 	cfg := process.NodeConfig(plugin, preset, spec, "/keys", nil)

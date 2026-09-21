@@ -67,18 +67,18 @@ type GenerateOpts struct {
 // Nothing is executed: every identity is derived in process, so a ring can be
 // generated with no chain binary built or on PATH. That is what lets a network
 // be declared from scratch rather than starting from a committed fixture.
-func Generate(opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func Generate(opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	return GenerateAt(context.Background(), opts, progress)
 }
 
 // GenerateAt is Generate against opts.Files (nil = local), with the context a
 // remote store's I/O needs.
-func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	// Creating over a ring that already exists would replace identities a
 	// genesis, a datadir, or a test is already referring to, and the keys behind
 	// them cannot be recovered. Adding to a ring is a different verb.
 	if exists, err := opts.files().Exists(ctx, filepath.Join(opts.Out, PresetFile)); err == nil && exists {
-		return keyring.Preset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", opts.Out)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", opts.Out)
 	}
 	// A ring generated without saying otherwise is a network's validator set,
 	// which is what every existing preset is.
@@ -94,11 +94,11 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 	// creating a smaller set than asked for produced a genesis with fewer
 	// validators than the operator believed they had.
 	if want > opts.Nodes {
-		return keyring.Preset{}, fmt.Errorf("keyring: %d validators from %d identities — create more identities, or declare fewer validators",
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: %d validators from %d identities — create more identities, or declare fewer validators",
 			want, opts.Nodes)
 	}
 	opts.Validators = &want
-	return generate(ctx, keyring.Preset{}, opts, progress)
+	return generate(ctx, keyring.KeyPreset{}, opts, progress)
 }
 
 // files is the ring's store, defaulting to this resource.
@@ -119,12 +119,12 @@ func (o GenerateOpts) files() filestore.Store {
 // opts.Validators is how many of the *new* entries join the validator set, and
 // it defaults to none. Changing who validates changes what the chain is, so it
 // is asked for rather than inferred from a count.
-func Extend(opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func Extend(opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	return ExtendAt(context.Background(), opts, progress)
 }
 
 // ExtendAt is Extend against opts.Files (nil = local).
-func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	// Extending without saying otherwise promotes nobody: adding an identity and
 	// changing who validates are different decisions.
 	want := 0
@@ -132,13 +132,13 @@ func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (ke
 		want = *opts.Validators
 	}
 	if want > opts.Nodes {
-		return keyring.Preset{}, fmt.Errorf("keyring: extend: %d new validators from %d new nodes",
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: extend: %d new validators from %d new nodes",
 			want, opts.Nodes)
 	}
 	opts.Validators = &want
 	existing, err := LoadPresetAt(ctx, opts.files(), opts.Out)
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: extend: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: extend: %w", err)
 	}
 	// A key set that uses BLS keeps using it. Adding a plain identity to one
 	// and promoting it produced a validator with no BLS key, which left the
@@ -192,22 +192,22 @@ func ImportAt(ctx context.Context, files filestore.Store, dir string, label keyr
 	return e, nil
 }
 
-func generate(ctx context.Context, existing keyring.Preset, opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func generate(ctx context.Context, existing keyring.KeyPreset, opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	if opts.Nodes < 1 {
-		return keyring.Preset{}, fmt.Errorf("keyring: nodes must be >= 1")
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: nodes must be >= 1")
 	}
 	if opts.Rand == nil {
 		opts.Rand = rand.Reader
 	}
 	if err := prepareRingDir(ctx, opts); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	set, err := appendEntries(ctx, existing, opts, progress)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	if err := writePreset(ctx, opts, set); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	return set, nil
 }
@@ -223,10 +223,10 @@ func prepareRingDir(ctx context.Context, opts GenerateOpts) error {
 
 // appendEntries creates opts.Nodes identities after the ones already in
 // existing, and folds each into the ring's network decisions.
-func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOpts, progress func(string)) (keyring.Preset, error) {
+func appendEntries(ctx context.Context, existing keyring.KeyPreset, opts GenerateOpts, progress func(string)) (keyring.KeyPreset, error) {
 	alloc, err := decodeAlloc(existing.Network.Alloc)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	set := existing
 	set.Password = opts.Password
@@ -236,14 +236,14 @@ func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOp
 	for i := first; i < first+opts.Nodes; i++ {
 		e, err := generateEntry(ctx, i, opts)
 		if err != nil {
-			return keyring.Preset{}, fmt.Errorf("keyring: node %d: %w", i, err)
+			return keyring.KeyPreset{}, fmt.Errorf("keyring: node %d: %w", i, err)
 		}
 		set.Nodes = append(set.Nodes, e)
 		alloc[strings.TrimPrefix(e.Address, "0x")] = map[string]any{"balance": opts.Balance}
 		if promoted < *opts.Validators {
 			net, err := promote(set.Network, e)
 			if err != nil {
-				return keyring.Preset{}, err
+				return keyring.KeyPreset{}, err
 			}
 			set.Network = net
 			promoted++
@@ -260,7 +260,7 @@ func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOp
 
 	raw, err := json.Marshal(alloc)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	set.Network.Alloc = raw
 	return set, nil
@@ -269,7 +269,7 @@ func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOp
 // usesBLS reports whether this key set carries BLS material — either the
 // network declares BLS keys, or an identity holds one. Both are asked because
 // a set may hold BLS identities before any of them validates.
-func usesBLS(set keyring.Preset) bool {
+func usesBLS(set keyring.KeyPreset) bool {
 	if len(set.Network.BLSKeys) > 0 {
 		return true
 	}
@@ -309,7 +309,7 @@ func promote(net keyring.Network, e keyring.Entry) (keyring.Network, error) {
 // no existing genesis, so without a balance their first transaction cannot pay
 // for gas, and nothing else can supply one until the network blueprint can
 // declare accounts of its own.
-func writePreset(ctx context.Context, opts GenerateOpts, set keyring.Preset) error {
+func writePreset(ctx context.Context, opts GenerateOpts, set keyring.KeyPreset) error {
 	f := presetFile{
 		Description: fmt.Sprintf("Generated ring: %d nodes (%d validators). chainbench keyring.",
 			len(set.Nodes), len(set.Network.Validators)),
@@ -445,37 +445,37 @@ func shortHex(s string) string {
 //
 // The destination must not already hold a ring, for the same reason Generate
 // refuses one: silently replacing referenced identities is unrecoverable.
-func ImportRing(ctx context.Context, files filestore.Store, dir string, src keyring.Preset, password string) (keyring.Preset, error) {
+func ImportRing(ctx context.Context, files filestore.Store, dir string, src keyring.KeyPreset, password string) (keyring.KeyPreset, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
 	if len(src.Nodes) == 0 {
-		return keyring.Preset{}, fmt.Errorf("keyring: import-ring: the source key set holds no identities")
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: import-ring: the source key set holds no identities")
 	}
 	if exists, err := files.Exists(ctx, filepath.Join(dir, PresetFile)); err == nil && exists {
-		return keyring.Preset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", dir)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", dir)
 	}
 	for _, e := range src.Nodes {
 		if err := e.Verify(); err != nil {
-			return keyring.Preset{}, fmt.Errorf("keyring: import-ring: source entry %q failed verification: %w", e.Label, err)
+			return keyring.KeyPreset{}, fmt.Errorf("keyring: import-ring: source entry %q failed verification: %w", e.Label, err)
 		}
 	}
 	if password == "" {
 		password = src.Password
 	}
 	if err := files.Write(ctx, filepath.Join(dir, "password"), []byte(password), keyring.SecretPerm); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	for _, e := range src.Nodes {
 		entryDir := filepath.Join(dir, string(e.Label))
 		if err := writeEntryDir(ctx, files, entryDir, e.Nodekey, e.Identity, password); err != nil {
-			return keyring.Preset{}, fmt.Errorf("keyring: import-ring: %q: %w", e.Label, err)
+			return keyring.KeyPreset{}, fmt.Errorf("keyring: import-ring: %q: %w", e.Label, err)
 		}
 	}
 	set := src
 	set.Password = password
 	if err := writePreset(ctx, GenerateOpts{Out: dir, Files: files}, set); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	return set, nil
 }

@@ -138,7 +138,7 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 // on, and the config names it by address, devp2p id, host and p2p port. Every
 // key-set identity is funded, so a test does not have to arrange for gas before
 // it can do anything.
-func (s GenesisSource) config(preset keyring.Preset, req genesis.Request) (Config, error) {
+func (s GenesisSource) config(preset keyring.KeyPreset, req genesis.Request) (Config, error) {
 	boot, ok := bootPlacement(req.Nodes)
 	if !ok {
 		return Config{}, fmt.Errorf("poa: genesis: the placement has no producer to bootstrap from")

@@ -64,7 +64,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 // and a mid-test config swap share it, so both produce the same config and the
 // same provenance record. purpose, when set, names the swap's config fixture
 // (config-<purpose>); the initial compose passes "".
-func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
 	t, err := w.machineFor(ns)
 	if err != nil {
 		return ConfigProvenance{}, err
@@ -92,7 +92,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 //
 // A node that names its own config file uses it verbatim — the file is the
 // whole config, so nothing is rendered and no override applies to it.
-func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
+func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {

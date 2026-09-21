@@ -131,7 +131,7 @@ type (
 	// GenerateSetIn shapes generating a preset key set.
 	GenerateSetIn = store.GenerateOpts
 	// GenerateSetOut describes what was generated.
-	GenerateSetOut = keyring.Preset
+	GenerateSetOut = keyring.KeyPreset
 )
 
 // DeriveIdentity derives what the chain's consensus family needs from a key.

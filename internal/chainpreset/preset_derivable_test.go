@@ -1,4 +1,4 @@
-package upgrade
+package chainpreset
 
 import (
 	"strings"
@@ -24,13 +24,13 @@ import (
 // through the ordinary path: there is nothing in it the key set does not
 // already know.
 
-// TestChainPreset_TheValidatorSetIsWhatTheKeySetDerives.
-func TestChainPreset_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
-	prof, err := LoadChainPreset("../../../presets/hardfork/wemix-upgrade.yaml")
+// TestPreset_TheValidatorSetIsWhatTheKeySetDerives.
+func TestPreset_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
+	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
-		t.Fatalf("read the golden profile: %v", err)
+		t.Fatalf("read the golden preset: %v", err)
 	}
-	preset, err := store.LoadPreset("../../../keys/preset")
+	preset, err := store.LoadPreset("../../keys/preset")
 	if err != nil {
 		t.Fatalf("read the shipped key set: %v", err)
 	}

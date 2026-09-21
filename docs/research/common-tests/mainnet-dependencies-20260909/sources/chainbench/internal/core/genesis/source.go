@@ -119,7 +119,7 @@ func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, re
 //
 // Without a placement (a fixed-port caller that has only a count) it falls back
 // to the first req.Validators of the ring.
-func presetNetwork(preset keyring.Preset, req Request) (keyring.Network, error) {
+func presetNetwork(preset keyring.KeyPreset, req Request) (keyring.Network, error) {
 	if req.Nodes == nil {
 		return preset.NetworkFor(req.Validators), nil
 	}

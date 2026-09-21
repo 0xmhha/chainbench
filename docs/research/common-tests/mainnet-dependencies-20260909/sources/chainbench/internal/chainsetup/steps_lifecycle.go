@@ -761,7 +761,7 @@ type owner struct {
 	pid  int
 }
 
-func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}

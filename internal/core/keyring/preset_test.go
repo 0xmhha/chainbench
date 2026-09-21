@@ -14,7 +14,7 @@ import (
 
 // bareRing generates a ring that declares nothing about a network: identities
 // and no validator set.
-func bareRing(t *testing.T, nodes int) keyring.Preset {
+func bareRing(t *testing.T, nodes int) keyring.KeyPreset {
 	t.Helper()
 	none := 0
 	set, err := store.Generate(store.GenerateOpts{
@@ -188,7 +188,7 @@ func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
 // is the nodes a placement named as producers (by index), not the first N of the
 // ring. For EN,BP,PN,BP the producers are node2 and node4.
 func TestNetworkForNodes_SelectsByIndexNotFirstN(t *testing.T) {
-	p := keyring.Preset{Nodes: []keyring.Entry{
+	p := keyring.KeyPreset{Nodes: []keyring.Entry{
 		{Index: 1, Identity: derive.Identity{Address: "0xa1", BLS: &derive.BLS{PublicKey: "0xb1"}}},
 		{Index: 2, Identity: derive.Identity{Address: "0xa2", BLS: &derive.BLS{PublicKey: "0xb2"}}},
 		{Index: 3, Identity: derive.Identity{Address: "0xa3", BLS: &derive.BLS{PublicKey: "0xb3"}}},

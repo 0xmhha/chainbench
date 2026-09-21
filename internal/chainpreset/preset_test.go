@@ -1,18 +1,18 @@
-package upgrade_test
+package chainpreset_test
 
 import (
 	"path/filepath"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/chainpreset"
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
-	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// goldenPresetPath resolves the repo's golden upgrade profile from this test's
-// package dir (internal/consensus/upgrade -> repo root).
+// goldenPresetPath resolves the repo's golden chain preset from this test's
+// package dir (internal/chainpreset -> repo root).
 func goldenPresetPath() string {
-	return filepath.Join("..", "..", "..", "presets", "hardfork", "wemix-upgrade.yaml")
+	return filepath.Join("..", "..", "presets", "hardfork", "wemix-upgrade.yaml")
 }
 
 // TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide.
@@ -22,12 +22,12 @@ func goldenPresetPath() string {
 // nodes stand on each side. Everything else it used to drive — the plan, the
 // ports, the launch — belongs to the composition steps.
 func TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide(t *testing.T) {
-	p, err := upgrade.LoadChainPreset(goldenPresetPath())
+	p, err := chainpreset.Load(goldenPresetPath())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if p.Upgrade.From != "wemix" || p.Upgrade.To != "wbft" || p.Upgrade.AtFork != "croissant" {
-		t.Fatalf("golden profile upgrade section unexpected: %+v", p.Upgrade)
+		t.Fatalf("golden preset upgrade section unexpected: %+v", p.Upgrade)
 	}
 	if p.Roles.Validators < 4 || p.Roles.Producers < 1 {
 		t.Fatalf("golden profile roles below verified minimum: %+v", p.Roles)

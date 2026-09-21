@@ -138,10 +138,10 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 // which is what its datadir, its keyring entry and its enode are all named
 // from. Deriving against a different table would produce keys that are correct
 // in isolation and attached to the wrong nodes.
-func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset, error) {
+func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.KeyPreset, error) {
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
+		return keyring.KeyPreset{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
 	}
 	r, err := blueprint.Resolve(bp, blueprint.Inputs{
 		Placed: placed.Placements(),
@@ -149,7 +149,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 		Layout: node.Layout{Root: w.state.Target.DataRoot},
 	})
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	// BLS material is derived for every family, which is what the generated
 	// source already does. Only wbft reads it, and asking the family instead
@@ -158,10 +158,10 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 	// debt rather than guessed at.
 	set, err := blueprint.PresetFrom(r, derive.WithBLS, localKeyReader)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	if len(set.Nodes) < n {
-		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
+		return keyring.KeyPreset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
 	}
 	return set, nil
 }
@@ -178,7 +178,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 // rest of the system expects — rather than being hand-rolled here. Only their
 // key material is taken; DeclaredKeys re-writes the ring (keystores, password,
 // metadata) at the workspace's key dir, the way the declared source already does.
-func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, []int, bool, error) {
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.KeyPreset, []int, bool, error) {
 	byIndex := make(map[int]node.Record, len(w.state.Nodes))
 	// pinned are the nodes whose key the table actually names. They are the only
 	// ones an existing ring can contradict — the rest are filled with fresh
@@ -191,7 +191,7 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 		}
 	}
 	if len(pinned) == 0 {
-		return keyring.Preset{}, nil, false, nil
+		return keyring.KeyPreset{}, nil, false, nil
 	}
 	sort.Ints(pinned)
 
@@ -200,19 +200,19 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 	// them from the key material below — so the dir is temporary.
 	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
 	if err != nil {
-		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
+		return keyring.KeyPreset{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
 	if err != nil {
-		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+		return keyring.KeyPreset{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
 
-	var set keyring.Preset
+	var set keyring.KeyPreset
 	for i := 1; i <= n; i++ {
 		r, ok := byIndex[i]
 		if !ok {
-			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+			return keyring.KeyPreset{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
@@ -220,14 +220,14 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 			// material must not be wrapped in anything that quotes the value.
 			key, err = parseNodeKey(i, r.Key)
 			if err != nil {
-				return keyring.Preset{}, nil, true, err
+				return keyring.KeyPreset{}, nil, true, err
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
 		id, derr := derive.Derive(key, derive.WithBLS)
 		if derr != nil {
-			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+			return keyring.KeyPreset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
 		set.Nodes = append(set.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(i)),

@@ -1,4 +1,4 @@
-package upgrade
+package chainpreset
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// TestChainPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal.
+// TestPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal.
 //
 // plan_order remaps which preset identity each plan node takes, and the reason
 // is one slot: the preset's node5 carries a keystore for an account that is NOT
@@ -26,10 +26,10 @@ import (
 // express: it exists because a handoff plan puts its producers FIRST while the
 // preset's producer-capable entry is LAST. A node table chooses its own order,
 // so it can put the producer on node5 and need no remap at all.
-func TestChainPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
-	prof, err := LoadChainPreset("../../../presets/hardfork/wemix-upgrade.yaml")
+func TestPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
+	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
-		t.Fatalf("read the golden profile: %v", err)
+		t.Fatalf("read the golden preset: %v", err)
 	}
 	order := prof.Identities.PlanOrder
 	if len(order) == 0 {
@@ -40,7 +40,7 @@ func TestChainPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.
 	}
 
 	// Plan node 1 is the producer; order[0] is the preset slot it takes.
-	acct, err := keystoreAccount(t, "../../../keys/preset", order[0])
+	acct, err := keystoreAccount(t, "../../keys/preset", order[0])
 	if err != nil {
 		t.Fatalf("read preset node%d's keystore: %v", order[0], err)
 	}

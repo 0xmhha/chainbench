@@ -330,23 +330,23 @@ func commanderRunner(c process.Commander) genesis.CommandRunner {
 // set (identity and public keys), the placement, the validated peering, and a
 // public-key lookup by index. Config, launchopts and start all render from
 // the same four, so they are gathered once.
-func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.Preset, *node.Map, node.Peering, func(int) (string, bool), error) {
+func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.KeyPreset, *node.Map, node.Peering, func(int) (string, bool), error) {
 	// With accounts, for the same reason start loads them: this renders each
 	// node's config, and a producer's config names the account it unlocks.
 	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return keyring.KeyPreset{}, nil, "", nil, err
 	}
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return keyring.KeyPreset{}, nil, "", nil, err
 	}
 	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return keyring.KeyPreset{}, nil, "", nil, err
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return keyring.KeyPreset{}, nil, "", nil, err
 	}
 	// The peer's own recorded address: spread across a set each node lives on
 	// a different host, and a static-node list pointing at this machine would

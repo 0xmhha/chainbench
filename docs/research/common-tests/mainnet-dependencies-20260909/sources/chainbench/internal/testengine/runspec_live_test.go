@@ -116,7 +116,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 // liveSpec builds a smoke spec: send one node-signed tx, then assert the chain
 // id and that the head has advanced.
-func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) dsl.Spec {
+func liveSpec(t *testing.T, chainID int64, preset keyring.KeyPreset) dsl.Spec {
 	t.Helper()
 	from := preset.Network.Validators[0]
 	to := from

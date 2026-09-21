@@ -26,16 +26,16 @@ type FileReader func(path string) ([]byte, error)
 //
 // derivation says how much to compute: the wbft family needs BLS material and
 // nothing else does, and asking for it costs real time.
-func PresetFrom(r ResolvedNetwork, derivation derive.Derivation, read FileReader) (keyring.Preset, error) {
-	var ks keyring.Preset
+func PresetFrom(r ResolvedNetwork, derivation derive.Derivation, read FileReader) (keyring.KeyPreset, error) {
+	var ks keyring.KeyPreset
 	for _, n := range r.Nodes {
 		key, err := privateKey(n, read)
 		if err != nil {
-			return keyring.Preset{}, err
+			return keyring.KeyPreset{}, err
 		}
 		id, err := derive.Derive(key, derivation)
 		if err != nil {
-			return keyring.Preset{}, fmt.Errorf("blueprint: preset: %s: %w", n.Name, err)
+			return keyring.KeyPreset{}, fmt.Errorf("blueprint: preset: %s: %w", n.Name, err)
 		}
 		ks.Nodes = append(ks.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(n.Index)),
@@ -50,7 +50,7 @@ func PresetFrom(r ResolvedNetwork, derivation derive.Derivation, read FileReader
 	for _, name := range r.Validators {
 		addr, ok := addressOf(r, ks, name)
 		if !ok {
-			return keyring.Preset{}, fmt.Errorf("blueprint: preset: validator %q is no node in this network", name)
+			return keyring.KeyPreset{}, fmt.Errorf("blueprint: preset: validator %q is no node in this network", name)
 		}
 		ks.Network.Validators = append(ks.Network.Validators, addr)
 	}
@@ -88,7 +88,7 @@ func privateKey(n ResolvedNode, read FileReader) (derive.PrivateKey, error) {
 }
 
 // addressOf finds the account address a validator name stands for.
-func addressOf(r ResolvedNetwork, ks keyring.Preset, name string) (string, bool) {
+func addressOf(r ResolvedNetwork, ks keyring.KeyPreset, name string) (string, bool) {
 	for i, n := range r.Nodes {
 		if n.Name != name {
 			continue

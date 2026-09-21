@@ -14,7 +14,7 @@ import (
 // and the node's spec: the one place a nodeconfig.Spec is built from a plan.
 // The step surface builds the same Spec from a workspace record through here,
 // so a step-composed node launches with exactly the argv and config it renders.
-func NodeConfig(plugin registry.ChainPlugin, preset keyring.Preset, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
+func NodeConfig(plugin registry.ChainPlugin, preset keyring.KeyPreset, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
 	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 	cfg := nodeconfig.Spec{
 		Chain:       nodeconfig.ChainOf(plugin, spec.Role),

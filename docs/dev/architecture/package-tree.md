@@ -84,16 +84,13 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 12패키지 3,940줄
+## 2. 체인·합의 정의 — 11패키지 3,776줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
 ├── wbft            579  wbft genesis(extraData RLP) · start flags. stablenet 과 wbft 체인이 공유
-├── poa           1,525  wemix config · genesis 생성 · 거버넌스/etcd 부트스트랩 프리미티브와 그 실행자
+└── poa           1,525  wemix config · genesis 생성 · 거버넌스/etcd 부트스트랩 프리미티브와 그 실행자
 │                        (Bootstrap: 패밀리가 선언한 액션을 한 타깃에서 / Info·WaitEtcdCluster: 클러스터가 실제로 섰는지)
-└── upgrade         164  체인 핸드오프 — 계획(BuildPlan)·기동(Launch)·메시(WireMesh) + 핸드오프 본문 1개
-                         (Handoff: config → base genesis → plan → overlay → launch → mesh → governance →
-                          etcd → verify → fork 대기)
 
 internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안다
 ├── all              26  등록 집합 — blank import 로 내장 플러그인과 그 capability 전체를 등록. 유일한 plug-in seam
@@ -113,9 +110,14 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 14패키지 31,721줄
+## 3. 자원 · 테스트 · 표면 — 15패키지 31,885줄
 
 ```
+internal/chainpreset  164  [L2a] 체인 preset 1문서 — 골든 핸드오프 선언을 읽는다(Preset·Load).
+                          어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지,
+                          거버넌스 정책·검증자·포트 계획. preset 의 두 갈래 중 체인 쪽
+                          (키 쪽은 keys/preset + keyring.KeyPreset)
+
 internal/resource  3,094  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
@@ -192,8 +194,8 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── txcmd                212  체인에 일을 맡기고 결과를 기다리기 — send·wait·deploy·call
 ├── accountcmd           177  노드나 체인이 아니라 ACCOUNT 에 가하는 것 — 상태 읽기, 자금 공급
 ├── keyringcmd         1,073  키 재료 CLI — new·add·list·show·export·import·derive
-├── upgradecmd            69  hardfork — 구성된 체인을 fork 블록에서 다른 바이너리로 옮긴다.
 │                             wemix→wbft 핸드오프는 이제 보통 케이스로 돈다(upgrade run 은 없어졌다)
+├── upgradecmd            69  hardfork — 구성된 체인을 fork 블록에서 다른 바이너리로 옮긴다.
 ├── reportcmd            137  실행을 되읽기 — report(세션이 기록한 verdict 와 증적)·log(수집한 노드 로그)
 ├── networkcmd           215  이름 붙인 네트워크 레지스트리 — MCP chainbench_network_*·chainbench_remote_rpc 의 CLI 거울
 ├── resourcecmd          237  네트워크가 무엇으로 구성될 수 있는지를 질문으로 — 서버·포트 슬롯·용량

@@ -104,7 +104,7 @@
 | ~~3~~ | ~~`upgrade.Profile`/`LoadProfile` 개명~~ | — | **완료 2026-09-21** |
 | ~~4~~ | ~~실행 조건 어휘 + 동사 이동 + 래칫~~ | — | **완료 2026-09-21** |
 | ~~5~~ | ~~남은 동사를 옮긴다~~ | — | **부분 완료 2026-09-21 (§12)** |
-| 6 | `keys/preset` → `keys/fixture` | 중 | 참조 71곳. 따로 판단 |
+| ~~6~~ | ~~`keys/preset` → `keys/fixture`~~ | — | **취소 (2026-09-21).** 갈래가 체인/키 둘이면 `keys/preset` 은 이미 정확한 이름이다 |
 | 7 | 큰 덩어리 | — | 요구가 생기면 |
 
 1·2 는 서로 독립이고 오늘 끝난다. 3 은 1 뒤다. 4 가 이 설계의 본체다.
@@ -248,3 +248,45 @@ run \`chain start\` first"` 가 세 곳에 복사돼 있었다: `StartNode`(node
 빌드를 세웠다. 숫자를 다시 재는 스크립트를 쓰지 않고 손으로 고치면 또 어긋나므로, 래칫과 같은
 규칙으로 갱신하는 스크립트를 세션 스크래치패드에 두었다(`retree.py`). **저장소에 넣지 않았다** —
 도구를 늘리는 대신 래칫이 틀린 숫자를 막는 쪽이 값이 크다고 보았고, 이 판단은 뒤집을 수 있다.
+
+## 13. 갈래를 패키지로 (2026-09-21)
+
+**`upgrade.ChainPreset` 이 아직 거꾸로였다.** 업그레이드는 체인 구성의 **한 종류**인데 chain
+preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌 것과 같은 실수를, 이번에는 패키지에서
+하고 있었다.
+
+실측이 그것을 굳혔다: `internal/consensus/upgrade` 는 **`preset.go` 164줄이 전부**였다.
+핸드오프 본문·계획·기동은 이미 다른 데로 갔고(1,949 → 164), 실제로 import 하는 곳도
+`testengine` 한 곳뿐이다(`core/hardfork` 는 주석 언급). **패키지가 곧 chain preset 이었다.**
+
+그래서 `internal/chainpreset` 으로 옮기고, 패키지가 갈래를 말하므로 타입은 `Preset`,
+읽는 함수는 `Load` 로 줄였다. 호출부가 문장이 된다 — `chainpreset.Load(path)`.
+
+### 래칫 다섯이 동시에 울렸고, 그것이 설계대로였다
+
+패키지를 옮기자 `TestEveryPackageIsPlaced`(배치 누락 + 유령) ·
+`TestCommentsDoNotContradictTheCode`(죽은 경로를 말하는 주석 둘) · `TestPackageTreeBodyIsMeasured`
+(없는 패키지를 부르는 항목 + 빠진 패키지) · `TestPackageTreeSectionsSumTheirOwnEntries` ·
+`TestNamesDoNotCollide` 가 **한 번에** 무엇을 고쳐야 하는지 목록으로 말했다. 문서를 손으로 쫓지
+않았다.
+
+### 충돌이 갈래를 완성시켰다
+
+`chainpreset.Preset` 과 `keyring.Preset` 이 겹쳤다. 래칫의 요구는 "하나를 개명하라" 였고,
+빚으로 기록하는 대신 **키 쪽을 갈래 이름으로 올렸다**: `keyring.KeyPreset`(77파일, 컴파일러가
+검증). 이제 짝이 맞는다.
+
+| 갈래 | 문서 | 타입 | 읽는 함수 |
+|---|---|---|---|
+| 체인 | `presets/<종류>/*.yaml` | `chainpreset.Preset` | `chainpreset.Load` |
+| 키 | `keys/preset/` | `keyring.KeyPreset` | `store.LoadPreset` |
+
+로더까지 `LoadKeyPreset` 으로 바꾸려다 되돌렸다 — **충돌은 타입 하나였고**, 래칫이 요구하지 않은
+것까지 바꾸면서 `LoadPresetWithAccountsAt` 같은 이름이 길어지기만 했다.
+
+### 6번 취소
+
+`direction.md` §2 가 제안하던 `keys/preset` → `keys/fixture` 를 **취소했다.** 그 제안은
+"`preset` 이 여러 뜻이니 키 쪽이 비켜 주자" 는 내 논리에서 나왔는데, 갈래가 **체인/키 둘**이면
+`keys/preset` 은 이미 정확한 이름이다. 비용도 반대를 가리킨다 — 경로 문자열 157곳, env 파일
+21개가 그것을 참조한다.

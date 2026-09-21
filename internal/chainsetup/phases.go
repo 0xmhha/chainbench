@@ -28,7 +28,7 @@ import (
 // the rest one at a time — launching everything at once produced a network that
 // came up and never agreed on anything.
 
-func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}

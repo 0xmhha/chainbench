@@ -41,33 +41,33 @@ type presetNode struct {
 // record of what a running network was given, and silently correcting it would
 // hide a set whose identities and keys have come apart. Use [Entry.Verify] to
 // check them on purpose.
-func LoadPreset(dir string) (keyring.Preset, error) {
+func LoadPreset(dir string) (keyring.KeyPreset, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
-func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.KeyPreset, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: read preset: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: read preset: %w", err)
 	}
 	var f presetFile
 	if err := json.Unmarshal(b, &f); err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
 	if err := f.validate(path); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	nodes, err := f.entries(path)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
-	return keyring.Preset{
+	return keyring.KeyPreset{
 		Nodes: nodes,
 		Network: keyring.Network{
 			Validators: f.Validators,

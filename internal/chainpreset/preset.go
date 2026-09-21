@@ -1,4 +1,4 @@
-package upgrade
+package chainpreset
 
 import (
 	"math/big"
@@ -11,11 +11,11 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// ChainPreset is one golden chain preset (presets/<kind>/*.yaml) decoded.
+// Preset is one golden chain preset (presets/<kind>/*.yaml) decoded.
 //
 // Presets come in two families, and the name says which this is. A CHAIN preset
 // declares how a network is configured; a KEY preset declares the identities it
-// runs as (keys/preset, decoded by keyring.Preset). Naming this one after the
+// runs as (keys/preset, decoded by keyring.KeyPreset). Naming this one after the
 // family rather than after the kind is deliberate: of its eleven sections only
 // "upgrade" is about a hardfork, and the other ten — chains, roles, identities,
 // producers, validators, data, ports, nodes — are ordinary chain configuration
@@ -28,7 +28,7 @@ import (
 //
 // It was called Profile, which named neither family nor kind, and matched
 // neither the directory it lives in nor the DSL field that selects it.
-type ChainPreset struct {
+type Preset struct {
 	Name    string `yaml:"name"`
 	Upgrade struct {
 		From      string `yaml:"from"`
@@ -109,7 +109,7 @@ type Governance struct {
 
 // PlanOrderOrDefault returns the plan-node -> preset-node mapping, defaulting to
 // identity order (plan node k = preset node k) when the preset omits it.
-func (p ChainPreset) PlanOrderOrDefault() []int {
+func (p Preset) PlanOrderOrDefault() []int {
 	if len(p.Identities.PlanOrder) != 0 {
 		return p.Identities.PlanOrder
 	}
@@ -121,15 +121,15 @@ func (p ChainPreset) PlanOrderOrDefault() []int {
 	return order
 }
 
-// LoadChainPreset reads and decodes a golden hardfork preset.
-func LoadChainPreset(path string) (ChainPreset, error) {
+// Load reads and decodes a golden hardfork preset.
+func Load(path string) (Preset, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return ChainPreset{}, fmt.Errorf("upgrade: read preset: %w", err)
+		return Preset{}, fmt.Errorf("chainpreset: read preset: %w", err)
 	}
-	var p ChainPreset
+	var p Preset
 	if err := yaml.Unmarshal(b, &p); err != nil {
-		return ChainPreset{}, fmt.Errorf("upgrade: parse preset %s: %w", path, err)
+		return Preset{}, fmt.Errorf("chainpreset: parse preset %s: %w", path, err)
 	}
 	return p, nil
 }
@@ -141,7 +141,7 @@ func LoadChainPreset(path string) (ChainPreset, error) {
 // thing that has ever declared one, and because a test holds it against
 // poa.DefaultEnv: as long as the two agree, a hardfork needs no governance
 // declaration to compose the same chain.
-func (p ChainPreset) GovernanceEnv() poa.Env {
+func (p Preset) GovernanceEnv() poa.Env {
 	g := p.Producers.Governance
 	return poa.Env{
 		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,

@@ -1,4 +1,4 @@
-package upgrade
+package chainpreset
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 )
 
-// TestChainPreset_TheGovernancePolicyIsTheDefault.
+// TestPreset_TheGovernancePolicyIsTheDefault.
 //
 // The golden profile spells out thirteen governance parameters — ballot
 // durations, staking bounds, block reward, fee ceiling, reward split. Every one
@@ -23,10 +23,10 @@ import (
 // choosing rather than restating, and that is precisely the point at which a
 // governance policy needs a way to be DECLARED — a DSL surface for it, which is
 // deliberately not built while nothing asks for one.
-func TestChainPreset_TheGovernancePolicyIsTheDefault(t *testing.T) {
-	prof, err := LoadChainPreset("../../../presets/hardfork/wemix-upgrade.yaml")
+func TestPreset_TheGovernancePolicyIsTheDefault(t *testing.T) {
+	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
 	if err != nil {
-		t.Fatalf("read the golden profile: %v", err)
+		t.Fatalf("read the golden preset: %v", err)
 	}
 	declared := prof.GovernanceEnv()
 

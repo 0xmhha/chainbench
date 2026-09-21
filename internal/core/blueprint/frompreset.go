@@ -40,7 +40,7 @@ type FromPresetIn struct {
 // It is deliberately the reverse of the raw path rather than a shortcut past
 // it: what this writes must resolve to the identities the preset holds, which
 // is what TestFromPreset_ComposesTheSameNetwork holds it to.
-func FromPreset(set keyring.Preset, in FromPresetIn) (Blueprint, error) {
+func FromPreset(set keyring.KeyPreset, in FromPresetIn) (Blueprint, error) {
 	if in.Dir == "" {
 		return Blueprint{}, fmt.Errorf("blueprint: from preset: the key set directory is what the document points its keys at")
 	}

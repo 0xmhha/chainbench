@@ -81,12 +81,12 @@ type Network struct {
 	Alloc json.RawMessage
 }
 
-// Preset is a decoded ring: the identities it holds, and — for a file that
+// KeyPreset is a decoded ring: the identities it holds, and — for a file that
 // still carries them — the network decisions recorded beside them.
 //
 // A ring that declares no validator set is the point: it is identities and
 // nothing more, so what a network does with them is the network's to say.
-type Preset struct {
+type KeyPreset struct {
 	// Nodes are the per-node identities. This is the keyring proper.
 	Nodes []Entry
 	// Network holds the decisions the file recorded, if any. It is empty for a
@@ -99,7 +99,7 @@ type Preset struct {
 // validate rejects a file that cannot describe a usable ring.
 
 // Node returns the entry with the given 1-based index and whether it was found.
-func (p Preset) Node(index int) (Entry, bool) {
+func (p KeyPreset) Node(index int) (Entry, bool) {
 	for _, n := range p.Nodes {
 		if n.Index == index {
 			return n, true
@@ -123,7 +123,7 @@ func (p Preset) Node(index int) (Entry, bool) {
 //
 // The governance council is not narrowed: it is independent of how many
 // validators are active.
-func (p Preset) NetworkFor(n int) Network {
+func (p KeyPreset) NetworkFor(n int) Network {
 	if len(p.Network.Validators) > 0 {
 		out := p.Network
 		if n > 0 && n < len(out.Validators) {
@@ -176,7 +176,7 @@ func (p Preset) NetworkFor(n int) Network {
 // An index with no identity in the ring is an error: it means the placement and
 // the key set disagree, which must fail while composing rather than produce a
 // genesis that names a validator the network cannot launch.
-func (p Preset) NetworkForNodes(indices []int) (Network, error) {
+func (p KeyPreset) NetworkForNodes(indices []int) (Network, error) {
 	out := p.Network
 	vals := make([]string, 0, len(indices))
 	bls := make([]string, 0, len(indices))

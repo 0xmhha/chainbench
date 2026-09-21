@@ -11,8 +11,8 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/0xmhha/chainbench/internal/chainpreset"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -83,7 +83,7 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	// The preset is read only for what the case left out. A declaration that
 	// says both says everything, and a restart has no preset to read at all.
 	if u.Fork == "" || u.At == nil {
-		prof, err := upgrade.LoadChainPreset(upgradePresetPath(u))
+		prof, err := chainpreset.Load(upgradePresetPath(u))
 		if err != nil {
 			return nil, fmt.Errorf("upgrade preset: %w", err)
 		}
@@ -130,7 +130,7 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Style == dsl.UpgradeRestart {
 		return nil
 	}
-	prof, err := upgrade.LoadChainPreset(presetPath)
+	prof, err := chainpreset.Load(presetPath)
 	if err != nil {
 		return fmt.Errorf("upgrade preset: %w", err)
 	}

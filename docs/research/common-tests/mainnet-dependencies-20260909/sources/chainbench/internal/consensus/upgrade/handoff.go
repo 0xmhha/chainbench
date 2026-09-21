@@ -125,7 +125,7 @@ type Handoff struct {
 	// Profile is the loaded golden profile.
 	Profile Profile
 	// Preset is the loaded key preset.
-	Preset keyring.Preset
+	Preset keyring.KeyPreset
 	// From and To are the two chains.
 	From, To registry.ChainPlugin
 	// Plan is the composed handoff plan, set by ComposePlan.

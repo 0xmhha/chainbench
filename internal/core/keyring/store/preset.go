@@ -50,7 +50,7 @@ type presetNode struct {
 // record of what a running network was given, and silently correcting it would
 // hide a set whose identities and keys have come apart. Use [Entry.Verify] to
 // check them on purpose.
-func LoadPreset(dir string) (keyring.Preset, error) {
+func LoadPreset(dir string) (keyring.KeyPreset, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
@@ -74,17 +74,17 @@ func LoadPreset(dir string) (keyring.Preset, error) {
 // The cost is N reads instead of one, which on a remote ring is N round trips.
 // That is the price of the secret not travelling for the other questions, and it
 // is only paid by the two that need it.
-func LoadPresetWithKeysAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+func LoadPresetWithKeysAt(ctx context.Context, files filestore.Store, dir string) (keyring.KeyPreset, error) {
 	set, err := LoadPresetAt(ctx, files, dir)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	if files == nil {
 		files = filestore.Local{}
 	}
 	legacy, lerr := legacyIndexKeys(ctx, files, dir)
 	if lerr != nil {
-		return keyring.Preset{}, lerr
+		return keyring.KeyPreset{}, lerr
 	}
 	for i := range set.Nodes {
 		key, kerr := NodeKeyAt(ctx, files, dir, set.Nodes[i].Index)
@@ -100,7 +100,7 @@ func LoadPresetWithKeysAt(ctx context.Context, files filestore.Store, dir string
 			set.Nodes[i].Nodekey = old
 			continue
 		}
-		return keyring.Preset{}, kerr
+		return keyring.KeyPreset{}, kerr
 	}
 	return set, nil
 }
@@ -131,7 +131,7 @@ func legacyIndexKeys(ctx context.Context, files filestore.Store, dir string) (ma
 }
 
 // LoadPresetWithKeys is LoadPresetWithKeysAt on the local filesystem.
-func LoadPresetWithKeys(dir string) (keyring.Preset, error) {
+func LoadPresetWithKeys(dir string) (keyring.KeyPreset, error) {
 	return LoadPresetWithKeysAt(context.Background(), nil, dir)
 }
 
@@ -156,27 +156,27 @@ func NodeKeyAt(ctx context.Context, files filestore.Store, dir string, index int
 	return key, nil
 }
 
-func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.KeyPreset, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: read preset: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: read preset: %w", err)
 	}
 	var f presetFile
 	if err := json.Unmarshal(b, &f); err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
 	if err := f.validate(path); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	nodes, err := f.entries(path)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
-	return keyring.Preset{
+	return keyring.KeyPreset{
 		Nodes: nodes,
 		Network: keyring.Network{
 			Validators: f.Validators,
@@ -272,15 +272,15 @@ type presetFile struct {
 // that unlocks it. Before this they did not read it at all: both assumed the
 // account was the address the nodekey derives, and a ring where it is not
 // produced a node that starts and dies on "no key for given address or file".
-func LoadPresetWithAccounts(dir string) (keyring.Preset, error) {
+func LoadPresetWithAccounts(dir string) (keyring.KeyPreset, error) {
 	return LoadPresetWithAccountsAt(context.Background(), nil, dir)
 }
 
 // LoadPresetWithAccountsAt is LoadPresetWithAccounts through files (nil = local).
-func LoadPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+func LoadPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir string) (keyring.KeyPreset, error) {
 	set, err := LoadPresetAt(ctx, files, dir)
 	if err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	for i := range set.Nodes {
 		acct, aerr := KeystoreAccount(dir, set.Nodes[i].Index)

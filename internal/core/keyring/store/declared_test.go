@@ -14,9 +14,9 @@ import (
 
 // declaredSet builds a small ring the way a declaration would: keys stated,
 // identities derived, nothing generated.
-func declaredSet(t *testing.T, n int) keyring.Preset {
+func declaredSet(t *testing.T, n int) keyring.KeyPreset {
 	t.Helper()
-	var set keyring.Preset
+	var set keyring.KeyPreset
 	for i := 1; i <= n; i++ {
 		k, err := derive.ParsePrivateKey(strings.Repeat(string(rune('0'+i)), 64))
 		if err != nil {

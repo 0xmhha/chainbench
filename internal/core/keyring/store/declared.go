@@ -15,7 +15,7 @@ import (
 //
 // It is the third source alongside PresetKeys and GeneratedKeys, and it is what
 // makes a preset optional rather than merely described as optional. A network
-// declaration that carries its own nodekeys derives them into a keyring.Preset
+// declaration that carries its own nodekeys derives them into a keyring.KeyPreset
 // (blueprint.PresetFrom) and hands it here; the composition then reads keys the
 // one way it already does, so nothing downstream learns that a second origin
 // exists.
@@ -30,7 +30,7 @@ type DeclaredKeys struct {
 	Path string
 	// Set is the already-derived ring. Its entries are written verbatim: this
 	// source derives nothing, so what the document declared is what lands.
-	Set keyring.Preset
+	Set keyring.KeyPreset
 	// Password encrypts the keystores written for the set; empty uses the
 	// default a generated ring uses.
 	Password string
@@ -63,7 +63,7 @@ func (s DeclaredKeys) Describe() string {
 // on this boundary behaves: re-running a command must reuse the identities a
 // genesis and a datadir already refer to, and the keys behind them cannot be
 // recovered once replaced.
-func (s DeclaredKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error) {
+func (s DeclaredKeys) Ensure(ctx context.Context, n int) (keyring.KeyPreset, error) {
 	if _, err := os.Stat(filepath.Join(s.Path, PresetFile)); err == nil {
 		// Reuse, but not in silence. The ring on disk wins — it is what an
 		// existing genesis and the datadirs already refer to — so a key the
@@ -71,18 +71,18 @@ func (s DeclaredKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error)
 		// reported before anything is composed on top of the wrong identity.
 		existing, err := PresetKeys{Path: s.Path}.Ensure(ctx, n)
 		if err != nil {
-			return keyring.Preset{}, err
+			return keyring.KeyPreset{}, err
 		}
 		if err := s.checkPinnedAgainst(existing); err != nil {
-			return keyring.Preset{}, err
+			return keyring.KeyPreset{}, err
 		}
 		return existing, nil
 	}
 	if err := ctx.Err(); err != nil {
-		return keyring.Preset{}, err
+		return keyring.KeyPreset{}, err
 	}
 	if len(s.Set.Nodes) < n {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: the declaration carries %d identities, the network needs %d", len(s.Set.Nodes), n)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: key source: the declaration carries %d identities, the network needs %d", len(s.Set.Nodes), n)
 	}
 
 	// ImportRing is the one writer for "a ring I already hold". Laying the
@@ -97,7 +97,7 @@ func (s DeclaredKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error)
 	set := s.Set
 	set.Password = orDefault(s.Password, defaultGeneratedPassword)
 	if _, err := ImportRing(ctx, s.Files, s.Path, set, set.Password); err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: %w", err)
+		return keyring.KeyPreset{}, fmt.Errorf("keyring: key source: %w", err)
 	}
 	// Read back rather than return what was written. A set that cannot be
 	// loaded again is a set the composition cannot use, and finding that out
@@ -113,7 +113,7 @@ func (s DeclaredKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error)
 // failure. Addresses are public, so the message names both sides — that is what
 // tells the operator whether to point at a different key set or accept the ring.
 // Nothing is written here; the ring on disk is untouched either way.
-func (s DeclaredKeys) checkPinnedAgainst(existing keyring.Preset) error {
+func (s DeclaredKeys) checkPinnedAgainst(existing keyring.KeyPreset) error {
 	if len(s.Pinned) == 0 {
 		return nil
 	}
