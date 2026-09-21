@@ -88,7 +88,7 @@ func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut,
 	// Counted before the step runs: it stops every node that still has a
 	// PID, and clears them, so afterwards there is nothing left to count.
 	var running int
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		running = withPID(ws.NodeSet())
 		return ws.Stop(ctx)
 	})
@@ -123,7 +123,7 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	if in.DataDir == "" || in.Index <= 0 {
 		return ErrNoDataDirAndIndex
 	}
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.StopNode(ctx, in.Index)
 	})
 	return err
@@ -185,7 +185,7 @@ func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) 
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	var swapped node.Node
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		detail, err := ws.SwapNode(ctx, SwapNodeOpts{
 			Index: in.Index, Binary: in.Binary, Config: in.Config,
 			GenesisOverlay: in.GenesisOverlay, Purpose: in.Purpose,
@@ -214,7 +214,7 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	var started node.Node
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		detail, err := ws.StartNode(ctx, in.Index)
 		if err != nil {
 			return "", err
@@ -301,7 +301,7 @@ func NetCrossFork(ctx context.Context, d Deps, in NetCrossForkIn) (NetCrossForkO
 		return NetCrossForkOut{}, ErrNoDataDir
 	}
 	var out NetCrossForkOut
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		detail, err := ws.CrossFork(ctx, CrossForkOpts{Timeout: in.Timeout})
 		if err != nil {
 			return "", err
@@ -346,7 +346,7 @@ func NetFork(_ context.Context, d Deps, in NetForkIn) (NetForkOut, error) {
 		return NetForkOut{}, ErrNoDataDir
 	}
 	var out NetForkOut
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		out.HaltsAt = ws.state.HaltsAt
 		out.Fork = ws.state.Fork
 		if out.Fork == nil {

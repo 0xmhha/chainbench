@@ -40,10 +40,10 @@ func setLockPath(setPath string) (string, error) {
 	return filepath.Join(root, name+".lock"), nil
 }
 
-// acquireSetLock takes the set's allocation lock, waiting briefly for a live
+// AcquireSetLock takes the set's allocation lock, waiting briefly for a live
 // holder, and returns the release. A stale lock is taken over, as a
 // workspace's is.
-func acquireSetLock(setPath string, d Deps) (func(), error) {
+func AcquireSetLock(setPath string, d Deps) (func(), error) {
 	path, err := setLockPath(setPath)
 	if err != nil {
 		return nil, err

@@ -74,7 +74,7 @@ type AllocateOpts struct {
 // The kinds of failure the place stage has.
 //
 // Two, and neither is retryable. A layout given twice is a request to fix; a
-// contended server set has already been waited for — acquireSetLock polls every
+// contended server set has already been waited for — AcquireSetLock polls every
 // 200ms for ten seconds before it gives up, so a caller that waited again would
 // be waiting a second time on an answer that was already taken.
 //
@@ -106,7 +106,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 			//
 			// The refusal used to live in the keys step, which runs after place
 			// has put this exact string into the node record and after
-			// withWorkspace has saved it: the run stopped, and the key it
+			// WithWorkspace has saved it: the run stopped, and the key it
 			// stopped for was already in chain-record.json — and in the --json
 			// report, since a setup error is carried in it verbatim. Rejecting
 			// a value the moment it is read is the only order in which "never
@@ -377,4 +377,17 @@ func PlaceFailure(err error) lifecycle.Status {
 		return lifecycle.ChainBuildNodeTableFailSetContended
 	}
 	return lifecycle.FailStageUnclassified
+}
+
+// OneLayoutOnly refuses a request that describes the layout twice.
+//
+// It is a rule about the layout rather than about the verb that carries one, so
+// it lives with the stage that builds the node table. Picking one silently
+// would leave the other's author reading a network that is not theirs.
+func OneLayoutOnly(hasBlueprint, hasTopology bool) error {
+	if hasBlueprint && hasTopology {
+		return ofKind(errPlaceTwoLayouts,
+			errors.New("chainsetup: allocate: a blueprint and a topology both describe the layout — give one"))
+	}
+	return nil
 }

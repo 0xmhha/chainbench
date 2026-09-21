@@ -154,7 +154,7 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 //
 // That version asserted only that the use was refused. Both leaks it was meant
 // to close were still open underneath: place had already copied the key into the
-// node record and withWorkspace had saved it, so the run stopped over a key that
+// node record and WithWorkspace had saved it, so the run stopped over a key that
 // was by then in chain-record.json; and the refusal itself quoted the key, which
 // put it on stderr and — a setup error is carried verbatim — into the --json
 // report. The test passed because it never called Save and never read the
@@ -205,7 +205,7 @@ func TestKeys_NodeTableRejectsInlineKeyMaterial(t *testing.T) {
 				t.Fatalf("the refusal should name the node: %v", err)
 			}
 
-			// And a save after the refusal — which is what withWorkspace does on
+			// And a save after the refusal — which is what WithWorkspace does on
 			// the error path — must find nothing to write down.
 			if err := ws.Save(); err != nil {
 				t.Fatalf("save: %v", err)

@@ -149,7 +149,7 @@ func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 // TestWorkspaceGenesis_RefusesChangeRequestsOnTheMethodItself puts MON-007's
 // rule where the operation is rather than where one caller happens to be.
 //
-// The check lived in genesisOpts, the helper that turns a NetGenesisIn into
+// The check lived in GenesisOptsFor, the helper that turns a NetGenesisIn into
 // options. Every caller went through it, so the behaviour was right — but
 // Workspace.Genesis is exported and takes the options directly, so "a finished
 // genesis is never quietly changed" was a property of the callers, not of the

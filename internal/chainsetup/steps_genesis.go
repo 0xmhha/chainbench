@@ -194,8 +194,8 @@ func (f GenesisFork) carrier() ForkCarrier {
 // step's concern; genesis always reflects the current inputs).
 func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, error) {
 	// The rule belongs to the operation, not to the one builder that happened to
-	// construct these options. genesisOpts checks it too, and every caller today
-	// goes through genesisOpts — but this method is exported and takes the
+	// construct these options. GenesisOptsFor checks it too, and every caller today
+	// goes through GenesisOptsFor — but this method is exported and takes the
 	// options directly, so "a finished genesis is never quietly changed" held
 	// only as long as no one assembled a GenesisOpts by hand. An invariant that
 	// depends on which door you came in is not an invariant.
@@ -643,9 +643,9 @@ type NetGenesisIn struct {
 	PerBinary map[string]string
 }
 
-// genesisOpts folds the flag-shaped genesis inputs into the step options: the
+// GenesisOptsFor folds the flag-shaped genesis inputs into the step options: the
 // key=value overrides and the overlay file's two halves.
-// genesisOpts turns a genesis request into the options the step applies, and
+// GenesisOptsFor turns a genesis request into the options the step applies, and
 // refuses a request that asks for both a finished genesis and a change to it.
 //
 // The two cannot both be honoured: a finished genesis is written byte for byte,
@@ -655,7 +655,7 @@ type NetGenesisIn struct {
 // from the dropped fork heights, so a capability-gated fork test would run
 // against a chain that has no such fork. Saying no here, before anything is
 // written, is the only answer that leaves the request and the result equal.
-func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
+func GenesisOptsFor(in NetGenesisIn) (GenesisOpts, error) {
 	opts, err := buildGenesisOpts(in)
 	if err != nil {
 		return opts, err

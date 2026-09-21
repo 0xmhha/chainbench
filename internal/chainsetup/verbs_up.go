@@ -78,7 +78,7 @@ func planUp(in NetUpIn) (upPlan, error) {
 	// the request carries the topology whole — so an inline key was already in
 	// chain-record.json by the time place refused it. Nothing is written until this
 	// returns.
-	if err := checkTopologyKeyRefs(in.Topology); err != nil {
+	if err := CheckTopologyKeyRefs(in.Topology); err != nil {
 		return upPlan{}, err
 	}
 	// execution.chain selects how this up treats an existing composition. attach
@@ -96,7 +96,7 @@ func planUp(in NetUpIn) (upPlan, error) {
 }
 
 // upSteps is the composition's step table: one closure per name in
-// upStepNames, each wrapping the same verb the matching `chain <step>` command
+// UpStepNames, each wrapping the same verb the matching `chain <step>` command
 // calls. It is built once and read by the runner below, so the order the run
 // follows and the work each step does stay separate things.
 func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (StepOut, error) {
@@ -210,9 +210,9 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	// before the compose steps re-run and reset the node table. A first up over
 	// an empty workspace yields an empty snapshot, which composes everything.
 	reuseMode := mode == resource.ChainReuseIfMatching && stage == UpStart
-	var snap reuseSnapshot
+	var snap ReuseSnapshot
 	if reuseMode {
-		snap = lockWS.snapshotForReuse(ctx)
+		snap = lockWS.SnapshotForReuse(ctx)
 	}
 
 	var out NetUpOut
@@ -257,7 +257,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	}
 	handlers := handlersFor(composeStages(reuseMode), run)
 	if reuseMode {
-		handlers[lifecycle.ReconcileChain] = reconcileHandler(ctx, d, in, snap, func(line string) { out.Steps = append(out.Steps, line) })
+		handlers[lifecycle.ReconcileChain] = ReconcileHandler(ctx, d, in, snap, func(line string) { out.Steps = append(out.Steps, line) })
 	}
 	m, err := lifecycle.New(start, target, handlers)
 	if err != nil {
@@ -311,7 +311,7 @@ func upChainMode(in NetUpIn) (resource.ChainMode, error) {
 func recordRequest(d Deps, in NetUpIn) error {
 	req := in
 	req.DataDir = ""
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		ws.state.Request = &req
 		return "", nil
 	})

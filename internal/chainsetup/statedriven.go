@@ -10,7 +10,7 @@ import (
 
 // The composition driven by its state rather than by a list.
 //
-// What this replaces is a walk over the constant upStepNames with two
+// What this replaces is a walk over the constant UpStepNames with two
 // comparisons wedged into the middle of it: one asking on every iteration
 // whether the step just reached is one the requested stage stops before, and
 // one asking whether this is the step after which a running network gets

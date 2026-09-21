@@ -47,7 +47,7 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 	if source == "" && bp != nil {
 		source = "declared"
 	}
-	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Keys(ctx, KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
 	})
 }
@@ -95,11 +95,8 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return StepOut{}, err
 	}
 	topo := in.Topology
-	if bp != nil && (topo != nil || in.TopologyPath != "") {
-		// Both describe the layout, and picking one silently would leave the
-		// other's author reading a network that is not theirs.
-		return StepOut{}, ofKind(errPlaceTwoLayouts,
-			fmt.Errorf("chainsetup: allocate: a blueprint and a topology both describe the layout — give one"))
+	if err := OneLayoutOnly(bp != nil, topo != nil || in.TopologyPath != ""); err != nil {
+		return StepOut{}, err
 	}
 	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
@@ -119,12 +116,12 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 			setPath = ws.State().ServerSet
 		}
 	}
-	release, err := acquireSetLock(setPath, d)
+	release, err := AcquireSetLock(setPath, d)
 	if err != nil {
 		return StepOut{}, err
 	}
 	defer release()
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		// A set the workspace already recorded (chain new --server-set) is the
 		// default: --docker and its set arrive as a pair, and a later
 		// --server-set on this step still wins.
@@ -183,11 +180,11 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 	// The request is read before the workspace is opened: one that contradicts
 	// itself needs no workspace, and refusing here keeps the lock and the state
 	// out of a request that was never going to be carried out.
-	opts, err := genesisOpts(in)
+	opts, err := GenesisOptsFor(in)
 	if err != nil {
 		return StepOut{}, err
 	}
-	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Genesis(ctx, opts)
 	})
 }
@@ -210,7 +207,7 @@ type NetConfigIn struct {
 // TOML config with them applied. Recording and rendering share one step so
 // `chain config --node N --set k=v` both persists the override and reflects it.
 func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
 			if err := ws.recordConfigSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: config: %w", err)
@@ -250,7 +247,7 @@ type NetLaunchOptsOut struct {
 // and records it, returning the table so the surface can render the commands.
 func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
 	var nodes []node.Record
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
 			if err := ws.recordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: launchopts: %w", err)

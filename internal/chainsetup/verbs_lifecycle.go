@@ -21,7 +21,7 @@ type NetProvisionIn struct {
 // NetProvision verifies the launch inputs are present on the target
 // (skip-if-exists semantics: present files are reused, missing ones are named).
 func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (StepOut, error) {
-	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Provision(ctx)
 	})
 }
@@ -34,7 +34,7 @@ type NetInitIn struct {
 
 // NetInit runs `<binary> init` for each node's datadir from the built genesis.
 func NetInit(ctx context.Context, d Deps, in NetInitIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Init(ctx, in.Binary)
 	})
 	return StepOut{Detail: detail}, err
@@ -48,7 +48,7 @@ type NetStartIn struct {
 
 // NetStart launches every stopped node and records the PIDs.
 func NetStart(ctx context.Context, d Deps, in NetStartIn) (StepOut, error) {
-	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Start(ctx, in.Binary)
 	})
 }
@@ -60,7 +60,7 @@ type NetStopIn struct {
 
 // NetStop terminates every running node by its recorded PID.
 func NetStop(ctx context.Context, d Deps, in NetStopIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Stop(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -74,7 +74,7 @@ type NetRestartIn struct {
 
 // NetRestart stops and relaunches one node with its recorded arming.
 func NetRestart(ctx context.Context, d Deps, in NetRestartIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Restart(ctx, in.Node)
 	})
 	return StepOut{Detail: detail}, err
@@ -87,7 +87,7 @@ type NetRmIn struct {
 
 // NetRm removes the composed data plane (stopped nodes only).
 func NetRm(ctx context.Context, d Deps, in NetRmIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Rm(ctx)
 	})
 	return StepOut{Detail: detail}, err

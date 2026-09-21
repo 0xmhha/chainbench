@@ -39,7 +39,7 @@ func TestReconcileReuse_AllMatchLeavesRunningNodesUntouched(t *testing.T) {
 	}
 	cfg := map[int]string{1: "h1", 2: "h2"}
 	w := wsForReuse(t, nodes, "/g/genesis.json", "gh", cfg)
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh",
 		before: map[int]nodeBaseline{
 			1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111},
@@ -63,7 +63,7 @@ func TestReconcileReuse_AllMatchLeavesRunningNodesUntouched(t *testing.T) {
 func TestReconcileReuse_GenesisChangeRefusesAndTouchesNothing(t *testing.T) {
 	nodes := []node.Record{{Index: 1, Label: "bp1", ConfigPath: "/c/1.toml", PID: 999}}
 	w := wsForReuse(t, nodes, "/g/genesis.json", "gh-new", map[int]string{1: "h1"})
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh-old",
 		before:      map[int]nodeBaseline{1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111}},
 		alive:       map[int]bool{1: true},
@@ -92,7 +92,7 @@ func TestReconcileReuse_StoppedDriftedNodeClearedFromLedger(t *testing.T) {
 	}
 	// Node 2's config drifted; node 1 unchanged.
 	w := wsForReuse(t, nodes, "/g/genesis.json", "gh", map[int]string{1: "h1", 2: "h2-new"})
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh",
 		before: map[int]nodeBaseline{
 			1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111},

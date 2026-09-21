@@ -3,13 +3,8 @@ package chainsetup
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
-
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Recovery (F1). A chainbench run can die between steps — killed, crashed,
@@ -60,9 +55,9 @@ func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error
 	var out NetResumeOut
 	var req *NetUpIn
 	var first string
-	// withWorkspace takes over a stale lock and refuses a live one, which is
+	// WithWorkspace takes over a stale lock and refuses a live one, which is
 	// exactly resume's rule: a run that is still going is not resumed.
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		lines, err := ws.Reconcile(ctx)
 		out.Reconciled = lines
 		if err != nil {
@@ -112,108 +107,15 @@ func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error
 }
 
 // firstUndone is the first composition step the workspace has not recorded
-// as done, or empty when every step has.
-func (w *Workspace) firstUndone() string {
-	stage := UpStart
-	if w.state.Request != nil && w.state.Request.Stage != "" {
-		stage = w.state.Request.Stage
-	}
-	for _, name := range upStepNames {
-		if stage == UpDeploy && (name == "init" || name == "start") {
-			return ""
-		}
-		if !w.state.Steps[name].Done {
-			return name
-		}
-	}
-	return ""
-}
 
 // Reconcile makes the node records true against the resource. A recorded pid
 // that is gone is cleared; a node with no pid whose process is nevertheless
 // running — launched by a run that died before it could record — is adopted
 // when its command line is the one this workspace would have launched it
-// with. It reports one line per node and changes nothing else.
-func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
-	lines := make([]string, 0, len(w.state.Nodes))
-	for i, rec := range w.state.Nodes {
-		t, err := w.machineFor(rec)
-		if err != nil {
-			return lines, err
-		}
-		insp, ok := t.Driver.(process.ProcessInspector)
-		if !ok {
-			lines = append(lines, fmt.Sprintf("node%d: pid %d (machine cannot be asked; left as recorded)", rec.Index, rec.PID))
-			continue
-		}
-		if rec.PID > 0 {
-			alive, err := insp.PIDAlive(ctx, rec.PID)
-			if err != nil {
-				return lines, fmt.Errorf("chainsetup: reconcile node%d: %w", rec.Index, err)
-			}
-			if alive {
-				lines = append(lines, fmt.Sprintf("node%d: pid %d alive", rec.Index, rec.PID))
-				continue
-			}
-			w.clearPID(i)
-			lines = append(lines, fmt.Sprintf("node%d: pid %d dead, cleared", rec.Index, rec.PID))
-			continue
-		}
-		pid, err := w.orphanOf(ctx, t, rec)
-		if err != nil {
-			return lines, err
-		}
-		if pid == 0 {
-			lines = append(lines, fmt.Sprintf("node%d: not running", rec.Index))
-			continue
-		}
-		if err := w.recordLaunch(i, pid, w.state.Binary); err != nil {
-			return lines, fmt.Errorf("chainsetup: reconcile node%d: %w", rec.Index, err)
-		}
-		lines = append(lines, fmt.Sprintf("node%d: pid %d running unrecorded, adopted", rec.Index, pid))
-	}
-	return lines, nil
-}
 
 // orphanOf finds a process of this workspace's binary that nobody recorded
 // and whose command line is the one rec would launch with. It answers the
 // pid, or 0 when there is none — a process running the same binary with
-// another command line belongs to somebody else.
-func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.Record) (int, error) {
-	if w.state.Binary == "" || len(rec.Args) == 0 {
-		return 0, nil
-	}
-	insp, ok := t.Driver.(process.ProcessInspector)
-	if !ok {
-		return 0, nil
-	}
-	cmdr, ok := t.Driver.(process.Commander)
-	if !ok {
-		return 0, nil
-	}
-	pids, err := insp.FindBinary(ctx, filepath.Base(w.state.Binary))
-	if err != nil {
-		return 0, fmt.Errorf("chainsetup: reconcile: %w", err)
-	}
-	known := map[int]bool{}
-	for _, p := range w.ledger.Recorded() {
-		known[p.PID] = true
-	}
-	want := launchCommand(w.state.Binary, rec.Args)
-	for _, pid := range pids {
-		if known[pid] {
-			continue
-		}
-		out, err := cmdr.Run(ctx, fmt.Sprintf("ps -o command= -p %d", pid))
-		if err != nil {
-			continue
-		}
-		if sameCommand(strings.TrimSpace(out), want) {
-			return pid, nil
-		}
-	}
-	return 0, nil
-}
 
 // launchCommand renders the command line a node is launched with — the same
 // rendering the ledger records.
@@ -245,7 +147,7 @@ func sameCommand(got, want string) bool {
 // not running, with the argv it was armed with.
 func startMissing(ctx context.Context, d Deps, dataDir, binary string) ([]string, error) {
 	var started []string
-	_, err := withWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
 		for _, rec := range ws.State().Nodes {
 			if rec.PID > 0 {
 				continue

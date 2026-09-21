@@ -84,8 +84,8 @@ func TestTheWalkRunsEveryStepInOrder(t *testing.T) {
 	if _, err := walk(t, "", UpStart, r); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(r.ran, ",") != strings.Join(upStepNames[:], ",") {
-		t.Errorf("ran %v, want %v", r.ran, upStepNames)
+	if strings.Join(r.ran, ",") != strings.Join(UpStepNames[:], ",") {
+		t.Errorf("ran %v, want %v", r.ran, UpStepNames)
 	}
 }
 
@@ -331,14 +331,14 @@ func TestAKindKeepsTheMessage(t *testing.T) {
 // the two debts. Both numbers only go down, and lowering one is how a stage
 // moving in gets said out loud.
 func TestEveryStageIsPlaced(t *testing.T) {
-	if len(composition) != len(upStepNames) {
+	if len(composition) != len(UpStepNames) {
 		t.Fatalf("the stage table has %d stages, the composition runs %d steps",
-			len(composition), len(upStepNames))
+			len(composition), len(UpStepNames))
 	}
 	assuming, owing := 0, 0
 	for i, s := range composition {
-		if s.step != upStepNames[i] {
-			t.Errorf("stage %d is %s, the composition runs %s there", i, s.step, upStepNames[i])
+		if s.step != UpStepNames[i] {
+			t.Errorf("stage %d is %s, the composition runs %s there", i, s.step, UpStepNames[i])
 		}
 		if (s.classify == nil) != (s.owed != "") {
 			t.Errorf("stage %s either classifies its failures or says why it cannot, not both or neither", s.step)

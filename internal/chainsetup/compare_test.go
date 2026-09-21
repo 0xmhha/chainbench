@@ -140,7 +140,7 @@ func TestAReconcilingRunGoesThroughTheReconciliation(t *testing.T) {
 		}
 		// Either way the nine stages run: the reconciliation keeps nodes, it
 		// does not skip steps.
-		if got := join(r.ran); got != join(upStepNames) {
+		if got := join(r.ran); got != join(UpStepNames) {
 			t.Errorf("%s: ran %q", c.name, got)
 		}
 	}

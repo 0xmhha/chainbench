@@ -7,7 +7,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -100,7 +99,7 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 		return HardforkExecuteOut{}, errors.New("chainsetup: hardfork needs a resolved post-fork binary path")
 	}
 	var out HardforkExecuteOut
-	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		ns, err := ws.Hardfork(ctx, in.Plan.Plan, in.Binary)
 		if err != nil {
 			return "", err
@@ -112,40 +111,3 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 }
 
 // Hardfork swaps every node onto binary at the plan's fork, continuing the
-// same chain data, and records the new pids, binary and chain.
-func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary string) (node.NodeSet, error) {
-	if err := w.allow("Hardfork"); err != nil {
-		return node.NodeSet{}, err
-	}
-	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
-	for _, rec := range w.state.Nodes {
-		spec := process.SpecOf(rec)
-		spec.Binary = w.state.Binary
-		specs = append(specs, spec)
-	}
-	// One driver relaunches every node: the swap runs on the machine the
-	// network's nodes share. (A network spread across a server set would need
-	// a per-node driver; the plan executes over one.)
-	t, err := w.machineFor(w.state.Nodes[0])
-	if err != nil {
-		return node.NodeSet{}, err
-	}
-	ns, err := plan.Execute(ctx, t.Driver, specs, binary)
-	if err != nil {
-		return ns, err
-	}
-	for _, n := range ns.Nodes {
-		for i, rec := range w.state.Nodes {
-			if rec.Index != n.Index {
-				continue
-			}
-			if err := w.recordSwap(i, n.PID, binary); err != nil {
-				return ns, fmt.Errorf("chainsetup: hardfork: node%d: %w", n.Index, err)
-			}
-		}
-	}
-	w.state.Chain = plan.ToChain
-	w.state.Binary = binary
-	w.markStep("hardfork", fmt.Sprintf("%s -> %s at block %d on %s", plan.FromChain, plan.ToChain, plan.Block, binary))
-	return ns, nil
-}

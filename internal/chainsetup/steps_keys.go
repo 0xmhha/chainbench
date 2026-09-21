@@ -320,9 +320,9 @@ func checkNodeKeyRef(index int, ref string) error {
 	return nil
 }
 
-// checkTopologyKeyRefs applies checkNodeKeyRef to every node a topology
+// CheckTopologyKeyRefs applies checkNodeKeyRef to every node a topology
 // declares. A nil topology declares nothing.
-func checkTopologyKeyRefs(t *node.Topology) error {
+func CheckTopologyKeyRefs(t *node.Topology) error {
 	if t == nil {
 		return nil
 	}

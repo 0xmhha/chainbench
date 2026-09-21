@@ -120,21 +120,21 @@ func planReuse(genesisBefore, genesisAfter string, before map[int]nodeBaseline, 
 	return plan
 }
 
-// reuseSnapshot is the running composition's baseline, captured before an up
+// ReuseSnapshot is the running composition's baseline, captured before an up
 // re-runs its steps and overwrites the record. planReuse compares it against
 // what the re-run produces.
-type reuseSnapshot struct {
+type ReuseSnapshot struct {
 	genesisHash string
 	before      map[int]nodeBaseline
 	alive       map[int]bool
 }
 
-// snapshotForReuse captures the prior per-node baseline and probes which nodes
+// SnapshotForReuse captures the prior per-node baseline and probes which nodes
 // answer, before the compose steps re-run and reset the node table. An empty
 // workspace (a first up) yields an empty snapshot, which planReuse reads as
 // "compose every node fresh".
-func (w *Workspace) snapshotForReuse(ctx context.Context) reuseSnapshot {
-	snap := reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}
+func (w *Workspace) SnapshotForReuse(ctx context.Context) ReuseSnapshot {
+	snap := ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}
 	if len(w.state.Nodes) == 0 {
 		return snap
 	}
@@ -164,7 +164,7 @@ func (w *Workspace) snapshotForReuse(ctx context.Context) reuseSnapshot {
 // datadir and process are left untouched); a node that must be redone and is
 // still up is stopped here so init can re-initialize its datadir. A changed
 // shared genesis refuses the whole reuse and touches nothing.
-func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot, cand candidateInputs) (reusePlan, error) {
+func (w *Workspace) reconcileReuse(ctx context.Context, snap ReuseSnapshot, cand candidateInputs) (reusePlan, error) {
 	genesisAfter := cand.Genesis
 	after := make([]nodeTarget, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
@@ -236,7 +236,7 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot, cand
 // reused in place (keyed by node index), and a non-empty refusal when a node is
 // already up under a different config or binary — which this run must not
 // compose over. When every node already has a record, the target is not probed.
-func (w *Workspace) mergeRunning(ctx context.Context, after []nodeTarget, snap reuseSnapshot) (before map[int]nodeBaseline, alive map[int]bool, attach map[int]int, refuse string, err error) {
+func (w *Workspace) mergeRunning(ctx context.Context, after []nodeTarget, snap ReuseSnapshot) (before map[int]nodeBaseline, alive map[int]bool, attach map[int]int, refuse string, err error) {
 	before = make(map[int]nodeBaseline, len(snap.before))
 	for k, v := range snap.before {
 		before[k] = v
@@ -368,9 +368,9 @@ func (w *Workspace) buildCandidateInputs(ctx context.Context, gopts GenesisOpts)
 // reconcileUp runs the reuse reconciliation against the freshly composed
 // workspace and saves the result, returning the plan for the caller to report
 // and to stop on a refusal.
-func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot, gopts GenesisOpts) (reusePlan, error) {
+func reconcileUp(ctx context.Context, d Deps, dataDir string, snap ReuseSnapshot, gopts GenesisOpts) (reusePlan, error) {
 	var plan reusePlan
-	_, err := withWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
+	_, err := WithWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
 		// Render what this run would write and compare THAT. Nothing has been
 		// written to the target yet at this point, which is what makes a refusal
 		// leave the running network untouched.
@@ -388,7 +388,7 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot
 	return plan, err
 }
 
-// reconcileHandler is the reconciliation, as the state between the key set and
+// ReconcileHandler is the reconciliation, as the state between the key set and
 // the genesis.
 //
 // note takes the line it records rather than the result it would be appended
@@ -402,14 +402,14 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot
 // changed is a refusal. What it can do is keep the nodes that still match what
 // this run will write and tear down the ones that do not, which is what lets
 // the stages after it bring only those back.
-func reconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap reuseSnapshot, note func(string)) lifecycle.Handler {
+func ReconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap ReuseSnapshot, note func(string)) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ReconcileChain:
 			// What this run WOULD write, rendered and compared before the
 			// genesis stage writes any of it. That is what makes a refusal
 			// leave the running network untouched.
-			gopts, gerr := genesisOpts(NetGenesisIn{
+			gopts, gerr := GenesisOptsFor(NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
 				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,

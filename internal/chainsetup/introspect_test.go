@@ -111,7 +111,7 @@ func TestMergeRunning_RefusesForeignMismatch(t *testing.T) {
 	// The run would compose a different config for node1 (a hash that is not the
 	// running file's), so the running node is foreign.
 	after := []nodeTarget{{Index: 1, Label: "node1", ConfigHash: "sha256:different", Binary: "gstable"}}
-	_, _, _, refuse, err := w.mergeRunning(context.Background(), after, reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+	_, _, _, refuse, err := w.mergeRunning(context.Background(), after, ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil {
 		t.Fatalf("mergeRunning: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestMergeRunning_ReusesMatchingInPlace(t *testing.T) {
 	w.SetDriver(func() (process.Driver, error) { return fake, nil })
 
 	after := []nodeTarget{{Index: 1, Label: "node1", ConfigHash: filestore.Hash([]byte(cfg)), Binary: "gstable"}}
-	before, alive, attach, refuse, err := w.mergeRunning(context.Background(), after, reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+	before, alive, attach, refuse, err := w.mergeRunning(context.Background(), after, ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil || refuse != "" {
 		t.Fatalf("mergeRunning: refuse=%q err=%v", refuse, err)
 	}
@@ -248,7 +248,7 @@ func TestIntrospectRunning_TwoCompositionsOnOneServerDoNotCollide(t *testing.T) 
 	// order was: matched by datadir, not by the shared label.
 	after := []nodeTarget{{Index: 1, Label: "node1", ConfigHash: filestore.Hash([]byte("mine")), Binary: "gstable"}}
 	_, _, attach, refuse, err := w.mergeRunning(context.Background(), after,
-		reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+		ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil || refuse != "" {
 		t.Fatalf("mergeRunning: refuse=%q err=%v", refuse, err)
 	}

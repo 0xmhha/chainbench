@@ -112,11 +112,11 @@ type NetUpIn struct {
 	ConfigSet map[string][]string `json:"configSet,omitempty"`
 }
 
-// upStepNames is the composition order, for reading the record.
+// UpStepNames is the composition order, for reading the record.
 //
 // It no longer drives anything: the walk is the transition table, and the stage
 // table in statedriven.go is what names each step's state. What is left needs
 // the names in order — resume asks the record which step is the first one not
 // marked done — and a test holds the two lists to the same nine names in the
 // same order.
-var upStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
+var UpStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}

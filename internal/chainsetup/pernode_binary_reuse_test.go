@@ -96,7 +96,7 @@ func TestMergeRunning_FindsNodesOnDifferentBinaries(t *testing.T) {
 	}
 
 	before, alive, attach, refuse, err := w.mergeRunning(context.Background(), after,
-		reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+		ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil {
 		t.Fatalf("mergeRunning: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestMergeRunning_SharedBinaryIsNotSearchedTwice(t *testing.T) {
 		after[i] = nodeTarget{Index: i + 1, Label: nodes[i].Label, ConfigHash: filestore.Hash(b), Binary: "/data/bin/shared"}
 	}
 	_, _, attach, refuse, err := w.mergeRunning(context.Background(), after,
-		reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+		ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil {
 		t.Fatalf("three nodes on one binary must not error: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestMergeRunning_SecondBinaryMismatchIsRefused(t *testing.T) {
 		{Index: 2, Label: "node2", ConfigHash: "sha256:something-else", Binary: binNames["beta"]},
 	}
 	_, _, _, refuse, err := w.mergeRunning(context.Background(), after,
-		reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+		ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
 	if err != nil {
 		t.Fatalf("mergeRunning: %v", err)
 	}

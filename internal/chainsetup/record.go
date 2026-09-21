@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"path/filepath"
 	"strings"
 	"time"
@@ -177,4 +179,100 @@ func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin strin
 		}
 	}
 	return dir, nil
+}
+
+// as done, or empty when every step has.
+func (w *Workspace) firstUndone() string {
+	stage := UpStart
+	if w.state.Request != nil && w.state.Request.Stage != "" {
+		stage = w.state.Request.Stage
+	}
+	for _, name := range UpStepNames {
+		if stage == UpDeploy && (name == "init" || name == "start") {
+			return ""
+		}
+		if !w.state.Steps[name].Done {
+			return name
+		}
+	}
+	return ""
+}
+
+// with. It reports one line per node and changes nothing else.
+func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
+	lines := make([]string, 0, len(w.state.Nodes))
+	for i, rec := range w.state.Nodes {
+		t, err := w.machineFor(rec)
+		if err != nil {
+			return lines, err
+		}
+		insp, ok := t.Driver.(process.ProcessInspector)
+		if !ok {
+			lines = append(lines, fmt.Sprintf("node%d: pid %d (machine cannot be asked; left as recorded)", rec.Index, rec.PID))
+			continue
+		}
+		if rec.PID > 0 {
+			alive, err := insp.PIDAlive(ctx, rec.PID)
+			if err != nil {
+				return lines, fmt.Errorf("chainsetup: reconcile node%d: %w", rec.Index, err)
+			}
+			if alive {
+				lines = append(lines, fmt.Sprintf("node%d: pid %d alive", rec.Index, rec.PID))
+				continue
+			}
+			w.clearPID(i)
+			lines = append(lines, fmt.Sprintf("node%d: pid %d dead, cleared", rec.Index, rec.PID))
+			continue
+		}
+		pid, err := w.orphanOf(ctx, t, rec)
+		if err != nil {
+			return lines, err
+		}
+		if pid == 0 {
+			lines = append(lines, fmt.Sprintf("node%d: not running", rec.Index))
+			continue
+		}
+		if err := w.recordLaunch(i, pid, w.state.Binary); err != nil {
+			return lines, fmt.Errorf("chainsetup: reconcile node%d: %w", rec.Index, err)
+		}
+		lines = append(lines, fmt.Sprintf("node%d: pid %d running unrecorded, adopted", rec.Index, pid))
+	}
+	return lines, nil
+}
+
+// another command line belongs to somebody else.
+func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.Record) (int, error) {
+	if w.state.Binary == "" || len(rec.Args) == 0 {
+		return 0, nil
+	}
+	insp, ok := t.Driver.(process.ProcessInspector)
+	if !ok {
+		return 0, nil
+	}
+	cmdr, ok := t.Driver.(process.Commander)
+	if !ok {
+		return 0, nil
+	}
+	pids, err := insp.FindBinary(ctx, filepath.Base(w.state.Binary))
+	if err != nil {
+		return 0, fmt.Errorf("chainsetup: reconcile: %w", err)
+	}
+	known := map[int]bool{}
+	for _, p := range w.ledger.Recorded() {
+		known[p.PID] = true
+	}
+	want := launchCommand(w.state.Binary, rec.Args)
+	for _, pid := range pids {
+		if known[pid] {
+			continue
+		}
+		out, err := cmdr.Run(ctx, fmt.Sprintf("ps -o command= -p %d", pid))
+		if err != nil {
+			continue
+		}
+		if sameCommand(strings.TrimSpace(out), want) {
+			return pid, nil
+		}
+	}
+	return 0, nil
 }
