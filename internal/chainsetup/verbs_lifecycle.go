@@ -49,10 +49,9 @@ type NetStartIn struct {
 
 // NetStart launches every stopped node and records the PIDs.
 func NetStart(ctx context.Context, d Deps, in NetStartIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Start(ctx, in.Binary)
 	})
-	return StepOut{Detail: detail}, err
 }
 
 // NetStopIn identifies the workspace.

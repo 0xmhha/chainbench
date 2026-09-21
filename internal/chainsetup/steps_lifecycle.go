@@ -14,6 +14,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/preset"
@@ -208,26 +209,26 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 // Start launches every stopped node. Argv comes from the launchopts step when
 // it ran; otherwise it is assembled here through the same single site
 // (nodeconfig.Argv) with no overrides.
-func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
+func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
 	if err := w.require("start"); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	p, err := w.plugin()
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
+		return StepOut{}, fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	// With accounts: a producer unlocks the account its keystore holds, which is
 	// not always the address its nodekey derives.
 	preset, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
-		return "", fmt.Errorf("chainsetup: start: %w", err)
+		return StepOut{}, fmt.Errorf("chainsetup: start: %w", err)
 	}
 	// The family orders the launch. A wbft network declares one phase and this
 	// is the loop it always was; a wemix network starts its producer alone so
@@ -241,31 +242,43 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	phases := p.Family().BringUpPhases(roles)
 
 	if err := w.checkUnmanaged(ctx, bin); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if err := w.checkPaths(ctx, bin); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
+	// The walk through the phases, as states. A family decides how many there
+	// are — wbft declares one, a poa network declares a boot plus one join per
+	// producer — so the count is not this package's to know, and the path is
+	// built as the loop runs rather than assumed in front of it.
+	//
+	// The state says what the launch was doing; how many times it has been
+	// through says which phase. A launch that dies in the third join reports
+	// three PhaseLaunching and stops there, which is the thing the loop alone
+	// could not say: the record used to hold "start" and nothing else.
+	var passed []lifecycle.Status
 	started := 0
 	for _, phase := range phases {
+		passed = append(passed, lifecycle.ChainLaunchNodesPhaseLaunching)
 		launched, err := w.startPhase(ctx, p, preset, bin, phase)
 		if err != nil {
-			return "", err
+			return StepOut{Passed: passed}, err
 		}
 		started += launched
-		if len(phase.Actions) == 0 {
-			continue
+		if len(phase.Actions) > 0 {
+			passed = append(passed, lifecycle.ChainLaunchNodesPhaseActions)
+			if err := w.runPhaseActions(ctx, bin, phase); err != nil {
+				return StepOut{Passed: passed}, err
+			}
 		}
-		if err := w.runPhaseActions(ctx, bin, phase); err != nil {
-			return "", err
-		}
+		passed = append(passed, lifecycle.ChainLaunchNodesPhaseDone)
 	}
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
 	rec, err := w.machineFor(w.state.Nodes[0])
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if dir, err := w.recordRun(ctx, rec, bin); err == nil {
 		detail += fmt.Sprintf("; run recorded at %s", dir)
@@ -273,7 +286,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 		// The record must never take the network it records down with it.
 		detail += fmt.Sprintf("; run record failed: %v", err)
 	}
-	return detail, nil
+	return StepOut{Detail: detail, Passed: passed}, nil
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.

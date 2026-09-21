@@ -41,13 +41,19 @@ func (r *recorder) run(step string) ([]lifecycle.Status, error) {
 	if p, ok := r.path[step]; ok {
 		return p, nil
 	}
-	// The two stages whose work has moved in must say something, so a recorder
-	// that does not care gives them their plainest answer.
+	// The stages whose work has moved in must say something, so a recorder that
+	// does not care gives them their plainest answer: one source, one genesis
+	// built from the template, one launch phase.
 	switch step {
 	case "keys":
 		return []lifecycle.Status{lifecycle.ChainEnsureKeysFromPreset}, nil
 	case "genesis":
 		return []lifecycle.Status{lifecycle.ChainBuildGenesisFromTemplate}, nil
+	case "start":
+		return []lifecycle.Status{
+			lifecycle.ChainLaunchNodesPhaseLaunching,
+			lifecycle.ChainLaunchNodesPhaseDone,
+		}, nil
 	}
 	return nil, nil
 }
@@ -133,6 +139,26 @@ func TestAStageWalksThePathItsStepReports(t *testing.T) {
 				lifecycle.ChainBuildGenesisFromExisting,
 				lifecycle.ChainBuildGenesisForkApplied,
 				lifecycle.ChainBuildGenesisVariantsWritten}}},
+		// A wbft network declares one phase; a poa network declares a boot and
+		// one join per producer, and the boot phase carries actions.
+		{"a launch of one phase", map[string][]lifecycle.Status{
+			"start": {
+				lifecycle.ChainLaunchNodesPhaseLaunching,
+				lifecycle.ChainLaunchNodesPhaseDone}}},
+		{"a launch whose first phase has actions", map[string][]lifecycle.Status{
+			"start": {
+				lifecycle.ChainLaunchNodesPhaseLaunching,
+				lifecycle.ChainLaunchNodesPhaseActions,
+				lifecycle.ChainLaunchNodesPhaseDone}}},
+		{"a poa launch: boot with actions, then four joins", map[string][]lifecycle.Status{
+			"start": {
+				lifecycle.ChainLaunchNodesPhaseLaunching,
+				lifecycle.ChainLaunchNodesPhaseActions,
+				lifecycle.ChainLaunchNodesPhaseDone,
+				lifecycle.ChainLaunchNodesPhaseLaunching, lifecycle.ChainLaunchNodesPhaseDone,
+				lifecycle.ChainLaunchNodesPhaseLaunching, lifecycle.ChainLaunchNodesPhaseDone,
+				lifecycle.ChainLaunchNodesPhaseLaunching, lifecycle.ChainLaunchNodesPhaseDone,
+				lifecycle.ChainLaunchNodesPhaseLaunching, lifecycle.ChainLaunchNodesPhaseDone}}},
 	} {
 		r := &recorder{path: c.path}
 		if _, err := walk(t, "", UpStart, r); err != nil {
@@ -145,11 +171,14 @@ func TestAStageWalksThePathItsStepReports(t *testing.T) {
 // whose work has moved in reports where it went; silence is a report that was
 // lost, and filling one in is what these stages stopped doing.
 func TestAMovedStageRefusesAStepThatSaysNothing(t *testing.T) {
-	for _, step := range []string{"keys", "genesis"} {
+	for _, step := range []string{"keys", "genesis", "start"} {
 		silent := func(s string) ([]lifecycle.Status, error) { return nil, nil }
 		at := lifecycle.ChainEnsureKeys
-		if step == "genesis" {
+		switch step {
+		case "genesis":
 			at = lifecycle.ChainBuildGenesis
+		case "start":
+			at = lifecycle.ChainLaunchNodes
 		}
 		m, err := lifecycle.New(at, lifecycle.ChainVerify, upHandlers(silent))
 		if err != nil {
@@ -191,6 +220,18 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 		{"something the genesis package refused", "genesis", errors.New("no"), nil, lifecycle.FailStageUnclassified},
 
 		// A stage that has not moved in reports the debt state whatever failed.
+		{"no binary", "start", ofKind(errLaunchNoBinary, errors.New("x")), nil, lifecycle.ChainLaunchNodesFailNoBinary},
+		{"a busy port", "start", ofKind(errLaunchPortBusy, errors.New("x")), nil, lifecycle.ChainLaunchNodesFailPortBusy},
+		{"the machine is occupied", "start", ofKind(errLaunchOccupied, errors.New("x")), nil, lifecycle.ChainLaunchNodesFailOccupied},
+		// These two can only happen once a phase has begun, and the table lists
+		// them under the phase states rather than the entry.
+		{"a producer with no keystore", "start", ofKind(errLaunchNoKeystore, errors.New("x")),
+			[]lifecycle.Status{lifecycle.ChainLaunchNodesPhaseLaunching}, lifecycle.ChainLaunchNodesFailNoKeystore},
+		{"a phase with nowhere to act", "start", ofKind(errLaunchPhaseEmpty, errors.New("x")),
+			[]lifecycle.Status{lifecycle.ChainLaunchNodesPhaseLaunching, lifecycle.ChainLaunchNodesPhaseActions},
+			lifecycle.ChainLaunchNodesFailPhaseEmpty},
+		{"something the driver refused", "start", errors.New("no"), nil, lifecycle.FailStageUnclassified},
+
 		{"a stage still owing", "config", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
 	} {
 		r := &recorder{failAt: c.step, fail: c.err, failPath: c.got}
@@ -292,5 +333,14 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	}
 	if got := genesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
 		t.Errorf("the real refusal classified as %s, want ChainBuildGenesisFailForkUnresolved", got)
+	}
+
+	// No binary at all, which checkBinary refuses before it touches a target.
+	berr := checkBinary(context.Background(), nil, "")
+	if berr == nil {
+		t.Fatal("a launch with no binary was accepted")
+	}
+	if got := launchFailure(berr); got != lifecycle.ChainLaunchNodesFailNoBinary {
+		t.Errorf("the real refusal classified as %s, want ChainLaunchNodesFailNoBinary", got)
 	}
 }

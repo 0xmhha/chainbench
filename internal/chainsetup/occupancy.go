@@ -70,8 +70,9 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, na
 		}
 	}
 	if len(strays) > 0 {
-		return fmt.Errorf("chainsetup: %s is already running on the machine outside this workspace (pid %s) — stop it, or compose on a different server",
-			name, strings.Join(strays, ", "))
+		return ofKind(errLaunchOccupied,
+			fmt.Errorf("chainsetup: %s is already running on the machine outside this workspace (pid %s) — stop it, or compose on a different server",
+				name, strings.Join(strays, ", ")))
 	}
 	return nil
 }
@@ -134,7 +135,8 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
 	}
 	hint := strings.Join(hints, "; ")
-	return fmt.Errorf("chainsetup: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
+	return ofKind(errLaunchPortBusy,
+		fmt.Errorf("chainsetup: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint))
 }
 
 // scanPorts asks whether the plan's ports are taken, from where the

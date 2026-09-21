@@ -45,27 +45,6 @@ var (
 	errKeyUnreadable = errors.New("node key file cannot be read as a key")
 )
 
-// keyFail is an error of this step with its kind attached.
-//
-// Error is the message the step already wrote, so nothing a person reads
-// changes. Unwrap reports both, so errors.Is finds the kind and the cause.
-type keyFail struct {
-	kind error
-	err  error
-}
-
-func (f keyFail) Error() string   { return f.err.Error() }
-func (f keyFail) Unwrap() []error { return []error{f.kind, f.err} }
-
-// ofKind marks err as being of this kind. A nil err stays nil so it can wrap a
-// return site without a branch around it.
-func ofKind(kind error, err error) error {
-	if err == nil {
-		return nil
-	}
-	return keyFail{kind: kind, err: err}
-}
-
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
 		return nil, fmt.Errorf("chainsetup: no chain set — run `chain new` first")

@@ -98,26 +98,23 @@ var composition = []composeStage{
 		owed: "NetInit reports an unreachable target and an unreadable genesis the same way",
 	},
 	{
-		// The launch verb runs every phase the family declares inside one call,
-		// so one pass is assumed: it launched, and the pass is done. The
-		// per-phase walk arrives when the phase loop moves out of
-		// Workspace.Start and into this stage.
+		// The block with the most detail states, because it is the one stage
+		// whose shape the family decides. The launch reports a phase's worth of
+		// states per phase, so a launch that dies in the third join says so.
 		step: "start", at: lifecycle.ChainLaunchNodes, next: lifecycle.ChainVerify,
-		assumed: []lifecycle.Status{
-			lifecycle.ChainLaunchNodesPhaseLaunching,
-			lifecycle.ChainLaunchNodesPhaseDone,
-		},
-		owed: "NetStart reports no binary, a busy port and an occupied datadir the same way",
+		classify: launchFailure,
 	},
 }
 
 // The two debts, counted. Lowering a number is how a stage moving in gets said
 // out loud; neither ever goes up.
 const (
-	// stagesStillAssuming walk a path they claim on the step's behalf.
-	stagesStillAssuming = 1
+	// stagesStillAssuming walk a path they claim on the step's behalf. None do:
+	// a stage with states of its own reports the ones it went through, and one
+	// with none goes straight on.
+	stagesStillAssuming = 0
 	// stagesStillOwing report every failure as one sentence.
-	stagesStillOwing = 7
+	stagesStillOwing = 6
 )
 
 // composeRun is one step of the composition: it runs the verb, appends the
@@ -295,6 +292,29 @@ func genesisFailure(err error) lifecycle.Status {
 		return lifecycle.ChainBuildGenesisFailDeclUnused
 	case errors.Is(err, errGenesisTargetUnable):
 		return lifecycle.ChainBuildGenesisFailTargetUnable
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// launchFailure is which of the launch's five failures this error is.
+//
+// What still reaches the default is everything the launch does per node once
+// the checks have passed: resolving a machine, building a peer list, the
+// driver's own refusal to start a process. Those belong to the packages that
+// raise them, and giving one of the five names here would say something the
+// error does not.
+func launchFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errLaunchNoBinary):
+		return lifecycle.ChainLaunchNodesFailNoBinary
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	case errors.Is(err, errLaunchOccupied):
+		return lifecycle.ChainLaunchNodesFailOccupied
+	case errors.Is(err, errLaunchNoKeystore):
+		return lifecycle.ChainLaunchNodesFailNoKeystore
+	case errors.Is(err, errLaunchPhaseEmpty):
+		return lifecycle.ChainLaunchNodesFailPhaseEmpty
 	}
 	return lifecycle.FailStageUnclassified
 }
