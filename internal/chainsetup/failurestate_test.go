@@ -148,3 +148,28 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 		t.Errorf("the real refusal classified as %s, want ChainBuildNodeTableFailTwoLayouts", got)
 	}
 }
+
+// TestHaveReportsTheChainIdItWasComposedWith closes a gap that cost every
+// run naming a chain id a full rebuild.
+//
+// preflight compares a recorded chain id against a wanted one, and Have never
+// filled its side. So a workspace composed with --chain-id 9911 reported
+// "chain id: have 0, want 9911" against the very request that built it, and
+// the verdict was rebuild-all every time. It is read from the recorded request,
+// the same place and for the same reason as the genesis digest — which already
+// contains it, so the check was never what caught a real change.
+func TestHaveReportsTheChainIdItWasComposedWith(t *testing.T) {
+	req := NetUpIn{Chain: "stablenet", ChainID: 9911}
+	w := &Workspace{state: State{Chain: "stablenet", Request: &req}}
+
+	have := w.Have(context.Background())
+	if have.ChainID != 9911 {
+		t.Fatalf("Have reports chain id %d, want the 9911 it was composed with", have.ChainID)
+	}
+	// And a workspace with no recorded request still says nothing rather than
+	// claiming a chain id it does not know.
+	bare := &Workspace{state: State{Chain: "stablenet"}}
+	if got := bare.Have(context.Background()).ChainID; got != 0 {
+		t.Errorf("a workspace with no request reports chain id %d", got)
+	}
+}
