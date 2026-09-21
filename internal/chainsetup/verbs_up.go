@@ -415,29 +415,6 @@ func upChainMode(in NetUpIn) (resource.ChainMode, error) {
 	return wc.Execution.Chain, nil
 }
 
-// reconcileUp runs the reuse reconciliation against the freshly composed
-// workspace and saves the result, returning the plan for the caller to report
-// and to stop on a refusal.
-func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot, gopts GenesisOpts) (reusePlan, error) {
-	var plan reusePlan
-	_, err := withWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
-		// Render what this run would write and compare THAT. Nothing has been
-		// written to the target yet at this point, which is what makes a refusal
-		// leave the running network untouched.
-		cand, cerr := ws.buildCandidateInputs(ctx, gopts)
-		if cerr != nil {
-			return "", cerr
-		}
-		p, err := ws.reconcileReuse(ctx, snap, cand)
-		if err != nil {
-			return "", err
-		}
-		plan = p
-		return p.describe(), nil
-	})
-	return plan, err
-}
-
 // recordRequest writes what the composition was asked for onto the
 // workspace. The location is not part of it: the record is where the
 // workspace is.

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -80,21 +79,6 @@ const (
 	minValidators = 1
 	portBand      = 100
 )
-
-// StepOut is what one mutating step did: its recorded detail line, and the
-// states it went through when the step knows them.
-//
-// It is the step's type as well as the verb's. They were two types with the
-// same two fields for one commit, and a verb that copied one into the other is
-// a place where the two can be made to disagree.
-type StepOut struct {
-	Detail string
-	// Passed is the states this step went through, in order, ending at the one
-	// it finished in. It is empty for a step whose work has not moved into its
-	// handler yet, and the handler then walks a path it assumed instead of the
-	// one that happened. A step that fills this has stopped being guessed at.
-	Passed []lifecycle.Status
-}
 
 // NetKeysIn selects where node identities come from.
 type NetKeysIn struct {
