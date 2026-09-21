@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -14,6 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -24,6 +26,57 @@ import (
 // generated here — and checks the node table's key references before anything
 // is written, because a reference that only fails at launch has already cost a
 // provisioning round trip.
+
+// The kinds of failure this step has. They are what a caller branches on: the
+// messages below name the node, the file and what to do about it, which is what
+// makes them worth reading, and none of that is something a caller can switch
+// on. A kind added in front of the message would say the same thing twice, so
+// the kind rides alongside the message instead.
+var (
+	// errKeySourceUnknown: the source named is not one of the three.
+	errKeySourceUnknown = errors.New("key source unknown")
+	// errKeyCountShort: the declaration holds fewer identities than the
+	// network has nodes.
+	errKeyCountShort = errors.New("declared identities are fewer than the nodes")
+	// errKeyRefNotLocal: a node named its key as something other than a local
+	// file — inline material, or a path on another machine.
+	errKeyRefNotLocal = errors.New("node key reference is not a local file")
+	// errKeyUnreadable: the local file a node named cannot be read as a key.
+	errKeyUnreadable = errors.New("node key file cannot be read as a key")
+)
+
+// keyFail is an error of this step with its kind attached.
+//
+// Error is the message the step already wrote, so nothing a person reads
+// changes. Unwrap reports both, so errors.Is finds the kind and the cause.
+type keyFail struct {
+	kind error
+	err  error
+}
+
+func (f keyFail) Error() string   { return f.err.Error() }
+func (f keyFail) Unwrap() []error { return []error{f.kind, f.err} }
+
+// ofKind marks err as being of this kind. A nil err stays nil so it can wrap a
+// return site without a branch around it.
+func ofKind(kind error, err error) error {
+	if err == nil {
+		return nil
+	}
+	return keyFail{kind: kind, err: err}
+}
+
+// KeysDone is what the keys step did: the line it recorded, and which of the
+// three sources the identities actually came from.
+//
+// The source is reported rather than inferred from the request because the
+// request does not decide it on its own. A node table that names per-node keys
+// is the source whatever the request said, and a handler reading the request
+// would call that a preset.
+type KeysDone struct {
+	Detail string
+	Source lifecycle.Status
+}
 
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
@@ -50,9 +103,9 @@ type KeysOpts struct {
 
 // Keys ensures the workspace's key set exists and covers the requested node
 // count, through the same KeySource boundary `chainbench run` uses.
-func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
+func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
 	if _, err := w.plugin(); err != nil {
-		return "", err
+		return KeysDone{}, err
 	}
 	n := opts.Nodes
 	if n <= 0 {
@@ -62,12 +115,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
+		return KeysDone{}, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 	// A key set named on a server is downloaded to a local directory first, so
 	// the rest of this step reads it the one local way.
 	if err := w.materializeKeyring(ctx); err != nil {
-		return "", err
+		return KeysDone{}, err
 	}
 
 	// A node table that names any per-node key builds the set from the table:
@@ -77,24 +130,30 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	// over the source string because a table that declares keys has said where
 	// its identities come from.
 	var src store.KeySource
+	// from is the state this step ends in, set where the source is chosen so
+	// the two cannot drift apart.
+	var from lifecycle.Status
 	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
-		return "", kerr
+		return KeysDone{}, kerr
 	} else if keyed {
 		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
+		from = lifecycle.ChainEnsureKeysFromBlueprint
 	} else {
 		switch opts.Source {
 		case "", "keyPreset":
 			src = store.PresetKeys{Path: w.state.KeysDir}
+			from = lifecycle.ChainEnsureKeysFromPreset
 		case "declared":
 			// The declaration is the origin, and the ring is materialised from it
 			// so that the genesis source, the launcher and provision keep reading
 			// keys the one way they already do.
 			if opts.Blueprint == nil {
-				return "", fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source)
+				return KeysDone{}, ofKind(errKeySourceUnknown,
+					fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
 			}
 			set, err := w.declaredKeys(*opts.Blueprint, n)
 			if err != nil {
-				return "", err
+				return KeysDone{}, err
 			}
 			// A blueprint names a key for every node it declares (a node without
 			// one is an error there), so every index is pinned: if the ring on
@@ -106,6 +165,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			}
 			sort.Ints(pinned)
 			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
+			from = lifecycle.ChainEnsureKeysFromBlueprint
 		case "generate":
 			// A generated set must declare exactly the topology's validators, not
 			// make every node one: a network with endpoints (4 bp + 11 en) whose key
@@ -117,18 +177,20 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 				validators = w.state.BPCount
 			}
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
+			from = lifecycle.ChainEnsureKeysGenerated
 		default:
-			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source)
+			return KeysDone{}, ofKind(errKeySourceUnknown,
+				fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
 		}
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
-		return "", err
+		return KeysDone{}, err
 	}
 	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
 		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
-	return detail, nil
+	return KeysDone{Detail: detail, Source: from}, nil
 }
 
 // declaredKeys derives the ring a blueprint declares, for the network the
@@ -162,7 +224,8 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (preset.Key, err
 		return preset.Key{}, err
 	}
 	if len(set.Nodes) < n {
-		return preset.Key{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
+		return preset.Key{}, ofKind(errKeyCountShort,
+			fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n))
 	}
 	return set, nil
 }
@@ -275,15 +338,17 @@ func checkNodeKeyRef(index int, ref string) error {
 		return nil
 	}
 	if looksLikeKeyMaterial(ref) {
-		return fmt.Errorf(
+		return ofKind(errKeyRefNotLocal, fmt.Errorf(
 			"chainsetup: keys: node%d declares a private key inline: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext (the value is withheld here for the same reason)",
-			index)
+			index))
 	}
 	if strings.HasPrefix(ref, "srv://") {
-		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref)
+		return ofKind(errKeyRefNotLocal,
+			fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref))
 	}
 	if _, err := os.Stat(ref); err != nil {
-		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref)
+		return ofKind(errKeyRefNotLocal,
+			fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref))
 	}
 	return nil
 }
@@ -352,13 +417,15 @@ func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 	}
 	b, rerr := os.ReadFile(ref)
 	if rerr != nil {
-		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr)
+		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+			fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr))
 	}
 	// The parse failure is not wrapped with the bytes: a file that is nearly a
 	// key is still a key someone meant to keep.
 	key, perr := derive.ParsePrivateKey(string(b))
 	if perr != nil {
-		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref)
+		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+			fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref))
 	}
 	return key, nil
 }

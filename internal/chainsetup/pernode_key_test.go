@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
@@ -88,8 +89,15 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatalf("allocate: %v", err)
 	}
 	ctx := context.Background()
-	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
+	done, err := ws.Keys(ctx, chainsetup.KeysOpts{})
+	if err != nil {
 		t.Fatalf("keys: %v", err)
+	}
+	// The request names no source, and the node table does. This is the case a
+	// handler reading the request called a preset: the step reports what it
+	// actually took.
+	if done.Source != lifecycle.ChainEnsureKeysFromBlueprint {
+		t.Errorf("the step reported %s, want ChainEnsureKeysFromBlueprint", done.Source)
 	}
 
 	set, err := preset.LoadKeyPreset(keysDir)

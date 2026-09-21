@@ -203,27 +203,27 @@ func planUp(in NetUpIn) (upPlan, error) {
 // upStepNames, each wrapping the same verb the matching `chain <step>` command
 // calls. It is built once and read by the runner below, so the order the run
 // follows and the work each step does stay separate things.
-func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string, error) {
-	return map[string]func() (string, error){
-		"new": func() (string, error) {
+func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (StepOut, error) {
+	return map[string]func() (StepOut, error){
+		"new": func() (StepOut, error) {
 			r, err := NetNew(ctx, d, NetNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
 				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
 				Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
 			})
 			if err != nil {
-				return "", err
+				return StepOut{}, err
 			}
 			// The request is the one fact of a composition otherwise nowhere
 			// on disk; it is what a resume composes from.
 			if err := recordRequest(d, in); err != nil {
-				return "", err
+				return StepOut{}, err
 			}
-			return r.Detail, nil
+			return StepOut{Detail: r.Detail}, nil
 		},
 		// Place precedes keys: the key step sizes the identity set from the
 		// node table, so the layout has to exist first.
-		"place": func() (string, error) {
+		"place": func() (StepOut, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
@@ -232,44 +232,44 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 				Server:   in.Server,
 				AutoSize: in.AutoSize,
 			})
-			return r.Detail, err
+			return r, err
 		},
-		"keys": func() (string, error) {
+		"keys": func() (StepOut, error) {
 			r, err := NetKeys(ctx, d, NetKeysIn{
 				DataDir: in.DataDir, Source: in.KeysSource, BlueprintPath: in.BlueprintPath,
 				Validators: in.KeysValidators,
 			})
-			return r.Detail, err
+			return r, err
 		},
-		"genesis": func() (string, error) {
+		"genesis": func() (StepOut, error) {
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
 				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
 				Fork: in.GenesisFork,
 			})
-			return r.Detail, err
+			return r, err
 		},
-		"config": func() (string, error) {
+		"config": func() (StepOut, error) {
 			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir, ScopedSet: in.ConfigSet})
-			return r.Detail, err
+			return r, err
 		},
-		"build": func() (string, error) {
+		"build": func() (StepOut, error) {
 			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{
 				DataDir: in.DataDir, Set: in.LaunchSet, ScopedSet: in.LaunchScoped,
 			})
-			return r.Detail, err
+			return StepOut{Detail: r.Detail}, err
 		},
-		"deploy": func() (string, error) {
+		"deploy": func() (StepOut, error) {
 			r, err := NetProvision(ctx, d, NetProvisionIn{DataDir: in.DataDir})
-			return r.Detail, err
+			return r, err
 		},
-		"init": func() (string, error) {
+		"init": func() (StepOut, error) {
 			r, err := NetInit(ctx, d, NetInitIn{DataDir: in.DataDir, Binary: in.Binary})
-			return r.Detail, err
+			return r, err
 		},
-		"start": func() (string, error) {
+		"start": func() (StepOut, error) {
 			r, err := NetStart(ctx, d, NetStartIn{DataDir: in.DataDir, Binary: in.Binary})
-			return r.Detail, err
+			return r, err
 		},
 	}
 }
@@ -328,19 +328,21 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	// the record saying nothing at all about the step it died in: the reader saw
 	// the last step that WORKED and had to guess what came next. Now the record
 	// names the step, the time, and the error.
-	record := func(name string, fn func() (string, error)) error {
-		detail, err := fn()
+	record := func(name string, fn func() (StepOut, error)) (lifecycle.Status, error) {
+		r, err := fn()
 		if err != nil {
 			werr := fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
 			markStepFailed(d, in.DataDir, name, werr)
-			return werr
+			return 0, werr
 		}
-		out.Steps = append(out.Steps, name+": "+detail)
-		return nil
+		out.Steps = append(out.Steps, name+": "+r.Detail)
+		// Zero when the step's work has not moved into its handler: the handler
+		// then reports what the request asked for instead of what was done.
+		return r.Reached, nil
 	}
 
 	steps := upSteps(ctx, d, in)
-	run := func(name string) error { return record(name, steps[name]) }
+	run := func(name string) (lifecycle.Status, error) { return record(name, steps[name]) }
 
 	// A fresh composition is walked by its state. What used to decide how far to
 	// go is the machine's target, and what used to decide which step comes next
@@ -385,7 +387,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		if stage == UpDeploy && (name == "init" || name == "start") {
 			break
 		}
-		if err := run(name); err != nil {
+		if _, err := run(name); err != nil {
 			return out, err
 		}
 		// Reconcile against the running network as soon as the keys exist and

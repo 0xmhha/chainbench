@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
@@ -30,11 +31,11 @@ import (
 // apart: today every one of these verbs fails with an error built by
 // fmt.Errorf, and no handler can branch on a sentence.
 //
-// Nine now, one per composition stage.
+// Eight now. The keys stage left when its four declared failures became kinds
+// a caller can branch on, which is what a stage leaving looks like.
 var unclassified = map[string]string{
 	"new":     "NetNew reports a missing chain and a bad request the same way",
 	"place":   "NetAllocate reports two layouts and a contended server set the same way",
-	"keys":    "NetKeys reports an unknown source and an unreadable key the same way",
 	"genesis": "NetGenesis reports a foreign existing genesis and an unresolved fork the same way",
 	"config":  "NetConfig reports a bad override and a failed readback the same way",
 	"build":   "NetLaunchOpts reports every bad option the same way",
@@ -60,12 +61,13 @@ var stageOf = map[string]lifecycle.Status{
 }
 
 // composeRun is one step of the composition: it runs the verb, appends the
-// detail to the result and marks a failure into the record.
+// detail to the result and marks a failure into the record. It reports the
+// state the step ended in, or zero when the step does not yet say.
 //
 // It is the closure netUpFrom already had. Passing it in rather than rebuilding
 // it means the state-driven path and the list-driven one cannot come to record
 // a composition differently.
-type composeRun func(step string) error
+type composeRun func(step string) (lifecycle.Status, error)
 
 // upHandlers is one handler per composition stage.
 //
@@ -77,7 +79,7 @@ func upHandlers(in NetUpIn, run composeRun) map[lifecycle.Status]lifecycle.Handl
 	return map[lifecycle.Status]lifecycle.Handler{
 		lifecycle.ChainOpenWorkspace:   plainStage("new", lifecycle.ChainBuildNodeTable, run),
 		lifecycle.ChainBuildNodeTable:  plainStage("place", lifecycle.ChainEnsureKeys, run),
-		lifecycle.ChainEnsureKeys:      keysStage(in, run),
+		lifecycle.ChainEnsureKeys:      keysStage(run),
 		lifecycle.ChainBuildGenesis:    genesisStage(in, run),
 		lifecycle.ChainBuildNodeConfig: plainStage("config", lifecycle.ChainBuildNodeCommand, run),
 		lifecycle.ChainBuildNodeCommand: plainStage("build",
@@ -94,28 +96,33 @@ func plainStage(step string, next lifecycle.Status, run composeRun) lifecycle.Ha
 		if at != stageOf[step] {
 			return unexpected(step, at)
 		}
-		if err := runStep(m, step, run); err != nil {
+		if _, err := runStep(m, step, run); err != nil {
 			return err
 		}
 		return m.Request(next)
 	}
 }
 
-// keysStage is the key stage and its three sources.
+// keysStage is the key stage: the source the identities came from, and the four
+// ways it refuses.
 //
-// Which source was used is read from the request rather than from the verb,
-// because the verb resolves it from the same two fields: a source names itself,
-// and a silent source with a declaration next to it is the declaration. The
-// handler asks only after the verb has succeeded, so a declaration that did not
-// parse has already become a failure rather than a source.
-func keysStage(in NetUpIn, run composeRun) lifecycle.Handler {
+// This is the first stage whose work reports its own state. It used to be read
+// off the request, and that was wrong in a case the request cannot show: a node
+// table that names per-node keys is the source whatever the request said, so a
+// composition with an inline topology was recorded as having used the preset.
+// The step says which source it took, and this passes it on.
+func keysStage(run composeRun) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ChainEnsureKeys:
-			if err := runStep(m, "keys", run); err != nil {
+			from, err := runStep(m, "keys", run)
+			if err != nil {
 				return err
 			}
-			return m.Request(keysSourceState(in))
+			if from == 0 {
+				return fmt.Errorf("chainsetup: the keys step did not say which source it used")
+			}
+			return m.Request(from)
 		case lifecycle.ChainEnsureKeysFromPreset,
 			lifecycle.ChainEnsureKeysGenerated,
 			lifecycle.ChainEnsureKeysFromBlueprint:
@@ -125,19 +132,25 @@ func keysStage(in NetUpIn, run composeRun) lifecycle.Handler {
 	}
 }
 
-// keysSourceState is which of the three key sources the request names.
-func keysSourceState(in NetUpIn) lifecycle.Status {
-	switch in.KeysSource {
-	case "generate":
-		return lifecycle.ChainEnsureKeysGenerated
-	case "declared":
-		return lifecycle.ChainEnsureKeysFromBlueprint
-	case "":
-		if in.BlueprintPath != "" {
-			return lifecycle.ChainEnsureKeysFromBlueprint
-		}
+// keysFailure is which of the key stage's failures this error is.
+//
+// The default is the debt state and not a guess. Two things still reach it: the
+// preconditions the transition table makes unreachable in a composition but not
+// in a bare `chain keys`, and whatever the key store itself refuses when it
+// writes the set. Neither has a state, and naming one of the four would say
+// something the error does not.
+func keysFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errKeySourceUnknown):
+		return lifecycle.ChainEnsureKeysFailUnknownSource
+	case errors.Is(err, errKeyCountShort):
+		return lifecycle.ChainEnsureKeysFailCountMismatch
+	case errors.Is(err, errKeyRefNotLocal):
+		return lifecycle.ChainEnsureKeysFailKeyNotLocal
+	case errors.Is(err, errKeyUnreadable):
+		return lifecycle.ChainEnsureKeysFailKeyUnreadable
 	}
-	return lifecycle.ChainEnsureKeysFromPreset
+	return lifecycle.FailStageUnclassified
 }
 
 // genesisStage is the genesis stage: where the genesis came from, then what was
@@ -151,7 +164,7 @@ func genesisStage(in NetUpIn, run composeRun) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ChainBuildGenesis:
-			if err := runStep(m, "genesis", run); err != nil {
+			if _, err := runStep(m, "genesis", run); err != nil {
 				return err
 			}
 			if in.GenesisExisting != "" {
@@ -186,7 +199,7 @@ func launchStage(run composeRun) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ChainLaunchNodes:
-			if err := runStep(m, "start", run); err != nil {
+			if _, err := runStep(m, "start", run); err != nil {
 				return err
 			}
 			return m.Request(lifecycle.ChainLaunchNodesPhaseLaunching)
@@ -200,16 +213,37 @@ func launchStage(run composeRun) lifecycle.Handler {
 }
 
 // runStep runs one step's verb and, when it fails, puts the machine in the
-// failure state that says which stage failed and that nobody has classified its
-// failures yet.
-func runStep(m *lifecycle.Machine, step string, run composeRun) error {
-	if err := run(step); err != nil {
-		if rerr := m.Request(lifecycle.FailStageUnclassified); rerr != nil {
-			return rerr
-		}
-		return fmt.Errorf("%w (%s: %s)", err, step, unclassified[step])
+// state that failure is.
+//
+// A stage that classifies its failures has an entry in failureOf and lands on
+// the state its error is; a stage that does not lands on the debt state, and
+// the reason it cannot say more is appended to the error so the two are read
+// together rather than one being looked up.
+func runStep(m *lifecycle.Machine, step string, run composeRun) (lifecycle.Status, error) {
+	reached, err := run(step)
+	if err == nil {
+		return reached, nil
 	}
-	return nil
+	at := lifecycle.FailStageUnclassified
+	if classify, ok := failureOf[step]; ok {
+		at = classify(err)
+	}
+	if rerr := m.Request(at); rerr != nil {
+		return 0, rerr
+	}
+	if at == lifecycle.FailStageUnclassified {
+		if why, owed := unclassified[step]; owed {
+			return 0, fmt.Errorf("%w (%s: %s)", err, step, why)
+		}
+	}
+	return 0, err
+}
+
+// failureOf is, per stage, how its error becomes a state. A stage without an
+// entry here is one whose failures are still a sentence, which is what
+// unclassified lists.
+var failureOf = map[string]func(error) lifecycle.Status{
+	"keys": keysFailure,
 }
 
 // unexpected is what a handler says when it is asked for a state of its own

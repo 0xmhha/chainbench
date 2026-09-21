@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -23,9 +24,21 @@ import (
 // verbs, which do not, are in verbs_lifecycle.go.
 
 func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) (string, error) {
+	return inWorkspace(d, dataDir, fn)
+}
+
+// inWorkspace is withWorkspace for a step that reports more than a line.
+//
+// A step that decides something — which of three key sources it used, which of
+// two targets it shipped to — has to be able to say so, and a string is what it
+// says to a person rather than to the caller. The lock, the save and the way
+// the two errors are joined are the same for both, so they are written once
+// here and withWorkspace is the string case of it.
+func inWorkspace[T any](d Deps, dataDir string, fn func(*Workspace) (T, error)) (T, error) {
+	var zero T
 	ws, err := Open(dataDir, d.Clock)
 	if err != nil {
-		return "", err
+		return zero, err
 	}
 	ws.SetEnv(d.Env)
 	ws.SetDriver(d.Driver)
@@ -37,24 +50,24 @@ func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) 
 	// here to clear — but never in silence.
 	held, prev, state, lerr := ws.Acquire(d.command())
 	if lerr != nil {
-		return "", lerr
+		return zero, lerr
 	}
 	defer func() { _ = held.Release() }()
 	if state == session.LockStale {
 		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `chain status` shows what is there", prev.Describe())
 	}
 
-	detail, stepErr := fn(ws)
+	out, stepErr := fn(ws)
 	saveErr := ws.Save()
 	switch {
 	case stepErr != nil && saveErr != nil:
-		return "", fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
+		return zero, fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
 	case stepErr != nil:
-		return "", stepErr
+		return zero, stepErr
 	case saveErr != nil:
-		return "", saveErr
+		return zero, saveErr
 	}
-	return detail, nil
+	return out, nil
 }
 
 // Placement bounds shared by the composition steps: a BFT network needs at
@@ -64,9 +77,15 @@ const (
 	portBand      = 100
 )
 
-// StepOut is the common result of one mutating step: its recorded detail line.
+// StepOut is the common result of one mutating step: its recorded detail line,
+// and the state it ended in when the step knows one.
 type StepOut struct {
 	Detail string
+	// Reached is the lifecycle state this step ended in. It is zero for a step
+	// whose work has not moved into its handler yet, and the handler then
+	// reports what the request asked for instead of what the step did. A step
+	// that sets it has stopped being guessed at.
+	Reached lifecycle.Status
 }
 
 // NetKeysIn selects where node identities come from.
@@ -94,10 +113,10 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 	if source == "" && bp != nil {
 		source = "declared"
 	}
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	done, err := inWorkspace(d, in.DataDir, func(ws *Workspace) (KeysDone, error) {
 		return ws.Keys(ctx, KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
 	})
-	return StepOut{Detail: detail}, err
+	return StepOut{Detail: done.Detail, Reached: done.Source}, err
 }
 
 // NetAllocateIn sizes the network.
