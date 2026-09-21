@@ -331,3 +331,37 @@ poa 로 따라갔다.
 지적이었다 — poa 의존이 빠진 `preset` 은 `keyring` 하나만 import 하므로 **L1 이다.** 배치를 옮겼다.
 `TestNamesDoNotCollide` 는 `Key` 가 `nodeconfig` 와 겹친다고 했고, 실행 옵션의 **키 이름** 타입인
 쪽을 `nodeconfig.OptionKey` 로 올렸다(외부 참조 3건 대 110건).
+
+## 15. A·B (2026-09-21)
+
+### A — 스키마 검사가 중첩 객체로 내려간다
+
+`TestSchemaV2MatchesParsedFields` 는 `$defs.envSpec`·`caseSpec` 의 **최상위 속성만** 비교했다.
+그 아래 `upgrade` 블록이 통째로 낡은 것이 1번에서 드러났는데, **아무도 보지 않았기 때문**이다.
+
+`TestSchemaV2NestedObjectsMatchTheLeirTypes` 가 envSpec·caseSpec 아래 **properties 를 가진 객체를
+전부 걸어** 각각을 파싱하는 Go 타입과 대조한다. 짝짓기 자체도 래칫이다 — 새 중첩 객체는 짝을
+선언해야 통과하고, 없어진 객체의 짝이 남아 있어도 걸린다.
+
+**걸자마자 넷을 더 찾았다.** `genesis` 블록에 `ref`·`provides`·`haltsAt`·`perBinary` 가 없었다.
+`haltsAt` 은 실제 케이스(`unsupported-system-contract-version`)가 쓰는 필드다. 넷을 채우자
+`perBinary` 안의 중첩 객체가 또 짝을 요구했고(`GenesisSideV2`), 지금 **7개**가 검사된다.
+변이 셋으로 확인했다 — 필드 삭제 · 스키마에만 있는 필드 · 짝 없는 중첩 객체.
+
+### B — 죽은 명령을 부르는 e2e
+
+`cmd/chainbench/e2e_commands_exist_test.go` 가 이 패키지의 **모든 테스트가 조립하는 argv 를 AST 로
+읽어** 그 명령이 CLI 에 있는지 묻는다. 게이트 뒤 테스트도 파싱은 태그를 가리지 않으므로 함께 본다.
+
+만들면서 두 번 틀렸다. 처음엔 `SetArgs` 의 **인라인 리터럴만** 읽어 argv 를 변수에 담는 테스트
+하나를 놓쳤고, 넓혔더니 hex 표와 Solidity 시그니처 목록을 명령으로 읽었다. `SetArgs` 에 실제로
+넘어가는 변수만 따라가고 명령어 모양(`^[a-z][a-z0-9-]*$`, 24자 이하)으로 좁혀 **거짓양성 0**이 됐다.
+
+판정은 셋이 달랐다. `upgrade_run_e2e_test.go` 는 **지웠다** — 그 단언 셋(핸드오프 확인 · 자금이
+후계 체인에 남는지 · 포크 뒤 tx)을 DSL 케이스 `croissant-successors-take-over` 와
+`state-written-before-the-fork-survives-it` 이 그대로 한다. 나머지 둘은 **다른 곳이 덮지 않는
+것**을 시험하므로(go-wbft 가 go-wemix chaindata 로 init 되는지 · 거버넌스 NCP 생애주기)
+`invocationDebt` 에 **무엇이 걸려 있는지와 함께** 적었다. 그 목록은 줄기만 하고, 낡으면 걸린다.
+
+`chainbench upgrade run` 을 안내하던 기록 셋(`tests/repro/README.md`·`tests/e2e/README.md`·
+`wemix-chain.sh`)도 살아 있는 경로로 고쳤다.

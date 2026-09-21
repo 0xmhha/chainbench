@@ -89,6 +89,39 @@
             "overlay": {
               "type": "object",
               "description": "deep-merged into the built genesis"
+            },
+            "ref": {
+              "type": "string",
+              "description": "the finished genesis file for mode \"existing\": a portable reference resolved under the workspace-config genesis directory, a srv:// path, or a local absolute path. Required for \"existing\" and refused otherwise."
+            },
+            "provides": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "what this genesis makes the network ABLE to do, for cases that gate on it. Not the env's \"capabilities\", which says what a case REQUIRES — the two read alike and mean opposite things."
+            },
+            "haltsAt": {
+              "type": "integer",
+              "description": "the block this genesis makes the network stop one short of; omit for a genesis that keeps producing. The readiness gate waits for advance, so a chain meant to stop has to say so."
+            },
+            "perBinary": {
+              "type": "object",
+              "description": "per binary name (the keys \"binaries\" declares), what that side of a handoff puts in its own genesis",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "set": {
+                    "type": "object",
+                    "description": "dot-path single values for this binary's genesis"
+                  },
+                  "overlay": {
+                    "type": "object",
+                    "description": "deep-merged into this binary's genesis"
+                  }
+                }
+              }
             }
           }
         },

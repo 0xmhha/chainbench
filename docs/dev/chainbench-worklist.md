@@ -69,6 +69,14 @@
       P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
       **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
 
+- [ ] **죽은 명령을 부르는 e2e 둘** — 근거: `internal/arch` 가 아니라 `cmd/chainbench/e2e_commands_exist_test.go` 의 `invocationDebt` 가 센다.
+      `upgrade_data_migration_e2e_test.go`(go-wbft 가 go-wemix chaindata 로 init 되는지)와
+      `upgrade_gov_ncp_lifecycle_e2e_test.go`(핸드오프를 건너는 거버넌스 NCP 생애주기)가 아직
+      `chainbench upgrade run` 으로 망을 세운다 — **CLI 에 없는 명령이다.** `e2e` 태그 뒤에 있고
+      환경변수가 없으면 건너뛰어 아무도 실패를 보지 못했다. 둘 다 **다른 곳이 덮지 않는 것**을
+      시험하고, 그 명령의 **출력**(pid·node1 RPC·"handoff confirmed")을 읽으므로 `chainbench run`
+      으로 바꾸는 것은 치환이 아니라 발판 재작성이다. 검증에 체인 바이너리 둘이 필요하다.
+
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
 

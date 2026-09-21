@@ -16,7 +16,7 @@ prints exactly what it needs.
 The multi-chain support matrix maps to these scripts:
 
 1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
-2. **wemix→wbft hardfork** — migrated to Go: `TestUpgradeRunE2E` in `cmd/chainbench/` (croissant handoff + post-fork state/tx/contract)
+2. **wemix→wbft hardfork** — migrated to the DSL: `tests/tc/go-wemix/hardfork/` (croissant handoff, and state written before the fork surviving it). The Go e2e that held it, `TestUpgradeRunE2E`, is gone — it drove `chainbench upgrade run`, a command the CLI no longer has (croissant handoff + post-fork state/tx/contract)
 3. **wbft chain** — migrated to Go: `TestE2E_WbftChain` in `tests/e2e/` (fresh go-wbft from genesis)
 4. **stablenet chain** — migrated to Go: `TestE2E_StablenetChain` in `tests/e2e/`
 5. **stablenet hardfork** — migrated to Go: `TestE2E_StablenetHardforkSwap` in `tests/e2e/` (binary-swap in place)
