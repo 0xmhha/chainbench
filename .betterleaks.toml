@@ -51,8 +51,18 @@ paths = ['''^network/''', '''^docs/superpowers/plans/''', '''^keys/preset/''']
 # it finds 1,036 of them, which is enough to teach a reader to ignore the
 # scanner. That is the risk this entry removes.
 #
-# TEMPORARY. These snapshots come out of the repository once the refactoring
-# that reads them is done, and this entry goes with them. It is the only entry
-# here that covers code this project did not write.
-description = "vendored chain sources kept for analysis; removed when the refactoring closes"
+# The working tree no longer holds them: 8dbbd07e (2026-09-21) dropped the
+# vendored trees and what was generated from them, and 2026-09-21 dropped the
+# last analysis snapshot that carried a copy of this repository's own source.
+# What is left under docs/research/ is markdown and graph JSON, and it scans
+# clean on its own — measured by taking this entry out and scanning: 0 findings
+# in the tree.
+#
+# The entry stays anyway, because `betterleaks git .` reads HISTORY. The
+# vendored sources are still in every commit before 8dbbd07e, and the same
+# measurement with this entry removed reports 1036 of them. Removing it needs
+# the history rewritten, which is a decision for the team and not for a
+# scanner's config — so the exit condition is that, not "when the refactoring
+# closes", which is what this said and what made someone try.
+description = "vendored chain sources, still reachable through git history"
 paths = ['''^docs/research/''']
