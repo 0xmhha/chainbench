@@ -20,7 +20,7 @@ type FileReader func(path string) ([]byte, error)
 //
 // This is the raw path (design §3.2). Until now a composition could not start
 // without a keys directory — preset.LoadKeyPreset was the only way a Preset came
-// into being, so "keys is optional" was untrue no matter what the documents
+// into being, so "preset is optional" was untrue no matter what the documents
 // said. A blueprint that writes its own nodekeys now produces the same Preset
 // the rest of the composition already consumes, so nothing downstream has to
 // learn a second way to obtain keys.

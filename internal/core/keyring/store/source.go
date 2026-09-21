@@ -15,7 +15,7 @@ import (
 const (
 	defaultGeneratedPassword = "chainbench"
 	// defaultGeneratedBalance pre-funds each generated account in the genesis
-	// alloc. Generated identities are not in any shipped keys's alloc, so
+	// alloc. Generated identities are not in any shipped preset's alloc, so
 	// without this their first transaction cannot pay for gas.
 	defaultGeneratedBalance = "0x152D02C7E14AF6800000" // 100_000 ether
 )
@@ -44,17 +44,17 @@ type KeySource interface {
 // default: the same directory yields the same validator set, the same genesis
 // extra-data, and therefore the same chain across runs.
 type PresetKeys struct {
-	// Path is the keys directory (metadata.json + node<i>/ + password).
+	// Path is the preset directory (metadata.json + node<i>/ + password).
 	Path string
 }
 
-// Dir is the keys directory.
+// Dir is the preset directory.
 func (s PresetKeys) Dir() string { return s.Path }
 
 // Describe names the source.
 func (s PresetKeys) Describe() string { return "keys:" + s.Path }
 
-// Ensure loads the keys and checks it covers n nodes.
+// Ensure loads the preset and checks it covers n nodes.
 //
 // With keys: this is the KEY source a composition draws from, and what it hands
 // back is registered into a ring that writes each identity's key file. It reads

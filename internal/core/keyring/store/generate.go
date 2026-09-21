@@ -82,7 +82,7 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 		return preset.Key{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", opts.Out)
 	}
 	// A ring generated without saying otherwise is a network's validator set,
-	// which is what every existing keys is.
+	// which is what every existing preset is.
 	want := opts.Nodes
 	if opts.Validators != nil {
 		want = *opts.Validators

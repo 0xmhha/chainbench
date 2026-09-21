@@ -20,7 +20,7 @@ type CommandRunner func(ctx context.Context, name string, args ...string) ([]byt
 
 // Source produces a network's genesis bytes for a chain plugin, sized to
 // the active validator count. It is a boundary so BuildEnv does not depend on where
-// the validator set and RLP extra-data come from: a baked keys today, and a
+// the validator set and RLP extra-data come from: a baked preset today, and a
 // live key deriver (once a Go extra-data encoder exists) later.
 type Source interface {
 	// Genesis builds the genesis artifacts for plugin from the network being
@@ -62,14 +62,14 @@ type Artifacts struct {
 	Extra map[string][]byte
 }
 
-// PresetSource builds genesis from a baked keys key set. The keys is
+// PresetSource builds genesis from a baked preset key set. The preset is
 // the only source of a wbft-family network's RLP extra-data: the consensus
 // family substitutes the extra-data into its template but does not compute it,
 // so a freshly generated random key set cannot seed a valid wbft genesis on its
 // own. Node identity/account keys (nodekey, unlock) come from the key registry;
 // the validator set and its extra-data come from here.
 type PresetSource struct {
-	// KeysDir holds the keys metadata.json (validator addresses, BLS public
+	// KeysDir holds the preset metadata.json (validator addresses, BLS public
 	// keys, and RLP extra-data).
 	KeysDir string
 	// ChainID, when non-zero, overrides the manifest chain id in the built
@@ -77,9 +77,9 @@ type PresetSource struct {
 	ChainID int64
 }
 
-// Genesis loads the keys, takes the first `validators` entries, and delegates
+// Genesis loads the preset, takes the first `validators` entries, and delegates
 // to the chain's consensus family to build the genesis, applying any launch
-// config overrides and overlay. ctx is accepted for future remote keys
+// config overrides and overlay. ctx is accepted for future remote preset
 // sources; the local metadata read does not use it.
 func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, req Request) (Artifacts, error) {
 	keys, err := preset.LoadKeyPreset(s.KeysDir)
@@ -106,7 +106,7 @@ func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, re
 	return Artifacts{Genesis: gen}, nil
 }
 
-// presetNetwork resolves the validator set for a keys genesis.
+// presetNetwork resolves the validator set for a preset genesis.
 //
 // When a placement is present, the validators are the producers the topology
 // actually named — the nodes whose role is a producer, taken by index in
@@ -201,7 +201,7 @@ type SourceProvider interface {
 }
 
 // SourceFor returns the source a chain's family builds its genesis with: the
-// family's own when it provides one, else the keys template substitution.
+// family's own when it provides one, else the preset template substitution.
 func SourceFor(plugin registry.ChainPlugin, cfg Config) Source {
 	if p, ok := plugin.Family().(SourceProvider); ok {
 		return p.GenesisSource(cfg)

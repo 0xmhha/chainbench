@@ -80,19 +80,16 @@ a plaintext private key, public-equivalent, never to be funded anywhere real.
 
 ## How chainbench consumes these
 
-This directory is the built-in default, not a special case: the config defaults
-in `internal/core/config` are `keys.mode: static` and `keys.source: keys/preset`,
-and a profile under `profiles/` overrides them.
+This directory is the built-in default, not a special case. The default lives in
+one place — `defaultKeysDir` in `internal/testengine/compose.go` — and a chain
+declaration overrides it by naming another directory:
 
-```yaml
-keys:
-  mode: static
-  source: "keys/preset"
+```json
+"keys": { "nodekeys": { "source": "keyPreset", "ref": "presets/keys" } }
 ```
 
-The `keys` step of a network resolves that source
-(`chainbench net keys --keys-source preset`, or `chainbench net up`, which runs
-the steps in order). Genesis is built from
+The `keys` step of a composition resolves that source (`chainbench chain keys`,
+or `chainbench chain up`, which runs the steps in order). Genesis is built from
 `metadata.json`, and the launcher ships each node's identity — `password`,
 `keystore/`, `nodekey` — into that run's data directory before starting the node,
 locally or over the file seam for a remote node.

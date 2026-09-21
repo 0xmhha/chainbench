@@ -31,7 +31,7 @@ func bareRing(t *testing.T, nodes int) preset.Key {
 }
 
 // TestNetworkFor_BareRingIsIdentitiesOnly pins the bare-ring contract: a ring can hold
-// identities and say nothing about a network, so a keys is a choice rather
+// identities and say nothing about a network, so a preset is a choice rather
 // than a premise.
 func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 	set := bareRing(t, 4)
@@ -75,7 +75,7 @@ func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 	}
 }
 
-// TestNetworkFor_DeclaredSetWins keeps an existing keys's answer: a file that
+// TestNetworkFor_DeclaredSetWins keeps an existing preset's answer: a file that
 // says who validates is not second-guessed.
 func TestNetworkFor_DeclaredSetWins(t *testing.T) {
 	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "presets", "keys"))

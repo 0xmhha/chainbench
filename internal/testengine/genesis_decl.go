@@ -67,10 +67,10 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, p
 	return path, nil
 }
 
-// forkOf reads the fork a declaration schedules, taking from the keys what the
+// forkOf reads the fork a declaration schedules, taking from the preset what the
 // case did not say.
 //
-// The keys decides the fork and the block; a case may repeat them and is held
+// The preset decides the fork and the block; a case may repeat them and is held
 // to the repetition (see checkDeclaredFork). Here the two are folded into the
 // one instruction the genesis step acts on, along with which file the case
 // wants the fork carried in — empty meaning the genesis, which is the step's
@@ -80,8 +80,8 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	if u.At != nil {
 		at = *u.At
 	}
-	// The keys is read only for what the case left out. A declaration that
-	// says both says everything, and a restart has no keys to read at all.
+	// The preset is read only for what the case left out. A declaration that
+	// says both says everything, and a restart has no preset to read at all.
 	if u.Fork == "" || u.At == nil {
 		prof, err := preset.LoadChainPreset(upgradePresetPath(u))
 		if err != nil {
@@ -108,10 +108,10 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	}, nil
 }
 
-// hardforkPresetDir is where a named hardfork keys lives.
+// hardforkPresetDir is where a named hardfork preset lives.
 const hardforkPresetDir = "presets/chain"
 
-// upgradePresetPath is the keys file this declaration names, under
+// upgradePresetPath is the preset file this declaration names, under
 // presets/chain.
 func upgradePresetPath(u *dsl.UpgradeV2) string {
 	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
@@ -119,14 +119,14 @@ func upgradePresetPath(u *dsl.UpgradeV2) string {
 
 // checkDeclaredFork holds a case to what it said about the fork.
 //
-// The keys decides which fork and which block; a case may repeat them, and a
+// The preset decides which fork and which block; a case may repeat them, and a
 // repetition that disagrees is the case testing something other than what it
-// claims. Saying nothing is fine — the keys answers.
+// claims. Saying nothing is fine — the preset answers.
 func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Fork == "" && u.At == nil {
 		return nil
 	}
-	// A restart names no keys, so there is nothing to hold it to.
+	// A restart names no preset, so there is nothing to hold it to.
 	if u.Style == dsl.UpgradeRestart {
 		return nil
 	}
@@ -137,17 +137,17 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
 		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)
 	}
-	// The block is NOT held to the keys, and the fork's name is.
+	// The block is NOT held to the preset, and the fork's name is.
 	//
 	// They are different kinds of fact. The name says which change is under
 	// test, and a case wrong about that reports a pass for a fork it never
 	// exercised — the worst failure there is. The block is a schedule this run
 	// chooses: how far in it puts the fork. A case that has to act while the
 	// pre-fork build is still sealing needs the fork far enough out to get the
-	// work done, and the keys's height is the handoff environment's, not
+	// work done, and the preset's height is the handoff environment's, not
 	// every case's.
 	//
-	// Measured: with the keys's block 20 the chain reaches the fork and stops
+	// Measured: with the preset's block 20 the chain reaches the fork and stops
 	// during bring-up, so a case sending a transaction beforehand submits it to
 	// a network that seals nothing and waits out its receipt.
 	return nil

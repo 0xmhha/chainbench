@@ -129,7 +129,7 @@ type (
 	// ValidatorSetOut is a key set's validator declaration as a network reads
 	// it.
 	ValidatorSetOut = validatorset.Roster
-	// GenerateSetIn shapes generating a keys key set.
+	// GenerateSetIn shapes generating a preset key set.
 	GenerateSetIn = store.GenerateOpts
 	// GenerateSetOut describes what was generated.
 	GenerateSetOut = preset.Key
@@ -179,7 +179,7 @@ func ValidatorSetOf(_ Deps, chain, keysDir string) (ValidatorSetOut, error) {
 	return validatorset.Load(chain, keysDir)
 }
 
-// GenerateSet creates a keys key set, reporting each identity as it is made.
+// GenerateSet creates a preset key set, reporting each identity as it is made.
 func GenerateSet(_ Deps, in GenerateSetIn, report func(string)) (GenerateSetOut, error) {
 	return store.Generate(in, report)
 }

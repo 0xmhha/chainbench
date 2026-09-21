@@ -20,7 +20,7 @@ import (
 
 // The keys step: the key set a composition runs on.
 //
-// It resolves what the declaration asked for — a keys used as-is, or a set
+// It resolves what the declaration asked for — a preset used as-is, or a set
 // generated here — and checks the node table's key references before anything
 // is written, because a reference that only fails at launch has already cost a
 // provisioning round trip.
@@ -38,7 +38,7 @@ type KeysOpts struct {
 	Source string
 	// Blueprint is the declaration the keys come from when Source is
 	// "declared". Its nodes carry their own nodekeys, which is what lets a
-	// network be composed with no keys directory anywhere (N3).
+	// network be composed with no preset directory anywhere (N3).
 	Blueprint *blueprint.Blueprint
 	// Nodes is how many identities the set must cover; <=0 uses the node table
 	// length, falling back to the validator count.

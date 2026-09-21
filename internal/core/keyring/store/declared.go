@@ -15,7 +15,7 @@ import (
 // DeclaredKeys writes down a key set the caller already holds.
 //
 // It is the third source alongside PresetKeys and GeneratedKeys, and it is what
-// makes a keys optional rather than merely described as optional. A network
+// makes a preset optional rather than merely described as optional. A network
 // declaration that carries its own nodekeys derives them into a preset.Key
 // (blueprint.PresetFrom) and hands it here; the composition then reads keys the
 // one way it already does, so nothing downstream learns that a second origin

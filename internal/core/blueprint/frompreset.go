@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/preset"
 )
 
-// FromPresetIn describes the network a keys should be written out as.
+// FromPresetIn describes the network a preset should be written out as.
 type FromPresetIn struct {
 	// Dir is the key set directory the document will point its nodekeys at.
 	Dir string
@@ -29,8 +29,8 @@ type FromPresetIn struct {
 // FromPreset writes the network a key set would compose, as a document.
 //
 // This is the inversion the whole track is for (design §3.3). The composition
-// used to read `keys -> (internal assembly) -> network`, and the middle was
-// neither visible nor editable. It now reads `keys -> blueprint -> network`,
+// used to read `preset -> (internal assembly) -> network`, and the middle was
+// neither visible nor editable. It now reads `preset -> blueprint -> network`,
 // where the blueprint is a file a person can open, diff, edit and commit.
 //
 // The keys are referenced by path, never copied into the document. A blueprint
@@ -39,7 +39,7 @@ type FromPresetIn struct {
 // turn a convenience into a leak.
 //
 // It is deliberately the reverse of the raw path rather than a shortcut past
-// it: what this writes must resolve to the identities the keys holds, which
+// it: what this writes must resolve to the identities the preset holds, which
 // is what TestFromPreset_ComposesTheSameNetwork holds it to.
 func FromPreset(set preset.Key, in FromPresetIn) (Blueprint, error) {
 	if in.Dir == "" {
@@ -91,7 +91,7 @@ func FromPreset(set preset.Key, in FromPresetIn) (Blueprint, error) {
 	return bp, nil
 }
 
-// entryDir names the directory an entry's key lives in. A keys labels its
+// entryDir names the directory an entry's key lives in. A preset labels its
 // entries by index, and a ring built by a command may label its own.
 func entryDir(e keyring.Entry, i int) string {
 	if e.Label != "" {
