@@ -265,3 +265,45 @@ func must(t *testing.T, start, target Status) *Machine {
 	}
 	return m
 }
+
+// TestAreasAreFarApart holds the one number the whole vocabulary rests on.
+//
+// Every state's value is its area plus its block plus its slot, and nothing
+// checks that arithmetic at compile time. Areas 0x1000 apart give each of them
+// sixteen blocks of 0x100, so an area that grew past sixteen stages would start
+// writing states that belong to the next one — and the collision would show up
+// as a handler running for a stage it does not own, which is a bug that reads
+// like a logic error rather than like a numbering one.
+//
+// The operational and test areas have no states yet. They are checked here
+// because the spacing is the reason their bases were chosen now rather than
+// when their first state is written.
+func TestAreasAreFarApart(t *testing.T) {
+	areas := map[string]Status{
+		"chain": areaChain, "adopt": areaAdopt,
+		"operational": areaChainOp, "test": areaTest,
+	}
+	const gap = 0x1000
+	for an, a := range areas {
+		if a%gap != 0 {
+			t.Errorf("the %s area is %#x, which is not on a %#x boundary", an, uint32(a), gap)
+		}
+		for bn, b := range areas {
+			if an >= bn {
+				continue
+			}
+			if a == b {
+				t.Errorf("the %s and %s areas are both %#x", an, bn, uint32(a))
+			}
+		}
+	}
+	// The common failures sit below every area so that adding an area cannot
+	// walk over them.
+	if areaCommon >= areaChain {
+		t.Errorf("the common block is %#x, at or above the first area %#x", uint32(areaCommon), uint32(areaChain))
+	}
+	// Sixteen blocks per area, and the composition uses eleven of them.
+	if blocks := (areaAdopt - areaChain) / blockSize; blocks != 0x10 {
+		t.Errorf("an area holds %d blocks, want 16", blocks)
+	}
+}

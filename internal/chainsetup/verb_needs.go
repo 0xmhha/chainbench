@@ -199,6 +199,10 @@ func (w *Workspace) allowNode(verb string, index int) error {
 func checkNode(verb string, needs []nodeNeed, ns node.Record) error {
 	for _, need := range needs {
 		switch need {
+		case anyNode:
+			// The zero value asks nothing. It is named and handled so that a
+			// declaration that leaves a slot empty is a no-op on purpose rather
+			// than a condition that fell through the switch.
 		case launched:
 			if len(ns.Args) == 0 {
 				return fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index)

@@ -1,9 +1,6 @@
 package preset
 
 import (
-	"math/big"
-	"strings"
-
 	"fmt"
 	"os"
 
@@ -131,13 +128,4 @@ func LoadChainPreset(path string) (Chain, error) {
 		return Chain{}, fmt.Errorf("preset: parse chain preset %s: %w", path, err)
 	}
 	return p, nil
-}
-
-// dec parses a decimal wei string; empty or malformed is zero.
-func dec(s string) *big.Int {
-	n, ok := new(big.Int).SetString(strings.TrimSpace(s), 10)
-	if !ok {
-		return big.NewInt(0)
-	}
-	return n
 }
