@@ -128,7 +128,8 @@ func TestPackageTreeBodyIsMeasured(t *testing.T) {
 		}
 		seen[l.pkg] = true
 		if got != l.claimed {
-			t.Errorf("%s:%d: %s holds %d non-test lines, the tree says %d", treeDoc, l.line, l.pkg, got, l.claimed)
+			t.Errorf("%s:%d: %s holds %d non-test lines, the tree says %d\n"+
+				"Refresh every figure with: python3 scripts/refresh-package-tree.py", treeDoc, l.line, l.pkg, got, l.claimed)
 		}
 	}
 	// The other direction: a tree that quietly drops a package reads as complete.
