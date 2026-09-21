@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -339,6 +340,39 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	}
 
 	steps := upSteps(ctx, d, in)
+	run := func(name string) error { return record(name, steps[name]) }
+
+	// A fresh composition is walked by its state. What used to decide how far to
+	// go is the machine's target, and what used to decide which step comes next
+	// is the transition table, so neither is a comparison inside the walk.
+	//
+	// Reconciling against a running network is still walked by the list below.
+	// Its decision belongs in the adopt states, and putting it there is a change
+	// to where a run STARTS rather than to what the composition does — so it
+	// comes with the attach paths, not with this.
+	if !reuseMode {
+		start, err := startFor(from)
+		if err != nil {
+			return out, err
+		}
+		target, err := targetFor(stage)
+		if err != nil {
+			return out, err
+		}
+		m, err := lifecycle.New(start, target, upHandlers(in, run))
+		if err != nil {
+			return out, err
+		}
+		if err := m.Run(ctx); err != nil {
+			return out, err
+		}
+		nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
+		if err != nil {
+			return out, err
+		}
+		out.Nodes = nodes
+		return out, nil
+	}
 
 	started := from == ""
 	for _, name := range upStepNames {
@@ -351,14 +385,14 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		if stage == UpDeploy && (name == "init" || name == "start") {
 			break
 		}
-		if err := record(name, steps[name]); err != nil {
+		if err := run(name); err != nil {
 			return out, err
 		}
 		// Reconcile against the running network as soon as the keys exist and
 		// before the genesis step, which is the first step that writes to the
 		// target. Judging later meant a refusal that had already overwritten the
 		// running network's genesis and configs.
-		if reuseMode && name == "keys" {
+		if name == "keys" {
 			gopts, gerr := genesisOpts(NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,

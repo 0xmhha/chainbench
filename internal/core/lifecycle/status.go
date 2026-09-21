@@ -320,4 +320,14 @@ const (
 	// wrote, and passing it silently is how a composition comes to skip work
 	// it was asked for.
 	FailNoHandler
+	// FailStageUnclassified: a stage failed and its reason is in the error
+	// rather than in a state.
+	//
+	// It is a debt, not a design. Every stage has failure states of its own,
+	// and a handler reaches for this one only while the work it drives still
+	// returns a string nobody can branch on. A handler that uses it says which
+	// stage it stands for, and the list of handlers still doing so only
+	// shrinks — when a stage's work moves into its handler, its failures move
+	// with it and this stops being reachable from there.
+	FailStageUnclassified
 )

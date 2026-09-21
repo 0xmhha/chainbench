@@ -74,6 +74,7 @@ var names = map[Status]string{
 	FailWorkspaceConfig:                   "FailWorkspaceConfig",
 	FailLoop:                              "FailLoop",
 	FailNoHandler:                         "FailNoHandler",
+	FailStageUnclassified:                 "FailStageUnclassified",
 }
 
 // allowed is every move this machine permits, and it is the whole rule.
@@ -131,7 +132,13 @@ var allowed = map[Status][]Status{
 
 	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption},
 
-	ChainDeployNodes: {ChainDeployNodesVerifiedLocal, ChainDeployNodesShippedRemote,
+	// The two detail states say what the target was, not which way the walk
+	// went, so a deploy that cannot say which it did still moves on. The stage
+	// cannot say yet: whether anything was shipped is counted inside
+	// Workspace.Provision and does not come back out, and a handler that
+	// guessed from the request would call a local server set remote.
+	ChainDeployNodes: {ChainInitNodes,
+		ChainDeployNodesVerifiedLocal, ChainDeployNodesShippedRemote,
 		ChainDeployNodesFailInputMissing, ChainDeployNodesFailInputForeign},
 	ChainDeployNodesVerifiedLocal: {ChainInitNodes},
 	ChainDeployNodesShippedRemote: {ChainInitNodes},
