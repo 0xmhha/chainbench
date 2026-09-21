@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // NodeConfig assembles one node's configuration from the chain, the key set,
 // and the node's spec: the one place a nodeconfig.Spec is built from a plan.
 // The step surface builds the same Spec from a workspace record through here,
 // so a step-composed node launches with exactly the argv and config it renders.
-func NodeConfig(plugin registry.ChainPlugin, preset keyring.KeyPreset, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
+func NodeConfig(plugin registry.ChainPlugin, keys preset.Key, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
 	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 	cfg := nodeconfig.Spec{
 		Chain:       nodeconfig.ChainOf(plugin, spec.Role),
@@ -28,7 +28,7 @@ func NodeConfig(plugin registry.ChainPlugin, preset keyring.KeyPreset, spec Node
 		StaticNodes: staticNodes,
 	}
 	if node.Is(spec.Role, node.RoleBP) {
-		if nk, ok := preset.Node(spec.Index); ok {
+		if nk, ok := keys.Node(spec.Index); ok {
 			// The account it seals with, which is its keystore's when the ring
 			// says those differ. Unlocking the address its nodekey derives sent
 			// a producer to "no key for given address or file" on a ring whose

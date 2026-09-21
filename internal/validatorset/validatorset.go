@@ -11,8 +11,8 @@ package validatorset
 import (
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // What an account does in a chain. Spelled Account rather than Role because a
@@ -49,7 +49,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 	if keysDir == "" {
 		keysDir = "presets/keys"
 	}
-	preset, err := store.LoadPreset(keysDir)
+	preset, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
 		return Roster{}, err
 	}

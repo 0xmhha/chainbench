@@ -10,13 +10,14 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // TestLoadPreset_ShippedFixture checks the reader against the file three chains
 // actually consume, including the fields that used to need a second type to
 // hold them.
 func TestLoadPreset_ShippedFixture(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
+	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -59,7 +60,7 @@ func TestGenerate_RoundTrips(t *testing.T) {
 		t.Fatalf("Generate: %v", err)
 	}
 
-	read, err := store.LoadPreset(dir)
+	read, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -113,7 +114,7 @@ func TestImportRing_ClonesDeclarationAndRefusesTamper(t *testing.T) {
 	if len(got.Nodes) != 3 || len(got.Network.Validators) != 2 {
 		t.Fatalf("clone lost shape: %d nodes, %d validators", len(got.Nodes), len(got.Network.Validators))
 	}
-	back, err := store.LoadPreset(dstDir)
+	back, err := preset.LoadKeyPreset(dstDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +160,7 @@ func TestExtend_PromotingIntoABLSSetKeepsItLoadable(t *testing.T) {
 		t.Fatalf("extend: %v", err)
 	}
 
-	set, err := store.LoadPreset(dir)
+	set, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		t.Fatalf("the set no longer loads after add: %v", err)
 	}
@@ -187,7 +188,7 @@ func TestExtend_PlainSetStaysPlain(t *testing.T) {
 	}, nil); err != nil {
 		t.Fatalf("extend: %v", err)
 	}
-	set, err := store.LoadPreset(dir)
+	set, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // Enode listing is stage ③ of the composition dictionary: a queryable output
@@ -56,7 +56,7 @@ func NetEnodes(_ context.Context, d Deps, in NetEnodesIn) (NetEnodesOut, error) 
 	if st.KeysDir == "" {
 		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: no key set — run `chain keys` first")
 	}
-	preset, err := store.LoadPreset(st.KeysDir)
+	preset, err := preset.LoadKeyPreset(st.KeysDir)
 	if err != nil {
 		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: keys: %w", err)
 	}

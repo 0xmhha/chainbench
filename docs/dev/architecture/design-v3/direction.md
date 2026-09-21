@@ -290,3 +290,44 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 "`preset` 이 여러 뜻이니 키 쪽이 비켜 주자" 는 내 논리에서 나왔는데, 갈래가 **체인/키 둘**이면
 `presets/keys` 은 이미 정확한 이름이다. 비용도 반대를 가리킨다 — 경로 문자열 157곳, env 파일
 21개가 그것을 참조한다.
+
+## 14. preset 을 한 갈래·한 모듈로 (2026-09-21)
+
+검토에서 나온 방향을 그대로 반영했다. **preset 은 두 갈래(체인·키)이고, 정의는 한 모듈에 모으고,
+쓰는 모듈은 정의하지 않고 쓰기만 한다.**
+
+### 디스크
+
+`keys/preset/` 과 `presets/hardfork/` 가 같은 갈래를 두 자리에서, 한쪽은 **종류(hardfork)로**
+부르고 있었다. `presets/keys/` · `presets/chain/` 으로 모았다. 경로를 들고 있던 파일이 119개였고,
+그중 21개는 체인 선언이 키 세트를 경로로 참조하는 자리다. `filepath.Join` 으로 조립한 것은 문자열
+치환이 못 잡아 세그먼트를 따로 옮겼다.
+
+### 코드
+
+| 갈래 | 문서 | 타입 | 읽는 함수 |
+|---|---|---|---|
+| 체인 | `presets/chain/*.yaml` | `preset.Chain` | `preset.LoadChainPreset` |
+| 키 | `presets/keys/` | `preset.Key` | `preset.LoadKeyPreset` |
+
+`internal/preset` 이 두 타입과 두 로더, 그리고 키 preset 의 **디스크 형식**(`KeyFile`·`KeyNode`·
+`KeyIndexFile`·`NodeLabel`)을 갖는다. `keyring` 은 키 **모델**(`Entry`·`Network`·`Label`·`Source`)만
+남기고 preset 을 정의하지 않는다. `keyring/store` 는 키를 **만들고 가져오는 일**(Generate·Extend·
+Import)만 남았다 — 1,503 → 1,164줄.
+
+### 순환이 두 번 방향을 가르쳐 줬다
+
+**`preset` → `poa`.** `Chain.GovernanceEnv() poa.Env` 가 문서를 소비자에게 묶고 있었다. 어댑터를
+`poa.EnvFromPreset` 으로 옮겼다 — **문서가 독자를 알아야 하면 그것은 문서가 아니다.** 그 테스트도
+poa 로 따라갔다.
+
+**`preset` → `store`.** 키 로더가 `store` 에 있었는데 `store` 는 `preset.Key` 를 반환해야 했다.
+로더를 preset 으로 옮기니 풀렸다. 옮기면서 드러난 것: 로더 파일이 `store` 의 쓰기 쪽과 **형식
+타입을 공유**하고 있었고, 그 형식은 preset 문서의 일부지 저장소의 것이 아니다.
+
+### 래칫이 배치까지 고쳐 줬다
+
+`preset` 을 옮기자 `TestNoUpwardDependency` 가 **L1 다섯이 L2 를 import 한다**고 말했다. 옳은
+지적이었다 — poa 의존이 빠진 `preset` 은 `keyring` 하나만 import 하므로 **L1 이다.** 배치를 옮겼다.
+`TestNamesDoNotCollide` 는 `Key` 가 `nodeconfig` 와 겹친다고 했고, 실행 옵션의 **키 이름** 타입인
+쪽을 `nodeconfig.OptionKey` 로 올렸다(외부 참조 3건 대 110건).

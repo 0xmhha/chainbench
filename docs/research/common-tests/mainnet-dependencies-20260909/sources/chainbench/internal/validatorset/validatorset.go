@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -51,7 +52,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 	if keysDir == "" {
 		keysDir = "keys/preset"
 	}
-	preset, err := store.LoadPreset(keysDir)
+	preset, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
 		return Roster{}, err
 	}

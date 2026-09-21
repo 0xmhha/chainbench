@@ -17,6 +17,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -117,7 +118,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	keys, err := preset.LoadKeyPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start: %w", err)
 	}
@@ -140,7 +141,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	started := 0
 	for _, phase := range phases {
-		launched, err := w.startPhase(ctx, p, preset, bin, phase)
+		launched, err := w.startPhase(ctx, p, keys, bin, phase)
 		if err != nil {
 			return "", err
 		}
@@ -413,7 +414,7 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 	if err != nil {
 		return err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return err
 	}
@@ -422,7 +423,7 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 		w.state.ConfigSet = map[string][]string{}
 	}
 	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], config...)
-	prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
+	prov, err := w.writeNodeConfig(ctx, p, keys, placed, peering, pubkey, w.state.Nodes[ni], purpose)
 	if err != nil {
 		return err
 	}
@@ -761,7 +762,7 @@ type owner struct {
 	pid  int
 }
 
-func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, keys preset.Key, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}
@@ -785,7 +786,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d peers: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
+			args, err := nodeconfig.Argv(process.NodeConfig(p, keys, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}

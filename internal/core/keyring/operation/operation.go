@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -275,7 +276,7 @@ func (f passwordFunc) Password() (string, error) { return f() }
 
 // openSet resolves and loads a key set, naming the source in the error so that a
 // missing default key set is not a mystery.
-func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set keyring.KeyPreset, err error) {
+func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set preset.Key, err error) {
 	return openSetWithKeys(ctx, ref, d, false)
 }
 
@@ -288,26 +289,26 @@ func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set k
 // carries no private key any more, so the identity read moves none; asking for
 // keys reads node<N>/nodekey per entry, which is N round trips on a remote ring
 // and is the reason the two callers that need them are the only ones that ask.
-func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, source string, set keyring.KeyPreset, err error) {
+func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, source string, set preset.Key, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
-		return displaySet(ref, dir), source, keyring.KeyPreset{}, err
+		return displaySet(ref, dir), source, preset.Key{}, err
 	}
 	if withKeys {
-		set, err = store.LoadPresetWithKeysAt(ctx, files, dir)
+		set, err = preset.LoadKeyPresetWithKeysAt(ctx, files, dir)
 	} else {
-		set, err = store.LoadPresetAt(ctx, files, dir)
+		set, err = preset.LoadKeyPresetAt(ctx, files, dir)
 	}
 	dir = displaySet(ref, dir)
 	if err != nil {
-		return dir, source, keyring.KeyPreset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
+		return dir, source, preset.Key{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
 	}
 	return dir, source, set, nil
 }
 
 // findEntry looks up an identity by label, listing what the key set holds when the
 // name is not one of them.
-func findEntry(set keyring.KeyPreset, label string) (keyring.Entry, error) {
+func findEntry(set preset.Key, label string) (keyring.Entry, error) {
 	for _, e := range set.Nodes {
 		if string(e.Label) == label {
 			return e, nil
@@ -321,7 +322,7 @@ func findEntry(set keyring.KeyPreset, label string) (keyring.Entry, error) {
 }
 
 // validatorSet indexes the key set's declared validators by lowercase address.
-func validatorSet(set keyring.KeyPreset) map[string]bool {
+func validatorSet(set preset.Key) map[string]bool {
 	out := make(map[string]bool, len(set.Network.Validators))
 	for _, a := range set.Network.Validators {
 		out[lower(a)] = true
@@ -330,7 +331,7 @@ func validatorSet(set keyring.KeyPreset) map[string]bool {
 }
 
 // setOut renders a whole key set.
-func setOut(dir, source string, set keyring.KeyPreset) SetOut {
+func setOut(dir, source string, set preset.Key) SetOut {
 	vals := validatorSet(set)
 	out := SetOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
 	for _, e := range set.Nodes {

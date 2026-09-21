@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 48 | 51,769 |
+| `internal/` | 48 | 51,809 |
 | `cmd/` | 19 | 5,068 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **70** | **57,627** |
+| **합계** | **70** | **57,667** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 22패키지 16,108줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 22패키지 15,636줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -55,12 +55,12 @@ internal/core/
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
-├── blueprint    1,248  [L1] 네트워크 선언 1문서 — 파싱·왕복·문서 내부 검증. 미지 필드 거부. 해석하지 않는다
+├── blueprint    1,250  [L1] 네트워크 선언 1문서 — 파싱·왕복·문서 내부 검증. 미지 필드 거부. 해석하지 않는다
 │                            (빠진 값 채우기는 한 층 위 Resolve 몫)
-├── keyring        532  [L1] 키 모델 — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력
+├── keyring        391  [L1] 키 모델 — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력
 │   ├── derive     345  [L1] 키 파생 — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process 순수 계산)
-│   ├── store    1,499  [L1] 키셋 저장·읽기 — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드 · 키 출처(KeySource)
-│   └── operation  681  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
+│   ├── store    1,164  [L1] 키셋 저장·읽기 — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드 · 키 출처(KeySource)
+│   └── operation  683  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
 │                            서버 접근은 자기가 선언한 Opener 로 주입받는다
 ├── registry     1,093  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
 │                            capability 카탈로그·핸들러(LoadCatalog·RegisterHandler·GetByAddress)·검증자 조회(Validators)
@@ -84,12 +84,12 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 3,776줄
+## 2. 체인·합의 정의 — 11패키지 3,814줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
 ├── wbft            579  wbft genesis(extraData RLP) · start flags. stablenet 과 wbft 체인이 공유
-└── poa           1,525  wemix config · genesis 생성 · 거버넌스/etcd 부트스트랩 프리미티브와 그 실행자
+└── poa           1,563  wemix config · genesis 생성 · 거버넌스/etcd 부트스트랩 프리미티브와 그 실행자
 │                        (Bootstrap: 패밀리가 선언한 액션을 한 타깃에서 / Info·WaitEtcdCluster: 클러스터가 실제로 섰는지)
 
 internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안다
@@ -110,13 +110,12 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 15패키지 31,885줄
+## 3. 자원 · 테스트 · 표면 — 15패키지 32,359줄
 
 ```
-internal/chainpreset  164  [L2a] 체인 preset 1문서 — 골든 핸드오프 선언을 읽는다(Preset·Load).
-                          어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지,
-                          거버넌스 정책·검증자·포트 계획. preset 의 두 갈래 중 체인 쪽
-                          (키 쪽은 presets/keys + keyring.KeyPreset)
+internal/preset    636  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
+                          키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
+                          정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
 internal/resource  3,094  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
@@ -136,7 +135,7 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,384 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,385 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
@@ -153,7 +152,7 @@ internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app       2,604  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app       2,605  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions

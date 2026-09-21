@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
@@ -110,7 +111,7 @@ func TestCorpus_AddressesResolveToWhatTheyDidBefore(t *testing.T) {
 // against. It needs no network.
 func presetRing(t *testing.T) *store.KeySet {
 	t.Helper()
-	set, err := store.LoadPresetWithKeys(presetKeysDir)
+	set, err := preset.LoadKeyPresetWithKeys(presetKeysDir)
 	if err != nil {
 		t.Fatalf("load %s: %v", presetKeysDir, err)
 	}

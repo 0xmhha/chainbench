@@ -14,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -217,7 +218,7 @@ func ringFor(dir string) (*store.KeySet, error) {
 	if dir == "" {
 		return nil, nil
 	}
-	set, err := store.LoadPreset(dir)
+	set, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		// A key set that is not there is not an error here. Attaching to a
 		// network somebody else composed is the ordinary case, and the compose

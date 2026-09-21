@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -48,14 +49,14 @@ const (
 const handoffBalance = "1000000000000000000000000000"
 
 // HandoffInputs is what a live gwemix -> gwbft handoff needs from outside:
-// the golden profile, the key preset, the two binaries, go-wemix's own genesis
+// the golden profile, the key keys, the two binaries, go-wemix's own genesis
 // template, and where the network's files go. The seams (Exec, Files, Driver,
 // Peers) are how a caller runs the same sequence against a fake or a remote
 // target; nil takes the local default.
 type HandoffInputs struct {
 	// ProfilePath is the golden upgrade profile (profiles/*.yaml).
 	ProfilePath string
-	// PresetDir holds the key preset the nodes' identities come from.
+	// PresetDir holds the key keys the nodes' identities come from.
 	PresetDir string
 	// FromBinary produces blocks up to the fork; ToBinary takes over after it.
 	FromBinary, ToBinary string
@@ -72,7 +73,7 @@ type HandoffInputs struct {
 	// Exec runs a binary; nil uses os/exec.
 	Exec poa.Runner
 	// Files is where this run's artifacts are written; nil is the local
-	// filesystem. The preset is always read from this machine — it is the
+	// filesystem. The keys is always read from this machine — it is the
 	// operator's — while what the nodes need lands through Files, which is what
 	// lets the same sequence place a keystore on a remote node.
 	Files filestore.Store
@@ -125,7 +126,7 @@ type Handoff struct {
 	// Profile is the loaded golden profile.
 	Profile Profile
 	// Preset is the loaded key preset.
-	Preset keyring.KeyPreset
+	Preset preset.Key
 	// From and To are the two chains.
 	From, To registry.ChainPlugin
 	// Plan is the composed handoff plan, set by ComposePlan.
@@ -136,7 +137,7 @@ type Handoff struct {
 	pwPath     string
 }
 
-// NewHandoff loads the profile, the preset and the two chain plugins, and
+// NewHandoff loads the profile, the keys and the two chain plugins, and
 // checks the inputs a live run cannot do without. It reads; it writes nothing.
 func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	if in.ProfilePath == "" || in.Template == "" {
@@ -155,7 +156,7 @@ func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	if err != nil {
 		return nil, err
 	}
-	preset, err := store.LoadPreset(in.PresetDir)
+	keys, err := preset.LoadKeyPreset(in.PresetDir)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +168,12 @@ func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := &Handoff{in: in, Profile: prof, Preset: preset, From: from, To: to, order: prof.PlanOrderOrDefault()}
+	h := &Handoff{in: in, Profile: prof, Preset: keys, From: from, To: to, order: prof.PlanOrderOrDefault()}
 	if len(h.order) == 0 {
 		return nil, fmt.Errorf("upgrade: the profile plans no nodes")
 	}
-	if _, ok := preset.Node(h.order[0]); !ok {
-		return nil, fmt.Errorf("upgrade: preset has no node %d (the producer)", h.order[0])
+	if _, ok := keys.Node(h.order[0]); !ok {
+		return nil, fmt.Errorf("upgrade: keys has no node %d (the producer)", h.order[0])
 	}
 	if len(prof.Producers.Members) == 0 {
 		return nil, fmt.Errorf("upgrade: the profile names no producer member")
@@ -241,7 +242,7 @@ func (h *Handoff) ComposePlan(basePath string) error {
 	for i, num := range h.order {
 		nk, ok := h.Preset.Node(num)
 		if !ok {
-			return fmt.Errorf("upgrade: preset has no node %d", num)
+			return fmt.Errorf("upgrade: keys has no node %d", num)
 		}
 		in.NodePubkeys[i] = nk.PublicKey
 	}
@@ -580,7 +581,7 @@ func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) 
 		num := h.order[spec.Index]
 		nk, ok := h.Preset.Node(num)
 		if !ok {
-			return fmt.Errorf("upgrade: preset node %d missing", num)
+			return fmt.Errorf("upgrade: keys node %d missing", num)
 		}
 		dir := filepath.Join(spec.DataDir, inst)
 		if err := files.Write(ctx, filepath.Join(dir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
@@ -694,7 +695,7 @@ func firstEntry(dir string) (string, error) {
 }
 
 // copyFiles copies the regular files of src into dst. src is read from this
-// machine — the key preset is the operator's — while dst is written through
+// machine — the key keys is the operator's — while dst is written through
 // the file seam, because that side is the target.
 func copyFiles(ctx context.Context, files filestore.Store, src, dst string) error {
 	ents, err := os.ReadDir(src)

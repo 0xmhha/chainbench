@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testsupport"
 )
@@ -43,7 +43,7 @@ func TestLive_MaterializeKeyringDownloadsAServerKeyring(t *testing.T) {
 		t.Fatalf("KeysDir = %q, want the local download dir %q", w.state.KeysDir, wantLocal)
 	}
 	// The downloaded ring loads — the same read a node's signing uses.
-	preset, err := store.LoadPreset(wantLocal)
+	preset, err := preset.LoadKeyPreset(wantLocal)
 	if err != nil {
 		t.Fatalf("downloaded keyring does not load: %v", err)
 	}

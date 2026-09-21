@@ -20,153 +20,153 @@ import (
 	"strings"
 )
 
-// Key is the chain-agnostic name of one launch knob. Typed so a knob is never
+// OptionKey is the chain-agnostic name of one launch knob. Typed so a knob is never
 // a magic string; the Dialect maps it to (or refuses) a concrete flag.
-type Key string
+type OptionKey string
 
 // The vocabulary. Grouped by owning module (see modules.go). Spellings on the
 // right are the geth114 dialect; deviations live in the dialect tables.
 const (
 	// Identity
-	KeyNodeKey             Key = "nodekey"               // --nodekey <file>
-	KeyKeystore            Key = "keystore"              // --keystore <dir>
-	KeyUnlock              Key = "unlock"                // --unlock <addr>
-	KeyPassword            Key = "password"              // --password <file>
-	KeyAllowInsecureUnlock Key = "allow-insecure-unlock" // --allow-insecure-unlock
-	KeyEtherbase           Key = "miner.etherbase"       // --miner.etherbase <addr>
+	KeyNodeKey             OptionKey = "nodekey"               // --nodekey <file>
+	KeyKeystore            OptionKey = "keystore"              // --keystore <dir>
+	KeyUnlock              OptionKey = "unlock"                // --unlock <addr>
+	KeyPassword            OptionKey = "password"              // --password <file>
+	KeyAllowInsecureUnlock OptionKey = "allow-insecure-unlock" // --allow-insecure-unlock
+	KeyEtherbase           OptionKey = "miner.etherbase"       // --miner.etherbase <addr>
 
 	// Storage
-	KeyDataDir  Key = "datadir"  // --datadir <dir>
-	KeyConfig   Key = "config"   // --config <file>
-	KeySyncMode Key = "syncmode" // --syncmode full|snap
-	KeyGCMode   Key = "gcmode"   // --gcmode full|archive
+	KeyDataDir  OptionKey = "datadir"  // --datadir <dir>
+	KeyConfig   OptionKey = "config"   // --config <file>
+	KeySyncMode OptionKey = "syncmode" // --syncmode full|snap
+	KeyGCMode   OptionKey = "gcmode"   // --gcmode full|archive
 
 	// P2P
-	KeyPort       Key = "port"       // --port <n>
-	KeyBootnodes  Key = "bootnodes"  // --bootnodes <enodes>
-	KeyNoDiscover Key = "nodiscover" // --nodiscover
-	KeyMaxPeers   Key = "maxpeers"   // --maxpeers <n>
-	KeyNAT        Key = "nat"        // --nat none|any|...
-	KeyNetworkID  Key = "networkid"  // --networkid <n>
+	KeyPort       OptionKey = "port"       // --port <n>
+	KeyBootnodes  OptionKey = "bootnodes"  // --bootnodes <enodes>
+	KeyNoDiscover OptionKey = "nodiscover" // --nodiscover
+	KeyMaxPeers   OptionKey = "maxpeers"   // --maxpeers <n>
+	KeyNAT        OptionKey = "nat"        // --nat none|any|...
+	KeyNetworkID  OptionKey = "networkid"  // --networkid <n>
 
 	// HTTPRPC
-	KeyHTTP           Key = "http"            // --http
-	KeyHTTPAddr       Key = "http.addr"       // --http.addr <ip>
-	KeyHTTPPort       Key = "http.port"       // --http.port <n>
-	KeyHTTPAPI        Key = "http.api"        // --http.api <list>
-	KeyHTTPVHosts     Key = "http.vhosts"     // --http.vhosts <list>
-	KeyHTTPCorsDomain Key = "http.corsdomain" // --http.corsdomain <list>
+	KeyHTTP           OptionKey = "http"            // --http
+	KeyHTTPAddr       OptionKey = "http.addr"       // --http.addr <ip>
+	KeyHTTPPort       OptionKey = "http.port"       // --http.port <n>
+	KeyHTTPAPI        OptionKey = "http.api"        // --http.api <list>
+	KeyHTTPVHosts     OptionKey = "http.vhosts"     // --http.vhosts <list>
+	KeyHTTPCorsDomain OptionKey = "http.corsdomain" // --http.corsdomain <list>
 
 	// WSRPC
-	KeyWS        Key = "ws"         // --ws
-	KeyWSAddr    Key = "ws.addr"    // --ws.addr <ip>
-	KeyWSPort    Key = "ws.port"    // --ws.port <n>
-	KeyWSAPI     Key = "ws.api"     // --ws.api <list>
-	KeyWSOrigins Key = "ws.origins" // --ws.origins <list>
+	KeyWS        OptionKey = "ws"         // --ws
+	KeyWSAddr    OptionKey = "ws.addr"    // --ws.addr <ip>
+	KeyWSPort    OptionKey = "ws.port"    // --ws.port <n>
+	KeyWSAPI     OptionKey = "ws.api"     // --ws.api <list>
+	KeyWSOrigins OptionKey = "ws.origins" // --ws.origins <list>
 
 	// AuthIPC
-	KeyAuthAddr   Key = "authrpc.addr" // --authrpc.addr <ip>
-	KeyAuthPort   Key = "authrpc.port" // --authrpc.port <n>
-	KeyIPCPath    Key = "ipcpath"      // --ipcpath <path>
-	KeyIPCDisable Key = "ipcdisable"   // --ipcdisable
+	KeyAuthAddr   OptionKey = "authrpc.addr" // --authrpc.addr <ip>
+	KeyAuthPort   OptionKey = "authrpc.port" // --authrpc.port <n>
+	KeyIPCPath    OptionKey = "ipcpath"      // --ipcpath <path>
+	KeyIPCDisable OptionKey = "ipcdisable"   // --ipcdisable
 
 	// RPCPolicy
-	KeyRPCDeprecatedPersonal Key = "rpc.enabledeprecatedpersonal" // --rpc.enabledeprecatedpersonal
-	KeyRPCUnprotectedTxs     Key = "rpc.allow-unprotected-txs"    // --rpc.allow-unprotected-txs
-	KeyRPCGasCap             Key = "rpc.gascap"                   // --rpc.gascap <n>
-	KeyRPCTxFeeCap           Key = "rpc.txfeecap"                 // --rpc.txfeecap <n>
+	KeyRPCDeprecatedPersonal OptionKey = "rpc.enabledeprecatedpersonal" // --rpc.enabledeprecatedpersonal
+	KeyRPCUnprotectedTxs     OptionKey = "rpc.allow-unprotected-txs"    // --rpc.allow-unprotected-txs
+	KeyRPCGasCap             OptionKey = "rpc.gascap"                   // --rpc.gascap <n>
+	KeyRPCTxFeeCap           OptionKey = "rpc.txfeecap"                 // --rpc.txfeecap <n>
 
 	// Mining
-	KeyMine          Key = "mine"           // --mine
-	KeyMinerGasLimit Key = "miner.gaslimit" // --miner.gaslimit <n>
-	KeyMinerGasPrice Key = "miner.gasprice" // --miner.gasprice <n>
-	KeyMinerRecommit Key = "miner.recommit" // --miner.recommit <dur|nanos>
+	KeyMine          OptionKey = "mine"           // --mine
+	KeyMinerGasLimit OptionKey = "miner.gaslimit" // --miner.gaslimit <n>
+	KeyMinerGasPrice OptionKey = "miner.gasprice" // --miner.gasprice <n>
+	KeyMinerRecommit OptionKey = "miner.recommit" // --miner.recommit <dur|nanos>
 
 	// Metrics
-	KeyMetrics     Key = "metrics"      // --metrics
-	KeyMetricsAddr Key = "metrics.addr" // --metrics.addr <ip>
-	KeyMetricsPort Key = "metrics.port" // --metrics.port <n>
+	KeyMetrics     OptionKey = "metrics"      // --metrics
+	KeyMetricsAddr OptionKey = "metrics.addr" // --metrics.addr <ip>
+	KeyMetricsPort OptionKey = "metrics.port" // --metrics.port <n>
 
 	// Txpool — mempool admission and retention. These decide whether a
 	// transaction a test submits is kept, replaced or dropped, so a test that
 	// exercises nonce gaps or replacement needs to say what the pool does
 	// rather than hope the default suits it.
-	KeyTxPoolLocals       Key = "txpool.locals"       // --txpool.locals <addrs>
-	KeyTxPoolNoLocals     Key = "txpool.nolocals"     // --txpool.nolocals
-	KeyTxPoolJournal      Key = "txpool.journal"      // --txpool.journal <path>
-	KeyTxPoolRejournal    Key = "txpool.rejournal"    // --txpool.rejournal <dur>
-	KeyTxPoolPriceLimit   Key = "txpool.pricelimit"   // --txpool.pricelimit <n>
-	KeyTxPoolPriceBump    Key = "txpool.pricebump"    // --txpool.pricebump <n>
-	KeyTxPoolAccountSlots Key = "txpool.accountslots" // --txpool.accountslots <n>
-	KeyTxPoolGlobalSlots  Key = "txpool.globalslots"  // --txpool.globalslots <n>
-	KeyTxPoolAccountQueue Key = "txpool.accountqueue" // --txpool.accountqueue <n>
-	KeyTxPoolGlobalQueue  Key = "txpool.globalqueue"  // --txpool.globalqueue <n>
-	KeyTxPoolLifetime     Key = "txpool.lifetime"     // --txpool.lifetime <dur>
+	KeyTxPoolLocals       OptionKey = "txpool.locals"       // --txpool.locals <addrs>
+	KeyTxPoolNoLocals     OptionKey = "txpool.nolocals"     // --txpool.nolocals
+	KeyTxPoolJournal      OptionKey = "txpool.journal"      // --txpool.journal <path>
+	KeyTxPoolRejournal    OptionKey = "txpool.rejournal"    // --txpool.rejournal <dur>
+	KeyTxPoolPriceLimit   OptionKey = "txpool.pricelimit"   // --txpool.pricelimit <n>
+	KeyTxPoolPriceBump    OptionKey = "txpool.pricebump"    // --txpool.pricebump <n>
+	KeyTxPoolAccountSlots OptionKey = "txpool.accountslots" // --txpool.accountslots <n>
+	KeyTxPoolGlobalSlots  OptionKey = "txpool.globalslots"  // --txpool.globalslots <n>
+	KeyTxPoolAccountQueue OptionKey = "txpool.accountqueue" // --txpool.accountqueue <n>
+	KeyTxPoolGlobalQueue  OptionKey = "txpool.globalqueue"  // --txpool.globalqueue <n>
+	KeyTxPoolLifetime     OptionKey = "txpool.lifetime"     // --txpool.lifetime <dur>
 
 	// Cache — memory split across database, trie, pruning and snapshots. A
 	// sync or pruning test that does not set these is measuring the default.
-	KeyCache           Key = "cache"            // --cache <mb>
-	KeyCacheDatabase   Key = "cache.database"   // --cache.database <pct>
-	KeyCacheTrie       Key = "cache.trie"       // --cache.trie <pct>
-	KeyCacheGC         Key = "cache.gc"         // --cache.gc <pct>
-	KeyCacheSnapshot   Key = "cache.snapshot"   // --cache.snapshot <pct>
-	KeyCacheNoPrefetch Key = "cache.noprefetch" // --cache.noprefetch
-	KeyCachePreimages  Key = "cache.preimages"  // --cache.preimages
+	KeyCache           OptionKey = "cache"            // --cache <mb>
+	KeyCacheDatabase   OptionKey = "cache.database"   // --cache.database <pct>
+	KeyCacheTrie       OptionKey = "cache.trie"       // --cache.trie <pct>
+	KeyCacheGC         OptionKey = "cache.gc"         // --cache.gc <pct>
+	KeyCacheSnapshot   OptionKey = "cache.snapshot"   // --cache.snapshot <pct>
+	KeyCacheNoPrefetch OptionKey = "cache.noprefetch" // --cache.noprefetch
+	KeyCachePreimages  OptionKey = "cache.preimages"  // --cache.preimages
 
 	// GPO — the gas price oracle behind eth_gasPrice and eth_maxPriorityFee.
 	// The gas-policy suite asserts on those answers, and they come from here.
-	KeyGPOBlocks      Key = "gpo.blocks"      // --gpo.blocks <n>
-	KeyGPOPercentile  Key = "gpo.percentile"  // --gpo.percentile <n>
-	KeyGPOMaxPrice    Key = "gpo.maxprice"    // --gpo.maxprice <wei>
-	KeyGPOIgnorePrice Key = "gpo.ignoreprice" // --gpo.ignoreprice <wei>
+	KeyGPOBlocks      OptionKey = "gpo.blocks"      // --gpo.blocks <n>
+	KeyGPOPercentile  OptionKey = "gpo.percentile"  // --gpo.percentile <n>
+	KeyGPOMaxPrice    OptionKey = "gpo.maxprice"    // --gpo.maxprice <wei>
+	KeyGPOIgnorePrice OptionKey = "gpo.ignoreprice" // --gpo.ignoreprice <wei>
 
 	// State — what the node keeps and for how long. Archive-vs-pruned changes
 	// which historical reads answer at all.
-	KeySnapshot       Key = "snapshot"        // --snapshot
-	KeyDataDirAncient Key = "datadir.ancient" // --datadir.ancient <path>
-	KeyTxLookupLimit  Key = "txlookuplimit"   // --txlookuplimit <n>
+	KeySnapshot       OptionKey = "snapshot"        // --snapshot
+	KeyDataDirAncient OptionKey = "datadir.ancient" // --datadir.ancient <path>
+	KeyTxLookupLimit  OptionKey = "txlookuplimit"   // --txlookuplimit <n>
 
 	// Peering shape beyond the port: how many pending peers, which networks
 	// may connect, where discovery looks.
-	KeyMaxPendPeers  Key = "maxpendpeers"   // --maxpendpeers <n>
-	KeyNetRestrict   Key = "netrestrict"    // --netrestrict <cidr>
-	KeyDiscoveryDNS  Key = "discovery.dns"  // --discovery.dns <url>
-	KeyDiscoveryPort Key = "discovery.port" // geth114 --discovery.port <n>
+	KeyMaxPendPeers  OptionKey = "maxpendpeers"   // --maxpendpeers <n>
+	KeyNetRestrict   OptionKey = "netrestrict"    // --netrestrict <cidr>
+	KeyDiscoveryDNS  OptionKey = "discovery.dns"  // --discovery.dns <url>
+	KeyDiscoveryPort OptionKey = "discovery.port" // geth114 --discovery.port <n>
 
 	// Dev mode — a single-node chain that seals on demand. Useful for tests
 	// that need a chain and not a network.
-	KeyDev         Key = "dev"          // --dev
-	KeyDevPeriod   Key = "dev.period"   // --dev.period <s>
-	KeyDevGasLimit Key = "dev.gaslimit" // --dev.gaslimit <n>
+	KeyDev         OptionKey = "dev"          // --dev
+	KeyDevPeriod   OptionKey = "dev.period"   // --dev.period <s>
+	KeyDevGasLimit OptionKey = "dev.gaslimit" // --dev.gaslimit <n>
 
 	// Miner extras beyond the ones the Mining module already owns.
-	KeyMinerExtraData Key = "miner.extradata" // --miner.extradata <bytes>
+	KeyMinerExtraData OptionKey = "miner.extradata" // --miner.extradata <bytes>
 
 	// History pruning (geth114 generation only).
-	KeyHistoryState        Key = "history.state"        // --history.state <n>
-	KeyHistoryTransactions Key = "history.transactions" // --history.transactions <n>
-	KeyCacheBlockLogs      Key = "cache.blocklogs"      // --cache.blocklogs <n>
+	KeyHistoryState        OptionKey = "history.state"        // --history.state <n>
+	KeyHistoryTransactions OptionKey = "history.transactions" // --history.transactions <n>
+	KeyCacheBlockLogs      OptionKey = "cache.blocklogs"      // --cache.blocklogs <n>
 
 	// ChainExt — generation-specific consensus knobs. geth114 has none of
 	// these; requesting one there is a classified error, never a silent skip.
-	KeyConsensusMethod   Key = "chain.consensusmethod"    // gwemix --consensusmethod
-	KeyBlocksPerTurn     Key = "chain.blocksperturn"      // gwemix --blocksperturn
-	KeyNonceLimit        Key = "chain.noncelimit"         // gwemix --noncelimit
-	KeyMaxTxsPerBlock    Key = "chain.maxtxsperblock"     // gwemix --maxtxsperblock
-	KeyBlockInterval     Key = "chain.block.interval"     // gwemix --wemix.block.interval
-	KeyBlockTimeAdj      Key = "chain.block.timeadj"      // gwemix --wemix.block.timeadjblocks
-	KeyBlockMinBuildTime Key = "chain.block.minbuildtime" // gwemix --wemix.block.minbuildtime
-	KeyBlockMinBuildTxs  Key = "chain.block.minbuildtxs"  // gwemix --wemix.block.minbuildtxs
-	KeyBlockTrailTime    Key = "chain.block.trailtime"    // gwemix --wemix.block.trailtime
-	KeyBootnodeCount     Key = "chain.bootnodecount"      // gwemix --wemix.bootnodecount
-	KeyMaxIdleBlock      Key = "chain.maxidleblock"       // gwemix --maxidleblockinterval
-	KeyFixedDifficulty   Key = "chain.fixeddifficulty"    // gwemix --fixeddifficulty
-	KeyFixedGasLimit     Key = "chain.fixedgaslimit"      // gwemix --fixedgaslimit
-	KeyMinerGasTarget    Key = "miner.gastarget"          // gwemix --miner.gastarget
+	KeyConsensusMethod   OptionKey = "chain.consensusmethod"    // gwemix --consensusmethod
+	KeyBlocksPerTurn     OptionKey = "chain.blocksperturn"      // gwemix --blocksperturn
+	KeyNonceLimit        OptionKey = "chain.noncelimit"         // gwemix --noncelimit
+	KeyMaxTxsPerBlock    OptionKey = "chain.maxtxsperblock"     // gwemix --maxtxsperblock
+	KeyBlockInterval     OptionKey = "chain.block.interval"     // gwemix --wemix.block.interval
+	KeyBlockTimeAdj      OptionKey = "chain.block.timeadj"      // gwemix --wemix.block.timeadjblocks
+	KeyBlockMinBuildTime OptionKey = "chain.block.minbuildtime" // gwemix --wemix.block.minbuildtime
+	KeyBlockMinBuildTxs  OptionKey = "chain.block.minbuildtxs"  // gwemix --wemix.block.minbuildtxs
+	KeyBlockTrailTime    OptionKey = "chain.block.trailtime"    // gwemix --wemix.block.trailtime
+	KeyBootnodeCount     OptionKey = "chain.bootnodecount"      // gwemix --wemix.bootnodecount
+	KeyMaxIdleBlock      OptionKey = "chain.maxidleblock"       // gwemix --maxidleblockinterval
+	KeyFixedDifficulty   OptionKey = "chain.fixeddifficulty"    // gwemix --fixeddifficulty
+	KeyFixedGasLimit     OptionKey = "chain.fixedgaslimit"      // gwemix --fixedgaslimit
+	KeyMinerGasTarget    OptionKey = "miner.gastarget"          // gwemix --miner.gastarget
 )
 
 // Layer names one precedence level of the value stack: a later layer setting
-// the same Key wins.
+// the same OptionKey wins.
 //
 // It travels so a refusal can say WHO asked for a knob the binary does not
 // have, which is the difference between "this dialect has no such flag" and
@@ -213,24 +213,24 @@ type flagSpec struct {
 type Dialect struct {
 	// ID names the generation: "geth114" | "geth110-wemix".
 	ID    string
-	flags map[Key]flagSpec
+	flags map[OptionKey]flagSpec
 }
 
 // Spelling returns the dialect's flag name for k, or ok=false when the
 // generation does not have the knob.
-func (d Dialect) Spelling(k Key) (string, bool) {
+func (d Dialect) Spelling(k OptionKey) (string, bool) {
 	s, ok := d.flags[k]
 	return s.name, ok
 }
 
 // IsBool reports whether k is a value-less flag in this dialect.
-func (d Dialect) IsBool(k Key) bool { return d.flags[k].boolean }
+func (d Dialect) IsBool(k OptionKey) bool { return d.flags[k].boolean }
 
 // geth114Common is the shared modern-geth surface (go-stablenet 179 flags /
 // go-wbft 177 differ by two flags none of which chainbench sets; one table
 // covers both — the measured result behind the two-dialect design).
-func geth114Common() map[Key]flagSpec {
-	return map[Key]flagSpec{
+func geth114Common() map[OptionKey]flagSpec {
+	return map[OptionKey]flagSpec{
 		KeyNodeKey:             {"--nodekey", false},
 		KeyKeystore:            {"--keystore", false},
 		KeyUnlock:              {"--unlock", false},

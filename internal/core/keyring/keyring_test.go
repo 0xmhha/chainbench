@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // presetNode is one entry of the shipped presets/keys/metadata.json. The golden
@@ -212,7 +212,7 @@ func FuzzParseNodekey(f *testing.F) {
 // narrowed set used to carry: extra-data encodes the validator set, so the full
 // set's copy names validators a smaller network never starts.
 func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
+	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
 // declared identity has drifted from its key material launches a node signing
 // as one address while the genesis registers another.
 func TestEntry_VerifyCatchesDrift(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
+	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}

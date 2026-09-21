@@ -9,8 +9,8 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 )
@@ -92,7 +92,7 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatalf("keys: %v", err)
 	}
 
-	set, err := store.LoadPreset(keysDir)
+	set, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}

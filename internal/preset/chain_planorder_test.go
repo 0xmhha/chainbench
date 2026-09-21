@@ -1,7 +1,8 @@
-package chainpreset
+package preset_test
 
 import (
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,7 @@ import (
 // preset's producer-capable entry is LAST. A node table chooses its own order,
 // so it can put the producer on node5 and need no remap at all.
 func TestPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
-	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
+	prof, err := preset.LoadChainPreset("../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -14,7 +15,7 @@ import (
 // and the node's spec: the one place a nodeconfig.Spec is built from a plan.
 // The step surface builds the same Spec from a workspace record through here,
 // so a step-composed node launches with exactly the argv and config it renders.
-func NodeConfig(plugin registry.ChainPlugin, preset keyring.KeyPreset, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
+func NodeConfig(plugin registry.ChainPlugin, keys preset.Key, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
 	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 	cfg := nodeconfig.Spec{
 		Chain:       nodeconfig.ChainOf(plugin, spec.Role),
@@ -28,7 +29,7 @@ func NodeConfig(plugin registry.ChainPlugin, preset keyring.KeyPreset, spec Node
 		StaticNodes: staticNodes,
 	}
 	if node.Is(spec.Role, node.RoleBP) {
-		if nk, ok := preset.Node(spec.Index); ok {
+		if nk, ok := keys.Node(spec.Index); ok {
 			cfg.Unlock = nk.Address
 			cfg.PasswordFile = filepath.Join(keysDir, "password")
 		}

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // TestLoadPreset_ShippedFixture checks the reader against the file three chains
@@ -17,9 +18,9 @@ import (
 // hold them.
 func TestLoadPreset_ShippedFixture(t *testing.T) {
 	dir := filepath.Join("..", "..", "..", "..", "presets", "keys")
-	p, err := store.LoadPreset(dir)
+	p, err := preset.LoadKeyPreset(dir)
 	if err != nil {
-		t.Fatalf("LoadPreset: %v", err)
+		t.Fatalf("preset.LoadKeyPreset: %v", err)
 	}
 	if len(p.Nodes) == 0 || len(p.Network.Validators) == 0 {
 		t.Fatalf("empty preset: %d nodes, %d validators", len(p.Nodes), len(p.Network.Validators))
@@ -39,9 +40,9 @@ func TestLoadPreset_ShippedFixture(t *testing.T) {
 	}
 	// Asking for keys yields them, from the per-entry files, and they derive the
 	// identities the index recorded.
-	keyed, err := store.LoadPresetWithKeys(dir)
+	keyed, err := preset.LoadKeyPresetWithKeys(dir)
 	if err != nil {
-		t.Fatalf("LoadPresetWithKeys: %v", err)
+		t.Fatalf("preset.LoadKeyPresetWithKeys: %v", err)
 	}
 	for _, e := range keyed.Nodes {
 		if err := e.Verify(); err != nil {
@@ -57,7 +58,7 @@ func TestLoadPreset_ShippedFixture(t *testing.T) {
 }
 
 // TestGenerate_RoundTrips pins the merged package's round trip: what Generate
-// writes is exactly what LoadPreset reads back, with no second shape in
+// writes is exactly what preset.LoadKeyPreset reads back, with no second shape in
 // between. Entropy is injected so the run is reproducible.
 func TestGenerate_RoundTrips(t *testing.T) {
 	const nodes = 3
@@ -72,9 +73,9 @@ func TestGenerate_RoundTrips(t *testing.T) {
 		t.Fatalf("Generate: %v", err)
 	}
 
-	read, err := store.LoadPreset(dir)
+	read, err := preset.LoadKeyPreset(dir)
 	if err != nil {
-		t.Fatalf("LoadPreset: %v", err)
+		t.Fatalf("preset.LoadKeyPreset: %v", err)
 	}
 	if len(read.Nodes) != nodes || len(read.Network.Validators) != 2 {
 		t.Fatalf("read back %d nodes / %d validators", len(read.Nodes), len(read.Network.Validators))
@@ -90,9 +91,9 @@ func TestGenerate_RoundTrips(t *testing.T) {
 			t.Errorf("node %d: the index handed back a private key", want.Index)
 		}
 	}
-	keyed, err := store.LoadPresetWithKeys(dir)
+	keyed, err := preset.LoadKeyPresetWithKeys(dir)
 	if err != nil {
-		t.Fatalf("LoadPresetWithKeys: %v", err)
+		t.Fatalf("preset.LoadKeyPresetWithKeys: %v", err)
 	}
 	for i, want := range written.Nodes {
 		got := keyed.Nodes[i]
@@ -120,7 +121,7 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	}
 	// And the index itself must not carry it. This is the property the format
 	// change exists for, checked on the bytes rather than through the loader.
-	raw, err := os.ReadFile(filepath.Join(dir, store.PresetFile))
+	raw, err := os.ReadFile(filepath.Join(dir, preset.KeyIndexFile))
 	if err != nil {
 		t.Fatalf("read index: %v", err)
 	}
@@ -154,7 +155,7 @@ func TestImportRing_ClonesDeclarationAndRefusesTamper(t *testing.T) {
 	if len(got.Nodes) != 3 || len(got.Network.Validators) != 2 {
 		t.Fatalf("clone lost shape: %d nodes, %d validators", len(got.Nodes), len(got.Network.Validators))
 	}
-	back, err := store.LoadPreset(dstDir)
+	back, err := preset.LoadKeyPreset(dstDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +201,7 @@ func TestExtend_PromotingIntoABLSSetKeepsItLoadable(t *testing.T) {
 		t.Fatalf("extend: %v", err)
 	}
 
-	set, err := store.LoadPreset(dir)
+	set, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		t.Fatalf("the set no longer loads after add: %v", err)
 	}
@@ -228,7 +229,7 @@ func TestExtend_PlainSetStaysPlain(t *testing.T) {
 	}, nil); err != nil {
 		t.Fatalf("extend: %v", err)
 	}
-	set, err := store.LoadPreset(dir)
+	set, err := preset.LoadKeyPreset(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

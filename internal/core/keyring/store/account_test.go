@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds.
@@ -24,7 +24,7 @@ import (
 var shippedPreset = filepath.Join("..", "..", "..", "..", "presets", "keys")
 
 func TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds(t *testing.T) {
-	set, err := store.LoadPresetWithAccounts(shippedPreset)
+	set, err := preset.LoadKeyPresetWithAccounts(shippedPreset)
 	if err != nil {
 		t.Fatalf("read the shipped key set: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds(t *testing.T)
 // is one file and answers nearly every question a ring is asked. Only the two
 // callers that have to agree about the sealing account pay for the keystores.
 func TestLoadPreset_SaysNothingAboutAccounts(t *testing.T) {
-	set, err := store.LoadPreset(shippedPreset)
+	set, err := preset.LoadKeyPreset(shippedPreset)
 	if err != nil {
 		t.Fatalf("read the shipped key set: %v", err)
 	}

@@ -1,16 +1,16 @@
-package chainpreset_test
+package preset_test
 
 import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/chainpreset"
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // goldenPresetPath resolves the repo's golden chain preset from this test's
-// package dir (internal/chainpreset -> repo root).
+// package dir (internal/preset -> repo root).
 func goldenPresetPath() string {
 	return filepath.Join("..", "..", "presets", "chain", "wemix-upgrade.yaml")
 }
@@ -22,7 +22,7 @@ func goldenPresetPath() string {
 // nodes stand on each side. Everything else it used to drive — the plan, the
 // ports, the launch — belongs to the composition steps.
 func TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide(t *testing.T) {
-	p, err := chainpreset.Load(goldenPresetPath())
+	p, err := preset.LoadChainPreset(goldenPresetPath())
 	if err != nil {
 		t.Fatal(err)
 	}

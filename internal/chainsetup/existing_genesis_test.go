@@ -9,8 +9,8 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
@@ -25,7 +25,7 @@ func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	// A distinctive finished genesis (valid JSON, not what the builder would
 	// make) that still names the validators the two-producer key set provides —
 	// a wbft genesis without them is refused, and rightly, since it cannot sign.
-	preset, err := store.LoadPreset(presetDir)
+	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -215,7 +215,7 @@ func newValidatorSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Generate a validator set / preset key bundle (nodekeys, BLS, keystores, metadata)",
-		Long: "Generates the preset key set the harness consumes (store.LoadPreset): per-node\n" +
+		Long: "Generates the preset key set the harness consumes (preset.LoadKeyPreset): per-node\n" +
 			"nodekeys, their derived address + BLS public key/PoP (derived in process),\n" +
 			"an encrypted keystore per node (via the accounts SDK — no node binary),\n" +
 			"and a metadata.json. Use it to build validator sets larger than the committed\n" +

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // verifyExistingGenesisKeys checks that the validators an existing genesis
@@ -30,7 +30,7 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 	if err != nil {
 		return fmt.Errorf("chainsetup: genesis: existing genesis %s: %w", ref, err)
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	preset, err := preset.LoadKeyPreset(w.state.KeysDir)
 	if err != nil {
 		return fmt.Errorf("chainsetup: genesis: load keys to verify against the existing genesis: %w", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -58,11 +59,11 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 	if req.Nodes == nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: no placement — the governance config names the producer's host and p2p port, so the network has to be placed first")
 	}
-	preset, err := store.LoadPreset(s.KeysDir)
+	keys, err := preset.LoadKeyPreset(s.KeysDir)
 	if err != nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
 	}
-	cfg, err := s.config(preset, req)
+	cfg, err := s.config(keys, req)
 	if err != nil {
 		return genesis.Artifacts{}, err
 	}
@@ -138,12 +139,12 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 // on, and the config names it by address, devp2p id, host and p2p port. Every
 // key-set identity is funded, so a test does not have to arrange for gas before
 // it can do anything.
-func (s GenesisSource) config(preset keyring.KeyPreset, req genesis.Request) (Config, error) {
+func (s GenesisSource) config(keys preset.Key, req genesis.Request) (Config, error) {
 	boot, ok := bootPlacement(req.Nodes)
 	if !ok {
 		return Config{}, fmt.Errorf("poa: genesis: the placement has no producer to bootstrap from")
 	}
-	entry, ok := preset.Node(boot.Index)
+	entry, ok := keys.Node(boot.Index)
 	if !ok {
 		return Config{}, fmt.Errorf("poa: genesis: the key set has no identity for node%d", boot.Index)
 	}
@@ -151,7 +152,7 @@ func (s GenesisSource) config(preset keyring.KeyPreset, req genesis.Request) (Co
 	if s.Env != nil {
 		env = *s.Env
 	}
-	net := preset.NetworkFor(req.Validators)
+	net := keys.NetworkFor(req.Validators)
 	accounts := []Account{{Addr: entry.Address, Balance: DefaultAccountBalance()}}
 	for _, v := range net.Validators {
 		if v == entry.Address {
@@ -170,7 +171,7 @@ func (s GenesisSource) config(preset keyring.KeyPreset, req genesis.Request) (Co
 		if !node.Is(p.Role, node.RoleBP) {
 			continue
 		}
-		e, ok := preset.Node(p.Index)
+		e, ok := keys.Node(p.Index)
 		if !ok {
 			return Config{}, fmt.Errorf("poa: genesis: the key set has no identity for node%d", p.Index)
 		}

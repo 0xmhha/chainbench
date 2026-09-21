@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -43,7 +44,7 @@ func TestSuite_Live_AccountLabels(t *testing.T) {
 	t.Cleanup(func() { _ = os.RemoveAll(ws) })
 
 	keysDir := filepath.Join(repoRoot(t), "presets", "keys")
-	set, err := store.LoadPreset(keysDir)
+	set, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}

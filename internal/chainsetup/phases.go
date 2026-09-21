@@ -14,9 +14,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/core/inspector"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -28,7 +28,7 @@ import (
 // the rest one at a time — launching everything at once produced a network that
 // came up and never agreed on anything.
 
-func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, keys preset.Key, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}
@@ -59,7 +59,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(np, preset, spec, w.state.KeysDir, staticNodes))
+			args, err := nodeconfig.Argv(process.NodeConfig(np, keys, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}

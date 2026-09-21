@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -27,7 +27,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err := w.require("config"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
@@ -42,7 +42,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if perr != nil {
 			return "", perr
 		}
-		prov, err := w.writeNodeConfig(ctx, np, preset, placed, peering, pubkey, ns, "")
+		prov, err := w.writeNodeConfig(ctx, np, keys, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}
@@ -64,12 +64,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 // and a mid-test config swap share it, so both produce the same config and the
 // same provenance record. purpose, when set, names the swap's config fixture
 // (config-<purpose>); the initial compose passes "".
-func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, keys preset.Key, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
 	t, err := w.machineFor(ns)
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
-	toml, err := w.nodeConfigBytes(ctx, p, preset, placed, peering, pubkey, ns)
+	toml, err := w.nodeConfigBytes(ctx, p, keys, placed, peering, pubkey, ns)
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
@@ -92,7 +92,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 //
 // A node that names its own config file uses it verbatim — the file is the
 // whole config, so nothing is rendered and no override applies to it.
-func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
+func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, keys preset.Key, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
@@ -104,7 +104,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
-	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+	spec := process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
 	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
@@ -164,7 +164,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err := w.require("build"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
@@ -181,7 +181,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}

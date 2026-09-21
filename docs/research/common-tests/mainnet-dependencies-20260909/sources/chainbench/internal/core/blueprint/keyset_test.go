@@ -35,7 +35,7 @@ func rawNetwork(t *testing.T, roles ...node.Role) ResolvedNetwork {
 
 // TestKeySet_StandsUpWithoutAPreset is N3's premise.
 //
-// Before this, store.LoadPreset was the only way a keyring.KeyPreset came into
+// Before this, preset.LoadKeyPreset was the only way a preset.Key came into
 // being, so "the preset is optional" was untrue whatever the documents said. A
 // blueprint that writes its own keys now produces the same Preset the rest of
 // the composition already consumes, so nothing downstream learns a second way

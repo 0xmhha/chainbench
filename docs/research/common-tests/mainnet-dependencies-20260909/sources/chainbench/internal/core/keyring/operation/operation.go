@@ -13,6 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -380,7 +381,7 @@ func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	if err != nil {
 		return SetOut{}, err
 	}
-	srcSet, err := store.LoadPresetAt(ctx, srcFiles, srcDir)
+	srcSet, err := preset.LoadKeyPresetAt(ctx, srcFiles, srcDir)
 	if err != nil {
 		return SetOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
 	}
@@ -516,22 +517,22 @@ func (f passwordFunc) Password() (string, error) { return f() }
 
 // openSet resolves and loads a key set, naming the source in the error so that a
 // missing default key set is not a mystery.
-func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set keyring.KeyPreset, err error) {
+func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set preset.Key, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
-		return displaySet(ref, dir), source, keyring.KeyPreset{}, err
+		return displaySet(ref, dir), source, preset.Key{}, err
 	}
-	set, err = store.LoadPresetAt(ctx, files, dir)
+	set, err = preset.LoadKeyPresetAt(ctx, files, dir)
 	dir = displaySet(ref, dir)
 	if err != nil {
-		return dir, source, keyring.KeyPreset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
+		return dir, source, preset.Key{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
 	}
 	return dir, source, set, nil
 }
 
 // findEntry looks up an identity by label, listing what the key set holds when the
 // name is not one of them.
-func findEntry(set keyring.KeyPreset, label string) (keyring.Entry, error) {
+func findEntry(set preset.Key, label string) (keyring.Entry, error) {
 	for _, e := range set.Nodes {
 		if string(e.Label) == label {
 			return e, nil
@@ -545,7 +546,7 @@ func findEntry(set keyring.KeyPreset, label string) (keyring.Entry, error) {
 }
 
 // validatorSet indexes the key set's declared validators by lowercase address.
-func validatorSet(set keyring.KeyPreset) map[string]bool {
+func validatorSet(set preset.Key) map[string]bool {
 	out := make(map[string]bool, len(set.Network.Validators))
 	for _, a := range set.Network.Validators {
 		out[lower(a)] = true
@@ -554,7 +555,7 @@ func validatorSet(set keyring.KeyPreset) map[string]bool {
 }
 
 // setOut renders a whole key set.
-func setOut(dir, source string, set keyring.KeyPreset) SetOut {
+func setOut(dir, source string, set preset.Key) SetOut {
 	vals := validatorSet(set)
 	out := SetOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
 	for _, e := range set.Nodes {

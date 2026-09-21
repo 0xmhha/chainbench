@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
@@ -128,10 +129,10 @@ type (
 	// ValidatorSetOut is a key set's validator declaration as a network reads
 	// it.
 	ValidatorSetOut = validatorset.Roster
-	// GenerateSetIn shapes generating a preset key set.
+	// GenerateSetIn shapes generating a keys key set.
 	GenerateSetIn = store.GenerateOpts
 	// GenerateSetOut describes what was generated.
-	GenerateSetOut = keyring.KeyPreset
+	GenerateSetOut = preset.Key
 )
 
 // DeriveIdentity derives what the chain's consensus family needs from a key.
@@ -173,7 +174,7 @@ func ValidatorSetOf(_ Deps, chain, keysDir string) (ValidatorSetOut, error) {
 	return validatorset.Load(chain, keysDir)
 }
 
-// GenerateSet creates a preset key set, reporting each identity as it is made.
+// GenerateSet creates a keys key set, reporting each identity as it is made.
 func GenerateSet(_ Deps, in GenerateSetIn, report func(string)) (GenerateSetOut, error) {
 	return store.Generate(in, report)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"testing"
 )
 
@@ -24,10 +25,10 @@ func TestNodeConfigArgv_EmitsTheManifestNetworkID(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keyring.KeyPreset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa", Address: "0x1"}}}}
+	keys := preset.Key{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa", Address: "0x1"}}}}
 	spec := process.NodeSpec{Index: 1, Role: node.RoleEN, Host: "127.0.0.1", DataDir: "/d/node1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}}
 
-	cfg := process.NodeConfig(plugin, preset, spec, "/keys", nil)
+	cfg := process.NodeConfig(plugin, keys, spec, "/keys", nil)
 	args, err := nodeconfig.Argv(cfg)
 	if err != nil {
 		t.Fatalf("nodeconfig.Argv: %v", err)

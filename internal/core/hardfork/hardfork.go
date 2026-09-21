@@ -7,7 +7,7 @@
 // go-wbft (bft), where the two binaries must run CONCURRENTLY with disjoint
 // roles (producers mine up to the fork; separately-launched validators sync the
 // pre-fork chain and take over after it). That verified model lives in
-// internal/chainpreset (the golden handoff declaration); use it for engine-changing handoffs.
+// internal/preset (the golden handoff declaration); use it for engine-changing handoffs.
 package hardfork
 
 import (

@@ -37,7 +37,7 @@
 
 ```
 파일을 쓰는 패키지 14개:
-  app · chainsetup · chainpreset
+  app · chainsetup · preset
   core/process · core/keyring · core/collector · core/filestore
   core/session (R1: netreg 의 쓰기는 session 으로, obs 의 쓰기는 collector 로 흡수)
 ```
@@ -121,6 +121,7 @@ flowchart TD
 | `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
+| `preset` | preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과 키(`Key`). 갈래마다 문서가 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈(`keyring`·`poa`·`chainsetup`)은 정의하지 않고 쓰기만 한다 — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
 > 그래서 L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
@@ -131,7 +132,6 @@ flowchart TD
 |---|---|
 | `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
 | `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
-| `chainpreset` | 체인 preset 로더 하나(`Preset`) — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 ### L2b 체인 어댑터 — 체인 특화
 
@@ -150,7 +150,7 @@ flowchart TD
 | `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
 | `core/report` | **실행 전체 report 의 집계자(E0A).** 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를 모아 `report.json` 을 만든다(`Build`·`Generate`·`Write`·`Read`). 판정을 다시 하지 않고 `core/session` 만 읽는다 — testengine 이 저장 뒤 호출하고 CLI/MCP(app 경유)가 읽는다 |
 | `core/health` | 블록 전진 판정 |
-| `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `chainpreset` 이 선언하는 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
+| `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `preset` 이 선언하는 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
 | `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
 | `dsl/interp` | **DSL 런타임** — 실행 계약(`Action`·`Assertion`·`Registry`·`Reader`·`Deps`·`ActionCtx`·`AssertCtx`·`NodeControl`)과 해석기(`NewInterpreter`·`Run`)·바인딩(`$ref`/`save`)·`Fingerprint`(환경 재사용 키)·`Unresolved`(오프라인 이름 검증). 계약이 여기 사는 것이 핵심 — `testhelper`(L3)가 구현하므로 `testengine`(L4)으로 올릴 수 없다. 옛 `testspec` 의 실행 절반(R2, 2026-09-01) |
 | `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). `dsl/interp` 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 그 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
@@ -237,7 +237,7 @@ flowchart TD
 | `core/process` | 실행 대장(`process.json`) · config·log(LocalDriver, 옛 `core/driver`) | ✅ 프로세스·전송 계층 소유자(R3) |
 | `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
-**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`chainpreset` 이 마지막이었고, F4·F5 가
+**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`preset` 이 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
 `filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다. `consensus/poa` 도 원격 실행
 (R6, 2026-09-02)에서 genesis 생성의 임시 작업 파일을 주입된 `filestore.Store` 로 쓰게 되어
@@ -366,7 +366,7 @@ chainbench-feature-spec.md
 코드 주석도 같다:
 
 ```go
-// chainpreset/preset.go — 패키지 자신의 설명
+// preset/chain.go — 패키지 자신의 설명
 // "a single, validated launch plan for a hardfork handoff"
 
 // launcher.go

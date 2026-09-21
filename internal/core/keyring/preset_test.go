@@ -10,11 +10,12 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // bareRing generates a ring that declares nothing about a network: identities
 // and no validator set.
-func bareRing(t *testing.T, nodes int) keyring.KeyPreset {
+func bareRing(t *testing.T, nodes int) preset.Key {
 	t.Helper()
 	none := 0
 	set, err := store.Generate(store.GenerateOpts{
@@ -30,7 +31,7 @@ func bareRing(t *testing.T, nodes int) keyring.KeyPreset {
 }
 
 // TestNetworkFor_BareRingIsIdentitiesOnly pins the bare-ring contract: a ring can hold
-// identities and say nothing about a network, so a preset is a choice rather
+// identities and say nothing about a network, so a keys is a choice rather
 // than a premise.
 func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 	set := bareRing(t, 4)
@@ -74,21 +75,21 @@ func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 	}
 }
 
-// TestNetworkFor_DeclaredSetWins keeps an existing preset's answer: a file that
+// TestNetworkFor_DeclaredSetWins keeps an existing keys's answer: a file that
 // says who validates is not second-guessed.
 func TestNetworkFor_DeclaredSetWins(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
+	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
 	declared := p.Network.Validators
 	if len(declared) == 0 {
-		t.Skip("the shipped preset declares no validators")
+		t.Skip("the shipped keys declares no validators")
 	}
 	// The shipped ring holds more identities than it declares validators, so a
 	// derived answer would differ from the declared one.
 	if len(p.Nodes) <= len(declared) {
-		t.Skip("the shipped preset declares every identity as a validator")
+		t.Skip("the shipped keys declares every identity as a validator")
 	}
 	net := p.NetworkFor(0)
 	if len(net.Validators) != len(declared) {
@@ -100,10 +101,10 @@ func TestNetworkFor_DeclaredSetWins(t *testing.T) {
 // an empty ring, which would produce a genesis with no producers.
 func TestLoadPreset_RejectsAFileThatSaysNothing(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, store.PresetFile), []byte(`{"password":"1"}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, preset.KeyIndexFile), []byte(`{"password":"1"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.LoadPreset(dir); err == nil {
+	if _, err := preset.LoadKeyPreset(dir); err == nil {
 		t.Fatal("loaded a ring that holds no identities and declares no validators")
 	}
 }
@@ -188,7 +189,7 @@ func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
 // is the nodes a placement named as producers (by index), not the first N of the
 // ring. For EN,BP,PN,BP the producers are node2 and node4.
 func TestNetworkForNodes_SelectsByIndexNotFirstN(t *testing.T) {
-	p := keyring.KeyPreset{Nodes: []keyring.Entry{
+	p := preset.Key{Nodes: []keyring.Entry{
 		{Index: 1, Identity: derive.Identity{Address: "0xa1", BLS: &derive.BLS{PublicKey: "0xb1"}}},
 		{Index: 2, Identity: derive.Identity{Address: "0xa2", BLS: &derive.BLS{PublicKey: "0xb2"}}},
 		{Index: 3, Identity: derive.Identity{Address: "0xa3", BLS: &derive.BLS{PublicKey: "0xb3"}}},

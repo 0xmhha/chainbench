@@ -6,7 +6,7 @@
 // here: [RawFileBackend] writes the bare hex a node reads as its nodekey, and
 // [KeystoreBackend] writes the encrypted keystore an account unlocks from.
 //
-// [LoadPreset] reads the committed 5-node fixture and anything `validator set`
+// [preset.LoadKeyPreset] reads the committed 5-node fixture and anything `validator set`
 // generates in the same shape, which is what lets a network larger than the
 // fixture compose without a second code path.
 //

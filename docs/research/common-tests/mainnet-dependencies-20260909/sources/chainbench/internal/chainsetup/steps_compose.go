@@ -14,6 +14,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
@@ -55,7 +56,7 @@ type KeysOpts struct {
 	Source string
 	// Blueprint is the declaration the keys come from when Source is
 	// "declared". Its nodes carry their own nodekeys, which is what lets a
-	// network be composed with no preset directory anywhere (N3).
+	// network be composed with no keys directory anywhere (N3).
 	Blueprint *blueprint.Blueprint
 	// Nodes is how many identities the set must cover; <=0 uses the node table
 	// length, falling back to the validator count.
@@ -121,7 +122,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			}
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 		default:
-			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset, generate or declared)", opts.Source)
+			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want keys, generate or declared)", opts.Source)
 		}
 	}
 	ks, err := src.Ensure(ctx, n)
@@ -142,10 +143,10 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 // which is what its datadir, its keyring entry and its enode are all named
 // from. Deriving against a different table would produce keys that are correct
 // in isolation and attached to the wrong nodes.
-func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.KeyPreset, error) {
+func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (preset.Key, error) {
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.KeyPreset{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
+		return preset.Key{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
 	}
 	r, err := blueprint.Resolve(bp, blueprint.Inputs{
 		Placed: placed.Placements(),
@@ -153,7 +154,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.KeyPres
 		Layout: node.Layout{Root: w.state.Target.DataRoot},
 	})
 	if err != nil {
-		return keyring.KeyPreset{}, err
+		return preset.Key{}, err
 	}
 	// BLS material is derived for every family, which is what the generated
 	// source already does. Only wbft reads it, and asking the family instead
@@ -162,10 +163,10 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.KeyPres
 	// debt rather than guessed at.
 	set, err := blueprint.PresetFrom(r, derive.WithBLS, os.ReadFile)
 	if err != nil {
-		return keyring.KeyPreset{}, err
+		return preset.Key{}, err
 	}
 	if len(set.Nodes) < n {
-		return keyring.KeyPreset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
+		return preset.Key{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
 	}
 	return set, nil
 }
@@ -182,7 +183,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.KeyPres
 // rest of the system expects — rather than being hand-rolled here. Only their
 // key material is taken; DeclaredKeys re-writes the ring (keystores, password,
 // metadata) at the workspace's key dir, the way the declared source already does.
-func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.KeyPreset, bool, error) {
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, bool, error) {
 	byIndex := make(map[int]node.Record, len(w.state.Nodes))
 	keyed := false
 	for _, r := range w.state.Nodes {
@@ -192,7 +193,7 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.KeyPreset
 		}
 	}
 	if !keyed {
-		return keyring.KeyPreset{}, false, nil
+		return preset.Key{}, false, nil
 	}
 
 	// Generate a full set once, to a throwaway dir, for the entropy of the nodes
@@ -200,32 +201,32 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.KeyPreset
 	// them from the key material below — so the dir is temporary.
 	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
 	if err != nil {
-		return keyring.KeyPreset{}, true, fmt.Errorf("chainsetup: keys: %w", err)
+		return preset.Key{}, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
 	if err != nil {
-		return keyring.KeyPreset{}, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+		return preset.Key{}, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
 
-	var set keyring.KeyPreset
+	var set preset.Key
 	for i := 1; i <= n; i++ {
 		r, ok := byIndex[i]
 		if !ok {
-			return keyring.KeyPreset{}, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+			return preset.Key{}, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
 			key, err = parseNodeKey(r.Key)
 			if err != nil {
-				return keyring.KeyPreset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
+				return preset.Key{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
 		id, derr := derive.Derive(key, derive.WithBLS)
 		if derr != nil {
-			return keyring.KeyPreset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+			return preset.Key{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
 		set.Nodes = append(set.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(i)),
@@ -659,7 +660,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err := w.require("config"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
@@ -668,7 +669,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	w.state.ConfigProvenance = w.state.ConfigProvenance[:0]
 	overridden := 0
 	for _, ns := range w.state.Nodes {
-		prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, ns, "")
+		prov, err := w.writeNodeConfig(ctx, p, keys, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}
@@ -690,7 +691,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 // and a mid-test config swap share it, so both produce the same config and the
 // same provenance record. purpose, when set, names the swap's config fixture
 // (config-<purpose>); the initial compose passes "".
-func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.KeyPreset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, keys preset.Key, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
 	t, err := w.machineFor(ns)
 	if err != nil {
 		return ConfigProvenance{}, err
@@ -710,7 +711,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
-	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+	spec := process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
 	overrides := w.configOverridesFor(ns.Index)
 	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
@@ -757,7 +758,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err := w.require("build"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
@@ -774,7 +775,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -922,7 +923,7 @@ func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
 		if k == "" {
 			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
 		}
-		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
+		out = append(out, nodeconfig.Override{Key: nodeconfig.OptionKey(k), Value: v})
 	}
 	return out, nil
 }
@@ -1062,34 +1063,34 @@ func shellQuote(s string) string {
 // set (identity and public keys), the placement, the validated peering, and a
 // public-key lookup by index. Config, launchopts and start all render from
 // the same four, so they are gathered once.
-func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.KeyPreset, *node.Map, node.Peering, func(int) (string, bool), error) {
-	preset, err := store.LoadPreset(w.state.KeysDir)
+func (w *Workspace) peerPlan(p registry.ChainPlugin) (preset.Key, *node.Map, node.Peering, func(int) (string, bool), error) {
+	keys, err := preset.LoadKeyPreset(w.state.KeysDir)
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	// The peer's own recorded address: spread across a set each node lives on
 	// a different host, and a static-node list pointing at this machine would
 	// leave every node unable to find its peers. Keys reach the composition
 	// as inputs — the node module joins them to placements.
 	pubkey := func(index int) (string, bool) {
-		nk, ok := preset.Node(index)
+		nk, ok := keys.Node(index)
 		if !ok {
 			return "", false
 		}
 		return nk.PublicKey, true
 	}
-	return preset, placed, peering, pubkey, nil
+	return keys, placed, peering, pubkey, nil
 }
 
 // recordInput remembers what a launch input hashed to when this workspace wrote

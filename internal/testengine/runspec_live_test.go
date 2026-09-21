@@ -11,13 +11,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/testhelper"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
@@ -46,9 +45,9 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
 	presetDir := filepath.Join(repoRoot(t), "presets", "keys")
-	preset, err := store.LoadPreset(presetDir)
+	keys, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
-		t.Fatalf("load preset: %v", err)
+		t.Fatalf("load keys: %v", err)
 	}
 
 	// A short data root: the geth IPC unix socket path must stay under ~104
@@ -103,7 +102,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		Actions: testhelper.Registry(),
 	})
 
-	spec := liveSpec(t, plugin.Manifest().ChainID, preset)
+	spec := liveSpec(t, plugin.Manifest().ChainID, keys)
 	rec := sess.Test(1, spec.ID)
 	status, err := run(ctx, spec, env, rec)
 	if err != nil {
@@ -116,12 +115,12 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 // liveSpec builds a smoke spec: send one node-signed tx, then assert the chain
 // id and that the head has advanced.
-func liveSpec(t *testing.T, chainID int64, preset keyring.KeyPreset) dsl.Spec {
+func liveSpec(t *testing.T, chainID int64, keys preset.Key) dsl.Spec {
 	t.Helper()
-	from := preset.Network.Validators[0]
+	from := keys.Network.Validators[0]
 	to := from
-	if len(preset.Network.Validators) > 1 {
-		to = preset.Network.Validators[1]
+	if len(keys.Network.Validators) > 1 {
+		to = keys.Network.Validators[1]
 	}
 	raw, _ := json.Marshal(map[string]any{
 		"schemaVersion": "1",

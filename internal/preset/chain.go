@@ -1,11 +1,10 @@
-package chainpreset
+package preset
 
 import (
 	"math/big"
 	"strings"
 
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"os"
 
 	"go.yaml.in/yaml/v3"
@@ -28,7 +27,7 @@ import (
 //
 // It was called Profile, which named neither family nor kind, and matched
 // neither the directory it lives in nor the DSL field that selects it.
-type Preset struct {
+type Chain struct {
 	Name    string `yaml:"name"`
 	Upgrade struct {
 		From      string `yaml:"from"`
@@ -109,7 +108,7 @@ type Governance struct {
 
 // PlanOrderOrDefault returns the plan-node -> preset-node mapping, defaulting to
 // identity order (plan node k = preset node k) when the preset omits it.
-func (p Preset) PlanOrderOrDefault() []int {
+func (p Chain) PlanOrderOrDefault() []int {
 	if len(p.Identities.PlanOrder) != 0 {
 		return p.Identities.PlanOrder
 	}
@@ -121,37 +120,17 @@ func (p Preset) PlanOrderOrDefault() []int {
 	return order
 }
 
-// Load reads and decodes a golden hardfork preset.
-func Load(path string) (Preset, error) {
+// LoadChainPreset reads and decodes a golden chain preset.
+func LoadChainPreset(path string) (Chain, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return Preset{}, fmt.Errorf("chainpreset: read preset: %w", err)
+		return Chain{}, fmt.Errorf("preset: read chain preset: %w", err)
 	}
-	var p Preset
+	var p Chain
 	if err := yaml.Unmarshal(b, &p); err != nil {
-		return Preset{}, fmt.Errorf("chainpreset: parse preset %s: %w", path, err)
+		return Chain{}, fmt.Errorf("preset: parse chain preset %s: %w", path, err)
 	}
 	return p, nil
-}
-
-// GovernanceEnv is the governance policy the preset declares, in the terms the
-// poa genesis source takes.
-//
-// It is here rather than on the composition because the preset is the only
-// thing that has ever declared one, and because a test holds it against
-// poa.DefaultEnv: as long as the two agree, a hardfork needs no governance
-// declaration to compose the same chain.
-func (p Preset) GovernanceEnv() poa.Env {
-	g := p.Producers.Governance
-	return poa.Env{
-		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
-		StakingMin: dec(g.StakingMin), StakingMax: dec(g.StakingMax),
-		MaxIdleBlockInterval: g.MaxIdleBlockInterval, BlockCreationTime: g.BlockCreationTime,
-		BlockRewardAmount: dec(g.BlockRewardAmount), MaxPriorityFeePerGas: dec(g.MaxPriorityFeePerGas),
-		RewardDistribution: g.RewardDistribution, MaxBaseFee: dec(g.MaxBaseFee),
-		BlockGasLimit: g.BlockGasLimit, BaseFeeMaxChangeRate: g.BaseFeeMaxChangeRate,
-		GasTargetPercentage: g.GasTargetPercentage,
-	}
 }
 
 // dec parses a decimal wei string; empty or malformed is zero.

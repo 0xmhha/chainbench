@@ -13,9 +13,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -367,7 +367,7 @@ func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	preset, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: genesis: %w", err)
 	}

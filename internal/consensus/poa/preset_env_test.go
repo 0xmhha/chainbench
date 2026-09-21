@@ -1,13 +1,14 @@
-package chainpreset
+package poa_test
 
 import (
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 )
 
-// TestPreset_TheGovernancePolicyIsTheDefault.
+// TestEnvFromPreset_TheGovernancePolicyIsTheDefault.
 //
 // The golden profile spells out thirteen governance parameters — ballot
 // durations, staking bounds, block reward, fee ceiling, reward split. Every one
@@ -23,12 +24,12 @@ import (
 // choosing rather than restating, and that is precisely the point at which a
 // governance policy needs a way to be DECLARED — a DSL surface for it, which is
 // deliberately not built while nothing asks for one.
-func TestPreset_TheGovernancePolicyIsTheDefault(t *testing.T) {
-	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
+func TestEnvFromPreset_TheGovernancePolicyIsTheDefault(t *testing.T) {
+	prof, err := preset.LoadChainPreset("../../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}
-	declared := prof.GovernanceEnv()
+	declared := poa.EnvFromPreset(prof.Producers.Governance)
 
 	if diff := envDiff(declared, poa.DefaultEnv()); diff != "" {
 		t.Errorf("the profile's governance policy is no longer the default:\n%s\n"+

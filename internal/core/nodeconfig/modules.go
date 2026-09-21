@@ -310,7 +310,7 @@ func (m Metrics) Apply(a *Args) error {
 // dialect that lacks it is an explicit error — these change consensus
 // behavior, so a silent skip would run a materially different chain.
 type ChainExt struct {
-	Values map[Key]string
+	Values map[OptionKey]string
 }
 
 func (ChainExt) Name() string { return "chainext" }
@@ -330,9 +330,9 @@ func (m ChainExt) Apply(a *Args) error {
 }
 
 // chainExtOrder fixes emission order for deterministic argv.
-var chainExtOrder = []Key{
+var chainExtOrder = []OptionKey{
 	KeyConsensusMethod, KeyBlocksPerTurn, KeyNonceLimit, KeyMaxTxsPerBlock,
 	KeyBlockInterval, KeyBlockTimeAdj, KeyBlockMinBuildTime, KeyBlockMinBuildTxs,
 }
 
-func isChainExtKey(k Key) bool { return slices.Contains(chainExtOrder, k) }
+func isChainExtKey(k OptionKey) bool { return slices.Contains(chainExtOrder, k) }

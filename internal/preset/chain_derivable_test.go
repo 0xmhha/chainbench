@@ -1,11 +1,11 @@
-package chainpreset
+package preset_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/preset"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
 // The golden profile pins the successor set's addresses, BLS public keys and
@@ -26,11 +26,11 @@ import (
 
 // TestPreset_TheValidatorSetIsWhatTheKeySetDerives.
 func TestPreset_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
-	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
+	prof, err := preset.LoadChainPreset("../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}
-	preset, err := store.LoadPreset("../../presets/keys")
+	preset, err := preset.LoadKeyPreset("../../presets/keys")
 	if err != nil {
 		t.Fatalf("read the shipped key set: %v", err)
 	}

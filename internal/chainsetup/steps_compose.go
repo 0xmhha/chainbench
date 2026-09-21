@@ -11,11 +11,10 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -175,7 +174,7 @@ func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
 		if k == "" {
 			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
 		}
-		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
+		out = append(out, nodeconfig.Override{Key: nodeconfig.OptionKey(k), Value: v})
 	}
 	return out, nil
 }
@@ -330,36 +329,36 @@ func commanderRunner(c process.Commander) genesis.CommandRunner {
 // set (identity and public keys), the placement, the validated peering, and a
 // public-key lookup by index. Config, launchopts and start all render from
 // the same four, so they are gathered once.
-func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.KeyPreset, *node.Map, node.Peering, func(int) (string, bool), error) {
+func (w *Workspace) peerPlan(p registry.ChainPlugin) (preset.Key, *node.Map, node.Peering, func(int) (string, bool), error) {
 	// With accounts, for the same reason start loads them: this renders each
 	// node's config, and a producer's config names the account it unlocks.
-	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	keys, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return keyring.KeyPreset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	// The peer's own recorded address: spread across a set each node lives on
 	// a different host, and a static-node list pointing at this machine would
 	// leave every node unable to find its peers. Keys reach the composition
 	// as inputs — the node module joins them to placements.
 	pubkey := func(index int) (string, bool) {
-		nk, ok := preset.Node(index)
+		nk, ok := keys.Node(index)
 		if !ok {
 			return "", false
 		}
 		return nk.PublicKey, true
 	}
-	return preset, placed, peering, pubkey, nil
+	return keys, placed, peering, pubkey, nil
 }
 
 // recordInput remembers what a launch input hashed to when this workspace wrote

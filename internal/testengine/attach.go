@@ -21,6 +21,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // attachNetwork is the network label recorded for an attached NodeSet.
@@ -239,7 +240,7 @@ func ringFor(dir string) (*store.KeySet, error) {
 	// it registers have to carry their keys. This is the run's own local ring —
 	// a srv:// one is downloaded before this point — so the per-entry reads are
 	// local.
-	set, err := store.LoadPresetWithKeys(dir)
+	set, err := preset.LoadKeyPresetWithKeys(dir)
 	if err != nil {
 		// A key set that is not there is not an error here. Attaching to a
 		// network somebody else composed is the ordinary case, and the compose

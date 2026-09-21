@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -133,7 +133,7 @@ func TestPresetGenesisSource_ProducersFromPlacement(t *testing.T) {
 	// Use the real committed ring: the preset loader verifies each identity
 	// derives from its nodekey, so a fabricated one is rejected.
 	presetDir := filepath.Join("..", "..", "..", "..", "presets", "keys")
-	preset, err := store.LoadPreset(presetDir)
+	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
 		t.Skipf("preset fixture unavailable: %v", err)
 	}

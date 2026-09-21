@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"path/filepath"
 	"strings"
@@ -41,33 +42,33 @@ type presetNode struct {
 // record of what a running network was given, and silently correcting it would
 // hide a set whose identities and keys have come apart. Use [Entry.Verify] to
 // check them on purpose.
-func LoadPreset(dir string) (keyring.KeyPreset, error) {
+func LoadPreset(dir string) (preset.Key, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
-func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.KeyPreset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (preset.Key, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)
 	if err != nil {
-		return keyring.KeyPreset{}, fmt.Errorf("keyring: read preset: %w", err)
+		return preset.Key{}, fmt.Errorf("keyring: read keys: %w", err)
 	}
 	var f presetFile
 	if err := json.Unmarshal(b, &f); err != nil {
-		return keyring.KeyPreset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
+		return preset.Key{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
 	if err := f.validate(path); err != nil {
-		return keyring.KeyPreset{}, err
+		return preset.Key{}, err
 	}
 	nodes, err := f.entries(path)
 	if err != nil {
-		return keyring.KeyPreset{}, err
+		return preset.Key{}, err
 	}
-	return keyring.KeyPreset{
+	return preset.Key{
 		Nodes: nodes,
 		Network: keyring.Network{
 			Validators: f.Validators,

@@ -14,9 +14,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -225,7 +225,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	// With accounts: a producer unlocks the account its keystore holds, which is
 	// not always the address its nodekey derives.
-	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	preset, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start: %w", err)
 	}
