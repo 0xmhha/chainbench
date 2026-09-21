@@ -307,3 +307,32 @@ func TestAreasAreFarApart(t *testing.T) {
 		t.Errorf("an area holds %d blocks, want 16", blocks)
 	}
 }
+
+// TestDetailedIsTheTableAndNotAGuess pins the distinction the walk rests on: a
+// stage the table gives no way out of has to say which of its own states it
+// went through, and one that may move on without naming a detail does not.
+//
+// Both kinds exist and the difference is not visible from "has detail states".
+// Getting it wrong in either direction is silent: demand a report from a stage
+// that has nothing to report and every composition stops; let one off and a
+// stage that lost its report walks a path nobody took.
+func TestDetailedIsTheTableAndNotAGuess(t *testing.T) {
+	for _, c := range []struct {
+		at   Status
+		want bool
+		why  string
+	}{
+		{ChainEnsureKeys, true, "its three sources are the only ways out"},
+		{ChainBuildGenesis, true, "it must say where the genesis came from"},
+		{ChainLaunchNodes, true, "it must walk at least one phase"},
+		{ChainDeployNodes, false, "its two detail states say what the target was, and it may move on without either"},
+		{ChainOpenWorkspace, false, "it has no states of its own"},
+		{ChainBuildNodeConfig, false, "same"},
+		{CompareChain, true, "the four verdicts are the only ways out"},
+		{ReconcileChain, true, "kept and redone are the only ways out"},
+	} {
+		if got := Detailed(c.at); got != c.want {
+			t.Errorf("Detailed(%s) = %v, want %v — %s", c.at, got, c.want, c.why)
+		}
+	}
+}

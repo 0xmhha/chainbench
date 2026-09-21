@@ -157,8 +157,15 @@ var allowed = map[Status][]Status{
 	ChainDeployNodesVerifiedLocal: {ChainInitNodes},
 	ChainDeployNodesShippedRemote: {ChainInitNodes},
 
+	// The busy-port failure belongs to the launch and is listed here too,
+	// because the init stage asks the same question before it writes anything.
+	// It is one condition with one state rather than two: what failed is the
+	// ports the launch needs, whoever noticed. Naming a second state for it
+	// would put one concept under two names, and a reader comparing two runs
+	// would have to know which stage happened to ask.
 	ChainInitNodes: {ChainLaunchNodes, ChainInitNodesFailTargetUnable,
-		ChainInitNodesFailGenesisUnreadable, ChainInitNodesFailDatadir},
+		ChainInitNodesFailGenesisUnreadable, ChainInitNodesFailDatadir,
+		ChainLaunchNodesFailPortBusy},
 
 	ChainLaunchNodes: {ChainLaunchNodesPhaseLaunching,
 		ChainLaunchNodesFailNoBinary, ChainLaunchNodesFailPortBusy,
@@ -216,3 +223,32 @@ var allowed = map[Status][]Status{
 // count bounds the cycle; a limit that counted states would refuse the second
 // producer.
 const entryLimit = 1
+
+// Detailed reports whether a stage MUST walk states of its own before it moves
+// on — that is, whether the table gives it no way out of its own block.
+//
+// The question is not "does this stage have detail states". Two kinds of stage
+// have them and they are not the same. The key stage's three sources are the
+// only ways out, so a key step that named none went somewhere the table does
+// not allow; the deploy stage's two say what the target was and it may move on
+// without naming either, which is what it does while whether anything was
+// shipped is still counted inside Workspace.Provision and never comes back out.
+//
+// Read off the table rather than declared a second time beside it, and kept
+// apart from "the stage classifies its failures" — that is a different thing a
+// stage can do on its own, and confusing the two made every stage that did one
+// demand the other.
+func Detailed(entry Status) bool {
+	inside, outside := false, false
+	for _, to := range allowed[entry] {
+		if to.IsFailure() {
+			continue
+		}
+		if to.Block() == entry.Block() {
+			inside = true
+		} else {
+			outside = true
+		}
+	}
+	return inside && !outside
+}

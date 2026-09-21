@@ -232,6 +232,14 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 			lifecycle.ChainLaunchNodesFailPhaseEmpty},
 		{"something the driver refused", "start", errors.New("no"), nil, lifecycle.FailStageUnclassified},
 
+		{"a target that cannot initialize", "init", ofKind(errInitTargetUnable, errors.New("x")), nil, lifecycle.ChainInitNodesFailTargetUnable},
+		{"a genesis that cannot be read back", "init", ofKind(errInitGenesisUnreadable, errors.New("x")), nil, lifecycle.ChainInitNodesFailGenesisUnreadable},
+		{"a datadir that will not clear", "init", ofKind(errInitDatadir, errors.New("x")), nil, lifecycle.ChainInitNodesFailDatadir},
+		// The init stage asks the launch's question before it writes anything,
+		// and the answer keeps the launch's name.
+		{"a busy port, noticed by init", "init", ofKind(errLaunchPortBusy, errors.New("x")), nil, lifecycle.ChainLaunchNodesFailPortBusy},
+		{"the binary refusing the genesis", "init", errors.New("no"), nil, lifecycle.FailStageUnclassified},
+
 		{"a stage still owing", "config", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
 	} {
 		r := &recorder{failAt: c.step, fail: c.err, failPath: c.got}
@@ -248,13 +256,13 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 // TestADebtStateSaysWhyItIsOne pins that the two halves are read together: the
 // state says the stage is not classified, and the error says why it cannot be.
 func TestADebtStateSaysWhyItIsOne(t *testing.T) {
-	r := &recorder{failAt: "init"}
+	r := &recorder{failAt: "config"}
 	_, err := walk(t, "", UpStart, r)
 	if err == nil {
 		t.Fatal("the walk did not stop")
 	}
-	if !strings.Contains(err.Error(), "unreachable target") {
-		t.Errorf("the error does not say why init cannot classify: %v", err)
+	if !strings.Contains(err.Error(), "failed readback") {
+		t.Errorf("the error does not say why config cannot classify: %v", err)
 	}
 }
 

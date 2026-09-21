@@ -136,7 +136,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	}
 	hint := strings.Join(hints, "; ")
 	return ofKind(errLaunchPortBusy,
-		fmt.Errorf("chainsetup: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint))
+		fmt.Errorf("chainsetup: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint))
 }
 
 // scanPorts asks whether the plan's ports are taken, from where the

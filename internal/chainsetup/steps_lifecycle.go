@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -107,6 +108,24 @@ func (w *Workspace) genesisPaths() []string {
 	return out
 }
 
+// The kinds of failure the init stage has.
+//
+// What is deliberately not one of them is the binary's own refusal:
+// InitDatadir covers "the binary is not there", "it will not take this genesis"
+// and "the datadir is in use", and which of those it was is the driver's answer
+// rather than this step's. Naming one of these three over it would say
+// something the error does not.
+var (
+	// errInitTargetUnable: the target's driver cannot initialize a datadir.
+	errInitTargetUnable = errors.New("the target cannot initialize a datadir")
+	// errInitGenesisUnreadable: the genesis this node needs cannot be read back
+	// from the machine the genesis stage wrote it to.
+	errInitGenesisUnreadable = errors.New("the genesis cannot be read from the target")
+	// errInitDatadir: the datadir could not be cleared, so "init" would not
+	// mean what it says.
+	errInitDatadir = errors.New("the datadir cannot be cleared")
+)
+
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -135,7 +154,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	err = w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		initer, ok := t.Driver.(process.Initializer)
 		if !ok {
-			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
+			return ofKind(errInitTargetUnable,
+				fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs"))
 		}
 		// A path on the machine: the genesis step wrote it through each
 		// machine's file store, so it is read back the same way. Read once per
@@ -148,7 +168,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			}
 			gen, err := t.Files.Read(ctx, p)
 			if err != nil {
-				return nil, fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err)
+				return nil, ofKind(errInitGenesisUnreadable,
+					fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err))
 			}
 			byPath[p] = gen
 			return gen, nil
@@ -178,7 +199,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			// skipped above — so what is removed is the chain this node built,
 			// which is what a rebuild discards.
 			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
-				return fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err)
+				return ofKind(errInitDatadir,
+					fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err))
 			}
 			// The genesis this node's binary accepts, which is not always the
 			// network's: two builds in one network need not take the same

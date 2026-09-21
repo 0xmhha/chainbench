@@ -95,7 +95,7 @@ var composition = []composeStage{
 	},
 	{
 		step: "init", at: lifecycle.ChainInitNodes, next: lifecycle.ChainLaunchNodes,
-		owed: "NetInit reports an unreachable target and an unreadable genesis the same way",
+		classify: initFailure,
 	},
 	{
 		// The block with the most detail states, because it is the one stage
@@ -114,7 +114,7 @@ const (
 	// with none goes straight on.
 	stagesStillAssuming = 0
 	// stagesStillOwing report every failure as one sentence.
-	stagesStillOwing = 6
+	stagesStillOwing = 5
 )
 
 // composeRun is one step of the composition: it runs the verb, appends the
@@ -212,9 +212,12 @@ func (s composeStage) run(m *lifecycle.Machine, run composeRun) ([]lifecycle.Sta
 	if len(s.assumed) > 0 {
 		return s.assumed, nil
 	}
-	if s.classify != nil {
-		// A stage whose work has moved in says where it went. Only a stage
-		// still driven from outside is silent, and those have an assumed path.
+	if lifecycle.Detailed(s.at) {
+		// A stage with states of its own has to say which it went through.
+		// Silence is a report that was lost, and filling one in is what these
+		// stages stopped doing. A stage with none says nothing and goes on —
+		// which is a different thing from classifying its failures, and
+		// confusing the two made every stage that does one demand the other.
 		return nil, fmt.Errorf("chainsetup: the %s step did not say which states it went through", s.step)
 	}
 	return nil, nil
@@ -315,6 +318,31 @@ func launchFailure(err error) lifecycle.Status {
 		return lifecycle.ChainLaunchNodesFailNoKeystore
 	case errors.Is(err, errLaunchPhaseEmpty):
 		return lifecycle.ChainLaunchNodesFailPhaseEmpty
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// initFailure is which of the init stage's failures this error is.
+//
+// The busy-port answer is the launch's state, not one of this block's. The
+// check is the same one the launch makes, asked here before anything is
+// written so that the refusal can name the ports and the host instead of
+// leaving it to the binary to say "datadir already used"; what failed is the
+// ports the launch needs, and it keeps that name whoever noticed.
+//
+// What still reaches the default is the binary's own refusal, and the two
+// preconditions a bare `chain init` can still hit — inside a composition the
+// transition table is what makes those unreachable.
+func initFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errInitTargetUnable):
+		return lifecycle.ChainInitNodesFailTargetUnable
+	case errors.Is(err, errInitGenesisUnreadable):
+		return lifecycle.ChainInitNodesFailGenesisUnreadable
+	case errors.Is(err, errInitDatadir):
+		return lifecycle.ChainInitNodesFailDatadir
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
 	}
 	return lifecycle.FailStageUnclassified
 }
