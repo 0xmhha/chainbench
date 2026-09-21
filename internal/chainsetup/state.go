@@ -96,7 +96,12 @@ type State struct {
 	// wrong launch into a refusal that names the file.
 	LaunchInputs map[string]string `json:"launchInputs,omitempty"`
 	Nodes        []node.Record     `json:"nodes,omitempty"`
-	Steps        map[string]Step   `json:"steps"`
+	// Steps is what has been done to this composition, by name. It holds two
+	// kinds: a rung of the composition ladder (UpStepNames) and an operation on
+	// a network already up (OpStepNames). Every reader names the subset it
+	// means, so the two do not collide — but which kind a name is has to be
+	// read off one of those two lists, not guessed from the map.
+	Steps map[string]Step `json:"steps"`
 	// Peering is the peer graph the composition wires ("mesh" default,
 	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
 	// before the field keeps the graph it was composed with.

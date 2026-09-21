@@ -218,11 +218,13 @@ func (w *Workspace) opener() resource.Opener {
 	return resource.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
 }
 
-// applyConfigOverrides applies the workspace's config-knob overrides to one
-// node's spec, most-general-first, so the narrowest scope wins. Each entry is a
-// dot-path "key=value"; an unknown key or a malformed entry is an error, never
-// a silent no-op.
-
+// markStep records that step finished, with the detail it reports.
+//
+// step must be a name one of the two lists declares — UpStepNames for a rung of
+// the composition ladder, OpStepNames for an operation on a network that is
+// already up. The two go into the same map and a reader picks the subset it
+// means, so a name in neither list is recorded and then never read by anything.
+// TestRecordedStepsAreDeclared holds every call here to that.
 func (w *Workspace) markStep(step, detail string) {
 	w.state.Steps[step] = w.comp.StepMark(detail)
 }

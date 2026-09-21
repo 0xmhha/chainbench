@@ -21,6 +21,10 @@ import (
 // vocabulary does not take, or a --set that is not one.
 var errBuildBadOption = errors.New("a launch option is not one this accepts")
 
+// applyConfigOverrides applies the workspace's config-knob overrides to one
+// node's spec, most-general-first, so the narrowest scope wins. Each entry is a
+// dot-path "key=value"; an unknown key or a malformed entry is an error, never
+// a silent no-op.
 func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, index int) error {
 	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
