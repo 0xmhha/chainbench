@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
-const presetDir = "../../keys/preset"
+const presetDir = "../../presets/keys"
 
 // composeForQuery builds a small mixed network to ask questions about.
 func composeForQuery(t *testing.T) string {

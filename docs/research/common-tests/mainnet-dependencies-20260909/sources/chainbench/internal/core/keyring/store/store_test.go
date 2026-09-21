@@ -16,7 +16,7 @@ import (
 // actually consume, including the fields that used to need a second type to
 // hold them.
 func TestLoadPreset_ShippedFixture(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}

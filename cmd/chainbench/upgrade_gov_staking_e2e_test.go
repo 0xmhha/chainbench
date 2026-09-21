@@ -9,7 +9,7 @@
 //   - the operator (msg.sender) must differ from the staker
 //   - a valid BLS public key + proof-of-possession for the staker identity
 //
-// The BLS pubkey/PoP for each preset node ship in keys/preset/metadata.json
+// The BLS pubkey/PoP for each preset node ship in presets/keys/metadata.json
 // (blsPublicKey/blsPoP), derived from the committed nodekeys. This test uses
 // node2 as the operator and node1 as the staker. Run it with:
 //
@@ -453,10 +453,10 @@ func stakingUint(t *testing.T, c *rpc.Client, sig, addr string) *big.Int {
 }
 
 // presetNodeBLS returns node idx's BLS public key and proof-of-possession from
-// keys/preset/metadata.json (blsPublicKey / blsPoP).
+// presets/keys/metadata.json (blsPublicKey / blsPoP).
 func presetNodeBLS(t *testing.T, idx int) (pk, pop []byte) {
 	t.Helper()
-	b, err := os.ReadFile("../../keys/preset/metadata.json")
+	b, err := os.ReadFile("../../presets/keys/metadata.json")
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}

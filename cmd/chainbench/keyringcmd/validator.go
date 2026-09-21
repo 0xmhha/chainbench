@@ -197,7 +197,7 @@ func newValidatorRosterCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set (preset) directory")
+	cmd.Flags().StringVar(&keysDir, "keys", "presets/keys", "key set (preset) directory")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the roster as JSON")
 	return surface.ReadOnly(cmd)
 }

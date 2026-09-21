@@ -14,7 +14,7 @@ import (
 )
 
 // presetPath is the repository's shipped key set.
-func presetPath() string { return filepath.Join("..", "..", "..", "keys", "preset") }
+func presetPath() string { return filepath.Join("..", "..", "..", "presets", "keys") }
 
 // handoffInputs are the golden profile and preset over a temp data dir, with
 // a runner that answers the base-genesis step by writing the fixture the

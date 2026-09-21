@@ -26,7 +26,7 @@ func chainNewTool() Tool {
 				"workspaceConfig": map[string]any{"type": "string", "description": "environment file owning the target dataRoot and its purpose directories"},
 				"chain":           map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix)"},
 				"binary":          map[string]any{"type": "string", "description": "node binary path (may also be set at start)"},
-				"keys":            map[string]any{"type": "string", "description": "key set directory (default keys/preset)"},
+				"keys":            map[string]any{"type": "string", "description": "key set directory (default presets/keys)"},
 				"target":          map[string]any{"type": "string", "description": "data plane as one path: /local/path | user@host:/path | ssh://user@host:port/path"},
 				"remoteHost":      map[string]any{"type": "string", "description": "legacy: SSH host for a remote data plane (prefer target)"},
 				"remoteUser":      map[string]any{"type": "string", "description": "legacy: SSH user (prefer target)"},

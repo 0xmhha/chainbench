@@ -10,7 +10,7 @@
 // well-formed key that no wbft node will accept — a failure that surfaces as a
 // consensus problem rather than a key problem.
 //
-// The derivation is pinned against known-good vectors: keys/preset ships each
+// The derivation is pinned against known-good vectors: presets/keys ships each
 // nodekey next to the address, devp2p public key, BLS public key and proof of
 // possession it produced, and derive_test.go re-derives all of them and compares
 // byte for byte. That the check catches a real drift is itself verified — the

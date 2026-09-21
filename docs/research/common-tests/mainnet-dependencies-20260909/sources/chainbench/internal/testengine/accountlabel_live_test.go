@@ -42,7 +42,7 @@ func TestSuite_Live_AccountLabels(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(ws) })
 
-	keysDir := filepath.Join(repoRoot(t), "keys", "preset")
+	keysDir := filepath.Join(repoRoot(t), "presets", "keys")
 	set, err := store.LoadPreset(keysDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)

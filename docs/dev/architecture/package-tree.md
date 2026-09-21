@@ -116,7 +116,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 internal/chainpreset  164  [L2a] 체인 preset 1문서 — 골든 핸드오프 선언을 읽는다(Preset·Load).
                           어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지,
                           거버넌스 정책·검증자·포트 계획. preset 의 두 갈래 중 체인 쪽
-                          (키 쪽은 keys/preset + keyring.KeyPreset)
+                          (키 쪽은 presets/keys + keyring.KeyPreset)
 
 internal/resource  3,094  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·

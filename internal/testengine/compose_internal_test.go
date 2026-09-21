@@ -397,7 +397,7 @@ func TestCompositionOf_NodeTablePnSelectsProxied(t *testing.T) {
 // drift on a default. The constants are pinned so a surface's flag/arg default
 // cannot silently diverge from the seam.
 func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
-	if suiteDefaultValidators != 4 || defaultKeysDir != "keys/preset" {
+	if suiteDefaultValidators != 4 || defaultKeysDir != "presets/keys" {
 		t.Fatalf("canonical defaults drifted: validators=%d keys=%q", suiteDefaultValidators, defaultKeysDir)
 	}
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
@@ -412,7 +412,7 @@ func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if unset.up.KeysDir != explicit.up.KeysDir || unset.up.KeysDir != "keys/preset" {
+	if unset.up.KeysDir != explicit.up.KeysDir || unset.up.KeysDir != "presets/keys" {
 		t.Errorf("keys default diverges: unset=%q explicit=%q", unset.up.KeysDir, explicit.up.KeysDir)
 	}
 	if unset.up.BPCount != suiteDefaultValidators {

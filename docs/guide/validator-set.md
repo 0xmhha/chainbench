@@ -8,7 +8,7 @@
 > it lives under `validator`. Raw keypair primitives live under `keyring`
 > (`keyring new` / `keyring add`) — there is no top-level `keys` command group.
 
-The committed `keys/preset` ships 5 nodes, which caps a local network at 5. Some
+The committed `presets/keys` ships 5 nodes, which caps a local network at 5. Some
 cases need more (e.g. the n=6 WBFT quorum tests). `chainbench validator set`
 produces a preset of any size that `store.LoadPreset` (and every `chain` step)
 consumes.

@@ -33,7 +33,7 @@ type NewOpts struct {
 	// chain id is taken from the manifest.
 	ManifestPath string
 	TemplatePath string
-	// KeysDir is the key set the network composes from (default keys/preset).
+	// KeysDir is the key set the network composes from (default presets/keys).
 	// Account management/inspection is the `account` subcommand's job; net only
 	// records which key set to use.
 	KeysDir string
@@ -70,7 +70,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	}
 	keysDir := opts.KeysDir
 	if keysDir == "" {
-		keysDir = "keys/preset"
+		keysDir = "presets/keys"
 	}
 
 	tgt := opts.Target

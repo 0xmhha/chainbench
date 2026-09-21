@@ -29,7 +29,7 @@ func TestPresetGenesisSource_Live_GstableInit(t *testing.T) {
 		t.Fatalf("GSTABLE_BIN=%q: %v", bin, err)
 	}
 
-	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
+	presetDir := filepath.Join(repoRoot(t), "presets", "keys")
 	if _, err := os.Stat(filepath.Join(presetDir, "metadata.json")); err != nil {
 		t.Skipf("preset not found at %s: %v", presetDir, err)
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func TestValidatorRoster_WbftFamily(t *testing.T) {
-	out, err := run(t, "validator", "roster", "--chain", "stablenet", "--keys", "../../../keys/preset")
+	out, err := run(t, "validator", "roster", "--chain", "stablenet", "--keys", "../../../presets/keys")
 	if err != nil {
 		t.Fatalf("validator roster: %v\n%s", err, out)
 	}
@@ -19,7 +19,7 @@ func TestValidatorRoster_WbftFamily(t *testing.T) {
 }
 
 func TestValidatorRoster_PoaFamilyNote(t *testing.T) {
-	out, err := run(t, "validator", "roster", "--chain", "wemix", "--keys", "../../../keys/preset")
+	out, err := run(t, "validator", "roster", "--chain", "wemix", "--keys", "../../../presets/keys")
 	if err != nil {
 		t.Fatalf("validator roster wemix: %v\n%s", err, out)
 	}
@@ -32,7 +32,7 @@ func TestValidatorRoster_PoaFamilyNote(t *testing.T) {
 }
 
 func TestValidatorRoster_RequiresChain(t *testing.T) {
-	if _, err := run(t, "validator", "roster", "--keys", "../../../keys/preset"); err == nil {
+	if _, err := run(t, "validator", "roster", "--keys", "../../../presets/keys"); err == nil {
 		t.Fatal("expected error without --chain")
 	}
 }

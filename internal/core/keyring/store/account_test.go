@@ -21,7 +21,7 @@ import (
 // one that sealed with no balance ("insufficient funds for gas * price + value").
 // Both were measured before this existed.
 // shippedPreset is the key set this repository ships.
-var shippedPreset = filepath.Join("..", "..", "..", "..", "keys", "preset")
+var shippedPreset = filepath.Join("..", "..", "..", "..", "presets", "keys")
 
 func TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds(t *testing.T) {
 	set, err := store.LoadPresetWithAccounts(shippedPreset)

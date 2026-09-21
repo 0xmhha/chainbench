@@ -169,7 +169,7 @@ func TestKeySet_AddPropagatesSourceErrors(t *testing.T) {
 // TestNetworkFor_DoesNotAliasThePreset is a regression: the narrowed result
 // resliced the preset's own array, so appending to it rewrote the preset.
 func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -224,7 +224,7 @@ func TestKeySet_AddIsSafeUnderConcurrency(t *testing.T) {
 // fixture, reused so no key literal appears in source.
 func presetEntry(t *testing.T) keyring.Entry {
 	t.Helper()
-	set, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	set, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("read shipped preset: %v", err)
 	}

@@ -67,7 +67,7 @@ engine/app.go:114    session.New(cfg.ArtifactRoot, cmd, clock(), nil)
 
 `keyreg` 는 구현·단위테스트가 끝나 있고(T1.6 ☑) `session`·`testspec` 이 타입으로 받고 있지만
 **아무도 생성하지 않는다.** 결과로 배경 1.4·1.5 와 알고리즘 2·3(키를 random 생성할지 기존 것을
-쓸지 결정)이 통째로 미구현이며, 실경로는 `keys/preset` 하드코딩(`engine/app.go:50`)이다.
+쓸지 결정)이 통째로 미구현이며, 실경로는 `presets/keys` 하드코딩(`engine/app.go:50`)이다.
 
 component-architecture §2b 가 경고한 **"테스트 있음 ≠ 프로덕션 배선됨"의 재발**이다. 이번엔
 "이름만 있는 것"이 아니라 "생성자만 없는 것"이라 grep 으로도 안 잡힌다.

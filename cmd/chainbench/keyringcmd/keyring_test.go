@@ -193,7 +193,7 @@ func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
 // TestKeyring_VerifyCatchesDrift checks the shipped key set and then a tampered
 // copy, so the check is shown to fail as well as pass.
 func TestKeyring_VerifyCatchesDrift(t *testing.T) {
-	if _, err := run(t, "keyring", "list", "--keyring-dir", "../../../keys/preset", "--verify"); err != nil {
+	if _, err := run(t, "keyring", "list", "--keyring-dir", "../../../presets/keys", "--verify"); err != nil {
 		t.Fatalf("the shipped key set did not verify: %v", err)
 	}
 

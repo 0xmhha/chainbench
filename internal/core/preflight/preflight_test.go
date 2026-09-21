@@ -11,7 +11,7 @@ import (
 
 func have() preflight.Have {
 	return preflight.Have{
-		Chain: "stablenet", Binary: "/bin/gstable", KeysDir: "keys/preset", BPCount: 2, Started: true,
+		Chain: "stablenet", Binary: "/bin/gstable", KeysDir: "presets/keys", BPCount: 2, Started: true,
 		Nodes: []preflight.Node{
 			{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", PID: 100},
 			{Index: 2, Role: node.RoleBP, Host: "127.0.0.1", PID: 101},

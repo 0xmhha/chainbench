@@ -15,11 +15,11 @@ import (
 //
 // Presets come in two families, and the name says which this is. A CHAIN preset
 // declares how a network is configured; a KEY preset declares the identities it
-// runs as (keys/preset, decoded by keyring.KeyPreset). Naming this one after the
+// runs as (presets/keys, decoded by keyring.KeyPreset). Naming this one after the
 // family rather than after the kind is deliberate: of its eleven sections only
 // "upgrade" is about a hardfork, and the other ten — chains, roles, identities,
 // producers, validators, data, ports, nodes — are ordinary chain configuration
-// that a preset of another kind would declare the same way. presets/hardfork is
+// that a preset of another kind would declare the same way. presets/chain is
 // one kind; the directory layout is presets/<kind>/ and more may follow.
 //
 // It is the single, declarative record of the environment under test: every

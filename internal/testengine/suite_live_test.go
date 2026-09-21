@@ -56,7 +56,7 @@ func TestSuite_Live_FullRun(t *testing.T) {
 		SpecPaths:  []string{specPath},
 		DataDir:    ws,
 		Binary:     bin,
-		KeysDir:    filepath.Join(repoRoot(t), "keys", "preset"),
+		KeysDir:    filepath.Join(repoRoot(t), "presets", "keys"),
 		WaitBlocks: 1,
 	})
 	if err != nil {

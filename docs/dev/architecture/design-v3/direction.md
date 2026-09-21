@@ -32,16 +32,16 @@
 
 | 지금 | 제안 | 왜 |
 |---|---|---|
-| `presets/hardfork/*.yaml` + `upgrade.Profile` + `LoadProfile` | ~~preset 으로~~ **완료 (2026-09-21): `upgrade.ChainPreset` · `LoadChainPreset`** | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 했다 |
+| `presets/chain/*.yaml` + `upgrade.Profile` + `LoadProfile` | ~~preset 으로~~ **완료 (2026-09-21): `upgrade.ChainPreset` · `LoadChainPreset`** | 파일 위치가 `presets/` 인데 타입이 `Profile` 이라 문서와 코드가 다른 말을 했다 |
 | `dsl.UpgradeV2.Profile` 필드 | ~~삭제~~ **완료 (2026-09-21)** | 정의서 209개 중 쓰는 것이 0개였다. 지우면서 스키마의 `upgrade` 블록도 실제 구조에 맞췄다 — `required: [profile, template]` 에 `additionalProperties: false` 라 **실제로 쓰는 `preset` 을 거부하는 상태**였고, `fork`·`at`·`from`·`to`·`style`·`carry` 여섯 필드가 통째로 빠져 있었다 |
 | `profiles/` 디렉터리 | ~~삭제~~ **완료 (2026-09-21)** | 측정 §4 |
-| `keys/preset/` | **`keys/fixture/`** 로 | 키는 골든 설정이 아니라 테스트 픽스처다. `keyring.Preset` 타입도 같이 본다 |
+| `presets/keys/` | **`keys/fixture/`** 로 | 키는 골든 설정이 아니라 테스트 픽스처다. `keyring.Preset` 타입도 같이 본다 |
 | 메인넷 워크리스트의 "preset" (env 선언) | **env 로 통일** | 코드·파일·스키마가 이미 `env` 라 부른다. 문서만 다르다 |
 
 경로 오기 둘도 같이 고친다: `v2.schema.json:142` 의 *"profiles/\*.yaml"*, 그리고
 `chain-handover-2026-09-12.md:379` 의 `profiles/wemix-upgrade-15.yaml` 링크.
 
-**단점.** `keys/preset` → `keys/fixture` 는 env 파일 26개의 `keys.nodekeys.ref` 와 코드의
+**단점.** `presets/keys` → `keys/fixture` 는 env 파일 26개의 `keys.nodekeys.ref` 와 코드의
 `KeysDir` 기본값을 건드린다(참조 71곳). 이름 하나 때문에 넓게 퍼지므로, 나머지 넷을 먼저 하고
 이것만 따로 떼어 판단해도 된다.
 
@@ -104,7 +104,7 @@
 | ~~3~~ | ~~`upgrade.Profile`/`LoadProfile` 개명~~ | — | **완료 2026-09-21** |
 | ~~4~~ | ~~실행 조건 어휘 + 동사 이동 + 래칫~~ | — | **완료 2026-09-21** |
 | ~~5~~ | ~~남은 동사를 옮긴다~~ | — | **부분 완료 2026-09-21 (§12)** |
-| ~~6~~ | ~~`keys/preset` → `keys/fixture`~~ | — | **취소 (2026-09-21).** 갈래가 체인/키 둘이면 `keys/preset` 은 이미 정확한 이름이다 |
+| ~~6~~ | ~~`presets/keys` → `keys/fixture`~~ | — | **취소 (2026-09-21).** 갈래가 체인/키 둘이면 `presets/keys` 은 이미 정확한 이름이다 |
 | 7 | 큰 덩어리 | — | 요구가 생기면 |
 
 1·2 는 서로 독립이고 오늘 끝난다. 3 은 1 뒤다. 4 가 이 설계의 본체다.
@@ -135,7 +135,7 @@
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
 | **체인** | `presets/<종류>/*.yaml` (지금은 `hardfork` 하나) | `upgrade.ChainPreset` | `upgrade.LoadChainPreset` |
-| **키** | `keys/preset/` | `keyring.Preset` | `store.LoadPreset` |
+| **키** | `presets/keys/` | `keyring.Preset` | `store.LoadPreset` |
 
 **`HardforkPreset` 으로 갔다가 되돌렸다.** 종류(hardfork)로 이름을 좁혔는데, 그럴 이유가 없다 —
 하드포크는 체인 설정 preset 의 **한 종류**일 뿐이고 다른 종류가 더 생긴다. 실측이 그것을 보인다:
@@ -150,7 +150,7 @@ preset 도 똑같이 적을 **일반 체인 설정**이다. 디렉터리도 이�
 문서 쪽 표기도 `env` 로 통일하자고 적고 있다.
 
 **다음 차례는 키 쪽의 비대칭이다.** 체인 쪽은 갈래를 이름에 달았는데 키 쪽은 `Preset`·
-`LoadPreset` 으로 안 달았다. 6번에서 `keys/preset` 을 옮길 때 `KeyPreset`·`LoadKeyPreset` 으로
+`LoadPreset` 으로 안 달았다. 6번에서 `presets/keys` 을 옮길 때 `KeyPreset`·`LoadKeyPreset` 으로
 맞추면 둘이 짝이 된다.
 
 ## 9. 3번을 하면서 드러난 것
@@ -279,14 +279,14 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
 | 체인 | `presets/<종류>/*.yaml` | `chainpreset.Preset` | `chainpreset.Load` |
-| 키 | `keys/preset/` | `keyring.KeyPreset` | `store.LoadPreset` |
+| 키 | `presets/keys/` | `keyring.KeyPreset` | `store.LoadPreset` |
 
 로더까지 `LoadKeyPreset` 으로 바꾸려다 되돌렸다 — **충돌은 타입 하나였고**, 래칫이 요구하지 않은
 것까지 바꾸면서 `LoadPresetWithAccountsAt` 같은 이름이 길어지기만 했다.
 
 ### 6번 취소
 
-`direction.md` §2 가 제안하던 `keys/preset` → `keys/fixture` 를 **취소했다.** 그 제안은
+`direction.md` §2 가 제안하던 `presets/keys` → `keys/fixture` 를 **취소했다.** 그 제안은
 "`preset` 이 여러 뜻이니 키 쪽이 비켜 주자" 는 내 논리에서 나왔는데, 갈래가 **체인/키 둘**이면
-`keys/preset` 은 이미 정확한 이름이다. 비용도 반대를 가리킨다 — 경로 문자열 157곳, env 파일
+`presets/keys` 은 이미 정확한 이름이다. 비용도 반대를 가리킨다 — 경로 문자열 157곳, env 파일
 21개가 그것을 참조한다.

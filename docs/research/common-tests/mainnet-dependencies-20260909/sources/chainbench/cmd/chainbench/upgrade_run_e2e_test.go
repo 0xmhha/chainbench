@@ -133,7 +133,7 @@ func successorRPC(t *testing.T, out string) string {
 // fixture (public, local-only) whose address is genesis-funded.
 func presetNode1Key(t *testing.T) []byte {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join("..", "..", "keys", "preset", "metadata.json"))
+	b, err := os.ReadFile(filepath.Join("..", "..", "presets", "keys", "metadata.json"))
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}

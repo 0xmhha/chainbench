@@ -12,7 +12,7 @@ import (
 // goldenPresetPath resolves the repo's golden chain preset from this test's
 // package dir (internal/chainpreset -> repo root).
 func goldenPresetPath() string {
-	return filepath.Join("..", "..", "presets", "hardfork", "wemix-upgrade.yaml")
+	return filepath.Join("..", "..", "presets", "chain", "wemix-upgrade.yaml")
 }
 
 // TestGoldenPreset_SaysWhichForkAndHowManyOfEachSide.

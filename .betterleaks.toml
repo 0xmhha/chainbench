@@ -3,17 +3,17 @@
 # Every rule of the default set stays on. The allowlist below covers exactly the
 # two places README.md declares to be test fixtures, and nothing else:
 #
-#   > Treat a finding as real only if it is outside `keys/preset/` and outside
+#   > Treat a finding as real only if it is outside `presets/keys/` and outside
 #   > test code.
 #
-# The keys under keys/preset/ are committed on purpose so a local run is
+# The keys under presets/keys/ are committed on purpose so a local run is
 # reproducible. They are decryptable, every node binds to 127.0.0.1, and README
 # states they must never be used on any production, mainnet, testnet, staging or
 # shared network. The inline keys in test source are the upstream go-ethereum
 # test keys, already public in every geth fork.
 #
-# That covers both kinds of key under keys/preset/: the node identities, which
-# were generated once and committed, and the dev accounts (keys/preset/dev1/),
+# That covers both kinds of key under presets/keys/: the node identities, which
+# were generated once and committed, and the dev accounts (presets/keys/dev1/),
 # which the harness mints at run time and reads back so a label keeps naming one
 # address. Both are plaintext, both are disposable, and neither may ever hold
 # anything on a real network.
@@ -28,8 +28,8 @@
 useDefault = true
 
 [[allowlists]]
-description = "committed test fixtures under keys/preset (README CAUTION)"
-paths = ['''^keys/preset/''']
+description = "committed test fixtures under presets/keys (README CAUTION)"
+paths = ['''^presets/keys/''']
 
 [[allowlists]]
 description = "inline test keys in Go test source (upstream go-ethereum test keys)"

@@ -31,7 +31,7 @@ func run(t *testing.T, args ...string) (string, error) {
 
 func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
-	presetDir := filepath.Join("..", "..", "..", "keys", "preset")
+	presetDir := filepath.Join("..", "..", "..", "presets", "keys")
 
 	out, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet", "--keys", presetDir)
 	if err != nil {
@@ -95,7 +95,7 @@ func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet",
-		"--keys", filepath.Join("..", "..", "..", "keys", "preset"),
+		"--keys", filepath.Join("..", "..", "..", "presets", "keys"),
 		"--docker", "--server-set", set); err != nil {
 		t.Fatalf("chain new: %v", err)
 	}

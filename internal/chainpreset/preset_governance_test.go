@@ -24,7 +24,7 @@ import (
 // governance policy needs a way to be DECLARED — a DSL surface for it, which is
 // deliberately not built while nothing asks for one.
 func TestPreset_TheGovernancePolicyIsTheDefault(t *testing.T) {
-	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
+	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}

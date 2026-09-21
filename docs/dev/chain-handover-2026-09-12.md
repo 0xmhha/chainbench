@@ -376,15 +376,15 @@ chainbench 는 **클라이언트 쪽에서 태그를 풀어** 우회하고 있�
 wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 
 - W1 · B1: wemix→wbft 핸드오프, producer 15 + successor 15. 프로파일과 검증된 호출은
-  [`presets/hardfork/wemix-upgrade-15.yaml`](../../presets/hardfork/wemix-upgrade-15.yaml) 머리말에 그대로
+  [`presets/chain/wemix-upgrade-15.yaml`](../../presets/chain/wemix-upgrade-15.yaml) 머리말에 그대로
   적혀 있다(`chainbench upgrade run --profile … --all-servers --docker`).
 - W2: poa(wemix) 단독 원격 브링업, 14 bp + 1 en. chainbench 워크리스트 R6.
 
 환경을 세우는 법은 [`../guide/config-files.md`](../guide/config-files.md) 와
-`env/docker/` 다. 신원은 `keys/preset`(5노드)이 아니라 생성한 30노드 키 세트를 쓴다
+`env/docker/` 다. 신원은 `presets/keys`(5노드)이 아니라 생성한 30노드 키 세트를 쓴다
 (`chainbench validator set --nodes 30 --validators 15 --out <dir>`).
 
-> `keys/preset` 의 키는 **테스트 픽스처 전용**이다. 그 키나 거기서 파생된 주소를 공용
+> `presets/keys` 의 키는 **테스트 픽스처 전용**이다. 그 키나 거기서 파생된 주소를 공용
 > 네트워크로 옮기지 않는다 — [`../SECURITY_KEY_HANDLING.md`](../SECURITY_KEY_HANDLING.md).
 
 ---

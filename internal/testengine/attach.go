@@ -243,7 +243,7 @@ func ringFor(dir string) (*store.KeySet, error) {
 	if err != nil {
 		// A key set that is not there is not an error here. Attaching to a
 		// network somebody else composed is the ordinary case, and the compose
-		// path's default (keys/preset) is carried in even when nothing needs
+		// path's default (presets/keys) is carried in even when nothing needs
 		// it. What must not happen is a label quietly resolving to nothing:
 		// with no ring, ResolveAccount says there is none, at the step that
 		// asked.

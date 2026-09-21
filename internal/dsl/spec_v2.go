@@ -204,7 +204,7 @@ func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
 // and which genesis template the producer's binary generates from. It is a
 // declaration only; the composer that runs it lives above the grammar.
 type UpgradeV2 struct {
-	// Preset names a hardfork preset under presets/hardfork, without the
+	// Preset names a hardfork preset under presets/chain, without the
 	// directory or the extension.
 	//
 	// It used to have a sibling, "profile", that named the same document by

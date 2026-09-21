@@ -14,7 +14,7 @@ func preset(t *testing.T) string {
 	t.Helper()
 	dir, _ := os.Getwd()
 	for {
-		p := filepath.Join(dir, "keys", "preset")
+		p := filepath.Join(dir, "presets", "keys")
 		if _, err := os.Stat(filepath.Join(p, "metadata.json")); err == nil {
 			return p
 		}

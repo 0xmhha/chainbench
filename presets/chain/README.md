@@ -1,11 +1,11 @@
 # Hardfork presets
 
 A named bundle of the facts a hardfork test needs, in the same sense as the key
-preset under `keys/preset` and a chain's manifest: a declaration points at one
+preset under `presets/keys` and a chain's manifest: a declaration points at one
 and overrides what it needs to.
 
 A case names one with `env.upgrade.preset`, which resolves to
-`presets/hardfork/<id>.yaml`. An explicit path goes in `env.upgrade.profile`
+`presets/chain/<id>.yaml`. An explicit path goes in `env.upgrade.profile`
 instead, for a file that lives somewhere else.
 
 These used to sit in `profiles/`, beside the profiles for connecting to a

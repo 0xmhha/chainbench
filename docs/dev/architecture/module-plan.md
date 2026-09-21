@@ -450,7 +450,7 @@ fan-in 24). 나머지는 노드가 아니라 **노드에 대한 다른 것**이�
 경로는 **`node.Layout` 이 정본**이고 여기에 없던 넷을 더했다 — `NodekeyPath` ·
 `KeystoreDir` · `StaticNodesPath` · `IPCPath`(사용자 14 사실 중 빠져 있던 key·nodekey
 경로). 손조립 `fmt.Sprintf("node%d")` 는 데이터 플레인에서 0 이 됐다. 남은 둘은
-**키셋 소스**(`keys/preset/node1`) 레이아웃이라 keyring store 의 것이고, 착수 전에
+**키셋 소스**(`presets/keys/node1`) 레이아웃이라 keyring store 의 것이고, 착수 전에
 4곳으로 세었던 것 중 `session` 의 경로는 다른 평면(세션 아티팩트), `deploy.RemotePaths`
 는 외부 고정 레이아웃 선언이라 사본이 아니었다 — 실제 중복은 chainsetup 안의
 손조립이었고 그것이 사라졌다.

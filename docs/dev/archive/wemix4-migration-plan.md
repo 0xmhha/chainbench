@@ -48,7 +48,7 @@ govNCP.ncps=7(operator=OP_A~G), GovConfig{minStaking, unbonding 15/5, changeFeeD
 | wemix4 구성요소 | chainbench Go 대응 | 상태 |
 |---|---|---|
 | 15서버 토폴로지(node_env.json) | driver(local/remote) + `internal/core/topology` + preset | 있음 (역할 레이아웃 재구성 필요) |
-| `.credentials`/`env.conf`/`accounts.env` | `keys/preset` + `profiles/*.yaml` + genesis 템플릿 | 있음 |
+| `.credentials`/`env.conf`/`accounts.env` | `presets/keys` + `profiles/*.yaml` + genesis 템플릿 | 있음 |
 | `bootstrap.sh`(genesis→setup→init→gov배포→run→pre-croissant→블록100대기) | `chainbench upgrade run` (`internal/consensus/upgrade`) | 있음 (**minimal 설정**) |
 | `genesis_main_test.md` | `internal/chains/wbft/genesis.json`(템플릿) + 프로파일 | 있음 (**설정 격차**) |
 | `staker_register.sh`(OP가 VAL 등록) | e2e 헬퍼 `registerStakerVia` 등 | 있음 |

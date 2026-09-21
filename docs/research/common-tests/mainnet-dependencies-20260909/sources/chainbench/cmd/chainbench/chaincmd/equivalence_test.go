@@ -118,7 +118,7 @@ func normalize(v any, dir string) {
 // Nothing checked that the two agreed, and either could have picked up a
 // different default without the other noticing.
 func TestEquivalence_ChainNewComposesTheSameWorkspace(t *testing.T) {
-	preset := filepath.Join("..", "..", "..", "keys", "preset")
+	preset := filepath.Join("..", "..", "..", "presets", "keys")
 	cliDir, mcpDir := t.TempDir(), t.TempDir()
 
 	out, err := run(t, "chain", "new", "--workspace-dir", cliDir, "--chain", "stablenet", "--keys", preset)
@@ -152,7 +152,7 @@ func TestEquivalence_ChainNewComposesTheSameWorkspace(t *testing.T) {
 // reporting the chain, because the word also occurs inside a step's detail
 // line.
 func TestEquivalence_ChainStatusReportsTheSameComposition(t *testing.T) {
-	preset := filepath.Join("..", "..", "..", "keys", "preset")
+	preset := filepath.Join("..", "..", "..", "presets", "keys")
 	dir := t.TempDir()
 	if out, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet", "--keys", preset); err != nil {
 		t.Fatalf("chain new: %v\n%s", err, out)
@@ -201,7 +201,7 @@ func TestEquivalence_TheWorkspaceDefaultIsOneDefault(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home) // the same variable's name on Windows
 
-	preset := filepath.Join("..", "..", "..", "keys", "preset")
+	preset := filepath.Join("..", "..", "..", "presets", "keys")
 	out, err := run(t, "chain", "new", "--chain", "stablenet", "--keys", preset)
 	if err != nil {
 		t.Fatalf("chain new with no workspace: %v\n%s", err, out)

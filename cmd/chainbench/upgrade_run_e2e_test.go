@@ -49,8 +49,8 @@ func TestUpgradeRunE2E(t *testing.T) {
 	cmd := newRootCmd()
 	cmd.SetArgs([]string{
 		"upgrade", "run",
-		"--profile", "../../presets/hardfork/wemix-upgrade.yaml",
-		"--keys", "../../keys/preset",
+		"--profile", "../../presets/chain/wemix-upgrade.yaml",
+		"--keys", "../../presets/keys",
 		"--from-binary", fromBin,
 		"--to-binary", toBin,
 		"--template", template,
@@ -129,11 +129,11 @@ func successorRPC(t *testing.T, out string) string {
 	return m[1]
 }
 
-// presetNode1Key loads node 1's private key from keys/preset — a committed TEST
+// presetNode1Key loads node 1's private key from presets/keys — a committed TEST
 // fixture (public, local-only) whose address is genesis-funded.
 func presetNode1Key(t *testing.T) []byte {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join("..", "..", "keys", "preset", "metadata.json"))
+	b, err := os.ReadFile(filepath.Join("..", "..", "presets", "keys", "metadata.json"))
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}

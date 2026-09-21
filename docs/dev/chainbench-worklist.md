@@ -286,7 +286,7 @@ netcompose: `place` 할당 = http 8600·p2p 31000, step 10). 기존 절차 문�
 **검증 절차(바이너리 보유 환경)**:
 ```sh
 chainbench net up --data-dir /tmp/n1 --chain stablenet --binary $GSTABLE_BIN \
-  --keys keys/preset --validators 4
+  --keys presets/keys --validators 4
 chainbench net health --data-dir /tmp/n1     # 블록 전진 확인
 chainbench run --data-dir /tmp/n1 tests/specs/api/*.json
 chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
@@ -435,7 +435,7 @@ K0·S0 가 추측 위에 서게 된다.
 ### N — 네트워크 청사진 (구성 정보를 하나의 선언으로)
 
 > 근거: [[network-blueprint-design]](network-blueprint-design.md).
-> 실측 문제: 구성 정보가 **4조각**(`topology.yaml`·`serverset`·`keys/preset`·`poa.Config`)으로 흩어져
+> 실측 문제: 구성 정보가 **4조각**(`topology.yaml`·`serverset`·`presets/keys`·`poa.Config`)으로 흩어져
 > 어느 것도 전체를 말하지 못한다. **preset 이 선택이 아니라 전제**이고(`keys.LoadPreset` 필수),
 > 바이너리 경로가 **20개 파일**에 분산돼 있다. 노드별 nodekey·계정·포트·서버를 지정할 수단이 없다.
 
@@ -858,7 +858,7 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 | **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☑ **stage a**(`internal/nodemonitor` L4): `Verdict`·`Classify`(순수, worst-first)·`Gate`(관측→분류→제한복구 루프, `Observer`/`Restarter`/`Clock`/`EvidenceSink` 주입). `process.FailureMode` 재사용, 파괴 상태(chainId 불일치·fork·EtcdStale·QuorumLost)=FATAL 자동복구 0. **stage b**(testengine 배선): `health.Run`+recorded pid→Facts(순수 `factsFromReport`), `chainsetup.NetRestart` 재시작, `composeWorkspace`가 compose/reuse 후 1회·`PreSpec` 훅이 각 테스트 전 게이트. 관측·재시작은 재구현 없이 기존 함수 재사용(사용자 결정). 고아 `process.BringUp` 상한재시도는 모양이 달라 미재사용→1k-Z2 이월. **라이브 검증(GSTABLE_BIN) 이월** — CI는 순수 매핑·게이트·엔진루프 단위테스트로 green | ☑ |
 | **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☑ 기존(fault·partition·save/$ref·deploy·call)은 재구현 없이 조합. **신규**: ① `createAddress` 리더 — `accounts.CreateAddress`(SDK `tx.CreateAddress` 래핑, canonical 벡터 검증), nonce 생략 시 현재 nonce → deployContract 예상=실제 assert. ② `swapNode` action — 노드별 binary/config 교체(`chainsetup.NodeSwap`, 같은 datadir/genesis, **E4 recordSwap로 revision 보존**, config는 `writeNodeConfig` 공유·config-`<purpose>` fixture provenance). `interp.NodeSwapper` 선택 인터페이스(코어 미변경). ③ `contractChecksum` 리더 — bytecode/runtime code sha256(`filestore.Hash` 재사용). 기대 revert=PASS 등 verdict는 기존(`checkTxOutcome`). **swapNode config launch·라이브 시나리오는 사용자 환경 이월**, CI는 매핑·플러밍·revision·config render 단위테스트로 green | ☑ |
 | **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☑ 기존(session schema·`AssertResult.Provenance`·report.Build/Summary·chainstate_sink)은 확장. **E8-1** `session.Scrub` — 증적 write seam(`writeJSON`+`Spec`)에서 키·비밀번호 마스킹, hash/주소는 보존. workspace.json(기능)은 제외. **E8-2** FAIL/BLOCKED 시 엔진 `OnFail` 훅이 `collectFailureData`로 health.Run(RPC/peer/block)·process 레저(pid/command)·노드 로그 tail을 테스트별 `observations/`에 수집(`TestRecord.Observation`, 스크럽 적용). **E8-3** report가 observations/*를 링크, RunSuite가 bus로 chainstate.jsonl을 headless 경로에서도 기록. **E8-4** `collector.ReconnectingLogReader`(백오프 재시도, 항상 적용) + `resource.Access.Runner` 노출 + `chainsetup.NetRunner` + RunSuite가 remote면 `RemoteLogReader` 주입. **원격 SSH read·chainstate 라이브는 사용자 환경 이월**, CI는 스크럽·OnFail·tail·reconnect·report 링크 단위테스트로 green | ☑ |
-| **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☑ **E9-1** MCP↔CLI GAP 해소: `chainbench_run`이 rpc 없으면 compose(`app.RunSuite`, `RunSuiteIn.SpecContent`로 인라인 스펙)·있으면 attach. `chainbench_hardfork`→`app.HardforkPlan/Execute`(execute 기본 false). `chainbench_upgrade`→신설 `app.UpgradeRun`(handoff orchestration을 `upgrade.Handoff.Run`으로 추출, CLI `upgrade run`과 공유). **E9-2** 구조적 parity: 두 표면이 미설정 시 zero-value를 넘겨 `compositionOf`가 정본 기본값 단일 소스(validators 4·keys/preset 고정), run 모드 선택 검증. mixed-binary vs handoff 구분·컴포즈 기본값/선택/가드는 기존 `compose_internal_test`가 커버. 세 표면은 arch(`TestMCPGoesThroughApp`)가 app 경유로 고정. **행위적 CLI-vs-MCP diff는 cmd=main이라 불가**, local/remote/Docker 실제 실행은 라이브 이월(환경 분기 단일 지점 arch 고정) | ☑ |
+| **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☑ **E9-1** MCP↔CLI GAP 해소: `chainbench_run`이 rpc 없으면 compose(`app.RunSuite`, `RunSuiteIn.SpecContent`로 인라인 스펙)·있으면 attach. `chainbench_hardfork`→`app.HardforkPlan/Execute`(execute 기본 false). `chainbench_upgrade`→신설 `app.UpgradeRun`(handoff orchestration을 `upgrade.Handoff.Run`으로 추출, CLI `upgrade run`과 공유). **E9-2** 구조적 parity: 두 표면이 미설정 시 zero-value를 넘겨 `compositionOf`가 정본 기본값 단일 소스(validators 4·presets/keys 고정), run 모드 선택 검증. mixed-binary vs handoff 구분·컴포즈 기본값/선택/가드는 기존 `compose_internal_test`가 커버. 세 표면은 arch(`TestMCPGoesThroughApp`)가 app 경유로 고정. **행위적 CLI-vs-MCP diff는 cmd=main이라 불가**, local/remote/Docker 실제 실행은 라이브 이월(환경 분기 단일 지점 arch 고정) | ☑ |
 
 E1·E2·E3·E5는 E0A에서 저장 계약과 수정 파일을 분리한 뒤 병렬 진행할 수 있다. E4는 process와 chainsetup,
 E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 session/collector/report
@@ -1895,7 +1895,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   - **stablenet 흐름을 옮기지 않고 go-wbft 자신의 컨트랙트로 썼다** — 이 항목이 경고하던
     그대로다. `GovStaking.registerStaker` 는 `msg.sender != _staker` 와 operator 1인 1스테이커를
     강제하므로, 자기 키를 자기 노드에서 서명할 수 있는 node1 이 node2 의 신원을 등록한다.
-    BLS 공개키·PoP 는 `keys/preset` 픽스처에서 가져온다.
+    BLS 공개키·PoP 는 `presets/keys` 픽스처에서 가져온다.
   - 단정: 쓰기 **전** `isStaker(node2) == false`, 쓰기 **후** `true`, 그리고 **다른 노드(node3)에서도**
     `true`. 라이브 통과. **변이**로 `sendTx` 를 빼면 정확히 **2건**(node1·node3 의 사후 단정)이
     실패한다 — 상태를 바꾼 것이 그 쓰기였고, 두 노드가 같은 답을 한다는 뜻이다.
@@ -2357,7 +2357,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 **이 작업이 새로 찾은 것**
 
 - [x] ~~**`core/keyring/derive` 에 테스트가 하나도 없다.**~~ **해소 (2026-09-11).**
-      `keys/preset` 을 정답 벡터로 삼아 5노드의 주소·devp2p 공개키·BLS 공개키·PoP 를 전부
+      `presets/keys` 을 정답 벡터로 삼아 5노드의 주소·devp2p 공개키·BLS 공개키·PoP 를 전부
       재파생해 바이트 단위로 대조한다. **테스트가 실패할 수 있음을 뮤테이션으로 확인**했다 —
       version-3 salt(주석이 지목한 그 미묘한 지점)로 바꾸면 preset 대조가 깨진다.
       `Derive` 의 doc 이 이미 "픽스처와 바이트 단위로 대조된다"고 적어 두었는데 그 대조가
@@ -2424,7 +2424,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   바꿔** slot 2 를 준다(plan 1~15 = p2p 30301/http 8601, plan 16~30 = p2p 30304/http 8602).
   제네시스는 **1개 파일**이다: wemix 제네시스를 base 로 `config.croissant` 섹션만 병합한
   것으로, 15대 전 서버에서 md5 동일(`340b27d7…`), croissant.init 에 validator 15명과 BLS
-  키 15개. `presets/hardfork/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
+  키 15개. `presets/chain/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
   - **확인한 결과** — `handoff confirmed: head 50; blocks 21-50 all sealed by the
     successor set, across 15 of 15 validator(s)`. RPC 로 따로 읽은 것: 블록 19 는 boot
     wemix producer `0xfa119c06…`, 블록 20 부터는 wbft validator, **producer 자신의 head 는
@@ -2664,7 +2664,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     (3) 팁 0 으로 여러 건 전송, (4) **두 validator 모두** 잔액 증가를 단정. 소각이면 둘 다
     실패한다. 변이는 전송 스텝을 빼서 두 단정이 함께 실패하는 것으로 확인한다.
   - 주소: validator 1 `0xc17d4938…`(= 기존 부하 송신자), 2 `0x2493a84a…`, 3 `0x8c4a10b9…`
-    (`keys/preset/metadata.json`). 네 validator 의 `Diligence` 는 extraData 에서 동일하므로
+    (`presets/keys/metadata.json`). 네 validator 의 `Diligence` 는 extraData 에서 동일하므로
     지분도 같다.
 - [x] **F2 — 완료 (2026-09-12).** `regression/api/12c-validator-equal-power`. 가중치를 돌려주는
   RPC 가 없으므로 **동등성의 관측 가능한 결과 둘**을 단정하고, **무엇을 단정하지 않는지도
@@ -2800,7 +2800,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 | 검증 | 덮은 사이트 | 결과 |
 |---|---|---|
 | **15노드 wemix 브링업** (docker 15대, 13 bp + 2 en, `tests/tc/go-wemix/chain-up/02`) | poa 8곳 — `WaitForIPC`·`WaitForIPCOn`·`WaitSelf`·`VerifyEtcd`·`WaitForMember`·`joinOne`·`WaitProducing`·`WaitEtcdCluster` | **pass.** 직렬 내림차순 브링업 완주, 13 bp 전부 etcd 형성, 블록 생산 |
-| **golden 5노드 핸드오프** (로컬, `presets/hardfork/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
+| **golden 5노드 핸드오프** (로컬, `presets/chain/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
 | 단위 테스트 | `collector.WaitLog` 1곳 | 타임아웃 경로(`"nonexistent"`, 100ms)가 그 루프를 실제로 돈다. **프로덕션 호출자는 없다** — 인터페이스 계약이다 |
 
 - **8곳이 어디서 쓰이는지 먼저 확인하고 실행을 골랐다.** 각 사이트의 함수를 AST 가 아니라
@@ -2949,7 +2949,7 @@ offset 0 이 파일 전체, 직전 읽기가 끝난 오프셋에서 읽으면 **
 - ☑ **T4.4 BuildEnv 배선 [A안]** `engine.AssemblePlan(plugin, []PlacedNode, genesis, dataRoot, caps)` — place 할당 포트로 `setup.Plan` 을 조립하는 순수함수(레거시 `setup.BuildPlan` 의 `node.Offset` 고정포트 경로 대체). LocalOSAssigned·remote 모드가 이 함수 변경 없이 합성됨. 실 wbft 플러그인으로 단위검증(할당포트 반영·바이너리 폴백·datadir 기본값). **후속 슬라이스**: (T4.4b) keyreg→genesis 피딩(검증자 주소·ExtraData RLP), (T4.4c) provision+supervisor.BringUp 오케스트레이션(launch boundary 주입).
 - ☑ **T4.4b GenesisSource boundary** `engine.GenesisSource`(plugin·검증자수→genesis 바이트) + `PresetGenesisSource`(preset `metadata.json` 기반). **핵심 발견**: wbft 계열 ExtraData(RLP 검증자셋)는 코드가 계산하지 않고 preset 에 baked — 패밀리는 템플릿 치환만 함. 따라서 랜덤 keyreg 키만으로는 유효 genesis 불가 → preset 이 검증자셋·ExtraData 소스, keyreg 는 노드 신원/계정 키. 실 wbft 패밀리+최소 템플릿으로 단위검증(치환·Take 검증자 제한·preset 부재 에러). BuildEnv 조립(T4.4c)이 이 boundary 을 호출.
 - ☑ **T4.4c BuildEnv 오케스트레이션** `engine.NewBuildEnv(BuildDeps)` — allocate(place)→genesis(GenesisSource)→AssemblePlan→provision(주입 boundary)→`supervisor.BringUp`(launch/health boundary 주입)→NodeSet+Teardown 반환. `Deps.BuildEnv` production wiring 완성. fake allocator/genesis/provision + 실 supervisor(fake launch/health)로 파이프라인 스레딩 단위검증(4노드 조립·genesis 검증자수·plan 포트·teardown·에러전파). **남은 것**: (1) 실 `Provision` 파일생성(config.toml·keystore·nodekey; 레거시 `setup.provision` 참조), (2) 실 4노드 라이브 e2e(바이너리 필요, 사용자 환경). → **코드 수준 walking skeleton 조립 완료**(BuildEnv+RunSpec 모두 `Deps` 배선).
-- ☑ **T4.4d GenesisSource 라이브검증** `TestPresetGenesisSource_Live_GstableInit`(GSTABLE_BIN 게이트) — `PresetGenesisSource`+실 stablenet 플러그인으로 `keys/preset` 에서 genesis 생성 → **실 gstable v1.1.0 `init` 통과**("Successfully wrote genesis state", `<datadir>/gstable/chaindata` 생성). 이월했던 "랜덤키만으로 유효 genesis 불가·preset 필요" 가정을 실 바이너리로 확정. CI 는 바이너리 부재로 SKIP(green 유지). **실 4노드 라이브 기동(Provision+driver Launch+HealthGate)은 T4.4e 후속**.
+- ☑ **T4.4d GenesisSource 라이브검증** `TestPresetGenesisSource_Live_GstableInit`(GSTABLE_BIN 게이트) — `PresetGenesisSource`+실 stablenet 플러그인으로 `presets/keys` 에서 genesis 생성 → **실 gstable v1.1.0 `init` 통과**("Successfully wrote genesis state", `<datadir>/gstable/chaindata` 생성). 이월했던 "랜덤키만으로 유효 genesis 불가·preset 필요" 가정을 실 바이너리로 확정. CI 는 바이너리 부재로 SKIP(green 유지). **실 4노드 라이브 기동(Provision+driver Launch+HealthGate)은 T4.4e 후속**.
 - ☑ **T4.4e RunSpec 라이브 e2e (walking skeleton 증명)** `TestRunSpec_Live_Stablenet`(GSTABLE_BIN 게이트) — 실 gstable 로 4노드 stablenet 기동(`setup.Launch` fixture) → `engine.NewRunSpec`(인터프리터+빌트인) 으로 spec 실행: **sendTx(노드서명+영수증)·chainId==8283·blockNumber≥1 어세션 전부 실 RPC 대상 → status pass** → teardown 고아0. 로컬 39.7s 통과. **발견**: (1) geth IPC 유닉스소켓 경로 <104자 제약 → dataRoot 는 `/tmp/cblXXX`(t.TempDir 불가), (2) wbft 블록생성 웜업 ~35s → 헬스게이트 넉넉히 폴링. → **DSL 이 실 체인에서 실행·검증됨(실행 수직 라이브 완성)**. 남은 것: BuildEnv 자체의 실 launcher(place 포트 기동)는 T4.4f 선택.
 - ☑ **T4.4f BuildEnv 실 launcher (기동 수직 라이브)** `engine.LocalLauncher`(preset 기반 arming: config 렌더·신원설치·datadir init·기동) + `armSpecs`(순수, 단위검증: validator --unlock/--nodekey, static-node enode 가 plan p2p 포트 사용, endpoint 는 unlock 없음). `TestBuildEnv_Live_Stablenet`(GSTABLE_BIN 게이트): 실 allocator+PresetGenesisSource+LocalLauncher+블록전진 헬스게이트로 `NewBuildEnv` → **실 4노드 stablenet 을 allocator 할당 포트(node1 :8600)로 기동·헬스통과·teardown 고아0**. 로컬 통과. → **Engine 기동 수직(BuildEnv)도 실 체인 라이브 증명. RunSpec(#195)+BuildEnv 로 Engine.Run 전 구간 라이브 커버.** (짧은 session root 로 IPC 소켓 경로 <104자 유지.)
 - ☑ **T4.5 Engine 최상위 배선 (capstone)** `engine.NewLocalEngine(LocalConfig)` — allocator·PresetGenesisSource·LocalLauncher·`NewBlockAdvanceGate`·인터프리터·session 을 하나의 `engine.Deps` 로 조립하는 실행 가능한 진입점(CLI/MCP 가 호출). `NewBlockAdvanceGate`(head≥target 폴링, 로컬 non-etcd 라이브니스), `applicableTo`/`validatorReqs` 헬퍼. 단위검증(applicable 매칭·구성검증·미지체인 에러). **`TestEngine_Live_FullRun`(GSTABLE_BIN 게이트) capstone**: `NewLocalEngine`→`Engine.Run([spec])` 한 번으로 **실 gstable 4노드 기동→spec 실행(chainId/blockNumber)→teardown→session.json 저장, summary.pass=1** 검증. 로컬 4.5s 통과·고아0. → **walking skeleton 을 실행 가능한 단일 진입점으로 종료(Engine.Run 전체가 실 체인에서 동작).**

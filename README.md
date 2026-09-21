@@ -19,13 +19,13 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 
 > [!CAUTION]
 > **The preset keys and addresses are TEST FIXTURES — never use them in production.**
-> The validator keys, keystores, and addresses under `keys/preset/` exist only for
+> The validator keys, keystores, and addresses under `presets/keys/` exist only for
 > reproducible local testing. They are committed to a public repository with a
 > trivially decryptable keystore, and every node binds to `127.0.0.1`, so their
 > private keys are effectively public knowledge.
 >
 > **NEVER use any key, keystore, or address that appears in this repository — in
-> `keys/preset/`, in presets, in manifests, or in tests — on any production,
+> `presets/keys/`, in presets, in manifests, or in tests — on any production,
 > mainnet, testnet, staging, or shared network. Not to hold value, not to seal a
 > block, not to sign anything, not once, not "just to try it".** They are for
 > disposable, local throwaway networks ONLY. Anyone who can read this repository
@@ -34,9 +34,9 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 >
 > This covers every key in the tree, whatever produced it:
 >
-> - the node identities under `keys/preset/node{1..5}/`, generated once and
+> - the node identities under `presets/keys/node{1..5}/`, generated once and
 >   committed so a local network comes up with the same validators every time;
-> - the dev accounts under `keys/preset/dev1/`, which the harness mints on the
+> - the dev accounts under `presets/keys/dev1/`, which the harness mints on the
 >   first run that asks for one and reads back afterwards so a label keeps naming
 >   one address;
 > - **plaintext private keys written inline in test source** — the genesis-funded
@@ -46,10 +46,10 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 > A secret scanner reports nothing on this repository, and that is a decision,
 > not an accident: [`.betterleaks.toml`](.betterleaks.toml) allowlists exactly
 > these paths and leaves every rule of the default set on. **Treat a finding as
-> real if it is outside `keys/preset/` and outside test code** — the allowlist is
+> real if it is outside `presets/keys/` and outside test code** — the allowlist is
 > not to be widened to quiet one.
 >
-> See [`keys/preset/README.md`](keys/preset/README.md) and
+> See [`presets/keys/README.md`](presets/keys/README.md) and
 > [`docs/SECURITY_KEY_HANDLING.md`](docs/SECURITY_KEY_HANDLING.md).
 
 ## Table of contents
@@ -130,7 +130,7 @@ applicable tests, and tear it down. Starting needs a real chain binary — point
 
 ```bash
 chainbench net up --workspace-dir /tmp/cb --chain stablenet --binary /path/to/gstable \
-  --validators 2 --endpoints 1 --keys keys/preset
+  --validators 2 --endpoints 1 --keys presets/keys
 
 chainbench verify --workspace-dir /tmp/cb   # confirm block production + node info
 chainbench test   --workspace-dir /tmp/cb   # run applicable cases; prints coverage
@@ -141,7 +141,7 @@ Or declare the network in a DSL env and let one command compose, run, and
 tear down: `chainbench run --workspace-dir /tmp/cb tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json`.
 
 > [!WARNING]
-> `--keys-dir keys/preset` and every address it produces are **test-only
+> `--keys-dir presets/keys` and every address it produces are **test-only
 > fixtures**. Use them exclusively for local, throwaway networks — **never in any
 > production or shared environment** (see the caution above).
 
@@ -196,7 +196,7 @@ whose `upgrade` block names the preset:
              "from": "default", "to": "next", "style": "concurrent" }
 ```
 
-See [`presets/hardfork/wemix-upgrade.yaml`](presets/hardfork/wemix-upgrade.yaml) for the encoded
+See [`presets/chain/wemix-upgrade.yaml`](presets/chain/wemix-upgrade.yaml) for the encoded
 conditions (uniform network id, disjoint producers/validators, BFT quorum,
 paired fork sections). To plan a binary swap against a workspace that is already
 running, `chainbench hardfork --workspace-dir <dir> --to-chain <id> --block <n>`.
@@ -308,8 +308,8 @@ chainbench/
 │   ├── accounts/         # account/tx/ABI boundary over the accounts SDK
 │   ├── mcp/              # MCP tool handlers (through the app layer)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
-├── presets/hardfork/     # hardfork presets: fork block, roles, binaries (YAML)
-├── keys/preset/          # preset validator keys (TEST FIXTURE ONLY)
+├── presets/chain/     # hardfork presets: fork block, roles, binaries (YAML)
+├── presets/keys/          # preset validator keys (TEST FIXTURE ONLY)
 ├── tests/                # Go test cases (tests/all) + repro scripts (tests/repro)
 └── web/                  # dashboard SPA source (Svelte + Vite)
 ```

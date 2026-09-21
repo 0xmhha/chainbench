@@ -69,7 +69,7 @@ func TestWemix_Live_BringUp(t *testing.T) {
 		SpecPaths:  []string{specPath},
 		DataDir:    ws,
 		Binary:     bin,
-		KeysDir:    filepath.Join(repoRoot(t), "keys", "preset"),
+		KeysDir:    filepath.Join(repoRoot(t), "presets", "keys"),
 		Validators: 4,
 		WaitBlocks: 1,
 	})

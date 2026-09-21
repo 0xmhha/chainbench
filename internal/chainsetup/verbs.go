@@ -56,7 +56,7 @@ type NetNewIn struct {
 	// of an embedded chain; TemplatePath is its genesis template.
 	ManifestPath string
 	TemplatePath string
-	// KeysDir is the key set the network composes from ("" = keys/preset).
+	// KeysDir is the key set the network composes from ("" = presets/keys).
 	KeysDir string
 	// Target is where the data plane lives; zero value = local, rooted at the
 	// workspace directory.

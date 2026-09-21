@@ -27,7 +27,7 @@ var updateGolden = flag.Bool("update", false, "rewrite the corpus address record
 
 const (
 	corpusDir     = "../../tests/tc"
-	presetKeysDir = "../../keys/preset"
+	presetKeysDir = "../../presets/keys"
 	addressGolden = "testdata/corpus-addresses.golden"
 )
 
@@ -47,7 +47,7 @@ const (
 // rather than against a running chain.
 //
 // The values are a BASELINE, not a prediction. They are resolved against
-// keys/preset for every case, while a case whose env generates its keys gets
+// presets/keys for every case, while a case whose env generates its keys gets
 // different addresses at run time. That does not weaken the comparison — the
 // same key set is used on both sides, so a line that moves means the name
 // changed meaning, which is the only question being asked.

@@ -36,7 +36,7 @@ func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
 		Validators: 4,
 		Server:     resource.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
 		Docker:     true,
-		KeysDir:    filepath.Join("..", "..", "keys", "preset"),
+		KeysDir:    filepath.Join("..", "..", "presets", "keys"),
 		Caps:       []string{"consensus"},
 		WaitBlocks: 2,
 	})

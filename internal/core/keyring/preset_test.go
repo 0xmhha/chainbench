@@ -77,7 +77,7 @@ func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 // TestNetworkFor_DeclaredSetWins keeps an existing preset's answer: a file that
 // says who validates is not second-guessed.
 func TestNetworkFor_DeclaredSetWins(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}

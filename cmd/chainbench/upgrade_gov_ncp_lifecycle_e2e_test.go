@@ -3,7 +3,7 @@
 // This E2E ports the remaining reachable wemix4 NCP-governance WRITE flows —
 // GOV-007 (remove an NCP by vote of the others) and GOV-008 (immediate self-exit)
 // — as one coherent NCP lifecycle on the go-wbft handoff successor. It builds on
-// the GOV-006 add flow: the preset validator accounts (raw keys in keys/preset)
+// the GOV-006 add flow: the preset validator accounts (raw keys in presets/keys)
 // are the NCP electorate, and quorum is ceil(2*ncpCount/3).
 //
 //	add node2 (quorum 1)  -> ncpCount 1->2
@@ -177,8 +177,8 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		cmd := newRootCmd()
 		args := []string{
 			"upgrade", "run",
-			"--profile", "../../presets/hardfork/wemix-upgrade.yaml",
-			"--keys", "../../keys/preset",
+			"--profile", "../../presets/chain/wemix-upgrade.yaml",
+			"--keys", "../../presets/keys",
 			"--from-binary", fromBin,
 			"--to-binary", toBin,
 			"--template", template,
@@ -223,7 +223,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 	return ""
 }
 
-// presetNodeKey loads node idx's raw private key from keys/preset/metadata.json.
+// presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.
 func presetNodeKey(t *testing.T, idx int) []byte {
 	t.Helper()
 	_, keyHex := presetNode(t, idx)
@@ -234,7 +234,7 @@ func presetNodeKey(t *testing.T, idx int) []byte {
 	return key
 }
 
-// presetNodeAddr returns node idx's address from keys/preset/metadata.json.
+// presetNodeAddr returns node idx's address from presets/keys/metadata.json.
 func presetNodeAddr(t *testing.T, idx int) string {
 	t.Helper()
 	addr, _ := presetNode(t, idx)
@@ -244,7 +244,7 @@ func presetNodeAddr(t *testing.T, idx int) string {
 // presetNode returns node idx's (address, nodekey) from the preset metadata.
 func presetNode(t *testing.T, idx int) (addr, nodekey string) {
 	t.Helper()
-	b, err := os.ReadFile("../../keys/preset/metadata.json")
+	b, err := os.ReadFile("../../presets/keys/metadata.json")
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}

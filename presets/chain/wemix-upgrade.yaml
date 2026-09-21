@@ -52,7 +52,7 @@ identities:
 # Must be disjoint from the to-chain validator set below.
 producers:
   members:
-    # node5's unlockable keystore account (keys/preset/node5/keystore); it mines
+    # node5's unlockable keystore account (presets/keys/node5/keystore); it mines
     # and stakes pre-fork. Its devp2p identity is node5's nodekey (idv5). Note
     # the preset's node5 keystore is for this 0xf9593d... account, not node5's
     # own 0x5400... address -- the producer must be allocated + unlock this one.

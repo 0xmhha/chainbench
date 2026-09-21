@@ -161,7 +161,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
+	cmd.Flags().StringVar(&keysDir, "keys", "presets/keys", "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),

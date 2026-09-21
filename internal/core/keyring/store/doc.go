@@ -10,7 +10,7 @@
 // generates in the same shape, which is what lets a network larger than the
 // fixture compose without a second code path.
 //
-// The keys under keys/preset are PUBLIC TEST FIXTURES — the upstream
+// The keys under presets/keys are PUBLIC TEST FIXTURES — the upstream
 // go-ethereum test key among them — and exist so a test can fund a transfer
 // reproducibly. A secret scanner reports them and those reports are expected.
 // Never move one, or an address derived from one, onto a shared network

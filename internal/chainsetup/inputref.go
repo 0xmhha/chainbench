@@ -72,7 +72,7 @@ func (w *Workspace) indexName(i int) (string, error) {
 // directory, so the keys step (which reads the ring on the machine running
 // chainbench) and the test runtime (which signs with keys at a known local
 // path) both find it locally. Only a srv:// KeysDir is downloaded; a local path
-// — absolute or the default relative "keys/preset" — is left untouched.
+// — absolute or the default relative "presets/keys" — is left untouched.
 //
 // The download is the explicit, operator-authorized transfer of a key set that
 // already exists on a server (ssh.sudo permitting a root-owned one), distinct

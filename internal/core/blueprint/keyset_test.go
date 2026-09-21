@@ -182,7 +182,7 @@ func TestPresetFrom_Refuses(t *testing.T) {
 // composed from a blueprint and one composed from the same keys via the preset
 // would be two different chains that both looked correct.
 func TestPresetFrom_MatchesThePresetPath(t *testing.T) {
-	const presetDir = "../../../keys/preset"
+	const presetDir = "../../../presets/keys"
 	var meta struct {
 		Validators    []string `json:"validators"`
 		BLSPublicKeys []string `json:"blsPublicKeys"`

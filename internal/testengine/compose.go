@@ -39,7 +39,7 @@ const suiteDefaultValidators = 4
 const overlayFilePrefix = "env-genesis-overlay"
 
 // defaultKeysDir is the key set a declaration that names none composes from.
-const defaultKeysDir = "keys/preset"
+const defaultKeysDir = "presets/keys"
 
 // keySourceGenerate is the key source that creates a fresh set rather than
 // reading a recorded one; keySourceKeyPreset reads the recorded one and is what
@@ -167,7 +167,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if keysDir == "" {
 		// A generated set — or a node table that pins per-node keys — goes to a
 		// workspace-local dir, not the shared preset. The key sources reuse
-		// whatever set already sits at the dir, so defaulting to keys/preset
+		// whatever set already sits at the dir, so defaulting to presets/keys
 		// would silently reuse the preset's identities (and ignore the pinned
 		// keys, or fail when the network wants more than the preset holds)
 		// instead of building a fresh set. Preset stays the default otherwise.

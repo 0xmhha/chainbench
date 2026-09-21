@@ -21,7 +21,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WEMIX_BIN="${WEMIX_BIN:-$(command -v gwemix || true)}"
 TEMPLATE="${TEMPLATE:-}"
-PRESET="$REPO/keys/preset"
+PRESET="$REPO/presets/keys"
 WORK="${WORK:-/tmp/wemix-chain}"
 CHAINBENCH="${CHAINBENCH:-/tmp/chainbench-wemix-chain-bin}"
 

@@ -43,7 +43,7 @@ type RunSuiteIn struct {
 	// Docker treats the servers as local docker containers (the option is the
 	// power switch, as everywhere).
 	Docker bool
-	// KeysDir overrides the declared key set (default keys/preset).
+	// KeysDir overrides the declared key set (default presets/keys).
 	KeysDir string
 	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.

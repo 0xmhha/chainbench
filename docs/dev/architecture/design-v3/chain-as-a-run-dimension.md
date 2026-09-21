@@ -31,7 +31,7 @@
 포인터 하나**다.
 
 실측이 그것을 보인다: `tests/tc/env/{stablenet,wbft,wemix}-bp4.env.json` 세 파일은 `id` 와
-`chain` 두 줄을 빼면 같다. `keys` 는 셋 다 `{"nodekeys":{"ref":"keys/preset","source":"keyPreset"}}`,
+`chain` 두 줄을 빼면 같다. `keys` 는 셋 다 `{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}`,
 `topology` 는 셋 다 `{"bp":4}` 다. `stablenet-bp4` 에는 `binaries` 키가 아예 없고, 바이너리는
 매니페스트의 `binary: gstable` 에서 나온다.
 

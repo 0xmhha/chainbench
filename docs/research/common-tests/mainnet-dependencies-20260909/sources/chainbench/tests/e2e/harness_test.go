@@ -117,7 +117,7 @@ func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints 
 // launch runs `chainbench net up` with extraArgs and registers cleanup.
 func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
 	t.Helper()
-	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), validators, endpoints, extraArgs)
+	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "presets", "keys"), validators, endpoints, extraArgs)
 }
 
 // launchPreset is launch with an explicit preset key set (e.g. a generated one
@@ -528,7 +528,7 @@ func balance(t *testing.T, url, addr string) *big.Int {
 // real key; used only to fund local ephemeral test networks.
 func presetFundedKey(t *testing.T) []byte {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(repoRoot(t), "keys", "preset", "metadata.json"))
+	b, err := os.ReadFile(filepath.Join(repoRoot(t), "presets", "keys", "metadata.json"))
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}

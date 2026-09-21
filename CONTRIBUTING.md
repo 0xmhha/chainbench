@@ -84,7 +84,7 @@ internal/chainsetup/     composes a chain up to producing blocks
 internal/testengine/     runs tests on an already-composed chain
 internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
-presets/hardfork/        hardfork presets
+presets/chain/        hardfork presets
 tests/                   Go test cases (tests/all) + reproduction scripts (tests/repro)
 ```
 

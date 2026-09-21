@@ -47,8 +47,8 @@ Go 에서 호출은 import 를 수반하므로, import 층이 지켜지면 호�
 
 | 무엇 | 어디 | 부르는 이름 |
 |---|---|---|
-| 하드포크 골든 설정 파일 | `presets/hardfork/*.yaml` | 디렉터리는 **preset**, Go 타입은 `upgrade.Profile`, 읽는 함수는 `LoadProfile` |
-| 키 픽스처 (노드키·계정 45파일) | `keys/preset/` | **preset** |
+| 하드포크 골든 설정 파일 | `presets/chain/*.yaml` | 디렉터리는 **preset**, Go 타입은 `upgrade.Profile`, 읽는 함수는 `LoadProfile` |
+| 키 픽스처 (노드키·계정 45파일) | `presets/keys/` | **preset** |
 | 키셋 Go 타입 | `internal/core/keyring/preset.go` | `keyring.Preset` |
 | DSL 의 env 선언 | `tests/tc/env/*.env.json` | 메인넷 워크리스트 P1~P3 이 **preset** 이라 부른다 |
 | 원격 접속 설정 | `profiles/` | **profile** |
@@ -59,7 +59,7 @@ Go 에서 호출은 import 를 수반하므로, import 층이 지켜지면 호�
 `preset` 을 쓰는 것이 4개다. **`Profile` 필드는 소비자가 없다.**
 
 경로도 어긋나 있다. JSON 스키마는 이 파일을 *"golden upgrade profile (profiles/\*.yaml)"* 이라
-설명하는데(`v2.schema.json:142`) 실제 위치는 `presets/hardfork/*.yaml` 이다.
+설명하는데(`v2.schema.json:142`) 실제 위치는 `presets/chain/*.yaml` 이다.
 `docs/dev/chain-handover-2026-09-12.md:379` 도 `profiles/wemix-upgrade-15.yaml` 로 링크한다 —
 **그 경로에 그 파일은 없다.**
 

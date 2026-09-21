@@ -21,7 +21,7 @@
 | 합의 family | `wbft` |
 | chain id | 8284 |
 | RPC 네임스페이스 | `istanbul` |
-| 프리셋 | `keys/preset` |
+| 프리셋 | `presets/keys` |
 | 최소 노드 | 검증자 4 |
 
 > ⚠️ **바이너리 이름 함정**: go-wbft 의 make 타깃은 `gwemix` 라 **산출물 이름도 `gwemix`** 다.
@@ -98,7 +98,7 @@ EOF
 
 chainbench run --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \
-  --keys keys/preset --artifact-root /tmp/out /tmp/wbft-smoke.json
+  --keys presets/keys --artifact-root /tmp/out /tmp/wbft-smoke.json
 ```
 
 ### 4.3 단계별 경로
@@ -117,7 +117,7 @@ chainbench chain status --workspace-dir /tmp/x   # 어느 스텝까지 돌았는
 
 ## 5. 검증 근거 (2026-08-09)
 
-`chainbench run --chain wbft --binary <go-wbft/build/bin/gwemix> --keys keys/preset` 로
+`chainbench run --chain wbft --binary <go-wbft/build/bin/gwemix> --keys presets/keys` 로
 4노드 wbft 네트워크를 기동하고 스펙을 실행:
 
 ```

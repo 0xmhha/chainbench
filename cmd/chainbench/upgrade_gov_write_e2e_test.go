@@ -3,7 +3,7 @@
 // This E2E ports the first wemix4 governance WRITE flow (GOV-006: NCP add
 // proposal + vote). On the go-wbft successor, the post-fork validator set's
 // governance has one NCP (Node Change Proposal member) — the preset node-1
-// account, whose raw key ships in keys/preset. As that sole NCP (quorum
+// account, whose raw key ships in presets/keys. As that sole NCP (quorum
 // ceil(2*1/3) = 1), it proposes adding a new NCP and votes it through, and the
 // new address becomes an NCP (ncpCount 1 -> 2). This exercises the GovNCP
 // propose+vote+execute path end to end. Run it with:

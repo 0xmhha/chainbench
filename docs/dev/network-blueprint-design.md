@@ -28,7 +28,7 @@
 |---|---|---|
 | `topology.yaml` | index · role · sync_mode · bootnode | 서버·포트·키·계정·잔액 |
 | `server-set.yaml` | 호스트 · 포트 대역 · dataRoot · SSH | 어느 노드가 어디에 · 역할 |
-| `keys/preset/metadata.json` | nodekey · 계정 · BLS · extraData | 배치·역할·잔액 정책 |
+| `presets/keys/metadata.json` | nodekey · 계정 · BLS · extraData | 배치·역할·잔액 정책 |
 | `poa.Config`(wemix 전용) | members · accounts · env | 다른 체인에 쓸 수 없음 |
 
 **어느 것도 "이 네트워크는 이렇게 생겼다"를 말하지 못한다.** 그래서 각 스텝이 조각을 모아
@@ -311,7 +311,7 @@ governance:                         # N12·N13 — poa 패밀리만. 다른 체�
 
 ```sh
 # preset 에서 청사진을 만든다 — 이후 손으로 고칠 수 있다
-chainbench net blueprint --from-preset keys/preset --chain wemix --bp 4 --en 1 > network.yaml
+chainbench net blueprint --from-preset presets/keys --chain wemix --bp 4 --en 1 > network.yaml
 
 # 청사진으로 구성한다
 chainbench net up --blueprint network.yaml

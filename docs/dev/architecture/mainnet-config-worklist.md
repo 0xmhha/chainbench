@@ -273,7 +273,7 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
 
 | 뜻 | 대표 심볼 | 참조 | 판정 근거 |
 |---|---|---|---|
-| **키 preset** | `keyring.Preset`(106) · `store.LoadPreset` 계열(36) · `store.PresetKeys`(10) · `blueprint.FromPreset`/`PresetFrom` · `genesis.PresetSource` · `keys/preset/` · 정의서의 `"source": "preset"`(199건) | ~480 | 전부 키 집합을 읽거나 그 키로 genesis·설정을 만든다 |
+| **키 preset** | `keyring.Preset`(106) · `store.LoadPreset` 계열(36) · `store.PresetKeys`(10) · `blueprint.FromPreset`/`PresetFrom` · `genesis.PresetSource` · `presets/keys/` · 정의서의 `"source": "preset"`(199건) | ~480 | 전부 키 집합을 읽거나 그 키로 genesis·설정을 만든다 |
 | **대상에 이미 있는 입력** | `resource.InputPreset` · `WorkspaceConfig.Presets` · `Inputs.Preset` · `testengine.applyPreset`/`applyPresetConfigs` | ~40 | `inputs.mode: prepared` 일 때만 돈다. genesis·키링·설정 파일을 **가리킬 뿐 만들지 않는다** |
 
 (뜻 2 의 심볼 이름은 아래 1번이 끝나 바뀌었다. 위 표는 바꾸기 전의 측정이다.)
@@ -301,7 +301,7 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
 #### N7 — 한 값이 갖고 있던 이름 셋 (완료)
 
 `upgrade run` 만 `--preset` 이라고 불렀다. 같은 값을 `chain new`·`chain up`·
-`suite run`·`validator roster` 넷은 `--keys` 라고 부르고, 기본값도 다 `keys/preset`
+`suite run`·`validator roster` 넷은 `--keys` 라고 부르고, 기본값도 다 `presets/keys`
 이다. 코드 안에서는 한 줄에 두 이름이 있었다 — `PresetDir: keysDir`
 (`internal/testengine/compose.go:154`).
 
@@ -765,7 +765,7 @@ H1 이 치울 대상이고, 둘은 같은 작업의 앞뒤다.
 
 #### H3 은 기계가 이미 있다
 
-계정 주소 14개 중 5개가 `keys/preset` 의 node1~node5 다. 가장 많이 쓰인
+계정 주소 14개 중 5개가 `presets/keys` 의 node1~node5 다. 가장 많이 쓰인
 `0xc17d4938…`(30회)는 node1 이다. 그리고 **DSL 은 이미 계정을 라벨로 부른다** —
 `"from": "node1"` 이 키셋의 주소로 풀린다(`internal/testengine/accounts.go`,
 `accountlabel_live_test.go`). H3 은 새 문법이 필요 없고 치환이다.
@@ -880,7 +880,7 @@ genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **�
 
 ##### 4a — 주소를 이름으로 (기계가 판정)
 
-주소 해석은 **오프라인으로 끝까지 돌릴 수 있다.** 확인했다: `keys/preset` 을
+주소 해석은 **오프라인으로 끝까지 돌릴 수 있다.** 확인했다: `presets/keys` 을
 `LoadPresetWithKeys` 로 읽어 키셋을 만들고 매니페스트의 컨트랙트 표를 붙이면,
 `ResolveAddress` 가 망 없이 답한다.
 
@@ -1086,7 +1086,7 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 |---|---|---|---|---|
 | H1 | 시스템 컨트랙트 주소를 이름으로 바꾼다 | **197곳/65파일 완료 (2026-09-15).** 케이스가 `"to": "govMinter"` 라고 쓰고, 그 체인의 표가 주소로 푼다. 골든이 **한 줄도 안 바뀌었다** — 197곳 전부가 전과 같은 주소로 풀린다 | ~~P3~~, ~~매니페스트 능력~~ | **완료** |
 | H2 | 수수료 힌트를 값 또는 체인 어댑터로 돌린다 | 14개 파일 (12건이 stablenet) | P3, P5 | 미착수 |
-| H3 | 계정 주소 리터럴을 라벨로 바꾼다 | **35곳/20파일 완료.** `keys/preset` 의 node1~5 주소가 49곳에 있었고, 그중 35곳이 해석기가 닿는 자리(`address`·`from`·`to`·`deployer`·`funder`, 그리고 read 의 `of` 목록)였다. `of` 는 이번에 열었다 | ~~없음~~ | **완료 (2026-09-15)** — 남은 14곳은 H3-b |
+| H3 | 계정 주소 리터럴을 라벨로 바꾼다 | **35곳/20파일 완료.** `presets/keys` 의 node1~5 주소가 49곳에 있었고, 그중 35곳이 해석기가 닿는 자리(`address`·`from`·`to`·`deployer`·`funder`, 그리고 read 의 `of` 목록)였다. `of` 는 이번에 열었다 | ~~없음~~ | **완료 (2026-09-15)** — 남은 14곳은 H3-b |
 | H4 | arch 테스트로 주소 리터럴을 금지한다 | **래칫 1단계 완료 (2026-09-15).** "주소 리터럴 전면 금지" 가 아니다 — 이름이 없는 주소가 많다(테스트가 배포한 표식, 프리컴파일, 임의 수신자). 금지하는 것은 **체인이 이름을 가진 컨트랙트를, 이름이 통하는 자리에 주소로 쓰는 것**이다. 매니페스트에 컨트랙트를 더할 때마다 검사가 저절로 좁아진다. **2단계(허용 목록 줄이기)가 열려 있다 — §11.5** | ~~H1~~ | **1단계 완료, 2단계 대기** |
 
 #### H3 이 남긴 14곳 (H3-b) — 완료 (2026-09-18)
@@ -1853,7 +1853,7 @@ P2·P3 에서 스스로 경고한 바로 그것이다. 대신 **회귀 테스트
 
 프로필이 후계자 집합의 주소·BLS 공개키·RLP extra-data 를 미리 적어 둔다. 그
 **셋 다** 키셋에서 유도된다. 프로필 자신이 선언한 `plan_order` 를 따라
-`keys/preset` 의 노드 1~4 를 읽고 `wbft.ExtraData` 를 돌린 결과다.
+`presets/keys` 의 노드 1~4 를 읽고 `wbft.ExtraData` 를 돌린 결과다.
 
 ```
 plan_order        [5 1 2 3 4]         ← 1번은 생산자, 나머지가 후계자
@@ -2038,7 +2038,7 @@ X8 가드도 "맞다" 고 말해 주지 않는다.
 | 분류 | 건수 | 무엇 |
 |---|---:|---|
 | A | 19 | `--env` 가 env 의 *동작*(하드포크 일정·genesis overlay·바이너리 스왑·attach)을 지웠다 |
-| B1·B1b | 4 | 키가 `keys/preset` → `generate` 로 바뀌어 계정·주소가 달라졌다 |
+| B1·B1b | 4 | 키가 `presets/keys` → `generate` 로 바뀌어 계정·주소가 달라졌다 |
 | B2 | 5 | `waitFor` 예산이 4노드 망 기준이다 |
 | B3 | 5 | 어세션이 검증자 수를 값으로 박고 있다 |
 | B4 | 4 | 정족수·피어 수가 4노드 전제다 |

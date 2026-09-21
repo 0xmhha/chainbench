@@ -45,7 +45,7 @@ func TestWemixGenesisSource_AssemblesAValidConfigAndCallsTheBinary(t *testing.T)
 
 	var gotArgs []string
 	src := poa.GenesisSource{
-		KeysDir: filepath.Join(repoRoot(t), "keys", "preset"),
+		KeysDir: filepath.Join(repoRoot(t), "presets", "keys"),
 		Binary:  "gwemix",
 		WorkDir: dir,
 		Run: func(_ context.Context, _ string, args ...string) ([]byte, error) {
@@ -114,7 +114,7 @@ func TestWemixGenesisSource_AssemblesAValidConfigAndCallsTheBinary(t *testing.T)
 
 func TestWemixGenesisSource_RefusesWhatItCannotDo(t *testing.T) {
 	plugin, _ := registry.Get("wemix")
-	keys := filepath.Join(repoRoot(t), "keys", "preset")
+	keys := filepath.Join(repoRoot(t), "presets", "keys")
 
 	// No binary: this genesis cannot be produced in Go, and saying so beats
 	// returning a substituted template that starts the wrong chain.

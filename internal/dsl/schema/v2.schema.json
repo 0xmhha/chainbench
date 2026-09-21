@@ -131,11 +131,11 @@
         "upgrade": {
           "type": "object",
           "additionalProperties": false,
-          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to, shaped by a preset under presets/hardfork; a restart crosses one chain's own fork on one binary at a time and names the fork itself.",
+          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to, shaped by a preset under presets/chain; a restart crosses one chain's own fork on one binary at a time and names the fork itself.",
           "properties": {
             "preset": {
               "type": "string",
-              "description": "a hardfork preset under presets/hardfork, without the directory or the .yaml extension"
+              "description": "a hardfork preset under presets/chain, without the directory or the .yaml extension"
             },
             "template": {
               "type": "string",

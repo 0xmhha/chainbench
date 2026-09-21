@@ -13,7 +13,7 @@ import (
 
 // presetDir is the repository's shipped key set, used as a realistic fixture
 // (same convention as the engine tests).
-const presetDir = "../../keys/preset"
+const presetDir = "../../presets/keys"
 
 // TestNetStepPipeline composes a network step by step without a chain binary:
 // new -> allocate -> keys -> genesis -> config -> launchopts -> filestore.

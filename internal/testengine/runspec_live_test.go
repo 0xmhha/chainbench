@@ -45,7 +45,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
-	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
+	presetDir := filepath.Join(repoRoot(t), "presets", "keys")
 	preset, err := store.LoadPreset(presetDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)

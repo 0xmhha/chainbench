@@ -60,7 +60,7 @@ func TestBuildGenesis_CustomizesWhateverTheFamilyProduced(t *testing.T) {
 	art, err := genesis.Compose(context.Background(), plugin(t, "stablenet"),
 		genesis.Request{Validators: 4},
 		genesis.Config{
-			KeysDir: repoPath(t, "keys", "preset"),
+			KeysDir: repoPath(t, "presets", "keys"),
 			Overlay: []byte(`{"config":{"aMarkerForThisTest":7}}`),
 		})
 	if err != nil {

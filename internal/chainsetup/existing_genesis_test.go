@@ -21,7 +21,7 @@ import (
 // preset keyring + per-node configs) drive a regression run.
 func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	dir := t.TempDir()
-	presetDir := filepath.Join("..", "..", "keys", "preset")
+	presetDir := filepath.Join("..", "..", "presets", "keys")
 	// A distinctive finished genesis (valid JSON, not what the builder would
 	// make) that still names the validators the two-producer key set provides —
 	// a wbft genesis without them is refused, and rightly, since it cannot sign.
@@ -82,7 +82,7 @@ func TestGenesis_ExistingRejectsInvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset")}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys")}); err != nil {
 		t.Fatal(err)
 	}
 	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{{Index: 1, Role: "bp"}, {Index: 2, Role: "bp"}}}

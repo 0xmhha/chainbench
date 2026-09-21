@@ -27,7 +27,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 
 - Chain binaries come from env: `GSTABLE_BIN`, `WBFT_BIN`, `WEMIX_BIN` (or the
   binary on `PATH`). Absent → the test skips.
-- The funded sender is node 1's key from `keys/preset` — a committed **TEST
+- The funded sender is node 1's key from `presets/keys` — a committed **TEST
   fixture** (public, local-only). It is loaded at runtime, never a literal, and
   is only ever used to fund local ephemeral test networks.
 

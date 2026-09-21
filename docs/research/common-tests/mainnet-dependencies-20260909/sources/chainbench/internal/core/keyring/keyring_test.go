@@ -29,7 +29,7 @@ type presetNode struct {
 
 func loadPresetNodes(t *testing.T) []presetNode {
 	t.Helper()
-	path := filepath.Join("..", "..", "..", "keys", "preset", "metadata.json")
+	path := filepath.Join("..", "..", "..", "presets", "keys", "metadata.json")
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
@@ -212,7 +212,7 @@ func FuzzParseNodekey(f *testing.F) {
 // narrowed set used to carry: extra-data encodes the validator set, so the full
 // set's copy names validators a smaller network never starts.
 func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
 // declared identity has drifted from its key material launches a node signing
 // as one address while the genesis registers another.
 func TestEntry_VerifyCatchesDrift(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}

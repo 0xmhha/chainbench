@@ -14,7 +14,7 @@
 # (the producers) take slot 1, nodes 16-30 (the successors) take slot 2, so each
 # server runs one wemix node and one wbft node on different ports.
 #
-# Identities come from a generated 30-node key set, NOT from keys/preset (which
+# Identities come from a generated 30-node key set, NOT from presets/keys (which
 # ships 5). Regenerate with:
 #
 #   chainbench validator set --nodes 30 --validators 15 --out <dir>

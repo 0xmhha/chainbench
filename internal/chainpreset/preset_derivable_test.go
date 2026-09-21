@@ -26,11 +26,11 @@ import (
 
 // TestPreset_TheValidatorSetIsWhatTheKeySetDerives.
 func TestPreset_TheValidatorSetIsWhatTheKeySetDerives(t *testing.T) {
-	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
+	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}
-	preset, err := store.LoadPreset("../../keys/preset")
+	preset, err := store.LoadPreset("../../presets/keys")
 	if err != nil {
 		t.Fatalf("read the shipped key set: %v", err)
 	}

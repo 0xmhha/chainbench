@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
-const presetDir = "../../../keys/preset"
+const presetDir = "../../../presets/keys"
 
 // TestFromPreset_ComposesTheSameNetwork is N5's gate.
 //

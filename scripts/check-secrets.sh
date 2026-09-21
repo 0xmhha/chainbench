@@ -9,7 +9,7 @@
 # Install as a pre-commit hook:
 #   ln -s ../../scripts/check-secrets.sh .git/hooks/pre-commit
 #
-# The only intentional key material is keys/preset/ (TEST FIXTURE ONLY) and the
+# The only intentional key material is presets/keys/ (TEST FIXTURE ONLY) and the
 # public test addresses in tests/env/*.env; real secrets belong in the gitignored
 # tests/env/secret/ (docs/SECURITY_KEY_HANDLING.md).
 set -uo pipefail
@@ -21,7 +21,7 @@ CONTENT_RE='AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{50,}|xo
 
 # Secret-prone new file paths (allowlist the intentional test fixtures).
 FILE_RE='(\.pem|\.key|\.p12|\.pfx|\.keystore|(^|/)id_rsa|(^|/)id_ed25519|(^|/)\.env(\.[^/]+)?)$'
-ALLOW_RE='^(keys/preset/|tests/env/[^/]+\.env$|tests/env/secret\.example/)'
+ALLOW_RE='^(presets/keys/|tests/env/[^/]+\.env$|tests/env/secret\.example/)'
 
 if [ "${1:-}" = "--all" ]; then
   files=$(git ls-files)

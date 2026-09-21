@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
-const presetDir = "../../keys/preset"
+const presetDir = "../../presets/keys"
 
 // TestVerifyExistingGenesisKeys_MatchesAndMismatches drives the wbft-family
 // check against the committed preset: a genesis whose extra-data encodes the

@@ -47,7 +47,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 		return Roster{}, err
 	}
 	if keysDir == "" {
-		keysDir = "keys/preset"
+		keysDir = "presets/keys"
 	}
 	preset, err := store.LoadPreset(keysDir)
 	if err != nil {

@@ -132,7 +132,7 @@ func TestPresetGenesisSource_MissingPreset(t *testing.T) {
 func TestPresetGenesisSource_ProducersFromPlacement(t *testing.T) {
 	// Use the real committed ring: the preset loader verifies each identity
 	// derives from its nodekey, so a fabricated one is rejected.
-	presetDir := filepath.Join("..", "..", "..", "..", "keys", "preset")
+	presetDir := filepath.Join("..", "..", "..", "..", "presets", "keys")
 	preset, err := store.LoadPreset(presetDir)
 	if err != nil {
 		t.Skipf("preset fixture unavailable: %v", err)

@@ -18,7 +18,7 @@ import (
 // Set up first:
 //
 //	docker exec chainbench-server1 mkdir -p /data/chainbench/keys
-//	docker cp keys/preset chainbench-server1:/data/chainbench/keys/kr-src
+//	docker cp presets/keys chainbench-server1:/data/chainbench/keys/kr-src
 //	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./internal/chainsetup -run TestLive_MaterializeKeyring -v
 func TestLive_MaterializeKeyringDownloadsAServerKeyring(t *testing.T) {
 	build := testsupport.ServersBuildDir(t)

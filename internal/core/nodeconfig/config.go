@@ -31,7 +31,7 @@ func Defaults() Values {
 		"nodes.cache":        "1024",
 		"data.directory":     "data",
 		"keys.mode":          "static",
-		"keys.source":        "keys/preset",
+		"keys.source":        "presets/keys",
 		"ports.base_p2p":     "30301",
 		"ports.base_http":    "8501",
 		"ports.base_ws":      "9501",

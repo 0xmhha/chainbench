@@ -27,7 +27,7 @@ import (
 // preset's producer-capable entry is LAST. A node table chooses its own order,
 // so it can put the producer on node5 and need no remap at all.
 func TestPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
-	prof, err := Load("../../presets/hardfork/wemix-upgrade.yaml")
+	prof, err := Load("../../presets/chain/wemix-upgrade.yaml")
 	if err != nil {
 		t.Fatalf("read the golden preset: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestPreset_PlanOrderPutsTheProducerOnTheAccountThatCanSeal(t *testing.T) {
 	}
 
 	// Plan node 1 is the producer; order[0] is the preset slot it takes.
-	acct, err := keystoreAccount(t, "../../keys/preset", order[0])
+	acct, err := keystoreAccount(t, "../../presets/keys", order[0])
 	if err != nil {
 		t.Fatalf("read preset node%d's keystore: %v", order[0], err)
 	}

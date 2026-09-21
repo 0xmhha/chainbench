@@ -119,7 +119,7 @@ func TestSuite_Live_NewVocabulary(t *testing.T) {
 		SpecPaths:  paths,
 		DataDir:    ws,
 		Binary:     bin,
-		KeysDir:    filepath.Join(repoRoot(t), "keys", "preset"),
+		KeysDir:    filepath.Join(repoRoot(t), "presets", "keys"),
 		WaitBlocks: 1,
 	})
 	if err != nil {
