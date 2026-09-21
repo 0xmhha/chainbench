@@ -132,10 +132,14 @@
 
 **preset 은 두 갈래다: 체인에 대한 것과 키에 대한 것.** 이름은 그 갈래를 말해야 한다.
 
+> **이 표는 §14 가 대신한다 (2026-09-21).** 아래 이름 넷 중 지금 코드에 있는 것은 하나도 없다 —
+> §13 이 패키지를 옮기고 §14 가 갈래를 한 모듈로 모으면서 전부 바뀌었다. 여기 남겨 두는 것은
+> **그때 무엇을 정했는지의 기록**이고, 지금 이름을 찾는 사람은 §14 의 표를 봐야 한다.
+
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
-| **체인** | `presets/<종류>/*.yaml` (지금은 `hardfork` 하나) | `upgrade.ChainPreset` | `upgrade.LoadChainPreset` |
-| **키** | `presets/keys/` | `keyring.Preset` | `store.LoadPreset` |
+| **체인** | `presets/<종류>/*.yaml` (지금은 `hardfork` 하나) | ~~`upgrade.ChainPreset`~~ | ~~`upgrade.LoadChainPreset`~~ |
+| **키** | `presets/keys/` | ~~`keyring.Preset`~~ | ~~`store.LoadPreset`~~ |
 
 **`HardforkPreset` 으로 갔다가 되돌렸다.** 종류(hardfork)로 이름을 좁혔는데, 그럴 이유가 없다 —
 하드포크는 체인 설정 preset 의 **한 종류**일 뿐이고 다른 종류가 더 생긴다. 실측이 그것을 보인다:
@@ -249,6 +253,9 @@ run \`chain start\` first"` 가 세 곳에 복사돼 있었다: `StartNode`(node
 규칙으로 갱신하는 스크립트를 세션 스크래치패드에 두었다(`retree.py`). **저장소에 넣지 않았다** —
 도구를 늘리는 대신 래칫이 틀린 숫자를 막는 쪽이 값이 크다고 보았고, 이 판단은 뒤집을 수 있다.
 
+> **뒤집었다 (2026-09-21, `ea48ad9b`).** 스크래치패드는 다음 사람에게 건너가지 않는 자리다.
+> `scripts/refresh-package-tree.py` 로 옮겼고, 래칫의 실패 문구가 그 이름을 댄다.
+
 ## 13. 갈래를 패키지로 (2026-09-21)
 
 **`upgrade.ChainPreset` 이 아직 거꾸로였다.** 업그레이드는 체인 구성의 **한 종류**인데 chain
@@ -276,10 +283,13 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 빚으로 기록하는 대신 **키 쪽을 갈래 이름으로 올렸다**: `keyring.KeyPreset`(77파일, 컴파일러가
 검증). 이제 짝이 맞는다.
 
+> **이 표도 §14 가 대신한다 (2026-09-21).** `chainpreset` 패키지는 §14 에서 `preset` 으로
+> 다시 옮겨졌다. 아래는 그 직전의 상태다.
+
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
-| 체인 | `presets/<종류>/*.yaml` | `chainpreset.Preset` | `chainpreset.Load` |
-| 키 | `presets/keys/` | `keyring.KeyPreset` | `store.LoadPreset` |
+| 체인 | `presets/<종류>/*.yaml` | ~~`chainpreset.Preset`~~ | ~~`chainpreset.Load`~~ |
+| 키 | `presets/keys/` | ~~`keyring.KeyPreset`~~ | ~~`store.LoadPreset`~~ |
 
 로더까지 `LoadKeyPreset` 으로 바꾸려다 되돌렸다 — **충돌은 타입 하나였고**, 래칫이 요구하지 않은
 것까지 바꾸면서 `LoadPresetWithAccountsAt` 같은 이름이 길어지기만 했다.
@@ -304,6 +314,9 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 치환이 못 잡아 세그먼트를 따로 옮겼다.
 
 ### 코드
+
+**이 표가 정본이다.** §8·§13 에 같은 모양의 표가 둘 더 있는데 둘 다 이것의 이전 단계이고,
+거기 적힌 이름은 코드에 없다.
 
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
@@ -339,7 +352,7 @@ poa 로 따라갔다.
 `TestSchemaV2MatchesParsedFields` 는 `$defs.envSpec`·`caseSpec` 의 **최상위 속성만** 비교했다.
 그 아래 `upgrade` 블록이 통째로 낡은 것이 1번에서 드러났는데, **아무도 보지 않았기 때문**이다.
 
-`TestSchemaV2NestedObjectsMatchTheLeirTypes` 가 envSpec·caseSpec 아래 **properties 를 가진 객체를
+`TestSchemaV2NestedObjectsMatchTheirTypes` 가 envSpec·caseSpec 아래 **properties 를 가진 객체를
 전부 걸어** 각각을 파싱하는 Go 타입과 대조한다. 짝짓기 자체도 래칫이다 — 새 중첩 객체는 짝을
 선언해야 통과하고, 없어진 객체의 짝이 남아 있어도 걸린다.
 
