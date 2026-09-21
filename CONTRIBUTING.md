@@ -62,7 +62,7 @@ Open an issue with the `enhancement` label. Describe:
    ```
    feat: add new stress test for large transactions
    fix: resolve port conflict detection on macOS
-   docs: update profile schema reference
+   docs: update preset schema reference
    refactor: simplify genesis template substitution
    ```
 7. **Push** and open a Pull Request against `main`
@@ -82,12 +82,9 @@ internal/chains/         chain plugins (stablenet, wbft, wemix, external) + mani
                          genesis templates, and capability catalogs
 internal/chainsetup/     composes a chain up to producing blocks
 internal/testengine/     runs tests on an already-composed chain
-internal/netmap/         server set, placement, and the one dial-wiring point
 internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
-internal/testkit/        test-case framework
-profiles/                remote-chain connection profiles
-presets/hardfork/        hardfork presets
+presets/chain/        hardfork presets
 tests/                   Go test cases (tests/all) + reproduction scripts (tests/repro)
 ```
 
@@ -106,12 +103,6 @@ tests/                   Go test cases (tests/all) + reproduction scripts (tests
 1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
 2. Run with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
 
-### Adding a Profile
-
-1. Create YAML in `profiles/` or `profiles/custom/`
-2. Use `inherits: default` to extend the base profile
-3. Only override fields that differ
-
 ### Modifying the MCP Server
 
 1. Edit the Go tool handlers in `internal/mcp/` (`*_tools.go`, registered in
@@ -126,7 +117,7 @@ tests/                   Go test cases (tests/all) + reproduction scripts (tests
 - **Shell scripts**: Use `bash` with `set -euo pipefail`. Follow existing patterns in `scripts/` and `env/docker/`.
 - **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/) format
 - **Branch names**: `feat/`, `fix/`, `docs/`, `refactor/` prefixes
-- **No breaking changes** to profile schema without migration path
+- **No breaking changes** to the DSL or preset schema without a migration path
 
 ## License
 

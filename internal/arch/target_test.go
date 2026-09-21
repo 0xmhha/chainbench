@@ -54,7 +54,9 @@ var targetBranches = map[string]string{
 // TestStepsDoNotBranchOnTheTarget holds N4's gate: a composition step asks
 // where its target is, and never runs a different job because of the answer.
 func TestStepsDoNotBranchOnTheTarget(t *testing.T) {
-	found := targetQuestions(t, "../chainsetup")
+	// Both halves of the setup module: the object and the verb layer that
+	// split out of it in 2026-09-21.
+	found := append(targetQuestions(t, "../chainsetup"), targetQuestions(t, "../chainsetup/verb")...)
 
 	seen := map[string]bool{}
 	for _, where := range found {

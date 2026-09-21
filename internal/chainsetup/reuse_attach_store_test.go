@@ -101,7 +101,7 @@ func TestReconcileReuse_AttachesAndRecordsEachServersOwnPID(t *testing.T) {
 		Configs: map[string]string{sharedCfgPath: filestore.Hash([]byte(body6))},
 	}
 
-	snap := reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}
+	snap := ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}
 	plan, err := w.reconcileReuse(context.Background(), snap, cands)
 	if err != nil {
 		t.Fatalf("reconcileReuse: %v", err)
@@ -117,7 +117,7 @@ func TestReconcileReuse_AttachesAndRecordsEachServersOwnPID(t *testing.T) {
 	// each server's own pid on its own node.
 	w2 := twoServerWorkspace(t, t.TempDir(), body6, body6, pid6, pid7)
 	same := candidateInputs{Configs: map[string]string{sharedCfgPath: filestore.Hash([]byte(body6))}}
-	plan, err = w2.reconcileReuse(context.Background(), reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}, same)
+	plan, err = w2.reconcileReuse(context.Background(), ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}, same)
 	if err != nil {
 		t.Fatalf("reconcileReuse: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestReconcileReuse_IdenticalInputsStillKeepServersApart(t *testing.T) {
 	w := twoServerWorkspace(t, t.TempDir(), body, body, pid6, pid7)
 
 	cands := candidateInputs{Configs: map[string]string{sharedCfgPath: filestore.Hash([]byte(body))}}
-	plan, err := w.reconcileReuse(context.Background(), reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}, cands)
+	plan, err := w.reconcileReuse(context.Background(), ReuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}, cands)
 	if err != nil {
 		t.Fatalf("reconcileReuse: %v", err)
 	}

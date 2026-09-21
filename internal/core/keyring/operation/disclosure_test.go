@@ -10,6 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -144,7 +145,7 @@ func TestExport_DisclosesOnPurpose(t *testing.T) {
 		t.Fatalf("Export returned %q, want a 32-byte hex key", out.PrivateKey)
 	}
 	// It is node2's key, not whichever came first.
-	keyed, err := store.LoadPresetWithKeys(dir)
+	keyed, err := preset.LoadKeyPresetWithKeys(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

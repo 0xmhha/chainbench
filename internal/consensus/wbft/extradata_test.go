@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// The shipped preset's values, verbatim (keys/preset/metadata.json). The golden
+// The shipped preset's values, verbatim (presets/keys/metadata.json). The golden
 // test reproduces its extra-data byte-for-byte from its own validator set,
 // which pins both the RLP encoder and the WBFTExtra field layout at once.
 var presetValidators = []string{

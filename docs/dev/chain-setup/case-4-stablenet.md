@@ -21,7 +21,7 @@
 | 합의 family | `wbft` (stablenet 은 wbft 합의 + stable coin 정책) |
 | chain id | 8283 |
 | RPC 네임스페이스 | `istanbul` |
-| 프리셋 | `keys/preset` (5노드; 검증자 4 + BLS/PoP + alloc) |
+| 프리셋 | `presets/keys` (5노드; 검증자 4 + BLS/PoP + alloc) |
 | 최소 노드 | 검증자 4 (BFT 진행) |
 
 ---
@@ -34,7 +34,7 @@
 |---|---|---|
 | 1 | resolve-chain | `registry.Get("stablenet")` → 매니페스트(engine_field `anzeon`, hardforks `istanbul,boho`) |
 | 2 | resolve-binary | `--binary <gstable>` |
-| 3 | load-preset | `keys/preset/metadata.json` → 검증자 4 주소 + BLS + `extraData` + alloc |
+| 3 | load-preset | `presets/keys/metadata.json` → 검증자 4 주소 + BLS + `extraData` + alloc |
 | 4 | allocate | `place` 가 노드별 p2p/http/ws/auth 포트 산출 + 용량 검증 |
 | 5 | genesis | `PresetGenesisSource` → 템플릿 `internal/chains/stablenet/genesis.json` 에 프리셋 검증자셋 치환 |
 | 6 | assemble-plan | `engine.AssemblePlan` → 노드별 datadir·config 경로·launch args |
@@ -94,7 +94,7 @@ ls /tmp/x            # genesis.json + node<N>/config.toml 확인
 ### 4.2 DSL 스펙 실행 (엔진 경로)
 
 ```sh
-chainbench run --chain stablenet --binary <gstable> --keys keys/preset \
+chainbench run --chain stablenet --binary <gstable> --keys presets/keys \
   --artifact-root /tmp/out examples/specs/smoke-rpc-reads.json
 ```
 

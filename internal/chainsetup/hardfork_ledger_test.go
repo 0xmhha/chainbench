@@ -2,11 +2,11 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 )
@@ -38,14 +38,14 @@ func TestHardforkExecute_SupersedesTheLedgerKeepingThePriorRevision(t *testing.T
 		t.Fatalf("save seed ledger: %v", err)
 	}
 
-	planned, err := chainsetup.HardforkPlan(context.Background(), deps, chainsetup.HardforkPlanIn{
+	planned, err := verb.HardforkPlan(context.Background(), deps, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "wbft", Block: 100,
 	})
 	if err != nil {
 		t.Fatalf("HardforkPlan: %v", err)
 	}
 	const postFork = "/opt/gwbft"
-	if _, err := chainsetup.HardforkExecute(context.Background(), deps, chainsetup.HardforkExecuteIn{
+	if _, err := verb.HardforkExecute(context.Background(), deps, verb.HardforkExecuteIn{
 		Plan: planned, DataDir: dir, Binary: postFork,
 	}); err != nil {
 		t.Fatalf("HardforkExecute: %v", err)

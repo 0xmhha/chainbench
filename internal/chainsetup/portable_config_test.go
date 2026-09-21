@@ -48,7 +48,7 @@ execution: {chain: fresh}
 		t.Fatal(err)
 	}
 	if _, err := ws.New(chainsetup.NewOpts{
-		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset"),
+		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys"),
 		Target:              resource.Spec{DataRoot: dataRoot},
 		WorkspaceConfigPath: wcPath,
 	}); err != nil {

@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -14,9 +15,10 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -106,6 +108,24 @@ func (w *Workspace) genesisPaths() []string {
 	return out
 }
 
+// The kinds of failure the init stage has.
+//
+// What is deliberately not one of them is the binary's own refusal:
+// InitDatadir covers "the binary is not there", "it will not take this genesis"
+// and "the datadir is in use", and which of those it was is the driver's answer
+// rather than this step's. Naming one of these three over it would say
+// something the error does not.
+var (
+	// errInitTargetUnable: the target's driver cannot initialize a datadir.
+	errInitTargetUnable = errors.New("the target cannot initialize a datadir")
+	// errInitGenesisUnreadable: the genesis this node needs cannot be read back
+	// from the machine the genesis stage wrote it to.
+	errInitGenesisUnreadable = errors.New("the genesis cannot be read from the target")
+	// errInitDatadir: the datadir could not be cleared, so "init" would not
+	// mean what it says.
+	errInitDatadir = errors.New("the datadir cannot be cleared")
+)
+
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -134,7 +154,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	err = w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		initer, ok := t.Driver.(process.Initializer)
 		if !ok {
-			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
+			return ofKind(errInitTargetUnable,
+				fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs"))
 		}
 		// A path on the machine: the genesis step wrote it through each
 		// machine's file store, so it is read back the same way. Read once per
@@ -147,7 +168,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			}
 			gen, err := t.Files.Read(ctx, p)
 			if err != nil {
-				return nil, fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err)
+				return nil, ofKind(errInitGenesisUnreadable,
+					fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err))
 			}
 			byPath[p] = gen
 			return gen, nil
@@ -177,7 +199,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			// skipped above — so what is removed is the chain this node built,
 			// which is what a rebuild discards.
 			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
-				return fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err)
+				return ofKind(errInitDatadir,
+					fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err))
 			}
 			// The genesis this node's binary accepts, which is not always the
 			// network's: two builds in one network need not take the same
@@ -208,26 +231,26 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 // Start launches every stopped node. Argv comes from the launchopts step when
 // it ran; otherwise it is assembled here through the same single site
 // (nodeconfig.Argv) with no overrides.
-func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
+func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
 	if err := w.require("start"); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	p, err := w.plugin()
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
+		return StepOut{}, fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	// With accounts: a producer unlocks the account its keystore holds, which is
 	// not always the address its nodekey derives.
-	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	preset, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
-		return "", fmt.Errorf("chainsetup: start: %w", err)
+		return StepOut{}, fmt.Errorf("chainsetup: start: %w", err)
 	}
 	// The family orders the launch. A wbft network declares one phase and this
 	// is the loop it always was; a wemix network starts its producer alone so
@@ -241,31 +264,43 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	phases := p.Family().BringUpPhases(roles)
 
 	if err := w.checkUnmanaged(ctx, bin); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if err := w.checkPaths(ctx, bin); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
+	// The walk through the phases, as states. A family decides how many there
+	// are — wbft declares one, a poa network declares a boot plus one join per
+	// producer — so the count is not this package's to know, and the path is
+	// built as the loop runs rather than assumed in front of it.
+	//
+	// The state says what the launch was doing; how many times it has been
+	// through says which phase. A launch that dies in the third join reports
+	// three PhaseLaunching and stops there, which is the thing the loop alone
+	// could not say: the record used to hold "start" and nothing else.
+	var passed []lifecycle.Status
 	started := 0
 	for _, phase := range phases {
+		passed = append(passed, lifecycle.ChainLaunchNodesPhaseLaunching)
 		launched, err := w.startPhase(ctx, p, preset, bin, phase)
 		if err != nil {
-			return "", err
+			return StepOut{Passed: passed}, err
 		}
 		started += launched
-		if len(phase.Actions) == 0 {
-			continue
+		if len(phase.Actions) > 0 {
+			passed = append(passed, lifecycle.ChainLaunchNodesPhaseActions)
+			if err := w.runPhaseActions(ctx, bin, phase); err != nil {
+				return StepOut{Passed: passed}, err
+			}
 		}
-		if err := w.runPhaseActions(ctx, bin, phase); err != nil {
-			return "", err
-		}
+		passed = append(passed, lifecycle.ChainLaunchNodesPhaseDone)
 	}
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
 	rec, err := w.machineFor(w.state.Nodes[0])
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if dir, err := w.recordRun(ctx, rec, bin); err == nil {
 		detail += fmt.Sprintf("; run recorded at %s", dir)
@@ -273,7 +308,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 		// The record must never take the network it records down with it.
 		detail += fmt.Sprintf("; run record failed: %v", err)
 	}
-	return detail, nil
+	return StepOut{Detail: detail, Passed: passed}, nil
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
@@ -350,10 +385,8 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 // nodeAt finds a node's position in the table by its index.
 
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
-	for _, ns := range w.state.Nodes {
-		if ns.PID > 0 {
-			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `chain stop` first", ns.Index, ns.PID)
-		}
+	if err := w.allow("Rm"); err != nil {
+		return "", err
 	}
 	// Removal goes through the target's file store, the same boundary that wrote
 	// these paths. That is what makes a remote data plane removable at all: this
@@ -415,3 +448,28 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 // wrote it — which is what makes a remote node's log one call instead of a
 // branch. (The collector's live tail has its own byte-offset reader; this is
 // the step surface's one-shot read.)
+
+// InitFailure is which of the init stage's failures this error is.
+//
+// The busy-port answer is the launch's state, not one of this block's. The
+// check is the same one the launch makes, asked here before anything is
+// written so that the refusal can name the ports and the host instead of
+// leaving it to the binary to say "datadir already used"; what failed is the
+// ports the launch needs, and it keeps that name whoever noticed.
+//
+// What still reaches the default is the binary's own refusal, and the two
+// preconditions a bare `chain init` can still hit — inside a composition the
+// transition table is what makes those unreachable.
+func InitFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errInitTargetUnable):
+		return lifecycle.ChainInitNodesFailTargetUnable
+	case errors.Is(err, errInitGenesisUnreadable):
+		return lifecycle.ChainInitNodesFailGenesisUnreadable
+	case errors.Is(err, errInitDatadir):
+		return lifecycle.ChainInitNodesFailDatadir
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	}
+	return lifecycle.FailStageUnclassified
+}

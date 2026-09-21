@@ -12,9 +12,9 @@ import (
 	"sort"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // The genesis a declaration asks for: overlays, and a fork it schedules itself.
@@ -83,9 +83,9 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	// The preset is read only for what the case left out. A declaration that
 	// says both says everything, and a restart has no preset to read at all.
 	if u.Fork == "" || u.At == nil {
-		prof, err := upgrade.LoadProfile(upgradePresetPath(u))
+		prof, err := preset.LoadChainPreset(upgradePresetPath(u))
 		if err != nil {
-			return nil, fmt.Errorf("upgrade preset: %w", err)
+			return nil, fmt.Errorf("upgrade keys: %w", err)
 		}
 		if name == "" {
 			name = prof.Upgrade.AtFork
@@ -95,7 +95,7 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 		}
 	}
 	if name == "" {
-		return nil, fmt.Errorf("upgrade: neither the case nor its preset names a fork")
+		return nil, fmt.Errorf("upgrade: neither the case nor its keys names a fork")
 	}
 	to := u.To
 	if to == "" {
@@ -109,14 +109,11 @@ func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 }
 
 // hardforkPresetDir is where a named hardfork preset lives.
-const hardforkPresetDir = "presets/hardfork"
+const hardforkPresetDir = "presets/chain"
 
-// upgradePresetPath is the preset file this declaration names: a path when it
-// gave one, and otherwise the named preset under presets/hardfork.
+// upgradePresetPath is the preset file this declaration names, under
+// presets/chain.
 func upgradePresetPath(u *dsl.UpgradeV2) string {
-	if u.Profile != "" {
-		return expand(u.Profile)
-	}
 	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
 }
 
@@ -133,9 +130,9 @@ func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
 	if u.Style == dsl.UpgradeRestart {
 		return nil
 	}
-	prof, err := upgrade.LoadProfile(presetPath)
+	prof, err := preset.LoadChainPreset(presetPath)
 	if err != nil {
-		return fmt.Errorf("upgrade preset: %w", err)
+		return fmt.Errorf("upgrade keys: %w", err)
 	}
 	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
 		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)

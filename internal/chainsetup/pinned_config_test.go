@@ -30,7 +30,7 @@ func TestConfig_PinnedFileIsUsedVerbatim(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := ws.New(chainsetup.NewOpts{
-		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset"),
+		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys"),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestConfig_PinnedFileMissingIsReported(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := ws.New(chainsetup.NewOpts{
-		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset"),
+		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys"),
 	}); err != nil {
 		t.Fatal(err)
 	}

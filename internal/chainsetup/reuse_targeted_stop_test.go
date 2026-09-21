@@ -54,7 +54,7 @@ func TestReconcileReuse_StopsOnlyTheDriftedNodesProcess(t *testing.T) {
 	w.machines = map[string]*resource.Access{
 		"s1": {Spec: resource.Spec{Server: "s1"}, DataRoot: "/data/chainbench", Driver: drv},
 	}
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh",
 		before: map[int]nodeBaseline{
 			1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: pidKept},
@@ -104,7 +104,7 @@ func TestReconcileReuse_StopsNothingWhenEveryNodeMatches(t *testing.T) {
 	w.machines = map[string]*resource.Access{
 		"s1": {Spec: resource.Spec{Server: "s1"}, DataRoot: "/data/chainbench", Driver: drv},
 	}
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh",
 		before: map[int]nodeBaseline{
 			1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111},
@@ -134,7 +134,7 @@ func TestReconcileReuse_RefusalStopsNothing(t *testing.T) {
 	}
 	// The recorded genesis hash is what the candidate carries; the snapshot's is
 	// the older one, so the shared genesis changed.
-	snap := reuseSnapshot{
+	snap := ReuseSnapshot{
 		genesisHash: "gh-before",
 		before:      map[int]nodeBaseline{1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111}},
 		alive:       map[int]bool{1: true},

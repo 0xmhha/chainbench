@@ -15,13 +15,13 @@ func preset(t *testing.T) string {
 	t.Helper()
 	dir, _ := os.Getwd()
 	for {
-		p := filepath.Join(dir, "keys", "preset")
+		p := filepath.Join(dir, "presets", "keys")
 		if _, err := os.Stat(filepath.Join(p, "metadata.json")); err == nil {
 			return p
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			t.Fatal("keys/preset not found")
+			t.Fatal("presets/keys not found")
 		}
 		dir = parent
 	}

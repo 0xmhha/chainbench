@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -49,7 +49,7 @@ func wsForValidatorCheck(t *testing.T, srv *httptest.Server) (*Workspace, []stri
 	w.state.Nodes = []node.Record{{Index: 1, Label: "node1", Host: u.Hostname(), Endpoints: node.Endpoints{HTTP: port}}}
 	w.state.Target = resource.Spec{DataRoot: t.TempDir()}
 
-	preset, err := store.LoadPreset(presetDir)
+	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
 		t.Fatal(err)
 	}

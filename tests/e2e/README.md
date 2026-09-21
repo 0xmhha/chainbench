@@ -27,7 +27,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 
 - Chain binaries come from env: `GSTABLE_BIN`, `WBFT_BIN`, `WEMIX_BIN` (or the
   binary on `PATH`). Absent → the test skips.
-- The funded sender is node 1's key from `keys/preset` — a committed **TEST
+- The funded sender is node 1's key from `presets/keys` — a committed **TEST
   fixture** (public, local-only). It is loaded at runtime, never a literal, and
   is only ever used to fund local ephemeral test networks.
 
@@ -43,10 +43,10 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 | — | endpoint re-sync (a1-02/03/06) | `TestE2E_StablenetSyncGap` | `GSTABLE_BIN` (`SYNCMODE=snap GAP=150` for snap) |
 | — | proposal expiry → Expired (f3-06) | `TestE2E_StablenetProposalExpiry` | `GSTABLE_BIN` (short-expiry overlay) |
 
-> **Scenario 2 (wemix→wbft handoff)** lives in `cmd/chainbench/upgrade_run_e2e_test.go`
-> (`TestUpgradeRunE2E`) — it drives `chainbench upgrade run` and asserts the
-> croissant handoff plus post-fork state/tx/contract on the wbft successor. Run it
-> with `CHAINBENCH_E2E_FROM_BIN`/`_TO_BIN`/`_TEMPLATE`. No external etcd is needed — gwemix embeds one.
+> **Scenario 2 (wemix→wbft handoff)** lives in the DSL: `tests/tc/go-wemix/hardfork/`
+> asserts the croissant handoff and that state written before the fork survives it,
+> composed from `tests/tc/env/wemix-to-wbft.env.json`. The Go e2e that used to hold
+> it drove `chainbench upgrade run`, a command the CLI no longer has, and was removed.
 >
 > Migration in progress: the remaining scenarios (1 wemix pure, basefee, and the
 > account-extra / delayed-fork overlay cases — the last two need a gstable build

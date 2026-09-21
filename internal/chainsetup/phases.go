@@ -2,7 +2,9 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,9 +16,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/core/inspector"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -28,7 +30,28 @@ import (
 // the rest one at a time — launching everything at once produced a network that
 // came up and never agreed on anything.
 
-func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+// The kinds of failure the launch has. This is the block with the most detail
+// states and the most ways to fail, because it is the one stage whose shape the
+// family decides: a wbft network declares one phase, a poa network starts its
+// producer alone to let the etcd cluster form and then joins the rest one at a
+// time.
+var (
+	// errLaunchNoBinary: the binary is not set, not on the target, or not on
+	// the target's PATH.
+	errLaunchNoBinary = errors.New("the node binary is not on the target")
+	// errLaunchPortBusy: a port the plan needs is already taken.
+	errLaunchPortBusy = errors.New("a planned port is in use")
+	// errLaunchOccupied: the binary is already running on the machine outside
+	// this workspace.
+	errLaunchOccupied = errors.New("the machine is already running this binary")
+	// errLaunchNoKeystore: a producer has no keystore file to unlock.
+	errLaunchNoKeystore = errors.New("a node has no keystore file")
+	// errLaunchPhaseEmpty: a phase names actions and launched no node to run
+	// them on.
+	errLaunchPhaseEmpty = errors.New("a phase has nowhere to run its actions")
+)
+
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, keys preset.Key, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}
@@ -59,7 +82,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(np, preset, spec, w.state.KeysDir, staticNodes))
+			args, err := nodeconfig.Argv(process.NodeConfig(np, keys, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
@@ -85,7 +108,8 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
-		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
+		return ofKind(errLaunchPhaseEmpty,
+			fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name))
 	}
 	// No Binary override: the executor already prefers the plan's own entry for
 	// the node it runs on, and that is the node's binary. Naming one here
@@ -176,7 +200,8 @@ func bootKeystoreOnTarget(localKeysDir, targetKeysDir string, index int) (string
 			return path.Join(targetKeysDir, fmt.Sprintf("node%d", index), "keystore", e.Name()), nil
 		}
 	}
-	return "", fmt.Errorf("chainsetup: start: node%d has no keystore file in %s", index, dir)
+	return "", ofKind(errLaunchNoKeystore,
+		fmt.Errorf("chainsetup: start: node%d has no keystore file in %s", index, dir))
 }
 
 // phaseHasNode reports whether a phase covers a node. A phase naming no nodes
@@ -217,6 +242,12 @@ func phaseActionNode(nodes []node.Record, phase registry.Phase) (node.Node, bool
 // inside a launch with "no such file" and nothing about which file.
 func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	var lines []string
+	// Whether the binary was among the problems, and whether anything else was.
+	// The combined message lists everything; the kind can only name one thing,
+	// so it names the binary when that is the whole of it and says nothing when
+	// the workspace is missing more than that — a state that said "no binary"
+	// over a missing genesis would hide the bigger problem.
+	binaryMissing, otherMissing := false, false
 	for _, ns := range w.state.Nodes {
 		if ns.PID > 0 {
 			continue
@@ -230,6 +261,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 		// would report a binary the launch will find as missing.
 		if err := checkBinary(ctx, t, bin); err != nil {
 			lines = append(lines, "  "+err.Error())
+			binaryMissing = true
 		}
 		want := []inspector.Path{
 			{Path: w.genesisFor(ns), Purpose: "genesis"},
@@ -246,13 +278,18 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 				line += " on " + ns.Server
 			}
 			lines = append(lines, line)
+			otherMissing = true
 		}
 	}
 	if len(lines) == 0 {
 		return nil
 	}
-	return fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
+	err := fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
+	if binaryMissing && !otherMissing {
+		return ofKind(errLaunchNoBinary, err)
+	}
+	return err
 }
 
 // checkBinary reports the binary as missing when the target cannot produce it,
@@ -265,7 +302,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 // no for a binary the launch would have found.
 func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 	if bin == "" {
-		return fmt.Errorf("binary: none is set")
+		return ofKind(errLaunchNoBinary, fmt.Errorf("binary: none is set"))
 	}
 	if strings.ContainsRune(bin, '/') {
 		ok, err := t.Files.Exists(ctx, bin)
@@ -273,7 +310,7 @@ func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 			return fmt.Errorf("binary %s: %v", bin, err)
 		}
 		if !ok {
-			return fmt.Errorf("binary %s: not on the target", bin)
+			return ofKind(errLaunchNoBinary, fmt.Errorf("binary %s: not on the target", bin))
 		}
 		return nil
 	}
@@ -282,7 +319,8 @@ func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 		return fmt.Errorf("binary %s: %v", bin, err)
 	}
 	if !ok {
-		return fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin)
+		return ofKind(errLaunchNoBinary,
+			fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin))
 	}
 	_ = path
 	return nil
@@ -301,4 +339,27 @@ func uniq(in []string) []string {
 		out = append(out, s)
 	}
 	return out
+}
+
+// LaunchFailure is which of the launch's five failures this error is.
+//
+// What still reaches the default is everything the launch does per node once
+// the checks have passed: resolving a machine, building a peer list, the
+// driver's own refusal to start a process. Those belong to the packages that
+// raise them, and giving one of the five names here would say something the
+// error does not.
+func LaunchFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errLaunchNoBinary):
+		return lifecycle.ChainLaunchNodesFailNoBinary
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	case errors.Is(err, errLaunchOccupied):
+		return lifecycle.ChainLaunchNodesFailOccupied
+	case errors.Is(err, errLaunchNoKeystore):
+		return lifecycle.ChainLaunchNodesFailNoKeystore
+	case errors.Is(err, errLaunchPhaseEmpty):
+		return lifecycle.ChainLaunchNodesFailPhaseEmpty
+	}
+	return lifecycle.FailStageUnclassified
 }

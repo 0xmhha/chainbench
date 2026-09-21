@@ -96,12 +96,14 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/legacy-port-audit/`](dev/legacy-port-audit/README.md) | **[측정] 이관 감사** — 셸 460파일과 신규 Go+DSL 을 각각 AST 그래프로 만들어(노드 943 / 1,413) 테스트 단위로 대조한 기록. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) | wemix4 케이스 포팅 추적(covered / ported / deferred). 상단에 **경로 정정** — 판정은 유효하고 위치만 `tests/tc`·`tests/e2e` 로 옮겼다. |
 | [`dev/monitoring-issue-review-2026-09-10.md`](dev/monitoring-issue-review-2026-09-10.md) | **모니터링 이슈 16건 재판정과 수정 계획** (기준 `2cc82692`). 그중 14건은 `9b6b0930` 에서 해소됐다. |
+| [`dev/handoff-2026-09-21.md`](dev/handoff-2026-09-21.md) | **[이력] 리팩토링 design-v3 인계 (2026-09-21)** — 브랜치 `refactor/design-v3` 의 상태, 이 기계에만 있던 것, 새로 건 래칫 여섯, 바로 이어갈 셋, 되풀이하지 말 것 다섯. 열린 작업의 정본은 워크리스트 §0 이다. |
 | [`dev/chain-handover-2026-09-12.md`](dev/chain-handover-2026-09-12.md) | **[측정] 체인팀 인계 3건** — chainbench 를 고쳐서는 해소되지 않는 go-wemix / go-wbft 결함. `verifyBlockSig` 의 nil 역참조 패닉(원인 확정), 부트 etcd 붕괴(R6, 범위 좁힘), `istanbul_getWbftExtraInfo` 의 블록 태그. 증상·근거·재현·제안까지. |
 
 ## 4. `dev/architecture/` — 구조와 측정
 
 | 문서 | 등급 | 내용 |
 |---|---|---|
+| [`design-v3/`](dev/architecture/design-v3/direction.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21).** `measurement-…md` 는 잰 것만, `direction.md` 는 방향과 결정(§8·§13·§14 가 이름 판단의 근거), `chain-as-a-run-dimension.md` 는 공통 TC 한 벌이 세 체인에 도는 문제. **닫은 세 계획의 수치를 하나도 가져오지 않았다.** |
 | [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (2026-09, 검토 중).** **새 설계의 입력이 아니다 (2026-09-20)** — 목표 구조와 P0~P5 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). **측정·분석 부분만 인용할 수 있고, 그것도 날짜를 확인하고 다시 잴 것.** |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |

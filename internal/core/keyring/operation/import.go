@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // Importing key material into a set, and resolving a reference to one key.
@@ -134,7 +135,7 @@ func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	// With keys: importing a ring COPIES the identities, so it needs what makes
 	// them identities. It is the third caller that asks for secrets, and like the
 	// other two it is a call whose whole purpose is to move them.
-	srcSet, err := store.LoadPresetWithKeysAt(ctx, srcFiles, srcDir)
+	srcSet, err := preset.LoadKeyPresetWithKeysAt(ctx, srcFiles, srcDir)
 	if err != nil {
 		return SetOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
 	}

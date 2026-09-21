@@ -182,7 +182,7 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 	const bare = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"}`
 	const declared = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
-	  "target":"/srv/net1","keys":{"nodekeys":{"ref":"keys/preset","source":"keyPreset"}}}`
+	  "target":"/srv/net1","keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 
 	for _, tc := range []struct {
 		name  string
@@ -225,7 +225,7 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
 	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
-	  "keys":{"nodekeys":{"ref":"keys/preset","source":"keyPreset"}}}`
+	  "keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 	line := planFor(t, env, RunSuiteIn{}).chosenByLine()
 
 	if strings.Contains(line, string(FieldBinary)) || strings.Contains(line, string(FieldKeysDir)) {

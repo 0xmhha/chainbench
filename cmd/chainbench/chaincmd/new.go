@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // newNetNewCmd initializes a composition workspace: the target chain and where
@@ -54,7 +55,7 @@ func newNetNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (may also be set at start)")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
+	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "key set the network composes from (inspect/manage it with `account`)")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 	cmd.Flags().StringVar(&serverSet, "server-set", "",

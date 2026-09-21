@@ -14,7 +14,7 @@ import (
 // key generator, which meant a package about key material decided what a
 // genesis says about block production.
 //
-// Genesis shape (verified byte-for-byte against keys/preset and against the
+// Genesis shape (verified byte-for-byte against presets/keys and against the
 // chain's own simulated backend genExtraData):
 //
 //	WBFTExtra{

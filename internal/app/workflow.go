@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -62,6 +63,22 @@ type AttachRunIn struct {
 	// surface (L6) and this layer sits below it. Opening the stream is
 	// dashboard.Stream's job, which both surfaces call.
 	Bus *collector.Bus
+	// Declared is what the specs' env.attach said, carried by a Start whose
+	// state came from one. It supplies what the caller did not: the endpoints,
+	// the key set, the capabilities and the chain.
+	//
+	// The rule is that what the caller said outranks the document, and here
+	// that is expressed by "empty means not said" — a surface passes a flag's
+	// value only when the flag was given.
+	Declared *AttachDecl
+	// At is the adopt state this run starts in, from StartFor. It decides which
+	// of the three attach paths runs.
+	//
+	// Required. It used to be worked out here from whether DataDir was set,
+	// which is the same decision the two surfaces were each making again with
+	// their own words; a caller that has not decided is not a caller this can
+	// decide for.
+	At lifecycle.Status
 	// DataDir attaches to the network a workspace already composed, instead of
 	// naming its endpoints. The workspace supplies both: the endpoints, and
 	// the capabilities the composition advertised.
@@ -99,7 +116,30 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	// as the compose path does — the plain NewAttachEngine below wires none of
 	// those, so a bare-URL attach (which owns no workspace or processes) is the
 	// only thing that should use it (WA10).
-	if in.DataDir != "" {
+	if in.At.Block() != lifecycle.AdoptChain {
+		return "", fmt.Errorf("app: attach run: %s is not a state a run attaches in — resolve one with StartFor", in.At)
+	}
+	if in.At == lifecycle.AdoptChainByDeclaration {
+		if in.Declared == nil {
+			return "", fmt.Errorf("app: attach run: %s carries no declaration", in.At)
+		}
+		if in.Chain == "" {
+			in.Chain = in.Declared.Chain
+		}
+		if in.KeysDir == "" {
+			in.KeysDir = in.Declared.KeysDir
+		}
+		if len(in.RPCURLs) == 0 {
+			in.RPCURLs = in.Declared.RPCURLs
+		}
+		if len(in.Caps) == 0 {
+			in.Caps = in.Declared.Provides
+		}
+	}
+	if in.At == lifecycle.AdoptChainByWorkspace {
+		if in.DataDir == "" {
+			return "", fmt.Errorf("app: attach run: %s needs the workspace whose network is up", in.At)
+		}
 		return testengine.AttachWorkspaceRun(ctx, d.chainsetupDeps(), testengine.AttachWorkspaceIn{
 			DataDir: in.DataDir, Chain: in.Chain, ArtifactRoot: in.ArtifactRoot,
 			Caps: in.Caps, Specs: in.Specs,
@@ -138,6 +178,16 @@ func DeclaredAttach(paths []string) (*AttachDecl, error) {
 	if err != nil {
 		return nil, err
 	}
+	return declaredAttachIn(specs, paths)
+}
+
+// declaredAttachIn is DeclaredAttach over specs already read.
+//
+// The surfaces do not all hold paths: the CLI names files and the tool is
+// handed the blobs. Splitting the reading from the agreeing is what lets both
+// ask the same question, which is why the tool had no env.attach branch at all
+// until now.
+func declaredAttachIn(specs [][]byte, labels []string) (*AttachDecl, error) {
 	var (
 		want *AttachDecl
 		from string
@@ -149,7 +199,7 @@ func DeclaredAttach(paths []string) (*AttachDecl, error) {
 			// not parse, per spec, with the reason.
 			continue
 		}
-		label := paths[i]
+		label := labelAt(labels, i)
 		if sp.EnvAttach == nil {
 			if want != nil {
 				return nil, fmt.Errorf("app: %s declares an attach env and %s does not — one run runs against one network", from, label)
@@ -164,7 +214,7 @@ func DeclaredAttach(paths []string) (*AttachDecl, error) {
 		}
 		if want == nil {
 			if i > 0 {
-				return nil, fmt.Errorf("app: %s declares an attach env and %s does not — one run runs against one network", label, paths[0])
+				return nil, fmt.Errorf("app: %s declares an attach env and %s does not — one run runs against one network", label, labelAt(labels, 0))
 			}
 			want, from = got, label
 			continue
@@ -174,6 +224,15 @@ func DeclaredAttach(paths []string) (*AttachDecl, error) {
 		}
 	}
 	return want, nil
+}
+
+// labelAt names a spec in a refusal. A caller that handed over blobs with no
+// names gets a position, which is still enough to say which two disagree.
+func labelAt(labels []string, i int) string {
+	if i < len(labels) {
+		return labels[i]
+	}
+	return fmt.Sprintf("spec %d", i+1)
 }
 
 // AttachDecl is the network a case's own env names, in the terms a surface

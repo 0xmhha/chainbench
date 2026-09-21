@@ -59,7 +59,7 @@
 CHAIN=/Users/…/Work/github/chain
 chainbench chain up --workspace-dir /tmp/cbs --chain stablenet \
   --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --keys keys/preset --validators 4
+  --keys presets/keys --validators 4
 
 chainbench chain health --workspace-dir /tmp/cbs
 chainbench run --attach --chain stablenet --rpc http://127.0.0.1:8545 tests/tc/basic
@@ -77,7 +77,7 @@ stablenet 과 **명령이 완전히 동일**하다. 두 가지만 다르다.
 ```sh
 chainbench chain up --workspace-dir /tmp/cbw --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \   # ← 바이너리 이름이 gwemix 다
-  --keys keys/preset --validators 4
+  --keys presets/keys --validators 4
 ```
 
 | 함정 | 내용 |
@@ -207,7 +207,7 @@ for i in 2 3 4; do P=$((8588+(i-1)*1000)); $G --datadir $D/node$i --mine \
 ```sh
 # 목표 — 세 체인 모두 이 한 줄
 chainbench chain up --workspace-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
-  --binary <path> --keys keys/preset --validators 4 --server local
+  --binary <path> --keys presets/keys --validators 4 --server local
 ```
 
 보조로 필요한 것은 **관측**뿐이다: `net status` 가 어느 페이즈까지 갔는지,

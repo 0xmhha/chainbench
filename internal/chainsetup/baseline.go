@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -37,7 +37,7 @@ func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, err
 	if w.state.GenesisPath == "" {
 		return obs, fmt.Errorf("chainsetup: baseline: no genesis has been composed yet")
 	}
-	t, err := w.resolveTarget()
+	t, err := w.ResolveTarget()
 	if err != nil {
 		return obs, err
 	}
@@ -62,7 +62,7 @@ func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, err
 		obs.Configs[string(ns.NodeLabel())] = filestore.Hash(cfg)
 	}
 	if w.state.KeysDir != "" {
-		preset, err := store.LoadPreset(w.state.KeysDir)
+		preset, err := preset.LoadKeyPreset(w.state.KeysDir)
 		if err != nil {
 			return obs, fmt.Errorf("chainsetup: baseline: load keys: %w", err)
 		}

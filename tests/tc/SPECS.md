@@ -13,7 +13,7 @@ chainbench validate tests/tc/**/*.json
 # 로컬 체인 기동 후 실행
 CHAIN=/path/to/chain
 chainbench run --chain stablenet --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --keys keys/preset --artifact-root /tmp/out tests/tc/go-stablenet/regression/api/*.json
+  --keys presets/keys --artifact-root /tmp/out tests/tc/go-stablenet/regression/api/*.json
 
 # 이미 떠 있는 네트워크에 붙여서
 chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/tc/go-stablenet/regression/api/*.json

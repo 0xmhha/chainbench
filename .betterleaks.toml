@@ -1,19 +1,20 @@
 # Secret-scanning configuration for chainbench.
 #
-# Every rule of the default set stays on. The allowlist below covers exactly the
-# two places README.md declares to be test fixtures, and nothing else:
+# Every rule of the default set stays on. The allowlist below covers the places
+# README.md declares to be test fixtures, plus the vendored snapshots named at
+# the end, and nothing else:
 #
-#   > Treat a finding as real only if it is outside `keys/preset/` and outside
+#   > Treat a finding as real only if it is outside `presets/keys/` and outside
 #   > test code.
 #
-# The keys under keys/preset/ are committed on purpose so a local run is
+# The keys under presets/keys/ are committed on purpose so a local run is
 # reproducible. They are decryptable, every node binds to 127.0.0.1, and README
 # states they must never be used on any production, mainnet, testnet, staging or
 # shared network. The inline keys in test source are the upstream go-ethereum
 # test keys, already public in every geth fork.
 #
-# That covers both kinds of key under keys/preset/: the node identities, which
-# were generated once and committed, and the dev accounts (keys/preset/dev1/),
+# That covers both kinds of key under presets/keys/: the node identities, which
+# were generated once and committed, and the dev accounts (presets/keys/dev1/),
 # which the harness mints at run time and reads back so a label keeps naming one
 # address. Both are plaintext, both are disposable, and neither may ever hold
 # anything on a real network.
@@ -28,8 +29,8 @@
 useDefault = true
 
 [[allowlists]]
-description = "committed test fixtures under keys/preset (README CAUTION)"
-paths = ['''^keys/preset/''']
+description = "committed test fixtures under presets/keys (README CAUTION)"
+paths = ['''^presets/keys/''']
 
 [[allowlists]]
 description = "inline test keys in Go test source (upstream go-ethereum test keys)"
@@ -41,4 +42,27 @@ paths = ['''^tests/''']
 
 [[allowlists]]
 description = "retired paths reachable only through git history"
-paths = ['''^network/''', '''^docs/superpowers/plans/''']
+paths = ['''^network/''', '''^docs/superpowers/plans/''', '''^keys/preset/''']
+
+[[allowlists]]
+# docs/research/ holds chain repositories checked in whole so an analysis can be
+# re-read against the tree it was made from. What the scanner finds there is
+# upstream go-ethereum test data and clef tutorials — public in every fork — and
+# it finds 1,036 of them, which is enough to teach a reader to ignore the
+# scanner. That is the risk this entry removes.
+#
+# The working tree no longer holds them: 8dbbd07e (2026-09-21) dropped the
+# vendored trees and what was generated from them, and 2026-09-21 dropped the
+# last analysis snapshot that carried a copy of this repository's own source.
+# What is left under docs/research/ is markdown and graph JSON, and it scans
+# clean on its own — measured by taking this entry out and scanning: 0 findings
+# in the tree.
+#
+# The entry stays anyway, because `betterleaks git .` reads HISTORY. The
+# vendored sources are still in every commit before 8dbbd07e, and the same
+# measurement with this entry removed reports 1036 of them. Removing it needs
+# the history rewritten, which is a decision for the team and not for a
+# scanner's config — so the exit condition is that, not "when the refactoring
+# closes", which is what this said and what made someone try.
+description = "vendored chain sources, still reachable through git history"
+paths = ['''^docs/research/''']

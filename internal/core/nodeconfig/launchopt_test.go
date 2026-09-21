@@ -148,7 +148,7 @@ func TestMetricsPortWithoutEnableFails(t *testing.T) {
 }
 
 func TestChainExtRejectsForeignKey(t *testing.T) {
-	m := ChainExt{Values: map[Key]string{KeyHTTPPort: "8545"}}
+	m := ChainExt{Values: map[OptionKey]string{KeyHTTPPort: "8545"}}
 	if err := m.Apply(NewArgs(Geth110Wemix())); err == nil {
 		t.Fatal("non-chainext key must fail")
 	}
@@ -157,7 +157,7 @@ func TestChainExtRejectsForeignKey(t *testing.T) {
 func TestChainExtOnModernDialectIsError(t *testing.T) {
 	b := New(Geth114(),
 		Storage{DataDir: "/d"},
-		ChainExt{Values: map[Key]string{KeyBlockInterval: "1"}},
+		ChainExt{Values: map[OptionKey]string{KeyBlockInterval: "1"}},
 	)
 	if _, err := b.Build(); err == nil {
 		t.Fatal("wemix knob on geth114 must be an explicit error, not a skip")

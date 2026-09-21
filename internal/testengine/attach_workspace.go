@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -167,46 +167,15 @@ func composedArtifacts(net composed) []session.ArtifactRef {
 // records the steps and the preflight decision on out.
 func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
 	// What is composed here already may be what this suite wants: ask before
-	// rebuilding. The decision is recorded beside the setup steps so a run
-	// that reused a network says so, and one that rebuilt says why.
-	decision := preflightDecision(ctx, sd, up.DataDir, chainsetup.WantOf(up))
-	out.Preflight = decision.String()
-	switch decision.Verdict {
-	case preflight.Reuse:
-		out.SetupSteps = []string{"preflight: reuse — " + decision.String()}
-	case preflight.RebuildNodes:
-		for _, idx := range decision.Nodes {
-			st, err := chainsetup.NetRestart(ctx, sd, chainsetup.NetRestartIn{DataDir: up.DataDir, Node: idx})
-			if err != nil {
-				return composed{}, fmt.Errorf("engine: run suite: preflight restart node%d: %w", idx, err)
-			}
-			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
-		}
-	default:
-		// RebuildAll means a network-wide fact differs, and the most common one
-		// is the genesis — a different chain. The compose steps alone do not
-		// deliver that: init and start SKIP a node that still carries a recorded
-		// pid, so a second up over a workspace whose nodes are still running
-		// rewrites the genesis on disk and leaves every node serving the old one.
-		// Measured: the verdict read "rebuild-all: genesis differs", the
-		// workspace genesis had applepieBlock 0, and all four running nodes
-		// reported "Applepie: #<nil>" with one startup each.
-		//
-		// So the network is stopped first, which is what makes "rebuild all"
-		// true. Only on RebuildAll: Compose has nothing to stop, and
-		// RebuildNodes is handled above, per node.
-		if decision.Verdict == preflight.RebuildAll {
-			st, serr := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: up.DataDir})
-			if serr != nil {
-				return composed{}, fmt.Errorf("engine: run suite: preflight stop before rebuild: %w", serr)
-			}
-			out.SetupSteps = append(out.SetupSteps, "stop (rebuild-all): "+st.Detail)
-		}
-		res, err := chainsetup.NetUp(ctx, sd, up)
-		out.SetupSteps = append(out.SetupSteps, res.Steps...)
-		if err != nil {
-			return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
-		}
+	// rebuilding. The asking, and the four things the answer leads to, are the
+	// comparison block of the chain's own lifecycle — this used to be a switch
+	// over four verdicts written here, which could say what was done but not
+	// where the run was when it did it.
+	res, err := verb.NetUpComparing(ctx, sd, verb.CompareIn{Up: up})
+	out.Preflight = res.Decision
+	out.SetupSteps = append(out.SetupSteps, res.Steps...)
+	if err != nil {
+		return composed{}, fmt.Errorf("engine: run suite: setup: %w (at %s)", err, res.At)
 	}
 
 	return readWorkspaceComposed(ctx, sd, up.DataDir, up.KeysDir, &out.SetupSteps, gateBudget)
@@ -218,7 +187,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 // gates it ready (E6). It is the shared tail of both composing a network and
 // attaching to one an existing workspace already brought up (WA10).
 func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, keysDir string, setupSteps *[]string, gateBudget time.Duration) (composed, error) {
-	endpoints, err := chainsetup.NetEndpoints(ctx, sd, chainsetup.NetEndpointsIn{DataDir: dataDir})
+	endpoints, err := verb.NetEndpoints(ctx, sd, verb.NetEndpointsIn{DataDir: dataDir})
 	if err != nil {
 		return composed{}, fmt.Errorf("engine: run suite: endpoints: %w", err)
 	}
@@ -233,7 +202,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	// a docker/remote run attaches to the right endpoint with no re-translation
 	// here.
 	var nodes *node.NodeSet
-	if st, err := chainsetup.NetworkStatus(ctx, sd, chainsetup.NetworkStatusIn{DataDir: dataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
+	if st, err := verb.NetworkStatus(ctx, sd, verb.NetworkStatusIn{DataDir: dataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
 		ns := st.Nodes
 		nodes = &ns
 	}
@@ -244,7 +213,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 		endpoints: endpoints,
 		caps:      caps,
 		teardown: func(ctx context.Context) error {
-			_, err := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: dataDir})
+			_, err := verb.NetStop(ctx, sd, verb.NetStopIn{DataDir: dataDir})
 			return err
 		},
 		nodes:   nodes,
@@ -253,7 +222,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	}
 	// Where this network's declared fork is and who hands over at it. Read from
 	// the record, so attaching to a composed network knows it too.
-	if f, ferr := chainsetup.NetFork(ctx, sd, chainsetup.NetForkIn{DataDir: dataDir}); ferr == nil {
+	if f, ferr := verb.NetFork(ctx, sd, verb.NetForkIn{DataDir: dataDir}); ferr == nil {
 		switch {
 		case f.Fork != nil:
 			out.fork = forkGate{at: f.Fork.At, restart: f.Fork.Restart, preFork: make(map[int]bool, len(f.PreFork))}
@@ -283,22 +252,11 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 // target (or a lookup error — collection is best-effort) returns nil, and the
 // collector reads the local filesystem.
 func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
-	runner, err := chainsetup.NetRunner(sd, dataDir)
+	runner, err := verb.NetRunner(sd, dataDir)
 	if err != nil || runner == nil {
 		return nil
 	}
 	return process.NewRemoteLogReader(runner)
-}
-
-// preflightDecision asks the workspace, when there is one, how much of what it
-// holds the request can reuse. No workspace, or one that cannot be read, is
-// simply "compose".
-func preflightDecision(ctx context.Context, sd chainsetup.Deps, dir string, want preflight.Want) preflight.Decision {
-	ws, err := chainsetup.Open(dir, sd.Clock)
-	if err != nil || len(ws.State().Nodes) == 0 {
-		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
-	}
-	return ws.Compare(ctx, want)
 }
 
 // casesCrossFork reports whether any case names the step that crosses the

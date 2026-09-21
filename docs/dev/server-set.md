@@ -155,7 +155,7 @@ chainbench chain up --workspace-dir /tmp/n1 --chain stablenet \
   --binary /srv/bin/gstable --all-servers
 
 # DSL 실행도 같은 서버 세트를 읽는다
-chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
+chainbench run --chain stablenet --binary $GSTABLE --keys presets/keys \
   --server local tests/specs/api/*.json
 ```
 

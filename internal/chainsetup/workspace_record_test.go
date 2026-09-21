@@ -33,7 +33,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	// The step allocates (which writes the node table) and then fails, standing
 	// in for a start that launched nodes and was then interrupted.
 	boom := errors.New("the step failed after starting something")
-	_, err = withWorkspace(Deps{}, dir, func(ws *Workspace) (string, error) {
+	_, err = WithWorkspace(Deps{}, dir, func(ws *Workspace) (string, error) {
 		if _, aerr := ws.Allocate(AllocateOpts{BPCount: 2}); aerr != nil {
 			return "", aerr
 		}

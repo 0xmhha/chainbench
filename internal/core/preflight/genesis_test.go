@@ -13,12 +13,12 @@ func alive(context.Context, preflight.Node) (bool, string) { return true, "" }
 
 func composed() (preflight.Have, preflight.Want) {
 	have := preflight.Have{
-		Chain: "stablenet", Binary: "gstable", KeysDir: "keys/preset", BPCount: 4,
+		Chain: "stablenet", Binary: "gstable", KeysDir: "presets/keys", BPCount: 4,
 		GenesisDeclared: "aaaa", Started: true,
 		Nodes: []preflight.Node{{Index: 1, PID: 11}, {Index: 2, PID: 12}, {Index: 3, PID: 13}, {Index: 4, PID: 14}},
 	}
 	want := preflight.Want{
-		Chain: "stablenet", Binary: "gstable", KeysDir: "keys/preset", BPCount: 4,
+		Chain: "stablenet", Binary: "gstable", KeysDir: "presets/keys", BPCount: 4,
 		GenesisDeclared: "aaaa",
 	}
 	return have, want

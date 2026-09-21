@@ -9,7 +9,7 @@ import (
 // Where a key set lives is storage knowledge, resolved here for every surface:
 // an explicit directory wins, the environment may name one, and the default
 // is a well-known local set. A set is a directory, so the committed
-// keys/preset is not a special thing — it is one key set that happens to be
+// presets/keys is not a special thing — it is one key set that happens to be
 // in the repository.
 
 // DefaultKeySetName is the key set a caller gets when it names none, under the

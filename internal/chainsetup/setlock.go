@@ -40,25 +40,26 @@ func setLockPath(setPath string) (string, error) {
 	return filepath.Join(root, name+".lock"), nil
 }
 
-// acquireSetLock takes the set's allocation lock, waiting briefly for a live
+// AcquireSetLock takes the set's allocation lock, waiting briefly for a live
 // holder, and returns the release. A stale lock is taken over, as a
 // workspace's is.
-func acquireSetLock(setPath string, d Deps) (func(), error) {
+func AcquireSetLock(setPath string, d Deps) (func(), error) {
 	path, err := setLockPath(setPath)
 	if err != nil {
 		return nil, err
 	}
 	deadline := time.Now().Add(setLockWait)
 	for {
-		held, prev, state, err := session.AcquireLock(path, d.command(), d.Clock)
+		held, prev, state, err := session.AcquireLock(path, d.Owner(), d.Clock)
 		if err == nil {
 			if state == session.LockStale {
-				d.logf("took over an allocation lock left by a run that is no longer running (%s)", prev.Describe())
+				d.Logf("took over an allocation lock left by a run that is no longer running (%s)", prev.Describe())
 			}
 			return func() { _ = held.Release() }, nil
 		}
 		if state != session.LockLive || time.Now().After(deadline) {
-			return nil, fmt.Errorf("chainsetup: allocate: the server set is being allocated by another run (%s): %w", prev.Describe(), err)
+			return nil, ofKind(errPlaceSetContended,
+				fmt.Errorf("chainsetup: allocate: the server set is being allocated by another run (%s): %w", prev.Describe(), err))
 		}
 		time.Sleep(setLockPoll)
 	}

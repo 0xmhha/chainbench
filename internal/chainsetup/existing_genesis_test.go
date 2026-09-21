@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,8 +10,9 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
@@ -21,11 +23,11 @@ import (
 // preset keyring + per-node configs) drive a regression run.
 func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	dir := t.TempDir()
-	presetDir := filepath.Join("..", "..", "keys", "preset")
+	presetDir := filepath.Join("..", "..", "presets", "keys")
 	// A distinctive finished genesis (valid JSON, not what the builder would
 	// make) that still names the validators the two-producer key set provides —
 	// a wbft genesis without them is refused, and rightly, since it cannot sign.
-	preset, err := store.LoadPreset(presetDir)
+	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,8 +59,15 @@ func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	if _, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath}); err != nil {
+	done, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath})
+	if err != nil {
 		t.Fatalf("genesis (existing): %v", err)
+	}
+	// The step says where the genesis came from. Nothing else can: the handler
+	// driving it sees the same request the CLI does, and this method is
+	// exported, so the request and what the step did are two facts.
+	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainBuildGenesisFromExisting {
+		t.Errorf("the step reported %v, want [ChainBuildGenesisFromExisting]", done.Passed)
 	}
 
 	got, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
@@ -82,7 +91,7 @@ func TestGenesis_ExistingRejectsInvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset")}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys")}); err != nil {
 		t.Fatal(err)
 	}
 	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{{Index: 1, Role: "bp"}, {Index: 2, Role: "bp"}}}
@@ -115,7 +124,7 @@ func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
+			_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
 			if err == nil {
 				t.Fatal("a change alongside an existing genesis must be refused")
 			}
@@ -131,7 +140,7 @@ func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 	// A missing workspace fails later than the conflict check, which is enough
 	// to show the conflict check did not fire.
-	_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{},
+	_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{},
 		chainsetup.NetGenesisIn{DataDir: t.TempDir(), GenesisExisting: "/g.json"})
 	if err != nil && strings.Contains(err.Error(), "used verbatim") {
 		t.Fatalf("an existing genesis on its own must not be refused: %v", err)
@@ -141,7 +150,7 @@ func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 // TestWorkspaceGenesis_RefusesChangeRequestsOnTheMethodItself puts MON-007's
 // rule where the operation is rather than where one caller happens to be.
 //
-// The check lived in genesisOpts, the helper that turns a NetGenesisIn into
+// The check lived in GenesisOptsFor, the helper that turns a NetGenesisIn into
 // options. Every caller went through it, so the behaviour was right — but
 // Workspace.Genesis is exported and takes the options directly, so "a finished
 // genesis is never quietly changed" was a property of the callers, not of the

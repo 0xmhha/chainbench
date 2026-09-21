@@ -51,53 +51,42 @@ func runTool() Tool {
 			if len(specs) == 0 {
 				return "", fmt.Errorf("chainbench_run: provide spec or specs")
 			}
-			if rpcURLs := argStrings(args, "rpc"); len(rpcURLs) > 0 {
-				if argBool(args, "attach", false) {
-					return "", fmt.Errorf("chainbench_run: attach takes the endpoints from dataDir; it does not combine with rpc")
-				}
-				return runAttach(ctx, argString(args, "chain", ""), rpcURLs, specs)
+			// The same four-way answer the CLI gets, from the same place.
+			// This used to be two branches here with no third: a spec that
+			// declared env.attach could not be run through this tool at all.
+			rpcURLs := argStrings(args, "rpc")
+			dataDir := argString(args, "dataDir", "")
+			chain := argString(args, "chain", "")
+			start, serr := app.StartFor(app.Named{
+				Spell: app.ToolSpelling, RPCURLs: rpcURLs,
+				Attach: argBool(args, "attach", false), WorkspaceDir: dataDir,
+				Specs: func() ([][]byte, []string, error) { return specs, nil, nil },
+			})
+			if serr != nil {
+				return "", fmt.Errorf("chainbench_run: %w", serr)
 			}
-			if argBool(args, "attach", false) {
-				return runAttachWorkspace(ctx, argString(args, "dataDir", ""), argString(args, "chain", ""), specs)
+			if start.Adopts() {
+				return runAttached(ctx, start, chain, rpcURLs, dataDir, specs)
 			}
 			return runCompose(ctx, args, specs)
 		},
 	}
 }
 
-// runAttachWorkspace runs the specs against the network a workspace composed,
-// taking its endpoints and its advertised capabilities from the workspace.
+// runAttached runs the specs against a network that is already up.
 //
-// A spec that declares a capability it needs can only run this way: given
-// endpoints alone the gate has nothing to check against and the spec skips.
-func runAttachWorkspace(ctx context.Context, dataDir, chain string, specs [][]byte) (string, error) {
-	if dataDir == "" {
-		return "", fmt.Errorf("chainbench_run: attach needs dataDir, the workspace whose network is already up")
-	}
+// One function for all three ways in: which network, and where it came from, is
+// the start state. This tool had only two of the three until that state existed
+// — a spec declaring env.attach could not be run through it at all.
+func runAttached(ctx context.Context, start app.Start, chain string, rpcURLs []string, dataDir string, specs [][]byte) (string, error) {
 	artifactRoot, err := os.MkdirTemp("", "cb-run")
 	if err != nil {
 		return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 	}
 	root, err := app.AttachRun(ctx, app.Deps{}, app.AttachRunIn{
-		DataDir: dataDir, Chain: chain, ArtifactRoot: artifactRoot, Specs: specs,
-	})
-	if err != nil {
-		return "", err
-	}
-	return formatRunSummary(root)
-}
-
-// runAttach runs the specs against an already-running network.
-func runAttach(ctx context.Context, chain string, rpcURLs []string, specs [][]byte) (string, error) {
-	if chain == "" {
-		return "", fmt.Errorf("chainbench_run: chain is required to attach")
-	}
-	artifactRoot, err := os.MkdirTemp("", "cb-run")
-	if err != nil {
-		return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
-	}
-	root, err := app.AttachRun(ctx, app.Deps{}, app.AttachRunIn{
-		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Specs: specs,
+		At: start.At, Declared: start.Declared,
+		Chain: chain, RPCURLs: rpcURLs, DataDir: dataDir,
+		ArtifactRoot: artifactRoot, Specs: specs,
 	})
 	if err != nil {
 		return "", err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"io"
 	"io/fs"
 	"os"
@@ -28,7 +29,7 @@ type workspaceNodes struct {
 // Stop stops one node through the workspace and returns it with its pid
 // cleared, which the interpreter writes back to the environment's node table.
 func (w workspaceNodes) Stop(ctx context.Context, n node.Node) (node.Node, error) {
-	if err := chainsetup.NodeStop(ctx, w.sd, chainsetup.NodeStopIn{DataDir: w.dataDir, Index: n.Index}); err != nil {
+	if err := verb.NodeStop(ctx, w.sd, verb.NodeStopIn{DataDir: w.dataDir, Index: n.Index}); err != nil {
 		return n, err
 	}
 	n.PID = 0
@@ -38,7 +39,7 @@ func (w workspaceNodes) Stop(ctx context.Context, n node.Node) (node.Node, error
 // Start relaunches one previously stopped node through the workspace and
 // returns it with its new pid.
 func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, error) {
-	out, err := chainsetup.NodeStart(ctx, w.sd, chainsetup.NodeStartIn{DataDir: w.dataDir, Index: n.Index})
+	out, err := verb.NodeStart(ctx, w.sd, verb.NodeStartIn{DataDir: w.dataDir, Index: n.Index})
 	if err != nil {
 		return n, err
 	}
@@ -48,7 +49,7 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 // Swap relaunches one node with a different binary and/or config through the
 // workspace, satisfying interp.NodeSwapper so the swapNode action reaches it.
 func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
-	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{
+	out, err := verb.NodeSwap(ctx, w.sd, verb.NodeSwapIn{
 		DataDir: w.dataDir, Index: n.Index,
 		Binary: change.Binary, Config: change.Config,
 		GenesisOverlay: change.GenesisOverlay, Purpose: change.Purpose,
@@ -66,7 +67,7 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 // The whole table comes back: crossing gives every successor a new role and a
 // new pid, and a caller holding the old ones would stop the wrong process.
 func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error) {
-	out, err := chainsetup.NetCrossFork(ctx, w.sd, chainsetup.NetCrossForkIn{
+	out, err := verb.NetCrossFork(ctx, w.sd, verb.NetCrossForkIn{
 		DataDir: w.dataDir, Timeout: timeout,
 	})
 	if err != nil {

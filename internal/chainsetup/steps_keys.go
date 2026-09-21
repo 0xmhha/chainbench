@@ -2,17 +2,20 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -23,6 +26,24 @@ import (
 // generated here — and checks the node table's key references before anything
 // is written, because a reference that only fails at launch has already cost a
 // provisioning round trip.
+
+// The kinds of failure this step has. They are what a caller branches on: the
+// messages below name the node, the file and what to do about it, which is what
+// makes them worth reading, and none of that is something a caller can switch
+// on. A kind added in front of the message would say the same thing twice, so
+// the kind rides alongside the message instead.
+var (
+	// errKeySourceUnknown: the source named is not one of the three.
+	errKeySourceUnknown = errors.New("key source unknown")
+	// errKeyCountShort: the declaration holds fewer identities than the
+	// network has nodes.
+	errKeyCountShort = errors.New("declared identities are fewer than the nodes")
+	// errKeyRefNotLocal: a node named its key as something other than a local
+	// file — inline material, or a path on another machine.
+	errKeyRefNotLocal = errors.New("node key reference is not a local file")
+	// errKeyUnreadable: the local file a node named cannot be read as a key.
+	errKeyUnreadable = errors.New("node key file cannot be read as a key")
+)
 
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
@@ -49,9 +70,9 @@ type KeysOpts struct {
 
 // Keys ensures the workspace's key set exists and covers the requested node
 // count, through the same KeySource boundary `chainbench run` uses.
-func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
+func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 	if _, err := w.plugin(); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	n := opts.Nodes
 	if n <= 0 {
@@ -61,12 +82,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
+		return StepOut{}, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 	// A key set named on a server is downloaded to a local directory first, so
 	// the rest of this step reads it the one local way.
 	if err := w.materializeKeyring(ctx); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 
 	// A node table that names any per-node key builds the set from the table:
@@ -76,24 +97,30 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	// over the source string because a table that declares keys has said where
 	// its identities come from.
 	var src store.KeySource
+	// from is the state this step ends in, set where the source is chosen so
+	// the two cannot drift apart.
+	var from lifecycle.Status
 	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
-		return "", kerr
+		return StepOut{}, kerr
 	} else if keyed {
 		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
+		from = lifecycle.ChainEnsureKeysFromBlueprint
 	} else {
 		switch opts.Source {
 		case "", "keyPreset":
 			src = store.PresetKeys{Path: w.state.KeysDir}
+			from = lifecycle.ChainEnsureKeysFromPreset
 		case "declared":
 			// The declaration is the origin, and the ring is materialised from it
 			// so that the genesis source, the launcher and provision keep reading
 			// keys the one way they already do.
 			if opts.Blueprint == nil {
-				return "", fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source)
+				return StepOut{}, ofKind(errKeySourceUnknown,
+					fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
 			}
 			set, err := w.declaredKeys(*opts.Blueprint, n)
 			if err != nil {
-				return "", err
+				return StepOut{}, err
 			}
 			// A blueprint names a key for every node it declares (a node without
 			// one is an error there), so every index is pinned: if the ring on
@@ -105,6 +132,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			}
 			sort.Ints(pinned)
 			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
+			from = lifecycle.ChainEnsureKeysFromBlueprint
 		case "generate":
 			// A generated set must declare exactly the topology's validators, not
 			// make every node one: a network with endpoints (4 bp + 11 en) whose key
@@ -116,18 +144,20 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 				validators = w.state.BPCount
 			}
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
+			from = lifecycle.ChainEnsureKeysGenerated
 		default:
-			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source)
+			return StepOut{}, ofKind(errKeySourceUnknown,
+				fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
 		}
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
 		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
-	return detail, nil
+	return StepOut{Detail: detail, Passed: []lifecycle.Status{from}}, nil
 }
 
 // declaredKeys derives the ring a blueprint declares, for the network the
@@ -138,10 +168,10 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 // which is what its datadir, its keyring entry and its enode are all named
 // from. Deriving against a different table would produce keys that are correct
 // in isolation and attached to the wrong nodes.
-func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset, error) {
+func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (preset.Key, error) {
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
+		return preset.Key{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
 	}
 	r, err := blueprint.Resolve(bp, blueprint.Inputs{
 		Placed: placed.Placements(),
@@ -149,7 +179,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 		Layout: node.Layout{Root: w.state.Target.DataRoot},
 	})
 	if err != nil {
-		return keyring.Preset{}, err
+		return preset.Key{}, err
 	}
 	// BLS material is derived for every family, which is what the generated
 	// source already does. Only wbft reads it, and asking the family instead
@@ -158,10 +188,11 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 	// debt rather than guessed at.
 	set, err := blueprint.PresetFrom(r, derive.WithBLS, localKeyReader)
 	if err != nil {
-		return keyring.Preset{}, err
+		return preset.Key{}, err
 	}
 	if len(set.Nodes) < n {
-		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
+		return preset.Key{}, ofKind(errKeyCountShort,
+			fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n))
 	}
 	return set, nil
 }
@@ -178,7 +209,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 // rest of the system expects — rather than being hand-rolled here. Only their
 // key material is taken; DeclaredKeys re-writes the ring (keystores, password,
 // metadata) at the workspace's key dir, the way the declared source already does.
-func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, []int, bool, error) {
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, []int, bool, error) {
 	byIndex := make(map[int]node.Record, len(w.state.Nodes))
 	// pinned are the nodes whose key the table actually names. They are the only
 	// ones an existing ring can contradict — the rest are filled with fresh
@@ -191,7 +222,7 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 		}
 	}
 	if len(pinned) == 0 {
-		return keyring.Preset{}, nil, false, nil
+		return preset.Key{}, nil, false, nil
 	}
 	sort.Ints(pinned)
 
@@ -200,19 +231,19 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 	// them from the key material below — so the dir is temporary.
 	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
 	if err != nil {
-		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
+		return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
 	if err != nil {
-		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+		return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
 
-	var set keyring.Preset
+	var set preset.Key
 	for i := 1; i <= n; i++ {
 		r, ok := byIndex[i]
 		if !ok {
-			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+			return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
@@ -220,14 +251,14 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 			// material must not be wrapped in anything that quotes the value.
 			key, err = parseNodeKey(i, r.Key)
 			if err != nil {
-				return keyring.Preset{}, nil, true, err
+				return preset.Key{}, nil, true, err
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
 		id, derr := derive.Derive(key, derive.WithBLS)
 		if derr != nil {
-			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+			return preset.Key{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
 		set.Nodes = append(set.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(i)),
@@ -274,22 +305,24 @@ func checkNodeKeyRef(index int, ref string) error {
 		return nil
 	}
 	if looksLikeKeyMaterial(ref) {
-		return fmt.Errorf(
+		return ofKind(errKeyRefNotLocal, fmt.Errorf(
 			"chainsetup: keys: node%d declares a private key inline: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext (the value is withheld here for the same reason)",
-			index)
+			index))
 	}
 	if strings.HasPrefix(ref, "srv://") {
-		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref)
+		return ofKind(errKeyRefNotLocal,
+			fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref))
 	}
 	if _, err := os.Stat(ref); err != nil {
-		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref)
+		return ofKind(errKeyRefNotLocal,
+			fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref))
 	}
 	return nil
 }
 
-// checkTopologyKeyRefs applies checkNodeKeyRef to every node a topology
+// CheckTopologyKeyRefs applies checkNodeKeyRef to every node a topology
 // declares. A nil topology declares nothing.
-func checkTopologyKeyRefs(t *node.Topology) error {
+func CheckTopologyKeyRefs(t *node.Topology) error {
 	if t == nil {
 		return nil
 	}
@@ -351,15 +384,38 @@ func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 	}
 	b, rerr := os.ReadFile(ref)
 	if rerr != nil {
-		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr)
+		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+			fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr))
 	}
 	// The parse failure is not wrapped with the bytes: a file that is nearly a
 	// key is still a key someone meant to keep.
 	key, perr := derive.ParsePrivateKey(string(b))
 	if perr != nil {
-		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref)
+		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+			fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref))
 	}
 	return key, nil
 }
 
 // AllocateOpts sizes the network.
+
+// KeysFailure is which of the key stage's failures this error is.
+//
+// The default is the debt state and not a guess. Two things still reach it: the
+// preconditions the transition table makes unreachable in a composition but not
+// in a bare `chain keys`, and whatever the key store itself refuses when it
+// writes the set. Neither has a state, and naming one of the four would say
+// something the error does not.
+func KeysFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errKeySourceUnknown):
+		return lifecycle.ChainEnsureKeysFailUnknownSource
+	case errors.Is(err, errKeyCountShort):
+		return lifecycle.ChainEnsureKeysFailCountMismatch
+	case errors.Is(err, errKeyRefNotLocal):
+		return lifecycle.ChainEnsureKeysFailKeyNotLocal
+	case errors.Is(err, errKeyUnreadable):
+		return lifecycle.ChainEnsureKeysFailKeyUnreadable
+	}
+	return lifecycle.FailStageUnclassified
+}

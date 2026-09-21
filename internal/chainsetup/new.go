@@ -3,10 +3,13 @@ package chainsetup
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -15,6 +18,12 @@ import (
 // id — so a resume keeps the id it was composed under rather than minting a new
 // one from the run time or a pid, and two workspaces never collide on one data
 // root.
+// errNewNoChain is the one way this stage fails: nothing said which chain.
+//
+// The stage has no branches — it opens the workspace and records the request —
+// so one kind is the whole of it.
+var errNewNoChain = errors.New("no chain was named")
+
 func compositionID(dir string) string {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -33,7 +42,7 @@ type NewOpts struct {
 	// chain id is taken from the manifest.
 	ManifestPath string
 	TemplatePath string
-	// KeysDir is the key set the network composes from (default keys/preset).
+	// KeysDir is the key set the network composes from (default presets/keys).
 	// Account management/inspection is the `account` subcommand's job; net only
 	// records which key set to use.
 	KeysDir string
@@ -62,7 +71,7 @@ type NewOpts struct {
 // data root defaults to the workspace directory.
 func (w *Workspace) New(opts NewOpts) (string, error) {
 	if opts.Chain == "" && opts.ManifestPath == "" {
-		return "", fmt.Errorf("chainsetup: --chain or --manifest is required")
+		return "", ofKind(errNewNoChain, fmt.Errorf("chainsetup: --chain or --manifest is required"))
 	}
 	p, err := external.ResolveChain(opts.Chain, opts.ManifestPath, opts.TemplatePath)
 	if err != nil {
@@ -70,7 +79,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	}
 	keysDir := opts.KeysDir
 	if keysDir == "" {
-		keysDir = "keys/preset"
+		keysDir = preset.KeysDir
 	}
 
 	tgt := opts.Target
@@ -135,4 +144,16 @@ func (w *Workspace) Retarget(t resource.Spec) error {
 	}
 	w.state.Target = t
 	return nil
+}
+
+// NewFailure is the one failure the workspace stage has a state for.
+//
+// The default is everything else opening a workspace can hit: a chain that
+// resolves to nothing, a manifest that will not parse, a directory that cannot
+// be made. Those are the chain registry's and the filesystem's refusals.
+func NewFailure(err error) lifecycle.Status {
+	if errors.Is(err, errNewNoChain) {
+		return lifecycle.ChainOpenWorkspaceFailNoChain
+	}
+	return lifecycle.FailStageUnclassified
 }

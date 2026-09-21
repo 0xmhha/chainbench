@@ -33,7 +33,7 @@
   "id": "stablenet-bp4",
   "chain": "stablenet",
   "topology": { "bp": 4 },
-  "keys": { "nodekeys": { "source": "keyPreset", "ref": "keys/preset" } }
+  "keys": { "nodekeys": { "source": "keyPreset", "ref": "presets/keys" } }
 }
 ```
 
@@ -121,7 +121,7 @@ runnable 하지 않다고 거부한다. 테스트가 없으니 돌릴 것이 없
 복사되는 것이 P1 이 없앤 문제다.
 
 env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — bp 4대와
-`keys/preset` 이다(`internal/testengine/compose.go`). `tests/tc/env` 의 선언은 그
+`presets/keys` 이다(`internal/testengine/compose.go`). `tests/tc/env` 의 선언은 그
 기본값도 적어 둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을
 막기 위해서다.
 
@@ -374,7 +374,7 @@ chainbench run --plan --workspace-dir /tmp/ws tests/tc/basic/01-basic-consensus.
   target     this machine
   binary     gstable
   nodes      bp 4 · en 1 · pn 0, peering mesh
-  keys       keyPreset  keys/preset
+  keys       keyPreset  presets/keys
   genesis    built from the chain template
 ```
 

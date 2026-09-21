@@ -25,7 +25,7 @@
 
 Binaries build from `/Users/…/Work/github/chain/{go-stablenet,go-wbft,go-wemix}`
 (`make gstable` / `make gwemix` / `make gwemix USE_ROCKSDB=NO`). **gwemix embeds
-etcd** — no external etcd needed. Funded key: `keys/preset` node1 nodekey (public
+etcd** — no external etcd needed. Funded key: `presets/keys` node1 nodekey (public
 test fixture) is genesis-funded. See memory `live-verification-setup`.
 
 ## Remaining — nothing to port

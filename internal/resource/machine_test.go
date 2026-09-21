@@ -95,8 +95,8 @@ func TestParse_Syntaxes(t *testing.T) {
 		},
 		{
 			name: "relative path is local",
-			in:   "keys/preset",
-			want: resource.Spec{DataRoot: "keys/preset"},
+			in:   "presets/keys",
+			want: resource.Spec{DataRoot: "presets/keys"},
 		},
 		{
 			// The point of srv://: the address is not here.

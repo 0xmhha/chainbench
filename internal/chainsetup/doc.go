@@ -3,7 +3,7 @@
 // what has been done.
 //
 // The order is fixed and is the one list `chain up` and `chain resume` share
-// (upStepNames):
+// (UpStepNames):
 //
 //	new -> place -> keys -> genesis -> config -> build -> deploy -> init -> start
 //

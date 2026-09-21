@@ -200,7 +200,7 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name srv1 \
 ```
 bin/chainbench validator new --chain stablenet [--json]     # 새 키 + BLS/PoP 파생 뷰
 bin/chainbench validator import --chain wemix --private-key 0x…
-bin/chainbench validator roster --chain stablenet --keys keys/preset
+bin/chainbench validator roster --chain stablenet --keys presets/keys
 bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 ```
 

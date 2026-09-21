@@ -30,5 +30,5 @@
 // Address, devp2p public key, derive.BLS public key and derive.BLS proof of possession are
 // all computed here in Go. No chain binary is executed, so key generation works
 // with no build of go-wbft present and with CGO disabled. [derive.Derive] is checked
-// byte for byte against the shipped keys/preset fixture.
+// byte for byte against the shipped presets/keys fixture.
 package keyring

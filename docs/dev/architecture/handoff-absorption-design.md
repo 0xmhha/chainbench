@@ -318,7 +318,7 @@ config 는 읽히고 블록 실행에서 `invalid gov config params` 로 죽는�
 
 ### 2.4 프로필을 하드포크 preset 으로
 
-`presets/hardfork/wemix-upgrade.yaml` 은 이름이 무엇인지 말해 주지 않는다. **키와 체인에
+`presets/chain/wemix-upgrade.yaml` 은 이름이 무엇인지 말해 주지 않는다. **키와 체인에
 preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 
 **남는 값이 적다.** 오늘 확인한 바로 거버넌스 정책은 기본값과 하나하나 같고
@@ -411,7 +411,7 @@ preset 이 있으니 하드포크도 같은 자리로 옮긴다.**
 
    **프로필이 하드포크 preset 이 됐다.** `profiles/` 는 외부 체인 접속 프로필과
    업그레이드 프로필을 같이 담고 있었다 — 같은 종류가 아닌데 디렉터리가 같다고
-   말하고 있었다. 업그레이드 쪽을 `presets/hardfork/` 로 옮겼고, `upgrade.preset`
+   말하고 있었다. 업그레이드 쪽을 `presets/chain/` 로 옮겼고, `upgrade.preset`
    이 이름으로 가리킨다. 경로로 가리키는 `profile` 은 남는다.
 
    **선언이 거짓말을 못 한다.** 케이스가 `fork`·`at` 을 적으면 preset 과 **대조**

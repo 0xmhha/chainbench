@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
@@ -27,7 +28,7 @@ var updateGolden = flag.Bool("update", false, "rewrite the corpus address record
 
 const (
 	corpusDir     = "../../tests/tc"
-	presetKeysDir = "../../keys/preset"
+	presetKeysDir = "../../presets/keys"
 	addressGolden = "testdata/corpus-addresses.golden"
 )
 
@@ -47,7 +48,7 @@ const (
 // rather than against a running chain.
 //
 // The values are a BASELINE, not a prediction. They are resolved against
-// keys/preset for every case, while a case whose env generates its keys gets
+// presets/keys for every case, while a case whose env generates its keys gets
 // different addresses at run time. That does not weaken the comparison — the
 // same key set is used on both sides, so a line that moves means the name
 // changed meaning, which is the only question being asked.
@@ -110,7 +111,7 @@ func TestCorpus_AddressesResolveToWhatTheyDidBefore(t *testing.T) {
 // against. It needs no network.
 func presetRing(t *testing.T) *store.KeySet {
 	t.Helper()
-	set, err := store.LoadPresetWithKeys(presetKeysDir)
+	set, err := preset.LoadKeyPresetWithKeys(presetKeysDir)
 	if err != nil {
 		t.Fatalf("load %s: %v", presetKeysDir, err)
 	}

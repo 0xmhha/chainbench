@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -11,11 +12,11 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -44,9 +45,23 @@ const (
 	minValidatorsForPlacement = 1
 )
 
-func (w *Workspace) Provision(ctx context.Context) (string, error) {
+// The kinds of failure the deploy stage has.
+//
+// Both are about a launch input that is not what this workspace expects, and
+// the difference is the one that matters to whoever has to fix it: a file that
+// is not there needs an earlier step re-run, and a file that is there but is
+// somebody else's needs a decision about which is right.
+var (
+	// errDeployInputMissing: a launch input is not on the target.
+	errDeployInputMissing = errors.New("a launch input is missing on the target")
+	// errDeployInputForeign: a launch input is there and is not the one this
+	// workspace built.
+	errDeployInputForeign = errors.New("a launch input on the target is not this workspace's")
+)
+
+func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 	if err := w.require("deploy"); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	present, shipped := 0, 0
 	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
@@ -56,7 +71,8 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 				return err
 			}
 			if !exists {
-				return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
+				return ofKind(errDeployInputMissing,
+					fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path))
 			}
 			// Present is not the same as ours. A genesis someone edited, or a
 			// config left by a previous composition, is present and would be
@@ -67,9 +83,10 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 					return err
 				}
 				if have != want {
-					return fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
-						"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
-						"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have))
+					return ofKind(errDeployInputForeign,
+						fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
+							"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
+							"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have)))
 				}
 			}
 			present++
@@ -88,14 +105,21 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 		return err
 	})
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	detail := fmt.Sprintf("%d launch input(s) present on the target (reused, not rewritten)", present)
 	if shipped > 0 {
 		detail += fmt.Sprintf(", %d identity file(s) shipped to %s", shipped, w.keysBase())
 	}
 	w.markStep("deploy", detail)
-	return detail, nil
+	// Which of the two the deploy did, said by the step that counted it.
+	// Nothing outside can: whether anything was shipped is the difference
+	// between a local target and a remote one, and it is counted here.
+	at := lifecycle.ChainDeployNodesVerifiedLocal
+	if shipped > 0 {
+		at = lifecycle.ChainDeployNodesShippedRemote
+	}
+	return StepOut{Detail: detail, Passed: []lifecycle.Status{at}}, nil
 }
 
 // shipIdentities uploads each node's identity files — the devp2p nodekey, the
@@ -173,9 +197,10 @@ func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
 	for _, s := range sets {
 		k, v, _ := strings.Cut(s, "=")
 		if k == "" {
-			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
+			return nil, ofKind(errBuildBadOption,
+				fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s))
 		}
-		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
+		out = append(out, nodeconfig.Override{Key: nodeconfig.OptionKey(k), Value: v})
 	}
 	return out, nil
 }
@@ -239,10 +264,12 @@ func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, op
 	if opts.Existing != "" {
 		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
 		if rerr != nil {
-			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+				fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr))
 		}
 		if !json.Valid(b) {
-			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+				fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing))
 		}
 		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
 			return nil, genesis.Artifacts{}, err
@@ -283,7 +310,8 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 	if w.state.Target.IsRemote() {
 		boot, ok := firstProducer(w.state.Nodes)
 		if !ok {
-			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on")
+			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+				fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on"))
 		}
 		access, err := w.machineFor(boot)
 		if err != nil {
@@ -291,7 +319,8 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		}
 		cmdr, ok := access.Driver.(process.Commander)
 		if !ok {
-			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there")
+			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+				fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there"))
 		}
 		cfg.Files = access.Files
 		cfg.WorkDir = path.Join(access.DataRoot, genesisWorkDir)
@@ -330,36 +359,36 @@ func commanderRunner(c process.Commander) genesis.CommandRunner {
 // set (identity and public keys), the placement, the validated peering, and a
 // public-key lookup by index. Config, launchopts and start all render from
 // the same four, so they are gathered once.
-func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.Preset, *node.Map, node.Peering, func(int) (string, bool), error) {
+func (w *Workspace) peerPlan(p registry.ChainPlugin) (preset.Key, *node.Map, node.Peering, func(int) (string, bool), error) {
 	// With accounts, for the same reason start loads them: this renders each
 	// node's config, and a producer's config names the account it unlocks.
-	preset, err := store.LoadPresetWithAccounts(w.state.KeysDir)
+	keys, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	placed, err := w.Netmap()
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return keyring.Preset{}, nil, "", nil, err
+		return preset.Key{}, nil, "", nil, err
 	}
 	// The peer's own recorded address: spread across a set each node lives on
 	// a different host, and a static-node list pointing at this machine would
 	// leave every node unable to find its peers. Keys reach the composition
 	// as inputs — the node module joins them to placements.
 	pubkey := func(index int) (string, bool) {
-		nk, ok := preset.Node(index)
+		nk, ok := keys.Node(index)
 		if !ok {
 			return "", false
 		}
 		return nk.PublicKey, true
 	}
-	return preset, placed, peering, pubkey, nil
+	return keys, placed, peering, pubkey, nil
 }
 
 // recordInput remembers what a launch input hashed to when this workspace wrote
@@ -438,4 +467,20 @@ func (w *Workspace) require(step string) error {
 		}
 	}
 	return nil
+}
+
+// DeployFailure is which of the deploy stage's two failures this error is.
+//
+// The default is the shipping itself: a file store that will not read the local
+// key or will not write it to the machine. That is the store's refusal, and the
+// two named here are about what is on the target rather than about getting
+// there.
+func DeployFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errDeployInputMissing):
+		return lifecycle.ChainDeployNodesFailInputMissing
+	case errors.Is(err, errDeployInputForeign):
+		return lifecycle.ChainDeployNodesFailInputForeign
+	}
+	return lifecycle.FailStageUnclassified
 }

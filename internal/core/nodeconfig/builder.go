@@ -9,7 +9,7 @@ import (
 // Override is one high-precedence knob from the env.launch or case layer of a
 // test declaration. Value is ignored for boolean knobs.
 type Override struct {
-	Key   Key
+	Key   OptionKey
 	Value string
 	Layer Layer
 }

@@ -200,16 +200,18 @@ func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UpgradeV2 declares a handoff composition: which golden profile shapes it
+// UpgradeV2 declares a handoff composition: which hardfork preset shapes it
 // and which genesis template the producer's binary generates from. It is a
 // declaration only; the composer that runs it lives above the grammar.
 type UpgradeV2 struct {
-	// Preset names a hardfork preset under presets/hardfork, without the
+	// Preset names a hardfork preset under presets/chain, without the
 	// directory or the extension.
+	//
+	// It used to have a sibling, "profile", that named the same document by
+	// path. Two names for one thing, mutually exclusive, and no declaration in
+	// the repository ever used the second — so a reader met a word the code
+	// spelled two ways and the schema documented under a third directory.
 	Preset string `json:"preset,omitempty"`
-	// Profile is a hardfork preset by path, for one that is not under
-	// presets/hardfork. Preset names one that is.
-	Profile string `json:"profile,omitempty"`
 	// Template named the producer chain's own genesis template, for the handoff
 	// composer that generated the pre-fork genesis by running that binary
 	// against it. The ordinary path builds the genesis from the chain plugin's
@@ -383,17 +385,14 @@ func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 	// environment — one chain, one build at a time — so it says its fork and
 	// its block itself, and there is no preset with anything to add.
 	if u.Style == UpgradeRestart {
-		if u.Preset != "" || u.Profile != "" {
+		if u.Preset != "" {
 			return fmt.Errorf("dsl: case %s: a %s hardfork names no preset — a preset describes a handover between two chains, and this is one chain crossing its own fork", caseID, UpgradeRestart)
 		}
 		if u.Fork == "" || u.At == nil {
 			return fmt.Errorf("dsl: case %s: a %s hardfork says which fork it crosses and at which block (\"fork\" and \"at\")", caseID, UpgradeRestart)
 		}
-	} else if u.Preset == "" && u.Profile == "" {
-		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\" or a \"profile\"", caseID)
-	}
-	if u.Preset != "" && u.Profile != "" {
-		return fmt.Errorf("dsl: case %s: upgrade names both a preset (%s) and a profile (%s) — name one", caseID, u.Preset, u.Profile)
+	} else if u.Preset == "" {
+		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\"", caseID)
 	}
 	// A hardfork says which build each node runs, and the node table is where it
 	// says it. Without one nothing decides which side of the fork a node is on,

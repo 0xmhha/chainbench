@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // Inputs are the sources Resolve fills an absent field from, in the order the
@@ -21,7 +21,7 @@ type Inputs struct {
 	Placed []node.Placement
 	// Keys is the key set, when the composition has one. A blueprint that
 	// writes its own nodekeys resolves with none, which is the raw path.
-	Keys *keyring.Preset
+	Keys *preset.Key
 	// Chain is what the chain plugin knows. The caller reads it off the
 	// plugin so this package need not import the registry.
 	Chain ChainFacts

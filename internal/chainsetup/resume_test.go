@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,7 +85,7 @@ func startedWorkspace(t *testing.T) (dir string, d *inspectingDriver, deps chain
 
 func TestNetResume_NothingToDoWhenEverythingIsRunning(t *testing.T) {
 	dir, d, deps := startedWorkspace(t)
-	out, err := chainsetup.NetResume(context.Background(), deps, chainsetup.NetResumeIn{DataDir: dir})
+	out, err := verb.NetResume(context.Background(), deps, verb.NetResumeIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetResume: %v", err)
 	}
@@ -105,7 +106,7 @@ func TestNetResume_ADeadNodeIsClearedAndBroughtBack(t *testing.T) {
 	dir, d, deps := startedWorkspace(t)
 	d.alive[1002] = false // node2's process died with the run
 
-	out, err := chainsetup.NetResume(context.Background(), deps, chainsetup.NetResumeIn{DataDir: dir})
+	out, err := verb.NetResume(context.Background(), deps, verb.NetResumeIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetResume: %v", err)
 	}
@@ -148,7 +149,7 @@ func TestNetResume_AdoptsAnUnrecordedProcessOfOurs(t *testing.T) {
 	}
 	d.alive[4343] = true
 
-	out, err := chainsetup.NetResume(context.Background(), deps, chainsetup.NetResumeIn{DataDir: dir})
+	out, err := verb.NetResume(context.Background(), deps, verb.NetResumeIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetResume: %v", err)
 	}
@@ -167,8 +168,8 @@ func TestNetResume_AdoptsAnUnrecordedProcessOfOurs(t *testing.T) {
 
 func TestNetResume_RefusesAWorkspaceWithNoRequest(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
-	_, err := chainsetup.NetResume(context.Background(), deps, chainsetup.NetResumeIn{DataDir: dir})
-	if !errors.Is(err, chainsetup.ErrNoRequest) {
+	_, err := verb.NetResume(context.Background(), deps, verb.NetResumeIn{DataDir: dir})
+	if !errors.Is(err, verb.ErrNoRequest) {
 		t.Fatalf("want ErrNoRequest, got %v", err)
 	}
 }
@@ -183,7 +184,7 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 	}
 	bin := fakeNodeBinary(t, dir)
 	deps := chainsetup.Deps{Clock: fixedClock()}
-	if _, err := chainsetup.NetUp(context.Background(), deps, chainsetup.NetUpIn{
+	if _, err := verb.NetUp(context.Background(), deps, chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy, Chain: "stablenet", KeysDir: keysAbs, BPCount: 2, Binary: bin,
 	}); err != nil {
 		t.Fatalf("chain up --stage deploy: %v", err)
@@ -205,9 +206,9 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, err := chainsetup.NetResume(context.Background(), deps, chainsetup.NetResumeIn{DataDir: dir})
+	out, err := verb.NetResume(context.Background(), deps, verb.NetResumeIn{DataDir: dir})
 	t.Cleanup(func() {
-		_, _ = chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dir})
+		_, _ = verb.NetworkStop(context.Background(), deps, verb.NetworkStopIn{DataDir: dir})
 	})
 	if err != nil {
 		t.Fatalf("NetResume: %v (steps %v)", err, out.Steps)

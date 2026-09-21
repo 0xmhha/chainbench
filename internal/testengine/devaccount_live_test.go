@@ -51,7 +51,7 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	// A ring of this run's own, so the declared accounts are created here and
 	// the repo's preset is left untouched.
 	ringDir := filepath.Join(ws, "ring")
-	copyPreset(t, filepath.Join(repoRoot(t), "keys", "preset"), ringDir)
+	copyPreset(t, filepath.Join(repoRoot(t), "presets", "keys"), ringDir)
 
 	env := map[string]any{
 		"schemaVersion": "2", "kind": "env", "id": "declared-accounts-env", "chain": "stablenet",

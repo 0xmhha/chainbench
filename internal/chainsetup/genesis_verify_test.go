@@ -5,10 +5,10 @@ import (
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
-const presetDir = "../../keys/preset"
+const presetDir = "../../presets/keys"
 
 // TestVerifyExistingGenesisKeys_MatchesAndMismatches drives the wbft-family
 // check against the committed preset: a genesis whose extra-data encodes the
@@ -19,7 +19,7 @@ func TestVerifyExistingGenesisKeys_MatchesAndMismatches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve stablenet: %v", err)
 	}
-	preset, err := store.LoadPreset(presetDir)
+	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}

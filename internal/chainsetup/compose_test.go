@@ -21,7 +21,7 @@ func TestWorkspace_NewPersist(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: "keys/preset"}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: "presets/keys"}); err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	if err := ws.Save(); err != nil {
@@ -36,7 +36,7 @@ func TestWorkspace_NewPersist(t *testing.T) {
 		t.Fatalf("reopen: %v", err)
 	}
 	st := ws2.State()
-	if st.Chain != "stablenet" || st.KeysDir != "keys/preset" {
+	if st.Chain != "stablenet" || st.KeysDir != "presets/keys" {
 		t.Fatalf("state did not persist: %+v", st)
 	}
 	if st.Target.IsRemote() || st.Target.DataRoot != dir {

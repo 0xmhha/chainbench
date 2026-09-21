@@ -89,6 +89,39 @@
             "overlay": {
               "type": "object",
               "description": "deep-merged into the built genesis"
+            },
+            "ref": {
+              "type": "string",
+              "description": "the finished genesis file for mode \"existing\": a portable reference resolved under the workspace-config genesis directory, a srv:// path, or a local absolute path. Required for \"existing\" and refused otherwise."
+            },
+            "provides": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "what this genesis makes the network ABLE to do, for cases that gate on it. Not the env's \"capabilities\", which says what a case REQUIRES — the two read alike and mean opposite things."
+            },
+            "haltsAt": {
+              "type": "integer",
+              "description": "the block this genesis makes the network stop one short of; omit for a genesis that keeps producing. The readiness gate waits for advance, so a chain meant to stop has to say so."
+            },
+            "perBinary": {
+              "type": "object",
+              "description": "per binary name (the keys \"binaries\" declares), what that side of a handoff puts in its own genesis",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "set": {
+                    "type": "object",
+                    "description": "dot-path single values for this binary's genesis"
+                  },
+                  "overlay": {
+                    "type": "object",
+                    "description": "deep-merged into this binary's genesis"
+                  }
+                }
+              }
             }
           }
         },
@@ -131,19 +164,47 @@
         "upgrade": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "profile",
-            "template"
-          ],
-          "description": "a mixed-binary handoff: the network starts on binaries.from and forks to binaries.to, shaped by a golden profile",
+          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to, shaped by a preset under presets/chain; a restart crosses one chain's own fork on one binary at a time and names the fork itself.",
           "properties": {
-            "profile": {
+            "preset": {
               "type": "string",
-              "description": "golden upgrade profile (profiles/*.yaml)"
+              "description": "a hardfork preset under presets/chain, without the directory or the .yaml extension"
             },
             "template": {
               "type": "string",
               "description": "the from-chain's own genesis template"
+            },
+            "fork": {
+              "type": "string",
+              "description": "which fork is crossed. Required for a restart; for a handoff the preset answers, and a repetition that disagrees is refused."
+            },
+            "at": {
+              "type": "integer",
+              "description": "the block the fork activates at. Required for a restart; for a handoff the preset answers."
+            },
+            "from": {
+              "type": "string",
+              "description": "the binaries entry the network starts on (default \"from\")"
+            },
+            "to": {
+              "type": "string",
+              "description": "the binaries entry it ends on (default \"to\")"
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "concurrent",
+                "restart"
+              ],
+              "description": "concurrent: two builds run side by side across the fork. restart: one build at a time, every node relaunched on the successor."
+            },
+            "carry": {
+              "type": "string",
+              "enum": [
+                "genesis",
+                "config"
+              ],
+              "description": "where the successor reads the fork settings from"
             }
           }
         },

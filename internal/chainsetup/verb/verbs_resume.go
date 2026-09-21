@@ -1,0 +1,155 @@
+package verb
+
+import (
+	"context"
+	"errors"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+)
+
+// Recovery (F1). A chainbench run can die between steps — killed, crashed,
+// the machine rebooted. What it leaves is the workspace: which steps are
+// done, which nodes were recorded with which pids, and what it was asked to
+// compose. Resume reads that record, makes it true again against the
+// machine, and continues from the first step that never finished. It adds
+// no record of its own.
+
+// NetResumeIn identifies the workspace to resume.
+type NetResumeIn struct {
+	// DataDir is the workspace directory.
+	DataDir string
+	// Binary overrides the recorded node binary for the steps that run.
+	Binary string
+}
+
+// NetResumeOut is what the resume found and did.
+type NetResumeOut struct {
+	// Reconciled is one line per node: what its record said, what the
+	// machine said, and what was done about it.
+	Reconciled []string
+	// Resumed is the first step that had not finished, or empty when every
+	// step had.
+	Resumed string
+	// Steps are the composition steps that ran, in order, with their detail.
+	Steps []string
+	// Started are the nodes brought back because they were recorded as
+	// started and were not running.
+	Started []string
+	// Nodes is the network afterwards.
+	Nodes NetworkStatusOut
+}
+
+// ErrNoRequest refuses to resume a workspace that never recorded what it was
+// asked to compose — one composed before requests were recorded, or by hand
+// step by step.
+var ErrNoRequest = errors.New("chainsetup: resume: the workspace records no request — compose it with `chain up`, or finish the steps by hand")
+
+// NetResume recovers a workspace whose run died: reconcile the recorded pids
+// with the machine, continue the composition from the first step that never
+// finished, bring back the nodes that should be running, and read the
+// network back.
+func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResumeOut, error) {
+	if in.DataDir == "" {
+		return NetResumeOut{}, ErrNoDataDir
+	}
+	var out NetResumeOut
+	var req *chainsetup.NetUpIn
+	var first string
+	// WithWorkspace takes over a stale lock and refuses a live one, which is
+	// exactly resume's rule: a run that is still going is not resumed.
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		lines, err := ws.Reconcile(ctx)
+		out.Reconciled = lines
+		if err != nil {
+			return "", err
+		}
+		req = ws.State().Request
+		first = ws.FirstUndone()
+		return "", nil
+	})
+	if err != nil {
+		return out, err
+	}
+	if req == nil {
+		return out, ErrNoRequest
+	}
+	up := *req
+	up.DataDir = in.DataDir
+	if in.Binary != "" {
+		up.Binary = in.Binary
+	}
+
+	if first != "" {
+		out.Resumed = first
+		res, err := netUpFrom(ctx, d, up, first)
+		out.Steps = res.Steps
+		if err != nil {
+			return out, err
+		}
+	}
+	stage := up.Stage
+	if stage == "" {
+		stage = chainsetup.UpStart
+	}
+	if stage == chainsetup.UpStart {
+		started, err := startMissing(ctx, d, in.DataDir, up.Binary)
+		out.Started = started
+		if err != nil {
+			return out, err
+		}
+	}
+	nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
+	if err != nil {
+		return out, err
+	}
+	out.Nodes = nodes
+	return out, nil
+}
+
+// FirstUndone is the first composition step the workspace has not recorded
+
+// Reconcile makes the node records true against the resource. A recorded pid
+// that is gone is cleared; a node with no pid whose process is nevertheless
+// running — launched by a run that died before it could record — is adopted
+// when its command line is the one this workspace would have launched it
+
+// orphanOf finds a process of this workspace's binary that nobody recorded
+// and whose command line is the one rec would launch with. It answers the
+// pid, or 0 when there is none — a process running the same binary with
+
+// launchCommand renders the command line a node is launched with — the same
+
+// sameCommand compares two command lines by their fields, so the shell's
+// spacing does not decide whether a process is ours. The binary is compared
+// by its base name: ps reports the path the process was started by, which
+
+// startMissing brings back every node the workspace records as composed but
+// not running, with the argv it was armed with.
+func startMissing(ctx context.Context, d chainsetup.Deps, dataDir, binary string) ([]string, error) {
+	var started []string
+	_, err := chainsetup.WithWorkspace(d, dataDir, func(ws *chainsetup.Workspace) (string, error) {
+		for _, rec := range ws.State().Nodes {
+			if rec.PID > 0 {
+				continue
+			}
+			if len(rec.Args) == 0 {
+				// Never armed: the start step is what arms it, and that step
+				// ran (or will run) through the composition, not here.
+				continue
+			}
+			bin := binary
+			if bin == "" {
+				bin = ws.State().Binary
+			}
+			if bin != "" {
+				ws.SetBinary(bin)
+			}
+			detail, err := ws.StartNode(ctx, rec.Index)
+			if err != nil {
+				return "", err
+			}
+			started = append(started, detail)
+		}
+		return "", nil
+	})
+	return started, err
+}

@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
@@ -34,7 +35,7 @@ func TestNodeSwap_RelaunchesOnNewBinaryKeepingRevision(t *testing.T) {
 	}
 
 	const swapBin = "/opt/gwbft-swap"
-	out, err := chainsetup.NodeSwap(context.Background(), deps, chainsetup.NodeSwapIn{
+	out, err := verb.NodeSwap(context.Background(), deps, verb.NodeSwapIn{
 		DataDir: dir, Index: 1, Binary: swapBin,
 	})
 	if err != nil {
@@ -85,7 +86,7 @@ func TestNodeSwap_RelaunchesOnNewBinaryKeepingRevision(t *testing.T) {
 // relaunch on the same one.
 func TestNodeSwap_RequiresBinary(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
-	if _, err := chainsetup.NodeSwap(context.Background(), deps, chainsetup.NodeSwapIn{DataDir: dir, Index: 1}); err == nil {
+	if _, err := verb.NodeSwap(context.Background(), deps, verb.NodeSwapIn{DataDir: dir, Index: 1}); err == nil {
 		t.Fatal("want an error swapping with no binary")
 	}
 }

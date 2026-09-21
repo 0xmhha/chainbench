@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 func TestHardforkPlan_ReadsTheFromChainFromTheNetwork(t *testing.T) {
 	dir, _, _ := launchedNetwork(t)
 
-	out, err := chainsetup.HardforkPlan(context.Background(), chainsetup.Deps{}, chainsetup.HardforkPlanIn{
+	out, err := verb.HardforkPlan(context.Background(), chainsetup.Deps{}, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "wbft", Block: 100,
 	})
 	if err != nil {
@@ -36,7 +37,7 @@ func TestHardforkPlan_SameChainNeedsAnExplicitBinary(t *testing.T) {
 	// explicit post-fork build there is literally nothing to swap.
 	dir, _, _ := launchedNetwork(t)
 
-	_, err := chainsetup.HardforkPlan(context.Background(), chainsetup.Deps{}, chainsetup.HardforkPlanIn{
+	_, err := verb.HardforkPlan(context.Background(), chainsetup.Deps{}, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "stablenet", Block: 100,
 	})
 	if err == nil {
@@ -47,7 +48,7 @@ func TestHardforkPlan_SameChainNeedsAnExplicitBinary(t *testing.T) {
 	}
 
 	// With one it plans normally.
-	if _, err := chainsetup.HardforkPlan(context.Background(), chainsetup.Deps{}, chainsetup.HardforkPlanIn{
+	if _, err := verb.HardforkPlan(context.Background(), chainsetup.Deps{}, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "stablenet", ToBinary: "/opt/gstable-postfork", Block: 100,
 	}); err != nil {
 		t.Errorf("same-chain hardfork with a binary should plan: %v", err)
@@ -56,17 +57,17 @@ func TestHardforkPlan_SameChainNeedsAnExplicitBinary(t *testing.T) {
 
 func TestHardforkPlan_RequiresADataDirAndTarget(t *testing.T) {
 	dir, _, _ := launchedNetwork(t)
-	if _, err := chainsetup.HardforkPlan(context.Background(), chainsetup.Deps{}, chainsetup.HardforkPlanIn{ToChain: "wbft"}); err == nil {
+	if _, err := verb.HardforkPlan(context.Background(), chainsetup.Deps{}, verb.HardforkPlanIn{ToChain: "wbft"}); err == nil {
 		t.Error("want an error without a data dir")
 	}
-	if _, err := chainsetup.HardforkPlan(context.Background(), chainsetup.Deps{}, chainsetup.HardforkPlanIn{DataDir: dir}); err == nil {
+	if _, err := verb.HardforkPlan(context.Background(), chainsetup.Deps{}, verb.HardforkPlanIn{DataDir: dir}); err == nil {
 		t.Error("want an error without a target chain")
 	}
 }
 
 func TestHardforkExecute_RecordsThePostForkBinaryChainAndPids(t *testing.T) {
 	dir, stub, deps := launchedNetwork(t)
-	planned, err := chainsetup.HardforkPlan(context.Background(), deps, chainsetup.HardforkPlanIn{
+	planned, err := verb.HardforkPlan(context.Background(), deps, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "wbft", Block: 100,
 	})
 	if err != nil {
@@ -74,7 +75,7 @@ func TestHardforkExecute_RecordsThePostForkBinaryChainAndPids(t *testing.T) {
 	}
 
 	const postFork = "/opt/gwbft"
-	res, err := chainsetup.HardforkExecute(context.Background(), deps, chainsetup.HardforkExecuteIn{
+	res, err := verb.HardforkExecute(context.Background(), deps, verb.HardforkExecuteIn{
 		Plan: planned, DataDir: dir, Binary: postFork,
 	})
 	if err != nil {
@@ -105,14 +106,14 @@ func TestHardforkExecute_RecordsThePostForkBinaryChainAndPids(t *testing.T) {
 
 func TestHardforkExecute_RequiresAResolvedBinary(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
-	planned, err := chainsetup.HardforkPlan(context.Background(), deps, chainsetup.HardforkPlanIn{
+	planned, err := verb.HardforkPlan(context.Background(), deps, verb.HardforkPlanIn{
 		DataDir: dir, ToChain: "wbft", Block: 100,
 	})
 	if err != nil {
 		t.Fatalf("HardforkPlan: %v", err)
 	}
 
-	if _, err := chainsetup.HardforkExecute(context.Background(), deps, chainsetup.HardforkExecuteIn{
+	if _, err := verb.HardforkExecute(context.Background(), deps, verb.HardforkExecuteIn{
 		Plan: planned, DataDir: dir,
 	}); err == nil {
 		t.Error("want an error without a post-fork binary")

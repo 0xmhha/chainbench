@@ -66,7 +66,7 @@ type Identity struct {
 //
 // Everything is computed in process: no chain binary is executed, so this works
 // with no build of go-wbft present and with CGO disabled. The result is checked
-// byte for byte against the shipped keys/preset fixture.
+// byte for byte against the shipped presets/keys fixture.
 func Derive(k PrivateKey, d Derivation) (Identity, error) {
 	raw := k.Bytes()
 

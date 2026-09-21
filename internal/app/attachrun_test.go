@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"strings"
 	"testing"
 )
@@ -46,6 +47,7 @@ func specJSON(t *testing.T, id string, steps ...map[string]any) []byte {
 // down the unwired road.
 func TestAttachRun_AWorkspaceGoesThroughTheWiredPath(t *testing.T) {
 	_, err := AttachRun(context.Background(), Deps{}, AttachRunIn{
+		At:      lifecycle.AdoptChainByWorkspace,
 		DataDir: t.TempDir(), // a real directory, but no composition in it
 		Specs:   [][]byte{specJSON(t, "x", map[string]any{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"})},
 	})
@@ -64,12 +66,12 @@ func TestAttachRun_AWorkspaceGoesThroughTheWiredPath(t *testing.T) {
 func TestAttachRun_BareURLsNeedTheirInputs(t *testing.T) {
 	spec := [][]byte{specJSON(t, "x", map[string]any{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"})}
 
-	_, err := AttachRun(context.Background(), Deps{}, AttachRunIn{Specs: spec, RPCURLs: []string{"http://x"}})
+	_, err := AttachRun(context.Background(), Deps{}, AttachRunIn{At: lifecycle.AdoptChainByRPC, Specs: spec, RPCURLs: []string{"http://x"}})
 	if err == nil || !strings.Contains(err.Error(), "a chain is required") {
 		t.Errorf("attaching with no chain should say so: %v", err)
 	}
 
-	_, err = AttachRun(context.Background(), Deps{}, AttachRunIn{Specs: spec, Chain: "wbft"})
+	_, err = AttachRun(context.Background(), Deps{}, AttachRunIn{At: lifecycle.AdoptChainByRPC, Specs: spec, Chain: "wbft"})
 	if err == nil || !strings.Contains(err.Error(), "no endpoint to attach to") {
 		t.Errorf("attaching with no endpoint should say so: %v", err)
 	}
@@ -81,7 +83,7 @@ func TestAttachRun_BareURLsNeedTheirInputs(t *testing.T) {
 // here instead, naming the spec and the reference.
 func TestAttachRun_PrecheckRefusesBeforeAnythingRuns(t *testing.T) {
 	_, err := AttachRun(context.Background(), Deps{}, AttachRunIn{
-		Chain: "wbft", RPCURLs: []string{"http://127.0.0.1:1"},
+		At: lifecycle.AdoptChainByRPC, Chain: "wbft", RPCURLs: []string{"http://127.0.0.1:1"},
 		Specs: [][]byte{specJSON(t, "typo-case", map[string]any{
 			"expect": "blockNumbr", "compare": "GreaterOrEqual", "is": "1",
 		})},
@@ -100,6 +102,7 @@ func TestAttachRun_PrecheckRefusesBeforeAnythingRuns(t *testing.T) {
 // whole run. A precheck that refused it would turn one bad file into no run.
 func TestAttachRun_AnUnparseableSpecIsLeftToTheEngine(t *testing.T) {
 	_, err := AttachRun(context.Background(), Deps{}, AttachRunIn{
+		At:    lifecycle.AdoptChainByRPC,
 		Specs: [][]byte{[]byte("{not json")},
 	})
 	if err == nil {

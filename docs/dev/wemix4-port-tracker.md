@@ -169,7 +169,7 @@ does not apply.)
 ### The write path, and what is reachable (confirmed live)
 
 The **GovNCP write path is reachable**: on the handoff successor the initial NCP
-is the **preset node-1 account** (`0xc17d…`), whose **raw key ships in keys/preset**
+is the **preset node-1 account** (`0xc17d…`), whose **raw key ships in presets/keys**
 (no keystore decryption needed); the other preset validator accounts (node2/node3)
 supply additional NCP votes. Quorum is `ceil(2*ncpCount/3)`. The full NCP
 lifecycle is ported and live-verified: GOV-006 add (propose→vote), GOV-007 remove
@@ -191,7 +191,7 @@ operations by default. The real requirements (from `GovStaking.sol`) are:
 
 The BLS pubkey/PoP for each preset node are derived once from the committed
 nodekeys via the go-wbft `bootnode -writeaddress` tool and now ship in
-`keys/preset/metadata.json` (`blsPublicKey` + `blsPoP`), so tests need no extra
+`presets/keys/metadata.json` (`blsPublicKey` + `blsPoP`), so tests need no extra
 binary. GOV-003 is ported (`TestWemixGovernanceRegisterStakerE2E`: operator=node2,
 staker=node1, amount=minimumStaking → `isStaker` true, `stakerByOperator` maps
 back). GOV-011 delegation builds on it (`TestWemixGovernanceDelegateE2E`: node3
@@ -302,7 +302,7 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
   `cmd/chainbench/upgrade_gov_staking_e2e_test.go`
   (`TestWemixGovernanceRegisterStakerE2E`) — `GovStaking.registerStaker` with
   operator=node2, staker=node1, amount=minimumStaking, and the staker's BLS
-  pubkey/PoP (now shipped in `keys/preset/metadata.json`). Asserts `isStaker` and
+  pubkey/PoP (now shipped in `presets/keys/metadata.json`). Asserts `isStaker` and
   `stakerByOperator`. Live-verified against the go-wemix + go-wbft binaries. This
   unblocks the dependent staking flows.
 - **Batch 11** — GOV-011 delegation:

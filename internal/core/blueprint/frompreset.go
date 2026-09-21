@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // FromPresetIn describes the network a preset should be written out as.
@@ -40,12 +41,12 @@ type FromPresetIn struct {
 // It is deliberately the reverse of the raw path rather than a shortcut past
 // it: what this writes must resolve to the identities the preset holds, which
 // is what TestFromPreset_ComposesTheSameNetwork holds it to.
-func FromPreset(set keyring.Preset, in FromPresetIn) (Blueprint, error) {
+func FromPreset(set preset.Key, in FromPresetIn) (Blueprint, error) {
 	if in.Dir == "" {
-		return Blueprint{}, fmt.Errorf("blueprint: from preset: the key set directory is what the document points its keys at")
+		return Blueprint{}, fmt.Errorf("blueprint: from keys: the key set directory is what the document points its keys at")
 	}
 	if len(set.Nodes) == 0 {
-		return Blueprint{}, fmt.Errorf("blueprint: from preset: %s holds no identities", in.Dir)
+		return Blueprint{}, fmt.Errorf("blueprint: from keys: %s holds no identities", in.Dir)
 	}
 
 	producers := in.BPCount
@@ -56,10 +57,10 @@ func FromPreset(set keyring.Preset, in FromPresetIn) (Blueprint, error) {
 	}
 	total := producers + in.ENCount
 	if total > len(set.Nodes) {
-		return Blueprint{}, fmt.Errorf("blueprint: from preset: %d nodes were asked for and %s holds %d identities", total, in.Dir, len(set.Nodes))
+		return Blueprint{}, fmt.Errorf("blueprint: from keys: %d nodes were asked for and %s holds %d identities", total, in.Dir, len(set.Nodes))
 	}
 	if total == 0 {
-		return Blueprint{}, fmt.Errorf("blueprint: from preset: %s declares no validators, so the network size has to be given", in.Dir)
+		return Blueprint{}, fmt.Errorf("blueprint: from keys: %s declares no validators, so the network size has to be given", in.Dir)
 	}
 
 	bp := Blueprint{Version: Version, Chain: in.Chain, Manifest: in.Manifest, Peering: in.Peering}
@@ -85,7 +86,7 @@ func FromPreset(set keyring.Preset, in FromPresetIn) (Blueprint, error) {
 	// a document its own parser rejects is worse than one that fails, because
 	// the failure surfaces at whatever reads it next.
 	if err := bp.Validate(); err != nil {
-		return Blueprint{}, fmt.Errorf("blueprint: from preset: the generated document is not valid: %w", err)
+		return Blueprint{}, fmt.Errorf("blueprint: from keys: the generated document is not valid: %w", err)
 	}
 	return bp, nil
 }

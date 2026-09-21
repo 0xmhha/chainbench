@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"strings"
 	"time"
 
@@ -43,7 +44,7 @@ type RunSuiteIn struct {
 	// Docker treats the servers as local docker containers (the option is the
 	// power switch, as everywhere).
 	Docker bool
-	// KeysDir overrides the declared key set (default keys/preset).
+	// KeysDir overrides the declared key set (default presets/keys).
 	KeysDir string
 	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
@@ -283,7 +284,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		// none. A case that has to act BEFORE the fork says so by naming the
 		// crossFork step, and then this leaves the fork to it.
 		if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
-			res, cerr := chainsetup.NetCrossFork(ctx, sd, chainsetup.NetCrossForkIn{DataDir: comp.up.DataDir})
+			res, cerr := verb.NetCrossFork(ctx, sd, verb.NetCrossForkIn{DataDir: comp.up.DataDir})
 			if cerr != nil {
 				return fmt.Errorf("engine: run suite: %w", cerr)
 			}

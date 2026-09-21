@@ -2,10 +2,12 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -19,6 +21,23 @@ import (
 // Both are rendered from the same resolved values, so a node cannot be
 // configured one way and launched another.
 
+// The kinds of failure the config stage has.
+//
+// Two of the three are about a request that names something the config
+// vocabulary does not take, and the third is about the target disagreeing with
+// what was just written to it. They are different problems for different
+// people: the first is a line in a declaration, the second is a machine.
+var (
+	// errConfigBadOverride: an override is not key=value, names a key the
+	// config vocabulary does not have, or names a scope that is not one.
+	errConfigBadOverride = errors.New("a config override is not one this accepts")
+	// errConfigReadback: what the target holds is not what was written to it.
+	errConfigReadback = errors.New("the config did not read back intact")
+	// errConfigPinUnreadable: a config or a genesis this node was pinned to
+	// cannot be read.
+	errConfigPinUnreadable = errors.New("a pinned input cannot be read")
+)
+
 func (w *Workspace) Config(ctx context.Context) (string, error) {
 	p, err := w.plugin()
 	if err != nil {
@@ -27,7 +46,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err := w.require("config"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
@@ -42,7 +61,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if perr != nil {
 			return "", perr
 		}
-		prov, err := w.writeNodeConfig(ctx, np, preset, placed, peering, pubkey, ns, "")
+		prov, err := w.writeNodeConfig(ctx, np, keys, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}
@@ -64,12 +83,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 // and a mid-test config swap share it, so both produce the same config and the
 // same provenance record. purpose, when set, names the swap's config fixture
 // (config-<purpose>); the initial compose passes "".
-func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, keys preset.Key, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
 	t, err := w.machineFor(ns)
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
-	toml, err := w.nodeConfigBytes(ctx, p, preset, placed, peering, pubkey, ns)
+	toml, err := w.nodeConfigBytes(ctx, p, keys, placed, peering, pubkey, ns)
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
@@ -92,11 +111,12 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 //
 // A node that names its own config file uses it verbatim — the file is the
 // whole config, so nothing is rendered and no override applies to it.
-func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
+func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, keys preset.Key, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return nil, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
+			return nil, ofKind(errConfigPinUnreadable,
+				fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr))
 		}
 		return toml, nil
 	}
@@ -104,7 +124,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
-	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+	spec := process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
 	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
@@ -119,7 +139,8 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 		}
 		gen, rerr := t.Files.Read(ctx, path)
 		if rerr != nil {
-			return nil, fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr)
+			return nil, ofKind(errConfigPinUnreadable,
+				fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr))
 		}
 		spec.Genesis = gen
 	}
@@ -139,10 +160,12 @@ func (w *Workspace) writeConfigFile(ctx context.Context, t *resource.Access, ns 
 	want := filestore.Hash(toml)
 	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
 	if err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
+		return ConfigProvenance{}, ofKind(errConfigReadback,
+			fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err))
 	}
 	if got != want {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
+		return ConfigProvenance{}, ofKind(errConfigReadback,
+			fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got))
 	}
 	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}
 	if purpose != "" {
@@ -164,7 +187,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err := w.require("build"); err != nil {
 		return "", err
 	}
-	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	keys, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
@@ -181,7 +204,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -198,3 +221,21 @@ func (w *Workspace) LaunchOpts() (string, error) {
 // Provision materializes the shared launch inputs on the target with
 // upload-if-absent semantics: the genesis (as built by the genesis step) and
 // the per-node configs. Re-running it reuses what already exists.
+
+// ConfigFailure is which of the config stage's three failures this error is.
+//
+// What reaches the default is writing itself: a machine that will not take the
+// file, a directory that cannot be made. Those are the file store's refusals
+// and they read as such; the three named here are the ones a person can act on
+// without leaving the declaration.
+func ConfigFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errConfigBadOverride):
+		return lifecycle.ChainBuildNodeConfigFailBadOverride
+	case errors.Is(err, errConfigReadback):
+		return lifecycle.ChainBuildNodeConfigFailReadback
+	case errors.Is(err, errConfigPinUnreadable):
+		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
+	}
+	return lifecycle.FailStageUnclassified
+}

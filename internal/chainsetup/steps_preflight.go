@@ -28,6 +28,12 @@ func (w *Workspace) Have(ctx context.Context) preflight.Have {
 	// written before it was recorded digests to nothing, which skips the check
 	// rather than forcing every old workspace to rebuild.
 	if st.Request != nil {
+		// The chain id comes from the same place for the same reason. It is
+		// already inside GenesisDeclared, so leaving it unset did not let a
+		// changed chain id pass — it did the opposite: every request that named
+		// one reported "chain id: have 0, want N" against a workspace composed
+		// with exactly that N, and reused nothing, ever.
+		h.ChainID = st.Request.ChainID
 		h.GenesisDeclared = GenesisDeclared(*st.Request)
 	}
 	for _, r := range st.Nodes {

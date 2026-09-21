@@ -16,13 +16,13 @@ import (
 // that every node rejects at seal time, so the fault presents as a consensus
 // problem and the search starts in the wrong subsystem.
 //
-// keys/preset is the oracle. It ships each node's nodekey next to the address,
+// presets/keys is the oracle. It ships each node's nodekey next to the address,
 // devp2p public key, BLS public key and proof of possession that key produced,
 // so re-deriving from the nodekey and comparing is a byte-for-byte check
 // against known-good output — the check Derive's own doc comment claimed was
 // happening.
 
-// presetNode is one entry of keys/preset/metadata.json.
+// presetNode is one entry of presets/keys/metadata.json.
 type presetNode struct {
 	Index        int    `json:"index"`
 	NodeKey      string `json:"nodekey"`
@@ -34,8 +34,8 @@ type presetNode struct {
 
 func loadPreset(t *testing.T) []presetNode {
 	t.Helper()
-	// ../../../../keys/preset from internal/core/keyring/derive.
-	path := filepath.Join("..", "..", "..", "..", "keys", "preset", "metadata.json")
+	// ../../../../presets/keys from internal/core/keyring/derive.
+	path := filepath.Join("..", "..", "..", "..", "presets", "keys", "metadata.json")
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("the preset fixture is the oracle for this package: %v", err)

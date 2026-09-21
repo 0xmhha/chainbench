@@ -90,7 +90,7 @@ func TestAttachEnvReachesTheSpec(t *testing.T) {
 		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
 		"attach": map[string]any{
 			"rpc":      []string{"http://127.0.0.1:8600", "http://127.0.0.1:8610"},
-			"keysDir":  "keys/preset",
+			"keysDir":  "presets/keys",
 			"provides": []string{"rpc", "consensus"},
 		},
 	}
@@ -104,7 +104,7 @@ func TestAttachEnvReachesTheSpec(t *testing.T) {
 	if len(spec.EnvAttach.RPC) != 2 {
 		t.Errorf("RPC = %v, want both endpoints", spec.EnvAttach.RPC)
 	}
-	if spec.EnvAttach.KeysDir != "keys/preset" {
+	if spec.EnvAttach.KeysDir != "presets/keys" {
 		t.Errorf("KeysDir = %q", spec.EnvAttach.KeysDir)
 	}
 	if len(spec.EnvAttach.Provides) != 2 {

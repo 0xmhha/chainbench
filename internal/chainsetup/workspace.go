@@ -140,12 +140,12 @@ func (w *Workspace) keysBase() string {
 	return w.state.KeysDir
 }
 
-// resolveTarget builds the live target for a step through the netmap module,
+// ResolveTarget builds the live target for a step through the netmap module,
 // the one dial-wiring point: the recorded server set, the docker-mode
 // translation, and the login rules are bound there identically for every
 // consumer, so a multi-step run cannot be half-mapped and this module cannot
 // diverge from keyring or anyone else.
-func (w *Workspace) resolveTarget() (*resource.Access, error) {
+func (w *Workspace) ResolveTarget() (*resource.Access, error) {
 	return w.opener().Open(w.state.Target)
 }
 
@@ -166,7 +166,7 @@ func (w *Workspace) machineFor(ns node.Record) (*resource.Access, error) {
 		err error
 	)
 	if ns.Server == "" {
-		t, err = w.resolveTarget()
+		t, err = w.ResolveTarget()
 	} else {
 		t, err = w.opener().Open(resource.Spec{
 			Server: ns.Server,
@@ -340,3 +340,10 @@ func (w *Workspace) NodeSet() node.NodeSet {
 	}
 	return ns
 }
+
+// SetBinary records which node binary this workspace runs.
+//
+// A resume takes one from the command line for a node it is about to relaunch,
+// and the launch reads it back from here — so the two have to be the same field
+// rather than one passed alongside the other.
+func (w *Workspace) SetBinary(path string) { w.state.Binary = path }

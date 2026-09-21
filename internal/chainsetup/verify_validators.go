@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // ValidatorCheck is the outcome of asking a running chain which validators it
@@ -42,10 +42,10 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	if err != nil {
 		return ValidatorCheck{}, err
 	}
-	if len(w.state.Nodes) == 0 {
-		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: no node table")
+	if err := w.allow("VerifyValidators"); err != nil {
+		return ValidatorCheck{}, err
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	preset, err := preset.LoadKeyPreset(w.state.KeysDir)
 	if err != nil {
 		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: load keys: %w", err)
 	}

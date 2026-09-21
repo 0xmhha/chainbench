@@ -10,13 +10,14 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // declaredSet builds a small ring the way a declaration would: keys stated,
 // identities derived, nothing generated.
-func declaredSet(t *testing.T, n int) keyring.Preset {
+func declaredSet(t *testing.T, n int) preset.Key {
 	t.Helper()
-	var set keyring.Preset
+	var set preset.Key
 	for i := 1; i <= n; i++ {
 		k, err := derive.ParsePrivateKey(strings.Repeat(string(rune('0'+i)), 64))
 		if err != nil {

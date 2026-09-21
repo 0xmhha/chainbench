@@ -3,7 +3,7 @@
 // This E2E ports the remaining reachable wemix4 NCP-governance WRITE flows —
 // GOV-007 (remove an NCP by vote of the others) and GOV-008 (immediate self-exit)
 // — as one coherent NCP lifecycle on the go-wbft handoff successor. It builds on
-// the GOV-006 add flow: the preset validator accounts (raw keys in keys/preset)
+// the GOV-006 add flow: the preset validator accounts (raw keys in presets/keys)
 // are the NCP electorate, and quorum is ceil(2*ncpCount/3).
 //
 //	add node2 (quorum 1)  -> ncpCount 1->2
@@ -26,6 +26,8 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -177,8 +179,8 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		cmd := newRootCmd()
 		args := []string{
 			"upgrade", "run",
-			"--profile", "../../presets/hardfork/wemix-upgrade.yaml",
-			"--keys", "../../keys/preset",
+			"--profile", "../../presets/chain/wemix-upgrade.yaml",
+			"--keys", "../../presets/keys",
 			"--from-binary", fromBin,
 			"--to-binary", toBin,
 			"--template", template,
@@ -223,7 +225,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 	return ""
 }
 
-// presetNodeKey loads node idx's raw private key from keys/preset/metadata.json.
+// presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.
 func presetNodeKey(t *testing.T, idx int) []byte {
 	t.Helper()
 	_, keyHex := presetNode(t, idx)
@@ -234,7 +236,7 @@ func presetNodeKey(t *testing.T, idx int) []byte {
 	return key
 }
 
-// presetNodeAddr returns node idx's address from keys/preset/metadata.json.
+// presetNodeAddr returns node idx's address from presets/keys/metadata.json.
 func presetNodeAddr(t *testing.T, idx int) string {
 	t.Helper()
 	addr, _ := presetNode(t, idx)
@@ -244,7 +246,7 @@ func presetNodeAddr(t *testing.T, idx int) string {
 // presetNode returns node idx's (address, nodekey) from the preset metadata.
 func presetNode(t *testing.T, idx int) (addr, nodekey string) {
 	t.Helper()
-	b, err := os.ReadFile("../../keys/preset/metadata.json")
+	b, err := os.ReadFile("../../presets/keys/metadata.json")
 	if err != nil {
 		t.Fatalf("read preset metadata: %v", err)
 	}
@@ -265,4 +267,70 @@ func presetNode(t *testing.T, idx int) (addr, nodekey string) {
 	}
 	t.Fatalf("no node %d in preset metadata", idx)
 	return "", ""
+}
+
+func successorRPC(t *testing.T, out string) string {
+	t.Helper()
+	re := regexp.MustCompile(`node2\s+(http://\S+)\s+pid=`)
+	m := re.FindStringSubmatch(out)
+	if len(m) != 2 {
+		t.Fatalf("could not find successor (node2) RPC in output:\n%s", out)
+	}
+	return m[1]
+}
+
+// presetNode1Key loads node 1's private key from presets/keys — a committed TEST
+// fixture (public, local-only) whose address is genesis-funded.
+
+func presetNode1Key(t *testing.T) []byte {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join("..", "..", "presets", "keys", "metadata.json"))
+	if err != nil {
+		t.Fatalf("read preset metadata: %v", err)
+	}
+	var m struct {
+		Nodes []struct {
+			Index   int    `json:"index"`
+			NodeKey string `json:"nodekey"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("parse preset metadata: %v", err)
+	}
+	for _, n := range m.Nodes {
+		if n.Index == 1 {
+			key, err := hex.DecodeString(strings.TrimPrefix(n.NodeKey, "0x"))
+			if err != nil {
+				t.Fatalf("decode nodekey: %v", err)
+			}
+			return key
+		}
+	}
+	t.Fatal("no node 1 in preset metadata")
+	return nil
+}
+
+// waitReceiptOK polls for a mined receipt and asserts status == 0x1.
+
+func waitReceiptOK(t *testing.T, c *rpc.Client, hash string) {
+	t.Helper()
+	deadline := time.Now().Add(90 * time.Second)
+	for {
+		raw, err := c.TxReceipt(context.Background(), hash)
+		if err == nil && len(raw) > 0 && string(raw) != "null" {
+			var r struct {
+				Status string `json:"status"`
+			}
+			if json.Unmarshal(raw, &r) == nil && r.Status != "" {
+				if r.Status != "0x1" {
+					t.Fatalf("post-fork tx %s status=%s (want 0x1)", hash, r.Status)
+				}
+				return
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("post-fork tx %s never mined", hash)
+		}
+		time.Sleep(2 * time.Second)
+	}
 }

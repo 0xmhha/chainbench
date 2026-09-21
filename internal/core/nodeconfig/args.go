@@ -15,19 +15,19 @@ type entry struct {
 // the argv.
 type Args struct {
 	dialect  Dialect
-	order    []Key
-	vals     map[Key]entry
+	order    []OptionKey
+	vals     map[OptionKey]entry
 	problems []error
 }
 
 // NewArgs starts an empty argv for one dialect.
 func NewArgs(d Dialect) *Args {
-	return &Args{dialect: d, vals: map[Key]entry{}}
+	return &Args{dialect: d, vals: map[OptionKey]entry{}}
 }
 
 // Set records a valued knob. An unsupported key is a classified problem —
 // requested features are never silently skipped.
-func (a *Args) Set(k Key, v string, l Layer) {
+func (a *Args) Set(k OptionKey, v string, l Layer) {
 	name, ok := a.dialect.Spelling(k)
 	if !ok {
 		a.problems = append(a.problems,
@@ -46,7 +46,7 @@ func (a *Args) Set(k Key, v string, l Layer) {
 // the "harmless absence" branch of the tri-state rule: use it for knobs whose
 // absence the generation covers by default, never to smuggle a feature past a
 // dialect that lacks it.
-func (a *Args) SetIfSupported(k Key, v string, l Layer) {
+func (a *Args) SetIfSupported(k OptionKey, v string, l Layer) {
 	if _, ok := a.dialect.Spelling(k); !ok {
 		return
 	}
@@ -54,7 +54,7 @@ func (a *Args) SetIfSupported(k Key, v string, l Layer) {
 }
 
 // Enable records a boolean knob.
-func (a *Args) Enable(k Key, l Layer) {
+func (a *Args) Enable(k OptionKey, l Layer) {
 	name, ok := a.dialect.Spelling(k)
 	if !ok {
 		a.problems = append(a.problems,
@@ -71,14 +71,14 @@ func (a *Args) Enable(k Key, l Layer) {
 
 // EnableIfSupported is Enable under the harmless-absence rule (see
 // SetIfSupported).
-func (a *Args) EnableIfSupported(k Key, l Layer) {
+func (a *Args) EnableIfSupported(k OptionKey, l Layer) {
 	if _, ok := a.dialect.Spelling(k); !ok {
 		return
 	}
 	a.Enable(k, l)
 }
 
-func (a *Args) put(k Key, e entry) {
+func (a *Args) put(k OptionKey, e entry) {
 	if _, seen := a.vals[k]; !seen {
 		a.order = append(a.order, k)
 	}
@@ -86,14 +86,14 @@ func (a *Args) put(k Key, e entry) {
 }
 
 // Has reports whether the knob has been set.
-func (a *Args) Has(k Key) bool {
+func (a *Args) Has(k OptionKey) bool {
 	_, ok := a.vals[k]
 	return ok
 }
 
 // Value returns the recorded value for a valued knob ("" when unset or
 // boolean).
-func (a *Args) Value(k Key) string { return a.vals[k].value }
+func (a *Args) Value(k OptionKey) string { return a.vals[k].value }
 
 // Problems returns every classified problem accumulated so far. The Builder
 // joins them into one error, so a broken assembly reports all defects at once.

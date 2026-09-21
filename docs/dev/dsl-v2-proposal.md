@@ -110,7 +110,7 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 
 | # | 요구 | 문서 | 코드 | 판정 |
 |---|---|---|---|---|
-| **G1** | 배경 1.4·1.5 / 알고리즘 2·3 — node key·keystore 를 **random 생성할지 기존 사용할지 결정** | design §3.5 `keyreg`(인터페이스만) | `keyreg.New` 는 **프로덕션 호출 지점 0**. `engine/attach.go:79`·`app.go:114` 가 `session.New(…, nil)` 로 nil 전달. 실경로는 `keys/preset` 하드코딩(`app.go:50`) | **미구현**. DSL 필드도 없음 |
+| **G1** | 배경 1.4·1.5 / 알고리즘 2·3 — node key·keystore 를 **random 생성할지 기존 사용할지 결정** | design §3.5 `keyreg`(인터페이스만) | `keyreg.New` 는 **프로덕션 호출 지점 0**. `engine/attach.go:79`·`app.go:114` 가 `session.New(…, nil)` 로 nil 전달. 실경로는 `presets/keys` 하드코딩(`app.go:50`) | **미구현**. DSL 필드도 없음 |
 | **G2** | 배경 1.2 — genesis 4모드 | design §3.8 (4모드 명시) | DSL 은 `chain.genesisOverlay` 1개만 노출 | **문법 갭 3/4** |
 | **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](archive/chain-binary-flag-graph.md) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
 | **G4** | 배경 3 — 검증에 **log·rpc·metric** 활용 | design §3.6 collector 는 log·chainstate 만 | 어세션 16종 중 metric 소스 0 | **1/3 미구현** |
@@ -163,14 +163,14 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   // 구현(2026-08-28, P7): 핸드오프는 "upgrade" 블록으로 선언하고, 그때 binaries 는
   // {"producer": ..., "validator": ...} 역할 이름만 받는다. 실행기는 이 블록의
   // 유무로 조립기를 고른다(tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json 의 env 블록).
-  // "upgrade": { "profile": "profiles/wemix-upgrade.yaml", "template": "${GOWEMIX_TEMPLATE}" },
+  // "upgrade": { "profile": "presets/chain/wemix-upgrade.yaml", "template": "${GOWEMIX_TEMPLATE}" },
 
   "keys": {                                                 // 1.4 · 1.5 — G1 해소
-    "nodekeys": { "source": "keyPreset", "ref": "keys/preset" },
+    "nodekeys": { "source": "keyPreset", "ref": "presets/keys" },
     //   source: keyPreset | random | import | remote
     //   random 이면 keyreg 가 생성하고 BLSDeriver 로 BLS/PoP 를 채운다(design §3.5)
     "accounts": {
-      "source": "keyPreset", "ref": "keys/preset",
+      "source": "keyPreset", "ref": "presets/keys",
       "extra": [
         { "name": "acctA", "source": "random", "balance": "100ether" },
         { "name": "op1",   "source": "import", "ref": "keys/ops/op1.key" }
@@ -180,7 +180,7 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
 
   "genesis": {                                              // 1.2 — G2 해소 (design §3.8 4모드)
     "mode": "template",          // existing | build | template | inherit
-    "base": "keys/preset/genesis.json",     // existing/template/inherit 의 원본
+    "base": "presets/keys/genesis.json",     // existing/template/inherit 의 원본
     "set":  { "config.chainId": 8284 },     // 점경로 단일값
     "overlay": { "config": { "bohoBlock": 100 } }   // 깊은 병합
     // mode:"inherit" 는 base 를 상위 환경의 산출 genesis 로 해석(업그레이드 케이스)

@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +42,7 @@ func TestBlueprint_ComposesWithNoPresetDirectory(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysDir := filepath.Join(dir, "keys")
 
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{
 		DataDir: dir, Chain: "wbft", KeysDir: keysDir,
 	}); err != nil {
 		t.Fatalf("new: %v", err)
@@ -53,12 +54,12 @@ func TestBlueprint_ComposesWithNoPresetDirectory(t *testing.T) {
 	}
 
 	bp := rawBlueprint(t)
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BlueprintPath: bp,
 	}); err != nil {
 		t.Fatalf("allocate from a blueprint: %v", err)
 	}
-	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{
+	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{
 		DataDir: dir, BlueprintPath: bp,
 	}); err != nil {
 		t.Fatalf("keys from a blueprint: %v", err)
@@ -85,10 +86,10 @@ func TestBlueprint_ComposesWithNoPresetDirectory(t *testing.T) {
 
 	// Genesis and config run off that ring, which is the proof that nothing
 	// downstream had to learn a second way to be given keys.
-	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	if _, err := chainsetup.NetConfig(ctx, d, chainsetup.NetConfigIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir}); err != nil {
 		t.Fatalf("config: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "genesis.json")); err != nil {
@@ -102,14 +103,14 @@ func TestBlueprint_ComposesWithNoPresetDirectory(t *testing.T) {
 func TestBlueprint_RefusesTwoDescriptionsOfTheLayout(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
-	if _, err := chainsetup.NetNew(context.Background(), d, chainsetup.NetNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
+	if _, err := verb.NetNew(context.Background(), d, verb.NetNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	topo := filepath.Join(t.TempDir(), "topology.yaml")
 	if err := os.WriteFile(topo, []byte("chain: wbft\nnodes:\n  - {index: 1, role: bp}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
+	_, err := verb.NetAllocate(context.Background(), d, verb.NetAllocateIn{
 		DataDir: dir, BlueprintPath: rawBlueprint(t), TopologyPath: topo,
 	})
 	if err == nil {
@@ -127,7 +128,7 @@ func TestBlueprint_RefusesTwoDescriptionsOfTheLayout(t *testing.T) {
 func TestBlueprint_RefusesAFieldItCannotHonour(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
-	if _, err := chainsetup.NetNew(context.Background(), d, chainsetup.NetNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
+	if _, err := verb.NetNew(context.Background(), d, verb.NetNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	path := filepath.Join(t.TempDir(), "network.yaml")
@@ -135,7 +136,7 @@ func TestBlueprint_RefusesAFieldItCannotHonour(t *testing.T) {
 	if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{DataDir: dir, BlueprintPath: path})
+	_, err := verb.NetAllocate(context.Background(), d, verb.NetAllocateIn{DataDir: dir, BlueprintPath: path})
 	if err == nil {
 		t.Fatal("a per-node server was silently ignored")
 	}

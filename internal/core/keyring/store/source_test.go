@@ -14,7 +14,7 @@ import (
 )
 
 // presetDir is the repository's shipped key set, used as a realistic fixture.
-const presetDir = "../../../../keys/preset"
+const presetDir = "../../../../presets/keys"
 
 func TestPresetKeys_LoadsAndChecksCapacity(t *testing.T) {
 	src := store.PresetKeys{Path: presetDir}

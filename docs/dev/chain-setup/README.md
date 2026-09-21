@@ -156,7 +156,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 | 변곡점 | 설정 위치 | 비고 |
 |---|---|---|
-| 프리셋 경로 | `--keys` / `--keys-dir` (기본 `keys/preset`) | 5노드 커밋본 |
+| 프리셋 경로 | `--keys` / `--keys-dir` (기본 `presets/keys`) | 5노드 커밋본 |
 | 프리셋 생성 | `chainbench validator set --nodes N --validators V --bootnode <path> --binary <path> --out <dir>` | 5노드 초과 네트워크용 |
 | 계정 잔액 | `validator set --balance <0x-hex>` | genesis alloc |
 | 키스토어 암호 | `validator set --password` (기본 `1`) | |
@@ -263,9 +263,9 @@ chainbench stop   --workspace-dir /tmp/x                                   # 종
 곧 답이 되도록 만든 것은 그대로다.
 
 ```
-new: stablenet: family wbft, chain id 8283, bootstrap static; keys keys/preset; target local /tmp/x
+new: stablenet: family wbft, chain id 8283, bootstrap static; keys presets/keys; target local /tmp/x
 allocate: 4 node(s): 4 validator(s) + 0 endpoint(s); ports: built-in defaults; p2p from 31000, http from 8600
-keys: preset:keys/preset: 5 identities, 4 declared validators
+keys: preset:presets/keys: 5 identities, 4 declared validators
 genesis: 6273 bytes at /tmp/x/genesis.json, 4 validator(s)
 config: 4 config(s) under /tmp/x
 launchopts: 4 argv(s) assembled

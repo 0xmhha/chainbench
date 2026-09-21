@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // Default material for a generated key set.
@@ -34,7 +35,7 @@ type KeySource interface {
 	Dir() string
 	// Ensure materializes (or loads) the key set for at least n nodes and
 	// returns it decoded.
-	Ensure(ctx context.Context, n int) (keyring.Preset, error)
+	Ensure(ctx context.Context, n int) (preset.Key, error)
 	// Describe names the source for artifacts and error messages.
 	Describe() string
 }
@@ -51,7 +52,7 @@ type PresetKeys struct {
 func (s PresetKeys) Dir() string { return s.Path }
 
 // Describe names the source.
-func (s PresetKeys) Describe() string { return "preset:" + s.Path }
+func (s PresetKeys) Describe() string { return "keys:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
 //
@@ -59,13 +60,13 @@ func (s PresetKeys) Describe() string { return "preset:" + s.Path }
 // back is registered into a ring that writes each identity's key file. It reads
 // a local directory (a srv:// ring is downloaded before this point), so the N
 // per-entry reads are local ones.
-func (s PresetKeys) Ensure(_ context.Context, n int) (keyring.Preset, error) {
-	p, err := LoadPresetWithKeys(s.Path)
+func (s PresetKeys) Ensure(_ context.Context, n int) (preset.Key, error) {
+	p, err := preset.LoadKeyPresetWithKeys(s.Path)
 	if err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: %w", err)
+		return preset.Key{}, fmt.Errorf("keyring: key source: %w", err)
 	}
 	if len(p.Nodes) < n {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: preset %s has %d node identities, need %d",
+		return preset.Key{}, fmt.Errorf("keyring: key source: keys %s has %d node identities, need %d",
 			s.Path, len(p.Nodes), n)
 	}
 	return p, nil
@@ -102,12 +103,12 @@ func (s GeneratedKeys) Describe() string { return "generated:" + s.Path }
 
 // Ensure generates the key set on first call and loads it on later ones, so a
 // re-run keeps the identities the first run created (and therefore its genesis).
-func (s GeneratedKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error) {
+func (s GeneratedKeys) Ensure(ctx context.Context, n int) (preset.Key, error) {
 	if _, err := os.Stat(filepath.Join(s.Path, "metadata.json")); err == nil {
 		return PresetKeys{Path: s.Path}.Ensure(ctx, n)
 	}
 	if err := ctx.Err(); err != nil {
-		return keyring.Preset{}, err
+		return preset.Key{}, err
 	}
 	opts := GenerateOpts{
 		Nodes: n,
@@ -121,7 +122,7 @@ func (s GeneratedKeys) Ensure(ctx context.Context, n int) (keyring.Preset, error
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
 	if _, err := Generate(opts, nil); err != nil {
-		return keyring.Preset{}, fmt.Errorf("keyring: key source: generate: %w", err)
+		return preset.Key{}, fmt.Errorf("keyring: key source: generate: %w", err)
 	}
 	return PresetKeys{Path: s.Path}.Ensure(ctx, n)
 }
@@ -151,7 +152,7 @@ func orDefault(v, def string) string {
 // produces a chain whose genesis registers one address while the node signs
 // with another — a failure that otherwise surfaces much later as an unexplained
 // consensus stall.
-func (r *KeySet) Register(ctx context.Context, set keyring.Preset, n int) error {
+func (r *KeySet) Register(ctx context.Context, set preset.Key, n int) error {
 	if r == nil {
 		return nil
 	}
@@ -160,7 +161,7 @@ func (r *KeySet) Register(ctx context.Context, set keyring.Preset, n int) error 
 		if !ok {
 			return fmt.Errorf("keyring: key set has no identity for node%d", i)
 		}
-		label := nodeLabel(i)
+		label := preset.NodeLabel(i)
 		// Ask for exactly what the set claims to hold: a poa identity has no BLS
 		// material, and deriving some would invent a key it never had.
 		d := derive.AccountOnly

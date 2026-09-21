@@ -59,7 +59,7 @@ T7.11a 에서 고친 것과 같은 fan-out 이고, 같은 해법(유스케이스
 | **포트 규칙** | p2p 대역 · rpc 대역 (etcd = p2p+1 예약) | `PORT` 하나가 셋 결정: http=PORT, **p2p=PORT+1**, ws=PORT+10, **etcd = p2p+1 및 p2p+2** |
 | **노드 신원** | preset(address·128hex pubkey·nodekey) | **동일** — `id = "0x"+publicKey` 가 곧 idv5 |
 
-**마지막 줄이 설계상 가장 중요하다.** `keys/preset` 의 `publicKey` 는 128-hex 비압축 공개키이고,
+**마지막 줄이 설계상 가장 중요하다.** `presets/keys` 의 `publicKey` 는 128-hex 비압축 공개키이고,
 이는 `gwemix wemix nodeid` 의 `idv5` 와 같은 값이다. 즉 **wemix 전용 신원 생성기는 필요 없다** —
 기존 preset 키셋이 그대로 `poa.Member{Addr, ID}` 를 채운다.
 

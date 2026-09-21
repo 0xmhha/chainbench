@@ -26,7 +26,7 @@ const forkBase = `{
 func forkWorkspace() *Workspace {
 	return &Workspace{state: State{
 		Chain:        "wemix",
-		KeysDir:      "../../keys/preset",
+		KeysDir:      "../../presets/keys",
 		Binaries:     map[string]string{"from": "gwemix", "to": "gwbft"},
 		BinaryChains: map[string]string{"to": "wbft"},
 		Nodes: []node.Record{

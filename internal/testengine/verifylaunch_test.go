@@ -14,7 +14,7 @@ import (
 
 // recorded builds the record a composed network leaves behind.
 func recorded(nodes ...node.Record) chainsetup.State {
-	return chainsetup.State{Chain: "stablenet", KeysDir: "keys/preset", Nodes: nodes}
+	return chainsetup.State{Chain: "stablenet", KeysDir: "presets/keys", Nodes: nodes}
 }
 
 func bp(i int, args ...string) node.Record {
@@ -30,7 +30,7 @@ func itoa(i int) string { return string(rune('0' + i)) }
 // planFor builds a plan asking for what recorded() would satisfy.
 func planFor() testengine.ComposePlan {
 	p := testengine.ComposePlan{Chain: "stablenet"}
-	p.Keys.Dir = "keys/preset"
+	p.Keys.Dir = "presets/keys"
 	p.Nodes.BP, p.Nodes.EN = 2, 1
 	return p
 }

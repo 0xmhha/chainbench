@@ -3,6 +3,8 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/hardfork"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -61,17 +63,14 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 // argv it started with — and records the new pid. A node that is already
 // running is refused rather than doubled.
 func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
+	if err := w.allowNode("StartNode", index); err != nil {
+		return "", err
+	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
 		return "", err
 	}
 	ns := w.state.Nodes[ni]
-	if ns.PID > 0 {
-		return "", fmt.Errorf("chainsetup: node%d is already running (pid %d)", index, ns.PID)
-	}
-	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
-	}
 	bin, err := w.binary("")
 	if err != nil {
 		return "", err
@@ -139,14 +138,14 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
 		return "", fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index)
 	}
+	if err := w.allowNode("SwapNode", index); err != nil {
+		return "", err
+	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
 		return "", err
 	}
 	ns := w.state.Nodes[ni]
-	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
-	}
 	bin, err := w.binary("")
 	if err != nil {
 		return "", err
@@ -298,3 +297,41 @@ func (w *Workspace) addConfigProvenance(prov ConfigProvenance) {
 }
 
 // Rm removes the composed data plane (node datadirs, configs, genesis, logs)
+
+// same chain data, and records the new pids, binary and chain.
+func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary string) (node.NodeSet, error) {
+	if err := w.allow("Hardfork"); err != nil {
+		return node.NodeSet{}, err
+	}
+	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
+	for _, rec := range w.state.Nodes {
+		spec := process.SpecOf(rec)
+		spec.Binary = w.state.Binary
+		specs = append(specs, spec)
+	}
+	// One driver relaunches every node: the swap runs on the machine the
+	// network's nodes share. (A network spread across a server set would need
+	// a per-node driver; the plan executes over one.)
+	t, err := w.machineFor(w.state.Nodes[0])
+	if err != nil {
+		return node.NodeSet{}, err
+	}
+	ns, err := plan.Execute(ctx, t.Driver, specs, binary)
+	if err != nil {
+		return ns, err
+	}
+	for _, n := range ns.Nodes {
+		for i, rec := range w.state.Nodes {
+			if rec.Index != n.Index {
+				continue
+			}
+			if err := w.recordSwap(i, n.PID, binary); err != nil {
+				return ns, fmt.Errorf("chainsetup: hardfork: node%d: %w", n.Index, err)
+			}
+		}
+	}
+	w.state.Chain = plan.ToChain
+	w.state.Binary = binary
+	w.markStep("hardfork", fmt.Sprintf("%s -> %s at block %d on %s", plan.FromChain, plan.ToChain, plan.Block, binary))
+	return ns, nil
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // TestKeySet_AddIsIdempotent is what makes re-running a command safe: a label
@@ -169,9 +170,9 @@ func TestKeySet_AddPropagatesSourceErrors(t *testing.T) {
 // TestNetworkFor_DoesNotAliasThePreset is a regression: the narrowed result
 // resliced the preset's own array, so appending to it rewrote the preset.
 func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	p, err := preset.LoadKeyPreset(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
-		t.Fatalf("LoadPreset: %v", err)
+		t.Fatalf("preset.LoadKeyPreset: %v", err)
 	}
 	if len(p.Network.Validators) < 3 {
 		t.Skip("the shipped preset declares too few validators for this check")
@@ -226,7 +227,7 @@ func TestKeySet_AddIsSafeUnderConcurrency(t *testing.T) {
 // here sign and re-derive, which is what the keyed loader exists for.
 func presetEntry(t *testing.T) keyring.Entry {
 	t.Helper()
-	set, err := store.LoadPresetWithKeys(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	set, err := preset.LoadKeyPresetWithKeys(filepath.Join("..", "..", "..", "..", "presets", "keys"))
 	if err != nil {
 		t.Fatalf("read shipped preset: %v", err)
 	}

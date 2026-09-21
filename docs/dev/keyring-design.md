@@ -64,7 +64,7 @@ go-wbft 도 같은 버전·같은 해시를 쓴다. 직접 의존성으로 승�
 
 ## 2. 지금 preset 은 세 가지를 섞어 담고 있다 (실측)
 
-`keys/preset/metadata.json` 의 내용을 성격별로 나누면:
+`presets/keys/metadata.json` 의 내용을 성격별로 나누면:
 
 | 담긴 것 | 성격 | 실제 주인 |
 |---|---|---|
@@ -89,7 +89,7 @@ genesis   extraData                       파생. 저장하지 않고 매번 계
 계산 함수는 이미 있다(`keygen.WBFTExtraData`, 배포 preset 재현 골든 테스트 통과) —
 **`consensus/wbft` 로 옮긴다.** genesis 자료이지 키 자료가 아니다.
 
-> **하위호환**: 기존 `keys/preset/metadata.json` 은 그대로 읽는다. keyring 은 `nodes[]` 만 취하고,
+> **하위호환**: 기존 `presets/keys/metadata.json` 은 그대로 읽는다. keyring 은 `nodes[]` 만 취하고,
 > 나머지는 `net blueprint --from-keyring` 이 청사진 초안으로 옮긴다. 파일을 깨지 않는다.
 
 ---
@@ -141,7 +141,7 @@ core/keyring (L1)
 --keyring <dir>        대상 링. 기본값 ./keys/default, 환경변수 CHAINBENCH_KEYRING 로 덮음
 ```
 
-`keys/preset` 은 특별한 것이 아니라 **디스크에 있는 링 하나**다.
+`presets/keys` 은 특별한 것이 아니라 **디스크에 있는 링 하나**다.
 
 ### 4.2 동사
 
@@ -241,11 +241,11 @@ keys/dev/                ← 링 하나
 
 | # | 검증 |
 |---|---|
-| K1 | **골든**: 배포된 `keys/preset` 의 node1..5 를 nodekey 만으로 재현 — address·pubkey·BLS·PoP 바이트 동일 |
+| K1 | **골든**: 배포된 `presets/keys` 의 node1..5 를 nodekey 만으로 재현 — address·pubkey·BLS·PoP 바이트 동일 |
 | K2 | `--with-bls` 없이 생성하면 BLS 필드가 **없다**(0값이 아니라 부재) |
 | K3 | 링을 명시하지 않으면 기본 경로를 쓰고, **그 경로를 출력에 밝힌다** |
 | K4 | `keyring new` 가 **어떤 체인 바이너리도 실행하지 않는다** (프로세스 실행 0회) |
-| K5 | 기존 `keys/preset/metadata.json` 을 읽어 `nodes[]` 를 그대로 복원 |
+| K5 | 기존 `presets/keys/metadata.json` 을 읽어 `nodes[]` 를 그대로 복원 |
 | K6 | 파서 fuzz (metadata.json) |
 | K7 | `--from` 이 로컬·`srv://`·`user@host:` 세 형태를 같은 코드로 처리 (원격은 SSH 게이트) |
 | K8 | `srv://` 가 **인벤토리에서 호스트·포트·자격증명을 가져온다** — 명령줄에 IP 가 없다 |

@@ -25,6 +25,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
@@ -74,44 +75,37 @@ func NewRun() *cobra.Command {
 		Short: "Run DSL test specs (compose the declared network, or attach)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			switch {
-			case attach && len(rpcURLs) > 0:
-				return fmt.Errorf("run: --attach takes the endpoints from --workspace-dir; it does not combine with --rpc")
-			case attach && workspaceDir == "":
-				return fmt.Errorf("run: --attach needs --workspace-dir <dir>, the workspace whose network is already up")
-			case attach:
-				// The workspace supplies the endpoints and the capabilities its
-				// composition advertised, which is what lets a gated spec run
-				// against the network the operator set up rather than a fresh
-				// one built to satisfy the gate.
-				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
-			case len(rpcURLs) > 0 && workspaceDir != "":
-				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc (use --attach to run against the network it already composed)")
-			case len(rpcURLs) > 0:
-				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
-			case workspaceDir == "":
-				// Nothing on the command line said which network. Ask the
-				// specs: an env may declare that it attaches to one that is
-				// already up, and that is the only form that needs no flag.
-				//
-				// Asked here and not earlier because the command line wins
-				// (§2.5 override order): --rpc, --attach and --workspace-dir
-				// are all decided above, so reaching this point means the
-				// operator named no network at all.
-				at, aerr := app.DeclaredAttach(args)
-				if aerr != nil {
-					return aerr
+			// Which of the four ways this run was asked to reach a network.
+			// The answer is a state, and it is worked out in one place that
+			// every surface shares — this switch used to be written here, in
+			// the MCP tool, and again inside AttachRun, and the three did not
+			// agree.
+			start, serr := app.StartFor(app.Named{
+				Spell: app.CLISpelling, RPCURLs: rpcURLs, Attach: attach,
+				WorkspaceDir: workspaceDir,
+				Specs: func() ([][]byte, []string, error) {
+					specs, err := app.ReadSpecFiles(args)
+					return specs, args, err
+				},
+			})
+			if serr != nil {
+				return fmt.Errorf("run: %w", serr)
+			}
+			if start.Adopts() {
+				// ${VAR} in a declared endpoint is expanded here because the
+				// surface owns the process environment. A committed case must
+				// not have to carry a machine's address.
+				if start.Declared != nil {
+					start.Declared.RPCURLs = expandEach(start.Declared.RPCURLs)
 				}
-				if at == nil {
-					return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one) — or declare env.attach in the specs")
-				}
-				if chain == "" {
-					chain = at.Chain
-				}
+				// A flag's value is passed only when the flag was given, which
+				// is how "what the caller said outranks the document" is said
+				// to the layer that applies it.
 				if !cmd.Flags().Changed("keys") {
-					keysDir = at.KeysDir
+					keysDir = ""
 				}
-				return runAttachDeclared(cmd, args, chain, at, artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
+				return runAttached(cmd, args, start, workspaceDir, chain, rpcURLs,
+					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
@@ -161,7 +155,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
+	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
@@ -201,12 +195,16 @@ func defaultArtifactRoot() string {
 	return d
 }
 
-// runAttach runs the specs against a running network over its RPC endpoints,
-// optionally streaming orchestration events to a dashboard.
+// runAttached runs the specs against a network that is already up.
 //
-// The reading, the engine and the event stream all live in app: this is the
-// binding and the rendering, which is all a surface owes.
-func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
+// One function for all three ways in, because they only ever differed in where
+// the network came from and that is now the start state. What they shared —
+// reading the specs, opening the event stream, printing the session — is all a
+// surface owes, and having it written three times is how the declared path came
+// to expand ${VAR} and the other two did not.
+func runAttached(cmd *cobra.Command, args []string, start app.Start,
+	workspaceDir, chain string, rpcURLs []string,
+	artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -214,32 +212,9 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	bus, flush := dashboard.Stream(dashboardURL)
 	defer flush()
 	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
-		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
-		KeysDir: keysDir, Specs: specs, Bus: bus,
-	})
-	if err != nil {
-		return err
-	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
-}
-
-// runAttachDeclared runs the specs against the network their own env names.
-//
-// It is runAttach with the endpoints read from the declaration rather than
-// typed, plus the capabilities the declaration claims for that network: nothing
-// composed it, so nothing advertised anything, and the operator who set it up is
-// the only one who knows. Without them a gated case attached and skipped, which
-// looks exactly like a case that ran.
-func runAttachDeclared(cmd *cobra.Command, args []string, chain string, at *app.AttachDecl, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
-	specs, err := app.ReadSpecFiles(args)
-	if err != nil {
-		return err
-	}
-	bus, flush := dashboard.Stream(dashboardURL)
-	defer flush()
-	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
-		Chain: chain, RPCURLs: expandEach(at.RPCURLs), ArtifactRoot: artifactRoot,
-		KeysDir: keysDir, Caps: at.Provides, Specs: specs, Bus: bus,
+		At: start.At, Declared: start.Declared,
+		Chain: chain, RPCURLs: rpcURLs, DataDir: workspaceDir,
+		ArtifactRoot: artifactRoot, KeysDir: keysDir, Specs: specs, Bus: bus,
 	})
 	if err != nil {
 		return err
@@ -268,31 +243,6 @@ func envOrDefault(spec string) string {
 		return fallback
 	}
 	return ""
-}
-
-// runAttachWorkspace runs the specs against the network a workspace composed.
-//
-// It differs from runAttach in where the network comes from: not endpoints the
-// operator typed, but the workspace's own record, which also says which
-// capabilities the composition advertised. A spec that declares it needs one —
-// the proposal-expiry regression needs "short-expiry", granted by a genesis
-// overlay — can only run this way. Given endpoints alone the gate has nothing
-// to check against and the spec skips.
-func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
-	specs, err := app.ReadSpecFiles(args)
-	if err != nil {
-		return err
-	}
-	bus, flush := dashboard.Stream(dashboardURL)
-	defer flush()
-	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
-		DataDir: workspaceDir, Chain: chain, ArtifactRoot: artifactRoot,
-		KeysDir: keysDir, Specs: specs, Bus: bus,
-	})
-	if err != nil {
-		return err
-	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
 }
 
 // runComposed composes the network the specs declare and runs them against

@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,8 +10,9 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 )
@@ -88,11 +90,18 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatalf("allocate: %v", err)
 	}
 	ctx := context.Background()
-	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
+	done, err := ws.Keys(ctx, chainsetup.KeysOpts{})
+	if err != nil {
 		t.Fatalf("keys: %v", err)
 	}
+	// The request names no source, and the node table does. This is the case a
+	// handler reading the request called a preset: the step reports what it
+	// actually took.
+	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainEnsureKeysFromBlueprint {
+		t.Errorf("the step reported %v, want [ChainEnsureKeysFromBlueprint]", done.Passed)
+	}
 
-	set, err := store.LoadPreset(keysDir)
+	set, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}
@@ -146,7 +155,7 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 //
 // That version asserted only that the use was refused. Both leaks it was meant
 // to close were still open underneath: place had already copied the key into the
-// node record and withWorkspace had saved it, so the run stopped over a key that
+// node record and WithWorkspace had saved it, so the run stopped over a key that
 // was by then in chain-record.json; and the refusal itself quoted the key, which
 // put it on stderr and — a setup error is carried verbatim — into the --json
 // report. The test passed because it never called Save and never read the
@@ -197,7 +206,7 @@ func TestKeys_NodeTableRejectsInlineKeyMaterial(t *testing.T) {
 				t.Fatalf("the refusal should name the node: %v", err)
 			}
 
-			// And a save after the refusal — which is what withWorkspace does on
+			// And a save after the refusal — which is what WithWorkspace does on
 			// the error path — must find nothing to write down.
 			if err := ws.Save(); err != nil {
 				t.Fatalf("save: %v", err)
@@ -285,7 +294,7 @@ func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 		{Index: 3, Role: "bp"},
 		{Index: 4, Role: "bp"},
 	}}
-	_, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
+	_, err := verb.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
 		DataDir:  dir,
 		Chain:    "stablenet",
 		Binary:   "/nonexistent/gstable",

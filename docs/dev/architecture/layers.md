@@ -37,7 +37,7 @@
 
 ```
 파일을 쓰는 패키지 14개:
-  app · chainsetup · consensus/upgrade
+  app · chainsetup · preset
   core/process · core/keyring · core/collector · core/filestore
   core/session (R1: netreg 의 쓰기는 session 으로, obs 의 쓰기는 collector 로 흡수)
 ```
@@ -63,7 +63,7 @@
 flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
-    L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
+    L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup · chainsetup/verb"]
     L3["L3 도메인 서비스<br/>session · collector · health · dsl · dsl/interp"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
@@ -90,7 +90,7 @@ flowchart TD
 > 두 목록의 순서는 일부러 다르다 — `core` 안에 L0·L1·L3 이 함께 있고 L3 인 `dsl/*`·`testhelper` 는
 > `core` 밖이라, 경로만 보고는 층을 알 수 없다.
 
-## 3. 모듈 배치 (48개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01)
+## 3. 모듈 배치 (50개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21)
 
 ### L0 커널 — 공용 어휘
 
@@ -99,6 +99,7 @@ flowchart TD
 | `core/home` | **약속된 위치의 소유자** — `~/.chainbench`. 경로를 안 대면 키 세트·세션·구성이 전부 여기로 모인다(요구 ⑦). 세 곳이 각자 기본값을 들고 있어 `keys/default`·`chainbench-out` 이 **cwd 기준**이었던 것을 한 답으로 모은다 |
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
 | `core/wait` | **취소 가능한 유일한 멈춤** — `Sleep(ctx, d)`. 폴링 루프는 시도 사이에 멈춰야 하고 쓰는 법이 둘인데, `time.Sleep` 은 짧고 **틀렸다**: context 가 끼어들 수 없어 포기한 호출자가 남은 예산을 다 기다린다. 올바른 `select` 형태가 **11곳에 손으로** 쓰여 있었고, 그것은 짧은 쪽을 실수로 쓸 기회가 11번이라는 뜻이다 — 실제로 한 번 그랬다(핸드오프의 엔드포인트 대기, 취소된 실행이 죽은 엔드포인트를 30초 더 찔렀다). 이름 하나로 **올바른 형태를 짧은 쪽으로** 만든다. 내부 import 0 |
+| `core/lifecycle` | **상태 어휘와 그것을 걷는 기계** — `Status`(한 값에 영역·단계·자리가 들어 있다) · `Machine` · 전이 표. 무엇을 하는지는 핸들러의 것이고 이 패키지는 모른다. 그래서 체인 조립과 테스트 수행이 **값이 겹치지 않는 두 영역**으로 한 기계 위에 설 수 있다. 실패에 자리를 주는 것이 설계의 본체다 — 단계마다 0x100 칸을 갖고 위 절반이 실패라, 기계가 이름을 몰라도 "실패인가"와 "누구의 실패인가"를 답한다. 내부 import 0 |
 | `testsupport` | **테스트 게이트**(제품 코드 없음) — 여러 패키지의 _test.go 가 공유하는 스킵 헬퍼(`ServersBuildDir`·`EnvDockerServers`). 패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
@@ -121,6 +122,7 @@ flowchart TD
 | `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
+| `preset` | preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과 키(`Key`). 갈래마다 문서가 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈(`keyring`·`poa`·`chainsetup`)은 정의하지 않고 쓰기만 한다 — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
 > 그래서 L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
@@ -131,7 +133,6 @@ flowchart TD
 |---|---|
 | `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
 | `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
-| `consensus/upgrade` | 하드포크 preset 로더 하나(`Profile`) — 어느 체인이 어느 체인에게 어느 포크에서 넘기는지, 양쪽에 몇 대씩인지, 거버넌스 정책(`GovernanceEnv`). **핸드오프 본문은 없다**(2026-09-18): 계획은 place 단계가, 기동은 start 단계가, 피어는 config 의 static nodes 가, 포크 넘기기는 chainsetup 의 `CrossFork` 가 한다 |
 
 ### L2b 체인 어댑터 — 체인 특화
 
@@ -150,7 +151,7 @@ flowchart TD
 | `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
 | `core/report` | **실행 전체 report 의 집계자(E0A).** 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를 모아 `report.json` 을 만든다(`Build`·`Generate`·`Write`·`Read`). 판정을 다시 하지 않고 `core/session` 만 읽는다 — testengine 이 저장 뒤 호출하고 CLI/MCP(app 경유)가 읽는다 |
 | `core/health` | 블록 전진 판정 |
-| `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
+| `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `preset` 이 선언하는 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
 | `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
 | `dsl/interp` | **DSL 런타임** — 실행 계약(`Action`·`Assertion`·`Registry`·`Reader`·`Deps`·`ActionCtx`·`AssertCtx`·`NodeControl`)과 해석기(`NewInterpreter`·`Run`)·바인딩(`$ref`/`save`)·`Fingerprint`(환경 재사용 키)·`Unresolved`(오프라인 이름 검증). 계약이 여기 사는 것이 핵심 — `testhelper`(L3)가 구현하므로 `testengine`(L4)으로 올릴 수 없다. 옛 `testspec` 의 실행 절반(R2, 2026-09-01) |
 | `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). `dsl/interp` 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 그 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
@@ -162,6 +163,7 @@ flowchart TD
 |---|---|
 | `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/tc/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
+| `chainsetup/verb` | 셋업 동사 — 표면이 부르는 함수들(`NetUp`·`NetKeys`·`NetGenesis`·`NetStart`…)과 그것들을 몰고 가는 상태 기계 핸들러(`statedriven.go`·`compare.go`). `chainsetup` 객체 위에 얹히며 반대 방향 의존은 없다(2026-09-21 측정: 아래에서 위를 보는 간선 0). 나눈 이유는 `chainsetup` 이 파일 39개가 흩어진 것이 아니라 `Workspace` 객체 하나이고, 그 메서드 본문은 비공개 내부를 40곳 가까이 써서 나눌 수 없기 때문이다 — 나눌 수 있는 유일한 선이 동사층이었다 |
 | `nodemonitor` | 테스트 실행 허가 판정 + 제한 복구(E6). `health`·`collector`·`inspector`·`process/inspect`·`preflight` 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 을 판정하고(`Classify`), WAITABLE 은 `MaxNodeMonitorTimeout` 까지 대기·RESTARTABLE 은 `MaxRestarts` 상한으로 재시작·FATAL 은 파괴적 조치 없이 즉시 종료한다(`Gate`). 관측과 재시작은 재구현하지 않고 seam(`Observer`·`Restarter`)으로 기존 함수를 주입받는다. `testengine`(재사용 전·각 테스트 전)과 app/MCP 가 소비한다 |
 
 ### L5 유스케이스
@@ -237,7 +239,7 @@ flowchart TD
 | `core/process` | 실행 대장(`process.json`) · config·log(LocalDriver, 옛 `core/driver`) | ✅ 프로세스·전송 계층 소유자(R3) |
 | `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
-**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
+**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`preset` 이 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
 `filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다. `consensus/poa` 도 원격 실행
 (R6, 2026-09-02)에서 genesis 생성의 임시 작업 파일을 주입된 `filestore.Store` 로 쓰게 되어
@@ -366,7 +368,7 @@ chainbench-feature-spec.md
 코드 주석도 같다:
 
 ```go
-// consensus/upgrade/plan.go — 패키지 자신의 설명
+// preset/chain.go — 패키지 자신의 설명
 // "a single, validated launch plan for a hardfork handoff"
 
 // launcher.go

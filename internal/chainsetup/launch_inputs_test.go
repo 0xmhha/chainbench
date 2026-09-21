@@ -31,7 +31,7 @@ func composedForInputs(t *testing.T) string {
 		t.Fatal(err)
 	}
 	if _, err := ws.New(chainsetup.NewOpts{
-		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset"),
+		Chain: "stablenet", KeysDir: filepath.Join("..", "..", "presets", "keys"),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,8 @@ func reprovision(t *testing.T, dir string) (string, error) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ws.Provision(context.Background())
+	out, err := ws.Provision(context.Background())
+	return out.Detail, err
 }
 
 // TestDeploy_RefusesAGenesisSomethingElseWrote: a genesis at the expected path

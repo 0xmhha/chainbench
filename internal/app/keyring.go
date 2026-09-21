@@ -7,6 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/validatorset"
 )
@@ -131,7 +132,7 @@ type (
 	// GenerateSetIn shapes generating a preset key set.
 	GenerateSetIn = store.GenerateOpts
 	// GenerateSetOut describes what was generated.
-	GenerateSetOut = keyring.Preset
+	GenerateSetOut = preset.Key
 )
 
 // DeriveIdentity derives what the chain's consensus family needs from a key.

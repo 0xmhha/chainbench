@@ -6,7 +6,7 @@
 # contract deploy/call.
 #
 # This is the wemix (pure) half without the wbft successor (handoff is covered by
-# cmd/chainbench TestUpgradeRunE2E). The producer mines the whole chain (PoA, diff=1). The genesis has no croissant fork,
+# tests/tc/go-wemix/hardfork/). The producer mines the whole chain (PoA, diff=1). The genesis has no croissant fork,
 # so the go-wemix engine stays in charge throughout.
 #
 # Requirements (paths/env overridable): WEMIX_BIN, TEMPLATE (wemix genesis
@@ -21,7 +21,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WEMIX_BIN="${WEMIX_BIN:-$(command -v gwemix || true)}"
 TEMPLATE="${TEMPLATE:-}"
-PRESET="$REPO/keys/preset"
+PRESET="$REPO/presets/keys"
 WORK="${WORK:-/tmp/wemix-chain}"
 CHAINBENCH="${CHAINBENCH:-/tmp/chainbench-wemix-chain-bin}"
 

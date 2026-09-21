@@ -36,7 +36,7 @@ func TestWemixGenesisSource_Live_GeneratesAndInits(t *testing.T) {
 	dir := t.TempDir()
 
 	src := poa.GenesisSource{
-		KeysDir: filepath.Join(repoRoot(t), "keys", "preset"),
+		KeysDir: filepath.Join(repoRoot(t), "presets", "keys"),
 		Binary:  bin,
 		WorkDir: dir,
 	}

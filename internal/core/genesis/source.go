@@ -6,9 +6,9 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // CommandRunner runs a binary with args and returns its combined output. It is
@@ -82,13 +82,13 @@ type PresetSource struct {
 // config overrides and overlay. ctx is accepted for future remote preset
 // sources; the local metadata read does not use it.
 func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, req Request) (Artifacts, error) {
-	preset, err := store.LoadPreset(s.KeysDir)
+	keys, err := preset.LoadKeyPreset(s.KeysDir)
 	if err != nil {
-		return Artifacts{}, fmt.Errorf("genesis: preset source: %w", err)
+		return Artifacts{}, fmt.Errorf("genesis: keys source: %w", err)
 	}
-	net, err := presetNetwork(preset, req)
+	net, err := presetNetwork(keys, req)
 	if err != nil {
-		return Artifacts{}, fmt.Errorf("genesis: preset source: %w", err)
+		return Artifacts{}, fmt.Errorf("genesis: keys source: %w", err)
 	}
 	gen, err := Build(plugin, Inputs{
 		Validators: net.Validators,
@@ -99,7 +99,7 @@ func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, re
 		ChainID:    s.ChainID,
 	})
 	if err != nil {
-		return Artifacts{}, fmt.Errorf("genesis: preset source: %w", err)
+		return Artifacts{}, fmt.Errorf("genesis: keys source: %w", err)
 	}
 	// A wbft-family network is one file: the validator set is inside the
 	// genesis, so nothing else has to reach a later step.
@@ -119,9 +119,9 @@ func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, re
 //
 // Without a placement (a fixed-port caller that has only a count) it falls back
 // to the first req.Validators of the ring.
-func presetNetwork(preset keyring.Preset, req Request) (keyring.Network, error) {
+func presetNetwork(keys preset.Key, req Request) (keyring.Network, error) {
 	if req.Nodes == nil {
-		return preset.NetworkFor(req.Validators), nil
+		return keys.NetworkFor(req.Validators), nil
 	}
 	var indices []int
 	for _, p := range req.Nodes.Placements() {
@@ -132,9 +132,9 @@ func presetNetwork(preset keyring.Preset, req Request) (keyring.Network, error) 
 	if len(indices) == 0 {
 		// A placement that named no producer role: fall back to the count so a
 		// caller with a placement but no resolved producers still gets a genesis.
-		return preset.NetworkFor(req.Validators), nil
+		return keys.NetworkFor(req.Validators), nil
 	}
-	return preset.NetworkForNodes(indices)
+	return keys.NetworkForNodes(indices)
 }
 
 // Config is everything a caller can say about how a network's genesis is

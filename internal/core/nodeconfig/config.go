@@ -11,6 +11,7 @@
 package nodeconfig
 
 import (
+	"github.com/0xmhha/chainbench/internal/preset"
 	"strconv"
 	"time"
 )
@@ -31,7 +32,7 @@ func Defaults() Values {
 		"nodes.cache":        "1024",
 		"data.directory":     "data",
 		"keys.mode":          "static",
-		"keys.source":        "keys/preset",
+		"keys.source":        preset.KeysDir,
 		"ports.base_p2p":     "30301",
 		"ports.base_http":    "8501",
 		"ports.base_ws":      "9501",

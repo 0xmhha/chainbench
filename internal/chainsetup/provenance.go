@@ -1,7 +1,9 @@
 package chainsetup
 
 import (
+	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -15,14 +17,18 @@ import (
 // reader is the third — nothing they wrote chose it. Keeping the source beside
 // the value is what lets a plan say so.
 
+// errBuildBadOption is the one way the command stage fails: a launch knob the
+// vocabulary does not take, or a --set that is not one.
+var errBuildBadOption = errors.New("a launch option is not one this accepts")
+
 func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, index int) error {
 	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return fmt.Errorf("config override %q must be key=value", kv)
+			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
-			return err
+			return ofKind(errConfigBadOverride, err)
 		}
 	}
 	return nil
@@ -66,7 +72,7 @@ type ConfigProvenance struct {
 	At string `json:"at,omitempty"`
 }
 
-// recordLaunchSet stores launch-argv overrides under a scope ("all", a role,
+// RecordLaunchSet stores launch-argv overrides under a scope ("all", a role,
 // or "node<N>"). Each entry is validated as a launch override up front, so a
 // bad knob is refused where it is set rather than at argv assembly.
 //
@@ -77,15 +83,16 @@ type ConfigProvenance struct {
 // unconditionally, so composing the same declaration twice over one workspace
 // wrote the knob twice and a workspace reused all week grew a line per run.
 // Replacing in place keeps the order a reader sees stable across runs.
-func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
+func (w *Workspace) RecordLaunchSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords())
+		return ofKind(errBuildBadOption,
+			fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords()))
 	}
 	if _, err := ParseOverrides(sets); err != nil {
-		return err
+		return ofKind(errBuildBadOption, err)
 	}
 	if w.state.LaunchSet == nil {
 		w.state.LaunchSet = map[string][]string{}
@@ -132,8 +139,8 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	return out
 }
 
-// recordConfigSet stores config overrides under a scope, one entry per key, the
-// same way recordLaunchSet does and for the same reason: render is
+// RecordConfigSet stores config overrides under a scope, one entry per key, the
+// same way RecordLaunchSet does and for the same reason: render is
 // last-write-wins, so a second entry for one key means the same node either way
 // and only makes the record grow every time the workspace is recomposed.
 //
@@ -141,21 +148,22 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 // set rather than at render. The scope was not checked at all before: a typo
 // stored values under a key nothing reads, and the node it was meant for came
 // up with a config that silently lacked them.
-func (w *Workspace) recordConfigSet(scope string, sets []string) error {
+func (w *Workspace) RecordConfigSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords())
+		return ofKind(errConfigBadOverride,
+			fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords()))
 	}
 	var probe nodeconfig.Spec
 	for _, kv := range sets {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return fmt.Errorf("config override %q must be key=value", kv)
+			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(&probe, key, value); err != nil {
-			return err
+			return ofKind(errConfigBadOverride, err)
 		}
 	}
 	if w.state.ConfigSet == nil {
@@ -166,3 +174,15 @@ func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 }
 
 // markStep records that step ran with detail, stamping the completion time.
+
+// BuildFailure is the one failure the command stage has a state for.
+//
+// The default is assembling itself: a peer list that cannot be built, a node
+// whose plugin cannot be resolved. A bad option is a line somebody wrote; the
+// rest are the composition disagreeing with itself.
+func BuildFailure(err error) lifecycle.Status {
+	if errors.Is(err, errBuildBadOption) {
+		return lifecycle.ChainBuildNodeCommandFailBadOption
+	}
+	return lifecycle.FailStageUnclassified
+}
