@@ -1,6 +1,7 @@
 package chainsetup
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
@@ -69,6 +70,24 @@ type AllocateOpts struct {
 // placements resolves the requested layout into one placement request per node,
 // in launch order. A topology is authoritative when given; otherwise the counts
 // produce validators first, then endpoints.
+// The kinds of failure the place stage has.
+//
+// Two, and neither is retryable. A layout given twice is a request to fix; a
+// contended server set has already been waited for — acquireSetLock polls every
+// 200ms for ten seconds before it gives up, so a caller that waited again would
+// be waiting a second time on an answer that was already taken.
+//
+// The rest of what this stage refuses — a topology with no nodes, a network
+// with no validator, a server set too small for what was asked — has no state.
+// Those are all one thing said several ways: the layout asked for cannot exist,
+// which is a sentence rather than a branch.
+var (
+	// errPlaceTwoLayouts: a blueprint and a topology both describe the layout.
+	errPlaceTwoLayouts = errors.New("the layout is described twice")
+	// errPlaceSetContended: another run holds the server set's allocation lock.
+	errPlaceSetContended = errors.New("the server set is being allocated by another run")
+)
+
 func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	if o.Blueprint != nil {
 		return blueprintPlacements(*o.Blueprint)

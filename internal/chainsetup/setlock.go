@@ -58,7 +58,8 @@ func acquireSetLock(setPath string, d Deps) (func(), error) {
 			return func() { _ = held.Release() }, nil
 		}
 		if state != session.LockLive || time.Now().After(deadline) {
-			return nil, fmt.Errorf("chainsetup: allocate: the server set is being allocated by another run (%s): %w", prev.Describe(), err)
+			return nil, ofKind(errPlaceSetContended,
+				fmt.Errorf("chainsetup: allocate: the server set is being allocated by another run (%s): %w", prev.Describe(), err))
 		}
 		time.Sleep(setLockPoll)
 	}

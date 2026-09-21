@@ -63,7 +63,7 @@ var composition = []composeStage{
 	},
 	{
 		step: "place", at: lifecycle.ChainBuildNodeTable, next: lifecycle.ChainEnsureKeys,
-		owed: "NetAllocate reports two layouts and a contended server set the same way",
+		classify: placeFailure,
 	},
 	{
 		// The first stage whose work reports its own state. It used to be read
@@ -114,7 +114,7 @@ const (
 	// with none goes straight on.
 	stagesStillAssuming = 0
 	// stagesStillOwing report every failure as one sentence.
-	stagesStillOwing = 4
+	stagesStillOwing = 3
 )
 
 // composeRun is one step of the composition: it runs the verb, appends the
@@ -361,6 +361,22 @@ func configFailure(err error) lifecycle.Status {
 		return lifecycle.ChainBuildNodeConfigFailReadback
 	case errors.Is(err, errConfigPinUnreadable):
 		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// placeFailure is which of the place stage's two failures this error is.
+//
+// The default holds a family of refusals that say one thing: the layout asked
+// for cannot exist — no nodes in the topology, no validator, a server set too
+// small to hold what was asked. Splitting those into states would be splitting
+// a sentence.
+func placeFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errPlaceTwoLayouts):
+		return lifecycle.ChainBuildNodeTableFailTwoLayouts
+	case errors.Is(err, errPlaceSetContended):
+		return lifecycle.ChainBuildNodeTableFailSetContended
 	}
 	return lifecycle.FailStageUnclassified
 }

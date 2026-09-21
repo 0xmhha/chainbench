@@ -3,6 +3,8 @@ package chainsetup
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -232,6 +234,10 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 			lifecycle.ChainLaunchNodesFailPhaseEmpty},
 		{"something the driver refused", "start", errors.New("no"), nil, lifecycle.FailStageUnclassified},
 
+		{"a layout given twice", "place", ofKind(errPlaceTwoLayouts, errors.New("x")), nil, lifecycle.ChainBuildNodeTableFailTwoLayouts},
+		{"a contended server set", "place", ofKind(errPlaceSetContended, errors.New("x")), nil, lifecycle.ChainBuildNodeTableFailSetContended},
+		{"a layout that cannot exist", "place", errors.New("no validator"), nil, lifecycle.FailStageUnclassified},
+
 		{"a target that cannot initialize", "init", ofKind(errInitTargetUnable, errors.New("x")), nil, lifecycle.ChainInitNodesFailTargetUnable},
 		{"a genesis that cannot be read back", "init", ofKind(errInitGenesisUnreadable, errors.New("x")), nil, lifecycle.ChainInitNodesFailGenesisUnreadable},
 		{"a datadir that will not clear", "init", ofKind(errInitDatadir, errors.New("x")), nil, lifecycle.ChainInitNodesFailDatadir},
@@ -346,6 +352,23 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	}
 	if got := genesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
 		t.Errorf("the real refusal classified as %s, want ChainBuildGenesisFailForkUnresolved", got)
+	}
+
+	// A blueprint and a topology at once, refused before any workspace opens.
+	// The blueprint has to be readable to get that far: a missing file is a
+	// different refusal, which is what the first attempt at this test measured.
+	bp := filepath.Join(t.TempDir(), "n.yaml")
+	if werr := os.WriteFile(bp, []byte("# an empty blueprint is a valid one\n"), 0o600); werr != nil {
+		t.Fatal(werr)
+	}
+	_, perr := NetAllocate(context.Background(), Deps{}, NetAllocateIn{
+		DataDir: "/nonexistent", BlueprintPath: bp, TopologyPath: "t.yaml",
+	})
+	if perr == nil {
+		t.Fatal("a layout described twice was accepted")
+	}
+	if got := placeFailure(perr); got != lifecycle.ChainBuildNodeTableFailTwoLayouts {
+		t.Errorf("the real refusal classified as %s, want ChainBuildNodeTableFailTwoLayouts (%v)", got, perr)
 	}
 
 	// An override that is not key=value, refused where it is set.

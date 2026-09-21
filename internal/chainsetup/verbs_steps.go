@@ -172,7 +172,8 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 	if bp != nil && (topo != nil || in.TopologyPath != "") {
 		// Both describe the layout, and picking one silently would leave the
 		// other's author reading a network that is not theirs.
-		return StepOut{}, fmt.Errorf("chainsetup: allocate: a blueprint and a topology both describe the layout — give one")
+		return StepOut{}, ofKind(errPlaceTwoLayouts,
+			fmt.Errorf("chainsetup: allocate: a blueprint and a topology both describe the layout — give one"))
 	}
 	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
