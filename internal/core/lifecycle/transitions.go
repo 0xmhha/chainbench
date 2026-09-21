@@ -69,6 +69,11 @@ var names = map[Status]string{
 	CompareChainNetworkDiffers:            "CompareChainNetworkDiffers",
 	CompareChainNothingComposed:           "CompareChainNothingComposed",
 	CompareChainFailUnreadable:            "CompareChainFailUnreadable",
+	ReconcileChain:                        "ReconcileChain",
+	ReconcileChainAllKept:                 "ReconcileChainAllKept",
+	ReconcileChainSomeRedone:              "ReconcileChainSomeRedone",
+	ReconcileChainFailSharedInputChanged:  "ReconcileChainFailSharedInputChanged",
+	ReconcileChainFailUnreadable:          "ReconcileChainFailUnreadable",
 	FailRecordFormat:                      "FailRecordFormat",
 	FailRecordSave:                        "FailRecordSave",
 	FailWorkspaceConfig:                   "FailWorkspaceConfig",
@@ -110,9 +115,18 @@ var allowed = map[Status][]Status{
 		ChainEnsureKeysFromBlueprint, ChainEnsureKeysFailUnknownSource,
 		ChainEnsureKeysFailCountMismatch, ChainEnsureKeysFailKeyNotLocal,
 		ChainEnsureKeysFailKeyUnreadable},
-	ChainEnsureKeysFromPreset:    {ChainBuildGenesis},
-	ChainEnsureKeysGenerated:     {ChainBuildGenesis},
-	ChainEnsureKeysFromBlueprint: {ChainBuildGenesis},
+	// A composition that reconciles against a running network goes to the
+	// reconciliation here: after the key set is in place, and before the genesis
+	// stage, which is the first that writes to the target. Judging later meant a
+	// refusal that had already overwritten the running network's genesis.
+	ChainEnsureKeysFromPreset:    {ChainBuildGenesis, ReconcileChain},
+	ChainEnsureKeysGenerated:     {ChainBuildGenesis, ReconcileChain},
+	ChainEnsureKeysFromBlueprint: {ChainBuildGenesis, ReconcileChain},
+
+	ReconcileChain: {ReconcileChainAllKept, ReconcileChainSomeRedone,
+		ReconcileChainFailSharedInputChanged, ReconcileChainFailUnreadable},
+	ReconcileChainAllKept:    {ChainBuildGenesis},
+	ReconcileChainSomeRedone: {ChainBuildGenesis},
 
 	ChainBuildGenesis: {ChainBuildGenesisFromTemplate, ChainBuildGenesisFromExisting,
 		ChainBuildGenesisFailExistingInvalid, ChainBuildGenesisFailExistingForeign,

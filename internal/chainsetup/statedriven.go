@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 )
@@ -128,10 +129,41 @@ const (
 // a composition differently.
 type composeRun func(step string) ([]lifecycle.Status, error)
 
-// upHandlers is one handler per composition stage.
+// composeStages is the composition's stages for this run.
+//
+// Reconciling against a running network is a state between the key set and the
+// genesis — the first stage that writes to the target — so a run that does it
+// moves there from the keys instead of straight on. Judging later meant a
+// refusal that had already overwritten the running network's genesis.
+func composeStages(reconciling bool) []composeStage {
+	if !reconciling {
+		return composition
+	}
+	out := slices.Clone(composition)
+	for i := range out {
+		if out[i].step == "keys" {
+			out[i].next = lifecycle.ReconcileChain
+		}
+	}
+	return out
+}
+
+// upHandlers is one handler per composition stage, for a run that composes
+// straight through.
 func upHandlers(run composeRun) map[lifecycle.Status]lifecycle.Handler {
-	out := make(map[lifecycle.Status]lifecycle.Handler, len(composition))
-	for _, s := range composition {
+	return handlersFor(composition, run)
+}
+
+// handlersFor is one handler per stage in the given order.
+//
+// The reconciliation always gets a handler, even for a run that does not do it.
+// The table lets the keys stage move there, so the state is reachable, and a
+// machine refuses to start when a reachable stage has none — registering one
+// that says what happened is what keeps the loop free of nil checks.
+func handlersFor(stages []composeStage, run composeRun) map[lifecycle.Status]lifecycle.Handler {
+	out := make(map[lifecycle.Status]lifecycle.Handler, len(stages)+1)
+	out[lifecycle.ReconcileChain] = notReconciling
+	for _, s := range stages {
 		stage := s // captured by the closure
 		out[stage.at] = func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 			// A stage is entered at one state. Its own detail states are
@@ -158,6 +190,12 @@ func upHandlers(run composeRun) map[lifecycle.Status]lifecycle.Handler {
 		}
 	}
 	return out
+}
+
+// notReconciling is the reconciliation's handler for a run that does not
+// reconcile. Reaching it means the table and the stage list disagree.
+func notReconciling(_ context.Context, _ *lifecycle.Machine, at lifecycle.Status) error {
+	return fmt.Errorf("chainsetup: %s was reached by a run that does not reconcile against a running network", at)
 }
 
 // run does this stage's work and reports the path through it.

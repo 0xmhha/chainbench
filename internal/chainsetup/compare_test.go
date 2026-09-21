@@ -102,3 +102,69 @@ func join(xs []string) string {
 	}
 	return s
 }
+
+// TestAReconcilingRunGoesThroughTheReconciliation pins the state the second
+// comparison is, and that a run that does not reconcile never reaches it.
+//
+// The move is the table's, so a stage list that forgot to send the keys there
+// fails here rather than against a running network.
+func TestAReconcilingRunGoesThroughTheReconciliation(t *testing.T) {
+	for _, c := range []struct {
+		name        string
+		reconciling bool
+		want        bool
+	}{
+		{"a run that reconciles", true, true},
+		{"a run that composes straight through", false, false},
+	} {
+		reached := false
+		r := &recorder{}
+		h := handlersFor(composeStages(c.reconciling), r.run)
+		h[lifecycle.ReconcileChain] = func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
+			if at == lifecycle.ReconcileChain {
+				reached = true
+				return m.Request(lifecycle.ReconcileChainAllKept)
+			}
+			return m.Request(lifecycle.ChainBuildGenesis)
+		}
+		m, err := lifecycle.New(lifecycle.ChainOpenWorkspace, lifecycle.ChainVerify, h)
+		if err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		if err := m.Run(context.Background()); err != nil {
+			t.Errorf("%s: %v", c.name, err)
+			continue
+		}
+		if reached != c.want {
+			t.Errorf("%s: reached the reconciliation = %v, want %v", c.name, reached, c.want)
+		}
+		// Either way the nine stages run: the reconciliation keeps nodes, it
+		// does not skip steps.
+		if got := join(r.ran); got != join(upStepNames) {
+			t.Errorf("%s: ran %q", c.name, got)
+		}
+	}
+}
+
+// TestARunThatDoesNotReconcileRefusesTheState is the other half of registering
+// a handler for a state this run never asks for: it says what happened instead
+// of leaving a hole the machine would have to nil-check.
+func TestARunThatDoesNotReconcileRefusesTheState(t *testing.T) {
+	r := &recorder{}
+	h := handlersFor(composeStages(false), r.run)
+	m, err := lifecycle.New(lifecycle.ChainEnsureKeys, lifecycle.ChainVerify, h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Drive it there by hand, the way a stage list and a table that disagreed
+	// would.
+	if err := m.Request(lifecycle.ChainEnsureKeysFromPreset); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Request(lifecycle.ReconcileChain); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Run(context.Background()); err == nil {
+		t.Fatal("a run that does not reconcile walked into the reconciliation")
+	}
+}

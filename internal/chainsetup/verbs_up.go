@@ -142,7 +142,13 @@ func markStepFailed(d Deps, dataDir, name string, cause error) {
 	_ = ws.Save()
 }
 
-// upStepNames is the composition order — the one list resume and up share.
+// upStepNames is the composition order, for reading the record.
+//
+// It no longer drives anything: the walk is the transition table, and the stage
+// table in statedriven.go is what names each step's state. What is left needs
+// the names in order — resume asks the record which step is the first one not
+// marked done — and a test holds the two lists to the same nine names in the
+// same order.
 var upStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
 
 // NetUp runs the composition steps in order and returns what each recorded.
@@ -346,74 +352,29 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	steps := upSteps(ctx, d, in)
 	run := func(name string) ([]lifecycle.Status, error) { return record(name, steps[name]) }
 
-	// A fresh composition is walked by its state. What used to decide how far to
-	// go is the machine's target, and what used to decide which step comes next
-	// is the transition table, so neither is a comparison inside the walk.
-	//
-	// Reconciling against a running network is still walked by the list below.
-	// Its decision belongs in the adopt states, and putting it there is a change
-	// to where a run STARTS rather than to what the composition does — so it
-	// comes with the attach paths, not with this.
-	if !reuseMode {
-		start, err := startFor(from)
-		if err != nil {
-			return out, err
-		}
-		target, err := targetFor(stage)
-		if err != nil {
-			return out, err
-		}
-		m, err := lifecycle.New(start, target, upHandlers(run))
-		if err != nil {
-			return out, err
-		}
-		if err := m.Run(ctx); err != nil {
-			return out, err
-		}
-		nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
-		if err != nil {
-			return out, err
-		}
-		out.Nodes = nodes
-		return out, nil
+	// The composition is walked by its state. What used to decide how far to go
+	// is the machine's target, what decides which stage comes next is the
+	// transition table, and reconciling against a running network is a state
+	// between the keys and the genesis rather than a comparison on a step name
+	// in the middle of a loop.
+	start, err := startFor(from)
+	if err != nil {
+		return out, err
 	}
-
-	started := from == ""
-	for _, name := range upStepNames {
-		if !started {
-			if name != from {
-				continue
-			}
-			started = true
-		}
-		if stage == UpDeploy && (name == "init" || name == "start") {
-			break
-		}
-		if _, err := run(name); err != nil {
-			return out, err
-		}
-		// Reconcile against the running network as soon as the keys exist and
-		// before the genesis step, which is the first step that writes to the
-		// target. Judging later meant a refusal that had already overwritten the
-		// running network's genesis and configs.
-		if name == "keys" {
-			gopts, gerr := genesisOpts(NetGenesisIn{
-				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
-				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
-				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
-			})
-			if gerr != nil {
-				return out, gerr
-			}
-			plan, rerr := reconcileUp(ctx, d, in.DataDir, snap, gopts)
-			if rerr != nil {
-				return out, rerr
-			}
-			out.Steps = append(out.Steps, "reuse: "+plan.describe())
-			if plan.Refuse != "" {
-				return out, fmt.Errorf("chainsetup: chain up: reuse-if-matching refused: %s", plan.Refuse)
-			}
-		}
+	target, err := targetFor(stage)
+	if err != nil {
+		return out, err
+	}
+	handlers := handlersFor(composeStages(reuseMode), run)
+	if reuseMode {
+		handlers[lifecycle.ReconcileChain] = reconcileHandler(ctx, d, in, snap, &out)
+	}
+	m, err := lifecycle.New(start, target, handlers)
+	if err != nil {
+		return out, err
+	}
+	if err := m.Run(ctx); err != nil {
+		return out, err
 	}
 
 	nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})

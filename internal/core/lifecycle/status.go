@@ -269,6 +269,15 @@ const (
 	AdoptChain Status = areaAdopt + 0x100*iota
 	// CompareChain asks whether what is there is what is wanted.
 	CompareChain
+	// ReconcileChain asks the same question from inside a composition that has
+	// already started, which is a different question.
+	//
+	// CompareChain runs before anything is written and may answer "compose it
+	// again". This one runs after the key set is in place and before the first
+	// stage that writes to the target, so composing again is not one of its
+	// answers: a shared input that changed is a refusal, and what it can do is
+	// keep the nodes that still match and tear down the ones that do not.
+	ReconcileChain
 )
 
 const (
@@ -290,6 +299,28 @@ const (
 	CompareChainNetworkDiffers
 	// CompareChainNothingComposed: there is nothing on the target yet.
 	CompareChainNothingComposed
+)
+
+const (
+	// ReconcileChainAllKept: every node still matches what this run will write,
+	// so the composition goes on and every one of them stays up.
+	ReconcileChainAllKept = ReconcileChain + 1 + iota
+	// ReconcileChainSomeRedone: the nodes that drifted were torn down. The
+	// composition goes on, and the later stages bring those back — init and
+	// start skip a node that still carries a pid, which is what leaves the rest
+	// running.
+	ReconcileChainSomeRedone
+)
+
+const (
+	// ReconcileChainFailSharedInputChanged: something every node shares is not
+	// what the running network was built on — the genesis above all. A running
+	// network cannot be reconciled onto a new chain.
+	ReconcileChainFailSharedInputChanged = ReconcileChain + failureSlot + iota
+	// ReconcileChainFailUnreadable: what this run would write could not be
+	// rendered, or the target could not be read, so there was nothing to
+	// compare.
+	ReconcileChainFailUnreadable
 )
 
 const (
