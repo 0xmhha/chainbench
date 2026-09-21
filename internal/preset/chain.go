@@ -10,11 +10,11 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Preset is one golden chain preset (presets/<kind>/*.yaml) decoded.
+// Chain is one golden chain preset (presets/chain/*.yaml) decoded.
 //
 // Presets come in two families, and the name says which this is. A CHAIN preset
 // declares how a network is configured; a KEY preset declares the identities it
-// runs as (presets/keys, decoded by keyring.KeyPreset). Naming this one after the
+// runs as ([Key], read from [KeysDir]). Naming this one after the
 // family rather than after the kind is deliberate: of its eleven sections only
 // "upgrade" is about a hardfork, and the other ten — chains, roles, identities,
 // producers, validators, data, ports, nodes — are ordinary chain configuration

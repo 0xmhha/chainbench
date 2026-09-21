@@ -25,6 +25,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
@@ -161,7 +162,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
-	cmd.Flags().StringVar(&keysDir, "keys", "presets/keys", "compose: key set directory, overriding what the specs declare")
+	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),

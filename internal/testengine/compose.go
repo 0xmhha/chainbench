@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -39,7 +40,7 @@ const suiteDefaultValidators = 4
 const overlayFilePrefix = "env-genesis-overlay"
 
 // defaultKeysDir is the key set a declaration that names none composes from.
-const defaultKeysDir = "presets/keys"
+const defaultKeysDir = preset.KeysDir
 
 // keySourceGenerate is the key source that creates a fresh set rather than
 // reading a recorded one; keySourceKeyPreset reads the recorded one and is what

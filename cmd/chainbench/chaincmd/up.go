@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // newNetUpCmd composes and brings up a whole network in one command — the nine
@@ -84,7 +85,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (required for --stage=start)")
-	cmd.Flags().StringVar(&keysDir, "keys", "presets/keys", "key set the network composes from")
+	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "key set the network composes from")
 	cmd.Flags().IntVar(&bpCount, "bp", 4, "bp (block-producing) node count")
 	cmd.Flags().IntVar(&enCount, "en", 0, "en (endpoint, non-producing) node count")
 	cmd.Flags().IntVar(&pnCount, "pn", 0, "pn (proxy-tier) node count; a family with no proxy tier refuses it")

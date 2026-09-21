@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/preset"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -70,7 +71,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	}
 	keysDir := opts.KeysDir
 	if keysDir == "" {
-		keysDir = "presets/keys"
+		keysDir = preset.KeysDir
 	}
 
 	tgt := opts.Target

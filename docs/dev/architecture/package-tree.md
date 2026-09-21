@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 48 | 51,809 |
-| `cmd/` | 19 | 5,068 |
+| `internal/` | 48 | 51,844 |
+| `cmd/` | 19 | 5,072 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **70** | **57,667** |
+| **합계** | **70** | **57,706** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 22패키지 15,636줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 22패키지 15,637줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -51,7 +51,7 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,455  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,456  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -110,10 +110,10 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 15패키지 32,359줄
+## 3. 자원 · 테스트 · 표면 — 15패키지 32,393줄
 
 ```
-internal/preset    636  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
+internal/preset    668  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
@@ -135,12 +135,12 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,385 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,386 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 8,626 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 8,627 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
                           NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
                           NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·
@@ -172,7 +172,7 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,068줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,072줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
@@ -182,17 +182,17 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── surface               81  모든 명령군이 자기에 대해 말해야 하는 것 — 명령 트리의 두 번째 렌더링이
 │                             손으로 유지하는 목록이 아니라 선언 하나를 읽게 한다
 ├── exitcode              33  종료 상태를 결정한 명령에서 그것을 적용하는 main 까지 운반
-├── chaincmd             925  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
+├── chaincmd             927  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
 │                             + 읽는 동사(show·status·health·logs·enode)
 ├── lifecyclecmd         452  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
 │                             여전히 하나의 건강한 체인인지 판정(verify·consensus·baseline)
 ├── nodecmd              117  네트워크의 노드 1개 — 개별 start/stop, RPC 대화
-├── suitecmd             645  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
+├── suitecmd             646  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
 │                             validate(실행 없이 검사)·migrate-spec(v1 → v2)
 ├── testcmd               65  디렉토리의 DSL 테스트 케이스 목록 — run 전에 무엇이 있는지 발견
 ├── txcmd                212  체인에 일을 맡기고 결과를 기다리기 — send·wait·deploy·call
 ├── accountcmd           177  노드나 체인이 아니라 ACCOUNT 에 가하는 것 — 상태 읽기, 자금 공급
-├── keyringcmd         1,073  키 재료 CLI — new·add·list·show·export·import·derive
+├── keyringcmd         1,074  키 재료 CLI — new·add·list·show·export·import·derive
 │                             wemix→wbft 핸드오프는 이제 보통 케이스로 돈다(upgrade run 은 없어졌다)
 ├── upgradecmd            69  hardfork — 구성된 체인을 fork 블록에서 다른 바이너리로 옮긴다.
 ├── reportcmd            137  실행을 되읽기 — report(세션이 기록한 verdict 와 증적)·log(수집한 노드 로그)

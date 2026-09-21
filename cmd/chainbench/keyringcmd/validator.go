@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // NewValidator builds the validator-identity group. A validator is an account
@@ -197,7 +198,7 @@ func newValidatorRosterCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
-	cmd.Flags().StringVar(&keysDir, "keys", "presets/keys", "key set (preset) directory")
+	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "key set (preset) directory")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the roster as JSON")
 	return surface.ReadOnly(cmd)
 }
