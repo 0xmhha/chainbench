@@ -303,12 +303,12 @@ func NetCrossFork(ctx context.Context, d chainsetup.Deps, in NetCrossForkIn) (Ne
 	}
 	var out NetCrossForkOut
 	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		detail, err := ws.CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
+		done, err := ws.CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
 		if err != nil {
 			return "", err
 		}
-		out.Detail, out.Nodes = detail, ws.NodeSet()
-		return detail, nil
+		out.Detail, out.Nodes = done.Detail, ws.NodeSet()
+		return done.Detail, nil
 	})
 	if err != nil {
 		return NetCrossForkOut{}, err

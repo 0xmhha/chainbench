@@ -108,6 +108,10 @@ func (w *Workspace) genesisPaths() []string {
 	return out
 }
 
+// errOpSomeStillUp: not every node came down. Every node is attempted before
+// this is raised, so the message names each one that did not.
+var errOpSomeStillUp = errors.New("not every node came down")
+
 // The kinds of failure the init stage has.
 //
 // What is deliberately not one of them is the binary's own refusal:
@@ -374,8 +378,9 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		stopped++
 	}
 	if len(errs) > 0 {
-		return "", fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
-			stopped, attempts, strings.Join(errs, "; "))
+		return "", ofKind(errOpSomeStillUp,
+			fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
+				stopped, attempts, strings.Join(errs, "; ")))
 	}
 	detail := fmt.Sprintf("%d node(s) stopped", stopped)
 	w.markStep("stop", detail)
@@ -470,6 +475,22 @@ func InitFailure(err error) lifecycle.Status {
 		return lifecycle.ChainInitNodesFailDatadir
 	case errors.Is(err, errLaunchPortBusy):
 		return lifecycle.ChainLaunchNodesFailPortBusy
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// StopFailure is which state a failure of taking the network down is.
+//
+// Every node is attempted before the partial is raised, so the one state it has
+// means "not all of them", and the message names which.
+func StopFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errOpSomeStillUp):
+		return lifecycle.ChainOpStopNodesFailSomeStillUp
+	case errors.Is(err, errOpNoSuchNode):
+		return lifecycle.ChainOpFailNoSuchNode
+	case errors.Is(err, errOpPrecondition):
+		return lifecycle.ChainOpFailPrecondition
 	}
 	return lifecycle.FailStageUnclassified
 }
