@@ -61,9 +61,13 @@ func inWorkspace[T any](d Deps, dataDir string, fn func(*Workspace) (T, error)) 
 	saveErr := ws.Save()
 	switch {
 	case stepErr != nil && saveErr != nil:
-		return zero, fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
+		return out, fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
 	case stepErr != nil:
-		return zero, stepErr
+		// The value comes back with the error. A step that fails partway is
+		// still the authority on how far it got, and a caller that threw that
+		// away had to guess — which is what the genesis stage was doing when it
+		// reported a fork failure as if the genesis had never been built.
+		return out, stepErr
 	case saveErr != nil:
 		return zero, saveErr
 	}
@@ -77,15 +81,19 @@ const (
 	portBand      = 100
 )
 
-// StepOut is the common result of one mutating step: its recorded detail line,
-// and the state it ended in when the step knows one.
+// StepOut is what one mutating step did: its recorded detail line, and the
+// states it went through when the step knows them.
+//
+// It is the step's type as well as the verb's. They were two types with the
+// same two fields for one commit, and a verb that copied one into the other is
+// a place where the two can be made to disagree.
 type StepOut struct {
 	Detail string
-	// Reached is the lifecycle state this step ended in. It is zero for a step
-	// whose work has not moved into its handler yet, and the handler then
-	// reports what the request asked for instead of what the step did. A step
-	// that sets it has stopped being guessed at.
-	Reached lifecycle.Status
+	// Passed is the states this step went through, in order, ending at the one
+	// it finished in. It is empty for a step whose work has not moved into its
+	// handler yet, and the handler then walks a path it assumed instead of the
+	// one that happened. A step that fills this has stopped being guessed at.
+	Passed []lifecycle.Status
 }
 
 // NetKeysIn selects where node identities come from.
@@ -113,10 +121,9 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 	if source == "" && bp != nil {
 		source = "declared"
 	}
-	done, err := inWorkspace(d, in.DataDir, func(ws *Workspace) (KeysDone, error) {
+	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Keys(ctx, KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
 	})
-	return StepOut{Detail: done.Detail, Reached: done.Source}, err
 }
 
 // NetAllocateIn sizes the network.
@@ -283,10 +290,9 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 	if err != nil {
 		return StepOut{}, err
 	}
-	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	return inWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
 		return ws.Genesis(ctx, opts)
 	})
-	return StepOut{Detail: detail}, err
 }
 
 // genesisOpts folds the flag-shaped genesis inputs into the step options: the

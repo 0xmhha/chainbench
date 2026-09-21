@@ -22,114 +22,199 @@ import (
 // record themselves, so what a composition writes and what its record says do
 // not change. Only what decides which stage runs next.
 
-// unclassified is why a stage still reports lifecycle.FailStageUnclassified
-// when it fails, one entry per stage that does.
-//
-// It is a debt list and it only shrinks, which is the rule the other debt lists
-// in this repository keep. A stage leaves when its work moves out of the verb
-// and into its handler, because that is when the handler can tell its failures
-// apart: today every one of these verbs fails with an error built by
-// fmt.Errorf, and no handler can branch on a sentence.
-//
-// Eight now. The keys stage left when its four declared failures became kinds
-// a caller can branch on, which is what a stage leaving looks like.
-var unclassified = map[string]string{
-	"new":     "NetNew reports a missing chain and a bad request the same way",
-	"place":   "NetAllocate reports two layouts and a contended server set the same way",
-	"genesis": "NetGenesis reports a foreign existing genesis and an unresolved fork the same way",
-	"config":  "NetConfig reports a bad override and a failed readback the same way",
-	"build":   "NetLaunchOpts reports every bad option the same way",
-	"deploy":  "NetProvision reports a missing input and a foreign one the same way",
-	"init":    "NetInit reports an unreachable target and an unreadable genesis the same way",
-	"start":   "NetStart reports no binary, a busy port and an occupied datadir the same way",
+// composeStage is everything the machine needs to know about one stage of the
+// composition. One table rather than several: a stage's name, its state, what
+// follows it, how it fails and what it still guesses are all facts about the
+// same thing, and a stage added to one list and forgotten in another is the
+// failure mode a single table removes.
+type composeStage struct {
+	// step is the name the record has always carried. It does not change: a
+	// handler runs the same verb, and the verb marks itself.
+	step string
+	// at is the state this stage is entered in, and next is the stage after it.
+	at   lifecycle.Status
+	next lifecycle.Status
+	// assumed is the path through this stage's own states taken when the step
+	// does not report one.
+	//
+	// It is debt. A stage that fills it is claiming a route on the step's
+	// behalf, and the claim is only as good as the sentence next to it. The
+	// list shrinks as steps start reporting; see stagesStillAssuming.
+	assumed []lifecycle.Status
+	// classify turns this stage's error into the state that failure is. A stage
+	// without one has failures that are still a sentence nobody can branch on,
+	// and owed says why.
+	classify func(error) lifecycle.Status
+	// owed is why this stage cannot yet say more than "it failed". It is set
+	// exactly when classify is not; see stagesStillOwing.
+	owed string
 }
 
-// stageOf is the lifecycle stage each of the composition's steps is.
+// composition is the nine stages, in the order they run.
 //
-// The names on the left are the ones the record has always carried and they do
-// not change: a handler runs the same verb, and the verb marks itself.
-var stageOf = map[string]lifecycle.Status{
-	"new":     lifecycle.ChainOpenWorkspace,
-	"place":   lifecycle.ChainBuildNodeTable,
-	"keys":    lifecycle.ChainEnsureKeys,
-	"genesis": lifecycle.ChainBuildGenesis,
-	"config":  lifecycle.ChainBuildNodeConfig,
-	"build":   lifecycle.ChainBuildNodeCommand,
-	"deploy":  lifecycle.ChainDeployNodes,
-	"init":    lifecycle.ChainInitNodes,
-	"start":   lifecycle.ChainLaunchNodes,
+// The two counted debts are visible by reading down the columns: four stages
+// still assume a path, seven still report one kind of failure. Both numbers
+// only go down, and TestEveryStageIsPlaced holds them.
+var composition = []composeStage{
+	{
+		step: "new", at: lifecycle.ChainOpenWorkspace, next: lifecycle.ChainBuildNodeTable,
+		owed: "NetNew reports a missing chain and a bad request the same way",
+	},
+	{
+		step: "place", at: lifecycle.ChainBuildNodeTable, next: lifecycle.ChainEnsureKeys,
+		owed: "NetAllocate reports two layouts and a contended server set the same way",
+	},
+	{
+		// The first stage whose work reports its own state. It used to be read
+		// off the request, and that was wrong in a case the request cannot
+		// show: a node table naming per-node keys is the source whatever the
+		// request said, so a composition with an inline topology was recorded
+		// as having used the preset.
+		step: "keys", at: lifecycle.ChainEnsureKeys, next: lifecycle.ChainBuildGenesis,
+		classify: keysFailure,
+	},
+	{
+		// The block with the most failures, because it is the only stage that
+		// handles two chains: a network crossing a fork reads the handing
+		// chain's genesis to build the receiving chain's.
+		step: "genesis", at: lifecycle.ChainBuildGenesis, next: lifecycle.ChainBuildNodeConfig,
+		classify: genesisFailure,
+	},
+	{
+		step: "config", at: lifecycle.ChainBuildNodeConfig, next: lifecycle.ChainBuildNodeCommand,
+		owed: "NetConfig reports a bad override and a failed readback the same way",
+	},
+	{
+		step: "build", at: lifecycle.ChainBuildNodeCommand, next: lifecycle.ChainDeployNodes,
+		owed: "NetLaunchOpts reports every bad option the same way",
+	},
+	{
+		step: "deploy", at: lifecycle.ChainDeployNodes, next: lifecycle.ChainInitNodes,
+		owed: "NetProvision reports a missing input and a foreign one the same way",
+	},
+	{
+		step: "init", at: lifecycle.ChainInitNodes, next: lifecycle.ChainLaunchNodes,
+		owed: "NetInit reports an unreachable target and an unreadable genesis the same way",
+	},
+	{
+		// The launch verb runs every phase the family declares inside one call,
+		// so one pass is assumed: it launched, and the pass is done. The
+		// per-phase walk arrives when the phase loop moves out of
+		// Workspace.Start and into this stage.
+		step: "start", at: lifecycle.ChainLaunchNodes, next: lifecycle.ChainVerify,
+		assumed: []lifecycle.Status{
+			lifecycle.ChainLaunchNodesPhaseLaunching,
+			lifecycle.ChainLaunchNodesPhaseDone,
+		},
+		owed: "NetStart reports no binary, a busy port and an occupied datadir the same way",
+	},
 }
+
+// The two debts, counted. Lowering a number is how a stage moving in gets said
+// out loud; neither ever goes up.
+const (
+	// stagesStillAssuming walk a path they claim on the step's behalf.
+	stagesStillAssuming = 1
+	// stagesStillOwing report every failure as one sentence.
+	stagesStillOwing = 7
+)
 
 // composeRun is one step of the composition: it runs the verb, appends the
 // detail to the result and marks a failure into the record. It reports the
-// state the step ended in, or zero when the step does not yet say.
+// states the step went through, or nothing when the step does not yet say.
 //
 // It is the closure netUpFrom already had. Passing it in rather than rebuilding
 // it means the state-driven path and the list-driven one cannot come to record
 // a composition differently.
-type composeRun func(step string) (lifecycle.Status, error)
+type composeRun func(step string) ([]lifecycle.Status, error)
 
 // upHandlers is one handler per composition stage.
-//
-// Each holds its whole stage: the verb it runs and every state inside it. The
-// stages with detail states are the reason these are written out rather than
-// generated from a table — a stage that has more than one way to go decides
-// which one it took, and that decision is the stage's own knowledge.
-func upHandlers(in NetUpIn, run composeRun) map[lifecycle.Status]lifecycle.Handler {
-	return map[lifecycle.Status]lifecycle.Handler{
-		lifecycle.ChainOpenWorkspace:   plainStage("new", lifecycle.ChainBuildNodeTable, run),
-		lifecycle.ChainBuildNodeTable:  plainStage("place", lifecycle.ChainEnsureKeys, run),
-		lifecycle.ChainEnsureKeys:      keysStage(run),
-		lifecycle.ChainBuildGenesis:    genesisStage(in, run),
-		lifecycle.ChainBuildNodeConfig: plainStage("config", lifecycle.ChainBuildNodeCommand, run),
-		lifecycle.ChainBuildNodeCommand: plainStage("build",
-			lifecycle.ChainDeployNodes, run),
-		lifecycle.ChainDeployNodes: plainStage("deploy", lifecycle.ChainInitNodes, run),
-		lifecycle.ChainInitNodes:   plainStage("init", lifecycle.ChainLaunchNodes, run),
-		lifecycle.ChainLaunchNodes: launchStage(run),
-	}
-}
-
-// plainStage is a stage with one way through: run the verb, move on.
-func plainStage(step string, next lifecycle.Status, run composeRun) lifecycle.Handler {
-	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
-		if at != stageOf[step] {
-			return unexpected(step, at)
-		}
-		if _, err := runStep(m, step, run); err != nil {
-			return err
-		}
-		return m.Request(next)
-	}
-}
-
-// keysStage is the key stage: the source the identities came from, and the four
-// ways it refuses.
-//
-// This is the first stage whose work reports its own state. It used to be read
-// off the request, and that was wrong in a case the request cannot show: a node
-// table that names per-node keys is the source whatever the request said, so a
-// composition with an inline topology was recorded as having used the preset.
-// The step says which source it took, and this passes it on.
-func keysStage(run composeRun) lifecycle.Handler {
-	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
-		switch at {
-		case lifecycle.ChainEnsureKeys:
-			from, err := runStep(m, "keys", run)
+func upHandlers(run composeRun) map[lifecycle.Status]lifecycle.Handler {
+	out := make(map[lifecycle.Status]lifecycle.Handler, len(composition))
+	for _, s := range composition {
+		stage := s // captured by the closure
+		out[stage.at] = func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
+			// A stage is entered at one state. Its own detail states are
+			// reached inside this call, so being called at one of them means a
+			// move nobody wrote — a table and a handler that disagree, which is
+			// worth saying rather than guessing at.
+			if at != stage.at {
+				return fmt.Errorf("chainsetup: the %s stage was asked for %s, which nothing sets", stage.step, at)
+			}
+			passed, err := stage.run(m, run)
 			if err != nil {
 				return err
 			}
-			if from == 0 {
-				return fmt.Errorf("chainsetup: the keys step did not say which source it used")
+			// The path is walked here rather than one handler call per state:
+			// the step already did all of it, and these states are what it went
+			// through, not further work to do. Each move still goes through the
+			// table, so a path the table does not allow is refused.
+			for _, s := range passed {
+				if err := m.Request(s); err != nil {
+					return err
+				}
 			}
-			return m.Request(from)
-		case lifecycle.ChainEnsureKeysFromPreset,
-			lifecycle.ChainEnsureKeysGenerated,
-			lifecycle.ChainEnsureKeysFromBlueprint:
-			return m.Request(lifecycle.ChainBuildGenesis)
+			return m.Request(stage.next)
 		}
-		return unexpected("keys", at)
 	}
+	return out
+}
+
+// run does this stage's work and reports the path through it.
+//
+// A stage that neither reports a path nor assumes one is a stage with no states
+// of its own, and it goes straight to the next. A stage that has states and
+// reports nothing is a report that was lost, which is refused rather than
+// filled in.
+func (s composeStage) run(m *lifecycle.Machine, run composeRun) ([]lifecycle.Status, error) {
+	passed, err := run(s.step)
+	if err != nil {
+		return nil, s.failed(m, passed, err)
+	}
+	if len(passed) > 0 {
+		return passed, nil
+	}
+	if len(s.assumed) > 0 {
+		return s.assumed, nil
+	}
+	if s.classify != nil {
+		// A stage whose work has moved in says where it went. Only a stage
+		// still driven from outside is silent, and those have an assumed path.
+		return nil, fmt.Errorf("chainsetup: the %s step did not say which states it went through", s.step)
+	}
+	return nil, nil
+}
+
+// failed puts the machine in the state this error is and returns what the
+// caller should report.
+//
+// passed is how far the step got before it failed, and it is walked first. That
+// is what makes the table's shape real: the genesis stage's fork failure can
+// only happen once a genesis exists, and the table says so by listing it under
+// the built states rather than under the entry. A step that reports nothing
+// failed before it reached any state of its own, and the failure is reached
+// from the entry.
+//
+// A stage that classifies lands on the state its error is. A stage that does
+// not lands on the debt state, and the reason it cannot say more is appended to
+// the error so the two are read together rather than one being looked up.
+func (s composeStage) failed(m *lifecycle.Machine, passed []lifecycle.Status, err error) error {
+	for _, p := range passed {
+		if rerr := m.Request(p); rerr != nil {
+			return rerr
+		}
+	}
+	at := lifecycle.FailStageUnclassified
+	if s.classify != nil {
+		at = s.classify(err)
+	}
+	if rerr := m.Request(at); rerr != nil {
+		return rerr
+	}
+	if at == lifecycle.FailStageUnclassified && s.owed != "" {
+		return fmt.Errorf("%w (%s: %s)", err, s.step, s.owed)
+	}
+	return err
 }
 
 // keysFailure is which of the key stage's failures this error is.
@@ -153,104 +238,27 @@ func keysFailure(err error) lifecycle.Status {
 	return lifecycle.FailStageUnclassified
 }
 
-// genesisStage is the genesis stage: where the genesis came from, then what was
-// applied on top of it.
+// genesisFailure is which of the genesis stage's five failures this error is.
 //
-// The four states are not four routes. The first pair says whether a genesis
-// was built or taken verbatim, and the second pair says what else the request
-// asked for — a scheduled fork, a separate genesis per binary — so a request
-// that asks for neither goes straight on.
-func genesisStage(in NetUpIn, run composeRun) lifecycle.Handler {
-	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
-		switch at {
-		case lifecycle.ChainBuildGenesis:
-			if _, err := runStep(m, "genesis", run); err != nil {
-				return err
-			}
-			if in.GenesisExisting != "" {
-				return m.Request(lifecycle.ChainBuildGenesisFromExisting)
-			}
-			return m.Request(lifecycle.ChainBuildGenesisFromTemplate)
-		case lifecycle.ChainBuildGenesisFromTemplate, lifecycle.ChainBuildGenesisFromExisting:
-			if in.GenesisFork != nil {
-				return m.Request(lifecycle.ChainBuildGenesisForkApplied)
-			}
-			fallthrough
-		case lifecycle.ChainBuildGenesisForkApplied:
-			if len(in.GenesisPerBinary) > 0 {
-				return m.Request(lifecycle.ChainBuildGenesisVariantsWritten)
-			}
-			fallthrough
-		case lifecycle.ChainBuildGenesisVariantsWritten:
-			return m.Request(lifecycle.ChainBuildNodeConfig)
-		}
-		return unexpected("genesis", at)
+// What still reaches the default is the building itself: a template that will
+// not substitute, an overlay that will not merge, a fork ordering the result
+// does not satisfy. Those are the genesis package's refusals rather than this
+// step's, and giving them a state here would put the naming on the wrong side
+// of the boundary.
+func genesisFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errGenesisExistingInvalid):
+		return lifecycle.ChainBuildGenesisFailExistingInvalid
+	case errors.Is(err, errGenesisExistingForeign):
+		return lifecycle.ChainBuildGenesisFailExistingForeign
+	case errors.Is(err, errGenesisForkUnresolved):
+		return lifecycle.ChainBuildGenesisFailForkUnresolved
+	case errors.Is(err, errGenesisDeclUnused):
+		return lifecycle.ChainBuildGenesisFailDeclUnused
+	case errors.Is(err, errGenesisTargetUnable):
+		return lifecycle.ChainBuildGenesisFailTargetUnable
 	}
-}
-
-// launchStage is the launch and the pass it makes.
-//
-// The launch verb runs every phase the family declares inside one call, so this
-// handler makes one pass: it launches, then reports the pass done. The
-// per-phase walk the states describe arrives when the phase loop moves out of
-// Workspace.Start and into this handler, and until then this stage claims one
-// pass because one is what it made.
-func launchStage(run composeRun) lifecycle.Handler {
-	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
-		switch at {
-		case lifecycle.ChainLaunchNodes:
-			if _, err := runStep(m, "start", run); err != nil {
-				return err
-			}
-			return m.Request(lifecycle.ChainLaunchNodesPhaseLaunching)
-		case lifecycle.ChainLaunchNodesPhaseLaunching:
-			return m.Request(lifecycle.ChainLaunchNodesPhaseDone)
-		case lifecycle.ChainLaunchNodesPhaseDone:
-			return m.Request(lifecycle.ChainVerify)
-		}
-		return unexpected("start", at)
-	}
-}
-
-// runStep runs one step's verb and, when it fails, puts the machine in the
-// state that failure is.
-//
-// A stage that classifies its failures has an entry in failureOf and lands on
-// the state its error is; a stage that does not lands on the debt state, and
-// the reason it cannot say more is appended to the error so the two are read
-// together rather than one being looked up.
-func runStep(m *lifecycle.Machine, step string, run composeRun) (lifecycle.Status, error) {
-	reached, err := run(step)
-	if err == nil {
-		return reached, nil
-	}
-	at := lifecycle.FailStageUnclassified
-	if classify, ok := failureOf[step]; ok {
-		at = classify(err)
-	}
-	if rerr := m.Request(at); rerr != nil {
-		return 0, rerr
-	}
-	if at == lifecycle.FailStageUnclassified {
-		if why, owed := unclassified[step]; owed {
-			return 0, fmt.Errorf("%w (%s: %s)", err, step, why)
-		}
-	}
-	return 0, err
-}
-
-// failureOf is, per stage, how its error becomes a state. A stage without an
-// entry here is one whose failures are still a sentence, which is what
-// unclassified lists.
-var failureOf = map[string]func(error) lifecycle.Status{
-	"keys": keysFailure,
-}
-
-// unexpected is what a handler says when it is asked for a state of its own
-// stage that nothing sets. It is worth saying rather than guessing at: a stage
-// reached by a move nobody wrote is a table and a handler that disagree.
-func unexpected(step string, at lifecycle.Status) error {
-	return fmt.Errorf("chainsetup: the %s stage was asked for %s, which nothing sets", step, at)
+	return lifecycle.FailStageUnclassified
 }
 
 // startFor is the state a composition resumes at. An empty step is the whole
@@ -259,11 +267,12 @@ func startFor(from string) (lifecycle.Status, error) {
 	if from == "" {
 		return lifecycle.ChainOpenWorkspace, nil
 	}
-	s, ok := stageOf[from]
-	if !ok {
-		return 0, fmt.Errorf("chainsetup: no stage is named %q", from)
+	for _, s := range composition {
+		if s.step == from {
+			return s.at, nil
+		}
 	}
-	return s, nil
+	return 0, fmt.Errorf("chainsetup: no stage is named %q", from)
 }
 
 // targetFor is how far a composition runs, as the state it stops on.

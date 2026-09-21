@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/preset"
@@ -27,6 +29,32 @@ import (
 // than this step's. The network's advertised capabilities are computed here for
 // the same reason: what a network can answer for is decided by the genesis it
 // was given.
+
+// The kinds of failure this step has. This is the block with the most of them,
+// because it is the only step that handles two chains: a network that crosses a
+// fork reads the handing chain's genesis to build the receiving chain's.
+//
+// As in the keys step, the kind rides alongside the message rather than in
+// front of it — the sentences below name the binary, the fork and the file, and
+// that is what makes them worth reading.
+var (
+	// errGenesisExistingInvalid: what was named as a finished genesis cannot be
+	// used as one — it could not be read, or it is not JSON.
+	errGenesisExistingInvalid = errors.New("the named genesis is not usable")
+	// errGenesisExistingForeign: a finished genesis whose validators are not
+	// the composed key set.
+	errGenesisExistingForeign = errors.New("the named genesis is not this network's")
+	// errGenesisForkUnresolved: a scheduled fork is missing something it needs
+	// — a name, a chain to take its configuration from, that chain's section,
+	// or a node to hand over to.
+	errGenesisForkUnresolved = errors.New("the fork cannot be resolved")
+	// errGenesisDeclUnused: a genesis or a genesis config declared for a binary
+	// no node runs.
+	errGenesisDeclUnused = errors.New("the declaration names a binary no node runs")
+	// errGenesisTargetUnable: the target cannot produce a binary-written
+	// genesis — no producer to build it on, or no way to run a command there.
+	errGenesisTargetUnable = errors.New("the target cannot build this genesis")
+)
 
 type GenesisOpts struct {
 	// ChainID, when non-zero, overrides the manifest chain id.
@@ -163,7 +191,7 @@ func (f GenesisFork) carrier() ForkCarrier {
 // Genesis builds the genesis from the key set's validator material and writes
 // it to the target's data root (upload-if-absent semantics are the provision
 // step's concern; genesis always reflects the current inputs).
-func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, error) {
+func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, error) {
 	// The rule belongs to the operation, not to the one builder that happened to
 	// construct these options. genesisOpts checks it too, and every caller today
 	// goes through genesisOpts — but this method is exported and takes the
@@ -171,14 +199,14 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// only as long as no one assembled a GenesisOpts by hand. An invariant that
 	// depends on which door you came in is not an invariant.
 	if err := opts.checkExistingIsUnchanged(); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	p, err := w.plugin()
 	if err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	if err := w.require("genesis"); err != nil {
-		return "", err
+		return StepOut{}, err
 	}
 	// A family whose genesis its binary writes takes a different source: the
 	// generic dispatch builds a genesis by substituting a template, and for
@@ -190,7 +218,13 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	)
 	gen, art, err = w.genesisBytes(ctx, p, opts)
 	if err != nil {
-		return "", err
+		return StepOut{}, err
+	}
+	// passed is the states this step goes through, appended where each is
+	// decided so the path and the work cannot drift apart.
+	passed := []lifecycle.Status{lifecycle.ChainBuildGenesisFromTemplate}
+	if opts.Existing != "" {
+		passed[0] = lifecycle.ChainBuildGenesisFromExisting
 	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
@@ -201,7 +235,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	w.state.Fork = nil
 	if opts.Fork != nil {
 		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
-			return "", err
+			return StepOut{Passed: passed}, err
 		}
 		art.Genesis = gen
 		// Recorded because crossing the fork is a later step's work: it has to
@@ -209,10 +243,11 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		// over, and the request that said so is gone by then.
 		fork := *opts.Fork
 		w.state.Fork = &fork
+		passed = append(passed, lifecycle.ChainBuildGenesisForkApplied)
 	}
 	lay, err := w.layout()
 	if err != nil {
-		return "", err
+		return StepOut{Passed: passed}, err
 	}
 	path := lay.GenesisPath()
 	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
@@ -235,14 +270,17 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return StepOut{Passed: passed}, err
 	}
 	w.state.GenesisPath = path
 	if err := w.writeGenesisVariants(ctx, lay, gen, opts.Variants); err != nil {
-		return "", err
+		return StepOut{Passed: passed}, err
+	}
+	if len(opts.Variants) > 0 {
+		passed = append(passed, lifecycle.ChainBuildGenesisVariantsWritten)
 	}
 	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
-		return "", err
+		return StepOut{Passed: passed}, err
 	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts)
 	w.state.HaltsAt = opts.HaltsAt
@@ -264,7 +302,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		detail += fmt.Sprintf(", %s fork at %d carried by %s", opts.Fork.Name, opts.Fork.At, opts.Fork.carrier())
 	}
 	w.markStep("genesis", detail)
-	return detail, nil
+	return StepOut{Detail: detail, Passed: passed}, nil
 }
 
 // applyFork schedules the fork on the built genesis, taking its consensus
@@ -284,7 +322,8 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 // binary, empty for the genesis route.
 func (w *Workspace) applyFork(base []byte, f GenesisFork) ([]byte, map[string][]byte, error) {
 	if f.Name == "" {
-		return nil, nil, fmt.Errorf("chainsetup: genesis: a fork needs a name")
+		return nil, nil, ofKind(errGenesisForkUnresolved,
+			fmt.Errorf("chainsetup: genesis: a fork needs a name"))
 	}
 	withBlock, err := genesis.SetConfigSection(base, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
 	if err != nil {
@@ -357,7 +396,8 @@ const forkConfigTable = "Eth.Genesis"
 func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 	id := w.state.BinaryChains[f.Binary]
 	if id == "" {
-		return nil, fmt.Errorf("chainsetup: genesis: the %q fork seals on binary %q, which names no chain of its own — the fork's configuration comes from that chain's genesis", f.Name, f.Binary)
+		return nil, ofKind(errGenesisForkUnresolved,
+			fmt.Errorf("chainsetup: genesis: the %q fork seals on binary %q, which names no chain of its own — the fork's configuration comes from that chain's genesis", f.Name, f.Binary))
 	}
 	p, err := external.ResolveChain(id, "", "")
 	if err != nil {
@@ -387,7 +427,8 @@ func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 		return nil, fmt.Errorf("chainsetup: genesis: read the %q section from the %q genesis: %w", f.Name, id, err)
 	}
 	if len(section) == 0 {
-		return nil, fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name)
+		return nil, ofKind(errGenesisForkUnresolved,
+			fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name))
 	}
 	return section, nil
 }
@@ -407,7 +448,8 @@ func (w *Workspace) forkValidators(f GenesisFork) ([]int, error) {
 		}
 	}
 	if len(indices) == 0 {
-		return nil, fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name)
+		return nil, ofKind(errGenesisForkUnresolved,
+			fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name))
 	}
 	return indices, nil
 }
@@ -427,7 +469,8 @@ func (w *Workspace) writeGenesisConfigs(ctx context.Context, lay node.Layout, co
 	paths := make(map[string]string, len(configs))
 	for _, name := range slices.Sorted(maps.Keys(configs)) {
 		if w.state.Binaries[name] == "" {
-			return fmt.Errorf("chainsetup: genesis: a genesis config is declared for binary %q, which no node runs — name one of the declared binaries", name)
+			return ofKind(errGenesisDeclUnused,
+				fmt.Errorf("chainsetup: genesis: a genesis config is declared for binary %q, which no node runs — name one of the declared binaries", name))
 		}
 		body := configs[name]
 		path := lay.GenesisConfigPath(name)
@@ -469,7 +512,8 @@ func (w *Workspace) writeGenesisVariants(ctx context.Context, lay node.Layout, b
 	paths := make(map[string]string, len(variants))
 	for _, name := range slices.Sorted(maps.Keys(variants)) {
 		if w.state.Binaries[name] == "" {
-			return fmt.Errorf("chainsetup: genesis: a genesis is declared for binary %q, which no node runs — name one of the declared binaries", name)
+			return ofKind(errGenesisDeclUnused,
+				fmt.Errorf("chainsetup: genesis: a genesis is declared for binary %q, which no node runs — name one of the declared binaries", name))
 		}
 		gen, err := genesis.Customize(base, genesis.NetworkOptions{Overlay: variants[name]})
 		if err != nil {

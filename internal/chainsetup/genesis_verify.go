@@ -28,7 +28,8 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 	}
 	genesisVals, err := reader.GenesisValidators(genesisJSON)
 	if err != nil {
-		return fmt.Errorf("chainsetup: genesis: existing genesis %s: %w", ref, err)
+		return ofKind(errGenesisExistingInvalid,
+			fmt.Errorf("chainsetup: genesis: existing genesis %s: %w", ref, err))
 	}
 	preset, err := preset.LoadKeyPreset(w.state.KeysDir)
 	if err != nil {
@@ -36,7 +37,8 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 	}
 	keyVals := preset.NetworkFor(w.state.BPCount).Validators
 	if err := sameValidatorSet(genesisVals, keyVals, "genesis validators", "the running keys"); err != nil {
-		return fmt.Errorf("chainsetup: genesis: existing genesis %s does not match the composed keys — %w", ref, err)
+		return ofKind(errGenesisExistingForeign,
+			fmt.Errorf("chainsetup: genesis: existing genesis %s does not match the composed keys — %w", ref, err))
 	}
 	return nil
 }

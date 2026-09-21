@@ -66,18 +66,6 @@ func ofKind(kind error, err error) error {
 	return keyFail{kind: kind, err: err}
 }
 
-// KeysDone is what the keys step did: the line it recorded, and which of the
-// three sources the identities actually came from.
-//
-// The source is reported rather than inferred from the request because the
-// request does not decide it on its own. A node table that names per-node keys
-// is the source whatever the request said, and a handler reading the request
-// would call that a preset.
-type KeysDone struct {
-	Detail string
-	Source lifecycle.Status
-}
-
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
 		return nil, fmt.Errorf("chainsetup: no chain set — run `chain new` first")
@@ -103,9 +91,9 @@ type KeysOpts struct {
 
 // Keys ensures the workspace's key set exists and covers the requested node
 // count, through the same KeySource boundary `chainbench run` uses.
-func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
+func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 	if _, err := w.plugin(); err != nil {
-		return KeysDone{}, err
+		return StepOut{}, err
 	}
 	n := opts.Nodes
 	if n <= 0 {
@@ -115,12 +103,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return KeysDone{}, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
+		return StepOut{}, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 	// A key set named on a server is downloaded to a local directory first, so
 	// the rest of this step reads it the one local way.
 	if err := w.materializeKeyring(ctx); err != nil {
-		return KeysDone{}, err
+		return StepOut{}, err
 	}
 
 	// A node table that names any per-node key builds the set from the table:
@@ -134,7 +122,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
 	// the two cannot drift apart.
 	var from lifecycle.Status
 	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
-		return KeysDone{}, kerr
+		return StepOut{}, kerr
 	} else if keyed {
 		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 		from = lifecycle.ChainEnsureKeysFromBlueprint
@@ -148,12 +136,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
 			// so that the genesis source, the launcher and provision keep reading
 			// keys the one way they already do.
 			if opts.Blueprint == nil {
-				return KeysDone{}, ofKind(errKeySourceUnknown,
+				return StepOut{}, ofKind(errKeySourceUnknown,
 					fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
 			}
 			set, err := w.declaredKeys(*opts.Blueprint, n)
 			if err != nil {
-				return KeysDone{}, err
+				return StepOut{}, err
 			}
 			// A blueprint names a key for every node it declares (a node without
 			// one is an error there), so every index is pinned: if the ring on
@@ -179,18 +167,18 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (KeysDone, error) {
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 			from = lifecycle.ChainEnsureKeysGenerated
 		default:
-			return KeysDone{}, ofKind(errKeySourceUnknown,
+			return StepOut{}, ofKind(errKeySourceUnknown,
 				fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
 		}
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
-		return KeysDone{}, err
+		return StepOut{}, err
 	}
 	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
 		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
-	return KeysDone{Detail: detail, Source: from}, nil
+	return StepOut{Detail: detail, Passed: []lifecycle.Status{from}}, nil
 }
 
 // declaredKeys derives the ring a blueprint declares, for the network the

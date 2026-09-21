@@ -328,21 +328,23 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	// the record saying nothing at all about the step it died in: the reader saw
 	// the last step that WORKED and had to guess what came next. Now the record
 	// names the step, the time, and the error.
-	record := func(name string, fn func() (StepOut, error)) (lifecycle.Status, error) {
+	record := func(name string, fn func() (StepOut, error)) ([]lifecycle.Status, error) {
 		r, err := fn()
 		if err != nil {
 			werr := fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
 			markStepFailed(d, in.DataDir, name, werr)
-			return 0, werr
+			// The path comes back with the error: how far the step got is what
+			// decides which state its failure is reached from.
+			return r.Passed, werr
 		}
 		out.Steps = append(out.Steps, name+": "+r.Detail)
-		// Zero when the step's work has not moved into its handler: the handler
-		// then reports what the request asked for instead of what was done.
-		return r.Reached, nil
+		// Empty when the step's work has not moved into its handler: the handler
+		// then walks the path it assumed instead of the one that happened.
+		return r.Passed, nil
 	}
 
 	steps := upSteps(ctx, d, in)
-	run := func(name string) (lifecycle.Status, error) { return record(name, steps[name]) }
+	run := func(name string) ([]lifecycle.Status, error) { return record(name, steps[name]) }
 
 	// A fresh composition is walked by its state. What used to decide how far to
 	// go is the machine's target, and what used to decide which step comes next
@@ -361,7 +363,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		if err != nil {
 			return out, err
 		}
-		m, err := lifecycle.New(start, target, upHandlers(in, run))
+		m, err := lifecycle.New(start, target, upHandlers(run))
 		if err != nil {
 			return out, err
 		}

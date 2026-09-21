@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
@@ -57,8 +58,15 @@ func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	if _, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath}); err != nil {
+	done, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath})
+	if err != nil {
 		t.Fatalf("genesis (existing): %v", err)
+	}
+	// The step says where the genesis came from. Nothing else can: the handler
+	// driving it sees the same request the CLI does, and this method is
+	// exported, so the request and what the step did are two facts.
+	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainBuildGenesisFromExisting {
+		t.Errorf("the step reported %v, want [ChainBuildGenesisFromExisting]", done.Passed)
 	}
 
 	got, err := os.ReadFile(filepath.Join(dir, "genesis.json"))

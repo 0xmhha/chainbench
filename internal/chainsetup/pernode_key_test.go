@@ -96,8 +96,8 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 	// The request names no source, and the node table does. This is the case a
 	// handler reading the request called a preset: the step reports what it
 	// actually took.
-	if done.Source != lifecycle.ChainEnsureKeysFromBlueprint {
-		t.Errorf("the step reported %s, want ChainEnsureKeysFromBlueprint", done.Source)
+	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainEnsureKeysFromBlueprint {
+		t.Errorf("the step reported %v, want [ChainEnsureKeysFromBlueprint]", done.Passed)
 	}
 
 	set, err := preset.LoadKeyPreset(keysDir)

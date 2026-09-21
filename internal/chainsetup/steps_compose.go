@@ -238,10 +238,12 @@ func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, op
 	if opts.Existing != "" {
 		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
 		if rerr != nil {
-			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+				fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr))
 		}
 		if !json.Valid(b) {
-			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+				fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing))
 		}
 		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
 			return nil, genesis.Artifacts{}, err
@@ -282,7 +284,8 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 	if w.state.Target.IsRemote() {
 		boot, ok := firstProducer(w.state.Nodes)
 		if !ok {
-			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on")
+			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+				fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on"))
 		}
 		access, err := w.machineFor(boot)
 		if err != nil {
@@ -290,7 +293,8 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		}
 		cmdr, ok := access.Driver.(process.Commander)
 		if !ok {
-			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there")
+			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+				fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there"))
 		}
 		cfg.Files = access.Files
 		cfg.WorkDir = path.Join(access.DataRoot, genesisWorkDir)
