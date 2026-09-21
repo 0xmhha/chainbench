@@ -2,8 +2,10 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"strconv"
@@ -25,13 +27,22 @@ import (
 // expects — a node configured for one build and launched on another is the
 // failure this path exists to prevent.
 
+// The kinds of failure acting on one node has.
+var (
+	// errOpNoSuchNode: the index named is not in the node table.
+	errOpNoSuchNode = errors.New("no such node in the table")
+	// errOpNothingToReplace: a swap that names no binary, no config change and
+	// no genesis overlay has nothing to do.
+	errOpNothingToReplace = errors.New("the swap asks for no change")
+)
+
 func (w *Workspace) nodeAt(index int) (int, error) {
 	for i, ns := range w.state.Nodes {
 		if ns.Index == index {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("chainsetup: no node %d in the table", index)
+	return -1, ofKind(errOpNoSuchNode, fmt.Errorf("chainsetup: no node %d in the table", index))
 }
 
 // StopNode stops one node by index and clears its pid; the node keeps its
@@ -136,7 +147,8 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
-		return "", fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index)
+		return "", ofKind(errOpNothingToReplace,
+			fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index))
 	}
 	if err := w.allowNode("SwapNode", index); err != nil {
 		return "", err
@@ -334,4 +346,30 @@ func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary
 	w.state.Binary = binary
 	w.markStep("hardfork", fmt.Sprintf("%s -> %s at block %d on %s", plan.FromChain, plan.ToChain, plan.Block, binary))
 	return ns, nil
+}
+
+// NodeOpFailure is which state a failure of acting on one node is.
+//
+// The borrowed ones are the point. Deciding which binary to launch fails the
+// way the launch stage fails, and re-initializing one node's datadir fails the
+// way init does — the work is the same work, so it keeps the same name rather
+// than getting a second one under this block.
+func NodeOpFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errOpNoSuchNode):
+		return lifecycle.ChainOpFailNoSuchNode
+	case errors.Is(err, errOpNothingToReplace):
+		return lifecycle.ChainOpReplaceNodeFailNothingAsked
+	case errors.Is(err, errOpPrecondition):
+		return lifecycle.ChainOpFailPrecondition
+	case errors.Is(err, errLaunchNoBinary):
+		return lifecycle.ChainLaunchNodesFailNoBinary
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	case errors.Is(err, errInitTargetUnable):
+		return lifecycle.ChainInitNodesFailTargetUnable
+	case errors.Is(err, errInitGenesisUnreadable):
+		return lifecycle.ChainInitNodesFailGenesisUnreadable
+	}
+	return ConfigFailure(err)
 }

@@ -82,7 +82,7 @@ go run ./scripts/inventory/code-graph . > graph.json
 
 **`hostOf(rpc string)` 2곳.** `mcp/network_tools.go:165`와
 `cmd/chainbench/networkcmd/network.go:210`. 표면 두 곳이 같은 6줄을 각자 갖고 있다.
-(`chainsetup/discover.go`의 동명 함수는 인자와 본문이 달라 이름만 겹친다.)
+(`chainsetup/observe_discover.go`의 동명 함수는 인자와 본문이 달라 이름만 겹친다.)
 
 **`deps(cmd)` 10곳.** 6줄짜리가 `cmd/chainbench/*` 전역에 퍼져 있다. 그런데
 `cmd/chainbench/surface`라는 공용 패키지가 이미 있고 fan-in 이 9다. 자리가 있는데 안 쓴다.
@@ -103,7 +103,7 @@ go run ./scripts/inventory/code-graph . > graph.json
 
 | 줄 | 분기 | 깊이 | 위치 |
 |---|---|---|---|
-| 191 | 24 | 3 | `internal/chainsetup/verbs_up.go:130` `netUpFrom` |
+| 191 | 24 | 3 | `internal/chainsetup/verb/verbs_up.go:130` `netUpFrom` |
 | 182 | 46 | 3 | `internal/dsl/spec_v2.go:357` `lowerCase` |
 | 175 | 30 | 3 | `internal/testengine/compose.go:86` `compositionOf` |
 | 172 | 33 | 4 | `internal/arch/surface.go:230` `Entries` |

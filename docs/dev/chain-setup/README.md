@@ -32,7 +32,7 @@
 `bootstrap.type`으로 선언된다.
 
 > **단계 이름·소유자 갱신 (2026-09-11).** 아래는 `chainbench chain up` 이 실제로 도는 순서다
-> (`internal/chainsetup/verbs_up.go:120` 의 `upStepNames`). 각 단계는 같은 이름의 CLI 하위
+> (`internal/chainsetup/verb/verbs_up.go:120` 의 `upStepNames`). 각 단계는 같은 이름의 CLI 하위
 > 명령으로 따로 실행할 수도 있다(`chainbench chain place` 등). **`place` 가 `keys` 앞이다** —
 > 거버넌스 멤버가 배치에서 나오는 ip/port 를 담기 때문이며, 이 순서 정정이 case-1 의 발견이었다.
 

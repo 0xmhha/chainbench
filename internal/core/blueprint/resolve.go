@@ -74,28 +74,28 @@ func Resolve(bp Blueprint, in Inputs) (ResolvedNetwork, error) {
 		Alloc:      bp.Alloc,
 		Genesis:    bp.Genesis,
 		Governance: bp.Governance,
-		Sources:    map[string]Source{},
+		Origins:    map[string]Origin{},
 	}
 	if bp.Chain != "" {
 		r.Chain = bp.Chain
-		r.Sources["chain"] = FromBlueprint
+		r.Origins["chain"] = FromBlueprint
 	} else if r.Chain != "" {
-		r.Sources["chain"] = FromChain
+		r.Origins["chain"] = FromChain
 	}
-	r.Sources["peering"] = FromDefault
+	r.Origins["peering"] = FromDefault
 	if bp.Peering != "" {
-		r.Sources["peering"] = FromBlueprint
+		r.Origins["peering"] = FromBlueprint
 	}
 
 	r.ChainID = in.Chain.ChainID
-	r.Sources["chain_id"] = FromChain
+	r.Origins["chain_id"] = FromChain
 	if bp.Genesis != nil && bp.Genesis.ChainID != 0 {
 		r.ChainID = bp.Genesis.ChainID
-		r.Sources["chain_id"] = FromBlueprint
+		r.Origins["chain_id"] = FromBlueprint
 	}
 
 	for i, dn := range bp.Nodes {
-		rn, err := resolveNode(i, dn, bp, in, r.Sources)
+		rn, err := resolveNode(i, dn, bp, in, r.Origins)
 		if err != nil {
 			return ResolvedNetwork{}, err
 		}
@@ -105,7 +105,7 @@ func Resolve(bp Blueprint, in Inputs) (ResolvedNetwork, error) {
 	if err := checkRefs(bp, r.Nodes); err != nil {
 		return ResolvedNetwork{}, err
 	}
-	r.Validators, err = resolveValidators(bp, r.Nodes, r.Sources)
+	r.Validators, err = resolveValidators(bp, r.Nodes, r.Origins)
 	if err != nil {
 		return ResolvedNetwork{}, err
 	}
@@ -167,33 +167,33 @@ func sorted(set map[string]bool) []string {
 }
 
 // resolveNode decides one node's every field and records where each came from.
-func resolveNode(i int, dn Node, bp Blueprint, in Inputs, src map[string]Source) (ResolvedNode, error) {
+func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]Origin) (ResolvedNode, error) {
 	p := in.Placed[i]
 	at := func(field string) string { return fmt.Sprintf("nodes[%d].%s", i, field) }
 
 	rn := ResolvedNode{Index: p.Index, Host: p.Host, Launch: dn.Launch}
-	src[at("index")] = FromInventory
-	src[at("host")] = FromInventory
+	origins[at("index")] = FromInventory
+	origins[at("host")] = FromInventory
 
 	rn.Role = p.Role
-	src[at("role")] = FromInventory
+	origins[at("role")] = FromInventory
 	if dn.Role != "" {
 		role, err := node.NormalizeRole(dn.Role)
 		if err != nil {
 			return ResolvedNode{}, fmt.Errorf("blueprint: resolve: nodes[%d]: %w", i, err)
 		}
 		rn.Role = role
-		src[at("role")] = FromBlueprint
+		origins[at("role")] = FromBlueprint
 	}
 
 	rn.Name = string(node.RoleLabel(rn.Role, p.Ord))
-	src[at("name")] = FromInventory
+	origins[at("name")] = FromInventory
 	if dn.Name != "" {
 		rn.Name = dn.Name
-		src[at("name")] = FromBlueprint
+		origins[at("name")] = FromBlueprint
 	}
 
-	rn.Ports = mergePorts(dn.Ports, p.Ports, at, src)
+	rn.Ports = mergePorts(dn.Ports, p.Ports, at, origins)
 
 	// Paths are named after the node's identity label, never after its name:
 	// a name may change with a role, and a datadir that moves with it loses
@@ -202,21 +202,21 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, src map[string]Source)
 	rn.DataDir = in.Layout.DataDir(label)
 	rn.ConfigPath = in.Layout.ConfigPath(label)
 	rn.LogPath = in.Layout.LogPath(label)
-	src[at("data_dir")] = FromInventory
+	origins[at("data_dir")] = FromInventory
 
 	rn.SyncMode = defaultSyncMode
-	src[at("sync_mode")] = FromDefault
+	origins[at("sync_mode")] = FromDefault
 	if dn.SyncMode != "" {
 		rn.SyncMode = dn.SyncMode
-		src[at("sync_mode")] = FromBlueprint
+		origins[at("sync_mode")] = FromBlueprint
 	}
 
 	rn.Binary = in.Chain.Binary
-	src[at("binary")] = FromChain
+	origins[at("binary")] = FromChain
 	if bp.Binaries != nil {
 		if bp.Binaries.Node != "" {
 			rn.Binary = bp.Binaries.Node
-			src[at("binary")] = FromBlueprint
+			origins[at("binary")] = FromBlueprint
 		}
 		// Matched against the RESOLVED name, not the declared one. A document
 		// that names no nodes still addresses them by role label, and matching
@@ -229,13 +229,13 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, src map[string]Source)
 			for _, n := range o.Nodes {
 				if n == rn.Name {
 					rn.Binary = o.Node
-					src[at("binary")] = FromBlueprint
+					origins[at("binary")] = FromBlueprint
 				}
 			}
 		}
 	}
 
-	if err := resolveKeys(&rn, dn, in, i, at, src); err != nil {
+	if err := resolveKeys(&rn, dn, in, i, at, origins); err != nil {
 		return ResolvedNode{}, err
 	}
 	return rn, nil
@@ -243,7 +243,7 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, src map[string]Source)
 
 // mergePorts takes each port from the document when it is pinned there and from
 // the placement otherwise.
-func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string) string, src map[string]Source) node.Endpoints {
+func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string) string, origins map[string]Origin) node.Endpoints {
 	out := placed
 	// Each row is one port, the field it lands in, and how to read it off a
 	// declaration. Listing them is deliberate: a port added to node.Endpoints
@@ -264,13 +264,13 @@ func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string)
 	}
 	for _, f := range fields {
 		key := at("ports." + f.name)
-		src[key] = FromInventory
+		origins[key] = FromInventory
 		if declared == nil {
 			continue
 		}
 		if v := f.of(*declared); v != 0 {
 			*f.to = v
-			src[key] = FromBlueprint
+			origins[key] = FromBlueprint
 		}
 	}
 	return out
@@ -287,18 +287,18 @@ func portFields() []string {
 // A missing key is an error naming the node and what would supply it. The
 // alternative is a node launched with an empty identity, which joins nothing
 // and reports nothing wrong.
-func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) string, src map[string]Source) error {
+func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) string, origins map[string]Origin) error {
 	switch {
 	case dn.NodeKey != nil:
 		rn.NodeKey = *dn.NodeKey
-		src[at("nodekey")] = FromBlueprint
+		origins[at("nodekey")] = FromBlueprint
 	case in.Keys != nil:
 		e, ok := in.Keys.Node(rn.Index)
 		if !ok {
 			return fmt.Errorf("blueprint: resolve: nodes[%d] (%s): the key set has no entry %d — declare a nodekey or use a set that covers %d nodes", i, rn.Name, rn.Index, len(in.Placed))
 		}
 		rn.NodeKey = NodeKeyRef{Hex: e.Nodekey.Hex()}
-		src[at("nodekey")] = FromKeySet
+		origins[at("nodekey")] = FromKeySet
 	default:
 		return fmt.Errorf("blueprint: resolve: nodes[%d] (%s): no nodekey — declare one or resolve with a key set", i, rn.Name)
 	}
@@ -312,7 +312,7 @@ func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) st
 	if dn.Account != nil {
 		acct := *dn.Account
 		rn.Account = &acct
-		src[at("account")] = FromBlueprint
+		origins[at("account")] = FromBlueprint
 	}
 	return nil
 }
@@ -322,15 +322,15 @@ func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) st
 // Node order, not the order a set iterates: the genesis records the sealing set
 // as a list, and a list that comes out differently on two runs produces two
 // different genesis files from one document.
-func resolveValidators(bp Blueprint, nodes []ResolvedNode, src map[string]Source) ([]string, error) {
+func resolveValidators(bp Blueprint, nodes []ResolvedNode, origins map[string]Origin) ([]string, error) {
 	if bp.Validators != nil && len(bp.Validators.Explicit) > 0 {
 		// Already held against the resolved node table by checkRefs.
-		src["validators"] = FromBlueprint
+		origins["validators"] = FromBlueprint
 		return append([]string(nil), bp.Validators.Explicit...), nil
 	}
-	src["validators"] = FromDefault
+	origins["validators"] = FromDefault
 	if bp.Validators != nil && bp.Validators.From != "" {
-		src["validators"] = FromBlueprint
+		origins["validators"] = FromBlueprint
 	}
 	var out []string
 	for _, n := range nodes {

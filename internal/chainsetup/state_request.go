@@ -120,3 +120,24 @@ type NetUpIn struct {
 // marked done — and a test holds the two lists to the same nine names in the
 // same order.
 var UpStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
+
+// OpStepNames is what the record can hold besides the ladder: an operation on a
+// network that is already composed.
+//
+// It exists because the two kinds share one map. State.Steps is keyed by name
+// and a reader takes the subset it means — resume walks UpStepNames, preflight
+// looks at "start" — so an operation lands beside a rung and nothing says which
+// is which. Nothing breaks today because every reader names what it wants, but
+// the next person to call markStep has no way to tell which kind they are
+// adding, and composeNeeds answers nil for a name it does not know, which makes
+// every prerequisite of a typo vacuously satisfied.
+//
+// So the split is written down rather than left to be inferred, and
+// TestRecordedStepsAreDeclared holds the recording to it.
+//
+// These have no order. A ladder rung follows the one before it; an operation
+// happens when asked, as often as asked, and its record is the last time.
+var OpStepNames = []string{
+	"stop", "rm", "restart", "hardfork", "cross-fork",
+	"start-node", "stop-node", "swap-node",
+}

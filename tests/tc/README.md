@@ -40,6 +40,29 @@ tests/tc/
 `string-handling` 여섯 건은 각자 다른 genesis 를 요구한다. 실행기가 구성이 갈리는
 묶음을 거부하므로(`sameComposition`) 조용히 틀린 네트워크에서 돌지는 않는다.
 
+### env 가 같다고 같이 돌릴 수 있는 것은 아니다
+
+`sameComposition` 이 보는 것은 **어떤 망을 세우는가** 이지 그 망에 무엇을 하는가가
+아니다. 체인 상태를 바꾸는 케이스끼리는 env 가 같아도 서로를 밟는다.
+
+케이스가 "자기 완결" 이라고 적힌 것은 **깨끗한 망을 기준으로** 그렇다는 뜻이고,
+서로에 대해 독립이라는 뜻이 아니다. 잰 예가 있다(2026-09-21).
+
+| | 하는 일 |
+|---|---|
+| `regression/wbft/04-validator-add-member-executes` | `0x5c646aa6(node5, 4)` — node5 를 멤버로 추가 |
+| `regression/wbft/05-validator-remove-member-executes` | `0x5c646aa6(node5, 2)` 로 **자기가 먼저 추가**한 뒤 제거 |
+
+한 망에 04 를 먼저 올리면 node5 가 이미 멤버라 05 의 추가가 revert 하고, 05 는
+`step 2 (sendTx) ... reverted (status 0x0)` 로 실패한다. 둘 다 단독으로는 통과한다.
+
+멤버 집합이 바뀌면 그 뒤에 오는 **다른 거버넌스 케이스**도 영향을 받는다. 제안이
+자동 실행되는 데 필요한 승인 수가 멤버 수에 달려 있기 때문이다.
+
+그래서 **여러 케이스를 한 망에 올릴 때는 상태를 바꾸는 것이 있는지 먼저 본다.**
+확실하게 하려면 케이스마다 망을 새로 세우고 끝나면 내린다 — 조립 시간이 케이스 수만큼
+들지만, 결과가 그 케이스에 대한 것이 된다.
+
 작성 방법은 `../../docs/guide/dsl-authoring.md` 에 있다.
 
 ## 2. 디렉터리별 내용
@@ -426,7 +449,51 @@ fee-delegation 4건의 `personal_*` API 경로다. 후자는 로컬 서명으로
 
 케이스는 `"env": "<id>"` 로 환경을 부른다. `internal/dsl.ReadFiles` 가 케이스 파일이 있는 디렉터리부터 위로 올라가며 `<id>.env.json` 과 `env/<id>.env.json` 을 찾는다. 그래서 `tests/tc/env/` 하나로 모든 깊이의 케이스가 같은 환경 선언을 공유한다.
 
-## 7. 함께 있는 문서
+## 7. 실행 전에 있어야 하는 바이너리
+
+케이스 대부분은 `--binary` 로 준 하나면 돈다. **여섯 개 env 는 환경변수로 바이너리를
+더 받는다.** 안 걸어두면 `${VAR:-이름}` 의 기본값인 맨 이름으로 떨어지고, 그 이름은
+PATH 에 없으므로 실행이 이렇게 멈춘다.
+
+```
+exec: "gstable": executable file not found in $PATH
+```
+
+| env | 변수 | 무엇을 가리키나 |
+|---|---|---|
+| `wbft-bp4-binvar` | `GWBFT_BIN` | go-wbft 빌드 (make 가 `gwemix` 로 만든다) |
+| `wemix-bp4-binvar` | `GWEMIX_BIN` | go-wemix 빌드 |
+| `wemix-to-wbft`, `wemix-to-wbft-bp2` | `GWEMIX_BIN`, `GWBFT_BIN` | 넘겨주는 쪽과 넘겨받는 쪽 |
+| `stablenet-bp4-en1-default-upgrade` | `GSTABLE_UPGRADE_BIN` | **default 와 다른** go-stablenet 빌드 |
+| `stablenet-restart-at-boho` | `GSTABLE_BIN`, `GSTABLE_POSTFORK_BIN` | boho 도입 **양쪽**의 go-stablenet 빌드 |
+
+### go-stablenet 두 빌드 만들기
+
+뒤의 둘은 go-stablenet 을 **두 커밋에서** 빌드해야 한다. `ad0122af0` 은 boho 를 넣은
+커밋의 부모라 `BohoBlock` 자체가 없고, 그 뒤 아무 커밋이나가 상대다.
+
+```sh
+cd <go-stablenet>
+git worktree add /tmp/gs-prefork ad0122af0
+cd /tmp/gs-prefork && make gstable          # boho 를 모르는 빌드
+
+export GSTABLE_BIN=/tmp/gs-prefork/build/bin/gstable
+export GSTABLE_POSTFORK_BIN=<go-stablenet>/build/bin/gstable
+export GSTABLE_UPGRADE_BIN=$GSTABLE_BIN
+```
+
+두 빌드가 실제로 다른지는 이렇게 본다 — 앞은 0, 뒤는 0이 아니어야 한다.
+
+```sh
+strings $GSTABLE_BIN         | grep -ci bohoblock
+strings $GSTABLE_POSTFORK_BIN | grep -ci bohoblock
+```
+
+`GSTABLE_UPGRADE_BIN` 을 안 걸면 `01b-signature-compat-across-swap` 은 **같은 빌드로**
+스왑한다. 실행은 되지만 그 케이스가 검증한다는 것("노드가 **다른** 바이너리로 재기동해도
+tx 가 보존된다")을 확인하지 못한다.
+
+## 8. 함께 있는 문서
 
 - `SPECS.md` — 스펙 이관 기록 (레거시 시절 `tests/specs/README.md`)
 - `CHAIN-BRINGUP.md` — 체인 구성 케이스 설명 (레거시 시절 `tests/cases/README.md`)

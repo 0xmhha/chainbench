@@ -1,7 +1,9 @@
 package chainsetup
 
 import (
+	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
@@ -154,10 +156,20 @@ var verbNeeds = map[string]verbNeed{
 //
 // One function, so one message shape. The four wordings this replaced sent a
 // reader to three different places for the same missing thing.
+// errOpPrecondition is what an operational verb refuses for: the workspace is
+// not in a state it can act on.
+//
+// The composition has no equivalent because the transition table removes its
+// preconditions — a stage cannot be entered without the one before it. The
+// operational verbs have no such order, so this stays a condition a caller has
+// to be told about.
+var errOpPrecondition = errors.New("the workspace is not in a state this verb can act on")
+
 func (w *Workspace) allow(verb string) error {
 	need, declared := verbNeeds[verb]
 	if !declared {
-		return fmt.Errorf("chainsetup: %s: this verb declares no requirements — add it to verbNeeds", verb)
+		return ofKind(errOpPrecondition,
+			fmt.Errorf("chainsetup: %s: this verb declares no requirements — add it to verbNeeds", verb))
 	}
 	if need.step != "" {
 		if err := w.require(need.step); err != nil {
@@ -174,12 +186,14 @@ func (w *Workspace) allow(verb string) error {
 	switch need.run {
 	case placed:
 		if len(w.state.Nodes) == 0 {
-			return fmt.Errorf("chainsetup: %s: the node table is empty — run `chain place` first", lower(verb))
+			return ofKind(errOpPrecondition,
+				fmt.Errorf("chainsetup: %s: the node table is empty — run `chain place` first", lower(verb)))
 		}
 	case stopped:
 		for _, ns := range w.state.Nodes {
 			if ns.PID > 0 {
-				return fmt.Errorf("chainsetup: %s: node%d is running (pid %d) — run `chain stop` first", lower(verb), ns.Index, ns.PID)
+				return ofKind(errOpPrecondition,
+					fmt.Errorf("chainsetup: %s: node%d is running (pid %d) — run `chain stop` first", lower(verb), ns.Index, ns.PID))
 			}
 		}
 	}
@@ -215,11 +229,13 @@ func checkNode(verb string, needs []nodeNeed, ns node.Record) error {
 			// than a condition that fell through the switch.
 		case launched:
 			if len(ns.Args) == 0 {
-				return fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index)
+				return ofKind(errOpPrecondition,
+					fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index))
 			}
 		case down:
 			if ns.PID > 0 {
-				return fmt.Errorf("chainsetup: %s: node%d is already running (pid %d)", lower(verb), ns.Index, ns.PID)
+				return ofKind(errOpPrecondition,
+					fmt.Errorf("chainsetup: %s: node%d is already running (pid %d)", lower(verb), ns.Index, ns.PID))
 			}
 		}
 	}
@@ -239,4 +255,17 @@ func lower(verb string) string {
 		out = append(out, r)
 	}
 	return string(out)
+}
+
+// OpPreconditionFailure is the state a refused precondition is.
+//
+// It is one state for every operational verb that checks, because it is one
+// condition: the workspace is not in a state the verb can act on. Which verb
+// asked is in the message and in the record; making it six states would make a
+// reader compare two runs by knowing which verb happened to notice.
+func OpPreconditionFailure(err error) lifecycle.Status {
+	if errors.Is(err, errOpPrecondition) {
+		return lifecycle.ChainOpFailPrecondition
+	}
+	return lifecycle.FailStageUnclassified
 }

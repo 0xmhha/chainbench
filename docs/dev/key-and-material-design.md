@@ -108,7 +108,7 @@ type Deps struct { Generate func() ...; DeriveAddress func(priv []byte) (string,
 비효율이 아니라 결함**이다.
 
 ```go
-// internal/core/filestore/provision.go:52
+// internal/core/filestore/filestore.go — 재업로드 판정 지점
 exists, err := p.sink.Exists(ctx, full)
 if exists { res.Skipped++; continue }      // ← 내용을 보지 않는다
 ```
@@ -220,7 +220,7 @@ type FileStore interface {
 자료의 이름을 새로 만들 필요가 없다. **DSL 이 이미 이름을 선언한다.**
 
 ```go
-// internal/testspec/spec_v2.go — EnvV2 는 "재사용 단위" 로 정의돼 있다
+// internal/dsl/spec_v2.go — EnvV2 는 "재사용 단위" 로 정의돼 있다
 type EnvV2 struct {
     ID      string   `json:"id"`                // ← 이 환경의 이름
     Chain   string   `json:"chain"`

@@ -90,6 +90,34 @@
       같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
       `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
+- [ ] **T. 테스트 영역(0x8000)의 상태를 잰 적이 없다** — 근거: [`architecture/design-v3/state-machine-02-states.md`](architecture/design-v3/state-machine-02-states.md).
+      그 문서가 네 블록(`TEST_PENDING`·`RUNNING`·`REPORTING`·`DONE`)의 BASE 만 정해 두고 "세부는 이
+      문서가 정하지 않는다" 로 남겼다. `lifecycle.areaTest` 는 선언만 있고 상태가 하나도 없다.
+      **잰 것**: `internal/testengine` 은 23파일 4,347줄이고 실패 지점이 103곳, `RunSuite` 한
+      함수 안에만 분기가 27개다. 운영 영역이 65곳에 커밋 셋·695줄이었으니 그 1.5배로 본다.
+      **방법은 운영 영역과 같다** — 실패를 먼저 재서 문서로 내고, 상태와 전이를 쓰고, 핸들러가
+      자기 상태를 말하게 한다. 남은 것 중 유일하게 **라이브 검증이 필요**하다(전 케이스가 지나는
+      길목이라 일부만 돌려서는 확신할 수 없고, 209건 순차가 약 4시간).
+- [ ] **C2-1. 골든 preset 의 죽은 절을 지울지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B 의 "남은 결정".
+      이력으로 확인했다: `chains`·`data`·`ports`·`name` 과 yaml 전용
+      `nodes`·`description` 은 읽는 코드가 없고, `data`·`name` 은 저장소 전 이력에 독자가 0이다.
+      **두 범위**: (A) 그 여섯만 — yaml 76줄 + `internal/preset/chain.go` 26줄, 깨지는 테스트
+      없음. (B) 테스트만 읽는 `roles`·`identities`·`producers`·`validators` 까지 — 추가로 yaml
+      184줄·구조체 41줄이 빠지고 **테스트 넷(265줄)과 `poa.EnvFromPreset` 이 함께 없어진다**.
+      손보다 판단이 크다 — 지워지는 검사는 "이 환경은 이런 모양이었다" 는 기록이기도 하다.
+- [ ] **C2-2. `preset.Chain` 을 쓰임에 맞게 개명할지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B, 그리고 `internal/preset/chain.go`.
+      쓰임으로는 하드포크 일정표인데(프로덕션이 읽는 것은 `Upgrade.AtFork`·`ForkBlock` 둘뿐), 개명하면
+      `direction.md` 의 판단을 **네 번째로** 뒤집는 것이 된다. 이전 세 번과 다른 점은 근거가
+      취향이 아니라 이력이라는 것뿐이다. **두 범위**: (가) 타입·함수 이름만 — 코드 7파일 12곳,
+      문서 21곳. (나) 디렉터리까지(`presets/chain` → 다른 이름) — yaml 2파일 이동에
+      `ChainDir`·`hardforkPresetDir`·테스트 경로 6곳, 문서 11파일 21곳. DSL 정의서 3개는 이름만
+      부르므로 안 건드린다. **C2-1(B)를 먼저 하면 타입에 `Upgrade` 만 남아 이 결정이 자명해진다.**
+- [ ] **`preset.ChainDir` 은 쓰는 곳이 0이다** — 근거: `internal/preset/doc.go:31`.
+      선언의 주석은 "a caller that needs a default asks for it rather than spelling it" 이라고
+      적었는데, 정작 `internal/testengine/genesis_decl.go:112` 가 `hardforkPresetDir` 라는 자기
+      상수를 따로 갖고 같은 문자열을 쓴다. 상수가 있는데 아무도 안 묻는 것이라 C2 의 표면 정리에서
+      놓쳤다. 한 줄짜리이고 C2-2(나)를 하면 같이 정리된다.
+
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은
 [`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md).
@@ -894,7 +922,7 @@ E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 
 
 정리 대상(측정으로 확정):
 
-- `internal/core/session/netreg.go` — `core/netreg` 가 session 으로 합쳐졌는데 파일명·에러
+- `netreg.go` — `core/netreg` 가 session 으로 합쳐졌는데 파일명·에러
   접두("state: …")·주석이 옛 `core/state` 어휘를 유지(E0A 에서 관찰). session 어휘로 통일.
 - `core/collector` 안의 "옛 `core/obs`"·"옛 `core/logs`", `core/nodeconfig` 안의 "옛
   `core/launchopt`"·"옛 `core/config`" 등 §3 표가 나열한 흡수 이력 표기 — 코드 심볼은 이미
@@ -969,7 +997,7 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 | # | 작업 | 선행 | 핵심 게이트 | 상태 |
 |---|---|---|---|---|
 | **U0** | **규칙 확정과 측정 고정** | — | 도구가 157 항목·우회 109 를 재현 · 라체트가 표면별 상한을 고정 · 동등성 테스트 본보기 1건 · 문서 사이 모순 0 | ☑ **2026-09-05.** 문서 쪽은 #349 에서 끝냈다(`architecture-v2` §2 개정, S5·S6 폐기, 표면 통일 설계에 대체 표시). 코드 쪽은 이번에 붙였다. 인벤토리 걷기를 `internal/arch/surface.go` 로 옮겨 **도구와 테스트가 같은 코드를 센다**(두 벌이면 숫자가 갈라진다). `TestSurfacesReachThroughApp` 이 표면별 예산(CLI 40 · MCP 24 · DSL 18 · DSLa 27)을 **양방향으로** 잡는다. 넘으면 빚이 늘었다고 막고, 밑돌면 작업하고도 천장을 안 내렸다고 막는다. 실제로 41 로 올리고 39 로 내려 둘 다 실패하는 것을 확인했다. **동등성 테스트 본보기**는 `cmd/chainbench/resourcecmd/parity_test.go` 의 `TestParity_ResourcePool` 이다. `resource pool` 은 CLI 와 MCP 가 이미 둘 다 `app.NetPool` 을 부르는 네 쌍 중 하나라 지금 통과한다. 렌더링이 아니라 **답**을 비교한다(양쪽 JSON 을 값으로 디코드). MCP 쪽에 `res.Slots++` 를 심어 실제로 어긋남을 잡는 것을 확인하고 되돌렸다 |
-| **U1** | **CLI 를 import 가능한 패키지로** (U0 의 본보기가 `resourcecmd` 에서 돌아가는 것은 그 패키지가 이미 import 가능하기 때문이다. `package main` 에 남은 32개는 같은 테스트를 쓸 수 없다.) — `package main` 안에 cobra 명령 생성자가 **32개** 있어 그 명령들은 테스트에서 부를 수 없다. 표면 패키지로 옮기고 `package main` 은 배선만 남긴다(Helm 이 `cmd/helm` 을 `pkg/cmd` 로 옮긴 것과 같은 이유). 동등성 테스트가 가능해지는 전제다 | U0 | `package main` 의 명령 생성자 32 → 0 · 옮긴 그룹마다 표면 테스트 1건 이상 · E9 가 "cmd=main 이라 불가"로 이월한 CLI-vs-MCP diff 가 가능해짐 | ☑ **32 → 1 (2026-09-05).** `package main` 에는 이제 루트 하나만 남았다(149줄, `main.go`·`root.go`·`interrupt.go`). Helm 이 `cmd/helm/helm.go` 를 50줄 배선으로 두고 명령을 `pkg/cmd` 에 옮긴 것과 같은 모양이다. 표면 패키지는 여덟 개가 늘었다. `txcmd`(tx·contract) · `accountcmd`(account·faucet) · `catalogcmd`(chains·capabilities) · `nodecmd` · `lifecyclecmd`(status·stop·clean·verify·consensus) · `suitecmd`(run·validate·migrate-spec) · `reportcmd`(report·log) · `upgradecmd`(upgrade·genesis·run·hardfork). 그룹이 곧 패키지라는 기존 관례(`keyringcmd`·`chaincmd`·`resourcecmd`)를 그대로 따랐다.
+| **U1** | **CLI 를 import 가능한 패키지로** (U0 의 본보기가 `resourcecmd` 에서 돌아가는 것은 그 패키지가 이미 import 가능하기 때문이다. `package main` 에 남은 32개는 같은 테스트를 쓸 수 없다.) — `package main` 안에 cobra 명령 생성자가 **32개** 있어 그 명령들은 테스트에서 부를 수 없다. 표면 패키지로 옮기고 `package main` 은 배선만 남긴다(Helm 이 `cmd/helm` 을 `pkg/cmd` 로 옮긴 것과 같은 이유). 동등성 테스트가 가능해지는 전제다 | U0 | `package main` 의 명령 생성자 32 → 0 · 옮긴 그룹마다 표면 테스트 1건 이상 · E9 가 "cmd=main 이라 불가"로 이월한 CLI-vs-MCP diff 가 가능해짐 | ☑ **32 → 1 (2026-09-05).** `package main` 에는 이제 루트 하나만 남았다(149줄, `main.go`·`root.go`·`interrupt.go`). Helm 이 자기 `helm.go` 를 50줄 배선으로 두고 명령을 `pkg/cmd` 에 옮긴 것과 같은 모양이다. 표면 패키지는 여덟 개가 늘었다. `txcmd`(tx·contract) · `accountcmd`(account·faucet) · `catalogcmd`(chains·capabilities) · `nodecmd` · `lifecyclecmd`(status·stop·clean·verify·consensus) · `suitecmd`(run·validate·migrate-spec) · `reportcmd`(report·log) · `upgradecmd`(upgrade·genesis·run·hardfork). 그룹이 곧 패키지라는 기존 관례(`keyringcmd`·`chaincmd`·`resourcecmd`)를 그대로 따랐다.
 
 **이동은 순수하다**: 라체트 109 불변, 명령 트리 불변.
 
@@ -2127,7 +2155,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     지키려던 성질은 "mkdir 이 `&&` 가 아니라 `|| exit 1;` 로 갈라지고 nohup 이 그 뒤에 온다"는
     것이다. 인접을 박으면 그 틈에 올바른 것을 더할 때마다 깨진다. 성질로 바꿨다.
 - [x] **L2. 대상에서 키 검증(공개 신원만 반환) — 완료 (2026-09-12).** 가르는 일(2026-09-11)에
-  이어 **전송 자체를 없앴다**. 재확인: `grep -n "func LoadPresetWithKeys" internal/core/keyring/store/preset.go`
+  이어 **전송 자체를 없앴다**. 재확인: `grep -n "func LoadPresetWithKeys" internal/core/keyring/preset.go`
   가 둘을 보이고, 인덱스 읽기(`LoadPresetAt`)는 신원만 돌려준다. 아래 본문의 `LoadPublicPreset`
   은 그 중간 단계의 이름이고, 지금은 `LoadPreset`(신원) / `LoadPresetWithKeys`(키) 로 갈렸다.
   **(원래 표기)** 가르는 일은 했다 (2026-09-11). 전송을 없애는 일이 남았다.
@@ -2193,7 +2221,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     돌려줘서 우연히 같았다. 그 테스트는 버렸다. 판정에 `alive` 가 필요한 성질은 응답하는 노드가
     있어야 하므로 reconcile 수준에서 보는 것이 맞다.
 - [x] **`binaryAliases` 와 객체형 참조 — 닫혔다 (2026-09-12).** 별칭은 배선됐고 실사용
-  호출부가 있다(`internal/app/upgrade.go:249` → `resource.WorkspaceConfig.BinaryPath`; 재확인:
+  호출부가 있었다(당시 `app/upgrade.go:249` → `resource.WorkspaceConfig.BinaryPath`; 재확인:
   `grep -rn "BinaryPath(" internal/ cmd/ | grep -v _test.go`). 객체형 참조는 사용자 결정으로
   철회했다. 양쪽이 닫혔으므로 `◐` 가 아니다.
   **(원래 표기)** `binaryAliases` 는 배선했다 (2026-09-11). 대상에서 **bare 바이너리 이름**이 workspace-config 를 거쳐 풀린다 —

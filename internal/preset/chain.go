@@ -11,16 +11,22 @@ import (
 //
 // Presets come in two families, and the name says which this is. A CHAIN preset
 // declares how a network is configured; a KEY preset declares the identities it
-// runs as ([Key], read from [KeysDir]). Naming this one after the
-// family rather than after the kind is deliberate: of its eleven sections only
-// "upgrade" is about a hardfork, and the other ten — chains, roles, identities,
-// producers, validators, data, ports, nodes — are ordinary chain configuration
-// that a preset of another kind would declare the same way. presets/chain is
-// one kind; the directory layout is presets/<kind>/ and more may follow.
+// runs as ([Key], read from [KeysDir]). presets/chain is one kind; the
+// directory layout is presets/<kind>/ and more may follow.
 //
-// It is the single, declarative record of the environment under test: every
-// value BuildPlan needs comes from here, so there are no code defaults to hide
-// what was actually run.
+// What is still read is narrower than what the document holds, and the gap is
+// worth stating rather than discovering. Production reads Upgrade.AtFork and
+// Upgrade.ForkBlock and nothing else. Roles, Identities, Producers and
+// Validators are read only by tests that hold this document to the key set it
+// describes. Chains, Data, Ports and Name are read by nothing, and the yaml's
+// "description" and "nodes" keys have no field here at all, so whatever they
+// say is decoded into nothing.
+//
+// The reason is history, not oversight: those sections were the hardfork
+// handoff composer's inputs, and absorbing that composer into the ordinary
+// composition path (#419) left the composition taking the same facts from the
+// topology, the chain declaration, the server set and the key set. The document
+// kept them. See design-v3/cohesion-candidates-2026-09-21.md §B.
 //
 // It was called Profile, which named neither family nor kind, and matched
 // neither the directory it lives in nor the DSL field that selects it.
@@ -101,20 +107,6 @@ type Governance struct {
 	BlockGasLimit        int64  `yaml:"block_gas_limit"`
 	BaseFeeMaxChangeRate int64  `yaml:"base_fee_max_change_rate"`
 	GasTargetPercentage  int64  `yaml:"gas_target_percentage"`
-}
-
-// PlanOrderOrDefault returns the plan-node -> preset-node mapping, defaulting to
-// identity order (plan node k = preset node k) when the preset omits it.
-func (p Chain) PlanOrderOrDefault() []int {
-	if len(p.Identities.PlanOrder) != 0 {
-		return p.Identities.PlanOrder
-	}
-	total := p.Roles.Producers + p.Roles.Validators
-	order := make([]int, total)
-	for i := range order {
-		order[i] = i + 1
-	}
-	return order
 }
 
 // LoadChainPreset reads and decodes a golden chain preset.

@@ -4,28 +4,28 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
-// Source names where a resolved value came from.
+// Origin names where a resolved value came from.
 //
 // It is recorded rather than inferred because the value's origin is the first
 // question asked when a network does not behave like its document: a port that
 // is not the one written down came either from the inventory or from a default,
 // and those are two different mistakes.
-type Source string
+type Origin string
 
-// The source chain, strongest first (design §3.4). A value found earlier is
+// The origin chain, strongest first (design §3.4). A value found earlier is
 // never overwritten by one found later — that is what "an explicit value wins"
 // means in code.
 const (
 	// FromBlueprint is a value the document states.
-	FromBlueprint Source = "blueprint"
+	FromBlueprint Origin = "blueprint"
 	// FromInventory is a value the placement decided (host, ports, paths).
-	FromInventory Source = "inventory"
+	FromInventory Origin = "inventory"
 	// FromKeySet is a value a key set supplied (nodekey, sealing account).
-	FromKeySet Source = "keyset"
+	FromKeySet Origin = "keyset"
 	// FromChain is a value the chain plugin knows (binary, chain id).
-	FromChain Source = "chain"
+	FromChain Origin = "chain"
 	// FromDefault is a built-in fallback.
-	FromDefault Source = "default"
+	FromDefault Origin = "default"
 )
 
 // ResolvedNetwork is the network with every value decided.
@@ -59,9 +59,9 @@ type ResolvedNetwork struct {
 	// Governance is the poa family's declaration, carried through untouched.
 	Governance *GovernanceDecl `json:"governance,omitempty"`
 
-	// Sources records where each value came from, keyed by the path of the
+	// Origins records where each value came from, keyed by the path of the
 	// field it decided ("nodes[1].ports.p2p").
-	Sources map[string]Source `json:"sources,omitempty"`
+	Origins map[string]Origin `json:"origins,omitempty"`
 }
 
 // ResolvedNode is one node with nothing left to decide.

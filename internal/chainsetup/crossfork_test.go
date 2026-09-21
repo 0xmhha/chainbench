@@ -1,6 +1,7 @@
 package chainsetup
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"testing"
 	"time"
 
@@ -84,12 +85,17 @@ func TestCrossFork_ANetworkAlreadyAcrossIsLeftAlone(t *testing.T) {
 			w.state.Nodes[i].Role = string(node.RoleBP)
 		}
 	}
-	detail, err := w.CrossFork(t.Context(), CrossForkOpts{})
+	done, err := w.CrossFork(t.Context(), CrossForkOpts{})
 	if err != nil {
 		t.Fatalf("CrossFork on a crossed network: %v", err)
 	}
-	if detail == "" {
+	if done.Detail == "" {
 		t.Fatal("the step reported nothing")
+	}
+	// A network already past the fork went through all three moments, and says
+	// so: the answer is "it is crossed", not "nothing happened".
+	if len(done.Passed) != 3 || done.Passed[2] != lifecycle.ChainOpCrossForkCrossed {
+		t.Errorf("an already-crossed network reported %v", done.Passed)
 	}
 
 	// One left behind is not "already crossed".

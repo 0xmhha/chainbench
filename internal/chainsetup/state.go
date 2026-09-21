@@ -96,7 +96,12 @@ type State struct {
 	// wrong launch into a refusal that names the file.
 	LaunchInputs map[string]string `json:"launchInputs,omitempty"`
 	Nodes        []node.Record     `json:"nodes,omitempty"`
-	Steps        map[string]Step   `json:"steps"`
+	// Steps is what has been done to this composition, by name. It holds two
+	// kinds: a rung of the composition ladder (UpStepNames) and an operation on
+	// a network already up (OpStepNames). Every reader names the subset it
+	// means, so the two do not collide — but which kind a name is has to be
+	// read off one of those two lists, not guessed from the map.
+	Steps map[string]Step `json:"steps"`
 	// Peering is the peer graph the composition wires ("mesh" default,
 	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
 	// before the field keeps the graph it was composed with.
@@ -105,10 +110,10 @@ type State struct {
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
 	Bootnode int `json:"bootnode,omitempty"`
-	// PortSource names where the port plan came from (a server set entry,
+	// PortOrigin names where the port plan came from (a server set entry,
 	// or the built-in defaults), so an operator reading the state never has to
 	// guess why a node listens where it does.
-	PortSource string `json:"portSource,omitempty"`
+	PortOrigin string `json:"portOrigin,omitempty"`
 	// ServerSet is the server-set file the placement came from, recorded so
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.

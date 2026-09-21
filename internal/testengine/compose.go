@@ -115,9 +115,9 @@ func refuseMachineConflict(in RunSuiteIn, declared resource.Spec, placement stri
 // nobody chose that — a later branch may still fill it, and that branch says so
 // itself. Recording zero as a harness choice put two rows nobody asked about in
 // front of every reader.
-func countFrom(from map[PlanField]PlanSource, f PlanField, count int) {
+func countFrom(from map[PlanField]PlanOrigin, f PlanField, count int) {
 	if count > 0 {
-		from[f] = SourceDeclaration
+		from[f] = OriginDeclaration
 	}
 }
 
@@ -130,7 +130,7 @@ func countFrom(from map[PlanField]PlanSource, f PlanField, count int) {
 // one that came from the document are the same string.
 type composition struct {
 	up   *chainsetup.NetUpIn
-	from map[PlanField]PlanSource
+	from map[PlanField]PlanOrigin
 }
 
 // compositionOf reads the network a spec declares and applies the caller's
@@ -141,29 +141,29 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if in.Chain != "" && in.Chain != chain {
 		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
 	}
-	from := map[PlanField]PlanSource{}
+	from := map[PlanField]PlanOrigin{}
 	keysDir := in.KeysDir
 	keysSource := in.KeysSource
 	if keysSource != "" {
-		from[FieldKeysSource] = SourceCommand
+		from[FieldKeysSource] = OriginCommand
 	}
 	if keysDir != "" {
-		from[FieldKeysDir] = SourceCommand
+		from[FieldKeysDir] = OriginCommand
 	}
 	keysValidators := 0
 	if k := spec.EnvKeys; k != nil {
 		if keysSource == "" && k.Source != "" {
 			keysSource = k.Source
-			from[FieldKeysSource] = SourceDeclaration
+			from[FieldKeysSource] = OriginDeclaration
 		}
 		if keysDir == "" && k.Ref != "" {
 			keysDir = expand(k.Ref)
-			from[FieldKeysDir] = SourceDeclaration
+			from[FieldKeysDir] = OriginDeclaration
 		}
 		keysValidators = k.Validators
 	}
 	if keysSource == "" {
-		from[FieldKeysSource] = SourceHarness
+		from[FieldKeysSource] = OriginHarness
 	}
 	if keysDir == "" {
 		// A generated set — or a node table that pins per-node keys — goes to a
@@ -177,7 +177,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		} else {
 			keysDir = defaultKeysDir
 		}
-		from[FieldKeysDir] = SourceHarness
+		from[FieldKeysDir] = OriginHarness
 	}
 	var upgradeFork *chainsetup.GenesisFork
 	perBinaryOverlay, err := writeOverlays(ctx, in.DataDir, spec.Chain.GenesisPerBinary)
@@ -242,10 +242,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	}
 
 	binary := in.Binary
-	from[FieldBinary] = SourceCommand
+	from[FieldBinary] = OriginCommand
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)
-		from[FieldBinary] = SourceDeclaration
+		from[FieldBinary] = OriginDeclaration
 	}
 	if binary == "" {
 		// The declaration's own word for what the rest of the network runs. A
@@ -266,7 +266,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		binary = topoBinary
 	}
 	if binary == "" {
-		from[FieldBinary] = SourceHarness
+		from[FieldBinary] = OriginHarness
 		// Neither the run nor the declaration named one, so the chain does. A
 		// definition that repeats the chain's own name for its binary is how
 		// one binary came to be spelled two ways across the specs; leaving it
@@ -297,7 +297,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if in.BPCount > 0 {
 			validators = in.BPCount
 			autoBP = false
-			from[FieldNodesBP] = SourceCommand
+			from[FieldNodesBP] = OriginCommand
 		}
 		if autoBP {
 			// The unified model's default shape: one pn (the discovery hub on the
@@ -305,15 +305,15 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			// fills the rest with validators once it knows the server count.
 			if proxies == 0 {
 				proxies = 1
-				from[FieldNodesPN] = SourceHarness
+				from[FieldNodesPN] = OriginHarness
 			}
 			if endpoints == 0 {
 				endpoints = 1
-				from[FieldNodesEN] = SourceHarness
+				from[FieldNodesEN] = OriginHarness
 			}
 		} else if validators <= 0 {
 			validators = suiteDefaultValidators
-			from[FieldNodesBP] = SourceHarness
+			from[FieldNodesBP] = OriginHarness
 		}
 	}
 	// A node table is not recorded here: it names every node, and the nodes row
@@ -356,9 +356,9 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// server-set entry, or an ssh host). It fed only the reuse fingerprint
 	// before, so a declared target shifted the key without moving the nodes;
 	// thread it to the composition so it actually places them.
-	from[FieldTarget] = SourceHarness
+	from[FieldTarget] = OriginHarness
 	if in.Server.All || in.Server.Name != "" || in.Server.SetPath != "" || in.Docker {
-		from[FieldTarget] = SourceCommand
+		from[FieldTarget] = OriginCommand
 	}
 	if spec.Placement != "" {
 		tgt, perr := resource.Parse(spec.Placement)
@@ -369,8 +369,8 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			return composition{}, err
 		}
 		up.Target = tgt
-		if from[FieldTarget] == SourceHarness {
-			from[FieldTarget] = SourceDeclaration
+		if from[FieldTarget] == OriginHarness {
+			from[FieldTarget] = OriginDeclaration
 		}
 	}
 	// The workspace-config owns the target data root (it moved off the server

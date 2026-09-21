@@ -169,11 +169,11 @@ preset 도 똑같이 적을 **일반 체인 설정**이다. 디렉터리도 이�
   `upgrade genesis` 인데, `root.go` 가 등록하는 그룹에 `upgrade` 가 없다(있는 것은 `hardfork`).
   낱말만 바꾸면 거짓이 남으므로, 실제로 도는 경로(정의서 + `suite run`, 그리고
   `chainbench hardfork --workspace-dir …`)로 다시 썼다.
-- **e2e 테스트 셋이 같은 죽은 명령을 부른다** — `cmd/chainbench/upgrade_run_e2e_test.go`,
-  `upgrade_data_migration_e2e_test.go`, `upgrade_gov_ncp_lifecycle_e2e_test.go` 가
-  `"upgrade", "run", "--profile", …` 를 넘긴다. `e2e` 태그 뒤에 있고 환경변수가 없으면
-  건너뛰므로 **컴파일은 되고 아무도 실패를 보지 못한다.** 이번 범위 밖으로 두었다 — 고치는 일은
-  이름이 아니라 없어진 명령의 문제다.
+- **e2e 테스트 셋이 같은 죽은 명령을 부른다** — 세 파일이 `"upgrade", "run", "--profile", …`
+  를 넘긴다. `e2e` 태그 뒤에 있고 환경변수가 없으면 건너뛰므로 **컴파일은 되고 아무도 실패를
+  보지 못한다.** 이번 범위 밖으로 두었다 — 고치는 일은 이름이 아니라 없어진 명령의 문제다.
+  (이후 `upgrade_run_e2e_test.go` 는 #422 에서 지웠다. `cmd/chainbench/upgrade_data_migration_e2e_test.go`
+  와 `cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go` 는 아직 그대로 죽은 명령을 부른다.)
 - **여섯째 `profile` 이 있다** — `internal/accounts` 의 "accounts SDK protocol profile".
   상류 SDK 의 어휘라 건드리지 않는다.
 

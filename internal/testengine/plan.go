@@ -55,7 +55,7 @@ type ComposePlan struct {
 
 	// From says who chose each value that could have come from more than one
 	// place.
-	From map[PlanField]PlanSource `json:"from,omitempty"`
+	From map[PlanField]PlanOrigin `json:"from,omitempty"`
 }
 
 // PlanNodes is the layout: how many of each role, and how they peer.
@@ -97,7 +97,7 @@ type PlanGenesis struct {
 	Overlay string `json:"overlay,omitempty"`
 }
 
-// PlanSource is where one value in the plan came from.
+// PlanOrigin is where one value in the plan came from.
 //
 // Merging is silent, so after it a value cannot say who chose it. That matters
 // whenever someone has to go change the value: the declaration is a file they
@@ -110,19 +110,19 @@ type PlanGenesis struct {
 // a different question: that one asks which layer wins for a knob, this one
 // asks who chose a value the plan shows, including values no argv ever carries
 // (the binary, the node counts, the target).
-type PlanSource string
+type PlanOrigin string
 
 const (
-	// SourceDeclaration is the merged document: the chain declaration plus the
+	// OriginDeclaration is the merged document: the chain declaration plus the
 	// case's own overrides. A reader goes and edits a file.
-	SourceDeclaration PlanSource = "declaration"
-	// SourceCommand is the invocation. It names no layer and wins over every
+	OriginDeclaration PlanOrigin = "declaration"
+	// OriginCommand is the invocation. It names no layer and wins over every
 	// document. A reader goes and edits the line they typed.
-	SourceCommand PlanSource = "command"
-	// SourceHarness is a default this code chose because neither of the other
+	OriginCommand PlanOrigin = "command"
+	// OriginHarness is a default this code chose because neither of the other
 	// two named the value. A reader has nothing to edit, which is exactly why
 	// the plan has to say so out loud.
-	SourceHarness PlanSource = "harness"
+	OriginHarness PlanOrigin = "harness"
 )
 
 // PlanField names one value of the plan that can come from more than one
@@ -150,7 +150,7 @@ var planFields = []PlanField{
 // PlanKnob is one launch override and who asked for it.
 type PlanKnob struct {
 	Knob string     `json:"knob"`
-	From PlanSource `json:"from"`
+	From PlanOrigin `json:"from"`
 }
 
 func (k PlanKnob) String() string { return k.Knob + " (" + string(k.From) + ")" }
@@ -197,11 +197,11 @@ func mergeScopes(scoped map[string][]string, all []string) map[string][]PlanKnob
 	out := make(map[string][]PlanKnob, len(scoped)+1)
 	for k, v := range scoped {
 		for _, knob := range v {
-			out[k] = append(out[k], PlanKnob{Knob: knob, From: SourceDeclaration})
+			out[k] = append(out[k], PlanKnob{Knob: knob, From: OriginDeclaration})
 		}
 	}
 	for _, knob := range all {
-		out[node.ScopeAll] = append(out[node.ScopeAll], PlanKnob{Knob: knob, From: SourceCommand})
+		out[node.ScopeAll] = append(out[node.ScopeAll], PlanKnob{Knob: knob, From: OriginCommand})
 	}
 	return out
 }
@@ -296,7 +296,7 @@ func (p ComposePlan) chosenByLine() string {
 	var parts []string
 	for _, f := range planFields {
 		src := p.From[f]
-		if src == "" || src == SourceDeclaration {
+		if src == "" || src == OriginDeclaration {
 			continue
 		}
 		parts = append(parts, string(f)+": "+string(src))

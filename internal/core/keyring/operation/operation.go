@@ -82,7 +82,7 @@ type SetRef struct {
 
 // resolve returns the key set directory and where that choice came from; the
 // answer is the store's (where a key set lives is storage knowledge).
-func (r SetRef) resolve(env func(string) string) (dir, source string) {
+func (r SetRef) resolve(env func(string) string) (dir, origin string) {
 	return store.Locate(r.Dir, env)
 }
 
@@ -92,20 +92,20 @@ func (r SetRef) resolve(env func(string) string) (dir, source string) {
 // Before this, a remote-looking key set path was treated as a local directory
 // NAME — a key set created "on the server" landed silently on the operator's
 // machine, which is worse than a refusal.
-func (r SetRef) open(d Deps) (files filestore.Store, dir, source string, err error) {
-	dir, source = r.resolve(d.env())
+func (r SetRef) open(d Deps) (files filestore.Store, dir, origin string, err error) {
+	dir, origin = r.resolve(d.env())
 	// The netmap module is the one dial-wiring point: server-set lookup,
 	// --docker translation, and the translation report all live there, so
 	// this consumer cannot diverge from any other.
 	o, err := r.opener(d)
 	if err != nil {
-		return nil, dir, source, err
+		return nil, dir, origin, err
 	}
 	tgt, err := o.OpenPath(dir)
 	if err != nil {
-		return nil, dir, source, err
+		return nil, dir, origin, err
 	}
-	return tgt.Files, tgt.DataRoot, source, nil
+	return tgt.Files, tgt.DataRoot, origin, nil
 }
 
 // opener binds this key set's server-set and docker choices to the opener the
@@ -118,9 +118,9 @@ func (r SetRef) opener(d Deps) (Opener, error) {
 type SetOut struct {
 	// Dir is the resolved key set directory.
 	Dir string
-	// Source is where that directory came from: explicit, the environment
+	// Origin is where that directory came from: explicit, the environment
 	// variable's name, or "default".
-	Source string
+	Origin string
 	// Entries are the key set's identities, public material only.
 	Entries []EntryOut
 	// Validators is how many identities the key set declares as validators. Zero
@@ -163,32 +163,32 @@ type CreateIn struct {
 
 // New creates a key set of fresh identities.
 func New(ctx context.Context, d Deps, in CreateIn) (SetOut, error) {
-	files, dir, source, err := in.Ring.open(d)
+	files, dir, origin, err := in.Ring.open(d)
 	if err != nil {
-		return SetOut{Dir: in.Ring.Dir, Source: source}, err
+		return SetOut{Dir: in.Ring.Dir, Origin: origin}, err
 	}
 	opts := in.opts(dir)
 	opts.Files = files
 	set, err := store.GenerateAt(ctx, opts, nil)
 	if err != nil {
-		return SetOut{Dir: displaySet(in.Ring, dir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dir), Origin: origin}, err
 	}
-	return setOut(displaySet(in.Ring, dir), source, set), nil
+	return setOut(displaySet(in.Ring, dir), origin, set), nil
 }
 
 // Add adds identities to a key set that already exists.
 func Add(ctx context.Context, d Deps, in CreateIn) (SetOut, error) {
-	files, dir, source, err := in.Ring.open(d)
+	files, dir, origin, err := in.Ring.open(d)
 	if err != nil {
-		return SetOut{Dir: in.Ring.Dir, Source: source}, err
+		return SetOut{Dir: in.Ring.Dir, Origin: origin}, err
 	}
 	opts := in.opts(dir)
 	opts.Files = files
 	set, err := store.ExtendAt(ctx, opts, nil)
 	if err != nil {
-		return SetOut{Dir: displaySet(in.Ring, dir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dir), Origin: origin}, err
 	}
-	return setOut(displaySet(in.Ring, dir), source, set), nil
+	return setOut(displaySet(in.Ring, dir), origin, set), nil
 }
 
 // displaySet is what a report calls the key set: the spelling the operator gave
@@ -230,18 +230,18 @@ type ListIn struct {
 func List(ctx context.Context, d Deps, in ListIn) (SetOut, error) {
 	// Listing reports identities and needs no secret; --verify re-derives each
 	// identity from its key and cannot be done without one.
-	dir, source, set, err := openSetWithKeys(ctx, in.Ring, d, in.Verify)
+	dir, origin, set, err := openSetWithKeys(ctx, in.Ring, d, in.Verify)
 	if err != nil {
-		return SetOut{Dir: dir, Source: source}, err
+		return SetOut{Dir: dir, Origin: origin}, err
 	}
 	if in.Verify {
 		for _, e := range set.Nodes {
 			if err := e.Verify(); err != nil {
-				return SetOut{Dir: dir, Source: source}, err
+				return SetOut{Dir: dir, Origin: origin}, err
 			}
 		}
 	}
-	return setOut(dir, source, set), nil
+	return setOut(dir, origin, set), nil
 }
 
 // EntryIn names one identity in a key set.
@@ -274,9 +274,9 @@ type passwordFunc func() (string, error)
 
 func (f passwordFunc) Password() (string, error) { return f() }
 
-// openSet resolves and loads a key set, naming the source in the error so that a
+// openSet resolves and loads a key set, naming the origin in the error so that a
 // missing default key set is not a mystery.
-func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set preset.Key, err error) {
+func openSet(ctx context.Context, ref SetRef, d Deps) (dir, origin string, set preset.Key, err error) {
 	return openSetWithKeys(ctx, ref, d, false)
 }
 
@@ -289,10 +289,10 @@ func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set p
 // carries no private key any more, so the identity read moves none; asking for
 // keys reads node<N>/nodekey per entry, which is N round trips on a remote ring
 // and is the reason the two callers that need them are the only ones that ask.
-func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, source string, set preset.Key, err error) {
-	files, dir, source, err := ref.open(d)
+func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, origin string, set preset.Key, err error) {
+	files, dir, origin, err := ref.open(d)
 	if err != nil {
-		return displaySet(ref, dir), source, preset.Key{}, err
+		return displaySet(ref, dir), origin, preset.Key{}, err
 	}
 	if withKeys {
 		set, err = preset.LoadKeyPresetWithKeysAt(ctx, files, dir)
@@ -301,9 +301,9 @@ func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (di
 	}
 	dir = displaySet(ref, dir)
 	if err != nil {
-		return dir, source, preset.Key{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
+		return dir, origin, preset.Key{}, fmt.Errorf("keyring %s (%s): %w", dir, origin, err)
 	}
-	return dir, source, set, nil
+	return dir, origin, set, nil
 }
 
 // findEntry looks up an identity by label, listing what the key set holds when the
@@ -331,9 +331,9 @@ func validatorSet(set preset.Key) map[string]bool {
 }
 
 // setOut renders a whole key set.
-func setOut(dir, source string, set preset.Key) SetOut {
+func setOut(dir, origin string, set preset.Key) SetOut {
 	vals := validatorSet(set)
-	out := SetOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
+	out := SetOut{Dir: dir, Origin: origin, Validators: len(set.Network.Validators)}
 	for _, e := range set.Nodes {
 		out.Entries = append(out.Entries, entryOut(e, vals))
 	}

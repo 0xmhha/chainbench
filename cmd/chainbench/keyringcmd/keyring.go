@@ -88,15 +88,15 @@ func (f *ringFlags) ref() app.RingRef {
 // in this surface's own vocabulary, because an operator asking "why that key set?"
 // wants the flag they typed.
 func announce(cmd *cobra.Command, r app.RingOut) {
-	fmt.Fprintf(cmd.ErrOrStderr(), "keyring: %s (%s)\n", r.Dir, ringSourceName(r.Source))
+	fmt.Fprintf(cmd.ErrOrStderr(), "keyring: %s (%s)\n", r.Dir, ringOriginName(r.Origin))
 }
 
-// ringSourceName renders a use-case source as a CLI reason.
-func ringSourceName(source string) string {
-	if source == "explicit" {
+// ringOriginName renders a use case's origin as a CLI reason.
+func ringOriginName(origin string) string {
+	if origin == "explicit" {
 		return "--keyring-dir"
 	}
-	return source
+	return origin
 }
 
 // renderEntries writes the human listing.

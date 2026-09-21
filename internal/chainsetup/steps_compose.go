@@ -463,7 +463,8 @@ var composeNeeds = map[string][]string{
 func (w *Workspace) require(step string) error {
 	for _, need := range composeNeeds[step] {
 		if _, done := w.state.Steps[need]; !done {
-			return fmt.Errorf("chainsetup: %s: %s has not run — run `chain %s` first", step, need, need)
+			return ofKind(errOpPrecondition,
+				fmt.Errorf("chainsetup: %s: %s has not run — run `chain %s` first", step, need, need))
 		}
 	}
 	return nil

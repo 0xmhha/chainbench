@@ -129,7 +129,7 @@ func (e *engine) Run(ctx, specs [][]byte) {
     sess.Save()                                      // 판정
 }
 
-// internal/engine/wire.go — 인터프리터를 엔진에 묶는 boundary (현존)
+// internal/testengine/wire.go — 인터프리터를 엔진에 묶는 boundary (현존)
 func NewRunSpec(deps Deps) RunSpecFunc {
     interp := NewInterpreter(deps)
     return func(...) { return interp.Run(ctx, spec, env, rec) }

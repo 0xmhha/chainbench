@@ -48,8 +48,8 @@ Paths below resolve inside this PR; the reviewed implementation is the baseline 
 |---|---|
 | CLI flags → app.NetUp; completed steps printed even on failure | [chaincmd/up.go](../../../../cmd/chainbench/chaincmd/up.go) |
 | app.NetUp → chainsetup.NetUp | [app/net.go](../../../../internal/app/net.go) |
-| Validation, ordered verbs, composite lock, reuse, return | [chainsetup/verbs_up.go](../../../../internal/chainsetup/verbs_up.go) |
-| Step lock, execution, save on success or failure | [chainsetup/verbs_steps.go](../../../../internal/chainsetup/verbs_steps.go) |
+| Validation, ordered verbs, composite lock, reuse, return | [chainsetup/verbs_up.go](../../../../internal/chainsetup/verb/verbs_up.go) |
+| Step lock, execution, save on success or failure | [chainsetup/verbs_steps.go](../../../../internal/chainsetup/verb/verbs_steps.go) |
 | Node initialization, launch, stop and machine-specific execution | [steps_lifecycle.go](../../../../internal/chainsetup/steps_lifecycle.go) |
 | Remote file store / driver backed by SSHRunner | [resource/machine.go](../../../../internal/resource/machine.go) |
 | Detached local launch and recorded PID handle | [process/local.go](../../../../internal/core/process/local.go) |

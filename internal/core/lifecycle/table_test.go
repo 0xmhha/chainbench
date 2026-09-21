@@ -39,8 +39,14 @@ func TestEveryStateIsNamed(t *testing.T) {
 // The entry states of the two areas and the common failures are the exceptions,
 // because a run starts at one and can fall to another from anywhere.
 func TestEveryNamedStateIsReachable(t *testing.T) {
+	// The entry states of every area: a run starts at one of these, so nothing
+	// inside the table has to reach them. The six operational ones are six
+	// because that area has no order — a caller asks for stop, or for rm, or
+	// for cross-fork, and none of them follows from another.
 	reached := map[Status]bool{
 		ChainOpenWorkspace: true, AdoptChain: true,
+		ChainOpStopNodes: true, ChainOpStartNodes: true, ChainOpReplaceNode: true,
+		ChainOpCrossFork: true, ChainOpRemoveNodes: true, ChainOpHardfork: true,
 	}
 	for _, tos := range allowed {
 		for _, to := range tos {

@@ -23,6 +23,10 @@ import (
 // process holds, fails after provisioning has already run — and the message
 // names a port rather than the composition that took it.
 
+// Preflight is the check-only entry: the same pre-launch inspection Start
+// runs, callable without composing anything. It answers "may a network of
+// this shape start here right now?" with the refusal Start would give — port
+// occupancy plus unmanaged copies of the binary already on the resource.
 func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 	if err := w.allow("Preflight"); err != nil {
 		return err

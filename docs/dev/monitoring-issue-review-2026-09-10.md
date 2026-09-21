@@ -28,7 +28,7 @@
 
 | MON | 판정 | 핵심 근거 | 우선순위 |
 |---|---|---|---|
-| 001 | 유효 | `internal/core/node/record.go` Key 영속 + `internal/chainsetup/verbs_up.go` Request 2중 저장 | 높음 |
+| 001 | 유효 | `internal/core/node/record.go` Key 영속 + `internal/chainsetup/verb/verbs_up.go` Request 2중 저장 | 높음 |
 | 002 | 유효 | `internal/core/keyring/store/declared.go` 조기 반환으로 검증 미도달 | 높음 |
 | 003 | 유효 | `internal/dsl/spec_v2.go` nil map 대입 | 보통 |
 | 004 | 해결·검증완료 | 두 sample 모두 tracked, 테스트 통과 확인 | — |
@@ -49,7 +49,7 @@
 
 ### MON-009 — 구성 격리가 보호해 주지 않는다
 
-`compositionId`는 워크스페이스 디렉터리의 해시이고(`internal/chainsetup/new.go`) 한 번
+`compositionId`는 워크스페이스 디렉터리의 해시이고(`internal/chainsetup/workspace_new.go`) 한 번
 정해지면 바뀌지 않는다. reuse-if-matching은 정의상 **같은 워크스페이스**를 다시 up 하므로
 격리 경로가 이전 실행과 동일하다. 따라서 genesis·config 쓰기는 실행 중인 노드가 쓰던
 바로 그 파일을 덮어쓴다. 격리는 서로 다른 워크스페이스를 갈라줄 뿐, 같은 워크스페이스의
@@ -81,8 +81,9 @@
 
 - **N1. 파일 스토어 mode 계약 불일치**: 원격 쓰기는 `chmod`를 명시 실행하는데 로컬
   `filestore.Local.Write`는 생성 시에만 mode를 적용한다. 같은 인터페이스의 두 구현이
-  다르게 동작한다. MON-011의 실제 원인이며, `internal/chainsetup/steps_compose.go`와
-  `internal/consensus/upgrade/handoff.go`의 비밀 쓰기도 같은 원인에 걸린다.
+  다르게 동작한다. MON-011의 실제 원인이며, `internal/chainsetup/steps_compose.go` 의 비밀
+  쓰기도 같은 원인에 걸린다. (작성 당시에는 하드포크 핸드오버에도 같은 쓰기가 따로 있었으나,
+  #419 에서 합성 경로로 흡수되어 지점이 하나로 줄었다.)
 - **N2. 실행 기록에 노드 config가 없다**: `recordRun`은 manifest·launch-commands·genesis만
   모은다. genesis는 잘못된 경로에서 읽고, config는 아예 수집하지 않는다.
 - **N3. 순차 실행에서 종료 코드 구분이 사라진다**: 단일 실행은 실패 1 / blocked 2를

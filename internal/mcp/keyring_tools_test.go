@@ -36,7 +36,7 @@ func call(t *testing.T, name string, args map[string]any, into any) {
 
 type ringResult struct {
 	Keyring    string `json:"keyring"`
-	Source     string `json:"source"`
+	Origin     string `json:"origin"`
 	Validators int    `json:"validators"`
 	Entries    []struct {
 		Label      string `json:"label"`
@@ -61,7 +61,7 @@ func TestKeyringTools_DriveTheSameUseCases(t *testing.T) {
 	if len(created.Entries) != 3 || created.Validators != 2 {
 		t.Fatalf("new: %d identities, %d validators", len(created.Entries), created.Validators)
 	}
-	if created.Keyring != dir || created.Source != "explicit" {
+	if created.Keyring != dir || created.Origin != "explicit" {
 		t.Errorf("the result does not say which ring it used: %+v", created)
 	}
 	for _, e := range created.Entries {

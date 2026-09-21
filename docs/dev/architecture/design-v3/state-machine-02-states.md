@@ -64,7 +64,7 @@ STATE_<영역>_<단계>[_<세부>][_FAIL_<사유>]
 | 값 | 상태 | 근거 |
 |---|---|---|
 | +0x00 | `STATE_CHAIN_OPEN_WORKSPACE` | 진입 |
-| +0x80 | `…_FAIL_NO_CHAIN` | `new.go:66` — `--chain or --manifest is required` |
+| +0x80 | `…_FAIL_NO_CHAIN` | `workspace_new.go:66` — `--chain or --manifest is required` |
 
 세부 없음. 이 단계는 갈래가 없다.
 
@@ -108,7 +108,7 @@ STATE_<영역>_<단계>[_<세부>][_FAIL_<사유>]
 | +0x03 | `…_FORK_APPLIED` | `steps_genesis.go:202` — `opts.Fork != nil` |
 | +0x04 | `…_VARIANTS_WRITTEN` | `steps_genesis.go:241` — 바이너리별 genesis |
 | +0x80 | `…_FAIL_EXISTING_INVALID` | `steps_compose.go:244` — 유효한 JSON 이 아니다 |
-| +0x81 | `…_FAIL_EXISTING_FOREIGN` | `genesis_verify.go:39` — 구성한 키와 안 맞는다 |
+| +0x81 | `…_FAIL_EXISTING_FOREIGN` | `verify_genesis.go:39` — 구성한 키와 안 맞는다 |
 | +0x82 | `…_FAIL_FORK_UNRESOLVED` | `steps_genesis.go:287·360·390·410` — 포크의 이름·체인·구간·상대가 없다 |
 | +0x83 | `…_FAIL_DECL_UNUSED` | `steps_genesis.go:430·472` — 아무 노드도 안 쓰는 바이너리에 선언했다 |
 | +0x84 | `…_FAIL_TARGET_UNABLE` | `steps_compose.go:285·293` — 생성할 생산자가 없거나 대상이 명령을 못 돌린다 |
@@ -265,11 +265,11 @@ genesis 를 읽어 넘겨받는 체인 것을 만든다. `+0x03` 이 그 자리�
 |---|---|---|
 | 0x0F80 | `STATE_CHAIN_FAIL_RECORD_FORMAT` | `workspace.go:87` — 기록 형식이 이 빌드가 모르는 판이다 |
 | 0x0F81 | `STATE_CHAIN_FAIL_RECORD_SAVE` | `verbs_steps.go:51` — 저장 실패 |
-| 0x0F82 | `STATE_CHAIN_FAIL_WORKSPACE_CONFIG` | `inputref.go:27` |
+| 0x0F82 | `STATE_CHAIN_FAIL_WORKSPACE_CONFIG` | `workspace_refs.go:27` |
 
 **셋째, 여러 단계가 같은 일을 하는 것 (11건).** 바이너리 해석(`binary.go:88·99·105`,
 `binary.go:54·58`), 포트 점검(`occupancy.go:137·191`), blueprint 읽기(`verbs_steps.go:209·213`),
-입력 참조(`inputref.go:146`), 노드 조회(`steps_compose.go:201`).
+입력 참조(`workspace_refs.go:146`), 노드 조회(`steps_compose.go:201`).
 
 **이것들은 공통 블록으로 두지 않는다.** 실패한 자리를 상태가 말해야 하는데, 공통 블록에 넣으면
 "바이너리를 못 찾았다" 는 알아도 "명령을 조립하다가인지 띄우다가인지" 를 잃는다. 그래서

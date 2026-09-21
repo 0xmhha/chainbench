@@ -15,12 +15,12 @@ func TestPlanFile_SurvivesTheRunThatMadeIt(t *testing.T) {
 	dir := t.TempDir()
 	want := ComposePlan{
 		Chain: "stablenet", Workspace: dir, Binary: "/b/gstable",
-		From: map[PlanField]PlanSource{
-			FieldBinary: SourceCommand,
-			FieldTarget: SourceHarness,
+		From: map[PlanField]PlanOrigin{
+			FieldBinary: OriginCommand,
+			FieldTarget: OriginHarness,
 		},
 		Launch: map[string][]PlanKnob{
-			"bp": {{Knob: "mine=true", From: SourceDeclaration}},
+			"bp": {{Knob: "mine=true", From: OriginDeclaration}},
 		},
 	}
 	if err := WritePlan(dir, want); err != nil {
@@ -34,10 +34,10 @@ func TestPlanFile_SurvivesTheRunThatMadeIt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.From[FieldBinary] != SourceCommand || got.From[FieldTarget] != SourceHarness {
+	if got.From[FieldBinary] != OriginCommand || got.From[FieldTarget] != OriginHarness {
 		t.Errorf("the sources did not survive the round trip: %v", got.From)
 	}
-	if k := got.Launch["bp"]; len(k) != 1 || k[0].From != SourceDeclaration {
+	if k := got.Launch["bp"]; len(k) != 1 || k[0].From != OriginDeclaration {
 		t.Errorf("a launch knob lost who asked for it: %v", k)
 	}
 	if got.Binary != want.Binary || got.Chain != want.Chain {

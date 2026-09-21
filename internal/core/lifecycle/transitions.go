@@ -79,6 +79,25 @@ var names = map[Status]string{
 	FailWorkspaceConfig:                   "FailWorkspaceConfig",
 	FailLoop:                              "FailLoop",
 	FailNoHandler:                         "FailNoHandler",
+	ChainStopped:                          "ChainStopped",
+	ChainRemoved:                          "ChainRemoved",
+	ChainOpStopNodes:                      "ChainOpStopNodes",
+	ChainOpStopNodesFailSomeStillUp:       "ChainOpStopNodesFailSomeStillUp",
+	ChainOpStartNodes:                     "ChainOpStartNodes",
+	ChainOpReplaceNode:                    "ChainOpReplaceNode",
+	ChainOpReplaceNodeFailNothingAsked:    "ChainOpReplaceNodeFailNothingAsked",
+	ChainOpCrossFork:                      "ChainOpCrossFork",
+	ChainOpCrossForkBeforeFork:            "ChainOpCrossForkBeforeFork",
+	ChainOpCrossForkHandingOver:           "ChainOpCrossForkHandingOver",
+	ChainOpCrossForkCrossed:               "ChainOpCrossForkCrossed",
+	ChainOpCrossForkFailNoFork:            "ChainOpCrossForkFailNoFork",
+	ChainOpCrossForkFailHeadUnreadable:    "ChainOpCrossForkFailHeadUnreadable",
+	ChainOpCrossForkFailAlreadyPast:       "ChainOpCrossForkFailAlreadyPast",
+	ChainOpCrossForkFailNobodyCameBack:    "ChainOpCrossForkFailNobodyCameBack",
+	ChainOpRemoveNodes:                    "ChainOpRemoveNodes",
+	ChainOpHardfork:                       "ChainOpHardfork",
+	ChainOpFailPrecondition:               "ChainOpFailPrecondition",
+	ChainOpFailNoSuchNode:                 "ChainOpFailNoSuchNode",
 	FailStageUnclassified:                 "FailStageUnclassified",
 }
 
@@ -208,6 +227,53 @@ var allowed = map[Status][]Status{
 	// keeps a network that keeps failing to match from looping forever.
 	CompareChainNetworkDiffers:  {ChainOpenWorkspace},
 	CompareChainNothingComposed: {ChainOpenWorkspace},
+
+	// ---- what is done to a chain once it is ready ----
+	//
+	// Six entries and no order between them: a run starts at whichever one the
+	// caller asked for, and stop may be followed by rm or by restart with
+	// neither being wrong. That is why the preconditions here stay states —
+	// the composition's were removed by the table, and there is no table to
+	// remove these.
+	//
+	// Three sets of failures are borrowed rather than renamed. Deciding which
+	// binary to launch fails the way the launch stage already fails; rendering
+	// a node's config again fails the way the config stage does; re-initializing
+	// one node's datadir fails the way init does. The work is the same work.
+	ChainOpStopNodes: {ChainStopped,
+		ChainOpStopNodesFailSomeStillUp, ChainOpFailNoSuchNode},
+
+	ChainOpStartNodes: {ChainReady,
+		ChainOpFailPrecondition, ChainOpFailNoSuchNode,
+		ChainLaunchNodesFailNoBinary, ChainLaunchNodesFailPortBusy},
+
+	ChainOpReplaceNode: {ChainReady,
+		ChainOpReplaceNodeFailNothingAsked, ChainOpFailPrecondition,
+		ChainOpFailNoSuchNode, ChainLaunchNodesFailNoBinary,
+		ChainBuildNodeConfigFailBadOverride, ChainBuildNodeConfigFailReadback,
+		ChainBuildNodeConfigFailPinUnreadable,
+		ChainInitNodesFailTargetUnable, ChainInitNodesFailGenesisUnreadable},
+
+	// The only operational verb that waits on the chain rather than on a
+	// process, and the only one with states of its own. The three are the three
+	// moments its twenty failures fall into: before the fork, during the
+	// hand-over, after it.
+	ChainOpCrossFork: {ChainOpCrossForkBeforeFork,
+		ChainOpCrossForkFailNoFork, ChainOpCrossForkFailHeadUnreadable,
+		ChainOpCrossForkFailAlreadyPast},
+	ChainOpCrossForkBeforeFork: {ChainOpCrossForkHandingOver,
+		ChainOpCrossForkFailNoFork, ChainOpCrossForkFailHeadUnreadable,
+		ChainLaunchNodesFailNoBinary,
+		ChainBuildNodeConfigFailBadOverride, ChainBuildNodeConfigFailReadback,
+		ChainBuildNodeConfigFailPinUnreadable},
+	ChainOpCrossForkHandingOver: {ChainOpCrossForkCrossed,
+		ChainOpCrossForkFailNobodyCameBack, ChainOpCrossForkFailAlreadyPast,
+		ChainOpCrossForkFailHeadUnreadable},
+	ChainOpCrossForkCrossed: {ChainReady},
+
+	ChainOpRemoveNodes: {ChainRemoved, ChainOpFailPrecondition},
+
+	ChainOpHardfork: {ChainReady, ChainOpFailPrecondition},
 }
 
 // entryLimit is how many times one BLOCK may be entered in a single run.
