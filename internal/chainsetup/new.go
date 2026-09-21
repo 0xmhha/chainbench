@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
@@ -143,4 +144,16 @@ func (w *Workspace) Retarget(t resource.Spec) error {
 	}
 	w.state.Target = t
 	return nil
+}
+
+// NewFailure is the one failure the workspace stage has a state for.
+//
+// The default is everything else opening a workspace can hit: a chain that
+// resolves to nothing, a manifest that will not parse, a directory that cannot
+// be made. Those are the chain registry's and the filesystem's refusals.
+func NewFailure(err error) lifecycle.Status {
+	if errors.Is(err, errNewNoChain) {
+		return lifecycle.ChainOpenWorkspaceFailNoChain
+	}
+	return lifecycle.FailStageUnclassified
 }

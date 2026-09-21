@@ -398,3 +398,24 @@ func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 }
 
 // AllocateOpts sizes the network.
+
+// KeysFailure is which of the key stage's failures this error is.
+//
+// The default is the debt state and not a guess. Two things still reach it: the
+// preconditions the transition table makes unreachable in a composition but not
+// in a bare `chain keys`, and whatever the key store itself refuses when it
+// writes the set. Neither has a state, and naming one of the four would say
+// something the error does not.
+func KeysFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errKeySourceUnknown):
+		return lifecycle.ChainEnsureKeysFailUnknownSource
+	case errors.Is(err, errKeyCountShort):
+		return lifecycle.ChainEnsureKeysFailCountMismatch
+	case errors.Is(err, errKeyRefNotLocal):
+		return lifecycle.ChainEnsureKeysFailKeyNotLocal
+	case errors.Is(err, errKeyUnreadable):
+		return lifecycle.ChainEnsureKeysFailKeyUnreadable
+	}
+	return lifecycle.FailStageUnclassified
+}

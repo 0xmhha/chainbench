@@ -468,3 +468,19 @@ func (w *Workspace) require(step string) error {
 	}
 	return nil
 }
+
+// DeployFailure is which of the deploy stage's two failures this error is.
+//
+// The default is the shipping itself: a file store that will not read the local
+// key or will not write it to the machine. That is the store's refusal, and the
+// two named here are about what is on the target rather than about getting
+// there.
+func DeployFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errDeployInputMissing):
+		return lifecycle.ChainDeployNodesFailInputMissing
+	case errors.Is(err, errDeployInputForeign):
+		return lifecycle.ChainDeployNodesFailInputForeign
+	}
+	return lifecycle.FailStageUnclassified
+}

@@ -294,7 +294,7 @@ func TestADebtStateSaysWhyItIsOne(t *testing.T) {
 			"example: the verb returns a string"},
 		{"a stage whose classifier has no state for this",
 			composeStage{step: "build", at: lifecycle.ChainBuildNodeCommand,
-				classify: buildFailure},
+				classify: BuildFailure},
 			"build: this failure has no state of its own"},
 	} {
 		m, err := lifecycle.New(c.stage.at, lifecycle.ChainVerify, upHandlers((&recorder{}).run))
@@ -373,7 +373,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if err == nil {
 		t.Fatal("a key on a server was accepted")
 	}
-	if got := keysFailure(err); got != lifecycle.ChainEnsureKeysFailKeyNotLocal {
+	if got := KeysFailure(err); got != lifecycle.ChainEnsureKeysFailKeyNotLocal {
 		t.Errorf("the real refusal classified as %s, want ChainEnsureKeysFailKeyNotLocal", got)
 	}
 
@@ -384,7 +384,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if ferr == nil {
 		t.Fatal("a fork with no name was accepted")
 	}
-	if got := genesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
+	if got := GenesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
 		t.Errorf("the real refusal classified as %s, want ChainBuildGenesisFailForkUnresolved", got)
 	}
 
@@ -394,7 +394,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if nerr == nil {
 		t.Fatal("a workspace with no chain was accepted")
 	}
-	if got := newFailure(nerr); got != lifecycle.ChainOpenWorkspaceFailNoChain {
+	if got := NewFailure(nerr); got != lifecycle.ChainOpenWorkspaceFailNoChain {
 		t.Errorf("the real refusal classified as %s, want ChainOpenWorkspaceFailNoChain", got)
 	}
 
@@ -403,7 +403,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if operr == nil {
 		t.Fatal("a --set with no key was accepted")
 	}
-	if got := buildFailure(ofKind(errBuildBadOption, operr)); got != lifecycle.ChainBuildNodeCommandFailBadOption {
+	if got := BuildFailure(ofKind(errBuildBadOption, operr)); got != lifecycle.ChainBuildNodeCommandFailBadOption {
 		t.Errorf("the real refusal classified as %s, want ChainBuildNodeCommandFailBadOption", got)
 	}
 
@@ -420,7 +420,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if perr == nil {
 		t.Fatal("a layout described twice was accepted")
 	}
-	if got := placeFailure(perr); got != lifecycle.ChainBuildNodeTableFailTwoLayouts {
+	if got := PlaceFailure(perr); got != lifecycle.ChainBuildNodeTableFailTwoLayouts {
 		t.Errorf("the real refusal classified as %s, want ChainBuildNodeTableFailTwoLayouts (%v)", got, perr)
 	}
 
@@ -430,7 +430,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if oerr == nil {
 		t.Fatal("an override that is not key=value was accepted")
 	}
-	if got := configFailure(oerr); got != lifecycle.ChainBuildNodeConfigFailBadOverride {
+	if got := ConfigFailure(oerr); got != lifecycle.ChainBuildNodeConfigFailBadOverride {
 		t.Errorf("the real refusal classified as %s, want ChainBuildNodeConfigFailBadOverride", got)
 	}
 
@@ -439,7 +439,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	if berr == nil {
 		t.Fatal("a launch with no binary was accepted")
 	}
-	if got := launchFailure(berr); got != lifecycle.ChainLaunchNodesFailNoBinary {
+	if got := LaunchFailure(berr); got != lifecycle.ChainLaunchNodesFailNoBinary {
 		t.Errorf("the real refusal classified as %s, want ChainLaunchNodesFailNoBinary", got)
 	}
 }

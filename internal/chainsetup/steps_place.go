@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -361,3 +362,19 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 }
 
 // GenesisOpts customizes the built genesis.
+
+// PlaceFailure is which of the place stage's two failures this error is.
+//
+// The default holds a family of refusals that say one thing: the layout asked
+// for cannot exist — no nodes in the topology, no validator, a server set too
+// small to hold what was asked. Splitting those into states would be splitting
+// a sentence.
+func PlaceFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errPlaceTwoLayouts):
+		return lifecycle.ChainBuildNodeTableFailTwoLayouts
+	case errors.Is(err, errPlaceSetContended):
+		return lifecycle.ChainBuildNodeTableFailSetContended
+	}
+	return lifecycle.FailStageUnclassified
+}

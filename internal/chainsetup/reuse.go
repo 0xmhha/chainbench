@@ -391,6 +391,10 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot
 // reconcileHandler is the reconciliation, as the state between the key set and
 // the genesis.
 //
+// note takes the line it records rather than the result it would be appended
+// to: what a composition returns belongs to the verb that returns it, and the
+// reconciliation is below that.
+//
 // It is the second comparison this repository makes against a running network,
 // and it is not the first one. CompareChain runs before anything is written and
 // may answer "compose it again"; this one runs inside a composition that has
@@ -398,7 +402,7 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot
 // changed is a refusal. What it can do is keep the nodes that still match what
 // this run will write and tear down the ones that do not, which is what lets
 // the stages after it bring only those back.
-func reconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap reuseSnapshot, out *NetUpOut) lifecycle.Handler {
+func reconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap reuseSnapshot, note func(string)) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ReconcileChain:
@@ -417,7 +421,7 @@ func reconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap reuseSnapsho
 			if rerr != nil {
 				return unreadableReconcile(m, rerr)
 			}
-			out.Steps = append(out.Steps, "reuse: "+plan.describe())
+			note("reuse: " + plan.describe())
 			if plan.Refuse != "" {
 				if err := m.Request(lifecycle.ReconcileChainFailSharedInputChanged); err != nil {
 					return err

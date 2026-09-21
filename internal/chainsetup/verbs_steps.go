@@ -2,16 +2,11 @@ package chainsetup
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"maps"
 	"os"
-	"slices"
-	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -20,59 +15,6 @@ import (
 //
 // These carry more than a call because a declaration reaches them here — a
 // blueprint to read, an overlay to stage, a peering to resolve. The lifecycle
-// verbs, which do not, are in verbs_lifecycle.go.
-
-func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) (string, error) {
-	return inWorkspace(d, dataDir, fn)
-}
-
-// inWorkspace is withWorkspace for a step that reports more than a line.
-//
-// A step that decides something — which of three key sources it used, which of
-// two targets it shipped to — has to be able to say so, and a string is what it
-// says to a person rather than to the caller. The lock, the save and the way
-// the two errors are joined are the same for both, so they are written once
-// here and withWorkspace is the string case of it.
-func inWorkspace[T any](d Deps, dataDir string, fn func(*Workspace) (T, error)) (T, error) {
-	var zero T
-	ws, err := Open(dataDir, d.Clock)
-	if err != nil {
-		return zero, err
-	}
-	ws.SetEnv(d.Env)
-	ws.SetDriver(d.Driver)
-
-	// One run at a time per workspace. A second run would compose over the
-	// first's half-built network and blame the collision on the chain; the
-	// refusal names who holds it instead. A lock left by a run that died is
-	// taken over — that run is gone, and its wreckage is what the operator is
-	// here to clear — but never in silence.
-	held, prev, state, lerr := ws.Acquire(d.command())
-	if lerr != nil {
-		return zero, lerr
-	}
-	defer func() { _ = held.Release() }()
-	if state == session.LockStale {
-		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `chain status` shows what is there", prev.Describe())
-	}
-
-	out, stepErr := fn(ws)
-	saveErr := ws.Save()
-	switch {
-	case stepErr != nil && saveErr != nil:
-		return out, fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
-	case stepErr != nil:
-		// The value comes back with the error. A step that fails partway is
-		// still the authority on how far it got, and a caller that threw that
-		// away had to guess — which is what the genesis stage was doing when it
-		// reported a fork failure as if the genesis had never been built.
-		return out, stepErr
-	case saveErr != nil:
-		return zero, saveErr
-	}
-	return out, nil
-}
-
 // Placement bounds shared by the composition steps: a BFT network needs at
 // least one validator, and a local port band holds this many nodes.
 const (
@@ -236,36 +178,6 @@ func peeringOf(bp *blueprint.Blueprint, flag string) string {
 	return bp.Peering
 }
 
-// NetGenesisIn customizes the built genesis.
-//
-// The cb tags are what a surface renders this from: one declaration behind the
-// cobra flags a person types and the JSON schema an agent reads, so the two
-// cannot describe the same argument differently (feature.Flags / feature.Schema,
-// surface-unification-design §3.2). They are inert until a surface reads them —
-// this struct is unchanged otherwise — and TestNetGenesis_TagsMatchTheCommand
-// holds them to the flags the command declares by hand today, so the derivation
-// is proven to reproduce the shipped surface before anything switches to it.
-type NetGenesisIn struct {
-	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
-	ChainID int64  `cb:"chain-id"               help:"override the manifest chain id (0 = manifest)"`
-	// Set carries genesis config overrides as key=value on the bare config key,
-	// e.g. "bohoBlock=10" to move a fork off genesis.
-	Set []string `cb:"set" help:"override a genesis config key (repeatable), e.g. --set bohoBlock=10"`
-	// OverlayPath is a JSON overlay file {capabilities, genesis}: the genesis
-	// fragment is deep-merged and the capabilities are advertised.
-	OverlayPath string `cb:"overlay" help:"JSON overlay file {capabilities,genesis} deep-merged into the genesis"`
-	// GenesisExisting is a reference to a finished genesis file used verbatim
-	// (genesis mode "existing"); empty builds from the template.
-	GenesisExisting string
-	// Fork, when set, schedules a hardfork whose consensus configuration comes
-	// from the chain that seals after it.
-	Fork *GenesisFork
-	// PerBinary names, per binary, an overlay file in the same shape as
-	// OverlayPath. Its genesis fragment is merged onto the built genesis to
-	// make that binary's own document.
-	PerBinary map[string]string
-}
-
 // NetGenesis builds the genesis from the key set and writes it to the target.
 func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 	// The request is read before the workspace is opened: one that contradicts
@@ -280,122 +192,6 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 	})
 }
 
-// genesisOpts folds the flag-shaped genesis inputs into the step options: the
-// key=value overrides and the overlay file's two halves.
-// genesisOpts turns a genesis request into the options the step applies, and
-// refuses a request that asks for both a finished genesis and a change to it.
-//
-// The two cannot both be honoured: a finished genesis is written byte for byte,
-// so a chain id, a fork height or an overlay arriving alongside it is silently
-// dropped. It used to be worse than silent — the completion detail still
-// reported "chain id N (override)" and the advertised capabilities were derived
-// from the dropped fork heights, so a capability-gated fork test would run
-// against a chain that has no such fork. Saying no here, before anything is
-// written, is the only answer that leaves the request and the result equal.
-func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
-	opts, err := buildGenesisOpts(in)
-	if err != nil {
-		return opts, err
-	}
-	return opts, opts.checkExistingIsUnchanged()
-}
-
-// checkExistingIsUnchanged reports a request that pairs a finished genesis with
-// a change to it, naming every conflicting part so one message covers the whole
-// request rather than one round trip per option.
-func (o GenesisOpts) checkExistingIsUnchanged() error {
-	if o.Existing == "" {
-		return nil
-	}
-	var asked []string
-	if o.ChainID != 0 {
-		asked = append(asked, fmt.Sprintf("chain id %d", o.ChainID))
-	}
-	if len(o.Overrides) > 0 {
-		asked = append(asked, fmt.Sprintf("genesis override(s) %s", strings.Join(slices.Sorted(maps.Keys(o.Overrides)), ", ")))
-	}
-	if len(o.Overlay) > 0 {
-		asked = append(asked, "a genesis overlay")
-	}
-	if len(o.Variants) > 0 {
-		asked = append(asked, fmt.Sprintf("a separate genesis for binary %s", strings.Join(slices.Sorted(maps.Keys(o.Variants)), ", ")))
-	}
-	if len(asked) == 0 {
-		return nil
-	}
-	return fmt.Errorf(
-		"chainsetup: genesis: %q is used verbatim, so %s cannot be applied — drop the change, or build the genesis instead of naming a finished one",
-		o.Existing, strings.Join(asked, " and "))
-}
-
-func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
-	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting, Fork: in.Fork}
-	for _, kv := range in.Set {
-		k, v, ok := strings.Cut(kv, "=")
-		if !ok || k == "" {
-			return opts, fmt.Errorf("chainsetup: genesis override expects key=value, got %q", kv)
-		}
-		if opts.Overrides == nil {
-			opts.Overrides = map[string]string{}
-		}
-		opts.Overrides[k] = v
-	}
-	for _, name := range slices.Sorted(maps.Keys(in.PerBinary)) {
-		overlay, err := readGenesisOverlay(in.PerBinary[name])
-		if err != nil {
-			return opts, err
-		}
-		// Capabilities describe the network, and a network advertises one set.
-		// Accepting them here would let two binaries claim different ones with
-		// no way to say which the network has.
-		if len(overlay.Capabilities) > 0 {
-			return opts, fmt.Errorf("chainsetup: genesis: the overlay for binary %q declares capabilities, which describe the whole network — declare them on the network's own overlay", name)
-		}
-		// Same reason: whether the chain stops is one answer for the network.
-		if overlay.HaltsAt != 0 {
-			return opts, fmt.Errorf("chainsetup: genesis: the overlay for binary %q declares haltsAt, which describes the whole network — declare it on the network's own overlay", name)
-		}
-		if opts.Variants == nil {
-			opts.Variants = map[string][]byte{}
-		}
-		opts.Variants[name] = overlay.Genesis
-	}
-	if in.OverlayPath == "" {
-		return opts, nil
-	}
-	overlay, err := readGenesisOverlay(in.OverlayPath)
-	if err != nil {
-		return opts, err
-	}
-	opts.Overlay = overlay.Genesis
-	opts.Capabilities = overlay.Capabilities
-	opts.HaltsAt = overlay.HaltsAt
-	return opts, nil
-}
-
-// genesisOverlayFile is the {capabilities, genesis} document an overlay path
-// holds. One reader for the network's overlay and for a binary's own, so the
-// two cannot come to disagree about the shape.
-type genesisOverlayFile struct {
-	Capabilities []string        `json:"capabilities"`
-	Genesis      json.RawMessage `json:"genesis"`
-	// HaltsAt is the block this genesis makes the network stop one short of.
-	HaltsAt int64 `json:"haltsAt,omitempty"`
-}
-
-func readGenesisOverlay(path string) (genesisOverlayFile, error) {
-	var overlay genesisOverlayFile
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return overlay, err
-	}
-	if err := json.Unmarshal(raw, &overlay); err != nil {
-		return overlay, fmt.Errorf("chainsetup: bad genesis overlay %q: %w", path, err)
-	}
-	return overlay, nil
-}
-
-// NetConfigIn identifies the workspace and, optionally, per-node config
 // overrides to record before rendering.
 type NetConfigIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"os"
 	"path"
 	"path/filepath"
@@ -338,4 +339,27 @@ func uniq(in []string) []string {
 		out = append(out, s)
 	}
 	return out
+}
+
+// LaunchFailure is which of the launch's five failures this error is.
+//
+// What still reaches the default is everything the launch does per node once
+// the checks have passed: resolving a machine, building a peer list, the
+// driver's own refusal to start a process. Those belong to the packages that
+// raise them, and giving one of the five names here would say something the
+// error does not.
+func LaunchFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errLaunchNoBinary):
+		return lifecycle.ChainLaunchNodesFailNoBinary
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	case errors.Is(err, errLaunchOccupied):
+		return lifecycle.ChainLaunchNodesFailOccupied
+	case errors.Is(err, errLaunchNoKeystore):
+		return lifecycle.ChainLaunchNodesFailNoKeystore
+	case errors.Is(err, errLaunchPhaseEmpty):
+		return lifecycle.ChainLaunchNodesFailPhaseEmpty
+	}
+	return lifecycle.FailStageUnclassified
 }

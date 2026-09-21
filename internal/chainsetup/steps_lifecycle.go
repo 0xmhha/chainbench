@@ -448,3 +448,28 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 // wrote it — which is what makes a remote node's log one call instead of a
 // branch. (The collector's live tail has its own byte-offset reader; this is
 // the step surface's one-shot read.)
+
+// InitFailure is which of the init stage's failures this error is.
+//
+// The busy-port answer is the launch's state, not one of this block's. The
+// check is the same one the launch makes, asked here before anything is
+// written so that the refusal can name the ports and the host instead of
+// leaving it to the binary to say "datadir already used"; what failed is the
+// ports the launch needs, and it keeps that name whoever noticed.
+//
+// What still reaches the default is the binary's own refusal, and the two
+// preconditions a bare `chain init` can still hit — inside a composition the
+// transition table is what makes those unreachable.
+func InitFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errInitTargetUnable):
+		return lifecycle.ChainInitNodesFailTargetUnable
+	case errors.Is(err, errInitGenesisUnreadable):
+		return lifecycle.ChainInitNodesFailGenesisUnreadable
+	case errors.Is(err, errInitDatadir):
+		return lifecycle.ChainInitNodesFailDatadir
+	case errors.Is(err, errLaunchPortBusy):
+		return lifecycle.ChainLaunchNodesFailPortBusy
+	}
+	return lifecycle.FailStageUnclassified
+}

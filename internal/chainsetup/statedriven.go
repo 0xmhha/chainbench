@@ -2,7 +2,6 @@ package chainsetup
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -59,11 +58,11 @@ type composeStage struct {
 var composition = []composeStage{
 	{
 		step: "new", at: lifecycle.ChainOpenWorkspace, next: lifecycle.ChainBuildNodeTable,
-		classify: newFailure,
+		classify: NewFailure,
 	},
 	{
 		step: "place", at: lifecycle.ChainBuildNodeTable, next: lifecycle.ChainEnsureKeys,
-		classify: placeFailure,
+		classify: PlaceFailure,
 	},
 	{
 		// The first stage whose work reports its own state. It used to be read
@@ -72,37 +71,37 @@ var composition = []composeStage{
 		// request said, so a composition with an inline topology was recorded
 		// as having used the preset.
 		step: "keys", at: lifecycle.ChainEnsureKeys, next: lifecycle.ChainBuildGenesis,
-		classify: keysFailure,
+		classify: KeysFailure,
 	},
 	{
 		// The block with the most failures, because it is the only stage that
 		// handles two chains: a network crossing a fork reads the handing
 		// chain's genesis to build the receiving chain's.
 		step: "genesis", at: lifecycle.ChainBuildGenesis, next: lifecycle.ChainBuildNodeConfig,
-		classify: genesisFailure,
+		classify: GenesisFailure,
 	},
 	{
 		step: "config", at: lifecycle.ChainBuildNodeConfig, next: lifecycle.ChainBuildNodeCommand,
-		classify: configFailure,
+		classify: ConfigFailure,
 	},
 	{
 		step: "build", at: lifecycle.ChainBuildNodeCommand, next: lifecycle.ChainDeployNodes,
-		classify: buildFailure,
+		classify: BuildFailure,
 	},
 	{
 		step: "deploy", at: lifecycle.ChainDeployNodes, next: lifecycle.ChainInitNodes,
-		classify: deployFailure,
+		classify: DeployFailure,
 	},
 	{
 		step: "init", at: lifecycle.ChainInitNodes, next: lifecycle.ChainLaunchNodes,
-		classify: initFailure,
+		classify: InitFailure,
 	},
 	{
 		// The block with the most detail states, because it is the one stage
 		// whose shape the family decides. The launch reports a phase's worth of
 		// states per phase, so a launch that dies in the third join says so.
 		step: "start", at: lifecycle.ChainLaunchNodes, next: lifecycle.ChainVerify,
-		classify: launchFailure,
+		classify: LaunchFailure,
 	},
 }
 
@@ -264,172 +263,6 @@ func (s composeStage) failed(m *lifecycle.Machine, passed []lifecycle.Status, er
 		}
 	}
 	return err
-}
-
-// keysFailure is which of the key stage's failures this error is.
-//
-// The default is the debt state and not a guess. Two things still reach it: the
-// preconditions the transition table makes unreachable in a composition but not
-// in a bare `chain keys`, and whatever the key store itself refuses when it
-// writes the set. Neither has a state, and naming one of the four would say
-// something the error does not.
-func keysFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errKeySourceUnknown):
-		return lifecycle.ChainEnsureKeysFailUnknownSource
-	case errors.Is(err, errKeyCountShort):
-		return lifecycle.ChainEnsureKeysFailCountMismatch
-	case errors.Is(err, errKeyRefNotLocal):
-		return lifecycle.ChainEnsureKeysFailKeyNotLocal
-	case errors.Is(err, errKeyUnreadable):
-		return lifecycle.ChainEnsureKeysFailKeyUnreadable
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// genesisFailure is which of the genesis stage's five failures this error is.
-//
-// What still reaches the default is the building itself: a template that will
-// not substitute, an overlay that will not merge, a fork ordering the result
-// does not satisfy. Those are the genesis package's refusals rather than this
-// step's, and giving them a state here would put the naming on the wrong side
-// of the boundary.
-func genesisFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errGenesisExistingInvalid):
-		return lifecycle.ChainBuildGenesisFailExistingInvalid
-	case errors.Is(err, errGenesisExistingForeign):
-		return lifecycle.ChainBuildGenesisFailExistingForeign
-	case errors.Is(err, errGenesisForkUnresolved):
-		return lifecycle.ChainBuildGenesisFailForkUnresolved
-	case errors.Is(err, errGenesisDeclUnused):
-		return lifecycle.ChainBuildGenesisFailDeclUnused
-	case errors.Is(err, errGenesisTargetUnable):
-		return lifecycle.ChainBuildGenesisFailTargetUnable
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// launchFailure is which of the launch's five failures this error is.
-//
-// What still reaches the default is everything the launch does per node once
-// the checks have passed: resolving a machine, building a peer list, the
-// driver's own refusal to start a process. Those belong to the packages that
-// raise them, and giving one of the five names here would say something the
-// error does not.
-func launchFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errLaunchNoBinary):
-		return lifecycle.ChainLaunchNodesFailNoBinary
-	case errors.Is(err, errLaunchPortBusy):
-		return lifecycle.ChainLaunchNodesFailPortBusy
-	case errors.Is(err, errLaunchOccupied):
-		return lifecycle.ChainLaunchNodesFailOccupied
-	case errors.Is(err, errLaunchNoKeystore):
-		return lifecycle.ChainLaunchNodesFailNoKeystore
-	case errors.Is(err, errLaunchPhaseEmpty):
-		return lifecycle.ChainLaunchNodesFailPhaseEmpty
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// initFailure is which of the init stage's failures this error is.
-//
-// The busy-port answer is the launch's state, not one of this block's. The
-// check is the same one the launch makes, asked here before anything is
-// written so that the refusal can name the ports and the host instead of
-// leaving it to the binary to say "datadir already used"; what failed is the
-// ports the launch needs, and it keeps that name whoever noticed.
-//
-// What still reaches the default is the binary's own refusal, and the two
-// preconditions a bare `chain init` can still hit — inside a composition the
-// transition table is what makes those unreachable.
-func initFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errInitTargetUnable):
-		return lifecycle.ChainInitNodesFailTargetUnable
-	case errors.Is(err, errInitGenesisUnreadable):
-		return lifecycle.ChainInitNodesFailGenesisUnreadable
-	case errors.Is(err, errInitDatadir):
-		return lifecycle.ChainInitNodesFailDatadir
-	case errors.Is(err, errLaunchPortBusy):
-		return lifecycle.ChainLaunchNodesFailPortBusy
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// configFailure is which of the config stage's three failures this error is.
-//
-// What reaches the default is writing itself: a machine that will not take the
-// file, a directory that cannot be made. Those are the file store's refusals
-// and they read as such; the three named here are the ones a person can act on
-// without leaving the declaration.
-func configFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errConfigBadOverride):
-		return lifecycle.ChainBuildNodeConfigFailBadOverride
-	case errors.Is(err, errConfigReadback):
-		return lifecycle.ChainBuildNodeConfigFailReadback
-	case errors.Is(err, errConfigPinUnreadable):
-		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// placeFailure is which of the place stage's two failures this error is.
-//
-// The default holds a family of refusals that say one thing: the layout asked
-// for cannot exist — no nodes in the topology, no validator, a server set too
-// small to hold what was asked. Splitting those into states would be splitting
-// a sentence.
-func placeFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errPlaceTwoLayouts):
-		return lifecycle.ChainBuildNodeTableFailTwoLayouts
-	case errors.Is(err, errPlaceSetContended):
-		return lifecycle.ChainBuildNodeTableFailSetContended
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// deployFailure is which of the deploy stage's two failures this error is.
-//
-// The default is the shipping itself: a file store that will not read the local
-// key or will not write it to the machine. That is the store's refusal, and the
-// two named here are about what is on the target rather than about getting
-// there.
-func deployFailure(err error) lifecycle.Status {
-	switch {
-	case errors.Is(err, errDeployInputMissing):
-		return lifecycle.ChainDeployNodesFailInputMissing
-	case errors.Is(err, errDeployInputForeign):
-		return lifecycle.ChainDeployNodesFailInputForeign
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// newFailure is the one failure the workspace stage has a state for.
-//
-// The default is everything else opening a workspace can hit: a chain that
-// resolves to nothing, a manifest that will not parse, a directory that cannot
-// be made. Those are the chain registry's and the filesystem's refusals.
-func newFailure(err error) lifecycle.Status {
-	if errors.Is(err, errNewNoChain) {
-		return lifecycle.ChainOpenWorkspaceFailNoChain
-	}
-	return lifecycle.FailStageUnclassified
-}
-
-// buildFailure is the one failure the command stage has a state for.
-//
-// The default is assembling itself: a peer list that cannot be built, a node
-// whose plugin cannot be resolved. A bad option is a line somebody wrote; the
-// rest are the composition disagreeing with itself.
-func buildFailure(err error) lifecycle.Status {
-	if errors.Is(err, errBuildBadOption) {
-		return lifecycle.ChainBuildNodeCommandFailBadOption
-	}
-	return lifecycle.FailStageUnclassified
 }
 
 // startFor is the state a composition resumes at. An empty step is the whole

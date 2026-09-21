@@ -3,45 +3,9 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
-
-// Deps is what the verbs need from their caller: a clock for step stamps, an
-// environment, a command line for the workspace lock's owner note, and a
-// reporter for operational side notes. All may be zero — the defaults are
-// time.Now, the process environment, an empty owner, and silence.
-type Deps struct {
-	Clock   func() time.Time
-	Env     func(string) string
-	Command string
-	Report  func(format string, args ...any)
-	// Driver overrides the transport every machine of a workspace controls
-	// its nodes through; nil uses each machine's own process. Injected for
-	// tests and for surfaces that route the same verb over another transport.
-	Driver func() (process.Driver, error)
-}
-
-// Now is the clock the doc above promises, with its default applied. Callers
-// outside this package need the same default — a nil Clock is ordinary, and
-// every caller that reached for d.Clock() directly was one nil away from a
-// panic.
-func (d Deps) Now() time.Time {
-	if d.Clock == nil {
-		return time.Now()
-	}
-	return d.Clock()
-}
-
-func (d Deps) command() string { return d.Command }
-
-func (d Deps) logf(format string, args ...any) {
-	if d.Report != nil {
-		d.Report(format, args...)
-	}
-}
 
 // NetNewIn initializes a composition workspace: the chain identity and where
 // the network's data plane lives.

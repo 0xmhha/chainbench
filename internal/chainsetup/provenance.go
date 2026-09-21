@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -173,3 +174,15 @@ func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 }
 
 // markStep records that step ran with detail, stamping the completion time.
+
+// BuildFailure is the one failure the command stage has a state for.
+//
+// The default is assembling itself: a peer list that cannot be built, a node
+// whose plugin cannot be resolved. A bad option is a line somebody wrote; the
+// rest are the composition disagreeing with itself.
+func BuildFailure(err error) lifecycle.Status {
+	if errors.Is(err, errBuildBadOption) {
+		return lifecycle.ChainBuildNodeCommandFailBadOption
+	}
+	return lifecycle.FailStageUnclassified
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/preset"
@@ -220,3 +221,21 @@ func (w *Workspace) LaunchOpts() (string, error) {
 // Provision materializes the shared launch inputs on the target with
 // upload-if-absent semantics: the genesis (as built by the genesis step) and
 // the per-node configs. Re-running it reuses what already exists.
+
+// ConfigFailure is which of the config stage's three failures this error is.
+//
+// What reaches the default is writing itself: a machine that will not take the
+// file, a directory that cannot be made. Those are the file store's refusals
+// and they read as such; the three named here are the ones a person can act on
+// without leaving the declaration.
+func ConfigFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errConfigBadOverride):
+		return lifecycle.ChainBuildNodeConfigFailBadOverride
+	case errors.Is(err, errConfigReadback):
+		return lifecycle.ChainBuildNodeConfigFailReadback
+	case errors.Is(err, errConfigPinUnreadable):
+		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
+	}
+	return lifecycle.FailStageUnclassified
+}
