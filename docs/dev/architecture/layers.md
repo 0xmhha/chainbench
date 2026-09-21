@@ -461,7 +461,7 @@ L5 app 이 L2a 구현을 주입한다 — L3 는 여전히 wemix 를 모른다.
 문서만으로는 무너진다. **레이어 검사를 테스트로 만든다.**
 
 ```go
-// internal/architecture/layers_test.go (제안)
+// internal/arch/layers_test.go
 // TestLayering asserts that no package imports one above it. The layer map is
 // the design; this test is what keeps the design and the code the same thing.
 func TestLayering(t *testing.T) { ... }

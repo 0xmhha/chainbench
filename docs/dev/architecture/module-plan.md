@@ -568,7 +568,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   (node stop/start)·`HardforkSwap` 을 새 경로로 통과. 결과: `chainsetup` 3,589 →
   **3,313줄**, `app` 1,757 → 1,410, `cmd/chainbench` 2,746 → 2,580, 위반 0.
 - **P6.3 핸드오프 중복 제거 — 완료 2026-08-28.** `handoff_driver.go`(371줄)와
-  `cmd/chainbench/upgrade_run.go`(396줄)가 함수 단위로 같은 일을 했다(8쌍).
+  `upgrade_run.go`(396줄)가 함수 단위로 같은 일을 했다(8쌍).
   본문은 `consensus/upgrade.Handoff` 하나가 됐다(546줄: `NewHandoff` →
   `WriteConfig` → `BaseGenesis` → `ComposePlan` → `ApplyOverlay` → `Launch` →
   `WireMesh` → `DeployGovernance` → `EtcdInit` → `VerifyEtcd` → `AwaitFork`;
@@ -579,7 +579,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   소비자가 없어져 삭제. 결과: `chainsetup` 5,210 → 4,865줄, 레이어 위반 0,
   `Handoff` 종이 절반 테스트 4건(profile+preset 으로 config·plan·overlay 조립).
 - **P6.4 케이스 러너 삭제 — 완료 2026-08-28.** `cases`·`static`·`wemix`·`handoff`·
-  `handoff_driver`·`report`·`state`(7파일)와 `cmd/chainbench/chain.go`, 그 테스트
+  `handoff_driver`·`report`·`state`(7파일)와 `chain.go`, 그 테스트
   2파일을 지웠다. 소비자는 `chain.go` 하나였고, P7 의 선언 4개 + `app.RunSuite` 가
   같은 일을 한다(단계 보고는 `SetupSteps`, `chain status/down` 은 `net status/stop`).
   결과: `chainsetup` 4,865 → **3,589줄**(14파일), `cmd/chainbench` 2,966 → 2,746줄,
@@ -626,7 +626,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   변화(문자열→객체)가 verify 파싱을 깨는 것을 발견 — 아무도 읽지 않는 필드라
   `poa.EtcdState` 에서 제거(당시 `tests/cases/README.md` 표, 지금 `tests/tc/CHAIN-BRINGUP.md`).
 - 남은 것: P6.4 — `chain up --case` 러너(cases·static·wemix·handoff·report·state,
-  `cmd/chainbench/chain.go`)를 지운다. 케이스의 단계 보고는 `RunSuiteOut.SetupSteps`
+  `chain.go`)를 지운다. 케이스의 단계 보고는 `RunSuiteOut.SetupSteps`
   가 대신한다.
 
 ### P8. test-helper 모듈

@@ -15,7 +15,7 @@ import (
 // It is not zero because it was 36 when the check was written, and the check
 // came first on purpose: a count is what tells you whether fixing them is an
 // afternoon or a week. Lower it when references are fixed; never raise it.
-const docPathBudget = 36
+const docPathBudget = 0
 
 // docRoots are the documents a reader is expected to act on.
 //
@@ -62,10 +62,31 @@ func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 			if err != nil {
 				return nil
 			}
-			for _, m := range goPathInProse.FindAllStringSubmatch(string(b), -1) {
-				seen++
-				if _, err := os.Stat(filepath.Join(root, m[1])); err != nil {
-					missing = append(missing, miss{m[1], rel})
+			for _, line := range strings.Split(string(b), "\n") {
+				hits := goPathInProse.FindAllString(line, -1)
+				if len(hits) == 0 {
+					continue
+				}
+				seen += len(hits)
+				// A line that names a path that is gone AND one that is there
+				// is a record of the move, and naming the old one is the
+				// point. So is a blockquote: this repository corrects a
+				// document by quoting the correction above the text it
+				// corrects, and the correction has to be able to say what the
+				// text used to say.
+				live, dead := 0, []string{}
+				for _, h := range hits {
+					if _, err := os.Stat(filepath.Join(root, h)); err == nil {
+						live++
+					} else {
+						dead = append(dead, h)
+					}
+				}
+				if live > 0 || strings.HasPrefix(strings.TrimSpace(line), ">") {
+					continue
+				}
+				for _, d := range dead {
+					missing = append(missing, miss{d, rel})
 				}
 			}
 			return nil

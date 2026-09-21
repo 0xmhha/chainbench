@@ -103,7 +103,7 @@ go run ./scripts/inventory/code-graph . > graph.json
 
 | 줄 | 분기 | 깊이 | 위치 |
 |---|---|---|---|
-| 191 | 24 | 3 | `internal/chainsetup/verbs_up.go:130` `netUpFrom` |
+| 191 | 24 | 3 | `internal/chainsetup/verb/verbs_up.go:130` `netUpFrom` |
 | 182 | 46 | 3 | `internal/dsl/spec_v2.go:357` `lowerCase` |
 | 175 | 30 | 3 | `internal/testengine/compose.go:86` `compositionOf` |
 | 172 | 33 | 4 | `internal/arch/surface.go:230` `Entries` |

@@ -103,7 +103,8 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 (c) 파서·validator·문서가 두 벌씩 필요하다.
 
 **구조적 문제 ④(specifier 분산):** 배치 target 의 specifier 가 `placement`(spec) · `remote.cluster`
-(spec) · `--remote-host/--remote-user/--remote-port/--target-dir`(CLI, `cmd/chainbench/net.go:52-55`)
+(spec) · `--remote-host/--remote-user/--remote-port/--target-dir`(CLI; 작성 당시 `net.go`, 지금은
+`cmd/chainbench/chaincmd/chain.go`)
 **3곳**에 흩어져 있다. key point 2 가 요구한 "local/remote 무관한 단일 경로 표현"과 불일치.
 
 ### 2.4 갭 목록 (배경/알고리즘 ↔ 문서 ↔ 코드)
@@ -326,7 +327,7 @@ v1 은 **v2 의 부분집합으로 기계 변환 가능**하다. 파서에 desug
 | 3 | **§3.5 문법 통일 + 스키마 정본화** | 이후 모든 이관(106건 잔여)이 이 문법 위에 쌓임. 늦출수록 재작업 비용 증가 |
 | 4 | G2 genesis 4모드 노출 | 코드(`core/genesis`)는 이미 4모드 지원 — DSL 필드만 열면 됨 |
 | 5 | G4 metric 어세션 | collector 에 metrics 스크레이프 추가 필요(신규 작업) |
-| 6 | G6 단일 경로 문법 | `netcompose.TargetSpec`(`internal/netcompose/target.go:29`)이 이미 유사 모델 — 통합 |
+| 6 | G6 단일 경로 문법 | `TargetSpec`(작성 당시 `netcompose`, 지금은 `internal/app/serverconf.go` 의 `resource.Spec` 별칭)이 이미 유사 모델 — 통합 |
 | 7 | G5 override hook | 위 항목들이 자리 잡은 뒤 |
 
 **주의:** 3(문법 통일)을 1·2보다 뒤에 둔 것은 의도적이다. 문법을 먼저 바꾸면 아직 표현할 대상이

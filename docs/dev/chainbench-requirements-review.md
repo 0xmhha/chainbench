@@ -110,7 +110,7 @@
 - **리더-우선 확정**: producer의 `etcdInit` 호출 후 **etcd 준비(`etcdIsReady`/리더 `"*"`)를 폴링 확인**하고 나서 다음 단계 진행. "호출하고 기대"가 아니라 **확인 게이트**.
 - **시작 간격의 체계적 설정**: 조인이 필요한 구성에서는 **리더 부트스트랩 완료 시점 직후**에 조인 슬롯이 오도록 노드 시작 시각을 `gap`(7/11/17/23s)에 맞춰 정렬 → 슬롯 낭비(`tt`초) 제거. (요구 3의 "연결이 바로 되도록 시작 간격을 체계적으로")
 - **재기동 시 datadir 정리(S2 정정)**: etcd는 **노드 프로세스 내장**이라 프로세스를 종료하면 **함께 종료**된다("살아있는 etcd 정리"는 불필요). 문제는 **같은 datadir의 낡은 클러스터 상태**뿐이므로, **재-셋업 전 datadir 삭제**로 `Existing` 조인 루프를 차단한다. **노드 종료(kill PID)와 datadir 삭제는 별개 기능**이며, 재-셋업 = StopAll + RemoveDataDir. 정리 안 하면 데이터가 계속 쌓여 디스크 관리가 안 된다(요구 12·D-1 세션 정리).
-- **procman 확장(datadir 추적)**: 현재 procman은 `{PID, Label}`만 추적(`procman.go:22`)하고 **datadir는 추적하지 않는다**. 정확한 종료+정리를 위해 노드별 **`{PID, datadir}`** 를 추적하도록 확장해야 한다. 또한 etcd는 별도 PID가 없으므로 **상태는 RPC/IPC(`etcdIsReady`, `getMiners`의 `"*"`)로 관측**해 lifecycle에 포함(요구 12·3). (chainbench에는 `cmd/chainbench/clean.go`가 `os.RemoveAll(dataDir)`로 루트 삭제를 이미 제공 — 노드별 추적과 연계 필요.)
+- **procman 확장(datadir 추적)**: 현재 procman은 `{PID, Label}`만 추적(`procman.go:22`)하고 **datadir는 추적하지 않는다**. 정확한 종료+정리를 위해 노드별 **`{PID, datadir}`** 를 추적하도록 확장해야 한다. 또한 etcd는 별도 PID가 없으므로 **상태는 RPC/IPC(`etcdIsReady`, `getMiners`의 `"*"`)로 관측**해 lifecycle에 포함(요구 12·3). (chainbench에는 `cmd/chainbench/lifecyclecmd/clean.go`가 `os.RemoveAll(dataDir)`로 루트 삭제를 이미 제공 — 노드별 추적과 연계 필요.)
 
 > 요약: 이전 세션의 "flaky"는 **go-wemix etcd의 슬롯-스케줄 조인 + stale-datadir 재조인** 두 가지이며, chainbench는 (i)리더 준비 확인 게이트, (ii)슬롯(`gap`)에 맞춘 시작 정렬, (iii)재기동 시 **datadir 삭제**로 "바로 연결"을 만들 수 있다(내장 etcd는 프로세스 종료로 함께 죽으므로 별도 정리 불필요). 내가 넣었던 "port-free 폴링"은 이 실체와 무관했다.
 

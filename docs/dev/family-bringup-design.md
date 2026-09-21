@@ -33,16 +33,13 @@
 | `supervisor.Deps.LeaderGate` — "미배선이면 오류" 계약 | `core/supervisor` | ✅ 자리만 비어 있음 |
 | `engine.GenesisSource` / `KeySource` boundary | `internal/engine` | ✅ |
 
-**그런데 이 프리미티브를 부르는 곳이 3군데로 흩어져 있다:**
+**작성 당시에는 이 프리미티브를 부르는 곳이 3군데로 흩어져 있었다** — 업그레이드 CLI,
+핸드오프 드라이버, 원격 서버셋 부트스트랩. 그리고 정작 평범한 기동 경로에는 없었다.
+T7.11a 에서 고친 것과 같은 fan-out 이었다.
 
-```
-cmd/chainbench/upgrade_run.go        (업그레이드 CLI)
-internal/chainsetup/handoff_driver.go (핸드오프)
-internal/chains/wemix/deploy/bootstrap.go (원격 fleet)
-```
-
-그리고 **정작 평범한 기동 경로에는 없다** — `chainsetup/wemix.go` 가 `NotImplemented` 로 남긴 그 자리다.
-T7.11a 에서 고친 것과 같은 fan-out 이고, 같은 해법(유스케이스 1곳 수렴)이 필요하다.
+**지금은 한 곳으로 모였다(P6.3, #419).** 세 파일은 모두 없어졌고, `poa` 바깥에서 이
+프리미티브를 부르는 곳은 `internal/chains/wemix/caps.go` 하나다. 실행은 `poa` 안의
+`executor.go` 가 맡고, 평범한 합성 경로가 그것을 통과한다.
 
 ---
 
