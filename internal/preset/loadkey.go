@@ -87,7 +87,7 @@ func LoadKeyPresetWithKeysAt(ctx context.Context, files filestore.Store, dir str
 		return Key{}, lerr
 	}
 	for i := range set.Nodes {
-		key, kerr := NodeKeyAt(ctx, files, dir, set.Nodes[i].Index)
+		key, kerr := nodeKeyAt(ctx, files, dir, set.Nodes[i].Index)
 		if kerr == nil {
 			set.Nodes[i].Nodekey = key
 			continue
@@ -135,12 +135,12 @@ func LoadKeyPresetWithKeys(dir string) (Key, error) {
 	return LoadKeyPresetWithKeysAt(context.Background(), nil, dir)
 }
 
-// NodeKeyAt reads one identity's private key from node<N>/nodekey.
+// nodeKeyAt reads one identity's private key from node<N>/nodekey.
 //
 // It is the only way to obtain a key from a ring on disk. The index used to
 // carry a copy, which made every read of it a disclosure of the whole ring; now
 // a caller that wants one key reads one key.
-func NodeKeyAt(ctx context.Context, files filestore.Store, dir string, index int) (derive.PrivateKey, error) {
+func nodeKeyAt(ctx context.Context, files filestore.Store, dir string, index int) (derive.PrivateKey, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
@@ -273,17 +273,17 @@ type KeyFile struct {
 // account was the address the nodekey derives, and a ring where it is not
 // produced a node that starts and dies on "no key for given address or file".
 func LoadKeyPresetWithAccounts(dir string) (Key, error) {
-	return LoadKeyPresetWithAccountsAt(context.Background(), nil, dir)
+	return loadKeyPresetWithAccountsAt(context.Background(), nil, dir)
 }
 
-// LoadKeyPresetWithAccountsAt is LoadKeyPresetWithAccounts through files (nil = local).
-func LoadKeyPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir string) (Key, error) {
+// loadKeyPresetWithAccountsAt is LoadKeyPresetWithAccounts through files (nil = local).
+func loadKeyPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir string) (Key, error) {
 	set, err := LoadKeyPresetAt(ctx, files, dir)
 	if err != nil {
 		return Key{}, err
 	}
 	for i := range set.Nodes {
-		acct, aerr := KeystoreAccount(dir, set.Nodes[i].Index)
+		acct, aerr := keystoreAccount(dir, set.Nodes[i].Index)
 		if aerr != nil {
 			// A ring entry with no keystore is ordinary: only a node that seals
 			// needs one. Its account is the address its nodekey derives, which
@@ -297,7 +297,7 @@ func LoadKeyPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir
 	return set, nil
 }
 
-// KeystoreAccount is the address one entry's keystore holds.
+// keystoreAccount is the address one entry's keystore holds.
 //
 // Read from THIS machine. A key set is the operator's, and the keystore file is
 // named with its account and a timestamp, so it is found by listing a directory
@@ -308,7 +308,7 @@ func LoadKeyPresetWithAccountsAt(ctx context.Context, files filestore.Store, dir
 // A directory holding more than one takes the first by name. A node seals with
 // one account, and a ring that gave it two has not said which; guessing the same
 // way in one place is better than guessing differently in two.
-func KeystoreAccount(dir string, index int) (string, error) {
+func keystoreAccount(dir string, index int) (string, error) {
 	ksDir := filepath.Join(dir, fmt.Sprintf("node%d", index), "keystore")
 	ents, err := os.ReadDir(ksDir)
 	if err != nil {
