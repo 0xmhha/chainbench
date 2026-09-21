@@ -102,7 +102,7 @@ func BuiltinPool(slots int) Pool {
 		Hosts:  []Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots:  slots,
 		Ports:  Bands{P2P: Band{Base: p.P2PBase, Step: p.P2PStep}, RPC: Band{Base: p.RPCBase, Step: p.RPCStep}},
-		Source: builtinSource,
+		Origin: builtinOrigin,
 	}
 }
 

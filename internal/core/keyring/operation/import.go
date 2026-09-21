@@ -139,15 +139,15 @@ func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	if err != nil {
 		return SetOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
 	}
-	dstFiles, dstDir, source, err := in.Ring.open(d)
+	dstFiles, dstDir, origin, err := in.Ring.open(d)
 	if err != nil {
 		return SetOut{}, err
 	}
 	set, err := store.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
 	if err != nil {
-		return SetOut{Dir: displaySet(in.Ring, dstDir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dstDir), Origin: origin}, err
 	}
-	return setOut(displaySet(in.Ring, dstDir), source, set), nil
+	return setOut(displaySet(in.Ring, dstDir), origin, set), nil
 }
 
 // source turns the ways of naming a key into one keyring.Source. Where a file

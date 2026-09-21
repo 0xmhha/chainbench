@@ -134,7 +134,7 @@ func TestNetPool_ReportsCapacityWithoutCredentials(t *testing.T) {
 	if out.Used != 4 {
 		t.Fatalf("used = %d, want the 4 composed nodes", out.Used)
 	}
-	if out.Source == "" {
+	if out.Origin == "" {
 		t.Fatal("the pool must say where the port plan came from")
 	}
 	// The type carries no credential field at all: adding one would have to be

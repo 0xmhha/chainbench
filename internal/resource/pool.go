@@ -33,9 +33,9 @@ type Pool struct {
 	// a wbft one. The zero value takes portplan's default, so a caller that
 	// has not asked a family still gets a usable plan.
 	Reservation node.Reservation
-	// Source names where the pool was read from, so a port number is never a
+	// Origin names where the pool was read from, so a port number is never a
 	// guess ("server-set.yaml", "built-in defaults").
-	Source string
+	Origin string
 }
 
 // Cap is how many nodes the pool can place: every host, every slot.

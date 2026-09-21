@@ -130,30 +130,54 @@ KeystoreAccount   LoadKeyPresetWithAccountsAt   NodeKeyAt
 
 ---
 
-## C. `-Source` 가 반대 성격 둘을 덮는다
+## C. `-Source` 가 반대 성격 둘을 덮는다 — 완료 (2026-09-21)
 
-### 잰 것
+### 처음 잰 것이 좁았다
 
-접미사 `-Source` 를 가진 exported 타입이 **9개**이고, 성격이 둘로 갈린다.
+처음에는 접미사 `-Source` 를 가진 **exported 타입 9개**만 세고, 그중 꼬리표는
+`testengine.PlanSource` 하나라고 적었다. 그래서 "한 줄이면 끝나고 값도 크지 않다" 고 닫았다.
+**타입만 세고 필드를 안 센 것이 잘못이었다.** 다시 재니 꼬리표 쪽이 여섯이다.
 
-| 성격 | 타입 | 무엇 |
+| 성격 | 어디 | 값의 예 |
 |---|---|---|
-| **입력을 내주는 것** 8 | `keyring.FileSource` `MnemonicSource` `PrivateKeySource` `RandomSource` `PasswordSource` · `store.KeySource` · `genesis.PresetSource` · `poa.GenesisSource` | 값을 어디서 가져올지 정하고 실제로 가져온다 |
-| **출처를 적는 꼬리표** 1 | `testengine.PlanSource` | `string` 이다. 계획의 한 값이 **어디서 왔는지** 기록한다 |
+| **만드는 것** (지시, 일 전에 주어진다) | `keyring.Source`·`FileSource`·`MnemonicSource`·`PrivateKeySource`·`RandomSource`·`PasswordSource` · `store.KeySource` · `genesis.Source`·`PresetSource` · `poa.GenesisSource` · `keysSource` 문자열 5곳 · DSL 정의서의 `"source"` | `keyPreset` · `generate` · `declared` · `rpcCall` |
+| **적어 두는 것** (영수증, 일 끝난 뒤 남는다) | `blueprint.Source` · `testengine.PlanSource` · `State.PortSource` · `resource.Pool.Source` · `operation.SetOut.Source` · `NetPoolOut.Source` | `inventory` · `harness` · `server-set.yaml` · `explicit` |
 
-앞의 여덟은 인터페이스거나 구조체이고 메서드를 갖는다. 아홉째는 상수 몇 개를 가진 문자열
-타입이다. 같은 낱말이 "공급자" 와 "출처 표시" 를 함께 가리킨다.
+### "지금 헷갈릴 자리는 없다" 도 틀렸다
 
-### 고친다면
+두 뜻이 한 파일에서 만나는 곳이 있다. `internal/core/keyring/operation/import.go` 는
+지역변수 `source` 가 영수증인데, 여덟 줄 아래 메서드 `source()` 는 `keyring.Source` 를
+만들어 돌려준다. 같은 낱말, 같은 파일, 반대 뜻이다.
 
-`PlanSource` → `PlanOrigin` 또는 `PlanProvenance` 한 줄이다. 참조는 `testengine` 안과 계획
-문서에 한정된다. 래칫 `TestNamesDoNotCollide` 는 **선언 이름의 충돌**만 보므로 이런 접미사
-동음이의는 사정거리 밖이다.
+JSON 에서도 만난다. `State.Request *NetUpIn` 이라 워크스페이스 파일 하나가
+`request.keysSource: "generate"`(명령)와 `portSource: "server-set.yaml"`(기록)을 나란히
+담는다. 읽는 사람이 구분할 방법이 없다.
 
-> **단점.** 거의 없다. 다만 값도 크지 않다 — 두 뜻이 같은 패키지에서 만나지 않으므로 지금
-> 누가 헷갈릴 자리는 없다. A·B 뒤에 붙이는 것이 맞다.
+### 고친 것
 
----
+**코드가 이미 답을 반쯤 쓰고 있었다.** blueprint 의 상수는 `FromBlueprint`·`FromDefault` 로
+"from" 을 쓰고, testengine 의 필드 이름은 `From` 이다. 타입 이름만 `Source` 로 남아
+`FromDefault Source = "default"` 한 줄에 충돌이 그대로 보였다.
+
+영수증 쪽 여섯을 `Origin` 으로 바꿨다. 만드는 쪽은 뜻이 맞으므로 건드리지 않았다.
+
+- `blueprint.Source` → `Origin`, `ResolvedNetwork.Sources` → `Origins` (`json:"origins"`)
+- `testengine.PlanSource` → `PlanOrigin`, 상수 셋도 `Origin…` 으로. plan.json 의 키는
+  이미 `"from"` 이라 JSON 은 안 바뀐다
+- `State.PortSource` → `PortOrigin` (`json:"portOrigin"`)
+- `resource.Pool.Source` → `Origin`, `builtinSource` → `builtinOrigin`
+- `operation.SetOut.Source` → `Origin`, 이 패키지의 영수증 지역변수도 `origin` 으로
+- `NetPoolOut.Source` → `Origin` (`json:"origin"`), MCP 응답 키도 `origin`
+
+건드리지 않은 것도 분명히 적는다. 인터페이스 아홉은 생산자라는 뜻이 맞다. `keysSource`
+문자열 다섯 곳과 `tests/tc` 정의서 209개가 쓰는 `"source": "rpcCall"` 도 "어느 방식으로
+가져오나" 라는 지시라서 그대로다. 결과로 사용자가 보는 `source` 는 전부 "어느 방식" 이고,
+`origin` 은 전부 "누가 정했나" 다.
+
+> **치른 값.** JSON 키 세 개가 바뀐다(`sources`·`portSource`·`source`). 셋 다 진단용이고
+> 판단에 쓰이지 않는다 — `PortOrigin` 은 `steps_place.go` 가 쓰기만 하고 읽는 코드가 없다.
+> 다만 이전에 만든 워크스페이스를 resume 하면 `portOrigin` 이 빈 채로 보인다. 값 하나가
+> 빌 뿐 동작은 그대로다.
 
 ## 순서 제안
 
@@ -162,7 +186,7 @@ KeystoreAccount   LoadKeyPresetWithAccountsAt   NodeKeyAt
 | 1 | **B 의 앞부분** — 열 절이 살아 있는지 읽는다 | 코드를 안 바꾸고 답이 나온다. 그 답이 이름과 문서 크기를 동시에 정한다 |
 | 2 | **B 의 딸린 것** — 호출자 0인 셋 | 1번을 하면서 같은 파일을 읽는다 |
 | 3 | **A 의 2안** — 운영 기록 8개를 목록으로 선언하고 래칫을 건다 | 싸고, 다음 사람이 어느 종류를 더하는지 알게 된다 |
-| 4 | **C** | 한 줄 |
+| ~~4~~ | ~~**C**~~ | **완료 2026-09-21.** "한 줄" 이 아니었다 — 타입만 세고 필드를 안 세서 여섯 배로 작게 잡았다 |
 
 **A 의 1안(어휘를 둘로)과 B 의 개명은 여기 넣지 않았다.** 둘 다 1번의 답이 나오기 전에는
 근거가 "읽기 쉬움" 뿐이고, 이 저장소는 그 근거로 배선했다가 두 번 되돌렸다.

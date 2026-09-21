@@ -89,8 +89,8 @@ func TestVerifyLaunched_AutoSizedBPIsAFloor(t *testing.T) {
 func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 	p := planFor()
 	p.Launch = map[string][]testengine.PlanKnob{
-		node.ScopeAll: {{Knob: "nodiscover", From: testengine.SourceCommand}},
-		"bp":          {{Knob: "mine", From: testengine.SourceDeclaration}},
+		node.ScopeAll: {{Knob: "nodiscover", From: testengine.OriginCommand}},
+		"bp":          {{Knob: "mine", From: testengine.OriginDeclaration}},
 	}
 
 	full := recorded(
@@ -116,7 +116,7 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 		t.Errorf("the mismatch must name the node and the knob: %s", got[0])
 	}
 	// Whoever reads this has to go change something, so it says where to go.
-	if !strings.Contains(got[0].String(), string(testengine.SourceDeclaration)) {
+	if !strings.Contains(got[0].String(), string(testengine.OriginDeclaration)) {
 		t.Errorf("the mismatch must name who asked for the knob: %s", got[0])
 	}
 }
@@ -127,8 +127,8 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
 	p := planFor()
 	p.Launch = map[string][]testengine.PlanKnob{node.ScopeAll: {
-		{Knob: "chain.networkid=8283", From: testengine.SourceCommand},
-		{Knob: "rpc.allow-unprotected-txs", From: testengine.SourceDeclaration},
+		{Knob: "chain.networkid=8283", From: testengine.OriginCommand},
+		{Knob: "rpc.allow-unprotected-txs", From: testengine.OriginDeclaration},
 	}}
 
 	st := recorded(
@@ -149,8 +149,8 @@ func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
 func TestVerifyLaunched_CatchesAWorkspaceComposedWithAnotherBinary(t *testing.T) {
 	p := planFor()
 	p.Binary = "/b/gstable"
-	p.From = map[testengine.PlanField]testengine.PlanSource{
-		testengine.FieldBinary: testengine.SourceCommand,
+	p.From = map[testengine.PlanField]testengine.PlanOrigin{
+		testengine.FieldBinary: testengine.OriginCommand,
 	}
 
 	st := recorded(bp(1), bp(2), en(3))
@@ -167,7 +167,7 @@ func TestVerifyLaunched_CatchesAWorkspaceComposedWithAnotherBinary(t *testing.T)
 	if !strings.Contains(got[0].String(), "gwemix") || !strings.Contains(got[0].String(), "gstable") {
 		t.Errorf("the mismatch must name both binaries: %s", got[0])
 	}
-	if !strings.Contains(got[0].String(), string(testengine.SourceCommand)) {
+	if !strings.Contains(got[0].String(), string(testengine.OriginCommand)) {
 		t.Errorf("the mismatch must name who asked for the binary: %s", got[0])
 	}
 }

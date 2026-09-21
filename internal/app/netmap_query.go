@@ -171,7 +171,7 @@ type NetPoolIn struct {
 // how to log in belongs to the server set and the environment, and a summary an
 // agent can read should not be the place a password leaks.
 type NetPoolOut struct {
-	Source string   `json:"source"`
+	Origin string   `json:"origin"`
 	Hosts  []string `json:"hosts"`
 	Slots  int      `json:"slots"`
 	Cap    int      `json:"cap"`
@@ -203,7 +203,7 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 		return NetPoolOut{}, err
 	}
 	u := inv.Usage()
-	out := NetPoolOut{Source: pool.Source, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
+	out := NetPoolOut{Origin: pool.Origin, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
 	for _, h := range pool.Hosts {
 		name := h.Name
 		if name == "" || name == h.Addr {

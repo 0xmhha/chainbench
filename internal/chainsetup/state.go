@@ -105,10 +105,10 @@ type State struct {
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
 	Bootnode int `json:"bootnode,omitempty"`
-	// PortSource names where the port plan came from (a server set entry,
+	// PortOrigin names where the port plan came from (a server set entry,
 	// or the built-in defaults), so an operator reading the state never has to
 	// guess why a node listens where it does.
-	PortSource string `json:"portSource,omitempty"`
+	PortOrigin string `json:"portOrigin,omitempty"`
 	// ServerSet is the server-set file the placement came from, recorded so
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.

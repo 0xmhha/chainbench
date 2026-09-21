@@ -59,16 +59,16 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 		t.Errorf("p2p = %d, want the server set's 30303", st.Nodes[0].P2P)
 	}
 	// Where the plan came from is recorded, not left for an operator to guess.
-	if !strings.Contains(st.PortSource, "local") || !strings.Contains(out.Detail, "ports:") {
-		t.Errorf("port source = %q, detail = %q", st.PortSource, out.Detail)
+	if !strings.Contains(st.PortOrigin, "local") || !strings.Contains(out.Detail, "ports:") {
+		t.Errorf("port source = %q, detail = %q", st.PortOrigin, out.Detail)
 	}
 }
 
 func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
 	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
 	st := stateOf(t, dir, d)
-	if !strings.Contains(st.PortSource, "built-in") {
-		t.Errorf("port source = %q, want it to name the built-ins", st.PortSource)
+	if !strings.Contains(st.PortOrigin, "built-in") {
+		t.Errorf("port source = %q, want it to name the built-ins", st.PortOrigin)
 	}
 	if st.Nodes[0].HTTP == 0 {
 		t.Error("no ports assigned without a server set")
@@ -184,8 +184,8 @@ func TestResolveServer_NoSelectionFallsBackToTheBuiltins(t *testing.T) {
 	if out.HasTarget {
 		t.Error("no server set should leave the workspace target alone")
 	}
-	if !strings.Contains(out.Pool.Source, "built-in") {
-		t.Errorf("source = %q", out.Pool.Source)
+	if !strings.Contains(out.Pool.Origin, "built-in") {
+		t.Errorf("source = %q", out.Pool.Origin)
 	}
 }
 

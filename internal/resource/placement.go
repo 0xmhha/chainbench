@@ -25,8 +25,8 @@ const (
 	builtinRPCStep = 10
 )
 
-// builtinSource is what a pool's Source reports when no server set was loaded.
-const builtinSource = "built-in defaults (no server config)"
+// builtinOrigin is what a pool's Origin reports when no server set was loaded.
+const builtinOrigin = "built-in defaults (no server config)"
 
 // Builtin is the pool used with no server set: this machine, stepped ports. It
 // names itself as its own source so port provenance stays visible.
@@ -42,7 +42,7 @@ func (c *Set) PoolFor(s Server, minValidators, portBand int) Pool {
 		Hosts:  []Host{{Name: s.Name, Addr: s.Host}},
 		Slots:  s.Slots,
 		Ports:  bandsOf(s.Ports),
-		Source: fmt.Sprintf("%s[%s]", c.path, s.label(0)),
+		Origin: fmt.Sprintf("%s[%s]", c.path, s.label(0)),
 	}
 }
 
@@ -74,7 +74,7 @@ func (c *Set) Pool(minValidators, portBand int) (Pool, error) {
 		Hosts:  hosts,
 		Slots:  first.Slots,
 		Ports:  bandsOf(first.Ports),
-		Source: fmt.Sprintf("%s[%d servers]", c.path, len(hosts)),
+		Origin: fmt.Sprintf("%s[%d servers]", c.path, len(hosts)),
 	}, nil
 }
 

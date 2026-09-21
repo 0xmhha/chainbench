@@ -248,7 +248,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		return "", err
 	}
 	pool := opts.Pool
-	if pool.Source == "" {
+	if pool.Origin == "" {
 		pool = resource.Builtin(minValidatorsForPlacement, portBandSize)
 	}
 	if opts.SetPath != "" {
@@ -338,7 +338,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		w.state.Bootnode = opts.Topology.BootnodeIndex()
 	}
 
-	w.state.PortSource = pool.Source
+	w.state.PortOrigin = pool.Origin
 
 	// Counted by role rather than as "producers and the rest": the rest is two
 	// different jobs, and a pn reported as an endpoint is how a proxy tier goes
@@ -353,7 +353,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		}
 	}
 	detail := fmt.Sprintf("%d node(s): %d bp + %d en + %d pn; ports: %s; p2p from %d, http from %d",
-		len(nodes), validators, ens, pns, pool.Source, nodes[0].P2P, nodes[0].HTTP)
+		len(nodes), validators, ens, pns, pool.Origin, nodes[0].P2P, nodes[0].HTTP)
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}

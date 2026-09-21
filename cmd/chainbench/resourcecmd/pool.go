@@ -43,7 +43,7 @@ func newPoolCmd() *cobra.Command {
 			}
 			_ = w.Flush()
 			fmt.Fprintf(cmd.OutOrStdout(), "%d host(s) x %d slot(s) = %d node(s); %d used, %d free\nports: %s\n",
-				len(out.Hosts), out.Slots, out.Cap, out.Used, out.Free, out.Source)
+				len(out.Hosts), out.Slots, out.Cap, out.Used, out.Free, out.Origin)
 			// Who holds what: "0 free" alone tells an operator nothing about
 			// which workspace to remove.
 			names := make([]string, 0, len(out.ByNetwork))

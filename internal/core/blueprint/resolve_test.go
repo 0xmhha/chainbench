@@ -150,10 +150,10 @@ func TestResolve_PinningOnePortKeepsTheOthers(t *testing.T) {
 	if p.HTTP != 8500 || p.WS != 8600 || p.Auth != 8700 || p.Metrics != 6000 {
 		t.Errorf("the allocated ports were lost: %+v", p)
 	}
-	if got := r.Sources["nodes[0].ports.p2p"]; got != FromBlueprint {
+	if got := r.Origins["nodes[0].ports.p2p"]; got != FromBlueprint {
 		t.Errorf("p2p source = %q, want %q", got, FromBlueprint)
 	}
-	if got := r.Sources["nodes[0].ports.http"]; got != FromInventory {
+	if got := r.Origins["nodes[0].ports.http"]; got != FromInventory {
 		t.Errorf("http source = %q, want %q", got, FromInventory)
 	}
 }
@@ -195,7 +195,7 @@ func TestResolve_FillsFromThePlacementWhatTheDocumentLeavesOut(t *testing.T) {
 	if r.Nodes[0].SyncMode != "full" {
 		t.Errorf("sync mode = %q, want the default full", r.Nodes[0].SyncMode)
 	}
-	for key, want := range map[string]Source{
+	for key, want := range map[string]Origin{
 		"chain":              FromChain,
 		"chain_id":           FromChain,
 		"peering":            FromDefault,
@@ -206,7 +206,7 @@ func TestResolve_FillsFromThePlacementWhatTheDocumentLeavesOut(t *testing.T) {
 		"nodes[0].nodekey":   FromBlueprint,
 		"validators":         FromDefault,
 	} {
-		if got := r.Sources[key]; got != want {
+		if got := r.Origins[key]; got != want {
 			t.Errorf("source[%s] = %q, want %q", key, got, want)
 		}
 	}

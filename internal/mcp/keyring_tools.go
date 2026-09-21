@@ -213,10 +213,10 @@ func renderRing(r app.RingOut, err error) (string, error) {
 	}
 	return asJSON(struct {
 		Keyring    string         `json:"keyring"`
-		Source     string         `json:"source"`
+		Origin     string         `json:"origin"`
 		Validators int            `json:"validators"`
 		Entries    []app.EntryOut `json:"entries"`
-	}{r.Dir, r.Source, r.Validators, r.Entries})
+	}{r.Dir, r.Origin, r.Validators, r.Entries})
 }
 
 // asJSON renders a result for an agent.

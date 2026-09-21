@@ -90,8 +90,8 @@ func TestPool_ReadsTheGrid(t *testing.T) {
 		t.Errorf("unnamed host = %q, want it named by its address", p.Hosts[2].Name)
 	}
 	// Where a port came from is never a guess.
-	if !strings.Contains(p.Source, "server-set.yaml") {
-		t.Errorf("source = %q, want it to name the file", p.Source)
+	if !strings.Contains(p.Origin, "server-set.yaml") {
+		t.Errorf("source = %q, want it to name the file", p.Origin)
 	}
 }
 
@@ -185,8 +185,8 @@ func TestPoolFor_LocalAndRemoteReadTheSameFields(t *testing.T) {
 		t.Errorf("remote pool hosts = %v", rp.Hosts)
 	}
 	for _, p := range []resource.Pool{lp, rp} {
-		if !strings.Contains(p.Source, "server-set.yaml") {
-			t.Errorf("source does not name the file: %q", p.Source)
+		if !strings.Contains(p.Origin, "server-set.yaml") {
+			t.Errorf("source does not name the file: %q", p.Origin)
 		}
 	}
 }
@@ -223,15 +223,15 @@ func TestBuiltin_NamesItselfAsTheSource(t *testing.T) {
 	// Where a port came from must never be a guess, including when no file
 	// was involved.
 	p := resource.Builtin(1, 100)
-	if !strings.Contains(p.Source, "built-in") {
-		t.Errorf("source = %q, want it to say built-in", p.Source)
+	if !strings.Contains(p.Origin, "built-in") {
+		t.Errorf("source = %q, want it to say built-in", p.Origin)
 	}
 	if p.Ports.RPC.Base != resource.BuiltinPorts().RPCBase {
 		t.Errorf("builtin ports not used: %+v", p.Ports)
 	}
 
 	pool := resource.BuiltinPool(4)
-	if len(pool.Hosts) != 1 || pool.Slots != 4 || !strings.Contains(pool.Source, "built-in") {
+	if len(pool.Hosts) != 1 || pool.Slots != 4 || !strings.Contains(pool.Origin, "built-in") {
 		t.Errorf("builtin pool = %+v", pool)
 	}
 }
