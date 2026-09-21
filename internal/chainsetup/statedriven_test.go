@@ -240,7 +240,12 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 		{"a busy port, noticed by init", "init", ofKind(errLaunchPortBusy, errors.New("x")), nil, lifecycle.ChainLaunchNodesFailPortBusy},
 		{"the binary refusing the genesis", "init", errors.New("no"), nil, lifecycle.FailStageUnclassified},
 
-		{"a stage still owing", "config", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
+		{"a bad override", "config", ofKind(errConfigBadOverride, errors.New("x")), nil, lifecycle.ChainBuildNodeConfigFailBadOverride},
+		{"a config that did not read back", "config", ofKind(errConfigReadback, errors.New("x")), nil, lifecycle.ChainBuildNodeConfigFailReadback},
+		{"a pinned input that cannot be read", "config", ofKind(errConfigPinUnreadable, errors.New("x")), nil, lifecycle.ChainBuildNodeConfigFailPinUnreadable},
+
+		// A stage that has not moved in reports the debt state whatever failed.
+		{"a stage still owing", "build", ofKind(errKeyRefNotLocal, errors.New("x")), nil, lifecycle.FailStageUnclassified},
 	} {
 		r := &recorder{failAt: c.step, fail: c.err, failPath: c.got}
 		m, err := walk(t, "", UpStart, r)
@@ -256,13 +261,13 @@ func TestFailuresBecomeTheirOwnStates(t *testing.T) {
 // TestADebtStateSaysWhyItIsOne pins that the two halves are read together: the
 // state says the stage is not classified, and the error says why it cannot be.
 func TestADebtStateSaysWhyItIsOne(t *testing.T) {
-	r := &recorder{failAt: "config"}
+	r := &recorder{failAt: "build"}
 	_, err := walk(t, "", UpStart, r)
 	if err == nil {
 		t.Fatal("the walk did not stop")
 	}
-	if !strings.Contains(err.Error(), "failed readback") {
-		t.Errorf("the error does not say why config cannot classify: %v", err)
+	if !strings.Contains(err.Error(), "every bad option") {
+		t.Errorf("the error does not say why build cannot classify: %v", err)
 	}
 }
 
@@ -341,6 +346,16 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 	}
 	if got := genesisFailure(ferr); got != lifecycle.ChainBuildGenesisFailForkUnresolved {
 		t.Errorf("the real refusal classified as %s, want ChainBuildGenesisFailForkUnresolved", got)
+	}
+
+	// An override that is not key=value, refused where it is set.
+	var w2 Workspace
+	oerr := w2.recordConfigSet("all", []string{"nocolonhere"})
+	if oerr == nil {
+		t.Fatal("an override that is not key=value was accepted")
+	}
+	if got := configFailure(oerr); got != lifecycle.ChainBuildNodeConfigFailBadOverride {
+		t.Errorf("the real refusal classified as %s, want ChainBuildNodeConfigFailBadOverride", got)
 	}
 
 	// No binary at all, which checkBinary refuses before it touches a target.

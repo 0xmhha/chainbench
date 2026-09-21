@@ -19,10 +19,10 @@ func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, 
 	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return fmt.Errorf("config override %q must be key=value", kv)
+			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
-			return err
+			return ofKind(errConfigBadOverride, err)
 		}
 	}
 	return nil
@@ -146,16 +146,17 @@ func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords())
+		return ofKind(errConfigBadOverride,
+			fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords()))
 	}
 	var probe nodeconfig.Spec
 	for _, kv := range sets {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return fmt.Errorf("config override %q must be key=value", kv)
+			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(&probe, key, value); err != nil {
-			return err
+			return ofKind(errConfigBadOverride, err)
 		}
 	}
 	if w.state.ConfigSet == nil {

@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -18,6 +19,23 @@ import (
 //
 // Both are rendered from the same resolved values, so a node cannot be
 // configured one way and launched another.
+
+// The kinds of failure the config stage has.
+//
+// Two of the three are about a request that names something the config
+// vocabulary does not take, and the third is about the target disagreeing with
+// what was just written to it. They are different problems for different
+// people: the first is a line in a declaration, the second is a machine.
+var (
+	// errConfigBadOverride: an override is not key=value, names a key the
+	// config vocabulary does not have, or names a scope that is not one.
+	errConfigBadOverride = errors.New("a config override is not one this accepts")
+	// errConfigReadback: what the target holds is not what was written to it.
+	errConfigReadback = errors.New("the config did not read back intact")
+	// errConfigPinUnreadable: a config or a genesis this node was pinned to
+	// cannot be read.
+	errConfigPinUnreadable = errors.New("a pinned input cannot be read")
+)
 
 func (w *Workspace) Config(ctx context.Context) (string, error) {
 	p, err := w.plugin()
@@ -96,7 +114,8 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return nil, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
+			return nil, ofKind(errConfigPinUnreadable,
+				fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr))
 		}
 		return toml, nil
 	}
@@ -119,7 +138,8 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 		}
 		gen, rerr := t.Files.Read(ctx, path)
 		if rerr != nil {
-			return nil, fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr)
+			return nil, ofKind(errConfigPinUnreadable,
+				fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr))
 		}
 		spec.Genesis = gen
 	}
@@ -139,10 +159,12 @@ func (w *Workspace) writeConfigFile(ctx context.Context, t *resource.Access, ns 
 	want := filestore.Hash(toml)
 	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
 	if err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
+		return ConfigProvenance{}, ofKind(errConfigReadback,
+			fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err))
 	}
 	if got != want {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
+		return ConfigProvenance{}, ofKind(errConfigReadback,
+			fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got))
 	}
 	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}
 	if purpose != "" {

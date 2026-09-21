@@ -83,7 +83,7 @@ var composition = []composeStage{
 	},
 	{
 		step: "config", at: lifecycle.ChainBuildNodeConfig, next: lifecycle.ChainBuildNodeCommand,
-		owed: "NetConfig reports a bad override and a failed readback the same way",
+		classify: configFailure,
 	},
 	{
 		step: "build", at: lifecycle.ChainBuildNodeCommand, next: lifecycle.ChainDeployNodes,
@@ -114,7 +114,7 @@ const (
 	// with none goes straight on.
 	stagesStillAssuming = 0
 	// stagesStillOwing report every failure as one sentence.
-	stagesStillOwing = 5
+	stagesStillOwing = 4
 )
 
 // composeRun is one step of the composition: it runs the verb, appends the
@@ -343,6 +343,24 @@ func initFailure(err error) lifecycle.Status {
 		return lifecycle.ChainInitNodesFailDatadir
 	case errors.Is(err, errLaunchPortBusy):
 		return lifecycle.ChainLaunchNodesFailPortBusy
+	}
+	return lifecycle.FailStageUnclassified
+}
+
+// configFailure is which of the config stage's three failures this error is.
+//
+// What reaches the default is writing itself: a machine that will not take the
+// file, a directory that cannot be made. Those are the file store's refusals
+// and they read as such; the three named here are the ones a person can act on
+// without leaving the declaration.
+func configFailure(err error) lifecycle.Status {
+	switch {
+	case errors.Is(err, errConfigBadOverride):
+		return lifecycle.ChainBuildNodeConfigFailBadOverride
+	case errors.Is(err, errConfigReadback):
+		return lifecycle.ChainBuildNodeConfigFailReadback
+	case errors.Is(err, errConfigPinUnreadable):
+		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
 	}
 	return lifecycle.FailStageUnclassified
 }
