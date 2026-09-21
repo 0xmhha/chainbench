@@ -37,7 +37,7 @@ func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, err
 	if w.state.GenesisPath == "" {
 		return obs, fmt.Errorf("chainsetup: baseline: no genesis has been composed yet")
 	}
-	t, err := w.resolveTarget()
+	t, err := w.ResolveTarget()
 	if err != nil {
 		return obs, err
 	}

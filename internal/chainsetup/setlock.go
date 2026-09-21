@@ -50,10 +50,10 @@ func AcquireSetLock(setPath string, d Deps) (func(), error) {
 	}
 	deadline := time.Now().Add(setLockWait)
 	for {
-		held, prev, state, err := session.AcquireLock(path, d.command(), d.Clock)
+		held, prev, state, err := session.AcquireLock(path, d.Owner(), d.Clock)
 		if err == nil {
 			if state == session.LockStale {
-				d.logf("took over an allocation lock left by a run that is no longer running (%s)", prev.Describe())
+				d.Logf("took over an allocation lock left by a run that is no longer running (%s)", prev.Describe())
 			}
 			return func() { _ = held.Release() }, nil
 		}

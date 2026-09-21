@@ -3,6 +3,7 @@ package chainsetup_test
 import (
 	"context"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,7 +97,7 @@ func seedWorkspace(t *testing.T, dir, chain, binary string, nodes []node.Record)
 func TestNetworkStatus_ReadsTheLaunchedSet(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
 
-	out, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
+	out, err := verb.NetworkStatus(context.Background(), deps, verb.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkStatus: %v", err)
 	}
@@ -109,10 +110,10 @@ func TestNetworkStatus_ReadsTheLaunchedSet(t *testing.T) {
 }
 
 func TestNetworkStatus_RequiresAWorkspace(t *testing.T) {
-	if _, err := chainsetup.NetworkStatus(context.Background(), chainsetup.Deps{}, chainsetup.NetworkStatusIn{}); err == nil {
+	if _, err := verb.NetworkStatus(context.Background(), chainsetup.Deps{}, verb.NetworkStatusIn{}); err == nil {
 		t.Error("want an error without a workspace dir")
 	}
-	if _, err := chainsetup.NetworkStatus(context.Background(), chainsetup.Deps{}, chainsetup.NetworkStatusIn{DataDir: t.TempDir()}); err == nil {
+	if _, err := verb.NetworkStatus(context.Background(), chainsetup.Deps{}, verb.NetworkStatusIn{DataDir: t.TempDir()}); err == nil {
 		t.Error("want an error for a directory holding no workspace")
 	}
 }
@@ -120,7 +121,7 @@ func TestNetworkStatus_RequiresAWorkspace(t *testing.T) {
 func TestNetworkStop_StopsEveryLaunchedNode(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	out, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dir})
+	out, err := verb.NetworkStop(context.Background(), deps, verb.NetworkStopIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkStop: %v", err)
 	}
@@ -131,7 +132,7 @@ func TestNetworkStop_StopsEveryLaunchedNode(t *testing.T) {
 		t.Errorf("driver saw %v", d.stopped)
 	}
 	// The cleared pids are what make a later status accurate.
-	st, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
+	st, err := verb.NetworkStatus(context.Background(), deps, verb.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +147,7 @@ func TestNetworkStop_NamesTheNodeItCouldNotStop(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 	d.stopErr = errors.New("no such process")
 
-	_, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dir})
+	_, err := verb.NetworkStop(context.Background(), deps, verb.NetworkStopIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("want an error when a node cannot be stopped")
 	}
@@ -158,13 +159,13 @@ func TestNetworkStop_NamesTheNodeItCouldNotStop(t *testing.T) {
 func TestNodeStop_ClearsThePID(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
+	if err := verb.NodeStop(context.Background(), deps, verb.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
 		t.Fatalf("NodeStop: %v", err)
 	}
 	if len(d.stopped) != 1 || d.stopped[0] != 2 {
 		t.Errorf("stopped the wrong node: %v", d.stopped)
 	}
-	st, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
+	st, err := verb.NetworkStatus(context.Background(), deps, verb.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("reload: %v", err)
 	}
@@ -180,21 +181,21 @@ func TestNodeStop_ClearsThePID(t *testing.T) {
 
 func TestNodeStop_RequiresAWorkspaceAndIndex(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
-	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir}); err == nil {
+	if err := verb.NodeStop(context.Background(), deps, verb.NodeStopIn{DataDir: dir}); err == nil {
 		t.Error("want an error without an index")
 	}
-	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{Index: 1}); err == nil {
+	if err := verb.NodeStop(context.Background(), deps, verb.NodeStopIn{Index: 1}); err == nil {
 		t.Error("want an error without a workspace dir")
 	}
 }
 
 func TestNodeStart_RelaunchesWithTheRecordedArgv(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
-	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
+	if err := verb.NodeStop(context.Background(), deps, verb.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
 		t.Fatalf("NodeStop: %v", err)
 	}
 
-	out, err := chainsetup.NodeStart(context.Background(), deps, chainsetup.NodeStartIn{DataDir: dir, Index: 2})
+	out, err := verb.NodeStart(context.Background(), deps, verb.NodeStartIn{DataDir: dir, Index: 2})
 	if err != nil {
 		t.Fatalf("NodeStart: %v", err)
 	}
@@ -205,7 +206,7 @@ func TestNodeStart_RelaunchesWithTheRecordedArgv(t *testing.T) {
 		t.Errorf("refreshed node = %+v", out.Node)
 	}
 	// The new PID must be persisted, or a later stop has nothing to reach.
-	st, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
+	st, err := verb.NetworkStatus(context.Background(), deps, verb.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("reload: %v", err)
 	}
@@ -218,7 +219,7 @@ func TestNodeStart_RelaunchesWithTheRecordedArgv(t *testing.T) {
 
 func TestNodeStart_RefusesARunningNode(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
-	_, err := chainsetup.NodeStart(context.Background(), deps, chainsetup.NodeStartIn{DataDir: dir, Index: 1})
+	_, err := verb.NodeStart(context.Background(), deps, verb.NodeStartIn{DataDir: dir, Index: 1})
 	if err == nil || !strings.Contains(err.Error(), "already running") {
 		t.Fatalf("a running node must not be doubled, got: %v", err)
 	}
@@ -230,7 +231,7 @@ func TestNodeStart_RefusesARunningNode(t *testing.T) {
 func TestNodeStart_UnknownNodeIsNamed(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
 
-	_, err := chainsetup.NodeStart(context.Background(), deps, chainsetup.NodeStartIn{DataDir: dir, Index: 9})
+	_, err := verb.NodeStart(context.Background(), deps, verb.NodeStartIn{DataDir: dir, Index: 9})
 	if err == nil {
 		t.Fatal("want an error for a node not in the table")
 	}
@@ -242,7 +243,7 @@ func TestNodeStart_UnknownNodeIsNamed(t *testing.T) {
 func TestNetworkRemove_StopsThenDeletes(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	out, err := chainsetup.NetworkRemove(context.Background(), deps, chainsetup.NetworkRemoveIn{DataDir: dir})
+	out, err := verb.NetworkRemove(context.Background(), deps, verb.NetworkRemoveIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkRemove: %v", err)
 	}
@@ -262,7 +263,7 @@ func TestNetworkRemove_RefusesADirectoryWithNoWorkspace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := chainsetup.NetworkRemove(context.Background(), chainsetup.Deps{}, chainsetup.NetworkRemoveIn{DataDir: dir})
+	_, err := verb.NetworkRemove(context.Background(), chainsetup.Deps{}, verb.NetworkRemoveIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("want a refusal for a directory holding no workspace")
 	}
@@ -277,7 +278,7 @@ func TestNetworkRemove_ComposedButNeverStartedIsRemovable(t *testing.T) {
 	dir := t.TempDir()
 	seedWorkspace(t, dir, "stablenet", "", []node.Record{record(dir, 1, 8600, 0)})
 
-	out, err := chainsetup.NetworkRemove(context.Background(), chainsetup.Deps{}, chainsetup.NetworkRemoveIn{DataDir: dir})
+	out, err := verb.NetworkRemove(context.Background(), chainsetup.Deps{}, verb.NetworkRemoveIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkRemove: %v", err)
 	}
@@ -306,7 +307,7 @@ func TestNetworkStop_OneUnreachableNodeDoesNotStrandTheRest(t *testing.T) {
 	d := &stubDriver{}
 	deps := chainsetup.Deps{Driver: func() (process.Driver, error) { return d, nil }}
 
-	_, err := chainsetup.NetStop(context.Background(), deps, chainsetup.NetStopIn{DataDir: dir})
+	_, err := verb.NetStop(context.Background(), deps, verb.NetStopIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("a node that could not be stopped must be reported")
 	}

@@ -1,7 +1,8 @@
-package chainsetup
+package verb
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,13 +29,13 @@ execution: {chain: ` + chain + `}
 func TestUpChainMode(t *testing.T) {
 	cases := []struct {
 		name string
-		in   NetUpIn
+		in   chainsetup.NetUpIn
 		want string
 	}{
-		{"no config is fresh", NetUpIn{}, "fresh"},
-		{"fresh", NetUpIn{WorkspaceConfigPath: writeModeWC(t, "fresh")}, "fresh"},
-		{"reuse", NetUpIn{WorkspaceConfigPath: writeModeWC(t, "reuse-if-matching")}, "reuse-if-matching"},
-		{"attach", NetUpIn{WorkspaceConfigPath: writeModeWC(t, "attach")}, "attach"},
+		{"no config is fresh", chainsetup.NetUpIn{}, "fresh"},
+		{"fresh", chainsetup.NetUpIn{WorkspaceConfigPath: writeModeWC(t, "fresh")}, "fresh"},
+		{"reuse", chainsetup.NetUpIn{WorkspaceConfigPath: writeModeWC(t, "reuse-if-matching")}, "reuse-if-matching"},
+		{"attach", chainsetup.NetUpIn{WorkspaceConfigPath: writeModeWC(t, "attach")}, "attach"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -52,7 +53,7 @@ func TestUpChainMode(t *testing.T) {
 // TestNetUp_AttachModeRefusesToCompose: execution.chain=attach must not compose
 // or launch — up rejects it before touching the workspace.
 func TestNetUp_AttachModeRefusesToCompose(t *testing.T) {
-	_, err := NetUp(context.Background(), Deps{}, NetUpIn{
+	_, err := NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
 		DataDir:             t.TempDir(),
 		Chain:               "stablenet",
 		Binary:              "/bin/gwbft",

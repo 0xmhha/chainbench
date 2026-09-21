@@ -72,7 +72,7 @@ type ConfigProvenance struct {
 	At string `json:"at,omitempty"`
 }
 
-// recordLaunchSet stores launch-argv overrides under a scope ("all", a role,
+// RecordLaunchSet stores launch-argv overrides under a scope ("all", a role,
 // or "node<N>"). Each entry is validated as a launch override up front, so a
 // bad knob is refused where it is set rather than at argv assembly.
 //
@@ -83,7 +83,7 @@ type ConfigProvenance struct {
 // unconditionally, so composing the same declaration twice over one workspace
 // wrote the knob twice and a workspace reused all week grew a line per run.
 // Replacing in place keeps the order a reader sees stable across runs.
-func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
+func (w *Workspace) RecordLaunchSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}
@@ -139,8 +139,8 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	return out
 }
 
-// recordConfigSet stores config overrides under a scope, one entry per key, the
-// same way recordLaunchSet does and for the same reason: render is
+// RecordConfigSet stores config overrides under a scope, one entry per key, the
+// same way RecordLaunchSet does and for the same reason: render is
 // last-write-wins, so a second entry for one key means the same node either way
 // and only makes the record grow every time the workspace is recomposed.
 //
@@ -148,7 +148,7 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 // set rather than at render. The scope was not checked at all before: a typo
 // stored values under a key nothing reads, and the node it was meant for came
 // up with a config that silently lacked them.
-func (w *Workspace) recordConfigSet(scope string, sets []string) error {
+func (w *Workspace) RecordConfigSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}

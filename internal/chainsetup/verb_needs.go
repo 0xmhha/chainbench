@@ -103,6 +103,8 @@ var verbNeeds = map[string]verbNeed{
 	"LaunchOpts": {step: "build"},
 
 	// Verbs that read or act on the node table.
+	"Endpoints":        {run: placed},
+	"LivePIDs":         {run: placed},
 	"Health":           {run: placed},
 	"Preflight":        {run: placed},
 	"Hardfork":         {run: placed, node: []nodeNeed{launched}, nodeAll: true},
@@ -133,6 +135,12 @@ var verbNeeds = map[string]verbNeed{
 	"LogExcerpt":      {why: "same as Logs, which it calls"},
 	"Stop":            {why: "stopping what is already stopped is the outcome the caller asked for"},
 	"StopNode":        {why: "same as Stop, for one node"},
+	"FirstUndone":     {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
+	"RecordRequest":   {why: "it writes what was asked for, which is the first thing a composition records"},
+	"RecordConfigSet": {why: "it stores an override before anything renders with it; refusing a bad one early is the point"},
+	"RecordLaunchSet": {why: "same as RecordConfigSet, for launch knobs"},
+	"ResolveTarget":   {why: "accessor over the recorded target; it answers before anything is placed"},
+	"SetBinary":       {why: "wiring: a resume names the binary for a node it is about to relaunch"},
 	"StartNode":       {node: []nodeNeed{down, launched}},
 	"SwapNode":        {node: []nodeNeed{launched}},
 	"Restart":         {why: "delegates to StopNode and StartNode, which each answer for themselves"},

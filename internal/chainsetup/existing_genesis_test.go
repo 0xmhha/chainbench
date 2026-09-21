@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -123,7 +124,7 @@ func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
+			_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
 			if err == nil {
 				t.Fatal("a change alongside an existing genesis must be refused")
 			}
@@ -139,7 +140,7 @@ func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 	// A missing workspace fails later than the conflict check, which is enough
 	// to show the conflict check did not fire.
-	_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{},
+	_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{},
 		chainsetup.NetGenesisIn{DataDir: t.TempDir(), GenesisExisting: "/g.json"})
 	if err != nil && strings.Contains(err.Error(), "used verbatim") {
 		t.Fatalf("an existing genesis on its own must not be refused: %v", err)

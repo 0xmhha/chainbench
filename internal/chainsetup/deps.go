@@ -38,9 +38,13 @@ func (d Deps) Now() time.Time {
 	return d.Clock()
 }
 
-func (d Deps) command() string { return d.Command }
+// Owner is the command line the workspace lock records as its holder, so a
+// second run's refusal can name who has it.
+func (d Deps) Owner() string { return d.Command }
 
-func (d Deps) logf(format string, args ...any) {
+// Logf says an operational side note, and says nothing when nobody is
+// listening.
+func (d Deps) Logf(format string, args ...any) {
 	if d.Report != nil {
 		d.Report(format, args...)
 	}

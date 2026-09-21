@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -293,7 +294,7 @@ func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 		{Index: 3, Role: "bp"},
 		{Index: 4, Role: "bp"},
 	}}
-	_, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
+	_, err := verb.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
 		DataDir:  dir,
 		Chain:    "stablenet",
 		Binary:   "/nonexistent/gstable",

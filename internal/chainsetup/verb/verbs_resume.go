@@ -1,10 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"errors"
-	"path/filepath"
-	"strings"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // Recovery (F1). A chainbench run can die between steps — killed, crashed,
@@ -48,23 +47,23 @@ var ErrNoRequest = errors.New("chainsetup: resume: the workspace records no requ
 // with the machine, continue the composition from the first step that never
 // finished, bring back the nodes that should be running, and read the
 // network back.
-func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error) {
+func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResumeOut, error) {
 	if in.DataDir == "" {
 		return NetResumeOut{}, ErrNoDataDir
 	}
 	var out NetResumeOut
-	var req *NetUpIn
+	var req *chainsetup.NetUpIn
 	var first string
 	// WithWorkspace takes over a stale lock and refuses a live one, which is
 	// exactly resume's rule: a run that is still going is not resumed.
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		lines, err := ws.Reconcile(ctx)
 		out.Reconciled = lines
 		if err != nil {
 			return "", err
 		}
 		req = ws.State().Request
-		first = ws.firstUndone()
+		first = ws.FirstUndone()
 		return "", nil
 	})
 	if err != nil {
@@ -89,9 +88,9 @@ func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error
 	}
 	stage := up.Stage
 	if stage == "" {
-		stage = UpStart
+		stage = chainsetup.UpStart
 	}
-	if stage == UpStart {
+	if stage == chainsetup.UpStart {
 		started, err := startMissing(ctx, d, in.DataDir, up.Binary)
 		out.Started = started
 		if err != nil {
@@ -106,7 +105,7 @@ func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error
 	return out, nil
 }
 
-// firstUndone is the first composition step the workspace has not recorded
+// FirstUndone is the first composition step the workspace has not recorded
 
 // Reconcile makes the node records true against the resource. A recorded pid
 // that is gone is cleared; a node with no pid whose process is nevertheless
@@ -118,36 +117,16 @@ func NetResume(ctx context.Context, d Deps, in NetResumeIn) (NetResumeOut, error
 // pid, or 0 when there is none — a process running the same binary with
 
 // launchCommand renders the command line a node is launched with — the same
-// rendering the ledger records.
-func launchCommand(binary string, args []string) string {
-	return strings.Join(append([]string{binary}, args...), " ")
-}
 
 // sameCommand compares two command lines by their fields, so the shell's
 // spacing does not decide whether a process is ours. The binary is compared
 // by its base name: ps reports the path the process was started by, which
-// may be the resolved one.
-func sameCommand(got, want string) bool {
-	g, w := strings.Fields(got), strings.Fields(want)
-	if len(g) != len(w) || len(g) == 0 {
-		return false
-	}
-	if filepath.Base(g[0]) != filepath.Base(w[0]) {
-		return false
-	}
-	for i := 1; i < len(g); i++ {
-		if g[i] != w[i] {
-			return false
-		}
-	}
-	return true
-}
 
 // startMissing brings back every node the workspace records as composed but
 // not running, with the argv it was armed with.
-func startMissing(ctx context.Context, d Deps, dataDir, binary string) ([]string, error) {
+func startMissing(ctx context.Context, d chainsetup.Deps, dataDir, binary string) ([]string, error) {
 	var started []string
-	_, err := WithWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, dataDir, func(ws *chainsetup.Workspace) (string, error) {
 		for _, rec := range ws.State().Nodes {
 			if rec.PID > 0 {
 				continue
@@ -162,7 +141,7 @@ func startMissing(ctx context.Context, d Deps, dataDir, binary string) ([]string
 				bin = ws.State().Binary
 			}
 			if bin != "" {
-				ws.state.Binary = bin
+				ws.SetBinary(bin)
 			}
 			detail, err := ws.StartNode(ctx, rec.Index)
 			if err != nil {

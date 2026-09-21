@@ -1,9 +1,10 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -40,14 +41,14 @@ type HardforkPlanOut struct {
 }
 
 // HardforkPlan resolves the upgrade without touching the network.
-func HardforkPlan(_ context.Context, d Deps, in HardforkPlanIn) (HardforkPlanOut, error) {
+func HardforkPlan(_ context.Context, d chainsetup.Deps, in HardforkPlanIn) (HardforkPlanOut, error) {
 	if in.DataDir == "" {
 		return HardforkPlanOut{}, ErrNoDataDir
 	}
 	if in.ToChain == "" {
 		return HardforkPlanOut{}, errors.New("chainsetup: hardfork needs a target chain")
 	}
-	ws, err := Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return HardforkPlanOut{}, err
 	}
@@ -94,12 +95,12 @@ type HardforkExecuteOut struct {
 // The relaunch reuses each node's armed argv. That is load-bearing: the argv
 // carries the node's validator identity and its peering, and a node relaunched
 // on generic flags would rejoin consensus as an unauthorized address.
-func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (HardforkExecuteOut, error) {
+func HardforkExecute(ctx context.Context, d chainsetup.Deps, in HardforkExecuteIn) (HardforkExecuteOut, error) {
 	if in.Binary == "" {
 		return HardforkExecuteOut{}, errors.New("chainsetup: hardfork needs a resolved post-fork binary path")
 	}
 	var out HardforkExecuteOut
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		ns, err := ws.Hardfork(ctx, in.Plan.Plan, in.Binary)
 		if err != nil {
 			return "", err

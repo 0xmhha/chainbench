@@ -3,6 +3,7 @@ package chainsetup_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"slices"
@@ -56,12 +57,12 @@ func TestNetConfig_OverrideIsolationAndProvenance(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	must(chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
-	must(chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}))
-	must(chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}))
-	must(chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, ChainID: 9999}))
+	must(verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
+	must(verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 3}))
+	must(verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}))
+	must(verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, ChainID: 9999}))
 	// Every node gets metricsHost; only node2 gets httpHost.
-	must(chainsetup.NetConfig(ctx, d, chainsetup.NetConfigIn{DataDir: dir, ScopedSet: map[string][]string{
+	must(verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir, ScopedSet: map[string][]string{
 		"all":   {"metricsHost=10.7.7.7"},
 		"node2": {"httpHost=10.2.2.2"},
 	}}))

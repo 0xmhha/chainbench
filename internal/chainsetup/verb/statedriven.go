@@ -1,8 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
@@ -58,11 +59,11 @@ type composeStage struct {
 var composition = []composeStage{
 	{
 		step: "new", at: lifecycle.ChainOpenWorkspace, next: lifecycle.ChainBuildNodeTable,
-		classify: NewFailure,
+		classify: chainsetup.NewFailure,
 	},
 	{
 		step: "place", at: lifecycle.ChainBuildNodeTable, next: lifecycle.ChainEnsureKeys,
-		classify: PlaceFailure,
+		classify: chainsetup.PlaceFailure,
 	},
 	{
 		// The first stage whose work reports its own state. It used to be read
@@ -71,37 +72,37 @@ var composition = []composeStage{
 		// request said, so a composition with an inline topology was recorded
 		// as having used the preset.
 		step: "keys", at: lifecycle.ChainEnsureKeys, next: lifecycle.ChainBuildGenesis,
-		classify: KeysFailure,
+		classify: chainsetup.KeysFailure,
 	},
 	{
 		// The block with the most failures, because it is the only stage that
 		// handles two chains: a network crossing a fork reads the handing
 		// chain's genesis to build the receiving chain's.
 		step: "genesis", at: lifecycle.ChainBuildGenesis, next: lifecycle.ChainBuildNodeConfig,
-		classify: GenesisFailure,
+		classify: chainsetup.GenesisFailure,
 	},
 	{
 		step: "config", at: lifecycle.ChainBuildNodeConfig, next: lifecycle.ChainBuildNodeCommand,
-		classify: ConfigFailure,
+		classify: chainsetup.ConfigFailure,
 	},
 	{
 		step: "build", at: lifecycle.ChainBuildNodeCommand, next: lifecycle.ChainDeployNodes,
-		classify: BuildFailure,
+		classify: chainsetup.BuildFailure,
 	},
 	{
 		step: "deploy", at: lifecycle.ChainDeployNodes, next: lifecycle.ChainInitNodes,
-		classify: DeployFailure,
+		classify: chainsetup.DeployFailure,
 	},
 	{
 		step: "init", at: lifecycle.ChainInitNodes, next: lifecycle.ChainLaunchNodes,
-		classify: InitFailure,
+		classify: chainsetup.InitFailure,
 	},
 	{
 		// The block with the most detail states, because it is the one stage
 		// whose shape the family decides. The launch reports a phase's worth of
 		// states per phase, so a launch that dies in the third join says so.
 		step: "start", at: lifecycle.ChainLaunchNodes, next: lifecycle.ChainVerify,
-		classify: LaunchFailure,
+		classify: chainsetup.LaunchFailure,
 	},
 }
 
@@ -284,12 +285,12 @@ func startFor(from string) (lifecycle.Status, error) {
 // The machine stops when it REACHES the target, before running the handler that
 // owns it, so a stage stops the walk by naming the stage after it. This is what
 // the stage comparison inside the old loop did on every iteration.
-func targetFor(stage UpStage) (lifecycle.Status, error) {
+func targetFor(stage chainsetup.UpStage) (lifecycle.Status, error) {
 	switch stage {
-	case UpDeploy:
+	case chainsetup.UpDeploy:
 		return lifecycle.ChainInitNodes, nil
-	case UpStart, "":
+	case chainsetup.UpStart, "":
 		return lifecycle.ChainVerify, nil
 	}
-	return 0, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpDeploy, UpStart)
+	return 0, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, chainsetup.UpDeploy, chainsetup.UpStart)
 }

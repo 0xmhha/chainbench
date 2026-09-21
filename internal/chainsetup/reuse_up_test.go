@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,7 +60,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 		BPCount: 2, WorkspaceConfigPath: wc,
 	}
 
-	if _, err := chainsetup.NetUp(context.Background(), deps, up); err != nil {
+	if _, err := verb.NetUp(context.Background(), deps, up); err != nil {
 		t.Fatalf("first up: %v", err)
 	}
 
@@ -82,7 +83,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 	// refused — a running network cannot be reconciled onto another chain.
 	changed := up
 	changed.ChainID = 424242
-	_, err = chainsetup.NetUp(context.Background(), deps, changed)
+	_, err = verb.NetUp(context.Background(), deps, changed)
 	if err == nil {
 		t.Fatal("a changed genesis must refuse the reuse")
 	}
@@ -114,7 +115,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 
 	// Re-asking must keep refusing: the refusal did not quietly adopt the new
 	// inputs as the baseline for next time.
-	if _, err := chainsetup.NetUp(context.Background(), deps, changed); err == nil {
+	if _, err := verb.NetUp(context.Background(), deps, changed); err == nil {
 		t.Fatal("the second attempt must be refused too")
 	}
 }

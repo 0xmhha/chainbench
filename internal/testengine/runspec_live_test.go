@@ -3,6 +3,7 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"testing"
@@ -62,17 +63,17 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	defer cancel()
 
 	deps := chainsetup.Deps{}
-	if _, err := chainsetup.NetUp(ctx, deps, chainsetup.NetUpIn{
+	if _, err := verb.NetUp(ctx, deps, chainsetup.NetUpIn{
 		DataDir: dataRoot, Chain: "stablenet", Binary: bin, KeysDir: presetDir, BPCount: 4,
 	}); err != nil {
 		t.Fatalf("chain up stablenet: %v", err)
 	}
 	t.Cleanup(func() {
-		if _, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dataRoot}); err != nil {
+		if _, err := verb.NetworkStop(context.Background(), deps, verb.NetworkStopIn{DataDir: dataRoot}); err != nil {
 			t.Logf("teardown: %v", err)
 		}
 	})
-	st, err := chainsetup.NetworkStatus(ctx, deps, chainsetup.NetworkStatusIn{DataDir: dataRoot})
+	st, err := verb.NetworkStatus(ctx, deps, verb.NetworkStatusIn{DataDir: dataRoot})
 	if err != nil {
 		t.Fatalf("network status: %v", err)
 	}

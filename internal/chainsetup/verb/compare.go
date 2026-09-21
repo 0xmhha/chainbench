@@ -1,8 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
@@ -45,7 +46,7 @@ func stateOfVerdict(v preflight.Verdict) (lifecycle.Status, error) {
 // the comparison says it can.
 type CompareIn struct {
 	// Up is the composition to reach, and what the comparison compares against.
-	Up NetUpIn
+	Up chainsetup.NetUpIn
 }
 
 // CompareOut is what the comparison and the composition did.
@@ -69,7 +70,7 @@ type CompareOut struct {
 // It stops at ChainVerify. Whether the network that resulted is producing is a
 // question this package cannot answer — the readiness gate belongs to whoever
 // owns the monitor — so the walk hands it over rather than guessing.
-func NetUpComparing(ctx context.Context, d Deps, in CompareIn) (CompareOut, error) {
+func NetUpComparing(ctx context.Context, d chainsetup.Deps, in CompareIn) (CompareOut, error) {
 	var out CompareOut
 	m, err := lifecycle.New(lifecycle.CompareChain, lifecycle.ChainVerify,
 		compareHandlers(ctx, d, in, &out))
@@ -83,7 +84,7 @@ func NetUpComparing(ctx context.Context, d Deps, in CompareIn) (CompareOut, erro
 
 // compareHandlers is the comparison's four states plus the composition's own,
 // so a verdict that says "compose" walks straight into the stages.
-func compareHandlers(ctx context.Context, d Deps, in CompareIn, out *CompareOut) map[lifecycle.Status]lifecycle.Handler {
+func compareHandlers(ctx context.Context, d chainsetup.Deps, in CompareIn, out *CompareOut) map[lifecycle.Status]lifecycle.Handler {
 	up := in.Up
 	steps := upSteps(ctx, d, up)
 	// The composition's own record, written by the same closure the list walk
@@ -169,12 +170,12 @@ func compareHandlers(ctx context.Context, d Deps, in CompareIn, out *CompareOut)
 //
 // A workspace that will not open, or has no node table, is not a failure: it is
 // a target with nothing composed on it, which is one of the four answers.
-func compareWorkspace(ctx context.Context, d Deps, up NetUpIn) preflight.Decision {
-	ws, err := Open(up.DataDir, d.Clock)
+func compareWorkspace(ctx context.Context, d chainsetup.Deps, up chainsetup.NetUpIn) preflight.Decision {
+	ws, err := chainsetup.Open(up.DataDir, d.Clock)
 	if err != nil || len(ws.State().Nodes) == 0 {
 		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
 	}
 	ws.SetEnv(d.Env)
 	ws.SetDriver(d.Driver)
-	return ws.Compare(ctx, WantOf(up))
+	return ws.Compare(ctx, chainsetup.WantOf(up))
 }

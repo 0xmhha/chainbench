@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,24 +23,24 @@ func TestNetEnodes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
 	// Before place: no node table, so enode says which step to run first.
-	if _, err := chainsetup.NetEnodes(ctx, d, chainsetup.NetEnodesIn{DataDir: dir}); err == nil ||
+	if _, err := verb.NetEnodes(ctx, d, verb.NetEnodesIn{DataDir: dir}); err == nil ||
 		!strings.Contains(err.Error(), "chain place") {
 		t.Fatalf("enode before place: %v", err)
 	}
 
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
-	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
 
-	out, err := chainsetup.NetEnodes(ctx, d, chainsetup.NetEnodesIn{DataDir: dir})
+	out, err := verb.NetEnodes(ctx, d, verb.NetEnodesIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("enode: %v", err)
 	}
@@ -56,7 +57,7 @@ func TestNetEnodes(t *testing.T) {
 	}
 
 	// --node filters to one, keeping its identity.
-	one, err := chainsetup.NetEnodes(ctx, d, chainsetup.NetEnodesIn{DataDir: dir, Node: 2})
+	one, err := verb.NetEnodes(ctx, d, verb.NetEnodesIn{DataDir: dir, Node: 2})
 	if err != nil {
 		t.Fatalf("enode --node 2: %v", err)
 	}
@@ -65,7 +66,7 @@ func TestNetEnodes(t *testing.T) {
 	}
 
 	// A node the workspace does not have is an error, not an empty list.
-	if _, err := chainsetup.NetEnodes(ctx, d, chainsetup.NetEnodesIn{DataDir: dir, Node: 9}); err == nil {
+	if _, err := verb.NetEnodes(ctx, d, verb.NetEnodesIn{DataDir: dir, Node: 9}); err == nil {
 		t.Fatal("enode --node 9 must fail on a 3-node workspace")
 	}
 }
@@ -81,21 +82,21 @@ func TestNetConfigNodeScoped(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
-	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 
 	// node2 only: syncMode=snap.
-	if _, err := chainsetup.NetConfig(ctx, d, chainsetup.NetConfigIn{DataDir: dir, Node: 2, Set: []string{"syncMode=snap"}}); err != nil {
+	if _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir, Node: 2, Set: []string{"syncMode=snap"}}); err != nil {
 		t.Fatalf("config node2: %v", err)
 	}
 	readSync := func(idx int) string {
@@ -121,7 +122,7 @@ func TestNetConfigNodeScoped(t *testing.T) {
 	}
 
 	// An unknown knob is refused.
-	if _, err := chainsetup.NetConfig(ctx, d, chainsetup.NetConfigIn{DataDir: dir, Set: []string{"bogus=1"}}); err == nil {
+	if _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir, Set: []string{"bogus=1"}}); err == nil {
 		t.Fatal("an unknown config knob must be refused")
 	}
 }

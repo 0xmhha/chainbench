@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,11 +40,11 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
-	out, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	out, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
@@ -64,7 +65,7 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 }
 
 func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
-	dir, d := composed(t, chainsetup.NetAllocateIn{BPCount: 2})
+	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
 	st := stateOf(t, dir, d)
 	if !strings.Contains(st.PortSource, "built-in") {
 		t.Errorf("port source = %q, want it to name the built-ins", st.PortSource)
@@ -81,7 +82,7 @@ func TestNetAllocate_RemoteServerRetargetsTheDataPlane(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/chainbench"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -93,7 +94,7 @@ pool:
 ssh: {user: deploy, port: 2222}
 `)
 
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BPCount: 1,
 		Server: resource.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
@@ -116,7 +117,7 @@ ssh: {user: deploy, port: 2222}
 	}
 	// The node's own address is recorded, so a NodeSet reader reaches the host
 	// rather than this resource.
-	ns, err := chainsetup.NetworkStatus(ctx, d, chainsetup.NetworkStatusIn{DataDir: dir})
+	ns, err := verb.NetworkStatus(ctx, d, verb.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
@@ -130,7 +131,7 @@ func TestNetAllocate_AllServersSpreadsOneNodePerHost(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -143,7 +144,7 @@ pool:
 ssh: {user: deploy}
 `)
 
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
@@ -200,7 +201,7 @@ func TestNetAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -212,7 +213,7 @@ pool:
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy}
 `)
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {

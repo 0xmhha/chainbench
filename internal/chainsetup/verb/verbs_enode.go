@@ -1,8 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
@@ -41,11 +42,11 @@ type NetEnodesOut struct {
 // needs both stages done: the node table (place) supplies host and p2p port,
 // the key set (keys) supplies the devp2p public key. It reports which one is
 // missing rather than an empty list.
-func NetEnodes(_ context.Context, d Deps, in NetEnodesIn) (NetEnodesOut, error) {
+func NetEnodes(_ context.Context, d chainsetup.Deps, in NetEnodesIn) (NetEnodesOut, error) {
 	if in.DataDir == "" {
 		return NetEnodesOut{}, ErrNoDataDir
 	}
-	ws, err := Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetEnodesOut{}, err
 	}

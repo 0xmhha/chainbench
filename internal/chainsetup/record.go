@@ -182,7 +182,7 @@ func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin strin
 }
 
 // as done, or empty when every step has.
-func (w *Workspace) firstUndone() string {
+func (w *Workspace) FirstUndone() string {
 	stage := UpStart
 	if w.state.Request != nil && w.state.Request.Stage != "" {
 		stage = w.state.Request.Stage
@@ -275,4 +275,39 @@ func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.R
 		}
 	}
 	return 0, nil
+}
+
+// RecordRequest writes what the composition was asked for onto the workspace.
+//
+// The location is not part of it: the record is where the workspace is, so a
+// workspace moved to another directory still reads as the request it was
+// composed from rather than as one pointing somewhere that no longer exists.
+func (w *Workspace) RecordRequest(in NetUpIn) error {
+	req := in
+	req.DataDir = ""
+	w.state.Request = &req
+	return nil
+}
+
+// launchCommand is the one spelling of a launch, for comparing what is running
+// against what this workspace would run.
+func launchCommand(binary string, args []string) string {
+	return strings.TrimSpace(binary + " " + strings.Join(args, " "))
+}
+
+// sameCommand reports whether two launches are the same one, ignoring the
+// difference between a path and the name at the end of it: a node started from
+// an absolute path and one started from PATH are the same node.
+func sameCommand(got, want string) bool {
+	if got == want {
+		return true
+	}
+	gf, wf := strings.Fields(got), strings.Fields(want)
+	if len(gf) == 0 || len(wf) == 0 || len(gf) != len(wf) {
+		return false
+	}
+	if filepath.Base(gf[0]) != filepath.Base(wf[0]) {
+		return false
+	}
+	return strings.Join(gf[1:], " ") == strings.Join(wf[1:], " ")
 }

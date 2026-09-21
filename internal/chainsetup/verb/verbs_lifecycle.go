@@ -1,7 +1,8 @@
-package chainsetup
+package verb
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"sort"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -20,8 +21,8 @@ type NetProvisionIn struct {
 
 // NetProvision verifies the launch inputs are present on the target
 // (skip-if-exists semantics: present files are reused, missing ones are named).
-func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (StepOut, error) {
-	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+func NetProvision(ctx context.Context, d chainsetup.Deps, in NetProvisionIn) (chainsetup.StepOut, error) {
+	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
 		return ws.Provision(ctx)
 	})
 }
@@ -33,11 +34,11 @@ type NetInitIn struct {
 }
 
 // NetInit runs `<binary> init` for each node's datadir from the built genesis.
-func NetInit(ctx context.Context, d Deps, in NetInitIn) (StepOut, error) {
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+func NetInit(ctx context.Context, d chainsetup.Deps, in NetInitIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.Init(ctx, in.Binary)
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // NetStartIn launches the composed network.
@@ -47,8 +48,8 @@ type NetStartIn struct {
 }
 
 // NetStart launches every stopped node and records the PIDs.
-func NetStart(ctx context.Context, d Deps, in NetStartIn) (StepOut, error) {
-	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+func NetStart(ctx context.Context, d chainsetup.Deps, in NetStartIn) (chainsetup.StepOut, error) {
+	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
 		return ws.Start(ctx, in.Binary)
 	})
 }
@@ -59,11 +60,11 @@ type NetStopIn struct {
 }
 
 // NetStop terminates every running node by its recorded PID.
-func NetStop(ctx context.Context, d Deps, in NetStopIn) (StepOut, error) {
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+func NetStop(ctx context.Context, d chainsetup.Deps, in NetStopIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.Stop(ctx)
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // NetRestartIn bounces one node.
@@ -73,11 +74,11 @@ type NetRestartIn struct {
 }
 
 // NetRestart stops and relaunches one node with its recorded arming.
-func NetRestart(ctx context.Context, d Deps, in NetRestartIn) (StepOut, error) {
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+func NetRestart(ctx context.Context, d chainsetup.Deps, in NetRestartIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.Restart(ctx, in.Node)
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // NetRmIn identifies the workspace.
@@ -86,11 +87,11 @@ type NetRmIn struct {
 }
 
 // NetRm removes the composed data plane (stopped nodes only).
-func NetRm(ctx context.Context, d Deps, in NetRmIn) (StepOut, error) {
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+func NetRm(ctx context.Context, d chainsetup.Deps, in NetRmIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.Rm(ctx)
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // NetLogsIn selects one node's log tail.
@@ -106,8 +107,8 @@ type NetLogsOut struct {
 }
 
 // NetLogs returns the last N lines of one node's log. Read-only.
-func NetLogs(ctx context.Context, d Deps, in NetLogsIn) (NetLogsOut, error) {
-	ws, err := Open(in.DataDir, d.Clock)
+func NetLogs(ctx context.Context, d chainsetup.Deps, in NetLogsIn) (NetLogsOut, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetLogsOut{}, err
 	}
@@ -123,12 +124,12 @@ type NetHealthIn struct {
 
 // NetHealthOut is the per-node probe table.
 type NetHealthOut struct {
-	Nodes []NodeHealth
+	Nodes []chainsetup.NodeHealth
 }
 
 // NetHealth probes every node's HTTP RPC for its latest block. Read-only.
-func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (NetHealthOut, error) {
-	ws, err := Open(in.DataDir, d.Clock)
+func NetHealth(ctx context.Context, d chainsetup.Deps, in NetHealthIn) (NetHealthOut, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetHealthOut{}, err
 	}

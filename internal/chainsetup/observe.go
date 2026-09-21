@@ -78,14 +78,14 @@ func excerpt(s string, head, tail int) string {
 	return strings.Join(out, "\n")
 }
 
-// livePIDs asks each node's machine whether its recorded pid is still a
+// LivePIDs asks each node's machine whether its recorded pid is still a
 // process, for the nodes that have one.
 //
 // Best effort, and deliberately silent about its own failures: this answers
 // "what is running", and a machine that cannot be reached has not told us the
 // node is gone. Absent from the map means "not asked or could not ask", which
 // a caller must not read as "dead" — the map only ever carries answers.
-func (w *Workspace) livePIDs(ctx context.Context) map[int]bool {
+func (w *Workspace) LivePIDs(ctx context.Context) map[int]bool {
 	out := map[int]bool{}
 	for _, ns := range w.state.Nodes {
 		if ns.PID <= 0 {
@@ -147,3 +147,23 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // runs, callable without composing anything. It answers "may a network of
 // this shape start here right now?" with the refusal Start would give — port
 // occupancy plus unmanaged copies of the binary already on the resource.
+
+// Endpoints is every node's reachable RPC URL, in node order.
+//
+// The resolution is one helper shared with NodeSet and Health, so the three
+// cannot disagree about where a node answers — which is why the loop lives here
+// rather than in the verb that asks for it.
+func (w *Workspace) Endpoints() ([]string, error) {
+	if len(w.state.Nodes) == 0 {
+		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `chain place` first")
+	}
+	urls := make([]string, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		url, err := w.nodeHTTPURL(ns)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
+	}
+	return urls, nil
+}

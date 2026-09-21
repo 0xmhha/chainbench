@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"math"
 	"strconv"
 	"time"
@@ -16,7 +17,7 @@ import (
 // The run path gates a composed network through nodemonitor before running any
 // test on it (E6): a network that is up but not yet producing, or missing a
 // node, is waited on or restarted within limits rather than run against blind.
-// The observation reuses health.Run and the restart reuses chainsetup.NetRestart
+// The observation reuses health.Run and the restart reuses verb.NetRestart
 // — nodemonitor re-implements neither.
 
 // healthObserver produces one round of nodemonitor.Facts for a composed network
@@ -221,7 +222,7 @@ type restartAdapter struct {
 }
 
 func (r restartAdapter) Restart(ctx context.Context, n int) error {
-	_, err := chainsetup.NetRestart(ctx, r.deps, chainsetup.NetRestartIn{DataDir: r.dataDir, Node: n})
+	_, err := verb.NetRestart(ctx, r.deps, verb.NetRestartIn{DataDir: r.dataDir, Node: n})
 	return err
 }
 

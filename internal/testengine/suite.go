@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"strings"
 	"time"
 
@@ -283,7 +284,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		// none. A case that has to act BEFORE the fork says so by naming the
 		// crossFork step, and then this leaves the fork to it.
 		if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
-			res, cerr := chainsetup.NetCrossFork(ctx, sd, chainsetup.NetCrossForkIn{DataDir: comp.up.DataDir})
+			res, cerr := verb.NetCrossFork(ctx, sd, verb.NetCrossForkIn{DataDir: comp.up.DataDir})
 			if cerr != nil {
 				return fmt.Errorf("engine: run suite: %w", cerr)
 			}

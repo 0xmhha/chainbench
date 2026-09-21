@@ -1,8 +1,8 @@
-package chainsetup
+package verb
 
 import (
 	"context"
-	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -46,12 +46,12 @@ type NetNewOut struct {
 
 // NetNew initializes (or re-targets) the composition workspace — the `chain new`
 // step, shared verbatim by the CLI subcommand and the MCP tool.
-func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
-	ws, err := Open(in.DataDir, d.Clock)
+func NetNew(_ context.Context, d chainsetup.Deps, in NetNewIn) (NetNewOut, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetNewOut{}, err
 	}
-	detail, err := ws.New(NewOpts{
+	detail, err := ws.New(chainsetup.NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
 		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
 		ServerSet: in.ServerSet, WorkspaceConfigPath: in.WorkspaceConfigPath,
@@ -75,12 +75,12 @@ type NetStatusOut struct {
 	// Dir is the workspace control directory.
 	Dir string
 	// State is the persisted composition state (chain, target, step table).
-	State State
+	State chainsetup.State
 }
 
 // NetStatus reads the workspace composition state — the `chain status` step.
-func NetStatus(_ context.Context, d Deps, in NetStatusIn) (NetStatusOut, error) {
-	ws, err := Open(in.DataDir, d.Clock)
+func NetStatus(_ context.Context, d chainsetup.Deps, in NetStatusIn) (NetStatusOut, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetStatusOut{}, err
 	}
@@ -96,25 +96,11 @@ type NetEndpointsIn struct {
 // the recorded per-node host, translated through the docker map when the
 // workspace runs in docker mode — the same translation the health probe uses,
 // so a caller attaching a test engine dials what actually answers.
-func NetEndpoints(_ context.Context, d Deps, in NetEndpointsIn) ([]string, error) {
-	ws, err := Open(in.DataDir, d.Clock)
+func NetEndpoints(_ context.Context, d chainsetup.Deps, in NetEndpointsIn) ([]string, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return nil, err
 	}
 	ws.SetEnv(d.Env)
-	st := ws.State()
-	if len(st.Nodes) == 0 {
-		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `chain place` first")
-	}
-	// One helper, shared with NodeSet and Health: a node's reachable URL is
-	// resolved in a single place so the three cannot disagree.
-	urls := make([]string, 0, len(st.Nodes))
-	for _, ns := range st.Nodes {
-		url, err := ws.nodeHTTPURL(ns)
-		if err != nil {
-			return nil, err
-		}
-		urls = append(urls, url)
-	}
-	return urls, nil
+	return ws.Endpoints()
 }

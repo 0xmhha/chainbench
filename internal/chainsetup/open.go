@@ -39,13 +39,13 @@ func InWorkspace[T any](d Deps, dataDir string, fn func(*Workspace) (T, error)) 
 	// refusal names who holds it instead. A lock left by a run that died is
 	// taken over — that run is gone, and its wreckage is what the operator is
 	// here to clear — but never in silence.
-	held, prev, state, lerr := ws.Acquire(d.command())
+	held, prev, state, lerr := ws.Acquire(d.Owner())
 	if lerr != nil {
 		return zero, lerr
 	}
 	defer func() { _ = held.Release() }()
 	if state == session.LockStale {
-		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `chain status` shows what is there", prev.Describe())
+		d.Logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `chain status` shows what is there", prev.Describe())
 	}
 
 	out, stepErr := fn(ws)

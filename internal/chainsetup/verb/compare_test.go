@@ -1,8 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
@@ -140,7 +141,7 @@ func TestAReconcilingRunGoesThroughTheReconciliation(t *testing.T) {
 		}
 		// Either way the nine stages run: the reconciliation keeps nodes, it
 		// does not skip steps.
-		if got := join(r.ran); got != join(UpStepNames) {
+		if got := join(r.ran); got != join(chainsetup.UpStepNames) {
 			t.Errorf("%s: ran %q", c.name, got)
 		}
 	}

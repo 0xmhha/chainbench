@@ -55,13 +55,13 @@ func TestLaunchOverridesFor_MergesScopesMostGeneralFirst(t *testing.T) {
 func TestRecordLaunchSet_AcceptsEveryRoleAndRefusesWhatIsNotAScope(t *testing.T) {
 	for _, scope := range []string{"all", "bp", "en", "pn", "node2", "node12"} {
 		w := &Workspace{}
-		if err := w.recordLaunchSet(scope, []string{"mine"}); err != nil {
+		if err := w.RecordLaunchSet(scope, []string{"mine"}); err != nil {
 			t.Errorf("scope %q must be accepted: %v", scope, err)
 		}
 	}
 	for _, scope := range []string{"validator", "endpoint", "boot", "sideways", "node0", "node", ""} {
 		w := &Workspace{}
-		if err := w.recordLaunchSet(scope, []string{"mine"}); err == nil {
+		if err := w.RecordLaunchSet(scope, []string{"mine"}); err == nil {
 			t.Errorf("scope %q must be refused", scope)
 		}
 	}
@@ -72,13 +72,13 @@ func TestRecordLaunchSet_AcceptsEveryRoleAndRefusesWhatIsNotAScope(t *testing.T)
 // under one scope accumulate in order.
 func TestRecordLaunchSet_ValidatesTheKnobAndAccumulates(t *testing.T) {
 	w := &Workspace{}
-	if err := w.recordLaunchSet("all", []string{"=novalue"}); err == nil {
+	if err := w.RecordLaunchSet("all", []string{"=novalue"}); err == nil {
 		t.Error("a malformed knob must be refused")
 	}
-	if err := w.recordLaunchSet("bp", []string{"mine"}); err != nil {
+	if err := w.RecordLaunchSet("bp", []string{"mine"}); err != nil {
 		t.Fatalf("a role scope must be accepted: %v", err)
 	}
-	if err := w.recordLaunchSet("bp", []string{"metrics"}); err != nil {
+	if err := w.RecordLaunchSet("bp", []string{"metrics"}); err != nil {
 		t.Fatalf("a repeated record must be accepted: %v", err)
 	}
 	if got := strings.Join(w.state.LaunchSet["bp"], ","); got != "mine,metrics" {
@@ -98,7 +98,7 @@ func TestRecordLaunchSet_ValidatesTheKnobAndAccumulates(t *testing.T) {
 func TestRecordLaunchSet_HoldsOneEntryPerKey(t *testing.T) {
 	w := &Workspace{}
 	for i := 0; i < 3; i++ {
-		if err := w.recordLaunchSet("bp", []string{"mine=true", "nodiscover"}); err != nil {
+		if err := w.RecordLaunchSet("bp", []string{"mine=true", "nodiscover"}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -109,7 +109,7 @@ func TestRecordLaunchSet_HoldsOneEntryPerKey(t *testing.T) {
 
 	// A new value for a key it already holds replaces that entry where it
 	// stands, so the order a reader sees does not move under them.
-	if err := w.recordLaunchSet("bp", []string{"mine=false"}); err != nil {
+	if err := w.RecordLaunchSet("bp", []string{"mine=false"}); err != nil {
 		t.Fatal(err)
 	}
 	got = w.state.LaunchSet["bp"]

@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -39,28 +40,28 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 	// The binary is recorded here rather than left out: relaunching a node
 	// needs an executable even when only its config changed, and a workspace
 	// with none refuses the swap for that reason rather than for its config.
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{
+	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{
 		DataDir: dir, Chain: "stablenet", Binary: "/opt/gstable", KeysDir: keysAbs,
 	}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
 		DataDir: dir, BPCount: 1, ENCount: 1,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
 
 	for _, step := range []func() error{
 		func() error {
-			_, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir})
+			_, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir})
 			return err
 		},
-		func() error { _, err := chainsetup.NetConfig(ctx, d, chainsetup.NetConfigIn{DataDir: dir}); return err },
+		func() error { _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir}); return err },
 		func() error {
-			_, err := chainsetup.NetLaunchOpts(ctx, d, chainsetup.NetLaunchOptsIn{DataDir: dir})
+			_, err := verb.NetLaunchOpts(ctx, d, verb.NetLaunchOptsIn{DataDir: dir})
 			return err
 		},
 	} {
@@ -76,7 +77,7 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 
 	// No binary. This is the whole point of the case: a config change alone is
 	// a reason to relaunch a node.
-	out, err := chainsetup.NodeSwap(ctx, d, chainsetup.NodeSwapIn{
+	out, err := verb.NodeSwap(ctx, d, verb.NodeSwapIn{
 		DataDir: dir, Index: 2, Config: []string{"syncMode=snap"}, Purpose: "resync",
 	})
 	if err != nil {

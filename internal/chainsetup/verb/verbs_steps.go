@@ -1,8 +1,9 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
@@ -35,10 +36,10 @@ type NetKeysIn struct {
 }
 
 // NetKeys ensures the workspace's key set exists and covers the node count.
-func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
+func NetKeys(ctx context.Context, d chainsetup.Deps, in NetKeysIn) (chainsetup.StepOut, error) {
 	bp, err := readBlueprint(in.BlueprintPath)
 	if err != nil {
-		return StepOut{}, err
+		return chainsetup.StepOut{}, err
 	}
 	source := in.Source
 	// A blueprint that carries keys is the source unless the caller asked for
@@ -47,8 +48,8 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 	if source == "" && bp != nil {
 		source = "declared"
 	}
-	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
-		return ws.Keys(ctx, KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
+	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+		return ws.Keys(ctx, chainsetup.KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
 	})
 }
 
@@ -89,19 +90,19 @@ type NetAllocateIn struct {
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
-func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
+func NetAllocate(_ context.Context, d chainsetup.Deps, in NetAllocateIn) (chainsetup.StepOut, error) {
 	bp, err := readBlueprint(in.BlueprintPath)
 	if err != nil {
-		return StepOut{}, err
+		return chainsetup.StepOut{}, err
 	}
 	topo := in.Topology
-	if err := OneLayoutOnly(bp != nil, topo != nil || in.TopologyPath != ""); err != nil {
-		return StepOut{}, err
+	if err := chainsetup.OneLayoutOnly(bp != nil, topo != nil || in.TopologyPath != ""); err != nil {
+		return chainsetup.StepOut{}, err
 	}
 	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
 		if err != nil {
-			return StepOut{}, err
+			return chainsetup.StepOut{}, err
 		}
 		topo = &loaded
 	}
@@ -112,16 +113,16 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 	// (the workspaces stay the only record of what is taken).
 	setPath := in.Server.SetPath
 	if setPath == "" {
-		if ws, err := Open(in.DataDir, d.Clock); err == nil {
+		if ws, err := chainsetup.Open(in.DataDir, d.Clock); err == nil {
 			setPath = ws.State().ServerSet
 		}
 	}
-	release, err := AcquireSetLock(setPath, d)
+	release, err := chainsetup.AcquireSetLock(setPath, d)
 	if err != nil {
-		return StepOut{}, err
+		return chainsetup.StepOut{}, err
 	}
 	defer release()
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		// A set the workspace already recorded (chain new --server-set) is the
 		// default: --docker and its set arrive as a pair, and a later
 		// --server-set on this step still wins.
@@ -137,7 +138,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 				return "", err
 			}
 		}
-		return ws.Allocate(AllocateOpts{
+		return ws.Allocate(chainsetup.AllocateOpts{
 			BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
 			Peering: peeringOf(bp, in.Peering),
@@ -146,7 +147,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 			AutoSize:     in.AutoSize,
 		})
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // readBlueprint loads a network declaration, or returns nil when none is named.
@@ -176,15 +177,15 @@ func peeringOf(bp *blueprint.Blueprint, flag string) string {
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
-func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
+func NetGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.NetGenesisIn) (chainsetup.StepOut, error) {
 	// The request is read before the workspace is opened: one that contradicts
 	// itself needs no workspace, and refusing here keeps the lock and the state
 	// out of a request that was never going to be carried out.
-	opts, err := GenesisOptsFor(in)
+	opts, err := chainsetup.GenesisOptsFor(in)
 	if err != nil {
-		return StepOut{}, err
+		return chainsetup.StepOut{}, err
 	}
-	return InWorkspace(d, in.DataDir, func(ws *Workspace) (StepOut, error) {
+	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
 		return ws.Genesis(ctx, opts)
 	})
 }
@@ -206,10 +207,10 @@ type NetConfigIn struct {
 // NetConfig records any per-node overrides, then renders and writes each node's
 // TOML config with them applied. Recording and rendering share one step so
 // `chain config --node N --set k=v` both persists the override and reflects it.
-func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+func NetConfig(ctx context.Context, d chainsetup.Deps, in NetConfigIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
-			if err := ws.recordConfigSet(scope, in.ScopedSet[scope]); err != nil {
+			if err := ws.RecordConfigSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: config: %w", err)
 			}
 		}
@@ -218,13 +219,13 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 			if in.Node > 0 {
 				scope = fmt.Sprintf("node%d", in.Node)
 			}
-			if err := ws.recordConfigSet(scope, in.Set); err != nil {
+			if err := ws.RecordConfigSet(scope, in.Set); err != nil {
 				return "", fmt.Errorf("chainsetup: config: %w", err)
 			}
 		}
 		return ws.Config(ctx)
 	})
-	return StepOut{Detail: detail}, err
+	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // NetLaunchOptsIn customizes the assembled argv.
@@ -245,15 +246,15 @@ type NetLaunchOptsOut struct {
 
 // NetLaunchOpts assembles each node's launch argv (the single assembly site)
 // and records it, returning the table so the surface can render the commands.
-func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
+func NetLaunchOpts(_ context.Context, d chainsetup.Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
 	var nodes []node.Record
-	detail, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
-			if err := ws.recordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
+			if err := ws.RecordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 			}
 		}
-		if err := ws.recordLaunchSet("all", in.Set); err != nil {
+		if err := ws.RecordLaunchSet("all", in.Set); err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 		}
 		det, err := ws.LaunchOpts()

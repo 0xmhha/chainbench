@@ -1,9 +1,10 @@
-package chainsetup
+package verb
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"os"
 	"time"
 
@@ -45,20 +46,20 @@ type NetworkStatusOut struct {
 // capability is for, and every other lifecycle path already asks it; status was
 // the one that did not, and its signature said so: it took the context and
 // discarded it.
-func NetworkStatus(ctx context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
+func NetworkStatus(ctx context.Context, d chainsetup.Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
 	if in.DataDir == "" {
 		return NetworkStatusOut{}, ErrNoDataDir
 	}
 	if !isComposition(in.DataDir) {
 		return NetworkStatusOut{}, fmt.Errorf("chainsetup: %w", session.NoRecordError(in.DataDir))
 	}
-	ws, err := Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetworkStatusOut{}, err
 	}
 	ws.SetEnv(d.Env)
 	ws.SetDriver(d.Driver)
-	return NetworkStatusOut{Nodes: ws.NodeSet(), Alive: ws.livePIDs(ctx)}, nil
+	return NetworkStatusOut{Nodes: ws.NodeSet(), Alive: ws.LivePIDs(ctx)}, nil
 }
 
 // isComposition reports whether dir holds a composed chain. Its chain record is
@@ -81,14 +82,14 @@ type NetworkStopOut struct {
 
 // NetworkStop terminates every running node by its recorded PID and clears
 // the PIDs, through the workspace's stop step.
-func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut, error) {
+func NetworkStop(ctx context.Context, d chainsetup.Deps, in NetworkStopIn) (NetworkStopOut, error) {
 	if in.DataDir == "" {
 		return NetworkStopOut{}, ErrNoDataDir
 	}
 	// Counted before the step runs: it stops every node that still has a
 	// PID, and clears them, so afterwards there is nothing left to count.
 	var running int
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		running = withPID(ws.NodeSet())
 		return ws.Stop(ctx)
 	})
@@ -119,11 +120,11 @@ type NodeStopIn struct {
 // NodeStop stops a single node and records it as stopped, so a sync gap can be
 // created while the rest of the network keeps producing blocks. Clearing the
 // PID is what makes a later status or start accurate.
-func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
+func NodeStop(ctx context.Context, d chainsetup.Deps, in NodeStopIn) error {
 	if in.DataDir == "" || in.Index <= 0 {
 		return ErrNoDataDirAndIndex
 	}
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.StopNode(ctx, in.Index)
 	})
 	return err
@@ -143,15 +144,15 @@ type NodeStartOut struct {
 // NetRunner returns the target's remote command runner, or nil for a local
 // target (which reads its own filesystem). It is what lets the run read a remote
 // node's log over SSH and reconnect a dropped session (E8).
-func NetRunner(d Deps, dataDir string) (process.Runner, error) {
-	ws, err := Open(dataDir, d.Clock)
+func NetRunner(d chainsetup.Deps, dataDir string) (process.Runner, error) {
+	ws, err := chainsetup.Open(dataDir, d.Clock)
 	if err != nil {
 		return nil, err
 	}
-	if !ws.state.Target.IsRemote() {
+	if !ws.State().Target.IsRemote() {
 		return nil, nil
 	}
-	t, err := ws.resolveTarget()
+	t, err := ws.ResolveTarget()
 	if err != nil {
 		return nil, err
 	}
@@ -180,13 +181,13 @@ type NodeSwapIn struct {
 // config, so a network can run mixed binaries mid-test. The pre-swap pid and
 // command are kept as a ledger revision; the relaunched node's new PID is
 // returned.
-func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) {
+func NodeSwap(ctx context.Context, d chainsetup.Deps, in NodeSwapIn) (NodeStartOut, error) {
 	if in.DataDir == "" || in.Index <= 0 {
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	var swapped node.Node
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		detail, err := ws.SwapNode(ctx, SwapNodeOpts{
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		detail, err := ws.SwapNode(ctx, chainsetup.SwapNodeOpts{
 			Index: in.Index, Binary: in.Binary, Config: in.Config,
 			GenesisOverlay: in.GenesisOverlay, Purpose: in.Purpose,
 		})
@@ -209,12 +210,12 @@ func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) 
 // NodeStart relaunches a single stopped node with the argv it was armed with,
 // so it rejoins its peers and re-syncs the blocks it missed, and records its
 // new PID.
-func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error) {
+func NodeStart(ctx context.Context, d chainsetup.Deps, in NodeStartIn) (NodeStartOut, error) {
 	if in.DataDir == "" || in.Index <= 0 {
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	var started node.Node
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		detail, err := ws.StartNode(ctx, in.Index)
 		if err != nil {
 			return "", err
@@ -248,7 +249,7 @@ type NetworkRemoveOut struct {
 // NetworkRemove stops the network and deletes its workspace directory. It
 // refuses a directory that carries no workspace, so a mistyped path cannot
 // delete something unrelated.
-func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemoveOut, error) {
+func NetworkRemove(ctx context.Context, d chainsetup.Deps, in NetworkRemoveIn) (NetworkRemoveOut, error) {
 	if in.DataDir == "" {
 		return NetworkRemoveOut{}, ErrNoDataDir
 	}
@@ -296,13 +297,13 @@ type NetCrossForkOut struct {
 // a table and has to write the result into it, and returning only the changed
 // ones makes every caller re-derive which those were — from the same fact the
 // step already knows.
-func NetCrossFork(ctx context.Context, d Deps, in NetCrossForkIn) (NetCrossForkOut, error) {
+func NetCrossFork(ctx context.Context, d chainsetup.Deps, in NetCrossForkIn) (NetCrossForkOut, error) {
 	if in.DataDir == "" {
 		return NetCrossForkOut{}, ErrNoDataDir
 	}
 	var out NetCrossForkOut
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		detail, err := ws.CrossFork(ctx, CrossForkOpts{Timeout: in.Timeout})
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		detail, err := ws.CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
 		if err != nil {
 			return "", err
 		}
@@ -324,7 +325,7 @@ type NetForkIn struct {
 // nodes stand on each side of it.
 type NetForkOut struct {
 	// Fork is the declared hardfork, nil when the network crosses none.
-	Fork *GenesisFork `json:"fork,omitempty"`
+	Fork *chainsetup.GenesisFork `json:"fork,omitempty"`
 	// PreFork are the indices of the nodes running the build that seals up to
 	// the fork block and stops there. After the handover they stay where they
 	// stopped: they cannot validate what the successors produce.
@@ -341,18 +342,19 @@ type NetForkOut struct {
 // It is read from the record rather than carried from the request because the
 // two callers are not the same run: a network is composed once and attached to
 // afterwards, and the second one has no request to read.
-func NetFork(_ context.Context, d Deps, in NetForkIn) (NetForkOut, error) {
+func NetFork(_ context.Context, d chainsetup.Deps, in NetForkIn) (NetForkOut, error) {
 	if in.DataDir == "" {
 		return NetForkOut{}, ErrNoDataDir
 	}
 	var out NetForkOut
-	_, err := WithWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		out.HaltsAt = ws.state.HaltsAt
-		out.Fork = ws.state.Fork
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		st := ws.State()
+		out.HaltsAt = st.HaltsAt
+		out.Fork = st.Fork
 		if out.Fork == nil {
 			return "", nil
 		}
-		for _, ns := range ws.state.Nodes {
+		for _, ns := range st.Nodes {
 			if ns.Binary != out.Fork.Binary {
 				out.PreFork = append(out.PreFork, ns.Index)
 			}
