@@ -262,6 +262,113 @@ const (
 	ChainVerifyFailNotProducing
 )
 
+// ChainStopped and ChainRemoved are what an operational verb leaves behind when
+// it does not leave the network running.
+//
+// They are chain states rather than operational ones: the area above names what
+// is being DONE to a chain, and these name what the chain then IS. A reader
+// asking what a workspace holds needs the difference — one can be started
+// again, the other has no data plane left to start.
+const (
+	ChainRemoved Status = areaChain + 0xD00
+	ChainStopped Status = areaChain + 0xE00
+)
+
+// ---- chain: what is done to it once it is ready ----------------------------
+//
+// The operational area is not the composition with different names, and the
+// measurement is why (state-machine-04-operational-failures.md). There, nine
+// stages each had their own failures: 118 belonged to exactly one, 16 were
+// shared. Here 25 of 65 are shared, and four of the six verbs have one or two
+// of their own — stop, rm, restart and hardfork have nine between them.
+//
+// What they share is not a verb but three moves: decide which binary to launch,
+// render a node's config again, take a node down and bring it back. So the
+// blocks below are named for what happens, and the failures they share are
+// declared once and reachable from each of them. Two sets are not declared here
+// at all: rendering a config again fails the way the config stage already
+// fails, and re-initializing one node's datadir fails the way the init stage
+// does. Giving those second names would put one condition under two.
+
+const (
+	// ChainOpStopNodes halts what is running, the whole network or one node.
+	ChainOpStopNodes Status = areaChainOp + 0x100*iota
+	// ChainOpStartNodes brings a node back on the argv it was launched with.
+	ChainOpStartNodes
+	// ChainOpReplaceNode gives one node a different binary, config or genesis
+	// and brings it back on that.
+	ChainOpReplaceNode
+	// ChainOpCrossFork restarts the network across a fork boundary. It is the
+	// only operational verb that waits on the chain rather than on a process,
+	// and the only one with states of its own.
+	ChainOpCrossFork
+	// ChainOpRemoveNodes removes the composed data plane.
+	ChainOpRemoveNodes
+	// ChainOpHardfork runs the upgrade a hardfork plan describes.
+	ChainOpHardfork
+)
+
+const (
+	// ChainOpCrossForkBeforeFork saw the chain short of the fork block, which
+	// is where the hand-over has to begin.
+	ChainOpCrossForkBeforeFork = ChainOpCrossFork + 1 + iota
+	// ChainOpCrossForkHandingOver has the pre-fork nodes down and the post-fork
+	// build coming up in their place.
+	ChainOpCrossForkHandingOver
+	// ChainOpCrossForkCrossed saw the chain past the fork block on the new
+	// build.
+	ChainOpCrossForkCrossed
+)
+
+// opShared is the block the failures more than one operational verb can raise
+// live in.
+//
+// A block of its own, at the top of the area, because the first draft put them
+// at areaChainOp + failureSlot — which is the STOP block's failure range, since
+// stop is the area's first block. Two names, one value. The area has sixteen
+// blocks and the composition already keeps its terminal state at the top of
+// its own, so this is the same shape rather than a new one.
+const opShared Status = areaChainOp + 0xF00
+
+// The failures several operational verbs share. They are declared once because
+// they are one condition: a caller reading two runs should not have to know
+// which verb happened to ask.
+const (
+	// ChainOpFailPrecondition: the workspace is not in a state this verb can
+	// act on — no node table, a node still running, a node never started.
+	//
+	// The composition has no equivalent because the transition table removes
+	// its preconditions: a stage cannot be entered without the one before it.
+	// Operational verbs have no such order — stop may be followed by rm or by
+	// restart and neither is wrong — so this one stays a state.
+	ChainOpFailPrecondition = opShared + failureSlot + iota
+	// ChainOpFailNoSuchNode: the index named is not in the node table.
+	ChainOpFailNoSuchNode
+)
+
+const (
+	// ChainOpStopNodesFailSomeStillUp: not every node came down, and the
+	// failure names which. Every node is attempted before this is raised.
+	ChainOpStopNodesFailSomeStillUp = ChainOpStopNodes + failureSlot
+	// ChainOpReplaceNodeFailNothingAsked: a swap that names no binary, no
+	// config change and no genesis overlay has nothing to do.
+	ChainOpReplaceNodeFailNothingAsked = ChainOpReplaceNode + failureSlot
+)
+
+const (
+	// ChainOpCrossForkFailNoFork: this network is composed to cross no fork, or
+	// no node runs the build that would take over.
+	ChainOpCrossForkFailNoFork = ChainOpCrossFork + failureSlot + iota
+	// ChainOpCrossForkFailHeadUnreadable: the chain's head could not be read,
+	// or did not arrive inside the budget.
+	ChainOpCrossForkFailHeadUnreadable
+	// ChainOpCrossForkFailAlreadyPast: the chain is past the fork block, so the
+	// hand-over cannot be the thing that crosses it.
+	ChainOpCrossForkFailAlreadyPast
+	// ChainOpCrossForkFailNobodyCameBack: the restart left no node running.
+	ChainOpCrossForkFailNobodyCameBack
+)
+
 // ---- adopt: a chain that is already up -------------------------------------
 
 const (

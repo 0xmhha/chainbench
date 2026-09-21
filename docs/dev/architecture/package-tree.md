@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 50 | 53,900 |
+| `internal/` | 50 | 54,073 |
 | `cmd/` | 19 | 5,021 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **72** | **59,711** |
+| **합계** | **72** | **59,884** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 23패키지 16,472줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 23패키지 16,645줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -44,7 +44,7 @@ internal/core/
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
-├── lifecycle     835  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
+├── lifecycle   1,008  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
 ├── rpc            511  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)

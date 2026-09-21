@@ -92,3 +92,51 @@ func TestStringIsTheIdentifier(t *testing.T) {
 		t.Errorf("an undeclared value printed as %q", got)
 	}
 }
+
+// TestNoTwoStatesShareAValue is the check the near-miss asked for.
+//
+// Writing the operational area put its shared failures at
+// areaChainOp + failureSlot, which is the STOP block's failure range because
+// stop is that area's first block. Two names, one value. Nothing would have
+// said so: the name table is keyed BY value, so the second entry silently
+// replaces the first, and every other check here reads that table and sees one
+// consistent state.
+//
+// The declarations are the side to compare from, so this parses them the way
+// TestEveryDeclaredStateHasAName does and evaluates what the name table cannot.
+func TestNoTwoStatesShareAValue(t *testing.T) {
+	byValue := map[Status][]string{}
+	for s, n := range names {
+		byValue[s] = append(byValue[s], n)
+	}
+	// names is value-keyed, so a collision is invisible in it. Count the
+	// declarations instead: more declared names than distinct values means two
+	// share one.
+	declared := 0
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "status.go", nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range f.Decls {
+		gen, ok := d.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, sp := range gen.Specs {
+			vs, ok := sp.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			for _, id := range vs.Names {
+				if id.IsExported() {
+					declared++
+				}
+			}
+		}
+	}
+	if declared != len(names) {
+		t.Errorf("%d exported states are declared and the name table holds %d — "+
+			"a value declared twice keeps one name and loses the other", declared, len(names))
+	}
+}
