@@ -173,10 +173,17 @@ var allowed = map[Status][]Status{
 	CompareChain: {CompareChainSame, CompareChainNodesDiffer,
 		CompareChainNetworkDiffers, CompareChainNothingComposed,
 		CompareChainFailUnreadable},
-	CompareChainSame: {ChainReady},
-	// Restarting the nodes that differ, which is what preflight does today: it
-	// does not compose again.
-	CompareChainNodesDiffer: {ChainLaunchNodes},
+	// Every route out of the comparison ends at the same question: is the
+	// network the one that was planned. The first draft of this table sent a
+	// reused network straight to ChainReady, which read as "a network nobody
+	// composed needs no checking" — and it is not what the code does either.
+	// The readiness gate runs whatever the verdict was.
+	CompareChainSame: {ChainVerify},
+	// Restarting the nodes that differ is what preflight does: it does not
+	// compose again. The restart IS the launch work for those nodes, so this
+	// goes to the check rather than through ChainLaunchNodes, which would run
+	// a start over a network where nothing is stopped and re-mark the step.
+	CompareChainNodesDiffer: {ChainVerify},
 	// Composing from the beginning. Bounded by the entry limit, which is what
 	// keeps a network that keeps failing to match from looping forever.
 	CompareChainNetworkDiffers:  {ChainOpenWorkspace},

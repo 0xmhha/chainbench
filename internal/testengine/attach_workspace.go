@@ -10,7 +10,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -167,46 +166,15 @@ func composedArtifacts(net composed) []session.ArtifactRef {
 // records the steps and the preflight decision on out.
 func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
 	// What is composed here already may be what this suite wants: ask before
-	// rebuilding. The decision is recorded beside the setup steps so a run
-	// that reused a network says so, and one that rebuilt says why.
-	decision := preflightDecision(ctx, sd, up.DataDir, chainsetup.WantOf(up))
-	out.Preflight = decision.String()
-	switch decision.Verdict {
-	case preflight.Reuse:
-		out.SetupSteps = []string{"preflight: reuse — " + decision.String()}
-	case preflight.RebuildNodes:
-		for _, idx := range decision.Nodes {
-			st, err := chainsetup.NetRestart(ctx, sd, chainsetup.NetRestartIn{DataDir: up.DataDir, Node: idx})
-			if err != nil {
-				return composed{}, fmt.Errorf("engine: run suite: preflight restart node%d: %w", idx, err)
-			}
-			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
-		}
-	default:
-		// RebuildAll means a network-wide fact differs, and the most common one
-		// is the genesis — a different chain. The compose steps alone do not
-		// deliver that: init and start SKIP a node that still carries a recorded
-		// pid, so a second up over a workspace whose nodes are still running
-		// rewrites the genesis on disk and leaves every node serving the old one.
-		// Measured: the verdict read "rebuild-all: genesis differs", the
-		// workspace genesis had applepieBlock 0, and all four running nodes
-		// reported "Applepie: #<nil>" with one startup each.
-		//
-		// So the network is stopped first, which is what makes "rebuild all"
-		// true. Only on RebuildAll: Compose has nothing to stop, and
-		// RebuildNodes is handled above, per node.
-		if decision.Verdict == preflight.RebuildAll {
-			st, serr := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: up.DataDir})
-			if serr != nil {
-				return composed{}, fmt.Errorf("engine: run suite: preflight stop before rebuild: %w", serr)
-			}
-			out.SetupSteps = append(out.SetupSteps, "stop (rebuild-all): "+st.Detail)
-		}
-		res, err := chainsetup.NetUp(ctx, sd, up)
-		out.SetupSteps = append(out.SetupSteps, res.Steps...)
-		if err != nil {
-			return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
-		}
+	// rebuilding. The asking, and the four things the answer leads to, are the
+	// comparison block of the chain's own lifecycle — this used to be a switch
+	// over four verdicts written here, which could say what was done but not
+	// where the run was when it did it.
+	res, err := chainsetup.NetUpComparing(ctx, sd, chainsetup.CompareIn{Up: up})
+	out.Preflight = res.Decision
+	out.SetupSteps = append(out.SetupSteps, res.Steps...)
+	if err != nil {
+		return composed{}, fmt.Errorf("engine: run suite: setup: %w (at %s)", err, res.At)
 	}
 
 	return readWorkspaceComposed(ctx, sd, up.DataDir, up.KeysDir, &out.SetupSteps, gateBudget)
@@ -288,17 +256,6 @@ func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
 		return nil
 	}
 	return process.NewRemoteLogReader(runner)
-}
-
-// preflightDecision asks the workspace, when there is one, how much of what it
-// holds the request can reuse. No workspace, or one that cannot be read, is
-// simply "compose".
-func preflightDecision(ctx context.Context, sd chainsetup.Deps, dir string, want preflight.Want) preflight.Decision {
-	ws, err := chainsetup.Open(dir, sd.Clock)
-	if err != nil || len(ws.State().Nodes) == 0 {
-		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
-	}
-	return ws.Compare(ctx, want)
 }
 
 // casesCrossFork reports whether any case names the step that crosses the
