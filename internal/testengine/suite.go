@@ -315,9 +315,9 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 }
 
 // runCases runs every declared case against the network.
-func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, parsed []dsl.Spec, specs [][]byte, net composed, sess session.Session, out *RunSuiteOut) error {
+func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, chain string, specs [][]byte, net composed, sess session.Session, out *RunSuiteOut) error {
 	eng, err := wiredAttachEngine(sd, net, attachWiring{
-		Chain: parsed[0].Chain.Name, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
+		Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
 		Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
 		Session: sess,
 	})

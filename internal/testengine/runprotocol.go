@@ -19,6 +19,9 @@ const (
 const (
 	eventDeclarationRead statemachine.What = statemachine.BaseTest + 0x100 + iota
 	eventSessionOpened
+	// eventNetworkWayChosen: whether this run builds its network or joins one
+	// that is already up.
+	eventNetworkWayChosen
 	eventNetworkReached
 	eventChainPrepared
 	eventCasesRun
@@ -32,13 +35,14 @@ const (
 var runWhatNames = map[statemachine.What]string{
 	CmdRun: "CmdRun",
 
-	eventDeclarationRead: "eventDeclarationRead",
-	eventSessionOpened:   "eventSessionOpened",
-	eventNetworkReached:  "eventNetworkReached",
-	eventChainPrepared:   "eventChainPrepared",
-	eventCasesRun:        "eventCasesRun",
-	eventCollected:       "eventCollected",
-	eventStageStopped:    "eventStageStopped",
+	eventDeclarationRead:  "eventDeclarationRead",
+	eventSessionOpened:    "eventSessionOpened",
+	eventNetworkWayChosen: "eventNetworkWayChosen",
+	eventNetworkReached:   "eventNetworkReached",
+	eventChainPrepared:    "eventChainPrepared",
+	eventCasesRun:         "eventCasesRun",
+	eventCollected:        "eventCollected",
+	eventStageStopped:     "eventStageStopped",
 }
 
 // startRun begins the suite.
@@ -56,6 +60,11 @@ func (declarationRead) What() statemachine.What { return eventDeclarationRead }
 type sessionOpened struct{}
 
 func (sessionOpened) What() statemachine.What { return eventSessionOpened }
+
+// networkWayChosen: whether this run builds its network or joins one.
+type networkWayChosen struct{}
+
+func (networkWayChosen) What() statemachine.What { return eventNetworkWayChosen }
 
 // networkReached: there is a network, and it is the one the plan described.
 type networkReached struct{}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -23,6 +24,8 @@ const (
 	nameReadingDeclaration statemachine.StateName = "ReadingDeclaration"
 	nameOpeningSession     statemachine.StateName = "OpeningSession"
 	nameReachingNetwork    statemachine.StateName = "ReachingNetwork"
+	nameComposingNetwork   statemachine.StateName = "ComposingNetwork"
+	nameAttachingToNetwork statemachine.StateName = "AttachingToNetwork"
 	namePreparing          statemachine.StateName = "Preparing"
 	nameRunningCases       statemachine.StateName = "RunningCases"
 	nameCollecting         statemachine.StateName = "Collecting"
@@ -48,7 +51,10 @@ type runner struct {
 	comp  composition
 	plan  ComposePlan
 	sess  session.Session
-	net   composed
+	// keysDir is where an attached network's key set lives, read from the
+	// workspace it was composed by.
+	keysDir string
+	net     composed
 
 	// failure is why the run stopped, written just before the move to failed.
 	failure error
@@ -59,6 +65,9 @@ type runner struct {
 	// networkUp says whether there is a network to take down. A run that failed
 	// before one came up has nothing to collect from and nothing to stop.
 	networkUp bool
+	// attach says this run did not build its network and does not own it: it
+	// found one an existing workspace had already brought up.
+	attach bool
 
 	pending   *pendingState
 	reading   *readingDeclaration
@@ -80,7 +89,7 @@ func newRunner(sd chainsetup.Deps, in RunSuiteIn) *runner {
 	r.pending = &pendingState{r: r}
 	r.reading = &readingDeclaration{r: r}
 	r.opening = &openingSession{r: r}
-	r.reaching = &reachingNetwork{r: r}
+	r.reaching = newReachingNetwork(r)
 	r.preparing = &preparingRun{r: r}
 	r.running = &runningCases{r: r}
 	r.collect = &collecting{r: r}
@@ -92,6 +101,9 @@ func newRunner(sd chainsetup.Deps, in RunSuiteIn) *runner {
 	r.m.Add(r.reading, root)
 	r.m.Add(r.opening, root)
 	r.m.Add(r.reaching, root)
+	for _, leaf := range r.reaching.leafStates() {
+		r.m.Add(leaf, r.reaching)
+	}
 	r.m.Add(r.preparing, root)
 	r.m.Add(r.running, root)
 	r.m.Add(r.collect, root)
@@ -128,6 +140,40 @@ func (r *runner) fail(m *statemachine.Machine, in statemachine.State, err error)
 	// left.
 	r.failedIn = r.m.Path(in)
 	m.SendSelf(stageStopped{})
+}
+
+// chain is the chain this run's cases address nodes and accounts against.
+//
+// A composing run reads it from the declaration it composed from; an attaching
+// one from the workspace whose network it joined, because it never parsed a
+// declaration at all.
+func (r *runner) chain() string {
+	if len(r.specs) > 0 {
+		return r.specs[0].Chain.Name
+	}
+	return r.in.Chain
+}
+
+// readAttachTarget reads what an attaching run needs from the workspace whose
+// network it is joining: the chain, and where that network's keys live.
+func (r *runner) readAttachTarget() error {
+	if r.in.DataDir == "" {
+		return lifecycle.Mark(errUnreadable, fmt.Errorf("engine: attach workspace: a workspace directory is required"))
+	}
+	if ws, err := chainsetup.Open(r.in.DataDir, r.sd.Clock); err == nil {
+		st := ws.State()
+		r.keysDir = st.KeysDir
+		if r.in.Chain == "" {
+			r.in.Chain = st.Chain
+		}
+	}
+	if r.in.Chain == "" {
+		return lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach workspace: a chain is required to attach"))
+	}
+	// The documents as given: an attaching run does not parse them, because
+	// what they declare about a network is not this run's to act on.
+	r.raw = r.in.SpecContent
+	return nil
 }
 
 // runState is the root. It turns a stage's failure into the move to collecting.
@@ -176,8 +222,21 @@ type readingDeclaration struct {
 func (readingDeclaration) Name() statemachine.StateName { return nameReadingDeclaration }
 
 // Enter reads the specs and settles what network they ask for.
+//
+// A run that attaches settles less: the network is already there, so what it
+// declares about one is not this run's to act on. What it still needs is the
+// chain, because a spec addresses nodes by role and resolves account labels
+// against it.
 func (s *readingDeclaration) Enter(ctx context.Context, m *statemachine.Machine) error {
 	r := s.r
+	if r.attach {
+		if err := r.readAttachTarget(); err != nil {
+			r.fail(m, s, err)
+			return nil
+		}
+		m.SendSelf(declarationRead{})
+		return nil
+	}
 	if len(r.in.SpecPaths) == 0 && len(r.in.SpecContent) == 0 {
 		r.fail(m, s, fmt.Errorf("engine: run suite: no specs given"))
 		return nil
@@ -231,10 +290,17 @@ func (s *openingSession) Enter(_ context.Context, m *statemachine.Machine) error
 	r := s.r
 	root, err := artifactRoot(r.in.ArtifactRoot, r.in.WorkspaceConfigPath, r.in.DataDir)
 	if err != nil {
-		r.fail(m, s, err)
+		r.fail(m, s, lifecycle.Mark(errNoRoot, err))
 		return nil
 	}
 	r.in.ArtifactRoot = root
+	if r.attach {
+		// A run that attaches records itself in the session the engine makes,
+		// because it has no setup of its own to write down before the cases
+		// start -- the network was up before this run existed.
+		m.SendSelf(sessionOpened{})
+		return nil
+	}
 	sess, err := session.New(root, engineCommand, r.sd.Now())
 	if err != nil {
 		r.fail(m, s, fmt.Errorf("engine: run suite: %w", err))
@@ -255,21 +321,76 @@ func (s *openingSession) Process(_ context.Context, m *statemachine.Machine, msg
 	return true, nil
 }
 
-// reachingNetwork gets a network the declaration asked for, however it gets it.
+// reachingNetwork gets the network the run needs, however it gets one.
 //
 // Composing one and finding one already up are the same stage done two ways:
 // both end with a network held to the same readiness gate, and a run that
-// attached has reached a network exactly as much as one that built it.
+// attached has reached a network exactly as much as one that built it. Which
+// way it went is what the two leaves say.
 type reachingNetwork struct {
 	statemachine.Base
 	r *runner
+
+	composing *composingNetwork
+	attaching *attachingToNetwork
+}
+
+// newReachingNetwork builds the stage and the two ways it can go.
+func newReachingNetwork(r *runner) *reachingNetwork {
+	s := &reachingNetwork{r: r}
+	s.composing = &composingNetwork{r: r}
+	s.attaching = &attachingToNetwork{r: r}
+	return s
 }
 
 // Name says what this state is called.
 func (reachingNetwork) Name() statemachine.StateName { return nameReachingNetwork }
 
+// leafStates is the two ways to reach a network, in the order the tree shows.
+func (s *reachingNetwork) leafStates() []statemachine.State {
+	return []statemachine.State{s.composing, s.attaching}
+}
+
+// Enter chooses which way this run reaches its network.
+func (s *reachingNetwork) Enter(_ context.Context, m *statemachine.Machine) error {
+	m.SendSelf(networkWayChosen{})
+	return nil
+}
+
+// Process goes the way the request implies.
+func (s *reachingNetwork) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
+	switch msg.(type) {
+	case networkWayChosen:
+		if s.r.attach {
+			m.TransitionTo(s.attaching)
+			return true, nil
+		}
+		m.TransitionTo(s.composing)
+		return true, nil
+	case networkReached:
+		// A run that attached prepares nothing: the fork, the height and the
+		// accounts belong to whoever brought the network up.
+		if s.r.attach {
+			m.TransitionTo(s.r.running)
+			return true, nil
+		}
+		m.TransitionTo(s.r.preparing)
+		return true, nil
+	}
+	return false, nil
+}
+
+// composingNetwork builds the network the declaration asked for.
+type composingNetwork struct {
+	statemachine.Base
+	r *runner
+}
+
+// Name says what this state is called.
+func (composingNetwork) Name() statemachine.StateName { return nameComposingNetwork }
+
 // Enter composes the network and checks it is the one the plan described.
-func (s *reachingNetwork) Enter(ctx context.Context, m *statemachine.Machine) error {
+func (s *composingNetwork) Enter(ctx context.Context, m *statemachine.Machine) error {
 	r := s.r
 	net, err := composeWorkspace(ctx, r.sd, *r.comp.up, &r.out, r.in.NodeMonitorTimeout)
 	r.net = net
@@ -289,13 +410,29 @@ func (s *reachingNetwork) Enter(ctx context.Context, m *statemachine.Machine) er
 	return nil
 }
 
-// Process moves on to preparing the chain.
-func (s *reachingNetwork) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
-	if _, ok := msg.(networkReached); !ok {
-		return false, nil
+// attachingToNetwork finds the network an existing workspace brought up.
+type attachingToNetwork struct {
+	statemachine.Base
+	r *runner
+}
+
+// Name says what this state is called.
+func (attachingToNetwork) Name() statemachine.StateName { return nameAttachingToNetwork }
+
+// Enter reads the network the workspace already has, and holds it to the same
+// readiness gate a composed one is held to.
+func (s *attachingToNetwork) Enter(ctx context.Context, m *statemachine.Machine) error {
+	r := s.r
+	net, err := readWorkspaceComposed(ctx, r.sd, r.in.DataDir, r.keysDir, &r.out.SetupSteps, r.in.NodeMonitorTimeout)
+	if err != nil {
+		r.fail(m, s, err)
+		return nil
 	}
-	m.TransitionTo(s.r.preparing)
-	return true, nil
+	r.net = net
+	r.networkUp = true
+	r.out.Endpoints = net.endpoints
+	m.SendSelf(networkReached{})
+	return nil
 }
 
 // preparingRun makes the chain ready for the cases to run against.
@@ -342,7 +479,7 @@ func (runningCases) Name() statemachine.StateName { return nameRunningCases }
 // fails here is the running itself.
 func (s *runningCases) Enter(ctx context.Context, m *statemachine.Machine) error {
 	r := s.r
-	if err := runCases(ctx, r.sd, r.in, r.specs, r.raw, r.net, r.sess, &r.out); err != nil {
+	if err := runCases(ctx, r.sd, r.in, r.chain(), r.raw, r.net, r.sess, &r.out); err != nil {
 		r.fail(m, s, err)
 		return nil
 	}
@@ -375,7 +512,7 @@ func (collecting) Name() statemachine.StateName { return nameCollecting }
 // Enter gathers and tears down.
 func (s *collecting) Enter(ctx context.Context, m *statemachine.Machine) error {
 	r := s.r
-	if r.failure != nil && r.networkUp {
+	if r.failure != nil && r.networkUp && r.sess != nil {
 		recordBlockedBySetup(ctx, r.sd, r.comp.up.DataDir, r.net, &r.out, r.failure,
 			blockedRun{sess: r.sess, raw: r.raw, specs: r.specs})
 	}

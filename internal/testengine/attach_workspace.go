@@ -116,38 +116,17 @@ type AttachWorkspaceIn struct {
 // up — but reads the workspace's node table, capabilities, and key set so a
 // spec addresses nodes by role and resolves account labels (WA10).
 func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorkspaceIn) (string, error) {
-	if in.DataDir == "" {
-		return "", lifecycle.Mark(errUnreadable, fmt.Errorf("engine: attach workspace: a workspace directory is required"))
-	}
-	chain := in.Chain
-	keysDir := ""
-	if ws, err := chainsetup.Open(in.DataDir, sd.Clock); err == nil {
-		st := ws.State()
-		keysDir = st.KeysDir
-		if chain == "" {
-			chain = st.Chain
-		}
-	}
-	if chain == "" {
-		return "", lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach workspace: a chain is required to attach"))
-	}
-	artifactRoot, err := artifactRoot(in.ArtifactRoot, "", in.DataDir)
-	if err != nil {
-		return "", lifecycle.Mark(errNoRoot, fmt.Errorf("engine: attach workspace: %w", err))
-	}
-	var setupSteps []string
-	net, err := readWorkspaceComposed(ctx, sd, in.DataDir, keysDir, &setupSteps, in.NodeMonitorTimeout)
-	if err != nil {
-		return "", err
-	}
-	eng, err := wiredAttachEngine(sd, net, attachWiring{
-		Chain: chain, DataDir: in.DataDir, ArtifactRoot: artifactRoot,
-		Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &setupSteps,
+	r := newRunner(sd, RunSuiteIn{
+		DataDir: in.DataDir, Chain: in.Chain, SpecContent: in.Specs,
+		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps,
+		NodeMonitorTimeout: in.NodeMonitorTimeout,
+		// The network is somebody else's. Attaching to one and then taking it
+		// down is not attaching.
+		KeepUp: true,
 	})
-	if err != nil {
-		return "", fmt.Errorf("engine: attach workspace: %w", err)
-	}
-	return eng.Run(ctx, in.Specs)
+	r.attach = true
+	out, err := r.Run(ctx)
+	return out.SessionRoot, err
 }
 
 // composedArtifacts is the manifest of composition inputs a workspace-owned

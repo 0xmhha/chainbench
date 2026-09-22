@@ -13,14 +13,15 @@ import (
 func TestEveryRunMessageHasAName(t *testing.T) {
 	// Each message type, under the name its What is declared with.
 	msgs := map[string]statemachine.Message{
-		"CmdRun":               startRun{},
-		"eventDeclarationRead": declarationRead{},
-		"eventSessionOpened":   sessionOpened{},
-		"eventNetworkReached":  networkReached{},
-		"eventChainPrepared":   chainPrepared{},
-		"eventCasesRun":        casesRun{},
-		"eventCollected":       collected{},
-		"eventStageStopped":    stageStopped{},
+		"CmdRun":                startRun{},
+		"eventDeclarationRead":  declarationRead{},
+		"eventSessionOpened":    sessionOpened{},
+		"eventNetworkWayChosen": networkWayChosen{},
+		"eventNetworkReached":   networkReached{},
+		"eventChainPrepared":    chainPrepared{},
+		"eventCasesRun":         casesRun{},
+		"eventCollected":        collected{},
+		"eventStageStopped":     stageStopped{},
 	}
 	var missing []string
 	for name, msg := range msgs {
