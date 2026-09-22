@@ -207,7 +207,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if ferr != nil {
 			return composition{}, ferr
 		}
-		if err := checkDeclaredFork(u, upgradePresetPath(u)); err != nil {
+		if err := checkForkIsOneTheChainKnows(u, chain, spec.Chain.BinaryChains); err != nil {
 			return composition{}, err
 		}
 		upgradeFork = fork

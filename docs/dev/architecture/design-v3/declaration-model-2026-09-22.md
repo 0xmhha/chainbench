@@ -230,8 +230,9 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 | ~~**D-a**~~ | ~~`nodeconfig.Chain` 을 망 전체 사실과 노드별 사실로 가른다. network id 를 망의 chain id 에서 파생한다~~ | **완료 2026-09-22.** 혼합 바이너리 핸드오버에서 다섯 노드가 전부 8285 로 뜬다(라이브 확인) |
 | ~~**D-b**~~ | ~~`ValidateUniform` 을 배선한다~~ | **완료 2026-09-22.** `nodeconfig.ValidateUniformNetworkID` 로 옮겨 조립 세 자리에 걸었다. 일부러 어긋낸 합성이 `build` 에서 `ChainBuildNodeCommandFailSplitNetwork` 로 막힌다(라이브 확인) |
 | ~~**D-c**~~ | ~~`--chain-id` 가 network id 를 끌고 가는지 고정한다~~ | **완료 2026-09-22.** 합성 수준 테스트와 라이브 대조 둘 다. 옛 코드 8283 / 고친 뒤 4242 |
-| **P-1** | 용어를 확정한다 — 체인 정의 / 환경 선언 / 케이스 | 문서와 타입 이름이 한 낱말만 쓴다 |
-| **P-2** | `presets/chain/*.yaml` 두 개를 환경 선언으로 옮긴다. `upgrade.preset` 문법과 `preset.Chain` 타입을 없앤다 | 하드포크 케이스 넷이 그대로 돈다 |
+| ~~**P-1**~~ | ~~용어를 확정한다~~ | **완료 2026-09-22.** chain-manifest / chain-preset / case / key-preset. §7 |
+| ~~**P-1b**~~ | ~~`env` 를 `chain-preset` 으로 개명한다~~ | **완료 2026-09-22.** 케이스 209개·선언 26개·Go 식별자 약 104곳. 209/209 검증 통과 유지 |
+| ~~**P-2**~~ | ~~선언을 한 겹으로 줄인다~~ | **완료 2026-09-22.** `upgrade.preset` 과 `preset.Chain` 이 없어졌다. 선언이 fork 와 at 을 직접 말하고, 포크 이름은 **그 포크를 넘겨받는 바이너리의 chain-manifest** 가 아는지로 검사한다 |
 | **P-3** | manifest 와 환경 선언의 소유권을 가른다. 중복 필드(`upgrade`·`network_id`)를 한쪽으로 모은다 | 같은 사실을 적는 자리가 하나다 |
 | **P-4** | 우선순위 어휘 셋을 한 줄로 모은다 | 값마다 어느 단이 이겼는지 한 어휘로 읽힌다 |
 | **P-5** | `suite run` 에 `--server-set` 을 단다 | 정의서 하나가 server-set 만 갈아 끼워 다른 기계에서 돈다 |
@@ -241,6 +242,36 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 
 `presets/chain/wemix-upgrade-15.yaml` 은 그대로 둔다. 지금 부르는 데가 없을 뿐,
 `tests/tc` 정의서를 훑을 때 연결될 자리다.
+
+### P-2 가 실제로 바꾼 것 (2026-09-22)
+
+선언이 두 겹이었다. 케이스가 chain-preset 을 부르고, 그 안에서 다시 `upgrade.preset` 으로
+yaml 을 불렀다. 그런데 **yaml 을 부르는 두 선언 모두 `fork` 와 `at` 을 이미 직접 적고
+있었다.** 그래서 yaml 이 실제로 한 일은 "케이스가 적은 포크 이름이 yaml 과 같은가" 하나뿐이다.
+
+그 검사를 더 나은 것으로 바꿨다. **포크 이름이 그 포크를 넘겨받는 바이너리의 chain-manifest
+에 있는지** 본다. 문서 둘이 서로 같은지가 아니라 체인이 그 포크를 아는지를 묻는 것이고,
+preset 을 부르던 두 선언만이 아니라 **모든 선언**에 걸린다. 그리고 `validate` 에서 돈다 —
+오타 하나가 조용히 지나가던 자리였다. genesis 는 주어진 이름으로 `<name>Block` 을 쓰고 체인은
+그냥 포크하지 않으므로, 실행은 통과하고 검사는 포크 전 빌드가 한 일을 보고한다.
+
+물어보는 체인이 망의 체인이 아니라 **넘겨받는 쪽의 체인**인 것이 핵심이다. wemix 는 croissant
+를 모르고, 그것을 이어받는 wbft 빌드가 안다.
+
+```
+INVALID FORK: the declaration crosses the "croisant" fork and wbft does not know it
+              (it knows istanbul, pangyo, applepie, brioche, croissant)
+```
+
+같이 없어진 것: `preset.Chain`·`LoadChainPreset`·`ChainBinding`·`Governance`·`ChainDir`,
+`poa.EnvFromPreset`, 그리고 preset 을 읽던 테스트 넷.
+
+**거버넌스 감시선은 자리를 옮겼다.** `poa.DefaultEnv()` 가 라이브로 검증한 정책에서 벗어나지
+않는지 보는 검사인데, 그 기록이 테스트 작성자가 읽는 문서 안에 있었다. 이제
+`internal/consensus/poa/testdata/verified-governance.json` 이다. 지키는 대상 옆으로 갔다.
+
+두 yaml 은 지우지 않았다. 불러 쓰는 문법이 없어졌을 뿐, 15+15 환경의 신원 기록은 그 안에만
+있다.
 
 ---
 

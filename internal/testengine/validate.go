@@ -123,6 +123,17 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 		r.Result = "INVALID REQUIRES: " + strings.Join(bad, "; ")
 		return r
 	}
+	// A misspelled fork is the quietest error the grammar allows: the genesis
+	// writes <name>Block for whatever it is given, the chain never reaches a
+	// fork by that name, and the run reports whatever the pre-fork build did.
+	// Offline is where it should be caught, because that is the check a reader
+	// runs over every declaration at once.
+	if s.EnvUpgrade != nil {
+		if err := checkForkIsOneTheChainKnows(s.EnvUpgrade, s.Chain.Name, s.Chain.BinaryChains); err != nil {
+			r.Result = "INVALID FORK: " + err.Error()
+			return r
+		}
+	}
 	r.OK, r.Result = true, specResult(s, chain, caps)
 	return r
 }

@@ -98,25 +98,17 @@
       **방법은 운영 영역과 같다** — 실패를 먼저 재서 문서로 내고, 상태와 전이를 쓰고, 핸들러가
       자기 상태를 말하게 한다. 남은 것 중 유일하게 **라이브 검증이 필요**하다(전 케이스가 지나는
       길목이라 일부만 돌려서는 확신할 수 없고, 209건 순차가 약 4시간).
-- [ ] **C2-1. 골든 preset 의 죽은 절을 지울지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B 의 "남은 결정".
-      이력으로 확인했다: `chains`·`data`·`ports`·`name` 과 yaml 전용
-      `nodes`·`description` 은 읽는 코드가 없고, `data`·`name` 은 저장소 전 이력에 독자가 0이다.
-      **두 범위**: (A) 그 여섯만 — yaml 76줄 + `internal/preset/chain.go` 26줄, 깨지는 테스트
-      없음. (B) 테스트만 읽는 `roles`·`identities`·`producers`·`validators` 까지 — 추가로 yaml
-      184줄·구조체 41줄이 빠지고 **테스트 넷(265줄)과 `poa.EnvFromPreset` 이 함께 없어진다**.
-      손보다 판단이 크다 — 지워지는 검사는 "이 환경은 이런 모양이었다" 는 기록이기도 하다.
-- [ ] **C2-2. `preset.Chain` 을 쓰임에 맞게 개명할지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B, 그리고 `internal/preset/chain.go`.
-      쓰임으로는 하드포크 일정표인데(프로덕션이 읽는 것은 `Upgrade.AtFork`·`ForkBlock` 둘뿐), 개명하면
-      `direction.md` 의 판단을 **네 번째로** 뒤집는 것이 된다. 이전 세 번과 다른 점은 근거가
-      취향이 아니라 이력이라는 것뿐이다. **두 범위**: (가) 타입·함수 이름만 — 코드 7파일 12곳,
-      문서 21곳. (나) 디렉터리까지(`presets/chain` → 다른 이름) — yaml 2파일 이동에
-      `ChainDir`·`hardforkPresetDir`·테스트 경로 6곳, 문서 11파일 21곳. DSL 정의서 3개는 이름만
-      부르므로 안 건드린다. **C2-1(B)를 먼저 하면 타입에 `Upgrade` 만 남아 이 결정이 자명해진다.**
-- [ ] **`preset.ChainDir` 은 쓰는 곳이 0이다** — 근거: `internal/preset/doc.go:31`.
-      선언의 주석은 "a caller that needs a default asks for it rather than spelling it" 이라고
-      적었는데, 정작 `internal/testengine/genesis_decl.go:112` 가 `hardforkPresetDir` 라는 자기
-      상수를 따로 갖고 같은 문자열을 쓴다. 상수가 있는데 아무도 안 묻는 것이라 C2 의 표면 정리에서
-      놓쳤다. 한 줄짜리이고 C2-2(나)를 하면 같이 정리된다.
+- [x] ~~**C2-1. 골든 preset 의 죽은 절을 지울지**~~ · ~~**C2-2. `preset.Chain` 개명**~~ ·
+      ~~**`preset.ChainDir` 사용처 0**~~ — **셋 다 닫혔다 (2026-09-22).** 셋을 대체한 것은
+      [`architecture/design-v3/declaration-model-2026-09-22.md`](architecture/design-v3/declaration-model-2026-09-22.md)
+      이다. 지우는 것도 개명하는 것도 답이 아니었다 — **선언이 두 겹인 것**이 원인이었고,
+      chain-preset 한 겹으로 합쳤다. `preset.Chain`·`ChainDir`·`upgrade.preset` 이 함께 없어졌다.
+- [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
+      결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2 는 끝났다. 남은 것은 **P-3** chain-manifest 와
+      chain-preset 의 소유권 분리(지금 `upgrade` 와 `network_id` 가 두 곳에 있다), **P-4**
+      우선순위 어휘 셋을 한 줄로, **P-5** `suite run --server-set`, **P-6** 감시 테스트를
+      override 결과 기준으로, **P-7** 문서와 `presets/chain/README.md` 재작성, **P-8**
+      `manifest.network_id` 가 파생과 같으면 거부하는 래칫이다.
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은

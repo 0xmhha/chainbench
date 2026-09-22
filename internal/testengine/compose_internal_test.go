@@ -102,7 +102,7 @@ func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 func TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork(t *testing.T) {
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
-	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "upgrade":{"fork":"croissant","at":20,"from":"default","to":"next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"en","binary":"next"},
 	    {"index":2,"role":"bp"}

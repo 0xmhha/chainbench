@@ -10,11 +10,12 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
-	"github.com/0xmhha/chainbench/internal/preset"
 )
 
 // The genesis a declaration asks for: overlays, and a fork it schedules itself.
@@ -67,90 +68,67 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, p
 	return path, nil
 }
 
-// forkOf reads the fork a declaration schedules, taking from the preset what the
-// case did not say.
+// forkOf reads the fork a declaration schedules.
 //
-// The preset decides the fork and the block; a case may repeat them and is held
-// to the repetition (see checkDeclaredFork). Here the two are folded into the
-// one instruction the genesis step acts on, along with which file the case
-// wants the fork carried in — empty meaning the genesis, which is the step's
-// own default.
+// The declaration says both the fork's name and its block. It used to say
+// neither and take them from a second document, a hardfork preset the case
+// named — so standing up a handoff meant reading two files, and which of them
+// answered depended on what the first one left out. The second document is gone
+// and this reads one.
 func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
-	name, at := u.Fork, int64(0)
-	if u.At != nil {
-		at = *u.At
+	if u.Fork == "" {
+		return nil, fmt.Errorf("upgrade: no fork named — a hardfork declaration says which fork it crosses")
 	}
-	// The preset is read only for what the case left out. A declaration that
-	// says both says everything, and a restart has no preset to read at all.
-	if u.Fork == "" || u.At == nil {
-		prof, err := preset.LoadChainPreset(upgradePresetPath(u))
-		if err != nil {
-			return nil, fmt.Errorf("upgrade keys: %w", err)
-		}
-		if name == "" {
-			name = prof.Upgrade.AtFork
-		}
-		if u.At == nil {
-			at = prof.Upgrade.ForkBlock
-		}
-	}
-	if name == "" {
-		return nil, fmt.Errorf("upgrade: neither the case nor its keys names a fork")
+	if u.At == nil {
+		return nil, fmt.Errorf("upgrade: the %q fork has no block — a hardfork declaration says where it activates", u.Fork)
 	}
 	to := u.To
 	if to == "" {
 		to = dsl.BinaryTo
 	}
 	return &chainsetup.GenesisFork{
-		Name: name, At: at, Binary: to,
+		Name: u.Fork, At: *u.At, Binary: to,
 		Carrier: chainsetup.ForkCarrier(u.Carry),
 		Restart: u.Style == dsl.UpgradeRestart,
 	}, nil
 }
 
-// hardforkPresetDir is where a named hardfork preset lives.
-const hardforkPresetDir = "presets/chain"
-
-// upgradePresetPath is the preset file this declaration names, under
-// presets/chain.
-func upgradePresetPath(u *dsl.UpgradeV2) string {
-	return filepath.Join(hardforkPresetDir, u.Preset+".yaml")
-}
-
-// checkDeclaredFork holds a case to what it said about the fork.
+// checkForkIsOneTheChainKnows refuses a fork the binary taking over has never
+// heard of.
 //
-// The preset decides which fork and which block; a case may repeat them, and a
-// repetition that disagrees is the case testing something other than what it
-// claims. Saying nothing is fine — the preset answers.
-func checkDeclaredFork(u *dsl.UpgradeV2, presetPath string) error {
-	if u.Fork == "" && u.At == nil {
-		return nil
+// This is what a second document used to be for, and it is a different check.
+// Comparing the case against a preset only said the two agreed; two documents
+// can agree and both be wrong, and only the two declarations that named a preset
+// were compared at all. A chain-manifest lists the forks its build knows, so
+// asking it catches a misspelling in any declaration — and a misspelling is
+// silent otherwise, because the genesis takes whatever name it is given and
+// writes <name>Block, and the chain simply never forks.
+//
+// The chain asked is the one the POST-fork binary runs, which is not always the
+// network's: wemix does not know croissant and the wbft build that takes over
+// from it does.
+func checkForkIsOneTheChainKnows(u *dsl.UpgradeV2, networkChain string, binaryChains map[string]string) error {
+	to := u.To
+	if to == "" {
+		to = dsl.BinaryTo
 	}
-	// A restart names no preset, so there is nothing to hold it to.
-	if u.Style == dsl.UpgradeRestart {
-		return nil
+	chainID := binaryChains[to]
+	if chainID == "" {
+		chainID = networkChain
 	}
-	prof, err := preset.LoadChainPreset(presetPath)
+	p, err := registry.Get(chainID)
 	if err != nil {
-		return fmt.Errorf("upgrade keys: %w", err)
+		// An external manifest is resolved later and is not in the registry.
+		// Refusing here would reject a chain the run can perfectly well
+		// compose, so an unknown id is left to the step that resolves it.
+		return nil
 	}
-	if u.Fork != "" && u.Fork != prof.Upgrade.AtFork {
-		return fmt.Errorf("the case says it tests the %q fork and %s schedules %q", u.Fork, presetPath, prof.Upgrade.AtFork)
+	known := p.Manifest().Genesis.Hardforks
+	if slices.Contains(known, u.Fork) {
+		return nil
 	}
-	// The block is NOT held to the preset, and the fork's name is.
-	//
-	// They are different kinds of fact. The name says which change is under
-	// test, and a case wrong about that reports a pass for a fork it never
-	// exercised — the worst failure there is. The block is a schedule this run
-	// chooses: how far in it puts the fork. A case that has to act while the
-	// pre-fork build is still sealing needs the fork far enough out to get the
-	// work done, and the preset's height is the handoff environment's, not
-	// every case's.
-	//
-	// Measured: with the preset's block 20 the chain reaches the fork and stops
-	// during bring-up, so a case sending a transaction beforehand submits it to
-	// a network that seals nothing and waits out its receipt.
-	return nil
+	return fmt.Errorf("the declaration crosses the %q fork and %s does not know it (it knows %s)",
+		u.Fork, chainID, strings.Join(known, ", "))
 }
 
 // writeOverlays renders one overlay file per binary, the same way the network's

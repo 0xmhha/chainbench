@@ -19,32 +19,32 @@ func upgradeEnv(extra string) string {
 	  "upgrade":{"from":"default"` + extra + `}}`
 }
 
-// TestUpgradeDecl_TheCaseIsHeldToTheForkItNames.
+// TestUpgradeDecl_TheForkMustBeOneTheChainKnows.
 //
-// The name of the fork and the block it sits on are different kinds of fact,
-// and only one of them is the preset's.
+// A misspelled fork is the quietest error the grammar allows. The genesis
+// writes <name>Block for whatever name it is given, no chain reaches a fork by
+// that name, and the run reports what the pre-fork build did — a pass for a
+// change that was never exercised.
 //
-// The name says which change is under test. A case wrong about that exercises
-// one fork and reports a pass for another, so it is refused.
+// The chain asked is the one the POST-fork binary runs, not the network's:
+// wemix does not know croissant, and the wbft build that takes over from it
+// does. Asking the network's chain would refuse every handoff there is.
 //
-// The block is a schedule this run chooses. A case that has to write state
-// while the pre-fork build is still sealing needs the fork far enough out to
-// finish — with the preset's block 20 the chain reaches the fork and stops
-// during bring-up — so it sets its own and is not contradicted.
-func TestUpgradeDecl_TheCaseIsHeldToTheForkItNames(t *testing.T) {
+// This replaces holding the declaration against a second document. Two
+// documents agreeing said nothing about whether either was right, and only the
+// declarations that named a second document were checked at all.
+func TestUpgradeDecl_TheForkMustBeOneTheChainKnows(t *testing.T) {
 	cases := []struct {
 		name, extra, want string
 	}{
-		{"the right fork and block", `,"preset":"wemix-upgrade","fork":"croissant","at":20`, ""},
-		{"saying nothing is fine", `,"preset":"wemix-upgrade"`, ""},
-		{"the wrong fork", `,"preset":"wemix-upgrade","fork":"boho"`, `says it tests the "boho" fork`},
-		{"its own block", `,"preset":"wemix-upgrade","at":120`, ""},
+		{"the successor's own fork", `,"fork":"croissant","at":20`, ""},
+		{"its own block", `,"fork":"croissant","at":120`, ""},
+		{"a fork nobody has", `,"fork":"croisant","at":20`, `wbft does not know it`},
+		{"the producer's fork, not the successor's", `,"fork":"brioche","at":20`, ""},
+		{"another chain's fork", `,"fork":"boho","at":20`, `wbft does not know it`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			// A named preset resolves under the working directory, the same
-			// rule the default key set follows, so the check reads the real
-			// file rather than a fixture that could drift from it.
 			t.Chdir("../..")
 			spec := caseWithEnv(t, upgradeEnv(tc.extra))
 			_, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
@@ -53,9 +53,9 @@ func TestUpgradeDecl_TheCaseIsHeldToTheForkItNames(t *testing.T) {
 				t.Fatalf("a correct declaration was refused: %v", err)
 			case tc.want == "":
 			case err == nil:
-				t.Fatalf("a declaration that disagrees with the preset was accepted")
+				t.Fatalf("a fork the chain does not know was accepted")
 			case !strings.Contains(err.Error(), tc.want):
-				t.Fatalf("the refusal should say what disagrees: %v", err)
+				t.Fatalf("the refusal should name the chain and the fork: %v", err)
 			}
 		})
 	}
@@ -68,7 +68,9 @@ func TestUpgradeDecl_TheCaseIsHeldToTheForkItNames(t *testing.T) {
 // happens there. The declaration reaches the composition as a fork that moves
 // the whole network rather than one that hands production to another set.
 func TestUpgradeDecl_ARestartComposesAsAForkThatMovesTheWholeNetwork(t *testing.T) {
-	spec := caseWithEnv(t, upgradeEnv(`,"style":"restart","fork":"boho","at":200`))
+	// The fork is one the build taking over knows. A restart moves the whole
+	// network onto that build, so the same rule applies to it as to a handoff.
+	spec := caseWithEnv(t, upgradeEnv(`,"style":"restart","fork":"croissant","at":200`))
 	t.Chdir("../..")
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
@@ -83,11 +85,12 @@ func TestUpgradeDecl_ARestartComposesAsAForkThatMovesTheWholeNetwork(t *testing.
 // TestUpgradeDecl_RefusesADeclarationThatContradictsItself.
 func TestUpgradeDecl_RefusesADeclarationThatContradictsItself(t *testing.T) {
 	cases := []struct{ name, extra, want string }{
-		{"no preset", ``, `needs a "preset"`},
-		{"the retired profile spelling", `,"preset":"a","profile":"b.yaml"`, "profile"},
-		{"an unknown style", `,"preset":"a","style":"rolling"`, "unknown upgrade style"},
-		{"one side twice", `,"preset":"a","from":"to"`, "on both sides"},
-		{"a side no binary declares", `,"preset":"a","from":"old"`, "binaries.old is missing"},
+		{"no fork or block", ``, `says which fork it crosses and at which block`},
+		{"a fork with no block", `,"fork":"croissant"`, `says which fork it crosses and at which block`},
+		{"the retired profile spelling", `,"fork":"croissant","at":20,"profile":"b.yaml"`, "profile"},
+		{"an unknown style", `,"fork":"croissant","at":20,"style":"rolling"`, "unknown upgrade style"},
+		{"one side twice", `,"fork":"croissant","at":20,"from":"to"`, "on both sides"},
+		{"a side no binary declares", `,"fork":"croissant","at":20,"from":"old"`, "binaries.old is missing"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

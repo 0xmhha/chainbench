@@ -37,7 +37,7 @@ func TestAttachEnvIsExclusiveWithComposing(t *testing.T) {
 		"topology":  {"topology": map[string]any{"bp": 4}},
 		"genesis":   {"genesis": map[string]any{"overlay": map[string]any{}}},
 		"binaries":  {"binaries": map[string]any{"default": "gstable"}},
-		"upgrade":   {"upgrade": map[string]any{"preset": "p", "fork": "boho", "at": 10}},
+		"upgrade":   {"upgrade": map[string]any{"fork": "boho", "at": 10}},
 		"hardforks": {"hardforks": map[string]any{"boho": 0}},
 		"accounts":  {"accounts": map[string]any{"dev1": map[string]any{}}},
 	} {

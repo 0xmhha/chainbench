@@ -565,13 +565,13 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	good := `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
 	  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 	  "binaries":{"from":"gwemix","to":"gwbft"}` + table + `,
-	  "upgrade":{"preset":"p"}},
+	  "upgrade":{"fork":"croissant","at":20}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if s.EnvUpgrade == nil || s.EnvUpgrade.Preset != "p" {
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Fork != "croissant" || s.EnvUpgrade.At == nil || *s.EnvUpgrade.At != 20 {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
 	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
@@ -579,8 +579,8 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	}
 
 	bad := map[string]string{
-		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"preset":"p"}`,
-		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"preset":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"fork":"croissant","at":20}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"fork":"croissant","at":20}`,
 		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"preset":"p"}`,
 	}
 	for name, env := range bad {
@@ -865,7 +865,7 @@ func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 		return `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
 		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 		  "binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-		  "upgrade":{"preset":"p"` + carry + `}},
+		  "upgrade":{"fork":"croissant","at":20` + carry + `}},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	for _, want := range []string{"", CarryGenesis, CarryConfig} {
@@ -901,7 +901,7 @@ func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 		  "steps":[` + steps + `]}`
 	}
 	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-	  "upgrade":{"preset":"p"}`
+	  "upgrade":{"fork":"croissant","at":20}`
 	cross := `{"do":"crossFork","timeout":"120s"}`
 	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
 
@@ -939,7 +939,7 @@ func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
-	upgrade := `,"upgrade":{"preset":"wemix-upgrade","from":"default"}`
+	upgrade := `,"upgrade":{"fork":"croissant","at":20,"from":"default"}`
 
 	if _, err := Parse([]byte(spec(table + upgrade))); err != nil {
 		t.Fatalf("a hardfork with a node table was refused: %v", err)
@@ -947,7 +947,7 @@ func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 	if _, err := Parse([]byte(spec(upgrade))); err == nil {
 		t.Error("a hardfork with no node table was accepted")
 	}
-	withTemplate := `,"upgrade":{"preset":"wemix-upgrade","from":"default","template":"t.json"}`
+	withTemplate := `,"upgrade":{"fork":"croissant","at":20,"from":"default","template":"t.json"}`
 	if _, err := Parse([]byte(spec(table + withTemplate))); err == nil {
 		t.Error("a hardfork naming a genesis template was accepted")
 	}
@@ -972,10 +972,10 @@ func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
 		t.Fatalf("a restart naming its own fork was refused: %v", err)
 	}
 	for name, u := range map[string]string{
-		"no fork":     `,"at":200`,
-		"no block":    `,"fork":"boho"`,
-		"nothing":     ``,
-		"with preset": `,"fork":"boho","at":200,"preset":"wemix-upgrade"`,
+		"no fork":       `,"at":200`,
+		"no block":      `,"fork":"boho"`,
+		"nothing":       ``,
+		"unknown field": `,"fork":"boho","at":200,"preset":"gone"`,
 	} {
 		if _, err := Parse([]byte(spec(u))); err == nil {
 			t.Errorf("%s: accepted", name)

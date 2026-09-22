@@ -12,7 +12,6 @@
     }
   },
   "upgrade": {
-    "preset": "wemix-upgrade",
     "fork": "croissant",
     "at": 20,
     "from": "default",
