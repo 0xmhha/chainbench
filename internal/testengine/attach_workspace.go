@@ -1,8 +1,6 @@
 package testengine
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
@@ -173,7 +171,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Cha
 func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, keysDir string, setupSteps *[]string, gateBudget time.Duration) (composed, error) {
 	endpoints, err := verb.ChainEndpoints(ctx, sd, verb.ChainEndpointsIn{DataDir: dataDir})
 	if err != nil {
-		return composed{}, lifecycle.Mark(errUnreachable, fmt.Errorf("engine: run suite: endpoints: %w", err))
+		return composed{}, fmt.Errorf("engine: run suite: endpoints: %w", err)
 	}
 	var caps []string
 	if ws, err := chainsetup.Open(dataDir, sd.Clock); err == nil {

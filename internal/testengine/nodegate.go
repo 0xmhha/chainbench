@@ -1,8 +1,6 @@
 package testengine
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
@@ -292,7 +290,7 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 		return fmt.Errorf("nodemonitor: %w", err)
 	}
 	if !res.OK {
-		return lifecycle.Mark(errUnreachable, fmt.Errorf("network not ready to test: %s", res.Terminate))
+		return fmt.Errorf("network not ready to test: %s", res.Terminate)
 	}
 	return nil
 }

@@ -1,8 +1,6 @@
 package testengine
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
@@ -207,46 +205,40 @@ func verifyAgainstPlan(plan ComposePlan, dir string, out *RunSuiteOut) error {
 // the runner, which is the one thing a plan must never do.
 func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spec, composition, error) {
 	if in.DataDir == "" {
-		return nil, nil, composition{}, lifecycle.Mark(errUnreadable, fmt.Errorf("engine: run suite: a workspace directory is required"))
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: a workspace directory is required")
 	}
 	specs := in.SpecContent
 	if len(specs) > 0 && in.Env != "" {
-		return nil, nil, composition{}, lifecycle.Mark(errContradicted, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against"))
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against")
 	}
 	if len(specs) == 0 {
 		var err error
 		if specs, err = dsl.ReadFilesWithChainPreset(in.SpecPaths, in.Env); err != nil {
-			return nil, nil, composition{}, lifecycle.Mark(errUnreadable, err)
+			return nil, nil, composition{}, err
 		}
 	}
 	parsed := make([]dsl.Spec, 0, len(specs))
 	for i, raw := range specs {
 		s, err := dsl.Parse(raw)
 		if err != nil {
-			return nil, nil, composition{}, lifecycle.Mark(errMalformed, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err))
+			return nil, nil, composition{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
 		}
 		parsed = append(parsed, s)
 	}
 	if err := sameChain(parsed); err != nil {
-		return nil, nil, composition{}, lifecycle.Mark(errContradicted, fmt.Errorf("engine: run suite: %w", err))
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	if err := sameComposition(parsed); err != nil {
-		return nil, nil, composition{}, lifecycle.Mark(errContradicted, fmt.Errorf("engine: run suite: %w", err))
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	// Pre-flight before anything is allocated or written: a spec that names an
 	// action/assertion/reader/reference that does not resolve, or a malformed
 	// node selector, fails here rather than after a network is composed.
 	if err := Precheck(parsed); err != nil {
-		return nil, nil, composition{}, lifecycle.Mark(errUnknownName, fmt.Errorf("engine: run suite: %w", err))
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	comp, err := compositionOf(ctx, parsed[0], in)
 	if err != nil {
-		// compositionOf marks what it can name. What is left is the declaration
-		// asking for something it did not say enough about, which is the
-		// honest default for a stage that only ever reads documents.
-		if runFailure(err) == lifecycle.FailStageUnclassified {
-			err = lifecycle.Mark(errIncomplete, err)
-		}
 		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return specs, parsed, comp, nil
@@ -285,13 +277,13 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 	if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
 		res, cerr := verb.ChainCrossFork(ctx, sd, verb.ChainCrossForkIn{DataDir: comp.up.DataDir})
 		if cerr != nil {
-			return lifecycle.Mark(errPrepareFork, fmt.Errorf("engine: run suite: %w", cerr))
+			return fmt.Errorf("engine: run suite: %w", cerr)
 		}
 		out.SetupSteps = append(out.SetupSteps, "cross-fork: "+res.Detail)
 	}
 	if in.WaitBlocks > 0 {
 		if err := waitForHead(ctx, net.endpoints[0], in.WaitBlocks); err != nil {
-			return lifecycle.Mark(errPrepareHeight, fmt.Errorf("engine: run suite: %w", err))
+			return fmt.Errorf("engine: run suite: %w", err)
 		}
 	}
 	// Declared test accounts are created and funded here: after the chain seals
@@ -302,14 +294,14 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 	}
 	ring, rerr := ringFor(net.keysDir)
 	if rerr != nil {
-		return lifecycle.Mark(errPrepareAccount, fmt.Errorf("engine: run suite: accounts: %w", rerr))
+		return fmt.Errorf("engine: run suite: accounts: %w", rerr)
 	}
 	funder, ok := ring.Get("node1")
 	if !ok {
-		return lifecycle.Mark(errPrepareAccount, fmt.Errorf("engine: run suite: accounts: the key set has no node1 to fund from"))
+		return fmt.Errorf("engine: run suite: accounts: the key set has no node1 to fund from")
 	}
 	if err := prepareAccounts(ctx, ring, net.keysDir, net.endpoints[0], parsed[0].EnvAccounts, funder.Address); err != nil {
-		return lifecycle.Mark(errPrepareAccount, fmt.Errorf("engine: run suite: %w", err))
+		return fmt.Errorf("engine: run suite: %w", err)
 	}
 	return nil
 }
@@ -322,7 +314,7 @@ func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, chain stri
 		Session: sess,
 	})
 	if err != nil {
-		return lifecycle.Mark(errCasesCannotProceed, fmt.Errorf("engine: run suite: engine: %w", err))
+		return fmt.Errorf("engine: run suite: engine: %w", err)
 	}
 	root, err := eng.Run(ctx, specs)
 	if root != "" {
@@ -332,7 +324,7 @@ func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, chain stri
 		}
 	}
 	if err != nil {
-		return lifecycle.Mark(errCasesCannotProceed, fmt.Errorf("engine: run suite: %w", err))
+		return fmt.Errorf("engine: run suite: %w", err)
 	}
 	return nil
 }

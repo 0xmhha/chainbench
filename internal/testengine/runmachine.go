@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -158,7 +157,7 @@ func (r *runner) chain() string {
 // network it is joining: the chain, and where that network's keys live.
 func (r *runner) readAttachTarget() error {
 	if r.in.DataDir == "" {
-		return lifecycle.Mark(errUnreadable, fmt.Errorf("engine: attach workspace: a workspace directory is required"))
+		return fmt.Errorf("engine: attach workspace: a workspace directory is required")
 	}
 	if ws, err := chainsetup.Open(r.in.DataDir, r.sd.Clock); err == nil {
 		st := ws.State()
@@ -168,7 +167,7 @@ func (r *runner) readAttachTarget() error {
 		}
 	}
 	if r.in.Chain == "" {
-		return lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach workspace: a chain is required to attach"))
+		return fmt.Errorf("engine: attach workspace: a chain is required to attach")
 	}
 	// The documents as given: an attaching run does not parse them, because
 	// what they declare about a network is not this run's to act on.
@@ -290,7 +289,7 @@ func (s *openingSession) Enter(_ context.Context, m *statemachine.Machine) error
 	r := s.r
 	root, err := artifactRoot(r.in.ArtifactRoot, r.in.WorkspaceConfigPath, r.in.DataDir)
 	if err != nil {
-		r.fail(m, s, lifecycle.Mark(errNoRoot, err))
+		r.fail(m, s, err)
 		return nil
 	}
 	r.in.ArtifactRoot = root
