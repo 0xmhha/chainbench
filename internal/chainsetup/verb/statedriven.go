@@ -123,7 +123,7 @@ const (
 // detail to the result and marks a failure into the record. It reports the
 // states the step went through, or nothing when the step does not yet say.
 //
-// It is the closure netUpFrom already had. Passing it in rather than rebuilding
+// It is the closure composeFrom already had. Passing it in rather than rebuilding
 // it means the state-driven path and the list-driven one cannot come to record
 // a composition differently.
 type composeRun func(step string) ([]lifecycle.Status, error)

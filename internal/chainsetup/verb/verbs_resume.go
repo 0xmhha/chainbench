@@ -80,7 +80,7 @@ func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResum
 
 	if first != "" {
 		out.Resumed = first
-		res, err := netUpFrom(ctx, d, up, first)
+		res, err := composeFrom(ctx, d, up, first)
 		out.Steps = res.Steps
 		if err != nil {
 			return out, err

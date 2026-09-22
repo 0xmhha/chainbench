@@ -131,7 +131,15 @@ func WhatName(w statemachine.What) string {
 // offers.
 
 // Compose asks for a whole network, from the request that describes it.
-type Compose struct{ Request NetUpIn }
+type Compose struct {
+	Request NetUpIn
+	// From is the step to begin at, for a resume; empty begins at the first.
+	//
+	// It is here because the record does not yet say where a composition got
+	// to. When it does, a resume starts from the recorded state path and this
+	// field goes.
+	From string
+}
 
 // What says which message this is.
 func (Compose) What() statemachine.What { return CmdCompose }

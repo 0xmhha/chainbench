@@ -20,7 +20,7 @@ import (
 
 // NetUp runs the composition steps in order and returns what each recorded.
 func NetUp(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) (NetUpOut, error) {
-	return netUpFrom(ctx, d, in, "")
+	return composeFrom(ctx, d, in, "")
 }
 
 // NetUpOut reports each step's recorded detail, in order, and the resulting
@@ -171,10 +171,15 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[
 	}
 }
 
-// netUpFrom runs the composition from the named step on (every step when
+// composeFrom runs the composition from the named step on (every step when
 // from is empty). Steps before it are assumed done — the resume verb decides
 // that from the workspace's record.
-func netUpFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, from string) (NetUpOut, error) {
+//
+// It validates the request, opens and holds the workspace, and hands the step
+// bodies to the machine that walks them. It does not decide the order, which
+// stage comes after which, or where a run stops; those are the machine's, and
+// this is what starts it.
+func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, from string) (NetUpOut, error) {
 	up, err := planUp(in)
 	if err != nil {
 		return NetUpOut{}, err
@@ -243,29 +248,25 @@ func netUpFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, fr
 	steps := upSteps(ctx, d, in)
 	run := func(name string) ([]lifecycle.Status, error) { return record(name, steps[name]) }
 
-	// The composition is walked by its state. What used to decide how far to go
-	// is the machine's target, what decides which stage comes next is the
-	// transition table, and reconciling against a running network is a state
-	// between the keys and the genesis rather than a comparison on a step name
-	// in the middle of a loop.
-	start, err := startFor(from)
-	if err != nil {
-		return out, err
-	}
-	target, err := targetFor(stage)
-	if err != nil {
-		return out, err
-	}
-	handlers := handlersFor(composeStages(reuseMode), run)
+	// Two machines for the length of this series. A composition walks the state
+	// machine; reuse-if-matching still walks the old table, because its
+	// reconciliation is written against that table's Request and moving it is
+	// its own commit. Nothing else tells the two apart: both run the same nine
+	// step bodies in the same order and record the same thing.
 	if reuseMode {
-		handlers[lifecycle.ReconcileChain] = chainsetup.ReconcileHandler(ctx, d, in, snap, func(line string) { out.Steps = append(out.Steps, line) })
-	}
-	m, err := lifecycle.New(start, target, handlers)
-	if err != nil {
-		return out, err
-	}
-	if err := m.Run(ctx); err != nil {
-		return out, err
+		if err := reconcilingUp(ctx, d, in, from, stage, snap, run, &out); err != nil {
+			return out, err
+		}
+	} else {
+		// The step closures captured this ctx when upSteps built them, so the
+		// one the machine hands back is the one they already hold.
+		mgr := chainsetup.NewManager(d, lockWS, func(_ context.Context, step string) error {
+			_, serr := run(step)
+			return serr
+		})
+		if err := mgr.Compose(ctx, in, from); err != nil {
+			return out, err
+		}
 	}
 
 	nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
@@ -274,6 +275,39 @@ func netUpFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, fr
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// reconcilingUp composes through the old transition table.
+//
+// It is what a reuse-if-matching run still uses. The reconciliation between the
+// keys and the genesis asks the old machine to move, so it cannot be handed to
+// the new one until it is rewritten as a state of its own; until then this is
+// the path it takes, unchanged.
+func reconcilingUp(
+	ctx context.Context,
+	d chainsetup.Deps,
+	in chainsetup.NetUpIn,
+	from string,
+	stage chainsetup.UpStage,
+	snap chainsetup.ReuseSnapshot,
+	run composeRun,
+	out *NetUpOut,
+) error {
+	start, err := startFor(from)
+	if err != nil {
+		return err
+	}
+	target, err := targetFor(stage)
+	if err != nil {
+		return err
+	}
+	handlers := handlersFor(composeStages(true), run)
+	handlers[lifecycle.ReconcileChain] = chainsetup.ReconcileHandler(ctx, d, in, snap, func(line string) { out.Steps = append(out.Steps, line) })
+	m, err := lifecycle.New(start, target, handlers)
+	if err != nil {
+		return err
+	}
+	return m.Run(ctx)
 }
 
 // placeUpRequest places the request's binary references through the environment
