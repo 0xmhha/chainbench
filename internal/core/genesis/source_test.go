@@ -132,10 +132,13 @@ func TestPresetGenesisSource_MissingPreset(t *testing.T) {
 func TestPresetGenesisSource_ProducersFromPlacement(t *testing.T) {
 	// Use the real committed ring: the preset loader verifies each identity
 	// derives from its nodekey, so a fabricated one is rejected.
-	presetDir := filepath.Join("..", "..", "..", "..", "presets", "keys")
+	// Three levels up, not four: this file is internal/core/genesis. It said
+	// four, which is the directory ABOVE the repo, so the ring was never found
+	// and the reproduction skipped every run since it was written.
+	presetDir := filepath.Join("..", "..", "..", "presets", "keys")
 	preset, err := preset.LoadKeyPreset(presetDir)
 	if err != nil {
-		t.Skipf("preset fixture unavailable: %v", err)
+		t.Fatalf("read the committed ring at %s: %v", presetDir, err)
 	}
 	n2, ok2 := preset.Node(2)
 	n4, ok4 := preset.Node(4)
