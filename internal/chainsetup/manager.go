@@ -7,15 +7,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
-// StepRunner runs one composition step by name and returns the line it reports.
-//
-// The bodies live in the verb layer, which imports this package, so they are
-// handed in rather than reached for. It is the same seam the composition
-// already had: the runner closure the old machine's handlers were built from.
-// It shrinks as stages move into their own states, and goes when the last one
-// has.
-type StepRunner func(ctx context.Context, step string) (detail string, err error)
-
 // The composition's steps, as UpStepNames spells them.
 const (
 	stepNew     = "new"
@@ -78,10 +69,9 @@ var stageOrder = []struct {
 // its own lock would make `up` and `run` lock differently, which is the
 // difference the reconciliation commit exists to remove.
 type Manager struct {
-	d   Deps
-	ws  *Workspace
-	run StepRunner
-	m   *statemachine.Machine
+	d  Deps
+	ws *Workspace
+	m  *statemachine.Machine
 
 	// request is what this run was asked to compose. A stage reads the parts it
 	// needs from it; it is stored once, when the request arrives.
@@ -109,8 +99,8 @@ type Manager struct {
 // The Add calls below are the tree. They are written as the tree so the shape
 // can be read rather than reconstructed, which is what the reference does with
 // its own addState block.
-func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
-	mg := &Manager{d: d, ws: ws, run: run, m: statemachine.New("composition", nil)}
+func NewManager(d Deps, ws *Workspace) *Manager {
+	mg := &Manager{d: d, ws: ws, m: statemachine.New("composition", nil)}
 
 	root := &compositionState{}
 	mg.stopped = &stoppedState{mg: mg}
@@ -118,13 +108,17 @@ func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
 	mg.composed = &composedState{mg: mg}
 	mg.ready = &readyState{mg: mg}
 	mg.failed = &failedState{mg: mg}
-	// One state per stage. The ones that still say legacyStage run the old verb
-	// through the injected runner; each commit of this series turns one of them
-	// into a state that does the work itself.
-	mg.stages = append(mg.stages, &openingWorkspace{mg: mg}, &buildingNodeTable{mg: mg},
-		newEnsuringKeys(mg), newBuildingGenesis(mg), &buildingNodeConfig{mg: mg}, &buildingNodeCommand{mg: mg}, newDeployingInputs(mg), &initializingDatadirs{mg: mg})
-	for _, s := range stageOrder[len(mg.stages):] {
-		mg.stages = append(mg.stages, &legacyStage{mg: mg, stepName: s.step, name: s.name})
+	// One state per stage, in the order a composition runs them.
+	mg.stages = []stage{
+		&openingWorkspace{mg: mg},
+		&buildingNodeTable{mg: mg},
+		newEnsuringKeys(mg),
+		newBuildingGenesis(mg),
+		&buildingNodeConfig{mg: mg},
+		&buildingNodeCommand{mg: mg},
+		newDeployingInputs(mg),
+		&initializingDatadirs{mg: mg},
+		newLaunching(mg),
 	}
 
 	mg.m.Add(root, nil)

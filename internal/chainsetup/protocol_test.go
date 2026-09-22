@@ -135,7 +135,6 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"PostCompose":         PostCompose{},
 		"OnQuit":              OnQuit{},
 		"NodeDied":            NodeDied{},
-		"stageDone":           stageDone{},
 		"stageFailed":         stageFailed{},
 		"workspaceOpened":     workspaceOpened{},
 		"nodeTableBuilt":      nodeTableBuilt{},
@@ -148,6 +147,10 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"inputsPresent":       inputsPresent{},
 		"inputsDeployed":      inputsDeployed{},
 		"datadirsInitialized": datadirsInitialized{},
+		"launchPlanned":       launchPlanned{},
+		"phaseLaunched":       phaseLaunched{},
+		"phaseActionsDone":    phaseActionsDone{},
+		"nodesLaunched":       nodesLaunched{},
 	}
 	for name, msg := range types {
 		if _, ok := whatNames[msg.What()]; !ok {

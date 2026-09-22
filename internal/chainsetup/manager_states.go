@@ -86,40 +86,6 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 	return false, nil
 }
 
-// legacyStage is a stage whose work is still the old verb.
-//
-// It is the bridge this series crosses on: the machine's shape is real from the
-// first commit, and each stage's own states arrive one commit at a time. When
-// the last one has, this type goes.
-type legacyStage struct {
-	statemachine.Base
-	mg       *Manager
-	stepName string
-	name     statemachine.StateName
-}
-
-// Name says what this state is called.
-func (s *legacyStage) Name() statemachine.StateName { return s.name }
-
-// step is which of the composition's steps this state runs.
-func (s *legacyStage) step() string { return s.stepName }
-
-// Enter runs the stage and leaves the result as a message.
-//
-// The position is recorded first, before the work, because the question it
-// answers is where a composition died — and a position written after the work
-// can never name the stage that did not finish.
-func (s *legacyStage) Enter(ctx context.Context, m *statemachine.Machine) error {
-	s.mg.recordPath(s)
-	detail, err := s.mg.run(ctx, s.stepName)
-	if err != nil {
-		m.SendSelf(stageFailed{Step: s.stepName, Err: err})
-		return nil
-	}
-	m.SendSelf(stageDone{Step: s.stepName, Detail: detail})
-	return nil
-}
-
 // composedState is a composition that stopped where it was asked to.
 type composedState struct {
 	statemachine.Base

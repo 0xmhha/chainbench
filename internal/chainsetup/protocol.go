@@ -80,13 +80,16 @@ const (
 	eventInputsDeployed
 	// eventDatadirsInitialized: every node's datadir holds the chain.
 	eventDatadirsInitialized
+	// eventLaunchPlanned: the checks passed and the family has said how many
+	// phases this network comes up in.
+	eventLaunchPlanned
 	// eventPhaseLaunched: one launch phase is up. A launch is several, so the
 	// stage counts them.
 	eventPhaseLaunched
-	// eventStageDone: a stage finished and has nothing of its own to report.
-	// This is what the adapter around the old verbs says while the real leaf
-	// states are still being moved over, one per commit.
-	eventStageDone
+	// eventPhaseActionsDone: a phase's declared actions have run.
+	eventPhaseActionsDone
+	// eventNodesLaunched: the network is up and the run is recorded.
+	eventNodesLaunched
 	// eventStageFailed: a stage could not finish. The stage above writes the
 	// reason down and goes to failed.
 	eventStageFailed
@@ -124,8 +127,10 @@ var whatNames = map[statemachine.What]string{
 	eventInputsPresent:       "eventInputsPresent",
 	eventInputsDeployed:      "eventInputsDeployed",
 	eventDatadirsInitialized: "eventDatadirsInitialized",
+	eventLaunchPlanned:       "eventLaunchPlanned",
 	eventPhaseLaunched:       "eventPhaseLaunched",
-	eventStageDone:           "eventStageDone",
+	eventPhaseActionsDone:    "eventPhaseActionsDone",
+	eventNodesLaunched:       "eventNodesLaunched",
 	eventStageFailed:         "eventStageFailed",
 
 	EventNodeDied: "EventNodeDied",
@@ -224,16 +229,6 @@ type stageReport interface {
 	stage() (step, detail string)
 }
 
-// stageDone is a stage that finished with nothing of its own to say.
-type stageDone struct {
-	Step   string
-	Detail string
-}
-
-func (stageDone) What() statemachine.What { return eventStageDone }
-
-func (e stageDone) stage() (string, string) { return e.Step, e.Detail }
-
 // workspaceOpened: the workspace holds the chain it was asked for, and the
 // request that asked for it.
 type workspaceOpened struct{ Detail string }
@@ -320,6 +315,29 @@ type datadirsInitialized struct{ Detail string }
 func (datadirsInitialized) What() statemachine.What { return eventDatadirsInitialized }
 
 func (e datadirsInitialized) stage() (string, string) { return stepInit, e.Detail }
+
+// launchPlanned: the launch's checks passed, and this is how many phases the
+// family says the network comes up in.
+type launchPlanned struct{ Phases int }
+
+func (launchPlanned) What() statemachine.What { return eventLaunchPlanned }
+
+// phaseLaunched: one phase's nodes are up, and this is how many went.
+type phaseLaunched struct{ Started int }
+
+func (phaseLaunched) What() statemachine.What { return eventPhaseLaunched }
+
+// phaseActionsDone: a phase's declared actions have run.
+type phaseActionsDone struct{}
+
+func (phaseActionsDone) What() statemachine.What { return eventPhaseActionsDone }
+
+// nodesLaunched: the network is up and the run is recorded.
+type nodesLaunched struct{ Detail string }
+
+func (nodesLaunched) What() statemachine.What { return eventNodesLaunched }
+
+func (e nodesLaunched) stage() (string, string) { return stepStart, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

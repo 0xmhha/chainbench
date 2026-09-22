@@ -103,7 +103,13 @@ var verbNeeds = map[string]verbNeed{
 	"Provision":  {step: "deploy"},
 	"Init":       {step: "init"},
 	"Start":      {step: "start"},
-	"LaunchOpts": {step: "build"},
+	// The launch in four parts, for the states that walk it. Each needs what
+	// Start needed, because together they are Start.
+	"LaunchPlan":      {step: "start"},
+	"StartPhase":      {step: "start"},
+	"RunPhaseActions": {step: "start"},
+	"FinishLaunch":    {step: "start"},
+	"LaunchOpts":      {step: "build"},
 
 	// Verbs that read or act on the node table.
 	"Endpoints":        {run: placed},
