@@ -326,10 +326,15 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 
 | 갈래 | 문서 | 타입 | 읽는 함수 |
 |---|---|---|---|
-| 체인 | `presets/chain/*.yaml` | `preset.Chain` | `preset.LoadChainPreset` |
+| ~~체인~~ | ~~`presets/chain/*.yaml`~~ | ~~`preset.Chain`~~ | ~~`preset.LoadChainPreset`~~ |
 | 키 | `presets/keys/` | `preset.Key` | `preset.LoadKeyPreset` |
 
-`internal/preset` 이 두 타입과 두 로더, 그리고 키 preset 의 **디스크 형식**(`KeyFile`·`KeyNode`·
+> **체인 쪽은 없어졌다 (2026-09-22).** 그 문서가 말하던 것은 chain-preset 이 이미 말하고
+> 있었고, 한 망을 세우는 데 선언이 두 겹이었다. 지금 체인 선언은 DSL 의
+> `kind: "chain-preset"` 하나이고, `internal/preset` 은 키 쪽만 남는다. 근거와 이행은
+> [`declaration-model-2026-09-22.md`](declaration-model-2026-09-22.md).
+
+`internal/preset` 이 키 preset 의 타입과 로더, 그리고 그 **디스크 형식**(`KeyFile`·`KeyNode`·
 `KeyIndexFile`·`NodeLabel`)을 갖는다. `keyring` 은 키 **모델**(`Entry`·`Network`·`Label`·`Source`)만
 남기고 preset 을 정의하지 않는다. `keyring/store` 는 키를 **만들고 가져오는 일**(Generate·Extend·
 Import)만 남았다 — 1,503 → 1,164줄.
