@@ -315,8 +315,8 @@ func failedAtOf(res app.RunSuiteOut) string {
 		return ""
 	}
 	at := res.FailedAt.String()
-	if res.ComposeFailedAt != 0 {
-		at += " / " + res.ComposeFailedAt.String()
+	if res.ComposeFailedAt != "" {
+		at += " / " + res.ComposeFailedAt
 	}
 	return at
 }

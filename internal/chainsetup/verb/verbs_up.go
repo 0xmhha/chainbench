@@ -32,20 +32,6 @@ type ChainUpOut struct {
 	Nodes NetworkStatusOut
 }
 
-// markStepFailed writes a failed step into the composition record.
-//
-// Best effort on purpose, and silent when it cannot write: this runs while a
-// composition is already failing, and a second error about the bookkeeping
-// would bury the first one — which is the error the operator came for.
-func markStepFailed(d chainsetup.Deps, dataDir, name string, cause error) {
-	ws, err := chainsetup.Open(dataDir, d.Clock)
-	if err != nil {
-		return
-	}
-	ws.MarkStepFailed(name, cause)
-	_ = ws.Save()
-}
-
 // upPlan is a validated up request: the stage it runs to and how it treats an
 // existing composition, both resolved from defaults and checked once.
 type upPlan struct {
@@ -93,100 +79,6 @@ func planUp(in chainsetup.ChainUpIn) (upPlan, error) {
 		return upPlan{}, errors.New("chainsetup: chain up: execution.chain=attach does not compose or launch a network — bring the chain up separately and use the attach/run path")
 	}
 	return upPlan{stage: stage, mode: mode}, nil
-}
-
-// upSteps is the reuse path's step table: one closure per name in UpStepNames.
-//
-// It calls the step bodies rather than the `chain <step>` verbs, because those
-// go through the composition machine now and the machine does not report the
-// lifecycle states this table replays. Two callers of one body, for as long as
-// this path exists: it is the last thing still walking the old table, and it
-// goes when the reconciliation becomes a state.
-func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn) map[string]func() (chainsetup.StepOut, error) {
-	body := func(fn func(ws *chainsetup.Workspace) (chainsetup.StepOut, error)) func() (chainsetup.StepOut, error) {
-		return func() (chainsetup.StepOut, error) {
-			return chainsetup.InWorkspace(d, in.DataDir, fn)
-		}
-	}
-	line := func(fn func(ws *chainsetup.Workspace) (string, error)) func() (chainsetup.StepOut, error) {
-		return body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-			detail, err := fn(ws)
-			return chainsetup.StepOut{Detail: detail}, err
-		})
-	}
-	return map[string]func() (chainsetup.StepOut, error){
-		"new": line(func(ws *chainsetup.Workspace) (string, error) {
-			detail, err := ws.New(chainsetup.NewOpts{
-				Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
-				ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
-				Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
-			})
-			if err != nil {
-				return "", err
-			}
-			// The request is the one fact of a composition otherwise nowhere on
-			// disk; it is what a resume composes from.
-			return detail, ws.RecordRequest(in)
-		}),
-		// Place precedes keys: the key step sizes the identity set from the
-		// node table, so the layout has to exist first.
-		"place": func() (chainsetup.StepOut, error) {
-			detail, err := chainsetup.PlaceNodes(d, chainsetup.ChainAllocateIn{
-				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
-				EndpointSyncMode: in.EndpointSyncMode, Peering: in.Peering,
-				TopologyPath: in.TopologyPath, BlueprintPath: in.BlueprintPath,
-				Topology: in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains,
-				Server: in.Server, AutoSize: in.AutoSize,
-			})
-			return chainsetup.StepOut{Detail: detail}, err
-		},
-		"keys": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-			opts, err := chainsetup.KeysOptsFor(in.BlueprintPath, in.KeysSource, in.KeysNodes, in.KeysValidators)
-			if err != nil {
-				return chainsetup.StepOut{}, err
-			}
-			return ws.Keys(ctx, opts)
-		}),
-		"genesis": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-			opts, err := chainsetup.GenesisOptsFor(chainsetup.ChainGenesisIn{
-				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
-				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
-				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
-			})
-			if err != nil {
-				return chainsetup.StepOut{}, err
-			}
-			return ws.Genesis(ctx, opts)
-		}),
-		"config": line(func(ws *chainsetup.Workspace) (string, error) {
-			for _, scope := range chainsetup.SortedScopes(in.ConfigSet) {
-				if err := ws.RecordConfigSet(scope, in.ConfigSet[scope]); err != nil {
-					return "", fmt.Errorf("chainsetup: config: %w", err)
-				}
-			}
-			return ws.Config(ctx)
-		}),
-		"build": line(func(ws *chainsetup.Workspace) (string, error) {
-			for _, scope := range chainsetup.SortedScopes(in.LaunchScoped) {
-				if err := ws.RecordLaunchSet(scope, in.LaunchScoped[scope]); err != nil {
-					return "", fmt.Errorf("chainsetup: launchopts: %w", err)
-				}
-			}
-			if err := ws.RecordLaunchCommand(in.LaunchSet); err != nil {
-				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
-			}
-			return ws.LaunchOpts()
-		}),
-		"deploy": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-			return ws.Provision(ctx)
-		}),
-		"init": line(func(ws *chainsetup.Workspace) (string, error) {
-			return ws.Init(ctx, in.Binary)
-		}),
-		"start": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-			return ws.Start(ctx, in.Binary)
-		}),
-	}
 }
 
 // composeFrom runs the composition from the named step on (every step when

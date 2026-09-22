@@ -131,13 +131,13 @@ func TestFailedAtOf_OneSuffixForBothAreas(t *testing.T) {
 			name: "the chain refused, and says which of its stages",
 			res: app.RunSuiteOut{
 				FailedAt:        lifecycle.TestReachNetworkFailCompose,
-				ComposeFailedAt: lifecycle.ChainLaunchNodesFailPortBusy,
+				ComposeFailedAt: "Composition/Composing/Launching",
 			},
-			want: "TestReachNetworkFailCompose / ChainLaunchNodesFailPortBusy",
+			want: "TestReachNetworkFailCompose / Composition/Composing/Launching",
 		},
 		{
 			name: "a chain state with no run state is not a suffix",
-			res:  app.RunSuiteOut{ComposeFailedAt: lifecycle.ChainLaunchNodesFailPortBusy},
+			res:  app.RunSuiteOut{ComposeFailedAt: "Composition/Composing/Launching"},
 			want: "",
 		},
 	}

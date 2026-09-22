@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
@@ -96,8 +97,10 @@ type Manager struct {
 	failure error
 
 	stopped     *stoppedState
+	comparing   *comparing
 	composing   *composingState
 	reconciling *reconciling
+	verifying   *verifying
 	stages      []stage
 	composed    *composedState
 	ready       *readyState
@@ -115,6 +118,8 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 	root := &compositionState{}
 	mg.stopped = &stoppedState{mg: mg}
 	mg.reconciling = &reconciling{mg: mg}
+	mg.comparing = newComparing(mg)
+	mg.verifying = &verifying{mg: mg}
 	mg.composing = &composingState{mg: mg}
 	mg.composed = &composedState{mg: mg}
 	mg.ready = &readyState{mg: mg}
@@ -134,6 +139,10 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 
 	mg.m.Add(root, nil)
 	mg.m.Add(mg.stopped, root)
+	mg.m.Add(mg.comparing, root)
+	for _, leaf := range mg.comparing.leafStates() {
+		mg.m.Add(leaf, mg.comparing)
+	}
 	mg.m.Add(mg.composing, root)
 	for _, st := range mg.stages {
 		mg.m.Add(st, mg.composing)
@@ -154,6 +163,7 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 		}
 	}
 	mg.m.Add(mg.composed, root)
+	mg.m.Add(mg.verifying, root)
 	mg.m.Add(mg.ready, root)
 	mg.m.Add(mg.failed, root)
 	return mg
@@ -277,6 +287,35 @@ func (mg *Manager) stepIsDue(step string) error {
 func (mg *Manager) ReuseFrom(snap ReuseSnapshot) {
 	mg.reuse, mg.reusing = snap, true
 }
+
+// ComposeComparing composes the network the request declares, reusing what is
+// on the target when the comparison says it can.
+//
+// It stops at the hand-over rather than at Ready: whether the network is
+// producing is the readiness gate's question, and the gate belongs to whoever
+// owns the monitor.
+func (mg *Manager) ComposeComparing(ctx context.Context, in ChainUpIn) error {
+	mg.request = in
+	if err := mg.m.Start(ctx, mg.stopped); err != nil {
+		return err
+	}
+	if err := mg.m.Send(ctx, ComposeComparing{Request: in}); err != nil {
+		return err
+	}
+	return mg.failure
+}
+
+// Decision is what the comparison decided, as a report prints it.
+func (mg *Manager) Decision() string {
+	var none preflight.Verdict
+	if mg.comparing.decision.Verdict == none {
+		return ""
+	}
+	return mg.comparing.decision.String()
+}
+
+// At is where the machine ended, as a path, for a caller that reports it.
+func (mg *Manager) At() string { return mg.m.Path(mg.m.Current()) }
 
 // Tree is the machine's state tree, for a test to compare against the design.
 func (mg *Manager) Tree() string { return mg.m.Tree() }

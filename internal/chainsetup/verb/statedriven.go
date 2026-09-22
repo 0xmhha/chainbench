@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 )
@@ -127,25 +126,6 @@ const (
 // it means the state-driven path and the list-driven one cannot come to record
 // a composition differently.
 type composeRun func(step string) ([]lifecycle.Status, error)
-
-// composeStages is the composition's stages for this run.
-//
-// Reconciling against a running network is a state between the key set and the
-// genesis — the first stage that writes to the target — so a run that does it
-// moves there from the keys instead of straight on. Judging later meant a
-// refusal that had already overwritten the running network's genesis.
-func composeStages(reconciling bool) []composeStage {
-	if !reconciling {
-		return composition
-	}
-	out := slices.Clone(composition)
-	for i := range out {
-		if out[i].step == "keys" {
-			out[i].next = lifecycle.ReconcileChain
-		}
-	}
-	return out
-}
 
 // upHandlers is one handler per composition stage, for a run that composes
 // straight through.

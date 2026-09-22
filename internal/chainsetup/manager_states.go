@@ -54,6 +54,10 @@ func (s *stoppedState) Process(_ context.Context, m *statemachine.Machine, msg s
 		s.mg.request = c.Request
 		m.TransitionTo(first)
 		return true, nil
+	case ComposeComparing:
+		s.mg.request = c.Request
+		m.TransitionTo(s.mg.comparing)
+		return true, nil
 	case RunStep:
 		// One step, on a composition that has already got far enough for it.
 		// The order used to be kept by each step body asking; asking here is
@@ -100,6 +104,12 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 			return true, nil
 		}
 		m.TransitionTo(s.mg.after(step))
+		return true, nil
+	case nodesRestarted:
+		m.TransitionTo(s.mg.verifying)
+		return true, nil
+	case stoppedToRebuild:
+		m.TransitionTo(s.mg.stages[0])
 		return true, nil
 	case reconciled:
 		// Either way the composition goes on: what has to be redone is redone

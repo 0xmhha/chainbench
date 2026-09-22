@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 57,233 |
+| `internal/` | 52 | 57,270 |
 | `cmd/` | 19 | 5,053 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **63,076** |
+| **합계** | **74** | **63,113** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 35,714줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 35,751줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -150,14 +150,14 @@ internal/testengine 4,485 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup  9,994 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 10,279 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
                           ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
                           ChainVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
                           재사용 판단(PlanReuse·ReconcileReuse·GenesisDeclared·WantOf)·실행 중 프로세스 실사
 
-internal/chainsetup/verb 1,880 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+internal/chainsetup/verb 1,632 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainInit·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·
                           ChainHealth·ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·NodeStart/Stop/Swap·
                           Hardfork{Plan,Execute}·ChainCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·

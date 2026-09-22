@@ -130,6 +130,10 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 	types := map[string]statemachine.Message{
 		"Compose":             Compose{},
 		"RunStep":             RunStep{},
+		"ComposeComparing":    ComposeComparing{},
+		"comparisonMade":      comparisonMade{},
+		"nodesRestarted":      nodesRestarted{},
+		"stoppedToRebuild":    stoppedToRebuild{},
 		"Stop":                Stop{},
 		"ClearError":          ClearError{},
 		"PostCompose":         PostCompose{},

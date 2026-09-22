@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // the opening stage checks the chain is one we have
+	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
 // The machine's job at this commit is to walk the same nine steps in the same
@@ -84,6 +86,9 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 	want := strings.Join([]string{
 		"Composition",
 		"  Stopped",
+		"  Comparing",
+		"    RestartingNodes",
+		"    StoppingToRebuild",
 		"  Composing",
 		"    OpeningWorkspace",
 		"    BuildingNodeTable",
@@ -106,6 +111,7 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"      RunningPhaseActions",
 		"      RecordingRun",
 		"  Composed",
+		"  Verifying",
 		"  Ready",
 		"  Failed",
 		"",
@@ -541,5 +547,58 @@ func TestResumeStep_AWorkspaceWithNoPositionFallsBackToTheStepMap(t *testing.T) 
 	// A request that asked to stop at deploy has nothing left to resume.
 	if got := ws.ResumeStep(); got != "" {
 		t.Errorf("a composition told to stop at deploy resumes at %q", got)
+	}
+}
+
+// TestComparing_EachVerdictGoesItsOwnWay holds the two vocabularies together.
+//
+// preflight answers how much has to be rebuilt; this says where that answer
+// puts the run. A verdict added there without a move here would otherwise be
+// found at a comparison that had already been made, against a live network.
+func TestComparing_EachVerdictGoesItsOwnWay(t *testing.T) {
+	mg := newTestManager(t)
+	c := mg.comparing
+	for _, tc := range []struct {
+		v    preflight.Verdict
+		want statemachine.StateName
+	}{
+		{preflight.Reuse, nameVerifying},
+		{preflight.RebuildNodes, nameRestartingNodes},
+		{preflight.RebuildAll, nameStoppingToRebuild},
+		{preflight.Compose, nameOpeningWorkspace},
+	} {
+		got, err := c.nextFor(tc.v)
+		if err != nil {
+			t.Errorf("%s: %v", tc.v, err)
+			continue
+		}
+		if got.Name() != tc.want {
+			t.Errorf("%s goes to %s, want %s", tc.v, got.Name(), tc.want)
+		}
+	}
+	// A verdict nobody declared is refused rather than guessed at.
+	if _, err := c.nextFor(preflight.Verdict(9)); err == nil {
+		t.Error("an undeclared verdict was given a move")
+	}
+}
+
+// TestComposeComparing_NothingComposedComposes: the comparison against an empty
+// target is "nothing is composed", and that walks into the stages.
+func TestComposeComparing_NothingComposedComposes(t *testing.T) {
+	mg := newTestManager(t)
+	in := withStage(upRequest(t), UpDeploy)
+	in.DataDir = mg.ws.Dir()
+	if err := mg.ComposeComparing(context.Background(), in); err != nil {
+		t.Fatal(err)
+	}
+	got := entered(mg)
+	if !slices.Contains(got, "Comparing") {
+		t.Errorf("the run went through %v, and never compared", got)
+	}
+	if !slices.Contains(got, "OpeningWorkspace") {
+		t.Errorf("the run went through %v, and never composed", got)
+	}
+	if mg.Decision() == "" {
+		t.Error("the comparison reported nothing")
 	}
 }

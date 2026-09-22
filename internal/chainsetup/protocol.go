@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
@@ -33,6 +34,9 @@ const (
 	CmdCompose statemachine.What = statemachine.BaseChain + 0x001 + iota
 	// CmdStep runs one composition step on a network that stopped part way.
 	CmdStep
+	// CmdCompare composes only as far as what is on the target requires, and
+	// hands over before the readiness gate.
+	CmdCompare
 	// CmdStop takes the network down.
 	CmdStop
 	// CmdClearError is the only way out of a failed composition, so that a
@@ -65,6 +69,14 @@ const (
 	eventKeySourceChosen
 	// eventKeysEnsured: every node has an identity.
 	eventKeysEnsured
+	// eventComparisonMade: what is on the target has been held against what
+	// this run declares, and the verdict says which of four moves follows.
+	eventComparisonMade
+	// eventNodesRestarted: the nodes the comparison named are back.
+	eventNodesRestarted
+	// eventStoppedToRebuild: the running network is down and may be composed
+	// over.
+	eventStoppedToRebuild
 	// eventReconciled: the running network was compared with what this run
 	// would compose, and may be kept.
 	eventReconciled
@@ -116,6 +128,7 @@ const (
 var whatNames = map[statemachine.What]string{
 	CmdCompose:    "CmdCompose",
 	CmdStep:       "CmdStep",
+	CmdCompare:    "CmdCompare",
 	CmdStop:       "CmdStop",
 	CmdClearError: "CmdClearError",
 
@@ -126,6 +139,9 @@ var whatNames = map[statemachine.What]string{
 	eventNodeTableBuilt:      "eventNodeTableBuilt",
 	eventKeySourceChosen:     "eventKeySourceChosen",
 	eventKeysEnsured:         "eventKeysEnsured",
+	eventComparisonMade:      "eventComparisonMade",
+	eventNodesRestarted:      "eventNodesRestarted",
+	eventStoppedToRebuild:    "eventStoppedToRebuild",
 	eventReconciled:          "eventReconciled",
 	eventReconcileRefused:    "eventReconcileRefused",
 	eventGenesisWayChosen:    "eventGenesisWayChosen",
@@ -189,6 +205,13 @@ type RunStep struct {
 
 // What says which message this is.
 func (RunStep) What() statemachine.What { return CmdStep }
+
+// ComposeComparing asks for a composition that reuses what the target already has when
+// the comparison says it can.
+type ComposeComparing struct{ Request ChainUpIn }
+
+// What says which message this is.
+func (ComposeComparing) What() statemachine.What { return CmdCompare }
 
 // Stop asks for the network to be taken down.
 type Stop struct{}
@@ -364,6 +387,21 @@ func (reconciled) What() statemachine.What { return eventReconciled }
 type reconcileRefused struct{}
 
 func (reconcileRefused) What() statemachine.What { return eventReconcileRefused }
+
+// comparisonMade: what the comparison decided.
+type comparisonMade struct{ Verdict preflight.Verdict }
+
+func (comparisonMade) What() statemachine.What { return eventComparisonMade }
+
+// nodesRestarted: the nodes the comparison named are back.
+type nodesRestarted struct{}
+
+func (nodesRestarted) What() statemachine.What { return eventNodesRestarted }
+
+// stoppedToRebuild: the running network is down and may be composed over.
+type stoppedToRebuild struct{}
+
+func (stoppedToRebuild) What() statemachine.What { return eventStoppedToRebuild }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

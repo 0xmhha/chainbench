@@ -140,15 +140,15 @@ type RunSuiteOut struct {
 	// A caller branches on this rather than on the error's words, which name the
 	// file and the field and are written to be read rather than matched.
 	FailedAt lifecycle.Status
-	// ComposeFailedAt is the CHAIN area's state when this run's failure was the
-	// chain refusing. FailedAt says only that it refused, on purpose — repeating
-	// which of its stages would give one failure two names — so the detail
-	// travels beside it instead.
+	// ComposeFailedAt is where the CHAIN's own machine was when this run's
+	// failure was the chain refusing — its state path. FailedAt says only that
+	// it refused, on purpose, since repeating which of its stages would give
+	// one failure two names.
 	//
 	// It is carried rather than written into the message because both used to
 	// be, and a refusal then ended in two suffixes that look alike and say
 	// different things. One place renders them, once.
-	ComposeFailedAt lifecycle.Status
+	ComposeFailedAt string
 }
 
 // composed is a network the suite brought up: where the tests reach it, what
