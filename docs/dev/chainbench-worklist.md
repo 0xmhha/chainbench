@@ -90,7 +90,12 @@
       같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
       `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
-- [ ] **T. 테스트 영역(0x8000)의 상태를 잰 적이 없다** — 근거: [`architecture/design-v3/state-machine-02-states.md`](architecture/design-v3/state-machine-02-states.md).
+- [ ] **T. 테스트 영역(0x8000)의 상태 — 잰 것까지 끝났다 (T1)** — 근거: [`architecture/design-v3/state-machine-05-test-failures.md`](architecture/design-v3/state-machine-05-test-failures.md).
+      **T1 완료 (2026-09-22).** 실패 102곳을 단계별로 쟀고, 02 가 그려 둔 네 블록이 실측과
+      맞지 않는 것을 확인했다. 47곳은 선언을 읽는 일이라 결과가 체인 영역의 합성이고, 붙기
+      11곳은 다른 입구다. 실측이 가리키는 것은 **여섯 블록과 시작 상태 둘**이다. 남은 것은
+      **T2** 전이 표, **T3** 핸들러가 자기 상태를 말하게 하기, 그리고 **전 케이스 라이브**다.
+      아래는 T1 전의 기록.
       그 문서가 네 블록(`TEST_PENDING`·`RUNNING`·`REPORTING`·`DONE`)의 BASE 만 정해 두고 "세부는 이
       문서가 정하지 않는다" 로 남겼다. `lifecycle.areaTest` 는 선언만 있고 상태가 하나도 없다.
       **잰 것**: `internal/testengine` 은 23파일 4,347줄이고 실패 지점이 103곳, `RunSuite` 한
