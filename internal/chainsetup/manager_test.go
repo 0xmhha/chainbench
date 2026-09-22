@@ -67,6 +67,20 @@ func reported(mg *Manager) []string {
 // It grows as stages move in and start reading more of it, which is why it is
 // one function rather than a literal at each call: the alternative is editing
 // every test in this file nine times.
+// stubBinary is an executable that does nothing and succeeds.
+//
+// The init stage runs the node binary, and a unit test has no chain build. What
+// it is checking is that the stage ran and reported, not what a real init
+// writes; the live smoke of each commit is where a real binary is used.
+func stubBinary(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "stubchain")
+	if err := os.WriteFile(path, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
 func upRequest(t *testing.T) ChainUpIn {
 	t.Helper()
 	// Keys generated into this test's own directory, rather than the committed
@@ -75,6 +89,7 @@ func upRequest(t *testing.T) ChainUpIn {
 	return ChainUpIn{
 		Chain: "stablenet", BPCount: 2, ENCount: 1,
 		KeysSource: "generate", KeysDir: t.TempDir(),
+		Binary: stubBinary(t),
 	}
 }
 
@@ -194,10 +209,10 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	// A step that is still an adapter, so this says what it means -- that the
 	// walk begins where it was told -- without also needing the stages before
 	// it to have run.
-	if err := mg.Compose(context.Background(), upRequest(t), "init"); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(t), "start"); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"init", "start"}
+	want := []string{"start"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v", got, want)
 	}
@@ -222,13 +237,13 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 // TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason.
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "init"
+	w.failAt = "start"
 	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
 	// The failing stage reports nothing, so the lines stop one short of it.
-	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
+	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
@@ -243,7 +258,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "init"
+	w.failAt = "start"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -295,7 +310,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 // TestCompose_TheRecordKeepsWhereItDied.
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "init"
+	w.failAt = "start"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -486,7 +501,7 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 	// disk by then names that stage -- which is the guarantee, one stage on.
 	var atKeys string
 	mg.run = func(_ context.Context, step string) (string, error) {
-		if step == "init" {
+		if step == "start" {
 			ws, err := Open(mg.ws.Dir(), nil)
 			if err != nil {
 				return "", err
@@ -497,11 +512,11 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 		return step + " done", nil
 	}
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
-		t.Fatal("the walk was meant to stop at init")
+		t.Fatal("the walk was meant to stop at start")
 	}
 
-	if atKeys != "Composition/Composing/InitializingDatadirs" {
-		t.Errorf("the record said %q when the init stage began", atKeys)
+	if atKeys != "Composition/Composing/Launching" {
+		t.Errorf("the record said %q when the launch stage began", atKeys)
 	}
 	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
 		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)

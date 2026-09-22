@@ -78,6 +78,8 @@ const (
 	eventInputsPresent
 	// eventInputsDeployed: every launch input is present on its target.
 	eventInputsDeployed
+	// eventDatadirsInitialized: every node's datadir holds the chain.
+	eventDatadirsInitialized
 	// eventPhaseLaunched: one launch phase is up. A launch is several, so the
 	// stage counts them.
 	eventPhaseLaunched
@@ -111,19 +113,20 @@ var whatNames = map[statemachine.What]string{
 	CmdPostCompose: "CmdPostCompose",
 	CmdOnQuit:      "CmdOnQuit",
 
-	eventWorkspaceOpened:  "eventWorkspaceOpened",
-	eventNodeTableBuilt:   "eventNodeTableBuilt",
-	eventKeySourceChosen:  "eventKeySourceChosen",
-	eventKeysEnsured:      "eventKeysEnsured",
-	eventGenesisWayChosen: "eventGenesisWayChosen",
-	eventGenesisBuilt:     "eventGenesisBuilt",
-	eventNodeConfigBuilt:  "eventNodeConfigBuilt",
-	eventNodeCommandBuilt: "eventNodeCommandBuilt",
-	eventInputsPresent:    "eventInputsPresent",
-	eventInputsDeployed:   "eventInputsDeployed",
-	eventPhaseLaunched:    "eventPhaseLaunched",
-	eventStageDone:        "eventStageDone",
-	eventStageFailed:      "eventStageFailed",
+	eventWorkspaceOpened:     "eventWorkspaceOpened",
+	eventNodeTableBuilt:      "eventNodeTableBuilt",
+	eventKeySourceChosen:     "eventKeySourceChosen",
+	eventKeysEnsured:         "eventKeysEnsured",
+	eventGenesisWayChosen:    "eventGenesisWayChosen",
+	eventGenesisBuilt:        "eventGenesisBuilt",
+	eventNodeConfigBuilt:     "eventNodeConfigBuilt",
+	eventNodeCommandBuilt:    "eventNodeCommandBuilt",
+	eventInputsPresent:       "eventInputsPresent",
+	eventInputsDeployed:      "eventInputsDeployed",
+	eventDatadirsInitialized: "eventDatadirsInitialized",
+	eventPhaseLaunched:       "eventPhaseLaunched",
+	eventStageDone:           "eventStageDone",
+	eventStageFailed:         "eventStageFailed",
 
 	EventNodeDied: "EventNodeDied",
 }
@@ -310,6 +313,13 @@ type inputsDeployed struct{ Detail string }
 func (inputsDeployed) What() statemachine.What { return eventInputsDeployed }
 
 func (e inputsDeployed) stage() (string, string) { return stepDeploy, e.Detail }
+
+// datadirsInitialized: every node's datadir holds the chain.
+type datadirsInitialized struct{ Detail string }
+
+func (datadirsInitialized) What() statemachine.What { return eventDatadirsInitialized }
+
+func (e datadirsInitialized) stage() (string, string) { return stepInit, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to
