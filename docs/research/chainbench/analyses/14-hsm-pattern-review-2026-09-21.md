@@ -338,6 +338,7 @@ composition                  root. 공통: CmdStop, 모르는 메시지 → unha
     launching                공통: 포트·바이너리 검사. EventPhaseLaunched 를 세어 다음 phase 또는 verifying
       launchingPhase
       runningPhaseActions
+      recordingRun           (2026-09-22 추가) 마지막 phase 뒤의 마무리
   composed                   --stage=deploy 처럼 중간에 멈춘 자리. record 에 남는다. CmdStep 은 여기서만 받는다
   verifying                  Enter 가 준비 게이트를 돌린다 (게이트 함수는 testengine 이 주입)
   ready                      운영 Cmd 를 받는 유일한 자리. EventNodeDied 도 여기만
@@ -423,6 +424,12 @@ self message 에 실어 보내며, `Process` 가 그것을 보고 leaf 를 고�
 
 즉 갈래는 두 자리 중 하나에 선다. **일 앞**(요청이나 workspace 를 보고 정할 수 있을 때)이거나
 **일 뒤**(해 봐야 알 때)다. 어느 쪽이든 고르는 것은 `Process` 이고 leaf 는 state 다.
+
+**`recordingRun` 을 더한 이유** (2026-09-22, commit 13). 마지막 phase 가 끝나면 남는 일이 있다 —
+바이너리를 기록하고, 단계를 완료로 적고, 실행 기록을 남긴다. 그것은 일이고, 이 설계에서 일은
+state 의 `Enter` 안에서 한다. parent 의 `Process` 에 두면 "Process 는 전이를 정할 뿐" 이 깨지고,
+parent 의 `Exit` 에 두면 "Exit 은 Enter 가 건 것을 거둔다" 가 깨진다. 그래서 자리를 하나 준다.
+부수적으로 얻는 것이 있다 — 실행 기록에 실패했지만 망은 떠 있는 상태가 경로로 보인다.
 
 ### 시나리오
 
