@@ -403,6 +403,17 @@ leaf state을 고르는 것은 **앞 단계**다. `ensuringKeys` 의 parent `Pro
 요청을 보고 `genesisFromTemplate` 인지 `genesisFromExisting` 인지 골라 `TransitionTo` 한다.
 `StoppedState` 가 `CMD_START_DHCP` 를 받아 갈래를 고르는 것과 같다.
 
+**고를 때 보는 것은 request 만이 아니다** (2026-09-22, commit 7 을 쓰면서 정함). `ws.Keys` 는 요청의
+source 문자열보다 **앞 단계가 만든 노드 표**를 먼저 본다 — 키를 선언한 표는 이미 자기 신원의 출처를
+말한 것이기 때문이다(`steps_keys.go` 의 주석, 그리고 13번이 "요청에서 읽던 것이 틀렸던 사례" 로 든
+자리: 인라인 topology 로 조립한 것이 preset 을 썼다고 기록됐다). 그러니 문장을 한 번 넓힌다 —
+**고르는 자리는 request 와 workspace 를 본다.**
+
+그리고 고르는 일 자체에 준비가 필요할 때가 있다. 키 단계는 서버에 있는 ring 을 먼저 내려받아야
+표를 읽을 수 있다. 그런 단계는 **parent 의 `Enter` 가 준비하고 고른 뒤 self message 로 말하고,
+parent 의 `Process` 가 그것을 leaf 로 바꾼다.** 기제 그대로다 — Enter 가 일하고, 결과는 message 이고,
+Process 가 transition 이다. 고르는 데 일이 필요 없는 단계는 앞 단계의 `Process` 에서 바로 골라도 된다.
+
 ### 시나리오
 
 - **`chain up`.** `mg.Send(ctx, CmdCompose{req})` 하나. `stopped.Process` 가 요청을 저장하고
