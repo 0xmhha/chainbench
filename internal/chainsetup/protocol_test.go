@@ -140,6 +140,8 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"nodeTableBuilt":      nodeTableBuilt{},
 		"keySourceChosen":     keySourceChosen{},
 		"keysEnsured":         keysEnsured{},
+		"reconciled":          reconciled{},
+		"reconcileRefused":    reconcileRefused{},
 		"genesisWayChosen":    genesisWayChosen{},
 		"genesisBuilt":        genesisBuilt{},
 		"nodeConfigBuilt":     nodeConfigBuilt{},

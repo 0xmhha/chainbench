@@ -3,7 +3,6 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -386,65 +385,4 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap ReuseSnapshot
 		return p.describe(), nil
 	})
 	return plan, err
-}
-
-// ReconcileHandler is the reconciliation, as the state between the key set and
-// the genesis.
-//
-// note takes the line it records rather than the result it would be appended
-// to: what a composition returns belongs to the verb that returns it, and the
-// reconciliation is below that.
-//
-// It is the second comparison this repository makes against a running network,
-// and it is not the first one. CompareChain runs before anything is written and
-// may answer "compose it again"; this one runs inside a composition that has
-// already opened the workspace and written the keys, so a shared input that
-// changed is a refusal. What it can do is keep the nodes that still match what
-// this run will write and tear down the ones that do not, which is what lets
-// the stages after it bring only those back.
-func ReconcileHandler(ctx context.Context, d Deps, in ChainUpIn, snap ReuseSnapshot, note func(string)) lifecycle.Handler {
-	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
-		switch at {
-		case lifecycle.ReconcileChain:
-			// What this run WOULD write, rendered and compared before the
-			// genesis stage writes any of it. That is what makes a refusal
-			// leave the running network untouched.
-			gopts, gerr := GenesisOptsFor(ChainGenesisIn{
-				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
-				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
-				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
-			})
-			if gerr != nil {
-				return unreadableReconcile(m, gerr)
-			}
-			plan, rerr := reconcileUp(ctx, d, in.DataDir, snap, gopts)
-			if rerr != nil {
-				return unreadableReconcile(m, rerr)
-			}
-			note("reuse: " + plan.describe())
-			if plan.Refuse != "" {
-				if err := m.Request(lifecycle.ReconcileChainFailSharedInputChanged); err != nil {
-					return err
-				}
-				return fmt.Errorf("chainsetup: chain up: reuse-if-matching refused: %s", plan.Refuse)
-			}
-			if len(plan.redo()) == 0 {
-				return m.Request(lifecycle.ReconcileChainAllKept)
-			}
-			return m.Request(lifecycle.ReconcileChainSomeRedone)
-
-		case lifecycle.ReconcileChainAllKept, lifecycle.ReconcileChainSomeRedone:
-			return m.Request(lifecycle.ChainBuildGenesis)
-		}
-		return fmt.Errorf("chainsetup: the reconciliation was asked for %s, which nothing sets", at)
-	}
-}
-
-// unreadableReconcile is the failure for a comparison that could not be made at
-// all, as opposed to one that was made and refused.
-func unreadableReconcile(m *lifecycle.Machine, cause error) error {
-	if err := m.Request(lifecycle.ReconcileChainFailUnreadable); err != nil {
-		return err
-	}
-	return cause
 }

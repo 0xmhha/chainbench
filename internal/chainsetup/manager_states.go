@@ -101,6 +101,18 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 		}
 		m.TransitionTo(s.mg.after(step))
 		return true, nil
+	case reconciled:
+		// Either way the composition goes on: what has to be redone is redone
+		// by the steps that follow, which is what they do anyway.
+		next, err := s.mg.stageFor(stepGenesis)
+		if err != nil {
+			return true, err
+		}
+		m.TransitionTo(next)
+		return true, nil
+	case reconcileRefused:
+		m.TransitionTo(s.mg.failed)
+		return true, nil
 	case stageFailed:
 		// The reason is written before the move, so the failed state reads a
 		// fact rather than being handed one. Transitions carry no values.

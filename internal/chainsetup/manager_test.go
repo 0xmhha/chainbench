@@ -91,6 +91,7 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"      KeysFromPreset",
 		"      KeysGenerated",
 		"      KeysDeclared",
+		"    Reconciling",
 		"    BuildingGenesis",
 		"      GenesisFromTemplate",
 		"      GenesisFromExisting",

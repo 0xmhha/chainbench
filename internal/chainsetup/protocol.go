@@ -65,6 +65,12 @@ const (
 	eventKeySourceChosen
 	// eventKeysEnsured: every node has an identity.
 	eventKeysEnsured
+	// eventReconciled: the running network was compared with what this run
+	// would compose, and may be kept.
+	eventReconciled
+	// eventReconcileRefused: it cannot be kept, and composing over it would
+	// destroy what the request asked to preserve.
+	eventReconcileRefused
 	// eventGenesisWayChosen: where the genesis comes from is settled.
 	eventGenesisWayChosen
 	// eventGenesisBuilt: the genesis exists, however it was arrived at.
@@ -120,6 +126,8 @@ var whatNames = map[statemachine.What]string{
 	eventNodeTableBuilt:      "eventNodeTableBuilt",
 	eventKeySourceChosen:     "eventKeySourceChosen",
 	eventKeysEnsured:         "eventKeysEnsured",
+	eventReconciled:          "eventReconciled",
+	eventReconcileRefused:    "eventReconcileRefused",
 	eventGenesisWayChosen:    "eventGenesisWayChosen",
 	eventGenesisBuilt:        "eventGenesisBuilt",
 	eventNodeConfigBuilt:     "eventNodeConfigBuilt",
@@ -344,6 +352,18 @@ type nodesLaunched struct{ Detail string }
 func (nodesLaunched) What() statemachine.What { return eventNodesLaunched }
 
 func (e nodesLaunched) stage() (string, string) { return stepStart, e.Detail }
+
+// reconciled: the running network may be kept, and whether anything has to be
+// redone. It is not a stage report -- reconciling is not one of the
+// composition's steps.
+type reconciled struct{ Kept bool }
+
+func (reconciled) What() statemachine.What { return eventReconciled }
+
+// reconcileRefused: the running network cannot be kept.
+type reconcileRefused struct{}
+
+func (reconcileRefused) What() statemachine.What { return eventReconcileRefused }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

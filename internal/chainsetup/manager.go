@@ -79,6 +79,11 @@ type Manager struct {
 	request ChainUpIn
 	// stopAfter is the last step this run performs, or "" to run them all.
 	stopAfter string
+	// reuse is what was running before this composition started, for the
+	// reconciliation to compare against. Its presence is what makes a run a
+	// reuse-if-matching one.
+	reuse   ReuseSnapshot
+	reusing bool
 	// only is the one step a run was asked for, and "" for a whole composition.
 	// A step asked for by name stops when it is done rather than walking on.
 	only string
@@ -90,12 +95,13 @@ type Manager struct {
 	// failed so that state can report it once.
 	failure error
 
-	stopped   *stoppedState
-	composing *composingState
-	stages    []stage
-	composed  *composedState
-	ready     *readyState
-	failed    *failedState
+	stopped     *stoppedState
+	composing   *composingState
+	reconciling *reconciling
+	stages      []stage
+	composed    *composedState
+	ready       *readyState
+	failed      *failedState
 }
 
 // NewManager builds a composition machine over an open, held workspace.
@@ -108,6 +114,7 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 
 	root := &compositionState{}
 	mg.stopped = &stoppedState{mg: mg}
+	mg.reconciling = &reconciling{mg: mg}
 	mg.composing = &composingState{mg: mg}
 	mg.composed = &composedState{mg: mg}
 	mg.ready = &readyState{mg: mg}
@@ -139,6 +146,11 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 			for _, leaf := range branch.leafStates() {
 				mg.m.Add(leaf, st)
 			}
+		}
+		// The comparison stands where it happens: after the keys, before the
+		// genesis writes anything.
+		if st.step() == stepKeys {
+			mg.m.Add(mg.reconciling, mg.composing)
 		}
 	}
 	mg.m.Add(mg.composed, root)
@@ -256,6 +268,16 @@ func (mg *Manager) stepIsDue(step string) error {
 	return nil
 }
 
+// ReuseFrom tells this composition to hold what is already running against what
+// it would build, before it builds anything.
+//
+// The snapshot is taken by the caller, before the machine starts, because the
+// compose steps reset the node table: by the time a state could take it, what
+// was on the target is already gone.
+func (mg *Manager) ReuseFrom(snap ReuseSnapshot) {
+	mg.reuse, mg.reusing = snap, true
+}
+
 // Tree is the machine's state tree, for a test to compare against the design.
 func (mg *Manager) Tree() string { return mg.m.Tree() }
 
@@ -310,6 +332,11 @@ func (mg *Manager) stageFor(step string) (stage, error) {
 func (mg *Manager) after(step string) statemachine.State {
 	if step == mg.stopAfter {
 		return mg.composed
+	}
+	// The comparison stands between the keys and the genesis: the last moment
+	// what is on the target is still there to compare.
+	if step == stepKeys && mg.reusing {
+		return mg.reconciling
 	}
 	for i, st := range mg.stages {
 		if st.step() == step {
