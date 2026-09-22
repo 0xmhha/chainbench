@@ -118,11 +118,12 @@ type ChainUpIn struct {
 
 // UpStepNames is the composition order, for reading the record.
 //
-// It no longer drives anything: the walk is the transition table, and the stage
-// table in statedriven.go is what names each step's state. What is left needs
-// the names in order — resume asks the record which step is the first one not
-// marked done — and a test holds the two lists to the same nine names in the
-// same order.
+// It does not drive the walk: the composition machine's states do, and
+// stageOrder pairs each of these names with the state that runs it. What is
+// left needs the names in order — a record is keyed by them, and a run that
+// stopped where it was told is resumed by asking which is the first not marked
+// done — and a test holds the two lists to the same nine names in the same
+// order.
 var UpStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
 
 // OpStepNames is what the record can hold besides the ladder: an operation on a

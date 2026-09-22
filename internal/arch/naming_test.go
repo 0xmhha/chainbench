@@ -84,10 +84,9 @@ var nameCollisionDebt = map[string]string{
 	"Inventory":   "chainsetup 은 재고를 모으는 함수이고 resource 는 그 재고다",
 	"Verdict":     "preflight 는 얼마나 다시 지어야 하는지를, nodemonitor 는 게이트가 다음에 무엇을 할지를 가리킨다",
 
-	// HSM 이관 동안만이다. 두 항목은 옛 core/lifecycle 이 지워지는 commit 19 에서
-	// 함께 사라진다 — 그때 이 두 줄을 지우지 않으면 이 테스트가 그렇게 말한다.
-	"Machine": "이관 중이다. core/lifecycle 은 전이 표를 걷는 옛 기계, core/statemachine 은 그것을 대신할 새 기계다. 같은 개념의 두 구현이라 이름이 같고, 옛 것이 지워질 때 같이 사라진다",
-	"State":   "core/statemachine 은 Enter·Exit·Process 를 가진 state 객체를, chainsetup 은 디스크에 남는 record 를 가리킨다(app 은 그 별칭이다). 옛 이름을 record 로 고치는 것은 FormatVersion 2 로 올리는 commit 15 의 일이다",
+	// HSM 이관 동안만이다. Machine 은 옛 core/lifecycle 의 기계가 지워지면서
+	// 사라졌다. State 는 record 이름을 고치는 일이 남아 있다.
+	"State": "core/statemachine 은 Enter·Exit·Process 를 가진 state 객체를, chainsetup 은 디스크에 남는 record 를 가리킨다(app 은 그 별칭이다). 옛 이름을 record 로 고치는 것은 FormatVersion 2 로 올리는 commit 15 의 일이다",
 }
 
 // TestNamesDoNotCollide is A7: an exported name declared at package level in
