@@ -7,9 +7,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// NetNewIn initializes a composition workspace: the chain identity and where
+// ChainNewIn initializes a composition workspace: the chain identity and where
 // the network's data plane lives.
-type NetNewIn struct {
+type ChainNewIn struct {
 	// DataDir is the local workspace (control-plane) directory.
 	DataDir string
 	// Chain is the registry chain id.
@@ -38,18 +38,18 @@ type NetNewIn struct {
 	WorkspaceConfigPath string
 }
 
-// NetNewOut reports what the workspace was initialized to.
-type NetNewOut struct {
+// ChainNewOut reports what the workspace was initialized to.
+type ChainNewOut struct {
 	// Detail is the recorded step detail line.
 	Detail string
 }
 
-// NetNew initializes (or re-targets) the composition workspace — the `chain new`
+// ChainNew initializes (or re-targets) the composition workspace — the `chain new`
 // step, shared verbatim by the CLI subcommand and the MCP tool.
-func NetNew(_ context.Context, d chainsetup.Deps, in NetNewIn) (NetNewOut, error) {
+func ChainNew(_ context.Context, d chainsetup.Deps, in ChainNewIn) (ChainNewOut, error) {
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetNewOut{}, err
+		return ChainNewOut{}, err
 	}
 	detail, err := ws.New(chainsetup.NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
@@ -57,46 +57,46 @@ func NetNew(_ context.Context, d chainsetup.Deps, in NetNewIn) (NetNewOut, error
 		ServerSet: in.ServerSet, WorkspaceConfigPath: in.WorkspaceConfigPath,
 	})
 	if err != nil {
-		return NetNewOut{}, err
+		return ChainNewOut{}, err
 	}
 	if err := ws.Save(); err != nil {
-		return NetNewOut{}, err
+		return ChainNewOut{}, err
 	}
-	return NetNewOut{Detail: detail}, nil
+	return ChainNewOut{Detail: detail}, nil
 }
 
-// NetStatusIn identifies the workspace to inspect.
-type NetStatusIn struct {
+// ChainStatusIn identifies the workspace to inspect.
+type ChainStatusIn struct {
 	DataDir string
 }
 
-// NetStatusOut is the workspace composition state.
-type NetStatusOut struct {
+// ChainStatusOut is the workspace composition state.
+type ChainStatusOut struct {
 	// Dir is the workspace control directory.
 	Dir string
 	// State is the persisted composition state (chain, target, step table).
 	State chainsetup.State
 }
 
-// NetStatus reads the workspace composition state — the `chain status` step.
-func NetStatus(_ context.Context, d chainsetup.Deps, in NetStatusIn) (NetStatusOut, error) {
+// ChainStatus reads the workspace composition state — the `chain status` step.
+func ChainStatus(_ context.Context, d chainsetup.Deps, in ChainStatusIn) (ChainStatusOut, error) {
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetStatusOut{}, err
+		return ChainStatusOut{}, err
 	}
-	return NetStatusOut{Dir: ws.Dir(), State: ws.State()}, nil
+	return ChainStatusOut{Dir: ws.Dir(), State: ws.State()}, nil
 }
 
-// NetEndpointsIn asks for a composed network's reachable RPC endpoints.
-type NetEndpointsIn struct {
+// ChainEndpointsIn asks for a composed network's reachable RPC endpoints.
+type ChainEndpointsIn struct {
 	DataDir string
 }
 
-// NetEndpoints returns each node's HTTP RPC URL as this machine can reach it:
+// ChainEndpoints returns each node's HTTP RPC URL as this machine can reach it:
 // the recorded per-node host, translated through the docker map when the
 // workspace runs in docker mode — the same translation the health probe uses,
 // so a caller attaching a test engine dials what actually answers.
-func NetEndpoints(_ context.Context, d chainsetup.Deps, in NetEndpointsIn) ([]string, error) {
+func ChainEndpoints(_ context.Context, d chainsetup.Deps, in ChainEndpointsIn) ([]string, error) {
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return nil, err

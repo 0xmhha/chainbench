@@ -12,7 +12,7 @@ import (
 // composes from and what the comparison reads to decide whether a second run
 // wants the same chain. A type the record embeds cannot live above the record.
 
-// UpStage is how far NetUp takes the composition.
+// UpStage is how far ChainUp takes the composition.
 type UpStage string
 
 const (
@@ -24,9 +24,9 @@ const (
 	UpStart UpStage = "start"
 )
 
-// NetUpIn describes the network to compose. It is the union of the step inputs,
+// ChainUpIn describes the network to compose. It is the union of the step inputs,
 // in the order the steps consume them.
-type NetUpIn struct {
+type ChainUpIn struct {
 	// DataDir is the workspace directory.
 	DataDir string `json:"dataDir,omitempty"`
 	// Stage is how far to go; empty means UpStart.

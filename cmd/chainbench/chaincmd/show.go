@@ -41,7 +41,7 @@ func newNetShowCmd() *cobra.Command {
 			if workspaceDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetMap(cmd.Context(), queryDeps(cmd), app.NetMapIn{
+			out, err := app.NetworkMap(cmd.Context(), queryDeps(cmd), app.NetworkMapIn{
 				DataDir: workspaceDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
 			})
 			if err != nil {

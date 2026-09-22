@@ -167,13 +167,13 @@ func composedArtifacts(net composed) []session.ArtifactRef {
 // composeWorkspace composes a single-binary network through the workspace
 // steps, reusing what is already composed when preflight says it can. It
 // records the steps and the preflight decision on out.
-func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
+func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.ChainUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
 	// What is composed here already may be what this suite wants: ask before
 	// rebuilding. The asking, and the four things the answer leads to, are the
 	// comparison block of the chain's own lifecycle — this used to be a switch
 	// over four verdicts written here, which could say what was done but not
 	// where the run was when it did it.
-	res, err := verb.NetUpComparing(ctx, sd, verb.CompareIn{Up: up})
+	res, err := verb.ChainUpComparing(ctx, sd, verb.CompareIn{Up: up})
 	out.Preflight = res.Decision
 	out.SetupSteps = append(out.SetupSteps, res.Steps...)
 	if err != nil {
@@ -192,7 +192,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 // gates it ready (E6). It is the shared tail of both composing a network and
 // attaching to one an existing workspace already brought up (WA10).
 func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, keysDir string, setupSteps *[]string, gateBudget time.Duration) (composed, error) {
-	endpoints, err := verb.NetEndpoints(ctx, sd, verb.NetEndpointsIn{DataDir: dataDir})
+	endpoints, err := verb.ChainEndpoints(ctx, sd, verb.ChainEndpointsIn{DataDir: dataDir})
 	if err != nil {
 		return composed{}, lifecycle.Mark(errUnreachable, fmt.Errorf("engine: run suite: endpoints: %w", err))
 	}
@@ -203,7 +203,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	// The workspace knows the whole node table — indices, hosts, every
 	// endpoint — so the engine attaches to that, not to bare URLs, and fault
 	// steps get a control over the recorded processes. NodeSet's RPCURL is the
-	// reachable, dial-time-translated address (the same NetEndpoints returns), so
+	// reachable, dial-time-translated address (the same ChainEndpoints returns), so
 	// a docker/remote run attaches to the right endpoint with no re-translation
 	// here.
 	var nodes *node.NodeSet
@@ -218,7 +218,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 		endpoints: endpoints,
 		caps:      caps,
 		teardown: func(ctx context.Context) error {
-			_, err := verb.NetStop(ctx, sd, verb.NetStopIn{DataDir: dataDir})
+			_, err := verb.ChainStop(ctx, sd, verb.ChainStopIn{DataDir: dataDir})
 			return err
 		},
 		nodes:   nodes,
@@ -227,7 +227,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 	}
 	// Where this network's declared fork is and who hands over at it. Read from
 	// the record, so attaching to a composed network knows it too.
-	if f, ferr := verb.NetFork(ctx, sd, verb.NetForkIn{DataDir: dataDir}); ferr == nil {
+	if f, ferr := verb.ChainFork(ctx, sd, verb.ChainForkIn{DataDir: dataDir}); ferr == nil {
 		switch {
 		case f.Fork != nil:
 			out.fork = forkGate{at: f.Fork.At, restart: f.Fork.Restart, preFork: make(map[int]bool, len(f.PreFork))}
@@ -257,7 +257,7 @@ func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, key
 // target (or a lookup error — collection is best-effort) returns nil, and the
 // collector reads the local filesystem.
 func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
-	runner, err := verb.NetRunner(sd, dataDir)
+	runner, err := verb.NetworkRunner(sd, dataDir)
 	if err != nil || runner == nil {
 		return nil
 	}

@@ -613,16 +613,16 @@ func GenesisFailure(err error) lifecycle.Status {
 	return lifecycle.FailStageUnclassified
 }
 
-// NetGenesisIn customizes the built genesis.
+// ChainGenesisIn customizes the built genesis.
 //
 // The cb tags are what a surface renders this from: one declaration behind the
 // cobra flags a person types and the JSON schema an agent reads, so the two
 // cannot describe the same argument differently (feature.Flags / feature.Schema,
 // surface-unification-design §3.2). They are inert until a surface reads them —
-// this struct is unchanged otherwise — and TestNetGenesis_TagsMatchTheCommand
+// this struct is unchanged otherwise — and TestChainGenesis_TagsMatchTheCommand
 // holds them to the flags the command declares by hand today, so the derivation
 // is proven to reproduce the shipped surface before anything switches to it.
-type NetGenesisIn struct {
+type ChainGenesisIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	ChainID int64  `cb:"chain-id"               help:"override the manifest chain id (0 = manifest)"`
 	// Set carries genesis config overrides as key=value on the bare config key,
@@ -655,7 +655,7 @@ type NetGenesisIn struct {
 // from the dropped fork heights, so a capability-gated fork test would run
 // against a chain that has no such fork. Saying no here, before anything is
 // written, is the only answer that leaves the request and the result equal.
-func GenesisOptsFor(in NetGenesisIn) (GenesisOpts, error) {
+func GenesisOptsFor(in ChainGenesisIn) (GenesisOpts, error) {
 	opts, err := buildGenesisOpts(in)
 	if err != nil {
 		return opts, err
@@ -691,7 +691,7 @@ func (o GenesisOpts) checkExistingIsUnchanged() error {
 		o.Existing, strings.Join(asked, " and "))
 }
 
-func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
+func buildGenesisOpts(in ChainGenesisIn) (GenesisOpts, error) {
 	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting, Fork: in.Fork}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")
@@ -758,4 +758,4 @@ func readGenesisOverlay(path string) (genesisOverlayFile, error) {
 	return overlay, nil
 }
 
-// NetConfigIn identifies the workspace and, optionally, per-node config
+// ChainConfigIn identifies the workspace and, optionally, per-node config

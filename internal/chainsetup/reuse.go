@@ -402,14 +402,14 @@ func reconcileUp(ctx context.Context, d Deps, dataDir string, snap ReuseSnapshot
 // changed is a refusal. What it can do is keep the nodes that still match what
 // this run will write and tear down the ones that do not, which is what lets
 // the stages after it bring only those back.
-func ReconcileHandler(ctx context.Context, d Deps, in NetUpIn, snap ReuseSnapshot, note func(string)) lifecycle.Handler {
+func ReconcileHandler(ctx context.Context, d Deps, in ChainUpIn, snap ReuseSnapshot, note func(string)) lifecycle.Handler {
 	return func(_ context.Context, m *lifecycle.Machine, at lifecycle.Status) error {
 		switch at {
 		case lifecycle.ReconcileChain:
 			// What this run WOULD write, rendered and compared before the
 			// genesis stage writes any of it. That is what makes a refusal
 			// leave the running network untouched.
-			gopts, gerr := GenesisOptsFor(NetGenesisIn{
+			gopts, gerr := GenesisOptsFor(ChainGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
 				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
 				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,

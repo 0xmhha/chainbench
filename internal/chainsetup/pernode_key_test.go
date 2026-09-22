@@ -274,7 +274,7 @@ func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
 	}
 }
 
-// TestNetUp_InlineKeyNeverReachesTheWorkspace drives the real up verb, which is
+// TestChainUp_InlineKeyNeverReachesTheWorkspace drives the real up verb, which is
 // the only path that exercises the second way an inline key got onto disk.
 //
 // place refusing early is not enough on its own: `up` records the request before
@@ -283,7 +283,7 @@ func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
 // records and left it sitting in state.request.topology, where a run that had
 // already failed still published it. This drives up end to end and reads the
 // saved file back as text.
-func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
+func TestChainUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 	const inlineHex = "0x3333333333333333333333333333333333333333333333333333333333333333"
 	bare := strings.TrimPrefix(inlineHex, "0x")
 	dir := t.TempDir()
@@ -294,7 +294,7 @@ func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 		{Index: 3, Role: "bp"},
 		{Index: 4, Role: "bp"},
 	}}
-	_, err := verb.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
+	_, err := verb.ChainUp(context.Background(), chainsetup.Deps{}, chainsetup.ChainUpIn{
 		DataDir:  dir,
 		Chain:    "stablenet",
 		Binary:   "/nonexistent/gstable",

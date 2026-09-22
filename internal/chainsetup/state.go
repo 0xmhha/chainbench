@@ -189,7 +189,7 @@ type State struct {
 	// what it was asked, not re-asked. Its DataDir is left empty: the
 	// workspace's location is where this file is. It is the one fact of a
 	// composition that is otherwise nowhere on disk (F1).
-	Request *NetUpIn `json:"request,omitempty"`
+	Request *ChainUpIn `json:"request,omitempty"`
 }
 
 // Workspace is an open composition workspace: the session-owned persistence

@@ -40,10 +40,10 @@ func readProvenance(t *testing.T, dir string) []chainsetup.ConfigProvenance {
 	return state.ConfigProvenance
 }
 
-// TestNetConfig_OverrideIsolationAndProvenance pins E3: a node-scoped config
+// TestChainConfig_OverrideIsolationAndProvenance pins E3: a node-scoped config
 // override reaches only that node, the config the step wrote is recorded per
 // node with its checksum, and the checksums differ when the configs do.
-func TestNetConfig_OverrideIsolationAndProvenance(t *testing.T) {
+func TestChainConfig_OverrideIsolationAndProvenance(t *testing.T) {
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
@@ -57,12 +57,12 @@ func TestNetConfig_OverrideIsolationAndProvenance(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	must(verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
-	must(verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 3}))
-	must(verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}))
-	must(verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, ChainID: 9999}))
+	must(verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
+	must(verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 3}))
+	must(verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}))
+	must(verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, ChainID: 9999}))
 	// Every node gets metricsHost; only node2 gets httpHost.
-	must(verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir, ScopedSet: map[string][]string{
+	must(verb.ChainConfig(ctx, d, verb.ChainConfigIn{DataDir: dir, ScopedSet: map[string][]string{
 		"all":   {"metricsHost=10.7.7.7"},
 		"node2": {"httpHost=10.2.2.2"},
 	}}))

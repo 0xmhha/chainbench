@@ -17,8 +17,8 @@ import (
 // config. The enode host is the node's own recorded address — the one a peer
 // dials on the network — not the harness's docker-translated dial address.
 
-// NetEnodesIn selects the workspace and, optionally, one node.
-type NetEnodesIn struct {
+// ChainEnodesIn selects the workspace and, optionally, one node.
+type ChainEnodesIn struct {
 	// DataDir is the workspace directory.
 	DataDir string
 	// Node, when > 0, limits the result to that 1-based node index.
@@ -33,46 +33,46 @@ type NodeEnode struct {
 	Enode string `json:"enode"`
 }
 
-// NetEnodesOut is the enode list in node order.
-type NetEnodesOut struct {
+// ChainEnodesOut is the enode list in node order.
+type ChainEnodesOut struct {
 	Enodes []NodeEnode `json:"enodes"`
 }
 
-// NetEnodes derives each node's enode from the key set and the placement. It
+// ChainEnodes derives each node's enode from the key set and the placement. It
 // needs both stages done: the node table (place) supplies host and p2p port,
 // the key set (keys) supplies the devp2p public key. It reports which one is
 // missing rather than an empty list.
-func NetEnodes(_ context.Context, d chainsetup.Deps, in NetEnodesIn) (NetEnodesOut, error) {
+func ChainEnodes(_ context.Context, d chainsetup.Deps, in ChainEnodesIn) (ChainEnodesOut, error) {
 	if in.DataDir == "" {
-		return NetEnodesOut{}, ErrNoDataDir
+		return ChainEnodesOut{}, ErrNoDataDir
 	}
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetEnodesOut{}, err
+		return ChainEnodesOut{}, err
 	}
 	st := ws.State()
 	if len(st.Nodes) == 0 {
-		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: no node table — run `chain place` first")
+		return ChainEnodesOut{}, fmt.Errorf("chainsetup: enode: no node table — run `chain place` first")
 	}
 	if st.KeysDir == "" {
-		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: no key set — run `chain keys` first")
+		return ChainEnodesOut{}, fmt.Errorf("chainsetup: enode: no key set — run `chain keys` first")
 	}
 	preset, err := preset.LoadKeyPreset(st.KeysDir)
 	if err != nil {
-		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: keys: %w", err)
+		return ChainEnodesOut{}, fmt.Errorf("chainsetup: enode: keys: %w", err)
 	}
 	placed, err := ws.Netmap()
 	if err != nil {
-		return NetEnodesOut{}, err
+		return ChainEnodesOut{}, err
 	}
-	var out NetEnodesOut
+	var out ChainEnodesOut
 	for _, pl := range placed.Placements() {
 		if in.Node > 0 && pl.Index != in.Node {
 			continue
 		}
 		entry, ok := preset.Node(pl.Index)
 		if !ok {
-			return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: no key for node%d — the key set does not cover the node count", pl.Index)
+			return ChainEnodesOut{}, fmt.Errorf("chainsetup: enode: no key for node%d — the key set does not cover the node count", pl.Index)
 		}
 		out.Enodes = append(out.Enodes, NodeEnode{
 			Index: pl.Index,
@@ -81,7 +81,7 @@ func NetEnodes(_ context.Context, d chainsetup.Deps, in NetEnodesIn) (NetEnodesO
 		})
 	}
 	if in.Node > 0 && len(out.Enodes) == 0 {
-		return NetEnodesOut{}, fmt.Errorf("chainsetup: enode: no node%d in this workspace (%d nodes)", in.Node, len(st.Nodes))
+		return ChainEnodesOut{}, fmt.Errorf("chainsetup: enode: no node%d in this workspace (%d nodes)", in.Node, len(st.Nodes))
 	}
 	return out, nil
 }

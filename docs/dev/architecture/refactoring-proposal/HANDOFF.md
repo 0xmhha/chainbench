@@ -59,8 +59,8 @@ See [the detailed graph and source map](cli-composition-review.md).
 ```text
 chainbench chain up
   → chaincmd.newNetUpCmd
-  → app.NetUp
-  → chainsetup.NetUp / netUpFrom
+  → app.ChainUp
+  → chainsetup.ChainUp / netUpFrom
   → new / place / keys / genesis / config / build / deploy / init / start
   → workspace methods → per-machine resource.Access
   → selected LocalDriver or RemoteDriver/SSH

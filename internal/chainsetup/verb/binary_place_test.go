@@ -14,7 +14,7 @@ func TestPlaceRequest_PlacesEveryReferenceOnce(t *testing.T) {
 	cfg := writeWorkspaceConfig(t, "/data", nil)
 	declared := map[string]string{"upgrade": "gstable-next"}
 
-	in := chainsetup.NetUpIn{
+	in := chainsetup.ChainUpIn{
 		DataDir: t.TempDir(), Chain: "stablenet", Stage: chainsetup.UpStart,
 		Binary: "gstable", Binaries: declared, WorkspaceConfigPath: cfg,
 	}
@@ -45,7 +45,7 @@ func TestPlaceRequest_PlacesEveryReferenceOnce(t *testing.T) {
 // TestPlaceRequest_WithoutAnEnvironmentFileANameStaysAName: the target resolves
 // it on its PATH, and inventing a path here would name a file nobody put there.
 func TestPlaceRequest_WithoutAnEnvironmentFileANameStaysAName(t *testing.T) {
-	in := chainsetup.NetUpIn{Binary: "gstable", Binaries: map[string]string{"upgrade": "gstable-next"}}
+	in := chainsetup.ChainUpIn{Binary: "gstable", Binaries: map[string]string{"upgrade": "gstable-next"}}
 	if err := chainsetup.PlaceRequest(&in, nil); err != nil {
 		t.Fatal(err)
 	}

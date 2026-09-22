@@ -173,7 +173,7 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 
 | ID | 사용자 요구 | 본문 | 작업 | 증거 (이 테스트가 그 요구를 붙잡는다) |
 |---|---|---|---|---|
-| R01 | local 또는 remote 체인 구성 | §2 | E9 | `TestNetAllocate_RemoteServerRetargetsTheDataPlane` |
+| R01 | local 또는 remote 체인 구성 | §2 | E9 | `TestChainAllocate_RemoteServerRetargetsTheDataPlane` |
 | R02 | Docker로 폐쇄망 remote 환경 모사 | §2 | E9 | `TestWorkspace_DockerWithoutLocalmapRefusesLoudly` |
 | R03 | 서버 자료 확인·재사용·upload/download·동일성 검사 | §6 | E2 | `TestProvision_ReusesIdenticalOverwritesDifferent` |
 | R04 | local/remote 노드 PID와 실행 command 관리 | §4·§5·§7 | E4 | `TestLedger_RecordsQueriesAndSurvivesReopen` |

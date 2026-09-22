@@ -133,7 +133,7 @@ func countFrom(from map[PlanField]origin.Origin, f PlanField, count int) {
 // candidates: once the merge is done, a value that came from the command and
 // one that came from the document are the same string.
 type composition struct {
-	up   *chainsetup.NetUpIn
+	up   *chainsetup.ChainUpIn
 	from map[PlanField]origin.Origin
 }
 
@@ -329,7 +329,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if in.NetworkID != 0 {
 		launch = append(launch, fmt.Sprintf("%s=%d", nodeconfig.KeyNetworkID, in.NetworkID))
 	}
-	up := &chainsetup.NetUpIn{
+	up := &chainsetup.ChainUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
@@ -418,7 +418,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 // bundle. A field the DSL already declared is a conflict rather than a silent
 // override. It runs only for inputs.mode existing; a generated run names no
 // bundle (workspace-config validation ensures that).
-func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+func applyExistingInputs(up *chainsetup.ChainUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
 	if wc.Inputs.Mode != resource.InputExisting {
 		return nil
 	}
@@ -460,7 +460,7 @@ func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, sp
 // direct file reference, which is how a node named its config before bundles
 // existed. With no node table there is nothing to map onto, and the map is
 // simply unused.
-func applyExistingConfigs(up *chainsetup.NetUpIn, existing resource.ExistingInputs) {
+func applyExistingConfigs(up *chainsetup.ChainUpIn, existing resource.ExistingInputs) {
 	if len(existing.Configs) == 0 || up.Topology == nil {
 		return
 	}

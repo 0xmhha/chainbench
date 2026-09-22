@@ -21,7 +21,7 @@ import (
 // import check notices. So each feature that moves under app arrives with a
 // test of this shape, and this is the shape.
 //
-// resource pool is used because both surfaces already go through app.NetPool,
+// resource pool is used because both surfaces already go through app.NetworkPool,
 // which makes this a test that passes today and would fail the moment the two
 // drift. Three other pairs are in the same position (chain show, hardfork,
 // resource plan); the remaining 22 verified pairs are not, and each of those is
@@ -87,7 +87,7 @@ func decode(t *testing.T, out string) any {
 // TestParity_ResourcePool: the CLI and the MCP tool answer the same question,
 // so they must give the same answer.
 //
-// Both are wired to app.NetPool today. If one is later pointed at the module
+// Both are wired to app.NetworkPool today. If one is later pointed at the module
 // directly, or picks up a different default, the two answers separate and this
 // fails — which is the whole point, since nothing else would notice.
 func TestParity_ResourcePool(t *testing.T) {

@@ -282,7 +282,7 @@ func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.R
 // The location is not part of it: the record is where the workspace is, so a
 // workspace moved to another directory still reads as the request it was
 // composed from rather than as one pointing somewhere that no longer exists.
-func (w *Workspace) RecordRequest(in NetUpIn) error {
+func (w *Workspace) RecordRequest(in ChainUpIn) error {
 	req := in
 	req.DataDir = ""
 	w.state.Request = &req

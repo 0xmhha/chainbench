@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// NetUp composes a whole network in one call by running the step use cases in
+// ChainUp composes a whole network in one call by running the step use cases in
 // order. It is the step stack's answer to `setup --launch`: the same nine steps
 // an operator can run one at a time, driven end to end, so there is one
 // bring-up implementation rather than two.
@@ -18,14 +18,14 @@ import (
 // Every step still records itself in the workspace, so a run that fails part
 // way leaves an inspectable composition the operator can resume by hand.
 
-// NetUp runs the composition steps in order and returns what each recorded.
-func NetUp(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) (NetUpOut, error) {
+// ChainUp runs the composition steps in order and returns what each recorded.
+func ChainUp(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn) (ChainUpOut, error) {
 	return composeFrom(ctx, d, in, "")
 }
 
-// NetUpOut reports each step's recorded detail, in order, and the resulting
+// ChainUpOut reports each step's recorded detail, in order, and the resulting
 // network.
-type NetUpOut struct {
+type ChainUpOut struct {
 	// Steps is one "name: detail" line per step that ran.
 	Steps []string
 	// Nodes is the composed network. Its PIDs are set only when the run reached
@@ -57,7 +57,7 @@ type upPlan struct {
 // planUp validates the request and resolves its defaults. It writes nothing:
 // every refusal here happens before the workspace is opened, which is the point
 // of doing it in one place up front.
-func planUp(in chainsetup.NetUpIn) (upPlan, error) {
+func planUp(in chainsetup.ChainUpIn) (upPlan, error) {
 	if in.DataDir == "" {
 		return upPlan{}, errors.New("chainsetup: chain up needs a workspace directory")
 	}
@@ -100,10 +100,10 @@ func planUp(in chainsetup.NetUpIn) (upPlan, error) {
 // UpStepNames, each wrapping the same verb the matching `chain <step>` command
 // calls. It is built once and read by the runner below, so the order the run
 // follows and the work each step does stay separate things.
-func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[string]func() (chainsetup.StepOut, error) {
+func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn) map[string]func() (chainsetup.StepOut, error) {
 	return map[string]func() (chainsetup.StepOut, error){
 		"new": func() (chainsetup.StepOut, error) {
-			r, err := NetNew(ctx, d, NetNewIn{
+			r, err := ChainNew(ctx, d, ChainNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
 				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
 				Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
@@ -121,7 +121,7 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[
 		// Place precedes keys: the key step sizes the identity set from the
 		// node table, so the layout has to exist first.
 		"place": func() (chainsetup.StepOut, error) {
-			r, err := NetAllocate(ctx, d, NetAllocateIn{
+			r, err := ChainAllocate(ctx, d, ChainAllocateIn{
 				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
@@ -132,14 +132,14 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[
 			return r, err
 		},
 		"keys": func() (chainsetup.StepOut, error) {
-			r, err := NetKeys(ctx, d, NetKeysIn{
+			r, err := ChainKeys(ctx, d, ChainKeysIn{
 				DataDir: in.DataDir, Source: in.KeysSource, BlueprintPath: in.BlueprintPath,
 				Validators: in.KeysValidators,
 			})
 			return r, err
 		},
 		"genesis": func() (chainsetup.StepOut, error) {
-			r, err := NetGenesis(ctx, d, chainsetup.NetGenesisIn{
+			r, err := ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
 				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
 				Fork: in.GenesisFork,
@@ -147,25 +147,25 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[
 			return r, err
 		},
 		"config": func() (chainsetup.StepOut, error) {
-			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir, ScopedSet: in.ConfigSet})
+			r, err := ChainConfig(ctx, d, ChainConfigIn{DataDir: in.DataDir, ScopedSet: in.ConfigSet})
 			return r, err
 		},
 		"build": func() (chainsetup.StepOut, error) {
-			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{
+			r, err := ChainLaunchOpts(ctx, d, ChainLaunchOptsIn{
 				DataDir: in.DataDir, Set: in.LaunchSet, ScopedSet: in.LaunchScoped,
 			})
 			return chainsetup.StepOut{Detail: r.Detail}, err
 		},
 		"deploy": func() (chainsetup.StepOut, error) {
-			r, err := NetProvision(ctx, d, NetProvisionIn{DataDir: in.DataDir})
+			r, err := ChainProvision(ctx, d, ChainProvisionIn{DataDir: in.DataDir})
 			return r, err
 		},
 		"init": func() (chainsetup.StepOut, error) {
-			r, err := NetInit(ctx, d, NetInitIn{DataDir: in.DataDir, Binary: in.Binary})
+			r, err := ChainInit(ctx, d, ChainInitIn{DataDir: in.DataDir, Binary: in.Binary})
 			return r, err
 		},
 		"start": func() (chainsetup.StepOut, error) {
-			r, err := NetStart(ctx, d, NetStartIn{DataDir: in.DataDir, Binary: in.Binary})
+			r, err := ChainStart(ctx, d, ChainStartIn{DataDir: in.DataDir, Binary: in.Binary})
 			return r, err
 		},
 	}
@@ -179,15 +179,15 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn) map[
 // bodies to the machine that walks them. It does not decide the order, which
 // stage comes after which, or where a run stops; those are the machine's, and
 // this is what starts it.
-func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, from string) (NetUpOut, error) {
+func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn, from string) (ChainUpOut, error) {
 	up, err := planUp(in)
 	if err != nil {
-		return NetUpOut{}, err
+		return ChainUpOut{}, err
 	}
 	// Before the workspace is opened, so what this request records, compares
 	// and launches with is one form of the same reference.
 	if err := placeUpRequest(&in); err != nil {
-		return NetUpOut{}, err
+		return ChainUpOut{}, err
 	}
 	stage, mode := up.stage, up.mode
 
@@ -198,13 +198,13 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, 
 	// network.
 	lockWS, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetUpOut{}, err
+		return ChainUpOut{}, err
 	}
 	lockWS.SetEnv(d.Env)
 	lockWS.SetDriver(d.Driver)
 	held, prev, lockState, err := lockWS.Acquire(d.Owner())
 	if err != nil {
-		return NetUpOut{}, err
+		return ChainUpOut{}, err
 	}
 	defer func() { _ = held.Release() }()
 	if lockState == session.LockStale {
@@ -221,7 +221,7 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, 
 		snap = lockWS.SnapshotForReuse(ctx)
 	}
 
-	var out NetUpOut
+	var out ChainUpOut
 	// record runs one step and appends its detail, stopping the whole run on the
 	// first failure so a later step never composes on top of a broken one.
 	//
@@ -286,12 +286,12 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.NetUpIn, 
 func reconcilingUp(
 	ctx context.Context,
 	d chainsetup.Deps,
-	in chainsetup.NetUpIn,
+	in chainsetup.ChainUpIn,
 	from string,
 	stage chainsetup.UpStage,
 	snap chainsetup.ReuseSnapshot,
 	run composeRun,
-	out *NetUpOut,
+	out *ChainUpOut,
 ) error {
 	start, err := startFor(from)
 	if err != nil {
@@ -312,7 +312,7 @@ func reconcilingUp(
 
 // placeUpRequest places the request's binary references through the environment
 // file it names, if it names one.
-func placeUpRequest(in *chainsetup.NetUpIn) error {
+func placeUpRequest(in *chainsetup.ChainUpIn) error {
 	if in.WorkspaceConfigPath == "" {
 		return chainsetup.PlaceRequest(in, nil)
 	}
@@ -326,7 +326,7 @@ func placeUpRequest(in *chainsetup.NetUpIn) error {
 // upChainMode reads how this up should treat an existing composition from the
 // workspace-config's execution.chain. No config, or an empty value, is fresh —
 // the default that composes as it always has.
-func upChainMode(in chainsetup.NetUpIn) (resource.ChainMode, error) {
+func upChainMode(in chainsetup.ChainUpIn) (resource.ChainMode, error) {
 	if in.WorkspaceConfigPath == "" {
 		return resource.ChainFresh, nil
 	}
@@ -343,7 +343,7 @@ func upChainMode(in chainsetup.NetUpIn) (resource.ChainMode, error) {
 // recordRequest writes what the composition was asked for onto the
 // workspace. The location is not part of it: the record is where the
 // workspace is.
-func recordRequest(d chainsetup.Deps, in chainsetup.NetUpIn) error {
+func recordRequest(d chainsetup.Deps, in chainsetup.ChainUpIn) error {
 	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return "", ws.RecordRequest(in)
 	})

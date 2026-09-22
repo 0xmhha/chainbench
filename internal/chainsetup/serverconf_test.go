@@ -35,16 +35,16 @@ pool:
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 `
 
-func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
+func TestChainAllocate_InventoryDecidesThePorts(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
-	out, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	out, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
@@ -64,8 +64,8 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+func TestChainAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 	st := stateOf(t, dir, d)
 	if !strings.Contains(st.PortOrigin, "built-in") {
 		t.Errorf("port source = %q, want it to name the built-ins", st.PortOrigin)
@@ -75,14 +75,14 @@ func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_RemoteServerRetargetsTheDataPlane(t *testing.T) {
+func TestChainAllocate_RemoteServerRetargetsTheDataPlane(t *testing.T) {
 	// The same entry shape describes a remote host: only kind and ssh differ,
 	// and the composition follows the target it names.
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/chainbench"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -94,7 +94,7 @@ pool:
 ssh: {user: deploy, port: 2222}
 `)
 
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, BPCount: 1,
 		Server: resource.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
@@ -126,12 +126,12 @@ ssh: {user: deploy, port: 2222}
 	}
 }
 
-func TestNetAllocate_AllServersSpreadsOneNodePerHost(t *testing.T) {
+func TestChainAllocate_AllServersSpreadsOneNodePerHost(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -144,7 +144,7 @@ pool:
 ssh: {user: deploy}
 `)
 
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
@@ -189,7 +189,7 @@ func TestResolveServer_NoSelectionFallsBackToTheBuiltins(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
+func TestChainAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
 	// The per-node host is what the config's static-node list and the launch
 	// specs derive from. If every node recorded this machine instead, a set’s
 	// nodes could not find their peers and the failure would look like a
@@ -201,7 +201,7 @@ func TestNetAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
 		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
@@ -213,7 +213,7 @@ pool:
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy}
 `)
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {

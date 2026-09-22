@@ -28,7 +28,7 @@ func reuseWorkspaceConfig(t *testing.T, dir, dataRoot string) string {
 	return p
 }
 
-// TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched is MON-009.
+// TestChainUp_ReuseRefusalLeavesTheRunningCompositionUntouched is MON-009.
 //
 // The genesis and config steps write to the target and re-record the input
 // hashes. While the reuse verdict was computed after them, a refusal had already
@@ -36,7 +36,7 @@ func reuseWorkspaceConfig(t *testing.T, dir, dataRoot string) string {
 // could be reconciled while the files the live nodes were launched from had been
 // swapped underneath. The verdict now runs before the first write, so this test
 // reads the actual bytes back after a refusal.
-func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
+func TestChainUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 	dir := t.TempDir()
 	dataRoot := t.TempDir()
 	keysAbs, err := filepath.Abs(presetDir)
@@ -54,13 +54,13 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 	if err := os.WriteFile(binary, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	up := chainsetup.NetUpIn{
+	up := chainsetup.ChainUpIn{
 		DataDir: dir, Stage: chainsetup.UpStart,
 		Chain: "stablenet", KeysDir: keysAbs, Binary: binary,
 		BPCount: 2, WorkspaceConfigPath: wc,
 	}
 
-	if _, err := verb.NetUp(context.Background(), deps, up); err != nil {
+	if _, err := verb.ChainUp(context.Background(), deps, up); err != nil {
 		t.Fatalf("first up: %v", err)
 	}
 
@@ -83,7 +83,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 	// refused — a running network cannot be reconciled onto another chain.
 	changed := up
 	changed.ChainID = 424242
-	_, err = verb.NetUp(context.Background(), deps, changed)
+	_, err = verb.ChainUp(context.Background(), deps, changed)
 	if err == nil {
 		t.Fatal("a changed genesis must refuse the reuse")
 	}
@@ -115,7 +115,7 @@ func TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched(t *testing.T) {
 
 	// Re-asking must keep refusing: the refusal did not quietly adopt the new
 	// inputs as the baseline for next time.
-	if _, err := verb.NetUp(context.Background(), deps, changed); err == nil {
+	if _, err := verb.ChainUp(context.Background(), deps, changed); err == nil {
 		t.Fatal("the second attempt must be refused too")
 	}
 }

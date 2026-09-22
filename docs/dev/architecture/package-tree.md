@@ -151,17 +151,17 @@ internal/testengine 4,485 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
 internal/chainsetup 8,575 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
-                          워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
-                          NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
-                          NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·
-                          NetVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
+                          워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+                          ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
+                          ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
+                          ChainVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
                           재사용 판단(PlanReuse·ReconcileReuse·GenesisDeclared·WantOf)·실행 중 프로세스 실사
 
-internal/chainsetup/verb 2,085 [L4] 셋업 동사 — 표면이 부르는 함수(NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
-                          NetProvision·NetInit·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·
-                          NetHealth·NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NodeStart/Stop/Swap·
-                          Hardfork{Plan,Execute}·NetCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
-                          upHandlers·NetUpComparing). chainsetup 객체 위에 얹히며 반대 방향 의존은 없다
+internal/chainsetup/verb 2,085 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+                          ChainProvision·ChainInit·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·
+                          ChainHealth·ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·NodeStart/Stop/Swap·
+                          Hardfork{Plan,Execute}·ChainCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
+                          upHandlers·ChainUpComparing). chainsetup 객체 위에 얹히며 반대 방향 의존은 없다
 
 internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6) — health·collector·inspector·process/inspect·
                           preflight 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 판정(Classify),

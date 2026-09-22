@@ -29,7 +29,7 @@ func run(t *testing.T, args ...string) (string, error) {
 	return buf.String(), err
 }
 
-func TestNetCmd_ComposeStepByStep(t *testing.T) {
+func TestChainCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
 	presetDir := filepath.Join("..", "..", "..", "presets", "keys")
 
@@ -53,7 +53,7 @@ func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	}
 }
 
-func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
+func TestChainCmd_RemoteTargetRecorded(t *testing.T) {
 	dir := t.TempDir()
 	out, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet",
 		"--remote-host", "10.0.0.1", "--remote-user", "ubuntu", "--target-dir", "/tmp/net")
@@ -65,10 +65,10 @@ func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 	}
 }
 
-// TestNetCmd_DefaultsTheWorkspace pins the omitted-flag behaviour: a fresh
+// TestChainCmd_DefaultsTheWorkspace pins the omitted-flag behaviour: a fresh
 // timestamped directory under the (test-scoped) home, and the path printed
 // before anything uses it, so it is never a guess.
-func TestNetCmd_DefaultsTheWorkspace(t *testing.T) {
+func TestChainCmd_DefaultsTheWorkspace(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	out, err := run(t, "chain", "new", "--chain", "stablenet")
@@ -83,10 +83,10 @@ func TestNetCmd_DefaultsTheWorkspace(t *testing.T) {
 	}
 }
 
-// TestNetNew_RecordsTheServerSetWithDocker pins the pair travelling together:
+// TestChainNew_RecordsTheServerSetWithDocker pins the pair travelling together:
 // --docker names how servers are reached, --server-set names which exist, and
 // a workspace told both at new time carries both to every later step.
-func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
+func TestChainNew_RecordsTheServerSetWithDocker(t *testing.T) {
 	dir := t.TempDir()
 	set := filepath.Join(t.TempDir(), "server-set.yaml")
 	if err := os.WriteFile(set, []byte(

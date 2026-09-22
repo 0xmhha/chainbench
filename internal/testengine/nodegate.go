@@ -19,7 +19,7 @@ import (
 // The run path gates a composed network through nodemonitor before running any
 // test on it (E6): a network that is up but not yet producing, or missing a
 // node, is waited on or restarted within limits rather than run against blind.
-// The observation reuses health.Run and the restart reuses verb.NetRestart
+// The observation reuses health.Run and the restart reuses verb.ChainRestart
 // — nodemonitor re-implements neither.
 
 // healthObserver produces one round of nodemonitor.Facts for a composed network
@@ -224,7 +224,7 @@ type restartAdapter struct {
 }
 
 func (r restartAdapter) Restart(ctx context.Context, n int) error {
-	_, err := verb.NetRestart(ctx, r.deps, verb.NetRestartIn{DataDir: r.dataDir, Node: n})
+	_, err := verb.ChainRestart(ctx, r.deps, verb.ChainRestartIn{DataDir: r.dataDir, Node: n})
 	return err
 }
 

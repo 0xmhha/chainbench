@@ -181,7 +181,7 @@ func mergeScopes(scoped map[string][]string, all []string) map[string][]PlanKnob
 
 // planNodes reads the layout off whichever form the composition carries: a node
 // table names every node, and its absence leaves the counts.
-func planNodes(up *chainsetup.NetUpIn) PlanNodes {
+func planNodes(up *chainsetup.ChainUpIn) PlanNodes {
 	n := PlanNodes{Peering: up.Peering, SyncMode: up.EndpointSyncMode}
 	if n.Peering == "" {
 		n.Peering = "mesh"
@@ -217,7 +217,7 @@ func planNodes(up *chainsetup.NetUpIn) PlanNodes {
 // What a placement reads as is resource's to say, not this row's: it owns the
 // locality rule, so no display site decides what counts as remote
 // (architecture-v2 §4).
-func describeTarget(up *chainsetup.NetUpIn) string {
+func describeTarget(up *chainsetup.ChainUpIn) string {
 	var where string
 	switch {
 	case up.Server.All:

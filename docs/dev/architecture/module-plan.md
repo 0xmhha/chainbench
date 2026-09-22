@@ -297,13 +297,13 @@ genesis 포크 절). 재정의된 역할은 **테스트를 연속 수행할 때 
 
 **P4.x 결과(2026-08-28).** `core/preflight` 는 이제 **판단만** 한다: `Have`(타깃에 조립된
 체인 — chainsetup 이 워크스페이스 기록에서 읽음) 대 `Want`(다음 테스트가 원하는 체인 —
-`NetUpIn` 에서), `Compare` 가 종이 위에서 `reuse` / `rebuild-nodes N` / `rebuild-all` /
+`ChainUpIn` 에서), `Compare` 가 종이 위에서 `reuse` / `rebuild-nodes N` / `rebuild-all` /
 `compose` 를 내고, `Check` 가 주입된 liveness(pid 는 그 노드의 머신에서, RPC head 는 그
 노드의 주소에서)로 죽은 노드를 재구성 목록에 더한다. 네트워크 전체 사실(체인·키·genesis
 해시·피어링·노드 수·시작 여부)이 다르면 rebuild-all, 노드 하나의 사실(동기화 모드·서버)이
 다르거나 죽어 있으면 그 노드만, 전부 죽어 있으면 rebuild-all(노드 루프가 아니라 조립이
-되살린다). `app.RunSuite` 가 `NetUp` 전에 이것을 물어 reuse 면 건너뛰고, rebuild-nodes 면
-그 노드만 `NetRestart`, 아니면 `NetUp` 한다 — 결정은 `RunSuiteOut.Preflight` 에 남는다.
+되살린다). `app.RunSuite` 가 `ChainUp` 전에 이것을 물어 reuse 면 건너뛰고, rebuild-nodes 면
+그 노드만 `ChainRestart`, 아니면 `ChainUp` 한다 — 결정은 `RunSuiteOut.Preflight` 에 남는다.
 옛 계획 검사(`NetworkPlan`/`Validate`)의 유일한 소비자는 핸드오프였고, 그 검사는
 `consensus/upgrade.NetworkPlan.validate` 로 갔다(netid·ports·forks 는 각 빌더 함수 호출,
 "검증자는 멤버가 아니다" 는 핸드오프 자신의 규칙). 의존은 `node` 뿐이다.
@@ -355,7 +355,7 @@ resource: the set is full — 15 hosts × 1 slot = 15 nodes, all taken
 remove one with `chainbench net rm`
 ```
 
-지금 `app.NetPool` 이 워크스페이스 하나만 열어 `Used` 를 세는 것(같은 세트의 다른
+지금 `app.NetworkPool` 이 워크스페이스 하나만 열어 `Used` 를 세는 것(같은 세트의 다른
 네트워크는 안 보인다)이 이 모듈로 옮겨와 고쳐진다.
 
 **구현(P1.5, 2026-08-28).** 위 모양 그대로 `internal/resource/inventory.go`. 워크스페이스는
@@ -535,7 +535,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
 체인 구성 케이스 1,793줄(`cases`·`static`·`wemix`·`handoff*`·`report`·`state` —
 `chain up --case` 러너), 옛 엔진 빌드 경로 805줄(`buildenv`·`keysource`·`localplan`·
 `locallaunch`·`wemixbootstrap`). `testengine → chainsetup` 엣지는 셋째 덩어리
-때문이었고, `app.RunSuite` 는 이미 위에서 조립한다(`NetUp` + attach 엔진). 둘째
+때문이었고, `app.RunSuite` 는 이미 위에서 조립한다(`ChainUp` + attach 엔진). 둘째
 덩어리는 P7 의 DSL 케이스 4종이 대체할 대상이라 P6 에서 지우지 않는다. 그래서 P6
 은 네 조각으로 간다.
 
@@ -606,8 +606,8 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
 지금 그 네 갈래는 `tests/tc/` 아래에 있고(`3c42fb76`), env 는 별도 파일이 아니라 각
 정의서의 `env` 블록이다.
 `upgrade` 블록이 있으면 `consensus/upgrade.Handoff`(혼합 바이너리 핸드오프), 없으면
-워크스페이스 단계(`NetUp`). 어느 쪽이든 attach 엔진이 케이스를 돌린다. wemix 의
-2-페이즈 부트스트랩은 패밀리가 선언한 phase 로 `NetUp` 안에서 돈다(F5b·F6).
+워크스페이스 단계(`ChainUp`). 어느 쪽이든 attach 엔진이 케이스를 돌린다. wemix 의
+2-페이즈 부트스트랩은 패밀리가 선언한 phase 로 `ChainUp` 안에서 돈다(F5b·F6).
 - 문법: `env.upgrade {profile, template}` 를 더했다(schema·strict parser·lowering).
   이때 `binaries` 는 `producer`/`validator` 역할 이름만 받는다. `env.topology` 는
   `bp|validators`·`en|endpoints`·`syncMode` 를 읽고, 모르는 키는 거부한다.
@@ -693,7 +693,7 @@ P2 가 병목이다. 노드 정보가 한 레코드로 서지 않으면 프로�
 | | | `alloc` · `assign` | 동작 이름 — 결과까지 소유하는 패키지에 안 맞는다 |
 
 `alloc` 은 이 저장소에서 **쓸 수 없다.** 이미 genesis 계정 배분을 뜻한다
-(`decodeAlloc` · `extraAllocBalanceWei`), 그리고 같은 낱말이 `NetAllocate`(자리 배정)
+(`decodeAlloc` · `extraAllocBalanceWei`), 그리고 같은 낱말이 `ChainAllocate`(자리 배정)
 로도 쓰여 뜻이 둘이다(실측 13건).
 
 M1 후보를 이 잣대로 비교한 결과다.
@@ -748,7 +748,7 @@ core 를 직접 부른다는 v2 원칙과 부딪힌다 — §7 열린 질문 7 �
    소유하고, I/O 는 절대 들이지 않는다(out-edge 0 을 게이트로 고정).
 5. **`netreg` 의 새 이름.** 약어(규칙 7 위반)이고 netmap 과 혼동됐다. 붙어 있는
    네트워크의 레지스트리라는 역할에 맞는 이름을 P5 그룹 재편과 함께 정한다.
-7. **`verbs_*.go` 의 자리.** 1,100줄의 use-case 함수(`NetKeys`·`NetUp`·`NetworkStop` …)가
+7. **`verbs_*.go` 의 자리.** 1,100줄의 use-case 함수(`ChainKeys`·`ChainUp`·`NetworkStop` …)가
    `chainsetup` 안에 있고 `app` 은 별칭만 둔다. `app` 으로 옮기면 `chainsetup` 은 2,000줄
    아래로 가지만, CLI 가 `app` 을 거치게 된다(v2 는 CLI → core 직접). 그대로 두면 chainsetup
    이 "순서 + 표면" 을 겸한다. F1 뒤에 정한다.

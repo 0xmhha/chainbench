@@ -326,7 +326,7 @@ func runSuiteBody(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSu
 		// none. A case that has to act BEFORE the fork says so by naming the
 		// crossFork step, and then this leaves the fork to it.
 		if comp.up.GenesisFork != nil && !casesCrossFork(parsed) {
-			res, cerr := verb.NetCrossFork(ctx, sd, verb.NetCrossForkIn{DataDir: comp.up.DataDir})
+			res, cerr := verb.ChainCrossFork(ctx, sd, verb.ChainCrossForkIn{DataDir: comp.up.DataDir})
 			if cerr != nil {
 				return lifecycle.Mark(errPrepareFork, fmt.Errorf("engine: run suite: %w", cerr))
 			}

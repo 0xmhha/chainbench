@@ -66,8 +66,8 @@ a running network's layout is inspectable with `chainbench chain show` and
 
 - `internal/core/node` — the model: `node.Topology`/`node.Entry`, `node.Load`,
   role/sync normalization (`bp`→validator, `en`→endpoint).
-- `chainsetup.NetAllocate` (`internal/chainsetup/verb/verbs_steps.go:147`) — resolves the
+- `chainsetup.ChainAllocate` (`internal/chainsetup/verb/verbs_steps.go:147`) — resolves the
   three layout sources and refuses two at once, then allocates the node table
   under the server-set lock.
-- The DSL declares the same thing inline (`NetAllocateIn.Topology`), so a spec
+- The DSL declares the same thing inline (`ChainAllocateIn.Topology`), so a spec
   needs no side file.

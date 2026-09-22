@@ -23,9 +23,9 @@ var machineBranchAllowed = map[string]string{
 	"internal/resource":   "the module owns the server set: it constructs Specs from its entries and wires the dial. Server.IsRemote is the set's own field logic, not machine.Kind (P1.2 merged the surface and the format; R3 merged the machine spec in)",
 	"internal/chainsetup": "deferred: display and keys-path branches dissolve with V5 follow-ups and V6.3",
 	// The verb layer split out of chainsetup in 2026-09-21 and took one branch
-	// with it: NetRunner answers "is there a command runner", which there is
+	// with it: NetworkRunner answers "is there a command runner", which there is
 	// only when there is a machine to run commands on.
-	"internal/chainsetup/verb": "deferred: the one branch is NetRunner's, and it dissolves with the same V6.3 work",
+	"internal/chainsetup/verb": "deferred: the one branch is NetworkRunner's, and it dissolves with the same V6.3 work",
 }
 
 // TestMachineConsumersDoNotBranchOnKind walks every non-test Go file and

@@ -91,7 +91,7 @@ func TestStageOrderIsUpStepNames(t *testing.T) {
 // TestCompose_WalksEveryStageInOrderAndEndsReady.
 func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), NetUpIn{}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if !slices.Equal(w.ran, UpStepNames) {
@@ -109,7 +109,7 @@ func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 // and the caller says nothing about it beyond the request it already had.
 func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), NetUpIn{Stage: UpDeploy}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Stage: UpDeploy}, ""); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
@@ -124,7 +124,7 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 // TestCompose_BeginsAtTheNamedStep is what a resume does today.
 func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), NetUpIn{}, "config"); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{}, "config"); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"config", "build", "deploy", "init", "start"}
@@ -136,7 +136,7 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 // TestCompose_RefusesAStepItDoesNotHave, before it starts anything.
 func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 	mg, w := newTestManager(t)
-	err := mg.Compose(context.Background(), NetUpIn{}, "nosuchstep")
+	err := mg.Compose(context.Background(), ChainUpIn{}, "nosuchstep")
 	if err == nil {
 		t.Fatal("an unknown step was accepted")
 	}
@@ -152,7 +152,7 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "genesis"
-	err := mg.Compose(context.Background(), NetUpIn{}, "")
+	err := mg.Compose(context.Background(), ChainUpIn{}, "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
@@ -172,7 +172,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "keys"
-	if err := mg.Compose(context.Background(), NetUpIn{}, ""); err == nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 
@@ -205,7 +205,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 		}
 		seen[step] = ws.State().StatePath
 	}
-	if err := mg.Compose(context.Background(), NetUpIn{}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err != nil {
 		t.Fatal(err)
 	}
 	for _, s := range stageOrder {
@@ -220,7 +220,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "deploy"
-	if err := mg.Compose(context.Background(), NetUpIn{}, ""); err == nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 	ws, err := Open(mg.ws.Dir(), nil)

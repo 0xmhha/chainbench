@@ -23,8 +23,8 @@ const (
 	portBand      = 100
 )
 
-// NetKeysIn selects where node identities come from.
-type NetKeysIn struct {
+// ChainKeysIn selects where node identities come from.
+type ChainKeysIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	// Source is preset (default) | generate | declared.
 	Source string `cb:"keys-source" default:"keyPreset" help:"keyPreset (use the recorded key set) | generate (create a fresh set)"`
@@ -35,8 +35,8 @@ type NetKeysIn struct {
 	Validators    int `cb:"validators" help:"identities joining the validator set (generate; 0 = all)"`
 }
 
-// NetKeys ensures the workspace's key set exists and covers the node count.
-func NetKeys(ctx context.Context, d chainsetup.Deps, in NetKeysIn) (chainsetup.StepOut, error) {
+// ChainKeys ensures the workspace's key set exists and covers the node count.
+func ChainKeys(ctx context.Context, d chainsetup.Deps, in ChainKeysIn) (chainsetup.StepOut, error) {
 	bp, err := readBlueprint(in.BlueprintPath)
 	if err != nil {
 		return chainsetup.StepOut{}, err
@@ -53,8 +53,8 @@ func NetKeys(ctx context.Context, d chainsetup.Deps, in NetKeysIn) (chainsetup.S
 	})
 }
 
-// NetAllocateIn sizes the network.
-type NetAllocateIn struct {
+// ChainAllocateIn sizes the network.
+type ChainAllocateIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	BPCount int    `cb:"bp" default:"4" help:"bp (block-producing) node count"`
 	ENCount int    `cb:"en" help:"en (endpoint, non-producing) node count"`
@@ -89,8 +89,8 @@ type NetAllocateIn struct {
 	AutoSize bool
 }
 
-// NetAllocate builds the node table (roles, paths, deterministic ports).
-func NetAllocate(_ context.Context, d chainsetup.Deps, in NetAllocateIn) (chainsetup.StepOut, error) {
+// ChainAllocate builds the node table (roles, paths, deterministic ports).
+func ChainAllocate(_ context.Context, d chainsetup.Deps, in ChainAllocateIn) (chainsetup.StepOut, error) {
 	bp, err := readBlueprint(in.BlueprintPath)
 	if err != nil {
 		return chainsetup.StepOut{}, err
@@ -176,8 +176,8 @@ func peeringOf(bp *blueprint.Blueprint, flag string) string {
 	return bp.Peering
 }
 
-// NetGenesis builds the genesis from the key set and writes it to the target.
-func NetGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.NetGenesisIn) (chainsetup.StepOut, error) {
+// ChainGenesis builds the genesis from the key set and writes it to the target.
+func ChainGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainGenesisIn) (chainsetup.StepOut, error) {
 	// The request is read before the workspace is opened: one that contradicts
 	// itself needs no workspace, and refusing here keeps the lock and the state
 	// out of a request that was never going to be carried out.
@@ -191,7 +191,7 @@ func NetGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.NetGenesis
 }
 
 // overrides to record before rendering.
-type NetConfigIn struct {
+type ChainConfigIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	// Node scopes a Set override to that 1-based node; 0 means every node.
 	Node int `cb:"node" help:"scope --set to this 1-based node (default: every node)"`
@@ -204,10 +204,10 @@ type NetConfigIn struct {
 	ScopedSet map[string][]string
 }
 
-// NetConfig records any per-node overrides, then renders and writes each node's
+// ChainConfig records any per-node overrides, then renders and writes each node's
 // TOML config with them applied. Recording and rendering share one step so
 // `chain config --node N --set k=v` both persists the override and reflects it.
-func NetConfig(ctx context.Context, d chainsetup.Deps, in NetConfigIn) (chainsetup.StepOut, error) {
+func ChainConfig(ctx context.Context, d chainsetup.Deps, in ChainConfigIn) (chainsetup.StepOut, error) {
 	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
 			if err := ws.RecordConfigSet(scope, in.ScopedSet[scope]); err != nil {
@@ -228,8 +228,8 @@ func NetConfig(ctx context.Context, d chainsetup.Deps, in NetConfigIn) (chainset
 	return chainsetup.StepOut{Detail: detail}, err
 }
 
-// NetLaunchOptsIn customizes the assembled argv.
-type NetLaunchOptsIn struct {
+// ChainLaunchOptsIn customizes the assembled argv.
+type ChainLaunchOptsIn struct {
 	DataDir string   `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	Set     []string `cb:"set" help:"high-precedence launch knob key=value (repeatable; bare key for booleans)"` // key=value overrides for every node (bare key for booleans)
 	// ScopedSet records overrides for several scopes at once ("all", a role like
@@ -238,15 +238,15 @@ type NetLaunchOptsIn struct {
 	ScopedSet map[string][]string
 }
 
-// NetLaunchOptsOut is the assembled per-node argv table.
-type NetLaunchOptsOut struct {
+// ChainLaunchOptsOut is the assembled per-node argv table.
+type ChainLaunchOptsOut struct {
 	Detail string
 	Nodes  []node.Record
 }
 
-// NetLaunchOpts assembles each node's launch argv (the single assembly site)
+// ChainLaunchOpts assembles each node's launch argv (the single assembly site)
 // and records it, returning the table so the surface can render the commands.
-func NetLaunchOpts(_ context.Context, d chainsetup.Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
+func ChainLaunchOpts(_ context.Context, d chainsetup.Deps, in ChainLaunchOptsIn) (ChainLaunchOptsOut, error) {
 	var nodes []node.Record
 	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		for _, scope := range sortedScopes(in.ScopedSet) {
@@ -261,7 +261,7 @@ func NetLaunchOpts(_ context.Context, d chainsetup.Deps, in NetLaunchOptsIn) (Ne
 		nodes = ws.State().Nodes
 		return det, err
 	})
-	return NetLaunchOptsOut{Detail: detail, Nodes: nodes}, err
+	return ChainLaunchOptsOut{Detail: detail, Nodes: nodes}, err
 }
 
-// NetProvisionIn identifies the workspace.
+// ChainProvisionIn identifies the workspace.

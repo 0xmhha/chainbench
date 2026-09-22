@@ -48,7 +48,7 @@ func (w *Workspace) Have(ctx context.Context) preflight.Have {
 // WantOf reads a net-up request as the chain the caller needs, in the same
 // terms. It is the shape the request declares; per-node facts are pinned by
 // the caller when it has them (a spec's topology), not invented here.
-func WantOf(in NetUpIn) preflight.Want {
+func WantOf(in ChainUpIn) preflight.Want {
 	return preflight.Want{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Peering: in.Peering,
 		ChainID: in.ChainID, BPCount: in.BPCount, ENCount: in.ENCount,
@@ -75,7 +75,7 @@ func WantOf(in NetUpIn) preflight.Want {
 // which file the post-fork build reads the rest of it out of. Without it a
 // composed network would be reused for a request that schedules a different
 // fork, a different block, or the same fork carried the other way.
-func GenesisDeclared(in NetUpIn) string {
+func GenesisDeclared(in ChainUpIn) string {
 	h := sha256.New()
 	write := func(parts ...string) {
 		for _, p := range parts {

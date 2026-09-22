@@ -15,39 +15,39 @@ import (
 // Each case below is a pair that must NOT digest the same, because each would
 // produce a different genesis document.
 func TestGenesisDeclared_SeparatesRequestsThatWantDifferentChains(t *testing.T) {
-	base := chainsetup.NetUpIn{Chain: "stablenet", Binary: "gstable", ChainID: 8283}
-	cases := map[string]chainsetup.NetUpIn{
-		"an overlay at all": func() chainsetup.NetUpIn {
+	base := chainsetup.ChainUpIn{Chain: "stablenet", Binary: "gstable", ChainID: 8283}
+	cases := map[string]chainsetup.ChainUpIn{
+		"an overlay at all": func() chainsetup.ChainUpIn {
 			in := base
 			in.OverlayPath = "/ws/env-genesis-overlay-c710e207.json"
 			return in
 		}(),
-		"a different overlay": func() chainsetup.NetUpIn {
+		"a different overlay": func() chainsetup.ChainUpIn {
 			in := base
 			in.OverlayPath = "/ws/env-genesis-overlay-deadbeef.json"
 			return in
 		}(),
-		"a dot-path set": func() chainsetup.NetUpIn {
+		"a dot-path set": func() chainsetup.ChainUpIn {
 			in := base
 			in.GenesisSet = []string{"config.applepieBlock=0"}
 			return in
 		}(),
-		"a different chain id": func() chainsetup.NetUpIn {
+		"a different chain id": func() chainsetup.ChainUpIn {
 			in := base
 			in.ChainID = 8284
 			return in
 		}(),
-		"a finished genesis used verbatim": func() chainsetup.NetUpIn {
+		"a finished genesis used verbatim": func() chainsetup.ChainUpIn {
 			in := base
 			in.GenesisExisting = "/ws/given-genesis.json"
 			return in
 		}(),
-		"a different template": func() chainsetup.NetUpIn {
+		"a different template": func() chainsetup.ChainUpIn {
 			in := base
 			in.TemplatePath = "/src/genesis-template.json"
 			return in
 		}(),
-		"a different manifest": func() chainsetup.NetUpIn {
+		"a different manifest": func() chainsetup.ChainUpIn {
 			in := base
 			in.ManifestPath = "/src/chain.yaml"
 			return in
@@ -72,8 +72,8 @@ func TestGenesisDeclared_SeparatesRequestsThatWantDifferentChains(t *testing.T) 
 // so two orders can produce two different genesis documents and must not be
 // mistaken for one request.
 func TestGenesisDeclared_OrderOfTheSetMatters(t *testing.T) {
-	a := chainsetup.NetUpIn{GenesisSet: []string{"config.x=1", "config.x=2"}}
-	b := chainsetup.NetUpIn{GenesisSet: []string{"config.x=2", "config.x=1"}}
+	a := chainsetup.ChainUpIn{GenesisSet: []string{"config.x=1", "config.x=2"}}
+	b := chainsetup.ChainUpIn{GenesisSet: []string{"config.x=2", "config.x=1"}}
 	if chainsetup.GenesisDeclared(a) == chainsetup.GenesisDeclared(b) {
 		t.Error("two orders of the same overrides digest alike; the last key wins, so they are different genesis documents")
 	}
@@ -85,16 +85,16 @@ func TestGenesisDeclared_OrderOfTheSetMatters(t *testing.T) {
 // them in here would report "genesis differs" for a difference the reader can
 // already see named.
 func TestGenesisDeclared_IsStableAndIgnoresWhatIsComparedElsewhere(t *testing.T) {
-	in := chainsetup.NetUpIn{Chain: "stablenet", ChainID: 8283, GenesisSet: []string{"config.applepieBlock=0"}}
+	in := chainsetup.ChainUpIn{Chain: "stablenet", ChainID: 8283, GenesisSet: []string{"config.applepieBlock=0"}}
 	first := chainsetup.GenesisDeclared(in)
 	if second := chainsetup.GenesisDeclared(in); first != second {
 		t.Fatalf("not stable: %s then %s", first, second)
 	}
-	for name, mutate := range map[string]func(*chainsetup.NetUpIn){
-		"keys dir":   func(i *chainsetup.NetUpIn) { i.KeysDir = "keys/other" },
-		"validators": func(i *chainsetup.NetUpIn) { i.BPCount = 15 },
-		"binary":     func(i *chainsetup.NetUpIn) { i.Binary = "/other/gstable" },
-		"peering":    func(i *chainsetup.NetUpIn) { i.Peering = "proxied" },
+	for name, mutate := range map[string]func(*chainsetup.ChainUpIn){
+		"keys dir":   func(i *chainsetup.ChainUpIn) { i.KeysDir = "keys/other" },
+		"validators": func(i *chainsetup.ChainUpIn) { i.BPCount = 15 },
+		"binary":     func(i *chainsetup.ChainUpIn) { i.Binary = "/other/gstable" },
+		"peering":    func(i *chainsetup.ChainUpIn) { i.Peering = "proxied" },
 	} {
 		other := in
 		mutate(&other)
@@ -109,8 +109,8 @@ func TestGenesisDeclared_IsStableAndIgnoresWhatIsComparedElsewhere(t *testing.T)
 // the same as the pair shifted by one character, and two different chains would
 // look like one.
 func TestGenesisDeclared_LengthPrefixesTheParts(t *testing.T) {
-	a := chainsetup.NetUpIn{OverlayPath: "ab", TemplatePath: "c"}
-	b := chainsetup.NetUpIn{OverlayPath: "a", TemplatePath: "bc"}
+	a := chainsetup.ChainUpIn{OverlayPath: "ab", TemplatePath: "c"}
+	b := chainsetup.ChainUpIn{OverlayPath: "a", TemplatePath: "bc"}
 	if chainsetup.GenesisDeclared(a) == chainsetup.GenesisDeclared(b) {
 		t.Error("parts are concatenated without a separator: (ab, c) and (a, bc) collide")
 	}

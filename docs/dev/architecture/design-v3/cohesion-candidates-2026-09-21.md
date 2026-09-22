@@ -236,7 +236,7 @@ portplan 에서, validator 는 키 셋에서 온다. **열 절은 다음 종류�
 | 성격 | 어디 | 값의 예 |
 |---|---|---|
 | **만드는 것** (지시, 일 전에 주어진다) | `keyring.Source`·`FileSource`·`MnemonicSource`·`PrivateKeySource`·`RandomSource`·`PasswordSource` · `store.KeySource` · `genesis.Source`·`PresetSource` · `poa.GenesisSource` · `keysSource` 문자열 5곳 · DSL 정의서의 `"source"` | `keyPreset` · `generate` · `declared` · `rpcCall` |
-| **적어 두는 것** (영수증, 일 끝난 뒤 남는다) | `blueprint.Source` · `testengine.PlanSource` · `State.PortSource` · `resource.Pool.Source` · `operation.SetOut.Source` · `NetPoolOut.Source` | `inventory` · `harness` · `server-set.yaml` · `explicit` |
+| **적어 두는 것** (영수증, 일 끝난 뒤 남는다) | `blueprint.Source` · `testengine.PlanSource` · `State.PortSource` · `resource.Pool.Source` · `operation.SetOut.Source` · `NetworkPoolOut.Source` | `inventory` · `harness` · `server-set.yaml` · `explicit` |
 
 ### "지금 헷갈릴 자리는 없다" 도 틀렸다
 
@@ -244,7 +244,7 @@ portplan 에서, validator 는 키 셋에서 온다. **열 절은 다음 종류�
 지역변수 `source` 가 영수증인데, 여덟 줄 아래 메서드 `source()` 는 `keyring.Source` 를
 만들어 돌려준다. 같은 낱말, 같은 파일, 반대 뜻이다.
 
-JSON 에서도 만난다. `State.Request *NetUpIn` 이라 워크스페이스 파일 하나가
+JSON 에서도 만난다. `State.Request *ChainUpIn` 이라 워크스페이스 파일 하나가
 `request.keysSource: "generate"`(명령)와 `portSource: "server-set.yaml"`(기록)을 나란히
 담는다. 읽는 사람이 구분할 방법이 없다.
 
@@ -262,7 +262,7 @@ JSON 에서도 만난다. `State.Request *NetUpIn` 이라 워크스페이스 파
 - `State.PortSource` → `PortOrigin` (`json:"portOrigin"`)
 - `resource.Pool.Source` → `Origin`, `builtinSource` → `builtinOrigin`
 - `operation.SetOut.Source` → `Origin`, 이 패키지의 영수증 지역변수도 `origin` 으로
-- `NetPoolOut.Source` → `Origin` (`json:"origin"`), MCP 응답 키도 `origin`
+- `NetworkPoolOut.Source` → `Origin` (`json:"origin"`), MCP 응답 키도 `origin`
 
 건드리지 않은 것도 분명히 적는다. 인터페이스 아홉은 생산자라는 뜻이 맞다. `keysSource`
 문자열 다섯 곳과 `tests/tc` 정의서 209개가 쓰는 `"source": "rpcCall"` 도 "어느 방식으로

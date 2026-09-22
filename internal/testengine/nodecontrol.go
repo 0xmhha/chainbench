@@ -67,7 +67,7 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 // The whole table comes back: crossing gives every successor a new role and a
 // new pid, and a caller holding the old ones would stop the wrong process.
 func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error) {
-	out, err := verb.NetCrossFork(ctx, w.sd, verb.NetCrossForkIn{
+	out, err := verb.ChainCrossFork(ctx, w.sd, verb.ChainCrossForkIn{
 		DataDir: w.dataDir, Timeout: timeout,
 	})
 	if err != nil {

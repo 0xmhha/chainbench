@@ -46,7 +46,7 @@ func chainNewTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			out, err := app.NetNew(ctx, app.Deps{}, app.NetNewIn{
+			out, err := app.ChainNew(ctx, app.Deps{}, app.ChainNewIn{
 				DataDir:             argString(args, "workspaceDir", ""),
 				Chain:               argString(args, "chain", ""),
 				Binary:              argString(args, "binary", ""),
@@ -77,7 +77,7 @@ func chainStatusTool() Tool {
 			"required": []string{"workspaceDir"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NetStatus(ctx, app.Deps{}, app.NetStatusIn{
+			res, err := app.ChainStatus(ctx, app.Deps{}, app.ChainStatusIn{
 				DataDir: argString(args, "workspaceDir", ""),
 			})
 			if err != nil {
@@ -112,7 +112,7 @@ func chainKeysTool() Tool {
 			"validators": map[string]any{"type": "number", "description": "identities joining the validator set (generate; 0 = all)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetKeys(ctx, app.Deps{}, app.NetKeysIn{
+			out, err := app.ChainKeys(ctx, app.Deps{}, app.ChainKeysIn{
 				DataDir: argString(args, "workspaceDir", ""), Source: argString(args, "source", ""),
 				Nodes: argInt(args, "nodes", 0), Validators: argInt(args, "validators", 0),
 			})
@@ -136,7 +136,7 @@ func chainPlaceTool() Tool {
 			},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetAllocate(ctx, app.Deps{}, app.NetAllocateIn{
+			out, err := app.ChainAllocate(ctx, app.Deps{}, app.ChainAllocateIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				BPCount: argInt(args, "bp", 4), ENCount: argInt(args, "en", 0),
 				Peering: argString(args, "peering", ""),
@@ -155,7 +155,7 @@ func chainGenesisTool() Tool {
 			"chainId": map[string]any{"type": "number", "description": "override the manifest chain id (0 = manifest)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetGenesis(ctx, app.Deps{}, app.NetGenesisIn{
+			out, err := app.ChainGenesis(ctx, app.Deps{}, app.ChainGenesisIn{
 				DataDir: argString(args, "workspaceDir", ""), ChainID: int64(argInt(args, "chainId", 0)),
 			})
 			return out.Detail, err
@@ -170,7 +170,7 @@ func chainConfigTool() Tool {
 		Description: "Render and write each node's TOML config to the target.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetConfig(ctx, app.Deps{}, app.NetConfigIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := app.ChainConfig(ctx, app.Deps{}, app.ChainConfigIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -186,7 +186,7 @@ func chainBuildTool() Tool {
 				"description": "high-precedence launch knobs key=value (bare key for booleans)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetLaunchOpts(ctx, app.Deps{}, app.NetLaunchOptsIn{
+			out, err := app.ChainLaunchOpts(ctx, app.Deps{}, app.ChainLaunchOptsIn{
 				DataDir: argString(args, "workspaceDir", ""), Set: argStrings(args, "set"),
 			})
 			if err != nil {
@@ -209,7 +209,7 @@ func chainDeployTool() Tool {
 		Description: "Verify the launch inputs (genesis, configs) are present on the target; present files are reused, missing ones are named.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetProvision(ctx, app.Deps{}, app.NetProvisionIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := app.ChainProvision(ctx, app.Deps{}, app.ChainProvisionIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -224,7 +224,7 @@ func chainInitTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetInit(ctx, app.Deps{}, app.NetInitIn{
+			out, err := app.ChainInit(ctx, app.Deps{}, app.ChainInitIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			return out.Detail, err
@@ -241,7 +241,7 @@ func chainStartTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetStart(ctx, app.Deps{}, app.NetStartIn{
+			out, err := app.ChainStart(ctx, app.Deps{}, app.ChainStartIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			return out.Detail, err
@@ -256,7 +256,7 @@ func chainStopTool() Tool {
 		Description: "Stop every running node by its recorded PID.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetStop(ctx, app.Deps{}, app.NetStopIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := app.ChainStop(ctx, app.Deps{}, app.ChainStopIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -271,7 +271,7 @@ func chainRestartTool() Tool {
 			"node": map[string]any{"type": "number", "description": "node index (1-based)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetRestart(ctx, app.Deps{}, app.NetRestartIn{
+			out, err := app.ChainRestart(ctx, app.Deps{}, app.ChainRestartIn{
 				DataDir: argString(args, "workspaceDir", ""), Node: argInt(args, "node", 0),
 			})
 			return out.Detail, err
@@ -286,7 +286,7 @@ func chainRmTool() Tool {
 		Description: "Remove the composed data plane (node datadirs, configs, genesis). Running nodes must be stopped first.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetRm(ctx, app.Deps{}, app.NetRmIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := app.ChainRm(ctx, app.Deps{}, app.ChainRmIn{DataDir: argString(args, "workspaceDir", "")})
 			return out.Detail, err
 		},
 	}
@@ -303,7 +303,7 @@ func chainLogsTool() Tool {
 			"lines": map[string]any{"type": "number", "description": "lines from the end (default 50)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetLogs(ctx, app.Deps{}, app.NetLogsIn{
+			out, err := app.ChainLogs(ctx, app.Deps{}, app.ChainLogsIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0), Lines: argInt(args, "lines", 50),
 			})
@@ -320,7 +320,7 @@ func chainHealthTool() Tool {
 		Description: "Probe every node's HTTP RPC for its latest block height; returns a JSON table.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetHealth(ctx, app.Deps{}, app.NetHealthIn{DataDir: argString(args, "workspaceDir", "")})
+			out, err := app.ChainHealth(ctx, app.Deps{}, app.ChainHealthIn{DataDir: argString(args, "workspaceDir", "")})
 			if err != nil {
 				return "", err
 			}
@@ -365,7 +365,7 @@ func chainResumeTool() Tool {
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the one the workspace recorded)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			out, err := app.NetResume(ctx, app.Deps{}, app.NetResumeIn{
+			out, err := app.ChainResume(ctx, app.Deps{}, app.ChainResumeIn{
 				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
 			})
 			var b strings.Builder
@@ -423,7 +423,7 @@ func chainUpTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			out, err := app.NetUp(ctx, app.Deps{}, app.NetUpIn{
+			out, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{
 				DataDir:             argString(args, "workspaceDir", ""),
 				Chain:               argString(args, "chain", ""),
 				Binary:              argString(args, "binary", ""),

@@ -118,7 +118,7 @@ func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
 // It is an argument rather than something read from the workspace because the
 // record does not carry the machine's position yet — the field is there and
 // nothing writes it until this commit, and nothing reads it until resume does.
-func (mg *Manager) Compose(ctx context.Context, in NetUpIn, from string) error {
+func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error {
 	// Refused before the machine is started, so a bad step name does not leave
 	// a half-entered machine behind.
 	if _, err := mg.leafFor(from); err != nil {

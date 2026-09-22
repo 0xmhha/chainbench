@@ -46,12 +46,12 @@ func stateOfVerdict(v preflight.Verdict) (lifecycle.Status, error) {
 // the comparison says it can.
 type CompareIn struct {
 	// Up is the composition to reach, and what the comparison compares against.
-	Up chainsetup.NetUpIn
+	Up chainsetup.ChainUpIn
 }
 
 // CompareOut is what the comparison and the composition did.
 type CompareOut struct {
-	NetUpOut
+	ChainUpOut
 	// Decision is the comparison as a report prints it, verdict and reasons.
 	Decision string
 	// At is the state the walk ended in. A caller that stopped at the check has
@@ -59,7 +59,7 @@ type CompareOut struct {
 	At lifecycle.Status
 }
 
-// NetUpComparing composes the network the request declares, reusing what is on
+// ChainUpComparing composes the network the request declares, reusing what is on
 // the target when the comparison says it can.
 //
 // Four ways through, and they are the four states rather than four arms of a
@@ -70,7 +70,7 @@ type CompareOut struct {
 // It stops at ChainVerify. Whether the network that resulted is producing is a
 // question this package cannot answer — the readiness gate belongs to whoever
 // owns the monitor — so the walk hands it over rather than guessing.
-func NetUpComparing(ctx context.Context, d chainsetup.Deps, in CompareIn) (CompareOut, error) {
+func ChainUpComparing(ctx context.Context, d chainsetup.Deps, in CompareIn) (CompareOut, error) {
 	var out CompareOut
 	m, err := lifecycle.New(lifecycle.CompareChain, lifecycle.ChainVerify,
 		compareHandlers(ctx, d, in, &out))
@@ -129,7 +129,7 @@ func compareHandlers(ctx context.Context, d chainsetup.Deps, in CompareIn, out *
 			// Only the nodes the comparison named. Composing again would
 			// rewrite inputs every other node is already running on.
 			for _, idx := range decision.Nodes {
-				st, err := NetRestart(ctx, d, NetRestartIn{DataDir: up.DataDir, Node: idx})
+				st, err := ChainRestart(ctx, d, ChainRestartIn{DataDir: up.DataDir, Node: idx})
 				if err != nil {
 					if rerr := m.Request(lifecycle.CompareChainFailUnreadable); rerr != nil {
 						return rerr
@@ -147,7 +147,7 @@ func compareHandlers(ctx context.Context, d chainsetup.Deps, in CompareIn, out *
 			// recorded pid, so a second up over a workspace whose nodes are
 			// still running rewrites the genesis on disk and leaves every node
 			// serving the old one.
-			st, err := NetStop(ctx, d, NetStopIn{DataDir: up.DataDir})
+			st, err := ChainStop(ctx, d, ChainStopIn{DataDir: up.DataDir})
 			if err != nil {
 				if rerr := m.Request(lifecycle.CompareChainFailUnreadable); rerr != nil {
 					return rerr
@@ -170,7 +170,7 @@ func compareHandlers(ctx context.Context, d chainsetup.Deps, in CompareIn, out *
 //
 // A workspace that will not open, or has no node table, is not a failure: it is
 // a target with nothing composed on it, which is one of the four answers.
-func compareWorkspace(ctx context.Context, d chainsetup.Deps, up chainsetup.NetUpIn) preflight.Decision {
+func compareWorkspace(ctx context.Context, d chainsetup.Deps, up chainsetup.ChainUpIn) preflight.Decision {
 	ws, err := chainsetup.Open(up.DataDir, d.Clock)
 	if err != nil || len(ws.State().Nodes) == 0 {
 		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}

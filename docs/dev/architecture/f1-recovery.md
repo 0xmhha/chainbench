@@ -52,13 +52,13 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
 
 ### 3.1 요청을 기록한다 (구멍 1)
 
-`chain-record.json` 에 `request` 를 더한다. `net up` 이 받은 `NetUpIn` 에서 **비밀이 아닌
+`chain-record.json` 에 `request` 를 더한다. `net up` 이 받은 `ChainUpIn` 에서 **비밀이 아닌
 것**(체인·바이너리·키셋 경로·노드 수·동기화 모드·피어링·서버 참조·genesis set/overlay
 경로·launch set)을 `new` 단계에서 적는다. 이것은 사본이 아니다 — 요청은 지금 어디에도
 남지 않는 새 사실이다. `run --workspace-dir` 가 선언(env)에서 만든 요청도 같은 자리에
 남으므로, 복구는 케이스 파일을 다시 열지 않아도 된다.
 
-`preflight.WantOf` 가 이미 `NetUpIn` 을 목표로 바꾸므로, 기록된 요청은 곧 "이 워크스
+`preflight.WantOf` 가 이미 `ChainUpIn` 을 목표로 바꾸므로, 기록된 요청은 곧 "이 워크스
 페이스가 되려던 것" 이다. 이어받기와 preflight 가 같은 값을 본다.
 
 ### 3.2 되짚기 — `net resume` (구멍 2)
@@ -74,7 +74,7 @@ P1.5 에서 정한 규칙이 그대로 간다: **같은 사실은 한 곳에만 
    **입양**한다(§4-4 결정 필요). 결과를 한 줄씩 보고한다: `node2: pid 4123 dead,
    cleared` / `node3: pid 4188 alive, adopted`.
 3. **첫 미완 단계부터 잇는다.** `steps` 에서 `done` 이 아닌 첫 단계를 찾아, 3.1 의
-   요청으로 `NetUp` 을 그 단계부터 돌린다. 이미 끝난 단계는 건너뛴다(각 단계가 이미
+   요청으로 `ChainUp` 을 그 단계부터 돌린다. 이미 끝난 단계는 건너뛴다(각 단계가 이미
    "있으면 재사용" 으로 되어 있어 다시 돌려도 안전하지만, 건너뛰는 편이 보고가 정직하다).
    `start` 가 미완이면 pid 가 없는 노드만 띄운다 — `startPhase` 가 이미 그렇게 한다.
 4. **서버를 다시 확인한다.** 끝나면 `preflight.Check` 로 전 노드 생사를 한 번 더 보고,
@@ -128,10 +128,10 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 
 | 조각 | 어디에 | 무엇 |
 |---|---|---|
-| 요청 기록 | `chainsetup.State.Request` (`chain-record.json` 의 `request`) | `net up` 의 `new` 단계 직후 `NetUpIn` 을 적는다(`DataDir` 은 비움). `NetUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
-| 되짚기 | `chainsetup.NetResume` (`verbs_resume.go`), CLI `net resume --workspace-dir [--binary]`, MCP `chainbench_net_resume`, `app.NetResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
+| 요청 기록 | `chainsetup.State.Request` (`chain-record.json` 의 `request`) | `net up` 의 `new` 단계 직후 `ChainUpIn` 을 적는다(`DataDir` 은 비움). `ChainUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
+| 되짚기 | `chainsetup.ChainResume` (`verbs_resume.go`), CLI `net resume --workspace-dir [--binary]`, MCP `chainbench_net_resume`, `app.ChainResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
 | 단계 목록 | `upStepNames` (`verbs_up.go`) | `net up` 과 `resume` 이 같은 순서 하나를 쓴다 |
-| 세트 잠금 | `chainsetup/setlock.go` + `session.AcquireLock` | `NetAllocate` 가 `~/.chainbench/<set>.lock`(내장 풀은 `local.lock`)을 잡고 워크스페이스를 저장한 뒤 놓는다. live 홀더는 10초까지 기다린다. `session.AcquireLock` 은 워크스페이스 잠금과 같은 코드다(stale 인수·같은 프로세스 중첩) |
+| 세트 잠금 | `chainsetup/setlock.go` + `session.AcquireLock` | `ChainAllocate` 가 `~/.chainbench/<set>.lock`(내장 풀은 `local.lock`)을 잡고 워크스페이스를 저장한 뒤 놓는다. live 홀더는 10초까지 기다린다. `session.AcquireLock` 은 워크스페이스 잠금과 같은 코드다(stale 인수·같은 프로세스 중첩) |
 
 게이트(§3.4) 실측:
 - 단위: 죽은 pid 정리 후 재기동 · 주인 없는 프로세스 입양(같은 바이너리 다른 argv 는 무시) ·

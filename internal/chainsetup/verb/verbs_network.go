@@ -141,10 +141,10 @@ type NodeStartOut struct {
 	Node node.Node
 }
 
-// NetRunner returns the target's remote command runner, or nil for a local
+// NetworkRunner returns the target's remote command runner, or nil for a local
 // target (which reads its own filesystem). It is what lets the run read a remote
 // node's log over SSH and reconnect a dropped session (E8).
-func NetRunner(d chainsetup.Deps, dataDir string) (process.Runner, error) {
+func NetworkRunner(d chainsetup.Deps, dataDir string) (process.Runner, error) {
 	ws, err := chainsetup.Open(dataDir, d.Clock)
 	if err != nil {
 		return nil, err
@@ -273,16 +273,16 @@ var (
 	ErrNoDataDirAndIndex = errors.New("chainsetup: a workspace directory and a 1-based node index are required")
 )
 
-// NetCrossForkIn names the composition whose declared hardfork is to be crossed.
-type NetCrossForkIn struct {
+// ChainCrossForkIn names the composition whose declared hardfork is to be crossed.
+type ChainCrossForkIn struct {
 	DataDir string
 	// Timeout bounds the wait for the network to reach the block before the
 	// fork; zero takes the step's own default.
 	Timeout time.Duration
 }
 
-// NetCrossForkOut is the network as it stands once the successors produce.
-type NetCrossForkOut struct {
+// ChainCrossForkOut is the network as it stands once the successors produce.
+type ChainCrossForkOut struct {
 	// Detail is what the step recorded.
 	Detail string `json:"detail"`
 	// Nodes is the whole node table, because crossing changes more than one
@@ -290,18 +290,18 @@ type NetCrossForkOut struct {
 	Nodes node.NodeSet `json:"nodes"`
 }
 
-// NetCrossFork waits for the network to reach the block before its declared
+// ChainCrossFork waits for the network to reach the block before its declared
 // hardfork and hands production to the build that seals after it.
 //
 // The whole table comes back rather than the nodes that changed. A caller holds
 // a table and has to write the result into it, and returning only the changed
 // ones makes every caller re-derive which those were — from the same fact the
 // step already knows.
-func NetCrossFork(ctx context.Context, d chainsetup.Deps, in NetCrossForkIn) (NetCrossForkOut, error) {
+func ChainCrossFork(ctx context.Context, d chainsetup.Deps, in ChainCrossForkIn) (ChainCrossForkOut, error) {
 	if in.DataDir == "" {
-		return NetCrossForkOut{}, ErrNoDataDir
+		return ChainCrossForkOut{}, ErrNoDataDir
 	}
-	var out NetCrossForkOut
+	var out ChainCrossForkOut
 	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		done, err := ws.CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
 		if err != nil {
@@ -311,19 +311,19 @@ func NetCrossFork(ctx context.Context, d chainsetup.Deps, in NetCrossForkIn) (Ne
 		return done.Detail, nil
 	})
 	if err != nil {
-		return NetCrossForkOut{}, err
+		return ChainCrossForkOut{}, err
 	}
 	return out, nil
 }
 
-// NetForkIn identifies the composition to read the declared hardfork from.
-type NetForkIn struct {
+// ChainForkIn identifies the composition to read the declared hardfork from.
+type ChainForkIn struct {
 	DataDir string
 }
 
-// NetForkOut is the hardfork a composition is built to cross and which of its
+// ChainForkOut is the hardfork a composition is built to cross and which of its
 // nodes stand on each side of it.
-type NetForkOut struct {
+type ChainForkOut struct {
 	// Fork is the declared hardfork, nil when the network crosses none.
 	Fork *chainsetup.GenesisFork `json:"fork,omitempty"`
 	// PreFork are the indices of the nodes running the build that seals up to
@@ -337,16 +337,16 @@ type NetForkOut struct {
 	HaltsAt int64 `json:"haltsAt,omitempty"`
 }
 
-// NetFork reads the hardfork a composition is built to cross.
+// ChainFork reads the hardfork a composition is built to cross.
 //
 // It is read from the record rather than carried from the request because the
 // two callers are not the same run: a network is composed once and attached to
 // afterwards, and the second one has no request to read.
-func NetFork(_ context.Context, d chainsetup.Deps, in NetForkIn) (NetForkOut, error) {
+func ChainFork(_ context.Context, d chainsetup.Deps, in ChainForkIn) (ChainForkOut, error) {
 	if in.DataDir == "" {
-		return NetForkOut{}, ErrNoDataDir
+		return ChainForkOut{}, ErrNoDataDir
 	}
-	var out NetForkOut
+	var out ChainForkOut
 	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		st := ws.State()
 		out.HaltsAt = st.HaltsAt
@@ -362,7 +362,7 @@ func NetFork(_ context.Context, d chainsetup.Deps, in NetForkIn) (NetForkOut, er
 		return "", nil
 	})
 	if err != nil {
-		return NetForkOut{}, err
+		return ChainForkOut{}, err
 	}
 	return out, nil
 }

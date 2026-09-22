@@ -16,44 +16,44 @@ import (
 // surfaces above it drift apart while both still appear to go through app.
 
 type (
-	NetNewIn         = verb.NetNewIn
-	NetNewOut        = verb.NetNewOut
-	NetStatusIn      = verb.NetStatusIn
-	NetStatusOut     = verb.NetStatusOut
-	StepOut          = chainsetupmod.StepOut
-	NetKeysIn        = verb.NetKeysIn
-	NetAllocateIn    = verb.NetAllocateIn
-	NetGenesisIn     = chainsetupmod.NetGenesisIn
-	NetConfigIn      = verb.NetConfigIn
-	NetLaunchOptsIn  = verb.NetLaunchOptsIn
-	NetLaunchOptsOut = verb.NetLaunchOptsOut
-	NetProvisionIn   = verb.NetProvisionIn
-	NetInitIn        = verb.NetInitIn
-	NetStartIn       = verb.NetStartIn
-	NetStopIn        = verb.NetStopIn
-	NetRestartIn     = verb.NetRestartIn
-	NetResumeIn      = verb.NetResumeIn
-	NetResumeOut     = verb.NetResumeOut
-	NetRmIn          = verb.NetRmIn
-	NetLogsIn        = verb.NetLogsIn
-	NetLogsOut       = verb.NetLogsOut
-	NetHealthIn      = verb.NetHealthIn
-	NetHealthOut     = verb.NetHealthOut
+	ChainNewIn         = verb.ChainNewIn
+	ChainNewOut        = verb.ChainNewOut
+	ChainStatusIn      = verb.ChainStatusIn
+	ChainStatusOut     = verb.ChainStatusOut
+	StepOut            = chainsetupmod.StepOut
+	ChainKeysIn        = verb.ChainKeysIn
+	ChainAllocateIn    = verb.ChainAllocateIn
+	ChainGenesisIn     = chainsetupmod.ChainGenesisIn
+	ChainConfigIn      = verb.ChainConfigIn
+	ChainLaunchOptsIn  = verb.ChainLaunchOptsIn
+	ChainLaunchOptsOut = verb.ChainLaunchOptsOut
+	ChainProvisionIn   = verb.ChainProvisionIn
+	ChainInitIn        = verb.ChainInitIn
+	ChainStartIn       = verb.ChainStartIn
+	ChainStopIn        = verb.ChainStopIn
+	ChainRestartIn     = verb.ChainRestartIn
+	ChainResumeIn      = verb.ChainResumeIn
+	ChainResumeOut     = verb.ChainResumeOut
+	ChainRmIn          = verb.ChainRmIn
+	ChainLogsIn        = verb.ChainLogsIn
+	ChainLogsOut       = verb.ChainLogsOut
+	ChainHealthIn      = verb.ChainHealthIn
+	ChainHealthOut     = verb.ChainHealthOut
 
-	NetVerifyValidatorsIn  = chainsetupmod.NetVerifyValidatorsIn
-	NetVerifyValidatorsOut = chainsetupmod.NetVerifyValidatorsOut
-	ValidatorCheck         = chainsetupmod.ValidatorCheck
+	ChainVerifyValidatorsIn  = chainsetupmod.ChainVerifyValidatorsIn
+	ChainVerifyValidatorsOut = chainsetupmod.ChainVerifyValidatorsOut
+	ValidatorCheck           = chainsetupmod.ValidatorCheck
 
-	NetBaselineIn  = chainsetupmod.NetBaselineIn
-	NetBaselineOut = chainsetupmod.NetBaselineOut
-	NetEnodesIn    = verb.NetEnodesIn
-	NetEnodesOut   = verb.NetEnodesOut
+	ChainBaselineIn  = chainsetupmod.ChainBaselineIn
+	ChainBaselineOut = chainsetupmod.ChainBaselineOut
+	ChainEnodesIn    = verb.ChainEnodesIn
+	ChainEnodesOut   = verb.ChainEnodesOut
 	// State is a workspace's recorded progress: which steps have run and what
 	// each produced. A surface renders it; it is not a use case's input.
 	State            = chainsetupmod.State
 	UpStage          = chainsetupmod.UpStage
-	NetUpIn          = chainsetupmod.NetUpIn
-	NetUpOut         = verb.NetUpOut
+	ChainUpIn        = chainsetupmod.ChainUpIn
+	ChainUpOut       = verb.ChainUpOut
 	NetworkStatusIn  = verb.NetworkStatusIn
 	NetworkStatusOut = verb.NetworkStatusOut
 	NetworkStopIn    = verb.NetworkStopIn
@@ -75,87 +75,87 @@ func (d Deps) chainsetupDeps() chainsetupmod.Deps {
 	return chainsetupmod.Deps{Clock: d.Clock, Env: d.Env, Command: d.command(), Report: d.Logf, Driver: d.Driver}
 }
 
-func NetAllocate(ctx context.Context, d Deps, in NetAllocateIn) (chainsetupmod.StepOut, error) {
-	return verb.NetAllocate(ctx, d.chainsetupDeps(), in)
+func ChainAllocate(ctx context.Context, d Deps, in ChainAllocateIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainAllocate(ctx, d.chainsetupDeps(), in)
 }
 
-func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (chainsetupmod.StepOut, error) {
-	return verb.NetConfig(ctx, d.chainsetupDeps(), in)
+func ChainConfig(ctx context.Context, d Deps, in ChainConfigIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainConfig(ctx, d.chainsetupDeps(), in)
 }
 
-func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (chainsetupmod.StepOut, error) {
-	return verb.NetGenesis(ctx, d.chainsetupDeps(), in)
+func ChainGenesis(ctx context.Context, d Deps, in ChainGenesisIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainGenesis(ctx, d.chainsetupDeps(), in)
 }
 
-func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (verb.NetHealthOut, error) {
-	return verb.NetHealth(ctx, d.chainsetupDeps(), in)
+func ChainHealth(ctx context.Context, d Deps, in ChainHealthIn) (verb.ChainHealthOut, error) {
+	return verb.ChainHealth(ctx, d.chainsetupDeps(), in)
 }
 
 // VerifyValidators checks the running chain recognizes exactly the composed
 // keys as its validators — the runtime validator verification behind
 // `verify --validators`, shared by both surfaces.
-func VerifyValidators(ctx context.Context, d Deps, in NetVerifyValidatorsIn) (NetVerifyValidatorsOut, error) {
-	return chainsetupmod.NetVerifyValidators(ctx, d.chainsetupDeps(), in)
+func VerifyValidators(ctx context.Context, d Deps, in ChainVerifyValidatorsIn) (ChainVerifyValidatorsOut, error) {
+	return chainsetupmod.ChainVerifyValidators(ctx, d.chainsetupDeps(), in)
 }
 
 // BaselineCheck compares a composition against its environment's approved
 // baseline. It writes nothing — approving is a separate, explicit act.
-func BaselineCheck(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
-	return chainsetupmod.NetBaselineCheck(ctx, d.chainsetupDeps(), in)
+func BaselineCheck(ctx context.Context, d Deps, in ChainBaselineIn) (ChainBaselineOut, error) {
+	return chainsetupmod.ChainBaselineCheck(ctx, d.chainsetupDeps(), in)
 }
 
 // BaselineApprove records this composition as the environment's approved
 // baseline, the one path that writes one.
-func BaselineApprove(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
-	return chainsetupmod.NetBaselineApprove(ctx, d.chainsetupDeps(), in)
+func BaselineApprove(ctx context.Context, d Deps, in ChainBaselineIn) (ChainBaselineOut, error) {
+	return chainsetupmod.ChainBaselineApprove(ctx, d.chainsetupDeps(), in)
 }
 
-func NetInit(ctx context.Context, d Deps, in NetInitIn) (chainsetupmod.StepOut, error) {
-	return verb.NetInit(ctx, d.chainsetupDeps(), in)
+func ChainInit(ctx context.Context, d Deps, in ChainInitIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainInit(ctx, d.chainsetupDeps(), in)
 }
 
-func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (chainsetupmod.StepOut, error) {
-	return verb.NetKeys(ctx, d.chainsetupDeps(), in)
+func ChainKeys(ctx context.Context, d Deps, in ChainKeysIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainKeys(ctx, d.chainsetupDeps(), in)
 }
 
-func NetLaunchOpts(ctx context.Context, d Deps, in NetLaunchOptsIn) (verb.NetLaunchOptsOut, error) {
-	return verb.NetLaunchOpts(ctx, d.chainsetupDeps(), in)
+func ChainLaunchOpts(ctx context.Context, d Deps, in ChainLaunchOptsIn) (verb.ChainLaunchOptsOut, error) {
+	return verb.ChainLaunchOpts(ctx, d.chainsetupDeps(), in)
 }
 
-func NetLogs(ctx context.Context, d Deps, in NetLogsIn) (verb.NetLogsOut, error) {
-	return verb.NetLogs(ctx, d.chainsetupDeps(), in)
+func ChainLogs(ctx context.Context, d Deps, in ChainLogsIn) (verb.ChainLogsOut, error) {
+	return verb.ChainLogs(ctx, d.chainsetupDeps(), in)
 }
 
-func NetNew(ctx context.Context, d Deps, in NetNewIn) (verb.NetNewOut, error) {
-	return verb.NetNew(ctx, d.chainsetupDeps(), in)
+func ChainNew(ctx context.Context, d Deps, in ChainNewIn) (verb.ChainNewOut, error) {
+	return verb.ChainNew(ctx, d.chainsetupDeps(), in)
 }
 
-func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (chainsetupmod.StepOut, error) {
-	return verb.NetProvision(ctx, d.chainsetupDeps(), in)
+func ChainProvision(ctx context.Context, d Deps, in ChainProvisionIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainProvision(ctx, d.chainsetupDeps(), in)
 }
 
-func NetRestart(ctx context.Context, d Deps, in NetRestartIn) (chainsetupmod.StepOut, error) {
-	return verb.NetRestart(ctx, d.chainsetupDeps(), in)
+func ChainRestart(ctx context.Context, d Deps, in ChainRestartIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainRestart(ctx, d.chainsetupDeps(), in)
 }
 
-func NetRm(ctx context.Context, d Deps, in NetRmIn) (chainsetupmod.StepOut, error) {
-	return verb.NetRm(ctx, d.chainsetupDeps(), in)
+func ChainRm(ctx context.Context, d Deps, in ChainRmIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainRm(ctx, d.chainsetupDeps(), in)
 }
 
-func NetStart(ctx context.Context, d Deps, in NetStartIn) (chainsetupmod.StepOut, error) {
-	return verb.NetStart(ctx, d.chainsetupDeps(), in)
+func ChainStart(ctx context.Context, d Deps, in ChainStartIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainStart(ctx, d.chainsetupDeps(), in)
 }
 
-func NetStatus(ctx context.Context, d Deps, in NetStatusIn) (verb.NetStatusOut, error) {
-	return verb.NetStatus(ctx, d.chainsetupDeps(), in)
+func ChainStatus(ctx context.Context, d Deps, in ChainStatusIn) (verb.ChainStatusOut, error) {
+	return verb.ChainStatus(ctx, d.chainsetupDeps(), in)
 }
 
-func NetStop(ctx context.Context, d Deps, in NetStopIn) (chainsetupmod.StepOut, error) {
-	return verb.NetStop(ctx, d.chainsetupDeps(), in)
+func ChainStop(ctx context.Context, d Deps, in ChainStopIn) (chainsetupmod.StepOut, error) {
+	return verb.ChainStop(ctx, d.chainsetupDeps(), in)
 }
 
-func NetUp(ctx context.Context, d Deps, in NetUpIn) (verb.NetUpOut, error) {
-	return verb.NetUp(ctx, d.chainsetupDeps(), in)
+func ChainUp(ctx context.Context, d Deps, in ChainUpIn) (verb.ChainUpOut, error) {
+	return verb.ChainUp(ctx, d.chainsetupDeps(), in)
 }
 
 func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (verb.NetworkRemoveOut, error) {
@@ -179,17 +179,17 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	return verb.NodeStop(ctx, d.chainsetupDeps(), in)
 }
 
-// NetResume recovers a workspace whose run died: reconcile pids with the
+// ChainResume recovers a workspace whose run died: reconcile pids with the
 // machine, continue from the first unfinished step, bring back the nodes
 // that should be running.
-func NetResume(ctx context.Context, d Deps, in NetResumeIn) (verb.NetResumeOut, error) {
-	return verb.NetResume(ctx, d.chainsetupDeps(), in)
+func ChainResume(ctx context.Context, d Deps, in ChainResumeIn) (verb.ChainResumeOut, error) {
+	return verb.ChainResume(ctx, d.chainsetupDeps(), in)
 }
 
-// NetEnodes reports each node's enode URL, which is what a surface prints when
+// ChainEnodes reports each node's enode URL, which is what a surface prints when
 // an operator needs to peer something by hand.
-func NetEnodes(ctx context.Context, d Deps, in NetEnodesIn) (NetEnodesOut, error) {
-	return verb.NetEnodes(ctx, d.chainsetupDeps(), in)
+func ChainEnodes(ctx context.Context, d Deps, in ChainEnodesIn) (ChainEnodesOut, error) {
+	return verb.ChainEnodes(ctx, d.chainsetupDeps(), in)
 }
 
 // DefaultWorkspaceDir is where a composition lands when the operator names no

@@ -35,7 +35,7 @@ testengine은 자신의 환경 포트를 호출하고 app이 구현체를 주입
 |---|---|---|---|
 | surface / `cmd/chainbench; internal/mcp; internal/dashboard` | 입력 파싱·출력 렌더링만 담당. 구성/테스트 정책을 표면마다 복제하지 않는다. | app | F2, F3 |
 | app / `internal/app` | 기존 입력·출력 타입, 기본값, 오류 및 의존 주입의 진입점. alias 일괄 제거 대신 변경되는 내부 경계만 어댑트한다. | bridge, testing, composition, services, chain-adapters | F2, F3, F5 |
-| bridge / `internal/app/composition` | testengine의 환경 요청 포트를 구현. 정규화된 환경 요청을 NetUpIn 또는 HandoffInputs로 변환하고 실행·lease 반환. DSL 문법을 소유하지 않는다. | composition, handoff, services, testing | F1, F2 |
+| bridge / `internal/app/composition` | testengine의 환경 요청 포트를 구현. 정규화된 환경 요청을 ChainUpIn 또는 HandoffInputs로 변환하고 실행·lease 반환. DSL 문법을 소유하지 않는다. | composition, handoff, services, testing | F1, F2 |
 | composition / `internal/chainsetup` | 키·genesis·설정·배치·프로세스·workspace·구성 readiness와 소유한 네트워크 해제. 테스트 assertion이나 결과 판정을 가져오지 않는다. | observation, services, chain-adapters | F1, F2, F6 |
 | handoff / `internal/consensus/upgrade` | 기존 Wemix→WBFT 혼합 바이너리 handoff의 단계와 fork 전후 구성. 테스트 환경 요청에서 선택되며 세 체인 내부 구조는 변경하지 않는다. | services, chain-adapters | F1 |
 | testing / `internal/testengine` | DSL 환경 정규화, compose/attach/reuse 요청, action/assertion, 결과·세션 조립. 소비자 소유 환경 포트로 lease를 받아 테스트하고 반환한다. | dsl, observation, services | F1, F4, F6 |
@@ -50,7 +50,7 @@ testengine은 자신의 환경 포트를 호출하고 app이 구현체를 주입
 
 | 진단 | 원 분석의 지위 / 설계 대응 | 책임 / 의존 규칙 | 단계 | 검증 항목 |
 |---|---|---|---|---|
-| F1 | candidate: 위험 후보: 테스트가 환경 의도를 소유하고 구성 어댑터가 NetUp/Handoff 정책 연결을 소유. 기존 체인 분기 없는 선언적 선택을 유지. | bridge, composition, handoff, testing, services, chain-adapters; 각 owner의 allowed_dependencies | P1, P5 | AC2-V2, AC2-V5 |
+| F1 | candidate: 위험 후보: 테스트가 환경 의도를 소유하고 구성 어댑터가 ChainUp/Handoff 정책 연결을 소유. 기존 체인 분기 없는 선언적 선택을 유지. | bridge, composition, handoff, testing, services, chain-adapters; 각 owner의 allowed_dependencies | P1, P5 | AC2-V2, AC2-V5 |
 | F2 | candidate: 위험 후보: forwarding 공유 장점 유지. 변경 필요 경계에만 변환을 두고 alias 전체 재작성은 하지 않음. | surface, app, bridge, composition, services; 각 owner의 allowed_dependencies | P2, P5 | AC2-V3, AC2-V5 |
 | F3 | confirmed: 현재 CLI→app 경로를 문서화하고 표면/유스케이스 책임을 구별. 번호 중심 재분류 제외. | surface, app; 각 owner의 allowed_dependencies | P0, P2, P5 | AC2-V1, AC2-V3 |
 | F4 | confirmed: 기존 Registry 주입을 보존하는 설계 제약. implements 관계만으로 동적 대상을 고정하지 않음. | testing, dsl, services; 각 owner의 allowed_dependencies | P1, P5 | AC2-V4 |
@@ -173,7 +173,7 @@ testengine은 자신의 환경 포트를 호출하고 app이 구현체를 주입
 
 **변경 대상:** `internal/testengine/compose.go`, `internal/testengine/attach.go`, `internal/testengine/wire.go`, `internal/app`, `internal/chainsetup`, `internal/consensus/upgrade`
 
-먼저 compositionOf의 순수 환경 정규화와 I/O를 함수 단위로 식별·특성화. 소비자 포트는 testengine에 두고 app/composition에서 NetUp/Handoff 변환·실행을 구현. overlay·key 기본값·override 거부·reuse fingerprint의 순서/내용은 그대로 이동. 기존 진입점 위임을 유지하고 앱 조립에서 주입한다. attach는 borrowed lease, compose는 owned lease를 반환.
+먼저 compositionOf의 순수 환경 정규화와 I/O를 함수 단위로 식별·특성화. 소비자 포트는 testengine에 두고 app/composition에서 ChainUp/Handoff 변환·실행을 구현. overlay·key 기본값·override 거부·reuse fingerprint의 순서/내용은 그대로 이동. 기존 진입점 위임을 유지하고 앱 조립에서 주입한다. attach는 borrowed lease, compose는 owned lease를 반환.
 
 **목표 소유자 / 진단:** testing, bridge, composition, handoff, dsl / F1, F4
 

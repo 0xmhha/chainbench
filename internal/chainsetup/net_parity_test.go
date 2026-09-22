@@ -19,7 +19,7 @@ import (
 // genesis overlay with its capability claims.
 
 // composed runs new + allocate + keys on a fresh workspace and returns it.
-func composed(t *testing.T, alloc verb.NetAllocateIn) (dir string, d chainsetup.Deps) {
+func composed(t *testing.T, alloc verb.ChainAllocateIn) (dir string, d chainsetup.Deps) {
 	t.Helper()
 	dir = t.TempDir()
 	d = chainsetup.Deps{Clock: fixedClock()}
@@ -28,14 +28,14 @@ func composed(t *testing.T, alloc verb.NetAllocateIn) (dir string, d chainsetup.
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	alloc.DataDir = dir
-	if _, err := verb.NetAllocate(ctx, d, alloc); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, alloc); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
 	return dir, d
@@ -44,21 +44,21 @@ func composed(t *testing.T, alloc verb.NetAllocateIn) (dir string, d chainsetup.
 // stateOf reads the persisted composition state.
 func stateOf(t *testing.T, dir string, d chainsetup.Deps) chainsetup.State {
 	t.Helper()
-	out, err := verb.NetStatus(context.Background(), d, verb.NetStatusIn{DataDir: dir})
+	out, err := verb.ChainStatus(context.Background(), d, verb.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
 	return out.State
 }
 
-func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
+func TestChainAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 	// Every node rendered "full" before this: a snap-sync re-sync test composed
 	// through the steps was silently running full sync instead.
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2, ENCount: 1, EndpointSyncMode: "snap"})
-	if _, err := verb.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, ENCount: 1, EndpointSyncMode: "snap"})
+	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	if _, err := verb.NetConfig(context.Background(), d, verb.NetConfigIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainConfig(context.Background(), d, verb.ChainConfigIn{DataDir: dir}); err != nil {
 		t.Fatalf("config: %v", err)
 	}
 
@@ -80,10 +80,10 @@ func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
+func TestChainAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 	// A sealing node must hold full state, so the knob must not reach it even
 	// when the caller sets it.
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2, EndpointSyncMode: "snap"})
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, EndpointSyncMode: "snap"})
 	for _, n := range stateOf(t, dir, d).Nodes {
 		if n.SyncMode != "full" {
 			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
@@ -91,10 +91,10 @@ func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 	}
 }
 
-func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+func TestChainGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 
-	out, err := verb.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
+	out, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=10"},
 	})
 	if err != nil {
@@ -113,10 +113,10 @@ func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
 	}
 }
 
-func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+func TestChainGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 
-	if _, err := verb.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
+	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=0"},
 	}); err != nil {
 		t.Fatalf("genesis: %v", err)
@@ -131,14 +131,14 @@ func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
 	}
 }
 
-func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+func TestChainGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 	overlay := filepath.Join(t.TempDir(), "overlay.json")
 	if err := os.WriteFile(overlay, []byte(`{"capabilities":["account-extra"],"genesis":{"config":{"chainId":4242}}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	out, err := verb.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: overlay})
+	out, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir, OverlayPath: overlay})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -153,21 +153,21 @@ func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
 	}
 }
 
-func TestNetGenesis_MalformedInputsAreRejected(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+func TestChainGenesis_MalformedInputsAreRejected(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 	ctx := context.Background()
 
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
 		t.Error("want an error for an override without a value")
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: "/nonexistent/overlay.json"}); err == nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, OverlayPath: "/nonexistent/overlay.json"}); err == nil {
 		t.Error("want an error for a missing overlay file")
 	}
 	bad := filepath.Join(t.TempDir(), "bad.json")
 	if err := os.WriteFile(bad, []byte(`{not json`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: bad}); err == nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, OverlayPath: bad}); err == nil {
 		t.Error("want an error for an unparseable overlay")
 	}
 }
@@ -188,7 +188,7 @@ func genesisConfig(t *testing.T, path string) map[string]any {
 	return gen.Config
 }
 
-func TestNetAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
+func TestChainAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, err := filepath.Abs(presetDir)
@@ -196,7 +196,7 @@ func TestNetAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
@@ -215,7 +215,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	out, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, TopologyPath: topo})
+	out, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, TopologyPath: topo})
 	if err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -250,7 +250,7 @@ nodes:
 	}
 }
 
-func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
+func TestChainKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
 	// A generated set for a network with endpoints must declare exactly the
 	// topology's validators, not one per node. When it claimed every node a
 	// validator, a 4-bp + 11-en network failed genesis ("members and validators
@@ -259,15 +259,15 @@ func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	ctx := context.Background()
 	genKeys := filepath.Join(t.TempDir(), "gen")
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, BPCount: 2, ENCount: 3,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	out, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir, Source: "generate"})
+	out, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir, Source: "generate"})
 	if err != nil {
 		t.Fatalf("keys: %v", err)
 	}
@@ -279,13 +279,13 @@ func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
 	}
 }
 
-func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
+func TestChainLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	// A network of 3 validators. A launch override scoped to the whole "bp" role
 	// reaches every node; a "node2" override reaches only node2's argv. This
 	// exercises the real verb path (place -> keys -> build), not a stub.
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 3})
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 3})
 	ctx := context.Background()
-	out, err := verb.NetLaunchOpts(ctx, d, verb.NetLaunchOptsIn{
+	out, err := verb.ChainLaunchOpts(ctx, d, verb.ChainLaunchOptsIn{
 		DataDir: dir,
 		ScopedSet: map[string][]string{
 			"bp":    {"metrics"},
@@ -317,14 +317,14 @@ func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
+func TestChainAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
 	// A topology naming a per-node binary, plus the name→path map, records the
 	// binary on each node and stores the map on the workspace for launch.
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
@@ -333,7 +333,7 @@ func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
 		{Index: 3, Role: "en", Binary: "wbft"},
 	}}
 	bins := map[string]string{"stable": "/opt/gstable", "wbft": "/opt/gwbft"}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
 		DataDir: dir, Topology: topo, Binaries: bins,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -353,14 +353,14 @@ func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
 	}
 }
 
-func TestNetAllocate_TopologyCannotMakeAValidatorStateless(t *testing.T) {
+func TestChainAllocate_TopologyCannotMakeAValidatorStateless(t *testing.T) {
 	// A sealing node must hold full state; a topology asking otherwise is
 	// overridden rather than silently producing a network that cannot seal.
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	topo := filepath.Join(t.TempDir(), "topology.yaml")
@@ -375,7 +375,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	for _, n := range stateOf(t, dir, d).Nodes {
@@ -385,16 +385,16 @@ nodes:
 	}
 }
 
-func TestNetAllocate_MissingTopologyFileIsAnError(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 1})
-	if _, err := verb.NetAllocate(context.Background(), d, verb.NetAllocateIn{
+func TestChainAllocate_MissingTopologyFileIsAnError(t *testing.T) {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 1})
+	if _, err := verb.ChainAllocate(context.Background(), d, verb.ChainAllocateIn{
 		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
 	}); err == nil {
 		t.Error("want an error for a missing topology file")
 	}
 }
 
-func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
+func TestChainNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 	// A project-supplied chain has to resolve on every later step, not just at
 	// `new`: the workspace records the manifest, not only the id.
 	dir := t.TempDir()
@@ -418,7 +418,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{
 		DataDir: dir, KeysDir: keysAbs, ManifestPath: manifest, TemplatePath: template,
 	}); err != nil {
 		t.Fatalf("new: %v", err)
@@ -430,10 +430,10 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 
 	// A later step must resolve the same plugin — registry.Get("foonet") would
 	// fail, since it is not an embedded chain.
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate on an external chain: %v", err)
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis on an external chain: %v", err)
 	}
 	if got := genesisConfig(t, filepath.Join(dir, "genesis.json"))["chainId"]; got != float64(9999) {
@@ -441,9 +441,9 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 	}
 }
 
-func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
-	if _, err := verb.NetNew(context.Background(), chainsetup.Deps{Clock: fixedClock()},
-		verb.NetNewIn{DataDir: t.TempDir()}); err == nil {
+func TestChainNew_NeedsAChainOrAManifest(t *testing.T) {
+	if _, err := verb.ChainNew(context.Background(), chainsetup.Deps{Clock: fixedClock()},
+		verb.ChainNewIn{DataDir: t.TempDir()}); err == nil {
 		t.Error("want an error with neither a chain nor a manifest")
 	}
 }
@@ -451,8 +451,8 @@ func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
 func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
 	// network has to be readable through the same call a setup one is.
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2, ENCount: 1})
-	if _, err := verb.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, ENCount: 1})
+	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 
@@ -481,7 +481,7 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 }
 
 func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
-	dir, d := composed(t, verb.NetAllocateIn{BPCount: 2})
+	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
 
 	out, err := verb.NetworkStop(context.Background(), d, verb.NetworkStopIn{DataDir: dir})
 	if err != nil {

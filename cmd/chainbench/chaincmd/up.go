@@ -13,7 +13,7 @@ import (
 )
 
 // newNetUpCmd composes and brings up a whole network in one command — the nine
-// `net` steps run in order. Flag binding + app.NetUp + output; the logic lives
+// `net` steps run in order. Flag binding + app.ChainUp + output; the logic lives
 // in the app layer, shared with the MCP tool.
 func newNetUpCmd() *cobra.Command {
 	var (
@@ -53,7 +53,7 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetUp(cmd.Context(), surface.Deps(cmd), app.NetUpIn{
+			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd), app.ChainUpIn{
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
@@ -110,7 +110,7 @@ func newNetUpCmd() *cobra.Command {
 }
 
 // printUpSteps lists what each step recorded, in order.
-func printUpSteps(cmd *cobra.Command, out app.NetUpOut) {
+func printUpSteps(cmd *cobra.Command, out app.ChainUpOut) {
 	w := cmd.OutOrStdout()
 	for _, s := range out.Steps {
 		fmt.Fprintln(w, s)
@@ -118,7 +118,7 @@ func printUpSteps(cmd *cobra.Command, out app.NetUpOut) {
 }
 
 // printUpNodes renders the composed node table.
-func printUpNodes(cmd *cobra.Command, out app.NetUpOut) {
+func printUpNodes(cmd *cobra.Command, out app.ChainUpOut) {
 	nodes := out.Nodes.Nodes.Nodes
 	if len(nodes) == 0 {
 		return
