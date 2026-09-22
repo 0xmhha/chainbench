@@ -22,12 +22,12 @@ import (
 // what the older spelling maps onto.
 
 func lowerCase(c CaseV2) (Spec, error) {
-	env, err := caseEnv(c)
+	env, err := casePreset(c)
 	if err != nil {
 		return Spec{}, err
 	}
 	spec := newSpec(c, env)
-	for _, step := range []func(CaseV2, EnvV2, *Spec) error{
+	for _, step := range []func(CaseV2, ChainPresetV2, *Spec) error{
 		lowerChain, lowerEnvDeclarations, lowerHooks, lowerStatements,
 	} {
 		if err := step(c, env, &spec); err != nil {
@@ -37,35 +37,35 @@ func lowerCase(c CaseV2) (Spec, error) {
 	return spec, nil
 }
 
-// caseEnv reads the env a case carries and refuses one the case cannot run on.
+// casePreset reads the env a case carries and refuses one the case cannot run on.
 //
 // Everything here fails the case rather than the run. An env named rather than
 // inlined has not been resolved yet, and a timeout key outside the vocabulary
 // is a typo that would otherwise be validated as a duration and then ignored —
 // leaving a spec that looks like it set a budget when no budget exists.
-func caseEnv(c CaseV2) (EnvV2, error) {
+func casePreset(c CaseV2) (ChainPresetV2, error) {
 	if c.ID == "" {
-		return EnvV2{}, fmt.Errorf("dsl: v2 case needs \"id\"")
+		return ChainPresetV2{}, fmt.Errorf("dsl: v2 case needs \"id\"")
 	}
-	if len(c.Env) == 0 {
-		return EnvV2{}, fmt.Errorf("dsl: v2 case %s needs \"env\" (an env id or an inline env object)", c.ID)
+	if len(c.ChainPreset) == 0 {
+		return ChainPresetV2{}, fmt.Errorf("dsl: v2 case %s needs \"chainPreset\" (a chain-preset id or an inline chain-preset object)", c.ID)
 	}
-	var envID string
-	if json.Unmarshal(c.Env, &envID) == nil {
-		return EnvV2{}, fmt.Errorf("dsl: case %s references env %q — resolve it with InlineEnv before parsing", c.ID, envID)
+	var presetID string
+	if json.Unmarshal(c.ChainPreset, &presetID) == nil {
+		return ChainPresetV2{}, fmt.Errorf("dsl: case %s references chain-preset %q — resolve it with InlineChainPreset before parsing", c.ID, presetID)
 	}
-	var env EnvV2
-	if err := parseStrict(c.Env, &env); err != nil {
-		return EnvV2{}, fmt.Errorf("dsl: case %s: env: %w", c.ID, err)
+	var env ChainPresetV2
+	if err := parseStrict(c.ChainPreset, &env); err != nil {
+		return ChainPresetV2{}, fmt.Errorf("dsl: case %s: chain-preset: %w", c.ID, err)
 	}
-	if env.Kind != "" && env.Kind != KindEnv {
-		return EnvV2{}, fmt.Errorf("dsl: case %s: env kind is %q, want %q", c.ID, env.Kind, KindEnv)
+	if env.Kind != "" && env.Kind != KindChainPreset {
+		return ChainPresetV2{}, fmt.Errorf("dsl: case %s: env kind is %q, want %q", c.ID, env.Kind, KindChainPreset)
 	}
 	if env.Chain == "" {
-		return EnvV2{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
+		return ChainPresetV2{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
 	if err := checkAttach(c.ID, env); err != nil {
-		return EnvV2{}, err
+		return ChainPresetV2{}, err
 	}
 	// Timeout values are durations; reject an unparsable one here so a typo
 	// fails at parse time rather than being silently ignored at run time.
@@ -77,10 +77,10 @@ func caseEnv(c CaseV2) (EnvV2, error) {
 	// vocabulary is a typo, not a feature request.
 	for name, v := range c.Timeouts {
 		if !timeoutKeys[name] {
-			return EnvV2{}, fmt.Errorf("dsl: case %s: timeouts.%s is not a known timeout (want %s)", c.ID, name, timeoutKeyList())
+			return ChainPresetV2{}, fmt.Errorf("dsl: case %s: timeouts.%s is not a known timeout (want %s)", c.ID, name, timeoutKeyList())
 		}
 		if _, err := time.ParseDuration(v); err != nil {
-			return EnvV2{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
+			return ChainPresetV2{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
 		}
 	}
 	return env, nil
@@ -89,7 +89,7 @@ func caseEnv(c CaseV2) (EnvV2, error) {
 // newSpec builds the lowered shape from the parts that carry straight across,
 // and unions the two gating inputs: a case listing its own requires must not
 // lose the capabilities its env declares.
-func newSpec(c CaseV2, env EnvV2) Spec {
+func newSpec(c CaseV2, env ChainPresetV2) Spec {
 	spec := Spec{
 		SchemaVersion:    supportedSchemaVersion, // lowered form IS the executable v1 shape
 		ID:               c.ID,
@@ -123,7 +123,7 @@ func newSpec(c CaseV2, env EnvV2) Spec {
 
 // lowerChain fills what a composer needs to build the network: the manifest it
 // runs on, the binaries, an upgrade, and the genesis.
-func lowerChain(c CaseV2, env EnvV2, spec *Spec) error {
+func lowerChain(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// An external manifest (and its genesis template) runs on the family named
 	// by chain; both travel on the chain spec for the composer to thread.
 	spec.Chain.ManifestPath = env.Manifest
@@ -215,7 +215,7 @@ func lowerChain(c CaseV2, env EnvV2, spec *Spec) error {
 
 // lowerEnvDeclarations carries the declarations a surface folds into the
 // engine's construction boundaries: accounts, keys, blueprint, launch, config.
-func lowerEnvDeclarations(c CaseV2, env EnvV2, spec *Spec) error {
+func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// Keys/launch declarations carry through for the surface (cmd run) to fold
 	// into the engine's construction boundaries.
 	if len(env.Accounts) > 0 {
@@ -251,7 +251,7 @@ func lowerEnvDeclarations(c CaseV2, env EnvV2, spec *Spec) error {
 }
 
 // lowerHooks lowers the three hook lists a case may declare.
-func lowerHooks(c CaseV2, _ EnvV2, spec *Spec) error {
+func lowerHooks(c CaseV2, _ ChainPresetV2, spec *Spec) error {
 	// Hooks.
 	if h := c.Hooks; h != nil {
 		var err error
@@ -271,7 +271,7 @@ func lowerHooks(c CaseV2, _ EnvV2, spec *Spec) error {
 // lowerStatements lowers the steps, and refuses a case that verifies nothing —
 // a sequence with no expect runs and proves nothing, which is worse than one
 // that fails.
-func lowerStatements(c CaseV2, _ EnvV2, spec *Spec) error {
+func lowerStatements(c CaseV2, _ ChainPresetV2, spec *Spec) error {
 	// Statements.
 	if len(c.Steps) == 0 {
 		return fmt.Errorf("dsl: case %s has no steps", c.ID)
@@ -499,7 +499,7 @@ func objectOf(raw []byte, what string) (map[string]any, error) {
 	return m, nil
 }
 
-// mergeEnv lays a case's overrides over a shared env and returns the result.
+// mergePreset lays a case's overrides over a shared env and returns the result.
 //
 // Three rules, and each exists because the alternative loses something the
 // author wrote:
@@ -517,7 +517,7 @@ func objectOf(raw []byte, what string) (map[string]any, error) {
 //
 // The merged object is parsed strictly afterwards, so a key neither side should
 // have is refused there rather than checked twice here.
-func mergeEnv(base, over map[string]any) map[string]any {
+func mergePreset(base, over map[string]any) map[string]any {
 	for k, v := range over {
 		if v == nil {
 			delete(base, k)
@@ -526,7 +526,7 @@ func mergeEnv(base, over map[string]any) map[string]any {
 		bo, baseIsObject := base[k].(map[string]any)
 		oo, overIsObject := v.(map[string]any)
 		if baseIsObject && overIsObject {
-			base[k] = mergeEnv(bo, oo)
+			base[k] = mergePreset(bo, oo)
 			continue
 		}
 		base[k] = v
@@ -546,7 +546,7 @@ func mergeEnv(base, over map[string]any) map[string]any {
 // chain's identity over RPC after attaching, and that is still right, but it
 // cannot be done first: a spec that names a contract ("govMinter") needs the
 // chain's table before the first call, and the table comes from the manifest.
-func checkAttach(caseID string, env EnvV2) error {
+func checkAttach(caseID string, env ChainPresetV2) error {
 	if env.Attach == nil {
 		return nil
 	}

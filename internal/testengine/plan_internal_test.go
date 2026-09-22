@@ -32,7 +32,7 @@ func planFor(t *testing.T, env string, in RunSuiteIn) ComposePlan {
 // counts at all (BPCount and friends stay zero), so a plan that read them would
 // print "bp 0 · en 0 · pn 0" over a fifteen node network and look plausible.
 func TestPlan_CountsRolesOffANodeTable(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -53,7 +53,7 @@ func TestPlan_CountsRolesOffANodeTable(t *testing.T) {
 // TestPlan_CountsComeFromTheRequestWithoutATable is the other form: counts, and
 // an explicit --bp overriding the declaration.
 func TestPlan_CountsComeFromTheRequestWithoutATable(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":3,"en":2,"syncMode":"snap"}}`
 
 	p := planFor(t, env, RunSuiteIn{})
@@ -76,7 +76,7 @@ func TestPlan_CountsComeFromTheRequestWithoutATable(t *testing.T) {
 // cannot see both has to merge them in their head, which is the thing that goes
 // wrong.
 func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "launch":{"bp":{"mine":true}},
 	  "config":{"node1":{"txpool.pricelimit":1}}}`
@@ -115,7 +115,7 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 // source composes from the recorded key set, and the plan has to say so rather
 // than print an empty field, because "" reads as "nothing decided yet".
 func TestPlan_KeysSourceDefaultsToTheRecordedSet(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2}}`
 	p := planFor(t, env, RunSuiteIn{})
 	if p.Keys.Source != keySourceKeyPreset {
@@ -133,7 +133,7 @@ func TestPlan_KeysSourceDefaultsToTheRecordedSet(t *testing.T) {
 // network the way it shows every other one — which is also the fix for X7, the
 // case whose size lived in a document the composer refused to read.
 func TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
 	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
 	  "topology":{"nodes":[
@@ -160,7 +160,7 @@ func TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork(t *testing.T) {
 // network on a server set, and that is exactly the difference an operator wants
 // confirmed before a remote run.
 func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2}}`
 	if got := planFor(t, env, RunSuiteIn{}).Target; got != "this machine" {
 		t.Errorf("target = %q", got)
@@ -179,8 +179,8 @@ func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
 // nobody named is the case worth holding hardest: a harness default is the one
 // a reader cannot find by grepping their own files.
 func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
-	const bare = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"}`
-	const declared = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const bare = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet"}`
+	const declared = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "target":"/srv/net1","keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 
@@ -223,7 +223,7 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 // enough to read. Listing every field would put five words a reader already
 // assumes in front of the one they need.
 func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
-	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const env = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 	line := planFor(t, env, RunSuiteIn{}).chosenByLine()
@@ -243,7 +243,7 @@ func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
 // that describes a different network than the one that launches is worse than
 // no plan.
 func TestPlan_ATargetTheDeclarationNamedIsShown(t *testing.T) {
-	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const env = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "target":"ops@host.example:/data/net1"}`
 	p := planFor(t, env, RunSuiteIn{})
@@ -311,7 +311,7 @@ func TestPlan_NamesTheBinaryTheLaunchWillRun(t *testing.T) {
 	cfg := filepath.Join(dir, "workspace-config.yaml")
 	writeConfig(t, cfg, filepath.Join(dir, "out"))
 
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":1}}`
 
 	t.Run("placed through the environment file", func(t *testing.T) {
@@ -349,7 +349,7 @@ func TestComposition_OneFormOfABinaryReference(t *testing.T) {
 	cfg := filepath.Join(dir, "workspace-config.yaml")
 	writeConfig(t, cfg, filepath.Join(dir, "out"))
 
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","upgrade":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -397,7 +397,7 @@ func TestComposition_OneFormOfABinaryReference(t *testing.T) {
 // composition carries an overlay file for it to the genesis step, which merges
 // it onto the built genesis and records where that document landed.
 func TestComposition_ASecondGenesisForASecondBinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "genesis":{"mode":"template","perBinary":{
 	     "next":{"set":{"config.croissantBlock":20}}}},
@@ -429,11 +429,11 @@ func TestComposition_ASecondGenesisForASecondBinary(t *testing.T) {
 // it would otherwise initialize from the network's genesis and nothing would
 // say so, which is the shape a misspelled name takes.
 func TestComposition_ASecondGenesisMustNameADeclaredBinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "genesis":{"mode":"template","perBinary":{"nxet":{"set":{"config.croissantBlock":20}}}},
 	  "topology":{"bp":2}}`
-	raw := `{"schemaVersion":"2","kind":"case","id":"typo","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"typo","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := dsl.Parse([]byte(raw)); err == nil ||
 		!strings.Contains(err.Error(), "binaries does not declare") {
@@ -449,7 +449,7 @@ func TestComposition_ASecondGenesisMustNameADeclaredBinary(t *testing.T) {
 // successor ran all four on the successor — and the plan said so, with nothing
 // about it looking wrong.
 func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -475,7 +475,7 @@ func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.
 // RPC namespace and what the consensus asks of a launch. The declaration says
 // it per binary, and a bare string keeps meaning "this environment's chain".
 func TestComposition_ABinaryCanNameItsOwnChain(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{
 	    "default":"gwemix",
 	    "next":{"binary":"gwbft","chain":"wbft"}},
@@ -501,10 +501,10 @@ func TestComposition_ABinaryCanNameItsOwnChain(t *testing.T) {
 // TestComposition_ABinaryEntryNeedsABinary: an object form that names only a
 // chain says which chain nothing runs.
 func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"chain":"wbft"}},
 	  "topology":{"bp":1}}`
-	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := dsl.Parse([]byte(raw)); err == nil ||
 		!strings.Contains(err.Error(), "needs a binary") {
@@ -520,7 +520,7 @@ func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
 // handed it — found by composing a network that used the object form for both.
 func TestComposition_TheDeclaredDefaultIsExpandedLikeAnyOtherReference(t *testing.T) {
 	t.Setenv("CB_TEST_DEFAULT_BIN", "/opt/gstable")
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"${CB_TEST_DEFAULT_BIN}","next":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp","binary":"next"}]}}`

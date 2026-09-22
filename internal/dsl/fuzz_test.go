@@ -29,7 +29,7 @@ func seedCorpus(f *testing.F) {
 	})
 	for _, s := range []string{
 		"", "{}", "[]", "null", "0", `{"schemaVersion":"1"}`, `{"schemaVersion":"2"}`,
-		`{"schemaVersion":"2","kind":"env"}`, `{"schemaVersion":"2","kind":"case"}`,
+		`{"schemaVersion":"2","kind":"chain-preset"}`, `{"schemaVersion":"2","kind":"case"}`,
 		`{"schemaVersion":"1","id":"x","chain":{"name":"a","binary":"b"},"assertions":[]}`,
 		`{"schemaVersion":` + strings.Repeat("9", 300) + `}`,
 		"\x00\x01\x02", `{"a":` + strings.Repeat("[", 200) + strings.Repeat("]", 200) + "}",
@@ -99,8 +99,8 @@ func FuzzInlineEnv(f *testing.F) {
 		// A lookup that hands back the caller's own bytes is the worst
 		// plausible one: it is what a mis-wired resolver does, and it invites
 		// unbounded recursion.
-		_, _ = dsl.InlineEnv(raw, func(string) ([]byte, error) { return raw, nil })
-		_, _ = dsl.InlineEnv(raw, func(string) ([]byte, error) { return []byte("{"), nil })
+		_, _ = dsl.InlineChainPreset(raw, func(string) ([]byte, error) { return raw, nil })
+		_, _ = dsl.InlineChainPreset(raw, func(string) ([]byte, error) { return []byte("{"), nil })
 	})
 }
 

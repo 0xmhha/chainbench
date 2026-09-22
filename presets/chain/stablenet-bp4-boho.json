@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
-  "id": "stablenet-bp4-boho-at-10",
-  "description": "stablenet: 4 bp, Applepie 는 처음부터, Boho 는 10번 블록에서 켜진다. 포크 전과 후를 견주는 케이스가 쓴다 — 포크가 0 이면 전후가 같아서 비교가 성립하지 않는다.",
+  "kind": "chain-preset",
+  "id": "stablenet-bp4-boho",
+  "description": "stablenet: 4 bp, Boho·Applepie 가 처음부터 켜져 있다. v1.0.0 이후 기능(govMinter v2, 소각 환불, 수수료 대납 트랜잭션)을 쓰는 케이스가 쓴다. 포크 전후를 견주는 케이스는 stablenet-bp4-boho-at-10 을 쓴다.",
   "chain": "stablenet",
   "keys": {
     "nodekeys": {
@@ -15,7 +15,7 @@
   },
   "hardforks": {
     "applepie": 0,
-    "boho": 10
+    "boho": 0
   },
   "genesis": {
     "overlay": {

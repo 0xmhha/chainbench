@@ -17,8 +17,8 @@ func attaching(t *testing.T, rpc []string) []byte {
 	t.Helper()
 	b, err := json.Marshal(map[string]any{
 		"schemaVersion": "2", "kind": "case", "id": "a",
-		"env": map[string]any{
-			"schemaVersion": "2", "kind": "env", "id": "e", "chain": "wbft",
+		"chainPreset": map[string]any{
+			"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "wbft",
 			"attach": map[string]any{"rpc": rpc, "provides": []string{"short-expiry"}},
 		},
 		"steps": []any{map[string]any{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"}},

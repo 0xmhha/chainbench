@@ -33,12 +33,12 @@ type catalogEntry struct {
 	ID          string          `json:"id"`
 	Kind        string          `json:"kind"`
 	Description string          `json:"description"`
-	Chain       json.RawMessage `json:"chain"` // v1: {"name": ...}
-	Env         json.RawMessage `json:"env"`   // v2: inline {"chain": ...} or an id string
+	Chain       json.RawMessage `json:"chain"`       // v1: {"name": ...}
+	Env         json.RawMessage `json:"chainPreset"` // v2: inline {"chain": ...} or an id string
 }
 
 // ListSpecs walks root for test-case JSON files and returns one SpecInfo each,
-// sorted by path. It skips env declaration files (kind "env") and any file that
+// sorted by path. It skips chain-preset files (kind "chain-preset") and any file that
 // is not a JSON object with an id, so a directory holding both cases and envs
 // lists only the runnable cases. It parses nothing beyond the header, so a case
 // that references its env by id lists without the env being resolvable.
@@ -56,7 +56,7 @@ func ListSpecs(root string) ([]SpecInfo, error) {
 			return rerr
 		}
 		var e catalogEntry
-		if json.Unmarshal(data, &e) != nil || e.ID == "" || e.Kind == KindEnv {
+		if json.Unmarshal(data, &e) != nil || e.ID == "" || e.Kind == KindChainPreset {
 			return nil // not a runnable case
 		}
 		rel, relErr := filepath.Rel(root, p)

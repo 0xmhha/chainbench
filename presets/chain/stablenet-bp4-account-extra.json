@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4-account-extra",
   "description": "stablenet: 4 bp, with three accounts whose Extra bits seed AccountManager status at genesis-init — bit 62 authorized, bit 63 blacklisted, both set. go-stablenet applies them via statedb.SetExtra during genesis and the AccountManager contract reads them back. The genesis is what makes this true, so it is what declares the account-extra capability. Used by 4 cases.",
   "chain": "stablenet",

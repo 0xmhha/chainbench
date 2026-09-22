@@ -9,7 +9,7 @@
     "engine:anzeon",
     "contract:govValidator"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4-en1",
     "genesis": {
       "overlay": {

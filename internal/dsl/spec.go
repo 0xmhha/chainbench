@@ -100,7 +100,7 @@ type Spec struct {
 
 // Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),
 // validates it, and returns the executable Spec. A v2 case referencing an env
-// by id must be resolved with InlineEnv first — the caller owns file lookup.
+// by id must be resolved with InlineChainPreset first — the caller owns file lookup.
 func Parse(raw []byte) (Spec, error) {
 	if IsV2(raw) {
 		return ParseV2(raw)

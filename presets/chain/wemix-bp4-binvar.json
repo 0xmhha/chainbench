@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "wemix-bp4-binvar",
   "description": "wemix: 4 bp. Binaries: default = ${GWEMIX_BIN:-gwemix}. Used by 3 cases.",
   "binaries": {

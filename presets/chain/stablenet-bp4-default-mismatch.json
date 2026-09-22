@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4-default-mismatch",
   "description": "stablenet: 4 bp. Binaries: default = gstable, mismatch = ${GSTABLE_MISMATCH_BIN:-gstable-genesis-mismatch}. Used by 1 case.",
   "binaries": {

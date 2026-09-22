@@ -8,7 +8,7 @@
     "short-expiry",
     "contract:govValidator"
   ],
-  "env": "stablenet-bp4-short-expiry",
+  "chainPreset": "stablenet-bp4-short-expiry",
   "steps": [
     {
       "do": "read",

@@ -54,7 +54,7 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	copyPreset(t, filepath.Join(repoRoot(t), "presets", "keys"), ringDir)
 
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "declared-accounts-env", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "declared-accounts-env", "chain": "stablenet",
 		"binaries": map[string]any{"default": bin},
 		"accounts": map[string]any{
 			"dev1": map[string]any{"fund": "10000000000000000000"},
@@ -63,8 +63,8 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	}
 	spec := map[string]any{
 		"schemaVersion": "2", "kind": "case",
-		"id":  "declared-accounts",
-		"env": "declared-accounts-env",
+		"id":          "declared-accounts",
+		"chainPreset": "declared-accounts-env",
 		"steps": []map[string]any{
 			// Signed here: no node holds dev1's key.
 			{"do": "sendTx", "from": "dev1", "to": "dev2", "value": "0x1", "save": "sent"},

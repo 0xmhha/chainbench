@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4-boho-at-100",
   "description": "stablenet: 4 bp, Applepie 는 처음부터, Boho 는 100번 블록에서 켜진다. 포크 직전(99)과 직후(100)의 상태를 블록 번호로 지목해 견주는 케이스가 쓴다 — 그 두 블록이 실제로 존재해야 하므로 케이스가 100번까지 기다린다.",
   "chain": "stablenet",

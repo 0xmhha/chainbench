@@ -13,9 +13,9 @@ func TestTimeouts_AnUnknownKeyIsRefused(t *testing.T) {
 	for _, key := range []string{"step", "action", "Case", "assertion"} {
 		t.Run(key, func(t *testing.T) {
 			_, err := lowerCase(CaseV2{
-				ID:       "c",
-				Env:      []byte(`{"kind":"env","id":"e","chain":"stablenet"}`),
-				Timeouts: map[string]string{key: "30s"},
+				ID:          "c",
+				ChainPreset: []byte(`{"kind":"chain-preset","id":"e","chain":"stablenet"}`),
+				Timeouts:    map[string]string{key: "30s"},
 			})
 			if err == nil {
 				t.Fatalf("timeouts.%s was accepted; it binds nothing, so it has to be refused", key)
@@ -32,8 +32,8 @@ func TestTimeouts_AnUnknownKeyIsRefused(t *testing.T) {
 func TestTimeouts_TheConsumedKeysAreAccepted(t *testing.T) {
 	for _, key := range []string{"case", "test"} {
 		spec, err := lowerCase(CaseV2{
-			ID:  "c",
-			Env: []byte(`{"kind":"env","id":"e","chain":"stablenet"}`),
+			ID:          "c",
+			ChainPreset: []byte(`{"kind":"chain-preset","id":"e","chain":"stablenet"}`),
 			Steps: []map[string]any{
 				{"do": "waitBlock", "target": float64(1)},
 				{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"},
@@ -53,9 +53,9 @@ func TestTimeouts_TheConsumedKeysAreAccepted(t *testing.T) {
 // the name check must not shadow the duration check.
 func TestTimeouts_AnUnparsableValueIsStillRefused(t *testing.T) {
 	_, err := lowerCase(CaseV2{
-		ID:       "c",
-		Env:      []byte(`{"kind":"env","id":"e","chain":"stablenet"}`),
-		Timeouts: map[string]string{"case": "ten minutes"},
+		ID:          "c",
+		ChainPreset: []byte(`{"kind":"chain-preset","id":"e","chain":"stablenet"}`),
+		Timeouts:    map[string]string{"case": "ten minutes"},
 	})
 	if err == nil {
 		t.Fatal("an unparsable duration was accepted")

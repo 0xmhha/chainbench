@@ -12,7 +12,7 @@ import (
 // whole beneath it.
 //
 // TestSchemaV2MatchesParsedFields compares $defs.envSpec and $defs.caseSpec
-// property by property against EnvV2 and CaseV2. It never descends, so the
+// property by property against ChainPresetV2 and CaseV2. It never descends, so the
 // "upgrade" object underneath went years without being compared to UpgradeV2:
 // measured 2026-09-21 it required "profile" and "template", allowed nothing
 // else, and carried none of fork, at, from, to, style or carry. Had the schema

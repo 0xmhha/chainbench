@@ -7,7 +7,7 @@
     "rpc",
     "contract:govValidator"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

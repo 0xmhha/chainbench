@@ -7,39 +7,47 @@ import (
 	"strings"
 )
 
-// maxEnvSearchDepth bounds how far ReadFiles walks up from a case file looking
-// for the env/ directory that holds its environment declaration. Case files sit
-// at most a few levels below the suite root (tests/tc/<chain>/<group>/<domain>),
-// so a small bound keeps a typo from scanning the whole filesystem.
-const maxEnvSearchDepth = 8
+// maxPresetSearchDepth bounds how far ReadFiles walks up from a case file
+// looking for the chain-preset/ directory that holds its declaration. Case files
+// sit at most a few levels below the suite root
+// (tests/tc/<chain>/<group>/<domain>), so a small bound keeps a typo from
+// scanning the whole filesystem.
+const maxPresetSearchDepth = 8
+
+// sharedPresetDir is where chain-presets live when they are not beside the
+// cases that use them: one directory at the repository root, beside the key
+// presets. A suite may still keep its own in a chain-preset/ directory next to
+// its cases, which is why the walk exists at all; this is the last place looked,
+// so a local declaration wins over the shared one of the same name.
+const sharedPresetDir = "presets/chain"
 
 // ReadFiles reads each spec file into raw JSON bytes, resolving a v2 case's
-// "env": "<id>" reference against the case file's directory and then each
-// ancestor up to maxEnvSearchDepth levels: at every level it looks for
-// <dir>/<id>.env.json and <dir>/env/<id>.env.json. That lets a tree of case
-// directories share one env/ directory at the suite root. It is the one place a
-// spec path becomes the bytes an engine runs, so every surface resolves env
-// references the same way.
-func ReadFiles(paths []string) ([][]byte, error) { return ReadFilesWithEnv(paths, "") }
+// "chainPreset": "<id>" reference against the case file's directory and then
+// each ancestor up to maxPresetSearchDepth levels: at every level it looks for
+// <dir>/<id>.json and <dir>/chain-preset/<id>.json, and finally in
+// sharedPresetDir. That lets a tree of case directories share one declaration
+// without naming a path. It is the one place a spec path becomes the bytes an
+// engine runs, so every surface resolves chain-preset references the same way.
+func ReadFiles(paths []string) ([][]byte, error) { return ReadFilesWithChainPreset(paths, "") }
 
-// ReadFilesWithEnv reads the specs the way ReadFiles does, with every case moved
-// onto the env named by envRef. An empty envRef reads the specs as written.
+// ReadFilesWithChainPreset reads the specs the way ReadFiles does, with every case moved
+// onto the env named by presetRef. An empty presetRef reads the specs as written.
 //
 // This is the run-time half of keeping mainnet differences out of the cases: the
 // declaration already lives in its own file, and this is what chooses which file
 // without editing the case. What the case itself overrode is kept, because that
 // is the part that belongs to the test rather than to the chain.
 //
-// envRef is an env id, resolved the same way a case's own reference is. A value
+// presetRef is an env id, resolved the same way a case's own reference is. A value
 // that looks like a path (it contains a separator or ends in .json) is read as
 // one instead, so a declaration for a chain that has no home in this tree yet
 // can still be run against.
-func ReadFilesWithEnv(paths []string, envRef string) ([][]byte, error) {
-	var envID string
-	var envRaw []byte
-	if envRef != "" {
+func ReadFilesWithChainPreset(paths []string, presetRef string) ([][]byte, error) {
+	var presetID string
+	var presetRaw []byte
+	if presetRef != "" {
 		var err error
-		if envID, envRaw, err = resolveEnvRef(paths, envRef); err != nil {
+		if presetID, presetRaw, err = resolveChainPresetRef(paths, presetRef); err != nil {
 			return nil, err
 		}
 	}
@@ -49,18 +57,18 @@ func ReadFilesWithEnv(paths []string, envRef string) ([][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("dsl: read spec %s: %w", p, err)
 		}
-		if b, err = UseEnv(b, envID); err != nil {
+		if b, err = UseChainPreset(b, presetID); err != nil {
 			return nil, fmt.Errorf("%s: %w", p, err)
 		}
 		dir := filepath.Dir(p)
-		b, err = InlineEnv(b, func(id string) ([]byte, error) {
-			if id == envID && envRaw != nil {
-				return envRaw, nil
+		b, err = InlineChainPreset(b, func(id string) ([]byte, error) {
+			if id == presetID && presetRaw != nil {
+				return presetRaw, nil
 			}
-			if eb, ok := findEnvFile(dir, id); ok {
+			if eb, ok := findChainPresetFile(dir, id); ok {
 				return eb, nil
 			}
-			return nil, fmt.Errorf("no %s.env.json beside %s or in an env/ directory at any level above it", id, p)
+			return nil, fmt.Errorf("no chain-preset %q beside %s, in a chain-preset/ directory above it, or in %s", id, p, sharedPresetDir)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("dsl: %w", err)
@@ -70,32 +78,32 @@ func ReadFilesWithEnv(paths []string, envRef string) ([][]byte, error) {
 	return specs, nil
 }
 
-// resolveEnvRef turns the caller's env reference into the id the cases will
+// resolveChainPresetRef turns the caller's env reference into the id the cases will
 // name and the bytes that id resolves to.
 //
 // A path is read directly and supplies its own id; an id is searched for from
 // the first spec's directory, which is where a case's own reference is searched
 // from, so one rule covers both.
-func resolveEnvRef(paths []string, envRef string) (string, []byte, error) {
-	if looksLikePath(envRef) {
-		raw, err := os.ReadFile(envRef)
+func resolveChainPresetRef(paths []string, presetRef string) (string, []byte, error) {
+	if looksLikePath(presetRef) {
+		raw, err := os.ReadFile(presetRef)
 		if err != nil {
-			return "", nil, fmt.Errorf("dsl: read env %s: %w", envRef, err)
+			return "", nil, fmt.Errorf("dsl: read env %s: %w", presetRef, err)
 		}
-		env, err := ParseEnv(raw)
+		env, err := ParseChainPreset(raw)
 		if err != nil {
-			return "", nil, fmt.Errorf("dsl: env %s: %w", envRef, err)
+			return "", nil, fmt.Errorf("dsl: env %s: %w", presetRef, err)
 		}
 		return env.ID, raw, nil
 	}
 	if len(paths) == 0 {
-		return "", nil, fmt.Errorf("dsl: env %q cannot be resolved without a spec to search from", envRef)
+		return "", nil, fmt.Errorf("dsl: env %q cannot be resolved without a spec to search from", presetRef)
 	}
-	raw, ok := findEnvFile(filepath.Dir(paths[0]), envRef)
+	raw, ok := findChainPresetFile(filepath.Dir(paths[0]), presetRef)
 	if !ok {
-		return "", nil, fmt.Errorf("dsl: no %s.env.json beside %s or in an env/ directory at any level above it", envRef, paths[0])
+		return "", nil, fmt.Errorf("dsl: no chain-preset %q beside %s, in a chain-preset/ directory above it, or in %s", presetRef, paths[0], sharedPresetDir)
 	}
-	return envRef, raw, nil
+	return presetRef, raw, nil
 }
 
 // looksLikePath distinguishes a file from an id without touching the disk, so
@@ -104,12 +112,13 @@ func looksLikePath(ref string) bool {
 	return strings.ContainsRune(ref, filepath.Separator) || strings.HasSuffix(ref, ".json")
 }
 
-// findEnvFile walks up from dir looking for the env declaration named id.
-func findEnvFile(dir, id string) ([]byte, bool) {
-	for depth := 0; depth < maxEnvSearchDepth; depth++ {
+// findChainPresetFile walks up from dir looking for the env declaration named id.
+func findChainPresetFile(dir, id string) ([]byte, bool) {
+	for depth := 0; depth < maxPresetSearchDepth; depth++ {
 		for _, cand := range []string{
-			filepath.Join(dir, id+".env.json"),
-			filepath.Join(dir, "env", id+".env.json"),
+			filepath.Join(dir, id+".json"),
+			filepath.Join(dir, "chain-preset", id+".json"),
+			filepath.Join(dir, sharedPresetDir, id+".json"),
 		} {
 			if b, err := os.ReadFile(cand); err == nil {
 				return b, true

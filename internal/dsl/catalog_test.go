@@ -21,9 +21,9 @@ func TestListSpecs(t *testing.T) {
 		}
 	}
 	write("a/case-v2.json", `{"schemaVersion":"2","kind":"case","id":"c2","description":"a v2 case",
-	  "env":{"chain":"wbft","binaries":{"default":"gwbft"}},"steps":[{"expect":"blockNumber","is":1}]}`)
-	write("a/env.json", `{"schemaVersion":"2","kind":"env","id":"e1","chain":"wbft"}`)
-	write("b/case-ref.json", `{"schemaVersion":"2","kind":"case","id":"cref","env":"e1","steps":[{"expect":"blockNumber","is":1}]}`)
+	  "chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"}},"steps":[{"expect":"blockNumber","is":1}]}`)
+	write("a/env.json", `{"schemaVersion":"2","kind":"chain-preset","id":"e1","chain":"wbft"}`)
+	write("b/case-ref.json", `{"schemaVersion":"2","kind":"case","id":"cref","chainPreset":"e1","steps":[{"expect":"blockNumber","is":1}]}`)
 	write("notjson.txt", `ignore me`)
 
 	got, err := ListSpecs(root)

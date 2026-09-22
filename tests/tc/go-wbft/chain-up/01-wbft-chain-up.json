@@ -6,7 +6,7 @@
     "rpc",
     "consensus"
   ],
-  "env": "wbft-bp4-binvar",
+  "chainPreset": "wbft-bp4-binvar",
   "steps": [
     {
       "do": "waitBlock",

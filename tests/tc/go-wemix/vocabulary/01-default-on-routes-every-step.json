@@ -7,7 +7,7 @@
     "rpc"
   ],
   "on": "node3",
-  "env": "wemix-bp4",
+  "chainPreset": "wemix-bp4",
   "hooks": {
     "pre": [
       {

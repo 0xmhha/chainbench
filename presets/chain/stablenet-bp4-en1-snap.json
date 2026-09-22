@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4-en1-snap",
   "description": "stablenet: 4 bp + 1 en, en syncing snap. Used by 3 cases.",
   "chain": "stablenet",

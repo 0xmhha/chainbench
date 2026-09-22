@@ -9,7 +9,7 @@
 ## 1. 케이스는 망을 고르고, 망은 따로 산다
 
 `tests/tc` 아래 문서는 모두 `schemaVersion: "2"` 의 케이스다. 케이스는 **무엇을
-검증하는지**를 말하고, **어떤 망 위에서 도는지**는 `tests/tc/env/` 의 선언을 이름으로
+검증하는지**를 말하고, **어떤 망 위에서 도는지**는 `presets/chain/` 의 선언을 이름으로
 고른다.
 
 ```json
@@ -19,17 +19,17 @@
   "id": "legacy-transfer",
   "description": "RT-A-2-01 — 레거시(type 0x00) 송금",
   "requires": ["rpc"],
-  "env": "stablenet-bp4",
+  "chainPreset": "stablenet-bp4",
   "steps": [ ... ]
 }
 ```
 
-`tests/tc/env/stablenet-bp4.env.json` 이 그 망이다.
+`presets/chain/stablenet-bp4.json` 이 그 망이다.
 
 ```json
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4",
   "chain": "stablenet",
   "topology": { "bp": 4 },
@@ -108,12 +108,12 @@ runnable 하지 않다고 거부한다. 테스트가 없으니 돌릴 것이 없
 
 ```json
 { "kind": "case",              ← 이 문서는 테스트다
-  "env": { "kind": "env",      ← 이 안은 네트워크 선언이다
+  "env": { "kind": "chain-preset",      ← 이 안은 네트워크 선언이다
            "chain": "stablenet" } }
 ```
 
 `lowerCase` 가 인라인 env 의 `kind` 를 검사한다. 비어 있으면 통과시키고, 값이 있는데
-`"env"` 가 아니면 거부한다.
+`"chainPreset"` 가 아니면 거부한다.
 
 `env` 는 문법상 세 가지를 받는다. 다른 파일에 있는 선언의 id 를 문자열로 부르거나,
 `extends` 로 부르면서 일부를 덮거나, 선언 객체를 그대로 넣거나. **`tests/tc` 는 앞의
@@ -121,7 +121,7 @@ runnable 하지 않다고 거부한다. 테스트가 없으니 돌릴 것이 없
 복사되는 것이 P1 이 없앤 문제다.
 
 env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — bp 4대와
-`presets/keys` 이다(`internal/testengine/compose.go`). `tests/tc/env` 의 선언은 그
+`presets/keys` 이다(`internal/testengine/compose.go`). `presets/chain` 의 선언은 그
 기본값도 적어 둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을
 막기 위해서다.
 
@@ -354,7 +354,7 @@ chainbench validate tests/tc/<path>.json
 `tests/tc` 아래 전체를 한 번에 보려면 다음처럼 한다.
 
 ```
-chainbench validate $(find tests/tc -name '*.json' ! -name '*.env.json')
+chainbench validate $(find tests/tc -name '*.json')
 ```
 
 `go test ./cmd/chainbench/ -run TestValidateCmd` 가 같은 검사를 CI 에서 돌린다. 새 문서를 넣으면 이 테스트가 자동으로 집어 간다.

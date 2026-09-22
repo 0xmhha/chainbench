@@ -194,7 +194,7 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 	}
 	if len(specs) == 0 {
 		var err error
-		if specs, err = dsl.ReadFilesWithEnv(in.SpecPaths, in.Env); err != nil {
+		if specs, err = dsl.ReadFilesWithChainPreset(in.SpecPaths, in.Env); err != nil {
 			return nil, nil, composition{}, err
 		}
 	}

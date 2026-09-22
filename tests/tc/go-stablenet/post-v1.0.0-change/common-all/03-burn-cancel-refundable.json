@@ -7,7 +7,7 @@
     "rpc",
     "contract:govMinter"
   ],
-  "env": "stablenet-bp4-boho",
+  "chainPreset": "stablenet-bp4-boho",
   "steps": [
     {
       "do": "read",

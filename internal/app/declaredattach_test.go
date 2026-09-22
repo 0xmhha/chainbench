@@ -14,7 +14,7 @@ import (
 func writeCase(t *testing.T, dir, id string, env map[string]any) string {
 	t.Helper()
 	doc := map[string]any{
-		"schemaVersion": "2", "kind": "case", "id": id, "env": env,
+		"schemaVersion": "2", "kind": "case", "id": id, "chainPreset": env,
 		"steps": []map[string]any{{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "0"}},
 	}
 	raw, err := json.Marshal(doc)
@@ -30,14 +30,14 @@ func writeCase(t *testing.T, dir, id string, env map[string]any) string {
 
 func attachEnv(rpc ...string) map[string]any {
 	return map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"attach": map[string]any{"rpc": rpc},
 	}
 }
 
 func composeEnv() map[string]any {
 	return map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"topology": map[string]any{"bp": 4},
 	}
 }

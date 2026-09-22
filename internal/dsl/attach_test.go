@@ -15,7 +15,7 @@ func attachCase(t *testing.T, env map[string]any) []byte {
 		"schemaVersion": "2",
 		"kind":          "case",
 		"id":            "attach-case",
-		"env":           env,
+		"chainPreset":   env,
 		"steps": []map[string]any{
 			{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "0"},
 		},
@@ -43,7 +43,7 @@ func TestAttachEnvIsExclusiveWithComposing(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			env := map[string]any{
-				"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+				"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 				"attach": map[string]any{"rpc": []string{"http://127.0.0.1:8600"}},
 			}
 			for k, v := range extra {
@@ -72,7 +72,7 @@ func TestAttachEnvNeedsAnEndpoint(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			env := map[string]any{
-				"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+				"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 				"attach": attach,
 			}
 			if _, err := dsl.Parse(attachCase(t, env)); err == nil {
@@ -87,7 +87,7 @@ func TestAttachEnvNeedsAnEndpoint(t *testing.T) {
 // thrown away elsewhere in this package.
 func TestAttachEnvReachesTheSpec(t *testing.T) {
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"attach": map[string]any{
 			"rpc":      []string{"http://127.0.0.1:8600", "http://127.0.0.1:8610"},
 			"keysDir":  "presets/keys",
@@ -121,7 +121,7 @@ func TestAttachEnvReachesTheSpec(t *testing.T) {
 // not acquire one, or every composed run would look like a candidate to attach.
 func TestComposingEnvHasNoAttach(t *testing.T) {
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"topology": map[string]any{"bp": 4},
 	}
 	spec, err := dsl.Parse(attachCase(t, env))

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
-  "id": "stablenet-bp3-en1-pn1",
-  "description": "stablenet: 3 bp + 1 en + 1 pn. Used by 1 case.",
+  "kind": "chain-preset",
+  "id": "stablenet-bp4",
+  "description": "stablenet: 4 bp. Used by 161 cases.",
   "chain": "stablenet",
   "keys": {
     "nodekeys": {
@@ -11,8 +11,6 @@
     }
   },
   "topology": {
-    "bp": 3,
-    "en": 1,
-    "pn": 1
+    "bp": 4
   }
 }

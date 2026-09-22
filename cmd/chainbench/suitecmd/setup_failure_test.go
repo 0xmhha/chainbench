@@ -225,9 +225,9 @@ func writeCaseWithInlineKey(path, key string) error {
 		"schemaVersion": "2",
 		"kind":          "case",
 		"id":            "inline-key-case",
-		"env": map[string]any{
+		"chainPreset": map[string]any{
 			"schemaVersion": "2",
-			"kind":          "env",
+			"kind":          "chain-preset",
 			"id":            "inline-key-env",
 			"chain":         "stablenet",
 			"binaries":      map[string]any{"default": "gstable"},

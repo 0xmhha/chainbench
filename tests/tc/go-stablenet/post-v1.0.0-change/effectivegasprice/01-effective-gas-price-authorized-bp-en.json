@@ -7,7 +7,7 @@
     "rpc",
     "contract:govCouncil"
   ],
-  "env": "stablenet-bp4-en1-snap",
+  "chainPreset": "stablenet-bp4-en1-snap",
   "steps": [
     {
       "do": "waitBlock",

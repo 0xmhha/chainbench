@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "wemix-to-wbft",
   "description": "wemix crossing the croissant fork to wbft: 1 wemix producer + 4 wbft successors, declared per node. Composed on the ordinary path, not the handoff composer. Used by 1 case.",
   "chain": "wemix",

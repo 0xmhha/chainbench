@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "wemix-bp7-en7-pn1",
   "description": "wemix: 7 bp + 7 en + 1 pn. Used by 1 case.",
   "chain": "wemix",

@@ -11,7 +11,7 @@
     "contract:govValidator",
     "contract:nativeCoinAdapter"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

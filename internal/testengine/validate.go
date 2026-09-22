@@ -89,7 +89,7 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 	case dsl.IsEnv(raw):
 		// An env is a declaration, not a run: it validates on its own terms and
 		// is exercised through the cases that name it.
-		env, perr := dsl.ParseEnv(raw)
+		env, perr := dsl.ParseChainPreset(raw)
 		if perr != nil {
 			r.Result = "INVALID: " + perr.Error()
 			return r

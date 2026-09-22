@@ -269,8 +269,40 @@ internal/dsl             18파일  3268줄   env·case 문법과 병합
 | 체인 정의 파일의 자리 | 지금 자리 유지. P-2 가 끝난 뒤 다시 본다 | 선언이 두 트리에 나뉜 상태가 그만큼 길어진다 |
 | `manifest.network_id` | 남기되 파생과 같은 값이면 래칫이 거부 (P-8) | 규칙이 한 줄 는다 |
 
-**아직 안 정한 것**은 P-1 의 낱말이다. "체인 정의 / 환경 선언 / 케이스" 세 개념에 각각 어떤
-낱말을 쓸지이고, 그것이 정해져야 P-2 이후가 움직인다.
+### P-1 — 낱말 (확정 2026-09-22)
+
+| 개념 | 낱말 | 파일 | 누가 쓰나 |
+|---|---|---|---|
+| 체인 구현이 무엇인가 | **chain-manifest** | `internal/chains/<id>/manifest.json` (embed) | 도구가 안다 |
+| 이 망이 어떻게 생겼나 | **chain-preset** | `presets/chain/<id>.json` | 테스트 작성자 |
+| 무엇을 검사하나 | **case** | `tests/tc/**/*.json` | 테스트 작성자 |
+| 노드 신원 | **key-preset** | `presets/keys/` | 테스트 작성자 |
+
+`env` 와 `profile` 과 (체인 쪽) `preset` 은 없어진다. `profile` 은 이미 죽은 낱말이라 주석의
+잔재와 없어진 명령을 부르는 e2e 둘에만 남아 있다.
+
+**chain-preset 은 종속성이 없어야 한다.** 논리적 이름만 적고, 구체적인 바이너리와 기계는
+chain-manifest 와 workspace-config 가 답한다. 지금 26개 중 8개가 `${GWBFT_BIN:-gwbft}` 로
+구체적인 파일 이름을 적고 있는데, 그 일을 할 자리는 `WorkspaceConfig.BinaryAliases` 에 이미
+있다. 이 기준이 그 8개를 걸러 낸다.
+
+### P-1b — 개명이 닿는 곳 (잰 것)
+
+| 무엇 | 지금 | 뒤 | 건수 |
+|---|---|---|---|
+| 케이스의 참조 키 | `"env": "<id>"` | `"chainPreset": "<id>"` | 209 |
+| 선언의 kind | `"kind": "env"` | `"kind": "chain-preset"` | 26 |
+| 파일 이름·자리 | `tests/tc/env/<id>.env.json` | `presets/chain/<id>.json` | 26 |
+| Go 식별자 | `EnvV2`·`KindEnv`·`findEnvFile`·`UseEnv`·`InlineEnv`·`ReadFilesWithEnv`·`envRef` | 대응하는 chain-preset 이름 | 약 104곳 |
+| 스키마 | `const: "env"`, 속성 `env` | `chain-preset`, `chainPreset` | 3곳 |
+| CLI | `suite run --env` | `--chain-preset` | 1 |
+
+**해석 규칙.** 지금은 케이스 파일의 디렉터리에서 위로 올라가며 `<dir>/<id>.env.json` 과
+`<dir>/env/<id>.env.json` 을 찾는다. 그 걸음은 유지하고(스위트가 자기 preset 을 곁에 둘 수
+있다) **저장소 루트의 `presets/chain/<id>.json` 을 마지막 자리로 더한다.** 케이스는 id 만
+부르므로 파일이 옮겨 가도 케이스의 값은 바뀌지 않는다 — 바뀌는 것은 키 이름뿐이다.
+
+게이트는 209개 케이스가 그대로 `validate` 를 통과하는 것이다(지금 209/209).
 
 ---
 

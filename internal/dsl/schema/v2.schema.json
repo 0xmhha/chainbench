@@ -26,7 +26,7 @@
           "const": "2"
         },
         "kind": {
-          "const": "env"
+          "const": "chain-preset"
         },
         "id": {
           "type": "string",
@@ -288,7 +288,7 @@
         "schemaVersion",
         "kind",
         "id",
-        "env",
+        "chainPreset",
         "steps"
       ],
       "properties": {
@@ -306,11 +306,11 @@
           "type": "string",
           "description": "Prose saying what this document is for. No execution semantics."
         },
-        "env": {
+        "chainPreset": {
           "oneOf": [
             {
               "type": "string",
-              "description": "env id resolved against the case file's directory"
+              "description": "chain-preset id, resolved against the case file's directory, a chain-preset/ directory above it, or presets/chain"
             },
             {
               "$ref": "#/$defs/envSpec"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "wemix-to-wbft-bp2",
   "description": "wemix crossing the croissant fork to wbft with TWO producers: 2 wemix producers + 4 go-wbft successors, declared per node. The one-producer network never exercises the poa bring-up's join phase, where each producer after the boot node joins the etcd cluster in turn. Keys are generated because the committed preset holds five identities and this wants six. Used by 1 case.",
   "chain": "wemix",

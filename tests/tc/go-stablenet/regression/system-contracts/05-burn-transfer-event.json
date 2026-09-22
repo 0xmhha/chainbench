@@ -8,7 +8,7 @@
     "contract:govMinter",
     "contract:nativeCoinAdapter"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

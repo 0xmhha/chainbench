@@ -17,7 +17,7 @@ func TestRunTool_ModeSelection(t *testing.T) {
 	}
 
 	// rpc present selects attach, which requires a chain.
-	if text, isErr := callText(t, s, "chainbench_run", map[string]any{"rpc": []any{"http://127.0.0.1:1"}, "spec": `{"schemaVersion":"2","kind":"case","id":"c","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"},"steps":[]}`}); !isErr || !strings.Contains(text, "chain") {
+	if text, isErr := callText(t, s, "chainbench_run", map[string]any{"rpc": []any{"http://127.0.0.1:1"}, "spec": `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet"},"steps":[]}`}); !isErr || !strings.Contains(text, "chain") {
 		t.Errorf("attach without chain: err=%v text=%q, want a chain-required error", isErr, text)
 	}
 }

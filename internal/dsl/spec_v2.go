@@ -33,10 +33,10 @@ var SchemaV2 []byte
 // sequence — one execution path, two grammars. Unknown fields are errors
 // (strict): v1 let typos flow through map[string]any to the runtime.
 
-// KindEnv and KindCase are the v2 file kinds.
+// KindChainPreset and KindCase are the v2 file kinds.
 const (
-	KindEnv  = "env"
-	KindCase = "case"
+	KindChainPreset = "chain-preset"
+	KindCase        = "case"
 )
 
 // schemaVersionV2 is the v2 grammar version.
@@ -54,8 +54,8 @@ type Statement struct {
 	Args map[string]any
 }
 
-// EnvV2 is the v2 environment declaration — the reuse unit.
-type EnvV2 struct {
+// ChainPresetV2 is the v2 environment declaration — the reuse unit.
+type ChainPresetV2 struct {
 	SchemaVersion string `json:"schemaVersion"`
 	Kind          string `json:"kind"`
 	ID            string `json:"id"`
@@ -369,7 +369,7 @@ type GenesisSideV2 struct {
 // Every refusal here is one the runtime would otherwise meet as something else:
 // a missing preset as a file-not-found, a misspelled side as a node running the
 // wrong build, an unbuilt style as a handoff that quietly did the other thing.
-func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
+func checkUpgrade(caseID string, u *UpgradeV2, env ChainPresetV2) error {
 	switch u.Style {
 	case "", UpgradeConcurrent, UpgradeRestart:
 	default:
@@ -450,7 +450,7 @@ type CaseV2 struct {
 	// a case cannot carry a note unless the grammar has a place for one, and a
 	// test that cannot say what it is for is read by opening its steps.
 	Description      string            `json:"description,omitempty"`
-	Env              json.RawMessage   `json:"env"`
+	ChainPreset      json.RawMessage   `json:"chainPreset"`
 	ApplicableChains string            `json:"applicableChains,omitempty"`
 	Requires         []string          `json:"requires,omitempty"`
 	On               string            `json:"on,omitempty"`

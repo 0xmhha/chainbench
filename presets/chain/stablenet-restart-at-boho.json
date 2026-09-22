@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-restart-at-boho",
   "description": "stablenet crossing its own boho fork by restart: 4 bp run the pre-fork build, and every node is relaunched on the post-fork one well before the fork block. One chain, one build at a time \u2014 the nodes keep their databases and their work, and only the executable changes. The two builds are go-stablenet either side of the commit that added boho: ad0122af0 (the parent, which has no BohoBlock at all) and any commit after bf17c9607. Build both and name them apart, e.g. gstable-ad0122 and gstable-740526, then point GSTABLE_BIN at the first and GSTABLE_POSTFORK_BIN at the second. Running the pre-fork build on both sides is the control: the network cannot even start, because that build refuses a config naming a field it does not have. Used by 1 case.",
   "chain": "stablenet",

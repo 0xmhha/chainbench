@@ -63,7 +63,7 @@ type Environment interface {
 // TestRecord accumulates one test's artifacts (spec/steps/assert/status/post).
 type TestRecord interface {
 	Dir() string
-	SetEnvRef(envID string)
+	SetEnvRef(presetID string)
 	Spec(raw []byte)
 	Step(i int, r StepResult)
 	Assert(r AssertResult)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2",
-  "kind": "env",
+  "kind": "chain-preset",
   "id": "stablenet-bp4-en1-binvar",
   "description": "stablenet: 4 bp + 1 en. Binaries: default = ${GSTABLE_BIN:-gstable}. Used by 1 case.",
   "binaries": {

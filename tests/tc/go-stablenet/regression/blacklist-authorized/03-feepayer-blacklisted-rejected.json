@@ -7,7 +7,7 @@
     "rpc",
     "contract:govCouncil"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4-boho",
     "capabilities": [
       "rpc"

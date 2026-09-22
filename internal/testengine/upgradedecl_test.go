@@ -10,7 +10,7 @@ import (
 
 // upgradeEnv builds an env declaring a hardfork, with extra fields folded in.
 func upgradeEnv(extra string) string {
-	return `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	return `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","to":{"binary":"gwbft","chain":"wbft"}},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"en","binary":"to"},
@@ -91,7 +91,7 @@ func TestUpgradeDecl_RefusesADeclarationThatContradictsItself(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + upgradeEnv(tc.extra) + `,
+			raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":` + upgradeEnv(tc.extra) + `,
 			  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 			_, err := dsl.Parse([]byte(raw))
 			if err == nil || !strings.Contains(err.Error(), tc.want) {

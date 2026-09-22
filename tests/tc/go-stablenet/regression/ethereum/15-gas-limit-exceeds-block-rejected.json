@@ -7,7 +7,7 @@
     "rpc",
     "engine:anzeon"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

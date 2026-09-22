@@ -5,7 +5,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "wemix-bp4-binvar",
     "genesis": {
       "overlay": {
