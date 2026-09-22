@@ -119,7 +119,7 @@ func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 	if shipped > 0 {
 		at = lifecycle.ChainDeployNodesShippedRemote
 	}
-	return StepOut{Detail: detail, Passed: []lifecycle.Status{at}}, nil
+	return StepOut{Detail: detail, Shipped: shipped, Passed: []lifecycle.Status{at}}, nil
 }
 
 // shipIdentities uploads each node's identity files — the devp2p nodekey, the

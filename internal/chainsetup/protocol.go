@@ -73,6 +73,9 @@ const (
 	eventNodeConfigBuilt
 	// eventNodeCommandBuilt: every node has a command line.
 	eventNodeCommandBuilt
+	// eventInputsPresent: the deploy is done, and says how many files it had
+	// to send to reach that.
+	eventInputsPresent
 	// eventInputsDeployed: every launch input is present on its target.
 	eventInputsDeployed
 	// eventPhaseLaunched: one launch phase is up. A launch is several, so the
@@ -116,6 +119,7 @@ var whatNames = map[statemachine.What]string{
 	eventGenesisBuilt:     "eventGenesisBuilt",
 	eventNodeConfigBuilt:  "eventNodeConfigBuilt",
 	eventNodeCommandBuilt: "eventNodeCommandBuilt",
+	eventInputsPresent:    "eventInputsPresent",
 	eventInputsDeployed:   "eventInputsDeployed",
 	eventPhaseLaunched:    "eventPhaseLaunched",
 	eventStageDone:        "eventStageDone",
@@ -289,6 +293,23 @@ type nodeCommandBuilt struct{ Detail string }
 func (nodeCommandBuilt) What() statemachine.What { return eventNodeCommandBuilt }
 
 func (e nodeCommandBuilt) stage() (string, string) { return stepBuild, e.Detail }
+
+// inputsPresent: the deploy finished, and how many identity files it sent. It
+// is not a stage report: which way it went is not settled until the state that
+// names that way has been entered.
+type inputsPresent struct {
+	Detail  string
+	Shipped int
+}
+
+func (inputsPresent) What() statemachine.What { return eventInputsPresent }
+
+// inputsDeployed: every launch input is present on its target.
+type inputsDeployed struct{ Detail string }
+
+func (inputsDeployed) What() statemachine.What { return eventInputsDeployed }
+
+func (e inputsDeployed) stage() (string, string) { return stepDeploy, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

@@ -120,6 +120,8 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"    BuildingNodeConfig",
 		"    BuildingNodeCommand",
 		"    DeployingInputs",
+		"      InputsVerifiedLocal",
+		"      InputsShippedRemote",
 		"    InitializingDatadirs",
 		"    Launching",
 		"  Composed",
@@ -192,10 +194,10 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	// A step that is still an adapter, so this says what it means -- that the
 	// walk begins where it was told -- without also needing the stages before
 	// it to have run.
-	if err := mg.Compose(context.Background(), upRequest(t), "deploy"); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(t), "init"); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"deploy", "init", "start"}
+	want := []string{"init", "start"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v", got, want)
 	}
@@ -220,13 +222,13 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 // TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason.
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "deploy"
+	w.failAt = "init"
 	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
 	// The failing stage reports nothing, so the lines stop one short of it.
-	want := []string{"new", "place", "keys", "genesis", "config", "build"}
+	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
@@ -241,7 +243,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "deploy"
+	w.failAt = "init"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -293,7 +295,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 // TestCompose_TheRecordKeepsWhereItDied.
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "deploy"
+	w.failAt = "init"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -484,7 +486,7 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 	// disk by then names that stage -- which is the guarantee, one stage on.
 	var atKeys string
 	mg.run = func(_ context.Context, step string) (string, error) {
-		if step == "deploy" {
+		if step == "init" {
 			ws, err := Open(mg.ws.Dir(), nil)
 			if err != nil {
 				return "", err
@@ -495,11 +497,11 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 		return step + " done", nil
 	}
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
-		t.Fatal("the walk was meant to stop at deploy")
+		t.Fatal("the walk was meant to stop at init")
 	}
 
-	if atKeys != "Composition/Composing/DeployingInputs" {
-		t.Errorf("the record said %q when the deploy stage began", atKeys)
+	if atKeys != "Composition/Composing/InitializingDatadirs" {
+		t.Errorf("the record said %q when the init stage began", atKeys)
 	}
 	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
 		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)
@@ -539,5 +541,29 @@ func TestBuildingGenesis_SaysWhereTheGenesisCameFrom(t *testing.T) {
 	}
 	if slices.Contains(got, "GenesisFromTemplate") {
 		t.Error("it also built one from the template, and a composition takes one way")
+	}
+}
+
+// TestDeployingInputs_SaysWhetherAnythingWasShipped.
+//
+// The branch here stands after the work: a deploy to a local target ships
+// nothing, because the key set already is the place the config points at, and
+// the only way to know is to count. So the state the composition lands in is
+// the answer, and it is what the record keeps.
+func TestDeployingInputs_SaysWhetherAnythingWasShipped(t *testing.T) {
+	mg, _ := newTestManager(t)
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err != nil {
+		t.Fatal(err)
+	}
+	got := entered(mg)
+	if !slices.Contains(got, "InputsVerifiedLocal") {
+		t.Errorf("a local composition went through %v, and never verified its inputs in place", got)
+	}
+	if slices.Contains(got, "InputsShippedRemote") {
+		t.Error("a local composition shipped something, and a local target has nowhere to ship to")
+	}
+	// The stage still reports its line, from the state that named the outcome.
+	if !strings.HasPrefix(mg.Steps()[6], "deploy: ") {
+		t.Errorf("the stage reported %q, want a line beginning \"deploy: \"", mg.Steps()[6])
 	}
 }
