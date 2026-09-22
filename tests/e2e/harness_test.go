@@ -301,29 +301,55 @@ func (n *network) rpcURLFor(index int) string {
 }
 
 // head returns the current block height at url (-1 on error).
+//
+// -1 is a value, and it compares: a node that is not answering yet reads lower
+// than one at genesis, so "unreachable, then reachable at block 0" looks like
+// growth to anything that only subtracts. Callers that ask whether a chain
+// MOVED must use headOK and require a reading first — see waitAdvancing.
 func head(t *testing.T, url string) int64 {
+	h, _ := headOK(t, url)
+	return h
+}
+
+// headOK is head with the reading's validity kept separate from its value.
+func headOK(t *testing.T, url string) (int64, bool) {
 	c := rpc.Dial(url)
 	bn, err := c.BlockNumber(context.Background())
 	if err != nil {
-		return -1
+		return -1, false
 	}
-	return int64(bn)
+	return int64(bn), true
 }
 
-// waitAdvancing polls until the head at url grows past its first sample, or
+// waitAdvancing polls until the head at url grows past its first reading, or
 // fails after timeout. WBFT consensus can take ~10-15s to warm up (head sits at
 // 1, then accelerates), so a single before/after window is too flaky — poll.
+//
+// The baseline is the first reading that ANSWERED, not the first sample. Taking
+// the sample was how this returned on a chain that had produced nothing: it
+// sampled the endpoint before that node's RPC was listening, got -1, and three
+// seconds later block 0 beat it. The caller then stopped a validator believing
+// the set was producing, and what it went on to measure was a set that had
+// never committed block 1.
 func (n *network) waitAdvancing(url string, timeout time.Duration) {
 	n.t.Helper()
-	start := head(n.t, url)
 	deadline := timeAfter(timeout)
+	start, have := int64(-1), false
 	for !deadline() {
-		time.Sleep(3 * time.Second)
-		if head(n.t, url) > start {
-			return
+		if h, ok := headOK(n.t, url); ok {
+			if !have {
+				start, have = h, true
+			} else if h > start {
+				return
+			}
 		}
+		time.Sleep(3 * time.Second)
 	}
-	n.t.Errorf("chain not producing blocks at %s (head stuck at %d)", url, start)
+	if !have {
+		n.t.Errorf("no node answered at %s within %s, so nothing was measured", url, timeout)
+	} else {
+		n.t.Errorf("chain not producing blocks at %s (head stuck at %d)", url, start)
+	}
 	n.diagnose("chain did not advance")
 	n.t.FailNow()
 }
@@ -427,10 +453,20 @@ func (n *network) waitFormed(timeout time.Duration) {
 
 // grewWithin reports whether the head at url grew over the window — used for the
 // negative check that production has HALTED (expects false).
+//
+// A window that begins or ends on an unreadable node answers nothing, and the
+// caller is asserting a negative, where "nothing" and "no" look alike. So an
+// unreadable end is reported as no growth, and an unreadable start fails the
+// test rather than quietly standing in for one.
 func grewWithin(t *testing.T, url string, window time.Duration) bool {
-	before := head(t, url)
+	t.Helper()
+	before, ok := headOK(t, url)
+	if !ok {
+		t.Fatalf("%s did not answer, so whether it halted cannot be asked", url)
+	}
 	time.Sleep(window)
-	return head(t, url) > before
+	after, ok := headOK(t, url)
+	return ok && after > before
 }
 
 // waitCross polls until the head at url exceeds target, or fails after timeout.
