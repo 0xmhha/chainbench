@@ -235,7 +235,7 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 | ~~**P-2**~~ | ~~선언을 한 겹으로 줄인다~~ | **완료 2026-09-22.** `upgrade.preset` 과 `preset.Chain` 이 없어졌다. 선언이 fork 와 at 을 직접 말하고, 포크 이름은 **그 포크를 넘겨받는 바이너리의 chain-manifest** 가 아는지로 검사한다 |
 | ~~**P-3**~~ | ~~소유권을 가른다~~ | **완료 2026-09-22.** `manifest.upgrade` 를 지우고 `network_id` 를 파생으로 돌렸다. 세 manifest 에서 네 필드가 없어졌다 |
 | **P-4** | 우선순위 어휘 셋을 한 줄로 모은다 | 값마다 어느 단이 이겼는지 한 어휘로 읽힌다 |
-| **P-5** | `suite run` 에 `--server-set` 을 단다 | 정의서 하나가 server-set 만 갈아 끼워 다른 기계에서 돈다 |
+| ~~**P-5**~~ | ~~`suite run` 에 `--server-set` 을 단다~~ | **닫음 2026-09-22. 할 일이 없었다 — 측정이 틀렸다.** §P-5 |
 | **P-6** | 감시 테스트를 override 결과 기준으로 다시 쓴다 | 기본값을 의도적으로 바꿔도 실패하지 않고, 사슬을 거친 결과가 틀리면 실패한다 |
 | **P-7** | preset 문서의 틀린 값과 `presets/chain/README.md` 를 고친다 | 문서가 적은 값이 실제로 쓰이는 값이다 |
 | ~~**P-8**~~ | ~~파생과 같은 `network_id` 를 거부한다~~ | **완료 2026-09-22.** P-3 과 떼어 놓을 수 없어 함께 했다. 세 필드가 전부 걸렸고, 지우니 통과한다 |
@@ -272,6 +272,29 @@ INVALID FORK: the declaration crosses the "croisant" fork and wbft does not know
 
 두 yaml 은 지우지 않았다. 불러 쓰는 문법이 없어졌을 뿐, 15+15 환경의 신원 기록은 그 안에만
 있다.
+
+### P-5 — 할 일이 없었다 (2026-09-22)
+
+이 항목은 "`suite run` 은 `--workspace-config` 는 받고 `--server-set` 은 안 받는다" 는 측정
+위에 세워졌다. **틀렸다.** `suite run` 에는 `--server-set` 이 있다.
+
+왜 놓쳤는지가 이 기록의 값이다. 그 플래그는 `cmd/chainbench/suitecmd/run.go` 에 적혀 있지
+않고, `resourcecmd.ServerFlags` 가 `--server-set`·`--server`·`--server-index`·`--all-servers`
+넷을 묶어 등록하고 `run` 이 그것을 빌려 쓴다. 나는 `run.go` 안에서 문자열을 찾았고 없다고
+보고했다. **파일을 찾아보고 없으면 없다고 결론지은 것**이고, 명령이 실제로 무엇을 받는지는
+`--help` 한 줄이면 나왔다.
+
+라이브로 확인했다. 포트 대역만 다른 server-set 을 만들어 넘기니 그대로 따라간다.
+
+```
+place: 4 node(s): 4 bp + 0 en + 0 pn; ports: /tmp/p5-set.yaml[local]; p2p from 33000, http from 9600
+```
+
+MCP 의 run 도구에도 `serverSet` 인자가 있다. 즉 §4.2 가 말하는 "정의서 하나가 server-set 과
+workspace-config 만 갈아 끼워 다른 기계에서 돈다" 는 **이미 성립한다.**
+
+남은 사실 하나는 여전히 맞다. 아무것도 주지 않으면 현재 디렉터리의 `server-set.yaml` 을
+줍고, 없으면 내장 기본값으로 간다. 그것은 문서화된 기본값이지 빈틈이 아니다.
 
 ### P-3 · P-8 — 소유권 (2026-09-22)
 
