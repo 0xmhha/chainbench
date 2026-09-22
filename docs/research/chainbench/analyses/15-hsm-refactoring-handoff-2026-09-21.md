@@ -99,15 +99,42 @@
 | 3 | record 에 state path 필드를 **추가만** 한다. `FormatVersion` 은 아직 1. 읽는 쪽 없음 | 기존 record 테스트 |
 | 4 | chainsetup `Manager` 와 트리. leaf state 는 전부 어댑터 `legacyStage{step}`(`Enter` 가 옛 verb 를 부르고 `SendSelf(eventStageDone)`). `failed` 는 parent + reason. `netUpFrom` 이 `Manager.Send(CmdCompose)` 를 부른다 | `chain up` 통합 전부. 동작이 같아야 한다 |
 | 5~13 | leaf state 하나씩 어댑터를 진짜 leaf 로. 한 commit 에 하나. 순서: openingWorkspace, buildingNodeTable, ensuringKeys(3 leaf), buildingGenesis(2 leaf), buildingNodeConfig, buildingNodeCommand, deployingInputs(2 leaf), initializingDatadirs, launching(2 leaf) | 그 단계 + 통합 |
-| 14 | `composed` state 와 `CmdStep`. `require` · `composeNeeds` · "run `chain X` first" 문장 삭제 | 단독 명령 |
-| 15 | resume 이 record 의 state path 로 `Start`. `FormatVersion` 2. `upStepNames` 잔재 삭제 | resume |
-| 16 | `reconciling` · `verifying` · `comparing` 을 트리에. `NetUpComparing` 삭제 | `run` 통합 |
-| 17 | `ready` 아래 운영 leaf(stopping · swapping · hardforking · restarting · crossingFork). `verbNeeds` 삭제 | 운영 명령 |
-| 18 | testengine `run` state machine. chainsetup 을 child 로, `Post` 로 보고 | 전체 |
-| 19 | 어댑터와 옛 `lifecycle` 삭제 | 전체 |
+| 14 | 단독 `chain <step>` 아홉 개를 machine 위로. `composed` state 와 `CmdStep` | 단독 명령 |
+| 15 | resume 이 record 의 state path 로 `Start`. `FormatVersion` 2 | resume |
+| 16 | reuse 경로와 `run` 의 조립 경로를 machine 위로(`reconciling`·`verifying`·`comparing`) | `run` 통합 |
+| 17 | 운영 명령을 machine 위로. `ready` 아래 leaf(stopping · swapping · hardforking · restarting · crossingFork) | 운영 명령 |
+| 18 | testengine `run` state machine. attach 포함. chainsetup 을 child 로, `Post` 로 보고 | 전체 |
+| 19 | **여기서 처음 지운다** — 옛 `lifecycle` · `composition` 표 · `handlersFor` · `require` · `composeNeeds` · `allow` · `verbNeeds` · 손 문장 15곳 · `ChainUpComparing` | 전체 |
+
+**삭제를 19번 하나로 모았다** (2026-09-22, 사용자 확인). 원래 표는 삭제를 14 · 16 · 17 · 19 에
+흩어 놓았다. 그러면 아직 machine 을 타지 않는 길이 옛 안전장치를 잃은 채 남는다 — 14번 시점에
+machine 밖에 있는 길이 여섯이다(아래). 리팩토링의 순서는 **길을 다 만들고, 도는 것을 확인하고,
+그다음에 지운다** 이다.
+
+**길 일곱과 지금 상태** (2026-09-22 측정).
+
+| 길 | 무엇으로 도나 | 옮기는 commit |
+|---|---|---|
+| ① `chain up` · `chain resume` 기본 | **새 machine** | 4 (끝) |
+| ② `chain up` reuse-if-matching | 옛 machine(`verbs_up.go:308`) | 16 |
+| ③ `run` 의 조립 | 옛 machine(`compare.go:75`) | 16 |
+| ④ 단독 `chain <step>` 9개 | machine 없음 | 14 |
+| ⑤ 운영 명령 8개 | machine 없음, `allow()` 10곳 | 17 |
+| ⑥ attach 세 갈래 | machine 없음 | 18 |
+| ⑦ testengine 자신의 수명주기 | machine 없음 | 18 |
+
+**19번을 시작해도 되는지는 grep 으로 답한다.** `lifecycle.New` 호출 0, 단계 본체(`ws.Genesis` 등)를
+직접 부르는 곳이 state 밖에 0. 그리고 19번 직전에 전체 e2e(`-p 1 -timeout 60m`)와
+`scripts/tcsweep.sh` 전수를 돌린다.
 
 **PR 묶음**(메모리 규칙: PR 은 phase 단위, commit 은 task 단위): PR-A = 1~3, PR-B = 4, PR-C = 5~13,
 PR-D = 14~17, PR-E = 18~19.
+
+**단독 명령의 진입은 `stopped` 이다** (2026-09-22, commit 14). 4장은 `composed.Process` 가 `CmdStep`
+을 받는다고 적었는데, 그것은 machine 이 명령 사이에 살아 있을 때의 이야기다. 명령 하나가 프로세스
+하나이므로 machine 은 매번 `stopped` 에서 태어난다. 그래서 `stopped.Process(CmdStep)` 가 record 를
+보고 이 단계를 지금 해도 되는지 판정하고 해당 stage 로 간다. `composed` 는 한 단계만 돌라고 했을 때
+그 단계가 끝나서 멈추는 자리다. 명령 사이에 자리를 잇는 것은 15번의 일이다.
 
 **이번 세션의 목표는 1~4 (PR-A, PR-B) 다.** 4 가 끝나면 `chain up` 이 새 Manager 로 돌면서 동작이
 전과 같아야 한다. 5 부터는 한 commit 에 leaf 하나이고, 시간이 남으면 이어 간다.
