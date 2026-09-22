@@ -66,7 +66,7 @@ func (s *ensuringKeys) leafStates() []statemachine.State {
 func (s *ensuringKeys) Enter(ctx context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
 	in := s.mg.request
-	opts, err := KeysOptsFor(in.BlueprintPath, in.KeysSource, 0, in.KeysValidators)
+	opts, err := KeysOptsFor(in.BlueprintPath, in.KeysSource, in.KeysNodes, in.KeysValidators)
 	if err != nil {
 		s.mg.fail(m, stepKeys, err)
 		return nil

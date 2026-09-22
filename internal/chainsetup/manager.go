@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
@@ -78,6 +79,9 @@ type Manager struct {
 	request ChainUpIn
 	// stopAfter is the last step this run performs, or "" to run them all.
 	stopAfter string
+	// only is the one step a run was asked for, and "" for a whole composition.
+	// A step asked for by name stops when it is done rather than walking on.
+	only string
 	// steps is one "step: detail" line per stage that finished, in order. It is
 	// what a caller prints, and it is kept even when the run then failed,
 	// because how far it got is the first thing a reader wants.
@@ -167,6 +171,55 @@ func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error
 	}
 	if mg.failure != nil {
 		return mg.failure
+	}
+	return nil
+}
+
+// Step runs one composition step by name, on a workspace that has got that far.
+//
+// It is what a standalone `chain <step>` command does. The machine is born at
+// rest every time, because one command is one process, so where a composition
+// had got to is read from its record rather than remembered.
+func (mg *Manager) Step(ctx context.Context, step string, in ChainUpIn) (string, error) {
+	if _, err := mg.stageFor(step); err != nil {
+		return "", err
+	}
+	mg.only = step
+	if err := mg.m.Start(ctx, mg.stopped); err != nil {
+		return "", err
+	}
+	if err := mg.m.Send(ctx, RunStep{Name: step, Request: in}); err != nil {
+		return "", err
+	}
+	if mg.failure != nil {
+		return "", mg.failure
+	}
+	if len(mg.steps) == 0 {
+		return "", fmt.Errorf("chainsetup: %s reported nothing", step)
+	}
+	_, detail, _ := strings.Cut(mg.steps[len(mg.steps)-1], ": ")
+	return detail, nil
+}
+
+// stepIsDue reports whether every step this one needs has already run.
+//
+// It reads the recorded steps rather than the state fields they leave behind. A
+// field can be non-empty because something else filled it, and a step that
+// half-ran leaves exactly that: state that looks composed and was not.
+//
+// The same table the step bodies read, not a second copy. While paths that do
+// not run on this machine still exist, the check lives in two places, and two
+// places reading one table cannot disagree about the answer.
+func (mg *Manager) stepIsDue(step string) error {
+	ws, err := Open(mg.ws.Dir(), mg.d.Clock)
+	if err != nil {
+		return err
+	}
+	done := ws.State().Steps
+	for _, need := range composeNeeds[step] {
+		if _, ok := done[need]; !ok {
+			return fmt.Errorf("chainsetup: %s: %s has not run — run `chain %s` first", step, need, need)
+		}
 	}
 	return nil
 }

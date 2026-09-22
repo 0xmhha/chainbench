@@ -96,78 +96,97 @@ func planUp(in chainsetup.ChainUpIn) (upPlan, error) {
 	return upPlan{stage: stage, mode: mode}, nil
 }
 
-// upSteps is the composition's step table: one closure per name in
-// UpStepNames, each wrapping the same verb the matching `chain <step>` command
-// calls. It is built once and read by the runner below, so the order the run
-// follows and the work each step does stay separate things.
+// upSteps is the reuse path's step table: one closure per name in UpStepNames.
+//
+// It calls the step bodies rather than the `chain <step>` verbs, because those
+// go through the composition machine now and the machine does not report the
+// lifecycle states this table replays. Two callers of one body, for as long as
+// this path exists: it is the last thing still walking the old table, and it
+// goes when the reconciliation becomes a state.
 func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn) map[string]func() (chainsetup.StepOut, error) {
+	body := func(fn func(ws *chainsetup.Workspace) (chainsetup.StepOut, error)) func() (chainsetup.StepOut, error) {
+		return func() (chainsetup.StepOut, error) {
+			return chainsetup.InWorkspace(d, in.DataDir, fn)
+		}
+	}
+	line := func(fn func(ws *chainsetup.Workspace) (string, error)) func() (chainsetup.StepOut, error) {
+		return body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+			detail, err := fn(ws)
+			return chainsetup.StepOut{Detail: detail}, err
+		})
+	}
 	return map[string]func() (chainsetup.StepOut, error){
-		"new": func() (chainsetup.StepOut, error) {
-			r, err := ChainNew(ctx, d, ChainNewIn{
-				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
-				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
+		"new": line(func(ws *chainsetup.Workspace) (string, error) {
+			detail, err := ws.New(chainsetup.NewOpts{
+				Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
+				ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
 				Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
+			})
+			if err != nil {
+				return "", err
+			}
+			// The request is the one fact of a composition otherwise nowhere on
+			// disk; it is what a resume composes from.
+			return detail, ws.RecordRequest(in)
+		}),
+		// Place precedes keys: the key step sizes the identity set from the
+		// node table, so the layout has to exist first.
+		"place": func() (chainsetup.StepOut, error) {
+			detail, err := chainsetup.PlaceNodes(d, chainsetup.ChainAllocateIn{
+				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
+				EndpointSyncMode: in.EndpointSyncMode, Peering: in.Peering,
+				TopologyPath: in.TopologyPath, BlueprintPath: in.BlueprintPath,
+				Topology: in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains,
+				Server: in.Server, AutoSize: in.AutoSize,
+			})
+			return chainsetup.StepOut{Detail: detail}, err
+		},
+		"keys": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+			opts, err := chainsetup.KeysOptsFor(in.BlueprintPath, in.KeysSource, in.KeysNodes, in.KeysValidators)
+			if err != nil {
+				return chainsetup.StepOut{}, err
+			}
+			return ws.Keys(ctx, opts)
+		}),
+		"genesis": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+			opts, err := chainsetup.GenesisOptsFor(chainsetup.ChainGenesisIn{
+				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
+				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
+				PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
 			})
 			if err != nil {
 				return chainsetup.StepOut{}, err
 			}
-			// The request is the one fact of a composition otherwise nowhere
-			// on disk; it is what a resume composes from.
-			if err := recordRequest(d, in); err != nil {
-				return chainsetup.StepOut{}, err
+			return ws.Genesis(ctx, opts)
+		}),
+		"config": line(func(ws *chainsetup.Workspace) (string, error) {
+			for _, scope := range chainsetup.SortedScopes(in.ConfigSet) {
+				if err := ws.RecordConfigSet(scope, in.ConfigSet[scope]); err != nil {
+					return "", fmt.Errorf("chainsetup: config: %w", err)
+				}
 			}
-			return chainsetup.StepOut{Detail: r.Detail}, nil
-		},
-		// Place precedes keys: the key step sizes the identity set from the
-		// node table, so the layout has to exist first.
-		"place": func() (chainsetup.StepOut, error) {
-			r, err := ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
-				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
-				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
-				BlueprintPath: in.BlueprintPath,
-				Topology:      in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains, Peering: in.Peering,
-				Server:   in.Server,
-				AutoSize: in.AutoSize,
-			})
-			return r, err
-		},
-		"keys": func() (chainsetup.StepOut, error) {
-			r, err := ChainKeys(ctx, d, ChainKeysIn{
-				DataDir: in.DataDir, Source: in.KeysSource, BlueprintPath: in.BlueprintPath,
-				Validators: in.KeysValidators,
-			})
-			return r, err
-		},
-		"genesis": func() (chainsetup.StepOut, error) {
-			r, err := ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{
-				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
-				GenesisExisting: in.GenesisExisting, PerBinary: in.GenesisPerBinary,
-				Fork: in.GenesisFork,
-			})
-			return r, err
-		},
-		"config": func() (chainsetup.StepOut, error) {
-			r, err := ChainConfig(ctx, d, ChainConfigIn{DataDir: in.DataDir, ScopedSet: in.ConfigSet})
-			return r, err
-		},
-		"build": func() (chainsetup.StepOut, error) {
-			r, err := ChainLaunchOpts(ctx, d, ChainLaunchOptsIn{
-				DataDir: in.DataDir, Set: in.LaunchSet, ScopedSet: in.LaunchScoped,
-			})
-			return chainsetup.StepOut{Detail: r.Detail}, err
-		},
-		"deploy": func() (chainsetup.StepOut, error) {
-			r, err := ChainProvision(ctx, d, ChainProvisionIn{DataDir: in.DataDir})
-			return r, err
-		},
-		"init": func() (chainsetup.StepOut, error) {
-			r, err := ChainInit(ctx, d, ChainInitIn{DataDir: in.DataDir, Binary: in.Binary})
-			return r, err
-		},
-		"start": func() (chainsetup.StepOut, error) {
-			r, err := ChainStart(ctx, d, ChainStartIn{DataDir: in.DataDir, Binary: in.Binary})
-			return r, err
-		},
+			return ws.Config(ctx)
+		}),
+		"build": line(func(ws *chainsetup.Workspace) (string, error) {
+			for _, scope := range chainsetup.SortedScopes(in.LaunchScoped) {
+				if err := ws.RecordLaunchSet(scope, in.LaunchScoped[scope]); err != nil {
+					return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+				}
+			}
+			if err := ws.RecordLaunchCommand(in.LaunchSet); err != nil {
+				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+			}
+			return ws.LaunchOpts()
+		}),
+		"deploy": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+			return ws.Provision(ctx)
+		}),
+		"init": line(func(ws *chainsetup.Workspace) (string, error) {
+			return ws.Init(ctx, in.Binary)
+		}),
+		"start": body(func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
+			return ws.Start(ctx, in.Binary)
+		}),
 	}
 }
 
@@ -340,14 +359,4 @@ func upChainMode(in chainsetup.ChainUpIn) (resource.ChainMode, error) {
 		return resource.ChainFresh, nil
 	}
 	return wc.Execution.Chain, nil
-}
-
-// recordRequest writes what the composition was asked for onto the
-// workspace. The location is not part of it: the record is where the
-// workspace is.
-func recordRequest(d chainsetup.Deps, in chainsetup.ChainUpIn) error {
-	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return "", ws.RecordRequest(in)
-	})
-	return err
 }

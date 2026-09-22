@@ -46,23 +46,14 @@ type ChainNewOut struct {
 
 // ChainNew initializes (or re-targets) the composition workspace — the `chain new`
 // step, shared verbatim by the CLI subcommand and the MCP tool.
-func ChainNew(_ context.Context, d chainsetup.Deps, in ChainNewIn) (ChainNewOut, error) {
-	ws, err := chainsetup.Open(in.DataDir, d.Clock)
-	if err != nil {
-		return ChainNewOut{}, err
-	}
-	detail, err := ws.New(chainsetup.NewOpts{
+func ChainNew(ctx context.Context, d chainsetup.Deps, in ChainNewIn) (ChainNewOut, error) {
+	out, err := step(ctx, d, in.DataDir, "new", chainsetup.ChainUpIn{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
-		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
-		ServerSet: in.ServerSet, WorkspaceConfigPath: in.WorkspaceConfigPath,
+		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
+		Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
+		Server: resource.ServerRef{SetPath: in.ServerSet},
 	})
-	if err != nil {
-		return ChainNewOut{}, err
-	}
-	if err := ws.Save(); err != nil {
-		return ChainNewOut{}, err
-	}
-	return ChainNewOut{Detail: detail}, nil
+	return ChainNewOut{Detail: out.Detail}, err
 }
 
 // ChainStatusIn identifies the workspace to inspect.

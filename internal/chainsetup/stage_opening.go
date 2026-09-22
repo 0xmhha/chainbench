@@ -38,9 +38,10 @@ func (s *openingWorkspace) Enter(_ context.Context, m *statemachine.Machine) err
 			Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
 			ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
 			WorkspaceConfigPath: in.WorkspaceConfigPath,
-			// No ServerSet: an up request does not carry one, and the placement
-			// stage reads the server set it was given. Passing a zero value
-			// here would record "no server set" over one `chain new` had set.
+			// The set a `chain new --server-set` named. An empty one is ignored
+			// by New, so an up that names its set at the placement step instead
+			// does not record "no server set" over it.
+			ServerSet: in.Server.SetPath,
 		})
 		if nerr != nil {
 			return "", nerr

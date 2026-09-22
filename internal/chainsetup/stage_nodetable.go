@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
-	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // buildingNodeTable decides which node runs where, on which ports.
@@ -31,10 +30,10 @@ func (s *buildingNodeTable) Enter(_ context.Context, m *statemachine.Machine) er
 	detail, err := PlaceNodes(s.mg.d, ChainAllocateIn{
 		DataDir: s.mg.ws.Dir(),
 		BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
-		EndpointSyncMode: in.EndpointSyncMode,
-		TopologyPath:     in.TopologyPath, BlueprintPath: in.BlueprintPath,
+		EndpointSyncMode: in.EndpointSyncMode, Peering: in.Peering,
+		TopologyPath: in.TopologyPath, BlueprintPath: in.BlueprintPath,
 		Topology: in.Topology, Binaries: in.Binaries, BinaryChains: in.BinaryChains,
-		Server:   resource.ServerRef(in.Server),
+		Server:   in.Server,
 		AutoSize: in.AutoSize,
 	})
 	if err != nil {

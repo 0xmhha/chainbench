@@ -19,9 +19,7 @@ type ChainProvisionIn struct {
 // ChainProvision verifies the launch inputs are present on the target
 // (skip-if-exists semantics: present files are reused, missing ones are named).
 func ChainProvision(ctx context.Context, d chainsetup.Deps, in ChainProvisionIn) (chainsetup.StepOut, error) {
-	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-		return ws.Provision(ctx)
-	})
+	return step(ctx, d, in.DataDir, "deploy", chainsetup.ChainUpIn{})
 }
 
 // ChainInitIn initializes datadirs.
@@ -32,10 +30,7 @@ type ChainInitIn struct {
 
 // ChainInit runs `<binary> init` for each node's datadir from the built genesis.
 func ChainInit(ctx context.Context, d chainsetup.Deps, in ChainInitIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return ws.Init(ctx, in.Binary)
-	})
-	return chainsetup.StepOut{Detail: detail}, err
+	return step(ctx, d, in.DataDir, "init", chainsetup.ChainUpIn{Binary: in.Binary})
 }
 
 // ChainStartIn launches the composed network.
@@ -46,9 +41,7 @@ type ChainStartIn struct {
 
 // ChainStart launches every stopped node and records the PIDs.
 func ChainStart(ctx context.Context, d chainsetup.Deps, in ChainStartIn) (chainsetup.StepOut, error) {
-	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-		return ws.Start(ctx, in.Binary)
-	})
+	return step(ctx, d, in.DataDir, "start", chainsetup.ChainUpIn{Binary: in.Binary})
 }
 
 // ChainStopIn identifies the workspace.

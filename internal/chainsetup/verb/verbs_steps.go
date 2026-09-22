@@ -28,32 +28,36 @@ type ChainKeysIn struct {
 
 // ChainKeys ensures the workspace's key set exists and covers the node count.
 func ChainKeys(ctx context.Context, d chainsetup.Deps, in ChainKeysIn) (chainsetup.StepOut, error) {
-	opts, err := chainsetup.KeysOptsFor(in.BlueprintPath, in.Source, in.Nodes, in.Validators)
-	if err != nil {
-		return chainsetup.StepOut{}, err
-	}
-	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-		return ws.Keys(ctx, opts)
+	return step(ctx, d, in.DataDir, "keys", chainsetup.ChainUpIn{
+		KeysSource: in.Source, BlueprintPath: in.BlueprintPath,
+		KeysNodes: in.Nodes, KeysValidators: in.Validators,
 	})
 }
 
 // ChainAllocate builds the node table (roles, paths, deterministic ports).
-func ChainAllocate(_ context.Context, d chainsetup.Deps, in chainsetup.ChainAllocateIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.PlaceNodes(d, in)
-	return chainsetup.StepOut{Detail: detail}, err
+func ChainAllocate(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainAllocateIn) (chainsetup.StepOut, error) {
+	return step(ctx, d, in.DataDir, "place", chainsetup.ChainUpIn{
+		BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
+		EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
+		BlueprintPath: in.BlueprintPath, Topology: in.Topology, Peering: in.Peering,
+		Binaries: in.Binaries, BinaryChains: in.BinaryChains,
+		Server: in.Server, AutoSize: in.AutoSize,
+	})
 }
 
 // ChainGenesis builds the genesis from the key set and writes it to the target.
 func ChainGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainGenesisIn) (chainsetup.StepOut, error) {
-	// The request is read before the workspace is opened: one that contradicts
-	// itself needs no workspace, and refusing here keeps the lock and the state
-	// out of a request that was never going to be carried out.
-	opts, err := chainsetup.GenesisOptsFor(in)
-	if err != nil {
+	// Read before the workspace is opened. A request that contradicts itself
+	// needs no workspace, and refusing here is what lets `chain genesis
+	// --existing X --chain-id 7` be refused without one. The stage reads it
+	// again; it is a pure check of the request and gives the same answer.
+	if _, err := chainsetup.GenesisOptsFor(in); err != nil {
 		return chainsetup.StepOut{}, err
 	}
-	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-		return ws.Genesis(ctx, opts)
+	return step(ctx, d, in.DataDir, "genesis", chainsetup.ChainUpIn{
+		ChainID: in.ChainID, GenesisSet: in.Set, OverlayPath: in.OverlayPath,
+		GenesisExisting: in.GenesisExisting, GenesisPerBinary: in.PerBinary,
+		GenesisFork: in.Fork,
 	})
 }
 
@@ -75,24 +79,19 @@ type ChainConfigIn struct {
 // TOML config with them applied. Recording and rendering share one step so
 // `chain config --node N --set k=v` both persists the override and reflects it.
 func ChainConfig(ctx context.Context, d chainsetup.Deps, in ChainConfigIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		for _, scope := range chainsetup.SortedScopes(in.ScopedSet) {
-			if err := ws.RecordConfigSet(scope, in.ScopedSet[scope]); err != nil {
-				return "", fmt.Errorf("chainsetup: config: %w", err)
-			}
+	set := map[string][]string{}
+	for scope, values := range in.ScopedSet {
+		set[scope] = values
+	}
+	if len(in.Set) > 0 {
+		// --node N --set k=v is the node's scope written the short way.
+		scope := node.ScopeAll
+		if in.Node > 0 {
+			scope = fmt.Sprintf("node%d", in.Node)
 		}
-		if len(in.Set) > 0 {
-			scope := node.ScopeAll
-			if in.Node > 0 {
-				scope = fmt.Sprintf("node%d", in.Node)
-			}
-			if err := ws.RecordConfigSet(scope, in.Set); err != nil {
-				return "", fmt.Errorf("chainsetup: config: %w", err)
-			}
-		}
-		return ws.Config(ctx)
-	})
-	return chainsetup.StepOut{Detail: detail}, err
+		set[scope] = append(set[scope], in.Set...)
+	}
+	return step(ctx, d, in.DataDir, "config", chainsetup.ChainUpIn{ConfigSet: set})
 }
 
 // ChainLaunchOptsIn customizes the assembled argv.
@@ -113,22 +112,19 @@ type ChainLaunchOptsOut struct {
 
 // ChainLaunchOpts assembles each node's launch argv (the single assembly site)
 // and records it, returning the table so the surface can render the commands.
-func ChainLaunchOpts(_ context.Context, d chainsetup.Deps, in ChainLaunchOptsIn) (ChainLaunchOptsOut, error) {
-	var nodes []node.Record
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		for _, scope := range chainsetup.SortedScopes(in.ScopedSet) {
-			if err := ws.RecordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
-				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
-			}
-		}
-		if err := ws.RecordLaunchCommand(in.Set); err != nil {
-			return "", fmt.Errorf("chainsetup: launchopts: %w", err)
-		}
-		det, err := ws.LaunchOpts()
-		nodes = ws.State().Nodes
-		return det, err
+func ChainLaunchOpts(ctx context.Context, d chainsetup.Deps, in ChainLaunchOptsIn) (ChainLaunchOptsOut, error) {
+	out, err := step(ctx, d, in.DataDir, "build", chainsetup.ChainUpIn{
+		LaunchSet: in.Set, LaunchScoped: in.ScopedSet,
 	})
-	return ChainLaunchOptsOut{Detail: detail, Nodes: nodes}, err
+	if err != nil {
+		return ChainLaunchOptsOut{}, err
+	}
+	// The table is read back rather than carried out of the step: what the
+	// surface renders is the node records as they now stand.
+	nodes, nerr := chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) ([]node.Record, error) {
+		return ws.State().Nodes, nil
+	})
+	return ChainLaunchOptsOut{Detail: out.Detail, Nodes: nodes}, nerr
 }
 
 // ChainProvisionIn identifies the workspace.

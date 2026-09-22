@@ -76,6 +76,10 @@ type ChainUpIn struct {
 
 	// Identities (step: keys).
 	KeysSource string `json:"keysSource,omitempty"`
+	// KeysNodes is how many identities the set must cover, and 0 means the
+	// allocated node count. Only `chain keys --nodes` sets it: a composition
+	// sizes the ring from the node table it just placed.
+	KeysNodes int `json:"keysNodes,omitempty"`
 	// KeysValidators is how many of a generated key set join the validator set
 	// (0 = all). It has effect only when KeysSource is "generate".
 	KeysValidators int `json:"keysValidators,omitempty"`

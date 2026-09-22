@@ -45,17 +45,37 @@ func (stoppedState) Name() statemachine.StateName { return nameStopped }
 // request is what says where a composition starts, and reading it here is what
 // lets the caller send one message instead of computing a starting point.
 func (s *stoppedState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
-	c, ok := msg.(Compose)
-	if !ok {
-		return false, nil
+	switch c := msg.(type) {
+	case Compose:
+		first, err := s.mg.stageFor(c.From)
+		if err != nil {
+			return true, err
+		}
+		s.mg.request = c.Request
+		m.TransitionTo(first)
+		return true, nil
+	case RunStep:
+		// One step, on a composition that has already got far enough for it.
+		// The order used to be kept by each step body asking; asking here is
+		// what lets a body stop asking once every path comes through a machine.
+		if err := s.mg.stepIsDue(c.Name); err != nil {
+			// Not through fail(): that leaves a message for the stage parent,
+			// and this state is not under it. Nor is it written into the
+			// record as a failed step — the step did not fail, it did not run,
+			// and an entry for it would make the next step think it had.
+			s.mg.failure = err
+			m.TransitionTo(s.mg.failed)
+			return true, nil
+		}
+		only, err := s.mg.stageFor(c.Name)
+		if err != nil {
+			return true, err
+		}
+		s.mg.request = c.Request
+		m.TransitionTo(only)
+		return true, nil
 	}
-	first, err := s.mg.stageFor(c.From)
-	if err != nil {
-		return true, err
-	}
-	s.mg.request = c.Request
-	m.TransitionTo(first)
-	return true, nil
+	return false, nil
 }
 
 // composingState is the stages' parent. It owns what a finished stage means and
@@ -74,6 +94,11 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 	case stageReport:
 		step, detail := e.stage()
 		s.mg.note(step, detail)
+		if s.mg.only != "" {
+			// One step was asked for, and it is done.
+			m.TransitionTo(s.mg.composed)
+			return true, nil
+		}
 		m.TransitionTo(s.mg.after(step))
 		return true, nil
 	case stageFailed:

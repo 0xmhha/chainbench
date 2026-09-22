@@ -169,9 +169,15 @@ type Compose struct {
 // What says which message this is.
 func (Compose) What() statemachine.What { return CmdCompose }
 
-// RunStep asks for one composition step by name, on a network that stopped part
-// way. The names are UpStepNames.
-type RunStep struct{ Name string }
+// RunStep asks for one composition step by name, on a composition that has got
+// that far. The names are UpStepNames.
+type RunStep struct {
+	Name string
+	// Request is what the step reads. A standalone command fills the part its
+	// own step needs and leaves the rest, which is the same request an up
+	// carries whole -- one vocabulary rather than one per command.
+	Request ChainUpIn
+}
 
 // What says which message this is.
 func (RunStep) What() statemachine.What { return CmdStep }
