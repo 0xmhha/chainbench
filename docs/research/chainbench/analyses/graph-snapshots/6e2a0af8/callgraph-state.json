@@ -90,7 +90,7 @@
   "cmd/chainbench/keyringcmd.renderEntry": "cmd/chainbench/keyringcmd/keyring.go:125",
   "cmd/chainbench/keyringcmd.ringFlags.bind": "cmd/chainbench/keyringcmd/keyring.go:66",
   "cmd/chainbench/keyringcmd.ringFlags.ref": "cmd/chainbench/keyringcmd/keyring.go:77",
-  "cmd/chainbench/keyringcmd.ringOriginName": "cmd/chainbench/keyringcmd/keyring.go:95",
+  "cmd/chainbench/keyringcmd.ringSourceName": "cmd/chainbench/keyringcmd/keyring.go:95",
   "cmd/chainbench/keyringcmd.runRingCreate": "cmd/chainbench/keyringcmd/new.go:106",
   "cmd/chainbench/keyringcmd.runValidator": "cmd/chainbench/keyringcmd/validator.go:35",
   "cmd/chainbench/keyringcmd.saveKey": "cmd/chainbench/keyringcmd/keyflags.go:224",
@@ -133,22 +133,21 @@
   "cmd/chainbench/resourcecmd.newPlanCmd": "cmd/chainbench/resourcecmd/plan.go:15",
   "cmd/chainbench/resourcecmd.newPoolCmd": "cmd/chainbench/resourcecmd/pool.go:18",
   "cmd/chainbench/suitecmd.NewMigrateSpec": "cmd/chainbench/suitecmd/migrate_spec.go:16",
-  "cmd/chainbench/suitecmd.NewRun": "cmd/chainbench/suitecmd/run.go:51",
+  "cmd/chainbench/suitecmd.NewRun": "cmd/chainbench/suitecmd/run.go:47",
   "cmd/chainbench/suitecmd.NewValidate": "cmd/chainbench/suitecmd/validate.go:19",
-  "cmd/chainbench/suitecmd.defaultArtifactRoot": "cmd/chainbench/suitecmd/run.go:194",
-  "cmd/chainbench/suitecmd.envOrDefault": "cmd/chainbench/suitecmd/run.go:241",
-  "cmd/chainbench/suitecmd.expandEach": "cmd/chainbench/suitecmd/run.go:232",
-  "cmd/chainbench/suitecmd.failedAtOf": "cmd/chainbench/suitecmd/run.go:306",
-  "cmd/chainbench/suitecmd.planPrinter": "cmd/chainbench/suitecmd/run.go:467",
-  "cmd/chainbench/suitecmd.printSession": "cmd/chainbench/suitecmd/run.go:416",
-  "cmd/chainbench/suitecmd.progressWriter": "cmd/chainbench/suitecmd/run.go:315",
+  "cmd/chainbench/suitecmd.defaultArtifactRoot": "cmd/chainbench/suitecmd/run.go:190",
+  "cmd/chainbench/suitecmd.envOrDefault": "cmd/chainbench/suitecmd/run.go:237",
+  "cmd/chainbench/suitecmd.expandEach": "cmd/chainbench/suitecmd/run.go:228",
+  "cmd/chainbench/suitecmd.planPrinter": "cmd/chainbench/suitecmd/run.go:446",
+  "cmd/chainbench/suitecmd.printSession": "cmd/chainbench/suitecmd/run.go:395",
+  "cmd/chainbench/suitecmd.progressWriter": "cmd/chainbench/suitecmd/run.go:294",
   "cmd/chainbench/suitecmd.renderValidate": "cmd/chainbench/suitecmd/validate.go:62",
-  "cmd/chainbench/suitecmd.runAttached": "cmd/chainbench/suitecmd/run.go:209",
-  "cmd/chainbench/suitecmd.runComposed": "cmd/chainbench/suitecmd/run.go:254",
-  "cmd/chainbench/suitecmd.runComposedSequence": "cmd/chainbench/suitecmd/run.go:326",
-  "cmd/chainbench/suitecmd.sequenceExit": "cmd/chainbench/suitecmd/run.go:397",
-  "cmd/chainbench/suitecmd.setupFailure": "cmd/chainbench/suitecmd/run.go:282",
-  "cmd/chainbench/suitecmd.showPlan": "cmd/chainbench/suitecmd/run.go:480",
+  "cmd/chainbench/suitecmd.runAttached": "cmd/chainbench/suitecmd/run.go:205",
+  "cmd/chainbench/suitecmd.runComposed": "cmd/chainbench/suitecmd/run.go:250",
+  "cmd/chainbench/suitecmd.runComposedSequence": "cmd/chainbench/suitecmd/run.go:305",
+  "cmd/chainbench/suitecmd.sequenceExit": "cmd/chainbench/suitecmd/run.go:376",
+  "cmd/chainbench/suitecmd.setupFailure": "cmd/chainbench/suitecmd/run.go:278",
+  "cmd/chainbench/suitecmd.showPlan": "cmd/chainbench/suitecmd/run.go:459",
   "cmd/chainbench/suitecmd.validateSpecs": "cmd/chainbench/suitecmd/validate.go:41",
   "cmd/chainbench/surface.Deps": "cmd/chainbench/surface/deps.go:26",
   "cmd/chainbench/surface.IsReadOnly": "cmd/chainbench/surface/readonly.go:34",
@@ -173,8 +172,8 @@
   "internal/app.ArgStrings": "internal/app/args.go:27",
   "internal/app.AttachNetwork": "internal/app/networks.go:37",
   "internal/app.AttachRun": "internal/app/workflow.go:97",
-  "internal/app.BaselineApprove": "internal/app/net.go:109",
-  "internal/app.BaselineCheck": "internal/app/net.go:103",
+  "internal/app.BaselineApprove": "internal/app/net.go:108",
+  "internal/app.BaselineCheck": "internal/app/net.go:102",
   "internal/app.BlueprintFromPreset": "internal/app/blueprint.go:45",
   "internal/app.BlueprintFromTopology": "internal/app/blueprint.go:86",
   "internal/app.CallOnNode": "internal/app/networks.go:80",
@@ -189,8 +188,8 @@
   "internal/app.ContractDeploy": "internal/app/chainops.go:186",
   "internal/app.DeclaredAttach": "internal/app/workflow.go:176",
   "internal/app.DefaultKeySetDir": "internal/app/keyring.go:53",
-  "internal/app.DefaultWorkspaceDir": "internal/app/net.go:200",
-  "internal/app.Deps.chainsetupDeps": "internal/app/net.go:74",
+  "internal/app.DefaultWorkspaceDir": "internal/app/net.go:199",
+  "internal/app.Deps.chainsetupDeps": "internal/app/net.go:73",
   "internal/app.Deps.command": "internal/app/app.go:59",
   "internal/app.Deps.keyringDeps": "internal/app/keyring.go:56",
   "internal/app.Deps.now": "internal/app/app.go:67",
@@ -203,8 +202,8 @@
   "internal/app.GCSessions": "internal/app/sessions.go:35",
   "internal/app.GenerateKey": "internal/app/keyring.go:118",
   "internal/app.GenerateSet": "internal/app/keyring.go:183",
-  "internal/app.HardforkExecute": "internal/app/hardfork.go:27",
-  "internal/app.HardforkPlan": "internal/app/hardfork.go:22",
+  "internal/app.HardforkExecute": "internal/app/hardfork.go:28",
+  "internal/app.HardforkPlan": "internal/app/hardfork.go:23",
   "internal/app.HexBytes": "internal/app/chainops.go:343",
   "internal/app.IsValidNetworkName": "internal/app/networks.go:33",
   "internal/app.KeyringAdd": "internal/app/keyring.go:74",
@@ -218,36 +217,36 @@
   "internal/app.LogSearch": "internal/app/logs.go:32",
   "internal/app.LogTimeline": "internal/app/logs.go:42",
   "internal/app.MigrateSpec": "internal/app/migrate.go:17",
-  "internal/app.NetAllocate": "internal/app/net.go:78",
-  "internal/app.NetConfig": "internal/app/net.go:82",
-  "internal/app.NetEnodes": "internal/app/net.go:191",
-  "internal/app.NetGenesis": "internal/app/net.go:86",
-  "internal/app.NetHealth": "internal/app/net.go:90",
-  "internal/app.NetInit": "internal/app/net.go:113",
-  "internal/app.NetKeys": "internal/app/net.go:117",
-  "internal/app.NetLaunchOpts": "internal/app/net.go:121",
-  "internal/app.NetLogs": "internal/app/net.go:125",
+  "internal/app.NetAllocate": "internal/app/net.go:77",
+  "internal/app.NetConfig": "internal/app/net.go:81",
+  "internal/app.NetEnodes": "internal/app/net.go:190",
+  "internal/app.NetGenesis": "internal/app/net.go:85",
+  "internal/app.NetHealth": "internal/app/net.go:89",
+  "internal/app.NetInit": "internal/app/net.go:112",
+  "internal/app.NetKeys": "internal/app/net.go:116",
+  "internal/app.NetLaunchOpts": "internal/app/net.go:120",
+  "internal/app.NetLogs": "internal/app/net.go:124",
   "internal/app.NetMap": "internal/app/netmap_query.go:65",
-  "internal/app.NetNew": "internal/app/net.go:129",
+  "internal/app.NetNew": "internal/app/net.go:128",
   "internal/app.NetPlan": "internal/app/netmap_query.go:232",
   "internal/app.NetPool": "internal/app/netmap_query.go:192",
-  "internal/app.NetProvision": "internal/app/net.go:133",
-  "internal/app.NetRestart": "internal/app/net.go:137",
-  "internal/app.NetResume": "internal/app/net.go:185",
-  "internal/app.NetRm": "internal/app/net.go:141",
-  "internal/app.NetStart": "internal/app/net.go:145",
-  "internal/app.NetStatus": "internal/app/net.go:149",
-  "internal/app.NetStop": "internal/app/net.go:153",
-  "internal/app.NetUp": "internal/app/net.go:157",
+  "internal/app.NetProvision": "internal/app/net.go:132",
+  "internal/app.NetRestart": "internal/app/net.go:136",
+  "internal/app.NetResume": "internal/app/net.go:184",
+  "internal/app.NetRm": "internal/app/net.go:140",
+  "internal/app.NetStart": "internal/app/net.go:144",
+  "internal/app.NetStatus": "internal/app/net.go:148",
+  "internal/app.NetStop": "internal/app/net.go:152",
+  "internal/app.NetUp": "internal/app/net.go:156",
   "internal/app.Network": "internal/app/networks.go:42",
-  "internal/app.NetworkRemove": "internal/app/net.go:161",
-  "internal/app.NetworkStatus": "internal/app/net.go:165",
-  "internal/app.NetworkStop": "internal/app/net.go:169",
+  "internal/app.NetworkRemove": "internal/app/net.go:160",
+  "internal/app.NetworkStatus": "internal/app/net.go:164",
+  "internal/app.NetworkStop": "internal/app/net.go:168",
   "internal/app.Networks": "internal/app/networks.go:47",
   "internal/app.NodeAt": "internal/app/networks.go:106",
   "internal/app.NodeCall": "internal/app/query.go:99",
-  "internal/app.NodeStart": "internal/app/net.go:173",
-  "internal/app.NodeStop": "internal/app/net.go:178",
+  "internal/app.NodeStart": "internal/app/net.go:172",
+  "internal/app.NodeStop": "internal/app/net.go:177",
   "internal/app.ParseTarget": "internal/app/serverconf.go:32",
   "internal/app.PeersOf": "internal/app/networks.go:66",
   "internal/app.PeersOfNode": "internal/app/networks.go:96",
@@ -283,7 +282,7 @@
   "internal/app.ValidatorSetOf": "internal/app/keyring.go:178",
   "internal/app.Validators": "internal/app/query.go:72",
   "internal/app.VerifyNetwork": "internal/app/health.go:45",
-  "internal/app.VerifyValidators": "internal/app/net.go:97",
+  "internal/app.VerifyValidators": "internal/app/net.go:96",
   "internal/app.Wei": "internal/app/chainops.go:355",
   "internal/app.WithWorkspaceConfig": "internal/app/workspaceconfig.go:12",
   "internal/app.clientFor": "internal/app/networks.go:119",
@@ -298,285 +297,266 @@
   "internal/app.suiteSpecUnits": "internal/app/runsuites.go:124",
   "internal/app.transferSource": "internal/app/transfer.go:174",
   "internal/app.uploadDests": "internal/app/transfer.go:144",
-  "internal/chainsetup.AcquireSetLock": "internal/chainsetup/setlock.go:48",
-  "internal/chainsetup.AllocateOpts.autoValidators": "internal/chainsetup/steps_place.go:173",
-  "internal/chainsetup.AllocateOpts.placements": "internal/chainsetup/steps_place.go:92",
-  "internal/chainsetup.Allocations": "internal/chainsetup/observe_discover.go:106",
-  "internal/chainsetup.BuildFailure": "internal/chainsetup/provenance.go:246",
-  "internal/chainsetup.CheckTopologyKeyRefs": "internal/chainsetup/steps_keys.go:325",
-  "internal/chainsetup.ConfigFailure": "internal/chainsetup/steps_config.go:242",
-  "internal/chainsetup.CrossForkFailure": "internal/chainsetup/steps_crossfork.go:410",
-  "internal/chainsetup.DefaultRoot": "internal/chainsetup/observe_discover.go:32",
-  "internal/chainsetup.DefaultWorkspaceDir": "internal/chainsetup/observe_discover.go:40",
-  "internal/chainsetup.DeployFailure": "internal/chainsetup/steps_compose.go:479",
-  "internal/chainsetup.Deps.Logf": "internal/chainsetup/deps.go:47",
-  "internal/chainsetup.Deps.Now": "internal/chainsetup/deps.go:34",
-  "internal/chainsetup.Deps.Owner": "internal/chainsetup/deps.go:43",
-  "internal/chainsetup.Discover": "internal/chainsetup/observe_discover.go:51",
-  "internal/chainsetup.GenesisDeclared": "internal/chainsetup/steps_preflight.go:78",
-  "internal/chainsetup.GenesisFailure": "internal/chainsetup/steps_genesis.go:600",
-  "internal/chainsetup.GenesisFork.carrier": "internal/chainsetup/steps_genesis.go:182",
-  "internal/chainsetup.GenesisOpts.checkExistingIsUnchanged": "internal/chainsetup/steps_genesis.go:669",
-  "internal/chainsetup.GenesisOptsFor": "internal/chainsetup/steps_genesis.go:658",
-  "internal/chainsetup.InWorkspace": "internal/chainsetup/workspace_open.go:28",
-  "internal/chainsetup.InitFailure": "internal/chainsetup/steps_lifecycle.go:516",
-  "internal/chainsetup.Inventory": "internal/chainsetup/observe_discover.go:77",
-  "internal/chainsetup.KeysFailure": "internal/chainsetup/steps_keys.go:409",
-  "internal/chainsetup.LaunchFailure": "internal/chainsetup/phases.go:358",
-  "internal/chainsetup.NetBaselineApprove": "internal/chainsetup/observe_baseline.go:145",
-  "internal/chainsetup.NetBaselineCheck": "internal/chainsetup/observe_baseline.go:131",
+  "internal/chainsetup.AllocateOpts.autoValidators": "internal/chainsetup/steps_place.go:153",
+  "internal/chainsetup.AllocateOpts.placements": "internal/chainsetup/steps_place.go:72",
+  "internal/chainsetup.Allocations": "internal/chainsetup/discover.go:106",
+  "internal/chainsetup.DefaultRoot": "internal/chainsetup/discover.go:32",
+  "internal/chainsetup.DefaultWorkspaceDir": "internal/chainsetup/discover.go:40",
+  "internal/chainsetup.Deps.Now": "internal/chainsetup/verbs.go:31",
+  "internal/chainsetup.Deps.command": "internal/chainsetup/verbs.go:38",
+  "internal/chainsetup.Deps.logf": "internal/chainsetup/verbs.go:40",
+  "internal/chainsetup.Discover": "internal/chainsetup/discover.go:51",
+  "internal/chainsetup.GenesisDeclared": "internal/chainsetup/steps_preflight.go:72",
+  "internal/chainsetup.GenesisFork.carrier": "internal/chainsetup/steps_genesis.go:181",
+  "internal/chainsetup.GenesisOpts.checkExistingIsUnchanged": "internal/chainsetup/verbs_steps.go:321",
+  "internal/chainsetup.HardforkExecute": "internal/chainsetup/verbs_hardfork.go:98",
+  "internal/chainsetup.HardforkPlan": "internal/chainsetup/verbs_hardfork.go:44",
+  "internal/chainsetup.Inventory": "internal/chainsetup/discover.go:77",
+  "internal/chainsetup.NetAllocate": "internal/chainsetup/verbs_steps.go:166",
+  "internal/chainsetup.NetBaselineApprove": "internal/chainsetup/baseline.go:145",
+  "internal/chainsetup.NetBaselineCheck": "internal/chainsetup/baseline.go:131",
+  "internal/chainsetup.NetConfig": "internal/chainsetup/verbs_steps.go:431",
+  "internal/chainsetup.NetCrossFork": "internal/chainsetup/verbs_network.go:299",
+  "internal/chainsetup.NetEndpoints": "internal/chainsetup/verbs.go:135",
+  "internal/chainsetup.NetEnodes": "internal/chainsetup/verbs_enode.go:44",
+  "internal/chainsetup.NetFork": "internal/chainsetup/verbs_network.go:344",
+  "internal/chainsetup.NetGenesis": "internal/chainsetup/verbs_steps.go:285",
+  "internal/chainsetup.NetHealth": "internal/chainsetup/verbs_lifecycle.go:131",
+  "internal/chainsetup.NetInit": "internal/chainsetup/verbs_lifecycle.go:37",
+  "internal/chainsetup.NetKeys": "internal/chainsetup/verbs_steps.go:112",
+  "internal/chainsetup.NetLaunchOpts": "internal/chainsetup/verbs_steps.go:470",
+  "internal/chainsetup.NetLogs": "internal/chainsetup/verbs_lifecycle.go:110",
+  "internal/chainsetup.NetNew": "internal/chainsetup/verbs.go:85",
+  "internal/chainsetup.NetProvision": "internal/chainsetup/verbs_lifecycle.go:23",
+  "internal/chainsetup.NetRestart": "internal/chainsetup/verbs_lifecycle.go:77",
+  "internal/chainsetup.NetResume": "internal/chainsetup/verbs_resume.go:56",
+  "internal/chainsetup.NetRm": "internal/chainsetup/verbs_lifecycle.go:90",
+  "internal/chainsetup.NetRunner": "internal/chainsetup/verbs_network.go:146",
+  "internal/chainsetup.NetStart": "internal/chainsetup/verbs_lifecycle.go:51",
+  "internal/chainsetup.NetStatus": "internal/chainsetup/verbs.go:118",
+  "internal/chainsetup.NetStop": "internal/chainsetup/verbs_lifecycle.go:63",
+  "internal/chainsetup.NetUp": "internal/chainsetup/verbs_up.go:155",
+  "internal/chainsetup.NetUpComparing": "internal/chainsetup/compare.go:72",
   "internal/chainsetup.NetVerifyValidators": "internal/chainsetup/verify_validators.go:89",
-  "internal/chainsetup.NewFailure": "internal/chainsetup/workspace_new.go:154",
-  "internal/chainsetup.NodeOpFailure": "internal/chainsetup/node_ops.go:357",
-  "internal/chainsetup.OneLayoutOnly": "internal/chainsetup/steps_place.go:387",
-  "internal/chainsetup.OpPreconditionFailure": "internal/chainsetup/verb_needs.go:267",
+  "internal/chainsetup.NetworkRemove": "internal/chainsetup/verbs_network.go:251",
+  "internal/chainsetup.NetworkStatus": "internal/chainsetup/verbs_network.go:48",
+  "internal/chainsetup.NetworkStop": "internal/chainsetup/verbs_network.go:84",
+  "internal/chainsetup.NodeStart": "internal/chainsetup/verbs_network.go:212",
+  "internal/chainsetup.NodeStop": "internal/chainsetup/verbs_network.go:122",
+  "internal/chainsetup.NodeSwap": "internal/chainsetup/verbs_network.go:183",
   "internal/chainsetup.Open": "internal/chainsetup/workspace.go:46",
-  "internal/chainsetup.ParseOverrides": "internal/chainsetup/steps_compose.go:195",
+  "internal/chainsetup.ParseOverrides": "internal/chainsetup/steps_compose.go:170",
   "internal/chainsetup.PlaceBinary": "internal/chainsetup/binary.go:86",
-  "internal/chainsetup.PlaceFailure": "internal/chainsetup/steps_place.go:372",
   "internal/chainsetup.PlaceRequest": "internal/chainsetup/binary.go:133",
-  "internal/chainsetup.ReconcileHandler": "internal/chainsetup/reuse.go:405",
-  "internal/chainsetup.StopFailure": "internal/chainsetup/steps_lifecycle.go:534",
-  "internal/chainsetup.WantOf": "internal/chainsetup/steps_preflight.go:51",
-  "internal/chainsetup.WithWorkspace": "internal/chainsetup/workspace_open.go:17",
+  "internal/chainsetup.WantOf": "internal/chainsetup/steps_preflight.go:45",
   "internal/chainsetup.Workspace.Acquire": "internal/chainsetup/workspace.go:103",
-  "internal/chainsetup.Workspace.Allocate": "internal/chainsetup/steps_place.go:241",
-  "internal/chainsetup.Workspace.CheckBaseline": "internal/chainsetup/observe_baseline.go:91",
-  "internal/chainsetup.Workspace.Compare": "internal/chainsetup/steps_preflight.go:100",
-  "internal/chainsetup.Workspace.Config": "internal/chainsetup/steps_config.go:41",
-  "internal/chainsetup.Workspace.CrossFork": "internal/chainsetup/steps_crossfork.go:81",
+  "internal/chainsetup.Workspace.Allocate": "internal/chainsetup/steps_place.go:221",
+  "internal/chainsetup.Workspace.CheckBaseline": "internal/chainsetup/baseline.go:91",
+  "internal/chainsetup.Workspace.Compare": "internal/chainsetup/steps_preflight.go:94",
+  "internal/chainsetup.Workspace.Config": "internal/chainsetup/steps_config.go:22",
+  "internal/chainsetup.Workspace.CrossFork": "internal/chainsetup/steps_crossfork.go:65",
   "internal/chainsetup.Workspace.Dir": "internal/chainsetup/workspace.go:99",
-  "internal/chainsetup.Workspace.Endpoints": "internal/chainsetup/observe.go:151",
-  "internal/chainsetup.Workspace.FirstUndone": "internal/chainsetup/record.go:185",
-  "internal/chainsetup.Workspace.Genesis": "internal/chainsetup/steps_genesis.go:195",
-  "internal/chainsetup.Workspace.Hardfork": "internal/chainsetup/node_ops.go:314",
+  "internal/chainsetup.Workspace.Genesis": "internal/chainsetup/steps_genesis.go:194",
+  "internal/chainsetup.Workspace.Hardfork": "internal/chainsetup/verbs_hardfork.go:116",
   "internal/chainsetup.Workspace.Have": "internal/chainsetup/steps_preflight.go:18",
   "internal/chainsetup.Workspace.Health": "internal/chainsetup/observe.go:121",
-  "internal/chainsetup.Workspace.Init": "internal/chainsetup/steps_lifecycle.go:183",
+  "internal/chainsetup.Workspace.Init": "internal/chainsetup/steps_lifecycle.go:112",
   "internal/chainsetup.Workspace.Keys": "internal/chainsetup/steps_keys.go:73",
-  "internal/chainsetup.Workspace.LaunchOpts": "internal/chainsetup/steps_config.go:186",
-  "internal/chainsetup.Workspace.LivePIDs": "internal/chainsetup/observe.go:88",
+  "internal/chainsetup.Workspace.LaunchOpts": "internal/chainsetup/steps_config.go:159",
   "internal/chainsetup.Workspace.Lock": "internal/chainsetup/workspace.go:108",
   "internal/chainsetup.Workspace.LogExcerpt": "internal/chainsetup/observe.go:57",
   "internal/chainsetup.Workspace.Logs": "internal/chainsetup/observe.go:20",
-  "internal/chainsetup.Workspace.MarkStepFailed": "internal/chainsetup/workspace.go:237",
-  "internal/chainsetup.Workspace.Netmap": "internal/chainsetup/steps_compose.go:221",
-  "internal/chainsetup.Workspace.New": "internal/chainsetup/workspace_new.go:72",
-  "internal/chainsetup.Workspace.NodeSet": "internal/chainsetup/workspace.go:309",
-  "internal/chainsetup.Workspace.ObserveBaseline": "internal/chainsetup/observe_baseline.go:28",
-  "internal/chainsetup.Workspace.Preflight": "internal/chainsetup/occupancy.go:32",
-  "internal/chainsetup.Workspace.Provision": "internal/chainsetup/steps_compose.go:62",
-  "internal/chainsetup.Workspace.RPCHost": "internal/chainsetup/workspace.go:293",
-  "internal/chainsetup.Workspace.Reconcile": "internal/chainsetup/record.go:202",
-  "internal/chainsetup.Workspace.RecordConfigSet": "internal/chainsetup/provenance.go:213",
-  "internal/chainsetup.Workspace.RecordLaunchCommand": "internal/chainsetup/provenance.go:189",
-  "internal/chainsetup.Workspace.RecordLaunchSet": "internal/chainsetup/provenance.go:94",
-  "internal/chainsetup.Workspace.RecordRequest": "internal/chainsetup/record.go:285",
-  "internal/chainsetup.Workspace.ResolveTarget": "internal/chainsetup/workspace.go:148",
-  "internal/chainsetup.Workspace.Restart": "internal/chainsetup/node_ops.go:107",
-  "internal/chainsetup.Workspace.Retarget": "internal/chainsetup/workspace_new.go:135",
-  "internal/chainsetup.Workspace.Rm": "internal/chainsetup/steps_lifecycle.go:440",
-  "internal/chainsetup.Workspace.Save": "internal/chainsetup/workspace.go:245",
-  "internal/chainsetup.Workspace.SetBinary": "internal/chainsetup/workspace.go:351",
+  "internal/chainsetup.Workspace.MarkStepFailed": "internal/chainsetup/workspace.go:235",
+  "internal/chainsetup.Workspace.Netmap": "internal/chainsetup/steps_compose.go:195",
+  "internal/chainsetup.Workspace.New": "internal/chainsetup/new.go:64",
+  "internal/chainsetup.Workspace.NodeSet": "internal/chainsetup/workspace.go:307",
+  "internal/chainsetup.Workspace.ObserveBaseline": "internal/chainsetup/baseline.go:28",
+  "internal/chainsetup.Workspace.Preflight": "internal/chainsetup/occupancy.go:26",
+  "internal/chainsetup.Workspace.Provision": "internal/chainsetup/steps_compose.go:46",
+  "internal/chainsetup.Workspace.RPCHost": "internal/chainsetup/workspace.go:291",
+  "internal/chainsetup.Workspace.Reconcile": "internal/chainsetup/verbs_resume.go:137",
+  "internal/chainsetup.Workspace.Restart": "internal/chainsetup/node_ops.go:94",
+  "internal/chainsetup.Workspace.Retarget": "internal/chainsetup/new.go:127",
+  "internal/chainsetup.Workspace.Rm": "internal/chainsetup/steps_lifecycle.go:365",
+  "internal/chainsetup.Workspace.Save": "internal/chainsetup/workspace.go:243",
   "internal/chainsetup.Workspace.SetDriver": "internal/chainsetup/workspace.go:121",
   "internal/chainsetup.Workspace.SetEnv": "internal/chainsetup/workspace.go:112",
-  "internal/chainsetup.Workspace.SnapshotForReuse": "internal/chainsetup/reuse.go:136",
-  "internal/chainsetup.Workspace.Start": "internal/chainsetup/steps_lifecycle.go:286",
-  "internal/chainsetup.Workspace.StartNode": "internal/chainsetup/node_ops.go:76",
+  "internal/chainsetup.Workspace.Start": "internal/chainsetup/steps_lifecycle.go:212",
+  "internal/chainsetup.Workspace.StartNode": "internal/chainsetup/node_ops.go:63",
   "internal/chainsetup.Workspace.State": "internal/chainsetup/workspace.go:128",
-  "internal/chainsetup.Workspace.Stop": "internal/chainsetup/steps_lifecycle.go:379",
-  "internal/chainsetup.Workspace.StopNode": "internal/chainsetup/node_ops.go:51",
-  "internal/chainsetup.Workspace.SwapNode": "internal/chainsetup/node_ops.go:146",
+  "internal/chainsetup.Workspace.Stop": "internal/chainsetup/steps_lifecycle.go:305",
+  "internal/chainsetup.Workspace.StopNode": "internal/chainsetup/node_ops.go:38",
+  "internal/chainsetup.Workspace.SwapNode": "internal/chainsetup/node_ops.go:133",
   "internal/chainsetup.Workspace.VerifyValidators": "internal/chainsetup/verify_validators.go:40",
-  "internal/chainsetup.Workspace.addConfigProvenance": "internal/chainsetup/node_ops.go:304",
-  "internal/chainsetup.Workspace.allow": "internal/chainsetup/verb_needs.go:169",
-  "internal/chainsetup.Workspace.allowNode": "internal/chainsetup/verb_needs.go:207",
-  "internal/chainsetup.Workspace.alreadyCrossed": "internal/chainsetup/steps_crossfork.go:154",
-  "internal/chainsetup.Workspace.applyConfigOverrides": "internal/chainsetup/provenance.go:32",
-  "internal/chainsetup.Workspace.applyFork": "internal/chainsetup/steps_genesis.go:324",
-  "internal/chainsetup.Workspace.awaitForkBoundary": "internal/chainsetup/steps_crossfork.go:223",
+  "internal/chainsetup.Workspace.addConfigProvenance": "internal/chainsetup/node_ops.go:290",
+  "internal/chainsetup.Workspace.allow": "internal/chainsetup/verb_needs.go:147",
+  "internal/chainsetup.Workspace.allowNode": "internal/chainsetup/verb_needs.go:182",
+  "internal/chainsetup.Workspace.alreadyCrossed": "internal/chainsetup/steps_crossfork.go:124",
+  "internal/chainsetup.Workspace.applyConfigOverrides": "internal/chainsetup/provenance.go:18",
+  "internal/chainsetup.Workspace.applyFork": "internal/chainsetup/steps_genesis.go:323",
+  "internal/chainsetup.Workspace.awaitForkBoundary": "internal/chainsetup/steps_crossfork.go:190",
   "internal/chainsetup.Workspace.binary": "internal/chainsetup/binary.go:32",
-  "internal/chainsetup.Workspace.binaryFor": "internal/chainsetup/steps_lifecycle.go:34",
-  "internal/chainsetup.Workspace.binaryNamesOn": "internal/chainsetup/observe_introspect.go:142",
+  "internal/chainsetup.Workspace.binaryFor": "internal/chainsetup/steps_lifecycle.go:32",
+  "internal/chainsetup.Workspace.binaryNamesOn": "internal/chainsetup/introspect.go:142",
   "internal/chainsetup.Workspace.buildCandidateInputs": "internal/chainsetup/reuse.go:342",
-  "internal/chainsetup.Workspace.checkPaths": "internal/chainsetup/phases.go:250",
-  "internal/chainsetup.Workspace.checkUniformNetworkID": "internal/chainsetup/steps_lifecycle.go:109",
-  "internal/chainsetup.Workspace.checkUnmanaged": "internal/chainsetup/occupancy.go:51",
-  "internal/chainsetup.Workspace.checkUnmanagedOn": "internal/chainsetup/occupancy.go:59",
-  "internal/chainsetup.Workspace.checkVacant": "internal/chainsetup/occupancy.go:94",
-  "internal/chainsetup.Workspace.clearPID": "internal/chainsetup/workspace.go:282",
-  "internal/chainsetup.Workspace.configOverridesFor": "internal/chainsetup/provenance.go:53",
-  "internal/chainsetup.Workspace.confirmBeforeFork": "internal/chainsetup/steps_crossfork.go:379",
+  "internal/chainsetup.Workspace.checkPaths": "internal/chainsetup/phases.go:242",
+  "internal/chainsetup.Workspace.checkUnmanaged": "internal/chainsetup/occupancy.go:45",
+  "internal/chainsetup.Workspace.checkUnmanagedOn": "internal/chainsetup/occupancy.go:53",
+  "internal/chainsetup.Workspace.checkVacant": "internal/chainsetup/occupancy.go:88",
+  "internal/chainsetup.Workspace.clearPID": "internal/chainsetup/workspace.go:280",
+  "internal/chainsetup.Workspace.configOverridesFor": "internal/chainsetup/provenance.go:39",
+  "internal/chainsetup.Workspace.confirmBeforeFork": "internal/chainsetup/steps_crossfork.go:339",
   "internal/chainsetup.Workspace.declaredKeys": "internal/chainsetup/steps_keys.go:171",
   "internal/chainsetup.Workspace.eachMachine": "internal/chainsetup/workspace.go:193",
-  "internal/chainsetup.Workspace.forkMoment": "internal/chainsetup/steps_crossfork.go:189",
-  "internal/chainsetup.Workspace.forkObserver": "internal/chainsetup/steps_crossfork.go:266",
-  "internal/chainsetup.Workspace.forkSection": "internal/chainsetup/steps_genesis.go:397",
-  "internal/chainsetup.Workspace.forkSuccessors": "internal/chainsetup/steps_crossfork.go:138",
-  "internal/chainsetup.Workspace.forkValidators": "internal/chainsetup/steps_genesis.go:444",
-  "internal/chainsetup.Workspace.genesisArtifacts": "internal/chainsetup/steps_compose.go:289",
-  "internal/chainsetup.Workspace.genesisBytes": "internal/chainsetup/steps_compose.go:263",
-  "internal/chainsetup.Workspace.genesisConfigFor": "internal/chainsetup/steps_lifecycle.go:66",
-  "internal/chainsetup.Workspace.genesisFor": "internal/chainsetup/steps_lifecycle.go:50",
-  "internal/chainsetup.Workspace.genesisPaths": "internal/chainsetup/steps_lifecycle.go:139",
-  "internal/chainsetup.Workspace.handOver": "internal/chainsetup/steps_crossfork.go:291",
-  "internal/chainsetup.Workspace.indexName": "internal/chainsetup/workspace_refs.go:56",
-  "internal/chainsetup.Workspace.introspectRunning": "internal/chainsetup/observe_introspect.go:73",
+  "internal/chainsetup.Workspace.firstUndone": "internal/chainsetup/verbs_resume.go:116",
+  "internal/chainsetup.Workspace.forkMoment": "internal/chainsetup/steps_crossfork.go:159",
+  "internal/chainsetup.Workspace.forkObserver": "internal/chainsetup/steps_crossfork.go:230",
+  "internal/chainsetup.Workspace.forkSection": "internal/chainsetup/steps_genesis.go:396",
+  "internal/chainsetup.Workspace.forkSuccessors": "internal/chainsetup/steps_crossfork.go:108",
+  "internal/chainsetup.Workspace.forkValidators": "internal/chainsetup/steps_genesis.go:443",
+  "internal/chainsetup.Workspace.genesisArtifacts": "internal/chainsetup/steps_compose.go:263",
+  "internal/chainsetup.Workspace.genesisBytes": "internal/chainsetup/steps_compose.go:237",
+  "internal/chainsetup.Workspace.genesisConfigFor": "internal/chainsetup/steps_lifecycle.go:64",
+  "internal/chainsetup.Workspace.genesisFor": "internal/chainsetup/steps_lifecycle.go:48",
+  "internal/chainsetup.Workspace.genesisPaths": "internal/chainsetup/steps_lifecycle.go:90",
+  "internal/chainsetup.Workspace.handOver": "internal/chainsetup/steps_crossfork.go:255",
+  "internal/chainsetup.Workspace.indexName": "internal/chainsetup/inputref.go:56",
+  "internal/chainsetup.Workspace.introspectRunning": "internal/chainsetup/introspect.go:73",
   "internal/chainsetup.Workspace.keysBase": "internal/chainsetup/workspace.go:136",
-  "internal/chainsetup.Workspace.launchOverridesFor": "internal/chainsetup/provenance.go:175",
-  "internal/chainsetup.Workspace.layout": "internal/chainsetup/workspace_refs.go:38",
-  "internal/chainsetup.Workspace.liveness": "internal/chainsetup/steps_preflight.go:106",
+  "internal/chainsetup.Workspace.launchOverridesFor": "internal/chainsetup/provenance.go:127",
+  "internal/chainsetup.Workspace.layout": "internal/chainsetup/inputref.go:38",
+  "internal/chainsetup.Workspace.livePIDs": "internal/chainsetup/observe.go:88",
+  "internal/chainsetup.Workspace.liveness": "internal/chainsetup/steps_preflight.go:100",
   "internal/chainsetup.Workspace.machineFor": "internal/chainsetup/workspace.go:156",
   "internal/chainsetup.Workspace.manifestBinary": "internal/chainsetup/binary.go:51",
-  "internal/chainsetup.Workspace.markStep": "internal/chainsetup/workspace.go:228",
-  "internal/chainsetup.Workspace.materializeKeyring": "internal/chainsetup/workspace_refs.go:81",
+  "internal/chainsetup.Workspace.markStep": "internal/chainsetup/workspace.go:226",
+  "internal/chainsetup.Workspace.materializeKeyring": "internal/chainsetup/inputref.go:81",
   "internal/chainsetup.Workspace.mergeRunning": "internal/chainsetup/reuse.go:239",
-  "internal/chainsetup.Workspace.network": "internal/chainsetup/steps_lifecycle.go:87",
-  "internal/chainsetup.Workspace.nodeAt": "internal/chainsetup/node_ops.go:39",
-  "internal/chainsetup.Workspace.nodeConfigBytes": "internal/chainsetup/steps_config.go:114",
+  "internal/chainsetup.Workspace.nodeAt": "internal/chainsetup/node_ops.go:26",
+  "internal/chainsetup.Workspace.nodeConfigBytes": "internal/chainsetup/steps_config.go:95",
   "internal/chainsetup.Workspace.nodeHTTPURL": "internal/chainsetup/verify_validators.go:107",
   "internal/chainsetup.Workspace.nodeTableKeys": "internal/chainsetup/steps_keys.go:212",
   "internal/chainsetup.Workspace.opener": "internal/chainsetup/workspace.go:217",
-  "internal/chainsetup.Workspace.orphanOf": "internal/chainsetup/record.go:244",
-  "internal/chainsetup.Workspace.peerPlan": "internal/chainsetup/steps_compose.go:362",
-  "internal/chainsetup.Workspace.phasePlan": "internal/chainsetup/phases.go:175",
+  "internal/chainsetup.Workspace.orphanOf": "internal/chainsetup/verbs_resume.go:182",
+  "internal/chainsetup.Workspace.peerPlan": "internal/chainsetup/steps_compose.go:336",
+  "internal/chainsetup.Workspace.phasePlan": "internal/chainsetup/phases.go:167",
   "internal/chainsetup.Workspace.placeBinary": "internal/chainsetup/binary.go:69",
   "internal/chainsetup.Workspace.plugin": "internal/chainsetup/steps_keys.go:48",
-  "internal/chainsetup.Workspace.pluginFor": "internal/chainsetup/steps_lifecycle.go:126",
-  "internal/chainsetup.Workspace.readInputRef": "internal/chainsetup/workspace_refs.go:115",
+  "internal/chainsetup.Workspace.pluginFor": "internal/chainsetup/steps_lifecycle.go:77",
+  "internal/chainsetup.Workspace.readInputRef": "internal/chainsetup/inputref.go:115",
   "internal/chainsetup.Workspace.reconcileReuse": "internal/chainsetup/reuse.go:167",
-  "internal/chainsetup.Workspace.recordInput": "internal/chainsetup/steps_compose.go:397",
-  "internal/chainsetup.Workspace.recordLaunch": "internal/chainsetup/workspace.go:258",
-  "internal/chainsetup.Workspace.recordRun": "internal/chainsetup/record.go:67",
-  "internal/chainsetup.Workspace.recordSwap": "internal/chainsetup/workspace.go:271",
-  "internal/chainsetup.Workspace.recordedLeftovers": "internal/chainsetup/occupancy.go:223",
-  "internal/chainsetup.Workspace.reinitNodeGenesis": "internal/chainsetup/node_ops.go:210",
-  "internal/chainsetup.Workspace.require": "internal/chainsetup/steps_compose.go:463",
-  "internal/chainsetup.Workspace.runPhaseActions": "internal/chainsetup/phases.go:113",
-  "internal/chainsetup.Workspace.scanPorts": "internal/chainsetup/occupancy.go:156",
-  "internal/chainsetup.Workspace.setNodeBinary": "internal/chainsetup/node_ops.go:242",
-  "internal/chainsetup.Workspace.shipIdentities": "internal/chainsetup/steps_compose.go:131",
-  "internal/chainsetup.Workspace.startPhase": "internal/chainsetup/phases.go:54",
+  "internal/chainsetup.Workspace.recordConfigSet": "internal/chainsetup/provenance.go:144",
+  "internal/chainsetup.Workspace.recordInput": "internal/chainsetup/steps_compose.go:371",
+  "internal/chainsetup.Workspace.recordLaunch": "internal/chainsetup/workspace.go:256",
+  "internal/chainsetup.Workspace.recordLaunchSet": "internal/chainsetup/provenance.go:80",
+  "internal/chainsetup.Workspace.recordRun": "internal/chainsetup/record.go:65",
+  "internal/chainsetup.Workspace.recordSwap": "internal/chainsetup/workspace.go:269",
+  "internal/chainsetup.Workspace.recordedLeftovers": "internal/chainsetup/occupancy.go:217",
+  "internal/chainsetup.Workspace.reinitNodeGenesis": "internal/chainsetup/node_ops.go:196",
+  "internal/chainsetup.Workspace.require": "internal/chainsetup/steps_compose.go:437",
+  "internal/chainsetup.Workspace.resolveTarget": "internal/chainsetup/workspace.go:148",
+  "internal/chainsetup.Workspace.runPhaseActions": "internal/chainsetup/phases.go:105",
+  "internal/chainsetup.Workspace.scanPorts": "internal/chainsetup/occupancy.go:150",
+  "internal/chainsetup.Workspace.setNodeBinary": "internal/chainsetup/node_ops.go:228",
+  "internal/chainsetup.Workspace.shipIdentities": "internal/chainsetup/steps_compose.go:106",
+  "internal/chainsetup.Workspace.snapshotForReuse": "internal/chainsetup/reuse.go:136",
+  "internal/chainsetup.Workspace.startPhase": "internal/chainsetup/phases.go:53",
   "internal/chainsetup.Workspace.stopByPID": "internal/chainsetup/reuse.go:296",
-  "internal/chainsetup.Workspace.swapNodeConfig": "internal/chainsetup/node_ops.go:268",
-  "internal/chainsetup.Workspace.verifyExistingGenesisKeys": "internal/chainsetup/verify_genesis.go:26",
-  "internal/chainsetup.Workspace.wc": "internal/chainsetup/workspace_refs.go:17",
-  "internal/chainsetup.Workspace.writeConfigFile": "internal/chainsetup/steps_config.go:159",
-  "internal/chainsetup.Workspace.writeGenesisConfigs": "internal/chainsetup/steps_genesis.go:465",
-  "internal/chainsetup.Workspace.writeGenesisVariants": "internal/chainsetup/steps_genesis.go:508",
-  "internal/chainsetup.Workspace.writeNodeConfig": "internal/chainsetup/steps_config.go:86",
-  "internal/chainsetup.addressSet": "internal/chainsetup/verify_genesis.go:84",
-  "internal/chainsetup.blueprintPlacements": "internal/chainsetup/steps_place.go:192",
-  "internal/chainsetup.bootKeystoreOnTarget": "internal/chainsetup/phases.go:199",
-  "internal/chainsetup.buildGenesisOpts": "internal/chainsetup/steps_genesis.go:694",
-  "internal/chainsetup.checkBinary": "internal/chainsetup/phases.go:310",
-  "internal/chainsetup.checkNode": "internal/chainsetup/verb_needs.go:224",
+  "internal/chainsetup.Workspace.swapNodeConfig": "internal/chainsetup/node_ops.go:254",
+  "internal/chainsetup.Workspace.verifyExistingGenesisKeys": "internal/chainsetup/genesis_verify.go:24",
+  "internal/chainsetup.Workspace.wc": "internal/chainsetup/inputref.go:17",
+  "internal/chainsetup.Workspace.writeConfigFile": "internal/chainsetup/steps_config.go:134",
+  "internal/chainsetup.Workspace.writeGenesisConfigs": "internal/chainsetup/steps_genesis.go:464",
+  "internal/chainsetup.Workspace.writeGenesisVariants": "internal/chainsetup/steps_genesis.go:507",
+  "internal/chainsetup.Workspace.writeNodeConfig": "internal/chainsetup/steps_config.go:67",
+  "internal/chainsetup.acquireSetLock": "internal/chainsetup/setlock.go:46",
+  "internal/chainsetup.addressSet": "internal/chainsetup/genesis_verify.go:82",
+  "internal/chainsetup.blueprintPlacements": "internal/chainsetup/steps_place.go:172",
+  "internal/chainsetup.bootKeystoreOnTarget": "internal/chainsetup/phases.go:191",
+  "internal/chainsetup.buildGenesisOpts": "internal/chainsetup/verbs_steps.go:346",
+  "internal/chainsetup.checkBinary": "internal/chainsetup/phases.go:302",
+  "internal/chainsetup.checkNode": "internal/chainsetup/verb_needs.go:199",
   "internal/chainsetup.checkNodeKeyRef": "internal/chainsetup/steps_keys.go:303",
-  "internal/chainsetup.commanderRunner": "internal/chainsetup/steps_compose.go:354",
-  "internal/chainsetup.compositionID": "internal/chainsetup/workspace_new.go:27",
+  "internal/chainsetup.checkTopologyKeyRefs": "internal/chainsetup/steps_keys.go:325",
+  "internal/chainsetup.commanderRunner": "internal/chainsetup/steps_compose.go:328",
+  "internal/chainsetup.compareHandlers": "internal/chainsetup/compare.go:86",
+  "internal/chainsetup.compareWorkspace": "internal/chainsetup/compare.go:172",
+  "internal/chainsetup.composeStage.failed": "internal/chainsetup/statedriven.go:236",
+  "internal/chainsetup.composeStage.run": "internal/chainsetup/statedriven.go:204",
+  "internal/chainsetup.composeStages": "internal/chainsetup/statedriven.go:135",
+  "internal/chainsetup.compositionID": "internal/chainsetup/new.go:19",
   "internal/chainsetup.excerpt": "internal/chainsetup/observe.go:66",
-  "internal/chainsetup.firstProducer": "internal/chainsetup/steps_compose.go:338",
-  "internal/chainsetup.holdOnePerKey": "internal/chainsetup/provenance.go:153",
-  "internal/chainsetup.hostOf": "internal/chainsetup/observe_discover.go:122",
-  "internal/chainsetup.launchCommand": "internal/chainsetup/record.go:294",
+  "internal/chainsetup.firstProducer": "internal/chainsetup/steps_compose.go:312",
+  "internal/chainsetup.genesisFailure": "internal/chainsetup/statedriven.go:283",
+  "internal/chainsetup.genesisOpts": "internal/chainsetup/verbs_steps.go:310",
+  "internal/chainsetup.handlersFor": "internal/chainsetup/statedriven.go:160",
+  "internal/chainsetup.holdOnePerKey": "internal/chainsetup/provenance.go:105",
+  "internal/chainsetup.hostOf": "internal/chainsetup/discover.go:122",
+  "internal/chainsetup.inWorkspace": "internal/chainsetup/verbs_steps.go:37",
+  "internal/chainsetup.isComposition": "internal/chainsetup/verbs_network.go:66",
+  "internal/chainsetup.keysFailure": "internal/chainsetup/statedriven.go:262",
+  "internal/chainsetup.launchCommand": "internal/chainsetup/verbs_resume.go:220",
+  "internal/chainsetup.launchFailure": "internal/chainsetup/statedriven.go:306",
   "internal/chainsetup.localKeyReader": "internal/chainsetup/steps_keys.go:286",
   "internal/chainsetup.looksLikeKeyMaterial": "internal/chainsetup/steps_keys.go:346",
-  "internal/chainsetup.lower": "internal/chainsetup/verb_needs.go:247",
+  "internal/chainsetup.lower": "internal/chainsetup/verb_needs.go:220",
+  "internal/chainsetup.markStepFailed": "internal/chainsetup/verbs_up.go:136",
+  "internal/chainsetup.marked.Error": "internal/chainsetup/failurekind.go:21",
+  "internal/chainsetup.marked.Unwrap": "internal/chainsetup/failurekind.go:22",
   "internal/chainsetup.metricsURLOf": "internal/chainsetup/verify_validators.go:132",
-  "internal/chainsetup.netmapRequests": "internal/chainsetup/steps_compose.go:246",
-  "internal/chainsetup.networkCapabilities": "internal/chainsetup/steps_genesis.go:559",
-  "internal/chainsetup.nodeHost": "internal/chainsetup/steps_compose.go:211",
+  "internal/chainsetup.netUpFrom": "internal/chainsetup/verbs_up.go:286",
+  "internal/chainsetup.netmapRequests": "internal/chainsetup/steps_compose.go:220",
+  "internal/chainsetup.networkCapabilities": "internal/chainsetup/steps_genesis.go:558",
+  "internal/chainsetup.nodeHost": "internal/chainsetup/steps_compose.go:185",
+  "internal/chainsetup.notReconciling": "internal/chainsetup/statedriven.go:194",
+  "internal/chainsetup.ofKind": "internal/chainsetup/failurekind.go:26",
   "internal/chainsetup.open": "internal/chainsetup/workspace.go:73",
   "internal/chainsetup.parseNodeKey": "internal/chainsetup/steps_keys.go:364",
-  "internal/chainsetup.phaseActionNode": "internal/chainsetup/phases.go:232",
-  "internal/chainsetup.phaseHasNode": "internal/chainsetup/phases.go:216",
+  "internal/chainsetup.peeringOf": "internal/chainsetup/verbs_steps.go:247",
+  "internal/chainsetup.phaseActionNode": "internal/chainsetup/phases.go:224",
+  "internal/chainsetup.phaseHasNode": "internal/chainsetup/phases.go:208",
+  "internal/chainsetup.placeUpRequest": "internal/chainsetup/verbs_up.go:390",
   "internal/chainsetup.planReuse": "internal/chainsetup/reuse.go:98",
-  "internal/chainsetup.readGenesisOverlay": "internal/chainsetup/steps_genesis.go:749",
-  "internal/chainsetup.reconcileUp": "internal/chainsetup/reuse.go:371",
-  "internal/chainsetup.recordByIndex": "internal/chainsetup/phases.go:186",
-  "internal/chainsetup.refuseSharedPerNodeKnob": "internal/chainsetup/provenance.go:130",
+  "internal/chainsetup.planUp": "internal/chainsetup/verbs_up.go:169",
+  "internal/chainsetup.readBlueprint": "internal/chainsetup/verbs_steps.go:229",
+  "internal/chainsetup.readGenesisOverlay": "internal/chainsetup/verbs_steps.go:401",
+  "internal/chainsetup.reconcileHandler": "internal/chainsetup/reuse.go:378",
+  "internal/chainsetup.reconcileUp": "internal/chainsetup/verbs_up.go:421",
+  "internal/chainsetup.recordByIndex": "internal/chainsetup/phases.go:178",
+  "internal/chainsetup.recordRequest": "internal/chainsetup/verbs_up.go:444",
   "internal/chainsetup.reusePlan.describe": "internal/chainsetup/reuse.go:308",
   "internal/chainsetup.reusePlan.redo": "internal/chainsetup/reuse.go:67",
   "internal/chainsetup.reusePlan.reused": "internal/chainsetup/reuse.go:78",
   "internal/chainsetup.rpcURLOf": "internal/chainsetup/verify_validators.go:120",
-  "internal/chainsetup.sameCommand": "internal/chainsetup/record.go:301",
-  "internal/chainsetup.sameValidatorSet": "internal/chainsetup/verify_genesis.go:54",
-  "internal/chainsetup.serverLabel": "internal/chainsetup/observe_introspect.go:158",
-  "internal/chainsetup.setLockPath": "internal/chainsetup/setlock.go:32",
-  "internal/chainsetup.short": "internal/chainsetup/steps_compose.go:406",
-  "internal/chainsetup.syncModeFor": "internal/chainsetup/steps_place.go:227",
-  "internal/chainsetup.uniq": "internal/chainsetup/phases.go:338",
-  "internal/chainsetup.unreadableReconcile": "internal/chainsetup/reuse.go:445",
+  "internal/chainsetup.sameCommand": "internal/chainsetup/verbs_resume.go:228",
+  "internal/chainsetup.sameValidatorSet": "internal/chainsetup/genesis_verify.go:52",
+  "internal/chainsetup.serverLabel": "internal/chainsetup/introspect.go:158",
+  "internal/chainsetup.setLockPath": "internal/chainsetup/setlock.go:30",
+  "internal/chainsetup.short": "internal/chainsetup/steps_compose.go:380",
+  "internal/chainsetup.sortedScopes": "internal/chainsetup/verbs_lifecycle.go:144",
+  "internal/chainsetup.startFor": "internal/chainsetup/statedriven.go:324",
+  "internal/chainsetup.startMissing": "internal/chainsetup/verbs_resume.go:246",
+  "internal/chainsetup.stateOfVerdict": "internal/chainsetup/compare.go:30",
+  "internal/chainsetup.syncModeFor": "internal/chainsetup/steps_place.go:207",
+  "internal/chainsetup.targetFor": "internal/chainsetup/statedriven.go:341",
+  "internal/chainsetup.uniq": "internal/chainsetup/phases.go:330",
+  "internal/chainsetup.unreadableReconcile": "internal/chainsetup/reuse.go:418",
+  "internal/chainsetup.upChainMode": "internal/chainsetup/verbs_up.go:404",
+  "internal/chainsetup.upHandlers": "internal/chainsetup/statedriven.go:150",
+  "internal/chainsetup.upSteps": "internal/chainsetup/verbs_up.go:212",
+  "internal/chainsetup.withPID": "internal/chainsetup/verbs_network.go:102",
+  "internal/chainsetup.withWorkspace": "internal/chainsetup/verbs_steps.go:26",
   "internal/chainsetup.wsURLOf": "internal/chainsetup/verify_validators.go:155",
-  "internal/chainsetup/verb.HardforkExecute": "internal/chainsetup/verb/verbs_hardfork.go:98",
-  "internal/chainsetup/verb.HardforkPlan": "internal/chainsetup/verb/verbs_hardfork.go:44",
-  "internal/chainsetup/verb.NetAllocate": "internal/chainsetup/verb/verbs_steps.go:93",
-  "internal/chainsetup/verb.NetConfig": "internal/chainsetup/verb/verbs_steps.go:210",
-  "internal/chainsetup/verb.NetCrossFork": "internal/chainsetup/verb/verbs_network.go:300",
-  "internal/chainsetup/verb.NetEndpoints": "internal/chainsetup/verb/verbs.go:99",
-  "internal/chainsetup/verb.NetEnodes": "internal/chainsetup/verb/verbs_enode.go:45",
-  "internal/chainsetup/verb.NetFork": "internal/chainsetup/verb/verbs_network.go:345",
-  "internal/chainsetup/verb.NetGenesis": "internal/chainsetup/verb/verbs_steps.go:180",
-  "internal/chainsetup/verb.NetHealth": "internal/chainsetup/verb/verbs_lifecycle.go:131",
-  "internal/chainsetup/verb.NetInit": "internal/chainsetup/verb/verbs_lifecycle.go:37",
-  "internal/chainsetup/verb.NetKeys": "internal/chainsetup/verb/verbs_steps.go:39",
-  "internal/chainsetup/verb.NetLaunchOpts": "internal/chainsetup/verb/verbs_steps.go:249",
-  "internal/chainsetup/verb.NetLogs": "internal/chainsetup/verb/verbs_lifecycle.go:110",
-  "internal/chainsetup/verb.NetNew": "internal/chainsetup/verb/verbs.go:49",
-  "internal/chainsetup/verb.NetProvision": "internal/chainsetup/verb/verbs_lifecycle.go:24",
-  "internal/chainsetup/verb.NetRestart": "internal/chainsetup/verb/verbs_lifecycle.go:77",
-  "internal/chainsetup/verb.NetResume": "internal/chainsetup/verb/verbs_resume.go:50",
-  "internal/chainsetup/verb.NetRm": "internal/chainsetup/verb/verbs_lifecycle.go:90",
-  "internal/chainsetup/verb.NetRunner": "internal/chainsetup/verb/verbs_network.go:147",
-  "internal/chainsetup/verb.NetStart": "internal/chainsetup/verb/verbs_lifecycle.go:51",
-  "internal/chainsetup/verb.NetStatus": "internal/chainsetup/verb/verbs.go:82",
-  "internal/chainsetup/verb.NetStop": "internal/chainsetup/verb/verbs_lifecycle.go:63",
-  "internal/chainsetup/verb.NetUp": "internal/chainsetup/verb/verbs_up.go:22",
-  "internal/chainsetup/verb.NetUpComparing": "internal/chainsetup/verb/compare.go:73",
-  "internal/chainsetup/verb.NetworkRemove": "internal/chainsetup/verb/verbs_network.go:252",
-  "internal/chainsetup/verb.NetworkStatus": "internal/chainsetup/verb/verbs_network.go:49",
-  "internal/chainsetup/verb.NetworkStop": "internal/chainsetup/verb/verbs_network.go:85",
-  "internal/chainsetup/verb.NodeStart": "internal/chainsetup/verb/verbs_network.go:213",
-  "internal/chainsetup/verb.NodeStop": "internal/chainsetup/verb/verbs_network.go:123",
-  "internal/chainsetup/verb.NodeSwap": "internal/chainsetup/verb/verbs_network.go:184",
-  "internal/chainsetup/verb.compareHandlers": "internal/chainsetup/verb/compare.go:87",
-  "internal/chainsetup/verb.compareWorkspace": "internal/chainsetup/verb/compare.go:173",
-  "internal/chainsetup/verb.composeStage.failed": "internal/chainsetup/verb/statedriven.go:241",
-  "internal/chainsetup/verb.composeStage.run": "internal/chainsetup/verb/statedriven.go:206",
-  "internal/chainsetup/verb.composeStages": "internal/chainsetup/verb/statedriven.go:137",
-  "internal/chainsetup/verb.handlersFor": "internal/chainsetup/verb/statedriven.go:162",
-  "internal/chainsetup/verb.isComposition": "internal/chainsetup/verb/verbs_network.go:67",
-  "internal/chainsetup/verb.markStepFailed": "internal/chainsetup/verb/verbs_up.go:41",
-  "internal/chainsetup/verb.netUpFrom": "internal/chainsetup/verb/verbs_up.go:177",
-  "internal/chainsetup/verb.notReconciling": "internal/chainsetup/verb/statedriven.go:196",
-  "internal/chainsetup/verb.peeringOf": "internal/chainsetup/verb/verbs_steps.go:172",
-  "internal/chainsetup/verb.placeUpRequest": "internal/chainsetup/verb/verbs_up.go:281",
-  "internal/chainsetup/verb.planUp": "internal/chainsetup/verb/verbs_up.go:60",
-  "internal/chainsetup/verb.readBlueprint": "internal/chainsetup/verb/verbs_steps.go:154",
-  "internal/chainsetup/verb.recordRequest": "internal/chainsetup/verb/verbs_up.go:312",
-  "internal/chainsetup/verb.sortedScopes": "internal/chainsetup/verb/verbs_lifecycle.go:144",
-  "internal/chainsetup/verb.startFor": "internal/chainsetup/verb/statedriven.go:271",
-  "internal/chainsetup/verb.startMissing": "internal/chainsetup/verb/verbs_resume.go:127",
-  "internal/chainsetup/verb.stateOfVerdict": "internal/chainsetup/verb/compare.go:31",
-  "internal/chainsetup/verb.targetFor": "internal/chainsetup/verb/statedriven.go:288",
-  "internal/chainsetup/verb.upChainMode": "internal/chainsetup/verb/verbs_up.go:295",
-  "internal/chainsetup/verb.upHandlers": "internal/chainsetup/verb/statedriven.go:152",
-  "internal/chainsetup/verb.upSteps": "internal/chainsetup/verb/verbs_up.go:103",
-  "internal/chainsetup/verb.withPID": "internal/chainsetup/verb/verbs_network.go:103",
-  "internal/core/lifecycle.Detailed": "internal/core/lifecycle/transitions.go:354",
   "internal/core/lifecycle.Machine.At": "internal/core/lifecycle/machine.go:76",
   "internal/core/lifecycle.Machine.Err": "internal/core/lifecycle/machine.go:79",
   "internal/core/lifecycle.Machine.Request": "internal/core/lifecycle/machine.go:87",
   "internal/core/lifecycle.Machine.Run": "internal/core/lifecycle/machine.go:130",
-  "internal/core/lifecycle.Mark": "internal/core/lifecycle/mark.go:31",
   "internal/core/lifecycle.New": "internal/core/lifecycle/machine.go:59",
   "internal/core/lifecycle.Status.Block": "internal/core/lifecycle/status.go:40",
   "internal/core/lifecycle.Status.IsFailure": "internal/core/lifecycle/status.go:33",
   "internal/core/lifecycle.Status.String": "internal/core/lifecycle/status.go:47",
   "internal/core/lifecycle.contains": "internal/core/lifecycle/machine.go:200",
   "internal/core/lifecycle.list": "internal/core/lifecycle/machine.go:209",
-  "internal/core/lifecycle.marked.Error": "internal/core/lifecycle/mark.go:26",
-  "internal/core/lifecycle.marked.Unwrap": "internal/core/lifecycle/mark.go:27",
   "internal/core/lifecycle.permits": "internal/core/lifecycle/machine.go:166",
   "internal/core/lifecycle.unhandled": "internal/core/lifecycle/machine.go:178",
   "internal/mcp.Default": "internal/mcp/tools.go:16",
@@ -677,128 +657,127 @@
   "internal/mcp.validateTool": "internal/mcp/validate_tool.go:15",
   "internal/mcp.verifyTool": "internal/mcp/tools.go:249",
   "internal/mcp.workspaceDirSchema": "internal/mcp/chain_tools.go:96",
-  "internal/testengine.AttachWorkspaceRun": "internal/testengine/attach_workspace.go:118",
-  "internal/testengine.ComposePlan.String": "internal/testengine/plan.go:242",
-  "internal/testengine.ComposePlan.binaryLine": "internal/testengine/plan.go:280",
-  "internal/testengine.ComposePlan.chosenByLine": "internal/testengine/plan.go:268",
+  "internal/testengine.AttachWorkspaceRun": "internal/testengine/attach_workspace.go:115",
+  "internal/testengine.ComposePlan.String": "internal/testengine/plan.go:269",
+  "internal/testengine.ComposePlan.binaryLine": "internal/testengine/plan.go:307",
+  "internal/testengine.ComposePlan.chosenByLine": "internal/testengine/plan.go:295",
   "internal/testengine.LaunchMismatch.String": "internal/testengine/verifylaunch.go:33",
   "internal/testengine.New": "internal/testengine/engine_impl.go:65",
-  "internal/testengine.NewAttachBuildEnv": "internal/testengine/attach.go:136",
-  "internal/testengine.NewAttachEngine": "internal/testengine/attach.go:149",
-  "internal/testengine.NewRecordedBuildEnv": "internal/testengine/attach.go:127",
+  "internal/testengine.NewAttachBuildEnv": "internal/testengine/attach.go:134",
+  "internal/testengine.NewAttachEngine": "internal/testengine/attach.go:147",
+  "internal/testengine.NewRecordedBuildEnv": "internal/testengine/attach.go:125",
   "internal/testengine.NewRunSpec": "internal/testengine/wire.go:21",
-  "internal/testengine.PlanGenesis.line": "internal/testengine/plan.go:322",
-  "internal/testengine.PlanKeys.line": "internal/testengine/plan.go:311",
-  "internal/testengine.PlanKnob.String": "internal/testengine/plan.go:129",
-  "internal/testengine.PlanNodes.line": "internal/testengine/plan.go:296",
-  "internal/testengine.PlanSuite": "internal/testengine/plan.go:391",
-  "internal/testengine.Precheck": "internal/testengine/validate.go:162",
+  "internal/testengine.PlanGenesis.line": "internal/testengine/plan.go:349",
+  "internal/testengine.PlanKeys.line": "internal/testengine/plan.go:338",
+  "internal/testengine.PlanKnob.String": "internal/testengine/plan.go:156",
+  "internal/testengine.PlanNodes.line": "internal/testengine/plan.go:323",
+  "internal/testengine.PlanSuite": "internal/testengine/plan.go:418",
+  "internal/testengine.Precheck": "internal/testengine/validate.go:151",
   "internal/testengine.ReadPlan": "internal/testengine/planfile.go:53",
   "internal/testengine.ReadSessionSummary": "internal/testengine/summary.go:37",
-  "internal/testengine.RunSuite": "internal/testengine/suite.go:253",
+  "internal/testengine.RunSuite": "internal/testengine/suite.go:231",
   "internal/testengine.Summary.Failed": "internal/testengine/summary.go:29",
   "internal/testengine.ValidateContent": "internal/testengine/validate.go:62",
   "internal/testengine.ValidateSpecs": "internal/testengine/validate.go:32",
   "internal/testengine.VerifyLaunched": "internal/testengine/verifylaunch.go:54",
   "internal/testengine.WritePlan": "internal/testengine/planfile.go:30",
   "internal/testengine.accountSource": "internal/testengine/accounts.go:69",
-  "internal/testengine.afterFailedSetup": "internal/testengine/suite.go:403",
+  "internal/testengine.afterFailedSetup": "internal/testengine/suite.go:369",
   "internal/testengine.applicableTo": "internal/testengine/capability.go:16",
   "internal/testengine.applicableWithCaps": "internal/testengine/capability.go:52",
-  "internal/testengine.applyExistingConfigs": "internal/testengine/compose.go:463",
-  "internal/testengine.applyExistingInputs": "internal/testengine/compose.go:421",
+  "internal/testengine.applyExistingConfigs": "internal/testengine/compose.go:459",
+  "internal/testengine.applyExistingInputs": "internal/testengine/compose.go:417",
   "internal/testengine.argvNames": "internal/testengine/verifylaunch.go:191",
-  "internal/testengine.artifactRoot": "internal/testengine/attach_workspace.go:28",
+  "internal/testengine.artifactRoot": "internal/testengine/attach_workspace.go:25",
   "internal/testengine.askedBy": "internal/testengine/verifylaunch.go:152",
   "internal/testengine.awaitBalance": "internal/testengine/accounts.go:95",
   "internal/testengine.base": "internal/testengine/accounts.go:115",
-  "internal/testengine.busEmit": "internal/testengine/attach.go:37",
-  "internal/testengine.casesCrossFork": "internal/testengine/attach_workspace.go:273",
-  "internal/testengine.chainApplies": "internal/testengine/validate.go:348",
-  "internal/testengine.chainContracts": "internal/testengine/attach.go:305",
+  "internal/testengine.busEmit": "internal/testengine/attach.go:35",
+  "internal/testengine.casesCrossFork": "internal/testengine/attach_workspace.go:270",
+  "internal/testengine.chainApplies": "internal/testengine/validate.go:337",
+  "internal/testengine.chainContracts": "internal/testengine/attach.go:303",
   "internal/testengine.chainstateSink.close": "internal/testengine/chainstate_sink.go:59",
   "internal/testengine.chainstateSink.write": "internal/testengine/chainstate_sink.go:44",
-  "internal/testengine.checkForkIsOneTheChainKnows": "internal/testengine/genesis_decl.go:112",
-  "internal/testengine.clampCount": "internal/testengine/nodegate.go:213",
+  "internal/testengine.checkDeclaredFork": "internal/testengine/genesis_decl.go:125",
+  "internal/testengine.clampCount": "internal/testengine/nodegate.go:210",
   "internal/testengine.collectFailureData": "internal/testengine/failuredata.go:115",
-  "internal/testengine.composeWorkspace": "internal/testengine/attach_workspace.go:170",
-  "internal/testengine.composedArtifacts": "internal/testengine/attach_workspace.go:160",
+  "internal/testengine.composeWorkspace": "internal/testengine/attach_workspace.go:167",
+  "internal/testengine.composedArtifacts": "internal/testengine/attach_workspace.go:157",
   "internal/testengine.compositionKey": "internal/testengine/reuse.go:42",
-  "internal/testengine.compositionOf": "internal/testengine/compose.go:143",
-  "internal/testengine.countFrom": "internal/testengine/compose.go:122",
-  "internal/testengine.countOf": "internal/testengine/topology.go:196",
-  "internal/testengine.ctxClock.Sleep": "internal/testengine/nodegate.go:234",
-  "internal/testengine.declaredRoles": "internal/testengine/validate.go:194",
-  "internal/testengine.describeTarget": "internal/testengine/plan.go:220",
+  "internal/testengine.compositionOf": "internal/testengine/compose.go:139",
+  "internal/testengine.countFrom": "internal/testengine/compose.go:118",
+  "internal/testengine.countOf": "internal/testengine/topology.go:194",
+  "internal/testengine.ctxClock.Sleep": "internal/testengine/nodegate.go:231",
+  "internal/testengine.declaredRoles": "internal/testengine/validate.go:183",
+  "internal/testengine.describeTarget": "internal/testengine/plan.go:247",
   "internal/testengine.engine.Run": "internal/testengine/engine_impl.go:95",
   "internal/testengine.engine.emit": "internal/testengine/engine_impl.go:69",
   "internal/testengine.engine.recordArtifacts": "internal/testengine/engine_impl.go:85",
-  "internal/testengine.expand": "internal/testengine/compose.go:66",
-  "internal/testengine.factsFromReport": "internal/testengine/nodegate.go:132",
-  "internal/testengine.forkGate.parked": "internal/testengine/nodegate.go:83",
-  "internal/testengine.forkGate.retired": "internal/testengine/nodegate.go:98",
-  "internal/testengine.forkOf": "internal/testengine/genesis_decl.go:80",
+  "internal/testengine.expand": "internal/testengine/compose.go:62",
+  "internal/testengine.factsFromReport": "internal/testengine/nodegate.go:129",
+  "internal/testengine.forkGate.parked": "internal/testengine/nodegate.go:80",
+  "internal/testengine.forkGate.retired": "internal/testengine/nodegate.go:95",
+  "internal/testengine.forkOf": "internal/testengine/genesis_decl.go:78",
   "internal/testengine.fundAccount": "internal/testengine/accounts.go:78",
-  "internal/testengine.gateReady": "internal/testengine/nodegate.go:277",
+  "internal/testengine.gateReady": "internal/testengine/nodegate.go:274",
   "internal/testengine.gatherFailureData": "internal/testengine/failuredata.go:53",
-  "internal/testengine.hardforkSets": "internal/testengine/genesis_decl.go:29",
-  "internal/testengine.healthObserver.Observe": "internal/testengine/nodegate.go:34",
-  "internal/testengine.inlineTopologyOf": "internal/testengine/topology.go:58",
-  "internal/testengine.joinReasons": "internal/testengine/nodegate.go:261",
+  "internal/testengine.hardforkSets": "internal/testengine/genesis_decl.go:26",
+  "internal/testengine.healthObserver.Observe": "internal/testengine/nodegate.go:31",
+  "internal/testengine.inlineTopologyOf": "internal/testengine/topology.go:56",
+  "internal/testengine.joinReasons": "internal/testengine/nodegate.go:258",
   "internal/testengine.knobName": "internal/testengine/verifylaunch.go:176",
   "internal/testengine.launchKnobMismatches": "internal/testengine/verifylaunch.go:120",
-  "internal/testengine.loadEntries": "internal/testengine/attach.go:273",
-  "internal/testengine.malformedRequires": "internal/testengine/validate.go:148",
-  "internal/testengine.malformedSelectors": "internal/testengine/validate.go:273",
-  "internal/testengine.mergeScopes": "internal/testengine/plan.go:166",
-  "internal/testengine.misdirectedSends": "internal/testengine/validate.go:233",
-  "internal/testengine.missingCaps": "internal/testengine/validate.go:362",
+  "internal/testengine.loadEntries": "internal/testengine/attach.go:271",
+  "internal/testengine.malformedRequires": "internal/testengine/validate.go:137",
+  "internal/testengine.malformedSelectors": "internal/testengine/validate.go:262",
+  "internal/testengine.mergeScopes": "internal/testengine/plan.go:193",
+  "internal/testengine.misdirectedSends": "internal/testengine/validate.go:222",
+  "internal/testengine.missingCaps": "internal/testengine/validate.go:351",
   "internal/testengine.newChainstateSink": "internal/testengine/chainstate_sink.go:34",
-  "internal/testengine.nodeAccount": "internal/testengine/validate.go:260",
+  "internal/testengine.nodeAccount": "internal/testengine/validate.go:249",
   "internal/testengine.placementMismatch": "internal/testengine/verifylaunch.go:239",
-  "internal/testengine.planNodes": "internal/testengine/plan.go:184",
-  "internal/testengine.planOf": "internal/testengine/plan.go:134",
+  "internal/testengine.planNodes": "internal/testengine/plan.go:211",
+  "internal/testengine.planOf": "internal/testengine/plan.go:161",
   "internal/testengine.prepareAccounts": "internal/testengine/accounts.go:34",
   "internal/testengine.publishChainstate": "internal/testengine/collect.go:131",
-  "internal/testengine.readWorkspaceComposed": "internal/testengine/attach_workspace.go:191",
-  "internal/testengine.recordBlockedBySetup": "internal/testengine/suite.go:424",
-  "internal/testengine.refuseMachineConflict": "internal/testengine/compose.go:90",
-  "internal/testengine.remoteLogReader": "internal/testengine/attach_workspace.go:256",
-  "internal/testengine.resolveComposition": "internal/testengine/suite.go:196",
-  "internal/testengine.restartAdapter.Restart": "internal/testengine/nodegate.go:226",
-  "internal/testengine.ringFor": "internal/testengine/attach.go:237",
+  "internal/testengine.readWorkspaceComposed": "internal/testengine/attach_workspace.go:188",
+  "internal/testengine.recordBlockedBySetup": "internal/testengine/suite.go:390",
+  "internal/testengine.refuseMachineConflict": "internal/testengine/compose.go:86",
+  "internal/testengine.remoteLogReader": "internal/testengine/attach_workspace.go:253",
+  "internal/testengine.resolveComposition": "internal/testengine/suite.go:186",
+  "internal/testengine.restartAdapter.Restart": "internal/testengine/nodegate.go:223",
+  "internal/testengine.ringFor": "internal/testengine/attach.go:235",
   "internal/testengine.roleCountMismatches": "internal/testengine/verifylaunch.go:83",
   "internal/testengine.rpcProbe": "internal/testengine/collect.go:23",
-  "internal/testengine.runFailure": "internal/testengine/failurekind.go:80",
-  "internal/testengine.runSuiteBody": "internal/testengine/suite.go:261",
   "internal/testengine.sameChain": "internal/testengine/reuse.go:65",
   "internal/testengine.sameComposition": "internal/testengine/reuse.go:18",
   "internal/testengine.satisfies": "internal/testengine/capability.go:32",
   "internal/testengine.scopeCovers": "internal/testengine/verifylaunch.go:164",
-  "internal/testengine.selectorWellFormed": "internal/testengine/validate.go:305",
+  "internal/testengine.selectorWellFormed": "internal/testengine/validate.go:294",
   "internal/testengine.sortedLabels": "internal/testengine/accounts.go:125",
   "internal/testengine.sortedScopes": "internal/testengine/verifylaunch.go:207",
-  "internal/testengine.specResult": "internal/testengine/validate.go:333",
+  "internal/testengine.specResult": "internal/testengine/validate.go:322",
   "internal/testengine.startCollection": "internal/testengine/collect.go:44",
-  "internal/testengine.stepSink.Recovery": "internal/testengine/nodegate.go:253",
-  "internal/testengine.stepSink.Verdict": "internal/testengine/nodegate.go:249",
-  "internal/testengine.topologyHasKeys": "internal/testengine/topology.go:18",
-  "internal/testengine.topologyHasProxy": "internal/testengine/topology.go:38",
-  "internal/testengine.topologyOf": "internal/testengine/topology.go:163",
+  "internal/testengine.stepSink.Recovery": "internal/testengine/nodegate.go:250",
+  "internal/testengine.stepSink.Verdict": "internal/testengine/nodegate.go:246",
+  "internal/testengine.topologyHasKeys": "internal/testengine/topology.go:16",
+  "internal/testengine.topologyHasProxy": "internal/testengine/topology.go:36",
+  "internal/testengine.topologyOf": "internal/testengine/topology.go:161",
+  "internal/testengine.upgradePresetPath": "internal/testengine/genesis_decl.go:116",
   "internal/testengine.validateRaw": "internal/testengine/validate.go:86",
-  "internal/testengine.verifyAgainstPlan": "internal/testengine/suite.go:170",
-  "internal/testengine.waitForHead": "internal/testengine/suite.go:105",
-  "internal/testengine.wiredAttachEngine": "internal/testengine/attach_workspace.go:75",
+  "internal/testengine.verifyAgainstPlan": "internal/testengine/suite.go:160",
+  "internal/testengine.waitForHead": "internal/testengine/suite.go:102",
+  "internal/testengine.wiredAttachEngine": "internal/testengine/attach_workspace.go:72",
   "internal/testengine.withCollection": "internal/testengine/collect.go:103",
-  "internal/testengine.workspaceNodes.CrossFork": "internal/testengine/nodecontrol.go:69",
-  "internal/testengine.workspaceNodes.Log": "internal/testengine/nodecontrol.go:87",
-  "internal/testengine.workspaceNodes.Start": "internal/testengine/nodecontrol.go:41",
-  "internal/testengine.workspaceNodes.Stop": "internal/testengine/nodecontrol.go:31",
-  "internal/testengine.workspaceNodes.Swap": "internal/testengine/nodecontrol.go:51",
-  "internal/testengine.writeKnobScopes": "internal/testengine/plan.go:340",
-  "internal/testengine.writeOverlay": "internal/testengine/genesis_decl.go:46",
-  "internal/testengine.writeOverlays": "internal/testengine/genesis_decl.go:138",
-  "internal/testengine.writeScopes": "internal/testengine/plan.go:355"
+  "internal/testengine.workspaceNodes.CrossFork": "internal/testengine/nodecontrol.go:68",
+  "internal/testengine.workspaceNodes.Log": "internal/testengine/nodecontrol.go:86",
+  "internal/testengine.workspaceNodes.Start": "internal/testengine/nodecontrol.go:40",
+  "internal/testengine.workspaceNodes.Stop": "internal/testengine/nodecontrol.go:30",
+  "internal/testengine.workspaceNodes.Swap": "internal/testengine/nodecontrol.go:50",
+  "internal/testengine.writeKnobScopes": "internal/testengine/plan.go:367",
+  "internal/testengine.writeOverlay": "internal/testengine/genesis_decl.go:43",
+  "internal/testengine.writeOverlays": "internal/testengine/genesis_decl.go:158",
+  "internal/testengine.writeScopes": "internal/testengine/plan.go:382"
  },
  "edges": [
   {
@@ -1733,7 +1712,7 @@
   },
   {
    "From": "cmd/chainbench/keyringcmd.announce",
-   "To": "cmd/chainbench/keyringcmd.ringOriginName",
+   "To": "cmd/chainbench/keyringcmd.ringSourceName",
    "N": 1
   },
   {
@@ -2617,11 +2596,6 @@
    "N": 1
   },
   {
-   "From": "cmd/chainbench/suitecmd.failedAtOf",
-   "To": "internal/core/lifecycle.Status.String",
-   "N": 1
-  },
-  {
    "From": "cmd/chainbench/suitecmd.planPrinter",
    "To": "internal/testengine.ComposePlan.String",
    "N": 1
@@ -2659,11 +2633,6 @@
   {
    "From": "cmd/chainbench/suitecmd.runAttached",
    "To": "internal/dashboard.Stream",
-   "N": 1
-  },
-  {
-   "From": "cmd/chainbench/suitecmd.runComposed",
-   "To": "cmd/chainbench/suitecmd.failedAtOf",
    "N": 1
   },
   {
@@ -3248,7 +3217,7 @@
   },
   {
    "From": "internal/app.HardforkExecute",
-   "To": "internal/chainsetup/verb.HardforkExecute",
+   "To": "internal/chainsetup.HardforkExecute",
    "N": 1
   },
   {
@@ -3258,7 +3227,7 @@
   },
   {
    "From": "internal/app.HardforkPlan",
-   "To": "internal/chainsetup/verb.HardforkPlan",
+   "To": "internal/chainsetup.HardforkPlan",
    "N": 1
   },
   {
@@ -3363,7 +3332,7 @@
   },
   {
    "From": "internal/app.NetAllocate",
-   "To": "internal/chainsetup/verb.NetAllocate",
+   "To": "internal/chainsetup.NetAllocate",
    "N": 1
   },
   {
@@ -3373,7 +3342,7 @@
   },
   {
    "From": "internal/app.NetConfig",
-   "To": "internal/chainsetup/verb.NetConfig",
+   "To": "internal/chainsetup.NetConfig",
    "N": 1
   },
   {
@@ -3383,7 +3352,7 @@
   },
   {
    "From": "internal/app.NetEnodes",
-   "To": "internal/chainsetup/verb.NetEnodes",
+   "To": "internal/chainsetup.NetEnodes",
    "N": 1
   },
   {
@@ -3393,7 +3362,7 @@
   },
   {
    "From": "internal/app.NetGenesis",
-   "To": "internal/chainsetup/verb.NetGenesis",
+   "To": "internal/chainsetup.NetGenesis",
    "N": 1
   },
   {
@@ -3403,7 +3372,7 @@
   },
   {
    "From": "internal/app.NetHealth",
-   "To": "internal/chainsetup/verb.NetHealth",
+   "To": "internal/chainsetup.NetHealth",
    "N": 1
   },
   {
@@ -3413,7 +3382,7 @@
   },
   {
    "From": "internal/app.NetInit",
-   "To": "internal/chainsetup/verb.NetInit",
+   "To": "internal/chainsetup.NetInit",
    "N": 1
   },
   {
@@ -3423,7 +3392,7 @@
   },
   {
    "From": "internal/app.NetKeys",
-   "To": "internal/chainsetup/verb.NetKeys",
+   "To": "internal/chainsetup.NetKeys",
    "N": 1
   },
   {
@@ -3433,7 +3402,7 @@
   },
   {
    "From": "internal/app.NetLaunchOpts",
-   "To": "internal/chainsetup/verb.NetLaunchOpts",
+   "To": "internal/chainsetup.NetLaunchOpts",
    "N": 1
   },
   {
@@ -3443,7 +3412,7 @@
   },
   {
    "From": "internal/app.NetLogs",
-   "To": "internal/chainsetup/verb.NetLogs",
+   "To": "internal/chainsetup.NetLogs",
    "N": 1
   },
   {
@@ -3478,7 +3447,7 @@
   },
   {
    "From": "internal/app.NetNew",
-   "To": "internal/chainsetup/verb.NetNew",
+   "To": "internal/chainsetup.NetNew",
    "N": 1
   },
   {
@@ -3543,7 +3512,7 @@
   },
   {
    "From": "internal/app.NetProvision",
-   "To": "internal/chainsetup/verb.NetProvision",
+   "To": "internal/chainsetup.NetProvision",
    "N": 1
   },
   {
@@ -3553,7 +3522,7 @@
   },
   {
    "From": "internal/app.NetRestart",
-   "To": "internal/chainsetup/verb.NetRestart",
+   "To": "internal/chainsetup.NetRestart",
    "N": 1
   },
   {
@@ -3563,7 +3532,7 @@
   },
   {
    "From": "internal/app.NetResume",
-   "To": "internal/chainsetup/verb.NetResume",
+   "To": "internal/chainsetup.NetResume",
    "N": 1
   },
   {
@@ -3573,7 +3542,7 @@
   },
   {
    "From": "internal/app.NetRm",
-   "To": "internal/chainsetup/verb.NetRm",
+   "To": "internal/chainsetup.NetRm",
    "N": 1
   },
   {
@@ -3583,7 +3552,7 @@
   },
   {
    "From": "internal/app.NetStart",
-   "To": "internal/chainsetup/verb.NetStart",
+   "To": "internal/chainsetup.NetStart",
    "N": 1
   },
   {
@@ -3593,7 +3562,7 @@
   },
   {
    "From": "internal/app.NetStatus",
-   "To": "internal/chainsetup/verb.NetStatus",
+   "To": "internal/chainsetup.NetStatus",
    "N": 1
   },
   {
@@ -3603,7 +3572,7 @@
   },
   {
    "From": "internal/app.NetStop",
-   "To": "internal/chainsetup/verb.NetStop",
+   "To": "internal/chainsetup.NetStop",
    "N": 1
   },
   {
@@ -3613,7 +3582,7 @@
   },
   {
    "From": "internal/app.NetUp",
-   "To": "internal/chainsetup/verb.NetUp",
+   "To": "internal/chainsetup.NetUp",
    "N": 1
   },
   {
@@ -3628,7 +3597,7 @@
   },
   {
    "From": "internal/app.NetworkRemove",
-   "To": "internal/chainsetup/verb.NetworkRemove",
+   "To": "internal/chainsetup.NetworkRemove",
    "N": 1
   },
   {
@@ -3638,7 +3607,7 @@
   },
   {
    "From": "internal/app.NetworkStatus",
-   "To": "internal/chainsetup/verb.NetworkStatus",
+   "To": "internal/chainsetup.NetworkStatus",
    "N": 1
   },
   {
@@ -3648,7 +3617,7 @@
   },
   {
    "From": "internal/app.NetworkStop",
-   "To": "internal/chainsetup/verb.NetworkStop",
+   "To": "internal/chainsetup.NetworkStop",
    "N": 1
   },
   {
@@ -3678,7 +3647,7 @@
   },
   {
    "From": "internal/app.NodeStart",
-   "To": "internal/chainsetup/verb.NodeStart",
+   "To": "internal/chainsetup.NodeStart",
    "N": 1
   },
   {
@@ -3688,7 +3657,7 @@
   },
   {
    "From": "internal/app.NodeStop",
-   "To": "internal/chainsetup/verb.NodeStop",
+   "To": "internal/chainsetup.NodeStop",
    "N": 1
   },
   {
@@ -4092,41 +4061,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/chainsetup.Deps.Logf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/chainsetup.Deps.Owner",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/chainsetup.setLockPath",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/core/session.AcquireLock",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/core/session.Held.Release",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.AcquireSetLock",
-   "To": "internal/core/session.Lock.Describe",
-   "N": 2
-  },
-  {
    "From": "internal/chainsetup.AllocateOpts.placements",
    "To": "internal/chainsetup.AllocateOpts.autoValidators",
    "N": 1
@@ -4182,21 +4116,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.CheckTopologyKeyRefs",
-   "To": "internal/chainsetup.checkNodeKeyRef",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.CheckTopologyKeyRefs",
-   "To": "internal/core/node.Topology.Sorted",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.CrossForkFailure",
-   "To": "internal/chainsetup.ConfigFailure",
-   "N": 1
-  },
-  {
    "From": "internal/chainsetup.DefaultRoot",
    "To": "internal/core/home.Root",
    "N": 1
@@ -4217,59 +4136,39 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.GenesisOptsFor",
-   "To": "internal/chainsetup.GenesisOpts.checkExistingIsUnchanged",
+   "From": "internal/chainsetup.HardforkExecute",
+   "To": "internal/chainsetup.Workspace.Hardfork",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.GenesisOptsFor",
-   "To": "internal/chainsetup.buildGenesisOpts",
+   "From": "internal/chainsetup.HardforkExecute",
+   "To": "internal/chainsetup.withWorkspace",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Deps.Logf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Deps.Owner",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.InWorkspace",
+   "From": "internal/chainsetup.HardforkPlan",
    "To": "internal/chainsetup.Open",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Workspace.Acquire",
+   "From": "internal/chainsetup.HardforkPlan",
+   "To": "internal/chainsetup.Workspace.NodeSet",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Workspace.Save",
+   "From": "internal/chainsetup.HardforkPlan",
+   "To": "internal/chainsetup.Workspace.State",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Workspace.SetDriver",
+   "From": "internal/chainsetup.HardforkPlan",
+   "To": "internal/core/hardfork.PlanSwap",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/core/session.Held.Release",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.InWorkspace",
-   "To": "internal/core/session.Lock.Describe",
-   "N": 1
+   "From": "internal/chainsetup.HardforkPlan",
+   "To": "internal/core/registry.Get",
+   "N": 2
   },
   {
    "From": "internal/chainsetup.Inventory",
@@ -4299,6 +4198,56 @@
   {
    "From": "internal/chainsetup.Inventory",
    "To": "internal/resource.NewInventory",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.Workspace.Allocate",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.Workspace.Retarget",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.acquireSetLock",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.peeringOf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.readBlueprint",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/core/node.Load",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetAllocate",
+   "To": "internal/resource.ResolveServer",
    "N": 1
   },
   {
@@ -4342,6 +4291,351 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.NetConfig",
+   "To": "internal/chainsetup.Workspace.Config",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetConfig",
+   "To": "internal/chainsetup.Workspace.recordConfigSet",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.NetConfig",
+   "To": "internal/chainsetup.sortedScopes",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetConfig",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetCrossFork",
+   "To": "internal/chainsetup.Workspace.CrossFork",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetCrossFork",
+   "To": "internal/chainsetup.Workspace.NodeSet",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetCrossFork",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEndpoints",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEndpoints",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEndpoints",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEndpoints",
+   "To": "internal/chainsetup.Workspace.nodeHTTPURL",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/chainsetup.Workspace.Netmap",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/core/node.Enode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/core/node.Map.Placements",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/preset.Key.Node",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetEnodes",
+   "To": "internal/preset.LoadKeyPreset",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetFork",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetGenesis",
+   "To": "internal/chainsetup.Workspace.Genesis",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetGenesis",
+   "To": "internal/chainsetup.genesisOpts",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetGenesis",
+   "To": "internal/chainsetup.inWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetHealth",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetHealth",
+   "To": "internal/chainsetup.Workspace.Health",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetHealth",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetInit",
+   "To": "internal/chainsetup.Workspace.Init",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetInit",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetKeys",
+   "To": "internal/chainsetup.Workspace.Keys",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetKeys",
+   "To": "internal/chainsetup.inWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetKeys",
+   "To": "internal/chainsetup.readBlueprint",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLaunchOpts",
+   "To": "internal/chainsetup.Workspace.LaunchOpts",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLaunchOpts",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLaunchOpts",
+   "To": "internal/chainsetup.Workspace.recordLaunchSet",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.NetLaunchOpts",
+   "To": "internal/chainsetup.sortedScopes",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLaunchOpts",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLogs",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLogs",
+   "To": "internal/chainsetup.Workspace.Logs",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetLogs",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetNew",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetNew",
+   "To": "internal/chainsetup.Workspace.New",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetNew",
+   "To": "internal/chainsetup.Workspace.Save",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetProvision",
+   "To": "internal/chainsetup.Workspace.Provision",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetProvision",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRestart",
+   "To": "internal/chainsetup.Workspace.Restart",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRestart",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.NetworkStatus",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.Workspace.Reconcile",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.Workspace.firstUndone",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.netUpFrom",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.startMissing",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetResume",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRm",
+   "To": "internal/chainsetup.Workspace.Rm",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRm",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRunner",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRunner",
+   "To": "internal/chainsetup.Workspace.resolveTarget",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetRunner",
+   "To": "internal/resource.Spec.IsRemote",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStart",
+   "To": "internal/chainsetup.Workspace.Start",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStart",
+   "To": "internal/chainsetup.inWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStatus",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStatus",
+   "To": "internal/chainsetup.Workspace.Dir",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStatus",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStop",
+   "To": "internal/chainsetup.Workspace.Stop",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetStop",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetUp",
+   "To": "internal/chainsetup.netUpFrom",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetUpComparing",
+   "To": "internal/chainsetup.compareHandlers",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetUpComparing",
+   "To": "internal/core/lifecycle.Machine.At",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetUpComparing",
+   "To": "internal/core/lifecycle.Machine.Run",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetUpComparing",
+   "To": "internal/core/lifecycle.New",
+   "N": 1
+  },
+  {
    "From": "internal/chainsetup.NetVerifyValidators",
    "To": "internal/chainsetup.Open",
    "N": 1
@@ -4362,13 +4656,113 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.NodeOpFailure",
-   "To": "internal/chainsetup.ConfigFailure",
+   "From": "internal/chainsetup.NetworkRemove",
+   "To": "internal/chainsetup.NetworkStop",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.OneLayoutOnly",
-   "To": "internal/core/lifecycle.Mark",
+   "From": "internal/chainsetup.NetworkRemove",
+   "To": "internal/chainsetup.isComposition",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkRemove",
+   "To": "internal/core/session.NoRecordError",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.Workspace.NodeSet",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.Workspace.SetDriver",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.Workspace.livePIDs",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/chainsetup.isComposition",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStatus",
+   "To": "internal/core/session.NoRecordError",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStop",
+   "To": "internal/chainsetup.Workspace.NodeSet",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStop",
+   "To": "internal/chainsetup.Workspace.Stop",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStop",
+   "To": "internal/chainsetup.withPID",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NetworkStop",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeStart",
+   "To": "internal/chainsetup.Workspace.NodeSet",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeStart",
+   "To": "internal/chainsetup.Workspace.StartNode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeStart",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeStop",
+   "To": "internal/chainsetup.Workspace.StopNode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeStop",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeSwap",
+   "To": "internal/chainsetup.Workspace.NodeSet",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeSwap",
+   "To": "internal/chainsetup.Workspace.SwapNode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.NodeSwap",
+   "To": "internal/chainsetup.withWorkspace",
    "N": 1
   },
   {
@@ -4397,11 +4791,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.ParseOverrides",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
    "From": "internal/chainsetup.PlaceBinary",
    "To": "internal/resource.WorkspaceConfig.BinaryPath",
    "N": 1
@@ -4412,43 +4801,8 @@
    "N": 2
   },
   {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/chainsetup.GenesisOptsFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/chainsetup.reconcileUp",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/chainsetup.reusePlan.describe",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/chainsetup.reusePlan.redo",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/chainsetup.unreadableReconcile",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup.ReconcileHandler",
-   "To": "internal/core/lifecycle.Machine.Request",
-   "N": 4
-  },
-  {
    "From": "internal/chainsetup.WantOf",
    "To": "internal/chainsetup.GenesisDeclared",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.WithWorkspace",
-   "To": "internal/chainsetup.InWorkspace",
    "N": 1
   },
   {
@@ -4647,18 +5001,8 @@
    "N": 2
   },
   {
-   "From": "internal/chainsetup.Workspace.CrossFork",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
    "From": "internal/chainsetup.Workspace.Dir",
    "To": "internal/core/session.Composition.Dir",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.Endpoints",
-   "To": "internal/chainsetup.Workspace.nodeHTTPURL",
    "N": 1
   },
   {
@@ -4848,11 +5192,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.Init",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
-   "From": "internal/chainsetup.Workspace.Init",
    "To": "internal/core/process.Initializer.InitDatadir",
    "N": 1
   },
@@ -4888,6 +5227,11 @@
   },
   {
    "From": "internal/chainsetup.Workspace.Keys",
+   "To": "internal/chainsetup.ofKind",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.Workspace.Keys",
    "To": "internal/core/keyring/store.KeySource.Describe",
    "N": 1
   },
@@ -4897,18 +5241,8 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.Keys",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
    "From": "internal/chainsetup.Workspace.LaunchOpts",
    "To": "internal/chainsetup.ParseOverrides",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.LaunchOpts",
-   "To": "internal/chainsetup.Workspace.checkUniformNetworkID",
    "N": 1
   },
   {
@@ -4924,11 +5258,6 @@
   {
    "From": "internal/chainsetup.Workspace.LaunchOpts",
    "To": "internal/chainsetup.Workspace.markStep",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.LaunchOpts",
-   "To": "internal/chainsetup.Workspace.network",
    "N": 1
   },
   {
@@ -4969,16 +5298,6 @@
   {
    "From": "internal/chainsetup.Workspace.LaunchOpts",
    "To": "internal/core/process.SpecOf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.LivePIDs",
-   "To": "internal/chainsetup.Workspace.machineFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.LivePIDs",
-   "To": "internal/core/process.ProcessInspector.PIDAlive",
    "N": 1
   },
   {
@@ -5053,11 +5372,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.New",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.New",
    "To": "internal/core/registry.ChainPlugin.Manifest",
    "N": 2
   },
@@ -5103,12 +5417,12 @@
   },
   {
    "From": "internal/chainsetup.Workspace.ObserveBaseline",
-   "To": "internal/chainsetup.Workspace.ResolveTarget",
+   "To": "internal/chainsetup.Workspace.machineFor",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.ObserveBaseline",
-   "To": "internal/chainsetup.Workspace.machineFor",
+   "To": "internal/chainsetup.Workspace.resolveTarget",
    "N": 1
   },
   {
@@ -5197,11 +5511,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.Provision",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
    "From": "internal/chainsetup.Workspace.RPCHost",
    "To": "internal/resource.Spec.IsRemote",
    "N": 1
@@ -5229,91 +5538,6 @@
   {
    "From": "internal/chainsetup.Workspace.Reconcile",
    "To": "internal/core/process.ProcessInspector.PIDAlive",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordConfigSet",
-   "To": "internal/chainsetup.holdOnePerKey",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordConfigSet",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordConfigSet",
-   "To": "internal/core/node.ScopeWords",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordConfigSet",
-   "To": "internal/core/node.ValidScope",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordConfigSet",
-   "To": "internal/core/nodeconfig.ApplyConfigOverride",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchCommand",
-   "To": "internal/chainsetup.ParseOverrides",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchCommand",
-   "To": "internal/chainsetup.holdOnePerKey",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchCommand",
-   "To": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchCommand",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/chainsetup.ParseOverrides",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/chainsetup.holdOnePerKey",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/core/node.ScopeWords",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "To": "internal/core/node.ValidScope",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.ResolveTarget",
-   "To": "internal/chainsetup.Workspace.opener",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.ResolveTarget",
-   "To": "internal/resource.Opener.Open",
    "N": 1
   },
   {
@@ -5374,16 +5598,6 @@
   {
    "From": "internal/chainsetup.Workspace.Save",
    "To": "internal/core/session.Composition.Save",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.SnapshotForReuse",
-   "To": "internal/chainsetup.Workspace.Health",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.SnapshotForReuse",
-   "To": "internal/chainsetup.Workspace.binaryFor",
    "N": 1
   },
   {
@@ -5508,11 +5722,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.Stop",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.Stop",
    "To": "internal/core/process.Driver.Stop",
    "N": 1
   },
@@ -5593,11 +5802,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.SwapNode",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.SwapNode",
    "To": "internal/core/process.Driver.Launch",
    "N": 1
   },
@@ -5667,11 +5871,6 @@
    "N": 2
   },
   {
-   "From": "internal/chainsetup.Workspace.allow",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
    "From": "internal/chainsetup.Workspace.allowNode",
    "To": "internal/chainsetup.Workspace.allow",
    "N": 1
@@ -5698,11 +5897,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.applyConfigOverrides",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup.Workspace.applyConfigOverrides",
    "To": "internal/core/nodeconfig.ApplyConfigOverride",
    "N": 1
   },
@@ -5723,6 +5917,11 @@
   },
   {
    "From": "internal/chainsetup.Workspace.applyFork",
+   "To": "internal/chainsetup.ofKind",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.applyFork",
    "To": "internal/core/genesis.ConfigTOML",
    "N": 2
   },
@@ -5738,11 +5937,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.applyFork",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.applyFork",
    "To": "internal/core/registry.ChainPlugin.Manifest",
    "N": 2
   },
@@ -5755,11 +5949,6 @@
    "From": "internal/chainsetup.Workspace.awaitForkBoundary",
    "To": "internal/chainsetup.Workspace.nodeHTTPURL",
    "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.awaitForkBoundary",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
   },
   {
    "From": "internal/chainsetup.Workspace.awaitForkBoundary",
@@ -5833,6 +6022,11 @@
   },
   {
    "From": "internal/chainsetup.Workspace.checkPaths",
+   "To": "internal/chainsetup.ofKind",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.checkPaths",
    "To": "internal/chainsetup.uniq",
    "N": 1
   },
@@ -5847,26 +6041,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.checkPaths",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.checkUniformNetworkID",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.checkUniformNetworkID",
-   "To": "internal/core/node.Record.NodeLabel",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.checkUniformNetworkID",
-   "To": "internal/core/nodeconfig.ValidateUniformNetworkID",
-   "N": 1
-  },
-  {
    "From": "internal/chainsetup.Workspace.checkUnmanaged",
    "To": "internal/chainsetup.Workspace.checkUnmanagedOn",
    "N": 1
@@ -5878,7 +6052,7 @@
   },
   {
    "From": "internal/chainsetup.Workspace.checkUnmanagedOn",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.ofKind",
    "N": 1
   },
   {
@@ -5913,12 +6087,12 @@
   },
   {
    "From": "internal/chainsetup.Workspace.checkVacant",
-   "To": "internal/chainsetup.phaseHasNode",
+   "To": "internal/chainsetup.ofKind",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.checkVacant",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.phaseHasNode",
    "N": 1
   },
   {
@@ -5948,11 +6122,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.confirmBeforeFork",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup.Workspace.confirmBeforeFork",
    "To": "internal/core/rpc.Client.BlockNumber",
    "N": 1
   },
@@ -5968,17 +6137,17 @@
   },
   {
    "From": "internal/chainsetup.Workspace.declaredKeys",
+   "To": "internal/chainsetup.ofKind",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.declaredKeys",
    "To": "internal/core/blueprint.PresetFrom",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.declaredKeys",
    "To": "internal/core/blueprint.Resolve",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.declaredKeys",
-   "To": "internal/core/lifecycle.Mark",
    "N": 1
   },
   {
@@ -6008,11 +6177,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.forkMoment",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
-   "From": "internal/chainsetup.Workspace.forkMoment",
    "To": "internal/core/node.Record.NodeLabel",
    "N": 1
   },
@@ -6038,6 +6202,11 @@
   },
   {
    "From": "internal/chainsetup.Workspace.forkSection",
+   "To": "internal/chainsetup.ofKind",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.Workspace.forkSection",
    "To": "internal/core/genesis.Build",
    "N": 1
   },
@@ -6045,11 +6214,6 @@
    "From": "internal/chainsetup.Workspace.forkSection",
    "To": "internal/core/genesis.ExtractConfigSection",
    "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.forkSection",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
   },
   {
    "From": "internal/chainsetup.Workspace.forkSection",
@@ -6063,7 +6227,7 @@
   },
   {
    "From": "internal/chainsetup.Workspace.forkValidators",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.ofKind",
    "N": 1
   },
   {
@@ -6088,13 +6252,13 @@
   },
   {
    "From": "internal/chainsetup.Workspace.genesisArtifacts",
-   "To": "internal/core/genesis.Compose",
-   "N": 1
+   "To": "internal/chainsetup.ofKind",
+   "N": 2
   },
   {
    "From": "internal/chainsetup.Workspace.genesisArtifacts",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
+   "To": "internal/core/genesis.Compose",
+   "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.genesisArtifacts",
@@ -6118,7 +6282,7 @@
   },
   {
    "From": "internal/chainsetup.Workspace.genesisBytes",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.ofKind",
    "N": 2
   },
   {
@@ -6138,11 +6302,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.handOver",
-   "To": "internal/chainsetup.Workspace.checkUniformNetworkID",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.handOver",
    "To": "internal/chainsetup.Workspace.clearPID",
    "N": 1
   },
@@ -6154,11 +6313,6 @@
   {
    "From": "internal/chainsetup.Workspace.handOver",
    "To": "internal/chainsetup.Workspace.machineFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.handOver",
-   "To": "internal/chainsetup.Workspace.network",
    "N": 1
   },
   {
@@ -6189,7 +6343,7 @@
   {
    "From": "internal/chainsetup.Workspace.handOver",
    "To": "internal/core/node.Record.NodeLabel",
-   "N": 7
+   "N": 6
   },
   {
    "From": "internal/chainsetup.Workspace.handOver",
@@ -6282,6 +6436,16 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.Workspace.livePIDs",
+   "To": "internal/chainsetup.Workspace.machineFor",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.livePIDs",
+   "To": "internal/core/process.ProcessInspector.PIDAlive",
+   "N": 1
+  },
+  {
    "From": "internal/chainsetup.Workspace.liveness",
    "To": "internal/chainsetup.Workspace.machineFor",
    "N": 1
@@ -6308,12 +6472,12 @@
   },
   {
    "From": "internal/chainsetup.Workspace.machineFor",
-   "To": "internal/chainsetup.Workspace.ResolveTarget",
+   "To": "internal/chainsetup.Workspace.opener",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.machineFor",
-   "To": "internal/chainsetup.Workspace.opener",
+   "To": "internal/chainsetup.Workspace.resolveTarget",
    "N": 1
   },
   {
@@ -6377,21 +6541,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.network",
-   "To": "internal/chainsetup.Workspace.plugin",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.network",
-   "To": "internal/core/nodeconfig.NetworkOf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.nodeAt",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
    "From": "internal/chainsetup.Workspace.nodeConfigBytes",
    "To": "internal/chainsetup.Workspace.applyConfigOverrides",
    "N": 1
@@ -6413,11 +6562,6 @@
   },
   {
    "From": "internal/chainsetup.Workspace.nodeConfigBytes",
-   "To": "internal/chainsetup.Workspace.network",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.nodeConfigBytes",
    "To": "internal/chainsetup.Workspace.readInputRef",
    "N": 1
   },
@@ -6425,11 +6569,6 @@
    "From": "internal/chainsetup.Workspace.nodeConfigBytes",
    "To": "internal/core/filestore.Store.Read",
    "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.nodeConfigBytes",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
   },
   {
    "From": "internal/chainsetup.Workspace.nodeConfigBytes",
@@ -6647,6 +6786,26 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.Workspace.recordConfigSet",
+   "To": "internal/chainsetup.holdOnePerKey",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordConfigSet",
+   "To": "internal/core/node.ScopeWords",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordConfigSet",
+   "To": "internal/core/node.ValidScope",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordConfigSet",
+   "To": "internal/core/nodeconfig.ApplyConfigOverride",
+   "N": 1
+  },
+  {
    "From": "internal/chainsetup.Workspace.recordInput",
    "To": "internal/core/filestore.Hash",
    "N": 1
@@ -6664,6 +6823,26 @@
   {
    "From": "internal/chainsetup.Workspace.recordLaunch",
    "To": "internal/core/process.SpecOf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordLaunchSet",
+   "To": "internal/chainsetup.ParseOverrides",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordLaunchSet",
+   "To": "internal/chainsetup.holdOnePerKey",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordLaunchSet",
+   "To": "internal/core/node.ScopeWords",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.recordLaunchSet",
+   "To": "internal/core/node.ValidScope",
    "N": 1
   },
   {
@@ -6747,8 +6926,13 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.require",
-   "To": "internal/core/lifecycle.Mark",
+   "From": "internal/chainsetup.Workspace.resolveTarget",
+   "To": "internal/chainsetup.Workspace.opener",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.resolveTarget",
+   "To": "internal/resource.Opener.Open",
    "N": 1
   },
   {
@@ -6778,6 +6962,11 @@
   },
   {
    "From": "internal/chainsetup.Workspace.runPhaseActions",
+   "To": "internal/chainsetup.ofKind",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.runPhaseActions",
    "To": "internal/chainsetup.phaseActionNode",
    "N": 1
   },
@@ -6789,11 +6978,6 @@
   {
    "From": "internal/chainsetup.Workspace.runPhaseActions",
    "To": "internal/consensus/poa.Bootstrap.Action",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.runPhaseActions",
-   "To": "internal/core/lifecycle.Mark",
    "N": 1
   },
   {
@@ -6857,13 +7041,18 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.startPhase",
+   "From": "internal/chainsetup.Workspace.snapshotForReuse",
+   "To": "internal/chainsetup.Workspace.Health",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.snapshotForReuse",
    "To": "internal/chainsetup.Workspace.binaryFor",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.startPhase",
-   "To": "internal/chainsetup.Workspace.checkUniformNetworkID",
+   "To": "internal/chainsetup.Workspace.binaryFor",
    "N": 1
   },
   {
@@ -6874,11 +7063,6 @@
   {
    "From": "internal/chainsetup.Workspace.startPhase",
    "To": "internal/chainsetup.Workspace.machineFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.startPhase",
-   "To": "internal/chainsetup.Workspace.network",
    "N": 1
   },
   {
@@ -6963,13 +7147,13 @@
   },
   {
    "From": "internal/chainsetup.Workspace.verifyExistingGenesisKeys",
-   "To": "internal/chainsetup.sameValidatorSet",
-   "N": 1
+   "To": "internal/chainsetup.ofKind",
+   "N": 2
   },
   {
    "From": "internal/chainsetup.Workspace.verifyExistingGenesisKeys",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
+   "To": "internal/chainsetup.sameValidatorSet",
+   "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.verifyExistingGenesisKeys",
@@ -7017,11 +7201,6 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.Workspace.writeConfigFile",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
    "From": "internal/chainsetup.Workspace.writeGenesisConfigs",
    "To": "internal/chainsetup.Workspace.eachMachine",
    "N": 1
@@ -7033,12 +7212,12 @@
   },
   {
    "From": "internal/chainsetup.Workspace.writeGenesisConfigs",
-   "To": "internal/core/filestore.Store.Write",
+   "To": "internal/chainsetup.ofKind",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.writeGenesisConfigs",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/core/filestore.Store.Write",
    "N": 1
   },
   {
@@ -7058,17 +7237,17 @@
   },
   {
    "From": "internal/chainsetup.Workspace.writeGenesisVariants",
+   "To": "internal/chainsetup.ofKind",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.Workspace.writeGenesisVariants",
    "To": "internal/core/filestore.Store.Write",
    "N": 1
   },
   {
    "From": "internal/chainsetup.Workspace.writeGenesisVariants",
    "To": "internal/core/genesis.Customize",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.Workspace.writeGenesisVariants",
-   "To": "internal/core/lifecycle.Mark",
    "N": 1
   },
   {
@@ -7097,6 +7276,36 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/chainsetup.Deps.command",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/chainsetup.Deps.logf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/chainsetup.setLockPath",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/core/session.AcquireLock",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/core/session.Held.Release",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.acquireSetLock",
+   "To": "internal/core/session.Lock.Describe",
+   "N": 2
+  },
+  {
    "From": "internal/chainsetup.blueprintPlacements",
    "To": "internal/chainsetup.syncModeFor",
    "N": 1
@@ -7108,13 +7317,18 @@
   },
   {
    "From": "internal/chainsetup.bootKeystoreOnTarget",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.ofKind",
    "N": 1
   },
   {
    "From": "internal/chainsetup.buildGenesisOpts",
    "To": "internal/chainsetup.readGenesisOverlay",
    "N": 2
+  },
+  {
+   "From": "internal/chainsetup.checkBinary",
+   "To": "internal/chainsetup.ofKind",
+   "N": 3
   },
   {
    "From": "internal/chainsetup.checkBinary",
@@ -7127,18 +7341,8 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.checkBinary",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
    "From": "internal/chainsetup.checkNode",
    "To": "internal/chainsetup.lower",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup.checkNode",
-   "To": "internal/core/lifecycle.Mark",
    "N": 2
   },
   {
@@ -7148,8 +7352,18 @@
   },
   {
    "From": "internal/chainsetup.checkNodeKeyRef",
-   "To": "internal/core/lifecycle.Mark",
+   "To": "internal/chainsetup.ofKind",
    "N": 3
+  },
+  {
+   "From": "internal/chainsetup.checkTopologyKeyRefs",
+   "To": "internal/chainsetup.checkNodeKeyRef",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.checkTopologyKeyRefs",
+   "To": "internal/core/node.Topology.Sorted",
+   "N": 1
   },
   {
    "From": "internal/chainsetup.commanderRunner",
@@ -7157,8 +7371,178 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.NetRestart",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.NetStop",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.compareWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.markStepFailed",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.stateOfVerdict",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.upHandlers",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/chainsetup.upSteps",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/core/lifecycle.Machine.Request",
+   "N": 8
+  },
+  {
+   "From": "internal/chainsetup.compareHandlers",
+   "To": "internal/core/preflight.Decision.String",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.WantOf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.Workspace.Compare",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.Workspace.SetDriver",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.compareWorkspace",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.composeStage.failed",
+   "To": "internal/core/lifecycle.Machine.Request",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.composeStage.run",
+   "To": "internal/chainsetup.composeStage.failed",
+   "N": 1
+  },
+  {
    "From": "internal/chainsetup.firstProducer",
    "To": "internal/core/node.Is",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.genesisOpts",
+   "To": "internal/chainsetup.GenesisOpts.checkExistingIsUnchanged",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.genesisOpts",
+   "To": "internal/chainsetup.buildGenesisOpts",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.handlersFor",
+   "To": "internal/chainsetup.composeStage.run",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.handlersFor",
+   "To": "internal/core/lifecycle.Machine.Request",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Deps.command",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Deps.logf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Workspace.Acquire",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Workspace.Save",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Workspace.SetDriver",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/core/session.Held.Release",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.inWorkspace",
+   "To": "internal/core/session.Lock.Describe",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.isComposition",
+   "To": "internal/core/session.ChainRecordPath",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.markStepFailed",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.markStepFailed",
+   "To": "internal/chainsetup.Workspace.MarkStepFailed",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.markStepFailed",
+   "To": "internal/chainsetup.Workspace.Save",
    "N": 1
   },
   {
@@ -7179,6 +7563,111 @@
   {
    "From": "internal/chainsetup.metricsURLOf",
    "To": "internal/resource.Opener.HTTPEndpoint",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Deps.command",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Deps.logf",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.NetworkStatus",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Open",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Workspace.Acquire",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Workspace.SetDriver",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Workspace.SetEnv",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.Workspace.snapshotForReuse",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.composeStages",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.handlersFor",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.markStepFailed",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.placeUpRequest",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.planUp",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.reconcileHandler",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.startFor",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.targetFor",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/chainsetup.upSteps",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/core/lifecycle.Machine.Run",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/core/lifecycle.New",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/core/session.Held.Release",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.netUpFrom",
+   "To": "internal/core/session.Lock.Describe",
    "N": 1
   },
   {
@@ -7208,13 +7697,13 @@
   },
   {
    "From": "internal/chainsetup.parseNodeKey",
-   "To": "internal/core/keyring/derive.ParsePrivateKey",
-   "N": 1
+   "To": "internal/chainsetup.ofKind",
+   "N": 2
   },
   {
    "From": "internal/chainsetup.parseNodeKey",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
+   "To": "internal/core/keyring/derive.ParsePrivateKey",
+   "N": 1
   },
   {
    "From": "internal/chainsetup.phaseActionNode",
@@ -7227,9 +7716,59 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.reconcileUp",
-   "To": "internal/chainsetup.WithWorkspace",
+   "From": "internal/chainsetup.placeUpRequest",
+   "To": "internal/chainsetup.PlaceRequest",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.placeUpRequest",
+   "To": "internal/resource.LoadWorkspaceConfig",
    "N": 1
+  },
+  {
+   "From": "internal/chainsetup.planUp",
+   "To": "internal/chainsetup.checkTopologyKeyRefs",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.planUp",
+   "To": "internal/chainsetup.upChainMode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.readBlueprint",
+   "To": "internal/core/blueprint.Parse",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/chainsetup.genesisOpts",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/chainsetup.reconcileUp",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/chainsetup.reusePlan.describe",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/chainsetup.reusePlan.redo",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/chainsetup.unreadableReconcile",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.reconcileHandler",
+   "To": "internal/core/lifecycle.Machine.Request",
+   "N": 4
   },
   {
    "From": "internal/chainsetup.reconcileUp",
@@ -7247,23 +7786,13 @@
    "N": 1
   },
   {
-   "From": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "To": "internal/core/lifecycle.Mark",
+   "From": "internal/chainsetup.reconcileUp",
+   "To": "internal/chainsetup.withWorkspace",
    "N": 1
   },
   {
-   "From": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "To": "internal/core/node.ScopeIndex",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "To": "internal/core/nodeconfig.IsPerNode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup.refuseSharedPerNodeKnob",
-   "To": "internal/core/nodeconfig.PerNodeKeys",
+   "From": "internal/chainsetup.recordRequest",
+   "To": "internal/chainsetup.withWorkspace",
    "N": 1
   },
   {
@@ -7292,6 +7821,26 @@
    "N": 1
   },
   {
+   "From": "internal/chainsetup.sortedScopes",
+   "To": "internal/core/node.ScopeRank",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.startMissing",
+   "To": "internal/chainsetup.Workspace.StartNode",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.startMissing",
+   "To": "internal/chainsetup.Workspace.State",
+   "N": 2
+  },
+  {
+   "From": "internal/chainsetup.startMissing",
+   "To": "internal/chainsetup.withWorkspace",
+   "N": 1
+  },
+  {
    "From": "internal/chainsetup.syncModeFor",
    "To": "internal/core/node.Is",
    "N": 1
@@ -7299,6 +7848,71 @@
   {
    "From": "internal/chainsetup.unreadableReconcile",
    "To": "internal/core/lifecycle.Machine.Request",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upChainMode",
+   "To": "internal/resource.LoadWorkspaceConfig",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upHandlers",
+   "To": "internal/chainsetup.handlersFor",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetAllocate",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetConfig",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetGenesis",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetInit",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetKeys",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetLaunchOpts",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetNew",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetProvision",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.NetStart",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.upSteps",
+   "To": "internal/chainsetup.recordRequest",
+   "N": 1
+  },
+  {
+   "From": "internal/chainsetup.withWorkspace",
+   "To": "internal/chainsetup.inWorkspace",
    "N": 1
   },
   {
@@ -7314,916 +7928,6 @@
   {
    "From": "internal/chainsetup.wsURLOf",
    "To": "internal/resource.Opener.HTTPEndpoint",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkExecute",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkExecute",
-   "To": "internal/chainsetup.Workspace.Hardfork",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkPlan",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkPlan",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkPlan",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkPlan",
-   "To": "internal/core/hardfork.PlanSwap",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.HardforkPlan",
-   "To": "internal/core/registry.Get",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.AcquireSetLock",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.OneLayoutOnly",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.Workspace.Allocate",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.Workspace.Retarget",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup/verb.peeringOf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/chainsetup/verb.readBlueprint",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/core/node.Load",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetAllocate",
-   "To": "internal/resource.ResolveServer",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetConfig",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetConfig",
-   "To": "internal/chainsetup.Workspace.Config",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetConfig",
-   "To": "internal/chainsetup.Workspace.RecordConfigSet",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.NetConfig",
-   "To": "internal/chainsetup/verb.sortedScopes",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetCrossFork",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetCrossFork",
-   "To": "internal/chainsetup.Workspace.CrossFork",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetCrossFork",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEndpoints",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEndpoints",
-   "To": "internal/chainsetup.Workspace.Endpoints",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEndpoints",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/chainsetup.Workspace.Netmap",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/core/node.Enode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/core/node.Map.Placements",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/preset.Key.Node",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetEnodes",
-   "To": "internal/preset.LoadKeyPreset",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetFork",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetFork",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetGenesis",
-   "To": "internal/chainsetup.GenesisOptsFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetGenesis",
-   "To": "internal/chainsetup.InWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetGenesis",
-   "To": "internal/chainsetup.Workspace.Genesis",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetHealth",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetHealth",
-   "To": "internal/chainsetup.Workspace.Health",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetHealth",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetInit",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetInit",
-   "To": "internal/chainsetup.Workspace.Init",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetKeys",
-   "To": "internal/chainsetup.InWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetKeys",
-   "To": "internal/chainsetup.Workspace.Keys",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetKeys",
-   "To": "internal/chainsetup/verb.readBlueprint",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup.Workspace.LaunchOpts",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup.Workspace.RecordLaunchCommand",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup.Workspace.RecordLaunchSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLaunchOpts",
-   "To": "internal/chainsetup/verb.sortedScopes",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLogs",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLogs",
-   "To": "internal/chainsetup.Workspace.Logs",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetLogs",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetNew",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetNew",
-   "To": "internal/chainsetup.Workspace.New",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetNew",
-   "To": "internal/chainsetup.Workspace.Save",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetProvision",
-   "To": "internal/chainsetup.InWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetProvision",
-   "To": "internal/chainsetup.Workspace.Provision",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRestart",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRestart",
-   "To": "internal/chainsetup.Workspace.Restart",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup.Workspace.FirstUndone",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup.Workspace.Reconcile",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup/verb.NetworkStatus",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup/verb.netUpFrom",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetResume",
-   "To": "internal/chainsetup/verb.startMissing",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRm",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRm",
-   "To": "internal/chainsetup.Workspace.Rm",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRunner",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRunner",
-   "To": "internal/chainsetup.Workspace.ResolveTarget",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRunner",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetRunner",
-   "To": "internal/resource.Spec.IsRemote",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStart",
-   "To": "internal/chainsetup.InWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStart",
-   "To": "internal/chainsetup.Workspace.Start",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStatus",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStatus",
-   "To": "internal/chainsetup.Workspace.Dir",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStatus",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStop",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetStop",
-   "To": "internal/chainsetup.Workspace.Stop",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetUp",
-   "To": "internal/chainsetup/verb.netUpFrom",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetUpComparing",
-   "To": "internal/chainsetup/verb.compareHandlers",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetUpComparing",
-   "To": "internal/core/lifecycle.Machine.At",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetUpComparing",
-   "To": "internal/core/lifecycle.Machine.Run",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetUpComparing",
-   "To": "internal/core/lifecycle.New",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkRemove",
-   "To": "internal/chainsetup/verb.NetworkStop",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkRemove",
-   "To": "internal/chainsetup/verb.isComposition",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkRemove",
-   "To": "internal/core/session.NoRecordError",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup.Workspace.LivePIDs",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup.Workspace.SetDriver",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/chainsetup/verb.isComposition",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStatus",
-   "To": "internal/core/session.NoRecordError",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStop",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStop",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStop",
-   "To": "internal/chainsetup.Workspace.Stop",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NetworkStop",
-   "To": "internal/chainsetup/verb.withPID",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeStart",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeStart",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeStart",
-   "To": "internal/chainsetup.Workspace.StartNode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeStop",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeStop",
-   "To": "internal/chainsetup.Workspace.StopNode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeSwap",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeSwap",
-   "To": "internal/chainsetup.Workspace.NodeSet",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.NodeSwap",
-   "To": "internal/chainsetup.Workspace.SwapNode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.NetRestart",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.NetStop",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.compareWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.markStepFailed",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.stateOfVerdict",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.upHandlers",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/chainsetup/verb.upSteps",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/core/lifecycle.Machine.Request",
-   "N": 8
-  },
-  {
-   "From": "internal/chainsetup/verb.compareHandlers",
-   "To": "internal/core/preflight.Decision.String",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.WantOf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.Workspace.Compare",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.Workspace.SetDriver",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.compareWorkspace",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.composeStage.failed",
-   "To": "internal/core/lifecycle.Machine.Request",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.composeStage.run",
-   "To": "internal/chainsetup/verb.composeStage.failed",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.composeStage.run",
-   "To": "internal/core/lifecycle.Detailed",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.handlersFor",
-   "To": "internal/chainsetup/verb.composeStage.run",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.handlersFor",
-   "To": "internal/core/lifecycle.Machine.Request",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.isComposition",
-   "To": "internal/core/session.ChainRecordPath",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.markStepFailed",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.markStepFailed",
-   "To": "internal/chainsetup.Workspace.MarkStepFailed",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.markStepFailed",
-   "To": "internal/chainsetup.Workspace.Save",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Deps.Logf",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Deps.Owner",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Open",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.ReconcileHandler",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Workspace.Acquire",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Workspace.SetDriver",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Workspace.SetEnv",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup.Workspace.SnapshotForReuse",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.NetworkStatus",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.composeStages",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.handlersFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.markStepFailed",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.placeUpRequest",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.planUp",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.startFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.targetFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/chainsetup/verb.upSteps",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/core/lifecycle.Machine.Run",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/core/lifecycle.New",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/core/session.Held.Release",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.netUpFrom",
-   "To": "internal/core/session.Lock.Describe",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.placeUpRequest",
-   "To": "internal/chainsetup.PlaceRequest",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.placeUpRequest",
-   "To": "internal/resource.LoadWorkspaceConfig",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.planUp",
-   "To": "internal/chainsetup.CheckTopologyKeyRefs",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.planUp",
-   "To": "internal/chainsetup/verb.upChainMode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.readBlueprint",
-   "To": "internal/core/blueprint.Parse",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.recordRequest",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.recordRequest",
-   "To": "internal/chainsetup.Workspace.RecordRequest",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.sortedScopes",
-   "To": "internal/core/node.ScopeRank",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.startMissing",
-   "To": "internal/chainsetup.WithWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.startMissing",
-   "To": "internal/chainsetup.Workspace.SetBinary",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.startMissing",
-   "To": "internal/chainsetup.Workspace.StartNode",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.startMissing",
-   "To": "internal/chainsetup.Workspace.State",
-   "N": 2
-  },
-  {
-   "From": "internal/chainsetup/verb.upChainMode",
-   "To": "internal/resource.LoadWorkspaceConfig",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upHandlers",
-   "To": "internal/chainsetup/verb.handlersFor",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetAllocate",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetConfig",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetGenesis",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetInit",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetKeys",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetLaunchOpts",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetNew",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetProvision",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.NetStart",
-   "N": 1
-  },
-  {
-   "From": "internal/chainsetup/verb.upSteps",
-   "To": "internal/chainsetup/verb.recordRequest",
-   "N": 1
-  },
-  {
-   "From": "internal/core/lifecycle.Detailed",
-   "To": "internal/core/lifecycle.Status.Block",
-   "N": 2
-  },
-  {
-   "From": "internal/core/lifecycle.Detailed",
-   "To": "internal/core/lifecycle.Status.IsFailure",
    "N": 1
   },
   {
@@ -9858,11 +9562,6 @@
   },
   {
    "From": "internal/testengine.AttachWorkspaceRun",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
-  },
-  {
-   "From": "internal/testengine.AttachWorkspaceRun",
    "To": "internal/testengine.Engine.Run",
    "N": 1
   },
@@ -9925,11 +9624,6 @@
    "From": "internal/testengine.NewAttachEngine",
    "To": "internal/accounts.ForChain",
    "N": 1
-  },
-  {
-   "From": "internal/testengine.NewAttachEngine",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
   },
   {
    "From": "internal/testengine.NewAttachEngine",
@@ -10053,12 +9747,97 @@
   },
   {
    "From": "internal/testengine.RunSuite",
-   "To": "internal/testengine.runFailure",
+   "To": "internal/chainsetup.Deps.Now",
    "N": 1
   },
   {
    "From": "internal/testengine.RunSuite",
-   "To": "internal/testengine.runSuiteBody",
+   "To": "internal/chainsetup.NetCrossFork",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/core/keyring/store.KeySet.Get",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/core/session.New",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/core/session.Session.Root",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.Engine.Run",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.ReadSessionSummary",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.WritePlan",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.afterFailedSetup",
+   "N": 2
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.artifactRoot",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.casesCrossFork",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.composeWorkspace",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.planOf",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.prepareAccounts",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.resolveComposition",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.ringFor",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.verifyAgainstPlan",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.waitForHead",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.RunSuite",
+   "To": "internal/testengine.wiredAttachEngine",
    "N": 1
   },
   {
@@ -10202,18 +9981,8 @@
    "N": 1
   },
   {
-   "From": "internal/testengine.checkForkIsOneTheChainKnows",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.checkForkIsOneTheChainKnows",
-   "To": "internal/core/registry.ChainPlugin.Manifest",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.checkForkIsOneTheChainKnows",
-   "To": "internal/core/registry.Get",
+   "From": "internal/testengine.checkDeclaredFork",
+   "To": "internal/preset.LoadChainPreset",
    "N": 1
   },
   {
@@ -10228,7 +9997,7 @@
   },
   {
    "From": "internal/testengine.composeWorkspace",
-   "To": "internal/chainsetup/verb.NetUpComparing",
+   "To": "internal/chainsetup.NetUpComparing",
    "N": 1
   },
   {
@@ -10240,11 +10009,6 @@
    "From": "internal/testengine.compositionOf",
    "To": "internal/chainsetup.PlaceRequest",
    "N": 1
-  },
-  {
-   "From": "internal/testengine.compositionOf",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 4
   },
   {
    "From": "internal/testengine.compositionOf",
@@ -10278,7 +10042,7 @@
   },
   {
    "From": "internal/testengine.compositionOf",
-   "To": "internal/testengine.checkForkIsOneTheChainKnows",
+   "To": "internal/testengine.checkDeclaredFork",
    "N": 1
   },
   {
@@ -10328,6 +10092,11 @@
   },
   {
    "From": "internal/testengine.compositionOf",
+   "To": "internal/testengine.upgradePresetPath",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.compositionOf",
    "To": "internal/testengine.writeOverlay",
    "N": 1
   },
@@ -10335,11 +10104,6 @@
    "From": "internal/testengine.compositionOf",
    "To": "internal/testengine.writeOverlays",
    "N": 1
-  },
-  {
-   "From": "internal/testengine.countOf",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 3
   },
   {
    "From": "internal/testengine.declaredRoles",
@@ -10453,8 +10217,13 @@
   },
   {
    "From": "internal/testengine.forkOf",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
+   "To": "internal/preset.LoadChainPreset",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.forkOf",
+   "To": "internal/testengine.upgradePresetPath",
+   "N": 1
   },
   {
    "From": "internal/testengine.fundAccount",
@@ -10469,11 +10238,6 @@
   {
    "From": "internal/testengine.fundAccount",
    "To": "internal/testengine.base",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.gateReady",
-   "To": "internal/core/lifecycle.Mark",
    "N": 1
   },
   {
@@ -10530,11 +10294,6 @@
    "From": "internal/testengine.healthObserver.Observe",
    "To": "internal/testengine.factsFromReport",
    "N": 1
-  },
-  {
-   "From": "internal/testengine.inlineTopologyOf",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 12
   },
   {
    "From": "internal/testengine.inlineTopologyOf",
@@ -10663,37 +10422,32 @@
   },
   {
    "From": "internal/testengine.readWorkspaceComposed",
+   "To": "internal/chainsetup.NetEndpoints",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.readWorkspaceComposed",
+   "To": "internal/chainsetup.NetFork",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.readWorkspaceComposed",
+   "To": "internal/chainsetup.NetStop",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.readWorkspaceComposed",
+   "To": "internal/chainsetup.NetworkStatus",
+   "N": 1
+  },
+  {
+   "From": "internal/testengine.readWorkspaceComposed",
    "To": "internal/chainsetup.Open",
    "N": 1
   },
   {
    "From": "internal/testengine.readWorkspaceComposed",
    "To": "internal/chainsetup.Workspace.State",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.readWorkspaceComposed",
-   "To": "internal/chainsetup/verb.NetEndpoints",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.readWorkspaceComposed",
-   "To": "internal/chainsetup/verb.NetFork",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.readWorkspaceComposed",
-   "To": "internal/chainsetup/verb.NetStop",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.readWorkspaceComposed",
-   "To": "internal/chainsetup/verb.NetworkStatus",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.readWorkspaceComposed",
-   "To": "internal/core/lifecycle.Mark",
    "N": 1
   },
   {
@@ -10748,7 +10502,7 @@
   },
   {
    "From": "internal/testengine.remoteLogReader",
-   "To": "internal/chainsetup/verb.NetRunner",
+   "To": "internal/chainsetup.NetRunner",
    "N": 1
   },
   {
@@ -10758,17 +10512,12 @@
   },
   {
    "From": "internal/testengine.resolveComposition",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 8
-  },
-  {
-   "From": "internal/testengine.resolveComposition",
    "To": "internal/dsl.Parse",
    "N": 1
   },
   {
    "From": "internal/testengine.resolveComposition",
-   "To": "internal/dsl.ReadFilesWithChainPreset",
+   "To": "internal/dsl.ReadFilesWithEnv",
    "N": 1
   },
   {
@@ -10783,11 +10532,6 @@
   },
   {
    "From": "internal/testengine.resolveComposition",
-   "To": "internal/testengine.runFailure",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.resolveComposition",
    "To": "internal/testengine.sameChain",
    "N": 1
   },
@@ -10798,7 +10542,7 @@
   },
   {
    "From": "internal/testengine.restartAdapter.Restart",
-   "To": "internal/chainsetup/verb.NetRestart",
+   "To": "internal/chainsetup.NetRestart",
    "N": 1
   },
   {
@@ -10839,106 +10583,6 @@
   {
    "From": "internal/testengine.rpcProbe",
    "To": "internal/core/rpc.Client.PeerCount",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/chainsetup.Deps.Now",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/chainsetup/verb.NetCrossFork",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/core/keyring/store.KeySet.Get",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 13
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/core/session.New",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/core/session.Session.Root",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.Engine.Run",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.ReadSessionSummary",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.WritePlan",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.afterFailedSetup",
-   "N": 2
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.artifactRoot",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.casesCrossFork",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.composeWorkspace",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.planOf",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.prepareAccounts",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.resolveComposition",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.ringFor",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.verifyAgainstPlan",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.waitForHead",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.runSuiteBody",
-   "To": "internal/testengine.wiredAttachEngine",
    "N": 1
   },
   {
@@ -11038,11 +10682,6 @@
   },
   {
    "From": "internal/testengine.topologyOf",
-   "To": "internal/core/lifecycle.Mark",
-   "N": 2
-  },
-  {
-   "From": "internal/testengine.topologyOf",
    "To": "internal/testengine.countOf",
    "N": 3
   },
@@ -11058,17 +10697,12 @@
   },
   {
    "From": "internal/testengine.validateRaw",
-   "To": "internal/dsl.ParseChainPreset",
+   "To": "internal/dsl.ParseEnv",
    "N": 1
   },
   {
    "From": "internal/testengine.validateRaw",
    "To": "internal/dsl/interp.Unresolved",
-   "N": 1
-  },
-  {
-   "From": "internal/testengine.validateRaw",
-   "To": "internal/testengine.checkForkIsOneTheChainKnows",
    "N": 1
   },
   {
@@ -11173,7 +10807,7 @@
   },
   {
    "From": "internal/testengine.workspaceNodes.CrossFork",
-   "To": "internal/chainsetup/verb.NetCrossFork",
+   "To": "internal/chainsetup.NetCrossFork",
    "N": 1
   },
   {
@@ -11188,17 +10822,17 @@
   },
   {
    "From": "internal/testengine.workspaceNodes.Start",
-   "To": "internal/chainsetup/verb.NodeStart",
+   "To": "internal/chainsetup.NodeStart",
    "N": 1
   },
   {
    "From": "internal/testengine.workspaceNodes.Stop",
-   "To": "internal/chainsetup/verb.NodeStop",
+   "To": "internal/chainsetup.NodeStop",
    "N": 1
   },
   {
    "From": "internal/testengine.workspaceNodes.Swap",
-   "To": "internal/chainsetup/verb.NodeSwap",
+   "To": "internal/chainsetup.NodeSwap",
    "N": 1
   },
   {

@@ -78,10 +78,10 @@
   ],
   "ChainBuildNodeCommand": [
    "ChainDeployNodes",
-   "ChainBuildNodeCommandFailBadOption",
-   "ChainBuildNodeCommandFailSplitNetwork"
+   "ChainBuildNodeCommandFailBadOption"
   ],
   "ChainDeployNodes": [
+   "ChainInitNodes",
    "ChainDeployNodesVerifiedLocal",
    "ChainDeployNodesShippedRemote",
    "ChainDeployNodesFailInputMissing",
@@ -97,8 +97,7 @@
    "ChainLaunchNodes",
    "ChainInitNodesFailTargetUnable",
    "ChainInitNodesFailGenesisUnreadable",
-   "ChainInitNodesFailDatadir",
-   "ChainLaunchNodesFailPortBusy"
+   "ChainInitNodesFailDatadir"
   ],
   "ChainLaunchNodes": [
    "ChainLaunchNodesPhaseLaunching",
@@ -167,95 +166,6 @@
   ],
   "CompareChainNothingComposed": [
    "ChainOpenWorkspace"
-  ],
-  "ChainOpStopNodes": [
-   "ChainStopped",
-   "ChainOpStopNodesFailSomeStillUp",
-   "ChainOpFailNoSuchNode"
-  ],
-  "ChainOpStartNodes": [
-   "ChainReady",
-   "ChainOpFailPrecondition",
-   "ChainOpFailNoSuchNode",
-   "ChainLaunchNodesFailNoBinary",
-   "ChainLaunchNodesFailPortBusy"
-  ],
-  "ChainOpReplaceNode": [
-   "ChainReady",
-   "ChainOpReplaceNodeFailNothingAsked",
-   "ChainOpFailPrecondition",
-   "ChainOpFailNoSuchNode",
-   "ChainLaunchNodesFailNoBinary",
-   "ChainBuildNodeConfigFailBadOverride",
-   "ChainBuildNodeConfigFailReadback",
-   "ChainBuildNodeConfigFailPinUnreadable",
-   "ChainInitNodesFailTargetUnable",
-   "ChainInitNodesFailGenesisUnreadable"
-  ],
-  "ChainOpCrossFork": [
-   "ChainOpCrossForkBeforeFork",
-   "ChainOpCrossForkFailNoFork",
-   "ChainOpCrossForkFailHeadUnreadable",
-   "ChainOpCrossForkFailAlreadyPast"
-  ],
-  "ChainOpCrossForkBeforeFork": [
-   "ChainOpCrossForkHandingOver",
-   "ChainOpCrossForkFailNoFork",
-   "ChainOpCrossForkFailHeadUnreadable",
-   "ChainLaunchNodesFailNoBinary",
-   "ChainBuildNodeConfigFailBadOverride",
-   "ChainBuildNodeConfigFailReadback",
-   "ChainBuildNodeConfigFailPinUnreadable"
-  ],
-  "ChainOpCrossForkHandingOver": [
-   "ChainOpCrossForkCrossed",
-   "ChainOpCrossForkFailNobodyCameBack",
-   "ChainOpCrossForkFailAlreadyPast",
-   "ChainOpCrossForkFailHeadUnreadable"
-  ],
-  "ChainOpCrossForkCrossed": [
-   "ChainReady"
-  ],
-  "ChainOpRemoveNodes": [
-   "ChainRemoved",
-   "ChainOpFailPrecondition"
-  ],
-  "ChainOpHardfork": [
-   "ChainReady",
-   "ChainOpFailPrecondition"
-  ],
-  "TestReadDeclaration": [
-   "TestOpenSession",
-   "TestReadDeclarationFailUnreadable",
-   "TestReadDeclarationFailMalformed",
-   "TestReadDeclarationFailIncomplete",
-   "TestReadDeclarationFailUnknownName",
-   "TestReadDeclarationFailContradicted"
-  ],
-  "TestOpenSession": [
-   "TestReachNetwork",
-   "TestPrepare",
-   "TestOpenSessionFailNoRoot"
-  ],
-  "TestReachNetwork": [
-   "TestPrepare",
-   "TestReachNetworkFailCompose",
-   "TestReachNetworkFailNotThePlan",
-   "TestReachNetworkFailUnreachable"
-  ],
-  "TestPrepare": [
-   "TestRunCases",
-   "TestPrepareFailFork",
-   "TestPrepareFailHeight",
-   "TestPrepareFailAccount"
-  ],
-  "TestRunCases": [
-   "TestCollect",
-   "TestRunCasesFailCannotProceed"
-  ],
-  "TestCollect": [
-   "TestFinished",
-   "TestCollectFailEvidence"
   ]
  },
  "prod_referenced": [
@@ -274,20 +184,9 @@
   "ChainBuildGenesisFromTemplate",
   "ChainBuildGenesisVariantsWritten",
   "ChainBuildNodeCommand",
-  "ChainBuildNodeCommandFailBadOption",
-  "ChainBuildNodeCommandFailSplitNetwork",
   "ChainBuildNodeConfig",
-  "ChainBuildNodeConfigFailBadOverride",
-  "ChainBuildNodeConfigFailPinUnreadable",
-  "ChainBuildNodeConfigFailReadback",
   "ChainBuildNodeTable",
-  "ChainBuildNodeTableFailSetContended",
-  "ChainBuildNodeTableFailTwoLayouts",
   "ChainDeployNodes",
-  "ChainDeployNodesFailInputForeign",
-  "ChainDeployNodesFailInputMissing",
-  "ChainDeployNodesShippedRemote",
-  "ChainDeployNodesVerifiedLocal",
   "ChainEnsureKeys",
   "ChainEnsureKeysFailCountMismatch",
   "ChainEnsureKeysFailKeyNotLocal",
@@ -297,9 +196,6 @@
   "ChainEnsureKeysFromPreset",
   "ChainEnsureKeysGenerated",
   "ChainInitNodes",
-  "ChainInitNodesFailDatadir",
-  "ChainInitNodesFailGenesisUnreadable",
-  "ChainInitNodesFailTargetUnable",
   "ChainLaunchNodes",
   "ChainLaunchNodesFailNoBinary",
   "ChainLaunchNodesFailNoKeystore",
@@ -309,19 +205,7 @@
   "ChainLaunchNodesPhaseActions",
   "ChainLaunchNodesPhaseDone",
   "ChainLaunchNodesPhaseLaunching",
-  "ChainOpCrossForkBeforeFork",
-  "ChainOpCrossForkCrossed",
-  "ChainOpCrossForkFailAlreadyPast",
-  "ChainOpCrossForkFailHeadUnreadable",
-  "ChainOpCrossForkFailNoFork",
-  "ChainOpCrossForkFailNobodyCameBack",
-  "ChainOpCrossForkHandingOver",
-  "ChainOpFailNoSuchNode",
-  "ChainOpFailPrecondition",
-  "ChainOpReplaceNodeFailNothingAsked",
-  "ChainOpStopNodesFailSomeStillUp",
   "ChainOpenWorkspace",
-  "ChainOpenWorkspaceFailNoChain",
   "ChainVerify",
   "CompareChain",
   "CompareChainFailUnreadable",
@@ -333,44 +217,6 @@
   "ReconcileChainAllKept",
   "ReconcileChainFailSharedInputChanged",
   "ReconcileChainFailUnreadable",
-  "ReconcileChainSomeRedone",
-  "TestCollectFailEvidence",
-  "TestOpenSessionFailNoRoot",
-  "TestPrepareFailAccount",
-  "TestPrepareFailFork",
-  "TestPrepareFailHeight",
-  "TestReachNetworkFailCompose",
-  "TestReachNetworkFailNotThePlan",
-  "TestReachNetworkFailUnreachable",
-  "TestReadDeclarationFailContradicted",
-  "TestReadDeclarationFailIncomplete",
-  "TestReadDeclarationFailMalformed",
-  "TestReadDeclarationFailUnknownName",
-  "TestReadDeclarationFailUnreadable",
-  "TestRunCasesFailCannotProceed"
- ],
- "unreferenced": [
-  "AdoptChainFailUnreachable",
-  "AdoptChainFailWrongChain",
-  "ChainOpCrossFork",
-  "ChainOpHardfork",
-  "ChainOpRemoveNodes",
-  "ChainOpReplaceNode",
-  "ChainOpStartNodes",
-  "ChainOpStopNodes",
-  "ChainReady",
-  "ChainRemoved",
-  "ChainStopped",
-  "ChainVerifyFailNotProducing",
-  "ChainVerifyFailPlanMismatch",
-  "ChainVerifyHaltedAsDeclared",
-  "ChainVerifyProducing",
-  "TestCollect",
-  "TestFinished",
-  "TestOpenSession",
-  "TestPrepare",
-  "TestReachNetwork",
-  "TestReadDeclaration",
-  "TestRunCases"
+  "ReconcileChainSomeRedone"
  ]
 }
