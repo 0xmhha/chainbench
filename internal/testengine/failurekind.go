@@ -6,7 +6,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 )
 
-// What a run's failures are, in the terms the test area's states use.
+// What the ATTACH path's failures are, in the terms the test area's states use.
+//
+// A composing run no longer needs this: its machine's position IS where it
+// failed, and classifying the error afterwards said the same thing a second
+// way. Attaching still walks a sequence of calls rather than states, so until
+// it moves this is how its failures are told apart.
 //
 // The messages stay what they are — they name the file, the field and what to
 // do about it, which is what makes them worth reading. The kind rides alongside
@@ -48,11 +53,6 @@ var (
 	// could ever mark one.
 	errNoRoot = errors.New("the run has nowhere to record itself")
 
-	// errCompose: the chain area refused. Which of its stages did is that
-	// area's state to say, and this one does not repeat it.
-	errCompose = errors.New("the network could not be composed")
-	// errNotThePlan: it stood up and is not the network the plan described.
-	errNotThePlan = errors.New("the network that stood up is not the planned one")
 	// errUnreachable: there is a network and it does not answer — no node
 	// became ready, or the workspace names one that is not there.
 	errUnreachable = errors.New("the network could not be reached")
@@ -67,9 +67,6 @@ var (
 	// errCasesCannotProceed: the running itself broke. A case reporting a
 	// failure is a verdict and does not come here.
 	errCasesCannotProceed = errors.New("the cases could not be run")
-
-	// errEvidence: what the run is judged on could not be gathered.
-	errEvidence = errors.New("the run's evidence could not be gathered")
 )
 
 // runFailure is which state an error from a run is.
@@ -93,10 +90,6 @@ func runFailure(err error) lifecycle.Status {
 	case errors.Is(err, errNoRoot):
 		return lifecycle.TestOpenSessionFailNoRoot
 
-	case errors.Is(err, errCompose):
-		return lifecycle.TestReachNetworkFailCompose
-	case errors.Is(err, errNotThePlan):
-		return lifecycle.TestReachNetworkFailNotThePlan
 	case errors.Is(err, errUnreachable):
 		return lifecycle.TestReachNetworkFailUnreachable
 
@@ -110,8 +103,6 @@ func runFailure(err error) lifecycle.Status {
 	case errors.Is(err, errCasesCannotProceed):
 		return lifecycle.TestRunCasesFailCannotProceed
 
-	case errors.Is(err, errEvidence):
-		return lifecycle.TestCollectFailEvidence
 	}
 	return lifecycle.FailStageUnclassified
 }

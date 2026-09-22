@@ -311,10 +311,10 @@ func setupFailure(out io.Writer, cause error, at string, jsonOut bool) error {
 // The surface takes words rather than the state's own type, because naming that
 // type here would be reaching past app for it.
 func failedAtOf(res app.RunSuiteOut) string {
-	if res.FailedAt == 0 {
+	if res.FailedAt == "" {
 		return ""
 	}
-	at := res.FailedAt.String()
+	at := res.FailedAt
 	if res.ComposeFailedAt != "" {
 		at += " / " + res.ComposeFailedAt
 	}

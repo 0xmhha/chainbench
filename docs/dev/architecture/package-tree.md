@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 57,623 |
+| `internal/` | 52 | 58,077 |
 | `cmd/` | 19 | 5,053 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **63,466** |
+| **합계** | **74** | **63,920** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 36,104줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 36,558줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -145,7 +145,7 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,485 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,939 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약

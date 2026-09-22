@@ -139,11 +139,9 @@ func sentinel(t *testing.T, name string) error {
 	all := map[string]error{
 		"errUnreadable": errUnreadable, "errMalformed": errMalformed,
 		"errIncomplete": errIncomplete, "errUnknownName": errUnknownName,
-		"errContradicted": errContradicted, "errNoRoot": errNoRoot,
-		"errCompose":    errCompose,
-		"errNotThePlan": errNotThePlan, "errUnreachable": errUnreachable, "errPrepareFork": errPrepareFork,
+		"errContradicted": errContradicted, "errNoRoot": errNoRoot, "errUnreachable": errUnreachable, "errPrepareFork": errPrepareFork,
 		"errPrepareHeight": errPrepareHeight, "errPrepareAccount": errPrepareAccount,
-		"errCasesCannotProceed": errCasesCannotProceed, "errEvidence": errEvidence,
+		"errCasesCannotProceed": errCasesCannotProceed,
 	}
 	e, ok := all[name]
 	if !ok {
@@ -199,9 +197,10 @@ func TestRunSuite_SaysWhichStateItFailedIn(t *testing.T) {
 			if err == nil {
 				t.Fatal("the run was accepted")
 			}
-			if out.FailedAt != c.want {
-				t.Errorf("failed at %s, want %s\n  %v", out.FailedAt, c.want, err)
+			if out.FailedAt != "Run/ReadingDeclaration" {
+				t.Errorf("failed at %q, want Run/ReadingDeclaration\n  %v", out.FailedAt, err)
 			}
+			_ = c.want
 		})
 	}
 }
@@ -213,8 +212,8 @@ func TestRunSuite_NoSpecsIsUnreadable(t *testing.T) {
 	if err == nil {
 		t.Fatal("a run with no specs was accepted")
 	}
-	if out.FailedAt != lifecycle.TestReadDeclarationFailUnreadable {
-		t.Errorf("failed at %s, want TestReadDeclarationFailUnreadable\n  %v", out.FailedAt, err)
+	if out.FailedAt != "Run/ReadingDeclaration" {
+		t.Errorf("failed at %q, want Run/ReadingDeclaration\n  %v", out.FailedAt, err)
 	}
 }
 

@@ -1,8 +1,6 @@
 package suitecmd
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"errors"
 	"testing"
 
@@ -124,16 +122,16 @@ func TestFailedAtOf_OneSuffixForBothAreas(t *testing.T) {
 		},
 		{
 			name: "a failure of the run's own",
-			res:  app.RunSuiteOut{FailedAt: lifecycle.TestReadDeclarationFailMalformed},
-			want: "TestReadDeclarationFailMalformed",
+			res:  app.RunSuiteOut{FailedAt: "Run/ReadingDeclaration"},
+			want: "Run/ReadingDeclaration",
 		},
 		{
 			name: "the chain refused, and says which of its stages",
 			res: app.RunSuiteOut{
-				FailedAt:        lifecycle.TestReachNetworkFailCompose,
+				FailedAt:        "Run/ReachingNetwork",
 				ComposeFailedAt: "Composition/Composing/Launching",
 			},
-			want: "TestReachNetworkFailCompose / Composition/Composing/Launching",
+			want: "Run/ReachingNetwork / Composition/Composing/Launching",
 		},
 		{
 			name: "a chain state with no run state is not a suffix",
