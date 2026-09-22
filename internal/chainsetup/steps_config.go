@@ -218,6 +218,9 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		}
 		w.state.Nodes[i].Args = args
 	}
+	if err := w.checkUniformNetworkID(); err != nil {
+		return "", err
+	}
 	detail := fmt.Sprintf("%d argv(s) assembled", len(w.state.Nodes))
 	if scoped {
 		detail += ", with launch overrides"

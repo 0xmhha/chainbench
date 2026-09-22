@@ -83,7 +83,6 @@ var nameCollisionDebt = map[string]string{
 	"Defaults":    "nodeconfig 는 기본값을 만드는 함수이고 resource 는 기본값 구조체다",
 	"Inventory":   "chainsetup 은 재고를 모으는 함수이고 resource 는 그 재고다",
 	"Verdict":     "preflight 는 얼마나 다시 지어야 하는지를, nodemonitor 는 게이트가 다음에 무엇을 할지를 가리킨다",
-	"Flag":        "resource 는 기동 플래그를 만들고, 도구는 선언된 플래그 변수를 가리킨다",
 }
 
 // TestNamesDoNotCollide is A7: an exported name declared at package level in

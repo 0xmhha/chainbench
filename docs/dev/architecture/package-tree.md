@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 50 | 54,335 |
+| `internal/` | 50 | 54,414 |
 | `cmd/` | 19 | 5,021 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **72** | **60,146** |
+| **합계** | **72** | **60,225** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 23패키지 16,699줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 23패키지 16,784줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -44,7 +44,7 @@ internal/core/
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
-├── lifecycle   1,008  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
+├── lifecycle   1,015  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
 ├── rpc            511  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
@@ -54,7 +54,7 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,502  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,580  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -113,14 +113,14 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,822줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 33,816줄
 
 ```
 internal/preset    648  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
-internal/resource  3,094  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
+internal/resource  3,047  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
@@ -143,7 +143,7 @@ internal/testengine 4,347 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 7,898 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 7,939 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
                           NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
                           NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·

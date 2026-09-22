@@ -33,6 +33,7 @@ var names = map[Status]string{
 	ChainBuildNodeConfigFailPinUnreadable: "ChainBuildNodeConfigFailPinUnreadable",
 	ChainBuildNodeCommand:                 "ChainBuildNodeCommand",
 	ChainBuildNodeCommandFailBadOption:    "ChainBuildNodeCommandFailBadOption",
+	ChainBuildNodeCommandFailSplitNetwork: "ChainBuildNodeCommandFailSplitNetwork",
 	ChainDeployNodes:                      "ChainDeployNodes",
 	ChainDeployNodesVerifiedLocal:         "ChainDeployNodesVerifiedLocal",
 	ChainDeployNodesShippedRemote:         "ChainDeployNodesShippedRemote",
@@ -163,7 +164,7 @@ var allowed = map[Status][]Status{
 		ChainBuildNodeConfigFailBadOverride, ChainBuildNodeConfigFailReadback,
 		ChainBuildNodeConfigFailPinUnreadable},
 
-	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption},
+	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption, ChainBuildNodeCommandFailSplitNetwork},
 
 	// The two detail states say what the target was. The table let a deploy
 	// move on without naming either for as long as nothing could name it:

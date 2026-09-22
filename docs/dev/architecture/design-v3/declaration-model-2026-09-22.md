@@ -106,17 +106,27 @@ successor 넷과 producer 가 **다른 devp2p 망 번호로 떠 있었다.** 그
 (config 파일은 이 값을 아예 적지 않는다. TOML 렌더러에 network id 가 없다. 처음에는 config 와
 argv 가 어긋난다고 적었는데, 재보니 어긋나는 것은 argv 와 argv 였다.)
 
-### D2. 균일성 검사가 배선돼 있지 않다
+### D2. 균일성 검사가 배선돼 있지 않다 — 닫음 (2026-09-22)
 
-`internal/resource/netid.go` 는 이 함정을 막으려고 쓴 파일이다. 주석이 직접 말한다.
+`resource` 밑에 `netid.go` 라는 파일이 있었다. 이 함정을 막으려고 쓴 것이고, 주석이 직접 말한다.
 
 > go-wemix 는 chain id 와 무관하게 1111 로 기본값을 잡고, go-wbft 는 chain id 에서
 > 유도한다. 그래서 한 체인을 이루려는 두 바이너리는 같은 network id 를 명시하지 않으면
 > peer 를 거부한다.
 
-`Resolve`·`Flag`·`ValidateUniform` 세 함수의 **호출자가 0**이다.
+`Resolve`·`Flag`·`ValidateUniform` 세 함수의 **호출자가 0**이었다. 자리도 틀렸다 —
+`resource` 의 package doc 이 자기가 가진 파일을 열거하는데 `netid.go` 가 그 목록에 없고,
+그 패키지가 소유한다고 적은 것은 "어떤 서버가 있고 어느 포트를 주나" 다.
 
-### D3. chain id 를 바꿔도 network id 가 안 따라간다
+검사를 `nodeconfig` 로 옮겼다(`ValidateUniformNetworkID`). argv 의 어휘를 아는 패키지이고,
+**조립된 argv 를 읽는다.** 입력이 아니라 산출물을 보는 이유는, 입력은 `network()` 하나에서
+오므로 스스로와 어긋날 수 없기 때문이다. 어긋나는 길은 `network()` 를 안 거치는 길이다 —
+한 스코프에만 걸린 launch override, 또는 나중에 쓰이는 네 번째 조립기.
+
+옛 파일의 `Resolve`·`Flag` 는 지웠다. 해석은 이제 `NetworkOf` 가 하고, 플래그 철자는
+dialect 표가 갖는다. `Flag` 가 없어지면서 이름 충돌 빚도 하나 줄었다.
+
+### D3. chain id 를 바꿔도 network id 가 안 따라간다 — 닫음 (2026-09-22)
 
 `suite run --chain-id` 는 genesis 의 chainId 를 덮는다. network id 는 `ChainOf()` 가
 manifest 에서 그대로 읽는다(`nodeconfig.Chain` 에는 `ChainID` 필드가 아예 없다). 둘을 잇는
@@ -124,6 +134,17 @@ manifest 에서 그대로 읽는다(`nodeconfig.Chain` 에는 `ChainID` 필드�
 
 go-wbft 는 network id 를 chain id 에서 유도하므로, chain id 를 덮은 망에서 wbft 노드는
 자기 chain id 와 다른 network id 를 명령줄로 받는다.
+
+**실측.** `--chain-id 4242` 로 stablenet 케이스를 고치기 전 코드로 돌렸다.
+
+```
+옛 코드: genesis chainId = 4242, 노드 넷 전부 --networkid 8283  (manifest 값)
+고친 뒤: genesis chainId = 4242, 노드 넷 전부 --networkid 4242
+```
+
+케이스는 옛 코드에서도 통과한다. 넷이 다 8283 이라 서로는 붙기 때문이다. 문제는 **그 번호가
+손대지 않은 stablenet manifest 로 세운 다른 망의 번호와 같다**는 것이다. 옛 `netid.go` 주석이
+경고한 "서로 보면 안 되는 두 망이 합의해 버린다" 가 그것이다.
 
 ---
 
@@ -207,8 +228,8 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 | # | 무엇 | 게이트 |
 |---|---|---|
 | ~~**D-a**~~ | ~~`nodeconfig.Chain` 을 망 전체 사실과 노드별 사실로 가른다. network id 를 망의 chain id 에서 파생한다~~ | **완료 2026-09-22.** 혼합 바이너리 핸드오버에서 다섯 노드가 전부 8285 로 뜬다(라이브 확인) |
-| **D-b** | `resource/netid.go` 의 `ValidateUniform` 을 config·argv 양쪽 산출물에 건다. 안 쓰는 `Resolve`·`Flag` 는 정리한다 | 일부러 어긋낸 망에서 검사가 막는다 |
-| **D-c** | `--chain-id` 가 network id 를 끌고 가는지 테스트로 고정한다 | chain id 를 덮은 망에서 모든 노드의 network id 가 그 값이다 |
+| ~~**D-b**~~ | ~~`ValidateUniform` 을 배선한다~~ | **완료 2026-09-22.** `nodeconfig.ValidateUniformNetworkID` 로 옮겨 조립 세 자리에 걸었다. 일부러 어긋낸 합성이 `build` 에서 `ChainBuildNodeCommandFailSplitNetwork` 로 막힌다(라이브 확인) |
+| ~~**D-c**~~ | ~~`--chain-id` 가 network id 를 끌고 가는지 고정한다~~ | **완료 2026-09-22.** 합성 수준 테스트와 라이브 대조 둘 다. 옛 코드 8283 / 고친 뒤 4242 |
 | **P-1** | 용어를 확정한다 — 체인 정의 / 환경 선언 / 케이스 | 문서와 타입 이름이 한 낱말만 쓴다 |
 | **P-2** | `presets/chain/*.yaml` 두 개를 환경 선언으로 옮긴다. `upgrade.preset` 문법과 `preset.Chain` 타입을 없앤다 | 하드포크 케이스 넷이 그대로 돈다 |
 | **P-3** | manifest 와 환경 선언의 소유권을 가른다. 중복 필드(`upgrade`·`network_id`)를 한쪽으로 모은다 | 같은 사실을 적는 자리가 하나다 |

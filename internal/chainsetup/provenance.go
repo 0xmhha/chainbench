@@ -21,6 +21,10 @@ import (
 // vocabulary does not take, or a --set that is not one.
 var errBuildBadOption = errors.New("a launch option is not one this accepts")
 
+// errBuildSplitNetwork is the other: the commands were assembled and do not all
+// name the same devp2p network, so the nodes would come up unable to peer.
+var errBuildSplitNetwork = errors.New("the assembled commands name more than one network")
+
 // applyConfigOverrides applies the workspace's config-knob overrides to one
 // node's spec, most-general-first, so the narrowest scope wins. Each entry is a
 // dot-path "key=value"; an unknown key or a malformed entry is an error, never
@@ -179,14 +183,18 @@ func (w *Workspace) RecordConfigSet(scope string, sets []string) error {
 
 // markStep records that step ran with detail, stamping the completion time.
 
-// BuildFailure is the one failure the command stage has a state for.
+// BuildFailure is what the command stage's failures are.
 //
 // The default is assembling itself: a peer list that cannot be built, a node
-// whose plugin cannot be resolved. A bad option is a line somebody wrote; the
-// rest are the composition disagreeing with itself.
+// whose plugin cannot be resolved. A bad option is a line somebody wrote, a
+// split network is the commands disagreeing with each other, and the rest are
+// the composition disagreeing with itself.
 func BuildFailure(err error) lifecycle.Status {
-	if errors.Is(err, errBuildBadOption) {
+	switch {
+	case errors.Is(err, errBuildBadOption):
 		return lifecycle.ChainBuildNodeCommandFailBadOption
+	case errors.Is(err, errBuildSplitNetwork):
+		return lifecycle.ChainBuildNodeCommandFailSplitNetwork
 	}
 	return lifecycle.FailStageUnclassified
 }

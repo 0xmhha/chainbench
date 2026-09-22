@@ -96,6 +96,33 @@ func (w *Workspace) network() (nodeconfig.Network, error) {
 	return nodeconfig.NetworkOf(p, chainID), nil
 }
 
+// checkUniformNetworkID holds the assembled argv to one devp2p id.
+//
+// network() decides the number and every assembler takes it from there, so in
+// principle they cannot disagree. This reads what was actually assembled
+// instead, because the ways they can disagree are the ways that do not go
+// through network(): a launch override that names the flag on one scope, or a
+// fourth assembler written later. Both leave the input agreeing with itself.
+//
+// Nodes with no argv yet are skipped rather than failed: the check runs after
+// each step that assembles, and a composition part-way through has some.
+func (w *Workspace) checkUniformNetworkID() error {
+	argv := map[string][]string{}
+	for _, ns := range w.state.Nodes {
+		if len(ns.Args) == 0 {
+			continue
+		}
+		argv[string(ns.NodeLabel())] = ns.Args
+	}
+	if len(argv) == 0 {
+		return nil
+	}
+	if err := nodeconfig.ValidateUniformNetworkID(argv); err != nil {
+		return ofKind(errBuildSplitNetwork, err)
+	}
+	return nil
+}
+
 func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
 	if ns.Binary != "" {
 		if id := w.state.BinaryChains[ns.Binary]; id != "" {

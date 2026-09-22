@@ -217,6 +217,12 @@ const (
 	// ChainBuildNodeCommandFailBadOption: a launch option is malformed or
 	// names a scope that is not one.
 	ChainBuildNodeCommandFailBadOption = ChainBuildNodeCommand + failureSlot + iota
+	// ChainBuildNodeCommandFailSplitNetwork: the assembled commands do not all
+	// name the same devp2p network, so the nodes would not peer. It is its own
+	// state rather than a bad option because the composition is what produced
+	// the split — an option can cause it, and so can an assembler that took the
+	// network from the wrong place.
+	ChainBuildNodeCommandFailSplitNetwork
 )
 
 const (

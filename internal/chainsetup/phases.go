@@ -100,6 +100,9 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, keys
 		w.state.Nodes[i].PID = h.PID
 		started++
 	}
+	if err := w.checkUniformNetworkID(); err != nil {
+		return started, err
+	}
 	return started, nil
 }
 

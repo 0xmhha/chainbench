@@ -361,7 +361,7 @@ func (w *Workspace) handOver(ctx context.Context, f GenesisFork, successors []in
 		}
 		w.state.Nodes[i].PID = h.PID
 	}
-	return nil
+	return w.checkUniformNetworkID()
 }
 
 // confirmBeforeFork holds a restart to the thing that makes it a restart: the
