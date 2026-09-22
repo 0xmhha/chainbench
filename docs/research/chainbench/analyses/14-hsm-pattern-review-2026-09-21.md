@@ -526,6 +526,15 @@ func (PostCompose) What() lifecycle.What { return CmdPostCompose }
 5. **이름 표 한 곳.** `whatNames map[What]string` 을 protocol 파일에 두고 `String()` 이 쓴다.
    `MessageUtils` 의 리플렉션 대신 테스트가 빠짐을 잡는다.
 
+**구현하며 바뀐 것 둘 (2026-09-22, commit 2).**
+
+- `CmdStep` 의 본체 이름은 `Step` 이 아니라 **`RunStep`** 이다. `chainsetup` 에 이미 `Step`
+  (기록된 조립의 한 단계, `session.Step` 의 별칭)이 있고, 한 패키지에 같은 이름 둘은 Go 가 주지
+  않는다. 나머지 본체 이름은 이 문서 그대로다.
+- `String()` 은 `What` 에 붙일 수 없다. `What` 은 state machine 패키지의 타입이고 이름은 도메인의
+  것이라, 도메인이 자기 이름을 그 패키지에 등록하는 전역 가변 상태를 만들지 않으려면 방향이 반대여야
+  한다. 대신 도메인 패키지가 `WhatName(w) string` 을 내놓는다. 표와 "빠진 이름" 테스트는 그대로다.
+
 ### 5.2 상태 이름
 
 | 자리 | 형태 | 예 |
