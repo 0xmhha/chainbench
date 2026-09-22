@@ -2,7 +2,6 @@ package chainsetup
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
@@ -51,9 +50,7 @@ func (s *openingWorkspace) Enter(_ context.Context, m *statemachine.Machine) err
 		return detail, ws.RecordRequest(in)
 	})
 	if err != nil {
-		werr := fmt.Errorf("chainsetup: chain up: %s: %w", stepNew, err)
-		s.mg.markFailed(stepNew, werr)
-		m.SendSelf(stageFailed{Step: stepNew, Err: werr})
+		s.mg.fail(m, stepNew, err)
 		return nil
 	}
 	m.SendSelf(workspaceOpened{Detail: detail})

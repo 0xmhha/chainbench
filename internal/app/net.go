@@ -22,7 +22,7 @@ type (
 	ChainStatusOut     = verb.ChainStatusOut
 	StepOut            = chainsetupmod.StepOut
 	ChainKeysIn        = verb.ChainKeysIn
-	ChainAllocateIn    = verb.ChainAllocateIn
+	ChainAllocateIn    = chainsetupmod.ChainAllocateIn
 	ChainGenesisIn     = chainsetupmod.ChainGenesisIn
 	ChainConfigIn      = verb.ChainConfigIn
 	ChainLaunchOptsIn  = verb.ChainLaunchOptsIn

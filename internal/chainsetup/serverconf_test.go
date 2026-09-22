@@ -44,7 +44,7 @@ func TestChainAllocate_InventoryDecidesThePorts(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 
-	out, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	out, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
@@ -65,7 +65,7 @@ func TestChainAllocate_InventoryDecidesThePorts(t *testing.T) {
 }
 
 func TestChainAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 	st := stateOf(t, dir, d)
 	if !strings.Contains(st.PortOrigin, "built-in") {
 		t.Errorf("port source = %q, want it to name the built-ins", st.PortOrigin)
@@ -94,7 +94,7 @@ pool:
 ssh: {user: deploy, port: 2222}
 `)
 
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 1,
 		Server: resource.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
@@ -144,7 +144,7 @@ pool:
 ssh: {user: deploy}
 `)
 
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
@@ -213,7 +213,7 @@ pool:
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy}
 `)
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 2,
 		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {

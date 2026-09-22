@@ -54,7 +54,7 @@ func TestBlueprint_ComposesWithNoPresetDirectory(t *testing.T) {
 	}
 
 	bp := rawBlueprint(t)
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BlueprintPath: bp,
 	}); err != nil {
 		t.Fatalf("allocate from a blueprint: %v", err)
@@ -110,7 +110,7 @@ func TestBlueprint_RefusesTwoDescriptionsOfTheLayout(t *testing.T) {
 	if err := os.WriteFile(topo, []byte("chain: wbft\nnodes:\n  - {index: 1, role: bp}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := verb.ChainAllocate(context.Background(), d, verb.ChainAllocateIn{
+	_, err := verb.ChainAllocate(context.Background(), d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BlueprintPath: rawBlueprint(t), TopologyPath: topo,
 	})
 	if err == nil {
@@ -136,7 +136,7 @@ func TestBlueprint_RefusesAFieldItCannotHonour(t *testing.T) {
 	if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := verb.ChainAllocate(context.Background(), d, verb.ChainAllocateIn{DataDir: dir, BlueprintPath: path})
+	_, err := verb.ChainAllocate(context.Background(), d, chainsetup.ChainAllocateIn{DataDir: dir, BlueprintPath: path})
 	if err == nil {
 		t.Fatal("a per-node server was silently ignored")
 	}

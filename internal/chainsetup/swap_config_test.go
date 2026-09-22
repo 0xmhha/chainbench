@@ -45,7 +45,7 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 1, ENCount: 1,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)

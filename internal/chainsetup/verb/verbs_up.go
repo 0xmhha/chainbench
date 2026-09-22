@@ -121,7 +121,7 @@ func upSteps(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn) ma
 		// Place precedes keys: the key step sizes the identity set from the
 		// node table, so the layout has to exist first.
 		"place": func() (chainsetup.StepOut, error) {
-			r, err := ChainAllocate(ctx, d, ChainAllocateIn{
+			r, err := ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,

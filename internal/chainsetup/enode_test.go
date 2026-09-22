@@ -33,7 +33,7 @@ func TestChainEnodes(t *testing.T) {
 		t.Fatalf("enode before place: %v", err)
 	}
 
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
 	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
@@ -85,7 +85,7 @@ func TestChainConfigNodeScoped(t *testing.T) {
 	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
 	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {

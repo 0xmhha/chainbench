@@ -3,6 +3,8 @@ package chainsetup
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -58,6 +60,21 @@ func reported(mg *Manager) []string {
 		out = append(out, name)
 	}
 	return out
+}
+
+// upRequest is the smallest request the stages that have moved will accept.
+//
+// It grows as stages move in and start reading more of it, which is why it is
+// one function rather than a literal at each call: the alternative is editing
+// every test in this file nine times.
+func upRequest() ChainUpIn {
+	return ChainUpIn{Chain: "stablenet", BPCount: 2, ENCount: 1}
+}
+
+// withStage is upRequest with the stage it should stop at.
+func withStage(in ChainUpIn, stage UpStage) ChainUpIn {
+	in.Stage = stage
+	return in
 }
 
 // newTestManager returns a manager over a fresh workspace and the walker
@@ -123,7 +140,7 @@ func TestStageOrderIsUpStepNames(t *testing.T) {
 // the walker, and the claim here is about all nine.
 func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(), ""); err != nil {
 		t.Fatal(err)
 	}
 	if got := reported(mg); !slices.Equal(got, UpStepNames) {
@@ -144,7 +161,7 @@ func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 // and the caller says nothing about it beyond the request it already had.
 func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet", Stage: UpDeploy}, ""); err != nil {
+	if err := mg.Compose(context.Background(), withStage(upRequest(), UpDeploy), ""); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
@@ -160,7 +177,7 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 // TestCompose_BeginsAtTheNamedStep is what a resume does today.
 func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "config"); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(), "config"); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"config", "build", "deploy", "init", "start"}
@@ -173,7 +190,7 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 // TestCompose_RefusesAStepItDoesNotHave, before it starts anything.
 func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 	mg, w := newTestManager(t)
-	err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "nosuchstep")
+	err := mg.Compose(context.Background(), upRequest(), "nosuchstep")
 	if err == nil {
 		t.Fatal("an unknown step was accepted")
 	}
@@ -189,7 +206,7 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "genesis"
-	err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "")
+	err := mg.Compose(context.Background(), upRequest(), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
@@ -210,7 +227,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "keys"
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err == nil {
+	if err := mg.Compose(context.Background(), upRequest(), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 
@@ -243,7 +260,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 		}
 		seen[step] = ws.State().StatePath
 	}
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(), ""); err != nil {
 		t.Fatal(err)
 	}
 	for _, step := range adapterSteps(mg) {
@@ -262,7 +279,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "deploy"
-	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err == nil {
+	if err := mg.Compose(context.Background(), upRequest(), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 	ws, err := Open(mg.ws.Dir(), nil)
@@ -283,7 +300,8 @@ func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 // a resume cannot continue. One open, one save, both or neither.
 func TestOpeningWorkspace_RecordsTheChainAndTheRequestTogether(t *testing.T) {
 	mg, _ := newTestManager(t)
-	in := ChainUpIn{Chain: "stablenet", BPCount: 3}
+	in := upRequest()
+	in.BPCount = 3
 	if err := mg.Compose(context.Background(), in, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -326,5 +344,56 @@ func TestOpeningWorkspace_AnUnknownChainFailsTheComposition(t *testing.T) {
 	}
 	if step, ok := ws.State().Steps["new"]; !ok || step.Err == "" {
 		t.Errorf("the record does not name new as the failed step: %+v", ws.State().Steps)
+	}
+}
+
+// TestBuildingNodeTable_PlacesTheNodesTheRequestAsksFor.
+func TestBuildingNodeTable_PlacesTheNodesTheRequestAsksFor(t *testing.T) {
+	mg, _ := newTestManager(t)
+	in := upRequest()
+	in.BPCount, in.ENCount = 3, 2
+	if err := mg.Compose(context.Background(), in, ""); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := Open(mg.ws.Dir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := len(ws.State().Nodes); got != 5 {
+		t.Errorf("the record holds %d nodes, want 5", got)
+	}
+	if got := ws.State().BPCount; got != 3 {
+		t.Errorf("the record says %d producers, want 3", got)
+	}
+	if !strings.HasPrefix(mg.Steps()[1], "place: ") {
+		t.Errorf("the stage reported %q, want a line beginning \"place: \"", mg.Steps()[1])
+	}
+}
+
+// TestBuildingNodeTable_RefusesTwoLayouts, and says which stage refused.
+//
+// A blueprint and a topology are two descriptions of the same thing, and
+// preferring either silently composes a network the reader did not ask for.
+func TestBuildingNodeTable_RefusesTwoLayouts(t *testing.T) {
+	mg, _ := newTestManager(t)
+	in := upRequest()
+	in.TopologyPath = filepath.Join(t.TempDir(), "topology.yaml")
+	in.BlueprintPath = filepath.Join(t.TempDir(), "blueprint.json")
+	if err := os.WriteFile(in.BlueprintPath, []byte(`{"schemaVersion":"1","chain":"stablenet"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	err := mg.Compose(context.Background(), in, "")
+	if err == nil {
+		t.Fatal("two layouts were accepted")
+	}
+	if !strings.Contains(err.Error(), "place") {
+		t.Errorf("refused with %q, want it to name the stage", err)
+	}
+	ws, oerr := Open(mg.ws.Dir(), nil)
+	if oerr != nil {
+		t.Fatal(oerr)
+	}
+	if got := ws.State().StatePath; got != "Composition/Failed" {
+		t.Errorf("the record says %q, want Composition/Failed", got)
 	}
 }

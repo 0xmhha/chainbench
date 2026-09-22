@@ -19,7 +19,7 @@ import (
 // genesis overlay with its capability claims.
 
 // composed runs new + allocate + keys on a fresh workspace and returns it.
-func composed(t *testing.T, alloc verb.ChainAllocateIn) (dir string, d chainsetup.Deps) {
+func composed(t *testing.T, alloc chainsetup.ChainAllocateIn) (dir string, d chainsetup.Deps) {
 	t.Helper()
 	dir = t.TempDir()
 	d = chainsetup.Deps{Clock: fixedClock()}
@@ -54,7 +54,7 @@ func stateOf(t *testing.T, dir string, d chainsetup.Deps) chainsetup.State {
 func TestChainAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 	// Every node rendered "full" before this: a snap-sync re-sync test composed
 	// through the steps was silently running full sync instead.
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, ENCount: 1, EndpointSyncMode: "snap"})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2, ENCount: 1, EndpointSyncMode: "snap"})
 	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestChainAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 func TestChainAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 	// A sealing node must hold full state, so the knob must not reach it even
 	// when the caller sets it.
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, EndpointSyncMode: "snap"})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2, EndpointSyncMode: "snap"})
 	for _, n := range stateOf(t, dir, d).Nodes {
 		if n.SyncMode != "full" {
 			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
@@ -92,7 +92,7 @@ func TestChainAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 }
 
 func TestChainGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 
 	out, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=10"},
@@ -114,7 +114,7 @@ func TestChainGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
 }
 
 func TestChainGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 
 	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=0"},
@@ -132,7 +132,7 @@ func TestChainGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
 }
 
 func TestChainGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 	overlay := filepath.Join(t.TempDir(), "overlay.json")
 	if err := os.WriteFile(overlay, []byte(`{"capabilities":["account-extra"],"genesis":{"config":{"chainId":4242}}}`), 0o644); err != nil {
 		t.Fatal(err)
@@ -154,7 +154,7 @@ func TestChainGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
 }
 
 func TestChainGenesis_MalformedInputsAreRejected(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 	ctx := context.Background()
 
 	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
@@ -215,7 +215,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	out, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, TopologyPath: topo})
+	out, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, TopologyPath: topo})
 	if err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -262,7 +262,7 @@ func TestChainKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
 	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 2, ENCount: 3,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -283,7 +283,7 @@ func TestChainLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	// A network of 3 validators. A launch override scoped to the whole "bp" role
 	// reaches every node; a "node2" override reaches only node2's argv. This
 	// exercises the real verb path (place -> keys -> build), not a stub.
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 3})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 3})
 	ctx := context.Background()
 	out, err := verb.ChainLaunchOpts(ctx, d, verb.ChainLaunchOptsIn{
 		DataDir: dir,
@@ -333,7 +333,7 @@ func TestChainAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
 		{Index: 3, Role: "en", Binary: "wbft"},
 	}}
 	bins := map[string]string{"stable": "/opt/gstable", "wbft": "/opt/gwbft"}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, Topology: topo, Binaries: bins,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -375,7 +375,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	for _, n := range stateOf(t, dir, d).Nodes {
@@ -386,8 +386,8 @@ nodes:
 }
 
 func TestChainAllocate_MissingTopologyFileIsAnError(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 1})
-	if _, err := verb.ChainAllocate(context.Background(), d, verb.ChainAllocateIn{
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 1})
+	if _, err := verb.ChainAllocate(context.Background(), d, chainsetup.ChainAllocateIn{
 		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
 	}); err == nil {
 		t.Error("want an error for a missing topology file")
@@ -430,7 +430,7 @@ func TestChainNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 
 	// A later step must resolve the same plugin — registry.Get("foonet") would
 	// fail, since it is not an embedded chain.
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate on an external chain: %v", err)
 	}
 	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
@@ -451,7 +451,7 @@ func TestChainNew_NeedsAChainOrAManifest(t *testing.T) {
 func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
 	// network has to be readable through the same call a setup one is.
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2, ENCount: 1})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2, ENCount: 1})
 	if _, err := verb.ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -481,7 +481,7 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 }
 
 func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
-	dir, d := composed(t, verb.ChainAllocateIn{BPCount: 2})
+	dir, d := composed(t, chainsetup.ChainAllocateIn{BPCount: 2})
 
 	out, err := verb.NetworkStop(context.Background(), d, verb.NetworkStopIn{DataDir: dir})
 	if err != nil {

@@ -33,7 +33,7 @@ func TestChainStepPipeline(t *testing.T) {
 	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 2, ENCount: 1}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2, ENCount: 1}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	if out, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
@@ -130,7 +130,7 @@ func TestChainStepPrerequisites(t *testing.T) {
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
 
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 1}); err == nil ||
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 1}); err == nil ||
 		!strings.Contains(err.Error(), "chain new") {
 		t.Fatalf("allocate before new: %v", err)
 	}
@@ -175,7 +175,7 @@ nodes:
 	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, TopologyPath: topo, Peering: "proxied"}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, TopologyPath: topo, Peering: "proxied"}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
@@ -207,7 +207,7 @@ nodes:
 	}
 
 	// An impossible graph is refused where the layout is chosen, not later.
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 2, Peering: "starfish"}); err == nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2, Peering: "starfish"}); err == nil {
 		t.Fatal("an unknown peering must be refused")
 	}
 }
@@ -266,7 +266,7 @@ func TestChainAllocate_RecordsTheEtcdPort(t *testing.T) {
 	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "wemix", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	out, err := verb.ChainStatus(ctx, d, verb.ChainStatusIn{DataDir: dir})
@@ -301,7 +301,7 @@ func TestAllocate_AllServersRecordsEachNodesServer(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.ChainAllocate(context.Background(), d, verb.ChainAllocateIn{
+	if _, err := verb.ChainAllocate(context.Background(), d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: set, All: true},
 	}); err != nil {

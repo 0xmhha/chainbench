@@ -58,7 +58,7 @@ func TestChainConfig_OverrideIsolationAndProvenance(t *testing.T) {
 		}
 	}
 	must(verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
-	must(verb.ChainAllocate(ctx, d, verb.ChainAllocateIn{DataDir: dir, BPCount: 3}))
+	must(verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 3}))
 	must(verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}))
 	must(verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, ChainID: 9999}))
 	// Every node gets metricsHost; only node2 gets httpHost.

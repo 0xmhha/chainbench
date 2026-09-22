@@ -230,7 +230,14 @@ type stageFailed struct {
 
 func (stageFailed) What() statemachine.What { return eventStageFailed }
 
-// nodeTableBuilt and the rest are declared with their leaf states, one commit
+// nodeTableBuilt: the nodes, their roles, hosts and ports are decided.
+type nodeTableBuilt struct{ Detail string }
+
+func (nodeTableBuilt) What() statemachine.What { return eventNodeTableBuilt }
+
+func (e nodeTableBuilt) stage() (string, string) { return stepPlace, e.Detail }
+
+// The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to
 // read, and the band test holds every one of them to the private range whether
 // or not a state sends it yet.

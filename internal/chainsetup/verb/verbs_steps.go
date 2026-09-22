@@ -3,12 +3,9 @@ package verb
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"os"
 
-	"github.com/0xmhha/chainbench/internal/core/blueprint"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // The composition verbs, as a surface calls them: keys, allocate, genesis,
@@ -16,12 +13,6 @@ import (
 //
 // These carry more than a call because a declaration reaches them here — a
 // blueprint to read, an overlay to stage, a peering to resolve. The lifecycle
-// Placement bounds shared by the composition steps: a BFT network needs at
-// least one validator, and a local port band holds this many nodes.
-const (
-	minValidators = 1
-	portBand      = 100
-)
 
 // ChainKeysIn selects where node identities come from.
 type ChainKeysIn struct {
@@ -37,7 +28,7 @@ type ChainKeysIn struct {
 
 // ChainKeys ensures the workspace's key set exists and covers the node count.
 func ChainKeys(ctx context.Context, d chainsetup.Deps, in ChainKeysIn) (chainsetup.StepOut, error) {
-	bp, err := readBlueprint(in.BlueprintPath)
+	bp, err := chainsetup.ReadBlueprint(in.BlueprintPath)
 	if err != nil {
 		return chainsetup.StepOut{}, err
 	}
@@ -53,127 +44,10 @@ func ChainKeys(ctx context.Context, d chainsetup.Deps, in ChainKeysIn) (chainset
 	})
 }
 
-// ChainAllocateIn sizes the network.
-type ChainAllocateIn struct {
-	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
-	BPCount int    `cb:"bp" default:"4" help:"bp (block-producing) node count"`
-	ENCount int    `cb:"en" help:"en (endpoint, non-producing) node count"`
-	PNCount int    `cb:"pn" help:"pn (proxy-tier) node count; a family with no proxy tier refuses it"`
-	// Peering is the peer graph ("mesh" default, "proxied").
-	Peering string `cb:"peering" help:"peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)"`
-	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
-	// re-sync test can exercise that path. Empty leaves every node on full.
-	EndpointSyncMode string `cb:"endpoint-syncmode" help:"sync mode for endpoints (snap|archive); default full"`
-	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
-	// replaces the counts, which cannot express a per-node choice.
-	TopologyPath string `cb:"topology" help:"per-node layout YAML (role/sync-mode/bootnode/binary); overrides --bp/--en/--pn"`
-	// BlueprintPath is a network declaration (N1). It is the widest of the
-	// three layout sources and wins over both the counts and a topology.
-	BlueprintPath string
-	// Server selects where the nodes are placed and on what ports, from the
-	// operator's server set. Its zero value uses the built-in local plan.
-	Server resource.ServerRef
-	// Topology, when set, is the inline per-node layout (role/sync/bootnode/
-	// binary), the DSL's way to declare what --topology gives a file. It wins
-	// over Validators/Endpoints.
-	Topology *node.Topology
-	// Binaries maps per-node binary names to paths (with a per-node topology).
-	Binaries map[string]string
-	// BinaryChains names, per binary, the chain that binary runs when it is not
-	// the composition's.
-	BinaryChains map[string]string
-	// AutoSize fills the validator count to the server set (bp: "max"): the
-	// network is one node per server, less the proxies and endpoints asked for.
-	// It needs a server-set target and is ignored when a topology or blueprint
-	// gives the layout explicitly.
-	AutoSize bool
-}
-
 // ChainAllocate builds the node table (roles, paths, deterministic ports).
-func ChainAllocate(_ context.Context, d chainsetup.Deps, in ChainAllocateIn) (chainsetup.StepOut, error) {
-	bp, err := readBlueprint(in.BlueprintPath)
-	if err != nil {
-		return chainsetup.StepOut{}, err
-	}
-	topo := in.Topology
-	if err := chainsetup.OneLayoutOnly(bp != nil, topo != nil || in.TopologyPath != ""); err != nil {
-		return chainsetup.StepOut{}, err
-	}
-	if topo == nil && in.TopologyPath != "" {
-		loaded, err := node.Load(in.TopologyPath)
-		if err != nil {
-			return chainsetup.StepOut{}, err
-		}
-		topo = &loaded
-	}
-	// Allocation is the one moment two runs can hand out the same slot: each
-	// derives the set's inventory from the workspaces it can see, and two
-	// runs that look before either has saved both see it free. The set's
-	// lock is held from the look to the save — a lock, not a second record
-	// (the workspaces stay the only record of what is taken).
-	setPath := in.Server.SetPath
-	if setPath == "" {
-		if ws, err := chainsetup.Open(in.DataDir, d.Clock); err == nil {
-			setPath = ws.State().ServerSet
-		}
-	}
-	release, err := chainsetup.AcquireSetLock(setPath, d)
-	if err != nil {
-		return chainsetup.StepOut{}, err
-	}
-	defer release()
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		// A set the workspace already recorded (chain new --server-set) is the
-		// default: --docker and its set arrive as a pair, and a later
-		// --server-set on this step still wins.
-		if in.Server.SetPath == "" {
-			in.Server.SetPath = ws.State().ServerSet
-		}
-		resolved, err := resource.ResolveServer(in.Server, minValidators, portBand)
-		if err != nil {
-			return "", err
-		}
-		if resolved.HasTarget {
-			if err := ws.Retarget(resolved.Target); err != nil {
-				return "", err
-			}
-		}
-		return ws.Allocate(chainsetup.AllocateOpts{
-			BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
-			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
-			Peering: peeringOf(bp, in.Peering),
-			Pool:    resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
-			BinaryChains: in.BinaryChains,
-			AutoSize:     in.AutoSize,
-		})
-	})
+func ChainAllocate(_ context.Context, d chainsetup.Deps, in chainsetup.ChainAllocateIn) (chainsetup.StepOut, error) {
+	detail, err := chainsetup.PlaceNodes(d, in)
 	return chainsetup.StepOut{Detail: detail}, err
-}
-
-// readBlueprint loads a network declaration, or returns nil when none is named.
-func readBlueprint(path string) (*blueprint.Blueprint, error) {
-	if path == "" {
-		return nil, nil
-	}
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("chainsetup: read blueprint %s: %w", path, err)
-	}
-	bp, err := blueprint.Parse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", path, err)
-	}
-	return &bp, nil
-}
-
-// peeringOf lets a flag override the declaration, and the declaration answer
-// when the flag is silent. A flag is a person typing now, which is the one
-// thing that outranks a document.
-func peeringOf(bp *blueprint.Blueprint, flag string) string {
-	if flag != "" || bp == nil {
-		return flag
-	}
-	return bp.Peering
 }
 
 // ChainGenesis builds the genesis from the key set and writes it to the target.
