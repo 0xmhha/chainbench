@@ -126,6 +126,7 @@ var verbNeeds = map[string]verbNeed{
 	"Save":           {why: "persists the record, which has to work at every stage including a failed one"},
 	"Lock":           {why: "guards the workspace directory, so it runs before anything is known about it"},
 	"SetDriver":      {why: "wiring, set before any verb runs"},
+	"SetStatePath":   {why: "bookkeeping: the machine says where it is, and a machine with nowhere to be has not started"},
 	"SetEnv":         {why: "wiring, set before any verb runs"},
 	"Acquire":        {why: "resolves the machine set; it runs before place has anything to record"},
 	"MarkStepFailed": {why: "records a failure, which by definition happens where a requirement was not met"},

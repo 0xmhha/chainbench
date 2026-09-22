@@ -102,3 +102,51 @@ func TestOpen_AcceptsAFreshWorkspaceAndStampsIt(t *testing.T) {
 		t.Errorf("a record this build wrote must re-open: %v", err)
 	}
 }
+
+// TestRecord_KeepsTheStatePath is the field's whole guarantee for now.
+//
+// Nothing reads it yet, which is the risk a field like this carries: it can be
+// added, look right, and turn out not to survive a save when the code that
+// needs it arrives. So the round trip is checked at the commit that adds it,
+// not at the one that starts depending on it.
+func TestRecord_KeepsTheStatePath(t *testing.T) {
+	dir := t.TempDir()
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const path = "Composition/Composing/BuildingGenesis/GenesisFromTemplate"
+	ws.SetStatePath(path)
+	if err := ws.Save(); err != nil {
+		t.Fatal(err)
+	}
+
+	back, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back.State().StatePath; got != path {
+		t.Errorf("the record came back at %q, want %q", got, path)
+	}
+}
+
+// TestRecord_OmitsAnEmptyStatePath: a workspace no machine has walked should
+// not carry an empty key, because a reader meeting "statePath": "" cannot tell
+// it from a machine that reported nowhere.
+func TestRecord_OmitsAnEmptyStatePath(t *testing.T) {
+	dir := t.TempDir()
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ws.Save(); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), "statePath") {
+		t.Errorf("an unwalked workspace records a state path:\n%s", b)
+	}
+}

@@ -127,6 +127,13 @@ func (w *Workspace) SetDriver(fn func() (process.Driver, error)) {
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
 
+// SetStatePath records where the composition machine is, for the next Save.
+//
+// It takes the already-joined path rather than a state, because the path is
+// what the machine computes and this package's record has no opinion about the
+// shape of a machine's tree.
+func (w *Workspace) SetStatePath(path string) { w.state.StatePath = path }
+
 // keysBase is where a node's identity files (nodekey, keystore, password)
 // live at launch, from the target's point of view: the local key set for a
 // local target, or keys/ under the data root for a remote one — where the

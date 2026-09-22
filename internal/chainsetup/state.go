@@ -96,6 +96,21 @@ type State struct {
 	// wrong launch into a refusal that names the file.
 	LaunchInputs map[string]string `json:"launchInputs,omitempty"`
 	Nodes        []node.Record     `json:"nodes,omitempty"`
+	// StatePath is where the composition machine was when this record was last
+	// written: the state and its ancestors, outermost first, as
+	// "Composition/Composing/BuildingGenesis/GenesisFromTemplate".
+	//
+	// It is the thing Steps cannot say. Steps names the rungs that finished,
+	// so "where is this composition now" has to be worked out from it by
+	// walking UpStepNames and looking for the first one not done — which is a
+	// second account of the composition's position, kept in a different place
+	// from the first, and the two have disagreed.
+	//
+	// Nothing reads it yet. It is written before it is read on purpose: a
+	// workspace composed by this build already carries its position by the
+	// time the resume path starts trusting it, so the change of format and the
+	// change of behaviour are not the same commit.
+	StatePath string `json:"statePath,omitempty"`
 	// Steps is what has been done to this composition, by name. It holds two
 	// kinds: a rung of the composition ladder (UpStepNames) and an operation on
 	// a network already up (OpStepNames). Every reader names the subset it
