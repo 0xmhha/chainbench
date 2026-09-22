@@ -1,6 +1,8 @@
 package suitecmd
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"errors"
 	"testing"
 
@@ -96,5 +98,54 @@ func TestSequenceExit_ASkipIsOnlyAFailureWhenTheCallerSaysSo(t *testing.T) {
 	// And a clean run is still clean with the flag on.
 	if err := sequenceExit(skipped(0), true); err != nil {
 		t.Errorf("--no-skips failed a run that skipped nothing: %v", err)
+	}
+}
+
+// TestFailedAtOf_OneSuffixForBothAreas.
+//
+// A run that the chain refused has two true states: the run's own stage, and
+// which of the chain's stages refused. Both used to be written into the message
+// by different places, and the result ended
+//
+//	... (at ChainLaunchNodesFailPortBusy) (at TestReachNetworkFailCompose)
+//
+// which reads as one thing said twice rather than as a stage and the stage
+// inside it. The surface renders them once, outermost first.
+func TestFailedAtOf_OneSuffixForBothAreas(t *testing.T) {
+	cases := []struct {
+		name string
+		res  app.RunSuiteOut
+		want string
+	}{
+		{
+			name: "a run that did not fail",
+			res:  app.RunSuiteOut{},
+			want: "",
+		},
+		{
+			name: "a failure of the run's own",
+			res:  app.RunSuiteOut{FailedAt: lifecycle.TestReadDeclarationFailMalformed},
+			want: "TestReadDeclarationFailMalformed",
+		},
+		{
+			name: "the chain refused, and says which of its stages",
+			res: app.RunSuiteOut{
+				FailedAt:        lifecycle.TestReachNetworkFailCompose,
+				ComposeFailedAt: lifecycle.ChainLaunchNodesFailPortBusy,
+			},
+			want: "TestReachNetworkFailCompose / ChainLaunchNodesFailPortBusy",
+		},
+		{
+			name: "a chain state with no run state is not a suffix",
+			res:  app.RunSuiteOut{ComposeFailedAt: lifecycle.ChainLaunchNodesFailPortBusy},
+			want: "",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := failedAtOf(c.res); got != c.want {
+				t.Errorf("failedAtOf = %q, want %q", got, c.want)
+			}
+		})
 	}
 }

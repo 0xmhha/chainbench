@@ -33,6 +33,7 @@ var names = map[Status]string{
 	ChainBuildNodeConfigFailPinUnreadable: "ChainBuildNodeConfigFailPinUnreadable",
 	ChainBuildNodeCommand:                 "ChainBuildNodeCommand",
 	ChainBuildNodeCommandFailBadOption:    "ChainBuildNodeCommandFailBadOption",
+	ChainBuildNodeCommandFailSplitNetwork: "ChainBuildNodeCommandFailSplitNetwork",
 	ChainDeployNodes:                      "ChainDeployNodes",
 	ChainDeployNodesVerifiedLocal:         "ChainDeployNodesVerifiedLocal",
 	ChainDeployNodesShippedRemote:         "ChainDeployNodesShippedRemote",
@@ -99,6 +100,28 @@ var names = map[Status]string{
 	ChainOpFailPrecondition:               "ChainOpFailPrecondition",
 	ChainOpFailNoSuchNode:                 "ChainOpFailNoSuchNode",
 	FailStageUnclassified:                 "FailStageUnclassified",
+
+	TestReadDeclaration:                 "TestReadDeclaration",
+	TestReadDeclarationFailUnreadable:   "TestReadDeclarationFailUnreadable",
+	TestReadDeclarationFailMalformed:    "TestReadDeclarationFailMalformed",
+	TestReadDeclarationFailIncomplete:   "TestReadDeclarationFailIncomplete",
+	TestReadDeclarationFailUnknownName:  "TestReadDeclarationFailUnknownName",
+	TestReadDeclarationFailContradicted: "TestReadDeclarationFailContradicted",
+	TestOpenSession:                     "TestOpenSession",
+	TestOpenSessionFailNoRoot:           "TestOpenSessionFailNoRoot",
+	TestReachNetwork:                    "TestReachNetwork",
+	TestReachNetworkFailCompose:         "TestReachNetworkFailCompose",
+	TestReachNetworkFailNotThePlan:      "TestReachNetworkFailNotThePlan",
+	TestReachNetworkFailUnreachable:     "TestReachNetworkFailUnreachable",
+	TestPrepare:                         "TestPrepare",
+	TestPrepareFailFork:                 "TestPrepareFailFork",
+	TestPrepareFailHeight:               "TestPrepareFailHeight",
+	TestPrepareFailAccount:              "TestPrepareFailAccount",
+	TestRunCases:                        "TestRunCases",
+	TestRunCasesFailCannotProceed:       "TestRunCasesFailCannotProceed",
+	TestCollect:                         "TestCollect",
+	TestCollectFailEvidence:             "TestCollectFailEvidence",
+	TestFinished:                        "TestFinished",
 }
 
 // allowed is every move this machine permits, and it is the whole rule.
@@ -163,7 +186,7 @@ var allowed = map[Status][]Status{
 		ChainBuildNodeConfigFailBadOverride, ChainBuildNodeConfigFailReadback,
 		ChainBuildNodeConfigFailPinUnreadable},
 
-	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption},
+	ChainBuildNodeCommand: {ChainDeployNodes, ChainBuildNodeCommandFailBadOption, ChainBuildNodeCommandFailSplitNetwork},
 
 	// The two detail states say what the target was. The table let a deploy
 	// move on without naming either for as long as nothing could name it:
@@ -274,6 +297,31 @@ var allowed = map[Status][]Status{
 	ChainOpRemoveNodes: {ChainRemoved, ChainOpFailPrecondition},
 
 	ChainOpHardfork: {ChainReady, ChainOpFailPrecondition},
+
+	// A suite run. Every stage may end the run, because a failure at any of
+	// them still has to be recorded and the network still has to be put back —
+	// which is TestCollect's job and why it follows a failure as well as a
+	// pass.
+	TestReadDeclaration: {TestOpenSession,
+		TestReadDeclarationFailUnreadable, TestReadDeclarationFailMalformed,
+		TestReadDeclarationFailIncomplete, TestReadDeclarationFailUnknownName,
+		TestReadDeclarationFailContradicted},
+
+	// Standing a network up is skipped by a run that attaches to one already
+	// up, which is why the session leads to two places rather than one.
+	TestOpenSession: {TestReachNetwork, TestPrepare, TestOpenSessionFailNoRoot},
+
+	TestReachNetwork: {TestPrepare,
+		TestReachNetworkFailCompose, TestReachNetworkFailNotThePlan,
+		TestReachNetworkFailUnreachable},
+
+	TestPrepare: {TestRunCases,
+		TestPrepareFailFork, TestPrepareFailHeight, TestPrepareFailAccount},
+
+	// Cases reporting failures is a verdict, and the run goes on to collect it.
+	TestRunCases: {TestCollect, TestRunCasesFailCannotProceed},
+
+	TestCollect: {TestFinished, TestCollectFailEvidence},
 }
 
 // entryLimit is how many times one BLOCK may be entered in a single run.

@@ -5,6 +5,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -142,4 +143,68 @@ func TestNetUp_NeedsAWorkspaceDirectory(t *testing.T) {
 	if _, err := verb.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{Chain: "stablenet"}); err == nil {
 		t.Error("want an error without a data dir")
 	}
+}
+
+// TestNetUp_AnOverriddenChainIDCarriesTheNetworkID is the wiring the derivation
+// depends on: NetworkOf follows the chain id, and the workspace has to hand it
+// the one this composition was asked for rather than the manifest's.
+//
+// It did not. Measured before the fix, `--chain-id 4242` built a genesis for
+// chain 4242 and launched every node with --networkid 8283, the stablenet
+// manifest's — so the network announced the number of a chain it was not
+// running, and a second composition from the unmodified manifest would announce
+// the same one.
+func TestNetUp_AnOverriddenChainIDCarriesTheNetworkID(t *testing.T) {
+	dir := t.TempDir()
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := verb.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+		DataDir: dir, Stage: chainsetup.UpDeploy,
+		Chain: "stablenet", KeysDir: keysAbs,
+		BPCount: 2, ENCount: 1,
+		ChainID: 4242,
+	}); err != nil {
+		t.Fatalf("verb.NetUp: %v", err)
+	}
+
+	// The record is read rather than the workspace's own accessor: it is the
+	// artifact a later launch replays, so it is where a wrong value survives.
+	raw, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
+	if err != nil {
+		t.Fatalf("read the record: %v", err)
+	}
+	var rec struct {
+		Nodes []struct {
+			Index int      `json:"index"`
+			Args  []string `json:"args"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal(raw, &rec); err != nil {
+		t.Fatalf("parse the record: %v", err)
+	}
+	if len(rec.Nodes) == 0 {
+		t.Fatal("the record holds no nodes")
+	}
+	for _, n := range rec.Nodes {
+		got, ok := flagValue(n.Args, "--networkid")
+		if !ok {
+			t.Errorf("node%d was assembled without --networkid", n.Index)
+			continue
+		}
+		if got != "4242" {
+			t.Errorf("node%d runs --networkid %s, and the chain it was composed for is 4242", n.Index, got)
+		}
+	}
+}
+
+// flagValue returns the value that follows flag in an assembled command line.
+func flagValue(args []string, flag string) (string, bool) {
+	for i, a := range args {
+		if a == flag && i+1 < len(args) {
+			return args[i+1], true
+		}
+	}
+	return "", false
 }

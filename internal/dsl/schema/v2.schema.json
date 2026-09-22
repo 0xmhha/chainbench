@@ -26,7 +26,7 @@
           "const": "2"
         },
         "kind": {
-          "const": "env"
+          "const": "chain-preset"
         },
         "id": {
           "type": "string",
@@ -164,23 +164,19 @@
         "upgrade": {
           "type": "object",
           "additionalProperties": false,
-          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to, shaped by a preset under presets/chain; a restart crosses one chain's own fork on one binary at a time and names the fork itself.",
+          "description": "a hardfork crossing. A concurrent handoff starts on binaries.from and forks to binaries.to; a restart crosses one chain's own fork on one binary at a time. Both say which fork and at which block.",
           "properties": {
-            "preset": {
-              "type": "string",
-              "description": "a hardfork preset under presets/chain, without the directory or the .yaml extension"
-            },
             "template": {
               "type": "string",
               "description": "the from-chain's own genesis template"
             },
             "fork": {
               "type": "string",
-              "description": "which fork is crossed. Required for a restart; for a handoff the preset answers, and a repetition that disagrees is refused."
+              "description": "which fork is crossed. Required. Checked against the chain the post-fork binary runs."
             },
             "at": {
               "type": "integer",
-              "description": "the block the fork activates at. Required for a restart; for a handoff the preset answers."
+              "description": "the block the fork activates at. Required."
             },
             "from": {
               "type": "string",
@@ -288,7 +284,7 @@
         "schemaVersion",
         "kind",
         "id",
-        "env",
+        "chainPreset",
         "steps"
       ],
       "properties": {
@@ -306,11 +302,11 @@
           "type": "string",
           "description": "Prose saying what this document is for. No execution semantics."
         },
-        "env": {
+        "chainPreset": {
           "oneOf": [
             {
               "type": "string",
-              "description": "env id resolved against the case file's directory"
+              "description": "chain-preset id, resolved against the case file's directory, a chain-preset/ directory above it, or presets/chain"
             },
             {
               "$ref": "#/$defs/envSpec"

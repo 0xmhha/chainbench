@@ -58,7 +58,7 @@ func TestCompositionOf_ExistingConfigsResolveThroughTheDSL(t *testing.T) {
 	if err := os.WriteFile(wcPath, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},` +
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"},` +
 		`"topology":{"chain":"stablenet","nodes":[` +
 		`{"index":1,"role":"bp","config":"validator"},` +
 		`{"index":2,"role":"bp","config":"validator"},` +

@@ -6,7 +6,7 @@
     "rpc",
     "precompile:secp256r1"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "wbft-bp4",
     "capabilities": [
       "rpc"

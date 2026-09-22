@@ -16,7 +16,7 @@ import (
 // the suite parses it.
 func caseWithEnv(t *testing.T, env string) dsl.Spec {
 	t.Helper()
-	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := dsl.Parse([]byte(raw))
 	if err != nil {
@@ -26,7 +26,7 @@ func caseWithEnv(t *testing.T, env string) dsl.Spec {
 }
 
 func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"bp":3,"en":1,"syncMode":"snap"},
 	  "keys":{"nodekeys":{"source":"generate","ref":"/keys/gen"}},
@@ -73,7 +73,7 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 }
 
 func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/gstable", BPCount: 5, KeysDir: "/k"})
 	if err != nil {
 		t.Fatal(err)
@@ -100,9 +100,9 @@ func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 // scheduled on the genesis those nodes share and everything else is the
 // ordinary path.
 func TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
-	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "upgrade":{"fork":"croissant","at":20,"from":"default","to":"next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"en","binary":"next"},
 	    {"index":2,"role":"bp"}
@@ -126,7 +126,7 @@ func TestCompositionOf_AHardforkComposesLikeAnyOtherNetwork(t *testing.T) {
 
 func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	// Two binaries of the same family run side by side, declared per node.
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 	  "binaries":{"stable":"gstable","wbft":"gwbft"},
 	  "topology":{"nodes":[
 	    {"role":"bp","binary":"stable"},
@@ -167,7 +167,7 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 // every other source still defaults to the shared preset.
 func TestCompositionOf_GenerateDefaultsToWorkspaceDir(t *testing.T) {
 	dir := t.TempDir()
-	gen := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	gen := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "keys":{"nodekeys":{"source":"generate"}}}`)
 	comp, err := compositionOf(context.Background(), gen, RunSuiteIn{DataDir: dir})
@@ -182,7 +182,7 @@ func TestCompositionOf_GenerateDefaultsToWorkspaceDir(t *testing.T) {
 	}
 
 	// Preset (the default source) still composes from the shared preset.
-	preset := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	preset := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 	pc, err := compositionOf(context.Background(), preset, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
@@ -198,7 +198,7 @@ func TestCompositionOf_GenerateDefaultsToWorkspaceDir(t *testing.T) {
 // every other declared path.
 func TestCompositionOf_NodeTablePerNodeConfig(t *testing.T) {
 	t.Setenv("CFGDIR", "/opt/cfg")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"nodes":[
 	    {"role":"bp","config":"${CFGDIR}/node1.toml"},
@@ -226,7 +226,7 @@ func TestCompositionOf_NodeTablePerNodeConfig(t *testing.T) {
 func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
 	t.Setenv("KEYDIR", "/opt/keys")
 	dir := t.TempDir()
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"nodes":[
 	    {"role":"bp","key":"0xabc"},
@@ -272,7 +272,7 @@ func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 
 	// A genesis the bundle names expands to an existing-genesis reference.
 	write("existingInputs:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
@@ -285,7 +285,7 @@ func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 	}
 
 	// A bundle genesis conflicts with a spec that already declares a genesis.
-	specG := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"genesis":{"set":{"config.chainId":9}}}`)
+	specG := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"genesis":{"set":{"config.chainId":9}}}`)
 	if _, err := compositionOf(context.Background(), specG, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
 		t.Fatal("a bundle genesis over a declared genesis must conflict")
 	}
@@ -337,7 +337,7 @@ func TestCompositionOf_WorkspaceConfigDataRootConflict(t *testing.T) {
 
 	// env.target names a different root than the workspace-config -> conflict.
 	writeWC("/data")
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"target":"/other/root"}`)
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"target":"/other/root"}`)
 	_, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err == nil || !strings.Contains(err.Error(), "data root conflict") {
 		t.Fatalf("mismatched roots must conflict, got %v", err)
@@ -356,7 +356,7 @@ func TestCompositionOf_WorkspaceConfigDataRootConflict(t *testing.T) {
 
 	// No env target: the workspace-config root is used with no conflict.
 	writeWC("/data")
-	plain := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	plain := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 	comp, err := compositionOf(context.Background(), plain, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
 		t.Fatalf("no env target must be accepted: %v", err)
@@ -371,7 +371,7 @@ func TestCompositionOf_WorkspaceConfigDataRootConflict(t *testing.T) {
 // must select proxied peering. Under mesh the tier would do nothing and
 // endpoints would dial producers directly.
 func TestCompositionOf_NodeTablePnSelectsProxied(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"nodes":[
 	    {"role":"bp"},
@@ -400,7 +400,7 @@ func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
 	if suiteDefaultValidators != 4 || defaultKeysDir != "presets/keys" {
 		t.Fatalf("canonical defaults drifted: validators=%d keys=%q", suiteDefaultValidators, defaultKeysDir)
 	}
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 
 	// Unset (what both surfaces pass when the operator/agent gives nothing).
 	unset, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
@@ -431,7 +431,7 @@ func TestInlineTopologyOf_Rejects(t *testing.T) {
 	}
 	for name, topoJSON := range cases {
 		t.Run(name, func(t *testing.T) {
-			spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+			spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 			  "binaries":{"wbft":"gwbft"},"topology":`+topoJSON+`}`)
 			_ = bins
 			if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
@@ -471,8 +471,8 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 }
 
 func TestSameChain(t *testing.T) {
-	a := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"g"}}`)
-	b := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"f","chain":"wbft","binaries":{"default":"g"}}`)
+	a := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"g"}}`)
+	b := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"f","chain":"wbft","binaries":{"default":"g"}}`)
 	if err := sameChain([]dsl.Spec{a, a}); err != nil {
 		t.Errorf("same chain refused: %v", err)
 	}
@@ -502,7 +502,7 @@ func TestExpand_DefaultsAndVars(t *testing.T) {
 // the reuse fingerprint (which left a declared target moving the key but not the
 // nodes).
 func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"target":"srv://bp1/data"}`)
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
@@ -513,7 +513,7 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 	}
 
 	// A malformed target fails composition rather than being ignored.
-	bad := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	bad := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"target":"srv://"}`)
 	if _, err := compositionOf(context.Background(), bad, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
 		t.Fatal("a malformed env target must fail composition")
@@ -524,7 +524,7 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 // template reach the composition, so a DSL spec can run an external chain on a
 // built-in family — the capability was CLI-only before.
 func TestCompositionOf_EnvManifestThreads(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "manifest":"/chains/acme.json","genesisTemplate":"/chains/acme-genesis.json"}`)
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
@@ -542,7 +542,7 @@ func TestCompositionOf_EnvManifestThreads(t *testing.T) {
 // where they were CLI-only before.
 func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
 	// Blueprint: threaded to the composition's BlueprintPath.
-	bp := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	bp := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"blueprint":"/net/blueprint.yaml"}`)
 	comp, err := compositionOf(context.Background(), bp, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
@@ -553,7 +553,7 @@ func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
 	}
 
 	// keys.validators: threaded to the composition's KeysValidators.
-	kv := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	kv := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":3},
 	  "keys":{"nodekeys":{"source":"generate","ref":"keys/gen","validators":2}}}`)
 	comp, err = compositionOf(context.Background(), kv, RunSuiteIn{DataDir: t.TempDir()})
@@ -570,7 +570,7 @@ func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
 // non-producing discovery hub; validators stay the bp set. Verified live on the
 // docker fleet (a wemix bp3/pn1/en1 network comes up and produces blocks).
 func TestCompositionOf_WemixProxiedPn(t *testing.T) {
-	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix"},"topology":{"bp":3,"pn":1,"en":1}}`)
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {

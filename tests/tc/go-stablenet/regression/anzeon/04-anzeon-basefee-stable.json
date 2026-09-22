@@ -5,7 +5,7 @@
   "requires": [
     "rpc"
   ],
-  "env": "stablenet-bp4",
+  "chainPreset": "stablenet-bp4",
   "steps": [
     {
       "do": "waitBlock",

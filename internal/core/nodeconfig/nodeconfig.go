@@ -42,8 +42,6 @@ type Chain struct {
 	// MinerRecommit is the manifest's miner_recommit form: "duration"
 	// (default) or "nanos" — which the target binary decodes.
 	MinerRecommit string
-	// NetworkID is the devp2p network id; 0 leaves it to the binary.
-	NetworkID int64
 	// Launch is what the consensus asks of this node's launch. It carries facts
 	// rather than flags: which flag says "seal" is the dialect's question, and
 	// the family cannot answer it for a binary it does not know.
@@ -58,16 +56,63 @@ func ChainOf(plugin registry.ChainPlugin, role node.Role) Chain {
 		Dialect:       m.Dialect,
 		RPCNamespace:  m.Consensus.RPCNamespace,
 		MinerRecommit: m.MinerRecommit,
-		NetworkID:     m.NetworkID,
 		Launch:        plugin.Family().LaunchPolicy(role),
 	}
+}
+
+// Network is what every node of one network shares, whichever binary it runs.
+//
+// It is separate from [Chain] because the two answer different questions and
+// are filled from different plugins. Chain follows the BINARY — which flag
+// vocabulary it speaks, which RPC namespace it exposes — so a network of mixed
+// builds has one Chain per node. Network follows the NETWORK, so every node of
+// it has the same values or they are not one network.
+//
+// Keeping them in one struct is what let a mixed-binary network disagree with
+// itself: the config writer filled it from each node's own plugin and the argv
+// assembler from the composition's, so a successor's config file named one
+// devp2p network and its command line another. Nothing noticed, because the
+// command line wins.
+type Network struct {
+	// ChainID is the genesis chain id the whole network runs on. In a handoff
+	// it is the producing chain's and does not change at the fork: the chain
+	// continues, only the build that seals it changes.
+	ChainID int64
+	// NetworkID is the devp2p network id. It is ChainID unless a chain declares
+	// otherwise, which is the rule that makes a handoff work — go-wemix defaults
+	// its own id independently of the chain id and go-wbft derives it from the
+	// chain id, so two builds meant to form one chain peer only when both are
+	// told the same number.
+	NetworkID int64
+}
+
+// NetworkOf reads the network-wide facts from the plugin the NETWORK runs on,
+// with chainID overriding the manifest's when non-zero (`--chain-id`).
+//
+// The devp2p id follows the chain id. A manifest that declares a different one
+// is taken at its word — that is the only reason the field exists — but a
+// manifest that repeats the chain id adds nothing, and an overridden chain id
+// then carries the devp2p id with it instead of leaving it behind.
+func NetworkOf(plugin registry.ChainPlugin, chainID int64) Network {
+	m := plugin.Manifest()
+	n := Network{ChainID: m.ChainID}
+	if chainID != 0 {
+		n.ChainID = chainID
+	}
+	n.NetworkID = n.ChainID
+	if m.NetworkID != 0 && m.NetworkID != m.ChainID {
+		n.NetworkID = m.NetworkID
+	}
+	return n
 }
 
 // Spec is one node's configuration: everything both renderers draw on.
 type Spec struct {
 	Chain Chain
-	Role  node.Role
-	Ports node.Endpoints
+	// Network is what this node shares with every other node of its network.
+	Network Network
+	Role    node.Role
+	Ports   node.Endpoints
 	// SyncMode is the geth sync mode; empty renders the default ("full").
 	SyncMode string
 
@@ -212,11 +257,12 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 	modules := []Module{
 		id,
 		Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath},
-		// The manifest's network id is emitted rather than left to the
-		// binary's default: a chain whose devp2p network id differs from its
-		// genesis chain id (the handoff produces one) must say so. An
+		// The network's devp2p id is emitted rather than left to the binary's
+		// default, because the two builds default it differently and a handoff
+		// needs them to agree. It comes from the NETWORK, not from this node's
+		// chain, so every node of one network is told the same number. An
 		// operator's --network-id still wins, arriving on a later layer.
-		P2P{Port: s.Ports.P2P, NetworkID: s.Chain.NetworkID},
+		P2P{Port: s.Ports.P2P, NetworkID: s.Network.NetworkID},
 		HTTPRPC{Enabled: true, Addr: s.HTTPHost, Port: s.Ports.HTTP},
 		WSRPC{Enabled: true, Port: s.Ports.WS},
 	}

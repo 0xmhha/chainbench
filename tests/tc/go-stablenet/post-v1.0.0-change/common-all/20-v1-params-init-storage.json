@@ -8,7 +8,7 @@
     "contract:govMinter",
     "contract:govValidator"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4-boho-at-100",
     "capabilities": [
       "rpc"

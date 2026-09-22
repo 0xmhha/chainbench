@@ -7,7 +7,7 @@
     "rpc",
     "contract:govMinter"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

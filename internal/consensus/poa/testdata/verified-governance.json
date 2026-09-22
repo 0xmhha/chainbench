@@ -1,0 +1,20 @@
+{
+  "ballot_duration_max": 604800,
+  "ballot_duration_min": 86400,
+  "base_fee_max_change_rate": 55,
+  "block_creation_time": 1000,
+  "block_gas_limit": 105000000,
+  "block_reward_amount": "1000000000000000000",
+  "gas_target_percentage": 30,
+  "max_base_fee": "50000000000000",
+  "max_idle_block_interval": 5,
+  "max_priority_fee_per_gas": "100000000000",
+  "reward_distribution": [
+    4000,
+    1000,
+    2500,
+    2500
+  ],
+  "staking_max": "1500000000000000000000000000",
+  "staking_min": "1500000000000000000000000"
+}

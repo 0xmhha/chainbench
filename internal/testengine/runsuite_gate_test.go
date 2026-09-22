@@ -28,7 +28,7 @@ import (
 func caseSpec(t *testing.T, id, chain, binary string, extra map[string]any) []byte {
 	t.Helper()
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": chain,
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": chain,
 		"binaries": map[string]any{"default": binary},
 		"topology": map[string]any{"bp": 1},
 	}
@@ -37,8 +37,8 @@ func caseSpec(t *testing.T, id, chain, binary string, extra map[string]any) []by
 	}
 	b, err := json.Marshal(map[string]any{
 		"schemaVersion": "2", "kind": "case", "id": id,
-		"requires": []string{"rpc"},
-		"env":      env,
+		"requires":    []string{"rpc"},
+		"chainPreset": env,
 		"steps": []map[string]any{
 			{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"},
 		},
@@ -168,8 +168,8 @@ func TestRunSuite_PrecheckStopsAnUnresolvedReference(t *testing.T) {
 	bad, err := json.Marshal(map[string]any{
 		"schemaVersion": "2", "kind": "case", "id": "typo",
 		"requires": []string{"rpc"},
-		"env": map[string]any{
-			"schemaVersion": "2", "kind": "env", "id": "e", "chain": "wbft",
+		"chainPreset": map[string]any{
+			"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "wbft",
 			"binaries": map[string]any{"default": "gwbft"},
 			"topology": map[string]any{"bp": 1},
 		},

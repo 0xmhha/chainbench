@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/origin"
+
 	"context"
 	"os"
 	"path/filepath"
@@ -32,7 +34,7 @@ func planFor(t *testing.T, env string, in RunSuiteIn) ComposePlan {
 // counts at all (BPCount and friends stay zero), so a plan that read them would
 // print "bp 0 · en 0 · pn 0" over a fifteen node network and look plausible.
 func TestPlan_CountsRolesOffANodeTable(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -53,7 +55,7 @@ func TestPlan_CountsRolesOffANodeTable(t *testing.T) {
 // TestPlan_CountsComeFromTheRequestWithoutATable is the other form: counts, and
 // an explicit --bp overriding the declaration.
 func TestPlan_CountsComeFromTheRequestWithoutATable(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":3,"en":2,"syncMode":"snap"}}`
 
 	p := planFor(t, env, RunSuiteIn{})
@@ -76,7 +78,7 @@ func TestPlan_CountsComeFromTheRequestWithoutATable(t *testing.T) {
 // cannot see both has to merge them in their head, which is the thing that goes
 // wrong.
 func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "launch":{"bp":{"mine":true}},
 	  "config":{"node1":{"txpool.pricelimit":1}}}`
@@ -84,13 +86,13 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 
 	if got := p.Launch["bp"]; len(got) != 1 || !strings.HasPrefix(got[0].Knob, "mine") {
 		t.Errorf("declared bp launch = %v", got)
-	} else if got[0].From != OriginDeclaration {
+	} else if got[0].From != origin.FromDeclaration {
 		t.Errorf("the bp knob came from the declaration, not %q", got[0].From)
 	}
 	var all []string
 	for _, k := range p.Launch["all"] {
 		all = append(all, k.Knob)
-		if k.From != OriginCommand {
+		if k.From != origin.FromCommand {
 			t.Errorf("%q landed in the all scope from the command, not %q", k.Knob, k.From)
 		}
 	}
@@ -115,7 +117,7 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 // source composes from the recorded key set, and the plan has to say so rather
 // than print an empty field, because "" reads as "nothing decided yet".
 func TestPlan_KeysSourceDefaultsToTheRecordedSet(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2}}`
 	p := planFor(t, env, RunSuiteIn{})
 	if p.Keys.Source != keySourceKeyPreset {
@@ -133,9 +135,9 @@ func TestPlan_KeysSourceDefaultsToTheRecordedSet(t *testing.T) {
 // network the way it shows every other one — which is also the fix for X7, the
 // case whose size lived in a document the composer refused to read.
 func TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"binary":"gwbft","chain":"wbft"}},
-	  "upgrade":{"preset":"wemix-upgrade","fork":"croissant","at":20,"from":"default","to":"next"},
+	  "upgrade":{"fork":"croissant","at":20,"from":"default","to":"next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"en","binary":"next"},
 	    {"index":2,"role":"en","binary":"next"},
@@ -160,7 +162,7 @@ func TestPlan_AHardforkPlansItsLayoutLikeAnyOtherNetwork(t *testing.T) {
 // network on a server set, and that is exactly the difference an operator wants
 // confirmed before a remote run.
 func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2}}`
 	if got := planFor(t, env, RunSuiteIn{}).Target; got != "this machine" {
 		t.Errorf("target = %q", got)
@@ -179,8 +181,8 @@ func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
 // nobody named is the case worth holding hardest: a harness default is the one
 // a reader cannot find by grepping their own files.
 func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
-	const bare = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"}`
-	const declared = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const bare = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet"}`
+	const declared = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "target":"/srv/net1","keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 
@@ -189,26 +191,26 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 		env   string
 		in    RunSuiteIn
 		field PlanField
-		want  PlanOrigin
+		want  origin.Origin
 	}{
-		{"binary from the command", declared, RunSuiteIn{Binary: "/bin/gstable"}, FieldBinary, OriginCommand},
-		{"binary from the declaration", declared, RunSuiteIn{}, FieldBinary, OriginDeclaration},
-		{"binary from the chain manifest", bare, RunSuiteIn{}, FieldBinary, OriginHarness},
+		{"binary from the command", declared, RunSuiteIn{Binary: "/bin/gstable"}, FieldBinary, origin.FromCommand},
+		{"binary from the declaration", declared, RunSuiteIn{}, FieldBinary, origin.FromDeclaration},
+		{"binary from the chain manifest", bare, RunSuiteIn{}, FieldBinary, origin.FromDefault},
 
-		{"bp from the command", declared, RunSuiteIn{BPCount: 7}, FieldNodesBP, OriginCommand},
-		{"bp from the declaration", declared, RunSuiteIn{}, FieldNodesBP, OriginDeclaration},
-		{"bp from the harness default", bare, RunSuiteIn{}, FieldNodesBP, OriginHarness},
+		{"bp from the command", declared, RunSuiteIn{BPCount: 7}, FieldNodesBP, origin.FromCommand},
+		{"bp from the declaration", declared, RunSuiteIn{}, FieldNodesBP, origin.FromDeclaration},
+		{"bp from the harness default", bare, RunSuiteIn{}, FieldNodesBP, origin.FromDefault},
 
-		{"keys dir from the command", declared, RunSuiteIn{KeysDir: "/k"}, FieldKeysDir, OriginCommand},
-		{"keys dir from the declaration", declared, RunSuiteIn{}, FieldKeysDir, OriginDeclaration},
-		{"keys dir from the harness default", bare, RunSuiteIn{}, FieldKeysDir, OriginHarness},
+		{"keys dir from the command", declared, RunSuiteIn{KeysDir: "/k"}, FieldKeysDir, origin.FromCommand},
+		{"keys dir from the declaration", declared, RunSuiteIn{}, FieldKeysDir, origin.FromDeclaration},
+		{"keys dir from the harness default", bare, RunSuiteIn{}, FieldKeysDir, origin.FromDefault},
 
-		{"keys source from the command", declared, RunSuiteIn{KeysSource: "generate"}, FieldKeysSource, OriginCommand},
-		{"keys source from the declaration", declared, RunSuiteIn{}, FieldKeysSource, OriginDeclaration},
-		{"keys source from the harness default", bare, RunSuiteIn{}, FieldKeysSource, OriginHarness},
+		{"keys source from the command", declared, RunSuiteIn{KeysSource: "generate"}, FieldKeysSource, origin.FromCommand},
+		{"keys source from the declaration", declared, RunSuiteIn{}, FieldKeysSource, origin.FromDeclaration},
+		{"keys source from the harness default", bare, RunSuiteIn{}, FieldKeysSource, origin.FromDefault},
 
-		{"target from the declaration", declared, RunSuiteIn{}, FieldTarget, OriginDeclaration},
-		{"target from the harness default", bare, RunSuiteIn{}, FieldTarget, OriginHarness},
+		{"target from the declaration", declared, RunSuiteIn{}, FieldTarget, origin.FromDeclaration},
+		{"target from the harness default", bare, RunSuiteIn{}, FieldTarget, origin.FromDefault},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := planFor(t, tc.env, tc.in)
@@ -223,7 +225,7 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 // enough to read. Listing every field would put five words a reader already
 // assumes in front of the one they need.
 func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
-	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const env = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "keys":{"nodekeys":{"ref":"presets/keys","source":"keyPreset"}}}`
 	line := planFor(t, env, RunSuiteIn{}).chosenByLine()
@@ -232,7 +234,7 @@ func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
 		t.Errorf("the declaration chose the binary and the keys, so the row must not mention them: %q", line)
 	}
 	// Nothing named a target, and that is exactly what the row is for.
-	if !strings.Contains(line, string(FieldTarget)+": "+string(OriginHarness)) {
+	if !strings.Contains(line, string(FieldTarget)+": "+string(origin.FromDefault)) {
 		t.Errorf("the harness chose the target and the row must say so: %q", line)
 	}
 }
@@ -243,7 +245,7 @@ func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
 // that describes a different network than the one that launches is worse than
 // no plan.
 func TestPlan_ATargetTheDeclarationNamedIsShown(t *testing.T) {
-	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	const env = `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":2},
 	  "target":"ops@host.example:/data/net1"}`
 	p := planFor(t, env, RunSuiteIn{})
@@ -311,7 +313,7 @@ func TestPlan_NamesTheBinaryTheLaunchWillRun(t *testing.T) {
 	cfg := filepath.Join(dir, "workspace-config.yaml")
 	writeConfig(t, cfg, filepath.Join(dir, "out"))
 
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":1}}`
 
 	t.Run("placed through the environment file", func(t *testing.T) {
@@ -349,7 +351,7 @@ func TestComposition_OneFormOfABinaryReference(t *testing.T) {
 	cfg := filepath.Join(dir, "workspace-config.yaml")
 	writeConfig(t, cfg, filepath.Join(dir, "out"))
 
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","upgrade":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -397,7 +399,7 @@ func TestComposition_OneFormOfABinaryReference(t *testing.T) {
 // composition carries an overlay file for it to the genesis step, which merges
 // it onto the built genesis and records where that document landed.
 func TestComposition_ASecondGenesisForASecondBinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "genesis":{"mode":"template","perBinary":{
 	     "next":{"set":{"config.croissantBlock":20}}}},
@@ -429,11 +431,11 @@ func TestComposition_ASecondGenesisForASecondBinary(t *testing.T) {
 // it would otherwise initialize from the network's genesis and nothing would
 // say so, which is the shape a misspelled name takes.
 func TestComposition_ASecondGenesisMustNameADeclaredBinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "genesis":{"mode":"template","perBinary":{"nxet":{"set":{"config.croissantBlock":20}}}},
 	  "topology":{"bp":2}}`
-	raw := `{"schemaVersion":"2","kind":"case","id":"typo","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"typo","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := dsl.Parse([]byte(raw)); err == nil ||
 		!strings.Contains(err.Error(), "binaries does not declare") {
@@ -449,7 +451,7 @@ func TestComposition_ASecondGenesisMustNameADeclaredBinary(t *testing.T) {
 // successor ran all four on the successor — and the plan said so, with nothing
 // about it looking wrong.
 func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"gstable","next":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp"},
@@ -475,7 +477,7 @@ func TestComposition_TheDeclaredDefaultIsWhatTheRestOfTheNetworkRuns(t *testing.
 // RPC namespace and what the consensus asks of a launch. The declaration says
 // it per binary, and a bare string keeps meaning "this environment's chain".
 func TestComposition_ABinaryCanNameItsOwnChain(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{
 	    "default":"gwemix",
 	    "next":{"binary":"gwbft","chain":"wbft"}},
@@ -501,10 +503,10 @@ func TestComposition_ABinaryCanNameItsOwnChain(t *testing.T) {
 // TestComposition_ABinaryEntryNeedsABinary: an object form that names only a
 // chain says which chain nothing runs.
 func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 	  "binaries":{"default":"gwemix","next":{"chain":"wbft"}},
 	  "topology":{"bp":1}}`
-	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := dsl.Parse([]byte(raw)); err == nil ||
 		!strings.Contains(err.Error(), "needs a binary") {
@@ -520,7 +522,7 @@ func TestComposition_ABinaryEntryNeedsABinary(t *testing.T) {
 // handed it — found by composing a network that used the object form for both.
 func TestComposition_TheDeclaredDefaultIsExpandedLikeAnyOtherReference(t *testing.T) {
 	t.Setenv("CB_TEST_DEFAULT_BIN", "/opt/gstable")
-	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 	  "binaries":{"default":"${CB_TEST_DEFAULT_BIN}","next":"gstable-next"},
 	  "topology":{"nodes":[
 	    {"index":1,"role":"bp"},{"index":2,"role":"bp","binary":"next"}]}}`

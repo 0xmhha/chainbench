@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"context"
 	"fmt"
 	"os"
@@ -146,10 +148,10 @@ func NewAttachBuildEnv(chain string, eps []node.RPCEndpoint) BuildEnvFunc {
 // runs anywhere the endpoints are reachable.
 func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if cfg.Chain == "" || cfg.ArtifactRoot == "" {
-		return nil, fmt.Errorf("engine: attach config needs chain and artifactRoot")
+		return nil, lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach config needs chain and artifactRoot"))
 	}
 	if len(cfg.Nodes.Nodes) == 0 && len(cfg.RPCURLs) == 0 {
-		return nil, fmt.Errorf("engine: attach config needs a node set or at least one RPC URL")
+		return nil, lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach config needs a node set or at least one RPC URL"))
 	}
 	eps := make([]node.RPCEndpoint, len(cfg.RPCURLs))
 	for i, u := range cfg.RPCURLs {

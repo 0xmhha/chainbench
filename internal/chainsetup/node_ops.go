@@ -42,7 +42,7 @@ func (w *Workspace) nodeAt(index int) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, ofKind(errOpNoSuchNode, fmt.Errorf("chainsetup: no node %d in the table", index))
+	return -1, lifecycle.Mark(errOpNoSuchNode, fmt.Errorf("chainsetup: no node %d in the table", index))
 }
 
 // StopNode stops one node by index and clears its pid; the node keeps its
@@ -147,7 +147,7 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
-		return "", ofKind(errOpNothingToReplace,
+		return "", lifecycle.Mark(errOpNothingToReplace,
 			fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index))
 	}
 	if err := w.allowNode("SwapNode", index); err != nil {

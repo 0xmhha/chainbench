@@ -71,7 +71,7 @@ type NewOpts struct {
 // data root defaults to the workspace directory.
 func (w *Workspace) New(opts NewOpts) (string, error) {
 	if opts.Chain == "" && opts.ManifestPath == "" {
-		return "", ofKind(errNewNoChain, fmt.Errorf("chainsetup: --chain or --manifest is required"))
+		return "", lifecycle.Mark(errNewNoChain, fmt.Errorf("chainsetup: --chain or --manifest is required"))
 	}
 	p, err := external.ResolveChain(opts.Chain, opts.ManifestPath, opts.TemplatePath)
 	if err != nil {

@@ -15,15 +15,15 @@ import (
 func envFile(t *testing.T, id, chain string, bp int) string {
 	t.Helper()
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "env"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "chain-preset"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	doc := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": id, "chain": chain,
+		"schemaVersion": "2", "kind": "chain-preset", "id": id, "chain": chain,
 		"topology": map[string]any{"bp": bp},
 	}
 	b, _ := json.Marshal(doc)
-	if err := os.WriteFile(filepath.Join(dir, "env", id+".env.json"), b, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "chain-preset", id+".json"), b, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	return dir
@@ -32,7 +32,7 @@ func envFile(t *testing.T, id, chain string, bp int) string {
 // caseFile writes a case with the given env value (raw JSON) and returns its path.
 func caseFile(t *testing.T, dir, id, env string) string {
 	t.Helper()
-	raw := `{"schemaVersion":"2","kind":"case","id":"` + id + `","env":` + env + `,
+	raw := `{"schemaVersion":"2","kind":"case","id":"` + id + `","chainPreset":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	p := filepath.Join(dir, id+".json")
 	if err := os.WriteFile(p, []byte(raw), 0o644); err != nil {
@@ -42,9 +42,9 @@ func caseFile(t *testing.T, dir, id, env string) string {
 }
 
 // specOf reads one spec the way every surface does and parses it.
-func specOf(t *testing.T, path, envRef string) dsl.Spec {
+func specOf(t *testing.T, path, presetRef string) dsl.Spec {
 	t.Helper()
-	raws, err := dsl.ReadFilesWithEnv([]string{path}, envRef)
+	raws, err := dsl.ReadFilesWithChainPreset([]string{path}, presetRef)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -105,10 +105,10 @@ func TestReadFilesWithEnv_KeepsWhatTheCaseOverrode(t *testing.T) {
 // with no way to tell which parts mattered, so it is refused by name.
 func TestReadFilesWithEnv_RefusesACaseThatDeclaresItsEnvInline(t *testing.T) {
 	dir := envFile(t, "b-bp7", "wbft", 7)
-	p := caseFile(t, dir, "inline-case", `{"schemaVersion":"2","kind":"env","id":"x",
+	p := caseFile(t, dir, "inline-case", `{"schemaVersion":"2","kind":"chain-preset","id":"x",
 	  "chain":"stablenet","topology":{"bp":4}}`)
 
-	_, err := dsl.ReadFilesWithEnv([]string{p}, "b-bp7")
+	_, err := dsl.ReadFilesWithChainPreset([]string{p}, "b-bp7")
 	if err == nil {
 		t.Fatal("a case with an inline env must be refused, not silently rewritten")
 	}
@@ -129,7 +129,7 @@ func TestReadFilesWithEnv_TakesAPath(t *testing.T) {
 
 	outside := filepath.Join(t.TempDir(), "newchain.json")
 	b, _ := json.Marshal(map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "newchain", "chain": "wemix",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "newchain", "chain": "wemix",
 		"topology": map[string]any{"bp": 5},
 	})
 	if err := os.WriteFile(outside, b, 0o644); err != nil {
@@ -148,11 +148,11 @@ func TestReadFilesWithEnv_SaysWhereItLooked(t *testing.T) {
 	dir := envFile(t, "a-bp4", "stablenet", 4)
 	p := caseFile(t, dir, "c", `"a-bp4"`)
 
-	_, err := dsl.ReadFilesWithEnv([]string{p}, "nonesuch")
+	_, err := dsl.ReadFilesWithChainPreset([]string{p}, "nonesuch")
 	if err == nil {
 		t.Fatal("an unknown env id must be refused")
 	}
-	if !strings.Contains(err.Error(), "nonesuch.env.json") {
+	if !strings.Contains(err.Error(), "nonesuch") {
 		t.Errorf("message must name the file it looked for: %v", err)
 	}
 }
@@ -167,7 +167,7 @@ func TestReadFiles_IsReadFilesWithNoEnv(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := dsl.ReadFilesWithEnv([]string{p}, "")
+	b, err := dsl.ReadFilesWithChainPreset([]string{p}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,10 +188,10 @@ func bpOf(s dsl.Spec) int {
 func writeEnv(t *testing.T, dir, id, chain string, bp int) {
 	t.Helper()
 	b, _ := json.Marshal(map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": id, "chain": chain,
+		"schemaVersion": "2", "kind": "chain-preset", "id": id, "chain": chain,
 		"topology": map[string]any{"bp": bp},
 	})
-	if err := os.WriteFile(filepath.Join(dir, "env", id+".env.json"), b, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "chain-preset", id+".json"), b, 0o644); err != nil {
 		t.Fatal(err)
 	}
 }

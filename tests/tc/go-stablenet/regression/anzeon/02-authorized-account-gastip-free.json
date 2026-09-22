@@ -9,7 +9,7 @@
     "contract:accountManager",
     "contract:govCouncil"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

@@ -88,8 +88,8 @@ func attachSpec(t *testing.T, id string, expected string) []byte {
 	b, err := json.Marshal(map[string]any{
 		"schemaVersion": "2", "kind": "case", "id": id,
 		"requires": []string{"rpc"},
-		"env": map[string]any{
-			"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"chainPreset": map[string]any{
+			"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		},
 		"steps": []map[string]any{
 			{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": expected},
@@ -245,8 +245,8 @@ func TestRunToReport_AnUnansweredMethodFailsTheSpecRatherThanTheHarness(t *testi
 	spec, err := json.Marshal(map[string]any{
 		"schemaVersion": "2", "kind": "case", "id": "asks-for-what-the-stub-refuses",
 		"requires": []string{"rpc"},
-		"env": map[string]any{
-			"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"chainPreset": map[string]any{
+			"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		},
 		"steps": []map[string]any{
 			{"expect": "rpcCall", "method": "eth_getBalance", "params": []any{"0x0", "latest"}, "compare": "Equal", "is": "0x0"},

@@ -53,7 +53,8 @@ func TestTOML_MetricsHostNarrowsTheBind(t *testing.T) {
 // and not after.
 func TestArgv_SaysMetricsOnTheCommandLine(t *testing.T) {
 	argv, err := Argv(Spec{
-		Chain:       Chain{ID: "stablenet", Dialect: "geth114", NetworkID: 8283},
+		Chain:       Chain{ID: "stablenet", Dialect: "geth114"},
+		Network:     Network{ChainID: 8283, NetworkID: 8283},
 		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Metrics: 6061},
 		DataDir:     "/data/node1",
@@ -75,7 +76,8 @@ func TestArgv_SaysMetricsOnTheCommandLine(t *testing.T) {
 // allocated one must not get half the pair.
 func TestArgv_NoMetricsPortMeansNoMetricsFlags(t *testing.T) {
 	argv, err := Argv(Spec{
-		Chain:       Chain{ID: "stablenet", Dialect: "geth114", NetworkID: 8283},
+		Chain:       Chain{ID: "stablenet", Dialect: "geth114"},
+		Network:     Network{ChainID: 8283, NetworkID: 8283},
 		Role:        node.RoleBP,
 		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501},
 		DataDir:     "/data/node1",

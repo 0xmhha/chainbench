@@ -21,7 +21,7 @@ func MigrateV1(raw []byte) ([]byte, error) {
 
 	env := map[string]any{
 		"schemaVersion": schemaVersionV2,
-		"kind":          KindEnv,
+		"kind":          KindChainPreset,
 		"id":            s.ID + "-env",
 		"chain":         s.Chain.Name,
 	}
@@ -76,7 +76,7 @@ func MigrateV1(raw []byte) ([]byte, error) {
 		"schemaVersion": schemaVersionV2,
 		"kind":          KindCase,
 		"id":            s.ID,
-		"env":           env,
+		"chainPreset":   env,
 		"steps":         steps,
 	}
 	if s.ApplicableChains != "" {

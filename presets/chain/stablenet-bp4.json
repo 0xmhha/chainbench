@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "stablenet-bp4",
+  "description": "stablenet: 4 bp. Used by 161 cases.",
+  "chain": "stablenet",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "bp": 4
+  }
+}

@@ -64,15 +64,15 @@ func TestFingerprint_MapOrderIndependent(t *testing.T) {
 // share a key, and the second would reuse a network composed for the first —
 // the wrong chain, reported as a reused one.
 func TestFingerprint_HashesTheMergedValuesNotTheSharedEnv(t *testing.T) {
-	const shared = `{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet",
+	const shared = `{"schemaVersion":"2","kind":"chain-preset","id":"base","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":4,"en":1}}`
 	lookup := func(string) ([]byte, error) { return []byte(shared), nil }
 
 	fp := func(t *testing.T, override string) session.Fingerprint {
 		t.Helper()
-		raw := []byte(`{"schemaVersion":"2","kind":"case","id":"c","env":` + override + `,
+		raw := []byte(`{"schemaVersion":"2","kind":"case","id":"c","chainPreset":` + override + `,
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
-		inlined, err := dsl.InlineEnv(raw, lookup)
+		inlined, err := dsl.InlineChainPreset(raw, lookup)
 		if err != nil {
 			t.Fatalf("inline: %v", err)
 		}
@@ -91,7 +91,7 @@ func TestFingerprint_HashesTheMergedValuesNotTheSharedEnv(t *testing.T) {
 
 	// And the other direction: the same declared values are the same key, no
 	// matter whether they were written out or inherited.
-	spelledOut := fp(t, `{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet",
+	spelledOut := fp(t, `{"schemaVersion":"2","kind":"chain-preset","id":"base","chain":"stablenet",
 	  "binaries":{"default":"gstable"},"topology":{"bp":4,"en":1}}`)
 	if base != spelledOut {
 		t.Error("inheriting values and writing them out must give the same reuse key")

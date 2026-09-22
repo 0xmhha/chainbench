@@ -208,7 +208,7 @@ func (s *sess) Save() error {
 	}
 	var writeErrs []error
 	for _, r := range s.tests {
-		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.envRef, Status: string(r.status)})
+		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.presetRef, Status: string(r.status)})
 		switch r.status {
 		case StatusPass:
 			doc.Summary.Pass++

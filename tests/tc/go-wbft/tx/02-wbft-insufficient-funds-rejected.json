@@ -6,7 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": "wbft-bp4",
+  "chainPreset": "wbft-bp4",
   "steps": [
     {
       "do": "read",

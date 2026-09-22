@@ -5,7 +5,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc"

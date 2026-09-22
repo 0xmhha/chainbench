@@ -7,10 +7,9 @@
     "rpc",
     "consensus"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "wemix-to-wbft",
     "upgrade": {
-      "preset": "wemix-upgrade",
       "fork": "croissant",
       "at": 120,
       "from": "default",

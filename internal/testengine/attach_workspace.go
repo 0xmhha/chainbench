@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
@@ -115,7 +117,7 @@ type AttachWorkspaceIn struct {
 // spec addresses nodes by role and resolves account labels (WA10).
 func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorkspaceIn) (string, error) {
 	if in.DataDir == "" {
-		return "", fmt.Errorf("engine: attach workspace: a workspace directory is required")
+		return "", lifecycle.Mark(errUnreadable, fmt.Errorf("engine: attach workspace: a workspace directory is required"))
 	}
 	chain := in.Chain
 	keysDir := ""
@@ -127,11 +129,11 @@ func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorksp
 		}
 	}
 	if chain == "" {
-		return "", fmt.Errorf("engine: attach workspace: a chain is required to attach")
+		return "", lifecycle.Mark(errIncomplete, fmt.Errorf("engine: attach workspace: a chain is required to attach"))
 	}
 	artifactRoot, err := artifactRoot(in.ArtifactRoot, "", in.DataDir)
 	if err != nil {
-		return "", fmt.Errorf("engine: attach workspace: %w", err)
+		return "", lifecycle.Mark(errNoRoot, fmt.Errorf("engine: attach workspace: %w", err))
 	}
 	var setupSteps []string
 	net, err := readWorkspaceComposed(ctx, sd, in.DataDir, keysDir, &setupSteps, in.NodeMonitorTimeout)
@@ -175,7 +177,10 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	out.Preflight = res.Decision
 	out.SetupSteps = append(out.SetupSteps, res.Steps...)
 	if err != nil {
-		return composed{}, fmt.Errorf("engine: run suite: setup: %w (at %s)", err, res.At)
+		// The chain's own state rides on the result, not in the sentence. The
+		// surface prints one suffix for both areas.
+		out.ComposeFailedAt = res.At
+		return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
 	}
 
 	return readWorkspaceComposed(ctx, sd, up.DataDir, up.KeysDir, &out.SetupSteps, gateBudget)
@@ -189,7 +194,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, keysDir string, setupSteps *[]string, gateBudget time.Duration) (composed, error) {
 	endpoints, err := verb.NetEndpoints(ctx, sd, verb.NetEndpointsIn{DataDir: dataDir})
 	if err != nil {
-		return composed{}, fmt.Errorf("engine: run suite: endpoints: %w", err)
+		return composed{}, lifecycle.Mark(errUnreachable, fmt.Errorf("engine: run suite: endpoints: %w", err))
 	}
 	var caps []string
 	if ws, err := chainsetup.Open(dataDir, sd.Clock); err == nil {

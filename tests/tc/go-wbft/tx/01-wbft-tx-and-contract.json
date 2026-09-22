@@ -6,7 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "wbft-bp4",
     "genesis": {
       "overlay": {

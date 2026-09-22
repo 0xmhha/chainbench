@@ -15,7 +15,7 @@ func attachCase(t *testing.T, env map[string]any) []byte {
 		"schemaVersion": "2",
 		"kind":          "case",
 		"id":            "attach-case",
-		"env":           env,
+		"chainPreset":   env,
 		"steps": []map[string]any{
 			{"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "0"},
 		},
@@ -37,13 +37,13 @@ func TestAttachEnvIsExclusiveWithComposing(t *testing.T) {
 		"topology":  {"topology": map[string]any{"bp": 4}},
 		"genesis":   {"genesis": map[string]any{"overlay": map[string]any{}}},
 		"binaries":  {"binaries": map[string]any{"default": "gstable"}},
-		"upgrade":   {"upgrade": map[string]any{"preset": "p", "fork": "boho", "at": 10}},
+		"upgrade":   {"upgrade": map[string]any{"fork": "boho", "at": 10}},
 		"hardforks": {"hardforks": map[string]any{"boho": 0}},
 		"accounts":  {"accounts": map[string]any{"dev1": map[string]any{}}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			env := map[string]any{
-				"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+				"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 				"attach": map[string]any{"rpc": []string{"http://127.0.0.1:8600"}},
 			}
 			for k, v := range extra {
@@ -72,7 +72,7 @@ func TestAttachEnvNeedsAnEndpoint(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			env := map[string]any{
-				"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+				"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 				"attach": attach,
 			}
 			if _, err := dsl.Parse(attachCase(t, env)); err == nil {
@@ -87,7 +87,7 @@ func TestAttachEnvNeedsAnEndpoint(t *testing.T) {
 // thrown away elsewhere in this package.
 func TestAttachEnvReachesTheSpec(t *testing.T) {
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"attach": map[string]any{
 			"rpc":      []string{"http://127.0.0.1:8600", "http://127.0.0.1:8610"},
 			"keysDir":  "presets/keys",
@@ -121,7 +121,7 @@ func TestAttachEnvReachesTheSpec(t *testing.T) {
 // not acquire one, or every composed run would look like a candidate to attach.
 func TestComposingEnvHasNoAttach(t *testing.T) {
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "e", "chain": "stablenet",
+		"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "stablenet",
 		"topology": map[string]any{"bp": 4},
 	}
 	spec, err := dsl.Parse(attachCase(t, env))

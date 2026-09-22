@@ -33,10 +33,10 @@ var SchemaV2 []byte
 // sequence — one execution path, two grammars. Unknown fields are errors
 // (strict): v1 let typos flow through map[string]any to the runtime.
 
-// KindEnv and KindCase are the v2 file kinds.
+// KindChainPreset and KindCase are the v2 file kinds.
 const (
-	KindEnv  = "env"
-	KindCase = "case"
+	KindChainPreset = "chain-preset"
+	KindCase        = "case"
 )
 
 // schemaVersionV2 is the v2 grammar version.
@@ -54,8 +54,8 @@ type Statement struct {
 	Args map[string]any
 }
 
-// EnvV2 is the v2 environment declaration — the reuse unit.
-type EnvV2 struct {
+// ChainPresetV2 is the v2 environment declaration — the reuse unit.
+type ChainPresetV2 struct {
 	SchemaVersion string `json:"schemaVersion"`
 	Kind          string `json:"kind"`
 	ID            string `json:"id"`
@@ -200,18 +200,10 @@ func (b *BinaryRefV2) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UpgradeV2 declares a handoff composition: which hardfork preset shapes it
-// and which genesis template the producer's binary generates from. It is a
-// declaration only; the composer that runs it lives above the grammar.
+// UpgradeV2 declares a hardfork this network crosses: which fork, at which
+// block, and which binary takes over. It is a declaration only; the composer
+// that runs it lives above the grammar.
 type UpgradeV2 struct {
-	// Preset names a hardfork preset under presets/chain, without the
-	// directory or the extension.
-	//
-	// It used to have a sibling, "profile", that named the same document by
-	// path. Two names for one thing, mutually exclusive, and no declaration in
-	// the repository ever used the second — so a reader met a word the code
-	// spelled two ways and the schema documented under a third directory.
-	Preset string `json:"preset,omitempty"`
 	// Template named the producer chain's own genesis template, for the handoff
 	// composer that generated the pre-fork genesis by running that binary
 	// against it. The ordinary path builds the genesis from the chain plugin's
@@ -220,10 +212,11 @@ type UpgradeV2 struct {
 	//
 	// Deprecated: has no effect, and naming it is an error.
 	Template string `json:"template,omitempty"`
-	// Fork is the hardfork's name and At is the block it activates on. Given,
-	// they are checked against the preset rather than replacing it: a case
-	// saying which fork it tests and being wrong about it is worse than a case
-	// that does not say.
+	// Fork is the hardfork's name and At is the block it activates on. Both are
+	// required. The name is checked against the chain the post-fork binary runs
+	// (see checkForkIsOneTheChainKnows), because a misspelled fork is otherwise
+	// silent: the genesis writes <name>Block for whatever it is given and the
+	// chain never forks.
 	Fork string `json:"fork,omitempty"`
 	At   *int64 `json:"at,omitempty"`
 	// From and To name the binaries — the keys of "binaries" — that handle
@@ -369,7 +362,7 @@ type GenesisSideV2 struct {
 // Every refusal here is one the runtime would otherwise meet as something else:
 // a missing preset as a file-not-found, a misspelled side as a node running the
 // wrong build, an unbuilt style as a handoff that quietly did the other thing.
-func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
+func checkUpgrade(caseID string, u *UpgradeV2, env ChainPresetV2) error {
 	switch u.Style {
 	case "", UpgradeConcurrent, UpgradeRestart:
 	default:
@@ -380,19 +373,13 @@ func checkUpgrade(caseID string, u *UpgradeV2, env EnvV2) error {
 	default:
 		return fmt.Errorf("dsl: case %s: unknown upgrade carry %q (want %s or %s)", caseID, u.Carry, CarryGenesis, CarryConfig)
 	}
-	// A preset describes a HANDOVER environment: which chain hands to which, at
-	// which fork, and how many nodes stand on each side. A restart has no such
-	// environment — one chain, one build at a time — so it says its fork and
-	// its block itself, and there is no preset with anything to add.
-	if u.Style == UpgradeRestart {
-		if u.Preset != "" {
-			return fmt.Errorf("dsl: case %s: a %s hardfork names no preset — a preset describes a handover between two chains, and this is one chain crossing its own fork", caseID, UpgradeRestart)
-		}
-		if u.Fork == "" || u.At == nil {
-			return fmt.Errorf("dsl: case %s: a %s hardfork says which fork it crosses and at which block (\"fork\" and \"at\")", caseID, UpgradeRestart)
-		}
-	} else if u.Preset == "" {
-		return fmt.Errorf("dsl: case %s: upgrade needs a \"preset\"", caseID)
+	// Every hardfork says which fork it crosses and where, whether one build
+	// hands to another or one chain crosses its own fork. It used to be that a
+	// handover took both from a second document it named, so the same two facts
+	// were declared one way here and another way there, and a reader had to
+	// know which. The second document is gone.
+	if u.Fork == "" || u.At == nil {
+		return fmt.Errorf("dsl: case %s: a hardfork says which fork it crosses and at which block (\"fork\" and \"at\")", caseID)
 	}
 	// A hardfork says which build each node runs, and the node table is where it
 	// says it. Without one nothing decides which side of the fork a node is on,
@@ -450,7 +437,7 @@ type CaseV2 struct {
 	// a case cannot carry a note unless the grammar has a place for one, and a
 	// test that cannot say what it is for is read by opening its steps.
 	Description      string            `json:"description,omitempty"`
-	Env              json.RawMessage   `json:"env"`
+	ChainPreset      json.RawMessage   `json:"chainPreset"`
 	ApplicableChains string            `json:"applicableChains,omitempty"`
 	Requires         []string          `json:"requires,omitempty"`
 	On               string            `json:"on,omitempty"`

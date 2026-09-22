@@ -8,7 +8,7 @@
     "consensus",
     "contract:govStaking"
   ],
-  "env": "wbft-bp4",
+  "chainPreset": "wbft-bp4",
   "steps": [
     {
       "do": "waitBlock",

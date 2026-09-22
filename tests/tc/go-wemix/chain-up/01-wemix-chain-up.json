@@ -5,7 +5,7 @@
   "requires": [
     "rpc"
   ],
-  "env": "wemix-bp4-binvar",
+  "chainPreset": "wemix-bp4-binvar",
   "steps": [
     {
       "do": "waitBlock",

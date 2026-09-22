@@ -8,7 +8,7 @@
     "engine:anzeon",
     "contract:govCouncil"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {

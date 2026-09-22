@@ -7,7 +7,7 @@
     "account-extra",
     "contract:accountManager"
   ],
-  "env": "stablenet-bp4-account-extra",
+  "chainPreset": "stablenet-bp4-account-extra",
   "steps": [
     {
       "do": "read",

@@ -27,7 +27,7 @@ type record struct {
 	id     string
 
 	mu        sync.Mutex
-	envRef    string
+	presetRef string
 	status    TestStatus
 	steps     []StepResult
 	asserts   []AssertResult
@@ -39,11 +39,11 @@ type record struct {
 func (r *record) Dir() string { return r.dir }
 
 // SetEnvRef records which environment this test ran against.
-func (r *record) SetEnvRef(envID string) {
+func (r *record) SetEnvRef(presetID string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.envRef = envID
-	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
+	r.presetRef = presetID
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileEnvRef), []byte(presetID), 0o644))
 }
 
 // Spec stores the raw test definition as spec.json, scrubbed — a spec can carry
@@ -114,7 +114,7 @@ func (r *record) writeStatus() {
 		ID:     r.id,
 		Seq:    r.seq,
 		Result: string(r.status),
-		Env:    r.envRef,
+		Env:    r.presetRef,
 		Reason: r.reason,
 	}))
 }

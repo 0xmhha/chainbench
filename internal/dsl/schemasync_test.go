@@ -90,7 +90,7 @@ func TestSchemaV2IsAsStrictAsTheParser(t *testing.T) {
 	defs := schemaDefsRaw(t)
 	for def, wantRequired := range map[string][]string{
 		"envSpec":  {"chain", "id", "kind", "schemaVersion"},
-		"caseSpec": {"env", "id", "kind", "schemaVersion", "steps"},
+		"caseSpec": {"chainPreset", "id", "kind", "schemaVersion", "steps"},
 	} {
 		t.Run(def, func(t *testing.T) {
 			d, ok := defs[def]

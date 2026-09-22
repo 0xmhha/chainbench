@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "wemix-to-wbft",
+  "description": "wemix crossing the croissant fork to wbft: 1 wemix producer + 4 wbft successors, declared per node. Composed on the ordinary path, not the handoff composer. Used by 1 case.",
+  "chain": "wemix",
+  "binaries": {
+    "default": "${GWEMIX_BIN:-gwemix}",
+    "next": {
+      "binary": "${GWBFT_BIN:-gwbft}",
+      "chain": "wbft"
+    }
+  },
+  "upgrade": {
+    "fork": "croissant",
+    "at": 20,
+    "from": "default",
+    "to": "next",
+    "style": "concurrent"
+  },
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "nodes": [
+      { "index": 1, "role": "en", "binary": "next" },
+      { "index": 2, "role": "en", "binary": "next" },
+      { "index": 3, "role": "en", "binary": "next" },
+      { "index": 4, "role": "en", "binary": "next" },
+      { "index": 5, "role": "bp" }
+    ]
+  }
+}

@@ -7,7 +7,7 @@
     "rpc",
     "consensus"
   ],
-  "env": "stablenet-bp3-en1-pn1",
+  "chainPreset": "stablenet-bp3-en1-pn1",
   "steps": [
     {
       "do": "waitBlock",

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "wbft-bp4",
+  "description": "wbft: 4 bp. Used by 10 cases.",
+  "chain": "wbft",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "bp": 4
+  }
+}

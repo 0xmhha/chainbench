@@ -3,7 +3,6 @@
   "binary": "gwbft",
   "dialect": "geth114",
   "chain_id": 8284,
-  "network_id": 8284,
   "miner_recommit": "duration",
   "bootstrap": {
     "type": "static"

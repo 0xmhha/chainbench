@@ -132,24 +132,25 @@ var verbNeeds = map[string]verbNeed{
 	"Reconcile":      {why: "its job is to meet a record that disagrees with reality, so it must run on any state"},
 	"SnapshotForReuse": {why: "it photographs whatever is on the target before a composition starts; an empty " +
 		"workspace yields an empty snapshot, which is the answer that composes everything"},
-	"Retarget":        {why: "rewrites where the workspace points, which is what a stale target needs"},
-	"Logs":            {why: "a dead node's log is the reason to ask for it; it refuses an unknown index by name"},
-	"LogExcerpt":      {why: "same as Logs, which it calls"},
-	"Stop":            {why: "stopping what is already stopped is the outcome the caller asked for"},
-	"StopNode":        {why: "same as Stop, for one node"},
-	"FirstUndone":     {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
-	"RecordRequest":   {why: "it writes what was asked for, which is the first thing a composition records"},
-	"RecordConfigSet": {why: "it stores an override before anything renders with it; refusing a bad one early is the point"},
-	"RecordLaunchSet": {why: "same as RecordConfigSet, for launch knobs"},
-	"ResolveTarget":   {why: "accessor over the recorded target; it answers before anything is placed"},
-	"SetBinary":       {why: "wiring: a resume names the binary for a node it is about to relaunch"},
-	"StartNode":       {node: []nodeNeed{down, launched}},
-	"SwapNode":        {node: []nodeNeed{launched}},
-	"Restart":         {why: "delegates to StopNode and StartNode, which each answer for themselves"},
-	"CrossFork":       {why: "names the node or binary the fork has nobody to run on, which a table-wide state cannot"},
-	"Compare":         {why: "reads a baseline file, not the network"},
-	"CheckBaseline":   {why: "reads a baseline file, not the network"},
-	"ObserveBaseline": {why: "records what is there now, including nothing"},
+	"Retarget":            {why: "rewrites where the workspace points, which is what a stale target needs"},
+	"Logs":                {why: "a dead node's log is the reason to ask for it; it refuses an unknown index by name"},
+	"LogExcerpt":          {why: "same as Logs, which it calls"},
+	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
+	"StopNode":            {why: "same as Stop, for one node"},
+	"FirstUndone":         {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
+	"RecordRequest":       {why: "it writes what was asked for, which is the first thing a composition records"},
+	"RecordConfigSet":     {why: "it stores an override before anything renders with it; refusing a bad one early is the point"},
+	"RecordLaunchSet":     {why: "same as RecordConfigSet, for launch knobs"},
+	"RecordLaunchCommand": {why: "the same knobs as RecordLaunchSet, kept apart so the invocation is applied after every scope"},
+	"ResolveTarget":       {why: "accessor over the recorded target; it answers before anything is placed"},
+	"SetBinary":           {why: "wiring: a resume names the binary for a node it is about to relaunch"},
+	"StartNode":           {node: []nodeNeed{down, launched}},
+	"SwapNode":            {node: []nodeNeed{launched}},
+	"Restart":             {why: "delegates to StopNode and StartNode, which each answer for themselves"},
+	"CrossFork":           {why: "names the node or binary the fork has nobody to run on, which a table-wide state cannot"},
+	"Compare":             {why: "reads a baseline file, not the network"},
+	"CheckBaseline":       {why: "reads a baseline file, not the network"},
+	"ObserveBaseline":     {why: "records what is there now, including nothing"},
 }
 
 // allow reports whether verb may run, naming what is missing.
@@ -168,7 +169,7 @@ var errOpPrecondition = errors.New("the workspace is not in a state this verb ca
 func (w *Workspace) allow(verb string) error {
 	need, declared := verbNeeds[verb]
 	if !declared {
-		return ofKind(errOpPrecondition,
+		return lifecycle.Mark(errOpPrecondition,
 			fmt.Errorf("chainsetup: %s: this verb declares no requirements — add it to verbNeeds", verb))
 	}
 	if need.step != "" {
@@ -186,13 +187,13 @@ func (w *Workspace) allow(verb string) error {
 	switch need.run {
 	case placed:
 		if len(w.state.Nodes) == 0 {
-			return ofKind(errOpPrecondition,
+			return lifecycle.Mark(errOpPrecondition,
 				fmt.Errorf("chainsetup: %s: the node table is empty — run `chain place` first", lower(verb)))
 		}
 	case stopped:
 		for _, ns := range w.state.Nodes {
 			if ns.PID > 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d is running (pid %d) — run `chain stop` first", lower(verb), ns.Index, ns.PID))
 			}
 		}
@@ -229,12 +230,12 @@ func checkNode(verb string, needs []nodeNeed, ns node.Record) error {
 			// than a condition that fell through the switch.
 		case launched:
 			if len(ns.Args) == 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index))
 			}
 		case down:
 			if ns.PID > 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d is already running (pid %d)", lower(verb), ns.Index, ns.PID))
 			}
 		}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "stablenet-bp3-en1-pn1",
+  "description": "stablenet: 3 bp + 1 en + 1 pn. Used by 1 case.",
+  "chain": "stablenet",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "bp": 3,
+    "en": 1,
+    "pn": 1
+  }
+}

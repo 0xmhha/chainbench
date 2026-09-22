@@ -28,8 +28,8 @@ func specJSON(t *testing.T, id string, steps ...map[string]any) []byte {
 		// A v2 case needs an env to parse at all, and a spec that does not parse
 		// is dropped from the precheck by design — so a test about the precheck
 		// has to hand it something parseable.
-		"env": map[string]any{
-			"schemaVersion": "2", "kind": "env", "id": "e", "chain": "wbft",
+		"chainPreset": map[string]any{
+			"schemaVersion": "2", "kind": "chain-preset", "id": "e", "chain": "wbft",
 			"binaries": map[string]any{"default": "gwbft"},
 			"topology": map[string]any{"bp": 1},
 		},

@@ -7,7 +7,7 @@
     "fork:boho",
     "contract:govMinter"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {

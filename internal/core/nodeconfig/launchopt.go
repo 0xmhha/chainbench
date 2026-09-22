@@ -399,3 +399,43 @@ func DialectNames() []string {
 	sort.Strings(names)
 	return names
 }
+
+// perNode are the knobs whose value the assembler derives from ONE node's own
+// facts: where its data lives, which ports it holds, which files it opens, which
+// account it seals with.
+//
+// They are listed because one value cannot serve several nodes. Two nodes told
+// the same p2p port do not both bind it, two told the same datadir write over
+// each other, and two told the same keystore seal as one account. A knob set on
+// a scope that covers more than one node is therefore refused rather than
+// applied — see node.ScopeIndex for what "one node" means.
+//
+// The rest of what this layer sets is not here on purpose. --http and --ws turn
+// an endpoint on; every node may have one, and saying so once is what a scope is
+// for.
+var perNode = map[OptionKey]bool{
+	KeyPort:      true,
+	KeyHTTPPort:  true,
+	KeyWSPort:    true,
+	KeyAuthPort:  true,
+	KeyDataDir:   true,
+	KeyConfig:    true,
+	KeyNodeKey:   true,
+	KeyKeystore:  true,
+	KeyPassword:  true,
+	KeyUnlock:    true,
+	KeyEtherbase: true,
+}
+
+// IsPerNode reports whether k is a knob only one node can be told.
+func IsPerNode(k OptionKey) bool { return perNode[k] }
+
+// PerNodeKeys lists them, sorted, for a refusal that has to name what it means.
+func PerNodeKeys() []string {
+	out := make([]string, 0, len(perNode))
+	for k := range perNode {
+		out = append(out, string(k))
+	}
+	sort.Strings(out)
+	return out
+}

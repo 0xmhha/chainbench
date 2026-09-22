@@ -14,9 +14,9 @@ const v2Case = `{
   "schemaVersion": "2",
   "kind": "case",
   "id": "V2-001",
-  "env": {
+  "chainPreset": {
     "schemaVersion": "2",
-    "kind": "env",
+    "kind": "chain-preset",
     "id": "wbft-4",
     "target": "local:.chainbench/work",
     "chain": "wbft",
@@ -99,32 +99,32 @@ func TestParseV2CaseLowering(t *testing.T) {
 func TestParseV2Strictness(t *testing.T) {
 	cases := map[string]string{
 		"unknown case field": `{"schemaVersion":"2","kind":"case","id":"x","typo":1,
-			"env":{"chain":"wbft"},"steps":[{"expect":"blockNumber","is":1}]}`,
+			"chainPreset":{"chain":"wbft"},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"unknown env field": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","nope":1},"steps":[{"expect":"blockNumber","is":1}]}`,
-		"env alone": `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft"}`,
+			"chainPreset":{"chain":"wbft","nope":1},"steps":[{"expect":"blockNumber","is":1}]}`,
+		"env alone": `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft"}`,
 		"no kind":   `{"schemaVersion":"2","id":"x"}`,
 		"no expects": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft"},"steps":[{"do":"waitBlock","n":1}]}`,
+			"chainPreset":{"chain":"wbft"},"steps":[{"do":"waitBlock","n":1}]}`,
 		"unsupported genesis mode": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","genesis":{"mode":"inherit"}},"steps":[{"expect":"blockNumber","is":1}]}`,
+			"chainPreset":{"chain":"wbft","genesis":{"mode":"inherit"}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"existing genesis without ref": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","genesis":{"mode":"existing"}},"steps":[{"expect":"blockNumber","is":1}]}`,
+			"chainPreset":{"chain":"wbft","genesis":{"mode":"existing"}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"existing genesis with overlay": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","genesis":{"mode":"existing","ref":"g.json","set":{"config.chainId":9}}},"steps":[{"expect":"blockNumber","is":1}]}`,
+			"chainPreset":{"chain":"wbft","genesis":{"mode":"existing","ref":"g.json","set":{"config.chainId":9}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"unknown launch scope": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
-		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft"},
+			"chainPreset":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
+		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","chainPreset":{"chain":"wbft"},
 			"steps":[{"override":{"env.launch":{}}},{"expect":"blockNumber","is":1}]}`,
 		// A typo in a do step's expect adjunct must be refused, not silently
 		// treated as the default success (WA8) — "revrt" is not "revert".
 		"typo expect adjunct": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},
+			"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"}},
 			"steps":[{"do":"sendTx","from":"0xa","expect":"revrt"},{"expect":"blockNumber","is":1}]}`,
 		// A timeouts value that is not a duration must be refused, not silently
 		// ignored at run time (WA15).
 		"bad timeout duration": `{"schemaVersion":"2","kind":"case","id":"x",
-			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},"timeouts":{"case":"tenminutes"},
+			"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"}},"timeouts":{"case":"tenminutes"},
 			"steps":[{"expect":"blockNumber","is":1}]}`,
 	}
 	for name, raw := range cases {
@@ -135,7 +135,7 @@ func TestParseV2Strictness(t *testing.T) {
 }
 
 func TestParseV2ScopedLaunch(t *testing.T) {
-	raw := `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft",
+	raw := `{"schemaVersion":"2","kind":"case","id":"x","chainPreset":{"chain":"wbft",
 	  "binaries":{"default":"gwbft"},
 	  "launch":{"all":{"metrics":true},"bp":{"mine":true},"node1":{"verbosity":5}}},
 	  "steps":[{"expect":"blockNumber","is":1}]}`
@@ -155,11 +155,11 @@ func TestParseV2ScopedLaunch(t *testing.T) {
 }
 
 func TestInlineEnv(t *testing.T) {
-	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1","env":"wbft-4",
+	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1","chainPreset":"wbft-4",
 		"steps":[{"expect":"blockNumber","is":1}]}`
-	envDoc := `{"schemaVersion":"2","kind":"env","id":"wbft-4","chain":"wbft"}`
+	envDoc := `{"schemaVersion":"2","kind":"chain-preset","id":"wbft-4","chain":"wbft"}`
 
-	out, err := InlineEnv([]byte(caseRef), func(id string) ([]byte, error) {
+	out, err := InlineChainPreset([]byte(caseRef), func(id string) ([]byte, error) {
 		if id != "wbft-4" {
 			return nil, fmt.Errorf("unexpected id %s", id)
 		}
@@ -177,16 +177,16 @@ func TestInlineEnv(t *testing.T) {
 	}
 
 	// Unresolvable ref names the id.
-	if _, err := InlineEnv([]byte(caseRef), nil); err == nil || !strings.Contains(err.Error(), "wbft-4") {
+	if _, err := InlineChainPreset([]byte(caseRef), nil); err == nil || !strings.Contains(err.Error(), "wbft-4") {
 		t.Fatalf("nil resolver: %v", err)
 	}
 	// A v1 spec passes through untouched.
 	v1 := []byte(`{"schemaVersion":"1","id":"x"}`)
-	if out, err := InlineEnv(v1, nil); err != nil || string(out) != string(v1) {
+	if out, err := InlineChainPreset(v1, nil); err != nil || string(out) != string(v1) {
 		t.Fatalf("v1 passthrough: %v", err)
 	}
 	// A case parsed without inlining reports the pending reference.
-	if _, err := Parse([]byte(caseRef)); err == nil || !strings.Contains(err.Error(), "InlineEnv") {
+	if _, err := Parse([]byte(caseRef)); err == nil || !strings.Contains(err.Error(), "InlineChainPreset") {
 		t.Fatalf("unresolved ref parse: %v", err)
 	}
 }
@@ -195,7 +195,7 @@ func TestInlineEnv(t *testing.T) {
 // a ref lowers to Spec.Chain.GenesisExisting and does not build a template.
 func TestGenesisExistingMode(t *testing.T) {
 	raw := `{"schemaVersion":"2","kind":"case","id":"x",
-		"env":{"chain":"wbft","binaries":{"default":"gwbft"},
+		"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"},
 		       "genesis":{"mode":"existing","ref":"genesis-regression.json"}},
 		"steps":[{"expect":"blockNumber","is":1}]}`
 	s, err := Parse([]byte(raw))
@@ -231,11 +231,11 @@ func TestInlineEnv_NonObjectBaseIsAnError(t *testing.T) {
 	// The case must name at least one override field: that is what reaches the
 	// merge loop.
 	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
-		"env":{"extends":"base","topology":{"bp":3}},
+		"chainPreset":{"extends":"base","topology":{"bp":3}},
 		"steps":[{"expect":"blockNumber","is":1}]}`
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := InlineEnv([]byte(caseRef), func(string) ([]byte, error) {
+			_, err := InlineChainPreset([]byte(caseRef), func(string) ([]byte, error) {
 				return []byte(tc.base), nil
 			})
 			if err == nil {
@@ -250,9 +250,9 @@ func TestInlineEnv_NonObjectBaseIsAnError(t *testing.T) {
 // still not a usable env, and the failure should come from the same check.
 func TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused(t *testing.T) {
 	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
-		"env":{"extends":"base"},
+		"chainPreset":{"extends":"base"},
 		"steps":[{"expect":"blockNumber","is":1}]}`
-	if _, err := InlineEnv([]byte(caseRef), func(string) ([]byte, error) {
+	if _, err := InlineChainPreset([]byte(caseRef), func(string) ([]byte, error) {
 		return []byte(`null`), nil
 	}); err == nil {
 		t.Fatal("a null env must be refused even with no override field")
@@ -262,13 +262,13 @@ func TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused(t *testing.T) {
 // TestInlineEnv_Extends pins S6's override form on the merge rule that replaced
 // the shallow one: a case names what differs and inherits the rest, key by key.
 func TestInlineEnv_Extends(t *testing.T) {
-	canonical := `{"schemaVersion":"2","kind":"env","id":"stablenet-15","chain":"stablenet",
+	canonical := `{"schemaVersion":"2","kind":"chain-preset","id":"stablenet-15","chain":"stablenet",
 		"binaries":{"default":"gstable"},"topology":{"bp":"max","pn":1,"en":1}}`
 	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
-		"env":{"extends":"stablenet-15","topology":{"bp":3,"en":1}},
+		"chainPreset":{"extends":"stablenet-15","topology":{"bp":3,"en":1}},
 		"steps":[{"expect":"blockNumber","is":1}]}`
 
-	out, err := InlineEnv([]byte(caseRef), func(id string) ([]byte, error) {
+	out, err := InlineChainPreset([]byte(caseRef), func(id string) ([]byte, error) {
 		if id != "stablenet-15" {
 			return nil, fmt.Errorf("unexpected id %s", id)
 		}
@@ -298,9 +298,9 @@ func TestInlineEnv_Extends(t *testing.T) {
 
 	// And the way to drop it.
 	dropped := `{"schemaVersion":"2","kind":"case","id":"c1",
-		"env":{"extends":"stablenet-15","topology":{"bp":3,"pn":null}},
+		"chainPreset":{"extends":"stablenet-15","topology":{"bp":3,"pn":null}},
 		"steps":[{"expect":"blockNumber","is":1}]}`
-	out, err = InlineEnv([]byte(dropped), func(string) ([]byte, error) { return []byte(canonical), nil })
+	out, err = InlineChainPreset([]byte(dropped), func(string) ([]byte, error) { return []byte(canonical), nil })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,8 +313,8 @@ func TestInlineEnv_Extends(t *testing.T) {
 	}
 
 	// extends with a non-string id is rejected.
-	bad := `{"schemaVersion":"2","kind":"case","id":"c1","env":{"extends":5},"steps":[]}`
-	if _, err := InlineEnv([]byte(bad), func(string) ([]byte, error) { return nil, nil }); err == nil {
+	bad := `{"schemaVersion":"2","kind":"case","id":"c1","chainPreset":{"extends":5},"steps":[]}`
+	if _, err := InlineChainPreset([]byte(bad), func(string) ([]byte, error) { return nil, nil }); err == nil {
 		t.Fatal("a non-string extends id was accepted")
 	}
 }
@@ -374,7 +374,7 @@ func TestSchemaV2Embedded(t *testing.T) {
 
 // TestSchemaV2MatchesParsedFields keeps the schema's field set from drifting
 // from the strict parser's. The schema is documentation, not enforcement, so a
-// field added to EnvV2/CaseV2 without a schema entry (or the reverse) goes
+// field added to ChainPresetV2/CaseV2 without a schema entry (or the reverse) goes
 // unnoticed until a reader trusts the wrong one — which is how "config" came to
 // say string while the parser read an object. It checks names, the drift that
 // actually happens; types stay a manual review.
@@ -384,7 +384,7 @@ func TestSchemaV2MatchesParsedFields(t *testing.T) {
 		typ  reflect.Type
 		skip map[string]bool // struct fields the schema folds elsewhere
 	}{
-		{"envSpec", reflect.TypeOf(EnvV2{}), nil},
+		{"envSpec", reflect.TypeOf(ChainPresetV2{}), nil},
 		// CaseV2.Env is json.RawMessage in Go (resolved after a first pass); the
 		// schema spells out its string|envSpec shape.
 		{"caseSpec", reflect.TypeOf(CaseV2{}), nil},
@@ -441,7 +441,7 @@ func TestSchemaV2MatchesParsedTypes(t *testing.T) {
 		def string
 		typ reflect.Type
 	}{
-		{"envSpec", reflect.TypeOf(EnvV2{})},
+		{"envSpec", reflect.TypeOf(ChainPresetV2{})},
 		{"caseSpec", reflect.TypeOf(CaseV2{})},
 	} {
 		def, _ := defs[c.def].(map[string]any)
@@ -562,16 +562,16 @@ func sortedKeys(m map[string]bool) []string {
 // refused rather than composed as a single-binary network.
 func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
-	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
-	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	good := `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
+	  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 	  "binaries":{"from":"gwemix","to":"gwbft"}` + table + `,
-	  "upgrade":{"preset":"p"}},
+	  "upgrade":{"fork":"croissant","at":20}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if s.EnvUpgrade == nil || s.EnvUpgrade.Preset != "p" {
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Fork != "croissant" || s.EnvUpgrade.At == nil || *s.EnvUpgrade.At != 20 {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
 	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
@@ -579,12 +579,12 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	}
 
 	bad := map[string]string{
-		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"preset":"p"}`,
-		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"preset":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"}` + table + `,"upgrade":{"fork":"croissant","at":20}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"}` + table + `,"upgrade":{"fork":"croissant","at":20}`,
 		"no node table":        `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"preset":"p"}`,
 	}
 	for name, env := range bad {
-		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},
+		raw := `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",` + env + `},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 		if _, err := Parse([]byte(raw)); err == nil {
 			t.Errorf("%s: accepted", name)
@@ -593,27 +593,27 @@ func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 }
 
 func TestParseEnv_StandsOnItsOwn(t *testing.T) {
-	env, err := ParseEnv([]byte(`{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`))
+	env, err := ParseChainPreset([]byte(`{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`))
 	if err != nil || env.ID != "e" || env.Chain != "stablenet" {
-		t.Fatalf("ParseEnv: %+v (%v)", env, err)
+		t.Fatalf("ParseChainPreset: %+v (%v)", env, err)
 	}
-	if !IsEnv([]byte(`{"schemaVersion":"2","kind":"env"}`)) || IsEnv([]byte(`{"schemaVersion":"2","kind":"case"}`)) {
+	if !IsEnv([]byte(`{"schemaVersion":"2","kind":"chain-preset"}`)) || IsEnv([]byte(`{"schemaVersion":"2","kind":"case"}`)) {
 		t.Fatal("IsEnv misreads the kind")
 	}
 	for name, raw := range map[string]string{
-		"typo field": `{"schemaVersion":"2","kind":"env","id":"e","chain":"x","binaris":{}}`,
-		"no chain":   `{"schemaVersion":"2","kind":"env","id":"e"}`,
+		"typo field": `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"x","binaris":{}}`,
+		"no chain":   `{"schemaVersion":"2","kind":"chain-preset","id":"e"}`,
 		"wrong kind": `{"schemaVersion":"2","kind":"case","id":"e","chain":"x"}`,
 	} {
-		if _, err := ParseEnv([]byte(raw)); err == nil {
+		if _, err := ParseChainPreset([]byte(raw)); err == nil {
 			t.Errorf("%s: accepted", name)
 		}
 	}
 }
 
 func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
-	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":{
-	  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":{
+	  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
 	  "config":{"all":{"metricsHost":"0.0.0.0"},"node2":{"syncMode":"snap"}}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(raw))
@@ -628,8 +628,8 @@ func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
 	}
 
 	// A scope that is neither "all" nor node<N> is refused.
-	bad := `{"schemaVersion":"2","kind":"case","id":"c","env":{
-	  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
+	bad := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":{
+	  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
 	  "config":{"bp1":{"syncMode":"snap"}}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := Parse([]byte(bad)); err == nil || !strings.Contains(err.Error(), "config scope") {
@@ -643,7 +643,7 @@ func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
 func TestParseV2_RequiresAndCapabilitiesUnion(t *testing.T) {
 	raw := `{"schemaVersion":"2","kind":"case","id":"x",
 	  "requires":["account-extra"],
-	  "env":{"chain":"wbft","binaries":{"default":"gwbft"},"capabilities":["short-expiry","account-extra"]},
+	  "chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"},"capabilities":["short-expiry","account-extra"]},
 	  "steps":[{"expect":"blockNumber","is":1}]}`
 	s, err := Parse([]byte(raw))
 	if err != nil {
@@ -687,8 +687,8 @@ func TestSchemaV2StatementOnEachIsArray(t *testing.T) {
 // WHICH binary; a workspace-config says WHERE binaries live.
 func TestV2_BinaryReferenceMustBeAName(t *testing.T) {
 	caseWith := func(binaries string) []byte {
-		return []byte(`{"schemaVersion":"2","kind":"case","id":"b","env":{
-		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		return []byte(`{"schemaVersion":"2","kind":"case","id":"b","chainPreset":{
+		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 		  "binaries":` + binaries + `,"topology":{"bp":4}},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
 	}
@@ -728,13 +728,13 @@ func TestV2_BinaryReferenceMustBeAName(t *testing.T) {
 
 // mergeCase builds a case whose env extends "base" with the given override.
 func mergeCase(override string) []byte {
-	return []byte(`{"schemaVersion":"2","kind":"case","id":"m","env":` + override + `,
+	return []byte(`{"schemaVersion":"2","kind":"case","id":"m","chainPreset":` + override + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
 }
 
 // sharedEnv is the shape a case extends in these tests: two scopes of config
 // and a capability list, which is where the old shallow rule lost things.
-const sharedEnv = `{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet",
+const sharedEnv = `{"schemaVersion":"2","kind":"chain-preset","id":"base","chain":"stablenet",
   "topology":{"bp":4,"en":1},
   "config":{"all":{"metricsHost":"0.0.0.0"},"node1":{"syncMode":"archive"}},
   "capabilities":["rpc","consensus"]}`
@@ -753,7 +753,7 @@ func lookupShared(id string) ([]byte, error) {
 // differ wrote config.node2, and the shared env's "all" scope and node1's went
 // with it — the case ran, and only the result was different.
 func TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName(t *testing.T) {
-	raw, err := InlineEnv(mergeCase(`{"extends":"base","config":{"node2":{"syncMode":"snap"}}}`), lookupShared)
+	raw, err := InlineChainPreset(mergeCase(`{"extends":"base","config":{"node2":{"syncMode":"snap"}}}`), lookupShared)
 	if err != nil {
 		t.Fatalf("inline: %v", err)
 	}
@@ -761,7 +761,7 @@ func TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName(t *testing.T) {
 		Env struct {
 			Config   map[string]map[string]any `json:"config"`
 			Topology map[string]any            `json:"topology"`
-		} `json:"env"`
+		} `json:"chainPreset"`
 	}
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
@@ -785,12 +785,12 @@ func TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName(t *testing.T) {
 // commonest difference among the inline envs is exactly an absent capability
 // list.
 func TestInlineEnv_NullRemoves(t *testing.T) {
-	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":null,"config":{"node1":null}}`), lookupShared)
+	raw, err := InlineChainPreset(mergeCase(`{"extends":"base","capabilities":null,"config":{"node1":null}}`), lookupShared)
 	if err != nil {
 		t.Fatalf("inline: %v", err)
 	}
 	var got struct {
-		Env map[string]any `json:"env"`
+		Env map[string]any `json:"chainPreset"`
 	}
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
@@ -810,14 +810,14 @@ func TestInlineEnv_NullRemoves(t *testing.T) {
 // TestInlineEnv_ArraysReplace: unioning reads as generous and takes away the
 // only way to drop an entry, which is the same hole as having no delete.
 func TestInlineEnv_ArraysReplace(t *testing.T) {
-	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":["rpc"]}`), lookupShared)
+	raw, err := InlineChainPreset(mergeCase(`{"extends":"base","capabilities":["rpc"]}`), lookupShared)
 	if err != nil {
 		t.Fatalf("inline: %v", err)
 	}
 	var got struct {
 		Env struct {
 			Capabilities []string `json:"capabilities"`
-		} `json:"env"`
+		} `json:"chainPreset"`
 	}
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
@@ -833,9 +833,9 @@ func TestInlineEnv_ArraysReplace(t *testing.T) {
 // env exists to avoid.
 func TestInlineEnv_RefusesAChainOfExtends(t *testing.T) {
 	chained := func(string) ([]byte, error) {
-		return []byte(`{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet","extends":"other"}`), nil
+		return []byte(`{"schemaVersion":"2","kind":"chain-preset","id":"base","chain":"stablenet","extends":"other"}`), nil
 	}
-	if _, err := InlineEnv(mergeCase(`{"extends":"base"}`), chained); err == nil {
+	if _, err := InlineChainPreset(mergeCase(`{"extends":"base"}`), chained); err == nil {
 		t.Error("an env that extends another must be refused")
 	}
 }
@@ -844,7 +844,7 @@ func TestInlineEnv_RefusesAChainOfExtends(t *testing.T) {
 // keys neither side should have, because the parse that follows does. A typo
 // that survives the merge has to fail there.
 func TestInlineEnv_MergedResultIsStillParsedStrictly(t *testing.T) {
-	raw, err := InlineEnv(mergeCase(`{"extends":"base","toplogy":{"bp":9}}`), lookupShared)
+	raw, err := InlineChainPreset(mergeCase(`{"extends":"base","toplogy":{"bp":9}}`), lookupShared)
 	if err != nil {
 		t.Fatalf("inline: %v", err)
 	}
@@ -862,10 +862,10 @@ func TestInlineEnv_MergedResultIsStillParsedStrictly(t *testing.T) {
 // written before this meant.
 func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 	spec := func(carry string) string {
-		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
-		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+		return `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
+		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft",
 		  "binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-		  "upgrade":{"preset":"p"` + carry + `}},
+		  "upgrade":{"fork":"croissant","at":20` + carry + `}},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	for _, want := range []string{"", CarryGenesis, CarryConfig} {
@@ -896,12 +896,12 @@ func TestV2_UpgradeSaysWhichFileCarriesTheFork(t *testing.T) {
 // after the network is up and the case has already acted.
 func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 	spec := func(env, steps string) string {
-		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
-		  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft"` + env + `},
+		return `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
+		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wbft"` + env + `},
 		  "steps":[` + steps + `]}`
 	}
 	fork := `,"binaries":{"from":"gwemix","to":"gwbft"},"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]},
-	  "upgrade":{"preset":"p"}`
+	  "upgrade":{"fork":"croissant","at":20}`
 	cross := `{"do":"crossFork","timeout":"120s"}`
 	check := `{"expect":"blockNumber","compare":"Greater","is":"0"}`
 
@@ -933,13 +933,13 @@ func TestV2_ACaseThatCrossesTheForkItselfMustHaveOneToCross(t *testing.T) {
 // errors rather than a path.
 func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 	spec := func(env string) string {
-		return `{"schemaVersion":"2","kind":"case","id":"h","env":{
-		  "schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+		return `{"schemaVersion":"2","kind":"case","id":"h","chainPreset":{
+		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"wemix",
 		  "binaries":{"default":"gwemix","to":{"binary":"gwbft","chain":"wbft"}}` + env + `},
 		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	}
 	table := `,"topology":{"nodes":[{"index":1,"role":"en","binary":"to"},{"index":2,"role":"bp"}]}`
-	upgrade := `,"upgrade":{"preset":"wemix-upgrade","from":"default"}`
+	upgrade := `,"upgrade":{"fork":"croissant","at":20,"from":"default"}`
 
 	if _, err := Parse([]byte(spec(table + upgrade))); err != nil {
 		t.Fatalf("a hardfork with a node table was refused: %v", err)
@@ -947,7 +947,7 @@ func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 	if _, err := Parse([]byte(spec(upgrade))); err == nil {
 		t.Error("a hardfork with no node table was accepted")
 	}
-	withTemplate := `,"upgrade":{"preset":"wemix-upgrade","from":"default","template":"t.json"}`
+	withTemplate := `,"upgrade":{"fork":"croissant","at":20,"from":"default","template":"t.json"}`
 	if _, err := Parse([]byte(spec(table + withTemplate))); err == nil {
 		t.Error("a hardfork naming a genesis template was accepted")
 	}
@@ -961,8 +961,8 @@ func TestV2_AHardforkNeedsANodeTableAndNoTemplate(t *testing.T) {
 // block, and a preset would have nothing to add.
 func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
 	spec := func(upgrade string) string {
-		return `{"schemaVersion":"2","kind":"case","id":"r","env":{
-		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		return `{"schemaVersion":"2","kind":"case","id":"r","chainPreset":{
+		  "schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
 		  "binaries":{"default":"gstable","postfork":"gstable-next"},
 		  "topology":{"nodes":[{"index":1,"role":"bp"},{"index":2,"role":"bp"}]},
 		  "upgrade":{"style":"restart","from":"default","to":"postfork"` + upgrade + `}},
@@ -972,10 +972,10 @@ func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
 		t.Fatalf("a restart naming its own fork was refused: %v", err)
 	}
 	for name, u := range map[string]string{
-		"no fork":     `,"at":200`,
-		"no block":    `,"fork":"boho"`,
-		"nothing":     ``,
-		"with preset": `,"fork":"boho","at":200,"preset":"wemix-upgrade"`,
+		"no fork":       `,"at":200`,
+		"no block":      `,"fork":"boho"`,
+		"nothing":       ``,
+		"unknown field": `,"fork":"boho","at":200,"preset":"gone"`,
 	} {
 		if _, err := Parse([]byte(spec(u))); err == nil {
 			t.Errorf("%s: accepted", name)

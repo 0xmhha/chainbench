@@ -8,7 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": "stablenet-bp4-en1-default-upgrade",
+  "chainPreset": "stablenet-bp4-en1-default-upgrade",
   "steps": [
     {
       "do": "waitBlock",

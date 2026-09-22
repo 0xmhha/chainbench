@@ -2,30 +2,7 @@ package blueprint
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/node"
-)
-
-// Origin names where a resolved value came from.
-//
-// It is recorded rather than inferred because the value's origin is the first
-// question asked when a network does not behave like its document: a port that
-// is not the one written down came either from the inventory or from a default,
-// and those are two different mistakes.
-type Origin string
-
-// The origin chain, strongest first (design §3.4). A value found earlier is
-// never overwritten by one found later — that is what "an explicit value wins"
-// means in code.
-const (
-	// FromBlueprint is a value the document states.
-	FromBlueprint Origin = "blueprint"
-	// FromInventory is a value the placement decided (host, ports, paths).
-	FromInventory Origin = "inventory"
-	// FromKeySet is a value a key set supplied (nodekey, sealing account).
-	FromKeySet Origin = "keyset"
-	// FromChain is a value the chain plugin knows (binary, chain id).
-	FromChain Origin = "chain"
-	// FromDefault is a built-in fallback.
-	FromDefault Origin = "default"
+	"github.com/0xmhha/chainbench/internal/core/origin"
 )
 
 // ResolvedNetwork is the network with every value decided.
@@ -61,7 +38,7 @@ type ResolvedNetwork struct {
 
 	// Origins records where each value came from, keyed by the path of the
 	// field it decided ("nodes[1].ports.p2p").
-	Origins map[string]Origin `json:"origins,omitempty"`
+	Origins map[string]origin.Origin `json:"origins,omitempty"`
 }
 
 // ResolvedNode is one node with nothing left to decide.

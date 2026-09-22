@@ -6,7 +6,7 @@
     "rpc",
     "contract:accountManager"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {

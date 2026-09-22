@@ -1,6 +1,8 @@
 package chainsetup
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"context"
 	"fmt"
 	"path/filepath"
@@ -74,7 +76,7 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, na
 		}
 	}
 	if len(strays) > 0 {
-		return ofKind(errLaunchOccupied,
+		return lifecycle.Mark(errLaunchOccupied,
 			fmt.Errorf("chainsetup: %s is already running on the machine outside this workspace (pid %s) — stop it, or compose on a different server",
 				name, strings.Join(strays, ", ")))
 	}
@@ -139,7 +141,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
 	}
 	hint := strings.Join(hints, "; ")
-	return ofKind(errLaunchPortBusy,
+	return lifecycle.Mark(errLaunchPortBusy,
 		fmt.Errorf("chainsetup: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint))
 }
 

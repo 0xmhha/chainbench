@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/origin"
 	"github.com/0xmhha/chainbench/internal/preset"
 )
 
@@ -74,24 +75,24 @@ func Resolve(bp Blueprint, in Inputs) (ResolvedNetwork, error) {
 		Alloc:      bp.Alloc,
 		Genesis:    bp.Genesis,
 		Governance: bp.Governance,
-		Origins:    map[string]Origin{},
+		Origins:    map[string]origin.Origin{},
 	}
 	if bp.Chain != "" {
 		r.Chain = bp.Chain
-		r.Origins["chain"] = FromBlueprint
+		r.Origins["chain"] = origin.FromBlueprint
 	} else if r.Chain != "" {
-		r.Origins["chain"] = FromChain
+		r.Origins["chain"] = origin.FromChain
 	}
-	r.Origins["peering"] = FromDefault
+	r.Origins["peering"] = origin.FromDefault
 	if bp.Peering != "" {
-		r.Origins["peering"] = FromBlueprint
+		r.Origins["peering"] = origin.FromBlueprint
 	}
 
 	r.ChainID = in.Chain.ChainID
-	r.Origins["chain_id"] = FromChain
+	r.Origins["chain_id"] = origin.FromChain
 	if bp.Genesis != nil && bp.Genesis.ChainID != 0 {
 		r.ChainID = bp.Genesis.ChainID
-		r.Origins["chain_id"] = FromBlueprint
+		r.Origins["chain_id"] = origin.FromBlueprint
 	}
 
 	for i, dn := range bp.Nodes {
@@ -167,30 +168,30 @@ func sorted(set map[string]bool) []string {
 }
 
 // resolveNode decides one node's every field and records where each came from.
-func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]Origin) (ResolvedNode, error) {
+func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]origin.Origin) (ResolvedNode, error) {
 	p := in.Placed[i]
 	at := func(field string) string { return fmt.Sprintf("nodes[%d].%s", i, field) }
 
 	rn := ResolvedNode{Index: p.Index, Host: p.Host, Launch: dn.Launch}
-	origins[at("index")] = FromInventory
-	origins[at("host")] = FromInventory
+	origins[at("index")] = origin.FromPlacement
+	origins[at("host")] = origin.FromPlacement
 
 	rn.Role = p.Role
-	origins[at("role")] = FromInventory
+	origins[at("role")] = origin.FromPlacement
 	if dn.Role != "" {
 		role, err := node.NormalizeRole(dn.Role)
 		if err != nil {
 			return ResolvedNode{}, fmt.Errorf("blueprint: resolve: nodes[%d]: %w", i, err)
 		}
 		rn.Role = role
-		origins[at("role")] = FromBlueprint
+		origins[at("role")] = origin.FromBlueprint
 	}
 
 	rn.Name = string(node.RoleLabel(rn.Role, p.Ord))
-	origins[at("name")] = FromInventory
+	origins[at("name")] = origin.FromPlacement
 	if dn.Name != "" {
 		rn.Name = dn.Name
-		origins[at("name")] = FromBlueprint
+		origins[at("name")] = origin.FromBlueprint
 	}
 
 	rn.Ports = mergePorts(dn.Ports, p.Ports, at, origins)
@@ -202,21 +203,21 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]Ori
 	rn.DataDir = in.Layout.DataDir(label)
 	rn.ConfigPath = in.Layout.ConfigPath(label)
 	rn.LogPath = in.Layout.LogPath(label)
-	origins[at("data_dir")] = FromInventory
+	origins[at("data_dir")] = origin.FromPlacement
 
 	rn.SyncMode = defaultSyncMode
-	origins[at("sync_mode")] = FromDefault
+	origins[at("sync_mode")] = origin.FromDefault
 	if dn.SyncMode != "" {
 		rn.SyncMode = dn.SyncMode
-		origins[at("sync_mode")] = FromBlueprint
+		origins[at("sync_mode")] = origin.FromBlueprint
 	}
 
 	rn.Binary = in.Chain.Binary
-	origins[at("binary")] = FromChain
+	origins[at("binary")] = origin.FromChain
 	if bp.Binaries != nil {
 		if bp.Binaries.Node != "" {
 			rn.Binary = bp.Binaries.Node
-			origins[at("binary")] = FromBlueprint
+			origins[at("binary")] = origin.FromBlueprint
 		}
 		// Matched against the RESOLVED name, not the declared one. A document
 		// that names no nodes still addresses them by role label, and matching
@@ -229,7 +230,7 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]Ori
 			for _, n := range o.Nodes {
 				if n == rn.Name {
 					rn.Binary = o.Node
-					origins[at("binary")] = FromBlueprint
+					origins[at("binary")] = origin.FromBlueprint
 				}
 			}
 		}
@@ -243,7 +244,7 @@ func resolveNode(i int, dn Node, bp Blueprint, in Inputs, origins map[string]Ori
 
 // mergePorts takes each port from the document when it is pinned there and from
 // the placement otherwise.
-func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string) string, origins map[string]Origin) node.Endpoints {
+func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string) string, origins map[string]origin.Origin) node.Endpoints {
 	out := placed
 	// Each row is one port, the field it lands in, and how to read it off a
 	// declaration. Listing them is deliberate: a port added to node.Endpoints
@@ -264,13 +265,13 @@ func mergePorts(declared *node.Endpoints, placed node.Endpoints, at func(string)
 	}
 	for _, f := range fields {
 		key := at("ports." + f.name)
-		origins[key] = FromInventory
+		origins[key] = origin.FromPlacement
 		if declared == nil {
 			continue
 		}
 		if v := f.of(*declared); v != 0 {
 			*f.to = v
-			origins[key] = FromBlueprint
+			origins[key] = origin.FromBlueprint
 		}
 	}
 	return out
@@ -287,18 +288,18 @@ func portFields() []string {
 // A missing key is an error naming the node and what would supply it. The
 // alternative is a node launched with an empty identity, which joins nothing
 // and reports nothing wrong.
-func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) string, origins map[string]Origin) error {
+func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) string, origins map[string]origin.Origin) error {
 	switch {
 	case dn.NodeKey != nil:
 		rn.NodeKey = *dn.NodeKey
-		origins[at("nodekey")] = FromBlueprint
+		origins[at("nodekey")] = origin.FromBlueprint
 	case in.Keys != nil:
 		e, ok := in.Keys.Node(rn.Index)
 		if !ok {
 			return fmt.Errorf("blueprint: resolve: nodes[%d] (%s): the key set has no entry %d — declare a nodekey or use a set that covers %d nodes", i, rn.Name, rn.Index, len(in.Placed))
 		}
 		rn.NodeKey = NodeKeyRef{Hex: e.Nodekey.Hex()}
-		origins[at("nodekey")] = FromKeySet
+		origins[at("nodekey")] = origin.FromKeySet
 	default:
 		return fmt.Errorf("blueprint: resolve: nodes[%d] (%s): no nodekey — declare one or resolve with a key set", i, rn.Name)
 	}
@@ -312,7 +313,7 @@ func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) st
 	if dn.Account != nil {
 		acct := *dn.Account
 		rn.Account = &acct
-		origins[at("account")] = FromBlueprint
+		origins[at("account")] = origin.FromBlueprint
 	}
 	return nil
 }
@@ -322,15 +323,15 @@ func resolveKeys(rn *ResolvedNode, dn Node, in Inputs, i int, at func(string) st
 // Node order, not the order a set iterates: the genesis records the sealing set
 // as a list, and a list that comes out differently on two runs produces two
 // different genesis files from one document.
-func resolveValidators(bp Blueprint, nodes []ResolvedNode, origins map[string]Origin) ([]string, error) {
+func resolveValidators(bp Blueprint, nodes []ResolvedNode, origins map[string]origin.Origin) ([]string, error) {
 	if bp.Validators != nil && len(bp.Validators.Explicit) > 0 {
 		// Already held against the resolved node table by checkRefs.
-		origins["validators"] = FromBlueprint
+		origins["validators"] = origin.FromBlueprint
 		return append([]string(nil), bp.Validators.Explicit...), nil
 	}
-	origins["validators"] = FromDefault
+	origins["validators"] = origin.FromDefault
 	if bp.Validators != nil && bp.Validators.From != "" {
-		origins["validators"] = FromBlueprint
+		origins["validators"] = origin.FromBlueprint
 	}
 	var out []string
 	for _, n := range nodes {

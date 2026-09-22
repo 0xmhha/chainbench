@@ -89,7 +89,7 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 	case dsl.IsEnv(raw):
 		// An env is a declaration, not a run: it validates on its own terms and
 		// is exercised through the cases that name it.
-		env, perr := dsl.ParseEnv(raw)
+		env, perr := dsl.ParseChainPreset(raw)
 		if perr != nil {
 			r.Result = "INVALID: " + perr.Error()
 			return r
@@ -122,6 +122,17 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 	if bad := malformedRequires(s); len(bad) > 0 {
 		r.Result = "INVALID REQUIRES: " + strings.Join(bad, "; ")
 		return r
+	}
+	// A misspelled fork is the quietest error the grammar allows: the genesis
+	// writes <name>Block for whatever it is given, the chain never reaches a
+	// fork by that name, and the run reports whatever the pre-fork build did.
+	// Offline is where it should be caught, because that is the check a reader
+	// runs over every declaration at once.
+	if s.EnvUpgrade != nil {
+		if err := checkForkIsOneTheChainKnows(s.EnvUpgrade, s.Chain.Name, s.Chain.BinaryChains); err != nil {
+			r.Result = "INVALID FORK: " + err.Error()
+			return r
+		}
 	}
 	r.OK, r.Result = true, specResult(s, chain, caps)
 	return r

@@ -8,7 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": "wemix-bp4",
+  "chainPreset": "wemix-bp4",
   "steps": [
     {
       "do": "waitBlock",

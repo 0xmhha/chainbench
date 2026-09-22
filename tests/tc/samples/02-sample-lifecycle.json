@@ -8,7 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4-en1-binvar",
     "genesis": {
       "overlay": {

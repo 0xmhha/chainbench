@@ -8,7 +8,7 @@
     "consensus",
     "family:wbft"
   ],
-  "env": {
+  "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",

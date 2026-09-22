@@ -36,6 +36,10 @@ type runReport struct {
 	// compose, most often. It is omitted when there is one, so a successful
 	// document is byte for byte what it was before this field existed.
 	Error string `json:"error,omitempty"`
+	// FailedAt is the state the run failed in, so a consumer can tell a
+	// declaration that is wrong from a network that would not stand up without
+	// matching on the message.
+	FailedAt string `json:"failedAt,omitempty"`
 	app.RunSummary
 }
 
@@ -67,7 +71,7 @@ func NewRun() *cobra.Command {
 		docker          bool
 		attach          bool
 		planOnly        bool
-		envRef          string
+		presetRef       string
 		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -108,7 +112,7 @@ func NewRun() *cobra.Command {
 					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
 			}
 			in := app.RunSuiteIn{
-				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
+				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
 				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 				NodeMonitorTimeout: nodeMonitorT,
@@ -146,7 +150,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
-	cmd.Flags().StringVar(&envRef, "env", "", "compose: run every case on this chain declaration instead of the one it names (an env id, or a path to an env file); what a case overrode is kept")
+	cmd.Flags().StringVar(&presetRef, "chain-preset", "", "compose: run every case on this chain-preset instead of the one it names (an id, or a path to a chain-preset file); what a case overrode is kept")
 	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
@@ -259,7 +263,7 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 		fmt.Fprintf(notes, "preflight: %s\n", res.Preflight)
 	}
 	if err != nil {
-		return setupFailure(cmd.OutOrStdout(), err, jsonOut)
+		return setupFailure(cmd.OutOrStdout(), err, failedAtOf(res), jsonOut)
 	}
 	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut, noSkips)
 }
@@ -275,18 +279,46 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 // The code is 2 either way, --json or not, matching what sequenceExit already
 // returns for a definition that could not run: "the chain would not come up" is not the
 // same news as "a test ran and failed", and CI gates on the difference.
-func setupFailure(out io.Writer, cause error, jsonOut bool) error {
+func setupFailure(out io.Writer, cause error, at string, jsonOut bool) error {
 	if jsonOut {
 		// The document goes out even though the run failed, because under
 		// --json stdout is the whole answer: a consumer that gets nothing
 		// cannot tell a compose failure from a crash.
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(runReport{Error: cause.Error()}); err != nil {
+		if err := enc.Encode(runReport{Error: cause.Error(), FailedAt: at}); err != nil {
 			return err
 		}
 	}
+	// The state is appended rather than woven in: the message is a sentence
+	// somebody wrote to be read, and the state is for whoever asks "which stage
+	// was that?" without reading it.
+	if at != "" {
+		cause = fmt.Errorf("%w (at %s)", cause, at)
+	}
 	return &exitcode.Error{Code: 2, Err: cause}
+}
+
+// failedAtOf names the states a run failed in, outermost first, or "" when it
+// failed in none this build knows.
+//
+// There are two when the chain refused: the run's own stage, and which of the
+// chain's stages did the refusing. They are one suffix because they used to be
+// two — "(at ChainLaunchNodesFailPortBusy) (at TestReachNetworkFailCompose)" —
+// and two suffixes that look alike read as one thing said twice rather than as
+// a stage and the stage inside it.
+//
+// The surface takes words rather than the state's own type, because naming that
+// type here would be reaching past app for it.
+func failedAtOf(res app.RunSuiteOut) string {
+	if res.FailedAt == 0 {
+		return ""
+	}
+	at := res.FailedAt.String()
+	if res.ComposeFailedAt != 0 {
+		at += " / " + res.ComposeFailedAt.String()
+	}
+	return at
 }
 
 // progressWriter is where narration goes: stderr when stdout has to parse as a

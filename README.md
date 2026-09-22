@@ -188,7 +188,7 @@ A test declaration names the preset and the runner composes the handoff:
 chainbench suite run tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json
 ```
 
-The declaration it reads is [`tests/tc/env/wemix-to-wbft.env.json`](tests/tc/env/wemix-to-wbft.env.json),
+The declaration it reads is [`presets/chain/wemix-to-wbft.json`](presets/chain/wemix-to-wbft.json),
 whose `upgrade` block names the preset:
 
 ```json

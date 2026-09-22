@@ -323,7 +323,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 // binary, empty for the genesis route.
 func (w *Workspace) applyFork(base []byte, f GenesisFork) ([]byte, map[string][]byte, error) {
 	if f.Name == "" {
-		return nil, nil, ofKind(errGenesisForkUnresolved,
+		return nil, nil, lifecycle.Mark(errGenesisForkUnresolved,
 			fmt.Errorf("chainsetup: genesis: a fork needs a name"))
 	}
 	withBlock, err := genesis.SetConfigSection(base, f.Name+"Block", json.RawMessage(strconv.FormatInt(f.At, 10)))
@@ -397,7 +397,7 @@ const forkConfigTable = "Eth.Genesis"
 func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 	id := w.state.BinaryChains[f.Binary]
 	if id == "" {
-		return nil, ofKind(errGenesisForkUnresolved,
+		return nil, lifecycle.Mark(errGenesisForkUnresolved,
 			fmt.Errorf("chainsetup: genesis: the %q fork seals on binary %q, which names no chain of its own — the fork's configuration comes from that chain's genesis", f.Name, f.Binary))
 	}
 	p, err := external.ResolveChain(id, "", "")
@@ -428,7 +428,7 @@ func (w *Workspace) forkSection(f GenesisFork) (json.RawMessage, error) {
 		return nil, fmt.Errorf("chainsetup: genesis: read the %q section from the %q genesis: %w", f.Name, id, err)
 	}
 	if len(section) == 0 {
-		return nil, ofKind(errGenesisForkUnresolved,
+		return nil, lifecycle.Mark(errGenesisForkUnresolved,
 			fmt.Errorf("chainsetup: genesis: the %q genesis has no %q section to hand over", id, f.Name))
 	}
 	return section, nil
@@ -449,7 +449,7 @@ func (w *Workspace) forkValidators(f GenesisFork) ([]int, error) {
 		}
 	}
 	if len(indices) == 0 {
-		return nil, ofKind(errGenesisForkUnresolved,
+		return nil, lifecycle.Mark(errGenesisForkUnresolved,
 			fmt.Errorf("chainsetup: genesis: no node runs binary %q, so the %q fork would hand over to nobody", f.Binary, f.Name))
 	}
 	return indices, nil
@@ -470,7 +470,7 @@ func (w *Workspace) writeGenesisConfigs(ctx context.Context, lay node.Layout, co
 	paths := make(map[string]string, len(configs))
 	for _, name := range slices.Sorted(maps.Keys(configs)) {
 		if w.state.Binaries[name] == "" {
-			return ofKind(errGenesisDeclUnused,
+			return lifecycle.Mark(errGenesisDeclUnused,
 				fmt.Errorf("chainsetup: genesis: a genesis config is declared for binary %q, which no node runs — name one of the declared binaries", name))
 		}
 		body := configs[name]
@@ -513,7 +513,7 @@ func (w *Workspace) writeGenesisVariants(ctx context.Context, lay node.Layout, b
 	paths := make(map[string]string, len(variants))
 	for _, name := range slices.Sorted(maps.Keys(variants)) {
 		if w.state.Binaries[name] == "" {
-			return ofKind(errGenesisDeclUnused,
+			return lifecycle.Mark(errGenesisDeclUnused,
 				fmt.Errorf("chainsetup: genesis: a genesis is declared for binary %q, which no node runs — name one of the declared binaries", name))
 		}
 		gen, err := genesis.Customize(base, genesis.NetworkOptions{Overlay: variants[name]})

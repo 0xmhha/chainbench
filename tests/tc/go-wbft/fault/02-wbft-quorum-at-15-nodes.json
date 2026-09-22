@@ -8,7 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": "wbft-bp7-en7-pn1",
+  "chainPreset": "wbft-bp7-en7-pn1",
   "steps": [
     {
       "do": "waitBlock",

@@ -90,33 +90,21 @@
       같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
       `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
-- [ ] **T. 테스트 영역(0x8000)의 상태를 잰 적이 없다** — 근거: [`architecture/design-v3/state-machine-02-states.md`](architecture/design-v3/state-machine-02-states.md).
-      그 문서가 네 블록(`TEST_PENDING`·`RUNNING`·`REPORTING`·`DONE`)의 BASE 만 정해 두고 "세부는 이
-      문서가 정하지 않는다" 로 남겼다. `lifecycle.areaTest` 는 선언만 있고 상태가 하나도 없다.
-      **잰 것**: `internal/testengine` 은 23파일 4,347줄이고 실패 지점이 103곳, `RunSuite` 한
-      함수 안에만 분기가 27개다. 운영 영역이 65곳에 커밋 셋·695줄이었으니 그 1.5배로 본다.
-      **방법은 운영 영역과 같다** — 실패를 먼저 재서 문서로 내고, 상태와 전이를 쓰고, 핸들러가
-      자기 상태를 말하게 한다. 남은 것 중 유일하게 **라이브 검증이 필요**하다(전 케이스가 지나는
-      길목이라 일부만 돌려서는 확신할 수 없고, 209건 순차가 약 4시간).
-- [ ] **C2-1. 골든 preset 의 죽은 절을 지울지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B 의 "남은 결정".
-      이력으로 확인했다: `chains`·`data`·`ports`·`name` 과 yaml 전용
-      `nodes`·`description` 은 읽는 코드가 없고, `data`·`name` 은 저장소 전 이력에 독자가 0이다.
-      **두 범위**: (A) 그 여섯만 — yaml 76줄 + `internal/preset/chain.go` 26줄, 깨지는 테스트
-      없음. (B) 테스트만 읽는 `roles`·`identities`·`producers`·`validators` 까지 — 추가로 yaml
-      184줄·구조체 41줄이 빠지고 **테스트 넷(265줄)과 `poa.EnvFromPreset` 이 함께 없어진다**.
-      손보다 판단이 크다 — 지워지는 검사는 "이 환경은 이런 모양이었다" 는 기록이기도 하다.
-- [ ] **C2-2. `preset.Chain` 을 쓰임에 맞게 개명할지** — 근거: [`architecture/design-v3/cohesion-candidates-2026-09-21.md`](architecture/design-v3/cohesion-candidates-2026-09-21.md) B, 그리고 `internal/preset/chain.go`.
-      쓰임으로는 하드포크 일정표인데(프로덕션이 읽는 것은 `Upgrade.AtFork`·`ForkBlock` 둘뿐), 개명하면
-      `direction.md` 의 판단을 **네 번째로** 뒤집는 것이 된다. 이전 세 번과 다른 점은 근거가
-      취향이 아니라 이력이라는 것뿐이다. **두 범위**: (가) 타입·함수 이름만 — 코드 7파일 12곳,
-      문서 21곳. (나) 디렉터리까지(`presets/chain` → 다른 이름) — yaml 2파일 이동에
-      `ChainDir`·`hardforkPresetDir`·테스트 경로 6곳, 문서 11파일 21곳. DSL 정의서 3개는 이름만
-      부르므로 안 건드린다. **C2-1(B)를 먼저 하면 타입에 `Upgrade` 만 남아 이 결정이 자명해진다.**
-- [ ] **`preset.ChainDir` 은 쓰는 곳이 0이다** — 근거: `internal/preset/doc.go:31`.
-      선언의 주석은 "a caller that needs a default asks for it rather than spelling it" 이라고
-      적었는데, 정작 `internal/testengine/genesis_decl.go:112` 가 `hardforkPresetDir` 라는 자기
-      상수를 따로 갖고 같은 문자열을 쓴다. 상수가 있는데 아무도 안 묻는 것이라 C2 의 표면 정리에서
-      놓쳤다. 한 줄짜리이고 C2-2(나)를 하면 같이 정리된다.
+- [x] ~~**T. 테스트 영역(0x8000)의 상태**~~ — **완료 (2026-09-22).** 근거: [`architecture/design-v3/state-machine-05-test-failures.md`](architecture/design-v3/state-machine-05-test-failures.md).
+      실패 102곳을 재고(T1), 여섯 블록에 실패 스물을 붙여 전이표를 쓰고(T2), 실행이 자기 상태를
+      말하게 하고(T3), 붙기 경로까지 같은 단계를 지난다는 것을 확인했다(T4). **전 케이스 라이브로
+      209/209 통과**(71분, 실패·blocked·skip 0건) — stablenet 181 · wbft 15 · wemix 13, 하드포크
+      세 건과 포크 전 빌드를 요구하는 `01-boho-crossed-by-restart` 포함. 스위프 도구는
+      `scripts/tcsweep.sh` 에 남겼다.
+- [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
+      결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. **P-5 는 할 일이 없었다** —
+      `suite run` 에는 이미 `--server-set` 이 있고(`resourcecmd.ServerFlags` 를 빌려 쓴다),
+      MCP 도 마찬가지다. **P-4 도 끝났다** — `internal/core/origin` 에 rung 일곱을 둔 어휘 하나를
+      만들고 기록 둘이 그것을 쓴다. `nodeconfig.Layer` 는 "누가 요청했는가" 라는 다른 질문에
+      답하므로 합치지 않았고, 그 이유는 설계 문서 §P-4 에 있다. **P-6 도 끝났다** — 검사를 쓰면서 결함 둘이 나왔고(한 노브를
+      여러 노드에 주면 망이 겹친다 / 스코프가 좁으면 CLI 를 이긴다) 둘 다 고쳤다. **P-7 도 끝났다** — README 를 다시 썼고,
+      `direction.md` 의 "정본" 표에서 없어진 갈래를 지웠고, #419 설계 기록에 뒤에 무엇이
+      바뀌었는지 가리키는 줄을 달았다. **선언 모델은 이것으로 닫힌다.**
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은

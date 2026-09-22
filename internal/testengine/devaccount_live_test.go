@@ -53,9 +53,11 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	ringDir := filepath.Join(ws, "ring")
 	copyPreset(t, filepath.Join(repoRoot(t), "presets", "keys"), ringDir)
 
+	// No binaries block: the binary is a path here, and a chain-preset names a
+	// binary rather than saying where one lives. RunSuiteIn.Binary below is the
+	// invocation, which is the tier a path belongs to.
 	env := map[string]any{
-		"schemaVersion": "2", "kind": "env", "id": "declared-accounts-env", "chain": "stablenet",
-		"binaries": map[string]any{"default": bin},
+		"schemaVersion": "2", "kind": "chain-preset", "id": "declared-accounts-env", "chain": "stablenet",
 		"accounts": map[string]any{
 			"dev1": map[string]any{"fund": "10000000000000000000"},
 			"dev2": map[string]any{},
@@ -63,8 +65,8 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	}
 	spec := map[string]any{
 		"schemaVersion": "2", "kind": "case",
-		"id":  "declared-accounts",
-		"env": "declared-accounts-env",
+		"id":          "declared-accounts",
+		"chainPreset": "declared-accounts-env",
 		"steps": []map[string]any{
 			// Signed here: no node holds dev1's key.
 			{"do": "sendTx", "from": "dev1", "to": "dev2", "value": "0x1", "save": "sent"},
@@ -77,7 +79,12 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 			{"expect": "txStatus", "hash": "$sent", "expected": "0x1"},
 		},
 	}
-	writeJSON(t, filepath.Join(ws, "declared-accounts-env.env.json"), env)
+	// <id>.json beside the case, which is where findChainPresetFile looks.
+	//
+	// This test wrote <id>.env.json and declared its binary as a path long after
+	// both rules changed. It compiled and it skipped, because it needs a real
+	// gstable, so neither CI nor a reader ever saw the two mismatches.
+	writeJSON(t, filepath.Join(ws, "declared-accounts-env.json"), env)
 	casePath := filepath.Join(ws, "declared-accounts.json")
 	writeJSON(t, casePath, spec)
 

@@ -8,7 +8,7 @@
     "short-expiry",
     "contract:govMinter"
   ],
-  "env": "stablenet-bp4-boho-short-expiry",
+  "chainPreset": "stablenet-bp4-boho-short-expiry",
   "steps": [
     {
       "do": "read",

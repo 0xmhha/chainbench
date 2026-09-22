@@ -115,7 +115,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return nil, ofKind(errConfigPinUnreadable,
+			return nil, lifecycle.Mark(errConfigPinUnreadable,
 				fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr))
 		}
 		return toml, nil
@@ -124,7 +124,11 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
-	spec := process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
+	net, err := w.network()
+	if err != nil {
+		return nil, err
+	}
+	spec := process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
 	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
@@ -139,7 +143,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 		}
 		gen, rerr := t.Files.Read(ctx, path)
 		if rerr != nil {
-			return nil, ofKind(errConfigPinUnreadable,
+			return nil, lifecycle.Mark(errConfigPinUnreadable,
 				fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr))
 		}
 		spec.Genesis = gen
@@ -160,11 +164,11 @@ func (w *Workspace) writeConfigFile(ctx context.Context, t *resource.Access, ns 
 	want := filestore.Hash(toml)
 	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
 	if err != nil {
-		return ConfigProvenance{}, ofKind(errConfigReadback,
+		return ConfigProvenance{}, lifecycle.Mark(errConfigReadback,
 			fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err))
 	}
 	if got != want {
-		return ConfigProvenance{}, ofKind(errConfigReadback,
+		return ConfigProvenance{}, lifecycle.Mark(errConfigReadback,
 			fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got))
 	}
 	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}
@@ -191,6 +195,10 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
+	net, err := w.network()
+	if err != nil {
+		return "", err
+	}
 	scoped := false
 	for i, ns := range w.state.Nodes {
 		overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
@@ -204,11 +212,14 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
 		w.state.Nodes[i].Args = args
+	}
+	if err := w.checkUniformNetworkID(); err != nil {
+		return "", err
 	}
 	detail := fmt.Sprintf("%d argv(s) assembled", len(w.state.Nodes))
 	if scoped {

@@ -42,7 +42,7 @@ func TestSelectorWellFormed(t *testing.T) {
 // env reference. steps and on are spliced in.
 func caseJSON(steps string) []byte {
 	return []byte(`{"schemaVersion":"2","kind":"case","id":"c",` +
-		`"env":{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"},` +
+		`"chainPreset":{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet"},` +
 		`"steps":[` + steps + `]}`)
 }
 
@@ -78,7 +78,7 @@ func TestValidateContent(t *testing.T) {
 // target chain is SKIP, not invalid.
 func TestValidateContent_ApplicableChainsSkip(t *testing.T) {
 	raw := []byte(`{"schemaVersion":"2","kind":"case","id":"c",` +
-		`"env":{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"},` +
+		`"chainPreset":{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet"},` +
 		`"applicableChains":"wbft",` +
 		`"steps":[{"do":"waitBlock","target":1},{"expect":"chainId","is":"0"}]}`)
 	res, err := ValidateContent([][]byte{raw}, []string{"c"}, "stablenet")
