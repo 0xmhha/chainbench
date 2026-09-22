@@ -51,10 +51,9 @@ type ChainStopIn struct {
 
 // ChainStop terminates every running node by its recorded PID.
 func ChainStop(ctx context.Context, d chainsetup.Deps, in ChainStopIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return ws.Stop(ctx)
+	return operate(ctx, d, in.DataDir, func(mg *chainsetup.Manager) (string, error) {
+		return mg.Stop(ctx)
 	})
-	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // ChainRestartIn bounces one node.
@@ -65,10 +64,9 @@ type ChainRestartIn struct {
 
 // ChainRestart stops and relaunches one node with its recorded arming.
 func ChainRestart(ctx context.Context, d chainsetup.Deps, in ChainRestartIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return ws.Restart(ctx, in.Node)
+	return operate(ctx, d, in.DataDir, func(mg *chainsetup.Manager) (string, error) {
+		return mg.RestartNode(ctx, in.Node)
 	})
-	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // ChainRmIn identifies the workspace.
@@ -78,10 +76,9 @@ type ChainRmIn struct {
 
 // ChainRm removes the composed data plane (stopped nodes only).
 func ChainRm(ctx context.Context, d chainsetup.Deps, in ChainRmIn) (chainsetup.StepOut, error) {
-	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return ws.Rm(ctx)
+	return operate(ctx, d, in.DataDir, func(mg *chainsetup.Manager) (string, error) {
+		return mg.Remove(ctx)
 	})
-	return chainsetup.StepOut{Detail: detail}, err
 }
 
 // ChainLogsIn selects one node's log tail.

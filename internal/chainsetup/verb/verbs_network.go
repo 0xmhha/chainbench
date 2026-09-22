@@ -185,24 +185,25 @@ func NodeSwap(ctx context.Context, d chainsetup.Deps, in NodeSwapIn) (NodeStartO
 	if in.DataDir == "" || in.Index <= 0 {
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
-	var swapped node.Node
-	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		detail, err := ws.SwapNode(ctx, chainsetup.SwapNodeOpts{
+	if _, err := operate(ctx, d, in.DataDir, func(mg *chainsetup.Manager) (string, error) {
+		return mg.Swap(ctx, chainsetup.SwapNodeOpts{
 			Index: in.Index, Binary: in.Binary, Config: in.Config,
 			GenesisOverlay: in.GenesisOverlay, Purpose: in.Purpose,
 		})
-		if err != nil {
-			return "", err
-		}
-		for _, n := range ws.NodeSet().Nodes {
-			if n.Index == in.Index {
-				swapped = n
-			}
-		}
-		return detail, nil
-	})
+	}); err != nil {
+		return NodeStartOut{}, err
+	}
+	// The table is read back rather than carried out of the swap: what the
+	// caller wants is the node as it now stands.
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NodeStartOut{}, err
+	}
+	var swapped node.Node
+	for _, n := range ws.NodeSet().Nodes {
+		if n.Index == in.Index {
+			swapped = n
+		}
 	}
 	return NodeStartOut{Node: swapped}, nil
 }
@@ -301,19 +302,19 @@ func ChainCrossFork(ctx context.Context, d chainsetup.Deps, in ChainCrossForkIn)
 	if in.DataDir == "" {
 		return ChainCrossForkOut{}, ErrNoDataDir
 	}
-	var out ChainCrossForkOut
-	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		done, err := ws.CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
-		if err != nil {
-			return "", err
-		}
-		out.Detail, out.Nodes = done.Detail, ws.NodeSet()
-		return done.Detail, nil
-	})
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return ChainCrossForkOut{}, err
 	}
-	return out, nil
+	done, err := chainsetup.NewManager(d, ws).CrossFork(ctx, chainsetup.CrossForkOpts{Timeout: in.Timeout})
+	if err != nil {
+		return ChainCrossForkOut{}, err
+	}
+	back, err := chainsetup.Open(in.DataDir, d.Clock)
+	if err != nil {
+		return ChainCrossForkOut{}, err
+	}
+	return ChainCrossForkOut{Detail: done.Detail, Nodes: back.NodeSet()}, nil
 }
 
 // ChainForkIn identifies the composition to read the declared hardfork from.

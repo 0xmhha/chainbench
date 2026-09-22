@@ -25,3 +25,17 @@ func step(ctx context.Context, d chainsetup.Deps, dataDir, name string, in chain
 	detail, err := chainsetup.NewManager(d, ws).Step(ctx, name, in)
 	return chainsetup.StepOut{Detail: detail}, err
 }
+
+// operate runs one operation on a composed network, through the machine.
+//
+// The same seam a step takes: the caller says which operation and hands it its
+// own arguments, and the machine says whether a network in this condition may
+// be asked.
+func operate(ctx context.Context, d chainsetup.Deps, dataDir string, build func(*chainsetup.Manager) (string, error)) (chainsetup.StepOut, error) {
+	ws, err := chainsetup.Open(dataDir, d.Clock)
+	if err != nil {
+		return chainsetup.StepOut{}, err
+	}
+	detail, err := build(chainsetup.NewManager(d, ws))
+	return chainsetup.StepOut{Detail: detail}, err
+}

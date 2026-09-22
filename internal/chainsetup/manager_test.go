@@ -113,6 +113,12 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"  Composed",
 		"  Verifying",
 		"  Ready",
+		"    Stopping",
+		"    Restarting",
+		"    Swapping",
+		"    Hardforking",
+		"    CrossingFork",
+		"    Removing",
 		"  Failed",
 		"",
 	}, "\n")

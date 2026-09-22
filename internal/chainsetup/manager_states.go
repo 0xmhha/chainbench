@@ -23,12 +23,32 @@ type stage interface {
 	step() string
 }
 
-// compositionState is the root. It handles nothing, so a message no state below
-// wants is recorded as unhandled rather than mistaken for something.
-type compositionState struct{ statemachine.Base }
+// compositionState is the root. It holds the one thing every state below can
+// say: that it could not finish.
+//
+// Failing is handled here rather than in each parent because any state can
+// fail, and a state's Enter cannot move — so it leaves the message and
+// something above turns that into the move. The root is above all of them.
+type compositionState struct {
+	statemachine.Base
+	mg *Manager
+}
 
 // Name says what this state is called.
 func (compositionState) Name() statemachine.StateName { return nameComposition }
+
+// Process takes a failure from anywhere below and goes to failed.
+func (s *compositionState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
+	e, ok := msg.(stageFailed)
+	if !ok {
+		return false, nil
+	}
+	// The reason is written before the move, so the failed state reads a fact
+	// rather than being handed one. Transitions carry no values.
+	s.mg.failure = e.Err
+	m.TransitionTo(s.mg.failed)
+	return true, nil
+}
 
 // stoppedState is where a machine starts and where a cleared failure returns to.
 type stoppedState struct {
@@ -57,6 +77,21 @@ func (s *stoppedState) Process(_ context.Context, m *statemachine.Machine, msg s
 	case ComposeComparing:
 		s.mg.request = c.Request
 		m.TransitionTo(s.mg.comparing)
+		return true, nil
+	case Operate:
+		op, err := s.mg.operationNamed(c.Name)
+		if err != nil {
+			return true, err
+		}
+		// The conditions an operation needs are the ones verbNeeds declares:
+		// a node table that exists, a node that is stopped, an argv that was
+		// recorded. A position in a tree cannot say those, so it asks.
+		if err := s.mg.mayOperate(op.verb()); err != nil {
+			s.mg.failure = err
+			m.TransitionTo(s.mg.failed)
+			return true, nil
+		}
+		m.TransitionTo(op)
 		return true, nil
 	case RunStep:
 		// One step, on a composition that has already got far enough for it.
@@ -123,12 +158,6 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 	case reconcileRefused:
 		m.TransitionTo(s.mg.failed)
 		return true, nil
-	case stageFailed:
-		// The reason is written before the move, so the failed state reads a
-		// fact rather than being handed one. Transitions carry no values.
-		s.mg.failure = e.Err
-		m.TransitionTo(s.mg.failed)
-		return true, nil
 	}
 	return false, nil
 }
@@ -148,7 +177,8 @@ func (s *composedState) Enter(context.Context, *statemachine.Machine) error {
 	return nil
 }
 
-// readyState is a composition that ran every stage it had.
+// readyState is a composition that ran every stage it had, and the only place
+// an operation on it is accepted.
 type readyState struct {
 	statemachine.Base
 	mg *Manager
@@ -161,6 +191,15 @@ func (readyState) Name() statemachine.StateName { return nameReady }
 func (s *readyState) Enter(context.Context, *statemachine.Machine) error {
 	s.mg.recordPath(s)
 	return nil
+}
+
+// Process takes an operation's report and comes to rest.
+func (s *readyState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
+	if _, ok := msg.(operationDone); !ok {
+		return false, nil
+	}
+	m.TransitionTo(s)
+	return true, nil
 }
 
 // failedState is a composition that stopped because a stage could not finish.

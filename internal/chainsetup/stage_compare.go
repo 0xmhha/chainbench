@@ -124,8 +124,7 @@ func (l *stoppingToRebuild) Enter(ctx context.Context, m *statemachine.Machine) 
 		return ws.Stop(ctx)
 	})
 	if err != nil {
-		mg.failure = fmt.Errorf("chainsetup: preflight stop before rebuild: %w", err)
-		m.TransitionTo(mg.failed)
+		m.SendSelf(stageFailed{Step: "stop", Err: fmt.Errorf("chainsetup: preflight stop before rebuild: %w", err)})
 		return nil
 	}
 	mg.note("stop (rebuild-all)", detail)
@@ -154,8 +153,7 @@ func (l *restartingNodes) Enter(ctx context.Context, m *statemachine.Machine) er
 			return ws.Restart(ctx, idx)
 		})
 		if err != nil {
-			mg.failure = fmt.Errorf("chainsetup: preflight restart node%d: %w", idx, err)
-			m.TransitionTo(mg.failed)
+			m.SendSelf(stageFailed{Step: "restart", Err: fmt.Errorf("chainsetup: preflight restart node%d: %w", idx, err)})
 			return nil
 		}
 		mg.note("restart", detail)

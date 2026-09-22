@@ -131,6 +131,8 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"Compose":             Compose{},
 		"RunStep":             RunStep{},
 		"ComposeComparing":    ComposeComparing{},
+		"Operate":             Operate{},
+		"operationDone":       operationDone{},
 		"comparisonMade":      comparisonMade{},
 		"nodesRestarted":      nodesRestarted{},
 		"stoppedToRebuild":    stoppedToRebuild{},

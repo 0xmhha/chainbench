@@ -34,6 +34,9 @@ const (
 	CmdCompose statemachine.What = statemachine.BaseChain + 0x001 + iota
 	// CmdStep runs one composition step on a network that stopped part way.
 	CmdStep
+	// CmdOperate asks a composed network to do something: stop, restart a
+	// node, swap a binary, cross a fork.
+	CmdOperate
 	// CmdCompare composes only as far as what is on the target requires, and
 	// hands over before the readiness gate.
 	CmdCompare
@@ -74,6 +77,8 @@ const (
 	eventComparisonMade
 	// eventNodesRestarted: the nodes the comparison named are back.
 	eventNodesRestarted
+	// eventOperationDone: an operation on a composed network finished.
+	eventOperationDone
 	// eventStoppedToRebuild: the running network is down and may be composed
 	// over.
 	eventStoppedToRebuild
@@ -128,6 +133,7 @@ const (
 var whatNames = map[statemachine.What]string{
 	CmdCompose:    "CmdCompose",
 	CmdStep:       "CmdStep",
+	CmdOperate:    "CmdOperate",
 	CmdCompare:    "CmdCompare",
 	CmdStop:       "CmdStop",
 	CmdClearError: "CmdClearError",
@@ -141,6 +147,7 @@ var whatNames = map[statemachine.What]string{
 	eventKeysEnsured:         "eventKeysEnsured",
 	eventComparisonMade:      "eventComparisonMade",
 	eventNodesRestarted:      "eventNodesRestarted",
+	eventOperationDone:       "eventOperationDone",
 	eventStoppedToRebuild:    "eventStoppedToRebuild",
 	eventReconciled:          "eventReconciled",
 	eventReconcileRefused:    "eventReconcileRefused",
@@ -205,6 +212,18 @@ type RunStep struct {
 
 // What says which message this is.
 func (RunStep) What() statemachine.What { return CmdStep }
+
+// Operate asks a composed network to do something. Which one is the state's
+// name; what it needs is already on that state.
+type Operate struct{ Name statemachine.StateName }
+
+// What says which message this is.
+func (Operate) What() statemachine.What { return CmdOperate }
+
+// operationDone: an operation on a composed network finished.
+type operationDone struct{}
+
+func (operationDone) What() statemachine.What { return eventOperationDone }
 
 // ComposeComparing asks for a composition that reuses what the target already has when
 // the comparison says it can.

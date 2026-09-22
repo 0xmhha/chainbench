@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/hardfork"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
@@ -104,7 +106,15 @@ type Manager struct {
 	stages      []stage
 	composed    *composedState
 	ready       *readyState
-	failed      *failedState
+	ops         []operation
+
+	stopping     *stopping
+	restarting   *restarting
+	swapping     *swapping
+	hardforking  *hardforking
+	crossingFork *crossingFork
+	removing     *removing
+	failed       *failedState
 }
 
 // NewManager builds a composition machine over an open, held workspace.
@@ -115,10 +125,20 @@ type Manager struct {
 func NewManager(d Deps, ws *Workspace) *Manager {
 	mg := &Manager{d: d, ws: ws, m: statemachine.New("composition", nil)}
 
-	root := &compositionState{}
+	root := &compositionState{mg: mg}
 	mg.stopped = &stoppedState{mg: mg}
 	mg.reconciling = &reconciling{mg: mg}
 	mg.comparing = newComparing(mg)
+	mg.stopping = &stopping{mg: mg}
+	mg.restarting = &restarting{mg: mg}
+	mg.swapping = &swapping{mg: mg}
+	mg.hardforking = &hardforking{mg: mg}
+	mg.crossingFork = &crossingFork{mg: mg}
+	mg.removing = &removing{mg: mg}
+	mg.ops = []operation{
+		mg.stopping, mg.restarting, mg.swapping,
+		mg.hardforking, mg.crossingFork, mg.removing,
+	}
 	mg.verifying = &verifying{mg: mg}
 	mg.composing = &composingState{mg: mg}
 	mg.composed = &composedState{mg: mg}
@@ -165,6 +185,9 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 	mg.m.Add(mg.composed, root)
 	mg.m.Add(mg.verifying, root)
 	mg.m.Add(mg.ready, root)
+	for _, op := range mg.ops {
+		mg.m.Add(op, mg.ready)
+	}
 	mg.m.Add(mg.failed, root)
 	return mg
 }
@@ -303,6 +326,107 @@ func (mg *Manager) ComposeComparing(ctx context.Context, in ChainUpIn) error {
 		return err
 	}
 	return mg.failure
+}
+
+// Operate runs one operation on a composed network.
+//
+// The arguments are already on the state that will run it; this says which one,
+// and the machine says whether a network in this condition may be asked.
+func (mg *Manager) Operate(ctx context.Context, op operation) (string, error) {
+	if err := mg.m.Start(ctx, mg.stopped); err != nil {
+		return "", err
+	}
+	if err := mg.m.Send(ctx, Operate{Name: op.Name()}); err != nil {
+		return "", err
+	}
+	if mg.failure != nil {
+		return "", mg.failure
+	}
+	if len(mg.steps) == 0 {
+		return "", nil
+	}
+	_, detail, _ := strings.Cut(mg.steps[len(mg.steps)-1], ": ")
+	return detail, nil
+}
+
+// Stop takes every running node down.
+func (mg *Manager) Stop(ctx context.Context) (string, error) {
+	return mg.Operate(ctx, mg.stopping)
+}
+
+// Remove takes the composed network's data away.
+func (mg *Manager) Remove(ctx context.Context) (string, error) {
+	return mg.Operate(ctx, mg.removing)
+}
+
+// RestartNode bounces one node.
+func (mg *Manager) RestartNode(ctx context.Context, index int) (string, error) {
+	mg.restarting.index = index
+	return mg.Operate(ctx, mg.restarting)
+}
+
+// Swap replaces one node's binary.
+func (mg *Manager) Swap(ctx context.Context, opts SwapNodeOpts) (string, error) {
+	mg.swapping.opts = opts
+	return mg.Operate(ctx, mg.swapping)
+}
+
+// Hardfork swaps the network's binary at a fork block, keeping node data.
+func (mg *Manager) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary string) (node.NodeSet, error) {
+	mg.hardforking.plan, mg.hardforking.binary = plan, binary
+	if _, err := mg.Operate(ctx, mg.hardforking); err != nil {
+		return node.NodeSet{}, err
+	}
+	return mg.hardforking.nodes, nil
+}
+
+// CrossFork waits for the network to cross the fork it is planned for.
+func (mg *Manager) CrossFork(ctx context.Context, opts CrossForkOpts) (StepOut, error) {
+	mg.crossingFork.opts = opts
+	_, err := mg.Operate(ctx, mg.crossingFork)
+	return mg.crossingFork.out, err
+}
+
+// operationNamed is the state that runs the named operation.
+func (mg *Manager) operationNamed(name statemachine.StateName) (operation, error) {
+	for _, op := range mg.ops {
+		if op.Name() == name {
+			return op, nil
+		}
+	}
+	return nil, fmt.Errorf("chainsetup: no operation is named %q", name)
+}
+
+// mayOperate reports whether a composed network in this condition may be asked
+// to do this.
+//
+// It asks the same verbNeeds table the bodies ask, not a second copy. What an
+// operation needs — a node table that exists, a node that is stopped, an argv
+// that was recorded — is a fact about the network rather than a position in a
+// tree, so the position cannot answer it and does not pretend to.
+func (mg *Manager) mayOperate(verb string) error {
+	ws, err := Open(mg.ws.Dir(), mg.d.Clock)
+	if err != nil {
+		return err
+	}
+	ws.SetEnv(mg.d.Env)
+	ws.SetDriver(mg.d.Driver)
+	return ws.allow(verb)
+}
+
+// operated runs an operation's body and reports what it did.
+//
+// One place, because the six do the same three things around their own call:
+// record where the machine is, run it in the workspace, and say what happened.
+func (mg *Manager) operated(m *statemachine.Machine, op operation, fn func(*Workspace) (string, error)) {
+	mg.recordPath(op)
+	detail, err := InWorkspace(mg.d, mg.ws.Dir(), fn)
+	if err != nil {
+		m.SendSelf(stageFailed{Step: lower(op.verb()), Err: err})
+		return
+	}
+	mg.note(lower(op.verb()), detail)
+	m.SendSelf(operationDone{})
 }
 
 // Decision is what the comparison decided, as a report prints it.
