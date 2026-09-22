@@ -13,6 +13,16 @@ import (
 // in, and what one message means once it is there. Everything else is the
 // stage's work, which lives where it always did.
 
+// stage is a state that runs one of the composition's steps.
+//
+// The Manager keeps them in order and asks each which step it is, so the walk
+// and the record's step names stay one list while the states behind them are
+// replaced one at a time.
+type stage interface {
+	statemachine.State
+	step() string
+}
+
 // compositionState is the root. It handles nothing, so a message no state below
 // wants is recorded as unhandled rather than mistaken for something.
 type compositionState struct{ statemachine.Base }
@@ -39,10 +49,11 @@ func (s *stoppedState) Process(_ context.Context, m *statemachine.Machine, msg s
 	if !ok {
 		return false, nil
 	}
-	first, err := s.mg.leafFor(c.From)
+	first, err := s.mg.stageFor(c.From)
 	if err != nil {
 		return true, err
 	}
+	s.mg.request = c.Request
 	m.TransitionTo(first)
 	return true, nil
 }
@@ -60,8 +71,10 @@ func (composingState) Name() statemachine.StateName { return nameComposing }
 // Process routes a stage's report.
 func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
 	switch e := msg.(type) {
-	case stageDone:
-		m.TransitionTo(s.mg.after(e.Step))
+	case stageReport:
+		step, detail := e.stage()
+		s.mg.note(step, detail)
+		m.TransitionTo(s.mg.after(step))
 		return true, nil
 	case stageFailed:
 		// The reason is written before the move, so the failed state reads a
@@ -80,13 +93,16 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 // the last one has, this type goes.
 type legacyStage struct {
 	statemachine.Base
-	mg   *Manager
-	step string
-	name statemachine.StateName
+	mg       *Manager
+	stepName string
+	name     statemachine.StateName
 }
 
 // Name says what this state is called.
 func (s *legacyStage) Name() statemachine.StateName { return s.name }
+
+// step is which of the composition's steps this state runs.
+func (s *legacyStage) step() string { return s.stepName }
 
 // Enter runs the stage and leaves the result as a message.
 //
@@ -95,11 +111,12 @@ func (s *legacyStage) Name() statemachine.StateName { return s.name }
 // can never name the stage that did not finish.
 func (s *legacyStage) Enter(ctx context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
-	if err := s.mg.run(ctx, s.step); err != nil {
-		m.SendSelf(stageFailed{Step: s.step, Err: err})
+	detail, err := s.mg.run(ctx, s.stepName)
+	if err != nil {
+		m.SendSelf(stageFailed{Step: s.stepName, Err: err})
 		return nil
 	}
-	m.SendSelf(stageDone{Step: s.step})
+	m.SendSelf(stageDone{Step: s.stepName, Detail: detail})
 	return nil
 }
 

@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	_ "github.com/0xmhha/chainbench/internal/chains/all" // the opening stage checks the chain is one we have
 )
 
 // The machine's job at this commit is to walk the same nine steps in the same
@@ -21,19 +23,45 @@ type walker struct {
 	before  func(step string) // called before the step is marked as run
 }
 
-func (w *walker) run(_ context.Context, step string) error {
+func (w *walker) run(_ context.Context, step string) (string, error) {
 	if w.before != nil {
 		w.before(step)
 	}
 	w.ran = append(w.ran, step)
 	if step == w.failAt {
-		return w.failErr
+		return "", w.failErr
 	}
-	return nil
+	return step + " done", nil
+}
+
+// adapterSteps is the steps whose bodies have not moved into a state of their
+// own yet, in order.
+//
+// Derived rather than written down: it shrinks by one at each commit of this
+// series, and a list kept by hand here would be nine edits and nine chances to
+// say the wrong thing.
+func adapterSteps(mg *Manager) []string {
+	var out []string
+	for _, st := range mg.stages {
+		if _, ok := st.(*legacyStage); ok {
+			out = append(out, st.step())
+		}
+	}
+	return out
+}
+
+// reported is the step names the manager collected lines for, in order.
+func reported(mg *Manager) []string {
+	var out []string
+	for _, line := range mg.Steps() {
+		name, _, _ := strings.Cut(line, ":")
+		out = append(out, name)
+	}
+	return out
 }
 
 // newTestManager returns a manager over a fresh workspace and the walker
-// standing in for the step bodies.
+// standing in for the step bodies that have not moved yet.
 func newTestManager(t *testing.T) (*Manager, *walker) {
 	t.Helper()
 	ws, err := Open(t.TempDir(), nil)
@@ -89,13 +117,20 @@ func TestStageOrderIsUpStepNames(t *testing.T) {
 }
 
 // TestCompose_WalksEveryStageInOrderAndEndsReady.
+//
+// The order is read off what the manager reported, not off what the walker was
+// asked to do: a stage that has moved into its own state does not go through
+// the walker, and the claim here is about all nine.
 func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(w.ran, UpStepNames) {
-		t.Errorf("ran %v, want %v", w.ran, UpStepNames)
+	if got := reported(mg); !slices.Equal(got, UpStepNames) {
+		t.Errorf("reported %v, want %v", got, UpStepNames)
+	}
+	if want := adapterSteps(mg); !slices.Equal(w.ran, want) {
+		t.Errorf("the walker ran %v, want the stages that have not moved yet, %v", w.ran, want)
 	}
 	if got := mg.m.Path(mg.m.Current()); got != "Composition/Ready" {
 		t.Errorf("finished at %q, want Composition/Ready", got)
@@ -109,13 +144,14 @@ func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 // and the caller says nothing about it beyond the request it already had.
 func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{Stage: UpDeploy}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet", Stage: UpDeploy}, ""); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
-	if !slices.Equal(w.ran, want) {
-		t.Errorf("ran %v, want %v", w.ran, want)
+	if got := reported(mg); !slices.Equal(got, want) {
+		t.Errorf("reported %v, want %v", got, want)
 	}
+	_ = w
 	if got := mg.m.Path(mg.m.Current()); got != "Composition/Composed" {
 		t.Errorf("stopped at %q, want Composition/Composed", got)
 	}
@@ -124,19 +160,20 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 // TestCompose_BeginsAtTheNamedStep is what a resume does today.
 func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), ChainUpIn{}, "config"); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "config"); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"config", "build", "deploy", "init", "start"}
-	if !slices.Equal(w.ran, want) {
-		t.Errorf("ran %v, want %v", w.ran, want)
+	if got := reported(mg); !slices.Equal(got, want) {
+		t.Errorf("reported %v, want %v", got, want)
 	}
+	_ = w
 }
 
 // TestCompose_RefusesAStepItDoesNotHave, before it starts anything.
 func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 	mg, w := newTestManager(t)
-	err := mg.Compose(context.Background(), ChainUpIn{}, "nosuchstep")
+	err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "nosuchstep")
 	if err == nil {
 		t.Fatal("an unknown step was accepted")
 	}
@@ -152,13 +189,14 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "genesis"
-	err := mg.Compose(context.Background(), ChainUpIn{}, "")
+	err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
-	want := []string{"new", "place", "keys", "genesis"}
-	if !slices.Equal(w.ran, want) {
-		t.Errorf("ran %v, want %v — a stage after the failure ran", w.ran, want)
+	// The failing stage reports nothing, so the lines stop one short of it.
+	want := []string{"new", "place", "keys"}
+	if got := reported(mg); !slices.Equal(got, want) {
+		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
 	if got := mg.m.Path(mg.m.Current()); got != "Composition/Failed" {
 		t.Errorf("stopped at %q, want Composition/Failed", got)
@@ -172,7 +210,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "keys"
-	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err == nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 
@@ -205,13 +243,17 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 		}
 		seen[step] = ws.State().StatePath
 	}
-	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err != nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err != nil {
 		t.Fatal(err)
 	}
-	for _, s := range stageOrder {
-		want := "Composition/Composing/" + string(s.name)
-		if seen[s.step] != want {
-			t.Errorf("during %s the record said %q, want %q", s.step, seen[s.step], want)
+	for _, step := range adapterSteps(mg) {
+		st, err := mg.stageFor(step)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := "Composition/Composing/" + string(st.Name())
+		if seen[step] != want {
+			t.Errorf("during %s the record said %q, want %q", step, seen[step], want)
 		}
 	}
 }
@@ -220,7 +262,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "deploy"
-	if err := mg.Compose(context.Background(), ChainUpIn{}, ""); err == nil {
+	if err := mg.Compose(context.Background(), ChainUpIn{Chain: "stablenet"}, ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 	ws, err := Open(mg.ws.Dir(), nil)
@@ -229,5 +271,60 @@ func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	}
 	if got := ws.State().StatePath; got != "Composition/Failed" {
 		t.Errorf("the record says %q, want Composition/Failed", got)
+	}
+}
+
+// TestOpeningWorkspace_RecordsTheChainAndTheRequestTogether is the first stage
+// that does its own work.
+//
+// The two writes were two opens and two saves before: the verb recorded the
+// chain, then a second pass recorded the request. A run that died between them
+// left a workspace naming a chain it had no request for, which is a composition
+// a resume cannot continue. One open, one save, both or neither.
+func TestOpeningWorkspace_RecordsTheChainAndTheRequestTogether(t *testing.T) {
+	mg, _ := newTestManager(t)
+	in := ChainUpIn{Chain: "stablenet", BPCount: 3}
+	if err := mg.Compose(context.Background(), in, ""); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := Open(mg.ws.Dir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := ws.State()
+	if st.Chain != "stablenet" {
+		t.Errorf("the record names chain %q, want stablenet", st.Chain)
+	}
+	if st.Request == nil || st.Request.BPCount != 3 {
+		t.Errorf("the record kept request %+v, want the one that was composed", st.Request)
+	}
+	if !strings.HasPrefix(mg.Steps()[0], "new: ") {
+		t.Errorf("the stage reported %q, want a line beginning \"new: \"", mg.Steps()[0])
+	}
+}
+
+// TestOpeningWorkspace_AnUnknownChainFailsTheComposition, and the record says
+// which stage it was.
+func TestOpeningWorkspace_AnUnknownChainFailsTheComposition(t *testing.T) {
+	mg, w := newTestManager(t)
+	err := mg.Compose(context.Background(), ChainUpIn{Chain: "nosuchchain"}, "")
+	if err == nil {
+		t.Fatal("a chain nothing registers was accepted")
+	}
+	if !strings.Contains(err.Error(), "new") {
+		t.Errorf("refused with %q, want it to name the stage", err)
+	}
+	if len(w.ran) != 0 {
+		t.Errorf("a stage after the failure ran: %v", w.ran)
+	}
+	ws, oerr := Open(mg.ws.Dir(), nil)
+	if oerr != nil {
+		t.Fatal(oerr)
+	}
+	if got := ws.State().StatePath; got != "Composition/Failed" {
+		t.Errorf("the record says %q, want Composition/Failed", got)
+	}
+	if step, ok := ws.State().Steps["new"]; !ok || step.Err == "" {
+		t.Errorf("the record does not name new as the failed step: %+v", ws.State().Steps)
 	}
 }

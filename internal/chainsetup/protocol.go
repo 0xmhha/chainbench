@@ -191,10 +191,36 @@ func (NodeDied) What() statemachine.What { return EventNodeDied }
 
 // ---- What the machine says to itself.
 
+// stageReport is what a finished stage says.
+//
+// One interface rather than a case per stage. The stage parent does the same
+// three things with every one of them — note the line, look up what comes next,
+// move — and nine stages each with their own case would be that written nine
+// times. A failure is deliberately not one of these: it is the one report the
+// parent treats differently.
+type stageReport interface {
+	statemachine.Message
+	// stage is which step finished and the line a person reads about it.
+	stage() (step, detail string)
+}
+
 // stageDone is a stage that finished with nothing of its own to say.
-type stageDone struct{ Step string }
+type stageDone struct {
+	Step   string
+	Detail string
+}
 
 func (stageDone) What() statemachine.What { return eventStageDone }
+
+func (e stageDone) stage() (string, string) { return e.Step, e.Detail }
+
+// workspaceOpened: the workspace holds the chain it was asked for, and the
+// request that asked for it.
+type workspaceOpened struct{ Detail string }
+
+func (workspaceOpened) What() statemachine.What { return eventWorkspaceOpened }
+
+func (e workspaceOpened) stage() (string, string) { return stepNew, e.Detail }
 
 // stageFailed is a stage that could not finish, and why.
 type stageFailed struct {
@@ -204,7 +230,7 @@ type stageFailed struct {
 
 func (stageFailed) What() statemachine.What { return eventStageFailed }
 
-// workspaceOpened, nodeTableBuilt and the rest are declared with their leaf
-// states, one commit each. Their What values are above so that the whole
-// protocol is one file to read, and the band test holds every one of them to
-// the private range whether or not a state sends it yet.
+// nodeTableBuilt and the rest are declared with their leaf states, one commit
+// each. Their What values are above so that the whole protocol is one file to
+// read, and the band test holds every one of them to the private range whether
+// or not a state sends it yet.

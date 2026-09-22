@@ -7,12 +7,27 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
-// StepRunner runs one composition step by name.
+// StepRunner runs one composition step by name and returns the line it reports.
 //
 // The bodies live in the verb layer, which imports this package, so they are
 // handed in rather than reached for. It is the same seam the composition
 // already had: the runner closure the old machine's handlers were built from.
-type StepRunner func(ctx context.Context, step string) error
+// It shrinks as stages move into their own states, and goes when the last one
+// has.
+type StepRunner func(ctx context.Context, step string) (detail string, err error)
+
+// The composition's steps, as UpStepNames spells them.
+const (
+	stepNew     = "new"
+	stepPlace   = "place"
+	stepKeys    = "keys"
+	stepGenesis = "genesis"
+	stepConfig  = "config"
+	stepBuild   = "build"
+	stepDeploy  = "deploy"
+	stepInit    = "init"
+	stepStart   = "start"
+)
 
 // The states of a composition. The value is what a record keeps, through
 // [statemachine.Machine.Path], so these strings are read by people and by the
@@ -43,15 +58,15 @@ var stageOrder = []struct {
 	step string
 	name statemachine.StateName
 }{
-	{"new", nameOpeningWorkspace},
-	{"place", nameBuildingNodeTable},
-	{"keys", nameEnsuringKeys},
-	{"genesis", nameBuildingGenesis},
-	{"config", nameBuildingNodeConfig},
-	{"build", nameBuildingNodeCommand},
-	{"deploy", nameDeployingInputs},
-	{"init", nameInitializingDatadirs},
-	{"start", nameLaunching},
+	{stepNew, nameOpeningWorkspace},
+	{stepPlace, nameBuildingNodeTable},
+	{stepKeys, nameEnsuringKeys},
+	{stepGenesis, nameBuildingGenesis},
+	{stepConfig, nameBuildingNodeConfig},
+	{stepBuild, nameBuildingNodeCommand},
+	{stepDeploy, nameDeployingInputs},
+	{stepInit, nameInitializingDatadirs},
+	{stepStart, nameLaunching},
 }
 
 // Manager composes a network by walking states.
@@ -68,15 +83,23 @@ type Manager struct {
 	run StepRunner
 	m   *statemachine.Machine
 
+	// request is what this run was asked to compose. A stage reads the parts it
+	// needs from it; it is stored once, when the request arrives.
+	request ChainUpIn
 	// stopAfter is the last step this run performs, or "" to run them all.
 	stopAfter string
+	// steps is one "step: detail" line per stage that finished, in order. It is
+	// what a caller prints, and it is kept even when the run then failed,
+	// because how far it got is the first thing a reader wants.
+	steps []string
 	// failure is why the composition stopped, written just before the move to
 	// failed so that state can report it once.
 	failure error
 
 	stopped   *stoppedState
 	composing *composingState
-	leaves    []*legacyStage
+	opening   *openingWorkspace
+	stages    []stage
 	composed  *composedState
 	ready     *readyState
 	failed    *failedState
@@ -96,15 +119,20 @@ func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
 	mg.composed = &composedState{mg: mg}
 	mg.ready = &readyState{mg: mg}
 	mg.failed = &failedState{mg: mg}
-	for _, s := range stageOrder {
-		mg.leaves = append(mg.leaves, &legacyStage{mg: mg, step: s.step, name: s.name})
+	// One state per stage. The ones that still say legacyStage run the old verb
+	// through the injected runner; each commit of this series turns one of them
+	// into a state that does the work itself.
+	mg.opening = &openingWorkspace{mg: mg}
+	mg.stages = append(mg.stages, mg.opening)
+	for _, s := range stageOrder[1:] {
+		mg.stages = append(mg.stages, &legacyStage{mg: mg, stepName: s.step, name: s.name})
 	}
 
 	mg.m.Add(root, nil)
 	mg.m.Add(mg.stopped, root)
 	mg.m.Add(mg.composing, root)
-	for _, leaf := range mg.leaves {
-		mg.m.Add(leaf, mg.composing)
+	for _, st := range mg.stages {
+		mg.m.Add(st, mg.composing)
 	}
 	mg.m.Add(mg.composed, root)
 	mg.m.Add(mg.ready, root)
@@ -121,12 +149,12 @@ func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
 func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error {
 	// Refused before the machine is started, so a bad step name does not leave
 	// a half-entered machine behind.
-	if _, err := mg.leafFor(from); err != nil {
+	if _, err := mg.stageFor(from); err != nil {
 		return err
 	}
 	mg.stopAfter = ""
 	if in.Stage == UpDeploy {
-		mg.stopAfter = "deploy"
+		mg.stopAfter = stepDeploy
 	}
 	if err := mg.m.Start(ctx, mg.stopped); err != nil {
 		return err
@@ -143,14 +171,35 @@ func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error
 // Tree is the machine's state tree, for a test to compare against the design.
 func (mg *Manager) Tree() string { return mg.m.Tree() }
 
-// leafFor is the state that runs the named step, or the first when unnamed.
-func (mg *Manager) leafFor(step string) (*legacyStage, error) {
-	if step == "" {
-		return mg.leaves[0], nil
+// Steps is one line per stage that finished, in order, for a caller to print.
+func (mg *Manager) Steps() []string { return mg.steps }
+
+// note records what a finished stage reported.
+func (mg *Manager) note(step, detail string) {
+	mg.steps = append(mg.steps, step+": "+detail)
+}
+
+// markFailed writes a failed stage into the record.
+//
+// Best effort and silent: this runs while a composition is already failing, and
+// a second error about the bookkeeping would bury the one the operator came for.
+func (mg *Manager) markFailed(step string, cause error) {
+	ws, err := Open(mg.ws.Dir(), mg.d.Clock)
+	if err != nil {
+		return
 	}
-	for _, leaf := range mg.leaves {
-		if leaf.step == step {
-			return leaf, nil
+	ws.MarkStepFailed(step, cause)
+	_ = ws.Save()
+}
+
+// stageFor is the state that runs the named step, or the first when unnamed.
+func (mg *Manager) stageFor(step string) (stage, error) {
+	if step == "" {
+		return mg.stages[0], nil
+	}
+	for _, st := range mg.stages {
+		if st.step() == step {
+			return st, nil
 		}
 	}
 	return nil, fmt.Errorf("chainsetup: no stage is named %q", step)
@@ -162,10 +211,10 @@ func (mg *Manager) after(step string) statemachine.State {
 	if step == mg.stopAfter {
 		return mg.composed
 	}
-	for i, leaf := range mg.leaves {
-		if leaf.step == step {
-			if i+1 < len(mg.leaves) {
-				return mg.leaves[i+1]
+	for i, st := range mg.stages {
+		if st.step() == step {
+			if i+1 < len(mg.stages) {
+				return mg.stages[i+1]
 			}
 			return mg.ready
 		}

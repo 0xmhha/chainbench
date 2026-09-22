@@ -247,6 +247,21 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn
 
 	steps := upSteps(ctx, d, in)
 	run := func(name string) ([]lifecycle.Status, error) { return record(name, steps[name]) }
+	// What the machine calls. It hands the step's line back rather than
+	// appending it, because the machine is what keeps the order now.
+	runStep := func(name string) (string, error) {
+		fn, ok := steps[name]
+		if !ok {
+			return "", fmt.Errorf("chainsetup: chain up: no step named %q", name)
+		}
+		r, serr := fn()
+		if serr != nil {
+			werr := fmt.Errorf("chainsetup: chain up: %s: %w", name, serr)
+			markStepFailed(d, in.DataDir, name, werr)
+			return "", werr
+		}
+		return r.Detail, nil
+	}
 
 	// Two machines for the length of this series. A composition walks the state
 	// machine; reuse-if-matching still walks the old table, because its
@@ -259,13 +274,18 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn
 		}
 	} else {
 		// The step closures captured this ctx when upSteps built them, so the
-		// one the machine hands back is the one they already hold.
-		mgr := chainsetup.NewManager(d, lockWS, func(_ context.Context, step string) error {
-			_, serr := run(step)
-			return serr
+		// one the machine hands back is the one they already hold. A stage that
+		// has moved into its own state is not in this map any more and does not
+		// come through here.
+		mgr := chainsetup.NewManager(d, lockWS, func(_ context.Context, step string) (string, error) {
+			return runStep(step)
 		})
-		if err := mgr.Compose(ctx, in, from); err != nil {
-			return out, err
+		cerr := mgr.Compose(ctx, in, from)
+		// Read before the error is returned: how far a dead run got is the
+		// first thing its reader wants.
+		out.Steps = append(out.Steps, mgr.Steps()...)
+		if cerr != nil {
+			return out, cerr
 		}
 	}
 
