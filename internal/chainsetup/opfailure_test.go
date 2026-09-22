@@ -34,7 +34,7 @@ func TestOperationalKindsHaveTheirStates(t *testing.T) {
 		{"a chain already past the fork", CrossForkFailure, errCrossForkAlreadyPast, lifecycle.ChainOpCrossForkFailAlreadyPast},
 		{"a restart nobody came back from", CrossForkFailure, errCrossForkNobodyCameBack, lifecycle.ChainOpCrossForkFailNobodyCameBack},
 	} {
-		if got := c.classify(ofKind(c.kind, errors.New("x"))); got != c.want {
+		if got := c.classify(lifecycle.Mark(c.kind, errors.New("x"))); got != c.want {
 			t.Errorf("%s: %s, want %s", c.name, got, c.want)
 		}
 	}
@@ -62,7 +62,7 @@ func TestBorrowedStatesKeepTheirName(t *testing.T) {
 		{"cross-fork, no binary", CrossForkFailure, errLaunchNoBinary, lifecycle.ChainLaunchNodesFailNoBinary},
 		{"cross-fork, config readback", CrossForkFailure, errConfigReadback, lifecycle.ChainBuildNodeConfigFailReadback},
 	} {
-		if got := c.classify(ofKind(c.kind, errors.New("x"))); got != c.want {
+		if got := c.classify(lifecycle.Mark(c.kind, errors.New("x"))); got != c.want {
 			t.Errorf("%s: %s, want %s", c.name, got, c.want)
 		}
 	}

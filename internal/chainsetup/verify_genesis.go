@@ -1,6 +1,8 @@
 package chainsetup
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"fmt"
 	"sort"
 	"strings"
@@ -28,7 +30,7 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 	}
 	genesisVals, err := reader.GenesisValidators(genesisJSON)
 	if err != nil {
-		return ofKind(errGenesisExistingInvalid,
+		return lifecycle.Mark(errGenesisExistingInvalid,
 			fmt.Errorf("chainsetup: genesis: existing genesis %s: %w", ref, err))
 	}
 	preset, err := preset.LoadKeyPreset(w.state.KeysDir)
@@ -37,7 +39,7 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 	}
 	keyVals := preset.NetworkFor(w.state.BPCount).Validators
 	if err := sameValidatorSet(genesisVals, keyVals, "genesis validators", "the running keys"); err != nil {
-		return ofKind(errGenesisExistingForeign,
+		return lifecycle.Mark(errGenesisExistingForeign,
 			fmt.Errorf("chainsetup: genesis: existing genesis %s does not match the composed keys — %w", ref, err))
 	}
 	return nil

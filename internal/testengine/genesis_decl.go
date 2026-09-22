@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -77,10 +79,10 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any, p
 // and this reads one.
 func forkOf(u *dsl.UpgradeV2) (*chainsetup.GenesisFork, error) {
 	if u.Fork == "" {
-		return nil, fmt.Errorf("upgrade: no fork named — a hardfork declaration says which fork it crosses")
+		return nil, lifecycle.Mark(errIncomplete, fmt.Errorf("upgrade: no fork named — a hardfork declaration says which fork it crosses"))
 	}
 	if u.At == nil {
-		return nil, fmt.Errorf("upgrade: the %q fork has no block — a hardfork declaration says where it activates", u.Fork)
+		return nil, lifecycle.Mark(errIncomplete, fmt.Errorf("upgrade: the %q fork has no block — a hardfork declaration says where it activates", u.Fork))
 	}
 	to := u.To
 	if to == "" {
@@ -127,8 +129,8 @@ func checkForkIsOneTheChainKnows(u *dsl.UpgradeV2, networkChain string, binaryCh
 	if slices.Contains(known, u.Fork) {
 		return nil
 	}
-	return fmt.Errorf("the declaration crosses the %q fork and %s does not know it (it knows %s)",
-		u.Fork, chainID, strings.Join(known, ", "))
+	return lifecycle.Mark(errUnknownName, fmt.Errorf("the declaration crosses the %q fork and %s does not know it (it knows %s)",
+		u.Fork, chainID, strings.Join(known, ", ")))
 }
 
 // writeOverlays renders one overlay file per binary, the same way the network's

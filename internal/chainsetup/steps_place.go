@@ -386,7 +386,7 @@ func PlaceFailure(err error) lifecycle.Status {
 // would leave the other's author reading a network that is not theirs.
 func OneLayoutOnly(hasBlueprint, hasTopology bool) error {
 	if hasBlueprint && hasTopology {
-		return ofKind(errPlaceTwoLayouts,
+		return lifecycle.Mark(errPlaceTwoLayouts,
 			errors.New("chainsetup: allocate: a blueprint and a topology both describe the layout — give one"))
 	}
 	return nil

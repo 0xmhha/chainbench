@@ -36,6 +36,10 @@ type runReport struct {
 	// compose, most often. It is omitted when there is one, so a successful
 	// document is byte for byte what it was before this field existed.
 	Error string `json:"error,omitempty"`
+	// FailedAt is the state the run failed in, so a consumer can tell a
+	// declaration that is wrong from a network that would not stand up without
+	// matching on the message.
+	FailedAt string `json:"failedAt,omitempty"`
 	app.RunSummary
 }
 
@@ -259,7 +263,7 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 		fmt.Fprintf(notes, "preflight: %s\n", res.Preflight)
 	}
 	if err != nil {
-		return setupFailure(cmd.OutOrStdout(), err, jsonOut)
+		return setupFailure(cmd.OutOrStdout(), err, failedAtOf(res), jsonOut)
 	}
 	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut, noSkips)
 }
@@ -275,18 +279,35 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 // The code is 2 either way, --json or not, matching what sequenceExit already
 // returns for a definition that could not run: "the chain would not come up" is not the
 // same news as "a test ran and failed", and CI gates on the difference.
-func setupFailure(out io.Writer, cause error, jsonOut bool) error {
+func setupFailure(out io.Writer, cause error, at string, jsonOut bool) error {
 	if jsonOut {
 		// The document goes out even though the run failed, because under
 		// --json stdout is the whole answer: a consumer that gets nothing
 		// cannot tell a compose failure from a crash.
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(runReport{Error: cause.Error()}); err != nil {
+		if err := enc.Encode(runReport{Error: cause.Error(), FailedAt: at}); err != nil {
 			return err
 		}
 	}
+	// The state is appended rather than woven in: the message is a sentence
+	// somebody wrote to be read, and the state is for whoever asks "which stage
+	// was that?" without reading it.
+	if at != "" {
+		cause = fmt.Errorf("%w (at %s)", cause, at)
+	}
 	return &exitcode.Error{Code: 2, Err: cause}
+}
+
+// failedAtOf names the state a run failed in, or "" when it did not fail in one
+// this build knows. The surface takes a string rather than the state's own type
+// because naming that type here would be reaching past app for it, and what a
+// surface needs is the word rather than the value.
+func failedAtOf(res app.RunSuiteOut) string {
+	if res.FailedAt == 0 {
+		return ""
+	}
+	return res.FailedAt.String()
 }
 
 // progressWriter is where narration goes: stderr when stdout has to parse as a

@@ -71,7 +71,7 @@ func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 				return err
 			}
 			if !exists {
-				return ofKind(errDeployInputMissing,
+				return lifecycle.Mark(errDeployInputMissing,
 					fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path))
 			}
 			// Present is not the same as ours. A genesis someone edited, or a
@@ -83,7 +83,7 @@ func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 					return err
 				}
 				if have != want {
-					return ofKind(errDeployInputForeign,
+					return lifecycle.Mark(errDeployInputForeign,
 						fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
 							"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
 							"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have)))
@@ -197,7 +197,7 @@ func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
 	for _, s := range sets {
 		k, v, _ := strings.Cut(s, "=")
 		if k == "" {
-			return nil, ofKind(errBuildBadOption,
+			return nil, lifecycle.Mark(errBuildBadOption,
 				fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s))
 		}
 		out = append(out, nodeconfig.Override{Key: nodeconfig.OptionKey(k), Value: v})
@@ -264,11 +264,11 @@ func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, op
 	if opts.Existing != "" {
 		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
 		if rerr != nil {
-			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+			return nil, genesis.Artifacts{}, lifecycle.Mark(errGenesisExistingInvalid,
 				fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr))
 		}
 		if !json.Valid(b) {
-			return nil, genesis.Artifacts{}, ofKind(errGenesisExistingInvalid,
+			return nil, genesis.Artifacts{}, lifecycle.Mark(errGenesisExistingInvalid,
 				fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing))
 		}
 		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
@@ -310,7 +310,7 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 	if w.state.Target.IsRemote() {
 		boot, ok := firstProducer(w.state.Nodes)
 		if !ok {
-			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+			return genesis.Artifacts{}, lifecycle.Mark(errGenesisTargetUnable,
 				fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on"))
 		}
 		access, err := w.machineFor(boot)
@@ -319,7 +319,7 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		}
 		cmdr, ok := access.Driver.(process.Commander)
 		if !ok {
-			return genesis.Artifacts{}, ofKind(errGenesisTargetUnable,
+			return genesis.Artifacts{}, lifecycle.Mark(errGenesisTargetUnable,
 				fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there"))
 		}
 		cfg.Files = access.Files
@@ -463,7 +463,7 @@ var composeNeeds = map[string][]string{
 func (w *Workspace) require(step string) error {
 	for _, need := range composeNeeds[step] {
 		if _, done := w.state.Steps[need]; !done {
-			return ofKind(errOpPrecondition,
+			return lifecycle.Mark(errOpPrecondition,
 				fmt.Errorf("chainsetup: %s: %s has not run — run `chain %s` first", step, need, need))
 		}
 	}

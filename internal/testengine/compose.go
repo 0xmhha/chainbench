@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"github.com/0xmhha/chainbench/internal/core/origin"
 
 	"context"
@@ -141,7 +143,7 @@ type composition struct {
 func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (composition, error) {
 	chain := spec.Chain.Name
 	if in.Chain != "" && in.Chain != chain {
-		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
+		return composition{}, lifecycle.Mark(errContradicted, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain))
 	}
 	from := map[PlanField]origin.Origin{}
 	keysDir := in.KeysDir
@@ -203,7 +205,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// track removed.
 	if u := spec.EnvUpgrade; u != nil {
 		if len(spec.Topology) == 0 {
-			return composition{}, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])")
+			return composition{}, lifecycle.Mark(errIncomplete, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])"))
 		}
 		fork, ferr := forkOf(u)
 		if ferr != nil {
@@ -275,12 +277,12 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		// out is now the normal case, and chainsetup places the name.
 		p, err := registry.Get(chain)
 		if err != nil {
-			return composition{}, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err)
+			return composition{}, lifecycle.Mark(errUnknownName, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err))
 		}
 		binary = p.Manifest().Binary
 	}
 	if binary == "" {
-		return composition{}, fmt.Errorf("no binary was given and chain %q names none", chain)
+		return composition{}, lifecycle.Mark(errIncomplete, fmt.Errorf("no binary was given and chain %q names none", chain))
 	}
 
 	var validators, endpoints, proxies int

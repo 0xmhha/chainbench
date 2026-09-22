@@ -169,7 +169,7 @@ var errOpPrecondition = errors.New("the workspace is not in a state this verb ca
 func (w *Workspace) allow(verb string) error {
 	need, declared := verbNeeds[verb]
 	if !declared {
-		return ofKind(errOpPrecondition,
+		return lifecycle.Mark(errOpPrecondition,
 			fmt.Errorf("chainsetup: %s: this verb declares no requirements — add it to verbNeeds", verb))
 	}
 	if need.step != "" {
@@ -187,13 +187,13 @@ func (w *Workspace) allow(verb string) error {
 	switch need.run {
 	case placed:
 		if len(w.state.Nodes) == 0 {
-			return ofKind(errOpPrecondition,
+			return lifecycle.Mark(errOpPrecondition,
 				fmt.Errorf("chainsetup: %s: the node table is empty — run `chain place` first", lower(verb)))
 		}
 	case stopped:
 		for _, ns := range w.state.Nodes {
 			if ns.PID > 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d is running (pid %d) — run `chain stop` first", lower(verb), ns.Index, ns.PID))
 			}
 		}
@@ -230,12 +230,12 @@ func checkNode(verb string, needs []nodeNeed, ns node.Record) error {
 			// than a condition that fell through the switch.
 		case launched:
 			if len(ns.Args) == 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d has no recorded argv — run `chain start` first", lower(verb), ns.Index))
 			}
 		case down:
 			if ns.PID > 0 {
-				return ofKind(errOpPrecondition,
+				return lifecycle.Mark(errOpPrecondition,
 					fmt.Errorf("chainsetup: %s: node%d is already running (pid %d)", lower(verb), ns.Index, ns.PID))
 			}
 		}

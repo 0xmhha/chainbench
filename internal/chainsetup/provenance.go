@@ -33,10 +33,10 @@ func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, 
 	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
+			return lifecycle.Mark(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
-			return ofKind(errConfigBadOverride, err)
+			return lifecycle.Mark(errConfigBadOverride, err)
 		}
 	}
 	return nil
@@ -96,12 +96,12 @@ func (w *Workspace) RecordLaunchSet(scope string, sets []string) error {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return ofKind(errBuildBadOption,
+		return lifecycle.Mark(errBuildBadOption,
 			fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords()))
 	}
 	overrides, err := ParseOverrides(sets)
 	if err != nil {
-		return ofKind(errBuildBadOption, err)
+		return lifecycle.Mark(errBuildBadOption, err)
 	}
 	if err := refuseSharedPerNodeKnob(scope, overrides); err != nil {
 		return err
@@ -135,7 +135,7 @@ func refuseSharedPerNodeKnob(scope string, overrides []nodeconfig.Override) erro
 		if !nodeconfig.IsPerNode(o.Key) {
 			continue
 		}
-		return ofKind(errBuildBadOption, fmt.Errorf(
+		return lifecycle.Mark(errBuildBadOption, fmt.Errorf(
 			"chainsetup: launch %q on scope %q: the allocator gives each node its own, so one value for several nodes would collide — name a single node (node1) or change it in the server set. Per-node knobs: %s",
 			o.Key, scope, strings.Join(nodeconfig.PerNodeKeys(), ", ")))
 	}
@@ -192,7 +192,7 @@ func (w *Workspace) RecordLaunchCommand(sets []string) error {
 	}
 	overrides, err := ParseOverrides(sets)
 	if err != nil {
-		return ofKind(errBuildBadOption, err)
+		return lifecycle.Mark(errBuildBadOption, err)
 	}
 	if err := refuseSharedPerNodeKnob(node.ScopeAll, overrides); err != nil {
 		return err
@@ -215,17 +215,17 @@ func (w *Workspace) RecordConfigSet(scope string, sets []string) error {
 		return nil
 	}
 	if !node.ValidScope(scope) {
-		return ofKind(errConfigBadOverride,
+		return lifecycle.Mark(errConfigBadOverride,
 			fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords()))
 	}
 	var probe nodeconfig.Spec
 	for _, kv := range sets {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
-			return ofKind(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
+			return lifecycle.Mark(errConfigBadOverride, fmt.Errorf("config override %q must be key=value", kv))
 		}
 		if err := nodeconfig.ApplyConfigOverride(&probe, key, value); err != nil {
-			return ofKind(errConfigBadOverride, err)
+			return lifecycle.Mark(errConfigBadOverride, err)
 		}
 	}
 	if w.state.ConfigSet == nil {

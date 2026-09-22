@@ -1,6 +1,8 @@
 package chainsetup
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -58,7 +60,7 @@ func AcquireSetLock(setPath string, d Deps) (func(), error) {
 			return func() { _ = held.Release() }, nil
 		}
 		if state != session.LockLive || time.Now().After(deadline) {
-			return nil, ofKind(errPlaceSetContended,
+			return nil, lifecycle.Mark(errPlaceSetContended,
 				fmt.Errorf("chainsetup: allocate: the server set is being allocated by another run (%s): %w", prev.Describe(), err))
 		}
 		time.Sleep(setLockPoll)

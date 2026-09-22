@@ -115,7 +115,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 			// so that the genesis source, the launcher and provision keep reading
 			// keys the one way they already do.
 			if opts.Blueprint == nil {
-				return StepOut{}, ofKind(errKeySourceUnknown,
+				return StepOut{}, lifecycle.Mark(errKeySourceUnknown,
 					fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
 			}
 			set, err := w.declaredKeys(*opts.Blueprint, n)
@@ -146,7 +146,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 			from = lifecycle.ChainEnsureKeysGenerated
 		default:
-			return StepOut{}, ofKind(errKeySourceUnknown,
+			return StepOut{}, lifecycle.Mark(errKeySourceUnknown,
 				fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
 		}
 	}
@@ -191,7 +191,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (preset.Key, err
 		return preset.Key{}, err
 	}
 	if len(set.Nodes) < n {
-		return preset.Key{}, ofKind(errKeyCountShort,
+		return preset.Key{}, lifecycle.Mark(errKeyCountShort,
 			fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n))
 	}
 	return set, nil
@@ -305,16 +305,16 @@ func checkNodeKeyRef(index int, ref string) error {
 		return nil
 	}
 	if looksLikeKeyMaterial(ref) {
-		return ofKind(errKeyRefNotLocal, fmt.Errorf(
+		return lifecycle.Mark(errKeyRefNotLocal, fmt.Errorf(
 			"chainsetup: keys: node%d declares a private key inline: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext (the value is withheld here for the same reason)",
 			index))
 	}
 	if strings.HasPrefix(ref, "srv://") {
-		return ofKind(errKeyRefNotLocal,
+		return lifecycle.Mark(errKeyRefNotLocal,
 			fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref))
 	}
 	if _, err := os.Stat(ref); err != nil {
-		return ofKind(errKeyRefNotLocal,
+		return lifecycle.Mark(errKeyRefNotLocal,
 			fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref))
 	}
 	return nil
@@ -384,14 +384,14 @@ func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 	}
 	b, rerr := os.ReadFile(ref)
 	if rerr != nil {
-		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+		return derive.PrivateKey{}, lifecycle.Mark(errKeyUnreadable,
 			fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr))
 	}
 	// The parse failure is not wrapped with the bytes: a file that is nearly a
 	// key is still a key someone meant to keep.
 	key, perr := derive.ParsePrivateKey(string(b))
 	if perr != nil {
-		return derive.PrivateKey{}, ofKind(errKeyUnreadable,
+		return derive.PrivateKey{}, lifecycle.Mark(errKeyUnreadable,
 			fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref))
 	}
 	return key, nil

@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -60,10 +62,10 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 	}
 	list, ok := raw.([]any)
 	if !ok {
-		return nil, nil, "", fmt.Errorf("topology.nodes must be a list")
+		return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes must be a list"))
 	}
 	if len(list) == 0 {
-		return nil, nil, "", fmt.Errorf("topology.nodes is empty")
+		return nil, nil, "", lifecycle.Mark(errIncomplete, fmt.Errorf("topology.nodes is empty"))
 	}
 	topo := &node.Topology{Chain: chain, Nodes: make([]node.Entry, 0, len(list))}
 	resolved := map[string]string{}
@@ -71,7 +73,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 	for i, item := range list {
 		m, ok := item.(map[string]any)
 		if !ok {
-			return nil, nil, "", fmt.Errorf("topology.nodes[%d] must be a mapping", i)
+			return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d] must be a mapping", i))
 		}
 		entry := node.Entry{Index: i + 1}
 		for k, v := range m {
@@ -79,33 +81,33 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 			switch k {
 			case "role":
 				if !isStr {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].role must be a string", i)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].role must be a string", i))
 				}
 				entry.Role = s
 			case "binary":
 				if !isStr {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].binary must be a string", i)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].binary must be a string", i))
 				}
 				entry.Binary = s
 			case "sync", topoSyncMode, topoSyncModeSnak:
 				if !isStr {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s must be a string", i, k)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].%s must be a string", i, k))
 				}
 				entry.SyncMode = s
 			case "bootnode":
 				b, isBool := v.(bool)
 				if !isBool {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].bootnode must be a boolean", i)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].bootnode must be a boolean", i))
 				}
 				entry.Bootnode = b
 			case "config":
 				if !isStr {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].config must be a string (a path to a pre-written config file)", i)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].config must be a string (a path to a pre-written config file)", i))
 				}
 				entry.Config = expand(s)
 			case "key":
 				if !isStr {
-					return nil, nil, "", fmt.Errorf("topology.nodes[%d].key must be a string (a key file path or 0x-hex)", i)
+					return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].key must be a string (a key file path or 0x-hex)", i))
 				}
 				entry.Key = expand(s)
 			case "index":
@@ -115,16 +117,16 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 				}
 				entry.Index = n
 			default:
-				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config, key)", i, k)
+				return nil, nil, "", lifecycle.Mark(errMalformed, fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config, key)", i, k))
 			}
 		}
 		if entry.Role == "" {
-			return nil, nil, "", fmt.Errorf("topology.nodes[%d] needs a role", i)
+			return nil, nil, "", lifecycle.Mark(errIncomplete, fmt.Errorf("topology.nodes[%d] needs a role", i))
 		}
 		if entry.Binary != "" {
 			path, named := binaries[entry.Binary]
 			if !named {
-				return nil, nil, "", fmt.Errorf("topology.nodes[%d].binary %q is not declared in binaries", i, entry.Binary)
+				return nil, nil, "", lifecycle.Mark(errUnknownName, fmt.Errorf("topology.nodes[%d].binary %q is not declared in binaries", i, entry.Binary))
 			}
 			p := expand(path)
 			resolved[entry.Binary] = p
@@ -177,11 +179,11 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 		case topoSyncMode, topoSyncModeSnak:
 			s, ok := v.(string)
 			if !ok {
-				err = fmt.Errorf("topology.%s must be a string", k)
+				err = lifecycle.Mark(errMalformed, fmt.Errorf("topology.%s must be a string", k))
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (bp, en, pn, syncMode)", k)
+			err = lifecycle.Mark(errMalformed, fmt.Errorf("topology.%s is not a key the composer knows (bp, en, pn, syncMode)", k))
 		}
 		if err != nil {
 			return 0, 0, 0, "", false, err
@@ -195,16 +197,16 @@ func countOf(key string, v any) (int, error) {
 	switch n := v.(type) {
 	case float64:
 		if n < 0 || n != float64(int(n)) {
-			return 0, fmt.Errorf("topology.%s must be a whole non-negative number, got %v", key, v)
+			return 0, lifecycle.Mark(errMalformed, fmt.Errorf("topology.%s must be a whole non-negative number, got %v", key, v))
 		}
 		return int(n), nil
 	case int:
 		if n < 0 {
-			return 0, fmt.Errorf("topology.%s must be non-negative, got %d", key, n)
+			return 0, lifecycle.Mark(errMalformed, fmt.Errorf("topology.%s must be non-negative, got %d", key, n))
 		}
 		return n, nil
 	default:
-		return 0, fmt.Errorf("topology.%s must be a number, got %T", key, v)
+		return 0, lifecycle.Mark(errMalformed, fmt.Errorf("topology.%s must be a number, got %T", key, v))
 	}
 }
 

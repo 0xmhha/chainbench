@@ -81,16 +81,16 @@ var (
 func (w *Workspace) CrossFork(ctx context.Context, opts CrossForkOpts) (StepOut, error) {
 	f := w.state.Fork
 	if f == nil {
-		return StepOut{}, ofKind(errCrossForkNoFork,
+		return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
 			fmt.Errorf("chainsetup: cross-fork: this network is composed to cross no fork — declare one under env.upgrade"))
 	}
 	successors := w.forkSuccessors(*f)
 	if len(successors) == 0 {
 		if f.Restart {
-			return StepOut{}, ofKind(errCrossForkNoFork,
+			return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
 				fmt.Errorf("chainsetup: cross-fork: this network has no node to restart across the %q fork", f.Name))
 		}
-		return StepOut{}, ofKind(errCrossForkNoFork,
+		return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
 			fmt.Errorf("chainsetup: cross-fork: no node runs binary %q, so the %q fork has nobody to hand over to", f.Binary, f.Name))
 	}
 	// passed is the moments this crossing goes through, appended where each is
@@ -192,7 +192,7 @@ func (w *Workspace) forkMoment(ctx context.Context, f GenesisFork, timeout time.
 	}
 	obs, ok := w.forkObserver(f)
 	if !ok {
-		return 0, ofKind(errCrossForkNoFork,
+		return 0, lifecycle.Mark(errCrossForkNoFork,
 			fmt.Errorf("chainsetup: cross-fork: no node is running, so there is nothing to restart across the %q fork", f.Name))
 	}
 	url, err := w.nodeHTTPURL(obs)
@@ -201,12 +201,12 @@ func (w *Workspace) forkMoment(ctx context.Context, f GenesisFork, timeout time.
 	}
 	head, err := rpc.Dial(url).BlockNumber(ctx)
 	if err != nil {
-		return 0, ofKind(errCrossForkHeadUnreadable,
+		return 0, lifecycle.Mark(errCrossForkHeadUnreadable,
 			fmt.Errorf("chainsetup: cross-fork: %s reached no head: %w", obs.NodeLabel(), err))
 	}
 	at := int64(head) //nolint:gosec // a chain head, compared against a declared block
 	if at >= f.At {
-		return 0, ofKind(errCrossForkAlreadyPast,
+		return 0, lifecycle.Mark(errCrossForkAlreadyPast,
 			fmt.Errorf("chainsetup: cross-fork: the chain is at block %d and the %q fork is at %d — the nodes had to be on the post-fork build before it, and crossing it on the pre-fork one proves nothing about the build that replaces it", at, f.Name, f.At))
 	}
 	return at, nil
@@ -223,7 +223,7 @@ func (w *Workspace) forkMoment(ctx context.Context, f GenesisFork, timeout time.
 func (w *Workspace) awaitForkBoundary(ctx context.Context, f GenesisFork, timeout time.Duration) (int64, error) {
 	obs, ok := w.forkObserver(f)
 	if !ok {
-		return 0, ofKind(errCrossForkNoFork,
+		return 0, lifecycle.Mark(errCrossForkNoFork,
 			fmt.Errorf("chainsetup: cross-fork: no node runs the pre-fork build, so there is nothing to read the fork boundary from"))
 	}
 	url, err := w.nodeHTTPURL(obs)
@@ -248,10 +248,10 @@ func (w *Workspace) awaitForkBoundary(ctx context.Context, f GenesisFork, timeou
 		}
 		if !w.now().Before(deadline) {
 			if lastErr != nil {
-				return 0, ofKind(errCrossForkHeadUnreadable,
+				return 0, lifecycle.Mark(errCrossForkHeadUnreadable,
 					fmt.Errorf("chainsetup: cross-fork: %s reached no head within %s: %w", obs.NodeLabel(), timeout, lastErr))
 			}
-			return 0, ofKind(errCrossForkAlreadyPast,
+			return 0, lifecycle.Mark(errCrossForkAlreadyPast,
 				fmt.Errorf("chainsetup: cross-fork: %s is at block %d after %s, and the %q fork is at %d — the chain never reached the block before it", obs.NodeLabel(), last, timeout, f.Name, f.At))
 		}
 		select {
@@ -382,7 +382,7 @@ func (w *Workspace) confirmBeforeFork(ctx context.Context, f GenesisFork) error 
 	}
 	obs, ok := w.forkObserver(f)
 	if !ok {
-		return ofKind(errCrossForkNobodyCameBack,
+		return lifecycle.Mark(errCrossForkNobodyCameBack,
 			fmt.Errorf("chainsetup: cross-fork: no node came back from the %q restart", f.Name))
 	}
 	url, err := w.nodeHTTPURL(obs)
@@ -396,7 +396,7 @@ func (w *Workspace) confirmBeforeFork(ctx context.Context, f GenesisFork) error 
 		return nil //nolint:nilerr // readiness is the gate's question, not this one's
 	}
 	if at := int64(head); at >= f.At { //nolint:gosec // a chain head, compared against a declared block
-		return ofKind(errCrossForkAlreadyPast,
+		return lifecycle.Mark(errCrossForkAlreadyPast,
 			fmt.Errorf("chainsetup: cross-fork: the chain reached block %d while the nodes were being relaunched, and the %q fork is at %d — the fork has to be far enough out that every node is on the post-fork build before the chain gets there", at, f.Name, f.At))
 	}
 	return nil

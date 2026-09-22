@@ -115,7 +115,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return nil, ofKind(errConfigPinUnreadable,
+			return nil, lifecycle.Mark(errConfigPinUnreadable,
 				fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr))
 		}
 		return toml, nil
@@ -143,7 +143,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 		}
 		gen, rerr := t.Files.Read(ctx, path)
 		if rerr != nil {
-			return nil, ofKind(errConfigPinUnreadable,
+			return nil, lifecycle.Mark(errConfigPinUnreadable,
 				fmt.Errorf("chainsetup: config: node%d: read the genesis its config carries (%s): %w", ns.Index, path, rerr))
 		}
 		spec.Genesis = gen
@@ -164,11 +164,11 @@ func (w *Workspace) writeConfigFile(ctx context.Context, t *resource.Access, ns 
 	want := filestore.Hash(toml)
 	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
 	if err != nil {
-		return ConfigProvenance{}, ofKind(errConfigReadback,
+		return ConfigProvenance{}, lifecycle.Mark(errConfigReadback,
 			fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err))
 	}
 	if got != want {
-		return ConfigProvenance{}, ofKind(errConfigReadback,
+		return ConfigProvenance{}, lifecycle.Mark(errConfigReadback,
 			fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got))
 	}
 	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}

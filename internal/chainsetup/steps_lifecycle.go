@@ -118,7 +118,7 @@ func (w *Workspace) checkUniformNetworkID() error {
 		return nil
 	}
 	if err := nodeconfig.ValidateUniformNetworkID(argv); err != nil {
-		return ofKind(errBuildSplitNetwork, err)
+		return lifecycle.Mark(errBuildSplitNetwork, err)
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	err = w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		initer, ok := t.Driver.(process.Initializer)
 		if !ok {
-			return ofKind(errInitTargetUnable,
+			return lifecycle.Mark(errInitTargetUnable,
 				fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs"))
 		}
 		// A path on the machine: the genesis step wrote it through each
@@ -220,7 +220,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			}
 			gen, err := t.Files.Read(ctx, p)
 			if err != nil {
-				return nil, ofKind(errInitGenesisUnreadable,
+				return nil, lifecycle.Mark(errInitGenesisUnreadable,
 					fmt.Errorf("chainsetup: init: read genesis %s: %w", p, err))
 			}
 			byPath[p] = gen
@@ -251,7 +251,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			// skipped above — so what is removed is the chain this node built,
 			// which is what a rebuild discards.
 			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
-				return ofKind(errInitDatadir,
+				return lifecycle.Mark(errInitDatadir,
 					fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err))
 			}
 			// The genesis this node's binary accepts, which is not always the
@@ -426,7 +426,7 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		stopped++
 	}
 	if len(errs) > 0 {
-		return "", ofKind(errOpSomeStillUp,
+		return "", lifecycle.Mark(errOpSomeStillUp,
 			fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
 				stopped, attempts, strings.Join(errs, "; ")))
 	}

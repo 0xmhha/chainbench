@@ -550,10 +550,11 @@ const (
 
 const (
 	// TestOpenSessionFailNoRoot: there is nowhere to write the run.
+	//
+	// It is the stage's only failure. A plan that cannot be written is a note
+	// rather than a refusal — the run can still be judged without it — and the
+	// state that existed for it was dropped when nothing could mark one.
 	TestOpenSessionFailNoRoot = TestOpenSession + failureSlot + iota
-	// TestOpenSessionFailPlanUnwritable: the plan cannot be kept beside the
-	// record it describes.
-	TestOpenSessionFailPlanUnwritable
 )
 
 const (

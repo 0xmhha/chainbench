@@ -109,7 +109,6 @@ var names = map[Status]string{
 	TestReadDeclarationFailContradicted: "TestReadDeclarationFailContradicted",
 	TestOpenSession:                     "TestOpenSession",
 	TestOpenSessionFailNoRoot:           "TestOpenSessionFailNoRoot",
-	TestOpenSessionFailPlanUnwritable:   "TestOpenSessionFailPlanUnwritable",
 	TestStandUpNetwork:                  "TestStandUpNetwork",
 	TestStandUpNetworkFailCompose:       "TestStandUpNetworkFailCompose",
 	TestStandUpNetworkFailNotThePlan:    "TestStandUpNetworkFailNotThePlan",
@@ -310,8 +309,7 @@ var allowed = map[Status][]Status{
 
 	// Standing a network up is skipped by a run that attaches to one already
 	// up, which is why the session leads to two places rather than one.
-	TestOpenSession: {TestStandUpNetwork, TestPrepare,
-		TestOpenSessionFailNoRoot, TestOpenSessionFailPlanUnwritable},
+	TestOpenSession: {TestStandUpNetwork, TestPrepare, TestOpenSessionFailNoRoot},
 
 	TestStandUpNetwork: {TestPrepare,
 		TestStandUpNetworkFailCompose, TestStandUpNetworkFailNotThePlan},

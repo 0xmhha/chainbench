@@ -62,7 +62,7 @@ func TestEveryKindHasItsState(t *testing.T) {
 		{"no chain named", NewFailure, errNewNoChain, lifecycle.ChainOpenWorkspaceFailNoChain},
 		{"a bad launch option", BuildFailure, errBuildBadOption, lifecycle.ChainBuildNodeCommandFailBadOption},
 	} {
-		if got := c.classify(ofKind(c.kind, errors.New("x"))); got != c.want {
+		if got := c.classify(lifecycle.Mark(c.kind, errors.New("x"))); got != c.want {
 			t.Errorf("%s: %s, want %s", c.name, got, c.want)
 		}
 	}
@@ -83,14 +83,14 @@ func TestEveryKindHasItsState(t *testing.T) {
 // of in front of it: the sentence an operator reads is the one the step wrote.
 func TestAKindKeepsTheMessage(t *testing.T) {
 	inner := errors.New(`chainsetup: keys: node2: key reference "k.txt" is not a readable file`)
-	m := ofKind(errKeyRefNotLocal, inner)
+	m := lifecycle.Mark(errKeyRefNotLocal, inner)
 	if m.Error() != inner.Error() {
 		t.Errorf("the message changed: %q", m.Error())
 	}
 	if !errors.Is(m, errKeyRefNotLocal) || !errors.Is(m, inner) {
 		t.Error("a marked error lost either its kind or its cause")
 	}
-	if ofKind(errKeyRefNotLocal, nil) != nil {
+	if lifecycle.Mark(errKeyRefNotLocal, nil) != nil {
 		t.Error("a nil error came back marked")
 	}
 }

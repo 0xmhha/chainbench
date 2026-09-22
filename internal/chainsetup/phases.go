@@ -115,7 +115,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
-		return ofKind(errLaunchPhaseEmpty,
+		return lifecycle.Mark(errLaunchPhaseEmpty,
 			fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name))
 	}
 	// No Binary override: the executor already prefers the plan's own entry for
@@ -207,7 +207,7 @@ func bootKeystoreOnTarget(localKeysDir, targetKeysDir string, index int) (string
 			return path.Join(targetKeysDir, fmt.Sprintf("node%d", index), "keystore", e.Name()), nil
 		}
 	}
-	return "", ofKind(errLaunchNoKeystore,
+	return "", lifecycle.Mark(errLaunchNoKeystore,
 		fmt.Errorf("chainsetup: start: node%d has no keystore file in %s", index, dir))
 }
 
@@ -294,7 +294,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	err := fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
 	if binaryMissing && !otherMissing {
-		return ofKind(errLaunchNoBinary, err)
+		return lifecycle.Mark(errLaunchNoBinary, err)
 	}
 	return err
 }
@@ -309,7 +309,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 // no for a binary the launch would have found.
 func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 	if bin == "" {
-		return ofKind(errLaunchNoBinary, fmt.Errorf("binary: none is set"))
+		return lifecycle.Mark(errLaunchNoBinary, fmt.Errorf("binary: none is set"))
 	}
 	if strings.ContainsRune(bin, '/') {
 		ok, err := t.Files.Exists(ctx, bin)
@@ -317,7 +317,7 @@ func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 			return fmt.Errorf("binary %s: %v", bin, err)
 		}
 		if !ok {
-			return ofKind(errLaunchNoBinary, fmt.Errorf("binary %s: not on the target", bin))
+			return lifecycle.Mark(errLaunchNoBinary, fmt.Errorf("binary %s: not on the target", bin))
 		}
 		return nil
 	}
@@ -326,7 +326,7 @@ func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
 		return fmt.Errorf("binary %s: %v", bin, err)
 	}
 	if !ok {
-		return ofKind(errLaunchNoBinary,
+		return lifecycle.Mark(errLaunchNoBinary,
 			fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin))
 	}
 	_ = path
