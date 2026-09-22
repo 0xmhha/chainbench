@@ -99,13 +99,46 @@ func (w *Workspace) RecordLaunchSet(scope string, sets []string) error {
 		return ofKind(errBuildBadOption,
 			fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords()))
 	}
-	if _, err := ParseOverrides(sets); err != nil {
+	overrides, err := ParseOverrides(sets)
+	if err != nil {
 		return ofKind(errBuildBadOption, err)
+	}
+	if err := refuseSharedPerNodeKnob(scope, overrides); err != nil {
+		return err
 	}
 	if w.state.LaunchSet == nil {
 		w.state.LaunchSet = map[string][]string{}
 	}
 	w.state.LaunchSet[scope] = holdOnePerKey(w.state.LaunchSet[scope], sets)
+	return nil
+}
+
+// refuseSharedPerNodeKnob refuses a knob only one node can be told, named on a
+// scope that covers more than one.
+//
+// The allocator gives each node its own port slot, data root and key files, and
+// one value handed to a scope replaces all of them with the same one. Measured
+// before this existed: a two-node network with launch.all.port=39999 assembled
+// both nodes with --port 39999, so the second could not bind and the network
+// that came up was not the one declared.
+//
+// Refusing rather than ignoring is the point. The line this repository fixed
+// puts the allocator above a declaration, which would mean dropping the value —
+// and a value silently dropped is the shape of every defect this track has
+// found. A scope naming one node is allowed: overriding node1's port is a thing
+// somebody may mean, and it collapses nothing.
+func refuseSharedPerNodeKnob(scope string, overrides []nodeconfig.Override) error {
+	if node.ScopeIndex(scope) > 0 {
+		return nil
+	}
+	for _, o := range overrides {
+		if !nodeconfig.IsPerNode(o.Key) {
+			continue
+		}
+		return ofKind(errBuildBadOption, fmt.Errorf(
+			"chainsetup: launch %q on scope %q: the allocator gives each node its own, so one value for several nodes would collide — name a single node (node1) or change it in the server set. Per-node knobs: %s",
+			o.Key, scope, strings.Join(nodeconfig.PerNodeKeys(), ", ")))
+	}
 	return nil
 }
 
@@ -144,7 +177,28 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	for _, scope := range node.ScopeFor(node.Role(role), index) {
 		out = append(out, w.state.LaunchSet[scope]...)
 	}
-	return out
+	// Last, so nothing a document says can be more specific than the line the
+	// operator typed.
+	return append(out, w.state.LaunchCommand...)
+}
+
+// RecordLaunchCommand stores what the invocation overrode. It is held to the
+// same rules a scope is — the knobs are the same knobs, and an invocation
+// speaks for every node, so a per-node knob collides here exactly as it does on
+// scope "all".
+func (w *Workspace) RecordLaunchCommand(sets []string) error {
+	if len(sets) == 0 {
+		return nil
+	}
+	overrides, err := ParseOverrides(sets)
+	if err != nil {
+		return ofKind(errBuildBadOption, err)
+	}
+	if err := refuseSharedPerNodeKnob(node.ScopeAll, overrides); err != nil {
+		return err
+	}
+	w.state.LaunchCommand = holdOnePerKey(w.state.LaunchCommand, sets)
+	return nil
 }
 
 // RecordConfigSet stores config overrides under a scope, one entry per key, the

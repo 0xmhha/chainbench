@@ -154,6 +154,17 @@ type State struct {
 	// Each value is a list of "key" (boolean flag) or "key=value" applied at
 	// argv assembly, most-general-first (all, then role, then node — node wins).
 	LaunchSet map[string][]string `json:"launchSet,omitempty"`
+	// LaunchCommand holds what the invocation overrode, kept apart from the
+	// scoped sets and applied after all of them.
+	//
+	// It is separate because scope narrowness and the priority line are two
+	// different orders and they disagreed. The invocation says "all" — it has no
+	// scope syntax — so a declaration that named a role beat it: measured, a
+	// chain-preset with bp:maxpeers=11 and --launch-opt maxpeers=22 gave the
+	// producers 11, and the operator's flag did nothing on the nodes it was
+	// typed for. The line puts the invocation above every document, so it is
+	// applied where nothing can be narrower than it.
+	LaunchCommand []string `json:"launchCommand,omitempty"`
 	// Binaries maps a per-node binary name (as topology entries reference it)
 	// to its resolved path. Empty means every node runs the single Binary. It
 	// is how one network runs mixed builds concurrently.

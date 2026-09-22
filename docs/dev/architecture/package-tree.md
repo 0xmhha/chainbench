@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 51 | 54,278 |
+| `internal/` | 51 | 54,384 |
 | `cmd/` | 19 | 5,021 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **73** | **60,089** |
+| **합계** | **73** | **60,195** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 24패키지 16,847줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 24패키지 16,887줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -57,7 +57,7 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,585  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,625  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -116,7 +116,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,656줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 33,722줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -146,7 +146,7 @@ internal/testengine 4,311 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 7,939 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 8,005 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
                           NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
                           NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·

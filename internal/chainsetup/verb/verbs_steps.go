@@ -254,7 +254,7 @@ func NetLaunchOpts(_ context.Context, d chainsetup.Deps, in NetLaunchOptsIn) (Ne
 				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 			}
 		}
-		if err := ws.RecordLaunchSet("all", in.Set); err != nil {
+		if err := ws.RecordLaunchCommand(in.Set); err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 		}
 		det, err := ws.LaunchOpts()
