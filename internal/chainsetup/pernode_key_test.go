@@ -10,7 +10,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
@@ -90,16 +89,12 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatalf("allocate: %v", err)
 	}
 	ctx := context.Background()
-	done, err := ws.Keys(ctx, chainsetup.KeysOpts{})
-	if err != nil {
+	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	// The request names no source, and the node table does. This is the case a
-	// handler reading the request called a preset: the step reports what it
-	// actually took.
-	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainEnsureKeysFromBlueprint {
-		t.Errorf("the step reported %v, want [ChainEnsureKeysFromBlueprint]", done.Passed)
-	}
+	// The request names no source and the node table does, so the table wins.
+	// What the addresses below are is that decision's result; that the machine
+	// walks KeysDeclared to reach it is held in stage_keys_test.go.
 
 	set, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {

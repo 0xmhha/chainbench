@@ -159,6 +159,10 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"phaseLaunched":       phaseLaunched{},
 		"phaseActionsDone":    phaseActionsDone{},
 		"nodesLaunched":       nodesLaunched{},
+
+		"forkStandingRead":     forkStandingRead{},
+		"forkBoundaryReached":  forkBoundaryReached{},
+		"productionHandedOver": productionHandedOver{},
 	}
 	for name, msg := range types {
 		if _, ok := whatNames[msg.What()]; !ok {

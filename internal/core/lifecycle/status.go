@@ -106,52 +106,18 @@ const (
 const ChainReady Status = areaChain + 0xF00
 
 // ---- chain: stage detail ---------------------------------------------------
-
-const (
-	// ChainEnsureKeysFromPreset took the identities from a committed key set.
-	ChainEnsureKeysFromPreset = ChainEnsureKeys + 1 + iota
-	// ChainEnsureKeysGenerated made fresh ones.
-	ChainEnsureKeysGenerated
-	// ChainEnsureKeysFromBlueprint took what the network declaration names.
-	ChainEnsureKeysFromBlueprint
-)
-
-const (
-	// ChainBuildGenesisFromTemplate built it from the chain's own template.
-	ChainBuildGenesisFromTemplate = ChainBuildGenesis + 1 + iota
-	// ChainBuildGenesisFromExisting used a finished genesis as it stands.
-	ChainBuildGenesisFromExisting
-	// ChainBuildGenesisForkApplied scheduled a fork on it.
-	ChainBuildGenesisForkApplied
-	// ChainBuildGenesisVariantsWritten wrote the per-binary documents.
-	ChainBuildGenesisVariantsWritten
-)
-
-const (
-	// ChainDeployNodesVerifiedLocal checked the inputs where they already are.
-	ChainDeployNodesVerifiedLocal = ChainDeployNodes + 1 + iota
-	// ChainDeployNodesShippedRemote sent the identity files to the target.
-	ChainDeployNodesShippedRemote
-)
-
-const (
-	// ChainLaunchNodesPhaseLaunching is launching one phase's nodes. A family
-	// may declare several: one launches everything at once, another boots a
-	// single producer and joins the rest one at a time.
-	ChainLaunchNodesPhaseLaunching = ChainLaunchNodes + 1 + iota
-	// ChainLaunchNodesPhaseActions runs the work a phase names after its nodes
-	// are up and before the next phase starts.
-	ChainLaunchNodesPhaseActions
-	// ChainLaunchNodesPhaseDone finished one phase. Another may follow.
-	ChainLaunchNodesPhaseDone
-)
-
-const (
-	// ChainVerifyProducing saw blocks being made.
-	ChainVerifyProducing = ChainVerify + 1 + iota
-	// ChainVerifyHaltedAsDeclared saw the chain stop where it said it would.
-	ChainVerifyHaltedAsDeclared
-)
+//
+// There is none here any more. Each stage's detail — which way the keys came,
+// where the genesis came from, whether the deploy shipped anything, which
+// launch phase was running — was a value a step appended to a list as it ran,
+// and the list travelled back beside the step's result. The composition walks
+// a state machine now, so those are states under the stage they belong to, and
+// where the machine is is the answer. Keeping both meant keeping two accounts
+// of one walk, written by hand, which is how a step came to report a path it
+// had not taken.
+//
+// What stays in this area is the stages themselves and their failures: a
+// failure is a classification of an error, which a position cannot give.
 
 // ---- chain: failures -------------------------------------------------------
 
@@ -305,25 +271,14 @@ const (
 	// and brings it back on that.
 	ChainOpReplaceNode
 	// ChainOpCrossFork restarts the network across a fork boundary. It is the
-	// only operational verb that waits on the chain rather than on a process,
-	// and the only one with states of its own.
+	// only operational verb that waits on the chain rather than on a process.
+	// The three moments it goes through are states under CrossingFork, in
+	// chainsetup, rather than values here.
 	ChainOpCrossFork
 	// ChainOpRemoveNodes removes the composed data plane.
 	ChainOpRemoveNodes
 	// ChainOpHardfork runs the upgrade a hardfork plan describes.
 	ChainOpHardfork
-)
-
-const (
-	// ChainOpCrossForkBeforeFork saw the chain short of the fork block, which
-	// is where the hand-over has to begin.
-	ChainOpCrossForkBeforeFork = ChainOpCrossFork + 1 + iota
-	// ChainOpCrossForkHandingOver has the pre-fork nodes down and the post-fork
-	// build coming up in their place.
-	ChainOpCrossForkHandingOver
-	// ChainOpCrossForkCrossed saw the chain past the fork block on the new
-	// build.
-	ChainOpCrossForkCrossed
 )
 
 // opShared is the block the failures more than one operational verb can raise

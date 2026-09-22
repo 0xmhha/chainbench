@@ -33,6 +33,7 @@ func recordedStepNames(t *testing.T) map[string][]string {
 	}
 	fset := token.NewFileSet()
 	found := map[string][]string{}
+	var files []*ast.File
 	for _, e := range entries {
 		name := e.Name()
 		if e.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
@@ -42,6 +43,35 @@ func recordedStepNames(t *testing.T) map[string][]string {
 		if err != nil {
 			t.Fatalf("parse %s: %v", name, err)
 		}
+		files = append(files, file)
+	}
+	// Step names the package holds as constants. A name written out at every
+	// call is the duplication the rest of this package removes, so the check
+	// has to see through the constant to the word — otherwise the ratchet
+	// pushes back towards the literal it was never about.
+	consts := map[string]string{}
+	for _, file := range files {
+		for _, d := range file.Decls {
+			gd, ok := d.(*ast.GenDecl)
+			if !ok || gd.Tok != token.CONST {
+				continue
+			}
+			for _, spec := range gd.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
+					continue
+				}
+				lit, ok := vs.Values[0].(*ast.BasicLit)
+				if !ok || lit.Kind != token.STRING {
+					continue
+				}
+				if v, err := strconv.Unquote(lit.Value); err == nil {
+					consts[vs.Names[0].Name] = v
+				}
+			}
+		}
+	}
+	for _, file := range files {
 		ast.Inspect(file, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
 			if !ok || len(call.Args) == 0 {
@@ -51,18 +81,31 @@ func recordedStepNames(t *testing.T) map[string][]string {
 			if !ok || (sel.Sel.Name != "markStep" && sel.Sel.Name != "MarkStepFailed") {
 				return true
 			}
-			lit, ok := call.Args[0].(*ast.BasicLit)
-			if !ok || lit.Kind != token.STRING {
-				// A caller that passes the name through takes it from a table
-				// this package already holds to a list, so there is nothing
-				// here to check.
+			var step string
+			switch arg := call.Args[0].(type) {
+			case *ast.BasicLit:
+				if arg.Kind != token.STRING {
+					return true
+				}
+				unquoted, err := strconv.Unquote(arg.Value)
+				if err != nil {
+					return true
+				}
+				step = unquoted
+			case *ast.Ident:
+				// A constant this package declares, resolved to its word. An
+				// identifier from anywhere else is a name passed through, and
+				// a caller that passes one takes it from a table already held
+				// to a list.
+				name, ok := consts[arg.Name]
+				if !ok {
+					return true
+				}
+				step = name
+			default:
 				return true
 			}
-			step, err := strconv.Unquote(lit.Value)
-			if err != nil {
-				return true
-			}
-			at := fset.Position(lit.Pos())
+			at := fset.Position(call.Args[0].Pos())
 			found[step] = append(found[step], filepath.Base(at.Filename)+":"+strconv.Itoa(at.Line))
 			return true
 		})

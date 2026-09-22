@@ -84,18 +84,6 @@ const (
 	wayDeclared  keyWay = "declared"
 )
 
-// status is how the old machine spells this way.
-func (k keyWay) status() lifecycle.Status {
-	switch k {
-	case wayGenerated:
-		return lifecycle.ChainEnsureKeysGenerated
-	case wayDeclared:
-		return lifecycle.ChainEnsureKeysFromBlueprint
-	default:
-		return lifecycle.ChainEnsureKeysFromPreset
-	}
-}
-
 // KeysOptsFor reads the declaration a request names and settles the source.
 //
 // A blueprint that carries keys is the source unless the caller asked for
@@ -206,7 +194,7 @@ func (w *Workspace) EnsureKeys(ctx context.Context, src store.KeySource, n int) 
 // Keys ensures the workspace's key set exists and covers the requested node
 // count, through the same KeySource boundary `chainbench run` uses.
 func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
-	src, way, n, err := w.keySource(ctx, opts)
+	src, _, n, err := w.keySource(ctx, opts)
 	if err != nil {
 		return StepOut{}, err
 	}
@@ -214,7 +202,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 	if err != nil {
 		return StepOut{}, err
 	}
-	return StepOut{Detail: detail, Passed: []lifecycle.Status{way.status()}}, nil
+	return StepOut{Detail: detail}, nil
 }
 
 // declaredKeys derives the ring a blueprint declares, for the network the

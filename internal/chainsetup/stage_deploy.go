@@ -56,7 +56,10 @@ func (s *deployingInputs) Enter(ctx context.Context, m *statemachine.Machine) er
 		s.mg.fail(m, stepDeploy, err)
 		return nil
 	}
-	m.SendSelf(inputsPresent{Detail: out.Detail, Shipped: out.Shipped})
+	// Written out rather than converted from StepOut: the two match by accident
+	// now that the step no longer carries the states it went through, and a
+	// conversion would break or change meaning the next time either grows.
+	m.SendSelf(inputsPresent{Detail: out.Detail, Shipped: out.Shipped}) //nolint:staticcheck // see above
 	return nil
 }
 

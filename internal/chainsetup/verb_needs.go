@@ -156,10 +156,18 @@ var verbNeeds = map[string]verbNeed{
 	"StartNode":           {node: []nodeNeed{down, launched}},
 	"SwapNode":            {node: []nodeNeed{launched}},
 	"Restart":             {why: "delegates to StopNode and StartNode, which each answer for themselves"},
-	"CrossFork":           {why: "names the node or binary the fork has nobody to run on, which a table-wide state cannot"},
-	"Compare":             {why: "reads a baseline file, not the network"},
-	"CheckBaseline":       {why: "reads a baseline file, not the network"},
-	"ObserveBaseline":     {why: "records what is there now, including nothing"},
+	// Crossing a fork, one verb per moment. Each names the node or binary the
+	// fork has nobody to run on, which a table-wide state cannot — and a
+	// crossing is asked for on a network that is running, which "stopped" and
+	// "placed" each answer wrongly.
+	"ForkStanding":         {why: "reads whether the fork is already behind the network, which it must answer on any state"},
+	"ForkMoment":           {why: "waits on the chain rather than on the table; a network short of the fork is the case it is for"},
+	"HandOverFork":         {why: "stops and relaunches the successors itself, so requiring them stopped would refuse every crossing"},
+	"ConfirmCrossing":      {why: "reads the head after the hand-over, which is the one moment the table cannot describe"},
+	"ReportAlreadyCrossed": {why: "records a step for a network that crossed on its own, which asks nothing of the table"},
+	"Compare":              {why: "reads a baseline file, not the network"},
+	"CheckBaseline":        {why: "reads a baseline file, not the network"},
+	"ObserveBaseline":      {why: "records what is there now, including nothing"},
 }
 
 // allow reports whether verb may run, naming what is missing.

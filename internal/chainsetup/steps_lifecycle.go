@@ -362,33 +362,24 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error
 	if err != nil {
 		return StepOut{}, err
 	}
-	// The walk through the phases, as states. The path is built as the loop
-	// runs rather than assumed in front of it: the state says what the launch
-	// was doing, and how many times it has been through says which phase, so a
-	// launch that dies in the third join reports three PhaseLaunching and stops
-	// there. The record used to hold "start" and nothing else.
-	var passed []lifecycle.Status
 	started := 0
 	for _, phase := range phases {
-		passed = append(passed, lifecycle.ChainLaunchNodesPhaseLaunching)
 		launched, perr := w.StartPhase(ctx, bin, phase)
 		if perr != nil {
-			return StepOut{Passed: passed}, perr
+			return StepOut{}, perr
 		}
 		started += launched
 		if len(phase.Actions) > 0 {
-			passed = append(passed, lifecycle.ChainLaunchNodesPhaseActions)
 			if aerr := w.RunPhaseActions(ctx, bin, phase); aerr != nil {
-				return StepOut{Passed: passed}, aerr
+				return StepOut{}, aerr
 			}
 		}
-		passed = append(passed, lifecycle.ChainLaunchNodesPhaseDone)
 	}
 	detail, err := w.FinishLaunch(ctx, bin, started)
 	if err != nil {
 		return StepOut{}, err
 	}
-	return StepOut{Detail: detail, Passed: passed}, nil
+	return StepOut{Detail: detail}, nil
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.

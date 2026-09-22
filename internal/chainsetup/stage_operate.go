@@ -134,29 +134,3 @@ func (s *hardforking) Enter(ctx context.Context, m *statemachine.Machine) error 
 	})
 	return nil
 }
-
-// crossingFork waits for the network to cross the fork it is planned for.
-type crossingFork struct {
-	statemachine.Base
-	mg   *Manager
-	opts CrossForkOpts
-
-	// out is what the crossing reported, for the caller that asked for it.
-	out StepOut
-}
-
-// Name says what this state is called.
-func (crossingFork) Name() statemachine.StateName { return nameCrossingFork }
-
-// verb is the name this operation's conditions are declared under.
-func (crossingFork) verb() string { return "CrossFork" }
-
-// Enter waits for the crossing.
-func (s *crossingFork) Enter(ctx context.Context, m *statemachine.Machine) error {
-	s.mg.operated(m, s, func(ws *Workspace) (string, error) {
-		out, err := ws.CrossFork(ctx, s.opts)
-		s.out = out
-		return out.Detail, err
-	})
-	return nil
-}

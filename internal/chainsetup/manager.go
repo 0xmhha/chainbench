@@ -133,7 +133,7 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 	mg.restarting = &restarting{mg: mg}
 	mg.swapping = &swapping{mg: mg}
 	mg.hardforking = &hardforking{mg: mg}
-	mg.crossingFork = &crossingFork{mg: mg}
+	mg.crossingFork = newCrossingFork(mg)
 	mg.removing = &removing{mg: mg}
 	mg.ops = []operation{
 		mg.stopping, mg.restarting, mg.swapping,
@@ -187,6 +187,16 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 	mg.m.Add(mg.ready, root)
 	for _, op := range mg.ops {
 		mg.m.Add(op, mg.ready)
+		// An operation that goes somewhere on the way says so, and its moments
+		// go in right under it — the same shape a stage with more than one way
+		// of working has.
+		if branch, ok := op.(interface {
+			leafStates() []statemachine.State
+		}); ok {
+			for _, leaf := range branch.leafStates() {
+				mg.m.Add(leaf, op)
+			}
+		}
 	}
 	mg.m.Add(mg.failed, root)
 	return mg

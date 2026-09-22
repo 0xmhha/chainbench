@@ -113,6 +113,15 @@ const (
 	eventPhaseActionsDone
 	// eventNodesLaunched: the network is up and the run is recorded.
 	eventNodesLaunched
+	// eventForkStandingRead: where a network composed to cross a fork stands,
+	// which is what says whether there is a crossing left to do at all.
+	eventForkStandingRead
+	// eventForkBoundaryReached: the chain is at the block the hand-over has to
+	// begin from.
+	eventForkBoundaryReached
+	// eventProductionHandedOver: the pre-fork nodes are down and the build
+	// that seals after the fork is up in their place.
+	eventProductionHandedOver
 	// eventStageFailed: a stage could not finish. The stage above writes the
 	// reason down and goes to failed.
 	eventStageFailed
@@ -162,7 +171,12 @@ var whatNames = map[statemachine.What]string{
 	eventPhaseLaunched:       "eventPhaseLaunched",
 	eventPhaseActionsDone:    "eventPhaseActionsDone",
 	eventNodesLaunched:       "eventNodesLaunched",
-	eventStageFailed:         "eventStageFailed",
+
+	eventForkStandingRead:     "eventForkStandingRead",
+	eventForkBoundaryReached:  "eventForkBoundaryReached",
+	eventProductionHandedOver: "eventProductionHandedOver",
+
+	eventStageFailed: "eventStageFailed",
 
 	EventNodeDied: "EventNodeDied",
 }
@@ -224,6 +238,28 @@ func (Operate) What() statemachine.What { return CmdOperate }
 type operationDone struct{}
 
 func (operationDone) What() statemachine.What { return eventOperationDone }
+
+// forkStandingRead: where a network composed to cross a fork stands.
+//
+// It carries the answer rather than the state re-reading it, because reading it
+// is the work this message reports: a crossing that has already happened is not
+// one to perform again.
+type forkStandingRead struct{ Crossed bool }
+
+func (forkStandingRead) What() statemachine.What { return eventForkStandingRead }
+
+// forkBoundaryReached: the chain stands where the hand-over begins.
+//
+// Head is the block it settled on, which the sentence the step reports is
+// written from.
+type forkBoundaryReached struct{ Head int64 }
+
+func (forkBoundaryReached) What() statemachine.What { return eventForkBoundaryReached }
+
+// productionHandedOver: the successors are up and sealing.
+type productionHandedOver struct{}
+
+func (productionHandedOver) What() statemachine.What { return eventProductionHandedOver }
 
 // ComposeComparing asks for a composition that reuses what the target already has when
 // the comparison says it can.

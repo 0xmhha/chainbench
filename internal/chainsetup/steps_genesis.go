@@ -221,12 +221,6 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 	if err != nil {
 		return StepOut{}, err
 	}
-	// passed is the states this step goes through, appended where each is
-	// decided so the path and the work cannot drift apart.
-	passed := []lifecycle.Status{lifecycle.ChainBuildGenesisFromTemplate}
-	if opts.Existing != "" {
-		passed[0] = lifecycle.ChainBuildGenesisFromExisting
-	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
 	// The genesis is a generated file, so it sits under the composition's
@@ -236,7 +230,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 	w.state.Fork = nil
 	if opts.Fork != nil {
 		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
-			return StepOut{Passed: passed}, err
+			return StepOut{}, err
 		}
 		art.Genesis = gen
 		// Recorded because crossing the fork is a later step's work: it has to
@@ -244,11 +238,10 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		// over, and the request that said so is gone by then.
 		fork := *opts.Fork
 		w.state.Fork = &fork
-		passed = append(passed, lifecycle.ChainBuildGenesisForkApplied)
 	}
 	lay, err := w.layout()
 	if err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	path := lay.GenesisPath()
 	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
@@ -271,17 +264,14 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		return nil
 	})
 	if err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	w.state.GenesisPath = path
 	if err := w.writeGenesisVariants(ctx, lay, gen, opts.Variants); err != nil {
-		return StepOut{Passed: passed}, err
-	}
-	if len(opts.Variants) > 0 {
-		passed = append(passed, lifecycle.ChainBuildGenesisVariantsWritten)
+		return StepOut{}, err
 	}
 	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts)
 	w.state.HaltsAt = opts.HaltsAt
@@ -303,7 +293,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		detail += fmt.Sprintf(", %s fork at %d carried by %s", opts.Fork.Name, opts.Fork.At, opts.Fork.carrier())
 	}
 	w.markStep("genesis", detail)
-	return StepOut{Detail: detail, Passed: passed}, nil
+	return StepOut{Detail: detail}, nil
 }
 
 // applyFork schedules the fork on the built genesis, taking its consensus

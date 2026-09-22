@@ -49,6 +49,10 @@ const (
 	// crossForkTimeout is the default wait for a network to reach the block
 	// before its fork.
 	crossForkTimeout = 5 * time.Minute
+	// crossForkStep is what the crossing is called in a record and in a
+	// reported line. state_request.go lists it among the steps a workspace can
+	// hold, so the two have to be one word.
+	crossForkStep = "cross-fork"
 )
 
 // CrossForkOpts is how long to wait for the network to reach the fork.
@@ -58,12 +62,6 @@ type CrossForkOpts struct {
 	Timeout time.Duration
 }
 
-// CrossFork waits for the network to reach the block before its fork and hands
-// production to the build that seals after it.
-//
-// It is idempotent: a network whose successors already produce is reported as
-// already across rather than bounced, so a case that names the step on a
-// composition that crossed on its own does not restart a working chain.
 // The kinds of failure crossing a fork has.
 //
 // Four, and they are the three moments the twenty failure sites fall into plus
@@ -78,57 +76,112 @@ var (
 	errCrossForkNobodyCameBack = errors.New("the restart left no node running")
 )
 
-func (w *Workspace) CrossFork(ctx context.Context, opts CrossForkOpts) (StepOut, error) {
-	f := w.state.Fork
-	if f == nil {
-		return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
-			fmt.Errorf("chainsetup: cross-fork: this network is composed to cross no fork — declare one under env.upgrade"))
+// ForkStanding is where a network composed to cross a fork stands.
+type ForkStanding struct {
+	// Crossed reports whether every successor is already past the fork. It is
+	// the whole of the question the crossing asks before it does anything: a
+	// case may name the step on a composition that crossed on its own, and
+	// bouncing a working chain there would be worse than doing nothing.
+	Crossed bool
+}
+
+// ForkStanding reads whether the network still has a fork to cross.
+//
+// Read-only, and refused by name when there is no fork or nobody to hand over
+// to: saying so beats waiting out a timeout on a chain that was never going to
+// stop.
+func (w *Workspace) ForkStanding() (ForkStanding, error) {
+	f, successors, err := w.forkTargets()
+	if err != nil {
+		return ForkStanding{}, err
 	}
-	successors := w.forkSuccessors(*f)
-	if len(successors) == 0 {
-		if f.Restart {
-			return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
-				fmt.Errorf("chainsetup: cross-fork: this network has no node to restart across the %q fork", f.Name))
-		}
-		return StepOut{}, lifecycle.Mark(errCrossForkNoFork,
-			fmt.Errorf("chainsetup: cross-fork: no node runs binary %q, so the %q fork has nobody to hand over to", f.Binary, f.Name))
-	}
-	// passed is the moments this crossing goes through, appended where each is
-	// reached. A run that stops partway returns what it got through, which is
-	// what says which moment to look at.
-	var passed []lifecycle.Status
-	if w.alreadyCrossed(*f, successors) {
-		detail := fmt.Sprintf("%s already crossed: %d node(s) are past it", f.Name, len(successors))
-		w.markStep("cross-fork", detail)
-		return StepOut{Detail: detail, Passed: []lifecycle.Status{
-			lifecycle.ChainOpCrossForkBeforeFork,
-			lifecycle.ChainOpCrossForkHandingOver,
-			lifecycle.ChainOpCrossForkCrossed,
-		}}, nil
+	return ForkStanding{Crossed: w.alreadyCrossed(f, successors)}, nil
+}
+
+// ForkMoment brings the network to the point where it can be moved, and returns
+// the head it was at.
+func (w *Workspace) ForkMoment(ctx context.Context, opts CrossForkOpts) (int64, error) {
+	f, _, err := w.forkTargets()
+	if err != nil {
+		return 0, err
 	}
 	timeout := opts.Timeout
 	if timeout <= 0 {
 		timeout = crossForkTimeout
 	}
-	head, err := w.forkMoment(ctx, *f, timeout)
+	return w.forkMoment(ctx, f, timeout)
+}
+
+// HandOverFork stops each successor, records that it produces now, and
+// relaunches it.
+func (w *Workspace) HandOverFork(ctx context.Context) error {
+	f, successors, err := w.forkTargets()
 	if err != nil {
-		return StepOut{Passed: passed}, err
+		return err
 	}
-	passed = append(passed, lifecycle.ChainOpCrossForkBeforeFork)
-	if err := w.handOver(ctx, *f, successors); err != nil {
-		return StepOut{Passed: passed}, err
+	return w.handOver(ctx, f, successors)
+}
+
+// ConfirmCrossing holds the crossing to what makes it one and records the step.
+//
+// head is the block the network stood at when the hand-over began, which the
+// sentence it reports is written from.
+func (w *Workspace) ConfirmCrossing(ctx context.Context, head int64) (string, error) {
+	f, successors, err := w.forkTargets()
+	if err != nil {
+		return "", err
 	}
-	passed = append(passed, lifecycle.ChainOpCrossForkHandingOver)
-	if err := w.confirmBeforeFork(ctx, *f); err != nil {
-		return StepOut{Passed: passed}, err
+	if cerr := w.confirmBeforeFork(ctx, f); cerr != nil {
+		return "", cerr
 	}
-	passed = append(passed, lifecycle.ChainOpCrossForkCrossed)
 	detail := fmt.Sprintf("%s at %d: head %d, %d successor(s) now produce", f.Name, f.At, head, len(successors))
 	if f.Restart {
 		detail = fmt.Sprintf("%s at %d: %d node(s) relaunched on %s at head %d, before the fork", f.Name, f.At, len(successors), f.Binary, head)
 	}
-	w.markStep("cross-fork", detail)
-	return StepOut{Detail: detail, Passed: passed}, nil
+	w.markStep(crossForkStep, detail)
+	return detail, nil
+}
+
+// ReportAlreadyCrossed records the step for a network that was across before
+// anybody asked it to cross.
+//
+// It is a verb of its own rather than an arm of ConfirmCrossing because there
+// is nothing to confirm: no hand-over happened, so there is no head it began
+// at and no restart to hold to the fork block. What is left is the sentence and
+// the record.
+func (w *Workspace) ReportAlreadyCrossed() (string, error) {
+	f, successors, err := w.forkTargets()
+	if err != nil {
+		return "", err
+	}
+	detail := fmt.Sprintf("%s already crossed: %d node(s) are past it", f.Name, len(successors))
+	w.markStep(crossForkStep, detail)
+	return detail, nil
+}
+
+// forkTargets is the fork this network crosses and the positions that take over
+// after it.
+//
+// Every moment of the crossing derives them again rather than one of them
+// passing them on. They are read from the record, each moment opens the
+// workspace afresh, and a set carried across those opens would be the older
+// answer — which is exactly what the hand-over changes.
+func (w *Workspace) forkTargets() (GenesisFork, []int, error) {
+	f := w.state.Fork
+	if f == nil {
+		return GenesisFork{}, nil, lifecycle.Mark(errCrossForkNoFork,
+			fmt.Errorf("chainsetup: cross-fork: this network is composed to cross no fork — declare one under env.upgrade"))
+	}
+	successors := w.forkSuccessors(*f)
+	if len(successors) == 0 {
+		if f.Restart {
+			return GenesisFork{}, nil, lifecycle.Mark(errCrossForkNoFork,
+				fmt.Errorf("chainsetup: cross-fork: this network has no node to restart across the %q fork", f.Name))
+		}
+		return GenesisFork{}, nil, lifecycle.Mark(errCrossForkNoFork,
+			fmt.Errorf("chainsetup: cross-fork: no node runs binary %q, so the %q fork has nobody to hand over to", f.Binary, f.Name))
+	}
+	return *f, successors, nil
 }
 
 // forkSuccessors is the node table's positions for the build that seals after
