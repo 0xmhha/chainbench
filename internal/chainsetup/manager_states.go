@@ -154,11 +154,12 @@ type failedState struct {
 // Name says what this state is called.
 func (failedState) Name() statemachine.StateName { return nameFailed }
 
-// Enter records the position, which is the stage that failed.
-func (s *failedState) Enter(context.Context, *statemachine.Machine) error {
-	s.mg.recordPath(s)
-	return nil
-}
+// Enter leaves the recorded position alone on purpose.
+//
+// The stage wrote its own path on the way in, so the record already names the
+// stage that did not finish — which is what a resume needs and what a reader
+// asks. Writing "Failed" over it would replace the useful half of the answer
+// with the half the step record already gives: Steps[step].Err.
 
 // Process lets a caller leave the failure, having read it.
 //

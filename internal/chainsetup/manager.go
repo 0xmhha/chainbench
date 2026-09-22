@@ -201,6 +201,38 @@ func (mg *Manager) Step(ctx context.Context, step string, in ChainUpIn) (string,
 	return detail, nil
 }
 
+// ResumeStep is the step a composition should be resumed at.
+//
+// The recorded position is the better answer where it is decisive: a stage
+// writes its own path on the way in, so a run that died mid-stage names the
+// stage that did not finish, and re-entering it does that stage over. Working
+// the same thing out by walking UpStepNames for the first rung not done is a
+// second account of the position kept somewhere else, and the two have
+// disagreed.
+//
+// Two positions are deliberate stops rather than places a run is in. Ready is
+// finished. Composed is a run that stopped where it was told — after a
+// --stage=deploy, or after one step run by hand — and what should follow is the
+// step map's to answer, because the request rather than the position decides
+// whether there is more to do.
+func (w *Workspace) ResumeStep() string {
+	switch w.state.StatePath {
+	case string(nameComposition) + "/" + string(nameReady):
+		return ""
+	case "", string(nameComposition) + "/" + string(nameStopped),
+		string(nameComposition) + "/" + string(nameComposed):
+		return w.FirstUndone()
+	}
+	for _, part := range strings.Split(w.state.StatePath, "/") {
+		for _, st := range stageOrder {
+			if part == string(st.name) {
+				return st.step
+			}
+		}
+	}
+	return w.FirstUndone()
+}
+
 // stepIsDue reports whether every step this one needs has already run.
 //
 // It reads the recorded steps rather than the state fields they leave behind. A

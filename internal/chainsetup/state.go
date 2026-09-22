@@ -14,7 +14,11 @@ import (
 // process reads this rather than inferring from files on disk, because a file
 // can be present for reasons the composition never chose.
 
-const StateFormatVersion = 1
+// StateFormatVersion is 2 because a record now carries where the composition's
+// machine was, and a resume trusts it. A version 1 record has no position, and
+// a build that read one would resume from the beginning of a network that is
+// half up.
+const StateFormatVersion = 2
 
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step

@@ -63,7 +63,9 @@ func ChainResume(ctx context.Context, d chainsetup.Deps, in ChainResumeIn) (Chai
 			return "", err
 		}
 		req = ws.State().Request
-		first = ws.FirstUndone()
+		// Where the machine was, not where the step map suggests it should be.
+		// The two used to be worked out separately and could disagree.
+		first = ws.ResumeStep()
 		return "", nil
 	})
 	if err != nil {

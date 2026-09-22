@@ -252,8 +252,10 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := ws.State().StatePath; got != "Composition/Failed" {
-		t.Errorf("the record says %q, want Composition/Failed", got)
+	// The stage that did not finish, not the word "failed": that is what a
+	// resume re-enters, and the step record below is where the failure is.
+	if got := ws.State().StatePath; got != "Composition/Composing/BuildingGenesis/GenesisFromExisting" {
+		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 	if step, ok := ws.State().Steps["genesis"]; !ok || step.Err == "" {
 		t.Errorf("the record does not name genesis as the failed step: %+v", ws.State().Steps)
@@ -308,8 +310,8 @@ func TestOpeningWorkspace_AnUnknownChainFailsTheComposition(t *testing.T) {
 	if oerr != nil {
 		t.Fatal(oerr)
 	}
-	if got := ws.State().StatePath; got != "Composition/Failed" {
-		t.Errorf("the record says %q, want Composition/Failed", got)
+	if got := ws.State().StatePath; got != "Composition/Composing/OpeningWorkspace" {
+		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 	if step, ok := ws.State().Steps["new"]; !ok || step.Err == "" {
 		t.Errorf("the record does not name new as the failed step: %+v", ws.State().Steps)
@@ -362,8 +364,8 @@ func TestBuildingNodeTable_RefusesTwoLayouts(t *testing.T) {
 	if oerr != nil {
 		t.Fatal(oerr)
 	}
-	if got := ws.State().StatePath; got != "Composition/Failed" {
-		t.Errorf("the record says %q, want Composition/Failed", got)
+	if got := ws.State().StatePath; got != "Composition/Composing/BuildingNodeTable" {
+		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 }
 
@@ -486,5 +488,57 @@ func TestDeployingInputs_SaysWhetherAnythingWasShipped(t *testing.T) {
 	// The stage still reports its line, from the state that named the outcome.
 	if !strings.HasPrefix(mg.Steps()[6], "deploy: ") {
 		t.Errorf("the stage reported %q, want a line beginning \"deploy: \"", mg.Steps()[6])
+	}
+}
+
+// TestResumeStep_ReadsThePositionTheMachineRecorded.
+//
+// This is what the recorded path was added for. A run that died in a stage
+// names that stage, so a resume does that stage over rather than working the
+// answer out a second way and hoping the two agree.
+func TestResumeStep_ReadsThePositionTheMachineRecorded(t *testing.T) {
+	cases := []struct {
+		name string
+		path string
+		want string
+	}{
+		{"died in the genesis stage", "Composition/Composing/BuildingGenesis/GenesisFromTemplate", "genesis"},
+		{"died in the launch, third phase", "Composition/Composing/Launching/LaunchingPhase", "start"},
+		{"died on the way in", "Composition/Composing/OpeningWorkspace", "new"},
+		{"finished", "Composition/Ready", ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ws, err := Open(t.TempDir(), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ws.SetStatePath(c.path)
+			if got := ws.ResumeStep(); got != c.want {
+				t.Errorf("a composition at %q resumes at %q, want %q", c.path, got, c.want)
+			}
+		})
+	}
+}
+
+// TestResumeStep_AWorkspaceWithNoPositionFallsBackToTheStepMap.
+//
+// Composed and Stopped are deliberate stops rather than places a run is in, so
+// what should follow is the request's to answer, not the position's.
+func TestResumeStep_AWorkspaceWithNoPositionFallsBackToTheStepMap(t *testing.T) {
+	mg := newTestManager(t)
+	if err := mg.Compose(context.Background(), withStage(upRequest(t), UpDeploy), ""); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := Open(mg.ws.Dir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ws.State().StatePath; got != "Composition/Composed" {
+		t.Fatalf("the run stopped at %q, want Composition/Composed", got)
+	}
+	// A request that asked to stop at deploy has nothing left to resume.
+	if got := ws.ResumeStep(); got != "" {
+		t.Errorf("a composition told to stop at deploy resumes at %q", got)
 	}
 }
