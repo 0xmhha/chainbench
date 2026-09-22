@@ -1841,10 +1841,21 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
 
 
-## 1s. 남은 작업 한눈에 (2026-09-10 작성 · **2026-09-11 재측정**)
+## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-22 갱신**)
 
 §1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
 배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다.
+
+### 지금 열린 것 (2026-09-22)
+
+아래 G 절이 정본이다. 9월 12일과 9월 22일 사이에 두 트랙이 돌았고, 이 문서는 그동안
+따라오지 못했다 — 9월 11일에 멈춰 있었다. **이 절을 읽는 사람이 먼저 볼 것은 G 다.**
+
+| 갈래 | 상태 |
+|---|---|
+| G. HSM 리팩토링 (2026-09-21~) | 코드 완료 · **전량 검증 남음** |
+| G 파생 세 건 | 열림 (범위 밖으로 미뤄 둔 것) |
+| B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
 
 ### 재측정 (2026-09-11, PR #383 머지 후)
 
@@ -2912,6 +2923,69 @@ WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
 으로 해야 하고, 정리는 `git push --delete`(없는 것을 지우려다 실패한다)가 아니라
 `git remote prune origin` 이다. 같은 실수를 막는 문장: **`git branch -r` 은 원격을 보여주지
 않는다. 마지막으로 fetch 했을 때의 원격을 보여준다.**
+
+
+### G. HSM 리팩토링 — 코드 완료, 전량 검증 남음 (2026-09-21 착수 · 2026-09-22 현재)
+
+브랜치 `refactor/hsm-state-machine`. `internal/core/lifecycle` 의 표를 걸어 다니던 머신을
+계층형 상태 머신으로 바꿨다. 설계는 `docs/research/chainbench/analyses/14`, 작업 prompt 는
+`15`, 들어온 구현의 검토는 `16`, 수정 prompt 는 `17`, 두 머신의 state diagram 은 `18` 이다.
+
+**원칙(사용자 지시).** 길을 다 만들고, 동작을 확인하고, 그다음에 기존 것을 지운다. 그래서
+삭제는 마지막 세 커밋에 모였다.
+
+**한 일.** 커밋 31개. `internal/core/statemachine` 을 새로 세우고, chainsetup 에 닿는 경로
+일곱을 하나씩 머신 위로 옮기고(`chain up`, 독립 step 아홉, resume, reuse-if-matching,
+compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다. 마지막 커밋에서 크로싱의
+세 순간을 상태로 만들고 `StepOut.Passed` 와 그것만 채우던 `lifecycle.Status` 17개를 지웠다.
+
+**검증된 것.**
+
+| 무엇 | 결과 |
+|---|---|
+| 유닛 전량 · `go vet` · `golangci-lint` · `gofmt` | 통과 |
+| DSL 라이브 go-wbft 16건 + go-wemix 13건 | 29건 전부 PASS |
+| DSL 라이브 go-stablenet 부분 (47/209 에서 중단) | 47건 전부 PASS |
+| DSL 라이브 hardfork 4건 (크로싱 두 모양 전부) | 4건 전부 PASS |
+
+**남은 것 — 이것이 이 트랙의 열린 항목 전부다.**
+
+- [ ] **G1. 전량 검증.** `go test -tags e2e -p 1 -timeout 60m ./...` 와 209건 스위프 전량.
+  e2e 는 기본 10분 타임아웃을 넘으므로 `-p 1 -timeout 60m` 이 아니면 중간에 죽고, 죽은 실행은
+  포트를 쥔 노드를 남긴다. 부분 스위프에서 실패가 0이었으므로 기대는 통과지만, **기대는
+  검증이 아니다.**
+- [ ] **G2. PR.** G1 이 끝난 뒤.
+
+**라이브로 못 밟은 것 하나.** "이미 포크를 넘은 네트워크는 `BeforeFork`·`HandingOver` 를
+건너뛰고 곧장 `Crossed` 로 간다" 는 갈래는 단위 테스트로만 확인했다
+(`TestCrossingFork_TheMomentsAreStatesAndTheyAreWalkedInOrder`). 그 상황을 만드는 DSL
+케이스가 없다.
+
+### G 파생 — 범위 밖으로 미뤄 둔 셋 (2026-09-22 실측)
+
+리팩토링 중에 눈에 띄었지만 이 트랙의 일이 아니라서 손대지 않은 것들이다. 셋 다 **오늘
+코드에 대조했고**, 아래가 실측이다.
+
+- [ ] **G3. `preset.KeysDir` 이 무엇을 기준으로 풀리는지가 문서와 다르다.**
+  `internal/preset/doc.go:28` 은 "relative to the repository root" 라고 적었는데, 호출부
+  아홉 곳은 전부 이것을 플래그 기본값이나 설정 기본값으로 그냥 넘긴다
+  (`chaincmd/up.go`, `chaincmd/new.go`, `suitecmd/run.go`, `keyringcmd/validator.go`,
+  `nodeconfig/config.go`, `chainsetup/workspace_new.go`, `testengine/compose.go`,
+  `validatorset/validatorset.go`). 상대 경로이므로 프로세스의 CWD 기준으로 풀린다. 저장소
+  루트에서 실행하면 맞고, 다른 데서 실행하면 조용히 없는 디렉터리를 가리킨다.
+  **판단이 필요하다** — 주석을 사실에 맞추거나, 루트를 찾아 풀거나 둘 중 하나다.
+- [ ] **G4. `upgrade run` 을 부르는 e2e 둘.** 이미 `cmd/chainbench/e2e_commands_exist_test.go`
+  의 `invocationDebt` 에 이유까지 적혀 있으므로 **잊힌 것은 아니다.** 테스트 함수는 20개가
+  아니라 **각 파일에 하나씩, 둘**이다(`upgrade_data_migration_e2e_test.go`,
+  `upgrade_gov_ncp_lifecycle_e2e_test.go`). 둘 다 사라진 명령의 **출력**(pid, node1 RPC,
+  "handoff confirmed")을 읽으므로 `chainbench run` 으로 바꾸는 것은 치환이 아니라 발판을
+  다시 쓰는 일이고, 확인하려면 체인 바이너리 둘이 필요하다.
+- [ ] **G5. 죽은 `.env.json` 접미사 필터 넷.** `cmd/chainbench/validate_test.go:271`,
+  `internal/testengine/corpus_gate_test.go:65`,
+  `internal/testhelper/corpus_address_test.go:60` 과 `:365`. `tests/` 아래에
+  `*.env.json` 파일은 **한 개도 없다**(`find` 로 확인). 라이브 테스트가 쓰던 이름이
+  `<id>.json` 으로 바뀐 뒤 필터만 남았다. 지금은 아무것도 거르지 않으므로 해롭지는 않지만,
+  다음 사람에게 있지도 않은 규칙을 가르친다.
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)
