@@ -299,15 +299,26 @@ func setupFailure(out io.Writer, cause error, at string, jsonOut bool) error {
 	return &exitcode.Error{Code: 2, Err: cause}
 }
 
-// failedAtOf names the state a run failed in, or "" when it did not fail in one
-// this build knows. The surface takes a string rather than the state's own type
-// because naming that type here would be reaching past app for it, and what a
-// surface needs is the word rather than the value.
+// failedAtOf names the states a run failed in, outermost first, or "" when it
+// failed in none this build knows.
+//
+// There are two when the chain refused: the run's own stage, and which of the
+// chain's stages did the refusing. They are one suffix because they used to be
+// two — "(at ChainLaunchNodesFailPortBusy) (at TestReachNetworkFailCompose)" —
+// and two suffixes that look alike read as one thing said twice rather than as
+// a stage and the stage inside it.
+//
+// The surface takes words rather than the state's own type, because naming that
+// type here would be reaching past app for it.
 func failedAtOf(res app.RunSuiteOut) string {
 	if res.FailedAt == 0 {
 		return ""
 	}
-	return res.FailedAt.String()
+	at := res.FailedAt.String()
+	if res.ComposeFailedAt != 0 {
+		at += " / " + res.ComposeFailedAt.String()
+	}
+	return at
 }
 
 // progressWriter is where narration goes: stderr when stdout has to parse as a

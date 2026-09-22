@@ -177,7 +177,10 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	out.Preflight = res.Decision
 	out.SetupSteps = append(out.SetupSteps, res.Steps...)
 	if err != nil {
-		return composed{}, fmt.Errorf("engine: run suite: setup: %w (at %s)", err, res.At)
+		// The chain's own state rides on the result, not in the sentence. The
+		// surface prints one suffix for both areas.
+		out.ComposeFailedAt = res.At
+		return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
 	}
 
 	return readWorkspaceComposed(ctx, sd, up.DataDir, up.KeysDir, &out.SetupSteps, gateBudget)
