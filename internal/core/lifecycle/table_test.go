@@ -364,17 +364,17 @@ func TestTestArea_TheTableIsTheOrderOfARun(t *testing.T) {
 		allow    bool
 	}{
 		{"a run reads, then opens its session", TestReadDeclaration, TestOpenSession, true},
-		{"and stands the network up", TestOpenSession, TestStandUpNetwork, true},
+		{"and stands the network up", TestOpenSession, TestReachNetwork, true},
 		{"attaching skips standing one up", TestOpenSession, TestPrepare, true},
 		{"cases follow preparing", TestPrepare, TestRunCases, true},
 		{"collecting follows the cases", TestRunCases, TestCollect, true},
 		{"and the run ends there", TestCollect, TestFinished, true},
 
 		{"reading may not reach the cases", TestReadDeclaration, TestRunCases, false},
-		{"a network is not stood up before there is somewhere to record it", TestReadDeclaration, TestStandUpNetwork, false},
+		{"a network is not stood up before there is somewhere to record it", TestReadDeclaration, TestReachNetwork, false},
 		{"preparing may not skip the cases", TestPrepare, TestCollect, false},
 		{"a run does not end before it collects", TestRunCases, TestFinished, false},
-		{"and does not go back to standing up", TestPrepare, TestStandUpNetwork, false},
+		{"and does not go back to standing up", TestPrepare, TestReachNetwork, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -394,7 +394,7 @@ func TestTestArea_TheTableIsTheOrderOfARun(t *testing.T) {
 // avoid repeating.
 func TestTestArea_EveryStageMayFail(t *testing.T) {
 	for _, s := range []Status{
-		TestReadDeclaration, TestOpenSession, TestStandUpNetwork,
+		TestReadDeclaration, TestOpenSession, TestReachNetwork,
 		TestPrepare, TestRunCases, TestCollect,
 	} {
 		var failures int

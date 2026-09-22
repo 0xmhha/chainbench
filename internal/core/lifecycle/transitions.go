@@ -109,14 +109,14 @@ var names = map[Status]string{
 	TestReadDeclarationFailContradicted: "TestReadDeclarationFailContradicted",
 	TestOpenSession:                     "TestOpenSession",
 	TestOpenSessionFailNoRoot:           "TestOpenSessionFailNoRoot",
-	TestStandUpNetwork:                  "TestStandUpNetwork",
-	TestStandUpNetworkFailCompose:       "TestStandUpNetworkFailCompose",
-	TestStandUpNetworkFailNotThePlan:    "TestStandUpNetworkFailNotThePlan",
+	TestReachNetwork:                    "TestReachNetwork",
+	TestReachNetworkFailCompose:         "TestReachNetworkFailCompose",
+	TestReachNetworkFailNotThePlan:      "TestReachNetworkFailNotThePlan",
+	TestReachNetworkFailUnreachable:     "TestReachNetworkFailUnreachable",
 	TestPrepare:                         "TestPrepare",
 	TestPrepareFailFork:                 "TestPrepareFailFork",
 	TestPrepareFailHeight:               "TestPrepareFailHeight",
 	TestPrepareFailAccount:              "TestPrepareFailAccount",
-	TestPrepareFailNotReady:             "TestPrepareFailNotReady",
 	TestRunCases:                        "TestRunCases",
 	TestRunCasesFailCannotProceed:       "TestRunCasesFailCannotProceed",
 	TestCollect:                         "TestCollect",
@@ -309,14 +309,14 @@ var allowed = map[Status][]Status{
 
 	// Standing a network up is skipped by a run that attaches to one already
 	// up, which is why the session leads to two places rather than one.
-	TestOpenSession: {TestStandUpNetwork, TestPrepare, TestOpenSessionFailNoRoot},
+	TestOpenSession: {TestReachNetwork, TestPrepare, TestOpenSessionFailNoRoot},
 
-	TestStandUpNetwork: {TestPrepare,
-		TestStandUpNetworkFailCompose, TestStandUpNetworkFailNotThePlan},
+	TestReachNetwork: {TestPrepare,
+		TestReachNetworkFailCompose, TestReachNetworkFailNotThePlan,
+		TestReachNetworkFailUnreachable},
 
 	TestPrepare: {TestRunCases,
-		TestPrepareFailFork, TestPrepareFailHeight,
-		TestPrepareFailAccount, TestPrepareFailNotReady},
+		TestPrepareFailFork, TestPrepareFailHeight, TestPrepareFailAccount},
 
 	// Cases reporting failures is a verdict, and the run goes on to collect it.
 	TestRunCases: {TestCollect, TestRunCasesFailCannotProceed},

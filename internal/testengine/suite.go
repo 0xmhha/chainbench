@@ -229,6 +229,12 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 	}
 	comp, err := compositionOf(ctx, parsed[0], in)
 	if err != nil {
+		// compositionOf marks what it can name. What is left is the declaration
+		// asking for something it did not say enough about, which is the
+		// honest default for a stage that only ever reads documents.
+		if runFailure(err) == lifecycle.FailStageUnclassified {
+			err = lifecycle.Mark(errIncomplete, err)
+		}
 		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return specs, parsed, comp, nil

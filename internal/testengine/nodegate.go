@@ -292,7 +292,7 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 		return fmt.Errorf("nodemonitor: %w", err)
 	}
 	if !res.OK {
-		return lifecycle.Mark(errPrepareNotReady, fmt.Errorf("network not ready to test: %s", res.Terminate))
+		return lifecycle.Mark(errUnreachable, fmt.Errorf("network not ready to test: %s", res.Terminate))
 	}
 	return nil
 }

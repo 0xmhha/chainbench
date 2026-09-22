@@ -505,9 +505,15 @@ const (
 	// itself. It happens before the network on purpose: a run that has nowhere
 	// to write is a run nobody can debug afterwards.
 	TestOpenSession
-	// TestStandUpNetwork stands the network up and holds it to the plan. The
-	// chain area does the work and answers for its own stages.
-	TestStandUpNetwork
+	// TestReachNetwork ends with a network that answers. Composing reaches one
+	// by building it; attaching reaches one by finding it and checking it
+	// responds. It was named for the first of those until the attach path was
+	// measured and turned out to pass through the same stage rather than skip
+	// it — one stage, two ways of doing its work.
+	//
+	// When it composes, the chain area does the work and answers for its own
+	// stages.
+	TestReachNetwork
 	// TestPrepare is what has to be true before a case runs, on a chain that is
 	// already sealing: the declared fork crossed, a height reached, the test
 	// accounts funded.
@@ -558,12 +564,17 @@ const (
 )
 
 const (
-	// TestStandUpNetworkFailCompose: the chain area refused. Which stage it was
+	// TestReachNetworkFailCompose: the chain area refused. Which stage it was
 	// in is its own state's to say, and this one does not repeat it.
-	TestStandUpNetworkFailCompose = TestStandUpNetwork + failureSlot + iota
-	// TestStandUpNetworkFailNotThePlan: it stood up and is not the network the
+	TestReachNetworkFailCompose = TestReachNetwork + failureSlot + iota
+	// TestReachNetworkFailNotThePlan: it stood up and is not the network the
 	// plan described, so whatever the cases report would be about another one.
-	TestStandUpNetworkFailNotThePlan
+	TestReachNetworkFailNotThePlan
+	// TestReachNetworkFailUnreachable: there is a network and it does not
+	// answer — no node became ready, or the workspace names one that is not
+	// there. It is this stage's rather than the next one's because a network
+	// that cannot be asked anything has not been reached.
+	TestReachNetworkFailUnreachable
 )
 
 const (
@@ -573,8 +584,6 @@ const (
 	TestPrepareFailHeight
 	// TestPrepareFailAccount: a declared account could not be created or funded.
 	TestPrepareFailAccount
-	// TestPrepareFailNotReady: a node never became ready to be asked anything.
-	TestPrepareFailNotReady
 )
 
 const (

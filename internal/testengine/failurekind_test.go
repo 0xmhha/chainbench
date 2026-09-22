@@ -141,9 +141,8 @@ func sentinel(t *testing.T, name string) error {
 		"errIncomplete": errIncomplete, "errUnknownName": errUnknownName,
 		"errContradicted": errContradicted, "errNoRoot": errNoRoot,
 		"errCompose":    errCompose,
-		"errNotThePlan": errNotThePlan, "errPrepareFork": errPrepareFork,
+		"errNotThePlan": errNotThePlan, "errUnreachable": errUnreachable, "errPrepareFork": errPrepareFork,
 		"errPrepareHeight": errPrepareHeight, "errPrepareAccount": errPrepareAccount,
-		"errPrepareNotReady":    errPrepareNotReady,
 		"errCasesCannotProceed": errCasesCannotProceed, "errEvidence": errEvidence,
 	}
 	e, ok := all[name]
@@ -216,5 +215,43 @@ func TestRunSuite_NoSpecsIsUnreadable(t *testing.T) {
 	}
 	if out.FailedAt != lifecycle.TestReadDeclarationFailUnreadable {
 		t.Errorf("failed at %s, want TestReadDeclarationFailUnreadable\n  %v", out.FailedAt, err)
+	}
+}
+
+// TestAttachWorkspace_SaysWhichStateItFailedIn: attaching to a network is the
+// area's other way in, and it passes through the same stages rather than
+// skipping any. Its failures therefore have to land on the same states.
+//
+// The measurement said this path skipped standing a network up. Measuring what
+// it actually does said otherwise: it reads a node table and holds the network
+// to the readiness gate, which is the same stage's work done the other way —
+// composing reaches a network by building it, attaching by finding it.
+func TestAttachWorkspace_SaysWhichStateItFailedIn(t *testing.T) {
+	cases := []struct {
+		name string
+		in   AttachWorkspaceIn
+		want lifecycle.Status
+	}{
+		{
+			name: "no workspace to attach to",
+			in:   AttachWorkspaceIn{},
+			want: lifecycle.TestReadDeclarationFailUnreadable,
+		},
+		{
+			name: "a workspace that names no chain",
+			in:   AttachWorkspaceIn{DataDir: t.TempDir()},
+			want: lifecycle.TestReadDeclarationFailIncomplete,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := AttachWorkspaceRun(context.Background(), chainsetup.Deps{}, c.in)
+			if err == nil {
+				t.Fatal("the attach was accepted")
+			}
+			if got := runFailure(err); got != c.want {
+				t.Errorf("failed at %s, want %s\n  %v", got, c.want, err)
+			}
+		})
 	}
 }

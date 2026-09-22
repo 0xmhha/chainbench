@@ -53,6 +53,9 @@ var (
 	errCompose = errors.New("the network could not be composed")
 	// errNotThePlan: it stood up and is not the network the plan described.
 	errNotThePlan = errors.New("the network that stood up is not the planned one")
+	// errUnreachable: there is a network and it does not answer — no node
+	// became ready, or the workspace names one that is not there.
+	errUnreachable = errors.New("the network could not be reached")
 
 	// errPrepareFork: the declared fork was not crossed.
 	errPrepareFork = errors.New("the declared fork was not crossed")
@@ -60,8 +63,6 @@ var (
 	errPrepareHeight = errors.New("the chain did not reach the height the run waits for")
 	// errPrepareAccount: a declared account could not be created or funded.
 	errPrepareAccount = errors.New("a declared account could not be prepared")
-	// errPrepareNotReady: a node never became ready to be asked anything.
-	errPrepareNotReady = errors.New("a node never became ready")
 
 	// errCasesCannotProceed: the running itself broke. A case reporting a
 	// failure is a verdict and does not come here.
@@ -93,9 +94,11 @@ func runFailure(err error) lifecycle.Status {
 		return lifecycle.TestOpenSessionFailNoRoot
 
 	case errors.Is(err, errCompose):
-		return lifecycle.TestStandUpNetworkFailCompose
+		return lifecycle.TestReachNetworkFailCompose
 	case errors.Is(err, errNotThePlan):
-		return lifecycle.TestStandUpNetworkFailNotThePlan
+		return lifecycle.TestReachNetworkFailNotThePlan
+	case errors.Is(err, errUnreachable):
+		return lifecycle.TestReachNetworkFailUnreachable
 
 	case errors.Is(err, errPrepareFork):
 		return lifecycle.TestPrepareFailFork
@@ -103,8 +106,6 @@ func runFailure(err error) lifecycle.Status {
 		return lifecycle.TestPrepareFailHeight
 	case errors.Is(err, errPrepareAccount):
 		return lifecycle.TestPrepareFailAccount
-	case errors.Is(err, errPrepareNotReady):
-		return lifecycle.TestPrepareFailNotReady
 
 	case errors.Is(err, errCasesCannotProceed):
 		return lifecycle.TestRunCasesFailCannotProceed

@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 51 | 54,706 |
+| `internal/` | 51 | 54,726 |
 | `cmd/` | 19 | 5,042 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **73** | **60,538** |
+| **합계** | **73** | **60,558** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 24패키지 17,083줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 24패키지 17,092줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -44,7 +44,7 @@ internal/core/
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
-├── lifecycle   1,211  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
+├── lifecycle   1,220  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
 ├── origin          88  [L0] 값이 어디서 왔는지를 말하는 어휘 하나 — Origin 과 일곱 rung, 그리고 그 순서.
@@ -116,7 +116,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,848줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 33,859줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -141,7 +141,7 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,462 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,473 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
