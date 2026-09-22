@@ -31,7 +31,7 @@ func TestRecordConfigSet_RefusesAScopeNothingWouldRead(t *testing.T) {
 // order they will be applied, so a reader of chain-record.json sees them in the
 // order that decides the outcome, and the walk does not depend on map order.
 func TestSortedScopes_OrdersMostGeneralFirst(t *testing.T) {
-	got := strings.Join(sortedScopes(map[string][]string{
+	got := strings.Join(chainsetup.SortedScopes(map[string][]string{
 		"node10": {"a"}, "pn": {"b"}, "all": {"c"}, "node2": {"d"}, "bp": {"e"}, "en": {"f"},
 	}), ",")
 	if want := "all,bp,en,pn,node10,node2"; got != want {

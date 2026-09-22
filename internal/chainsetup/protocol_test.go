@@ -143,6 +143,7 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"keysEnsured":      keysEnsured{},
 		"genesisWayChosen": genesisWayChosen{},
 		"genesisBuilt":     genesisBuilt{},
+		"nodeConfigBuilt":  nodeConfigBuilt{},
 	}
 	for name, msg := range types {
 		if _, ok := whatNames[msg.What()]; !ok {

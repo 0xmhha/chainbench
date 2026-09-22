@@ -76,7 +76,7 @@ type ChainConfigIn struct {
 // `chain config --node N --set k=v` both persists the override and reflects it.
 func ChainConfig(ctx context.Context, d chainsetup.Deps, in ChainConfigIn) (chainsetup.StepOut, error) {
 	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		for _, scope := range sortedScopes(in.ScopedSet) {
+		for _, scope := range chainsetup.SortedScopes(in.ScopedSet) {
 			if err := ws.RecordConfigSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: config: %w", err)
 			}
@@ -116,7 +116,7 @@ type ChainLaunchOptsOut struct {
 func ChainLaunchOpts(_ context.Context, d chainsetup.Deps, in ChainLaunchOptsIn) (ChainLaunchOptsOut, error) {
 	var nodes []node.Record
 	detail, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		for _, scope := range sortedScopes(in.ScopedSet) {
+		for _, scope := range chainsetup.SortedScopes(in.ScopedSet) {
 			if err := ws.RecordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
 				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 			}

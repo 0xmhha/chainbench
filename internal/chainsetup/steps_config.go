@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -249,4 +251,25 @@ func ConfigFailure(err error) lifecycle.Status {
 		return lifecycle.ChainBuildNodeConfigFailPinUnreadable
 	}
 	return lifecycle.FailStageUnclassified
+}
+
+// SortedScopes orders config-override scopes deterministically, most general
+// first, so recording is reproducible regardless of map iteration order. Ties
+// within a rank are broken by name for the same reason.
+func SortedScopes(m map[string][]string) []string {
+	if len(m) == 0 {
+		return nil
+	}
+	scopes := make([]string, 0, len(m))
+	for k := range m {
+		scopes = append(scopes, k)
+	}
+	sort.Slice(scopes, func(i, j int) bool {
+		ri, rj := node.ScopeRank(scopes[i]), node.ScopeRank(scopes[j])
+		if ri != rj {
+			return ri < rj
+		}
+		return scopes[i] < scopes[j]
+	})
+	return scopes
 }

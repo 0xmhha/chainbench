@@ -189,10 +189,13 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 // TestCompose_BeginsAtTheNamedStep is what a resume does today.
 func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), upRequest(t), "config"); err != nil {
+	// A step that is still an adapter, so this says what it means -- that the
+	// walk begins where it was told -- without also needing the stages before
+	// it to have run.
+	if err := mg.Compose(context.Background(), upRequest(t), "deploy"); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"config", "build", "deploy", "init", "start"}
+	want := []string{"deploy", "init", "start"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v", got, want)
 	}
@@ -217,13 +220,13 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 // TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason.
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "config"
+	w.failAt = "build"
 	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
 	// The failing stage reports nothing, so the lines stop one short of it.
-	want := []string{"new", "place", "keys", "genesis"}
+	want := []string{"new", "place", "keys", "genesis", "config"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
@@ -238,7 +241,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "config"
+	w.failAt = "build"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -481,7 +484,7 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 	// disk by then names that stage -- which is the guarantee, one stage on.
 	var atKeys string
 	mg.run = func(_ context.Context, step string) (string, error) {
-		if step == "config" {
+		if step == "build" {
 			ws, err := Open(mg.ws.Dir(), nil)
 			if err != nil {
 				return "", err
@@ -492,11 +495,11 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 		return step + " done", nil
 	}
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
-		t.Fatal("the walk was meant to stop at config")
+		t.Fatal("the walk was meant to stop at build")
 	}
 
-	if atKeys != "Composition/Composing/BuildingNodeConfig" {
-		t.Errorf("the record said %q when config began", atKeys)
+	if atKeys != "Composition/Composing/BuildingNodeCommand" {
+		t.Errorf("the record said %q when the build stage began", atKeys)
 	}
 	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
 		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)

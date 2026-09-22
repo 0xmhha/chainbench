@@ -69,6 +69,8 @@ const (
 	eventGenesisWayChosen
 	// eventGenesisBuilt: the genesis exists, however it was arrived at.
 	eventGenesisBuilt
+	// eventNodeConfigBuilt: every node has a config file.
+	eventNodeConfigBuilt
 	// eventInputsDeployed: every launch input is present on its target.
 	eventInputsDeployed
 	// eventPhaseLaunched: one launch phase is up. A launch is several, so the
@@ -110,6 +112,7 @@ var whatNames = map[statemachine.What]string{
 	eventKeysEnsured:      "eventKeysEnsured",
 	eventGenesisWayChosen: "eventGenesisWayChosen",
 	eventGenesisBuilt:     "eventGenesisBuilt",
+	eventNodeConfigBuilt:  "eventNodeConfigBuilt",
 	eventInputsDeployed:   "eventInputsDeployed",
 	eventPhaseLaunched:    "eventPhaseLaunched",
 	eventStageDone:        "eventStageDone",
@@ -269,6 +272,13 @@ type genesisBuilt struct{ Detail string }
 func (genesisBuilt) What() statemachine.What { return eventGenesisBuilt }
 
 func (e genesisBuilt) stage() (string, string) { return stepGenesis, e.Detail }
+
+// nodeConfigBuilt: every node has a config file.
+type nodeConfigBuilt struct{ Detail string }
+
+func (nodeConfigBuilt) What() statemachine.What { return eventNodeConfigBuilt }
+
+func (e nodeConfigBuilt) stage() (string, string) { return stepConfig, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

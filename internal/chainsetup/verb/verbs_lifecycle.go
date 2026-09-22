@@ -3,9 +3,6 @@ package verb
 import (
 	"context"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"sort"
-
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // The lifecycle verbs, as a surface calls them: provision, init, start, stop,
@@ -136,25 +133,4 @@ func ChainHealth(ctx context.Context, d chainsetup.Deps, in ChainHealthIn) (Chai
 	ws.SetEnv(d.Env)
 	nodes, err := ws.Health(ctx)
 	return ChainHealthOut{Nodes: nodes}, err
-}
-
-// sortedScopes orders config-override scopes deterministically, most general
-// first, so recording is reproducible regardless of map iteration order. Ties
-// within a rank are broken by name for the same reason.
-func sortedScopes(m map[string][]string) []string {
-	if len(m) == 0 {
-		return nil
-	}
-	scopes := make([]string, 0, len(m))
-	for k := range m {
-		scopes = append(scopes, k)
-	}
-	sort.Slice(scopes, func(i, j int) bool {
-		ri, rj := node.ScopeRank(scopes[i]), node.ScopeRank(scopes[j])
-		if ri != rj {
-			return ri < rj
-		}
-		return scopes[i] < scopes[j]
-	})
-	return scopes
 }
