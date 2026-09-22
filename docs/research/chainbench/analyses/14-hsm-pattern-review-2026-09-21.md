@@ -5,7 +5,8 @@
 > `/Users/wm-it-25_0220/Work/github/references/android/READING-ORDER.md` 가 가리키는 코드를
 > 다섯 갈래로 전부 읽은 뒤 썼다. 근거는 전부 파일·줄이다.
 >
-> 대상 chainbench 코드는 커밋 `80e29fbe` 와 작업 트리다. 13번 문서의 판정("지금 `lifecycle` 는
+> 대상 chainbench 코드는 커밋 `80e29fbe` 와 작업 트리다. **2026-09-22 에 HEAD `ea267fd8` 로 경로와 줄을
+> 다시 맞췄다**(verb 층이 `internal/chainsetup/verb/` 로 갔고, 운영·테스트 영역의 `Status` 가 선언됐다. 13번 5장). 13번 문서의 판정("지금 `lifecycle` 는
 > 상태를 추인하는 테이블 기반 state machine다")은 그대로 유효하고, 이 문서는 그 대안이 정확히 무엇인지를
 > 적는다.
 >
@@ -196,12 +197,12 @@ SyncStateMachine 은 위 기제에서 Looper · 지연 메시지 · `deferMessag
 | 상태 | `enter/exit/processMessage` 를 가진 객체 | `uint32` 값. 행동은 `map[Status]Handler` | `internal/core/lifecycle/status.go:23` |
 | 전이 | 상태가 `transitionTo`. 표 없음 | 전역 `allowed` 표가 `Request` 를 거절 | `internal/core/lifecycle/transitions.go` |
 | 무엇이 움직이나 | 메시지 | 루프가 목표까지 핸들러를 부름 | `internal/core/lifecycle/machine.go:130` |
-| 일은 어디서 | `enter()` | verb 가 밖에서 하고 `Passed` 로 지나온 상태를 재생 | 13번 2장 |
+| 일은 어디서 | `enter()` | verb 가 밖에서 하고 `Passed` 로 지나온 state 를 재생 (16곳) | `internal/chainsetup/verb/statedriven.go:162`~`204` |
 | 결과는 어떻게 | 메시지 | 반환값 | 위와 같음 |
 | self message | 있음. 기제의 핵심 | 없음 | — |
 | parent 위임 | 있음 | 없음 | — |
 | 정리 | `exit()` | 없음 | — |
-| parent·child | child이 parent 큐에 보고 | 두 state machine, parent 없음 | `internal/chainsetup/compare.go:72` |
+| parent·child | child이 parent 큐에 보고 | 두 state machine, parent 없음 | `internal/chainsetup/verb/compare.go:73` |
 | 기록 | `LogRec` | 없음 | — |
 
 한 줄로: 지금 것은 상태 **표를 검사하는 루프**이고, 참조는 **메시지로 이어지는 상태 객체
@@ -281,6 +282,17 @@ func (m *Machine) Dump() []LogRec
 `Send` 의 순서는 `SyncStateMachine.processMessage` 그대로다: 처리(parent로 올라가며) → 전이(exit
 깊은 쪽부터, enter 바깥부터, 마지막에 current 갱신) → `self` 소진 → `inbox` 소진. 돌아오면
 state machine는 정지 상태다. `LogRec` 은 메시지마다 (what, 처리 상태, 원 상태, 목적지)를 남긴다.
+
+**한 곳만 SyncStateMachine 이 아니라 StateMachine 을 따른다 — 자기 자신으로의 transition**
+(2026-09-22, commit 1 을 쓰면서 정함). SyncStateMachine 은 `performTransitions` 첫 줄에서
+`mDestState == mCurrentState` 면 그냥 돌아간다(279). 그래서 `transitionTo(자기 자신)` 이 아무
+일도 하지 않고, 부른 쪽은 그것을 알 방법이 없다. 비동기 StateMachine 은 반대로 목적지를 **언제나**
+enter 한다 — "the destState must always be entered even if it is active. This can happen if we are
+exiting/entering the current state"(StateMachine 1105~1112). 우리는 뒤쪽을 쓴다. 이유 둘이다.
+첫째, "이 단계를 다시 한다" 가 여기서는 실제로 필요한 동작이고(재시도, resume 뒤 같은 leaf state
+재실행), 그것을 말할 방법이 `TransitionTo(self)` 말고는 없다. 둘째, `Exit` 은 `Enter` 가 건 것을
+거두는 자리라 둘이 짝이어야 하는데, 조용한 no-op 은 두 번째 `Enter` 가 첫 번째가 건 것 위에 다시
+거는 모양이 된다. 그 밖의 순서·규칙은 전부 SyncStateMachine 그대로다.
 
 ---
 
@@ -557,7 +569,8 @@ leaf state에 parent를 접두로 붙이지 않는다. 기록에는 state machin
 `lifecycle` 의 `Status` 상수 · `names` · `allowed` · 표를 붙드는 테스트. `statedriven.go`
 (작업 트리에서는 `internal/chainsetup/verb/statedriven.go`)의 `composition` 표 · `handlersFor` ·
 `run` · `failed` · `startFor` · `targetFor`. `composeNeeds` · `require` · `verbNeeds` · `allow`.
-`compareHandlers` · `reconcileHandler`. verb 의 `inWorkspace` 감싸기. `app.Start.At` 의 `Status`.
+`verb/compare.go` 의 `compareHandlers` · `chainsetup.ReconcileHandler`. verb 의 `InWorkspace` / `WithWorkspace` 감싸기.
+운영 영역의 값(`ChainOp*`)과 테스트 영역의 값(`Test*`)은 각각 17 · 18번 commit 에서 leaf state 와 `failed` reason 으로 흡수된다(13번 5장). `app.Start.At` 의 `Status`.
 
 ### 순서 — 옛 state machine와 새 state machine를 같이 두고 leaf state을 하나씩
 
