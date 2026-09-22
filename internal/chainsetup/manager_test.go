@@ -220,13 +220,13 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 // TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason.
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "build"
+	w.failAt = "deploy"
 	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
 	// The failing stage reports nothing, so the lines stop one short of it.
-	want := []string{"new", "place", "keys", "genesis", "config"}
+	want := []string{"new", "place", "keys", "genesis", "config", "build"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
@@ -241,7 +241,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "build"
+	w.failAt = "deploy"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -484,7 +484,7 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 	// disk by then names that stage -- which is the guarantee, one stage on.
 	var atKeys string
 	mg.run = func(_ context.Context, step string) (string, error) {
-		if step == "build" {
+		if step == "deploy" {
 			ws, err := Open(mg.ws.Dir(), nil)
 			if err != nil {
 				return "", err
@@ -495,11 +495,11 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 		return step + " done", nil
 	}
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
-		t.Fatal("the walk was meant to stop at build")
+		t.Fatal("the walk was meant to stop at deploy")
 	}
 
-	if atKeys != "Composition/Composing/BuildingNodeCommand" {
-		t.Errorf("the record said %q when the build stage began", atKeys)
+	if atKeys != "Composition/Composing/DeployingInputs" {
+		t.Errorf("the record said %q when the deploy stage began", atKeys)
 	}
 	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
 		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)
