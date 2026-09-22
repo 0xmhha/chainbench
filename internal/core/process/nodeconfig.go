@@ -14,10 +14,18 @@ import (
 // and the node's spec: the one place a nodeconfig.Spec is built from a plan.
 // The step surface builds the same Spec from a workspace record through here,
 // so a step-composed node launches with exactly the argv and config it renders.
-func NodeConfig(plugin registry.ChainPlugin, keys preset.Key, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
+//
+// plugin is THIS NODE's chain and net is THE NETWORK's, and they are two
+// parameters rather than one because a network of mixed builds has one of the
+// first per node and one of the second in total. A caller that passes the same
+// plugin's facts for both is describing a network of one build, which is the
+// ordinary case; a caller that passes the node's plugin for net has said every
+// node is its own network, which is the defect this signature exists to stop.
+func NodeConfig(plugin registry.ChainPlugin, net nodeconfig.Network, keys preset.Key, spec NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
 	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 	cfg := nodeconfig.Spec{
 		Chain:       nodeconfig.ChainOf(plugin, spec.Role),
+		Network:     net,
 		Role:        spec.Role,
 		Ports:       spec.Ports,
 		SyncMode:    spec.SyncMode,

@@ -124,7 +124,11 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
-	spec := process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
+	net, err := w.network()
+	if err != nil {
+		return nil, err
+	}
+	spec := process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes)
 	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
@@ -191,6 +195,10 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
+	net, err := w.network()
+	if err != nil {
+		return "", err
+	}
 	scoped := false
 	for i, ns := range w.state.Nodes {
 		overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
@@ -204,7 +212,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}

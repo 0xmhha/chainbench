@@ -344,7 +344,11 @@ func (w *Workspace) handOver(ctx context.Context, f GenesisFork, successors []in
 		}
 		spec := process.SpecOf(w.state.Nodes[i])
 		spec.Binary = w.binaryFor(w.state.Nodes[i], bin)
-		args, aerr := nodeconfig.Argv(process.NodeConfig(np, preset, spec, w.keysBase(), staticNodes))
+		net, nerr := w.network()
+		if nerr != nil {
+			return fmt.Errorf("chainsetup: cross-fork: %s: %w", ns.NodeLabel(), nerr)
+		}
+		args, aerr := nodeconfig.Argv(process.NodeConfig(np, net, preset, spec, w.keysBase(), staticNodes))
 		if aerr != nil {
 			return fmt.Errorf("chainsetup: cross-fork: %s: %w", ns.NodeLabel(), aerr)
 		}

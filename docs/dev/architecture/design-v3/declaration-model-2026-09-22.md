@@ -74,17 +74,37 @@ server-set 을 모른다.** preset 의 값이 아무 데도 안 닿는 이유가
 
 ## 2. 그래서 살아 있는 결함 셋
 
-### D1. config 와 argv 가 다른 체인을 본다
+### D1. 같은 노드의 argv 가 띄우는 경로마다 다르다 — 실측으로 확인 (2026-09-22)
 
-`internal/chainsetup/steps_config.go:60` 은 노드마다 `pluginFor(ns)` 로 **그 노드 바이너리의**
-체인을 쓴다. 주석도 "Each node's config is rendered from ITS chain" 이다.
+argv 를 만드는 자리가 셋인데 서로 다른 plugin 을 쓴다.
 
-같은 파일 `:182` 의 `LaunchOpts()` 는 모든 노드의 argv 를 `w.plugin()` 으로, 즉 **망 전체의**
-체인으로 만든다.
+```
+steps_config.go:182  LaunchOpts       w.plugin()      망 전체의 체인
+phases.go:85         startPhase       pluginFor(ns)   그 노드의 체인
+steps_crossfork.go   포크 뒤 재기동    pluginFor(ns)   그 노드의 체인
+```
 
-wemix→wbft 핸드오버에서 wbft 노드의 config 파일은 network id 8284 를 적고, 같은 노드의
-argv 는 `--networkid 8285` 를 넘긴다. **argv 가 config 를 이기기 때문에 돈다.** 설계가 아니라
-우선순위의 우연이고, 두 문서가 다른 값을 적고 있는 것을 아무도 확인하지 않는다.
+`nodeconfig.Chain` 이 노드별 사실(dialect·RPC namespace)과 망 전체 사실(network id)을 한
+구조체에 담고, 그것을 `ChainOf(plugin, role)` 가 **넘겨받은 plugin 하나**로 채우기 때문이다.
+타입의 주석은 스스로 "none of them per node" 라고 적고 있는데, 부르는 쪽 둘이 노드별 plugin 을
+넘긴다.
+
+**실측.** wemix→wbft 핸드오버(`01-croissant-successors-take-over`)를 고치기 전 코드로 돌려
+기록된 argv 를 읽었다.
+
+```
+옛 코드: node1=8284 node2=8284 node3=8284 node4=8284 node5=8285
+D-a 뒤 : node1=8285 node2=8285 node3=8285 node4=8285 node5=8285
+```
+
+successor 넷과 producer 가 **다른 devp2p 망 번호로 떠 있었다.** 그런데도 케이스는 통과한다.
+포크 전에는 `LaunchOpts` 가 만든 argv(8285)로 떠서 producer 와 붙어 동기화하고, 포크 뒤
+재기동에서 8284 로 바뀌는데 그때는 producer 가 이미 멈췄고 넷끼리는 번호가 같기 때문이다.
+**구성이 그렇게 생겨서 안 터진 것**이고, 포크 뒤에도 옛 빌드로 남는 노드가 하나라도 있으면
+그 노드는 나머지와 peer 하지 못한다.
+
+(config 파일은 이 값을 아예 적지 않는다. TOML 렌더러에 network id 가 없다. 처음에는 config 와
+argv 가 어긋난다고 적었는데, 재보니 어긋나는 것은 argv 와 argv 였다.)
 
 ### D2. 균일성 검사가 배선돼 있지 않다
 
@@ -186,7 +206,7 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 
 | # | 무엇 | 게이트 |
 |---|---|---|
-| **D-a** | `nodeconfig.Chain` 을 망 전체 사실과 노드별 사실로 가른다. network id 를 망의 chain id 에서 파생한다 | 혼합 바이너리 망에서 config 파일과 argv 의 network id 가 같다 |
+| ~~**D-a**~~ | ~~`nodeconfig.Chain` 을 망 전체 사실과 노드별 사실로 가른다. network id 를 망의 chain id 에서 파생한다~~ | **완료 2026-09-22.** 혼합 바이너리 핸드오버에서 다섯 노드가 전부 8285 로 뜬다(라이브 확인) |
 | **D-b** | `resource/netid.go` 의 `ValidateUniform` 을 config·argv 양쪽 산출물에 건다. 안 쓰는 `Resolve`·`Flag` 는 정리한다 | 일부러 어긋낸 망에서 검사가 막는다 |
 | **D-c** | `--chain-id` 가 network id 를 끌고 가는지 테스트로 고정한다 | chain id 를 덮은 망에서 모든 노드의 network id 가 그 값이다 |
 | **P-1** | 용어를 확정한다 — 체인 정의 / 환경 선언 / 케이스 | 문서와 타입 이름이 한 낱말만 쓴다 |

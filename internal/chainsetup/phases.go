@@ -82,7 +82,11 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, keys
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(process.NodeConfig(np, keys, spec, w.state.KeysDir, staticNodes))
+			net, nerr := w.network()
+			if nerr != nil {
+				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, nerr)
+			}
+			args, err := nodeconfig.Argv(process.NodeConfig(np, net, keys, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
