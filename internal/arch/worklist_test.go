@@ -29,7 +29,7 @@ const worklistDoc = "../../docs/dev/chainbench-worklist.md"
 // The honest limit: this cannot catch an item added only to the narrative, deep in
 // 2,900 lines. What it catches is the canonical list going stale — which is the
 // failure that actually happened.
-const openWork = 12
+const openWork = 11
 
 var (
 	openItem    = regexp.MustCompile(`(?m)^- \[ \] `)

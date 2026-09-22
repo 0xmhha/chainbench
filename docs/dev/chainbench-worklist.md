@@ -90,27 +90,12 @@
       같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
       `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
-- [ ] **T. 테스트 영역(0x8000)의 상태 — 잰 것까지 끝났다 (T1)** — 근거: [`architecture/design-v3/state-machine-05-test-failures.md`](architecture/design-v3/state-machine-05-test-failures.md).
-      **T1~T4 완료 (2026-09-22).** 실패 102곳을 단계별로 쟀고, 02 가 그려 둔 네 블록이 실측과
-      맞지 않는 것을 확인했다. 47곳은 선언을 읽는 일이라 결과가 체인 영역의 합성이고, 붙기
-      11곳은 다른 입구다. 실측이 가리키는 것은 **여섯 블록과 시작 상태 둘**이었고, T2 에서 그 여섯에
-      실패 열넷을 붙여 전이표를 썼다(47곳은 다섯 갈래로 접었다). T3 에서 실패 지점에 종류를 달고 결과가 상태를
-      말하게 했다(`(at TestReadDeclarationFailMalformed)`). T4 에서 붙기 경로도 같은 여섯 단계를 지난다는
-      것이 드러나(T1 의 "건너뛴다" 가 틀렸다) 블록 이름을 `TestReachNetwork` 로 고쳤다.
-      남은 것은 **전 케이스 라이브**뿐이다.
-      아래는 T1 전의 기록.
-      그 문서가 네 블록(`TEST_PENDING`·`RUNNING`·`REPORTING`·`DONE`)의 BASE 만 정해 두고 "세부는 이
-      문서가 정하지 않는다" 로 남겼다. `lifecycle.areaTest` 는 선언만 있고 상태가 하나도 없다.
-      **잰 것**: `internal/testengine` 은 23파일 4,347줄이고 실패 지점이 103곳, `RunSuite` 한
-      함수 안에만 분기가 27개다. 운영 영역이 65곳에 커밋 셋·695줄이었으니 그 1.5배로 본다.
-      **방법은 운영 영역과 같다** — 실패를 먼저 재서 문서로 내고, 상태와 전이를 쓰고, 핸들러가
-      자기 상태를 말하게 한다. 남은 것 중 유일하게 **라이브 검증이 필요**하다(전 케이스가 지나는
-      길목이라 일부만 돌려서는 확신할 수 없고, 209건 순차가 약 4시간).
-- [x] ~~**C2-1. 골든 preset 의 죽은 절을 지울지**~~ · ~~**C2-2. `preset.Chain` 개명**~~ ·
-      ~~**`preset.ChainDir` 사용처 0**~~ — **셋 다 닫혔다 (2026-09-22).** 셋을 대체한 것은
-      [`architecture/design-v3/declaration-model-2026-09-22.md`](architecture/design-v3/declaration-model-2026-09-22.md)
-      이다. 지우는 것도 개명하는 것도 답이 아니었다 — **선언이 두 겹인 것**이 원인이었고,
-      chain-preset 한 겹으로 합쳤다. `preset.Chain`·`ChainDir`·`upgrade.preset` 이 함께 없어졌다.
+- [x] ~~**T. 테스트 영역(0x8000)의 상태**~~ — **완료 (2026-09-22).** 근거: [`architecture/design-v3/state-machine-05-test-failures.md`](architecture/design-v3/state-machine-05-test-failures.md).
+      실패 102곳을 재고(T1), 여섯 블록에 실패 스물을 붙여 전이표를 쓰고(T2), 실행이 자기 상태를
+      말하게 하고(T3), 붙기 경로까지 같은 단계를 지난다는 것을 확인했다(T4). **전 케이스 라이브로
+      209/209 통과**(71분, 실패·blocked·skip 0건) — stablenet 181 · wbft 15 · wemix 13, 하드포크
+      세 건과 포크 전 빌드를 요구하는 `01-boho-crossed-by-restart` 포함. 스위프 도구는
+      `scripts/tcsweep.sh` 에 남겼다.
 - [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
       결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. **P-5 는 할 일이 없었다** —
       `suite run` 에는 이미 `--server-set` 이 있고(`resourcecmd.ServerFlags` 를 빌려 쓴다),
