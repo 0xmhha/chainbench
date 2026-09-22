@@ -414,6 +414,16 @@ source 문자열보다 **앞 단계가 만든 노드 표**를 먼저 본다 — 
 parent 의 `Process` 가 그것을 leaf 로 바꾼다.** 기제 그대로다 — Enter 가 일하고, 결과는 message 이고,
 Process 가 transition 이다. 고르는 데 일이 필요 없는 단계는 앞 단계의 `Process` 에서 바로 골라도 된다.
 
+**갈래가 일 앞에 오지 않는 단계도 있다** (2026-09-22, commit 11 을 쓰면서 확인). deploy 는 어느
+쪽인지를 **하고 나서야** 안다 — 원격에 무언가를 올렸는지는 올려 봐야 세어지고, 그 수가 곧 갈래다
+(`steps_compose.go` 의 주석: "Nothing outside can"). 이때는 parent 의 `Enter` 가 일을 하고 결과를
+self message 에 실어 보내며, `Process` 가 그것을 보고 leaf 를 고른다. leaf 는 일을 하지 않고
+**결과의 이름**이다. 이것도 기제 그대로이고 참조에도 있다 — `DataNetwork` 의 setup 응답이 성공이면
+`Connected`, 실패면 `Disconnected` 로 가는 것과 같은 꼴이다(1.5).
+
+즉 갈래는 두 자리 중 하나에 선다. **일 앞**(요청이나 workspace 를 보고 정할 수 있을 때)이거나
+**일 뒤**(해 봐야 알 때)다. 어느 쪽이든 고르는 것은 `Process` 이고 leaf 는 state 다.
+
 ### 시나리오
 
 - **`chain up`.** `mg.Send(ctx, CmdCompose{req})` 하나. `stopped.Process` 가 요청을 저장하고
