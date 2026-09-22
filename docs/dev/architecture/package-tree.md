@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 51 | 54,738 |
+| `internal/` | 52 | 55,390 |
 | `cmd/` | 19 | 5,053 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **73** | **60,581** |
+| **합계** | **74** | **61,233** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 24패키지 17,092줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 17,744줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -47,6 +47,10 @@ internal/core/
 ├── lifecycle   1,220  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
+├── statemachine   652  [L0] state 가 이끄는 기계 — State(Enter·Exit·Process)·Machine(트리·Send·
+│                            self queue·inbox·LogRec). lifecycle 과 같은 자리의 반대 물건이다:
+│                            저쪽은 전이 표를 검사하는 루프, 이쪽은 message 로 이어지는 state 사슬.
+│                            동기 모델이라 Looper·지연·defer 가 없다. 내부 import 0
 ├── origin          88  [L0] 값이 어디서 왔는지를 말하는 어휘 하나 — Origin 과 일곱 rung, 그리고 그 순서.
 │                            기제가 아니다: 무엇이 이기는지는 상류에서 정해지고 여기는 적을 낱말만 갖는다.
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
