@@ -27,6 +27,8 @@ docs/dev/session-data/
 # Removed legacy trees — the Go tool replaced these; never re-add. (They were
 # once accidentally re-committed via `git add -A`; use explicit `git add <path>`.)
 # Anchored to repo root so unrelated dirs (e.g. tests/specs/network/) aren't swallowed.
+# An untracked husk of mcp-server/ still sat in working copies until 2026-09-22 —
+# ignoring a path hides it, it does not remove it. Both rules stay regardless.
 /mcp-server/
 /network/
 
@@ -86,9 +88,12 @@ remote-server-config.yml
 # public test addresses in tests/env/*.env. Real secrets belong in the
 # gitignored tests/env/secret/ (see docs/SECURITY_KEY_HANDLING.md).
 
-# The keyring's default ring location (keyring new with no --keyring-dir).
-# It holds generated private keys, so it must never be committed — matched at
-# any depth, because a command run from a subdirectory creates it there.
+# The keyring's default ring location, from when it WAS the relative
+# keys/default. It is ~/.chainbench/keys/default now (store.DefaultKeySetDir),
+# so nothing creates this any more — but an ignore rule does not delete what it
+# already matched, and a working copy sat here holding ten generated keys until
+# 2026-09-22. The rule stays for an older build, and it is matched at any depth
+# because a command run from a subdirectory would create it there.
 keys/default/
 #
 # Private-key / certificate files (none are tracked; catch new ones).

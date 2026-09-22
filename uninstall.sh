@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# uninstall.sh - Remove chainbench installation
-# Usage: chainbench uninstall  OR  ~/.chainbench/uninstall.sh
+# uninstall.sh - Remove a chainbench installation
+#
+# Usage: ~/.chainbench/uninstall.sh
+#
+# It undoes what install.sh and setup.sh did: the symlink in /usr/local/bin and
+# the clone at ~/.chainbench.
+#
+# It removes that same ~/.chainbench whichever directory it is run from. A
+# development checkout is left alone, but the session artifacts of every run
+# live under ~/.chainbench — so running a checkout's copy still takes those.
 set -euo pipefail
 
 INSTALL_DIR="${HOME}/.chainbench"
