@@ -121,7 +121,8 @@ func NewManager(d Deps, ws *Workspace, run StepRunner) *Manager {
 	// One state per stage. The ones that still say legacyStage run the old verb
 	// through the injected runner; each commit of this series turns one of them
 	// into a state that does the work itself.
-	mg.stages = append(mg.stages, &openingWorkspace{mg: mg}, &buildingNodeTable{mg: mg}, newEnsuringKeys(mg))
+	mg.stages = append(mg.stages, &openingWorkspace{mg: mg}, &buildingNodeTable{mg: mg},
+		newEnsuringKeys(mg), newBuildingGenesis(mg))
 	for _, s := range stageOrder[len(mg.stages):] {
 		mg.stages = append(mg.stages, &legacyStage{mg: mg, stepName: s.step, name: s.name})
 	}

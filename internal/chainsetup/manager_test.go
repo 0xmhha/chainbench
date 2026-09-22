@@ -115,6 +115,8 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"      KeysGenerated",
 		"      KeysDeclared",
 		"    BuildingGenesis",
+		"      GenesisFromTemplate",
+		"      GenesisFromExisting",
 		"    BuildingNodeConfig",
 		"    BuildingNodeCommand",
 		"    DeployingInputs",
@@ -215,13 +217,13 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 // TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason.
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "genesis"
+	w.failAt = "config"
 	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
 	// The failing stage reports nothing, so the lines stop one short of it.
-	want := []string{"new", "place", "keys"}
+	want := []string{"new", "place", "keys", "genesis"}
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
@@ -236,7 +238,7 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "genesis"
+	w.failAt = "config"
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
@@ -474,12 +476,12 @@ func TestEnsuringKeys_SaysWhichWayTheKeysCameFrom(t *testing.T) {
 // one on disk while that leaf is doing its work.
 func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 	mg, _ := newTestManager(t)
-	// Fail the stage after keys, so the last thing the keys leaf wrote is still
-	// there to read when the walk stops -- the genesis stage records its own
-	// position on the way in, so reading from inside it would be too late.
+	// Fail the first stage that is still an adapter, and read the record from
+	// inside it: a stage records its own position on the way in, so what is on
+	// disk by then names that stage -- which is the guarantee, one stage on.
 	var atKeys string
 	mg.run = func(_ context.Context, step string) (string, error) {
-		if step == "genesis" {
+		if step == "config" {
 			ws, err := Open(mg.ws.Dir(), nil)
 			if err != nil {
 				return "", err
@@ -490,14 +492,49 @@ func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
 		return step + " done", nil
 	}
 	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
-		t.Fatal("the walk was meant to stop at genesis")
+		t.Fatal("the walk was meant to stop at config")
 	}
-	// The genesis stage records itself before it runs, so what is on disk by
-	// then names it -- which is the guarantee, one stage later.
-	if atKeys != "Composition/Composing/BuildingGenesis" {
-		t.Errorf("the record said %q when genesis began", atKeys)
+
+	if atKeys != "Composition/Composing/BuildingNodeConfig" {
+		t.Errorf("the record said %q when config began", atKeys)
 	}
 	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
 		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)
+	}
+}
+
+// TestBuildingGenesis_SaysWhereTheGenesisCameFrom.
+//
+// A genesis built from the family's template is one this run decided; a genesis
+// taken from a file is one somebody else decided and this run is bound to. A
+// chain that will not start looks the same either way until you know which.
+func TestBuildingGenesis_SaysWhereTheGenesisCameFrom(t *testing.T) {
+	// A genesis this run wrote, to hand to the second case as an existing one.
+	first, _ := newTestManager(t)
+	firstIn := upRequest(t)
+	if err := first.Compose(context.Background(), firstIn, ""); err != nil {
+		t.Fatal(err)
+	}
+	if got := entered(first); !slices.Contains(got, "GenesisFromTemplate") {
+		t.Fatalf("a run with no genesis named went through %v, and never built one from the template", got)
+	}
+	existing := filepath.Join(first.ws.Dir(), "genesis.json")
+
+	second, _ := newTestManager(t)
+	in := upRequest(t)
+	// The same ring as the first run: a genesis names its validators, and one
+	// composed against different identities is refused before this test could
+	// say anything about which state it went through.
+	in.KeysDir = firstIn.KeysDir
+	in.GenesisExisting = existing
+	if err := second.Compose(context.Background(), in, ""); err != nil {
+		t.Fatal(err)
+	}
+	got := entered(second)
+	if !slices.Contains(got, "GenesisFromExisting") {
+		t.Errorf("a run given a genesis went through %v, and never took it", got)
+	}
+	if slices.Contains(got, "GenesisFromTemplate") {
+		t.Error("it also built one from the template, and a composition takes one way")
 	}
 }

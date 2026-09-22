@@ -65,6 +65,8 @@ const (
 	eventKeySourceChosen
 	// eventKeysEnsured: every node has an identity.
 	eventKeysEnsured
+	// eventGenesisWayChosen: where the genesis comes from is settled.
+	eventGenesisWayChosen
 	// eventGenesisBuilt: the genesis exists, however it was arrived at.
 	eventGenesisBuilt
 	// eventInputsDeployed: every launch input is present on its target.
@@ -102,15 +104,16 @@ var whatNames = map[statemachine.What]string{
 	CmdPostCompose: "CmdPostCompose",
 	CmdOnQuit:      "CmdOnQuit",
 
-	eventWorkspaceOpened: "eventWorkspaceOpened",
-	eventNodeTableBuilt:  "eventNodeTableBuilt",
-	eventKeySourceChosen: "eventKeySourceChosen",
-	eventKeysEnsured:     "eventKeysEnsured",
-	eventGenesisBuilt:    "eventGenesisBuilt",
-	eventInputsDeployed:  "eventInputsDeployed",
-	eventPhaseLaunched:   "eventPhaseLaunched",
-	eventStageDone:       "eventStageDone",
-	eventStageFailed:     "eventStageFailed",
+	eventWorkspaceOpened:  "eventWorkspaceOpened",
+	eventNodeTableBuilt:   "eventNodeTableBuilt",
+	eventKeySourceChosen:  "eventKeySourceChosen",
+	eventKeysEnsured:      "eventKeysEnsured",
+	eventGenesisWayChosen: "eventGenesisWayChosen",
+	eventGenesisBuilt:     "eventGenesisBuilt",
+	eventInputsDeployed:   "eventInputsDeployed",
+	eventPhaseLaunched:    "eventPhaseLaunched",
+	eventStageDone:        "eventStageDone",
+	eventStageFailed:      "eventStageFailed",
 
 	EventNodeDied: "EventNodeDied",
 }
@@ -253,6 +256,19 @@ type keysEnsured struct{ Detail string }
 func (keysEnsured) What() statemachine.What { return eventKeysEnsured }
 
 func (e keysEnsured) stage() (string, string) { return stepKeys, e.Detail }
+
+// genesisWayChosen: whether this composition takes a genesis somebody else
+// decided, or builds one from the family's template.
+type genesisWayChosen struct{ FromExisting bool }
+
+func (genesisWayChosen) What() statemachine.What { return eventGenesisWayChosen }
+
+// genesisBuilt: the genesis exists, however it was arrived at.
+type genesisBuilt struct{ Detail string }
+
+func (genesisBuilt) What() statemachine.What { return eventGenesisBuilt }
+
+func (e genesisBuilt) stage() (string, string) { return stepGenesis, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

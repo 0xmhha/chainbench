@@ -128,19 +128,21 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 	// is checked against the source below, so adding a message without adding
 	// it here fails.
 	types := map[string]statemachine.Message{
-		"Compose":         Compose{},
-		"RunStep":         RunStep{},
-		"Stop":            Stop{},
-		"ClearError":      ClearError{},
-		"PostCompose":     PostCompose{},
-		"OnQuit":          OnQuit{},
-		"NodeDied":        NodeDied{},
-		"stageDone":       stageDone{},
-		"stageFailed":     stageFailed{},
-		"workspaceOpened": workspaceOpened{},
-		"nodeTableBuilt":  nodeTableBuilt{},
-		"keySourceChosen": keySourceChosen{},
-		"keysEnsured":     keysEnsured{},
+		"Compose":          Compose{},
+		"RunStep":          RunStep{},
+		"Stop":             Stop{},
+		"ClearError":       ClearError{},
+		"PostCompose":      PostCompose{},
+		"OnQuit":           OnQuit{},
+		"NodeDied":         NodeDied{},
+		"stageDone":        stageDone{},
+		"stageFailed":      stageFailed{},
+		"workspaceOpened":  workspaceOpened{},
+		"nodeTableBuilt":   nodeTableBuilt{},
+		"keySourceChosen":  keySourceChosen{},
+		"keysEnsured":      keysEnsured{},
+		"genesisWayChosen": genesisWayChosen{},
+		"genesisBuilt":     genesisBuilt{},
 	}
 	for name, msg := range types {
 		if _, ok := whatNames[msg.What()]; !ok {
