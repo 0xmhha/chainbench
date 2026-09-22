@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 55,390 |
+| `internal/` | 52 | 55,592 |
 | `cmd/` | 19 | 5,053 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **61,233** |
+| **합계** | **74** | **61,435** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,871줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 34,073줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -150,7 +150,7 @@ internal/testengine 4,485 [L4] 테스트 엔진 — RunSuite 가 4단계를 소�
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 7,980 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 8,182 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
                           NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
                           NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·
