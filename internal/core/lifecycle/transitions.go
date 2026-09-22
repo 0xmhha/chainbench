@@ -100,6 +100,29 @@ var names = map[Status]string{
 	ChainOpFailPrecondition:               "ChainOpFailPrecondition",
 	ChainOpFailNoSuchNode:                 "ChainOpFailNoSuchNode",
 	FailStageUnclassified:                 "FailStageUnclassified",
+
+	TestReadDeclaration:                 "TestReadDeclaration",
+	TestReadDeclarationFailUnreadable:   "TestReadDeclarationFailUnreadable",
+	TestReadDeclarationFailMalformed:    "TestReadDeclarationFailMalformed",
+	TestReadDeclarationFailIncomplete:   "TestReadDeclarationFailIncomplete",
+	TestReadDeclarationFailUnknownName:  "TestReadDeclarationFailUnknownName",
+	TestReadDeclarationFailContradicted: "TestReadDeclarationFailContradicted",
+	TestOpenSession:                     "TestOpenSession",
+	TestOpenSessionFailNoRoot:           "TestOpenSessionFailNoRoot",
+	TestOpenSessionFailPlanUnwritable:   "TestOpenSessionFailPlanUnwritable",
+	TestStandUpNetwork:                  "TestStandUpNetwork",
+	TestStandUpNetworkFailCompose:       "TestStandUpNetworkFailCompose",
+	TestStandUpNetworkFailNotThePlan:    "TestStandUpNetworkFailNotThePlan",
+	TestPrepare:                         "TestPrepare",
+	TestPrepareFailFork:                 "TestPrepareFailFork",
+	TestPrepareFailHeight:               "TestPrepareFailHeight",
+	TestPrepareFailAccount:              "TestPrepareFailAccount",
+	TestPrepareFailNotReady:             "TestPrepareFailNotReady",
+	TestRunCases:                        "TestRunCases",
+	TestRunCasesFailCannotProceed:       "TestRunCasesFailCannotProceed",
+	TestCollect:                         "TestCollect",
+	TestCollectFailEvidence:             "TestCollectFailEvidence",
+	TestFinished:                        "TestFinished",
 }
 
 // allowed is every move this machine permits, and it is the whole rule.
@@ -275,6 +298,32 @@ var allowed = map[Status][]Status{
 	ChainOpRemoveNodes: {ChainRemoved, ChainOpFailPrecondition},
 
 	ChainOpHardfork: {ChainReady, ChainOpFailPrecondition},
+
+	// A suite run. Every stage may end the run, because a failure at any of
+	// them still has to be recorded and the network still has to be put back —
+	// which is TestCollect's job and why it follows a failure as well as a
+	// pass.
+	TestReadDeclaration: {TestOpenSession,
+		TestReadDeclarationFailUnreadable, TestReadDeclarationFailMalformed,
+		TestReadDeclarationFailIncomplete, TestReadDeclarationFailUnknownName,
+		TestReadDeclarationFailContradicted},
+
+	// Standing a network up is skipped by a run that attaches to one already
+	// up, which is why the session leads to two places rather than one.
+	TestOpenSession: {TestStandUpNetwork, TestPrepare,
+		TestOpenSessionFailNoRoot, TestOpenSessionFailPlanUnwritable},
+
+	TestStandUpNetwork: {TestPrepare,
+		TestStandUpNetworkFailCompose, TestStandUpNetworkFailNotThePlan},
+
+	TestPrepare: {TestRunCases,
+		TestPrepareFailFork, TestPrepareFailHeight,
+		TestPrepareFailAccount, TestPrepareFailNotReady},
+
+	// Cases reporting failures is a verdict, and the run goes on to collect it.
+	TestRunCases: {TestCollect, TestRunCasesFailCannotProceed},
+
+	TestCollect: {TestFinished, TestCollectFailEvidence},
 }
 
 // entryLimit is how many times one BLOCK may be entered in a single run.

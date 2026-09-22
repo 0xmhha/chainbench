@@ -475,3 +475,115 @@ const (
 	// with it and this stops being reachable from there.
 	FailStageUnclassified
 )
+
+// ---- test: running a suite ---------------------------------------------
+//
+// The stages one run of a suite passes through, measured before they were
+// drawn (design-v3/state-machine-05-test-failures.md). An earlier sketch had
+// four — pending, running, reporting, done — and the measurement did not
+// support it: "pending" would have held both a declaration that is wrong and a
+// network that will not stand up, which are not the same kind of failure and
+// are not fixed in the same place.
+//
+// Two of the seven stages are somebody else's work seen from here.
+// TestStandUpNetwork is the chain area composing, and TestRunCases is the cases
+// themselves. The test area keeps ONE state for each rather than mirroring what
+// happens inside: a composition that fails has a chain state saying which stage
+// it was in, and copying that into a second vocabulary is how one failure comes
+// to have two names.
+//
+// A run that attaches to a network already up does not pass through
+// TestStandUpNetwork at all. It is a second START rather than a block of its
+// own — the same shape the operational area's four attach paths took.
+
+const (
+	// TestReadDeclaration turns the specs and the chain-preset they name into
+	// one composition request. Most of what can go wrong in a run goes wrong
+	// here, and none of it has touched a machine yet.
+	TestReadDeclaration Status = areaTest + 0x100*iota
+	// TestOpenSession writes the plan and opens the place the run records
+	// itself. It happens before the network on purpose: a run that has nowhere
+	// to write is a run nobody can debug afterwards.
+	TestOpenSession
+	// TestStandUpNetwork stands the network up and holds it to the plan. The
+	// chain area does the work and answers for its own stages.
+	TestStandUpNetwork
+	// TestPrepare is what has to be true before a case runs, on a chain that is
+	// already sealing: the declared fork crossed, a height reached, the test
+	// accounts funded.
+	TestPrepare
+	// TestRunCases runs them. A case that fails is a result, not a failure of
+	// this stage; this stage fails when the running itself cannot proceed.
+	TestRunCases
+	// TestCollect gathers what the run is judged on and puts the network back
+	// the way the invocation asked.
+	TestCollect
+)
+
+// TestFinished is the terminal state of a run, whatever its verdict. It sits at
+// the top of the area for the same reason ChainStopped does: an end state is
+// not the next stage after the last one, and numbering it that way invites a
+// transition table to treat it as one.
+const TestFinished Status = areaTest + 0xF00
+
+const (
+	// TestReadDeclarationFailUnreadable: a spec file cannot be read, or the
+	// run was given nowhere to work.
+	TestReadDeclarationFailUnreadable = TestReadDeclaration + failureSlot + iota
+	// TestReadDeclarationFailMalformed: the document is not the grammar — a
+	// topology entry that is a string where a mapping belongs, a key the
+	// composer does not know.
+	TestReadDeclarationFailMalformed
+	// TestReadDeclarationFailIncomplete: the document is the grammar and does
+	// not say enough for what it asks. A hardfork with no node table, an
+	// upgrade naming no fork, a chain whose binary nobody gave.
+	TestReadDeclarationFailIncomplete
+	// TestReadDeclarationFailUnknownName: it names something that is not there
+	// — a binary no binaries entry declares, a chain the registry does not
+	// know, a fork the successor's build has never heard of.
+	TestReadDeclarationFailUnknownName
+	// TestReadDeclarationFailContradicted: the invocation and the document
+	// disagree, and neither can be preferred without silently running the
+	// other's network.
+	TestReadDeclarationFailContradicted
+)
+
+const (
+	// TestOpenSessionFailNoRoot: there is nowhere to write the run.
+	TestOpenSessionFailNoRoot = TestOpenSession + failureSlot + iota
+	// TestOpenSessionFailPlanUnwritable: the plan cannot be kept beside the
+	// record it describes.
+	TestOpenSessionFailPlanUnwritable
+)
+
+const (
+	// TestStandUpNetworkFailCompose: the chain area refused. Which stage it was
+	// in is its own state's to say, and this one does not repeat it.
+	TestStandUpNetworkFailCompose = TestStandUpNetwork + failureSlot + iota
+	// TestStandUpNetworkFailNotThePlan: it stood up and is not the network the
+	// plan described, so whatever the cases report would be about another one.
+	TestStandUpNetworkFailNotThePlan
+)
+
+const (
+	// TestPrepareFailFork: the declared fork was not crossed.
+	TestPrepareFailFork = TestPrepare + failureSlot + iota
+	// TestPrepareFailHeight: the chain did not reach the height a run waits for.
+	TestPrepareFailHeight
+	// TestPrepareFailAccount: a declared account could not be created or funded.
+	TestPrepareFailAccount
+	// TestPrepareFailNotReady: a node never became ready to be asked anything.
+	TestPrepareFailNotReady
+)
+
+const (
+	// TestRunCasesFailCannotProceed: the running itself broke. A case reporting
+	// a failure is a verdict and does not come here.
+	TestRunCasesFailCannotProceed = TestRunCases + failureSlot + iota
+)
+
+const (
+	// TestCollectFailEvidence: what the run is judged on could not be gathered,
+	// which makes the verdict unreadable whatever it was.
+	TestCollectFailEvidence = TestCollect + failureSlot + iota
+)

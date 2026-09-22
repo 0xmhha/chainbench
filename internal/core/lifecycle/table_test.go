@@ -43,10 +43,15 @@ func TestEveryNamedStateIsReachable(t *testing.T) {
 	// inside the table has to reach them. The six operational ones are six
 	// because that area has no order — a caller asks for stop, or for rm, or
 	// for cross-fork, and none of them follows from another.
+	//
+	// TestReadDeclaration is the test area's: a suite run begins by reading what
+	// it was asked to run. The area's other start — attaching to a network
+	// already up — enters at TestOpenSession, which the table reaches anyway.
 	reached := map[Status]bool{
 		ChainOpenWorkspace: true, AdoptChain: true,
 		ChainOpStopNodes: true, ChainOpStartNodes: true, ChainOpReplaceNode: true,
 		ChainOpCrossFork: true, ChainOpRemoveNodes: true, ChainOpHardfork: true,
+		TestReadDeclaration: true,
 	}
 	for _, tos := range allowed {
 		for _, to := range tos {
@@ -341,6 +346,65 @@ func TestDetailedIsTheTableAndNotAGuess(t *testing.T) {
 	} {
 		if got := Detailed(c.at); got != c.want {
 			t.Errorf("Detailed(%s) = %v, want %v — %s", c.at, got, c.want, c.why)
+		}
+	}
+}
+
+// TestTestArea_TheTableIsTheOrderOfARun pins the moves the test area allows,
+// because a table is only as good as the moves it refuses.
+//
+// The two that matter are the skip and the attach. A run may not jump from
+// reading a declaration to running cases — everything between is what makes the
+// cases mean anything — and a run that attaches to a network already up goes
+// from the session straight to preparing, because there is nothing to stand up.
+func TestTestArea_TheTableIsTheOrderOfARun(t *testing.T) {
+	cases := []struct {
+		name     string
+		from, to Status
+		allow    bool
+	}{
+		{"a run reads, then opens its session", TestReadDeclaration, TestOpenSession, true},
+		{"and stands the network up", TestOpenSession, TestStandUpNetwork, true},
+		{"attaching skips standing one up", TestOpenSession, TestPrepare, true},
+		{"cases follow preparing", TestPrepare, TestRunCases, true},
+		{"collecting follows the cases", TestRunCases, TestCollect, true},
+		{"and the run ends there", TestCollect, TestFinished, true},
+
+		{"reading may not reach the cases", TestReadDeclaration, TestRunCases, false},
+		{"a network is not stood up before there is somewhere to record it", TestReadDeclaration, TestStandUpNetwork, false},
+		{"preparing may not skip the cases", TestPrepare, TestCollect, false},
+		{"a run does not end before it collects", TestRunCases, TestFinished, false},
+		{"and does not go back to standing up", TestPrepare, TestStandUpNetwork, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := permits(c.from, c.to); got != c.allow {
+				verb := "refuses"
+				if got {
+					verb = "allows"
+				}
+				t.Errorf("the table %s %s -> %s", verb, names[c.from], names[c.to])
+			}
+		})
+	}
+}
+
+// TestTestArea_EveryStageMayFail: a stage with no failure of its own would push
+// its reasons into an error string, which is the debt this area was measured to
+// avoid repeating.
+func TestTestArea_EveryStageMayFail(t *testing.T) {
+	for _, s := range []Status{
+		TestReadDeclaration, TestOpenSession, TestStandUpNetwork,
+		TestPrepare, TestRunCases, TestCollect,
+	} {
+		var failures int
+		for _, to := range allowed[s] {
+			if to.IsFailure() {
+				failures++
+			}
+		}
+		if failures == 0 {
+			t.Errorf("%s has no failure state, so its reasons would live in an error string", names[s])
 		}
 	}
 }
