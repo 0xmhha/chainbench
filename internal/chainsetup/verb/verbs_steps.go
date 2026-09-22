@@ -28,19 +28,12 @@ type ChainKeysIn struct {
 
 // ChainKeys ensures the workspace's key set exists and covers the node count.
 func ChainKeys(ctx context.Context, d chainsetup.Deps, in ChainKeysIn) (chainsetup.StepOut, error) {
-	bp, err := chainsetup.ReadBlueprint(in.BlueprintPath)
+	opts, err := chainsetup.KeysOptsFor(in.BlueprintPath, in.Source, in.Nodes, in.Validators)
 	if err != nil {
 		return chainsetup.StepOut{}, err
 	}
-	source := in.Source
-	// A blueprint that carries keys is the source unless the caller asked for
-	// another one. Making the operator name it twice would let the two answers
-	// disagree, and the composition would take the one they did not mean.
-	if source == "" && bp != nil {
-		source = "declared"
-	}
 	return chainsetup.InWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (chainsetup.StepOut, error) {
-		return ws.Keys(ctx, chainsetup.KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
+		return ws.Keys(ctx, opts)
 	})
 }
 

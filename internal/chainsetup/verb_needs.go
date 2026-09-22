@@ -96,6 +96,7 @@ var verbNeeds = map[string]verbNeed{
 	// Composition steps. Their order is composeNeeds'; they are listed here so
 	// the table is the whole surface and not a second partial one.
 	"Allocate":   {step: "place"},
+	"EnsureKeys": {step: "keys"},
 	"Keys":       {step: "keys"},
 	"Genesis":    {step: "genesis"},
 	"Config":     {step: "config"},

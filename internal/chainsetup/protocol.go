@@ -60,6 +60,9 @@ const (
 	eventWorkspaceOpened statemachine.What = statemachine.BaseChain + 0x100 + iota
 	// eventNodeTableBuilt: the nodes, their roles, hosts and ports are decided.
 	eventNodeTableBuilt
+	// eventKeySourceChosen: where this composition's identities come from is
+	// settled, and the state that fetches them can be entered.
+	eventKeySourceChosen
 	// eventKeysEnsured: every node has an identity.
 	eventKeysEnsured
 	// eventGenesisBuilt: the genesis exists, however it was arrived at.
@@ -101,6 +104,7 @@ var whatNames = map[statemachine.What]string{
 
 	eventWorkspaceOpened: "eventWorkspaceOpened",
 	eventNodeTableBuilt:  "eventNodeTableBuilt",
+	eventKeySourceChosen: "eventKeySourceChosen",
 	eventKeysEnsured:     "eventKeysEnsured",
 	eventGenesisBuilt:    "eventGenesisBuilt",
 	eventInputsDeployed:  "eventInputsDeployed",
@@ -236,6 +240,19 @@ type nodeTableBuilt struct{ Detail string }
 func (nodeTableBuilt) What() statemachine.What { return eventNodeTableBuilt }
 
 func (e nodeTableBuilt) stage() (string, string) { return stepPlace, e.Detail }
+
+// keySourceChosen: which of the three ways this composition takes. It is not a
+// stage report — the stage has not finished, it has only decided.
+type keySourceChosen struct{ Way keyWay }
+
+func (keySourceChosen) What() statemachine.What { return eventKeySourceChosen }
+
+// keysEnsured: every node has an identity.
+type keysEnsured struct{ Detail string }
+
+func (keysEnsured) What() statemachine.What { return eventKeysEnsured }
+
+func (e keysEnsured) stage() (string, string) { return stepKeys, e.Detail }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

@@ -139,6 +139,8 @@ func TestEveryMessageTypeCarriesADeclaredWhat(t *testing.T) {
 		"stageFailed":     stageFailed{},
 		"workspaceOpened": workspaceOpened{},
 		"nodeTableBuilt":  nodeTableBuilt{},
+		"keySourceChosen": keySourceChosen{},
+		"keysEnsured":     keysEnsured{},
 	}
 	for name, msg := range types {
 		if _, ok := whatNames[msg.What()]; !ok {

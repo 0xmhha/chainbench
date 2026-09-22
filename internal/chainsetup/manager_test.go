@@ -67,8 +67,15 @@ func reported(mg *Manager) []string {
 // It grows as stages move in and start reading more of it, which is why it is
 // one function rather than a literal at each call: the alternative is editing
 // every test in this file nine times.
-func upRequest() ChainUpIn {
-	return ChainUpIn{Chain: "stablenet", BPCount: 2, ENCount: 1}
+func upRequest(t *testing.T) ChainUpIn {
+	t.Helper()
+	// Keys generated into this test's own directory, rather than the committed
+	// preset: a test that walks the stages should not also depend on a ring
+	// outside the package, nor write into one.
+	return ChainUpIn{
+		Chain: "stablenet", BPCount: 2, ENCount: 1,
+		KeysSource: "generate", KeysDir: t.TempDir(),
+	}
 }
 
 // withStage is upRequest with the stage it should stop at.
@@ -104,6 +111,9 @@ func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 		"    OpeningWorkspace",
 		"    BuildingNodeTable",
 		"    EnsuringKeys",
+		"      KeysFromPreset",
+		"      KeysGenerated",
+		"      KeysDeclared",
 		"    BuildingGenesis",
 		"    BuildingNodeConfig",
 		"    BuildingNodeCommand",
@@ -140,7 +150,7 @@ func TestStageOrderIsUpStepNames(t *testing.T) {
 // the walker, and the claim here is about all nine.
 func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), upRequest(), ""); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err != nil {
 		t.Fatal(err)
 	}
 	if got := reported(mg); !slices.Equal(got, UpStepNames) {
@@ -161,7 +171,7 @@ func TestCompose_WalksEveryStageInOrderAndEndsReady(t *testing.T) {
 // and the caller says nothing about it beyond the request it already had.
 func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), withStage(upRequest(), UpDeploy), ""); err != nil {
+	if err := mg.Compose(context.Background(), withStage(upRequest(t), UpDeploy), ""); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
@@ -177,7 +187,7 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 // TestCompose_BeginsAtTheNamedStep is what a resume does today.
 func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 	mg, w := newTestManager(t)
-	if err := mg.Compose(context.Background(), upRequest(), "config"); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(t), "config"); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"config", "build", "deploy", "init", "start"}
@@ -190,7 +200,7 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 // TestCompose_RefusesAStepItDoesNotHave, before it starts anything.
 func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 	mg, w := newTestManager(t)
-	err := mg.Compose(context.Background(), upRequest(), "nosuchstep")
+	err := mg.Compose(context.Background(), upRequest(t), "nosuchstep")
 	if err == nil {
 		t.Fatal("an unknown step was accepted")
 	}
@@ -206,7 +216,7 @@ func TestCompose_RefusesAStepItDoesNotHave(t *testing.T) {
 func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "genesis"
-	err := mg.Compose(context.Background(), upRequest(), "")
+	err := mg.Compose(context.Background(), upRequest(t), "")
 	if !errors.Is(err, w.failErr) {
 		t.Fatalf("Compose returned %v, want the stage's own error", err)
 	}
@@ -226,8 +236,8 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 // composition that stopped and one that was composed over.
 func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	mg, w := newTestManager(t)
-	w.failAt = "keys"
-	if err := mg.Compose(context.Background(), upRequest(), ""); err == nil {
+	w.failAt = "genesis"
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 
@@ -260,7 +270,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 		}
 		seen[step] = ws.State().StatePath
 	}
-	if err := mg.Compose(context.Background(), upRequest(), ""); err != nil {
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err != nil {
 		t.Fatal(err)
 	}
 	for _, step := range adapterSteps(mg) {
@@ -279,7 +289,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 	mg, w := newTestManager(t)
 	w.failAt = "deploy"
-	if err := mg.Compose(context.Background(), upRequest(), ""); err == nil {
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
 		t.Fatal("the failing stage did not fail the composition")
 	}
 	ws, err := Open(mg.ws.Dir(), nil)
@@ -300,7 +310,7 @@ func TestCompose_TheRecordKeepsWhereItDied(t *testing.T) {
 // a resume cannot continue. One open, one save, both or neither.
 func TestOpeningWorkspace_RecordsTheChainAndTheRequestTogether(t *testing.T) {
 	mg, _ := newTestManager(t)
-	in := upRequest()
+	in := upRequest(t)
 	in.BPCount = 3
 	if err := mg.Compose(context.Background(), in, ""); err != nil {
 		t.Fatal(err)
@@ -350,7 +360,7 @@ func TestOpeningWorkspace_AnUnknownChainFailsTheComposition(t *testing.T) {
 // TestBuildingNodeTable_PlacesTheNodesTheRequestAsksFor.
 func TestBuildingNodeTable_PlacesTheNodesTheRequestAsksFor(t *testing.T) {
 	mg, _ := newTestManager(t)
-	in := upRequest()
+	in := upRequest(t)
 	in.BPCount, in.ENCount = 3, 2
 	if err := mg.Compose(context.Background(), in, ""); err != nil {
 		t.Fatal(err)
@@ -376,7 +386,7 @@ func TestBuildingNodeTable_PlacesTheNodesTheRequestAsksFor(t *testing.T) {
 // preferring either silently composes a network the reader did not ask for.
 func TestBuildingNodeTable_RefusesTwoLayouts(t *testing.T) {
 	mg, _ := newTestManager(t)
-	in := upRequest()
+	in := upRequest(t)
 	in.TopologyPath = filepath.Join(t.TempDir(), "topology.yaml")
 	in.BlueprintPath = filepath.Join(t.TempDir(), "blueprint.json")
 	if err := os.WriteFile(in.BlueprintPath, []byte(`{"schemaVersion":"1","chain":"stablenet"}`), 0o644); err != nil {
@@ -395,5 +405,99 @@ func TestBuildingNodeTable_RefusesTwoLayouts(t *testing.T) {
 	}
 	if got := ws.State().StatePath; got != "Composition/Failed" {
 		t.Errorf("the record says %q, want Composition/Failed", got)
+	}
+}
+
+// entered is the states the machine moved into, in order, from its own log.
+func entered(mg *Manager) []string {
+	var out []string
+	for _, rec := range mg.m.Dump() {
+		if rec.Dest != "" {
+			out = append(out, string(rec.Dest))
+		}
+	}
+	return out
+}
+
+// TestEnsuringKeys_SaysWhichWayTheKeysCameFrom is what this stage's leaves
+// exist for.
+//
+// Two compositions of the same shape can end up with different validator
+// addresses, and the answer is almost always that one took its identities from
+// a preset and the other generated them. A stage that was one state could not
+// tell them apart; a stage with three says it in the path it walks, which is
+// what the record then keeps.
+func TestEnsuringKeys_SaysWhichWayTheKeysCameFrom(t *testing.T) {
+	cases := []struct {
+		name string
+		arm  func(in *ChainUpIn)
+		want string
+	}{
+		{
+			name: "generated into this run's own ring",
+			arm:  func(*ChainUpIn) {},
+			want: "KeysGenerated",
+		},
+		{
+			name: "taken from the committed preset",
+			arm: func(in *ChainUpIn) {
+				in.KeysSource = ""
+				in.KeysDir = filepath.Join("..", "..", "presets", "keys")
+				// The preset ring holds five identities.
+				in.BPCount, in.ENCount = 4, 1
+			},
+			want: "KeysFromPreset",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			mg, _ := newTestManager(t)
+			in := upRequest(t)
+			c.arm(&in)
+			if err := mg.Compose(context.Background(), in, ""); err != nil {
+				t.Fatal(err)
+			}
+			got := entered(mg)
+			if !slices.Contains(got, c.want) {
+				t.Errorf("the machine went through %v, and never entered %s", got, c.want)
+			}
+			for _, other := range []string{"KeysFromPreset", "KeysGenerated", "KeysDeclared"} {
+				if other != c.want && slices.Contains(got, other) {
+					t.Errorf("it also entered %s, and a composition takes one way", other)
+				}
+			}
+		})
+	}
+}
+
+// TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps: the path a leaf writes is the
+// one on disk while that leaf is doing its work.
+func TestEnsuringKeys_TheLeafIsWhatTheRecordKeeps(t *testing.T) {
+	mg, _ := newTestManager(t)
+	// Fail the stage after keys, so the last thing the keys leaf wrote is still
+	// there to read when the walk stops -- the genesis stage records its own
+	// position on the way in, so reading from inside it would be too late.
+	var atKeys string
+	mg.run = func(_ context.Context, step string) (string, error) {
+		if step == "genesis" {
+			ws, err := Open(mg.ws.Dir(), nil)
+			if err != nil {
+				return "", err
+			}
+			atKeys = ws.State().StatePath
+			return "", errors.New("stop here")
+		}
+		return step + " done", nil
+	}
+	if err := mg.Compose(context.Background(), upRequest(t), ""); err == nil {
+		t.Fatal("the walk was meant to stop at genesis")
+	}
+	// The genesis stage records itself before it runs, so what is on disk by
+	// then names it -- which is the guarantee, one stage later.
+	if atKeys != "Composition/Composing/BuildingGenesis" {
+		t.Errorf("the record said %q when genesis began", atKeys)
+	}
+	if got := entered(mg); !slices.Contains(got, "KeysGenerated") {
+		t.Errorf("the machine went through %v, and never entered KeysGenerated", got)
 	}
 }

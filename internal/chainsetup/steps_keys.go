@@ -68,11 +68,59 @@ type KeysOpts struct {
 	Validators int
 }
 
-// Keys ensures the workspace's key set exists and covers the requested node
-// count, through the same KeySource boundary `chainbench run` uses.
-func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
+// keyWay is which of the three ways a composition gets its identities.
+//
+// It is a value rather than a lifecycle.Status because two readers want it now:
+// the record, which keeps the state the composition was in, and the old
+// machine, which still wants a Status. Keeping the choice separate from either
+// spelling is what lets both read the same decision.
+type keyWay string
+
+// The three ways. A node table that names keys is one of them, not a fourth:
+// it resolves to declared, and the table is simply where the declaration is.
+const (
+	wayPreset    keyWay = "preset"
+	wayGenerated keyWay = "generated"
+	wayDeclared  keyWay = "declared"
+)
+
+// status is how the old machine spells this way.
+func (k keyWay) status() lifecycle.Status {
+	switch k {
+	case wayGenerated:
+		return lifecycle.ChainEnsureKeysGenerated
+	case wayDeclared:
+		return lifecycle.ChainEnsureKeysFromBlueprint
+	default:
+		return lifecycle.ChainEnsureKeysFromPreset
+	}
+}
+
+// KeysOptsFor reads the declaration a request names and settles the source.
+//
+// A blueprint that carries keys is the source unless the caller asked for
+// another one. Making the operator name it twice would let the two answers
+// disagree, and the composition would take the one they did not mean.
+func KeysOptsFor(blueprintPath, source string, nodes, validators int) (KeysOpts, error) {
+	bp, err := ReadBlueprint(blueprintPath)
+	if err != nil {
+		return KeysOpts{}, err
+	}
+	if source == "" && bp != nil {
+		source = "declared"
+	}
+	return KeysOpts{Source: source, Blueprint: bp, Nodes: nodes, Validators: validators}, nil
+}
+
+// keySource decides where this composition's identities come from, and gets
+// whatever has to be in place before that can be decided.
+//
+// Split out of Keys so the state that chooses and the state that acts can be
+// two states. Nothing here writes a ring: the choice is a decision, and
+// [Workspace.EnsureKeys] is what carries it out.
+func (w *Workspace) keySource(ctx context.Context, opts KeysOpts) (store.KeySource, keyWay, int, error) {
 	if _, err := w.plugin(); err != nil {
-		return StepOut{}, err
+		return nil, "", 0, err
 	}
 	n := opts.Nodes
 	if n <= 0 {
@@ -82,12 +130,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return StepOut{}, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
+		return nil, "", 0, fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 	// A key set named on a server is downloaded to a local directory first, so
 	// the rest of this step reads it the one local way.
 	if err := w.materializeKeyring(ctx); err != nil {
-		return StepOut{}, err
+		return nil, "", 0, err
 	}
 
 	// A node table that names any per-node key builds the set from the table:
@@ -96,68 +144,77 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
 	// its nodekey and enode without making it a validator. It takes precedence
 	// over the source string because a table that declares keys has said where
 	// its identities come from.
-	var src store.KeySource
-	// from is the state this step ends in, set where the source is chosen so
-	// the two cannot drift apart.
-	var from lifecycle.Status
 	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
-		return StepOut{}, kerr
+		return nil, "", 0, kerr
 	} else if keyed {
-		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
-		from = lifecycle.ChainEnsureKeysFromBlueprint
-	} else {
-		switch opts.Source {
-		case "", "keyPreset":
-			src = store.PresetKeys{Path: w.state.KeysDir}
-			from = lifecycle.ChainEnsureKeysFromPreset
-		case "declared":
-			// The declaration is the origin, and the ring is materialised from it
-			// so that the genesis source, the launcher and provision keep reading
-			// keys the one way they already do.
-			if opts.Blueprint == nil {
-				return StepOut{}, lifecycle.Mark(errKeySourceUnknown,
-					fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
-			}
-			set, err := w.declaredKeys(*opts.Blueprint, n)
-			if err != nil {
-				return StepOut{}, err
-			}
-			// A blueprint names a key for every node it declares (a node without
-			// one is an error there), so every index is pinned: if the ring on
-			// disk holds a different identity, the document and the disk
-			// disagree and the operator has to say which is right.
-			pinned := make([]int, 0, len(set.Nodes))
-			for _, e := range set.Nodes {
-				pinned = append(pinned, e.Index)
-			}
-			sort.Ints(pinned)
-			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
-			from = lifecycle.ChainEnsureKeysFromBlueprint
-		case "generate":
-			// A generated set must declare exactly the topology's validators, not
-			// make every node one: a network with endpoints (4 bp + 11 en) whose key
-			// set claims 15 validators fails genesis, where the governance contract
-			// requires members and validators to match. The allocated count is the
-			// authority; an explicit opts.Validators still wins.
-			validators := opts.Validators
-			if validators <= 0 {
-				validators = w.state.BPCount
-			}
-			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
-			from = lifecycle.ChainEnsureKeysGenerated
-		default:
-			return StepOut{}, lifecycle.Mark(errKeySourceUnknown,
-				fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
-		}
+		return store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}, wayDeclared, n, nil
 	}
+
+	switch opts.Source {
+	case "", "keyPreset":
+		return store.PresetKeys{Path: w.state.KeysDir}, wayPreset, n, nil
+	case "declared":
+		// The declaration is the origin, and the ring is materialised from it
+		// so that the genesis source, the launcher and provision keep reading
+		// keys the one way they already do.
+		if opts.Blueprint == nil {
+			return nil, "", 0, lifecycle.Mark(errKeySourceUnknown,
+				fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source))
+		}
+		set, err := w.declaredKeys(*opts.Blueprint, n)
+		if err != nil {
+			return nil, "", 0, err
+		}
+		// A blueprint names a key for every node it declares (a node without
+		// one is an error there), so every index is pinned: if the ring on
+		// disk holds a different identity, the document and the disk
+		// disagree and the operator has to say which is right.
+		pinned := make([]int, 0, len(set.Nodes))
+		for _, e := range set.Nodes {
+			pinned = append(pinned, e.Index)
+		}
+		sort.Ints(pinned)
+		return store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}, wayDeclared, n, nil
+	case "generate":
+		// A generated set must declare exactly the topology's validators, not
+		// make every node one: a network with endpoints (4 bp + 11 en) whose key
+		// set claims 15 validators fails genesis, where the governance contract
+		// requires members and validators to match. The allocated count is the
+		// authority; an explicit opts.Validators still wins.
+		validators := opts.Validators
+		if validators <= 0 {
+			validators = w.state.BPCount
+		}
+		return store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}, wayGenerated, n, nil
+	}
+	return nil, "", 0, lifecycle.Mark(errKeySourceUnknown,
+		fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source))
+}
+
+// EnsureKeys writes the ring the chosen source describes and says what it made.
+func (w *Workspace) EnsureKeys(ctx context.Context, src store.KeySource, n int) (string, error) {
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
-		return StepOut{}, err
+		return "", err
 	}
 	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
 		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
-	return StepOut{Detail: detail, Passed: []lifecycle.Status{from}}, nil
+	return detail, nil
+}
+
+// Keys ensures the workspace's key set exists and covers the requested node
+// count, through the same KeySource boundary `chainbench run` uses.
+func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (StepOut, error) {
+	src, way, n, err := w.keySource(ctx, opts)
+	if err != nil {
+		return StepOut{}, err
+	}
+	detail, err := w.EnsureKeys(ctx, src, n)
+	if err != nil {
+		return StepOut{}, err
+	}
+	return StepOut{Detail: detail, Passed: []lifecycle.Status{way.status()}}, nil
 }
 
 // declaredKeys derives the ring a blueprint declares, for the network the
