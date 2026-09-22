@@ -2,8 +2,13 @@ package nodeconfig
 
 import "fmt"
 
-// entry is one accumulated knob: its value, whether it is boolean, and the
-// layer that set it last (the winner).
+// entry is one accumulated knob: its value and whether it is boolean.
+//
+// It does not hold the layer that set it. It used to, for a `chain status`
+// display that was never built, and the field went when nothing read it in two
+// years — but this comment kept naming it, so it described a struct that had
+// not existed for that long. Precedence here is call order: a later Set
+// replaces an earlier one, whatever layer either named.
 type entry struct {
 	value   string
 	boolean bool

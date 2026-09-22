@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/origin"
+
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,12 +17,12 @@ func TestPlanFile_SurvivesTheRunThatMadeIt(t *testing.T) {
 	dir := t.TempDir()
 	want := ComposePlan{
 		Chain: "stablenet", Workspace: dir, Binary: "/b/gstable",
-		From: map[PlanField]PlanOrigin{
-			FieldBinary: OriginCommand,
-			FieldTarget: OriginHarness,
+		From: map[PlanField]origin.Origin{
+			FieldBinary: origin.FromCommand,
+			FieldTarget: origin.FromDefault,
 		},
 		Launch: map[string][]PlanKnob{
-			"bp": {{Knob: "mine=true", From: OriginDeclaration}},
+			"bp": {{Knob: "mine=true", From: origin.FromDeclaration}},
 		},
 	}
 	if err := WritePlan(dir, want); err != nil {
@@ -34,10 +36,10 @@ func TestPlanFile_SurvivesTheRunThatMadeIt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.From[FieldBinary] != OriginCommand || got.From[FieldTarget] != OriginHarness {
+	if got.From[FieldBinary] != origin.FromCommand || got.From[FieldTarget] != origin.FromDefault {
 		t.Errorf("the sources did not survive the round trip: %v", got.From)
 	}
-	if k := got.Launch["bp"]; len(k) != 1 || k[0].From != OriginDeclaration {
+	if k := got.Launch["bp"]; len(k) != 1 || k[0].From != origin.FromDeclaration {
 		t.Errorf("a launch knob lost who asked for it: %v", k)
 	}
 	if got.Binary != want.Binary || got.Chain != want.Chain {

@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 50 | 54,232 |
+| `internal/` | 51 | 54,278 |
 | `cmd/` | 19 | 5,021 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **72** | **60,043** |
+| **합계** | **73** | **60,089** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 23패키지 16,776줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 24패키지 16,847줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -47,6 +47,9 @@ internal/core/
 ├── lifecycle   1,015  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
+├── origin          88  [L0] 값이 어디서 왔는지를 말하는 어휘 하나 — Origin 과 일곱 rung, 그리고 그 순서.
+│                            기제가 아니다: 무엇이 이기는지는 상류에서 정해지고 여기는 적을 낱말만 갖는다.
+│                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
 ├── rpc            511  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
 ├── remote         552  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
 ├── process      1,453  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
@@ -54,11 +57,11 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,580  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,585  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
-├── blueprint    1,250  [L1] 네트워크 선언 1문서 — 파싱·왕복·문서 내부 검증. 미지 필드 거부. 해석하지 않는다
+├── blueprint    1,228  [L1] 네트워크 선언 1문서 — 파싱·왕복·문서 내부 검증. 미지 필드 거부. 해석하지 않는다
 │                            (빠진 값 채우기는 한 층 위 Resolve 몫)
 ├── keyring        391  [L1] 키 모델 — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력
 │   ├── derive     345  [L1] 키 파생 — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process 순수 계산)
@@ -113,7 +116,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,681줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 33,656줄
 
 ```
 internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -138,7 +141,7 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,336 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,311 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약

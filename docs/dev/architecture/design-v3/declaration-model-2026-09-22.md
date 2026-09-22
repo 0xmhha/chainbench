@@ -234,7 +234,7 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 | ~~**P-1b**~~ | ~~`env` 를 `chain-preset` 으로 개명한다~~ | **완료 2026-09-22.** 케이스 209개·선언 26개·Go 식별자 약 104곳. 209/209 검증 통과 유지 |
 | ~~**P-2**~~ | ~~선언을 한 겹으로 줄인다~~ | **완료 2026-09-22.** `upgrade.preset` 과 `preset.Chain` 이 없어졌다. 선언이 fork 와 at 을 직접 말하고, 포크 이름은 **그 포크를 넘겨받는 바이너리의 chain-manifest** 가 아는지로 검사한다 |
 | ~~**P-3**~~ | ~~소유권을 가른다~~ | **완료 2026-09-22.** `manifest.upgrade` 를 지우고 `network_id` 를 파생으로 돌렸다. 세 manifest 에서 네 필드가 없어졌다 |
-| **P-4** | 우선순위 어휘 셋을 한 줄로 모은다 | 값마다 어느 단이 이겼는지 한 어휘로 읽힌다 |
+| ~~**P-4**~~ | ~~우선순위 어휘 셋을 한 줄로 모은다~~ | **완료 2026-09-22.** 둘은 합쳤고 셋째는 다른 질문이라 남겼다. §P-4 |
 | ~~**P-5**~~ | ~~`suite run` 에 `--server-set` 을 단다~~ | **닫음 2026-09-22. 할 일이 없었다 — 측정이 틀렸다.** §P-5 |
 | **P-6** | 감시 테스트를 override 결과 기준으로 다시 쓴다 | 기본값을 의도적으로 바꿔도 실패하지 않고, 사슬을 거친 결과가 틀리면 실패한다 |
 | **P-7** | preset 문서의 틀린 값과 `presets/chain/README.md` 를 고친다 | 문서가 적은 값이 실제로 쓰이는 값이다 |
@@ -272,6 +272,49 @@ INVALID FORK: the declaration crosses the "croisant" fork and wbft does not know
 
 두 yaml 은 지우지 않았다. 불러 쓰는 문법이 없어졌을 뿐, 15+15 환경의 신원 기록은 그 안에만
 있다.
+
+### P-4 — 셋 중 둘만 합쳤고, 그 이유를 적는다 (2026-09-22)
+
+착수하면서 셋이 각각 무엇을 하는지 먼저 쟀다. **셋 다 아무것도 결정하지 않는다.**
+
+`blueprint.Origins` 는 값마다 출처를 적는데 **읽는 코드가 없다.** `testengine.Plan.From` 은
+두 곳에서 읽히고 둘 다 사람이 읽을 문장을 만든다. 그리고 `nodeconfig.Layer` 는 주석이 자기를
+"precedence level of the value stack" 이라고 설명하는데, `Args.Set(k, v, l)` 의 `l` 은
+**에러 메시지 문자열에만 쓰인다.** 값을 넣는 `put` 은 층을 보지 않고 덮어쓴다.
+
+그래서 처음에는 `Args` 가 순위를 실제로 강제하게 만들 생각이었다. **`Layer` 의 주석을 끝까지
+읽고 접었다.** 그 주석이 이렇게 적고 있다.
+
+> These four are not the three tiers a declaration is merged through
+> (chain-preset, then the case's own override, then the command). … That is on
+> purpose: which tier a declared value came from is answered by reading the case
+> file, not by the argv assembler.
+
+`Layer` 는 "누가 이 노브를 **요청했는가**" 에 답한다. 바이너리에 없는 플래그를 거절할 때
+누구에게 말해야 하는지를 위한 것이다. 우선순위 줄과는 다른 질문이고, 그 결정에는 적힌 이유가
+있다. 이 저장소는 근거 없이 구조를 뒤집었다가 두 번 되돌린 적이 있으므로, 여기서 세 번째를
+하지 않는다.
+
+**합친 것은 둘이다.** `internal/core/origin` 에 rung 일곱을 둔 어휘 하나를 만들고, 두 기록이
+그것을 쓴다. 별칭은 두지 않았다 — 도메인 어휘는 한 개념 한 이름이라는 규칙이 있고, 래칫이
+`Blueprint`·`Command`·`Default` 가 다른 패키지와 겹치는 것을 잡아 줬다.
+
+```
+기본값 < 체인 정의 < 키 셋 < blueprint 문서 < 선언(chain-preset+케이스) < 자원 배정 < CLI/MCP
+```
+
+경쟁하지 않는 rung 둘(체인의 사실, 키 셋의 재료)도 목록에 넣었다. 다투는 상대는 없지만
+"어디서 왔나" 에는 답해야 한다. 순서는 `Rank()` 가 읽는 데이터 한 줄이고, 테스트가 그것을
+이 문서의 §4.2 줄에 묶는다 — 두 곳이 갈라지는 것이 원래 이 어휘가 생긴 이유다.
+
+사용자가 보는 변화는 한 낱말이다. 조립 계획의 `chosen by` 줄이 `harness` 대신 `default` 를
+쓴다. 해결된 망의 `inventory` 도 `placement` 가 됐다. 같은 rung 을 두 이름으로 부르던 것이
+하나가 됐다.
+
+**곁가지.** `nodeconfig` 의 `entry` 주석이 "the layer that set it last (the winner)" 라고
+적고 있었는데, 그 구조체에는 층 필드가 없다. 2년 전 `chain status` 표시를 위해 있었다가
+아무도 안 읽어 지웠고 주석만 남은 것이다. 고쳤다. `TestCommentsDoNotContradictTheCode` 는
+**없는 필드를 설명하는 주석**을 보지 못한다.
 
 ### P-5 — 할 일이 없었다 (2026-09-22)
 

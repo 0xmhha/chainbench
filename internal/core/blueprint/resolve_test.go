@@ -1,6 +1,8 @@
 package blueprint
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/origin"
+
 	"reflect"
 	"strings"
 	"testing"
@@ -150,11 +152,11 @@ func TestResolve_PinningOnePortKeepsTheOthers(t *testing.T) {
 	if p.HTTP != 8500 || p.WS != 8600 || p.Auth != 8700 || p.Metrics != 6000 {
 		t.Errorf("the allocated ports were lost: %+v", p)
 	}
-	if got := r.Origins["nodes[0].ports.p2p"]; got != FromBlueprint {
-		t.Errorf("p2p source = %q, want %q", got, FromBlueprint)
+	if got := r.Origins["nodes[0].ports.p2p"]; got != origin.FromBlueprint {
+		t.Errorf("p2p source = %q, want %q", got, origin.FromBlueprint)
 	}
-	if got := r.Origins["nodes[0].ports.http"]; got != FromInventory {
-		t.Errorf("http source = %q, want %q", got, FromInventory)
+	if got := r.Origins["nodes[0].ports.http"]; got != origin.FromPlacement {
+		t.Errorf("http source = %q, want %q", got, origin.FromPlacement)
 	}
 }
 
@@ -195,16 +197,16 @@ func TestResolve_FillsFromThePlacementWhatTheDocumentLeavesOut(t *testing.T) {
 	if r.Nodes[0].SyncMode != "full" {
 		t.Errorf("sync mode = %q, want the default full", r.Nodes[0].SyncMode)
 	}
-	for key, want := range map[string]Origin{
-		"chain":              FromChain,
-		"chain_id":           FromChain,
-		"peering":            FromDefault,
-		"nodes[0].name":      FromInventory,
-		"nodes[0].host":      FromInventory,
-		"nodes[0].sync_mode": FromDefault,
-		"nodes[0].binary":    FromChain,
-		"nodes[0].nodekey":   FromBlueprint,
-		"validators":         FromDefault,
+	for key, want := range map[string]origin.Origin{
+		"chain":              origin.FromChain,
+		"chain_id":           origin.FromChain,
+		"peering":            origin.FromDefault,
+		"nodes[0].name":      origin.FromPlacement,
+		"nodes[0].host":      origin.FromPlacement,
+		"nodes[0].sync_mode": origin.FromDefault,
+		"nodes[0].binary":    origin.FromChain,
+		"nodes[0].nodekey":   origin.FromBlueprint,
+		"validators":         origin.FromDefault,
 	} {
 		if got := r.Origins[key]; got != want {
 			t.Errorf("source[%s] = %q, want %q", key, got, want)

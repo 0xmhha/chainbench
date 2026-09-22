@@ -1,6 +1,8 @@
 package testengine
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/origin"
+
 	"context"
 	"os"
 	"path/filepath"
@@ -84,13 +86,13 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 
 	if got := p.Launch["bp"]; len(got) != 1 || !strings.HasPrefix(got[0].Knob, "mine") {
 		t.Errorf("declared bp launch = %v", got)
-	} else if got[0].From != OriginDeclaration {
+	} else if got[0].From != origin.FromDeclaration {
 		t.Errorf("the bp knob came from the declaration, not %q", got[0].From)
 	}
 	var all []string
 	for _, k := range p.Launch["all"] {
 		all = append(all, k.Knob)
-		if k.From != OriginCommand {
+		if k.From != origin.FromCommand {
 			t.Errorf("%q landed in the all scope from the command, not %q", k.Knob, k.From)
 		}
 	}
@@ -189,26 +191,26 @@ func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
 		env   string
 		in    RunSuiteIn
 		field PlanField
-		want  PlanOrigin
+		want  origin.Origin
 	}{
-		{"binary from the command", declared, RunSuiteIn{Binary: "/bin/gstable"}, FieldBinary, OriginCommand},
-		{"binary from the declaration", declared, RunSuiteIn{}, FieldBinary, OriginDeclaration},
-		{"binary from the chain manifest", bare, RunSuiteIn{}, FieldBinary, OriginHarness},
+		{"binary from the command", declared, RunSuiteIn{Binary: "/bin/gstable"}, FieldBinary, origin.FromCommand},
+		{"binary from the declaration", declared, RunSuiteIn{}, FieldBinary, origin.FromDeclaration},
+		{"binary from the chain manifest", bare, RunSuiteIn{}, FieldBinary, origin.FromDefault},
 
-		{"bp from the command", declared, RunSuiteIn{BPCount: 7}, FieldNodesBP, OriginCommand},
-		{"bp from the declaration", declared, RunSuiteIn{}, FieldNodesBP, OriginDeclaration},
-		{"bp from the harness default", bare, RunSuiteIn{}, FieldNodesBP, OriginHarness},
+		{"bp from the command", declared, RunSuiteIn{BPCount: 7}, FieldNodesBP, origin.FromCommand},
+		{"bp from the declaration", declared, RunSuiteIn{}, FieldNodesBP, origin.FromDeclaration},
+		{"bp from the harness default", bare, RunSuiteIn{}, FieldNodesBP, origin.FromDefault},
 
-		{"keys dir from the command", declared, RunSuiteIn{KeysDir: "/k"}, FieldKeysDir, OriginCommand},
-		{"keys dir from the declaration", declared, RunSuiteIn{}, FieldKeysDir, OriginDeclaration},
-		{"keys dir from the harness default", bare, RunSuiteIn{}, FieldKeysDir, OriginHarness},
+		{"keys dir from the command", declared, RunSuiteIn{KeysDir: "/k"}, FieldKeysDir, origin.FromCommand},
+		{"keys dir from the declaration", declared, RunSuiteIn{}, FieldKeysDir, origin.FromDeclaration},
+		{"keys dir from the harness default", bare, RunSuiteIn{}, FieldKeysDir, origin.FromDefault},
 
-		{"keys source from the command", declared, RunSuiteIn{KeysSource: "generate"}, FieldKeysSource, OriginCommand},
-		{"keys source from the declaration", declared, RunSuiteIn{}, FieldKeysSource, OriginDeclaration},
-		{"keys source from the harness default", bare, RunSuiteIn{}, FieldKeysSource, OriginHarness},
+		{"keys source from the command", declared, RunSuiteIn{KeysSource: "generate"}, FieldKeysSource, origin.FromCommand},
+		{"keys source from the declaration", declared, RunSuiteIn{}, FieldKeysSource, origin.FromDeclaration},
+		{"keys source from the harness default", bare, RunSuiteIn{}, FieldKeysSource, origin.FromDefault},
 
-		{"target from the declaration", declared, RunSuiteIn{}, FieldTarget, OriginDeclaration},
-		{"target from the harness default", bare, RunSuiteIn{}, FieldTarget, OriginHarness},
+		{"target from the declaration", declared, RunSuiteIn{}, FieldTarget, origin.FromDeclaration},
+		{"target from the harness default", bare, RunSuiteIn{}, FieldTarget, origin.FromDefault},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := planFor(t, tc.env, tc.in)
@@ -232,7 +234,7 @@ func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
 		t.Errorf("the declaration chose the binary and the keys, so the row must not mention them: %q", line)
 	}
 	// Nothing named a target, and that is exactly what the row is for.
-	if !strings.Contains(line, string(FieldTarget)+": "+string(OriginHarness)) {
+	if !strings.Contains(line, string(FieldTarget)+": "+string(origin.FromDefault)) {
 		t.Errorf("the harness chose the target and the row must say so: %q", line)
 	}
 }

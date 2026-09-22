@@ -106,10 +106,10 @@
 - [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
       결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. **P-5 는 할 일이 없었다** —
       `suite run` 에는 이미 `--server-set` 이 있고(`resourcecmd.ServerFlags` 를 빌려 쓴다),
-      MCP 도 마찬가지다. 남은 것은 **P-4** 우선순위 어휘
-      셋(`blueprint.Origin`·`nodeconfig.Layer`·`testengine.PlanOrigin`)을 한 줄로, **P-6**
-      감시 테스트를 override 결과 기준으로, **P-7** 문서와 `presets/chain/README.md`
-      재작성이다.
+      MCP 도 마찬가지다. **P-4 도 끝났다** — `internal/core/origin` 에 rung 일곱을 둔 어휘 하나를
+      만들고 기록 둘이 그것을 쓴다. `nodeconfig.Layer` 는 "누가 요청했는가" 라는 다른 질문에
+      답하므로 합치지 않았고, 그 이유는 설계 문서 §P-4 에 있다. 남은 것은 **P-6** 감시
+      테스트를 override 결과 기준으로, **P-7** 문서와 `presets/chain/README.md` 재작성이다.
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은
