@@ -103,7 +103,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 
 | 문서 | 등급 | 내용 |
 |---|---|---|
-| [`design-v3/`](dev/architecture/design-v3/direction.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21).** `measurement-…md` 는 잰 것만, `direction.md` 는 방향과 결정(§8·§13·§14 가 이름 판단의 근거), `chain-as-a-run-dimension.md` 는 공통 TC 한 벌이 세 체인에 도는 문제. **닫은 세 계획의 수치를 하나도 가져오지 않았다.** |
+| [`design-v3/`](dev/architecture/design-v3/direction.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21~).** `measurement-…md` 는 잰 것만, `direction.md` 는 방향과 결정(§8·§13·§14 가 이름 판단의 근거), `chain-as-a-run-dimension.md` 는 공통 TC 한 벌이 세 체인에 도는 문제, `state-machine-01~04` 는 실패를 재고 상태·전이를 정한 것, `cohesion-candidates-…md` 는 응집 후보 셋, `declaration-model-2026-09-22.md` 는 체인을 무엇으로 서술하고 값이 어느 순서로 정해지나(우선순위 줄 확정, 결함 셋). **닫은 세 계획의 수치를 하나도 가져오지 않았다.** |
 | [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (2026-09, 검토 중).** **새 설계의 입력이 아니다 (2026-09-20)** — 목표 구조와 P0~P5 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). **측정·분석 부분만 인용할 수 있고, 그것도 날짜를 확인하고 다시 잴 것.** |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |
