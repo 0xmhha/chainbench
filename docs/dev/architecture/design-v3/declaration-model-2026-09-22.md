@@ -233,12 +233,12 @@ D1 은 "노드별이냐 망 전체냐" 의 문제가 아니라 **어떤 사실�
 | ~~**P-1**~~ | ~~용어를 확정한다~~ | **완료 2026-09-22.** chain-manifest / chain-preset / case / key-preset. §7 |
 | ~~**P-1b**~~ | ~~`env` 를 `chain-preset` 으로 개명한다~~ | **완료 2026-09-22.** 케이스 209개·선언 26개·Go 식별자 약 104곳. 209/209 검증 통과 유지 |
 | ~~**P-2**~~ | ~~선언을 한 겹으로 줄인다~~ | **완료 2026-09-22.** `upgrade.preset` 과 `preset.Chain` 이 없어졌다. 선언이 fork 와 at 을 직접 말하고, 포크 이름은 **그 포크를 넘겨받는 바이너리의 chain-manifest** 가 아는지로 검사한다 |
-| **P-3** | manifest 와 환경 선언의 소유권을 가른다. 중복 필드(`upgrade`·`network_id`)를 한쪽으로 모은다 | 같은 사실을 적는 자리가 하나다 |
+| ~~**P-3**~~ | ~~소유권을 가른다~~ | **완료 2026-09-22.** `manifest.upgrade` 를 지우고 `network_id` 를 파생으로 돌렸다. 세 manifest 에서 네 필드가 없어졌다 |
 | **P-4** | 우선순위 어휘 셋을 한 줄로 모은다 | 값마다 어느 단이 이겼는지 한 어휘로 읽힌다 |
 | **P-5** | `suite run` 에 `--server-set` 을 단다 | 정의서 하나가 server-set 만 갈아 끼워 다른 기계에서 돈다 |
 | **P-6** | 감시 테스트를 override 결과 기준으로 다시 쓴다 | 기본값을 의도적으로 바꿔도 실패하지 않고, 사슬을 거친 결과가 틀리면 실패한다 |
 | **P-7** | preset 문서의 틀린 값과 `presets/chain/README.md` 를 고친다 | 문서가 적은 값이 실제로 쓰이는 값이다 |
-| **P-8** | `manifest.network_id` 가 파생과 같으면 거부하는 래칫을 건다 | 세 체인의 현재 필드가 전부 걸린다(같은 값이므로), 지우면 통과한다 |
+| ~~**P-8**~~ | ~~파생과 같은 `network_id` 를 거부한다~~ | **완료 2026-09-22.** P-3 과 떼어 놓을 수 없어 함께 했다. 세 필드가 전부 걸렸고, 지우니 통과한다 |
 
 `presets/chain/wemix-upgrade-15.yaml` 은 그대로 둔다. 지금 부르는 데가 없을 뿐,
 `tests/tc` 정의서를 훑을 때 연결될 자리다.
@@ -272,6 +272,29 @@ INVALID FORK: the declaration crosses the "croisant" fork and wbft does not know
 
 두 yaml 은 지우지 않았다. 불러 쓰는 문법이 없어졌을 뿐, 15+15 환경의 신원 기록은 그 안에만
 있다.
+
+### P-3 · P-8 — 소유권 (2026-09-22)
+
+같은 사실이 chain-manifest 와 chain-preset 두 곳에 있었다. 둘 다 정리했고, 둘 다 **읽는 곳이
+없다는 것이 먼저 드러났다.**
+
+**`manifest.upgrade`.** `to_chain`·`at_fork`·`validator_source` 셋을 선언하는데, 읽는 코드는
+**자기 자신을 검증하는 한 줄뿐**이었다. `ValidatorSource` 는 어디서도 읽히지 않는다. 핸드오버가
+어디로 가고 어느 포크에서 갈리는지는 chain-preset 이 망마다 말하는 것이고, manifest 의 사본은
+그것과 어긋날 수 있을 뿐 쓰이지 않았다. `UpgradeSpec` 타입과 함께 지웠다.
+
+**`manifest.network_id`.** D-a 가 파생 규칙을 세운 뒤로 이 필드의 뜻은 "파생과 다르다" 하나다.
+그런데 세 체인 모두 자기 chain id 와 같은 값을 적고 있었으니 **세 번 아무 말도 안 한 셈**이다.
+필드를 지우고, 파생과 같은 값을 적으면 거부하는 검증을 넣었다.
+
+```
+registry: manifest "wbft" sets network_id to its own chain id (8284), which is what an
+unset field already means — remove it, or set the id this chain actually differs by
+```
+
+검증을 넣자 세 manifest 가 전부 걸렸다. 그것이 필드가 비어 있어야 한다는 증거다. 지우고 나니
+파생만 남고, 라이브 핸드오버에서 다섯 노드가 전부 8285 로 뜬다 — 이제 그 값을 적어 둔 곳은
+어디에도 없고 chain id 에서 나온다.
 
 ---
 

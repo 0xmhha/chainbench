@@ -3,7 +3,6 @@
   "binary": "gstable",
   "dialect": "geth114",
   "chain_id": 8283,
-  "network_id": 8283,
   "miner_recommit": "duration",
   "bootstrap": {
     "type": "static"

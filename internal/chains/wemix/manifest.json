@@ -3,7 +3,6 @@
   "binary": "gwemix",
   "dialect": "geth110-wemix",
   "chain_id": 8285,
-  "network_id": 8285,
   "miner_recommit": "nanos",
   "bootstrap": {
     "type": "governance-etcd"
@@ -46,10 +45,5 @@
     "rpc",
     "ws",
     "consensus"
-  ],
-  "upgrade": {
-    "to_chain": "wbft",
-    "at_fork": "croissant",
-    "validator_source": "croissant_init"
-  }
+  ]
 }

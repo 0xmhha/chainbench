@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 50 | 54,240 |
+| `internal/` | 50 | 54,232 |
 | `cmd/` | 19 | 5,021 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **72** | **60,051** |
+| **합계** | **72** | **60,043** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 23패키지 16,784줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 23패키지 16,776줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -65,7 +65,7 @@ internal/core/
 │   ├── store    1,164  [L1] 키셋 저장·읽기 — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드 · 키 출처(KeySource)
 │   └── operation  683  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
 │                            서버 접근은 자기가 선언한 Opener 로 주입받는다
-├── registry     1,093  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
+├── registry     1,085  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
 │                            capability 카탈로그·핸들러(LoadCatalog·RegisterHandler·GetByAddress)·검증자 조회(Validators)
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      297  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘

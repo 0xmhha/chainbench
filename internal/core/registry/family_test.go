@@ -103,8 +103,7 @@ func TestValidatorsCarryBLS_IsTheFamilysAnswer(t *testing.T) {
 // dereference in the middle of a composition.
 func TestRegister_RefusesAHalfWiredPlugin(t *testing.T) {
 	m := registry.MustParseManifest([]byte(`{
-		"id":"probe-only","binary":"gx","dialect":"geth114","chain_id":1,"network_id":1,
-		"miner_recommit":"duration","bootstrap":{"type":"static"},"consensus_family":"wbft"}`))
+		"id":"probe-only","binary":"gx","dialect":"geth114","chain_id":1,"miner_recommit":"duration","bootstrap":{"type":"static"},"consensus_family":"wbft"}`))
 
 	for name, p := range map[string]registry.ChainPlugin{
 		"no family":   registry.StaticPlugin{M: m},

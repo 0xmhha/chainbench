@@ -104,11 +104,10 @@
       이다. 지우는 것도 개명하는 것도 답이 아니었다 — **선언이 두 겹인 것**이 원인이었고,
       chain-preset 한 겹으로 합쳤다. `preset.Chain`·`ChainDir`·`upgrade.preset` 이 함께 없어졌다.
 - [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
-      결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2 는 끝났다. 남은 것은 **P-3** chain-manifest 와
-      chain-preset 의 소유권 분리(지금 `upgrade` 와 `network_id` 가 두 곳에 있다), **P-4**
-      우선순위 어휘 셋을 한 줄로, **P-5** `suite run --server-set`, **P-6** 감시 테스트를
-      override 결과 기준으로, **P-7** 문서와 `presets/chain/README.md` 재작성, **P-8**
-      `manifest.network_id` 가 파생과 같으면 거부하는 래칫이다.
+      결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. 남은 것은 **P-4** 우선순위 어휘
+      셋(`blueprint.Origin`·`nodeconfig.Layer`·`testengine.PlanOrigin`)을 한 줄로, **P-5**
+      `suite run --server-set`, **P-6** 감시 테스트를 override 결과 기준으로, **P-7** 문서와
+      `presets/chain/README.md` 재작성이다.
 
 **체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은

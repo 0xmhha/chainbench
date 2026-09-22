@@ -23,10 +23,22 @@ type Manifest struct {
 	// ChainID is the default local-network chain id (operator-overridable via
 	// profile). Also used by the probe for chains that disambiguate by id.
 	ChainID int64 `json:"chain_id"`
-	// NetworkID is the devp2p network id. It MUST be set explicitly and be
+	// NetworkID is the devp2p network id, and is set ONLY by a chain whose id
+	// is not its chain id. Empty means the ordinary case: the network's devp2p
+	// id is its chain id, which is what [nodeconfig.NetworkOf] derives and what
+	// lets an overridden chain id carry the devp2p id with it.
+	//
+	// It used to be required, and all three chains set it to their own chain
+	// id — so the field said nothing three times and an overridden chain id
+	// left the devp2p id behind. Declaring it now MEANS "deliberately
+	// different", and a value equal to the chain id is refused so it keeps
+	// meaning that.
+	//
+	// The reason a chain may need one: go-wemix defaults its devp2p
 	// identical across every node of a network: go-wemix defaults its network
-	// id to 1111 (Wemix mainnet) independent of ChainID, while go-wbft defaults
-	// it to ChainID, so an unset value silently prevents cross-binary peering.
+	// id to 1111 (Wemix mainnet) independent of ChainID, while go-wbft derives
+	// it from ChainID — which is why it is emitted on every command line rather
+	// than left to the binary.
 	// There is deliberately no code default — set it here so a run's network id
 	// is always traceable to the manifest.
 	NetworkID int64 `json:"network_id"`
@@ -88,10 +100,6 @@ type Manifest struct {
 	// contract the binary provides rather than genesis is nowhere in a template
 	// at all (stablenet's accountManager).
 	SystemContracts map[string]string `json:"system_contracts,omitempty"`
-	// Upgrade, when present, declares that a network of this chain hands block
-	// production off to another chain's binary/consensus at a fork block (the
-	// wemix+etcd -> wbft hardfork). Absent for chains with no upgrade.
-	Upgrade *UpgradeSpec `json:"upgrade,omitempty"`
 }
 
 // BootstrapSpec describes how a network of a chain is brought up to producing
@@ -105,20 +113,6 @@ type BootstrapSpec struct {
 	//                       rotation are driven by the on-chain member list and
 	//                       etcd (wemix).
 	Type string `json:"type"`
-}
-
-// UpgradeSpec declares a hardfork handoff to another chain at a fork block.
-// Pre-fork, this chain's nodes produce; at the fork block they stop and the
-// to-chain's nodes (running concurrently and syncing until then) take over.
-type UpgradeSpec struct {
-	// ToChain is the chain id whose binary/consensus takes over (e.g. "wbft").
-	ToChain string `json:"to_chain"`
-	// AtFork is the fork name whose activation block is the handoff point
-	// (e.g. "croissant").
-	AtFork string `json:"at_fork"`
-	// ValidatorSource says where the post-fork validator set comes from
-	// ("croissant_init" = the genesis croissant.init validators/BLS keys).
-	ValidatorSource string `json:"validator_source"`
 }
 
 // BuildSpec describes how to obtain the node binary.
@@ -208,8 +202,11 @@ func (m Manifest) validate() error {
 	if m.ChainID <= 0 {
 		return fmt.Errorf("registry: manifest %q missing/invalid chain_id", m.ID)
 	}
-	if m.NetworkID <= 0 {
-		return fmt.Errorf("registry: manifest %q missing/invalid network_id (set it explicitly; there is no default)", m.ID)
+	if m.NetworkID < 0 {
+		return fmt.Errorf("registry: manifest %q has a negative network_id", m.ID)
+	}
+	if m.NetworkID != 0 && m.NetworkID == m.ChainID {
+		return fmt.Errorf("registry: manifest %q sets network_id to its own chain id (%d), which is what an unset field already means — remove it, or set the id this chain actually differs by", m.ID, m.ChainID)
 	}
 	if m.Dialect == "" {
 		return fmt.Errorf("registry: manifest %q missing dialect (set it explicitly; there is no default)", m.ID)
@@ -223,11 +220,6 @@ func (m Manifest) validate() error {
 	case "static", "governance-etcd":
 	default:
 		return fmt.Errorf("registry: manifest %q bootstrap.type must be \"static\" or \"governance-etcd\", got %q", m.ID, m.Bootstrap.Type)
-	}
-	if u := m.Upgrade; u != nil {
-		if u.ToChain == "" || u.AtFork == "" || u.ValidatorSource == "" {
-			return fmt.Errorf("registry: manifest %q upgrade requires to_chain, at_fork, and validator_source", m.ID)
-		}
 	}
 	return nil
 }
