@@ -185,9 +185,22 @@ PR-D = 14~17, PR-E = 18~19.
 `run := func(name string) ...` 을 만들어 `handlersFor` 에 넘기고 있으니(`verbs_up.go`), 새로 만드는
 기제가 아니라 이미 있는 이음매를 그대로 쓰는 것이다. `Open` 은 손대지 않는다.
 
-**(2) 결과 줄은 계속 `netUpFrom` 이 모은다.**
-`out.Steps` 의 `"name: detail"` 은 `record` 클로저가 쌓고 CLI 가 출력한다. `run` 이 그 클로저를
-감싸므로 모으는 자리가 바뀌지 않는다. `Manager` 는 출력 형식을 모른다.
+**(2) 결과 줄은 커밋 4 에서는 `composeFrom` 이, 커밋 5 부터는 `Manager` 가 모은다.**
+`out.Steps` 의 `"name: detail"` 은 `record` 클로저가 쌓고 CLI 가 출력한다. 커밋 4 에서는 모든 leaf
+가 어댑터라 그 클로저가 아홉 단계를 전부 부르므로 모으는 자리가 바뀌지 않는다.
+
+**커밋 5 에서 이 결정이 깨진다**(2026-09-22, `openingWorkspace` 를 쓰면서 확인). 단계 본체가 state
+안으로 들어가면 그 클로저는 그 단계를 더 이상 부르지 않고, 그 단계의 줄이 출력에서 조용히 사라진다.
+"어댑터만 있는 동안" 이라는 전제가 붙은 결정이었다.
+
+그래서 커밋 5 에서 보고를 `Manager` 로 옮긴다. `StepRunner` 가 detail 을 돌려주고, 단계가 끝났다는
+message 가 그것을 싣고, `Composing` 이 `"step: detail"` 로 모으고, `composeFrom` 이 마지막에
+`Manager.Steps()` 로 읽는다. 실패해도 먼저 읽는다 — 거기까지 된 것을 보여 주는 것이 지금 동작이다.
+두 곳이 나눠 갖지 않는 것이 요점이다.
+
+**단계가 끝났다는 message 는 하나의 인터페이스로 받는다.** `Composing` 이 단계마다 case 를 하나씩
+갖게 두면 아홉 개가 같은 말을 하게 된다. 대신 "끝난 단계가 하는 말" 을 인터페이스로 두고
+(`step` 과 `detail` 을 내놓는다), `Composing` 은 case 하나로 받는다. 실패는 여기에 들지 않는다.
 
 **(3) workspace 잠금은 `netUpFrom` 의 것이다. `Manager` 는 잠그지 않는다.**
 `Manager` 는 이미 열려 있고 이미 잠긴 `*Workspace` 를 받는다. 잠금 구간이 machine 보다 넓기
