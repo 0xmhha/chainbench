@@ -1841,7 +1841,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
 
 
-## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-22 갱신**)
+## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-23 갱신**)
 
 §1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
 배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다.
@@ -1853,11 +1853,15 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 | 갈래 | 상태 |
 |---|---|
-| G. HSM 리팩토링 (2026-09-21~) | 코드 완료 · **DSL 스위프 208/209 PASS, FAIL 0** |
-| G1b. 로컬 체인 바이너리가 없어 e2e 태그 검증 미실시 | 열림 |
-| G6. 15노드 poa node13 합류 실패 (2026-09-23 관측) | 열림 · 원인 미확인 |
-| G 파생 세 건 (G3~G5) | 열림 (범위 밖으로 미뤄 둔 것) |
+| G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
+| G6. 15노드 poa node13 합류 실패 | 열림 · **원인 규명됨 — go-wemix 몫** |
+| G4. `upgrade run` 을 부르는 e2e 20건이 못 돈다 | 열림 (수치 정정 2026-09-23) |
+| G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다 | 열림 (신규 2026-09-23) |
+| G3 · G5 | 열림 (범위 밖으로 미뤄 둔 것) |
 | B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
+
+**G4·G6·G7 은 어느 것도 이 브랜치가 만든 것이 아니다.** G4·G7 은 발판이 없어진 테스트이고
+(둘 다 main 에서 이미 그랬다), G6 은 go-wemix 의 블록 검증 안이다.
 
 ### 재측정 (2026-09-11, PR #383 머지 후)
 
@@ -2927,7 +2931,7 @@ WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
 않는다. 마지막으로 fetch 했을 때의 원격을 보여준다.**
 
 
-### G. HSM 리팩토링 — 코드 완료, 전량 검증 남음 (2026-09-21 착수 · 2026-09-22 현재)
+### G. HSM 리팩토링 — 검증 완료 (2026-09-21 착수 · 2026-09-23 전량 검증)
 
 브랜치 `refactor/hsm-state-machine`. `internal/core/lifecycle` 의 표를 걸어 다니던 머신을
 계층형 상태 머신으로 바꿨다. 설계는 `docs/research/chainbench/analyses/14`, 작업 prompt 는
@@ -2969,22 +2973,60 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   15노드 구성(`wbft-chain-up-15`, `stablenet-chain-up-15`)과 정족수 계열
   (`wbft-quorum-at-15-nodes` 129s, `wbft-quorum-halt-and-recover` 98s)이 전부 통과했다 —
   HSM 리팩토링이 건드린 면이 바로 이쪽이다. 남은 1건은 아래 G6.
-- [ ] **G1b. `go test -tags e2e ./...` 는 이 기기에서 아무것도 검증하지 못한다.**
-  `tests/e2e` 와 `cmd/chainbench/upgrade_*_e2e_test.go` 는 **호스트에 darwin/arm64 체인
-  바이너리**를 요구하고 없으면 `t.Skip` 한다. docker 는 이 경로를 대신하지 못한다 — 그
-  테스트들은 체인을 로컬 프로세스로 띄우지 SSH 로 띄우지 않는다. 지금 돌리면 전부 skip 이라
-  **초록으로 보이지만 아무것도 묻지 않은 것**이다. 실행하려면 로컬 체인 바이너리가 필요하다.
+- [x] **G1b. e2e 태그 계층도 돌았다 (2026-09-23).** 이 계층은 **호스트에 darwin/arm64 체인
+  바이너리**를 요구한다 — docker 는 대신하지 못한다(그 테스트들은 체인을 로컬 프로세스로
+  띄우지 SSH 로 띄우지 않는다). 바이너리는 이 기기에 있다:
+  `~/work/github/wemade/{go-wemix,go-wbft}/build/bin/gwemix` 와 `go-stablenet/build/bin/gstable`.
+  게이트는 `GSTABLE_BIN` · `WBFT_BIN` · `CHAINBENCH_E2E_FROM_BIN` · `CHAINBENCH_E2E_TO_BIN` ·
+  `CHAINBENCH_E2E_TEMPLATE`(= `go-wemix/wemix/scripts/genesis-template.json`) 다.
+
+  | 무엇 | 결과 |
+  |---|---|
+  | `tests/e2e` (실제 체인을 띄우는 계층) | **통과, 811초** |
+  | `internal/testengine` · `internal/app` · 그 외 60여 패키지 | 통과 |
+  | 실패 | **21건 — 전부 발판이 없어진 테스트. 회귀 0건** |
+
+  실패 21건은 아래 G4·G7 이다. 어느 것도 이 브랜치가 만든 것이 아니다.
+  `tests/e2e` 는 `-v` 없이 돌려 **개별 테스트 단위 기록은 남기지 않았다.**
 - [x] **G2. PR.** #425. G1 보다 먼저 냈다(사용자 의도). 이 절이 그 PR 의 검증 기록이다.
-- [ ] **G6. 15노드 poa 에서 node13 이 합류하지 못한다 (신규 2026-09-23).**
+- [ ] **G6. 15노드 poa 에서 node13 이 합류하지 못한다 — 체인팀 몫 (신규 2026-09-23).**
   `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED — `1 node(s) still not ready after
-  5m0s`. 14대가 블록 591 에 있는 동안 node13 은 블록 4, peer 0, syncing 이다. 로그는 5분
-  내내 같은 것을 반복한다: 블록 5 를 `unauthorized block` 으로 거절 → 그 블록을 준 피어를
-  끊음 → 재접속 → 다시 거절. 증적(노드 15대 로그 전부 + health.json + processes.json)은
-  `~/.chainbench/20260923-100943-97772/`. **원인 미확인**이고, 이 브랜치가 만든 것인지도
-  확인하지 않았다 — **한 번 관측했을 뿐 재실행하지 않았으므로 재현성도 모른다.** 워크리스트가
-  기록한 이전 검증은 `4 bp + 11 en` 구성이고 지금 표준은 `bp 7 · en 7 · pn 1` 이라 구성 자체가
-  다르다. 확인 순서: 같은 케이스를 한 번 더 돌려 결정적인지 본다 → 결정적이면 main 에서
-  같은 케이스를 돌려 브랜치 탓인지 가른다.
+  5m0s`. 14대가 블록 591 에 있는 동안 node13 은 블록 4, peer 0, syncing 이다. 증적(노드 15대
+  로그 전부 + health.json + processes.json)은 `~/.chainbench/20260923-100943-97772/`.
+
+  **원인은 go-wemix 의 블록 권한 검사 안에 있다. chainbench 와 이 브랜치는 무관하다.**
+  검사는 `consensus/ethash/consensus.go:327` → `wemix/admin.go:992 verifyBlockSig` 로 가고,
+  거기서 **부모 블록(height-1)의 거버넌스 상태**를 읽는다. 그 상태를 못 읽으면 어떻게 되는가가
+  갈림길이다.
+
+  - `wemix/admin.go:998-1002` — 레지스트리 조회가 `ethereum.NotFound` 거나 member count 가 0이면
+    **통과(true)** 로 돌려준다. 그 `NotFound` 는 `wemix/bind/structs.go:253-261` 이 후보 주소
+    10개를 모두 실패했을 때 원인을 가리지 않고 만들어 낸다 — "컨트랙트가 아직 없다" 와
+    "그 블록의 state 가 로컬에 없다" 가 같은 에러가 된다.
+  - `wemix/miner_limit.go:118 enodeExists` — 여기서 나오는 에러는 하나도 관대하게 처리되지 않고
+    호출부가 전부 **거절(false)** 로 만든다.
+
+  즉 **같은 "거버넌스를 확인할 수 없다" 가 호출 깊이에 따라 통과와 거절로 갈린다.**
+
+  왜 node13 만 걸렸나: geth 는 배치의 헤더를 먼저 한꺼번에 검증한다. 형제 여섯(node8~12·14)은
+  블록 3–64 를 **한 배치**로 받아서 블록 5 헤더를 검증할 때 로컬 head 가 아직 2였다 — 블록 4의
+  state 가 없으니 관대한 경로로 통과했다. node13 만 배치가 3–4 에서 끊겨 **블록 4를 이미
+  갖고 있었고**, 그래서 혼자 진짜 검사를 돌려 떨어졌다. 뒤처진 것이 통과의 조건이었다.
+
+  왜 회복하지 못했나: 블록 4는 되돌아가지 않으므로 재시도마다 같은 엄격한 경로를 타고 같은
+  이유로 떨어진다. 관대한 경로는 "부모 state 가 없을 때"만 열리는데 node13 은 그 조건에서
+  영구히 벗어났다. **피어 수는 원인이 아니다** — 어느 피어가 줘도 같은 블록 5이고, 거절은
+  node13 자신의 상태 때문이다. (`rawdb.WriteBadBlock` 이 남기는 목록은 진단용이고 import 를
+  막지 않는다. 읽는 곳은 `eth/tracers/api.go` 뿐이다.)
+
+  **체인팀에 넘길 질문 둘.** (1) 거버넌스를 못 읽을 때 통과시키는 것이 의도인가 — 의도면
+  `enodeExists` 경로도 같아야 하고, 아니면 셋 다 거절이어야 한다. (2) `GetRegistryByOwner` 가
+  "컨트랙트 없음" 과 "state 조회 실패" 를 같은 `NotFound` 로 뭉개는 것이 맞는가.
+
+  **확인하지 않은 것.** 블록 5가 실제로 권한 없는 블록인지는 모른다 — 진짜 검사를 통과한 노드가
+  하나도 없으므로 14대가 옳다는 근거도 없다. 판정하려면 블록 4 시점의 거버넌스 상태가 필요한데
+  그 datadir 은 스위프가 지웠다(이 케이스는 tcsweep 수정 이전에 돌았다). 재현성도 모른다 —
+  배치 경계는 다운로더 경합이라 매번 다르다.
 
 **라이브로 못 밟은 것 하나.** "이미 포크를 넘은 네트워크는 `BeforeFork`·`HandingOver` 를
 건너뛰고 곧장 `Crossed` 로 간다" 는 갈래는 단위 테스트로만 확인했다
@@ -3004,12 +3046,32 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   `validatorset/validatorset.go`). 상대 경로이므로 프로세스의 CWD 기준으로 풀린다. 저장소
   루트에서 실행하면 맞고, 다른 데서 실행하면 조용히 없는 디렉터리를 가리킨다.
   **판단이 필요하다** — 주석을 사실에 맞추거나, 루트를 찾아 풀거나 둘 중 하나다.
-- [ ] **G4. `upgrade run` 을 부르는 e2e 둘.** 이미 `cmd/chainbench/e2e_commands_exist_test.go`
-  의 `invocationDebt` 에 이유까지 적혀 있으므로 **잊힌 것은 아니다.** 테스트 함수는 20개가
-  아니라 **각 파일에 하나씩, 둘**이다(`upgrade_data_migration_e2e_test.go`,
-  `upgrade_gov_ncp_lifecycle_e2e_test.go`). 둘 다 사라진 명령의 **출력**(pid, node1 RPC,
-  "handoff confirmed")을 읽으므로 `chainbench run` 으로 바꾸는 것은 치환이 아니라 발판을
-  다시 쓰는 일이고, 확인하려면 체인 바이너리 둘이 필요하다.
+- [ ] **G4. `upgrade run` 을 부르는 e2e 는 둘이 아니라 스무 개다 (2026-09-23 실행으로 확정).**
+  이 항목은 2026-09-22 에 "테스트 함수는 20개가 아니라 각 파일에 하나씩, 둘" 이라고 적었다.
+  **그게 틀렸다.** 바이너리를 걸고 실제로 돌리니 스무 개가 전부 실패한다. 파일은 일곱이다.
+
+  | 파일 | 함수 |
+  |---|---|
+  | `upgrade_gov_staking_e2e_test.go` | **14** |
+  | `upgrade_data_migration_e2e_test.go` · `upgrade_gov_e2e_test.go` · `upgrade_gov_epoch_e2e_test.go` · `upgrade_gov_ncp_lifecycle_e2e_test.go` · `upgrade_gov_scenario_e2e_test.go` · `upgrade_gov_write_e2e_test.go` | 각 1 |
+
+  `e2e_commands_exist_test.go` 의 `invocationDebt` 도 두 파일만 이름 붙이고 있어 같은 정도로
+  적게 잡고 있다. **못 도는 커버리지는 20건이다.** 세는 방법이 문제였다 — 파일을 셌지 함수를
+  세지 않았고, 돌려 보지 않았다.
+
+  스무 개 전부 사라진 명령의 **출력**(pid, node1 RPC, "handoff confirmed")을 읽으므로
+  `chainbench run` 으로 바꾸는 것은 치환이 아니라 발판을 다시 쓰는 일이다.
+
+  **덤으로 드러난 것.** `runGovHandoffArgs` 의 재시도 고리
+  (`upgrade_gov_ncp_lifecycle_e2e_test.go:172`)가 "unknown command" 를
+  `flaky producer/etcd bootstrap` 으로 보고한다. 체인이 한 번도 뜨지 않았는데(각 시도 0.00초)
+  로그는 go-wemix 가 불안정한 것처럼 읽힌다. **진단이 원인을 엉뚱한 곳으로 돌린다.**
+- [ ] **G7. `TestRemoteDriver_E2E` 의 발판이 저장소에 없다 (신규 2026-09-23).**
+  `internal/core/process/remote_e2e_test.go` 는 원격에 `/usr/local/bin/fakenode` 가 있다고
+  가정하고, 자기 주석은 그것을 `tests/remote/sshd/run.sh` 가 띄운다고 적는다. **그 디렉터리가
+  없다.** `fakenode` 를 언급하는 곳은 이 테스트 자신(`:62`)뿐이다. 즉 이 테스트는 어디서
+  돌려도 통과할 수 없다. G4 와 같은 부류인데 `invocationDebt` 에는 없다 — 그 장부가 명령만
+  보고 fixture 는 보지 않기 때문이다. 고치려면 sshd 스탠드인을 되살리거나 테스트를 지운다.
 - [ ] **G5. 죽은 `.env.json` 접미사 필터 넷.** `cmd/chainbench/validate_test.go:271`,
   `internal/testengine/corpus_gate_test.go:65`,
   `internal/testhelper/corpus_address_test.go:60` 과 `:365`. `tests/` 아래에
