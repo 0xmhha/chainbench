@@ -27,11 +27,6 @@ func reported(mg *Manager) []string {
 	return out
 }
 
-// upRequest is the smallest request the stages that have moved will accept.
-//
-// It grows as stages move in and start reading more of it, which is why it is
-// one function rather than a literal at each call: the alternative is editing
-// every test in this file nine times.
 // stubBinary is an executable that does nothing and succeeds.
 //
 // The init stage runs the node binary, and a unit test has no chain build. What
@@ -46,6 +41,11 @@ func stubBinary(t *testing.T) string {
 	return path
 }
 
+// upRequest is the smallest request the stages that have moved will accept.
+//
+// It grows as stages move in and start reading more of it, which is why it is
+// one function rather than a literal at each call: the alternative is editing
+// every test in this file nine times.
 func upRequest(t *testing.T) ChainUpIn {
 	t.Helper()
 	// Keys generated into this test's own directory, rather than the committed

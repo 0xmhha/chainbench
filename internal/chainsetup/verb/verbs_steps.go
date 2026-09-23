@@ -61,6 +61,7 @@ func ChainGenesis(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainGen
 	})
 }
 
+// ChainConfigIn is what ChainConfig takes: the workspace, the scope, and the
 // overrides to record before rendering.
 type ChainConfigIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
