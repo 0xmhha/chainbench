@@ -69,13 +69,13 @@
       P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
       **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
 
-- [ ] **죽은 명령을 부르는 e2e 둘** — 근거: `internal/arch` 가 아니라 `cmd/chainbench/e2e_commands_exist_test.go` 의 `invocationDebt` 가 센다.
-      `upgrade_data_migration_e2e_test.go`(go-wbft 가 go-wemix chaindata 로 init 되는지)와
-      `upgrade_gov_ncp_lifecycle_e2e_test.go`(핸드오프를 건너는 거버넌스 NCP 생애주기)가 아직
-      `chainbench upgrade run` 으로 망을 세운다 — **CLI 에 없는 명령이다.** `e2e` 태그 뒤에 있고
-      환경변수가 없으면 건너뛰어 아무도 실패를 보지 못했다. 둘 다 **다른 곳이 덮지 않는 것**을
-      시험하고, 그 명령의 **출력**(pid·node1 RPC·"handoff confirmed")을 읽으므로 `chainbench run`
-      으로 바꾸는 것은 치환이 아니라 발판 재작성이다. 검증에 체인 바이너리 둘이 필요하다.
+- [x] **죽은 명령을 부르는 e2e** — **해소 (2026-09-24). 둘이 아니라 스무 개였다.**
+      이 항목은 `upgrade_data_migration_e2e_test.go` 와 `upgrade_gov_ncp_lifecycle_e2e_test.go`
+      둘이라고 적었다. 바이너리를 걸고 돌리니 **7개 파일 20개 함수**가 전부
+      `chainbench upgrade run` 에서 죽었다 — 파일을 셌지 함수를 세지 않았고, 돌려 보지
+      않았다. `invocationDebt` 도 같은 정도로 적게 잡고 있었고, 지금은 비어 있다.
+      스무 개 전부 리팩토링이 남긴 경로(`chainbench run` + `wemix-to-wbft` chain-preset)로
+      옮겼고 21건이 통과한다. 상세는 §1s G4 · G4-a.
 
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
@@ -1841,12 +1841,12 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
 
 
-## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-23 갱신**)
+## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-24 갱신**)
 
 §1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
 배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다.
 
-### 지금 열린 것 (2026-09-23)
+### 지금 열린 것 (2026-09-24)
 
 아래 G 절이 정본이다. 9월 12일과 9월 22일 사이에 두 트랙이 돌았고, 이 문서는 그동안
 따라오지 못했다 — 9월 11일에 멈춰 있었다. **이 절을 읽는 사람이 먼저 볼 것은 G 다.**
@@ -1855,13 +1855,15 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 |---|---|
 | G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
 | G6. 15노드 poa node13 합류 실패 | 열림 · **원인 규명됨 — go-wemix 몫** |
-| G4. `upgrade run` 을 부르는 e2e 20건이 못 돈다 | 열림 (수치 정정 2026-09-23) |
 | G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다 | 열림 (신규 2026-09-23) |
 | G3 · G5 | 열림 (범위 밖으로 미뤄 둔 것) |
+| ~~G4. `upgrade run` e2e 20건~~ | **닫힘 (2026-09-24) — 21 PASS · 0 FAIL** |
+| ~~G4-a. overlay 가 fork 섹션에서 버려짐~~ | **닫힘 (2026-09-24) — 순서 원복** |
 | B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
 
-**G4·G6·G7 은 어느 것도 이 브랜치가 만든 것이 아니다.** G4·G7 은 발판이 없어진 테스트이고
-(둘 다 main 에서 이미 그랬다), G6 은 go-wemix 의 블록 검증 안이다.
+**G6·G7 은 이 브랜치가 만든 것이 아니다.** G7 은 발판이 없어진 테스트(main 에서 이미 그랬다),
+G6 은 go-wemix 의 블록 검증 안이다. G4-a 는 이 계열의 리팩토링(#419)이 뒤집은 순서이고,
+여기서 되돌렸다.
 
 ### 재측정 (2026-09-11, PR #383 머지 후)
 
@@ -2931,7 +2933,7 @@ WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
 않는다. 마지막으로 fetch 했을 때의 원격을 보여준다.**
 
 
-### G. HSM 리팩토링 — 검증 완료 (2026-09-21 착수 · 2026-09-23 전량 검증)
+### G. HSM 리팩토링 — 검증 완료 (2026-09-21 착수 · 2026-09-24 전량 검증)
 
 브랜치 `refactor/hsm-state-machine`. `internal/core/lifecycle` 의 표를 걸어 다니던 머신을
 계층형 상태 머신으로 바꿨다. 설계는 `docs/research/chainbench/analyses/14`, 작업 prompt 는
@@ -2964,6 +2966,7 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
 | `go vet -tags e2e ./...` (e2e 컴파일) | 통과 |
 | docker live 테스트 17건 (chainsetup 2 · resource 3 · process 7 · keyringcmd 4 · app 1) | 17건 전부 PASS |
 | **209건 DSL 스위프** | **208 PASS · 0 FAIL · 1 BLOCKED** |
+| **핸드오버 e2e 21건** (2026-09-24) | **21 PASS · 0 FAIL** |
 
 스위프는 두 번에 나눠 돌았다. go-wemix 13건은 poa 가 노드마다 p2p 옆 3연속 포트를 잡으므로
 `server-set-wemix.yaml`(p2p step 3) + `--node-monitor-timeout 5m` 이 따로 필요하다. 한 번의
@@ -2973,21 +2976,26 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   15노드 구성(`wbft-chain-up-15`, `stablenet-chain-up-15`)과 정족수 계열
   (`wbft-quorum-at-15-nodes` 129s, `wbft-quorum-halt-and-recover` 98s)이 전부 통과했다 —
   HSM 리팩토링이 건드린 면이 바로 이쪽이다. 남은 1건은 아래 G6.
-- [x] **G1b. e2e 태그 계층도 돌았다 (2026-09-23).** 이 계층은 **호스트에 darwin/arm64 체인
+- [x] **G1b. e2e 태그 계층도 돌았다 (2026-09-23 최초 · 2026-09-24 재측정).** 이 계층은 **호스트에 darwin/arm64 체인
   바이너리**를 요구한다 — docker 는 대신하지 못한다(그 테스트들은 체인을 로컬 프로세스로
   띄우지 SSH 로 띄우지 않는다). 바이너리는 이 기기에 있다:
   `~/work/github/wemade/{go-wemix,go-wbft}/build/bin/gwemix` 와 `go-stablenet/build/bin/gstable`.
-  게이트는 `GSTABLE_BIN` · `WBFT_BIN` · `CHAINBENCH_E2E_FROM_BIN` · `CHAINBENCH_E2E_TO_BIN` ·
-  `CHAINBENCH_E2E_TEMPLATE`(= `go-wemix/wemix/scripts/genesis-template.json`) 다.
+
+  게이트는 `GSTABLE_BIN` · `WBFT_BIN` · `CHAINBENCH_E2E_FROM_BIN` ·
+  `CHAINBENCH_E2E_TO_BIN` 넷이다. `CHAINBENCH_E2E_TEMPLATE` 은 더 필요 없다 — genesis
+  템플릿은 chain-preset 이 소유한다(G4).
 
   | 무엇 | 결과 |
   |---|---|
-  | `tests/e2e` (실제 체인을 띄우는 계층) | **통과, 811초** |
+  | `tests/e2e` (실제 체인을 띄우는 계층) | 통과, 854초 (캐시 끄고 잰 값) |
+  | 핸드오버 e2e 21건 | **21 PASS · 0 FAIL** (G4 에서 살려냄) |
   | `internal/testengine` · `internal/app` · 그 외 60여 패키지 | 통과 |
-  | 실패 | **21건 — 전부 발판이 없어진 테스트. 회귀 0건** |
 
-  실패 21건은 아래 G4·G7 이다. 어느 것도 이 브랜치가 만든 것이 아니다.
-  `tests/e2e` 는 `-v` 없이 돌려 **개별 테스트 단위 기록은 남기지 않았다.**
+  처음 돌렸을 때는 21건이 실패했고 **전부 발판이 없어진 테스트**였다. 그 21건은 G4 와 G7
+  이고, 어느 것도 이 브랜치가 만든 것이 아니다. G4 는 닫혔고 G7 만 남았다.
+
+  **주의: `go test` 캐시.** 두 번째 실행에서 35개 패키지가 `(cached)` 로 통과했고 그중
+  `tests/e2e` 가 있었다. 캐시는 재실행이 아니다 — 이 계층을 다시 잴 때는 `-count=1` 을 준다.
 - [x] **G2. PR.** #425. G1 보다 먼저 냈다(사용자 의도). 이 절이 그 PR 의 검증 기록이다.
 - [ ] **G6. 15노드 poa 에서 node13 이 합류하지 못한다 — 체인팀 몫 (신규 2026-09-23).**
   `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED — `1 node(s) still not ready after
@@ -3046,26 +3054,75 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   `validatorset/validatorset.go`). 상대 경로이므로 프로세스의 CWD 기준으로 풀린다. 저장소
   루트에서 실행하면 맞고, 다른 데서 실행하면 조용히 없는 디렉터리를 가리킨다.
   **판단이 필요하다** — 주석을 사실에 맞추거나, 루트를 찾아 풀거나 둘 중 하나다.
-- [ ] **G4. `upgrade run` 을 부르는 e2e 는 둘이 아니라 스무 개다 (2026-09-23 실행으로 확정).**
-  이 항목은 2026-09-22 에 "테스트 함수는 20개가 아니라 각 파일에 하나씩, 둘" 이라고 적었다.
-  **그게 틀렸다.** 바이너리를 걸고 실제로 돌리니 스무 개가 전부 실패한다. 파일은 일곱이다.
+- [x] **G4. `upgrade run` 을 부르던 e2e 20건을 리팩토링이 남긴 경로로 옮겼다 (2026-09-24).**
+  `upgrade run` 은 main 의 `6ed4b37c` (#419, 2026-09-20)가 지웠다. 그 리팩토링은 핸드오버를
+  전용 composer 에서 **일반 composition 경로**로 옮겼고, 명령을 몰던 e2e 20건은 따라 고치지
+  않았다. 각 시도가 0.00초에 끝났으므로 체인이 한 번도 뜬 적이 없다.
 
-  | 파일 | 함수 |
+  이 항목은 2026-09-22 에 "테스트 함수는 둘" 이라고 적었다. **틀렸다** — 바이너리를 걸고
+  돌리니 **7개 파일 20개 함수**였다. 파일을 셌지 함수를 세지 않았고, 돌려 보지 않았다.
+  `invocationDebt` 도 같은 정도로 적게 잡고 있었다.
+
+  **어떻게 옮겼나.** 명령이 플래그로 받던 것을 chain-preset 이 선언한다.
+
+  | 이전 | 지금 |
   |---|---|
-  | `upgrade_gov_staking_e2e_test.go` | **14** |
-  | `upgrade_data_migration_e2e_test.go` · `upgrade_gov_e2e_test.go` · `upgrade_gov_epoch_e2e_test.go` · `upgrade_gov_ncp_lifecycle_e2e_test.go` · `upgrade_gov_scenario_e2e_test.go` · `upgrade_gov_write_e2e_test.go` | 각 1 |
+  | `upgrade run --profile wemix-upgrade.yaml --from-binary --to-binary --template` | `chainbench run <생성 케이스> --keep-up` |
+  | 프로파일 YAML | `presets/chain/wemix-to-wbft.json` (두 바이너리 · croissant · 블록 20) |
+  | stdout 정규식으로 RPC·PID 파싱 | 워크스페이스 `chain-record.json` |
+  | `--genesis-overlay` 플래그 | chain-preset 의 `genesis.overlay` 선언 |
 
-  `e2e_commands_exist_test.go` 의 `invocationDebt` 도 두 파일만 이름 붙이고 있어 같은 정도로
-  적게 잡고 있다. **못 도는 커버리지는 20건이다.** 세는 방법이 문제였다 — 파일을 셌지 함수를
-  세지 않았고, 돌려 보지 않았다.
+  **진단이 원인을 엉뚱한 곳으로 돌리고 있었다.** 재시도 고리가 `cmd.Execute()` 의 에러를
+  버려서, "unknown command" 가 `flaky producer/etcd bootstrap` 으로 15일간 보고됐다. 로그만
+  보면 go-wemix 가 불안정한 것처럼 읽혔다. 이제 그 에러를 기록한다.
 
-  스무 개 전부 사라진 명령의 **출력**(pid, node1 RPC, "handoff confirmed")을 읽으므로
-  `chainbench run` 으로 바꾸는 것은 치환이 아니라 발판을 다시 쓰는 일이다.
+  **막혔던 것 넷과 그 해결.**
+  1. 임시 디렉터리의 케이스가 `presets/chain` 을 못 찾는다 → 커밋된 preset 을 읽어 인라인.
+  2. preset 의 `keys` 가 CWD 기준이라 풀리지 않는다 → `--keys` 로 절대 경로.
+  3. 운영자 계정에 genesis 잔고가 없다(13건이 `insufficient funds`) → 옛 프로파일이 주던
+     자금을 테스트가 선언한다.
+  4. 마이그레이션 테스트가 node1 을 producer 로 가정 → 이 preset 은 node5 가 producer 다.
+     어느 노드인지는 선언이 정하므로 **기록이 답하게** 했다.
 
-  **덤으로 드러난 것.** `runGovHandoffArgs` 의 재시도 고리
-  (`upgrade_gov_ncp_lifecycle_e2e_test.go:172`)가 "unknown command" 를
-  `flaky producer/etcd bootstrap` 으로 보고한다. 체인이 한 번도 뜨지 않았는데(각 시도 0.00초)
-  로그는 go-wemix 가 불안정한 것처럼 읽힌다. **진단이 원인을 엉뚱한 곳으로 돌린다.**
+  **마지막 5건은 리팩토링이 뒤집은 순서였다.** 상세는 아래 §G4-a.
+
+  `invocationDebt` 는 비었다 — 래칫이 항목을 지우라고 요구했고, 그것이 그 장부의 쓰임이다.
+
+- [x] **G4-a. genesis overlay 가 fork 섹션 안의 선언을 조용히 버리고 있었다 (2026-09-24).**
+  G4 의 마지막 5건이 여기서 막혀 있었다. overlay 가 `config.croissant` 아래에 선언한 것은
+  **전부 무시됐다** — 받아들여진 뒤 폐기됐고, 충돌을 알리는 것은 아무것도 없었다.
+
+  | overlay 가 요구 | genesis 결과 |
+  |---|---|
+  | `stabilizingStakersThreshold: 2` | 5 (템플릿 기본값) |
+  | `govNCP.params.ncps: 주소 하나` | 네 멤버 전부 |
+
+  순서 때문이다. `genesis.Customize`(`internal/core/genesis/genesis.go:111`)가 base 에
+  overlay 를 병합한 **뒤에**, `steps_genesis.go` 가 링에서 만든 fork 섹션으로
+  `SetConfigSection` 을 부르고 그 함수는 `config.croissant` 를 **통째로 교체**한다
+  (`internal/core/genesis/config.go:37`).
+
+  **이것은 리팩토링이 뒤집은 순서다.** #419가 흡수한 핸드오버는 정확히 그 이유로 fork 를
+  구성한 **뒤에** overlay 를 적용했다 — `upgrade.Handoff.Run` 이
+  `ComposePlan` → `ApplyOverlay` 순서였다. 그 일은 `7f39c562` 의
+  `internal/consensus/upgrade/handoff.go` 에 있었고 지금은 `internal/chainsetup/steps_genesis.go`
+  가 한다. 옮겨 오면서 순서가 뒤집혔고, 그 파일에서 fork 섹션 뒤에 overlay 를 다시 병합해
+  되돌렸다.
+
+  **왜 테스트가 이것을 필요로 했나.** 옛 프로파일은 검증자 집합과 거버넌스 의회를 **분리해**
+  선언했다 — `validators.addresses` 4명, `validators.members` 1명. chain-preset 에는 의회를
+  선언할 자리가 없어서 키셋의 `systemContractMembers`(4명)가 강제되고, 제안 정족수가 3이
+  된다. 단독 NCP 를 전제한 GOV-006/007/008/017 은 그 위에서 성립하지 않는다. overlay 가
+  효력을 되찾자 테스트가 자기 의회를 선언할 수 있게 됐다.
+
+  **남은 설계 질문(비차단).** chain-preset 이 의회를 선언할 수 있어야 하는가. 지금은
+  overlay 로 우회하고 있고, 옛 프로파일에는 그 필드가 있었다.
+
+  **찾은 방법을 적어 둔다.** 리팩토링 이전 트리를 worktree 로 받아(`7f39c562`) AST 로 파싱하고,
+  `upgrade run` 의 실행 절차를 복원해 지금 경로와 대조했다. 그 대조 없이는 순서 역전이
+  보이지 않았다 — 그 전까지는 이것을 새로 설계할 문제로 다루고 있었고, 정답(순서 원복)을
+  가장 위험한 안으로 잘못 평가했다.
+
 - [ ] **G7. `TestRemoteDriver_E2E` 의 발판이 저장소에 없다 (신규 2026-09-23).**
   `internal/core/process/remote_e2e_test.go` 는 원격에 `/usr/local/bin/fakenode` 가 있다고
   가정하고, 자기 주석은 그것을 `tests/remote/sshd/run.sh` 가 띄운다고 적는다. **그 디렉터리가
