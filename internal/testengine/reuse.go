@@ -14,6 +14,18 @@ import (
 // same shape, same genesis. The key is computed from the request rather than
 // from what was built, so a reuse decision can be made before composing.
 
+// sameComposition checks that every spec in a suite declares the SAME network,
+// not merely the same chain.
+//
+// One run composes one network, and it composes it from the first spec. A spec
+// further down the list that declares a different genesis, topology or binary
+// does not get the network it asked for — it runs against the first spec's, and
+// its assertions are answered by the wrong chain. That failure is silent, which
+// is the worst kind: six genesis-string cases each declaring their own
+// authorizedAccounts would all be answered by the first one's genesis and five
+// of them would report a wrong count as a real result.
+//
+// So the disagreement is refused here, before anything is allocated, and the
 // message names what differs so the caller can split the run.
 func sameComposition(specs []dsl.Spec) error {
 	if len(specs) < 2 {

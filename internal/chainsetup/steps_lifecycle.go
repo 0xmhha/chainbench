@@ -70,20 +70,6 @@ func (w *Workspace) genesisConfigFor(ns node.Record) string {
 	return ""
 }
 
-// pluginFor resolves the chain one node runs: the one recorded for its binary
-// when that binary is a different chain, otherwise the composition's.
-//
-// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
-// same question: which of this network's builds is this node. Keeping them the
-// same shape is what stops one of them answering differently from the others.
-// network is what every node of this composition shares, whichever binary it
-// runs: the chain id it was composed with and the devp2p id that follows it.
-//
-// Every caller that builds a node's configuration takes it from here, so the
-// config writer and the argv assembler cannot answer differently. They used to:
-// the config writer read the node's own plugin and the assembler the
-// composition's, which wrote one devp2p id into a successor's config file and
-// passed another on its command line.
 func (w *Workspace) network() (nodeconfig.Network, error) {
 	p, err := w.plugin()
 	if err != nil {
@@ -123,6 +109,20 @@ func (w *Workspace) checkUniformNetworkID() error {
 	return nil
 }
 
+// pluginFor resolves the chain one node runs: the one recorded for its binary
+// when that binary is a different chain, otherwise the composition's.
+//
+// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
+// same question: which of this network's builds is this node. Keeping them the
+// same shape is what stops one of them answering differently from the others.
+// network is what every node of this composition shares, whichever binary it
+// runs: the chain id it was composed with and the devp2p id that follows it.
+//
+// Every caller that builds a node's configuration takes it from here, so the
+// config writer and the argv assembler cannot answer differently. They used to:
+// the config writer read the node's own plugin and the assembler the
+// composition's, which wrote one devp2p id into a successor's config file and
+// passed another on its command line.
 func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
 	if ns.Binary != "" {
 		if id := w.state.BinaryChains[ns.Binary]; id != "" {
@@ -454,8 +454,8 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// nodeAt finds a node's position in the table by its index.
-
+// Rm removes the composed data plane (node datadirs, configs, genesis, logs)
+// for a local target. Running nodes must be stopped first.
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	if err := w.allow("Rm"); err != nil {
 		return "", err

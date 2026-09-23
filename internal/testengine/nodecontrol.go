@@ -21,6 +21,9 @@ import (
 // adapter rather than touching the workspace, so the engine holds one narrow
 // surface and the steps cannot reach past it into the composition.
 
+// workspaceNodes adapts the workspace's node verbs to the interpreter's
+// NodeControl, so fault steps (stopNode/startNode/restartNode) act on a
+// suite-composed network through the same record every other verb uses.
 type workspaceNodes struct {
 	sd      chainsetup.Deps
 	dataDir string

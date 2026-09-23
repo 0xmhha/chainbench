@@ -50,11 +50,6 @@ func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSCollected, wsCollectedAssertion{})
 }
 
-// wsOpenAction opens a WebSocket subscription as a STEP and binds its live
-// handle under "save", so a later step can cause the events and a wsCollected
-// assertion can check they arrived. This closes the ordering gap wsSubscribe
-// (an assertion, which runs after every step) cannot: a logs subscription must
-
 func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
 	var s string
 	if err := c.Call(ctx, "eth_gasPrice", &s); err != nil {
@@ -178,14 +173,6 @@ func dotPath(v any, path string) (any, bool) {
 	}
 	return cur, true
 }
-
-// wsSubscribeAssertion opens a WebSocket subscription and reports how many
-// notifications arrived within the window. It proves the WS transport is live,
-// which an HTTP-only read cannot: a node can answer eth_blockNumber perfectly
-// while its WebSocket endpoint is misconfigured.
-//
-// Spec: event ("newHeads" by default), params (extra eth_subscribe arguments,
-// e.g. a logs filter), count (how many to wait for, default 1), timeout, on.
 
 func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)

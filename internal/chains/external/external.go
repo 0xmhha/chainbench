@@ -57,8 +57,6 @@ func Load(manifestPath, templatePath string) (registry.ChainPlugin, error) {
 	return registry.StaticPlugin{M: m, Fam: fam, Proto: proto, Tmpl: tmpl}, nil
 }
 
-// familyByName resolves a built-in consensus family. This switch lives in the
-// composition layer (not core), so core keeps its no-family-import boundary.
 // ResolveChain returns the plugin a caller means: the external, project-supplied
 // manifest when one is named (the hybrid model), otherwise the embedded chain
 // registered for the id.

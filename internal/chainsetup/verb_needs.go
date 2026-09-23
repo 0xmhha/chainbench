@@ -170,10 +170,6 @@ var verbNeeds = map[string]verbNeed{
 	"ObserveBaseline":      {why: "records what is there now, including nothing"},
 }
 
-// allow reports whether verb may run, naming what is missing.
-//
-// One function, so one message shape. The four wordings this replaced sent a
-// reader to three different places for the same missing thing.
 // errOpPrecondition is what an operational verb refuses for: the workspace is
 // not in a state it can act on.
 //
@@ -183,6 +179,10 @@ var verbNeeds = map[string]verbNeed{
 // to be told about.
 var errOpPrecondition = errors.New("the workspace is not in a state this verb can act on")
 
+// allow reports whether verb may run, naming what is missing.
+//
+// One function, so one message shape. The four wordings this replaced sent a
+// reader to three different places for the same missing thing.
 func (w *Workspace) allow(verb string) error {
 	need, declared := verbNeeds[verb]
 	if !declared {

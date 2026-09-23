@@ -23,7 +23,7 @@ func New() *cobra.Command {
 	return node
 }
 
-// newNodeStopCmd stops a single node of a launched network by index, so a sync
+// newStopCmd stops a single node of a launched network by index, so a sync
 // gap can be created while the rest keep producing blocks.
 func newStopCmd() *cobra.Command {
 	var (
@@ -46,7 +46,7 @@ func newStopCmd() *cobra.Command {
 	return cmd
 }
 
-// newNodeStartCmd relaunches a single previously-stopped node from its saved
+// newStartCmd relaunches a single previously-stopped node from its saved
 // spec, so it rejoins its peers and re-syncs the blocks it missed.
 func newStartCmd() *cobra.Command {
 	var (

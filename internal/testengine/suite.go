@@ -173,10 +173,6 @@ type composed struct {
 	fork forkGate
 }
 
-// workspaceNodes adapts the workspace's node verbs to the interpreter's
-// NodeControl, so fault steps (stopNode/startNode/restartNode) act on a
-// suite-composed network through the same record every other verb uses.
-
 func verifyAgainstPlan(plan ComposePlan, dir string, out *RunSuiteOut) error {
 	ws, err := chainsetup.Open(dir, nil)
 	if err != nil {

@@ -20,6 +20,8 @@ import (
 // itself. Both paths end at the same receipt wait, which keeps a spec from
 // having to know which one it took.
 
+// sendTxAction submits a node-signed transaction and, unless wait:false, polls
+// for its receipt before returning.
 type sendTxAction struct{}
 
 // Do resolves the target node, sends the transaction, and waits for the
@@ -107,7 +109,7 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	return checkTxOutcome(hash, receipt, ac.Args)
 }
 
-// sendTxLocal signs and submits a transaction locally with the given private
+// sendTxLocalFrom signs and submits a transaction locally with the given private
 // key (hex, optional 0x prefix), routing the outcome through the same
 // reject/wait/revert logic as the node-signed path. It uses the injected
 // account provider's Wallet: a "feePayerKey" arg makes it a 0x16 fee-delegated

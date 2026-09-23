@@ -322,8 +322,6 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (preset.Key, []int
 	return set, pinned, true, nil
 }
 
-// parseNodeKey reads a node's declared key from the local file the node table
-// names. Inline key material is refused — see the reasoning on the function.
 // localKeyReader is the file reader a blueprint's declared keys are read
 // through. Like parseNodeKey, it refuses a server reference: a private key a
 // blueprint names is a local file or inline hex, never a secret pulled off a
@@ -406,6 +404,8 @@ func looksLikeKeyMaterial(ref string) bool {
 	return true
 }
 
+// parseNodeKey reads a node's declared key from the local file the node table
+// names. Inline key material is refused — see the reasoning on the function.
 func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 	// A node table's key is a local FILE, and nothing else.
 	//

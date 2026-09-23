@@ -92,7 +92,7 @@ func chainStatusTool() Tool {
 	}
 }
 
-// dataDirSchema is the one argument every step shares.
+// workspaceDirSchema is the one argument every step shares.
 func workspaceDirSchema(extra map[string]any) map[string]any {
 	props := map[string]any{
 		"workspaceDir": map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},

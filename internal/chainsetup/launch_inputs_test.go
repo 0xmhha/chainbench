@@ -21,7 +21,7 @@ import (
 // These compose far enough to write the launch inputs, then change one on disk
 // and re-run deploy.
 
-// composed runs the steps that produce the launch inputs and returns the
+// composedForInputs runs the steps that produce the launch inputs and returns the
 // workspace directory.
 func composedForInputs(t *testing.T) string {
 	t.Helper()

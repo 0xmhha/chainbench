@@ -264,12 +264,6 @@ func Show(ctx context.Context, d Deps, in EntryIn) (EntryOut, error) {
 	return entryOut(e, validatorSet(set)), nil
 }
 
-// Export reports one identity including its private key.
-//
-// It is a separate use case from Show rather than a flag on it, so that
-// disclosing a secret is a call a reader can find, and so a surface can offer
-// one without offering the other.
-
 type passwordFunc func() (string, error)
 
 func (f passwordFunc) Password() (string, error) { return f() }

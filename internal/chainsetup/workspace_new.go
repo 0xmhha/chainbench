@@ -13,17 +13,17 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// compositionID derives a stable short identifier for a composition from its
-// workspace directory. It is deterministic — the same workspace yields the same
-// id — so a resume keeps the id it was composed under rather than minting a new
-// one from the run time or a pid, and two workspaces never collide on one data
-// root.
 // errNewNoChain is the one way this stage fails: nothing said which chain.
 //
 // The stage has no branches — it opens the workspace and records the request —
 // so one kind is the whole of it.
 var errNewNoChain = errors.New("no chain was named")
 
+// compositionID derives a stable short identifier for a composition from its
+// workspace directory. It is deterministic — the same workspace yields the same
+// id — so a resume keeps the id it was composed under rather than minting a new
+// one from the run time or a pid, and two workspaces never collide on one data
+// root.
 func compositionID(dir string) string {
 	abs, err := filepath.Abs(dir)
 	if err != nil {

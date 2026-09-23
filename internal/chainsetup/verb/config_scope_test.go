@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+// TestRecordConfigSet_RefusesAScopeNothingWouldRead is the hole this change
+// closed.
+//
+// The scope was not checked at all. A typo stored the overrides under a key no
+// node ever looks up, the step reported success, and the node came up with a
+// config that silently lacked them — the failure showed later as behaviour, not
 // as an error.
 func TestRecordConfigSet_RefusesAScopeNothingWouldRead(t *testing.T) {
 	for _, scope := range []string{"all", "bp", "en", "pn", "node1", "node12"} {

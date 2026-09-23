@@ -20,6 +20,10 @@ import (
 // built from the node's own address — under docker those differ, and building
 // it here is what made this the one dial that skipped the translation.
 
+// wsOpenAction opens a WebSocket subscription as a STEP and binds its live
+// handle under "save", so a later step can cause the events and a wsCollected
+// assertion can check they arrived. This closes the ordering gap wsSubscribe
+// (an assertion, which runs after every step) cannot: a logs subscription must
 // be open before the transaction that emits the log, because eth_subscribe does
 // not backfill. Args: event ("logs" by default), address / topics (a logs
 // filter), params (extra eth_subscribe args, verbatim), on, save (required).
@@ -157,6 +161,14 @@ func sanitizeWSProvenance(spec map[string]any) map[string]any {
 // the base fee plus the node's tip, so comparing the two is how a spec checks
 // the tip without the harness having to know the chain's tip rule.
 
+// wsSubscribeAssertion opens a WebSocket subscription and reports how many
+// notifications arrived within the window. It proves the WS transport is live,
+// which an HTTP-only read cannot: a node can answer eth_blockNumber perfectly
+// while its WebSocket endpoint is misconfigured.
+//
+// Spec: event ("newHeads" by default), params (extra eth_subscribe arguments,
+// e.g. a logs filter), count (how many to wait for, default 1), timeout, on.
+//
 // A timeout is a failed assertion reporting the count that did arrive, not an
 // error — "two heads in five seconds" is a claim that can simply be false.
 type wsSubscribeAssertion struct{}

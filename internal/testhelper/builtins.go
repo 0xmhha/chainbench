@@ -143,9 +143,6 @@ func (waitBlockAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 }
 
-// sendTxAction submits a node-signed transaction and, unless wait:false, polls
-// for its receipt before returning.
-
 type newAccountAction struct{}
 
 // Do generates a key pair and records the address as the step value plus the

@@ -347,7 +347,7 @@ func isProducer(r node.Role) bool {
 	return node.Is(r, node.RoleBP)
 }
 
-// specFor finds a node's launch spec, which is where its datadir lives.
+// planSpecFor finds a node's launch spec, which is where its datadir lives.
 func planSpecFor(plan process.Plan, index int) (process.NodeSpec, bool) {
 	for _, s := range plan.Nodes {
 		if s.Index == index {

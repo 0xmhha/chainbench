@@ -12,7 +12,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newShowCmd answers where a composed network's nodes are, in both directions.
 // queryDeps is the app.Deps a read-only query runs with: side notes to stderr.
 func queryDeps(cmd *cobra.Command) app.Deps {
 	errOut := cmd.ErrOrStderr()
@@ -21,6 +20,9 @@ func queryDeps(cmd *cobra.Command) app.Deps {
 	}}
 }
 
+// newNetShowCmd answers where a composed network's nodes are, in both
+// directions.
+//
 // It is a query, not a step: it changes nothing. It lives in the net group
 // because it reads the composed workspace — the placement that IS, where
 // `resource plan` computes the placement that WOULD BE.

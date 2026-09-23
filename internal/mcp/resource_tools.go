@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// netMapTool answers where nodes are, in both directions. It is the tool an
+// chainShowTool answers where nodes are, in both directions. It is the tool an
 // agent reaches for instead of reading the workspace file and parsing it:
 // "which node owns port 8610", "what runs on this host", "where is en2".
 func chainShowTool() Tool {
@@ -46,7 +46,7 @@ func chainShowTool() Tool {
 	}
 }
 
-// netPoolTool reports what a network may be composed from, so an agent sizing
+// resourcePoolTool reports what a network may be composed from, so an agent sizing
 // one can ask instead of guessing — and can explain a refusal.
 //
 // It returns no credentials, and that absence is fixed by a test: the pool says

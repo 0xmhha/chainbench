@@ -64,7 +64,7 @@ func NewCapabilities() *cobra.Command {
 	return cmd
 }
 
-// newCapabilityCallCmd invokes a handler-backed capability by its address.
+// newCallCmd invokes a handler-backed capability by its address.
 func newCallCmd() *cobra.Command {
 	var argPairs []string
 	cmd := &cobra.Command{
