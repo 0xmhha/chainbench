@@ -1855,14 +1855,14 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 |---|---|
 | G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
 | G6. 15노드 poa node13 합류 실패 | 열림 · **원인 규명됨 — go-wemix 몫** |
-| G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다 | 열림 (신규 2026-09-23) |
+| ~~G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다~~ | **닫힘 (2026-09-24) — 테스트가 자기 바이너리를 들고 간다** |
 | G3 · G5 | 열림 (범위 밖으로 미뤄 둔 것) |
 | ~~G4. `upgrade run` e2e 20건~~ | **닫힘 (2026-09-24) — 21 PASS · 0 FAIL** |
 | ~~G4-a. overlay 가 fork 섹션에서 버려짐~~ | **닫힘 (2026-09-24) — 순서 원복** |
 | B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
 
-**G6·G7 은 이 브랜치가 만든 것이 아니다.** G7 은 발판이 없어진 테스트(main 에서 이미 그랬다),
-G6 은 go-wemix 의 블록 검증 안이다. G4-a 는 이 계열의 리팩토링(#419)이 뒤집은 순서이고,
+**G6 만 이 브랜치 밖의 일이다** — go-wemix 의 블록 검증 안이다. G4·G4-a·G7 은 전부 앞선
+리팩토링이 남긴 것이고(#419가 순서를 뒤집고 명령을 지웠으며, #130이 sshd 하네스를 지웠다)
 여기서 되돌렸다.
 
 ### 재측정 (2026-09-11, PR #383 머지 후)
@@ -3123,12 +3123,23 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   보이지 않았다 — 그 전까지는 이것을 새로 설계할 문제로 다루고 있었고, 정답(순서 원복)을
   가장 위험한 안으로 잘못 평가했다.
 
-- [ ] **G7. `TestRemoteDriver_E2E` 의 발판이 저장소에 없다 (신규 2026-09-23).**
+- [x] **G7. `TestRemoteDriver_E2E` 가 자기 노드 바이너리를 들고 간다 (2026-09-24 해소).**
   `internal/core/process/remote_e2e_test.go` 는 원격에 `/usr/local/bin/fakenode` 가 있다고
-  가정하고, 자기 주석은 그것을 `tests/remote/sshd/run.sh` 가 띄운다고 적는다. **그 디렉터리가
-  없다.** `fakenode` 를 언급하는 곳은 이 테스트 자신(`:62`)뿐이다. 즉 이 테스트는 어디서
-  돌려도 통과할 수 없다. G4 와 같은 부류인데 `invocationDebt` 에는 없다 — 그 장부가 명령만
-  보고 fixture 는 보지 않기 때문이다. 고치려면 sshd 스탠드인을 되살리거나 테스트를 지운다.
+  가정했고, 자기 주석은 그것을 `tests/remote/sshd/run.sh` 가 띄운다고 적었다. **그 디렉터리는
+  `704f9e1a` (#130, 레거시 bash 스위트 폐기, 2026-07-29)가 지웠다.** 그 뒤로 어디서 돌려도
+  `exit 127: no such file` 이었고, SSH 변수가 없으면 건너뛰는 게이트 뒤라 아무도 실패를 보지
+  못했다. 두 달이다. `invocationDebt` 가 이걸 못 잡는 것은 그 장부가 명령만 보고 fixture 는
+  보지 않기 때문이다.
+
+  **없어진 컨테이너가 준 것은 둘이었다** — sshd 와 가짜 노드 바이너리. sshd 는 `env/docker`
+  가 이미 준다. 빠진 것은 바이너리 하나뿐이었다.
+
+  그래서 **테스트가 직접 쓴다**(`standInNode`). `init` 은 0으로 끝나고 나머지는
+  `sleep 3600` 인 네 줄 스크립트면 driver 가 요구하는 것 — init 성공, Stop 이 죽일 수 있는
+  살아 있는 프로세스 — 을 둘 다 만족한다. 이미지도 root 도 필요 없고, 로그인할 수 있는
+  호스트면 어디서든 돈다. 진짜 체인 바이너리를 쓰면 빌드가 전제로 하나 더 붙을 뿐이다.
+
+  `env/docker` 의 server1(sshd 2201)로 검증했다: **PASS 2.3초.** 실행법은 파일 머리말에.
 - [ ] **G5. 죽은 `.env.json` 접미사 필터 넷.** `cmd/chainbench/validate_test.go:271`,
   `internal/testengine/corpus_gate_test.go:65`,
   `internal/testhelper/corpus_address_test.go:60` 과 `:365`. `tests/` 아래에
