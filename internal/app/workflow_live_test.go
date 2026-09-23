@@ -23,22 +23,23 @@ import (
 func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
 	build := testsupport.ServersBuildDir(t)
 
-	spec := filepath.Join("..", "..", "tests", "specs", "consensus", "wbft-seals-quorum.json")
+	spec := filepath.Join("..", "..", "tests", "tc", "go-stablenet", "regression", "wbft", "11-prev-seals-quorum.json")
 	if _, err := os.Stat(spec); err != nil {
 		t.Fatalf("spec fixture missing: %v", err)
 	}
 
 	out, err := app.RunSuite(context.Background(), app.Deps{}, app.RunSuiteIn{
-		SpecPaths:  []string{spec},
-		DataDir:    t.TempDir(),
-		Chain:      "stablenet",
-		Binary:     "/data/chainbench/bin/gstable",
-		BPCount:    4,
-		Server:     resource.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
-		Docker:     true,
-		KeysDir:    filepath.Join("..", "..", "presets", "keys"),
-		Caps:       []string{"consensus"},
-		WaitBlocks: 2,
+		SpecPaths:           []string{spec},
+		DataDir:             t.TempDir(),
+		Chain:               "stablenet",
+		Binary:              "/data/chainbench/bin/gstable",
+		BPCount:             4,
+		Server:              resource.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
+		Docker:              true,
+		WorkspaceConfigPath: filepath.Join(build, "workspace-config.yaml"),
+		KeysDir:             filepath.Join("..", "..", "presets", "keys"),
+		Caps:                []string{"consensus"},
+		WaitBlocks:          2,
 	})
 	if err != nil {
 		t.Fatalf("run suite: %v (setup steps: %v)", err, out.SetupSteps)

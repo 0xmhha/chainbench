@@ -21,6 +21,12 @@ PATTERN="${2:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/bin/chainbench"
 WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
+# Extra flags for every `chainbench run`. A sweep against the docker fleet needs
+# four of them and they belong to the environment, not to this script:
+#   TCSWEEP_FLAGS="--server-set env/docker/build/server-set.yaml \
+#     --workspace-config env/docker/build/workspace-config.yaml --docker \
+#     --keys-source generate"
+read -r -a EXTRA <<<"${TCSWEEP_FLAGS:-}"
 
 [ -x "$BIN" ] || { echo "no $BIN — run make build" >&2; exit 2; }
 
@@ -72,7 +78,7 @@ for spec in "${CASES[@]}"; do
   ws="$WS_BASE/c$i"
   rm -rf "$ws"
   start=$SECONDS
-  out=$("$BIN" run "$spec" --workspace-dir "$ws" 2>&1)
+  out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
   code=$?
   took=$((SECONDS - start))
 
@@ -101,7 +107,14 @@ for spec in "${CASES[@]}"; do
     # The last lines hold the refusal, including the state it failed in.
     tail -3 <<<"$out" | sed 's/^/          /' | tee -a "$OUT"
   fi
-  # Leaving a network up would let it collide with the next case's ports.
+  # Leaving a network up would let it collide with the next case's ports. On a
+  # remote target the datadir outlives the local workspace too, and the next
+  # case's genesis would meet it — so remove the composition through the
+  # record that still names it, before that record goes.
+  if [ -n "${TCSWEEP_FLAGS:-}" ]; then
+    "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+    "$BIN" chain rm   --workspace-dir "$ws" >/dev/null 2>&1
+  fi
   rm -rf "$ws"
 done
 

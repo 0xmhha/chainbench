@@ -59,6 +59,34 @@ bin/chainbench run \
 키는 15개가 필요해 preset(5개) 대신 generate 로 만든다 — 생성 세트는 topology 의
 bp 수(7)만 validator 로 선언한다.
 
+### 209건 전량 스위프를 이 15대에서
+
+`scripts/tcsweep.sh` 는 기본적으로 로컬 바이너리로 돈다. `TCSWEEP_FLAGS` 를 주면 같은
+스위프가 이 컨테이너들을 향한다 — 로컬에 체인 바이너리가 없는 기기에서는 이쪽이
+유일한 경로다. 플래그가 설정돼 있으면 케이스마다 `chain stop` + `chain rm` 이 먼저
+걸린다. 로컬 워크스페이스만 지우면 컨테이너의 datadir 이 남아 다음 케이스의 genesis 가
+`incompatible genesis` 로 막히기 때문이다.
+
+```bash
+export TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set.yaml \
+  --workspace-config $PWD/env/docker/build/workspace-config.yaml \
+  --docker --all-servers --keys-source generate"
+scripts/tcsweep.sh sweep.log            # 209건, 케이스당 망 하나
+scripts/tcsweep.sh sweep.log go-wbft    # 일부만
+```
+
+`--server` 없이 `--server-set` 만 주면 15대 중 어느 것인지 몰라 place 단계가 거절한다.
+`--all-servers` 는 노드를 서버당 하나씩 퍼뜨려 그 질문을 없앤다.
+
+Go 테스트 쪽 게이트는 `CHAINBENCH_DOCKER_SERVERS` 다:
+
+```bash
+CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test -p 1 -timeout 60m ./...
+```
+
+**live 테스트는 없는 fixture 를 skip 하지 않고 fail 한다.** 각 테스트 주석 맨 위에
+`docker exec ...` 로 무엇을 심어야 하는지 적혀 있다. 심지 않고 돌리면 회귀처럼 보인다.
+
 ### 세 체인 패밀리 15대 스모크 (stablenet · wbft · go-wemix)
 
 세 패밀리 모두 15대에서 검증됐다(검증 당시 4 bp + 11 en, 지금 표준은 bp 7 · en 7 · pn 1):
