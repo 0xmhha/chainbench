@@ -107,15 +107,22 @@ for spec in "${CASES[@]}"; do
     # The last lines hold the refusal, including the state it failed in.
     tail -3 <<<"$out" | sed 's/^/          /' | tee -a "$OUT"
   fi
-  # Leaving a network up would let it collide with the next case's ports. On a
-  # remote target the datadir outlives the local workspace too, and the next
-  # case's genesis would meet it — so remove the composition through the
-  # record that still names it, before that record goes.
+  # Stop always: a network left running holds the next case's ports. Remove
+  # only what passed. On a remote target `chain rm` deletes the datadir and
+  # the node logs on the server, and `rm -rf $ws` takes the record that could
+  # ask for them later — so for a case that did not pass, both stay and the
+  # sweep says where. The session under ~/.chainbench already holds the logs
+  # gathered at the moment of failure; what is kept here is the machine state
+  # behind them, which is what a second look needs.
   if [ -n "${TCSWEEP_FLAGS:-}" ]; then
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
-    "$BIN" chain rm   --workspace-dir "$ws" >/dev/null 2>&1
   fi
-  rm -rf "$ws"
+  if [ "$verdict" = PASS ]; then
+    [ -n "${TCSWEEP_FLAGS:-}" ] && "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1
+    rm -rf "$ws"
+  else
+    printf '          kept for inspection: %s\n' "$ws" | tee -a "$OUT"
+  fi
 done
 
 {

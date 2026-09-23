@@ -63,9 +63,11 @@ bp 수(7)만 validator 로 선언한다.
 
 `scripts/tcsweep.sh` 는 기본적으로 로컬 바이너리로 돈다. `TCSWEEP_FLAGS` 를 주면 같은
 스위프가 이 컨테이너들을 향한다 — 로컬에 체인 바이너리가 없는 기기에서는 이쪽이
-유일한 경로다. 플래그가 설정돼 있으면 케이스마다 `chain stop` + `chain rm` 이 먼저
-걸린다. 로컬 워크스페이스만 지우면 컨테이너의 datadir 이 남아 다음 케이스의 genesis 가
-`incompatible genesis` 로 막히기 때문이다.
+유일한 경로다. 케이스마다 `chain stop` 이 걸리고(포트를 놓아야 다음 케이스가 쓴다),
+**통과한 것만** `chain rm` 까지 간다. 통과하지 못한 케이스는 컨테이너의 datadir·노드
+로그와 로컬 워크스페이스를 남기고 그 경로를 로그에 찍는다 — 실패를 다시 볼 때 필요한
+것은 `~/.chainbench` 의 증적이 아니라 그 뒤의 기계 상태다. 통과한 것을 지우는 이유는
+남겨 두면 다음 케이스의 genesis 가 그것을 만나 `incompatible genesis` 로 막히기 때문이다.
 
 ```bash
 export TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set.yaml \
