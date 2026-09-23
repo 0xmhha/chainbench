@@ -18,6 +18,7 @@
 `14-hsm-pattern-review-2026-09-21.md` 는 2026-09-21 의 상태 주도 리팩토링을 검토한 문서다.
 결론을 `docs/dev/architecture/design-v3/` 로 옮긴 뒤 여기서 지운다. 두 문서가
 `graph/` 와 `graph-snapshots/` 의 그래프 자료를 인용하므로 그것들도 같이 남아 있다.
+어느 파일이 어느 커밋을 잰 것인지는 [`graph/README.md`](graph/README.md) 가 적는다.
 
 `15-hsm-refactoring-handoff-2026-09-21.md` 는 그 리팩토링의 작업 prompt 이고,
 `16-hsm-implementation-review-2026-09-22.md` 는 **들어온 구현을 검토한 문서**다. 16번은 14번(설계)과
