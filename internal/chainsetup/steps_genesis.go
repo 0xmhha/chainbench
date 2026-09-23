@@ -232,6 +232,23 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
 			return StepOut{}, err
 		}
+		// The fork's section is built from the ring and REPLACES config.<fork>,
+		// so an overlay merged into the base genesis is gone by the time it is
+		// written. The handoff this path absorbed applied the overlay AFTER
+		// composing the fork for exactly that reason — upgrade.Handoff.Run ran
+		// ComposePlan and then ApplyOverlay — and the order inverted when the
+		// work moved here. Re-merge, so an overlay that names something inside
+		// the fork section still means what it says.
+		//
+		// Measured before this: an overlay asking for a
+		// stabilizingStakersThreshold of 2 produced the template's 5, and one
+		// naming a single governance member produced all four. Neither was
+		// reported; the declaration was simply dropped.
+		if len(opts.Overlay) > 0 {
+			if gen, err = genesis.Customize(gen, genesis.NetworkOptions{Overlay: opts.Overlay}); err != nil {
+				return StepOut{}, fmt.Errorf("chainsetup: genesis: overlay after the %s fork: %w", opts.Fork.Name, err)
+			}
+		}
 		art.Genesis = gen
 		// Recorded because crossing the fork is a later step's work: it has to
 		// know which block the pre-fork build stops at and which nodes take
