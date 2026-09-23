@@ -27,7 +27,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -171,7 +170,7 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, prod
 		if runErr != nil {
 			lastOut += "\nerror: " + runErr.Error()
 		}
-		if _, pids := recordedPIDs(dataDir); len(pids) > 0 {
+		if pids := recordedPIDs(dataDir); len(pids) > 0 {
 			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 			}
@@ -208,16 +207,6 @@ func producerRPC(t *testing.T, dataDir string) (url, nodeDir string, pids []int)
 		t.Fatalf("no producer node in %s/chain-record.json", dataDir)
 	}
 	return url, nodeDir, pids
-}
-
-// node1RPC parses the producer (node1) RPC URL from the upgrade run output.
-func node1RPC(t *testing.T, out string) string {
-	t.Helper()
-	m := regexp.MustCompile(`node1\s+(http://\S+)\s+pid=`).FindStringSubmatch(out)
-	if len(m) != 2 {
-		t.Fatalf("could not find producer (node1) RPC in output:\n%s", out)
-	}
-	return m[1]
 }
 
 // launchOfflineReader starts the go-wbft binary on a datadir as a non-mining,

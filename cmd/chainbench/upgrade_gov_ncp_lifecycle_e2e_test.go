@@ -434,7 +434,7 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 		if runErr != nil {
 			lastOut += "\nerror: " + runErr.Error()
 		}
-		if _, pids := recordedPIDs(dataDir); len(pids) > 0 {
+		if pids := recordedPIDs(dataDir); len(pids) > 0 {
 			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 			}
@@ -448,15 +448,15 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 
 // recordedPIDs reads the pids a failed attempt left behind, so teardown can
 // reach nodes the run launched before it gave up. A workspace with no record
-// launched nothing.
-func recordedPIDs(dataDir string) (bool, []int) {
+// launched nothing, and answers none.
+func recordedPIDs(dataDir string) []int {
 	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
 	if err != nil {
-		return false, nil
+		return nil
 	}
 	var rec handoffNodes
 	if err := json.Unmarshal(b, &rec); err != nil {
-		return false, nil
+		return nil
 	}
 	var pids []int
 	for _, n := range rec.Nodes {
@@ -464,7 +464,7 @@ func recordedPIDs(dataDir string) (bool, []int) {
 			pids = append(pids, n.PID)
 		}
 	}
-	return true, pids
+	return pids
 }
 
 // presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.
@@ -540,29 +540,4 @@ func presetNode1Key(t *testing.T) []byte {
 	}
 	t.Fatal("no node 1 in preset metadata")
 	return nil
-}
-
-// waitReceiptOK polls for a mined receipt and asserts status == 0x1.
-
-func waitReceiptOK(t *testing.T, c *rpc.Client, hash string) {
-	t.Helper()
-	deadline := time.Now().Add(90 * time.Second)
-	for {
-		raw, err := c.TxReceipt(context.Background(), hash)
-		if err == nil && len(raw) > 0 && string(raw) != "null" {
-			var r struct {
-				Status string `json:"status"`
-			}
-			if json.Unmarshal(raw, &r) == nil && r.Status != "" {
-				if r.Status != "0x1" {
-					t.Fatalf("post-fork tx %s status=%s (want 0x1)", hash, r.Status)
-				}
-				return
-			}
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("post-fork tx %s never mined", hash)
-		}
-		time.Sleep(2 * time.Second)
-	}
 }

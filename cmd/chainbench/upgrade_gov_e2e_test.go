@@ -3,9 +3,9 @@
 // This E2E ports the wemix4 governance read cases (GOV-001 contract deploy,
 // GOV-002 config params). The wemix governance system contracts are deployed at
 // the Croissant fork block, so they live on the go-wbft SUCCESSOR chain (the
-// go-wemix producer stops at croissant-1 and never sees them). It drives the same
-// `chainbench upgrade run` handoff as TestUpgradeRunE2E and asserts governance on
-// the successor. Run it with:
+// go-wemix producer stops at croissant-1 and never sees them). It composes the
+// handoff the way every test in this group does — runGovHandoff — and asserts
+// governance on the successor. Run it with:
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \

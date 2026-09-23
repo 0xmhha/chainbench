@@ -15,10 +15,12 @@ import (
 // A test behind a build tag that names a command which no longer exists is not
 // coverage — it is the appearance of it.
 //
-// Three hardfork e2e tests invoked `upgrade run` long after the root command
+// Twenty handoff e2e tests invoked `upgrade run` long after the root command
 // stopped registering an `upgrade` group. They compiled, because cobra takes
 // args as strings, and they skipped, because they are gated on chain binaries
-// being present. So nothing ever said the command was gone.
+// being present. So nothing ever said the command was gone. (This said three
+// when it was written; running them with the binaries said twenty, across
+// seven files. They are on `chainbench run` now and the ledger below is empty.)
 //
 // This walks every test in this package — gated ones included, since the parse
 // does not care about build tags — collects the command paths they invoke, and
