@@ -156,6 +156,3 @@ func (s *staticBlock) ChainID(context.Context) (uint64, error)     { return s.ch
 func (s *staticBlock) BlockNumber(context.Context) (uint64, error) { return s.height, nil }
 func (s *staticBlock) PeerCount(context.Context) (uint64, error)   { return 0, nil }
 func (s *staticBlock) Syncing(context.Context) (bool, error)       { return false, nil }
-
-// ensure node package import is used (NodeSet type surfaced via attach).
-var _ = node.NodeSet{}

@@ -184,5 +184,6 @@ func averageInterval(timestamps []uint64) (float64, error) {
 	return float64(total) / float64(len(timestamps)-1), nil
 }
 
-// compile-time assertion that the RPC client exposes what these assertions read.
+// rpc.Client must expose what these assertions read; this fails to compile
+// if it stops.
 var _ = func(c *rpc.Client) { _, _ = c.BlockByNumber, c.BlockNumber }
