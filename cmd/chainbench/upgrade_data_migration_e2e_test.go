@@ -16,13 +16,14 @@
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixDataMigrationE2E -timeout 10m ./cmd/chainbench
 package main
 
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,21 +40,22 @@ import (
 func TestWemixDataMigrationE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
 	ctx := context.Background()
 
-	// 1. Run the handoff, keeping the datadir. node1 (go-wemix producer) mines the
-	// pre-fork chain into <dataRoot>/node1/geth.
-	dataRoot, node1URL, pids := runHandoffKeepDatadir(t, fromBin, toBin, template)
+	// 1. Compose the handoff and keep the workspace. The go-wemix producer — the
+	// node the preset leaves on the from-binary — mines the pre-fork chain into
+	// its own <datadir>/geth. Which node that is belongs to the declaration, so
+	// the record answers it rather than this test assuming node1.
+	dataRoot, producerURL, producerDir, pids := runHandoffKeepDatadir(t, fromBin, toBin)
 	t.Cleanup(func() { _ = os.RemoveAll(dataRoot) })
 
-	// Record node1's pre-fork head before shutting it down.
-	preforkHead, err := rpc.Dial(node1URL).BlockNumber(ctx)
+	// Record the producer's pre-fork head before shutting it down.
+	preforkHead, err := rpc.Dial(producerURL).BlockNumber(ctx)
 	if err != nil || preforkHead == 0 {
-		t.Fatalf("read node1 pre-fork head: head=%d err=%v", preforkHead, err)
+		t.Fatalf("read producer pre-fork head: head=%d err=%v", preforkHead, err)
 	}
 	t.Logf("go-wemix producer pre-fork head: %d", preforkHead)
 
@@ -64,10 +66,10 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 	// Give the OS a moment to release the DB lock.
 	time.Sleep(2 * time.Second)
 
-	// 3. Bridge node1's instance directory: go-wemix writes <datadir>/geth,
+	// 3. Bridge the producer's instance directory: go-wemix writes <datadir>/geth,
 	// go-wbft reads <datadir>/gwemix. A relative symlink gwemix -> geth reuses the
 	// exact chaindata files in place (the migration NODE-002 performs).
-	node1dd := filepath.Join(dataRoot, "node1")
+	node1dd := producerDir
 	gethDir := filepath.Join(node1dd, "geth")
 	if _, err := os.Stat(filepath.Join(gethDir, "chaindata")); err != nil {
 		t.Fatalf("go-wemix chaindata not found at %s: %v", gethDir, err)
@@ -122,52 +124,90 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 	}
 }
 
-// runHandoffKeepDatadir runs the handoff like runGovHandoff but returns the data
-// root, the producer (node1) RPC URL, and the pids of the nodes
-// (the caller stops them) instead of auto-tearing-down. It retries the flaky
-// producer/etcd bootstrap.
-func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (string, string, []int) {
+// runHandoffKeepDatadir composes the handoff like runGovHandoff but hands the
+// workspace back instead of tearing it down: this test reads the producer's
+// chaindata after the network stops, which is the thing it is checking.
+//
+// It returns the workspace, the PRODUCER's RPC URL (the node that runs the
+// from-binary and stops at the fork) and every launched pid, which the caller
+// stops.
+func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, producerURL, producerDir string, pids []int) {
 	t.Helper()
+	t.Setenv("GWEMIX_BIN", fromBin)
+	t.Setenv("GWBFT_BIN", toBin)
+	spec := writeHandoffCase(t, nil)
+
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
 		dataDir, err := os.MkdirTemp("/tmp", "cbmigrate")
 		if err != nil {
-			t.Fatalf("mkdir temp datadir: %v", err)
+			t.Fatalf("mkdir temp workspace: %v", err)
 		}
-
 		cmd := newRootCmd()
 		cmd.SetArgs([]string{
-			"upgrade", "run",
-			"--profile", "../../presets/chain/wemix-upgrade.yaml",
-			"--keys", "../../presets/keys",
-			"--from-binary", fromBin,
-			"--to-binary", toBin,
-			"--template", template,
-			"--data-dir", dataDir,
-			"--wait", govHandoffWait,
+			"run", spec,
+			"--workspace-dir", dataDir,
+			"--keys", presetKeysDir(t),
+			"--keep-up",
+			"--node-monitor-timeout", "5m",
 		})
 		var out bytes.Buffer
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
 		runErr := cmd.Execute()
-		pids := pidsFrom(out.String())
 
-		if runErr == nil && strings.Contains(out.String(), "handoff confirmed") {
+		if runErr == nil && strings.Contains(out.String(), "fail=0") {
+			url, nodeDir, launched := producerRPC(t, dataDir)
 			if attempt > 1 {
-				t.Logf("handoff confirmed on attempt %d/%d", attempt, govHandoffAttempts)
+				t.Logf("handoff composed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
-			return dataDir, node1RPC(t, out.String()), pids
+			return dataDir, url, nodeDir, launched
 		}
 
+		// The error Execute returns is the only account of a refusal cobra
+		// never printed. Dropping it is what let "unknown command" read as a
+		// flaky chain for fifteen days.
 		lastOut = out.String()
-		if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
+		if runErr != nil {
+			lastOut += "\nerror: " + runErr.Error()
+		}
+		if _, pids := recordedPIDs(dataDir); len(pids) > 0 {
+			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
+				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
+			}
 		}
 		_ = os.RemoveAll(dataDir)
-		t.Logf("handoff attempt %d/%d failed (flaky producer/etcd bootstrap); retrying", attempt, govHandoffAttempts)
+		t.Logf("handoff attempt %d/%d did not compose; retrying", attempt, govHandoffAttempts)
 	}
-	t.Fatalf("handoff not confirmed after %d attempts:\n%s", govHandoffAttempts, lastOut)
-	return "", "", nil
+	t.Fatalf("handoff not composed after %d attempts:\n%s", govHandoffAttempts, lastOut)
+	return "", "", "", nil
+}
+
+// producerRPC answers the from-binary node's RPC URL and every launched pid. It
+// is the mirror of successorRPC: the producer is the node the preset leaves on
+// the default binary.
+func producerRPC(t *testing.T, dataDir string) (url, nodeDir string, pids []int) {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
+	if err != nil {
+		t.Fatalf("read chain record: %v", err)
+	}
+	var rec handoffNodes
+	if err := json.Unmarshal(b, &rec); err != nil {
+		t.Fatalf("parse chain record: %v", err)
+	}
+	for _, n := range rec.Nodes {
+		if n.PID > 0 {
+			pids = append(pids, n.PID)
+		}
+		if url == "" && n.Binary != "next" && n.HTTP > 0 {
+			url, nodeDir = fmt.Sprintf("http://%s:%d", n.Host, n.HTTP), n.DataDir
+		}
+	}
+	if url == "" {
+		t.Fatalf("no producer node in %s/chain-record.json", dataDir)
+	}
+	return url, nodeDir, pids
 }
 
 // node1RPC parses the producer (node1) RPC URL from the upgrade run output.

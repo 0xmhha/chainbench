@@ -9,7 +9,6 @@
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixGovernanceE2E -timeout 8m ./cmd/chainbench
 package main
 
@@ -35,12 +34,11 @@ const (
 func TestWemixGovernanceE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
 	// Governance lives on the go-wbft successor (deployed at the fork block).
-	c := rpc.Dial(runGovHandoff(t, fromBin, toBin, template))
+	c := rpc.Dial(runGovHandoff(t, fromBin, toBin))
 	ctx := context.Background()
 
 	// GOV-001: all four governance system contracts carry code.

@@ -15,7 +15,6 @@
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixGovernanceNCPLifecycleE2E -timeout 8m ./cmd/chainbench
 package main
 
@@ -24,10 +23,10 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -39,11 +38,10 @@ import (
 func TestWemixGovernanceNCPLifecycleE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -142,87 +140,331 @@ func passBallot(t *testing.T, c *rpc.Client, proposer accounts.Wallet, voters []
 	}
 }
 
-// govHandoffAttempts is how many times runGovHandoff will (re)launch the handoff
-// before giving up. The go-wemix producer's embedded etcd intermittently fails to
-// bootstrap (it enters a join-failure loop and the chain halts before the fork),
-// so a single launch is flaky; each failed attempt is torn down cleanly (via
-// procman, so no orphaned node process survives to hold etcd's ports and poison
-// the next attempt) and retried.
+// govHandoffAttempts is how many times the handoff is (re)composed before
+// giving up. The go-wemix producer's embedded etcd intermittently fails to
+// bootstrap, so a single bring-up is flaky; each failed attempt is torn down
+// cleanly before the retry.
 const govHandoffAttempts = 4
 
-// govHandoffWait is the per-attempt handoff poll (seconds). A healthy producer
-// crosses the fork within ~30s; this bounds how long a halted attempt wastes
-// before the retry.
-const govHandoffWait = "100"
+// handoffPresetPath is the declaration the handoff is composed from.
+//
+// `chainbench upgrade run` used to do this, and #419 retired it: the handoff no
+// longer has a composer of its own, it goes through the ordinary composition
+// path like any other network. What the command took as flags this file
+// declares — both binaries, the croissant fork and the block it lands on.
+const handoffPresetPath = "../../presets/chain/wemix-to-wbft.json"
 
-// runGovHandoff launches the `upgrade run` handoff and returns a successor RPC
-// URL, retrying the flaky producer/etcd bootstrap. It uses a SHORT /tmp datadir
-// so node1's IPC socket path stays under the ~104-byte unix-socket limit (long
-// t.TempDir() paths break the producer's IPC), and the node pids so every
-// launched node is tracked and verifiably killed on teardown (between retries and
-// at test end) — no orphans.
-func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
-	return runGovHandoffArgs(t, fromBin, toBin, template, nil)
+// presetKeysDir answers the shipped key set as an absolute path.
+//
+// The preset names it "presets/keys", which resolves against the process
+// working directory — this package's own directory when a test runs, where
+// there is no such thing.
+func presetKeysDir(t *testing.T) string {
+	t.Helper()
+	abs, err := filepath.Abs(filepath.Join("..", "..", "presets", "keys"))
+	if err != nil {
+		t.Fatalf("resolve preset keys: %v", err)
+	}
+	return abs
 }
 
-// runGovHandoffArgs is runGovHandoff with extra `upgrade run` args (e.g.
-// "--genesis-overlay <path>" to drive a full-fidelity wemix4 config).
-func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs []string) string {
+// handoffProducer is the account the producer mines and stakes with before the
+// fork. presets/chain/wemix-upgrade.yaml names it as the from-chain member, and
+// the preset's node5 keystore holds it rather than node5's own address.
+const handoffProducer = "0xf9593d358b373d354a348c00887b914b408f6984"
+
+// handoffBalance funds an account past what any of these flows spends:
+// minimumStaking is 1e25 and a test may stake several times.
+const handoffBalance = "0x33b2e3c9fd0803ce8000000" // 1e27 wei
+
+// baseOverlay is the genesis state every one of these flows starts from.
+//
+// The retired command took both of these from its profile. The chain-preset
+// declares neither, because it describes a network crossing a fork and not a
+// governance exercise — so the exercise brings its own, the way the two tests
+// that already declared an overlay did.
+//
+//   - Funding. Without it a flow fails at its first transaction with
+//     "insufficient funds for gas * price + value", which says nothing about
+//     what it was testing.
+//   - One NCP. The wbft genesis template seeds govNCP from the member CSV, so
+//     the four validators all start as NCPs and a proposal needs three votes.
+//     These flows are written against a SOLE initial NCP that can carry a
+//     proposal alone, which is what the handoff produced. A test that wants a
+//     different council declares it and wins.
+func baseOverlay(t *testing.T) map[string]any {
 	t.Helper()
+	alloc := map[string]any{
+		handoffProducer: map[string]any{"balance": handoffBalance},
+	}
+	b, err := os.ReadFile(filepath.Join("..", "..", "presets", "keys", "metadata.json"))
+	if err != nil {
+		t.Fatalf("read preset metadata: %v", err)
+	}
+	var m struct {
+		Nodes []struct {
+			Address string `json:"address"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("parse preset metadata: %v", err)
+	}
+	for _, n := range m.Nodes {
+		if n.Address != "" {
+			alloc[n.Address] = map[string]any{"balance": handoffBalance}
+		}
+	}
+	return map[string]any{
+		"alloc": alloc,
+		"config": map[string]any{
+			"croissant": map[string]any{
+				"govContracts": map[string]any{
+					"govNCP": map[string]any{
+						"params": map[string]any{"ncps": presetNodeAddr(t, 1)},
+					},
+				},
+			},
+		},
+	}
+}
+
+// mergeOverlay lays a test's overlay over the state above, leaf by leaf. Two
+// maps at the same key are merged rather than replaced, so a test that tunes
+// one wBFT parameter does not thereby drop the funding or the council it did
+// not mention.
+func mergeOverlay(base, over map[string]any) map[string]any {
+	for k, v := range over {
+		bm, bok := base[k].(map[string]any)
+		vm, vok := v.(map[string]any)
+		if bok && vok {
+			base[k] = mergeOverlay(bm, vm)
+			continue
+		}
+		base[k] = v
+	}
+	return base
+}
+
+// overlayFromJSON reads the {"genesis": {...}} document a test builds and
+// returns the genesis object inside it, which is what the chain-preset declares.
+func overlayFromJSON(t *testing.T, doc string) map[string]any {
+	t.Helper()
+	var wrapper struct {
+		Genesis map[string]any `json:"genesis"`
+	}
+	if err := json.Unmarshal([]byte(doc), &wrapper); err != nil {
+		t.Fatalf("parse genesis overlay: %v\n%s", err, doc)
+	}
+	return wrapper.Genesis
+}
+
+// writeHandoffCase writes the case the handoff is composed from: the preset
+// INLINE, the genesis state these flows need, and a wait past the fork block so
+// the successors have taken production over before a test asks them anything.
+//
+// The preset is inlined rather than named by id because the case is written to
+// a temp directory, and a named preset is looked for beside the case or under
+// presets/chain — neither of which is there. Reading the committed file keeps
+// the test on the same declaration the shipped case uses.
+func writeHandoffCase(t *testing.T, overlay map[string]any) string {
+	t.Helper()
+	b, err := os.ReadFile(handoffPresetPath)
+	if err != nil {
+		t.Fatalf("read handoff preset: %v", err)
+	}
+	var preset map[string]any
+	if err := json.Unmarshal(b, &preset); err != nil {
+		t.Fatalf("parse handoff preset: %v", err)
+	}
+	merged := mergeOverlay(baseOverlay(t), overlay)
+	withForkBlock(t, preset, merged)
+	preset["genesis"] = map[string]any{"overlay": merged}
+	doc := map[string]any{
+		"schemaVersion": "2",
+		"kind":          "case",
+		"id":            "gov-handoff",
+		"description":   "composes the wemix->wbft handoff and waits past the fork",
+		"requires":      []string{"rpc", "consensus"},
+		"chainPreset":   preset,
+		"steps": []map[string]any{
+			{"do": "waitBlock", "target": 22, "timeout": "300s"},
+			{"expect": "blockNumber", "compare": "Greater", "is": "20"},
+		},
+	}
+	enc, err := json.MarshalIndent(doc, "", " ")
+	if err != nil {
+		t.Fatalf("encode handoff case: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "gov-handoff.json")
+	if err := os.WriteFile(path, enc, 0o644); err != nil {
+		t.Fatalf("write handoff case: %v", err)
+	}
+	return path
+}
+
+// withForkBlock puts the fork block beside a croissant section the overlay
+// adds. The genesis refuses "croissantBlock and the croissant config section
+// must be set together", and an overlay that tunes wBFT parameters brings the
+// section without the block — the preset's upgrade.at is where the block comes
+// from, so the test does not repeat a number the declaration already owns.
+func withForkBlock(t *testing.T, preset, overlay map[string]any) {
+	t.Helper()
+	cfg, ok := overlay["config"].(map[string]any)
+	if !ok {
+		return
+	}
+	if _, has := cfg["croissant"]; !has {
+		return
+	}
+	if _, has := cfg["croissantBlock"]; has {
+		return
+	}
+	up, ok := preset["upgrade"].(map[string]any)
+	if !ok {
+		t.Fatalf("preset declares no upgrade block, so there is no fork block to set")
+	}
+	at, ok := up["at"].(float64)
+	if !ok {
+		t.Fatalf("preset upgrade.at is %T, want a number", up["at"])
+	}
+	cfg["croissantBlock"] = int(at)
+}
+
+// handoffNodes is what the workspace records about each node the run launched.
+type handoffNodes struct {
+	Nodes []struct {
+		Label   string `json:"label"`
+		Host    string `json:"host"`
+		HTTP    int    `json:"http"`
+		PID     int    `json:"pid"`
+		Binary  string `json:"binary"`
+		DataDir string `json:"dataDir"`
+	} `json:"nodes"`
+}
+
+// successorRPC reads the record the run wrote and answers a successor's RPC
+// URL, with every launched pid beside it for teardown.
+//
+// The retired command printed both, and the tests parsed its stdout. The record
+// is the better source: it is what resume, status and stop already read, so a
+// test asks the same question the product does.
+func successorRPC(t *testing.T, dataDir string) (string, []int) {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
+	if err != nil {
+		t.Fatalf("read chain record: %v", err)
+	}
+	var rec handoffNodes
+	if err := json.Unmarshal(b, &rec); err != nil {
+		t.Fatalf("parse chain record: %v", err)
+	}
+	var url string
+	var pids []int
+	for _, n := range rec.Nodes {
+		if n.PID > 0 {
+			pids = append(pids, n.PID)
+		}
+		// "next" is the successor binary the preset declares; the producer runs
+		// "default" and stops at the fork, so it can answer nothing after it.
+		if url == "" && n.Binary == "next" && n.HTTP > 0 {
+			url = fmt.Sprintf("http://%s:%d", n.Host, n.HTTP)
+		}
+	}
+	if url == "" {
+		t.Fatalf("no successor node in %s/chain-record.json", dataDir)
+	}
+	return url, pids
+}
+
+// runGovHandoff composes the handoff, leaves it up, and returns a successor's
+// RPC URL. It uses a SHORT /tmp workspace so node1's IPC socket path stays under
+// the ~104-byte unix-socket limit, and tears every launched node down at the end.
+func runGovHandoff(t *testing.T, fromBin, toBin string) string {
+	return runGovHandoffOverlay(t, fromBin, toBin, nil)
+}
+
+// runGovHandoffOverlay is runGovHandoff with a genesis overlay deep-merged into
+// the handoff genesis — the shape `upgrade run --genesis-overlay` took, declared
+// on the chain-preset instead of passed as a flag.
+func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[string]any) string {
+	t.Helper()
+	// The preset names its binaries through these, so a test points them at the
+	// builds it was given rather than at whatever is on PATH.
+	t.Setenv("GWEMIX_BIN", fromBin)
+	t.Setenv("GWBFT_BIN", toBin)
+	spec := writeHandoffCase(t, overlay)
+
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
-		dataDir, err := os.MkdirTemp("/tmp", "cbgovlc")
+		dataDir, err := os.MkdirTemp("/tmp", "cbgov")
 		if err != nil {
-			t.Fatalf("mkdir temp datadir: %v", err)
+			t.Fatalf("mkdir temp workspace: %v", err)
 		}
-
 		cmd := newRootCmd()
-		args := []string{
-			"upgrade", "run",
-			"--profile", "../../presets/chain/wemix-upgrade.yaml",
-			"--keys", "../../presets/keys",
-			"--from-binary", fromBin,
-			"--to-binary", toBin,
-			"--template", template,
-			"--data-dir", dataDir,
-			"--wait", govHandoffWait,
-		}
-		args = append(args, extraArgs...)
-		cmd.SetArgs(args)
+		cmd.SetArgs([]string{
+			"run", spec,
+			"--workspace-dir", dataDir,
+			"--keys", presetKeysDir(t),
+			"--keep-up",
+			"--node-monitor-timeout", "5m",
+		})
 		var out bytes.Buffer
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
 		runErr := cmd.Execute()
-		// Track whatever launched (PIDs are printed as `pid=N`, and mirrored into
-		// nodeset.json) so we can guarantee teardown either way.
-		pids := pidsFrom(out.String())
 
-		if runErr == nil && strings.Contains(out.String(), "handoff confirmed") {
-			// Success: keep the nodes running for the test, tear down verifiably at
-			// the end.
-			dir := dataDir
+		if runErr == nil && strings.Contains(out.String(), "fail=0") {
+			url, pids := successorRPC(t, dataDir)
 			t.Cleanup(func() {
 				if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 					t.Logf("process: leaked node PIDs after test: %v", leaks)
 				}
-				_ = os.RemoveAll(dir)
+				_ = os.RemoveAll(dataDir)
 			})
 			if attempt > 1 {
-				t.Logf("handoff confirmed on attempt %d/%d", attempt, govHandoffAttempts)
+				t.Logf("handoff composed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
-			return successorRPC(t, out.String())
+			return url
 		}
 
-		// Failure: kill this attempt's nodes cleanly (no orphans) before retrying.
+		// The error Execute returns is the only account of a refusal cobra
+		// never printed. Dropping it is what let "unknown command" read as a
+		// flaky chain for fifteen days.
 		lastOut = out.String()
-		if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
+		if runErr != nil {
+			lastOut += "\nerror: " + runErr.Error()
+		}
+		if _, pids := recordedPIDs(dataDir); len(pids) > 0 {
+			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
+				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
+			}
 		}
 		_ = os.RemoveAll(dataDir)
-		t.Logf("handoff attempt %d/%d failed (flaky producer/etcd bootstrap); retrying", attempt, govHandoffAttempts)
+		t.Logf("handoff attempt %d/%d did not compose; retrying", attempt, govHandoffAttempts)
 	}
-	t.Fatalf("handoff not confirmed after %d attempts:\n%s", govHandoffAttempts, lastOut)
+	t.Fatalf("handoff not composed after %d attempts:\n%s", govHandoffAttempts, lastOut)
 	return ""
+}
+
+// recordedPIDs reads the pids a failed attempt left behind, so teardown can
+// reach nodes the run launched before it gave up. A workspace with no record
+// launched nothing.
+func recordedPIDs(dataDir string) (bool, []int) {
+	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
+	if err != nil {
+		return false, nil
+	}
+	var rec handoffNodes
+	if err := json.Unmarshal(b, &rec); err != nil {
+		return false, nil
+	}
+	var pids []int
+	for _, n := range rec.Nodes {
+		if n.PID > 0 {
+			pids = append(pids, n.PID)
+		}
+	}
+	return true, pids
 }
 
 // presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.
@@ -267,16 +509,6 @@ func presetNode(t *testing.T, idx int) (addr, nodekey string) {
 	}
 	t.Fatalf("no node %d in preset metadata", idx)
 	return "", ""
-}
-
-func successorRPC(t *testing.T, out string) string {
-	t.Helper()
-	re := regexp.MustCompile(`node2\s+(http://\S+)\s+pid=`)
-	m := re.FindStringSubmatch(out)
-	if len(m) != 2 {
-		t.Fatalf("could not find successor (node2) RPC in output:\n%s", out)
-	}
-	return m[1]
 }
 
 // presetNode1Key loads node 1's private key from presets/keys — a committed TEST

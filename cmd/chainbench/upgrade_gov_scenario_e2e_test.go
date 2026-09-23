@@ -24,7 +24,6 @@
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixGovValidatorSelectionScenarioE2E -timeout 15m ./cmd/chainbench
 package main
 
@@ -35,7 +34,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -57,9 +55,8 @@ var scenarioOpKeys = map[string]string{
 func TestWemixGovValidatorSelectionScenarioE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -90,12 +87,7 @@ func TestWemixGovValidatorSelectionScenarioE2E(t *testing.T) {
 		`"wBFT":{"useNCP":true,"targetValidators":4,"stabilizingStakersThreshold":2},` +
 		`"govContracts":{"govNCP":{"params":{"ncps":"` + ncps + `"}}}}},` +
 		`"alloc":{` + strings.Join(allocEntries, ",") + `}}}`
-	overlay := filepath.Join(t.TempDir(), "wemix4-fidelity.json")
-	if err := os.WriteFile(overlay, []byte(overlayJSON), 0o644); err != nil {
-		t.Fatalf("write overlay: %v", err)
-	}
-
-	url := runGovHandoffArgs(t, fromBin, toBin, template, []string{"--genesis-overlay", overlay})
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlayFromJSON(t, overlayJSON))
 	c := rpc.Dial(url)
 
 	// The four handoff successors (preset nodes 1..4) are the mining validators and

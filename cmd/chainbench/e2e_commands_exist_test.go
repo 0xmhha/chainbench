@@ -28,15 +28,7 @@ import (
 //
 // It may only shrink. An entry is not permission — it is a note that coverage
 // nobody can run is sitting here, and what would be lost by deleting it instead.
-var invocationDebt = map[string]string{
-	"upgrade run": "upgrade_data_migration_e2e_test.go and upgrade_gov_ncp_lifecycle_e2e_test.go " +
-		"still set a network up with it. Neither is covered elsewhere — one checks that go-wbft " +
-		"initialises on go-wemix's chaindata, the other drives the governance NCP lifecycle across " +
-		"the handoff — and both read the removed command's OUTPUT (pids, node1 RPC, \"handoff " +
-		"confirmed\"), so pointing them at `chainbench run` is a rewrite of their scaffolding, not " +
-		"a substitution. It needs both chain binaries to verify, which is why it is written down " +
-		"rather than guessed at.",
-}
+var invocationDebt = map[string]string{}
 
 func TestEveryCommandATestInvokesExists(t *testing.T) {
 	root := newRootCmd()
