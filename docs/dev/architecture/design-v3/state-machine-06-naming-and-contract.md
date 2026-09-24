@@ -466,23 +466,25 @@ type Declared interface{ Contract() Contract }
 
 ---
 
-## 10. 검증 — 구현 단계가 내야 할 증거
+## 10. 검증 — 증거와 결과 (2026-09-24)
 
-모두 필요하다. 결함 테스트는 **지금 코드에서 먼저 실패**(RED)하는 것을 보이고, 수정 뒤 통과(GREEN)한다.
+결함 테스트는 **고치기 전 코드에서 먼저 실패**(RED)하는 것을 확인한 뒤 고쳤다(GREEN).
 
-| 번호 | 증거 | 모양 |
-|---|---|---|
-| E1 | `stoppedToRebuild` 가 버려져 rebuild 가 멈춤 | 네트워크 없는 상태 기계 테스트. 판정 "망 전체가 다르다" 에서 `ComposeComparing` 이 `CHAIN_OPEN_WORKSPACE` 에 들어가는지 본다. 지금 코드에서는 `StoppingToRebuild` 에 멈춘다 |
-| E2 | `nodesRestarted` 가 버려짐 | 같은 방식. 판정 "일부 노드가 다르다" 뒤 `CHAIN_READY` 에 닿는지 |
-| E3 | 진입점이 끝 상태 없이 성공 | 상태 기계 테스트. 도중에 멈추는 머신에서 `Compose`·`ComposeComparing`·`Operate`·`runner.Run` 이 `ErrNotTerminal` 을 돌려주는지. 지금은 `nil` |
-| E4 | 처리되지 않은 메시지 | `statemachine` 단위 테스트. 아무도 받지 않는 메시지가 `ErrUnhandled` 와 실패 상태로 가는지, `Ignores` 에 있으면 넘어가는지 |
-| E5 | gate 의 pid 스냅샷 | 가짜 observer 입력과 가짜 restarter 로 gate 를 돌린다. 재시작이 새 pid 를 기록한 뒤 다음 라운드에서 살아 있다고 보는지. 지금은 `exhausted 1 restart(s)` |
-| E6 | 선언 점검 | 두 머신의 모든 상태가 `Declared` 이고, 선언과 코드가 맞고, 받는 이 없는 메시지가 0 건. §5.3·§5.4 표가 선언에서 다시 만든 것과 같다 |
-| E7 | 트리 golden | `manager_test.go` 와 run 머신의 트리 golden 이 §3 의 새 이름·새 구조(S1·S2)와 같다 |
-| E8 | 기록 | 형식 2 기록을 열면 찾은/기대 형식을 대며 거절(`state_format_test` 확장). 형식 3 기록이 새 `statePath` 를 왕복하고 `ResumeStep` 이 새 단계 이름을 푼다 |
-| E9 | 배포 | 대상에 같은 sha256 의 바이너리가 있으면 보내지 않고, 다르거나 없으면 보내고, 보낸 뒤 해시가 다르면 실패 |
-| E10 | 라이브 재실행 | 같은 워크스페이스에 `chainbench run` 을 두 번 걸어 두 번째도 pass(2026-09-24 재현의 반대) |
-| E11 | 전체 스위프 | 로컬 209건 스위프 통과(지난번 약 71분). 명령은 `tests/tc/RUN-EACH.md` |
+| 번호 | 증거 | 모양 | 결과 |
+|---|---|---|---|
+| E1 | `stoppedToRebuild` 가 버려져 rebuild 가 멈춤 | `TestComposeComparing_RebuildAllComposesAgain` — 판정 "망 전체가 다르다" 뒤 조립에 다시 들어가는지 | RED: `StoppingToRebuild` 에서 멈춤 → GREEN |
+| E2 | `nodesRestarted` 가 버려짐 | `TestComposeComparing_RebuildNodesEndsReady` | RED: `RestartingNodes` 에서 멈춤 → GREEN |
+| E3 | 진입점이 끝 상태 없이 성공 | `TestComposeComparing_NilOnlyAtATerminalState`, `statemachine` 의 `TestRequireAt` | RED: 판정 셋에서 `nil` 을 끝 상태 밖에서 돌려줌 → GREEN |
+| E4 | 처리되지 않은 메시지 | `statemachine` 의 `TestProcess_AMessageNobodyHandlesFailsTheSend`, `TestContract_*` | 통과 |
+| E5 | gate 의 pid 스냅샷 | `TestHealthObserver_SeesThePIDARestartRecorded` (가짜 RPC) | RED: 재시작 뒤에도 `PIDAlive:false` → GREEN |
+| E6 | 선언 점검 | `Audit`(두 머신), `internal/arch` 의 `TestStateContractsMatchTheCode`(go/ast), §5 표 대조 | 통과. 계약을 일부러 둘 틀리게 하자 둘 다 잡았다 |
+| E7 | 트리 golden | `TestManagerTreeIsTheTreeTheDesignDrew` | 새 트리로 통과 |
+| E8 | 기록 | `state_format_test`(형식 2 거절), `TestResumeStep_*` | 통과 |
+| E9 | 배포 | `TestShipBinaries_SendsOnlyWhatTheTargetLacks` | 통과 |
+| E10 | 라이브 재실행 | 같은 워크스페이스에 `basic-consensus` 두 번 | 두 번째가 `relaunch` 로 `start` 만 하고 pass. 끝난 뒤 노드 0개, `CHAIN/CHAIN_STOPPED`, 형식 3 |
+| E11 | 전체 스위프 | 로컬 `scripts/tcsweep.sh`, 209건 | **209 pass · 0 fail · 0 blocked · 0 skip**, 약 2시간 30분. `boho-crossed-by-restart` 는 boho 이전 빌드로 따로 한 번 더 — pass(214초) |
+| — | e2e 계층 | `go test -tags e2e ./...` (실제 체인 바이너리, 핸드오버 포함) | 통과. `tests/e2e` 756초, `cmd/chainbench` 2120초 |
+| — | 여러 정의서 연속 | `chainbench run 01 02 wbft-01` 한 명령 | 1번 조립 → 2번 `reuse`(조립 없음) → 3번 `rebuild-all`(멈추고 wbft 로 다시 조립). 셋 다 pass, 끝난 뒤 노드 0개 |
 
 ---
 

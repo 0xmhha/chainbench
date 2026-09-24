@@ -66,9 +66,10 @@ session: ~/.chainbench/sessions/<시각>/UTC-<시각>
   `~/work/github/0xmhha/chainbench/bin/chainbench chain stop --workspace-dir ~/cbw/manual/<id>` 로 내린다.
 - 무엇이 세워질지만 보려면 줄 끝에 `--plan` 을 붙인다. 망을 만들지 않는다.
 
-**줄마다 `rm -rf` 가 붙은 이유.** 한 번 돈 워크스페이스에 같은 명령을 다시 걸면 망을 세우지
-못하고 `network not ready to test: node1 exhausted 1 restart(s)` 로 끝난다(2026-09-24 확인,
-결함이다 — 재조립 신호를 받는 상태가 없다). 고쳐질 때까지 매번 새 워크스페이스로 돌린다.
+**줄마다 `rm -rf` 가 붙은 이유.** 케이스를 매번 빈 워크스페이스에서 시작해, 앞 실행이 남긴 상태가
+판정에 끼지 않게 하려는 것이다. `rm -rf` 없이 같은 명령을 다시 걸어도 이제 돈다 — preflight 가 같은
+망에 노드만 멈춘 것을 `relaunch` 로 보고 설정 단계를 건너 노드만 다시 띄운다(state-machine-06 R3,
+2026-09-24 확인). 그 전에는 `network not ready to test: node1 exhausted 1 restart(s)` 로 끝났다.
 워크스페이스 경로를 짧게 둔 것은 노드의 IPC 소켓이 그 아래 생기고 macOS 의 소켓 경로 한도가
 104바이트이기 때문이다.
 
