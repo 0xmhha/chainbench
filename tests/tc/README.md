@@ -495,6 +495,7 @@ tx 가 보존된다")을 확인하지 못한다.
 
 ## 8. 함께 있는 문서
 
+- `RUN-EACH.md` — 케이스 209건을 하나씩 돌리는 명령과 그 준비
 - `SPECS.md` — 스펙 이관 기록 (레거시 시절 `tests/specs/README.md`)
 - `CHAIN-BRINGUP.md` — 체인 구성 케이스 설명 (레거시 시절 `tests/cases/README.md`)
 - `../../docs/dev/legacy-port-audit/` — 포팅 감사 (그래프 2종 + 대응표)
