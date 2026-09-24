@@ -4,7 +4,7 @@
 2026-09-22 에 커밋된 `code-graph.json` 은 `internal/chainsetup` 을 103 파일로 적고 있었는데,
 그 그래프를 커밋한 시점(`47a27257`)의 트리에는 120 파일이 있었다. main 을 잰 그래프가
 브랜치 끝의 그래프처럼 인용되고 있었다. 옛 측정은
-[`../graph-snapshots/a5386b0e/`](../graph-snapshots/a5386b0e/) 로 옮겼다.
+`../graph-snapshots/a5386b0e/` 로 옮겼다가 2026-09-24 에 지웠다(`git show cde3a08f:docs/research/chainbench/analyses/graph-snapshots/a5386b0e/<파일>`).
 
 | 파일 | 잰 커밋 | 도구 |
 |---|---|---|
@@ -49,5 +49,5 @@ bash "$P/scripts/setup_env.sh"
 - 저장소 자체 도구(`go run ./scripts/inventory/code-graph .`)는 layer 위반 **6건**을 본다 —
   `internal/core` 의 여섯 패키지가 `internal/preset` 을 import 한다. **main 에도 그대로
   있다**(`git grep -l internal/preset main -- 'internal/core/*'`). 이 브랜치가 만든 것이
-  아니다. [`../../../dev/architecture/code-graph.md`](../../../dev/architecture/code-graph.md)
+  아니다. [`../../../dev/architecture/code-graph.md`](../../../../dev/architecture/code-graph.md)
   §2 는 아직 `violations: null` 이라고 적고 있으므로 그 문서는 다시 뽑아야 한다.

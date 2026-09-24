@@ -2,7 +2,7 @@
 
 > `internal/testkit` 에 Go 함수로 등록된 레거시 케이스를 DSL 정의서로 옮긴 것.
 > `examples/specs/` 는 **문법 예시**이고, 여기는 **실제 이관분**이다.
-> 은퇴 계획: [[legacy-retirement-plan]] (`docs/dev/archive/legacy-retirement-plan.md`)
+> 은퇴 계획: `legacy-retirement-plan` (2026-09-24 삭제) (`docs/dev/archive/legacy-retirement-plan.md`)
 
 ## 실행
 
@@ -566,7 +566,7 @@ accounts (+10) → fresh 4노드(--wait-blocks 2): pass=10
 ```
 
 **잔여 미이관 14건**: 카테고리·소스파일·사유·손실의 정본 표는
-[[legacy-retirement-plan]] §5 (`docs/dev/archive/legacy-retirement-plan.md`). 세 갈래 —
+`legacy-retirement-plan` (2026-09-24 삭제) §5 (`docs/dev/archive/legacy-retirement-plan.md`). 세 갈래 —
 A 설계 경계 6건(토폴로지 자기참조·구독 순서·SDK 정적가드), B 외부 블로커 3건
 (external 2·set-code 0x04 1), C 라이브 반증 4건(P256 3·govminter 코드스왑 1).
 
@@ -600,4 +600,4 @@ api (+1) → fresh 4노드: pass=1
 **잔여 미이관 5건** (등록 56 − 이관·동명 spec 51): 전부 이관 대상 아님 —
 external 2(operator 키·외부 체인, 라이브 검증 불가) · SDK 정적가드 2(chainbench 아닌
 SDK 동작) · tipcap-underpriced 1(라이브 반증). P256 3·govminter 1 은 바이너리/genesis
-확보 시 기존 동사로 즉시 이관(DSL 작업 없음). 정본 표는 [[legacy-retirement-plan]] §5.
+확보 시 기존 동사로 즉시 이관(DSL 작업 없음). 정본 표는 `legacy-retirement-plan` (2026-09-24 삭제) §5.

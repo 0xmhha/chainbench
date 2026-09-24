@@ -19,7 +19,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | **코드가 실제로 어떤 모양인가** | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) (AST 실측) · [`dev/codegraph/`](dev/codegraph/README.md) (호출 그래프) |
 | **체인 바이너리의 플래그·RPC 가 궁금하다** | [`chain-analysis/`](chain-analysis/README.md) — **체인 소스를 읽기 전에 여기부터** |
 | **테스트는 어디에 있나** | [`../tests/README.md`](../tests/README.md) |
-| **왜 이렇게 결정했었나** | [`dev/archive/`](dev/archive/README.md) |
+| **왜 이렇게 결정했었나** | git 이력 — `dev/archive/` 는 2026-09-24 에 정리됐다. `git log --diff-filter=D -- docs/dev/archive/` 로 목록을, `git show cde3a08f:<경로>` 로 본문을 본다 |
 
 ## 문서 등급과 권위 순서
 
@@ -33,7 +33,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | **[제안]** | *이렇게 하면 어떨까* — 아직 결정이 아니다 | **등급 밖이다.** 현행 설계를 대체하지 않고 이기지도 진다고도 할 수 없다. 채택하려면 검토를 끝내고 등급을 올린다. 분석·측정은 인용 가능, 목표 구조·일정은 인용 금지. |
 | **[측정]** | *언제 재보니 이랬다* | 기준 커밋이 붙는다. 다시 뽑으면 갱신된다 — **어긋나면 코드가 이긴다.** |
 | **[이력]** | *그때 무엇을 측정·결정했는가* | **현재 상태를 말하지 않는다.** 근거로 인용할 수 없다. |
-| **[대체됨]** | 제안이 구현됐거나 다른 문서로 옮겨감 | [`dev/archive/`](dev/archive/README.md) 로 이동. 새 작업의 근거 금지. |
+| **[대체됨]** | 제안이 구현됐거나 다른 문서로 옮겨감 | **지운다.** 본문은 git 이력에 남는다. 새 작업의 근거 금지. |
 
 위 등급 체계는 **chainbench 자신의 설계·작업 문서**(`dev/`)에 적용된다. 그 정본은
 4종뿐이다. [`chain-analysis/`](chain-analysis/README.md) 와 [`claudedocs/`](claudedocs/README.md)
@@ -70,7 +70,6 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | 문서 | 내용 |
 |---|---|
 | [`dev/chainbench-system-direction.md`](dev/chainbench-system-direction.md) | **[제품 목표·확정 방향] 2026-09-02 사용자 확인** — local/remote/Docker 원격 모사, 자료 재사용, PID·command·노드별 제어, config/contract 테스트, DSL 사전검사, 환경 재사용, Node Monitor, 실행 증적과 최종 report. |
-| [`dev/refactoring-follow-up-handoff-2026-09-02.md`](dev/refactoring-follow-up-handoff-2026-09-02.md) | **[현행 설계 보조] 후속 작업 인수인계** — AST·문서 대조에서 확인한 genesis identity 결함과 E0A~E9 의 완료 조건. 작업 상태는 worklist §1k 가 이긴다. |
 
 ### 구성 요소별 설계
 
@@ -92,11 +91,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | 문서 | 내용 |
 |---|---|
 | [`dev/chain-setup/`](dev/chain-setup/README.md) | **체인 구성 절차** — 공통 파이프라인과 변곡점, 케이스 4종(wemix · wemix→wbft · wbft · stablenet), `cli-steps`. 검증 기준일 2026-08-09 의 실측이며, 각 문서 상단에 **명령 표면 정정(2026-09-11)** 이 붙어 있다. |
-| [`dev/legacy-test-migration.md`](dev/legacy-test-migration.md) | **레거시 셸 스위트 → DSL 이관** — 양쪽을 파싱해 만든 대응표와 남은 계획. local 계열(basic·fault·stress·anzeon)은 이관·라이브 검증 완료. |
 | [`dev/legacy-port-audit/`](dev/legacy-port-audit/README.md) | **[측정] 이관 감사** — 셸 460파일과 신규 Go+DSL 을 각각 AST 그래프로 만들어(노드 943 / 1,413) 테스트 단위로 대조한 기록. |
-| [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) | wemix4 케이스 포팅 추적(covered / ported / deferred). 상단에 **경로 정정** — 판정은 유효하고 위치만 `tests/tc`·`tests/e2e` 로 옮겼다. |
-| [`dev/monitoring-issue-review-2026-09-10.md`](dev/monitoring-issue-review-2026-09-10.md) | **모니터링 이슈 16건 재판정과 수정 계획** (기준 `2cc82692`). 그중 14건은 `9b6b0930` 에서 해소됐다. |
-| [`dev/handoff-2026-09-21.md`](dev/handoff-2026-09-21.md) | **[이력] 리팩토링 design-v3 인계 (2026-09-21)** — 브랜치 `refactor/design-v3` 의 상태, 이 기계에만 있던 것, 새로 건 래칫 여섯, 바로 이어갈 셋, 되풀이하지 말 것 다섯. 열린 작업의 정본은 워크리스트 §0 이다. |
 | [`dev/chain-handover-2026-09-12.md`](dev/chain-handover-2026-09-12.md) | **[측정] 체인팀 인계 3건** — chainbench 를 고쳐서는 해소되지 않는 go-wemix / go-wbft 결함. `verifyBlockSig` 의 nil 역참조 패닉(원인 확정), 부트 etcd 붕괴(R6, 범위 좁힘), `istanbul_getWbftExtraInfo` 의 블록 태그. 증상·근거·재현·제안까지. |
 
 ## 4. `dev/architecture/` — 구조와 측정
@@ -104,18 +99,13 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | 문서 | 등급 | 내용 |
 |---|---|---|
 | [`design-v3/`](dev/architecture/design-v3/direction.md) | **[측정] + [제안]** | **리팩토링 설계 v3 (2026-09-21~).** `measurement-…md` 는 잰 것만, `direction.md` 는 방향과 결정(§8·§13·§14 가 이름 판단의 근거), `chain-as-a-run-dimension.md` 는 공통 TC 한 벌이 세 체인에 도는 문제, `state-machine-01~05` 는 실패를 재고 상태·전이를 정한 것(05 는 테스트 영역), `cohesion-candidates-…md` 는 응집 후보 셋, `declaration-model-2026-09-22.md` 는 체인을 무엇으로 서술하고 값이 어느 순서로 정해지나(우선순위 줄 확정, 결함 셋). **닫은 세 계획의 수치를 하나도 가져오지 않았다.** |
-| [`refactoring-proposal/`](dev/architecture/refactoring-proposal/README.md) | **[제안]** | **리팩토링 제안 묶음 6종 (2026-09, 검토 중).** **새 설계의 입력이 아니다 (2026-09-20)** — 목표 구조와 P0~P5 일정은 근거로 인용할 수 없다(문서 스스로 historical draft 라고 적는다). **측정·분석 부분만 인용할 수 있고, 그것도 날짜를 확인하고 다시 잴 것.** |
 | [`architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, 자원/노드정보 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. **모듈 경계는 이 문서가 이긴다.** |
 | [`layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 패키지 전수 배치 · 의존 규칙 · **상태 소유 규칙**(control plane=session / data plane=FileSink) · `internal/arch` 가 기계로 강제하는 규칙. |
 | [`module-responsibilities.md`](dev/architecture/module-responsibilities.md) | [현행 설계] | **관심사별 소유 모듈** 16개 · 소유자 부재 실측 · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할. |
-| [`module-plan.md`](dev/architecture/module-plan.md) | **[이력]** | **모듈 재편 계획 (2026-08-27) — 2026-09-20 에 닫혔다.** 이름으로 부르는 모듈 다섯(`testspec`·`netmap`·`netmapcmd`·`deploy`·`supervisor`)이 코드에 없고, 기준 패키지 수 75/71 이 오늘 48 이다. **근거로 인용하지 않는다.** P1~P8 은 재개 대상이 아니다. |
-| [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | **[이력]** | **통폐합 계획 (2026-08-31 ~ 2026-09-20) — 완료로 닫혔다.** 진단("작은 형제 24개")이 7개로 해소됐고, 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다. 인용하는 수치는 닫을 당시의 것이라 이미 낡았다(`chainsetup` 6,585줄 → 8,406줄). **근거로 인용하지 않는다.** |
-| [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
+| [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` (2026-09-24 삭제) 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
 | [`terminology-map.md`](dev/architecture/terminology-map.md) | [측정] | **용어 지도 (2026-09-14)** — 한 낱말이 몇 뜻으로 쓰이는지, 뜻마다 주인이 우리인지 체인인지. `validator` 6뜻 · `boot` 4뜻 · `workspace` 4뜻 · `preset` 3뜻. **새 낱말을 쓰기 전에 본다.** |
-| [`target-architecture.md`](dev/architecture/target-architecture.md) | **[이력]** | **2026-08-26 의 목표 다이어그램 8종.** 그리는 L1 모듈 이름 일곱이 코드에 없다(2026-09-20 실측) — 근거로 인용하지 않는다. 지금 향하는 구조는 `architecture-v2`·`layers`·`module-responsibilities`. |
 | [`f1-recovery.md`](dev/architecture/f1-recovery.md) | [현행 설계] | **F1 파일 영속·복구** — 프로세스가 죽어도 다시 실행하면 이전 진행을 이어받는다. §0 원칙: 복구용 사본을 만들지 않는다. |
 | [`code-graph.md`](dev/architecture/code-graph.md) | [측정] | **AST 실측 패키지 그래프** — 2026-09-11 재측정(70패키지 · 225엣지 · 51,151줄 · **층 위반 0**), 레이어별 규모와 fan-in/out, 자원 소유자로의 수렴. 다시 뽑기: `go run ./scripts/inventory/code-graph .` |
-| [`code-health-review-2026-09-10.md`](dev/architecture/code-health-review-2026-09-10.md) | [측정] | **코드 건강도 검토** — 같은 수치 위에서 함수 길이·분기·중첩·완전 중복까지. `shellQuote` 4중복 등 **네 갈래 중복**과 패키지 문서 공백 17개. 수정은 아직 하지 않았다(worklist §1s). |
 | [`../codegraph/`](dev/codegraph/README.md) | [측정] | **호출(선택자) 그래프** — 패키지 그래프가 답하지 않는 "누가 무엇을 부르는가". `codegraph.json` + 파이프라인 mermaid. |
 
 ## 5. 하위 디렉토리 — 외부 축
@@ -124,7 +114,6 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 |---|---|
 | [`chain-analysis/`](chain-analysis/README.md) | **체인 바이너리의 CLI 표면과 배선** — gstable · gwbft · gwemix 각각의 명령/플래그 그래프와 RPC/metrics 그래프. 실행 옵션 질문은 **체인 소스를 읽기 전에 여기부터.** 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. 대상이 외부 바이너리라 설계 4종과는 별개 축이다. |
 | [`claudedocs/`](claudedocs/README.md) | **[이력] 외부 컨텍스트** — chainbench 가 속한 상위 자동화 시스템의 제안서/지시서(2026-04). 제안 당시 문서라 존재하지 않는 명령이 그대로 있다. 명령 표면은 `chainbench --help` 가 이긴다. |
-| `research/` | 다른 세션이 관리하는 분석 트리. 저장소에 추적되는 것은 [`08-dsl-15-node-analysis-response.md`](research/chainbench/analyses/08-dsl-15-node-analysis-response.md)(15노드 DSL 구성, 코드 변경 전 검토) 하나다. 여기서 참조하는 다른 번호 문서는 그 세션의 트리에 있고 이 저장소에는 없다. |
-| [`dev/archive/`](dev/archive/README.md) | **대체·완료된 문서.** 지우지 않고 옮긴다 — 결정의 근거는 결정 자체와 별개의 정보다. 각 문서에 "무엇으로 대체됐나" 가 붙어 있다. |
+| `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다)와 `common-tests/mainnet-dependencies-*`(메인넷 프로파일 계획의 근거). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. |
 
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).

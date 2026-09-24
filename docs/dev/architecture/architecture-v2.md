@@ -3,7 +3,7 @@
 > **[현행 설계]** 모듈 재편의 목표 구조.
 > 사용자 결정 2026-08-25. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])과
 > 이 세션의 실측(서버 세트 nil 전달 결함 등)이고, 작업 순서는 [[chainbench-worklist]] §1h 다.
-> [[layers]](layers.md)·[[target-architecture]](target-architecture.md) 의 레이어 규칙을 승계하며,
+> [[layers]](layers.md)·`target-architecture` (2026-09-24 삭제) 의 레이어 규칙을 승계하며,
 > 모듈 경계와 표면 경로를 재정의한다. 어긋나는 부분은 이 문서가 이긴다.
 
 ---
@@ -132,5 +132,5 @@ loopback 주소의 머신일 뿐이고, 구현 차이는 machine 내부의 관�
 
 ## 8. 이동 계획
 
-함수 단위 이동표는 [[v2-move-map]](../archive/v2-move-map.md), 작업 순서와 상태는
+함수 단위 이동표는 `v2-move-map` (2026-09-24 삭제), 작업 순서와 상태는
 [[chainbench-worklist]] §1h (V0~V7) 이 정본이다.

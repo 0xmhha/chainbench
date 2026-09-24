@@ -52,8 +52,8 @@ func (c *Set) PoolFor(s Server, minValidators, portBand int) Pool {
 // It refuses a set that mixes local and remote servers: that is two port
 // regimes at once, and the allocator cannot express it. Slots need no such
 // check — v2 declares one pool, so expand gives every host the same slot count
-// (a per-host count would be a format change, tracked as P1.3 in
-// docs/dev/architecture/module-plan.md). The count is read from the first
+// (a per-host count would be a format change, and no open plan carries it).
+// The count is read from the first
 // server rather than summed and divided, which is what the retired whole-set
 // resolver did.
 func (c *Set) Pool(minValidators, portBand int) (Pool, error) {

@@ -19,14 +19,15 @@ const docPathBudget = 0
 
 // docRoots are the documents a reader is expected to act on.
 //
-// docs/dev/archive/ and docs/research/ are left out, and the reason is the same
-// one that governs a comment: what a record SAID at the time is not a false
-// claim now. An archived design naming a file that has since been renamed is
-// the archive working. A live guide doing it sends a reader to a path that is
-// not there.
+// docs/research/ is left out, and the reason is the same one that governs a
+// comment: what a record SAID at the time is not a false claim now. A frozen
+// analysis naming a file that has since been renamed is the record working. A
+// live guide doing it sends a reader to a path that is not there.
+//
+// docs/dev/archive/ used to be skipped for the same reason. It was retired on
+// 2026-09-24 and its contents live in git history, so there is nothing left
+// to skip.
 var docRoots = []string{"docs/dev", "docs/guide"}
-
-var docSkip = []string{filepath.Join("docs", "dev", "archive")}
 
 // goPathInProse matches a repository path to a Go file written in a document.
 var goPathInProse = regexp.MustCompile(`\b((?:internal|cmd)/[a-z0-9_/-]+\.go)\b`)
@@ -53,11 +54,6 @@ func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 				return nil
 			}
 			rel, _ := filepath.Rel(root, p)
-			for _, s := range docSkip {
-				if strings.HasPrefix(rel, s) {
-					return nil
-				}
-			}
 			b, err := os.ReadFile(p)
 			if err != nil {
 				return nil

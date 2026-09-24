@@ -5,7 +5,7 @@
 
 - **레이어 축**(어느 패키지가 L0~L6 중 어디이고 의존이 어느 방향으로 흐르는지) — [[layers]](layers.md) §2·§3
 - **관심사 축**(어떤 관심사의 주인이 누구인지) — [[module-responsibilities]](module-responsibilities.md)
-- **통폐합 판단** — 닫혔다 (2026-09-20). 이력은 [[consolidation-plan]](consolidation-plan.md)
+- **통폐합 판단** — 닫혔다 (2026-09-20). 이력은 `consolidation-plan` (2026-09-24 삭제)
 
 숫자는 **비테스트 줄 수**다. `[L0]`~`[L6]` 은 `layers.md` §2 의 레이어이고, 그 배치는
 `internal/arch/layers_test.go` 가 강제한다.
@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 57,633 |
+| `internal/` | 52 | 57,636 |
 | `cmd/` | 19 | 5,055 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **63,478** |
+| **합계** | **74** | **63,481** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,12 +35,12 @@
 
 ---
 
-## 1. `internal/core` — 25패키지 17,227줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 17,230줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
 ├── home            52  [L0] 약속된 위치의 소유자 ~/.chainbench. 경로를 안 대면 키셋·세션·구성이 다 여기로 (요구 7)
-├── node         1,184  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
+├── node         1,185  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
@@ -61,7 +61,7 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,625  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,627  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -224,8 +224,8 @@ cmd/chainbench-dashboard  37  main. 대시보드 데몬(요구 19) — obs 이�
 
 ## 5. `scripts/inventory/` — 3패키지 790줄
 
-측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` 의 숫자가
-여기서 나온다. (`consolidation-plan.md` 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
+측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` (2026-09-24 삭제) 의 숫자가
+여기서 나온다. (`consolidation-plan.md` (2026-09-24 삭제) 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
 
 ```
 scripts/inventory/
@@ -248,7 +248,7 @@ scripts/inventory/
 **깊이가 있는 곳은 `core` 와 `dsl` 뿐이다.** `core` 22패키지 depth 3, `dsl` 3패키지, `consensus` 3,
 `chains` 7(depth 3). 나머지 최상위는 자식이 없다. 즉 트리를 더 읽기 쉽게 만드는 여지는 "최상위를
 줄이는" 쪽보다 "큰 최상위에 자식을 만드는" 쪽에 있다. **판단은 2026-09-20 에 닫혔다** —
-[[consolidation-plan]](consolidation-plan.md) 은 이력이고, 다음 리팩토링은 그것을 이어받지 않고
+`consolidation-plan` (2026-09-24 삭제) 은 이력이고, 다음 리팩토링은 그것을 이어받지 않고
 백지에서 다시 설계한다. 그때 이 문서의 수치는 **다시 잰다.**
 
 **층과 디렉토리가 어긋나는 자리가 셋 있다.** `core` 안의 L3 다섯 개(`session`·`collector`·`health`·

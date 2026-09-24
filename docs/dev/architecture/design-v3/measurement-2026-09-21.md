@@ -1,7 +1,7 @@
 # 리팩토링 설계 v3 — 실측 (2026-09-21) — [측정]
 
 > **[측정]** 이 문서는 잰 것만 적는다. 방향과 제안은 `direction.md` 에 있다.
-> 닫힌 세 계획([[consolidation-plan]]·[[module-plan]]·`refactoring-proposal/`)의 수치를
+> 닫힌 세 계획(`consolidation-plan` (2026-09-24 삭제)·`module-plan`·`refactoring-proposal/`)의 수치를
 > 하나도 가져오지 않았다. 전부 이날 다시 쟀다.
 >
 > 재는 법: `go run docs/dev/codegraph/main.go .` (AST, `go/parser`+`go/ast`).

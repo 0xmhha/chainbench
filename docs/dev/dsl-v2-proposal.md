@@ -6,7 +6,7 @@
 
 > 지시 1(DSL 문법 신규 제안) · 지시 4(x-bar 기반 문서 대조·갭) 응답. 작성: 2026-08-11 · 기준 커밋 `2181191`.
 > 대조 대상: [`chainbench-design.md`](chainbench-design.md) §3.2·§4.3 · [`chainbench-feature-spec.md`](chainbench-feature-spec.md) ·
-> [`chainbench-component-architecture.md`](archive/chainbench-component-architecture.md) · 구현 정본
+> `chainbench-component-architecture.md` (2026-09-24 삭제) · 구현 정본
 > `internal/testspec/spec.go` (**2026-09-11: 지금은 `internal/dsl/spec.go`** — 아래 경로 정정 참조).
 
 > **경로 정정 (2026-09-11).** 작성 시점 기준 커밋은 `2181191` 이고, 문법은 T7.8 에서
@@ -74,9 +74,9 @@ X-bar 도식을 다음과 같이 사상한다.
 |---|---|---|---|---|
 | `chainbench-design.md` | "구현 전 확정 설계(HOW)" | 패키지 인터페이스 계약 | §3 인터페이스 · §4 데이터모델 | §6 동시성 · §8 마이그레이션 · §9 미결 |
 | `chainbench-feature-spec.md` | F1–F16 번호 | 기능 동작 계약 | 입력/동작/출력/에러 + AC | 요구↔F 추적 부록 |
-| `chainbench-component-architecture.md` | "#225 시점 실측" | 컴포넌트 계층·조립 순서 | §1b DDD · §2b 실측 · §3 카탈로그 | §0 비평 · §6 리스크 |
+| `chainbench-component-architecture.md` (2026-09-24 삭제) | "#225 시점 실측" | 컴포넌트 계층·조립 순서 | §1b DDD · §2b 실측 · §3 카탈로그 | §0 비평 · §6 리스크 |
 | `chainbench-worklist.md` | "진행 단일 정본" | 작업 상태 | T0–T6 태스크 · 상태표기 | 폴더 트리 예상도 |
-| `chain-cli-execution-plan.md` | "기준 커밋 2424ccc" | 6-지시 → 순서화 | §4 원자 명령 표면 · §5 페이즈 | §2.4 드리프트 |
+| `chain-cli-execution-plan.md` (2026-09-24 삭제) | "기준 커밋 2424ccc" | 6-지시 → 순서화 | §4 원자 명령 표면 · §5 페이즈 | §2.4 드리프트 |
 | `chain-setup/README.md` | 12단계 파이프라인 | bring-up 절차 | 단계·2페이즈 계약·결함8 | §4 CLI |
 
 **구조적 문제 ①: `design` 의 head 는 "계약"인데, 정의서 문법의 complement 가 없다.**
@@ -86,8 +86,8 @@ X-bar 도식을 다음과 같이 사상한다.
 (T6.1 에서 추가되며 문서에 반영되지 않음).
 
 **구조적 문제 ②: adjunct 가 SSoT 를 흐린다.**
-`chainbench-audit-2026-08-09.md` 는 자기 §7 에서 "worklist 가 SSoT"라 자인하면서도 §1–§6 의
-판정을 남겨 둔다 — head 없이 adjunct 만 남은 문서다. `chain-cli-execution-plan.md §2.4` 가 이미
+`chainbench-audit-2026-08-09.md` (2026-09-24 삭제) 는 자기 §7 에서 "worklist 가 SSoT"라 자인하면서도 §1–§6 의
+판정을 남겨 둔다 — head 없이 adjunct 만 남은 문서다. `chain-cli-execution-plan.md §2.4` (2026-09-24 삭제) 가 이미
 드리프트로 지목했으나 배너 추가 이상의 조치가 없다.
 
 ### 2.3 DSL x-bar 표 — 비대칭 발견
@@ -113,7 +113,7 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 |---|---|---|---|---|
 | **G1** | 배경 1.4·1.5 / 알고리즘 2·3 — node key·keystore 를 **random 생성할지 기존 사용할지 결정** | design §3.5 `keyreg`(인터페이스만) | `keyreg.New` 는 **프로덕션 호출 지점 0**. `engine/attach.go:79`·`app.go:114` 가 `session.New(…, nil)` 로 nil 전달. 실경로는 `presets/keys` 하드코딩(`app.go:50`) | **미구현**. DSL 필드도 없음 |
 | **G2** | 배경 1.2 — genesis 4모드 | design §3.8 (4모드 명시) | DSL 은 `chain.genesisOverlay` 1개만 노출 | **문법 갭 3/4** |
-| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](archive/chain-binary-flag-graph.md) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
+| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → `chain-binary-flag-graph.md` (2026-09-24 삭제) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
 | **G4** | 배경 3 — 검증에 **log·rpc·metric** 활용 | design §3.6 collector 는 log·chainstate 만 | 어세션 16종 중 metric 소스 0 | **1/3 미구현** |
 | **G5** | 배경 4 — pre/post hook 의 **override 동작** 정의 | design §3.2 는 액션 리스트로만 해석 | preActions/postActions = 액션 배열 | **시맨틱 부재** |
 | **G6** | key point 2 — local/remote 를 단일 "경로"로 | design §7 은 `remote.cluster` 참조 | §2.3 문제 ④ 참조 | **표현 분산** |
@@ -323,7 +323,7 @@ v1 은 **v2 의 부분집합으로 기계 변환 가능**하다. 파서에 desug
 | 순위 | 항목 | 이유 |
 |---|---|---|
 | 1 | **G1 keyreg 배선** (`keys` 선언 + `session.New(…, keyreg.New(…))`) | 알고리즘 2·3 이 통째로 미구현. `keyreg` 는 이미 구현·테스트되어 있고 **호출 지점만 없다** — 문서가 경고한 "테스트 있음 ≠ 배선됨"의 재발 |
-| 2 | **G3 launch 옵션** | 배경 2·알고리즘 7 미충족. 설계는 [`chain-binary-flag-graph.md`](archive/chain-binary-flag-graph.md) §3.3 |
+| 2 | **G3 launch 옵션** | 배경 2·알고리즘 7 미충족. 설계는 `chain-binary-flag-graph.md` (2026-09-24 삭제) §3.3 |
 | 3 | **§3.5 문법 통일 + 스키마 정본화** | 이후 모든 이관(106건 잔여)이 이 문법 위에 쌓임. 늦출수록 재작업 비용 증가 |
 | 4 | G2 genesis 4모드 노출 | 코드(`core/genesis`)는 이미 4모드 지원 — DSL 필드만 열면 됨 |
 | 5 | G4 metric 어세션 | collector 에 metrics 스크레이프 추가 필요(신규 작업) |
