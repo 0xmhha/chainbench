@@ -196,18 +196,24 @@ func TestProcess_GoesUpToTheParentUntilSomebodyHandlesIt(t *testing.T) {
 	}
 }
 
-// TestProcess_AMessageNobodyHandlesIsRecordedAndNotAnError.
+// TestProcess_AMessageNobodyHandlesFailsTheSend.
 //
-// Refusing it would make every machine answer for messages meant for a state it
-// is not in, which is normal: an observer's event arriving mid-composition has
-// no handler and is not a fault. The log is where it shows up.
-func TestProcess_AMessageNobodyHandlesIsRecordedAndNotAnError(t *testing.T) {
+// It used to be recorded and dropped, on the grounds that an observer's event
+// can arrive in a state that has no use for it. That is what let a rebuild stall
+// with no error: the message that would have started the composition again was
+// dropped the same way. A message a state means to let pass is now declared as
+// ignored (see the contract tests); anything else is a failure.
+func TestProcess_AMessageNobodyHandlesFailsTheSend(t *testing.T) {
 	tr := newTree(t)
 	if err := tr.m.Start(context.Background(), tr.s3); err != nil {
 		t.Fatal(err)
 	}
-	if err := tr.m.Send(context.Background(), noteOther); err != nil {
-		t.Fatalf("an unhandled message failed the send: %v", err)
+	err := tr.m.Send(context.Background(), noteOther)
+	if !errors.Is(err, ErrUnhandled) {
+		t.Fatalf("an unhandled message returned %v, want ErrUnhandled", err)
+	}
+	if !strings.Contains(err.Error(), "P/S1/S3") {
+		t.Errorf("the error %q does not say where the message went unhandled", err)
 	}
 	last := lastRec(t, tr.m)
 	if last.Processed != "" {

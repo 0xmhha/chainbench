@@ -50,6 +50,11 @@ type Machine struct {
 	setupErr error // the first Add that was wrong, reported by Start
 	opErr    error // a misuse inside a state, reported by the Send it happened in
 
+	contracts   bool                                    // RequireContracts
+	onUnhandled func(msg Message, at StateName) Message // OnUnhandled
+	acting      StateName                               // the state whose Enter, Exit or Process is running
+	inFailure   bool                                    // dispatching what OnUnhandled made
+
 	log *ring
 	now func() time.Time
 }
@@ -118,6 +123,9 @@ func (m *Machine) Start(ctx context.Context, initial State) error {
 	if m.setupErr != nil {
 		return m.setupErr
 	}
+	if err := m.checkDeclared(); err != nil {
+		return err
+	}
 	if m.current != "" {
 		return fmt.Errorf("statemachine %s: already started, and now in %s", m.name, m.current)
 	}
@@ -144,8 +152,8 @@ func (m *Machine) Start(ctx context.Context, initial State) error {
 // Send handles one message and everything that follows from it.
 //
 // The message is offered to the current state and then to each of its parents
-// until one handles it; a message nobody handles is recorded and is not an
-// error. At most one transition follows, and then the self queue and the inbox
+// until one handles it. A message nobody handles is a failure unless a state on
+// that path declared it ignores it — see [Machine.OnUnhandled]. At most one transition follows, and then the self queue and the inbox
 // are drained until both are empty. When Send returns, the machine is at rest.
 //
 // Calling Send from inside a state is refused. A state that wants to say
@@ -222,6 +230,7 @@ func (m *Machine) SendSelf(msg Message) {
 	case !m.inState:
 		m.misuse("SendSelf outside Enter, Exit or Process")
 	default:
+		m.checkEmitted(msg)
 		m.self = append(m.self, msg)
 	}
 }
@@ -239,7 +248,7 @@ func (m *Machine) Current() State {
 }
 
 // Path is s and its ancestors, outermost first, joined with "/" — the form a
-// run's record keeps, e.g. "Composition/Composing/BuildingGenesis".
+// run's record keeps, e.g. "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_GENESIS".
 //
 // A state this machine does not hold has no ancestors here, so it comes back as
 // its own name alone.
@@ -320,21 +329,27 @@ func (m *Machine) dispatch(ctx context.Context, msg Message) error {
 	var handled StateName
 	m.inState = true
 	for name := original; name != ""; name = m.info[name].parent {
+		m.acting = name
 		ok, err := m.info[name].state.Process(ctx, m, msg)
 		if err != nil {
-			m.inState = false
+			m.inState, m.acting = false, ""
 			m.record(msg, name, original, "")
 			return fmt.Errorf("statemachine %s: %s processing %v: %w", m.name, name, msg.What(), err)
 		}
 		if ok {
 			handled = name
+			m.checkHandled(name, msg)
 			break
 		}
 	}
-	m.inState = false
+	m.inState, m.acting = false, ""
 	if m.opErr != nil {
 		m.record(msg, handled, original, "")
 		return m.takeOpErr()
+	}
+	if handled == "" && !m.ignoredOnPath(original, msg.What()) {
+		m.record(msg, "", original, "")
+		return m.failUnhandled(ctx, msg, original)
 	}
 
 	dest := m.dest
@@ -383,8 +398,10 @@ func (m *Machine) performTransition(ctx context.Context) error {
 	m.inState, m.inTransition = true, true
 	defer func() { m.inState, m.inTransition = false, false }()
 
+	defer func() { m.acting = "" }()
 	for name := m.current; name != "" && name != ancestor; name = m.info[name].parent {
 		i := m.info[name]
+		m.acting = name
 		if err := i.state.Exit(ctx, m); err != nil {
 			return fmt.Errorf("statemachine %s: leaving %s: %w", m.name, name, err)
 		}
@@ -392,6 +409,7 @@ func (m *Machine) performTransition(ctx context.Context) error {
 	}
 	for k := len(entering) - 1; k >= 0; k-- {
 		i := m.info[entering[k]]
+		m.acting = entering[k]
 		if err := i.state.Enter(ctx, m); err != nil {
 			return fmt.Errorf("statemachine %s: entering %s: %w", m.name, entering[k], err)
 		}
@@ -399,6 +417,20 @@ func (m *Machine) performTransition(ctx context.Context) error {
 	}
 	m.current = dest
 	return nil
+}
+
+// failUnhandled is what a message nobody handled becomes: the machine's own
+// failure event when it named one, and ErrUnhandled otherwise — including when
+// that failure event is itself unhandled, so a missing failure path stops the
+// machine instead of looping.
+func (m *Machine) failUnhandled(ctx context.Context, msg Message, at StateName) error {
+	err := fmt.Errorf("statemachine %s: %w: %d in %s", m.name, ErrUnhandled, msg.What(), m.Path(m.info[at].state))
+	if m.onUnhandled == nil || m.inFailure {
+		return err
+	}
+	m.inFailure = true
+	defer func() { m.inFailure = false }()
+	return m.dispatch(ctx, m.onUnhandled(msg, at))
 }
 
 // record writes one line of the log.
