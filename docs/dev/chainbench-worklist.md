@@ -69,6 +69,14 @@
       P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
       **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
 
+- [ ] **go-wemix 코어: 거버넌스가 반만 지어진 구간에서 full sync 가 영구히 멈춘다** — 근거: §1s G6.
+      **chainbench 가 고칠 수 없다 — 체인팀 인계 건이다.** 거버넌스는 블록 4~13에 걸쳐 지어지고
+      (proxy 가 imp 주소를, registry 등록이 proxy 주소를 필요로 하는 의존 사슬), 그 중간 블록의
+      상태를 쥔 채 다음 블록을 검증한 노드는 "registry 는 있는데 주소록이 비었다" 를 본다.
+      `wemix/admin.go:1000` 이 그 revert 를 "아직 준비 안 됨" 으로 인정하지 않아 `unauthorized block`
+      으로 판정하고, 상태를 버릴 수 없으므로 **영구 고장**이 된다. 15노드 poa 에서 재현 2/2,
+      걸리는 노드는 매번 다르다(배치 경계 경합). full sync 만 취약하다.
+      **이 항목이 열려 있는 한 `02-wemix-chain-up-15` 는 BLOCKED 로 남는다.**
 - [x] **죽은 명령을 부르는 e2e** — **해소 (2026-09-24). 둘이 아니라 스무 개였다.**
       이 항목은 `upgrade_data_migration_e2e_test.go` 와 `upgrade_gov_ncp_lifecycle_e2e_test.go`
       둘이라고 적었다. 바이너리를 걸고 돌리니 **7개 파일 20개 함수**가 전부
@@ -1854,7 +1862,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 | 갈래 | 상태 |
 |---|---|
 | G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
-| G6. 15노드 poa endpoint 합류 실패 | 열림 · **재현 2/2 · 기전 확정 — go-wemix 몫** |
+| G6. 15노드 poa endpoint 영구 합류 실패 | 열림 · **원인 확정 — go-wemix 코어 결함, 체인팀 인계 대기** |
 | ~~G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다~~ | **닫힘 (2026-09-24) — 테스트가 자기 바이너리를 들고 간다** |
 | ~~G3. `preset.KeysDir` 의 기준이 문서와 다르다~~ | **닫힘 (2026-09-24) — 주석을 사실에 맞추고 실패가 기준을 말한다** |
 | ~~G5. 죽은 `.env.json` 필터 넷~~ | **닫힘 (2026-09-24)** |
@@ -2998,61 +3006,122 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   **주의: `go test` 캐시.** 두 번째 실행에서 35개 패키지가 `(cached)` 로 통과했고 그중
   `tests/e2e` 가 있었다. 캐시는 재실행이 아니다 — 이 계층을 다시 잴 때는 `-count=1` 을 준다.
 - [x] **G2. PR.** #425. G1 보다 먼저 냈다(사용자 의도). 이 절이 그 PR 의 검증 기록이다.
-- [ ] **G6. 15노드 poa 에서 endpoint 하나가 합류하지 못한다 — 체인팀 몫
-  (2026-09-23 관측 · 2026-09-24 재현·확정).**
+- [ ] **G6. 15노드 poa 에서 endpoint 하나가 영구히 합류하지 못한다 — go-wemix 결함, 원인
+  확정 (2026-09-23 관측 · 2026-09-24 재현·근본원인 측정).**
   `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED 된다 —
-  `1 node(s) still not ready after 5m0s`.
+  `1 node(s) still not ready after 5m0s`. 케이스 자신의 주장은 약하고(블록 2 이상, 피어 0
+  아님), 실패하는 곳은 스텝이 아니라 그 앞의 readiness 게이트다. 스텝은 실행되지 않는다.
 
-  **재현된다. 2/2.** 다만 **어느 노드가 걸리는지는 매번 다르다** — 9월 23일에는 node13,
-  9월 24일에는 node9 였다. 증적은 각각 `~/.chainbench/20260923-100943-97772/` 와
-  `~/.chainbench/20260924-013034-76103/`(노드 15대 로그 전부 + health.json + processes.json).
+  **chainbench 의 문제가 아니다.** 15대를 같은 방식으로 띄웠고, 갈라지는 지점은 go-wemix 의
+  블록 검증 안이다. 기동 순서로도 피할 수 없다 — 아래 "왜 순서로 못 피하나" 참조.
 
-  **기전은 결정적이다.** geth 는 배치의 헤더를 먼저 한꺼번에 검증한다. 거버넌스 배포
-  트랜잭션(언제나 `txs=6 mgas=19.363`)이 들어 있는 블록에서 **다운로더 배치가 정확히
-  끊긴 노드**만 그 다음 블록을 진짜로 검사하고, 떨어진다.
+  ### 무엇이 일어나나
 
-  | 2026-09-24 실측 | 2번째 배치 | 결과 |
+  재현된다. **2/2. 다만 걸리는 노드는 매번 다르다** — 2026-09-23 node13, 2026-09-24 node9.
+  증적은 `~/.chainbench/20260923-100943-97772/` 와 `~/.chainbench/20260924-013034-76103/`
+  (노드 15대 로그 전부 + health.json + processes.json).
+
+  걸린 노드는 블록 N 에서 멈추고 블록 N+1 을 `unauthorized block` 으로 거절한다. 피어를
+  끊고 다시 붙기를 반복하며 영원히 나아가지 못한다.
+
+  ### 왜 한 노드만 — 데이터 문제가 아니다
+
+  geth 는 배치의 헤더를 **블록을 넣기 전에 한꺼번에·동시에** 검증한다
+  (`core/blockchain.go:1446` → `consensus/ethash/consensus.go:146`). 그래서 블록 N+1 의
+  검증이 일어나는 순간의 로컬 head 가 노드마다 다르다.
+
+  | 2026-09-24 실측 | 2차 배치 | 블록 6 검증 시 head | 블록 5 상태 | 판정 |
+  |---|---|---|---|---|
+  | node8·10·11·12·13·14 | 블록 4~67 (64개) | 3 | **없음** | 통과 |
+  | **node9** | **블록 4~5 (2개)** | **5** | **있음** | **거절** |
+
+  배치 크기는 다운로더가 그 순간 받아 둔 만큼이라 **경합**이다. 둘 다 큐에는 69개를 알고
+  있었다(`blockTasks=69`).
+
+  블록 5의 데이터는 멀쩡하다 — `health.json` 이 "all 15 node(s) report the same hash at
+  block 5" 라고 적고, node9 의 registry 코드와 `magic()` 도 정상이다.
+
+  ### 왜 거절하나 — 거버넌스가 블록 4~13에 걸쳐 지어진다
+
+  chainbench 는 `gwemix wemix deploy-governance` 를 **한 번** 부른다. 나누는 것은 go-wemix
+  안의 의존 사슬이다: proxy 는 imp 의 주소를 생성자 인자로 받고, registry 등록은 proxy
+  주소를, 초기화는 registry 를 필요로 한다. `WaitMined()` 가 다섯 번 걸린다
+  (`wemix/bind/structs.go` `DeployGovContracts`·`ExecuteInitialize`).
+
+  | 블록 | 트랜잭션 | 무엇 |
   |---|---|---|
-  | node8·10·11·12·13·14 | 64~69 블록을 한 번에 (→ 67~73) | 통과 |
-  | **node9** | **2 블록 (→ 5, 거버넌스 배포에서 끊김)** | 블록 6 거절 |
+  | 4 | 생성 6 | registry + 구현(imp) 5 |
+  | 6 | 생성 5 | proxy 5 |
+  | 9 | 호출 9 | registry 도메인 등록 + 초기화 |
+  | 12·13 | 호출 5 | 멤버·스테이킹 마무리 |
 
-  형제들은 블록 6의 헤더를 검증할 때 head 가 아직 3이라 부모 상태를 읽지 못하고 **관대한
-  경로**로 통과했다. node9 만 블록 5를 이미 갖고 있어 진짜 검사를 돌렸다.
+  블록 5에서 검사가 보는 것(node9 콘솔로 직접 재현):
 
-  **거절당한 블록은 그 노드가 방금까지 받아들이던 생산자의 것이다.** 블록 6을 봉인한 것은
-  node7 이고(`Successfully sealed number=6 hash=5ceb9a..05aedb`), node9 는 같은 node7 의
-  블록 1~5를 받아들였다. node7 의 주소는 이 구성의 `systemContractMembers` 에 들어 있다.
-  즉 **블록이 잘못된 것이 아니라 검사가 잘못될 조건이 있다.**
+      registry code  = 3250 hex chars
+      magic()        = "Wemix Registry"                  ← registry 로 인식된다
+      getContractAddress("GovernanceContract")
+                     → execution reverted: address should be non-zero
 
-  **어디를 보아야 하나 — 가드가 비대칭이다.** `wemix/admin.go:992 verifyBlockSig` 는
-  거버넌스를 못 읽을 때를 두 번은 통과로, 두 번은 거절로 처리한다.
+  **주소록은 있고 자기소개도 하는데 내용이 비어 있다.**
 
-  | 조건 | 결과 |
+  ### 결함 — 준비 안 된 상태의 표현이 셋인데 둘만 인정한다
+
+  `wemix/admin.go:992 verifyBlockSig` 는 ① registry 에서 Gov 주소 찾기 → ② 멤버 수 →
+  ③ enode 조회 순으로 간다. 블록 5에서는 **①에서 죽으므로 ②·③에 닿지 못한다.**
+
+  | 노드가 보는 것 | 에러 | 판정 |
+  |---|---|---|
+  | 상태가 아예 없다 | `missing trie node` → `ethereum.NotFound` | 통과 (`admin.go:1000`) |
+  | 멤버가 0명 | — | 통과 (`admin.go:1002`) |
+  | **registry 는 있는데 주소록이 비었다** | **`revert: address should be non-zero`** | **거절** |
+
+      return err == wemixminer.ErrNotInitialized || errors.Is(err, ethereum.NotFound)
+
+  revert 는 둘 중 어느 것도 아니라 `false` → `consensus.ErrUnauthorized` 다.
+
+  ### 왜 영구적인가
+
+  관대한 경로는 **상태가 없을 때만** 열린다. 블록 5를 넣은 노드는 그 상태를 버릴 수 없고,
+  geth 는 실패한 import 에서 head 를 되감지 않는다. 그래서 재시도 입력이 매번 같다 —
+  **재기동해도 head 5, peers 0** (실측). 피어를 바꿔도 소용없다: 거절은 피어가 준 데이터가
+  아니라 자기 상태 때문이고, 어느 피어가 줘도 블록 6은 같다. 앞으로 가는 유일한 문이 블록
+  6인데 막혀 있으니 검사가 정상 동작하는 블록 9 이후에 영원히 닿지 못한다.
+
+  ### 왜 기동 순서로 못 피하나
+
+  `BootstrapPlan()` 은 이미 `deploy-governance → init-etcd → start-nodes` 다. 실측 타임라인:
+  블록 9(거버넌스 완료) 01:31:20 → etcd 01:31:24 → 나머지 14대 01:31:26 이후, endpoint 는
+  01:32:55(체인은 이미 블록 39). **모든 노드가 거버넌스 완료 뒤에 뜬다.** 그래도 실패하는
+  것은, 늦게 뜬 노드도 **블록 1부터 재생**해야 하므로 어차피 그 구간을 지나기 때문이다.
+  검증은 기동 시점이 아니라 **재생 시점**에 일어난다.
+
+  ### full sync 만 취약하다
+
+  | | full sync | snap sync |
+  |---|---|---|
+  | seal 검증 대상 | 모든 블록 (`blockchain.go:1444`) | 100개당 무작위 1개 (`headerchain.go:332`, `fsHeaderCheckFrequency=100`) |
+  | 초기 구간 state 보유 | 직접 실행해 만든다 → 있다 | 만들지 않는다 (pivot 에서 받음) |
+  | 취약 | **예** | 아니오 (두 이유가 독립적으로 막는다) |
+
+  chainbench 기본값은 `full` 이다(`nodeconfig.go:165`), 그래서 15대 전원이 취약한 조건에
+  있었다. `--syncmode snap` 은 증상 회피일 뿐이고, full sync 를 요구하는 검증 환경에는
+  쓸 수 없다.
+
+  ### 메인넷 영향
+
+  | 상황 | 위험 |
   |---|---|
-  | 레지스트리 조회가 `NotFound` (`admin.go:1000`) | **통과** |
-  | `GetMemberLength()` 오류 또는 0 (`admin.go:1002`) | **통과** |
-  | `ModifiedBlock` 오류 또는 0 → `ErrNotInitialized` (`miner_limit.go:52-57`) | **거절** |
-  | enode 가 노드 표에 없음 → `NotFound` (`miner_limit.go:123`) | **거절** |
+  | 운영 중 노드가 새 블록을 하나씩 받음 | **없음** — 항상 부모 상태가 있고 거버넌스는 완성돼 있다 |
+  | 신규 구성 직후 노드 합류 | **높음** — 재현 2/2 |
+  | **메인넷을 genesis 부터 full sync** | **가능** — 그 체인 초기에도 같은 미완성 구간이 있다면, 언제 띄우든 재생하며 지난다 |
 
-  **조회 키가 주소가 아니라 enode 다.** `enode2index` 는 `GetNodeLength()`/`GetNode()` 로
-  만든다 — 멤버 표(`GetMemberLength`)와 **다른 표**다. 멤버는 채워졌는데 노드(enode) 표가
-  아직 비어 있는 높이가 있으면, 멤버 0은 "아직 준비 안 됨 → 통과" 인데 노드 0은 "→ 전부
-  거절" 이 된다. 거버넌스가 블록 4~5에서 막 배포된 직후가 정확히 그 구간이다.
+  ### 체인팀에 넘길 것
 
-  덤으로 `coinbaseEnodeCache` 는 `modifiedBlock` 을 키로 한 **프로세스 전역 캐시**라, 한
-  높이에서 담은 표가 같은 `modifiedBlock` 을 갖는 다른 높이에 그대로 재사용된다.
-
-  **체인팀에 넘길 질문 둘.** (1) 거버넌스를 못 읽을 때 통과시키는 것이 의도라면 enode 표
-  경로도 같아야 하고, 의도가 아니라면 네 갈래 모두 거절이어야 한다. (2) 블록 4~5 시점에
-  `GetNodeLength()` 가 0인가 — 그렇다면 그것이 직접 원인이다.
-
-  **확인하지 못한 것.** (2)를 답하려면 블록 5 시점의 거버넌스를 RPC 로 조회해야 하는데
-  노드가 멈춰 있다. 2026-09-24 실행의 컨테이너 datadir 은 남겨 뒀다(`chain rm` 을 걸지
-  않았다) — 다시 띄워 물어보면 답이 나온다.
-
-  **chainbench 쪽은 아니다.** 15대를 같은 방식으로 띄웠고, 갈라진 지점은 go-wemix 의 블록
-  검증 안이다. en 의 상류가 pn 하나뿐인 것도 원인이 아니다 — 거절은 피어가 준 데이터가
-  아니라 그 노드 자신의 상태 때문이고, 어느 피어가 줘도 같은 블록이다.
+  1. `wemix/admin.go:1000` 의 통과 조건에 **revert 를 포함**한다. "거버넌스를 아직 읽을 수
+     없다" 는 상태가 없을 때든 주소록이 비었을 때든 같은 뜻인데 지금은 전자만 통과한다.
+  2. `NewGovContracts`(`wemix/bind/structs.go`)가 `CallOpts` 에 높이를 넣지 않아 주소록을
+     **검증 대상 높이가 아니라 latest 기준**으로 푼다. 이번에는 node9 의 latest 가 마침 5라
+     결과가 같았지만 일반적으로 다른 답이 나올 수 있는 자리다.
 
 - [x] **G4. `upgrade run` 을 부르던 e2e 20건을 리팩토링이 남긴 경로로 옮겼다 (2026-09-24).**
   `upgrade run` 은 main 의 `6ed4b37c` (#419, 2026-09-20)가 지웠다. 그 리팩토링은 핸드오버를
