@@ -27,14 +27,27 @@ import (
 type healthObserver struct {
 	nodes node.NodeSet
 	fork  forkGate
+	// load re-reads the node set from the workspace record each round.
+	load func(ctx context.Context) (node.NodeSet, error)
+	// opts reaches health.Run; a test sets its Dial.
+	opts health.Options
 }
 
 func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error) {
-	rep, err := health.Run(ctx, o.nodes, health.Options{}, nil)
+	// Read the node set again every round. A restart the gate asked for records
+	// the node's new pid in the workspace; a set held from before it still says
+	// the old one, and the restarted node would be judged dead forever.
+	ns := o.nodes
+	if o.load != nil {
+		if fresh, err := o.load(ctx); err == nil && len(fresh.Nodes) > 0 {
+			ns = fresh
+		}
+	}
+	rep, err := health.Run(ctx, ns, o.opts, nil)
 	if err != nil {
 		return nil, err
 	}
-	return factsFromReport(rep, o.nodes, o.fork), nil
+	return factsFromReport(rep, ns, o.fork), nil
 }
 
 // forkGate is what the readiness gate has to know about a network that stops on
@@ -277,7 +290,10 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 		return nil
 	}
 	res, err := nodemonitor.Gate(ctx,
-		healthObserver{nodes: *nodes, fork: fork},
+		healthObserver{nodes: *nodes, fork: fork, load: func(ctx context.Context) (node.NodeSet, error) {
+			st, err := verb.NetworkStatus(ctx, deps, verb.NetworkStatusIn{DataDir: dataDir})
+			return st.Nodes, err
+		}},
 		restartAdapter{deps: deps, dataDir: dataDir},
 		ctxClock{},
 		stepSink{steps: steps},
