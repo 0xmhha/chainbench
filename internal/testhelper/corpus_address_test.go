@@ -57,7 +57,7 @@ func TestCorpus_AddressesResolveToWhatTheyDidBefore(t *testing.T) {
 	var lines []string
 
 	err := filepath.WalkDir(corpusDir, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".env.json") {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
 			return err
 		}
 		raws, rerr := dsl.ReadFiles([]string{p})
@@ -362,7 +362,7 @@ func firstDifference(want, got string) string {
 // ratchet rather than a list someone has to remember to extend.
 func TestCorpus_ANamedContractIsNotWrittenAsAnAddress(t *testing.T) {
 	err := filepath.WalkDir(corpusDir, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".env.json") {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
 			return err
 		}
 		raws, rerr := dsl.ReadFiles([]string{p})

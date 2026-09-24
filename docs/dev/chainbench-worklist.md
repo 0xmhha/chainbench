@@ -1854,9 +1854,10 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 | 갈래 | 상태 |
 |---|---|
 | G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
-| G6. 15노드 poa node13 합류 실패 | 열림 · **원인 규명됨 — go-wemix 몫** |
+| G6. 15노드 poa endpoint 합류 실패 | 열림 · **재현 2/2 · 기전 확정 — go-wemix 몫** |
 | ~~G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다~~ | **닫힘 (2026-09-24) — 테스트가 자기 바이너리를 들고 간다** |
-| G3 · G5 | 열림 (범위 밖으로 미뤄 둔 것) |
+| ~~G3. `preset.KeysDir` 의 기준이 문서와 다르다~~ | **닫힘 (2026-09-24) — 주석을 사실에 맞추고 실패가 기준을 말한다** |
+| ~~G5. 죽은 `.env.json` 필터 넷~~ | **닫힘 (2026-09-24)** |
 | ~~G4. `upgrade run` e2e 20건~~ | **닫힘 (2026-09-24) — 21 PASS · 0 FAIL** |
 | ~~G4-a. overlay 가 fork 섹션에서 버려짐~~ | **닫힘 (2026-09-24) — 순서 원복** |
 | B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
@@ -2997,63 +2998,62 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   **주의: `go test` 캐시.** 두 번째 실행에서 35개 패키지가 `(cached)` 로 통과했고 그중
   `tests/e2e` 가 있었다. 캐시는 재실행이 아니다 — 이 계층을 다시 잴 때는 `-count=1` 을 준다.
 - [x] **G2. PR.** #425. G1 보다 먼저 냈다(사용자 의도). 이 절이 그 PR 의 검증 기록이다.
-- [ ] **G6. 15노드 poa 에서 node13 이 합류하지 못한다 — 체인팀 몫 (신규 2026-09-23).**
-  `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED — `1 node(s) still not ready after
-  5m0s`. 14대가 블록 591 에 있는 동안 node13 은 블록 4, peer 0, syncing 이다. 증적(노드 15대
-  로그 전부 + health.json + processes.json)은 `~/.chainbench/20260923-100943-97772/`.
+- [ ] **G6. 15노드 poa 에서 endpoint 하나가 합류하지 못한다 — 체인팀 몫
+  (2026-09-23 관측 · 2026-09-24 재현·확정).**
+  `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED 된다 —
+  `1 node(s) still not ready after 5m0s`.
 
-  **원인은 go-wemix 의 블록 권한 검사 안에 있다. chainbench 와 이 브랜치는 무관하다.**
-  검사는 `consensus/ethash/consensus.go:327` → `wemix/admin.go:992 verifyBlockSig` 로 가고,
-  거기서 **부모 블록(height-1)의 거버넌스 상태**를 읽는다. 그 상태를 못 읽으면 어떻게 되는가가
-  갈림길이다.
+  **재현된다. 2/2.** 다만 **어느 노드가 걸리는지는 매번 다르다** — 9월 23일에는 node13,
+  9월 24일에는 node9 였다. 증적은 각각 `~/.chainbench/20260923-100943-97772/` 와
+  `~/.chainbench/20260924-013034-76103/`(노드 15대 로그 전부 + health.json + processes.json).
 
-  - `wemix/admin.go:998-1002` — 레지스트리 조회가 `ethereum.NotFound` 거나 member count 가 0이면
-    **통과(true)** 로 돌려준다. 그 `NotFound` 는 `wemix/bind/structs.go:253-261` 이 후보 주소
-    10개를 모두 실패했을 때 원인을 가리지 않고 만들어 낸다 — "컨트랙트가 아직 없다" 와
-    "그 블록의 state 가 로컬에 없다" 가 같은 에러가 된다.
-  - `wemix/miner_limit.go:118 enodeExists` — 여기서 나오는 에러는 하나도 관대하게 처리되지 않고
-    호출부가 전부 **거절(false)** 로 만든다.
+  **기전은 결정적이다.** geth 는 배치의 헤더를 먼저 한꺼번에 검증한다. 거버넌스 배포
+  트랜잭션(언제나 `txs=6 mgas=19.363`)이 들어 있는 블록에서 **다운로더 배치가 정확히
+  끊긴 노드**만 그 다음 블록을 진짜로 검사하고, 떨어진다.
 
-  즉 **같은 "거버넌스를 확인할 수 없다" 가 호출 깊이에 따라 통과와 거절로 갈린다.**
+  | 2026-09-24 실측 | 2번째 배치 | 결과 |
+  |---|---|---|
+  | node8·10·11·12·13·14 | 64~69 블록을 한 번에 (→ 67~73) | 통과 |
+  | **node9** | **2 블록 (→ 5, 거버넌스 배포에서 끊김)** | 블록 6 거절 |
 
-  왜 node13 만 걸렸나: geth 는 배치의 헤더를 먼저 한꺼번에 검증한다. 형제 여섯(node8~12·14)은
-  블록 3–64 를 **한 배치**로 받아서 블록 5 헤더를 검증할 때 로컬 head 가 아직 2였다 — 블록 4의
-  state 가 없으니 관대한 경로로 통과했다. node13 만 배치가 3–4 에서 끊겨 **블록 4를 이미
-  갖고 있었고**, 그래서 혼자 진짜 검사를 돌려 떨어졌다. 뒤처진 것이 통과의 조건이었다.
+  형제들은 블록 6의 헤더를 검증할 때 head 가 아직 3이라 부모 상태를 읽지 못하고 **관대한
+  경로**로 통과했다. node9 만 블록 5를 이미 갖고 있어 진짜 검사를 돌렸다.
 
-  왜 회복하지 못했나: 블록 4는 되돌아가지 않으므로 재시도마다 같은 엄격한 경로를 타고 같은
-  이유로 떨어진다. 관대한 경로는 "부모 state 가 없을 때"만 열리는데 node13 은 그 조건에서
-  영구히 벗어났다. **피어 수는 원인이 아니다** — 어느 피어가 줘도 같은 블록 5이고, 거절은
-  node13 자신의 상태 때문이다. (`rawdb.WriteBadBlock` 이 남기는 목록은 진단용이고 import 를
-  막지 않는다. 읽는 곳은 `eth/tracers/api.go` 뿐이다.)
+  **거절당한 블록은 그 노드가 방금까지 받아들이던 생산자의 것이다.** 블록 6을 봉인한 것은
+  node7 이고(`Successfully sealed number=6 hash=5ceb9a..05aedb`), node9 는 같은 node7 의
+  블록 1~5를 받아들였다. node7 의 주소는 이 구성의 `systemContractMembers` 에 들어 있다.
+  즉 **블록이 잘못된 것이 아니라 검사가 잘못될 조건이 있다.**
 
-  **체인팀에 넘길 질문 둘.** (1) 거버넌스를 못 읽을 때 통과시키는 것이 의도인가 — 의도면
-  `enodeExists` 경로도 같아야 하고, 아니면 셋 다 거절이어야 한다. (2) `GetRegistryByOwner` 가
-  "컨트랙트 없음" 과 "state 조회 실패" 를 같은 `NotFound` 로 뭉개는 것이 맞는가.
+  **어디를 보아야 하나 — 가드가 비대칭이다.** `wemix/admin.go:992 verifyBlockSig` 는
+  거버넌스를 못 읽을 때를 두 번은 통과로, 두 번은 거절로 처리한다.
 
-  **확인하지 않은 것.** 블록 5가 실제로 권한 없는 블록인지는 모른다 — 진짜 검사를 통과한 노드가
-  하나도 없으므로 14대가 옳다는 근거도 없다. 판정하려면 블록 4 시점의 거버넌스 상태가 필요한데
-  그 datadir 은 스위프가 지웠다(이 케이스는 tcsweep 수정 이전에 돌았다). 재현성도 모른다 —
-  배치 경계는 다운로더 경합이라 매번 다르다.
+  | 조건 | 결과 |
+  |---|---|
+  | 레지스트리 조회가 `NotFound` (`admin.go:1000`) | **통과** |
+  | `GetMemberLength()` 오류 또는 0 (`admin.go:1002`) | **통과** |
+  | `ModifiedBlock` 오류 또는 0 → `ErrNotInitialized` (`miner_limit.go:52-57`) | **거절** |
+  | enode 가 노드 표에 없음 → `NotFound` (`miner_limit.go:123`) | **거절** |
 
-**라이브로 못 밟은 것 하나.** "이미 포크를 넘은 네트워크는 `BeforeFork`·`HandingOver` 를
-건너뛰고 곧장 `Crossed` 로 간다" 는 갈래는 단위 테스트로만 확인했다
-(`TestCrossingFork_TheMomentsAreStatesAndTheyAreWalkedInOrder`). 그 상황을 만드는 DSL
-케이스가 없다.
+  **조회 키가 주소가 아니라 enode 다.** `enode2index` 는 `GetNodeLength()`/`GetNode()` 로
+  만든다 — 멤버 표(`GetMemberLength`)와 **다른 표**다. 멤버는 채워졌는데 노드(enode) 표가
+  아직 비어 있는 높이가 있으면, 멤버 0은 "아직 준비 안 됨 → 통과" 인데 노드 0은 "→ 전부
+  거절" 이 된다. 거버넌스가 블록 4~5에서 막 배포된 직후가 정확히 그 구간이다.
 
-### G 파생 — 범위 밖으로 미뤄 둔 셋 (2026-09-22 실측)
+  덤으로 `coinbaseEnodeCache` 는 `modifiedBlock` 을 키로 한 **프로세스 전역 캐시**라, 한
+  높이에서 담은 표가 같은 `modifiedBlock` 을 갖는 다른 높이에 그대로 재사용된다.
 
-리팩토링 중에 눈에 띄었지만 이 트랙의 일이 아니라서 손대지 않은 것들이다. 셋 다 **오늘
-코드에 대조했고**, 아래가 실측이다.
+  **체인팀에 넘길 질문 둘.** (1) 거버넌스를 못 읽을 때 통과시키는 것이 의도라면 enode 표
+  경로도 같아야 하고, 의도가 아니라면 네 갈래 모두 거절이어야 한다. (2) 블록 4~5 시점에
+  `GetNodeLength()` 가 0인가 — 그렇다면 그것이 직접 원인이다.
 
-- [ ] **G3. `preset.KeysDir` 이 무엇을 기준으로 풀리는지가 문서와 다르다.**
-  `internal/preset/doc.go:28` 은 "relative to the repository root" 라고 적었는데, 호출부
-  아홉 곳은 전부 이것을 플래그 기본값이나 설정 기본값으로 그냥 넘긴다
-  (`chaincmd/up.go`, `chaincmd/new.go`, `suitecmd/run.go`, `keyringcmd/validator.go`,
-  `nodeconfig/config.go`, `chainsetup/workspace_new.go`, `testengine/compose.go`,
-  `validatorset/validatorset.go`). 상대 경로이므로 프로세스의 CWD 기준으로 풀린다. 저장소
-  루트에서 실행하면 맞고, 다른 데서 실행하면 조용히 없는 디렉터리를 가리킨다.
-  **판단이 필요하다** — 주석을 사실에 맞추거나, 루트를 찾아 풀거나 둘 중 하나다.
+  **확인하지 못한 것.** (2)를 답하려면 블록 5 시점의 거버넌스를 RPC 로 조회해야 하는데
+  노드가 멈춰 있다. 2026-09-24 실행의 컨테이너 datadir 은 남겨 뒀다(`chain rm` 을 걸지
+  않았다) — 다시 띄워 물어보면 답이 나온다.
+
+  **chainbench 쪽은 아니다.** 15대를 같은 방식으로 띄웠고, 갈라진 지점은 go-wemix 의 블록
+  검증 안이다. en 의 상류가 pn 하나뿐인 것도 원인이 아니다 — 거절은 피어가 준 데이터가
+  아니라 그 노드 자신의 상태 때문이고, 어느 피어가 줘도 같은 블록이다.
+
 - [x] **G4. `upgrade run` 을 부르던 e2e 20건을 리팩토링이 남긴 경로로 옮겼다 (2026-09-24).**
   `upgrade run` 은 main 의 `6ed4b37c` (#419, 2026-09-20)가 지웠다. 그 리팩토링은 핸드오버를
   전용 composer 에서 **일반 composition 경로**로 옮겼고, 명령을 몰던 e2e 20건은 따라 고치지
@@ -3140,12 +3140,30 @@ compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다
   호스트면 어디서든 돈다. 진짜 체인 바이너리를 쓰면 빌드가 전제로 하나 더 붙을 뿐이다.
 
   `env/docker` 의 server1(sshd 2201)로 검증했다: **PASS 2.3초.** 실행법은 파일 머리말에.
-- [ ] **G5. 죽은 `.env.json` 접미사 필터 넷.** `cmd/chainbench/validate_test.go:271`,
-  `internal/testengine/corpus_gate_test.go:65`,
-  `internal/testhelper/corpus_address_test.go:60` 과 `:365`. `tests/` 아래에
-  `*.env.json` 파일은 **한 개도 없다**(`find` 로 확인). 라이브 테스트가 쓰던 이름이
-  `<id>.json` 으로 바뀐 뒤 필터만 남았다. 지금은 아무것도 거르지 않으므로 해롭지는 않지만,
-  다음 사람에게 있지도 않은 규칙을 가르친다.
+- [x] **G3. `preset.KeysDir` 은 저장소 루트 기준이 아니다 — 주석이 틀렸다 (2026-09-24 해소).**
+  `internal/preset/doc.go` 는 "relative to the repository root" 라고 적었다. 그렇지 않다.
+  호출부 아홉은 **전부 플래그·설정의 기본값**이고, 상대 경로는 프로세스 작업 디렉터리
+  기준으로 풀린다. 그리고 chainbench 는 `install.sh` 로 설치되는 바이너리라 **저장소 루트가
+  없는 환경이 정상**이다 — "루트를 찾아 풀자"는 선택지는 애초에 성립하지 않는다.
+
+  이 항목은 "다른 데서 실행하면 **조용히** 없는 디렉터리를 가리킨다" 고도 적었다. 그것도
+  틀렸다. `/tmp` 에서 돌려 보면 조용하지 않다:
+  `keyring: read keys: open presets/keys/metadata.json: no such file or directory`.
+  경로는 말한다. 말하지 않던 것은 **그 경로가 무엇을 기준으로 풀렸는지**다.
+
+  그래서 둘을 고쳤다. 주석을 사실에 맞췄고, 상대 경로일 때만 실패에 기준을 덧붙인다 —
+  `("presets/keys" is relative, resolved against the working directory /tmp)`.
+  절대 경로면 아무것도 붙이지 않는다.
+
+- [x] **G5. 죽은 `.env.json` 접미사 필터 넷 — 제거 (2026-09-24).** 네 곳 모두 `tests/tc` 를
+  훑는데, 그 트리에는 `kind: case` 파일 209개뿐이고 `*.env.json` 은 **한 개도 없다**.
+  거르는 것이 0건이었다. 라이브 테스트가 쓰던 이름이 `<id>.json` 으로 바뀐 뒤 필터만
+  남은 것이고, 해롭지는 않아도 다음 사람에게 있지도 않은 규칙을 가르친다.
+
+  `cmd/chainbench/validate_test.go` 에서는 그 필터가 함수 하나의 전부였다(`specFilesUnder`).
+  `jsonFilesUnder` 와 같아졌으므로 접고 호출부 둘을 옮겼다. 남은 함수의 주석이 **걸러낼 것이
+  없다는 사실과 그 이름이 무엇이었는지**를 적는다. 나머지 셋은 제외 절만 뺐다
+  (`internal/testengine/corpus_gate_test.go` 1곳, `internal/testhelper/corpus_address_test.go` 2곳).
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)

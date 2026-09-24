@@ -25,9 +25,15 @@
 // noticed and made a package-local constant of its own.
 package preset
 
-// KeysDir is where the key preset lives, relative to the repository root. A
-// caller that needs the default asks for it rather than spelling it, so moving
-// the family is a change here.
+// KeysDir is the default key set: the `--keys` flag's value when an operator
+// gives none, and the config default beside it. A caller that needs it asks
+// rather than spelling it, so moving the family is a change here.
+//
+// It is RELATIVE, and it resolves against the process working directory like
+// any relative path — not against the repository root, which an installed
+// binary has no way to find and no reason to. Run from a checkout it names the
+// shipped ring; run from anywhere else it names nothing, and the failure says
+// which path it looked for and that it was relative to where the command ran.
 //
 // There was a ChainDir beside it, naming presets/chain. Nothing ever asked for
 // it — the one consumer kept a constant of its own with the same string — and

@@ -163,7 +163,7 @@ func LoadKeyPresetAt(ctx context.Context, files filestore.Store, dir string) (Ke
 	path := filepath.Join(dir, KeyIndexFile)
 	b, err := files.Read(ctx, path)
 	if err != nil {
-		return Key{}, fmt.Errorf("keyring: read keys: %w", err)
+		return Key{}, fmt.Errorf("keyring: read keys: %w%s", err, relativeHint(dir))
 	}
 	var f KeyFile
 	if err := json.Unmarshal(b, &f); err != nil {
@@ -335,4 +335,23 @@ func keystoreAccount(dir string, index int) (string, error) {
 		return "0x" + strings.TrimPrefix(doc.Address, "0x"), nil
 	}
 	return "", fmt.Errorf("keyring: node%d has no keystore under %s", index, ksDir)
+}
+
+// relativeHint says what a relative key-set path was resolved against, and
+// nothing for an absolute one.
+//
+// KeysDir is relative, so `--keys` left at its default means "presets/keys
+// under wherever this command ran". From a checkout that is the shipped ring;
+// from anywhere else it is nothing, and "no such file or directory" on a bare
+// relative path does not say why. Naming the working directory turns it into
+// an answer.
+func relativeHint(dir string) string {
+	if filepath.IsAbs(dir) {
+		return ""
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf(" (%q is relative, resolved against the working directory %s)", dir, wd)
 }

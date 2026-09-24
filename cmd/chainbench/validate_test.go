@@ -179,7 +179,7 @@ func TestValidateCmd_JSONOutput(t *testing.T) {
 // suites: every one must parse and resolve. A ported case that only fails once
 // a network is up would defeat the point of porting it.
 func TestValidateCmd_PortedSpecs(t *testing.T) {
-	paths := specFilesUnder(t, "../../tests/tc")
+	paths := jsonFilesUnder(t, "../../tests/tc")
 	if len(paths) == 0 {
 		t.Fatal("no ported specs found under tests/tc")
 	}
@@ -195,7 +195,7 @@ func TestValidateCmd_PortedSpecs(t *testing.T) {
 // TestPortedSpecs_IDsAreUnique keeps a ported id from colliding with another,
 // since the session records a test by id and a duplicate would overwrite it.
 func TestPortedSpecs_IDsAreUnique(t *testing.T) {
-	paths := specFilesUnder(t, "../../tests/tc")
+	paths := jsonFilesUnder(t, "../../tests/tc")
 	seen := map[string]string{}
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
@@ -241,9 +241,13 @@ func TestValidateCmd_ChainCases(t *testing.T) {
 	}
 }
 
-// jsonFilesUnder lists every .json file under root, including env
-// declarations. The suite nests case directories several levels deep
-// (tests/tc/<chain>/<group>/<domain>), so it walks rather than globs.
+// jsonFilesUnder lists every .json file under root. The suite nests case
+// directories several levels deep (tests/tc/<chain>/<group>/<domain>), so it
+// walks rather than globs.
+//
+// There is nothing to leave out. A separate lister used to drop "*.env.json",
+// the name env declarations went by when a case referenced one by file; the
+// tree holds only cases now and the filter matched nothing.
 func jsonFilesUnder(t *testing.T, root string) []string {
 	t.Helper()
 	var out []string
@@ -259,18 +263,5 @@ func jsonFilesUnder(t *testing.T, root string) []string {
 		t.Fatal(err)
 	}
 	sort.Strings(out)
-	return out
-}
-
-// specFilesUnder lists the spec and case files under root, leaving out the
-// env declarations those cases reference.
-func specFilesUnder(t *testing.T, root string) []string {
-	t.Helper()
-	var out []string
-	for _, p := range jsonFilesUnder(t, root) {
-		if !strings.HasSuffix(p, ".env.json") {
-			out = append(out, p)
-		}
-	}
 	return out
 }
