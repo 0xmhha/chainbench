@@ -10,6 +10,8 @@
 | `10-prepared-inputs-server-ref-handoff.md` | `docs/dev/chainbench-worklist.md:1781`, `docs/guide/config-files.md:141` |
 | `12-mainnet-profile-plan.md` | `docs/dev/architecture/mainnet-config-worklist.md:11` |
 | `18-hsm-state-diagrams-2026-09-22.md` | `graph/README.md` |
+| `19-state-machine-gaps-2026-09-24.md` | 상태 머신 빈 경로 수정안의 검토 근거(수정이 들어가면 그 커밋이 인용한다) |
+| `20-state-naming-review-2026-09-24.md` | 상태 이름을 02 규약으로 되돌리는 검토(결정 D1~D5 뒤 구현 커밋이 인용한다) |
 
 `18-hsm-state-diagrams-2026-09-22.md` 는 두 machine(`composition`, `run`)의 **state diagram** 이다.
 state tree, Cmd 와 Event 목록, 전이와 그 조건, error 가 어디로 가는지를 코드에서 뽑아 mermaid 로
