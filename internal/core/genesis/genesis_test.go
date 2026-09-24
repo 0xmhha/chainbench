@@ -19,7 +19,7 @@ var testInputs = genesis.Inputs{
 	Alloc:      json.RawMessage(`{"c17d493883eaa3b4cceb0f214b273392d562f9d8":{"balance":"0x64"}}`),
 }
 
-// decodeGenesis parses just enough of a genesis to check chain id and which
+// genesisView parses just enough of a genesis to check chain id and which
 // engine field (anzeon vs croissant) is present.
 type genesisView struct {
 	Config struct {

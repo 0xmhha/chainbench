@@ -11,7 +11,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chains, as a surface does
 )
 
-// NetPlan is the allocator asked as a question: "where would these nodes land".
+// NetworkPlan is the allocator asked as a question: "where would these nodes land".
 // It was uncovered, and what it answers is load-bearing in a way a wrong answer
 // does not announce -- a plan that says five servers and composes onto one is a
 // shape this project has already met once, from the other side of the boundary.
@@ -43,9 +43,9 @@ func serverSet(t *testing.T, n, slots int) string {
 	return p
 }
 
-func TestNetPlan_RefusesANetworkWithNoValidator(t *testing.T) {
+func TestChainPlan_RefusesANetworkWithNoValidator(t *testing.T) {
 	for _, n := range []int{0, -1} {
-		_, err := NetPlan(context.Background(), Deps{}, NetPlanIn{BPCount: n})
+		_, err := NetworkPlan(context.Background(), Deps{}, NetworkPlanIn{BPCount: n})
 		if err == nil {
 			t.Errorf("%d validators was accepted", n)
 			continue
@@ -56,16 +56,16 @@ func TestNetPlan_RefusesANetworkWithNoValidator(t *testing.T) {
 	}
 }
 
-// TestNetPlan_PlansWhatWasAskedFor: the plan has to be the requested shape, in
+// TestChainPlan_PlansWhatWasAskedFor: the plan has to be the requested shape, in
 // total and per role. A plan short of what was asked for and silent about it is
 // the failure worth ruling out.
-func TestNetPlan_PlansWhatWasAskedFor(t *testing.T) {
-	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
+func TestChainPlan_PlansWhatWasAskedFor(t *testing.T) {
+	out, err := NetworkPlan(context.Background(), Deps{}, NetworkPlanIn{
 		Chain: "wbft", BPCount: 4, ENCount: 2,
 		Server: ServerRef{SetPath: serverSet(t, 3, 6), All: true},
 	})
 	if err != nil {
-		t.Fatalf("NetPlan: %v", err)
+		t.Fatalf("NetworkPlan: %v", err)
 	}
 	if out.Total != 6 {
 		t.Fatalf("planned %d nodes for 4 validators and 2 endpoints", out.Total)
@@ -87,17 +87,17 @@ func TestNetPlan_PlansWhatWasAskedFor(t *testing.T) {
 	}
 }
 
-// TestNetPlan_FillsEveryServerBeforeReusingOne is the stated allocation order.
+// TestChainPlan_FillsEveryServerBeforeReusingOne is the stated allocation order.
 // Six nodes over three servers must be two per server at DIFFERENT port bands,
 // not three on the first and three on the second -- the wrap is what lets a
 // 15-container environment hold thirty nodes, one per purpose per machine.
-func TestNetPlan_FillsEveryServerBeforeReusingOne(t *testing.T) {
-	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
+func TestChainPlan_FillsEveryServerBeforeReusingOne(t *testing.T) {
+	out, err := NetworkPlan(context.Background(), Deps{}, NetworkPlanIn{
 		Chain: "wbft", BPCount: 6,
 		Server: ServerRef{SetPath: serverSet(t, 3, 6), All: true},
 	})
 	if err != nil {
-		t.Fatalf("NetPlan: %v", err)
+		t.Fatalf("NetworkPlan: %v", err)
 	}
 	perHost := map[string][]int{}
 	for _, e := range out.Entries {
@@ -126,19 +126,19 @@ func TestNetPlan_FillsEveryServerBeforeReusingOne(t *testing.T) {
 	}
 }
 
-// TestNetPlan_UnknownChainIsRefused: the family supplies the port reservation,
+// TestChainPlan_UnknownChainIsRefused: the family supplies the port reservation,
 // so a chain nobody registered cannot be planned for.
-func TestNetPlan_UnknownChainIsRefused(t *testing.T) {
-	if _, err := NetPlan(context.Background(), Deps{}, NetPlanIn{Chain: "nope", BPCount: 1}); err == nil {
+func TestChainPlan_UnknownChainIsRefused(t *testing.T) {
+	if _, err := NetworkPlan(context.Background(), Deps{}, NetworkPlanIn{Chain: "nope", BPCount: 1}); err == nil {
 		t.Fatal("a plan was produced for an unregistered chain")
 	}
 }
 
-// TestNetPlan_TooManyNodesForTheSetIsRefused: capacity is the one thing a plan
+// TestChainPlan_TooManyNodesForTheSetIsRefused: capacity is the one thing a plan
 // must not round down. Asking for more than the set holds has to fail, not
 // quietly return fewer nodes than were asked for.
-func TestNetPlan_TooManyNodesForTheSetIsRefused(t *testing.T) {
-	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
+func TestChainPlan_TooManyNodesForTheSetIsRefused(t *testing.T) {
+	out, err := NetworkPlan(context.Background(), Deps{}, NetworkPlanIn{
 		Chain: "wbft", BPCount: 9,
 		Server: ServerRef{SetPath: serverSet(t, 2, 2), All: true}, // holds 4
 	})

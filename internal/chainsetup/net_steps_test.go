@@ -16,12 +16,12 @@ import (
 // (same convention as the engine tests).
 const presetDir = "../../presets/keys"
 
-// TestNetStepPipeline composes a network step by step without a chain binary:
+// TestChainStepPipeline composes a network step by step without a chain binary:
 // new -> allocate -> keys -> genesis -> config -> launchopts -> filestore.
 // It pins that each step persists its state, that the argv comes from the
 // single assembly site with overrides applied, and that the lifecycle steps
 // fail with actionable errors when their prerequisites are missing.
-func TestNetStepPipeline(t *testing.T) {
+func TestChainStepPipeline(t *testing.T) {
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
@@ -30,18 +30,18 @@ func TestNetStepPipeline(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 2, ENCount: 1}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2, ENCount: 1}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if out, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
+	if out, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	} else if !strings.Contains(out.Detail, "identities") {
 		t.Fatalf("keys detail = %q", out.Detail)
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, ChainID: 9999}); err != nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir, ChainID: 9999}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 	if b, err := os.ReadFile(filepath.Join(dir, "genesis.json")); err != nil {
@@ -49,11 +49,11 @@ func TestNetStepPipeline(t *testing.T) {
 	} else if !strings.Contains(string(b), "9999") {
 		t.Fatal("genesis does not carry the chain-id override")
 	}
-	if _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainConfig(ctx, d, verb.ChainConfigIn{DataDir: dir}); err != nil {
 		t.Fatalf("config: %v", err)
 	}
 
-	lo, err := verb.NetLaunchOpts(ctx, d, verb.NetLaunchOptsIn{DataDir: dir, Set: []string{"networkid=4242"}})
+	lo, err := verb.ChainLaunchOpts(ctx, d, verb.ChainLaunchOptsIn{DataDir: dir, Set: []string{"networkid=4242"}})
 	if err != nil {
 		t.Fatalf("launchopts: %v", err)
 	}
@@ -71,12 +71,12 @@ func TestNetStepPipeline(t *testing.T) {
 		t.Fatal("endpoint node must not unlock an account")
 	}
 
-	if _, err := verb.NetProvision(ctx, d, verb.NetProvisionIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainProvision(ctx, d, verb.ChainProvisionIn{DataDir: dir}); err != nil {
 		t.Fatalf("provision: %v", err)
 	}
 
 	// chainsetup.State round-trips: a fresh open sees the accumulated composition.
-	st, err := verb.NetStatus(ctx, d, verb.NetStatusIn{DataDir: dir})
+	st, err := verb.ChainStatus(ctx, d, verb.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,28 +93,28 @@ func TestNetStepPipeline(t *testing.T) {
 	// before it looks at the binary, because init has not run: launching a node
 	// over a datadir no genesis ever reached is the worse of the two, and the
 	// order the message arrives in is the order the operator has to fix them.
-	if _, err := verb.NetStart(ctx, d, verb.NetStartIn{DataDir: dir}); err == nil ||
+	if _, err := verb.ChainStart(ctx, d, verb.ChainStartIn{DataDir: dir}); err == nil ||
 		!strings.Contains(err.Error(), "init has not run") {
 		t.Fatalf("start before init must say so, got %v", err)
 	}
 	// init is reached (its own prerequisite, deploy, has run) and fails on the
 	// binary itself, which is what the operator has to supply.
-	if _, err := verb.NetInit(ctx, d, verb.NetInitIn{DataDir: dir}); err == nil ||
+	if _, err := verb.ChainInit(ctx, d, verb.ChainInitIn{DataDir: dir}); err == nil ||
 		!strings.Contains(err.Error(), "gstable") {
 		t.Fatalf("init must fail naming the binary it could not run, got %v", err)
 	}
-	if _, err := verb.NetRestart(ctx, d, verb.NetRestartIn{DataDir: dir, Node: 9}); err == nil {
+	if _, err := verb.ChainRestart(ctx, d, verb.ChainRestartIn{DataDir: dir, Node: 9}); err == nil {
 		t.Fatal("restart of an unknown node must fail")
 	}
 
 	// Rm clears the composed data plane and the node table.
-	if _, err := verb.NetRm(ctx, d, verb.NetRmIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainRm(ctx, d, verb.ChainRmIn{DataDir: dir}); err != nil {
 		t.Fatalf("rm: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "genesis.json")); !os.IsNotExist(err) {
 		t.Fatal("rm must remove the genesis")
 	}
-	st, err = verb.NetStatus(ctx, d, verb.NetStatusIn{DataDir: dir})
+	st, err = verb.ChainStatus(ctx, d, verb.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,37 +123,37 @@ func TestNetStepPipeline(t *testing.T) {
 	}
 }
 
-// TestNetStepPrerequisites pins the fail-fast messages steps give before their
+// TestChainStepPrerequisites pins the fail-fast messages steps give before their
 // prerequisites ran.
-func TestNetStepPrerequisites(t *testing.T) {
+func TestChainStepPrerequisites(t *testing.T) {
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
 
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 1}); err == nil ||
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 1}); err == nil ||
 		!strings.Contains(err.Error(), "chain new") {
 		t.Fatalf("allocate before new: %v", err)
 	}
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet"}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err == nil ||
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir}); err == nil ||
 		!strings.Contains(err.Error(), "chain place") {
 		t.Fatalf("genesis before allocate: %v", err)
 	}
-	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err == nil {
+	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err == nil {
 		t.Fatal("keys with no node count must fail")
 	}
-	if _, err := verb.NetHealth(ctx, d, verb.NetHealthIn{DataDir: dir}); err == nil {
+	if _, err := verb.ChainHealth(ctx, d, verb.ChainHealthIn{DataDir: dir}); err == nil {
 		t.Fatal("health before allocate must fail")
 	}
 }
 
-// TestNetAllocate_ProxiedKeepsEndpointsAwayFromProducers composes the graph a
+// TestChainAllocate_ProxiedKeepsEndpointsAwayFromProducers composes the graph a
 // production network runs and checks it where it actually takes effect: the
 // config each node is handed. Transactions arrive at an endpoint and travel
 // inward, so an endpoint must not hold a route to a producer.
-func TestNetAllocate_ProxiedKeepsEndpointsAwayFromProducers(t *testing.T) {
+func TestChainAllocate_ProxiedKeepsEndpointsAwayFromProducers(t *testing.T) {
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
@@ -172,19 +172,19 @@ nodes:
 		t.Fatal(err)
 	}
 
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, TopologyPath: topo, Peering: "proxied"}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, TopologyPath: topo, Peering: "proxied"}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	if _, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	if _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainConfig(ctx, d, verb.ChainConfigIn{DataDir: dir}); err != nil {
 		t.Fatalf("config: %v", err)
 	}
 
@@ -207,7 +207,7 @@ nodes:
 	}
 
 	// An impossible graph is refused where the layout is chosen, not later.
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 2, Peering: "starfish"}); err == nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2, Peering: "starfish"}); err == nil {
 		t.Fatal("an unknown peering must be refused")
 	}
 }
@@ -225,7 +225,7 @@ func readConfig(t *testing.T, dir string, index int) string {
 // portOf returns the "@host:p2p" fragment identifying a node inside an enode.
 func portOf(t *testing.T, dir string, index int) string {
 	t.Helper()
-	out, err := verb.NetStatus(context.Background(), chainsetup.Deps{}, verb.NetStatusIn{DataDir: dir})
+	out, err := verb.ChainStatus(context.Background(), chainsetup.Deps{}, verb.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
@@ -249,11 +249,11 @@ func itoa(n int) string {
 	return string(b)
 }
 
-// TestNetAllocate_RecordsTheEtcdPort: the composed network must be able to say
+// TestChainAllocate_RecordsTheEtcdPort: the composed network must be able to say
 // which port a node's etcd is on. It is derived by the binary (p2p+1) and is
 // the reason the port plan reserves a step of two, but the workspace used to
 // drop it — so the rule protected a value nothing could read back.
-func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
+func TestChainAllocate_RecordsTheEtcdPort(t *testing.T) {
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
@@ -263,13 +263,13 @@ func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
 	}
 	// wemix, deliberately: it is the family that derives etcd ports; a wbft
 	// node listens on p2p alone and records none.
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{DataDir: dir, Chain: "wemix", KeysDir: keysAbs}); err != nil {
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{DataDir: dir, Chain: "wemix", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	out, err := verb.NetStatus(ctx, d, verb.NetStatusIn{DataDir: dir})
+	out, err := verb.ChainStatus(ctx, d, verb.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
@@ -295,13 +295,13 @@ func TestAllocate_AllServersRecordsEachNodesServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	d := chainsetup.Deps{Clock: fixedClock()}
-	if _, err := verb.NetNew(context.Background(), d, verb.NetNewIn{
+	if _, err := verb.ChainNew(context.Background(), d, verb.ChainNewIn{
 		DataDir: dir, Chain: "stablenet", KeysDir: presetDir,
 		Target: resource.Spec{DataRoot: "/data/cb"},
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.NetAllocate(context.Background(), d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(context.Background(), d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: set, All: true},
 	}); err != nil {

@@ -13,7 +13,7 @@ import (
 // in prose goes stale silently, and this one did.
 const specDoc = "../../tests/tc/SPECS.md"
 
-// gapSection is where a case is recorded as NOT migrated. Everything under one
+// gapHeadings is where a case is recorded as NOT migrated. Everything under one
 // of these headings names cases blocked on a grammar gap.
 var gapHeadings = []string{
 	"## 이관하지 않은 것과 그 이유",

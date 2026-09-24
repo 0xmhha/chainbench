@@ -26,7 +26,7 @@ func newPlanCmd() *cobra.Command {
 			"family reserves a different number of ports per node.\n\n" +
 			"Nothing is written: no workspace, no files on any server.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			out, err := app.NetPlan(cmd.Context(), surface.Deps(cmd), app.NetPlanIn{
+			out, err := app.NetworkPlan(cmd.Context(), surface.Deps(cmd), app.NetworkPlanIn{
 				Chain: chain, BPCount: bpCount, ENCount: enCount, Server: sf.Ref(),
 			})
 			if err != nil {

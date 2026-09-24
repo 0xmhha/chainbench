@@ -10,7 +10,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
@@ -90,16 +89,12 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatalf("allocate: %v", err)
 	}
 	ctx := context.Background()
-	done, err := ws.Keys(ctx, chainsetup.KeysOpts{})
-	if err != nil {
+	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	// The request names no source, and the node table does. This is the case a
-	// handler reading the request called a preset: the step reports what it
-	// actually took.
-	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainEnsureKeysFromBlueprint {
-		t.Errorf("the step reported %v, want [ChainEnsureKeysFromBlueprint]", done.Passed)
-	}
+	// The request names no source and the node table does, so the table wins.
+	// What the addresses below are is that decision's result; that the machine
+	// walks KeysDeclared to reach it is held in stage_keys_test.go.
 
 	set, err := preset.LoadKeyPreset(keysDir)
 	if err != nil {
@@ -274,7 +269,7 @@ func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
 	}
 }
 
-// TestNetUp_InlineKeyNeverReachesTheWorkspace drives the real up verb, which is
+// TestChainUp_InlineKeyNeverReachesTheWorkspace drives the real up verb, which is
 // the only path that exercises the second way an inline key got onto disk.
 //
 // place refusing early is not enough on its own: `up` records the request before
@@ -283,7 +278,7 @@ func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
 // records and left it sitting in state.request.topology, where a run that had
 // already failed still published it. This drives up end to end and reads the
 // saved file back as text.
-func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
+func TestChainUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 	const inlineHex = "0x3333333333333333333333333333333333333333333333333333333333333333"
 	bare := strings.TrimPrefix(inlineHex, "0x")
 	dir := t.TempDir()
@@ -294,7 +289,7 @@ func TestNetUp_InlineKeyNeverReachesTheWorkspace(t *testing.T) {
 		{Index: 3, Role: "bp"},
 		{Index: 4, Role: "bp"},
 	}}
-	_, err := verb.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{
+	_, err := verb.ChainUp(context.Background(), chainsetup.Deps{}, chainsetup.ChainUpIn{
 		DataDir:  dir,
 		Chain:    "stablenet",
 		Binary:   "/nonexistent/gstable",

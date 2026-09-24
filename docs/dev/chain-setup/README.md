@@ -39,15 +39,15 @@
 | # | 단계 | 하는 일 | 소유 |
 |---|---|---|---|
 | 0 | *(resolve-chain)* | 체인 플러그인 해석(chain_id·binary·family·hardforks·capabilities) | `core/registry` |
-| 1 | **new** | 워크스페이스 초기화(대상 target·server-set·workspace-config 확정) | `chainsetup.NetNew` |
-| 2 | **place** | 노드 테이블: 역할·호스트·**결정적 비충돌 포트** + 용량 사전검증 | `chainsetup.NetAllocate` → `resource` · `core/node` |
-| 3 | **keys** | 키 세트 확보(preset 사용 / 생성 / blueprint 선언), 노드 수만큼 커버 | `chainsetup.NetKeys` → `core/keyring` |
-| 4 | **genesis** | genesis 산출(§2.5 의 4모드) | `chainsetup.NetGenesis` → `core/genesis` |
-| 5 | **config** | 노드별 TOML config 렌더 (`--set key=value` 로 knob 오버라이드) | `chainsetup.NetConfig` → `core/nodeconfig` |
-| 6 | **build** | 노드별 실행 커맨드 조립(실행하지 않고 보여준다) | `chainsetup.NetLaunchOpts` → `core/nodeconfig` |
-| 7 | **deploy** | 산출물을 대상에 배치하고 **있는지 확인**(skip-if-exists; 로컬 FS 또는 SSH) | `chainsetup.NetProvision` → `core/filestore` · `core/remote` |
-| 8 | **init** | 노드별 datadir 초기화 (각자 자기 바이너리로) | `chainsetup.NetInit` → `core/process` |
-| 9 | **start** | 노드 기동 + PID 기록 | `chainsetup.NetStart` → `core/process` |
+| 1 | **new** | 워크스페이스 초기화(대상 target·server-set·workspace-config 확정) | `chainsetup.ChainNew` |
+| 2 | **place** | 노드 테이블: 역할·호스트·**결정적 비충돌 포트** + 용량 사전검증 | `chainsetup.ChainAllocate` → `resource` · `core/node` |
+| 3 | **keys** | 키 세트 확보(preset 사용 / 생성 / blueprint 선언), 노드 수만큼 커버 | `chainsetup.ChainKeys` → `core/keyring` |
+| 4 | **genesis** | genesis 산출(§2.5 의 4모드) | `chainsetup.ChainGenesis` → `core/genesis` |
+| 5 | **config** | 노드별 TOML config 렌더 (`--set key=value` 로 knob 오버라이드) | `chainsetup.ChainConfig` → `core/nodeconfig` |
+| 6 | **build** | 노드별 실행 커맨드 조립(실행하지 않고 보여준다) | `chainsetup.ChainLaunchOpts` → `core/nodeconfig` |
+| 7 | **deploy** | 산출물을 대상에 배치하고 **있는지 확인**(skip-if-exists; 로컬 FS 또는 SSH) | `chainsetup.ChainProvision` → `core/filestore` · `core/remote` |
+| 8 | **init** | 노드별 datadir 초기화 (각자 자기 바이너리로) | `chainsetup.ChainInit` → `core/process` |
+| 9 | **start** | 노드 기동 + PID 기록 | `chainsetup.ChainStart` → `core/process` |
 | — | *(bootstrap)* | `bootstrap.type` 이 `governance-etcd` 인 체인만: 거버넌스 배포 + etcd 초기화 · verify-etcd | `consensus/poa` 패밀리 phase 액션 |
 | — | **health** | 건강 판정(블록 전진 / etcd 리더 / 포크 도달) | `chain health` → `core/health` |
 | — | **stop / rm** | 기록된 PID 로 정지, 데이터 평면 제거는 **별개 연산** | `chain stop` · `chain rm` → `core/process` |

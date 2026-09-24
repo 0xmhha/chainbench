@@ -8,6 +8,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/preset"
 )
 
+// shippedPreset is the key set this repository ships.
+var shippedPreset = filepath.Join("..", "..", "..", "..", "presets", "keys")
+
 // TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds.
 //
 // A node's identity is its devp2p key; the account it seals and stakes with is
@@ -20,9 +23,6 @@ import (
 // nothing ("no key for given address or file") and then, once it could unlock,
 // one that sealed with no balance ("insufficient funds for gas * price + value").
 // Both were measured before this existed.
-// shippedPreset is the key set this repository ships.
-var shippedPreset = filepath.Join("..", "..", "..", "..", "presets", "keys")
-
 func TestLoadPresetWithAccounts_ANodeSealsWithWhatItsKeystoreHolds(t *testing.T) {
 	set, err := preset.LoadKeyPresetWithAccounts(shippedPreset)
 	if err != nil {

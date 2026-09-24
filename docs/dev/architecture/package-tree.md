@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 51 | 54,738 |
-| `cmd/` | 19 | 5,053 |
+| `internal/` | 52 | 57,633 |
+| `cmd/` | 19 | 5,055 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **73** | **60,581** |
+| **합계** | **74** | **63,478** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 24패키지 17,092줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 17,227줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -44,9 +44,13 @@ internal/core/
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
-├── lifecycle   1,220  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
+├── lifecycle     704  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
+├── statemachine   652  [L0] state 가 이끄는 기계 — State(Enter·Exit·Process)·Machine(트리·Send·
+│                            self queue·inbox·LogRec). lifecycle 과 같은 자리의 반대 물건이다:
+│                            저쪽은 전이 표를 검사하는 루프, 이쪽은 message 로 이어지는 state 사슬.
+│                            동기 모델이라 Looper·지연·defer 가 없다. 내부 import 0
 ├── origin          88  [L0] 값이 어디서 왔는지를 말하는 어휘 하나 — Origin 과 일곱 rung, 그리고 그 순서.
 │                            기제가 아니다: 무엇이 이기는지는 상류에서 정해지고 여기는 적을 낱말만 갖는다.
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
@@ -66,7 +70,7 @@ internal/core/
 ├── keyring        391  [L1] 키 모델 — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력
 │   ├── derive     345  [L1] 키 파생 — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process 순수 계산)
 │   ├── store    1,164  [L1] 키셋 저장·읽기 — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드 · 키 출처(KeySource)
-│   └── operation  683  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
+│   └── operation  682  [L1] 키셋에 가하는 동사 — new·add·list·show·export·import·세트 복제.
 │                            서버 접근은 자기가 선언한 Opener 로 주입받는다
 ├── registry     1,085  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
 │                            capability 카탈로그·핸들러(LoadCatalog·RegisterHandler·GetByAddress)·검증자 조회(Validators)
@@ -90,7 +94,7 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 3,775줄
+## 2. 체인·합의 정의 — 11패키지 3,773줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
@@ -101,7 +105,7 @@ internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른�
 internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안다
 ├── all              26  등록 집합 — blank import 로 내장 플러그인과 그 capability 전체를 등록. 유일한 plug-in seam
 ├── common           72  모든 체인이 공유하는 capability 구현("common" 프로젝트)
-├── external         75  프로젝트가 준 매니페스트 파일로 플러그인 로드 — 코드 변경 없이 미내장 체인을 벤치
+├── external         73  프로젝트가 준 매니페스트 파일로 플러그인 로드 — 코드 변경 없이 미내장 체인을 벤치
 │                        (기존 합의 패밀리 위에서)
 ├── stablenet       171  stablenet 특화 capability (거버넌스 시스템 컨트랙트)
 │   └── govbind     162  GovBase 바인딩 — propose→approve→execute calldata 빌더 · MintProof 인코더 ·
@@ -116,14 +120,14 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 33,871줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 36,633줄
 
 ```
-internal/preset    528  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
+internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
-internal/resource  3,047  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
+internal/resource  3,050  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
@@ -141,23 +145,23 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,485 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 4,946 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 7,980 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
-                          워크스페이스에 무엇을 했는지 기록한다. NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
-                          NetProvision·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·NetHealth·
-                          NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NetBaseline{Check,Approve}·
-                          NetVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
+internal/chainsetup 10,901 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+                          워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+                          ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
+                          ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
+                          ChainVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
                           재사용 판단(PlanReuse·ReconcileReuse·GenesisDeclared·WantOf)·실행 중 프로세스 실사
 
-internal/chainsetup/verb 2,051 [L4] 셋업 동사 — 표면이 부르는 함수(NetNew·NetKeys·NetGenesis·NetConfig·NetAllocate·
-                          NetProvision·NetInit·NetStart·NetUp·NetResume·NetRestart·NetStop·NetRm·NetStatus·
-                          NetHealth·NetLogs·NetEnodes·NetEndpoints·NetLaunchOpts·NodeStart/Stop/Swap·
-                          Hardfork{Plan,Execute}·NetCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
-                          upHandlers·NetUpComparing). chainsetup 객체 위에 얹히며 반대 방향 의존은 없다
+internal/chainsetup/verb 1,368 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+                          ChainProvision·ChainInit·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·
+                          ChainHealth·ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·NodeStart/Stop/Swap·
+                          Hardfork{Plan,Execute}·ChainCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
+                          upHandlers·ChainUpComparing). chainsetup 객체 위에 얹히며 반대 방향 의존은 없다
 
 internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6) — health·collector·inspector·process/inspect·
                           preflight 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 판정(Classify),
@@ -176,7 +180,7 @@ internal/mcp       2,806  [L6] MCP 표면(요구 14) — 도구 스키마 바인
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
 internal/dashboard   341  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 
-internal/arch      1,370  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
+internal/arch      1,405  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
                           제품 코드 0, import 0 — 문서를 읽고 측정과 맞춰 본다
 internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersBuildDir·EnvDockerServers 스킵 헬퍼.
                           패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0
@@ -184,7 +188,7 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,053줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,055줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
@@ -194,7 +198,7 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── surface               81  모든 명령군이 자기에 대해 말해야 하는 것 — 명령 트리의 두 번째 렌더링이
 │                             손으로 유지하는 목록이 아니라 선언 하나를 읽게 한다
 ├── exitcode              33  종료 상태를 결정한 명령에서 그것을 적용하는 main 까지 운반
-├── chaincmd             927  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
+├── chaincmd             929  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
 │                             + 읽는 동사(show·status·health·logs·enode)
 ├── lifecyclecmd         452  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
 │                             여전히 하나의 건강한 체인인지 판정(verify·consensus·baseline)

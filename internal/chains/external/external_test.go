@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 )
 
-// baseManifest is a valid external manifest on the wbft family borrowing the
+// writeManifest is a valid external manifest on the wbft family borrowing the
 // stablenet protocol, with %s holes for the fields a test varies.
 func writeManifest(t *testing.T, family, proto, template string) string {
 	t.Helper()

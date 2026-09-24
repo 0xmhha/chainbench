@@ -14,6 +14,9 @@ import (
 // firewall does not open, or a login with no way to authenticate, fails when
 // the file is read instead of after provisioning has already happened.
 
+// resolveSecretPaths canonicalizes the file-reference fields so they mean the
+// same thing wherever the command runs: a leading ~ expands to the home
+// directory, and a relative path is anchored to the server-set file's own
 // directory (dir), not the process working directory.
 func (s *SSH) resolveSecretPaths(dir string) error {
 	for _, f := range []*string{&s.PasswordFile, &s.KeyFile, &s.KeyPassphraseFile, &s.KnownHostsFile} {

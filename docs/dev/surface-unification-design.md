@@ -110,7 +110,7 @@ func Register[In, Out any](d Descriptor, fn func(context.Context, Deps, In) (Out
 **입력 struct 의 태그가 세 바인딩을 전부 만든다.**
 
 ```go
-type NetGenesisIn struct {
+type ChainGenesisIn struct {
     DataDir string `cb:"data-dir,required" help:"workspace directory"`
     ChainID int64  `cb:"chain-id"          help:"override the manifest chain id"`
     Set     []string `cb:"set"             help:"genesis config override key=value"`

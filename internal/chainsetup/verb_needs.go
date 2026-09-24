@@ -96,13 +96,20 @@ var verbNeeds = map[string]verbNeed{
 	// Composition steps. Their order is composeNeeds'; they are listed here so
 	// the table is the whole surface and not a second partial one.
 	"Allocate":   {step: "place"},
+	"EnsureKeys": {step: "keys"},
 	"Keys":       {step: "keys"},
 	"Genesis":    {step: "genesis"},
 	"Config":     {step: "config"},
 	"Provision":  {step: "deploy"},
 	"Init":       {step: "init"},
 	"Start":      {step: "start"},
-	"LaunchOpts": {step: "build"},
+	// The launch in four parts, for the states that walk it. Each needs what
+	// Start needed, because together they are Start.
+	"LaunchPlan":      {step: "start"},
+	"StartPhase":      {step: "start"},
+	"RunPhaseActions": {step: "start"},
+	"FinishLaunch":    {step: "start"},
+	"LaunchOpts":      {step: "build"},
 
 	// Verbs that read or act on the node table.
 	"Endpoints":        {run: placed},
@@ -126,6 +133,7 @@ var verbNeeds = map[string]verbNeed{
 	"Save":           {why: "persists the record, which has to work at every stage including a failed one"},
 	"Lock":           {why: "guards the workspace directory, so it runs before anything is known about it"},
 	"SetDriver":      {why: "wiring, set before any verb runs"},
+	"SetStatePath":   {why: "bookkeeping: the machine says where it is, and a machine with nowhere to be has not started"},
 	"SetEnv":         {why: "wiring, set before any verb runs"},
 	"Acquire":        {why: "resolves the machine set; it runs before place has anything to record"},
 	"MarkStepFailed": {why: "records a failure, which by definition happens where a requirement was not met"},
@@ -137,6 +145,7 @@ var verbNeeds = map[string]verbNeed{
 	"LogExcerpt":          {why: "same as Logs, which it calls"},
 	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
 	"StopNode":            {why: "same as Stop, for one node"},
+	"ResumeStep":          {why: "accessor: where a resume begins, read from the record"},
 	"FirstUndone":         {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
 	"RecordRequest":       {why: "it writes what was asked for, which is the first thing a composition records"},
 	"RecordConfigSet":     {why: "it stores an override before anything renders with it; refusing a bad one early is the point"},
@@ -147,16 +156,20 @@ var verbNeeds = map[string]verbNeed{
 	"StartNode":           {node: []nodeNeed{down, launched}},
 	"SwapNode":            {node: []nodeNeed{launched}},
 	"Restart":             {why: "delegates to StopNode and StartNode, which each answer for themselves"},
-	"CrossFork":           {why: "names the node or binary the fork has nobody to run on, which a table-wide state cannot"},
-	"Compare":             {why: "reads a baseline file, not the network"},
-	"CheckBaseline":       {why: "reads a baseline file, not the network"},
-	"ObserveBaseline":     {why: "records what is there now, including nothing"},
+	// Crossing a fork, one verb per moment. Each names the node or binary the
+	// fork has nobody to run on, which a table-wide state cannot — and a
+	// crossing is asked for on a network that is running, which "stopped" and
+	// "placed" each answer wrongly.
+	"ForkStanding":         {why: "reads whether the fork is already behind the network, which it must answer on any state"},
+	"ForkMoment":           {why: "waits on the chain rather than on the table; a network short of the fork is the case it is for"},
+	"HandOverFork":         {why: "stops and relaunches the successors itself, so requiring them stopped would refuse every crossing"},
+	"ConfirmCrossing":      {why: "reads the head after the hand-over, which is the one moment the table cannot describe"},
+	"ReportAlreadyCrossed": {why: "records a step for a network that crossed on its own, which asks nothing of the table"},
+	"Compare":              {why: "reads a baseline file, not the network"},
+	"CheckBaseline":        {why: "reads a baseline file, not the network"},
+	"ObserveBaseline":      {why: "records what is there now, including nothing"},
 }
 
-// allow reports whether verb may run, naming what is missing.
-//
-// One function, so one message shape. The four wordings this replaced sent a
-// reader to three different places for the same missing thing.
 // errOpPrecondition is what an operational verb refuses for: the workspace is
 // not in a state it can act on.
 //
@@ -166,6 +179,10 @@ var verbNeeds = map[string]verbNeed{
 // to be told about.
 var errOpPrecondition = errors.New("the workspace is not in a state this verb can act on")
 
+// allow reports whether verb may run, naming what is missing.
+//
+// One function, so one message shape. The four wordings this replaced sent a
+// reader to three different places for the same missing thing.
 func (w *Workspace) allow(verb string) error {
 	need, declared := verbNeeds[verb]
 	if !declared {

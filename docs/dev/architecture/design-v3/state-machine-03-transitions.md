@@ -49,8 +49,8 @@ byHand      — 다른 구성이거나 손으로 띄운 것. 사람이 찾아 �
 
 ### 1.2 `COMPARE_NETWORK_DIFFERS` → `OPEN_WORKSPACE` 되돌리기 → **허용하되 한 번만**
 
-**지금도 되돌아간다.** `attach_workspace.go:172` 가 판정하고, `RebuildAll` 이면 `NetStop` 으로
-멈춘 뒤 `NetUp` 이 처음부터 다시 조립한다. 새 동작이 아니다.
+**지금도 되돌아간다.** `attach_workspace.go:172` 가 판정하고, `RebuildAll` 이면 `ChainStop` 으로
+멈춘 뒤 `ChainUp` 이 처음부터 다시 조립한다. 새 동작이 아니다.
 
 **판정은 한 번만 일어난다.** `preflightDecision` 호출은 저장소 전체에서 그 한 곳뿐이다.
 
@@ -232,7 +232,7 @@ COMPARE → COMPARE_SAME                → READY               Reuse
 ```
 
 `COMPARE_NODES_DIFFER` 가 `LAUNCH_NODES` 로 가는 것은 지금 동작 그대로다 — `RebuildNodes` 는
-`NetRestart` 를 노드별로 부르지 조립을 다시 하지 않는다(`attach_workspace.go:177~184`).
+`ChainRestart` 를 노드별로 부르지 조립을 다시 하지 않는다(`attach_workspace.go:177~184`).
 
 ## 5. 목표 상태
 

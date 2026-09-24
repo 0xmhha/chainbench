@@ -181,6 +181,7 @@ func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin strin
 	return dir, nil
 }
 
+// FirstUndone is the first composition step the workspace has not recorded
 // as done, or empty when every step has.
 func (w *Workspace) FirstUndone() string {
 	stage := UpStart
@@ -198,6 +199,10 @@ func (w *Workspace) FirstUndone() string {
 	return ""
 }
 
+// Reconcile makes the node records true against the resource. A recorded pid
+// that is gone is cleared; a node with no pid whose process is nevertheless
+// running — launched by a run that died before it could record — is adopted
+// when its command line is the one this workspace would have launched it
 // with. It reports one line per node and changes nothing else.
 func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
 	lines := make([]string, 0, len(w.state.Nodes))
@@ -240,6 +245,9 @@ func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
 	return lines, nil
 }
 
+// orphanOf finds a process of this workspace's binary that nobody recorded
+// and whose command line is the one rec would launch with. It answers the
+// pid, or 0 when there is none — a process running the same binary with
 // another command line belongs to somebody else.
 func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.Record) (int, error) {
 	if w.state.Binary == "" || len(rec.Args) == 0 {
@@ -282,7 +290,7 @@ func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.R
 // The location is not part of it: the record is where the workspace is, so a
 // workspace moved to another directory still reads as the request it was
 // composed from rather than as one pointing somewhere that no longer exists.
-func (w *Workspace) RecordRequest(in NetUpIn) error {
+func (w *Workspace) RecordRequest(in ChainUpIn) error {
 	req := in
 	req.DataDir = ""
 	w.state.Request = &req

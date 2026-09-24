@@ -16,39 +16,39 @@ func init() {
 	Register(Registration{
 		Name: "chain.new", Stage: StageCompose,
 		Summary: "Initialize a composition workspace for a chain (and its target)",
-	}, app.NetNew)
+	}, app.ChainNew)
 	Register(Registration{
 		Name: "chain.place", Stage: StageCompose,
 		Summary: "Build the node table: roles, hosts, deterministic non-colliding ports",
-	}, app.NetAllocate)
+	}, app.ChainAllocate)
 	Register(Registration{
 		Name: "chain.keys", Stage: StageCompose,
 		Summary: "Ensure the key set exists and covers the node count (preset or generate)",
-	}, app.NetKeys)
+	}, app.ChainKeys)
 	Register(Registration{
 		Name: "chain.genesis", Stage: StageCompose,
 		Summary: "Build the genesis from the key set and write it to the target",
-	}, app.NetGenesis)
+	}, app.ChainGenesis)
 	Register(Registration{
 		Name: "chain.config", Stage: StageCompose,
 		Summary: "Render each node's TOML config",
-	}, app.NetConfig)
+	}, app.ChainConfig)
 	Register(Registration{
 		Name: "chain.build", Stage: StageCompose,
 		Summary: "Assemble each node's launch command without running it",
-	}, app.NetLaunchOpts)
+	}, app.ChainLaunchOpts)
 	Register(Registration{
 		Name: "chain.deploy", Stage: StageCompose,
 		Summary: "Put the launch inputs on the target and verify they are present",
-	}, app.NetProvision)
+	}, app.ChainProvision)
 	Register(Registration{
 		Name: "chain.init", Stage: StageCompose,
 		Summary: "Initialize each node's datadir from the built genesis",
-	}, app.NetInit)
+	}, app.ChainInit)
 	Register(Registration{
 		Name: "chain.start", Stage: StageCompose,
 		Summary: "Launch every stopped node and record its PID",
-	}, app.NetStart)
+	}, app.ChainStart)
 
 	// Reads of a composed network. They are the compose stage's queries, and
 	// the same declaration the CLI's query group and MCP's read-only tool list
@@ -56,11 +56,11 @@ func init() {
 	Register(Registration{
 		Name: "chain.status", Stage: StageCompose, ReadOnly: true,
 		Summary: "Show the workspace composition state and which steps have run",
-	}, app.NetStatus)
+	}, app.ChainStatus)
 	Register(Registration{
 		Name: "chain.health", Stage: StageCompose, ReadOnly: true,
 		Summary: "Probe every node's HTTP RPC for its latest block",
-	}, app.NetHealth)
+	}, app.ChainHealth)
 	Register(Registration{
 		Name: "chain.verify-validators", Stage: StageCompose, ReadOnly: true,
 		Summary: "Check the running chain recognizes exactly the composed keys as its validators",
@@ -76,10 +76,10 @@ func init() {
 	Register(Registration{
 		Name: "chain.enode", Stage: StageCompose, ReadOnly: true,
 		Summary: "Show each node's enode (derived from keys and place; writes nothing)",
-	}, app.NetEnodes)
+	}, app.ChainEnodes)
 	Register(Registration{
 		Name: "chain.logs", Stage: StageCompose, ReadOnly: true,
 		Summary: "Show the last lines of one node's log",
-	}, app.NetLogs)
+	}, app.ChainLogs)
 
 }

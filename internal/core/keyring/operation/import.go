@@ -18,6 +18,11 @@ import (
 // becomes an entry. Keeping them together is what stops a fifth source being
 // added in whichever function the author happened to open.
 
+// Export reports one identity including its private key.
+//
+// It is a separate use case from Show rather than a flag on it, so that
+// disclosing a secret is a call a reader can find, and so a surface can offer
+// one without offering the other.
 func Export(ctx context.Context, d Deps, in EntryIn) (EntryOut, error) {
 	out, err := Show(ctx, d, in)
 	if err != nil {

@@ -69,13 +69,23 @@
       P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
       **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
 
-- [ ] **죽은 명령을 부르는 e2e 둘** — 근거: `internal/arch` 가 아니라 `cmd/chainbench/e2e_commands_exist_test.go` 의 `invocationDebt` 가 센다.
-      `upgrade_data_migration_e2e_test.go`(go-wbft 가 go-wemix chaindata 로 init 되는지)와
-      `upgrade_gov_ncp_lifecycle_e2e_test.go`(핸드오프를 건너는 거버넌스 NCP 생애주기)가 아직
-      `chainbench upgrade run` 으로 망을 세운다 — **CLI 에 없는 명령이다.** `e2e` 태그 뒤에 있고
-      환경변수가 없으면 건너뛰어 아무도 실패를 보지 못했다. 둘 다 **다른 곳이 덮지 않는 것**을
-      시험하고, 그 명령의 **출력**(pid·node1 RPC·"handoff confirmed")을 읽으므로 `chainbench run`
-      으로 바꾸는 것은 치환이 아니라 발판 재작성이다. 검증에 체인 바이너리 둘이 필요하다.
+- [ ] **go-wemix 코어: 거버넌스가 반만 지어진 구간에서 full sync 가 영구히 멈춘다** — 근거: §1s G6,
+      인계는 [`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md) **W3**.
+      **W1 과 같은 블록의 이웃한 줄이다**(`admin.go:997-1003`) — 함께 고치는 것이 맞다.
+      **chainbench 가 고칠 수 없다 — 체인팀 인계 건이다.** 거버넌스는 블록 4~13에 걸쳐 지어지고
+      (proxy 가 imp 주소를, registry 등록이 proxy 주소를 필요로 하는 의존 사슬), 그 중간 블록의
+      상태를 쥔 채 다음 블록을 검증한 노드는 "registry 는 있는데 주소록이 비었다" 를 본다.
+      `wemix/admin.go:1000` 이 그 revert 를 "아직 준비 안 됨" 으로 인정하지 않아 `unauthorized block`
+      으로 판정하고, 상태를 버릴 수 없으므로 **영구 고장**이 된다. 15노드 poa 에서 재현 2/2,
+      걸리는 노드는 매번 다르다(배치 경계 경합). full sync 만 취약하다.
+      **이 항목이 열려 있는 한 `02-wemix-chain-up-15` 는 BLOCKED 로 남는다.**
+- [x] **죽은 명령을 부르는 e2e** — **해소 (2026-09-24). 둘이 아니라 스무 개였다.**
+      이 항목은 `upgrade_data_migration_e2e_test.go` 와 `upgrade_gov_ncp_lifecycle_e2e_test.go`
+      둘이라고 적었다. 바이너리를 걸고 돌리니 **7개 파일 20개 함수**가 전부
+      `chainbench upgrade run` 에서 죽었다 — 파일을 셌지 함수를 세지 않았고, 돌려 보지
+      않았다. `invocationDebt` 도 같은 정도로 적게 잡고 있었고, 지금은 비어 있다.
+      스무 개 전부 리팩토링이 남긴 경로(`chainbench run` + `wemix-to-wbft` chain-preset)로
+      옮겼고 21건이 통과한다. 상세는 §1s G4 · G4-a.
 
 - [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
@@ -96,7 +106,9 @@
       209/209 통과**(71분, 실패·blocked·skip 0건) — stablenet 181 · wbft 15 · wemix 13, 하드포크
       세 건과 포크 전 빌드를 요구하는 `01-boho-crossed-by-restart` 포함. 스위프 도구는
       `scripts/tcsweep.sh` 에 남겼다.
-- [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
+- [x] **선언 모델 — 닫힘 (2026-09-24 표시 정정).** 제목은 "남은 여섯" 이라고 적고 본문은 "이것으로
+      닫힌다" 로 끝나 있었다. 설계 문서의 표에서 P-1~P-8 이 전부 취소선이고 D-a·D-b·D-c 도
+      끝났다 — 일이 아니라 **표시가 남아 있었다**. 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
       결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. **P-5 는 할 일이 없었다** —
       `suite run` 에는 이미 `--server-set` 이 있고(`resourcecmd.ServerFlags` 를 빌려 쓴다),
       MCP 도 마찬가지다. **P-4 도 끝났다** — `internal/core/origin` 에 rung 일곱을 둔 어휘 하나를
@@ -200,7 +212,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | **T7.2** | **wbft extraData RLP 산출** — `keygen.WBFTExtraData`: WBFTExtra(10필드) RLP 를 자체 최소 인코더로 계산(geth 의존성 없음). 게이트: 배포된 preset 의 extra-data 를 자기 메타데이터에서 바이트 동일 재현. GasTip=InitialGasTip·Diligence=DefaultDiligence 는 체인 소스 대조 확인 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커였음 | ☑ |
 | **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☑ |
 | **T7.4** | **launchopt 전환** — `armSpecs`(engine)·`upgrade.LaunchArgs`·`ExtraArgs` 클로저 2곳(chainsetup·cmd)을 Builder 로 흡수 + CLI `--chain-id/--network-id/--launch-opt` 커스텀 심. 게이트는 flag-pair 동등성(레거시 argv 가 관심사를 2회 교차 배치해 바이트 동일은 구조적으로 불가 — `architecture/code-graph.md` §4). 잔여: legacy stack A 의 `nodeconfig.LaunchArgs` 호출 2곳은 T7.11 에서 스택과 함께 이관 | 5곳 → 1곳(레거시 스택 제외) | ☑ |
-| **T7.5** | **`internal/app` 유스케이스 층** — 유스케이스 1개=함수 1개, cobra·MCP 타입 무지. NetNew/NetStatus + net 스텝 전체가 이 층 경유 | fan-out 축소는 소비자 이관에 비례(레거시 소비자는 T7.11 잔여) | ☑ |
+| **T7.5** | **`internal/app` 유스케이스 층** — 유스케이스 1개=함수 1개, cobra·MCP 타입 무지. ChainNew/ChainStatus + net 스텝 전체가 이 층 경유 | fan-out 축소는 소비자 이관에 비례(레거시 소비자는 T7.11 잔여) | ☑ |
 | **T7.6** | **`net` 원자 스텝** — keys/allocate/genesis/config/launchopts/provision/init/start/stop/restart/rm/logs/health. 각 스텝 = app 함수 1 + CLI 서브커맨드 1 + MCP 도구 1. keys 는 engine.KeySource, argv 는 engine.NodeLaunchArgs(단일 조립 지점) 재사용 | 로컬 타깃 완성; 원격 rm/logs 는 명시적 미지원 오류 | ☑ |
 | **T7.7** | **`netcompose.Workspace` → `core/session` 흡수** — `session.Composition`(장수명 환경 모드)이 디렉토리·manifest·스텝 스탬프를 소유, Workspace 는 도메인 상태만 | 잔여 저장소 `core/state` 는 T7.11 에서 스택과 함께 | ☑ |
 | **T7.8** | **DSL v2** — env/case 분리, do/expect 통일 문장형(v1 은 같은 시퀀스로 desugar — 실행 경로 1개), strict 파싱, keys/launch/genesis(set·overlay) 선언, schema/v2.schema.json 정본, `migrate-spec`(라운드트립 게이트), hooks.onFail | 미배선 선언은 이름 붙여 거부: genesis existing/build/inherit·role-scoped launch·override hook(G5) | ☑ |
@@ -261,7 +273,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
 | **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
 | **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
-| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체. **전제가 바뀌었다**: b-6 이 먼저 일어나 `setup` 은 이미 `engine.LocalSetup` 위에 있다. 남은 것은 두 경로(`setup` / `net up`)를 하나로 합칠지의 판단이며, 그 자체가 S 계열(표면 통일)의 문제다 | ◐ **재검토 필요** |
+| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `ChainUp` 으로 교체. **전제가 바뀌었다**: b-6 이 먼저 일어나 `setup` 은 이미 `engine.LocalSetup` 위에 있다. 남은 것은 두 경로(`setup` / `net up`)를 하나로 합칠지의 판단이며, 그 자체가 S 계열(표면 통일)의 문제다 | ◐ **재검토 필요** |
 | **b-6** | `core/bringup`·`core/state` 삭제 | ☑ **완료** — #241 병합 시 `engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴하며 두 패키지가 소멸했다(§1f-x) | ☑ |
 
 ### 1f-x. 병합에서 달라진 것 (2026-08-21)
@@ -523,7 +535,7 @@ genesis·config 를 쓸 때 해시를 `State.LaunchInputs` 에 기록하고, dep
 |---|---|---|---|
 | **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 · **`ReadOnly` 속성**(선언식 — 상태 불변 + 출력에 비밀 없음; `keyring export` 는 자격 없음) | 기존 동작 무변경 · 미등록 기능 카운트 테스트 · ReadOnly 선언이 스키마에 노출 | ☑ **완료 2026-09-08.** `internal/feature`(L5): `Registration`·`Register[In,Out]`·`Stage`·`ReadOnly`, 그리고 **입력 struct 태그 하나가 두 바인딩을 만든다** — `Flags` 가 cobra 플래그를, `Schema` 가 MCP JSON 스키마를.
 
-**게이트 셋 다 실측으로 닫았다.** ① *기존 동작 무변경*: `NetGenesisIn` 에 태그를 달았고(태그는 무해하다), 파생한 플래그 4개가 `chain genesis` 가 손으로 선언한 것과 이름·타입·도움말까지 일치한다. 그래서 S1 의 이관은 표면을 바꾸는 일이 아니라 **손으로 쓴 절반을 지우는 일**이 된다. ② *미등록 기능 카운트*: app 의 유스케이스 80개 중 0개 등록. 큰 숫자이고 그게 계획이다 — 래칫이 막는 것은 이 숫자가 **오르는 것**이다. ③ *ReadOnly 가 스키마에 노출*: `readOnlyHint` 로 나간다.
+**게이트 셋 다 실측으로 닫았다.** ① *기존 동작 무변경*: `ChainGenesisIn` 에 태그를 달았고(태그는 무해하다), 파생한 플래그 4개가 `chain genesis` 가 손으로 선언한 것과 이름·타입·도움말까지 일치한다. 그래서 S1 의 이관은 표면을 바꾸는 일이 아니라 **손으로 쓴 절반을 지우는 일**이 된다. ② *미등록 기능 카운트*: app 의 유스케이스 80개 중 0개 등록. 큰 숫자이고 그게 계획이다 — 래칫이 막는 것은 이 숫자가 **오르는 것**이다. ③ *ReadOnly 가 스키마에 노출*: `readOnlyHint` 로 나간다.
 
 **이름 둘을 A7 이 커밋 전에 잡았다**: 설계가 `Descriptor` 라 불렀는데 그 이름이 이미 두 뜻(`core/registry` 의 체인 플러그인, `app` 의 재수출)으로 있어 `Registration` 으로, `All` 은 `core/registry` 것과 겹쳐 `Registered` 로 바꿨다.
 
@@ -665,7 +677,7 @@ datadir·config·log 경로를 그 라벨에서 파생한다 — `fmt.Sprintf("n
 별칭)·호스트·포트) — **포트로 노드를 되찾는 것**이 원래 동기였고, 이제 파생 etcd 포트로도 된다.
 `net pool` 은 "왜 15개가 거부됐는가"를 명령 하나로 답한다(호스트×슬롯=용량, 사용/여유, 출처).
 유스케이스는 `app` 에 하나씩, CLI·MCP 는 바인딩만(K8 선례). **자격증명은 어느 쪽에도 없고**,
-`NetPoolOut` 에 그런 필드가 없다는 것을 리플렉션 테스트로 고정했다 — 유출은 조용하기 때문이다.
+`NetworkPoolOut` 에 그런 필드가 없다는 것을 리플렉션 테스트로 고정했다 — 유출은 조용하기 때문이다.
 
 **NM4 를 하다 같은 결함을 한 번 더 잡았다**: `net map` 이 etcd 를 `-` 로 찍길래 보니
 워크스페이스→netmap 변환이 또 그 필드를 빠뜨리고 있었다(손복사 4곳 중 하나). 필드별 복사를
@@ -771,7 +783,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☑ (포트 충돌은 init 의 기존 점검, 포트가 비어도 같은 바이너리가 돌면 start 가 pid 지목 거부 — `checkUnmanaged`+`Preflight`(점검만 진입점). 라이브 양쪽 재현) |
 | **V5.4** | CLI `netcmd` 추출 — net 그룹 6파일을 패키지로, chainsetup 직접 호출 (serverFlags 중복 해소 포함) | V5.1 | keyringcmd 패턴 준수 · 도움말 무손실 | ☑ (선행으로 net·network·hardfork 동사 23개를 chainsetup 모듈로 이동(app 은 위임만), 테스트 동반 이동. 서버 선택 플래그는 `cmd/chainbench/internal/serverflag` 하나로 — netcmd·netmapcmd·run 공용) |
 | **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☑ (구성 파일 10개(빌드환경·genesis·keysource·launcher·plan·nodecontrol·wemix 계열)와 테스트가 chainsetup 으로, 러너는 setup_bridge 한 파일로 위탁 — 의존 방향 chainsetup→engine 이 testengine→chainsetup 으로 역전, 순환 0) |
-| **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☑ (`app.RunSuite`: testspec.ReadFiles(신설, CLI 도 공용) → NetUp → 봉인 대기(WaitBlocks) → attach 실행 → 수집 → 자동 해체. 라이브 e2e: DSL 1건 → server1 4노드 → 1 pass → 고아 0) |
+| **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☑ (`app.RunSuite`: testspec.ReadFiles(신설, CLI 도 공용) → ChainUp → 봉인 대기(WaitBlocks) → attach 실행 → 수집 → 자동 해체. 라이브 e2e: DSL 1건 → server1 4노드 → 1 pass → 고아 0) |
 | **V6.3** | MCP 전환 — MCP 도구가 app 워크플로·얇은 app 함수만 경유(CLI 는 core 직접 유지) | V6.2 | run 도구가 app 경유로 전환(`AttachRun`/`SessionSummary`). 잔여 직결 import 14종은 래칫 테스트가 축소 전용 목록으로 고정(각 항목이 소멸 후속을 명시) — `internal/arch` TestMCPGoesThroughApp | ☑ (전면 0건은 후속 축소로) |
 | **V7** | 기회 개명 백로그 | 해당 트랙 | 네이밍 규칙 표 판정 통과 | ☑ **완료 2026-09-07 — 둘의 판정이 갈렸다.** `netreg`(규칙 7)은 **모듈이 이미 없다** — R1 이 `core/session` 으로 흡수했고, 남은 것은 파일 이름 셋이었다. 규칙 표는 모듈을 판정하지만 약어는 읽는 사람이 마주치는 모든 이름에 해당하므로 `networks.go` 로 바꿨다(소비자 0, 기계적).
 
@@ -804,15 +816,15 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P1.2** | **`serverset` 승격 + `Opener` 합류 → `internal/resource`** — `netmap/internal/serverset`(1,028)와 `netmap` 표면(229)을 한 패키지로. 봉인 목적은 wrapper 가 같은 패키지에 들어오면서 유지. **서버 쪽 `Placement` 삭제**: `Source`·`DataRoot`·`Remote` 세 필드가 전부 같은 반환값(`Pool.Source`·`Target.DataRoot`·`Spec.IsRemote()`)에 이미 있는 사본이라, `ResolveServer` 가 `Pool` 과 `machine.Spec` 을 따로 돌려준다. **`fleet` 낱말 제거**(제품 용어는 server set 하나): `--fleet`→`--all-servers` · MCP `"fleet"`→`"all_servers"` · `ServerRef.Fleet`→`.All` · `fleetTarget`→`setTarget` · `CHAINBENCH_DOCKER_SERVERS`→`CHAINBENCH_DOCKER_SERVERS` · `ServersBuildDir`→`ServersBuildDir` · 주석의 은유까지. **`Config.Fleet()` 삭제 → `Config.Pool()` 로 통합**(둘이 같은 일을 하고 `Pool()` 은 프로덕션 호출자 0). 슬롯 나눗셈(`slots/len(hosts)`)은 제거 — **착수 후 실측 결과 도달 불가능한 죽은 산술**이었다(v2 는 풀 하나에 slots 하나를 선언하고 `expand()` 가 모든 호스트에 복사하므로 같은 값 N개를 N으로 나눈 값이다). 호스트별 슬롯은 형식 변경이라 별도 결정으로 분리 | P1.1 | `serverset → core/netmap` 엣지 소멸(동일 패키지) · 서버 쪽 `Placement` 심볼 0 · **`fleet` 문자열 0**(주석·테스트·스크립트 포함) · `--server-set` 과 `--docker` 라이브 경로 동작 동일 · keyring 원격 스위트(링 생성·복제) 통과 | ☑ **완료 2026-08-27** — `internal/netmap` 소멸(패키지 75→74, 엣지 260→258) · 서버측 `Placement` 심볼 0(`ResolveServerOut{Pool, Target, HasTarget}`) · `fleet` 문자열 0(코드·스크립트·샘플) · `resource` 5파일 1,176줄, 소비자 6 · 계층 위반 0 · 61패키지 통과 |
 | **P1.3** | **풀·배정·포트밴드 → `resource`, `place` 흡수** — pool(145)+portplan(184) 이동, `place.NodeReq` → `node.LaunchReq`(착수 후 정정: 기동 요청이라 배정 요청과 다르다), `Ports` 별칭 2개 제거하고 `node.Endpoints` 로 통일 | P1.2 | 패키지 **4개 소멸**(`core/netmap`·`netmap`·`core/portplan`·`core/place`) · `resource → node` 단방향 · 계층 위반 0·  `net allocate`·`netmap plan` 산출 바이트 동일 | ☑ **완료 2026-08-28** — 패키지 4개 소멸(75→71, 엣지 268→246) · `resource → node`·machine·remote 만 · `node` out-edge 0 · `Bands` 중복 2→1(`plan()` 소멸) · `Reservation` 은 노드 사실이라 `core/node` 로(패밀리·registry 가 resource 를 import 하지 않음) · 골든 동일 · 61패키지·-race·lint 0 |
 | **P1.4** | **슬롯 상한 검사** (결정 2026-08-28) — `Pool.Validate()` 가 선언한 슬롯 수만큼 `PlanBands` 를 실제로 돌려 `ValidatePorts` 로 충돌 검사. "가용 포트 수를 넘는 slots" 를 선언 시점에 거부(지금은 밴드에 끝이 없어 `slots: 1000` 도 통과, `pool.go` 주석은 하지 않는 검사를 한다고 적혀 있음). 형식 변경 없음. *(옛 P1.4? "호스트별 슬롯" 은 폐기 — 밴드가 세트 공통이라 포트가 허용하는 노드 수는 모든 호스트에서 같다. 개념이 성립하지 않음, 사용자 확인 2026-08-28)* | P1.3 | 초과 slots 선언이 `Validate` 에서 거부됨 · 기존 유효 세트는 전부 통과 | ☑ **완료 2026-08-28** — `Pool.Validate()` 가 선언 슬롯 전부를 `PlanBands`→`ValidatePorts` 로 검사. p2p 8500/10 + rpc 8600 에서 slots 11 이 "11 slot(s) exceed … port 8600" 으로 거부, 10 은 통과(테스트) |
-| **P1.5** | **`resource.Inventory` 신설** (결정 2026-08-28) — 서버 세트 소유 모듈이 가용/할당을 관리: 메모리 인스턴스(`Open`·`Adopt`·`Take`·`Release`·`Usage`·`Full`), ip·port 가 필요한 곳은 여기서 할당받는다. **메모리가 정본**(파일 영속·복구는 최종 항목 F1). **반납 = `rm`**(`stop` 은 pid 만 제거, 자원은 노드 것으로 유지 — pid 는 재기동 시 갈린다). `Full` 오류는 누가 쥐고 있는지까지 출력. `net pool` 의 `Used` 가 워크스페이스 하나만 세던 것이 이것으로 고쳐짐 | P1.4 | `Usage` 가 같은 세트의 모든 네트워크를 계수 · `Take` 초과 시 `ErrFull` 에 보유자 목록 · 단위 테스트 | ☑ **완료 2026-08-28** — `resource.Inventory`(`NewInventory`·`Adopt`·`Take`·`Release`·`Usage`·`Full`·`ErrFull`) 메모리 인스턴스. `Adopt` 은 워크스페이스 기록(`chainsetup.Allocations`)에서 파생, host+p2p 포트로 슬롯 역산, 세트 밖·밴드 밖 기록은 무시, 중복 claim 은 먼저 것 유지. `app.NetPool` 이 명명된 워크스페이스 + `~/.chainbench` 아래 전부(`chainsetup.Discover`)를 채택해 `Used/Free/ByNetwork` 답변, `resource pool` 이 보유자 출력. 기본 워크스페이스 경로 소유를 `chainsetup.DefaultWorkspaceDir` 로 이동. **라이브 확인: 같은 세트의 두 조립이 같은 포트를 받아 인벤토리가 첫 것만 셈 → P2.x 의 근거** |
+| **P1.5** | **`resource.Inventory` 신설** (결정 2026-08-28) — 서버 세트 소유 모듈이 가용/할당을 관리: 메모리 인스턴스(`Open`·`Adopt`·`Take`·`Release`·`Usage`·`Full`), ip·port 가 필요한 곳은 여기서 할당받는다. **메모리가 정본**(파일 영속·복구는 최종 항목 F1). **반납 = `rm`**(`stop` 은 pid 만 제거, 자원은 노드 것으로 유지 — pid 는 재기동 시 갈린다). `Full` 오류는 누가 쥐고 있는지까지 출력. `net pool` 의 `Used` 가 워크스페이스 하나만 세던 것이 이것으로 고쳐짐 | P1.4 | `Usage` 가 같은 세트의 모든 네트워크를 계수 · `Take` 초과 시 `ErrFull` 에 보유자 목록 · 단위 테스트 | ☑ **완료 2026-08-28** — `resource.Inventory`(`NewInventory`·`Adopt`·`Take`·`Release`·`Usage`·`Full`·`ErrFull`) 메모리 인스턴스. `Adopt` 은 워크스페이스 기록(`chainsetup.Allocations`)에서 파생, host+p2p 포트로 슬롯 역산, 세트 밖·밴드 밖 기록은 무시, 중복 claim 은 먼저 것 유지. `app.NetworkPool` 이 명명된 워크스페이스 + `~/.chainbench` 아래 전부(`chainsetup.Discover`)를 채택해 `Used/Free/ByNetwork` 답변, `resource pool` 이 보유자 출력. 기본 워크스페이스 경로 소유를 `chainsetup.DefaultWorkspaceDir` 로 이동. **라이브 확인: 같은 세트의 두 조립이 같은 포트를 받아 인벤토리가 첫 것만 셈 → P2.x 의 근거** |
 | **P5** | **표면 재정리 (P2 앞으로 당김, 결정 2026-08-28)** — ① `netmapcmd` 해체: `netmap` 모듈이 P1 에서 사라졌는데 표면이 그 이름을 부르고 있다. `netmap pool`(자원)·`plan`(배정 미리보기)은 resource 의 그룹으로, `show`(배치 조회)는 node 쪽으로, keyring 방식(모듈=그룹=MCP 묶음) 적용. 구체 모양은 착수 시 제안. ② **플래그 분리**(사용자 결정 2026-08-28): `--workspace-dir` = 셋업 정보를 생성하는 경로(+ 기본 경로 규칙, `~/.chainbench/<날짜시간>/<테스트명>/chainsetup` 방향) / `--data-dir` = 노드가 블록 데이터를 쌓는 디렉터리(geth 계열 `--datadir` 과 같은 뜻으로 통일). ③ CLI 는 모듈 직접·MCP 는 app 경유, 래칫 14종 축소. **P2 와의 선긋기: 이름과 경계만, 기록 구조는 건드리지 않는다** | P1.5 | 표면에서 `netmap` 문자열 0(재편으로 정한 이름만) · `--data-dir` 이 워크스페이스를 뜻하는 곳 0 · 래칫 14→한 자릿수 | ☑ **완료 2026-08-28** — `netmapcmd` 소멸: `resource pool·plan`(신설 `resourcecmd`) / `net show`(netcmd 로) / MCP `chainbench_resource_pool`·`_resource_plan`·`_net_show` · 공용 렌더러 `internal/mapview`(plan 과 show 가 같은 표) · 현행 경로 9곳 `--data-dir`→`--workspace-dir`(MCP 인자 `dataDir`→`workspaceDir`), 레거시 14곳은 T7.11 은퇴까지 유지 · `net new/up` 기본 경로 `~/.chainbench/<타임스탬프>/chainsetup`(생략 시 첫 줄에 경로 보고) · 표면에서 `netmap` 문자열 0 · 61패키지·race·lint 0 |
 | **P2** | 노드 사실 레코드 — "노드 하나" 타입 10 → 3, 경로 계산 4곳 → 1 | P5 | 심볼 인벤토리로 계수 확인. `workspace.json` 의 생성 주체·이유와 워크스페이스 삼중 정의(chainsetup.Workspace·session.Composition·Environment)의 소유 확정 포함 | ☑ **완료 2026-08-28** — `node.Record` 신설(옛 `chainsetup.NodeState`, JSON 계약 유지) · 노드 타입 10→3(Record·driver.NodeSpec·node.Node), 나머지는 정확한 이름으로(`collector.Sample`·`chainsetup.Probe`·`topology.Entry`) · `node.Layout` 에 Nodekey/Keystore/StaticNodes/IPC 경로 추가, 데이터플레인 손조립 0 · 워크스페이스 삼중 정의 해소: `workspace.json` 의 주체는 `session.Composition`, `chainsetup.Workspace` 는 그 위의 도메인 상태, `session.Environment` 는 다른 수명(아티팩트) · `node` out-edge 0 유지 · 61패키지·race·lint 0 |
 | **P2.x** | **배정이 Inventory 를 소비** — `Assign` 이 `Inventory` 에서 빈 슬롯을 받아 시작. 같은 세트로 올린 두 번째 네트워크가 첫 네트워크의 포트를 다시 받지 않게 됨(지금은 둘 다 슬롯 1부터 시작해 충돌) | P2 | 같은 세트 위 2개 네트워크 동시 기동 라이브 | ☑ **완료 2026-08-28** — `Inventory.Assign(reqs, network)` 이 빈 슬롯을 `Take` 해 배치(`place`). `chainsetup.Inventory(pool, self, named…)` 한 곳에서 인벤토리를 조립(기본 루트 전부 + 명명, 자기 자신 제외)하고 allocate·plan·pool 이 같은 claim 집합을 읽는다. `resource.Assign(pool)` 은 빈 인벤토리 위의 계획으로 남아 골든 바이트 동일. **라이브**: 같은 세트 두 조립이 31000/31010 과 31020/31030 을 받고, 반쯤 찬 세트의 `resource plan` 이 31040 부터 시작 |
 | **P3** | 프로세스 — 실행은 `driver`, 정책은 `process`. 기동 진입점 8 → **3**(driver 실행 · `launcher` 기동 정책 · `process` 종료 정책 — 사용자 결정 2026-08-28: 옛 `supervisor` 는 sudo 역할로 읽혀 `launcher` 로). **`occupancy` → `inspector` 개명·확장**(사용자 결정 2026-08-28): ip 가용·port 가용·경로 유효성(data root·datadir·genesis·keystore·nodekey·config·log·binary)을 요청 시에만 실사해 사실만 답한다. 타입은 stutter 회피(`inspector.Report` 등), `driver.ProcessInspector` 어휘도 이때 정리 | P2 | 진입점 계수 · `chainsetup` 714줄 감소 | ☑ **P3 완료 2026-08-28** · P3.1 — `core/launcher` = `supervisor`+`chainsetup.LocalLauncher`(→`Direct`)+`driver/lifecycle.go`, `supervisor` 낱말 0, `driver.NodeOf` 로 Node 조립 4→1(hardfork 의 loopback 리터럴 소멸), `workspace.go` 의 etcd 포트 누락 복사 수정, `chainsetup` 6,593→6,256. **P3.2 완료 2026-08-28** — `NodeController`→`launcher.Controller`(pid 맵 삭제: arming 만 기억, pid 는 `session.Environment` 노드표 한 곳 — `NodeControl.Stop/Start` 가 갱신된 노드를 돌려주고 fault 액션이 `Env.UpdateNode` 로 써넣음), `chainsetup` 6,256→6,123. `Workspace.Start/Stop/Restart` 는 노드별 머신을 거쳐 driver 를 부르고 `Record.PID` 에 적으므로 그대로(조립 모드의 한 기록). `LocalSetup` 은 레거시 `setup --launch`/MCP `_start` 경로라 T7.11 과 함께. **P3.3 완료 2026-08-28** — `core/occupancy`→`core/inspector`: `Ports`(옛 Scan) · `Paths`(file seam 으로 타깃에서 존재 확인) · `Hosts`(도달) 세 질문, 요청 시에만, 사실만. `net start` 가 기동 전 binary·genesis·datadir·config 존재를 각 노드의 머신에서 확인해 빠진 것을 이름으로 보고. `occupancy` 문자열 0 |
 | **P4** | 빌더 셋 — genesis 생성 지점 5 → 1, config 렌더 2 → 1, dsl 파서가 액션을 import 하지 않음 | P2, P3 | 계수 + import 방향 | ☑ **P4 완료 2026-08-28** · P4.1 genesis 완료 2026-08-28** — `core/genesis` 가 소스 선택(`SourceFor`, 패밀리 id 분기 0: `SourceProvider` 타입 단언)·`Compose`·프리셋 소스 소유, wemix 소스는 `consensus/poa.GenesisSource`(Family 가 capability 구현), 호출자 5곳 전부 `Compose`/주입 `Source` 경유, `chainsetup` 직접 파일 쓰기 0(layers §5 에서 제외), 5,828줄. **P4.2 config 완료 2026-08-28** — `nodeconfig.Spec` 단일 입력, `TOML`/`Argv` 두 렌더러, Spec 조립은 `launcher.NodeConfig` 한 곳, compose 의 config·launchopts·start 가 `peerPlan` 으로 같은 입력을 모음, argv 조립 3→1(`upgrade.LaunchArgs`·deploy 평평한 `LaunchArgs` 도 `Argv` 경유), `driverSpec` 의 `SyncMode` 누락 수정. `launchopt` 는 소유로 편입(호출자는 `nodeconfig.Argv` 뿐), 디렉터리 유지. **P4.3 dsl 완료 2026-08-28** — `testspec`(문법·해석기 1,432줄)과 `internal/testhelper`(액션·어세션·리더 2,129줄) 분리. `Registry` 에 `Reader` 추가로 문법이 액션 파일을 부르던 고리(`readerFor`) 제거, `NewRegistry()` 빈 레지스트리 + `testhelper.Register`. `testspec→testhelper` import 0 |
-| **P4.x** | **`preflight` 재정의** (결정 2026-08-28) — 계획 자기모순 검사에서 **현재 vs 목표 비교**로: 타깃의 현 체인 구성을 분석하고, 정상 동작 여부를 inspector 로 확인하고, 다음 테스트가 요구하는 구성과 비교해 "그대로 사용 / N번 서버만 재구성 / 전체 재구성" 을 답한다(연속 테스트의 재구성 비용 제거 — 설정 파일 비교만으로는 부족: 파일이 같아도 노드가 비정상일 수 있다). 기존 계획 검사는 각 빌더로(포트→resource, genesis 포크→genesis 빌더, netid→config 빌더) | P4, P3 | 동일 구성 연속 테스트에서 재구성 스킵 라이브 · 부분 변경 시 해당 노드만 재구성 | ☑ **완료 2026-08-28** — `core/preflight` = `Have`/`Want`/`Compare`/`Check`/`Decision`(reuse·rebuild-nodes·rebuild-all·compose, 이유 포함), 의존 `node` 뿐 · `chainsetup.Workspace.Have/Compare` + liveness(pid 는 노드의 머신, RPC head 는 노드 주소) · `app.RunSuite` 가 NetUp 전에 물어 reuse 는 건너뛰고 rebuild-nodes 는 `NetRestart` 만 · 옛 계획 검사는 `upgrade.NetworkPlan.validate` 로(빌더 함수 호출) · 표 테스트 9 + liveness 3 |
-| **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☒ **닫는다 2026-09-08 — 줄 수 목표는 근거를 잃었고, 남은 게이트는 좁히기로 달성되지 않는다.**\n\n**실측**: `chainsetup` 4,652줄 · `testengine` 2,349줄, 합 7,001. 그중 **주석이 1,547줄(22%)** 이고 공백 451, 실제 코드는 5,003 이다. 함수·메서드가 213개라 평균 20줄 남짓 — 비대한 함수가 몰린 구조가 아니다. 가장 큰 것이 `netUpFrom` 133 · `RunSuite` 132 · `Run` 109 · `Allocate` 99 다.\n\n**목표 2,000 은 P5 시점의 6,593 에서 잡은 것인데, 그 뒤 이 두 패키지가 하는 일이 늘었다**(청사진 N1~N6, N9 순서 선언, NM6, 원격 경로). 줄이 는 것은 기능이 는 것이지 부풀어서가 아니다. 그리고 줄 수를 목표로 삼으면 **가장 먼저 지워지는 것이 그 22%의 주석**인데, 이 세션에서 판단을 바꾼 것이 바로 그 주석들이었다(`derive quorum` 이 노드 표를 안 읽는 이유, `genesis` 가 키셋을 요구하지 않는 이유).\n\n**게이트 둘 중 하나는 충족**이다 — `setup_bridge.go` 는 없다. 남은 `testengine→chainsetup` 엣지는 비테스트 4파일이고, **층 위반이 아니다**(둘 다 L4). 노드 수명(start/stop/restart/swap)을 인터페이스로 좁혀 보면 **4파일 중 1개**(`nodegate.go`)만 import 가 사라지고 `suite.go` 에는 `NetUp`·`Open`·`WantOf`·`NetworkStatus`·`NetStop`·`NetEndpoints` 등 11개가 남는다 — **패키지 엣지는 그대로다.** 인터페이스가 12개 메서드라면 그것은 요구를 좁힌 것이 아니라 chainsetup 을 다른 이름으로 부르는 것이다.\n\n**엣지를 실제로 없애는 길은 하나뿐이다**: 조립을 testengine 밖으로 내보내 엔진이 망을 *받게* 하는 것. 그것은 좁히기가 아니라 재설계이고, 근거가 생기면 그때 별도 항목으로 세운다. 지금은 열어 둘 이유가 없다 |
-| **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — 당시 `tests/cases/env/` 선언 4개 + 케이스 4개(지금은 `tests/tc/`, env 는 정의서 인라인) · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `NetUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
+| **P4.x** | **`preflight` 재정의** (결정 2026-08-28) — 계획 자기모순 검사에서 **현재 vs 목표 비교**로: 타깃의 현 체인 구성을 분석하고, 정상 동작 여부를 inspector 로 확인하고, 다음 테스트가 요구하는 구성과 비교해 "그대로 사용 / N번 서버만 재구성 / 전체 재구성" 을 답한다(연속 테스트의 재구성 비용 제거 — 설정 파일 비교만으로는 부족: 파일이 같아도 노드가 비정상일 수 있다). 기존 계획 검사는 각 빌더로(포트→resource, genesis 포크→genesis 빌더, netid→config 빌더) | P4, P3 | 동일 구성 연속 테스트에서 재구성 스킵 라이브 · 부분 변경 시 해당 노드만 재구성 | ☑ **완료 2026-08-28** — `core/preflight` = `Have`/`Want`/`Compare`/`Check`/`Decision`(reuse·rebuild-nodes·rebuild-all·compose, 이유 포함), 의존 `node` 뿐 · `chainsetup.Workspace.Have/Compare` + liveness(pid 는 노드의 머신, RPC head 는 노드 주소) · `app.RunSuite` 가 ChainUp 전에 물어 reuse 는 건너뛰고 rebuild-nodes 는 `ChainRestart` 만 · 옛 계획 검사는 `upgrade.NetworkPlan.validate` 로(빌더 함수 호출) · 표 테스트 9 + liveness 3 |
+| **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☒ **닫는다 2026-09-08 — 줄 수 목표는 근거를 잃었고, 남은 게이트는 좁히기로 달성되지 않는다.**\n\n**실측**: `chainsetup` 4,652줄 · `testengine` 2,349줄, 합 7,001. 그중 **주석이 1,547줄(22%)** 이고 공백 451, 실제 코드는 5,003 이다. 함수·메서드가 213개라 평균 20줄 남짓 — 비대한 함수가 몰린 구조가 아니다. 가장 큰 것이 `netUpFrom` 133 · `RunSuite` 132 · `Run` 109 · `Allocate` 99 다.\n\n**목표 2,000 은 P5 시점의 6,593 에서 잡은 것인데, 그 뒤 이 두 패키지가 하는 일이 늘었다**(청사진 N1~N6, N9 순서 선언, NM6, 원격 경로). 줄이 는 것은 기능이 는 것이지 부풀어서가 아니다. 그리고 줄 수를 목표로 삼으면 **가장 먼저 지워지는 것이 그 22%의 주석**인데, 이 세션에서 판단을 바꾼 것이 바로 그 주석들이었다(`derive quorum` 이 노드 표를 안 읽는 이유, `genesis` 가 키셋을 요구하지 않는 이유).\n\n**게이트 둘 중 하나는 충족**이다 — `setup_bridge.go` 는 없다. 남은 `testengine→chainsetup` 엣지는 비테스트 4파일이고, **층 위반이 아니다**(둘 다 L4). 노드 수명(start/stop/restart/swap)을 인터페이스로 좁혀 보면 **4파일 중 1개**(`nodegate.go`)만 import 가 사라지고 `suite.go` 에는 `ChainUp`·`Open`·`WantOf`·`NetworkStatus`·`ChainStop`·`ChainEndpoints` 등 11개가 남는다 — **패키지 엣지는 그대로다.** 인터페이스가 12개 메서드라면 그것은 요구를 좁힌 것이 아니라 chainsetup 을 다른 이름으로 부르는 것이다.\n\n**엣지를 실제로 없애는 길은 하나뿐이다**: 조립을 testengine 밖으로 내보내 엔진이 망을 *받게* 하는 것. 그것은 좁히기가 아니라 재설계이고, 근거가 생기면 그때 별도 항목으로 세운다. 지금은 열어 둘 이유가 없다 |
+| **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — 당시 `tests/cases/env/` 선언 4개 + 케이스 4개(지금은 `tests/tc/`, env 는 정의서 인라인) · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `ChainUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☑ **완료 2026-09-07 (#357).** 남은 것은 문법 갭이 아니라 **낡은 기록**이었다 — 막혔다던 19건 중 15건에 이미 스펙이 있었고 122개 전부 `validate` 를 통과한다. 문서를 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다. 진짜 남은 8건은 이유가 유효하다(SDK 가드 2 · 조작자 공급 키 2 · 다른 빌드가 필요한 4) |
 | **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
@@ -879,9 +891,9 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 | **E3** | **config·command 증적** — `nodeconfig` Command Builder, `config-<test-purpose>` fixture, override 우선순위, config readback, 노드별 argv·binary·checksum 기록 | E0A | node override 격리 · config/argv 동일 사실 · 변경 전후 revision 보존 | ☑ |
 | **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☑ |
 | **E5** | **DSL syntax + semantic/capability 사전 검사** — schema/parser drift, selector/wait timeout, PN 제약과 chain·binary별 role/flag/RPC/metric/action/assertion/upgrade 지원을 모든 write 전에 검증 | E0A | unsupported는 no-write · applicableChains는 SKIP · CLI/MCP 판정 동등 | ☑ |
-| **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☑ **stage a**(`internal/nodemonitor` L4): `Verdict`·`Classify`(순수, worst-first)·`Gate`(관측→분류→제한복구 루프, `Observer`/`Restarter`/`Clock`/`EvidenceSink` 주입). `process.FailureMode` 재사용, 파괴 상태(chainId 불일치·fork·EtcdStale·QuorumLost)=FATAL 자동복구 0. **stage b**(testengine 배선): `health.Run`+recorded pid→Facts(순수 `factsFromReport`), `chainsetup.NetRestart` 재시작, `composeWorkspace`가 compose/reuse 후 1회·`PreSpec` 훅이 각 테스트 전 게이트. 관측·재시작은 재구현 없이 기존 함수 재사용(사용자 결정). 고아 `process.BringUp` 상한재시도는 모양이 달라 미재사용→1k-Z2 이월. **라이브 검증(GSTABLE_BIN) 이월** — CI는 순수 매핑·게이트·엔진루프 단위테스트로 green | ☑ |
+| **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☑ **stage a**(`internal/nodemonitor` L4): `Verdict`·`Classify`(순수, worst-first)·`Gate`(관측→분류→제한복구 루프, `Observer`/`Restarter`/`Clock`/`EvidenceSink` 주입). `process.FailureMode` 재사용, 파괴 상태(chainId 불일치·fork·EtcdStale·QuorumLost)=FATAL 자동복구 0. **stage b**(testengine 배선): `health.Run`+recorded pid→Facts(순수 `factsFromReport`), `chainsetup.ChainRestart` 재시작, `composeWorkspace`가 compose/reuse 후 1회·`PreSpec` 훅이 각 테스트 전 게이트. 관측·재시작은 재구현 없이 기존 함수 재사용(사용자 결정). 고아 `process.BringUp` 상한재시도는 모양이 달라 미재사용→1k-Z2 이월. **라이브 검증(GSTABLE_BIN) 이월** — CI는 순수 매핑·게이트·엔진루프 단위테스트로 green | ☑ |
 | **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☑ 기존(fault·partition·save/$ref·deploy·call)은 재구현 없이 조합. **신규**: ① `createAddress` 리더 — `accounts.CreateAddress`(SDK `tx.CreateAddress` 래핑, canonical 벡터 검증), nonce 생략 시 현재 nonce → deployContract 예상=실제 assert. ② `swapNode` action — 노드별 binary/config 교체(`chainsetup.NodeSwap`, 같은 datadir/genesis, **E4 recordSwap로 revision 보존**, config는 `writeNodeConfig` 공유·config-`<purpose>` fixture provenance). `interp.NodeSwapper` 선택 인터페이스(코어 미변경). ③ `contractChecksum` 리더 — bytecode/runtime code sha256(`filestore.Hash` 재사용). 기대 revert=PASS 등 verdict는 기존(`checkTxOutcome`). **swapNode config launch·라이브 시나리오는 사용자 환경 이월**, CI는 매핑·플러밍·revision·config render 단위테스트로 green | ☑ |
-| **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☑ 기존(session schema·`AssertResult.Provenance`·report.Build/Summary·chainstate_sink)은 확장. **E8-1** `session.Scrub` — 증적 write seam(`writeJSON`+`Spec`)에서 키·비밀번호 마스킹, hash/주소는 보존. workspace.json(기능)은 제외. **E8-2** FAIL/BLOCKED 시 엔진 `OnFail` 훅이 `collectFailureData`로 health.Run(RPC/peer/block)·process 레저(pid/command)·노드 로그 tail을 테스트별 `observations/`에 수집(`TestRecord.Observation`, 스크럽 적용). **E8-3** report가 observations/*를 링크, RunSuite가 bus로 chainstate.jsonl을 headless 경로에서도 기록. **E8-4** `collector.ReconnectingLogReader`(백오프 재시도, 항상 적용) + `resource.Access.Runner` 노출 + `chainsetup.NetRunner` + RunSuite가 remote면 `RemoteLogReader` 주입. **원격 SSH read·chainstate 라이브는 사용자 환경 이월**, CI는 스크럽·OnFail·tail·reconnect·report 링크 단위테스트로 green | ☑ |
+| **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☑ 기존(session schema·`AssertResult.Provenance`·report.Build/Summary·chainstate_sink)은 확장. **E8-1** `session.Scrub` — 증적 write seam(`writeJSON`+`Spec`)에서 키·비밀번호 마스킹, hash/주소는 보존. workspace.json(기능)은 제외. **E8-2** FAIL/BLOCKED 시 엔진 `OnFail` 훅이 `collectFailureData`로 health.Run(RPC/peer/block)·process 레저(pid/command)·노드 로그 tail을 테스트별 `observations/`에 수집(`TestRecord.Observation`, 스크럽 적용). **E8-3** report가 observations/*를 링크, RunSuite가 bus로 chainstate.jsonl을 headless 경로에서도 기록. **E8-4** `collector.ReconnectingLogReader`(백오프 재시도, 항상 적용) + `resource.Access.Runner` 노출 + `chainsetup.NetworkRunner` + RunSuite가 remote면 `RemoteLogReader` 주입. **원격 SSH read·chainstate 라이브는 사용자 환경 이월**, CI는 스크럽·OnFail·tail·reconnect·report 링크 단위테스트로 green | ☑ |
 | **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☑ **E9-1** MCP↔CLI GAP 해소: `chainbench_run`이 rpc 없으면 compose(`app.RunSuite`, `RunSuiteIn.SpecContent`로 인라인 스펙)·있으면 attach. `chainbench_hardfork`→`app.HardforkPlan/Execute`(execute 기본 false). `chainbench_upgrade`→신설 `app.UpgradeRun`(handoff orchestration을 `upgrade.Handoff.Run`으로 추출, CLI `upgrade run`과 공유). **E9-2** 구조적 parity: 두 표면이 미설정 시 zero-value를 넘겨 `compositionOf`가 정본 기본값 단일 소스(validators 4·presets/keys 고정), run 모드 선택 검증. mixed-binary vs handoff 구분·컴포즈 기본값/선택/가드는 기존 `compose_internal_test`가 커버. 세 표면은 arch(`TestMCPGoesThroughApp`)가 app 경유로 고정. **행위적 CLI-vs-MCP diff는 cmd=main이라 불가**, local/remote/Docker 실제 실행은 라이브 이월(환경 분기 단일 지점 arch 고정) | ☑ |
 
 E1·E2·E3·E5는 E0A에서 저장 계약과 수정 파일을 분리한 뒤 병렬 진행할 수 있다. E4는 process와 chainsetup,
@@ -984,7 +996,7 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 
 | # | 작업 | 선행 | 핵심 게이트 | 상태 |
 |---|---|---|---|---|
-| **U0** | **규칙 확정과 측정 고정** | — | 도구가 157 항목·우회 109 를 재현 · 라체트가 표면별 상한을 고정 · 동등성 테스트 본보기 1건 · 문서 사이 모순 0 | ☑ **2026-09-05.** 문서 쪽은 #349 에서 끝냈다(`architecture-v2` §2 개정, S5·S6 폐기, 표면 통일 설계에 대체 표시). 코드 쪽은 이번에 붙였다. 인벤토리 걷기를 `internal/arch/surface.go` 로 옮겨 **도구와 테스트가 같은 코드를 센다**(두 벌이면 숫자가 갈라진다). `TestSurfacesReachThroughApp` 이 표면별 예산(CLI 40 · MCP 24 · DSL 18 · DSLa 27)을 **양방향으로** 잡는다. 넘으면 빚이 늘었다고 막고, 밑돌면 작업하고도 천장을 안 내렸다고 막는다. 실제로 41 로 올리고 39 로 내려 둘 다 실패하는 것을 확인했다. **동등성 테스트 본보기**는 `cmd/chainbench/resourcecmd/parity_test.go` 의 `TestParity_ResourcePool` 이다. `resource pool` 은 CLI 와 MCP 가 이미 둘 다 `app.NetPool` 을 부르는 네 쌍 중 하나라 지금 통과한다. 렌더링이 아니라 **답**을 비교한다(양쪽 JSON 을 값으로 디코드). MCP 쪽에 `res.Slots++` 를 심어 실제로 어긋남을 잡는 것을 확인하고 되돌렸다 |
+| **U0** | **규칙 확정과 측정 고정** | — | 도구가 157 항목·우회 109 를 재현 · 라체트가 표면별 상한을 고정 · 동등성 테스트 본보기 1건 · 문서 사이 모순 0 | ☑ **2026-09-05.** 문서 쪽은 #349 에서 끝냈다(`architecture-v2` §2 개정, S5·S6 폐기, 표면 통일 설계에 대체 표시). 코드 쪽은 이번에 붙였다. 인벤토리 걷기를 `internal/arch/surface.go` 로 옮겨 **도구와 테스트가 같은 코드를 센다**(두 벌이면 숫자가 갈라진다). `TestSurfacesReachThroughApp` 이 표면별 예산(CLI 40 · MCP 24 · DSL 18 · DSLa 27)을 **양방향으로** 잡는다. 넘으면 빚이 늘었다고 막고, 밑돌면 작업하고도 천장을 안 내렸다고 막는다. 실제로 41 로 올리고 39 로 내려 둘 다 실패하는 것을 확인했다. **동등성 테스트 본보기**는 `cmd/chainbench/resourcecmd/parity_test.go` 의 `TestParity_ResourcePool` 이다. `resource pool` 은 CLI 와 MCP 가 이미 둘 다 `app.NetworkPool` 을 부르는 네 쌍 중 하나라 지금 통과한다. 렌더링이 아니라 **답**을 비교한다(양쪽 JSON 을 값으로 디코드). MCP 쪽에 `res.Slots++` 를 심어 실제로 어긋남을 잡는 것을 확인하고 되돌렸다 |
 | **U1** | **CLI 를 import 가능한 패키지로** (U0 의 본보기가 `resourcecmd` 에서 돌아가는 것은 그 패키지가 이미 import 가능하기 때문이다. `package main` 에 남은 32개는 같은 테스트를 쓸 수 없다.) — `package main` 안에 cobra 명령 생성자가 **32개** 있어 그 명령들은 테스트에서 부를 수 없다. 표면 패키지로 옮기고 `package main` 은 배선만 남긴다(Helm 이 `cmd/helm` 을 `pkg/cmd` 로 옮긴 것과 같은 이유). 동등성 테스트가 가능해지는 전제다 | U0 | `package main` 의 명령 생성자 32 → 0 · 옮긴 그룹마다 표면 테스트 1건 이상 · E9 가 "cmd=main 이라 불가"로 이월한 CLI-vs-MCP diff 가 가능해짐 | ☑ **32 → 1 (2026-09-05).** `package main` 에는 이제 루트 하나만 남았다(149줄, `main.go`·`root.go`·`interrupt.go`). Helm 이 자기 `helm.go` 를 50줄 배선으로 두고 명령을 `pkg/cmd` 에 옮긴 것과 같은 모양이다. 표면 패키지는 여덟 개가 늘었다. `txcmd`(tx·contract) · `accountcmd`(account·faucet) · `catalogcmd`(chains·capabilities) · `nodecmd` · `lifecyclecmd`(status·stop·clean·verify·consensus) · `suitecmd`(run·validate·migrate-spec) · `reportcmd`(report·log) · `upgradecmd`(upgrade·genesis·run·hardfork). 그룹이 곧 패키지라는 기존 관례(`keyringcmd`·`chaincmd`·`resourcecmd`)를 그대로 따랐다.
 
 **이동은 순수하다**: 라체트 109 불변, 명령 트리 불변.
@@ -996,7 +1008,7 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 **e2e 도 실제 마운트 지점을 거치게 바꿨다.** 잎사귀 생성자를 직접 부르면 그 명령이 루트에 제대로 붙어 있는지는 시험하지 못한다. `newRootCmd()` 에 `upgrade run` 을 붙여 부른다.
 
 덤으로 `resolve.go` 의 `remoteDriver` 를 걷어냈다. `remote` 명령군 폐기(#346) 이후 자기 테스트 말고 부르는 데가 없었다. |
-| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 19개가 `chainsetup` 을 직접 불렀다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☑ **2026-09-05. CLI 40 → 31.** `chaincmd` 가 `chainsetup`·`resource`·`core/node` 를 직접 부르던 것을 전부 `app` 경유로 돌렸다. app 이 이미 대부분을 얇게 감싸고 있어서(`NetStatus` 는 `chainsetupmod.NetStatus` 로 넘기는 한 줄) 빠진 진입점만 채웠다. `NetEnodes` · `DefaultWorkspaceDir` · `State` · `NodeSet` · `TargetSpec`/`ParseTarget`.
+| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 19개가 `chainsetup` 을 직접 불렀다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☑ **2026-09-05. CLI 40 → 31.** `chaincmd` 가 `chainsetup`·`resource`·`core/node` 를 직접 부르던 것을 전부 `app` 경유로 돌렸다. app 이 이미 대부분을 얇게 감싸고 있어서(`ChainStatus` 는 `chainsetupmod.ChainStatus` 로 넘기는 한 줄) 빠진 진입점만 채웠다. `ChainEnodes` · `DefaultWorkspaceDir` · `State` · `NodeSet` · `TargetSpec`/`ParseTarget`.
 
 **기본 워크스페이스를 app 으로 올린 것이 이 항목의 알맹이다.** 두 표면이 각자 계산하면 한쪽이 다른 쪽이 못 찾는 곳에 구성한다. `app.DefaultWorkspaceDir` 하나만 쓰게 했다.
 
@@ -1371,7 +1383,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
   다시 빌드해 링크를 돌리고 `tools/list` 로 73개를 확인했다. 상세는 §1s D.
   **(원래 진단)** 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
 - [x] **WA2** [목적1·2 차단] 단일 테스트 목록·실행 기능이 CLI·MCP 양쪽에 없다. testengine 에 RunOne/ListTests 카탈로그 API 가 없다. 증거: `internal/testengine/` 전역 grep 무결과, `cmd/chainbench/` 에 test 그룹 없음. 방향: testengine 에 목록·단건 실행 API 를 만들고 CLI·MCP 에 붙인다. **확인(2026-09-12): 완료.** `chainbench test --help` 가 뜨고 `chainbench_test_list` 가 MCP 에 등록돼 있다
-- [x] **WA3** [목적2 차단·MCP] 한 번에 구성+유지가 MCP 로 안 된다. `NetUp` 이 CLI 전용(`cmd/chainbench/chaincmd/up.go:49`), `chainbench_run` 은 항상 teardown 하고 `KeepUp` 을 MCP 로 노출 안 한다(`internal/mcp/run_tool.go:108-115`, `internal/testengine/suite.go:75-76`). run 이 `Server`·`Docker`·`WaitBlocks` 도 드롭한다. 방향: NetUp 을 MCP 로 노출하거나 run 에 KeepUp·Server·Docker 를 배선한다. **확인(2026-09-12): 완료.** `grep -c KeepUp internal/mcp/run_tool.go` > 0
+- [x] **WA3** [목적2 차단·MCP] 한 번에 구성+유지가 MCP 로 안 된다. `ChainUp` 이 CLI 전용(`cmd/chainbench/chaincmd/up.go:49`), `chainbench_run` 은 항상 teardown 하고 `KeepUp` 을 MCP 로 노출 안 한다(`internal/mcp/run_tool.go:108-115`, `internal/testengine/suite.go:75-76`). run 이 `Server`·`Docker`·`WaitBlocks` 도 드롭한다. 방향: ChainUp 을 MCP 로 노출하거나 run 에 KeepUp·Server·Docker 를 배선한다. **확인(2026-09-12): 완료.** `grep -c KeepUp internal/mcp/run_tool.go` > 0
 - [x] **WA4** [목적2·MCP] 노드 단위 stop/start(장애 주입)가 MCP 에 없다. `app.NodeStop`/`NodeStart` 가 CLI 전용(`internal/app/net.go:147,152`, `cmd/chainbench/nodecmd/node.go:32,55`). 방향: MCP 도구를 더한다. **확인(2026-09-12): 완료.** `grep -l chainbench_node_start internal/mcp/*.go`
 - [x] **WA5** [목적2·CLI] 네트워크 레지스트리(attach/detach/list/info/peers/topology, remote_rpc)가 CLI 에 없다. MCP 전용(`internal/mcp/network_tools.go`, `remote_tools.go`). 방향: CLI `network`·`remote` 그룹을 더한다. **확인(2026-09-12): 완료.** `chainbench network --help` 가 뜬다
 - [x] **WA6** [목적1·MCP] MCP run 이 세션 경로를 출력 안 해 리포트를 회수 못 한다(dataDir 없으면 임시 dir). spec 을 경로로 못 넘겨 env 참조 해석이 우회된다(`ReadSpecFiles` CLI 전용). 증거: `internal/mcp/run_tool.go:104,141-153`, `internal/app/workflow.go:115-120`. 방향: run 출력에 세션 root 를 싣고, spec 경로 입력을 받는다. **확인(2026-09-12): 완료.** `grep -n SessionRoot internal/mcp/run_tool.go`
@@ -1467,7 +1479,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 ### C. compose — DSL→체인 배선 누락
 
-- [x] **WA19** [compose] `env.target` 이 배치를 안 하고 fingerprint 만 바꾼다(오배선). 증거: `spec_v2.go:308`, `compose.go:158-170`(Target 미설정), `verbs_up.go:45`. 방향: compose 가 Target 을 NetUpIn 에 배선하거나, env.target 을 문법에서 뺀다. **확인(2026-09-12): 완료.** `grep -n "up.Target = tgt" internal/testengine/compose.go` + `TestCompositionOf_EnvTargetPlaces`
+- [x] **WA19** [compose] `env.target` 이 배치를 안 하고 fingerprint 만 바꾼다(오배선). 증거: `spec_v2.go:308`, `compose.go:158-170`(Target 미설정), `verbs_up.go:45`. 방향: compose 가 Target 을 ChainUpIn 에 배선하거나, env.target 을 문법에서 뺀다. **확인(2026-09-12): 완료.** `grep -n "up.Target = tgt" internal/testengine/compose.go` + `TestCompositionOf_EnvTargetPlaces`
 - [x] **WA20** [compose] upgrade(handoff) env 가 같은 env 의 hardforks/topology/launch/config 를 무시한다. 증거: `compose.go:100-116`. 방향: 핸드오프 경로가 이 필드들을 이어받게 한다.
   - **해소 확인 (2026-09-12 실측) — 다르게 해결됐다.** 무시하는 것이 아니라 **소리 내어
     거절한다**: `compose.go:147-149` 가 핸드오프 env 에 hardforks·topology·launch·config 가
@@ -1647,7 +1659,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
     - `HexBytes("0x")` 자체는 그대로 뒀다 — 빈 calldata 는 정당하다. **바이트가 필요한 호출자가
       그렇게 말해야 한다**는 쪽으로 고쳤다.
     - 결정표 2개 + 케이스 2개. `internal/app` 25.6% → 28.2%.
-  - **이어서: `NetPlan`(순위 5위, 12점).** 결함은 없었다 — 대신 **사용자가 말로 요구한 배치
+  - **이어서: `NetworkPlan`(순위 5위, 12점).** 결함은 없었다 — 대신 **사용자가 말로 요구한 배치
     순서가 운영자가 쓰는 층에서 한 번도 단정된 적이 없었다**는 것을 채웠다.
     - 고정한 성질: 요청한 모양 그대로 나오는지(총수·역할별 수·모든 항목에 호스트와 포트가
       있는지), **모든 서버에 한 칸씩 주고 나서야 첫 서버로 되돌아오며 그때는 포트 대역이
@@ -1841,10 +1853,30 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
 
 
-## 1s. 남은 작업 한눈에 (2026-09-10 작성 · **2026-09-11 재측정**)
+## 1s. 남은 작업 한눈에 (2026-09-10 작성 · 2026-09-11 재측정 · **2026-09-24 갱신**)
 
 §1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
 배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다.
+
+### 지금 열린 것 (2026-09-24)
+
+아래 G 절이 정본이다. 9월 12일과 9월 22일 사이에 두 트랙이 돌았고, 이 문서는 그동안
+따라오지 못했다 — 9월 11일에 멈춰 있었다. **이 절을 읽는 사람이 먼저 볼 것은 G 다.**
+
+| 갈래 | 상태 |
+|---|---|
+| G. HSM 리팩토링 (2026-09-21~) | **검증 끝. DSL 208/209 PASS · e2e 계층 통과 · 회귀 0건** |
+| G6. 15노드 poa endpoint 영구 합류 실패 | 열림 · **원인 확정 — go-wemix 코어 결함, 체인팀 인계 대기** |
+| ~~G7. `TestRemoteDriver_E2E` 의 fixture 가 저장소에 없다~~ | **닫힘 (2026-09-24) — 테스트가 자기 바이너리를 들고 간다** |
+| ~~G3. `preset.KeysDir` 의 기준이 문서와 다르다~~ | **닫힘 (2026-09-24) — 주석을 사실에 맞추고 실패가 기준을 말한다** |
+| ~~G5. 죽은 `.env.json` 필터 넷~~ | **닫힘 (2026-09-24)** |
+| ~~G4. `upgrade run` e2e 20건~~ | **닫힘 (2026-09-24) — 21 PASS · 0 FAIL** |
+| ~~G4-a. overlay 가 fork 섹션에서 버려짐~~ | **닫힘 (2026-09-24) — 순서 원복** |
+| B~F 절의 잔여 | 9월 12일 기록 그대로. 다시 재지 않았다 |
+
+**G6 만 이 브랜치 밖의 일이다** — go-wemix 의 블록 검증 안이다. G4·G4-a·G7 은 전부 앞선
+리팩토링이 남긴 것이고(#419가 순서를 뒤집고 명령을 지웠으며, #130이 sshd 하네스를 지웠다)
+여기서 되돌렸다.
 
 ### 재측정 (2026-09-11, PR #383 머지 후)
 
@@ -2203,7 +2235,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     거부되면 **정지 0건**(정지는 되돌릴 수 없고, 거부는 망이 그대로여야 하는 경우다).
   - 변이 2건으로 실패 확인 — 재사용 분기를 무력화하면 `stopped [111 222]` 로 잡히고, 거부 후
     조기 반환을 없애면 `a refusal stopped [111]` 로 잡힌다.
-  - **부수로 배운 것**: 같은 성질을 `NetUp` 끝단에서 스텁으로 재보려 했더니 통과했는데,
+  - **부수로 배운 것**: 같은 성질을 `ChainUp` 끝단에서 스텁으로 재보려 했더니 통과했는데,
     **아무것도 증명하지 못하는 통과**였다 — 스텁은 RPC 로 응답하지 않으므로 두 노드가 다
     `not answering` 으로 redo 되고(`0 node(s) reused, 2 redone`), pid 는 스텁이 같은 값을
     돌려줘서 우연히 같았다. 그 테스트는 버렸다. 판정에 `alive` 가 필요한 성질은 응답하는 노드가
@@ -2912,6 +2944,299 @@ WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
 으로 해야 하고, 정리는 `git push --delete`(없는 것을 지우려다 실패한다)가 아니라
 `git remote prune origin` 이다. 같은 실수를 막는 문장: **`git branch -r` 은 원격을 보여주지
 않는다. 마지막으로 fetch 했을 때의 원격을 보여준다.**
+
+
+### G. HSM 리팩토링 — 검증 완료 (2026-09-21 착수 · 2026-09-24 전량 검증)
+
+브랜치 `refactor/hsm-state-machine`. `internal/core/lifecycle` 의 표를 걸어 다니던 머신을
+계층형 상태 머신으로 바꿨다. 설계는 `docs/research/chainbench/analyses/14`, 작업 prompt 는
+`15`, 들어온 구현의 검토는 `16`, 수정 prompt 는 `17`, 두 머신의 state diagram 은 `18` 이다.
+
+**원칙(사용자 지시).** 길을 다 만들고, 동작을 확인하고, 그다음에 기존 것을 지운다. 그래서
+삭제는 마지막 세 커밋에 모였다.
+
+**한 일.** 커밋 31개. `internal/core/statemachine` 을 새로 세우고, chainsetup 에 닿는 경로
+일곱을 하나씩 머신 위로 옮기고(`chain up`, 독립 step 아홉, resume, reuse-if-matching,
+compose-comparing, 조작 여섯, run), 그다음 옛 머신과 표를 지웠다. 마지막 커밋에서 크로싱의
+세 순간을 상태로 만들고 `StepOut.Passed` 와 그것만 채우던 `lifecycle.Status` 17개를 지웠다.
+
+**검증된 것.**
+
+| 무엇 | 결과 |
+|---|---|
+| 유닛 전량 · `go vet` · `golangci-lint` · `gofmt` | 통과 |
+| DSL 라이브 go-wbft 16건 + go-wemix 13건 | 29건 전부 PASS |
+| DSL 라이브 go-stablenet 부분 (47/209 에서 중단) | 47건 전부 PASS |
+| DSL 라이브 hardfork 4건 (크로싱 두 모양 전부) | 4건 전부 PASS |
+
+**전량 검증 (2026-09-23, docker 15대, HEAD `08035919`).** 로컬에 체인 바이너리가 없는
+기기라 스위프를 `env/docker` 15대 위에서 돌렸다 — `TCSWEEP_FLAGS` 로 `--server-set` ·
+`--workspace-config` · `--docker` · `--all-servers` 를 넘긴다(env/docker/README.md).
+
+| 무엇 | 결과 |
+|---|---|
+| 유닛 전량 · `gofmt -l` · `go vet` · `golangci-lint` | 통과, 0 issues |
+| `go vet -tags e2e ./...` (e2e 컴파일) | 통과 |
+| docker live 테스트 17건 (chainsetup 2 · resource 3 · process 7 · keyringcmd 4 · app 1) | 17건 전부 PASS |
+| **209건 DSL 스위프** | **208 PASS · 0 FAIL · 1 BLOCKED** |
+| **핸드오버 e2e 21건** (2026-09-24) | **21 PASS · 0 FAIL** |
+
+스위프는 두 번에 나눠 돌았다. go-wemix 13건은 poa 가 노드마다 p2p 옆 3연속 포트를 잡으므로
+`server-set-wemix.yaml`(p2p step 3) + `--node-monitor-timeout 5m` 이 따로 필요하다. 한 번의
+스위프로 두 서버 세트를 다룰 수 없다.
+
+- [x] **G1. 전량 검증 — DSL 스위프는 끝났다.** 209건 중 208건 PASS, **FAIL 0건**.
+  15노드 구성(`wbft-chain-up-15`, `stablenet-chain-up-15`)과 정족수 계열
+  (`wbft-quorum-at-15-nodes` 129s, `wbft-quorum-halt-and-recover` 98s)이 전부 통과했다 —
+  HSM 리팩토링이 건드린 면이 바로 이쪽이다. 남은 1건은 아래 G6.
+- [x] **G1b. e2e 태그 계층도 돌았다 (2026-09-23 최초 · 2026-09-24 재측정).** 이 계층은 **호스트에 darwin/arm64 체인
+  바이너리**를 요구한다 — docker 는 대신하지 못한다(그 테스트들은 체인을 로컬 프로세스로
+  띄우지 SSH 로 띄우지 않는다). 바이너리는 이 기기에 있다:
+  `~/work/github/wemade/{go-wemix,go-wbft}/build/bin/gwemix` 와 `go-stablenet/build/bin/gstable`.
+
+  게이트는 `GSTABLE_BIN` · `WBFT_BIN` · `CHAINBENCH_E2E_FROM_BIN` ·
+  `CHAINBENCH_E2E_TO_BIN` 넷이다. `CHAINBENCH_E2E_TEMPLATE` 은 더 필요 없다 — genesis
+  템플릿은 chain-preset 이 소유한다(G4).
+
+  | 무엇 | 결과 |
+  |---|---|
+  | `tests/e2e` (실제 체인을 띄우는 계층) | 통과, 854초 (캐시 끄고 잰 값) |
+  | 핸드오버 e2e 21건 | **21 PASS · 0 FAIL** (G4 에서 살려냄) |
+  | `internal/testengine` · `internal/app` · 그 외 60여 패키지 | 통과 |
+
+  처음 돌렸을 때는 21건이 실패했고 **전부 발판이 없어진 테스트**였다. 그 21건은 G4 와 G7
+  이고, 어느 것도 이 브랜치가 만든 것이 아니다. G4 는 닫혔고 G7 만 남았다.
+
+  **주의: `go test` 캐시.** 두 번째 실행에서 35개 패키지가 `(cached)` 로 통과했고 그중
+  `tests/e2e` 가 있었다. 캐시는 재실행이 아니다 — 이 계층을 다시 잴 때는 `-count=1` 을 준다.
+- [x] **G2. PR.** #425. G1 보다 먼저 냈다(사용자 의도). 이 절이 그 PR 의 검증 기록이다.
+- [ ] **G6. 15노드 poa 에서 endpoint 하나가 영구히 합류하지 못한다 — go-wemix 결함, 원인
+  확정 (2026-09-23 관측 · 2026-09-24 재현·근본원인 측정).**
+  `go-wemix/chain-up/02-wemix-chain-up-15` 만 BLOCKED 된다 —
+  `1 node(s) still not ready after 5m0s`. 케이스 자신의 주장은 약하고(블록 2 이상, 피어 0
+  아님), 실패하는 곳은 스텝이 아니라 그 앞의 readiness 게이트다. 스텝은 실행되지 않는다.
+
+  **chainbench 의 문제가 아니다.** 15대를 같은 방식으로 띄웠고, 갈라지는 지점은 go-wemix 의
+  블록 검증 안이다. 기동 순서로도 피할 수 없다 — 아래 "왜 순서로 못 피하나" 참조.
+
+  ### 무엇이 일어나나
+
+  재현된다. **2/2. 다만 걸리는 노드는 매번 다르다** — 2026-09-23 node13, 2026-09-24 node9.
+  증적은 `~/.chainbench/20260923-100943-97772/` 와 `~/.chainbench/20260924-013034-76103/`
+  (노드 15대 로그 전부 + health.json + processes.json).
+
+  걸린 노드는 블록 N 에서 멈추고 블록 N+1 을 `unauthorized block` 으로 거절한다. 피어를
+  끊고 다시 붙기를 반복하며 영원히 나아가지 못한다.
+
+  ### 왜 한 노드만 — 데이터 문제가 아니다
+
+  geth 는 배치의 헤더를 **블록을 넣기 전에 한꺼번에·동시에** 검증한다
+  (`core/blockchain.go:1446` → `consensus/ethash/consensus.go:146`). 그래서 블록 N+1 의
+  검증이 일어나는 순간의 로컬 head 가 노드마다 다르다.
+
+  | 2026-09-24 실측 | 2차 배치 | 블록 6 검증 시 head | 블록 5 상태 | 판정 |
+  |---|---|---|---|---|
+  | node8·10·11·12·13·14 | 블록 4~67 (64개) | 3 | **없음** | 통과 |
+  | **node9** | **블록 4~5 (2개)** | **5** | **있음** | **거절** |
+
+  배치 크기는 다운로더가 그 순간 받아 둔 만큼이라 **경합**이다. 둘 다 큐에는 69개를 알고
+  있었다(`blockTasks=69`).
+
+  블록 5의 데이터는 멀쩡하다 — `health.json` 이 "all 15 node(s) report the same hash at
+  block 5" 라고 적고, node9 의 registry 코드와 `magic()` 도 정상이다.
+
+  ### 왜 거절하나 — 거버넌스가 블록 4~13에 걸쳐 지어진다
+
+  chainbench 는 `gwemix wemix deploy-governance` 를 **한 번** 부른다. 나누는 것은 go-wemix
+  안의 의존 사슬이다: proxy 는 imp 의 주소를 생성자 인자로 받고, registry 등록은 proxy
+  주소를, 초기화는 registry 를 필요로 한다. `WaitMined()` 가 다섯 번 걸린다
+  (`wemix/bind/structs.go` `DeployGovContracts`·`ExecuteInitialize`).
+
+  | 블록 | 트랜잭션 | 무엇 |
+  |---|---|---|
+  | 4 | 생성 6 | registry + 구현(imp) 5 |
+  | 6 | 생성 5 | proxy 5 |
+  | 9 | 호출 9 | registry 도메인 등록 + 초기화 |
+  | 12·13 | 호출 5 | 멤버·스테이킹 마무리 |
+
+  블록 5에서 검사가 보는 것(node9 콘솔로 직접 재현):
+
+      registry code  = 3250 hex chars
+      magic()        = "Wemix Registry"                  ← registry 로 인식된다
+      getContractAddress("GovernanceContract")
+                     → execution reverted: address should be non-zero
+
+  **주소록은 있고 자기소개도 하는데 내용이 비어 있다.**
+
+  ### 결함 — 준비 안 된 상태의 표현이 셋인데 둘만 인정한다
+
+  `wemix/admin.go:992 verifyBlockSig` 는 ① registry 에서 Gov 주소 찾기 → ② 멤버 수 →
+  ③ enode 조회 순으로 간다. 블록 5에서는 **①에서 죽으므로 ②·③에 닿지 못한다.**
+
+  | 노드가 보는 것 | 에러 | 판정 |
+  |---|---|---|
+  | 상태가 아예 없다 | `missing trie node` → `ethereum.NotFound` | 통과 (`admin.go:1000`) |
+  | 멤버가 0명 | — | 통과 (`admin.go:1002`) |
+  | **registry 는 있는데 주소록이 비었다** | **`revert: address should be non-zero`** | **거절** |
+
+      return err == wemixminer.ErrNotInitialized || errors.Is(err, ethereum.NotFound)
+
+  revert 는 둘 중 어느 것도 아니라 `false` → `consensus.ErrUnauthorized` 다.
+
+  ### 왜 영구적인가
+
+  관대한 경로는 **상태가 없을 때만** 열린다. 블록 5를 넣은 노드는 그 상태를 버릴 수 없고,
+  geth 는 실패한 import 에서 head 를 되감지 않는다. 그래서 재시도 입력이 매번 같다 —
+  **재기동해도 head 5, peers 0** (실측). 피어를 바꿔도 소용없다: 거절은 피어가 준 데이터가
+  아니라 자기 상태 때문이고, 어느 피어가 줘도 블록 6은 같다. 앞으로 가는 유일한 문이 블록
+  6인데 막혀 있으니 검사가 정상 동작하는 블록 9 이후에 영원히 닿지 못한다.
+
+  ### 왜 기동 순서로 못 피하나
+
+  `BootstrapPlan()` 은 이미 `deploy-governance → init-etcd → start-nodes` 다. 실측 타임라인:
+  블록 9(거버넌스 완료) 01:31:20 → etcd 01:31:24 → 나머지 14대 01:31:26 이후, endpoint 는
+  01:32:55(체인은 이미 블록 39). **모든 노드가 거버넌스 완료 뒤에 뜬다.** 그래도 실패하는
+  것은, 늦게 뜬 노드도 **블록 1부터 재생**해야 하므로 어차피 그 구간을 지나기 때문이다.
+  검증은 기동 시점이 아니라 **재생 시점**에 일어난다.
+
+  ### full sync 만 취약하다
+
+  | | full sync | snap sync |
+  |---|---|---|
+  | seal 검증 대상 | 모든 블록 (`blockchain.go:1444`) | 100개당 무작위 1개 (`headerchain.go:332`, `fsHeaderCheckFrequency=100`) |
+  | 초기 구간 state 보유 | 직접 실행해 만든다 → 있다 | 만들지 않는다 (pivot 에서 받음) |
+  | 취약 | **예** | 아니오 (두 이유가 독립적으로 막는다) |
+
+  chainbench 기본값은 `full` 이다(`nodeconfig.go:165`), 그래서 15대 전원이 취약한 조건에
+  있었다. `--syncmode snap` 은 증상 회피일 뿐이고, full sync 를 요구하는 검증 환경에는
+  쓸 수 없다.
+
+  ### 메인넷 영향
+
+  | 상황 | 위험 |
+  |---|---|
+  | 운영 중 노드가 새 블록을 하나씩 받음 | **없음** — 항상 부모 상태가 있고 거버넌스는 완성돼 있다 |
+  | 신규 구성 직후 노드 합류 | **높음** — 재현 2/2 |
+  | **메인넷을 genesis 부터 full sync** | **가능** — 그 체인 초기에도 같은 미완성 구간이 있다면, 언제 띄우든 재생하며 지난다 |
+
+  ### 체인팀에 넘길 것
+
+  1. `wemix/admin.go:1000` 의 통과 조건에 **revert 를 포함**한다. "거버넌스를 아직 읽을 수
+     없다" 는 상태가 없을 때든 주소록이 비었을 때든 같은 뜻인데 지금은 전자만 통과한다.
+  2. `NewGovContracts`(`wemix/bind/structs.go`)가 `CallOpts` 에 높이를 넣지 않아 주소록을
+     **검증 대상 높이가 아니라 latest 기준**으로 푼다. 이번에는 node9 의 latest 가 마침 5라
+     결과가 같았지만 일반적으로 다른 답이 나올 수 있는 자리다.
+
+- [x] **G4. `upgrade run` 을 부르던 e2e 20건을 리팩토링이 남긴 경로로 옮겼다 (2026-09-24).**
+  `upgrade run` 은 main 의 `6ed4b37c` (#419, 2026-09-20)가 지웠다. 그 리팩토링은 핸드오버를
+  전용 composer 에서 **일반 composition 경로**로 옮겼고, 명령을 몰던 e2e 20건은 따라 고치지
+  않았다. 각 시도가 0.00초에 끝났으므로 체인이 한 번도 뜬 적이 없다.
+
+  이 항목은 2026-09-22 에 "테스트 함수는 둘" 이라고 적었다. **틀렸다** — 바이너리를 걸고
+  돌리니 **7개 파일 20개 함수**였다. 파일을 셌지 함수를 세지 않았고, 돌려 보지 않았다.
+  `invocationDebt` 도 같은 정도로 적게 잡고 있었다.
+
+  **어떻게 옮겼나.** 명령이 플래그로 받던 것을 chain-preset 이 선언한다.
+
+  | 이전 | 지금 |
+  |---|---|
+  | `upgrade run --profile wemix-upgrade.yaml --from-binary --to-binary --template` | `chainbench run <생성 케이스> --keep-up` |
+  | 프로파일 YAML | `presets/chain/wemix-to-wbft.json` (두 바이너리 · croissant · 블록 20) |
+  | stdout 정규식으로 RPC·PID 파싱 | 워크스페이스 `chain-record.json` |
+  | `--genesis-overlay` 플래그 | chain-preset 의 `genesis.overlay` 선언 |
+
+  **진단이 원인을 엉뚱한 곳으로 돌리고 있었다.** 재시도 고리가 `cmd.Execute()` 의 에러를
+  버려서, "unknown command" 가 `flaky producer/etcd bootstrap` 으로 15일간 보고됐다. 로그만
+  보면 go-wemix 가 불안정한 것처럼 읽혔다. 이제 그 에러를 기록한다.
+
+  **막혔던 것 넷과 그 해결.**
+  1. 임시 디렉터리의 케이스가 `presets/chain` 을 못 찾는다 → 커밋된 preset 을 읽어 인라인.
+  2. preset 의 `keys` 가 CWD 기준이라 풀리지 않는다 → `--keys` 로 절대 경로.
+  3. 운영자 계정에 genesis 잔고가 없다(13건이 `insufficient funds`) → 옛 프로파일이 주던
+     자금을 테스트가 선언한다.
+  4. 마이그레이션 테스트가 node1 을 producer 로 가정 → 이 preset 은 node5 가 producer 다.
+     어느 노드인지는 선언이 정하므로 **기록이 답하게** 했다.
+
+  **마지막 5건은 리팩토링이 뒤집은 순서였다.** 상세는 아래 §G4-a.
+
+  `invocationDebt` 는 비었다 — 래칫이 항목을 지우라고 요구했고, 그것이 그 장부의 쓰임이다.
+
+- [x] **G4-a. genesis overlay 가 fork 섹션 안의 선언을 조용히 버리고 있었다 (2026-09-24).**
+  G4 의 마지막 5건이 여기서 막혀 있었다. overlay 가 `config.croissant` 아래에 선언한 것은
+  **전부 무시됐다** — 받아들여진 뒤 폐기됐고, 충돌을 알리는 것은 아무것도 없었다.
+
+  | overlay 가 요구 | genesis 결과 |
+  |---|---|
+  | `stabilizingStakersThreshold: 2` | 5 (템플릿 기본값) |
+  | `govNCP.params.ncps: 주소 하나` | 네 멤버 전부 |
+
+  순서 때문이다. `genesis.Customize`(`internal/core/genesis/genesis.go:111`)가 base 에
+  overlay 를 병합한 **뒤에**, `steps_genesis.go` 가 링에서 만든 fork 섹션으로
+  `SetConfigSection` 을 부르고 그 함수는 `config.croissant` 를 **통째로 교체**한다
+  (`internal/core/genesis/config.go:37`).
+
+  **이것은 리팩토링이 뒤집은 순서다.** #419가 흡수한 핸드오버는 정확히 그 이유로 fork 를
+  구성한 **뒤에** overlay 를 적용했다 — `upgrade.Handoff.Run` 이
+  `ComposePlan` → `ApplyOverlay` 순서였다. 그 일은 `7f39c562` 의
+  `internal/consensus/upgrade/handoff.go` 에 있었고 지금은 `internal/chainsetup/steps_genesis.go`
+  가 한다. 옮겨 오면서 순서가 뒤집혔고, 그 파일에서 fork 섹션 뒤에 overlay 를 다시 병합해
+  되돌렸다.
+
+  **왜 테스트가 이것을 필요로 했나.** 옛 프로파일은 검증자 집합과 거버넌스 의회를 **분리해**
+  선언했다 — `validators.addresses` 4명, `validators.members` 1명. chain-preset 에는 의회를
+  선언할 자리가 없어서 키셋의 `systemContractMembers`(4명)가 강제되고, 제안 정족수가 3이
+  된다. 단독 NCP 를 전제한 GOV-006/007/008/017 은 그 위에서 성립하지 않는다. overlay 가
+  효력을 되찾자 테스트가 자기 의회를 선언할 수 있게 됐다.
+
+  **남은 설계 질문(비차단).** chain-preset 이 의회를 선언할 수 있어야 하는가. 지금은
+  overlay 로 우회하고 있고, 옛 프로파일에는 그 필드가 있었다.
+
+  **찾은 방법을 적어 둔다.** 리팩토링 이전 트리를 worktree 로 받아(`7f39c562`) AST 로 파싱하고,
+  `upgrade run` 의 실행 절차를 복원해 지금 경로와 대조했다. 그 대조 없이는 순서 역전이
+  보이지 않았다 — 그 전까지는 이것을 새로 설계할 문제로 다루고 있었고, 정답(순서 원복)을
+  가장 위험한 안으로 잘못 평가했다.
+
+- [x] **G7. `TestRemoteDriver_E2E` 가 자기 노드 바이너리를 들고 간다 (2026-09-24 해소).**
+  `internal/core/process/remote_e2e_test.go` 는 원격에 `/usr/local/bin/fakenode` 가 있다고
+  가정했고, 자기 주석은 그것을 `tests/remote/sshd/run.sh` 가 띄운다고 적었다. **그 디렉터리는
+  `704f9e1a` (#130, 레거시 bash 스위트 폐기, 2026-07-29)가 지웠다.** 그 뒤로 어디서 돌려도
+  `exit 127: no such file` 이었고, SSH 변수가 없으면 건너뛰는 게이트 뒤라 아무도 실패를 보지
+  못했다. 두 달이다. `invocationDebt` 가 이걸 못 잡는 것은 그 장부가 명령만 보고 fixture 는
+  보지 않기 때문이다.
+
+  **없어진 컨테이너가 준 것은 둘이었다** — sshd 와 가짜 노드 바이너리. sshd 는 `env/docker`
+  가 이미 준다. 빠진 것은 바이너리 하나뿐이었다.
+
+  그래서 **테스트가 직접 쓴다**(`standInNode`). `init` 은 0으로 끝나고 나머지는
+  `sleep 3600` 인 네 줄 스크립트면 driver 가 요구하는 것 — init 성공, Stop 이 죽일 수 있는
+  살아 있는 프로세스 — 을 둘 다 만족한다. 이미지도 root 도 필요 없고, 로그인할 수 있는
+  호스트면 어디서든 돈다. 진짜 체인 바이너리를 쓰면 빌드가 전제로 하나 더 붙을 뿐이다.
+
+  `env/docker` 의 server1(sshd 2201)로 검증했다: **PASS 2.3초.** 실행법은 파일 머리말에.
+- [x] **G3. `preset.KeysDir` 은 저장소 루트 기준이 아니다 — 주석이 틀렸다 (2026-09-24 해소).**
+  `internal/preset/doc.go` 는 "relative to the repository root" 라고 적었다. 그렇지 않다.
+  호출부 아홉은 **전부 플래그·설정의 기본값**이고, 상대 경로는 프로세스 작업 디렉터리
+  기준으로 풀린다. 그리고 chainbench 는 `install.sh` 로 설치되는 바이너리라 **저장소 루트가
+  없는 환경이 정상**이다 — "루트를 찾아 풀자"는 선택지는 애초에 성립하지 않는다.
+
+  이 항목은 "다른 데서 실행하면 **조용히** 없는 디렉터리를 가리킨다" 고도 적었다. 그것도
+  틀렸다. `/tmp` 에서 돌려 보면 조용하지 않다:
+  `keyring: read keys: open presets/keys/metadata.json: no such file or directory`.
+  경로는 말한다. 말하지 않던 것은 **그 경로가 무엇을 기준으로 풀렸는지**다.
+
+  그래서 둘을 고쳤다. 주석을 사실에 맞췄고, 상대 경로일 때만 실패에 기준을 덧붙인다 —
+  `("presets/keys" is relative, resolved against the working directory /tmp)`.
+  절대 경로면 아무것도 붙이지 않는다.
+
+- [x] **G5. 죽은 `.env.json` 접미사 필터 넷 — 제거 (2026-09-24).** 네 곳 모두 `tests/tc` 를
+  훑는데, 그 트리에는 `kind: case` 파일 209개뿐이고 `*.env.json` 은 **한 개도 없다**.
+  거르는 것이 0건이었다. 라이브 테스트가 쓰던 이름이 `<id>.json` 으로 바뀐 뒤 필터만
+  남은 것이고, 해롭지는 않아도 다음 사람에게 있지도 않은 규칙을 가르친다.
+
+  `cmd/chainbench/validate_test.go` 에서는 그 필터가 함수 하나의 전부였다(`specFilesUnder`).
+  `jsonFilesUnder` 와 같아졌으므로 접고 호출부 둘을 옮겼다. 남은 함수의 주석이 **걸러낼 것이
+  없다는 사실과 그 이름이 무엇이었는지**를 적는다. 나머지 셋은 제외 절만 뺐다
+  (`internal/testengine/corpus_gate_test.go` 1곳, `internal/testhelper/corpus_address_test.go` 2곳).
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)

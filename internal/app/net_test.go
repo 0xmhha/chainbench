@@ -12,23 +12,23 @@ import (
 
 func fixedClock() time.Time { return time.Date(2026, 8, 12, 0, 0, 0, 0, time.UTC) }
 
-func TestNetNewThenStatus(t *testing.T) {
+func TestChainNewThenStatus(t *testing.T) {
 	dir := t.TempDir()
 	d := app.Deps{Clock: fixedClock}
 
-	out, err := app.NetNew(context.Background(), d, app.NetNewIn{
+	out, err := app.ChainNew(context.Background(), d, app.ChainNewIn{
 		DataDir: dir, Chain: "stablenet",
 	})
 	if err != nil {
-		t.Fatalf("NetNew: %v", err)
+		t.Fatalf("ChainNew: %v", err)
 	}
 	if out.Detail == "" {
-		t.Fatal("NetNew returned empty detail")
+		t.Fatal("ChainNew returned empty detail")
 	}
 
-	st, err := app.NetStatus(context.Background(), d, app.NetStatusIn{DataDir: dir})
+	st, err := app.ChainStatus(context.Background(), d, app.ChainStatusIn{DataDir: dir})
 	if err != nil {
-		t.Fatalf("NetStatus: %v", err)
+		t.Fatalf("ChainStatus: %v", err)
 	}
 	if st.State.Chain != "stablenet" {
 		t.Fatalf("chain = %q", st.State.Chain)
@@ -43,8 +43,8 @@ func TestNetNewThenStatus(t *testing.T) {
 	}
 }
 
-func TestNetNewRejectsUnknownChain(t *testing.T) {
-	_, err := app.NetNew(context.Background(), app.Deps{}, app.NetNewIn{
+func TestChainNewRejectsUnknownChain(t *testing.T) {
+	_, err := app.ChainNew(context.Background(), app.Deps{}, app.ChainNewIn{
 		DataDir: t.TempDir(), Chain: "nope",
 	})
 	if err == nil {

@@ -25,7 +25,7 @@
 //
 // Allocation is the one moment two runs can hand out the same port slot: each
 // derives the inventory from the workspaces it can see, and two runs that look
-// before either has saved both see it free. NetAllocate holds the server set's
+// before either has saved both see it free. ChainAllocate holds the server set's
 // lock from the look to the save — a lock, not a second record, so the
 // workspaces stay the only account of what is taken.
 package chainsetup

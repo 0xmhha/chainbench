@@ -34,7 +34,7 @@ func index(t *testing.T, dir string) map[string]any {
 	return m
 }
 
-// list returns the entries of a key set as the JSON surface reports them.
+// listEntries returns the entries of a key set as the JSON surface reports them.
 func listEntries(t *testing.T, dir string) []map[string]any {
 	t.Helper()
 	out, err := run(t, "keyring", "list", "--keyring-dir", dir, "--json")

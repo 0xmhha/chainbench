@@ -1,0 +1,464 @@
+package chainsetup
+
+import (
+	"fmt"
+
+	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/core/statemachine"
+)
+
+// The composition machine's messages.
+//
+// Everything this machine can be told, says to itself, or reports upward is in
+// this one file, because a protocol scattered across the states that use it is
+// a protocol nobody can read end to end. The states are elsewhere; what they
+// may say to each other is here.
+//
+// The value says the direction, so a number in a log is readable without the
+// name. Within [statemachine.BaseChain]:
+//
+//	+0x001  a Cmd the outside sends down
+//	+0x040  a Cmd this machine sends up to its controller
+//	+0x100  an Event this machine leaves itself
+//	+0x180  an Event something below posts up
+//
+// Exported or not says the same thing to the compiler: a message another
+// package may send is exported, and one that only ever travels inside this
+// machine is not. protocol_test.go holds the two to each other.
+
+// What the outside sends down. A controller — the CLI through a verb, or the
+// test engine — has these four and nothing else.
+const (
+	// CmdCompose composes a network from a request. It is accepted only when
+	// the machine is at rest.
+	CmdCompose statemachine.What = statemachine.BaseChain + 0x001 + iota
+	// CmdStep runs one composition step on a network that stopped part way.
+	CmdStep
+	// CmdOperate asks a composed network to do something: stop, restart a
+	// node, swap a binary, cross a fork.
+	CmdOperate
+	// CmdCompare composes only as far as what is on the target requires, and
+	// hands over before the readiness gate.
+	CmdCompare
+	// CmdStop takes the network down.
+	CmdStop
+	// CmdClearError is the only way out of a failed composition, so that a
+	// failure is something somebody decided to leave rather than something the
+	// next command walked past.
+	CmdClearError
+)
+
+// What this machine sends up to its controller. These are Cmd rather than
+// Event because to the controller they are "now do this": the reference names
+// a child's report CMD_POST_DHCP_ACTION for the same reason.
+const (
+	// CmdPostCompose reports that composing finished, either way. It is sent
+	// once.
+	CmdPostCompose statemachine.What = statemachine.BaseChain + 0x040 + iota
+	// CmdOnQuit reports that this machine has stopped and its controller need
+	// not wait for it any longer.
+	CmdOnQuit
+)
+
+// What this machine leaves itself. A state's Enter cannot move, so it says what
+// happened and the stage above it decides what that means.
+const (
+	// eventWorkspaceOpened: the workspace is open and locked.
+	eventWorkspaceOpened statemachine.What = statemachine.BaseChain + 0x100 + iota
+	// eventNodeTableBuilt: the nodes, their roles, hosts and ports are decided.
+	eventNodeTableBuilt
+	// eventKeySourceChosen: where this composition's identities come from is
+	// settled, and the state that fetches them can be entered.
+	eventKeySourceChosen
+	// eventKeysEnsured: every node has an identity.
+	eventKeysEnsured
+	// eventComparisonMade: what is on the target has been held against what
+	// this run declares, and the verdict says which of four moves follows.
+	eventComparisonMade
+	// eventNodesRestarted: the nodes the comparison named are back.
+	eventNodesRestarted
+	// eventOperationDone: an operation on a composed network finished.
+	eventOperationDone
+	// eventStoppedToRebuild: the running network is down and may be composed
+	// over.
+	eventStoppedToRebuild
+	// eventReconciled: the running network was compared with what this run
+	// would compose, and may be kept.
+	eventReconciled
+	// eventReconcileRefused: it cannot be kept, and composing over it would
+	// destroy what the request asked to preserve.
+	eventReconcileRefused
+	// eventGenesisWayChosen: where the genesis comes from is settled.
+	eventGenesisWayChosen
+	// eventGenesisBuilt: the genesis exists, however it was arrived at.
+	eventGenesisBuilt
+	// eventNodeConfigBuilt: every node has a config file.
+	eventNodeConfigBuilt
+	// eventNodeCommandBuilt: every node has a command line.
+	eventNodeCommandBuilt
+	// eventInputsPresent: the deploy is done, and says how many files it had
+	// to send to reach that.
+	eventInputsPresent
+	// eventInputsDeployed: every launch input is present on its target.
+	eventInputsDeployed
+	// eventDatadirsInitialized: every node's datadir holds the chain.
+	eventDatadirsInitialized
+	// eventLaunchPlanned: the checks passed and the family has said how many
+	// phases this network comes up in.
+	eventLaunchPlanned
+	// eventPhaseLaunched: one launch phase is up. A launch is several, so the
+	// stage counts them.
+	eventPhaseLaunched
+	// eventPhaseActionsDone: a phase's declared actions have run.
+	eventPhaseActionsDone
+	// eventNodesLaunched: the network is up and the run is recorded.
+	eventNodesLaunched
+	// eventForkStandingRead: where a network composed to cross a fork stands,
+	// which is what says whether there is a crossing left to do at all.
+	eventForkStandingRead
+	// eventForkBoundaryReached: the chain is at the block the hand-over has to
+	// begin from.
+	eventForkBoundaryReached
+	// eventProductionHandedOver: the pre-fork nodes are down and the build
+	// that seals after the fork is up in their place.
+	eventProductionHandedOver
+	// eventStageFailed: a stage could not finish. The stage above writes the
+	// reason down and goes to failed.
+	eventStageFailed
+)
+
+// What something below posts up to this machine. A node monitor watching a
+// launched network is outside the composition but reports into it.
+const (
+	// EventNodeDied: a node that was up is not any more.
+	EventNodeDied statemachine.What = statemachine.BaseChain + 0x180 + iota
+)
+
+// whatNames is the name of every message this machine has.
+//
+// It is what makes a log readable, and protocol_test.go fails on a message that
+// is missing from it — the reference gets the same list by reflection, and a
+// test that names the gap is the same guarantee with the reflection left out.
+var whatNames = map[statemachine.What]string{
+	CmdCompose:    "CmdCompose",
+	CmdStep:       "CmdStep",
+	CmdOperate:    "CmdOperate",
+	CmdCompare:    "CmdCompare",
+	CmdStop:       "CmdStop",
+	CmdClearError: "CmdClearError",
+
+	CmdPostCompose: "CmdPostCompose",
+	CmdOnQuit:      "CmdOnQuit",
+
+	eventWorkspaceOpened:     "eventWorkspaceOpened",
+	eventNodeTableBuilt:      "eventNodeTableBuilt",
+	eventKeySourceChosen:     "eventKeySourceChosen",
+	eventKeysEnsured:         "eventKeysEnsured",
+	eventComparisonMade:      "eventComparisonMade",
+	eventNodesRestarted:      "eventNodesRestarted",
+	eventOperationDone:       "eventOperationDone",
+	eventStoppedToRebuild:    "eventStoppedToRebuild",
+	eventReconciled:          "eventReconciled",
+	eventReconcileRefused:    "eventReconcileRefused",
+	eventGenesisWayChosen:    "eventGenesisWayChosen",
+	eventGenesisBuilt:        "eventGenesisBuilt",
+	eventNodeConfigBuilt:     "eventNodeConfigBuilt",
+	eventNodeCommandBuilt:    "eventNodeCommandBuilt",
+	eventInputsPresent:       "eventInputsPresent",
+	eventInputsDeployed:      "eventInputsDeployed",
+	eventDatadirsInitialized: "eventDatadirsInitialized",
+	eventLaunchPlanned:       "eventLaunchPlanned",
+	eventPhaseLaunched:       "eventPhaseLaunched",
+	eventPhaseActionsDone:    "eventPhaseActionsDone",
+	eventNodesLaunched:       "eventNodesLaunched",
+
+	eventForkStandingRead:     "eventForkStandingRead",
+	eventForkBoundaryReached:  "eventForkBoundaryReached",
+	eventProductionHandedOver: "eventProductionHandedOver",
+
+	eventStageFailed: "eventStageFailed",
+
+	EventNodeDied: "EventNodeDied",
+}
+
+// WhatName is what a message of this machine is called, for a log or an error.
+//
+// A message this machine does not have comes back as its number, because the
+// caller is holding something from somewhere else and saying so is more useful
+// than an empty string.
+func WhatName(w statemachine.What) string {
+	if name, ok := whatNames[w]; ok {
+		return name
+	}
+	return fmt.Sprintf("What(%#x)", int(w))
+}
+
+// ---- The messages themselves.
+//
+// Compose is spelled without a suffix, as the design writes it. RunStep is the
+// exception: this package already has a Step, which is a step of a recorded
+// composition, and two things called Step in one package is not a choice Go
+// offers.
+
+// Compose asks for a whole network, from the request that describes it.
+type Compose struct {
+	Request ChainUpIn
+	// From is the step to begin at, for a resume; empty begins at the first.
+	//
+	// It is here because the record does not yet say where a composition got
+	// to. When it does, a resume starts from the recorded state path and this
+	// field goes.
+	From string
+}
+
+// What says which message this is.
+func (Compose) What() statemachine.What { return CmdCompose }
+
+// RunStep asks for one composition step by name, on a composition that has got
+// that far. The names are UpStepNames.
+type RunStep struct {
+	Name string
+	// Request is what the step reads. A standalone command fills the part its
+	// own step needs and leaves the rest, which is the same request an up
+	// carries whole -- one vocabulary rather than one per command.
+	Request ChainUpIn
+}
+
+// What says which message this is.
+func (RunStep) What() statemachine.What { return CmdStep }
+
+// Operate asks a composed network to do something. Which one is the state's
+// name; what it needs is already on that state.
+type Operate struct{ Name statemachine.StateName }
+
+// What says which message this is.
+func (Operate) What() statemachine.What { return CmdOperate }
+
+// operationDone: an operation on a composed network finished.
+type operationDone struct{}
+
+func (operationDone) What() statemachine.What { return eventOperationDone }
+
+// forkStandingRead: where a network composed to cross a fork stands.
+//
+// It carries the answer rather than the state re-reading it, because reading it
+// is the work this message reports: a crossing that has already happened is not
+// one to perform again.
+type forkStandingRead struct{ Crossed bool }
+
+func (forkStandingRead) What() statemachine.What { return eventForkStandingRead }
+
+// forkBoundaryReached: the chain stands where the hand-over begins.
+//
+// Head is the block it settled on, which the sentence the step reports is
+// written from.
+type forkBoundaryReached struct{ Head int64 }
+
+func (forkBoundaryReached) What() statemachine.What { return eventForkBoundaryReached }
+
+// productionHandedOver: the successors are up and sealing.
+type productionHandedOver struct{}
+
+func (productionHandedOver) What() statemachine.What { return eventProductionHandedOver }
+
+// ComposeComparing asks for a composition that reuses what the target already has when
+// the comparison says it can.
+type ComposeComparing struct{ Request ChainUpIn }
+
+// What says which message this is.
+func (ComposeComparing) What() statemachine.What { return CmdCompare }
+
+// Stop asks for the network to be taken down.
+type Stop struct{}
+
+// What says which message this is.
+func (Stop) What() statemachine.What { return CmdStop }
+
+// ClearError leaves a failed composition, having been read.
+type ClearError struct{}
+
+// What says which message this is.
+func (ClearError) What() statemachine.What { return CmdClearError }
+
+// PostCompose reports the end of composing to the controller.
+//
+// It carries the reason rather than a status, because the controller's next
+// move depends on why: a port already held is somebody else's network, and a
+// binary that will not start is this one's.
+type PostCompose struct {
+	OK    bool
+	Steps []string
+	Err   error
+}
+
+// What says which message this is.
+func (PostCompose) What() statemachine.What { return CmdPostCompose }
+
+// OnQuit reports that this machine has stopped.
+type OnQuit struct{}
+
+// What says which message this is.
+func (OnQuit) What() statemachine.What { return CmdOnQuit }
+
+// NodeDied reports that a node of the composed network is no longer running.
+type NodeDied struct{ Index int }
+
+// What says which message this is.
+func (NodeDied) What() statemachine.What { return EventNodeDied }
+
+// ---- What the machine says to itself.
+
+// stageReport is what a finished stage says.
+//
+// One interface rather than a case per stage. The stage parent does the same
+// three things with every one of them — note the line, look up what comes next,
+// move — and nine stages each with their own case would be that written nine
+// times. A failure is deliberately not one of these: it is the one report the
+// parent treats differently.
+type stageReport interface {
+	statemachine.Message
+	// stage is which step finished and the line a person reads about it.
+	stage() (step, detail string)
+}
+
+// workspaceOpened: the workspace holds the chain it was asked for, and the
+// request that asked for it.
+type workspaceOpened struct{ Detail string }
+
+func (workspaceOpened) What() statemachine.What { return eventWorkspaceOpened }
+
+func (e workspaceOpened) stage() (string, string) { return stepNew, e.Detail }
+
+// stageFailed is a stage that could not finish, and why.
+type stageFailed struct {
+	Step string
+	Err  error
+}
+
+func (stageFailed) What() statemachine.What { return eventStageFailed }
+
+// nodeTableBuilt: the nodes, their roles, hosts and ports are decided.
+type nodeTableBuilt struct{ Detail string }
+
+func (nodeTableBuilt) What() statemachine.What { return eventNodeTableBuilt }
+
+func (e nodeTableBuilt) stage() (string, string) { return stepPlace, e.Detail }
+
+// keySourceChosen: which of the three ways this composition takes. It is not a
+// stage report — the stage has not finished, it has only decided.
+type keySourceChosen struct{ Way keyWay }
+
+func (keySourceChosen) What() statemachine.What { return eventKeySourceChosen }
+
+// keysEnsured: every node has an identity.
+type keysEnsured struct{ Detail string }
+
+func (keysEnsured) What() statemachine.What { return eventKeysEnsured }
+
+func (e keysEnsured) stage() (string, string) { return stepKeys, e.Detail }
+
+// genesisWayChosen: whether this composition takes a genesis somebody else
+// decided, or builds one from the family's template.
+type genesisWayChosen struct{ FromExisting bool }
+
+func (genesisWayChosen) What() statemachine.What { return eventGenesisWayChosen }
+
+// genesisBuilt: the genesis exists, however it was arrived at.
+type genesisBuilt struct{ Detail string }
+
+func (genesisBuilt) What() statemachine.What { return eventGenesisBuilt }
+
+func (e genesisBuilt) stage() (string, string) { return stepGenesis, e.Detail }
+
+// nodeConfigBuilt: every node has a config file.
+type nodeConfigBuilt struct{ Detail string }
+
+func (nodeConfigBuilt) What() statemachine.What { return eventNodeConfigBuilt }
+
+func (e nodeConfigBuilt) stage() (string, string) { return stepConfig, e.Detail }
+
+// nodeCommandBuilt: every node has a command line.
+type nodeCommandBuilt struct{ Detail string }
+
+func (nodeCommandBuilt) What() statemachine.What { return eventNodeCommandBuilt }
+
+func (e nodeCommandBuilt) stage() (string, string) { return stepBuild, e.Detail }
+
+// inputsPresent: the deploy finished, and how many identity files it sent. It
+// is not a stage report: which way it went is not settled until the state that
+// names that way has been entered.
+type inputsPresent struct {
+	Detail  string
+	Shipped int
+}
+
+func (inputsPresent) What() statemachine.What { return eventInputsPresent }
+
+// inputsDeployed: every launch input is present on its target.
+type inputsDeployed struct{ Detail string }
+
+func (inputsDeployed) What() statemachine.What { return eventInputsDeployed }
+
+func (e inputsDeployed) stage() (string, string) { return stepDeploy, e.Detail }
+
+// datadirsInitialized: every node's datadir holds the chain.
+type datadirsInitialized struct{ Detail string }
+
+func (datadirsInitialized) What() statemachine.What { return eventDatadirsInitialized }
+
+func (e datadirsInitialized) stage() (string, string) { return stepInit, e.Detail }
+
+// launchPlanned: the launch's checks passed, and this is how many phases the
+// family says the network comes up in.
+type launchPlanned struct{ Phases int }
+
+func (launchPlanned) What() statemachine.What { return eventLaunchPlanned }
+
+// phaseLaunched: one phase's nodes are up, and this is how many went.
+type phaseLaunched struct{ Started int }
+
+func (phaseLaunched) What() statemachine.What { return eventPhaseLaunched }
+
+// phaseActionsDone: a phase's declared actions have run.
+type phaseActionsDone struct{}
+
+func (phaseActionsDone) What() statemachine.What { return eventPhaseActionsDone }
+
+// nodesLaunched: the network is up and the run is recorded.
+type nodesLaunched struct{ Detail string }
+
+func (nodesLaunched) What() statemachine.What { return eventNodesLaunched }
+
+func (e nodesLaunched) stage() (string, string) { return stepStart, e.Detail }
+
+// reconciled: the running network may be kept, and whether anything has to be
+// redone. It is not a stage report -- reconciling is not one of the
+// composition's steps.
+type reconciled struct{ Kept bool }
+
+func (reconciled) What() statemachine.What { return eventReconciled }
+
+// reconcileRefused: the running network cannot be kept.
+type reconcileRefused struct{}
+
+func (reconcileRefused) What() statemachine.What { return eventReconcileRefused }
+
+// comparisonMade: what the comparison decided.
+type comparisonMade struct{ Verdict preflight.Verdict }
+
+func (comparisonMade) What() statemachine.What { return eventComparisonMade }
+
+// nodesRestarted: the nodes the comparison named are back.
+type nodesRestarted struct{}
+
+func (nodesRestarted) What() statemachine.What { return eventNodesRestarted }
+
+// stoppedToRebuild: the running network is down and may be composed over.
+type stoppedToRebuild struct{}
+
+func (stoppedToRebuild) What() statemachine.What { return eventStoppedToRebuild }
+
+// The rest are declared with their leaf states, one commit
+// each. Their What values are above so that the whole protocol is one file to
+// read, and the band test holds every one of them to the private range whether
+// or not a state sends it yet.

@@ -2,24 +2,31 @@
 
 // This E2E is gated behind the `e2e` build tag and skips unless a remote SSH
 // endpoint is provided, so `go test ./...` never runs it. It drives the SSH
-// RemoteDriver against a real sshd (locally: the Docker stand-in in
-// tests/remote/sshd) and asserts the provision -> launch -> stop path works over
-// SSH.
+// RemoteDriver against a real sshd and asserts the provision -> init -> launch
+// -> stop path works over SSH.
 //
-// Run it with tests/remote/sshd/run.sh, or manually:
+// Any host it can log into will do, and it brings its own node binary (see
+// standInNode), so nothing has to be installed on the far side. The env/docker
+// fleet is the one at hand — its server1 publishes sshd on 2201, and the login
+// is the first account in env/docker/accounts.env:
 //
-//	CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2222 \
-//	CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
+//	set -a; . env/docker/accounts.env; set +a
+//	CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2201 \
+//	CHAINBENCH_REMOTE_USER="${DEV_ACCOUNTS%%:*}" \
+//	CHAINBENCH_REMOTE_PASS="$DEV_ACCOUNTS_PASSWORD" \
 //	go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/process/
 package process_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/remote"
@@ -57,17 +64,18 @@ func TestRemoteDriver_E2E(t *testing.T) {
 	defer cancel()
 
 	base := "/home/" + user + "/chainbench-e2e"
+	// clean any prior run
+	_, _ = remote.Exec(ctx, creds, hostKey, "rm -rf "+base)
+
 	spec := process.NodeSpec{
 		Index:         1,
-		Binary:        "/usr/local/bin/fakenode",
+		Binary:        standInNode(ctx, t, creds, hostKey, base),
 		DataDir:       base + "/node1",
 		ConfigPath:    base + "/node1/config.toml",
 		ConfigContent: []byte("[Node]\nname = \"e2e\"\n"),
 		LogPath:       base + "/logs/node1.log",
 		Args:          []string{"run"},
 	}
-	// clean any prior run
-	_, _ = remote.Exec(ctx, creds, hostKey, "rm -rf "+base)
 
 	// Provision: datadir + config written on the remote host.
 	if err := d.Provision(ctx, spec); err != nil {
@@ -109,4 +117,35 @@ func TestRemoteDriver_E2E(t *testing.T) {
 	}
 
 	_, _ = remote.Exec(ctx, creds, hostKey, "rm -rf "+base)
+}
+
+// standInNode writes the node binary this drives and answers its path.
+//
+// The driver is what is under test, not a chain: `init` has to exit 0 and a
+// launch has to leave a process alive long enough for Stop to kill it, and a
+// four-line script does both. A real binary would only add a build to the
+// prerequisites.
+//
+// It used to come from a container of its own — tests/remote/sshd shipped an
+// sshd AND a /usr/local/bin/fakenode, and #130 retired that suite in July.
+// This test kept naming the path and failed with "exit 127: no such file" from
+// then on, behind a gate that skips when the SSH variables are unset, so
+// nothing said so. Writing it here needs no image and no root: any host this
+// test can log into can hold it, including the env/docker fleet.
+func standInNode(ctx context.Context, t *testing.T, creds remote.Credentials, hostKey ssh.HostKeyCallback, base string) string {
+	t.Helper()
+	path := base + "/stand-in-node"
+	script := "#!/bin/sh\ncase \"$1\" in\n  init) exit 0 ;;\n  *) exec sleep 3600 ;;\nesac\n"
+	cmd := fmt.Sprintf("mkdir -p %s && printf '%%s' %s > %s && chmod +x %s",
+		base, shellQuote(script), path, path)
+	if res, err := remote.Exec(ctx, creds, hostKey, cmd); err != nil {
+		t.Fatalf("write the stand-in node on the remote host: %v (%s)", err, res.Stderr)
+	}
+	return path
+}
+
+// shellQuote wraps s for a POSIX shell in single quotes, which take everything
+// literally except a single quote of their own.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

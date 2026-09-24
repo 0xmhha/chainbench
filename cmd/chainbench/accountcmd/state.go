@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newAccountStateCmd reports an account's on-chain state over RPC.
+// newStateCmd reports an account's on-chain state over RPC.
 func newStateCmd() *cobra.Command {
 	var (
 		rpcURL string

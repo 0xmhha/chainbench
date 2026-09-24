@@ -17,7 +17,7 @@
 > |---|---|
 > | `internal/engine` (테스트벤치 엔진) | `internal/testengine` — §4 가 경계한 이름 충돌은 `test` 접두로 해소됐다 |
 > | `internal/engine/wire.go` | `internal/testengine/wire.go` |
-> | `engine.KeySource` boundary | `chainsetup.NetKeys` → `core/keyring` (키 확보가 구성 단계의 하나가 됐다) |
+> | `engine.KeySource` boundary | `chainsetup.ChainKeys` → `core/keyring` (키 확보가 구성 단계의 하나가 됐다) |
 > | `engine.GenesisSource` boundary | `genesis.Source` 인터페이스 + 패밀리 구현(`consensus/poa.GenesisSource`) |
 > | `netcompose` / `engine` (네트워크 조립) | `internal/chainsetup` — 조립이 여기로 모였다 |
 > | `internal/dsl/bind` (L1, 제안) | **만들지 않았다.** 값 바인딩·`$ref` 해석은 `internal/dsl/interp/binding.go`(L3) 안에 있다 |
@@ -171,22 +171,22 @@ engine(L4) ──주도──▶ dsl/interp(L3) ──사용──▶ dsl(L1) ·
 
 ```
 L6  cmd/chainbench net up                       플래그 바인딩만
-L5  app.NetUp                                   9개 스텝을 순서대로
+L5  app.ChainUp                                   9개 스텝을 순서대로
      │
-     ├─ NetNew        → netcompose.New          → external.ResolveChain ─→ registry.ChainPlugin
-     ├─ NetAllocate   → app.ResolveServer       → serverset.Placement   (#2 배치·포트)
+     ├─ ChainNew        → netcompose.New          → external.ResolveChain ─→ registry.ChainPlugin
+     ├─ ChainAllocate   → app.ResolveServer       → serverset.Placement   (#2 배치·포트)
      │                  netcompose.Allocate     → place.Allocate → portplan.Plan
-     ├─ NetKeys       → netcompose.Keys         → engine.KeySource      (#3 키셋)
+     ├─ ChainKeys       → netcompose.Keys         → engine.KeySource      (#3 키셋)
      │                                            └ keyring.LoadPreset | keyring.Generate
-     ├─ NetGenesis    → netcompose.Genesis      → engine.GenesisSource  (#4 genesis)
+     ├─ ChainGenesis    → netcompose.Genesis      → engine.GenesisSource  (#4 genesis)
      │                                            └ ★ 패밀리 분기 ★
      │                                          → core/genesis (overlay·override·fork검증)
      │                                          → provision.FileSink.Write            (#7)
-     ├─ NetConfig     → netcompose.Config       → nodeconfig.Generate   (#5) → Sink   (#7)
-     ├─ NetLaunchOpts → netcompose.LaunchOpts   → engine.NodeLaunchArgs → launchopt   (#6)
-     ├─ NetProvision  → netcompose.Provision    → Sink.Exists (upload-if-absent)      (#7)
-     ├─ NetInit       → netcompose.Init         → driver.Initializer.InitDatadir      (#8)
-     └─ NetStart      → netcompose.Start        → ★ 패밀리 분기 ★                     (#10)
+     ├─ ChainConfig     → netcompose.Config       → nodeconfig.Generate   (#5) → Sink   (#7)
+     ├─ ChainLaunchOpts → netcompose.LaunchOpts   → engine.NodeLaunchArgs → launchopt   (#6)
+     ├─ ChainProvision  → netcompose.Provision    → Sink.Exists (upload-if-absent)      (#7)
+     ├─ ChainInit       → netcompose.Init         → driver.Initializer.InitDatadir      (#8)
+     └─ ChainStart      → netcompose.Start        → ★ 패밀리 분기 ★                     (#10)
                                                 → driver.Launch (#8) → procman (#9)
 L3  core/session 이 전 과정의 스텝 스탬프를 기록                                       (#14)
 ```

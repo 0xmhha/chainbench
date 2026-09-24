@@ -21,6 +21,9 @@ import (
 // adapter rather than touching the workspace, so the engine holds one narrow
 // surface and the steps cannot reach past it into the composition.
 
+// workspaceNodes adapts the workspace's node verbs to the interpreter's
+// NodeControl, so fault steps (stopNode/startNode/restartNode) act on a
+// suite-composed network through the same record every other verb uses.
 type workspaceNodes struct {
 	sd      chainsetup.Deps
 	dataDir string
@@ -67,7 +70,7 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 // The whole table comes back: crossing gives every successor a new role and a
 // new pid, and a caller holding the old ones would stop the wrong process.
 func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([]node.Node, error) {
-	out, err := verb.NetCrossFork(ctx, w.sd, verb.NetCrossForkIn{
+	out, err := verb.ChainCrossFork(ctx, w.sd, verb.ChainCrossForkIn{
 		DataDir: w.dataDir, Timeout: timeout,
 	})
 	if err != nil {

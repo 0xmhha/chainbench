@@ -76,7 +76,7 @@ func TestProvision_ReusesIdenticalOverwritesDifferent(t *testing.T) {
 	}
 }
 
-// fakeSink drives the upload-if-absent branch deterministically.
+// fakeStore drives the upload-if-absent branch deterministically.
 type fakeStore struct {
 	present map[string]bool
 	content map[string][]byte

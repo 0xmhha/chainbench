@@ -99,16 +99,15 @@ func HardforkExecute(ctx context.Context, d chainsetup.Deps, in HardforkExecuteI
 	if in.Binary == "" {
 		return HardforkExecuteOut{}, errors.New("chainsetup: hardfork needs a resolved post-fork binary path")
 	}
-	var out HardforkExecuteOut
-	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		ns, err := ws.Hardfork(ctx, in.Plan.Plan, in.Binary)
-		if err != nil {
-			return "", err
-		}
-		out.Nodes = ns
-		return fmt.Sprintf("%d node(s) now on %s (%s)", len(ns.Nodes), in.Plan.Plan.ToChain, in.Binary), nil
-	})
-	return out, err
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
+	if err != nil {
+		return HardforkExecuteOut{}, err
+	}
+	ns, err := chainsetup.NewManager(d, ws).Hardfork(ctx, in.Plan.Plan, in.Binary)
+	if err != nil {
+		return HardforkExecuteOut{}, err
+	}
+	return HardforkExecuteOut{Nodes: ns}, nil
 }
 
 // Hardfork swaps every node onto binary at the plan's fork, continuing the

@@ -307,7 +307,7 @@ func TestNetworkStop_OneUnreachableNodeDoesNotStrandTheRest(t *testing.T) {
 	d := &stubDriver{}
 	deps := chainsetup.Deps{Driver: func() (process.Driver, error) { return d, nil }}
 
-	_, err := verb.NetStop(context.Background(), deps, verb.NetStopIn{DataDir: dir})
+	_, err := verb.ChainStop(context.Background(), deps, verb.ChainStopIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("a node that could not be stopped must be reported")
 	}

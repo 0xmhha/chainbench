@@ -62,7 +62,7 @@ var (
 func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 	var offenders []string
 	err := filepath.WalkDir(corpusRoot, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".env.json") {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
 			return nil
 		}
 		raw, rerr := os.ReadFile(p)

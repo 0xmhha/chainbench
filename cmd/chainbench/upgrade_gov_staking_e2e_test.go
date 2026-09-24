@@ -15,7 +15,6 @@
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixGovernanceRegisterStakerE2E -timeout 8m ./cmd/chainbench
 package main
 
@@ -37,11 +36,10 @@ import (
 func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -89,11 +87,10 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 func TestWemixGovernanceDelegateE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -149,11 +146,10 @@ func TestWemixGovernanceDelegateE2E(t *testing.T) {
 func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -207,11 +203,10 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -262,11 +257,10 @@ func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 func TestWemixGovernanceClaimGuardE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -347,11 +341,10 @@ func leftPad(b []byte, n int) []byte {
 func TestWemixGovernanceFeeChangeE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -559,11 +552,10 @@ func stakingWaitStatus(t *testing.T, c *rpc.Client, hash string) string {
 func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -612,11 +604,10 @@ func TestWemixGovernanceReactivateE2E(t *testing.T) {
 func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -753,11 +744,10 @@ func registerProducingStaker(t *testing.T, c *rpc.Client, ap accounts.AccountPro
 func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
@@ -792,11 +782,10 @@ func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
 func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -851,11 +840,10 @@ func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
 func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -925,11 +913,10 @@ func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
 func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -1010,11 +997,10 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -1121,11 +1107,10 @@ const stabilizingStakersThreshold = 5
 func TestWemixGovernanceStabilizingE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin, template)
+	url := runGovHandoff(t, fromBin, toBin)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 

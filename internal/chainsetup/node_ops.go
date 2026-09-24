@@ -36,6 +36,7 @@ var (
 	errOpNothingToReplace = errors.New("the swap asks for no change")
 )
 
+// nodeAt finds a node's position in the table by its index.
 func (w *Workspace) nodeAt(index int) (int, error) {
 	for i, ns := range w.state.Nodes {
 		if ns.Index == index {
@@ -308,8 +309,7 @@ func (w *Workspace) addConfigProvenance(prov ConfigProvenance) {
 	w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
 }
 
-// Rm removes the composed data plane (node datadirs, configs, genesis, logs)
-
+// Hardfork swaps every node onto binary at the plan's fork, continuing the
 // same chain data, and records the new pids, binary and chain.
 func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.SwapPlan, binary string) (node.NodeSet, error) {
 	if err := w.allow("Hardfork"); err != nil {

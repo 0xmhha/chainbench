@@ -3,13 +3,12 @@
 // This E2E ports the wemix4 governance read cases (GOV-001 contract deploy,
 // GOV-002 config params). The wemix governance system contracts are deployed at
 // the Croissant fork block, so they live on the go-wbft SUCCESSOR chain (the
-// go-wemix producer stops at croissant-1 and never sees them). It drives the same
-// `chainbench upgrade run` handoff as TestUpgradeRunE2E and asserts governance on
-// the successor. Run it with:
+// go-wemix producer stops at croissant-1 and never sees them). It composes the
+// handoff the way every test in this group does — runGovHandoff — and asserts
+// governance on the successor. Run it with:
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \
-//	CHAINBENCH_E2E_TEMPLATE=/path/go-wemix/wemix/scripts/genesis-template.json \
 //	go test -tags e2e -run TestWemixGovernanceE2E -timeout 8m ./cmd/chainbench
 package main
 
@@ -35,12 +34,11 @@ const (
 func TestWemixGovernanceE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
 	// Governance lives on the go-wbft successor (deployed at the fork block).
-	c := rpc.Dial(runGovHandoff(t, fromBin, toBin, template))
+	c := rpc.Dial(runGovHandoff(t, fromBin, toBin))
 	ctx := context.Background()
 
 	// GOV-001: all four governance system contracts carry code.

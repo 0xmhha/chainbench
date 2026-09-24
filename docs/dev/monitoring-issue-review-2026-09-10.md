@@ -215,7 +215,7 @@ C1과 C5는 "대상의 현재 파일을 읽어 해시한다"는 같은 기능이
 세 가지는 계획을 세울 때 예상한 것보다 사정이 나빴고, 그 사실이 수정의 모양을 바꿨다.
 
 **C1 의 회귀 테스트가 실제로 결함을 잡는지 확인했다.** 게이트를 옛 위치로 되돌려
-`TestNetUp_ReuseRefusalLeavesTheRunningCompositionUntouched` 를 돌리면 "거부된 구성이
+`TestChainUp_ReuseRefusalLeavesTheRunningCompositionUntouched` 를 돌리면 "거부된 구성이
 대상의 genesis 를 덮었다"로 실패한다. 기존 테스트가 메모리 필드만 보고 있어 통과했던
 자리다.
 
@@ -287,7 +287,7 @@ PR 을 완료로 올리기 전에 MON-001·007·010·015 를 코드와 실행으
 
 고치는 도중에 세 번째 경로가 더 나왔다. `up` 은 place 보다 **먼저** 요청을 기록하고
 (`recordRequest`, resume 이 그것으로 재구성한다) 그 요청은 topology 를 통째로 담는다. 노드
-기록만 막았을 때 키는 `state.request.topology` 에 그대로 남았다. 거부를 `NetUp` 진입부로
+기록만 막았을 때 키는 `state.request.topology` 에 그대로 남았다. 거부를 `ChainUp` 진입부로
 올려 아무것도 쓰기 전에 멈추게 했다.
 
 기존 테스트가 통과한 이유도 분명했다. `Save` 를 부르지 않고 오류 문구를 읽지 않았다.
@@ -387,7 +387,7 @@ fixture가 v2 case의 `steps` 대신 최상위 `tests`를 썼다. `CaseV2`에 �
 error: engine: run suite: spec 1: dsl: parse v2 case: json: unknown field "tests"
 ```
 
-`NetUp`의 키 검사에는 닿지 않았다. 그런데 테스트는 오류를 가리지 않고 받은 뒤 stdout과
+`ChainUp`의 키 검사에는 닿지 않았다. 그런데 테스트는 오류를 가리지 않고 받은 뒤 stdout과
 stderr에 키가 없는지만 봤다. 문법 오류 메시지에 키가 있을 리 없으니 통과했다.
 
 #### 무용함을 어떻게 확인했나

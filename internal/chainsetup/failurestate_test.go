@@ -159,7 +159,7 @@ func TestTheRealRefusalsCarryTheirKind(t *testing.T) {
 // the same place and for the same reason as the genesis digest — which already
 // contains it, so the check was never what caught a real change.
 func TestHaveReportsTheChainIdItWasComposedWith(t *testing.T) {
-	req := NetUpIn{Chain: "stablenet", ChainID: 9911}
+	req := ChainUpIn{Chain: "stablenet", ChainID: 9911}
 	w := &Workspace{state: State{Chain: "stablenet", Request: &req}}
 
 	have := w.Have(context.Background())

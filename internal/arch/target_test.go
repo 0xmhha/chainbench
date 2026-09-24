@@ -36,7 +36,7 @@ var targetBranches = map[string]string{
 	"steps_compose.go:shipIdentities":   "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
 	"occupancy.go:scanPorts":            "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
 	"phases.go:runPhaseActions":         "the bootstrap's keystore, socket and config are on the target, so the paths point there",
-	"verbs_network.go:NetRunner":        "there is a command runner only when there is a machine to run commands on",
+	"verbs_network.go:NetworkRunner":    "there is a command runner only when there is a machine to run commands on",
 	"workspace.go:keysBase":             "where the keys are: under the target's data root when remote, the key set itself when local",
 	"workspace.go:RPCHost":              "which host answers RPC",
 

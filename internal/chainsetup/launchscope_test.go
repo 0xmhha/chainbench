@@ -79,7 +79,7 @@ func compose(t *testing.T, scoped map[string][]string) (map[int][]string, error)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+	if _, err := verb.ChainUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.ChainUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs, BPCount: 2, ENCount: 0,
 		LaunchScoped: scoped,
@@ -158,7 +158,7 @@ func composeWith(t *testing.T, scoped map[string][]string, set []string) (map[in
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verb.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+	if _, err := verb.ChainUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.ChainUpIn{
 		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs, BPCount: 2, ENCount: 0,
 		LaunchScoped: scoped, LaunchSet: set,

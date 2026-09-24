@@ -17,7 +17,7 @@ import (
 // resource group (plan — a placement that would be) and the net group (show —
 // the placement that is) print through here, so the two answers can never
 // drift apart in shape.
-func PrintMap(out io.Writer, m app.NetMapOut) {
+func PrintMap(out io.Writer, m app.NetworkMapOut) {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "NODE\tROLE\tLABEL\tHOST\tP2P\tETCD\tHTTP\tDATADIR")
 	for _, e := range m.Entries {

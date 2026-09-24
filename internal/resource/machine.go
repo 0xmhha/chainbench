@@ -58,7 +58,7 @@ type Spec struct {
 	Server string `json:"server,omitempty"`
 }
 
-// loopback are the host spellings that mean "this machine".
+// loopbackHosts are the host spellings that mean "this machine".
 var loopbackHosts = map[string]bool{
 	"": true, "127.0.0.1": true, "localhost": true, "::1": true, "[::1]": true,
 }

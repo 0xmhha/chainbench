@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// netMapTool answers where nodes are, in both directions. It is the tool an
+// chainShowTool answers where nodes are, in both directions. It is the tool an
 // agent reaches for instead of reading the workspace file and parsing it:
 // "which node owns port 8610", "what runs on this host", "where is en2".
 func chainShowTool() Tool {
@@ -26,7 +26,7 @@ func chainShowTool() Tool {
 			"addr":  map[string]any{"type": "string", "description": "select by an address as a log line prints it (host:port)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NetMap(ctx, app.Deps{}, app.NetMapIn{
+			res, err := app.NetworkMap(ctx, app.Deps{}, app.NetworkMapIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0),
 				Label:   argString(args, "label", ""),
@@ -46,7 +46,7 @@ func chainShowTool() Tool {
 	}
 }
 
-// netPoolTool reports what a network may be composed from, so an agent sizing
+// resourcePoolTool reports what a network may be composed from, so an agent sizing
 // one can ask instead of guessing — and can explain a refusal.
 //
 // It returns no credentials, and that absence is fixed by a test: the pool says
@@ -65,7 +65,7 @@ func resourcePoolTool() Tool {
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NetPool(ctx, app.Deps{}, app.NetPoolIn{
+			res, err := app.NetworkPool(ctx, app.Deps{}, app.NetworkPoolIn{
 				DataDir: argString(args, "workspaceDir", ""),
 			})
 			if err != nil {
@@ -109,7 +109,7 @@ func resourcePlanTool() Tool {
 			if bpCount == 0 {
 				bpCount = 4
 			}
-			res, err := app.NetPlan(ctx, app.Deps{}, app.NetPlanIn{
+			res, err := app.NetworkPlan(ctx, app.Deps{}, app.NetworkPlanIn{
 				Chain:   argString(args, "chain", ""),
 				BPCount: bpCount,
 				ENCount: argInt(args, "en", 0),

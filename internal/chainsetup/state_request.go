@@ -12,7 +12,7 @@ import (
 // composes from and what the comparison reads to decide whether a second run
 // wants the same chain. A type the record embeds cannot live above the record.
 
-// UpStage is how far NetUp takes the composition.
+// UpStage is how far ChainUp takes the composition.
 type UpStage string
 
 const (
@@ -24,9 +24,9 @@ const (
 	UpStart UpStage = "start"
 )
 
-// NetUpIn describes the network to compose. It is the union of the step inputs,
+// ChainUpIn describes the network to compose. It is the union of the step inputs,
 // in the order the steps consume them.
-type NetUpIn struct {
+type ChainUpIn struct {
 	// DataDir is the workspace directory.
 	DataDir string `json:"dataDir,omitempty"`
 	// Stage is how far to go; empty means UpStart.
@@ -76,6 +76,10 @@ type NetUpIn struct {
 
 	// Identities (step: keys).
 	KeysSource string `json:"keysSource,omitempty"`
+	// KeysNodes is how many identities the set must cover, and 0 means the
+	// allocated node count. Only `chain keys --nodes` sets it: a composition
+	// sizes the ring from the node table it just placed.
+	KeysNodes int `json:"keysNodes,omitempty"`
 	// KeysValidators is how many of a generated key set join the validator set
 	// (0 = all). It has effect only when KeysSource is "generate".
 	KeysValidators int `json:"keysValidators,omitempty"`
@@ -114,11 +118,12 @@ type NetUpIn struct {
 
 // UpStepNames is the composition order, for reading the record.
 //
-// It no longer drives anything: the walk is the transition table, and the stage
-// table in statedriven.go is what names each step's state. What is left needs
-// the names in order — resume asks the record which step is the first one not
-// marked done — and a test holds the two lists to the same nine names in the
-// same order.
+// It does not drive the walk: the composition machine's states do, and
+// stageOrder pairs each of these names with the state that runs it. What is
+// left needs the names in order — a record is keyed by them, and a run that
+// stopped where it was told is resumed by asking which is the first not marked
+// done — and a test holds the two lists to the same nine names in the same
+// order.
 var UpStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
 
 // OpStepNames is what the record can hold besides the ladder: an operation on a

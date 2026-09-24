@@ -19,8 +19,8 @@ The previous P0–P5 ordering is an earlier proposal, not the current implementa
 ```mermaid
 flowchart TD
   CLI[chainbench chain up] --> Bind[chaincmd.newNetUpCmd: flags and output]
-  Bind --> App[app.NetUp]
-  App --> Up[chainsetup.NetUp / netUpFrom]
+  Bind --> App[app.ChainUp]
+  App --> Up[chainsetup.ChainUp / netUpFrom]
   Up --> Plan[planUp: validate stage and mode]
   Up --> Lock[workspace Acquire]
   Up --> Steps[upSteps: ordered composition verbs]
@@ -46,8 +46,8 @@ Paths below resolve inside this PR; the reviewed implementation is the baseline 
 
 | Edge or behavior | Source |
 |---|---|
-| CLI flags → app.NetUp; completed steps printed even on failure | [chaincmd/up.go](../../../../cmd/chainbench/chaincmd/up.go) |
-| app.NetUp → chainsetup.NetUp | [app/net.go](../../../../internal/app/net.go) |
+| CLI flags → app.ChainUp; completed steps printed even on failure | [chaincmd/up.go](../../../../cmd/chainbench/chaincmd/up.go) |
+| app.ChainUp → chainsetup.ChainUp | [app/net.go](../../../../internal/app/net.go) |
 | Validation, ordered verbs, composite lock, reuse, return | [chainsetup/verbs_up.go](../../../../internal/chainsetup/verb/verbs_up.go) |
 | Step lock, execution, save on success or failure | [chainsetup/verbs_steps.go](../../../../internal/chainsetup/verb/verbs_steps.go) |
 | Node initialization, launch, stop and machine-specific execution | [steps_lifecycle.go](../../../../internal/chainsetup/steps_lifecycle.go) |
@@ -110,7 +110,7 @@ Selected existing tests were run with Go 1.25.13, `-count=1 -json -timeout=90s`,
 - `./internal/chainsetup`
 - `./internal/app`
 
-Selection: `^(TestNetCmd_|TestNetNew_|TestNetUp_|TestWithWorkspace_|TestAttachRun_|TestReconcileReuse_AttachesAndRecordsEachServersOwnPID|TestReconcileReuse_IdenticalInputsStillKeepServersApart)`.
+Selection: `^(TestChainCmd_|TestChainNew_|TestChainUp_|TestWithWorkspace_|TestAttachRun_|TestReconcileReuse_AttachesAndRecordsEachServersOwnPID|TestReconcileReuse_IdenticalInputsStillKeepServersApart)`.
 
 The first run failed because the sandbox blocked the local allocator lock under the user's chainbench home. It is retained as an environment failure. The retry result is recorded in [the verification receipt](cli-composition-verification.json). These are selected automated checks, not real remote deployment, a three-chain E2E run, crash-consistency proof, or complete CLI coverage.
 

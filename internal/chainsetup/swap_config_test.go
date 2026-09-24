@@ -40,28 +40,28 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 	// The binary is recorded here rather than left out: relaunching a node
 	// needs an executable even when only its config changed, and a workspace
 	// with none refuses the swap for that reason rather than for its config.
-	if _, err := verb.NetNew(ctx, d, verb.NetNewIn{
+	if _, err := verb.ChainNew(ctx, d, verb.ChainNewIn{
 		DataDir: dir, Chain: "stablenet", Binary: "/opt/gstable", KeysDir: keysAbs,
 	}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := verb.NetAllocate(ctx, d, verb.NetAllocateIn{
+	if _, err := verb.ChainAllocate(ctx, d, chainsetup.ChainAllocateIn{
 		DataDir: dir, BPCount: 1, ENCount: 1,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if _, err := verb.NetKeys(ctx, d, verb.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := verb.ChainKeys(ctx, d, verb.ChainKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
 
 	for _, step := range []func() error{
 		func() error {
-			_, err := verb.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir})
+			_, err := verb.ChainGenesis(ctx, d, chainsetup.ChainGenesisIn{DataDir: dir})
 			return err
 		},
-		func() error { _, err := verb.NetConfig(ctx, d, verb.NetConfigIn{DataDir: dir}); return err },
+		func() error { _, err := verb.ChainConfig(ctx, d, verb.ChainConfigIn{DataDir: dir}); return err },
 		func() error {
-			_, err := verb.NetLaunchOpts(ctx, d, verb.NetLaunchOptsIn{DataDir: dir})
+			_, err := verb.ChainLaunchOpts(ctx, d, verb.ChainLaunchOptsIn{DataDir: dir})
 			return err
 		},
 	} {

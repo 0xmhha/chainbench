@@ -14,10 +14,10 @@ import (
 func TestGenesis_RefusesBeforePlace(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: func() time.Time { return time.Unix(0, 0).UTC() }}
-	if _, err := NetNew(context.Background(), d, NetNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
+	if _, err := ChainNew(context.Background(), d, ChainNewIn{DataDir: dir, Chain: "wbft"}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	_, err := NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir})
+	_, err := ChainGenesis(context.Background(), d, chainsetup.ChainGenesisIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("genesis composed with no placement")
 	}

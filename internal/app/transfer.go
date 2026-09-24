@@ -17,7 +17,7 @@ import (
 // workspace-config defines: bin, genesis, configs, keystore, keyrings) plus a
 // file name, or by an explicit absolute path on the target.
 
-// uploadPurposes maps the operator-facing purpose names to the workspace-config
+// transferPurposes maps the operator-facing purpose names to the workspace-config
 // purpose directories. "bin" is the friendly spelling of the binaries folder.
 var transferPurposes = map[string]resource.Purpose{
 	"bin":      resource.PurposeBinaries,

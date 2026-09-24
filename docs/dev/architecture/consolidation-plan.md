@@ -169,7 +169,7 @@
 > 잔재도 정리. MCP `chainbench_net_*` 는 별도 표면이라 유지(후속). 라이브: `chain up
 > --stage deploy` 가 place/build/deploy 만 수행.
 > **C3 완료 (2026-09-01):** `chain enode` 신설 — 기존 `node.Enode`(원자) + preset 공개키
-> + `Netmap`(배치) 파생을 조회로 노출한다(`chainsetup.NetEnodes`). 쓰지 않는다. keys·place
+> + `Netmap`(배치) 파생을 조회로 노출한다(`chainsetup.ChainEnodes`). 쓰지 않는다. keys·place
 > 가 전제이며 없으면 어느 스텝을 돌릴지 알려준다. enode host 는 기록된 노드 주소(peer 가
 > 접속하는 것)로 docker 번역 없음 — config 의 static-nodes 와 바이트 일치(라이브 교차검증).
 > config 노드 단위(`--node N --set`)는 사용자 C3 우선순위 밖이라 후속으로 분리.
@@ -189,15 +189,15 @@
 
 | # | 단계 | 산출물 | DSL(env) | CLI | 공유 코어(chainsetup) |
 |---|---|---|---|---|---|
-| ① | keys | 노드별 nodekey·keystore·BLS | `keys` | `chain keys` | `NetKeys` |
-| ② | place | 노드별 host·port 표 (무충돌) | `topology`·`servers` | `chain place` | `NetAllocate` |
-| ③ | enode | 노드별 enode 목록 | ①②에서 파생 | `chain enode` | `NetEnodes` |
-| ④ | genesis | genesis.json (전 노드 공통) | `genesis`·`hardforks` | `chain genesis` | `NetGenesis` |
-| ⑤ | config | 노드별 config (노드 단위 수정) | `config.all`·`config.node<N>` | `chain config [--node N] --set k=v` | `NetConfig` |
-| ⑥ | build | 노드별 실행 command | `binaries`·`launch` | `chain build` | `NetLaunchOpts` |
-| ⑦ | deploy | 머신 위의 파일들 | `servers` | `chain deploy` | `NetProvision` |
-| ⑧ | run(살아 있는 체인) | 초기화+기동 | — | `chain init`·`chain start` | `NetInit`·`NetStart` |
-| — | 전체 | ①~⑧ 한 번에 | 케이스 실행이 곧 이것 | `chain up` | `NetUp` |
+| ① | keys | 노드별 nodekey·keystore·BLS | `keys` | `chain keys` | `ChainKeys` |
+| ② | place | 노드별 host·port 표 (무충돌) | `topology`·`servers` | `chain place` | `ChainAllocate` |
+| ③ | enode | 노드별 enode 목록 | ①②에서 파생 | `chain enode` | `ChainEnodes` |
+| ④ | genesis | genesis.json (전 노드 공통) | `genesis`·`hardforks` | `chain genesis` | `ChainGenesis` |
+| ⑤ | config | 노드별 config (노드 단위 수정) | `config.all`·`config.node<N>` | `chain config [--node N] --set k=v` | `ChainConfig` |
+| ⑥ | build | 노드별 실행 command | `binaries`·`launch` | `chain build` | `ChainLaunchOpts` |
+| ⑦ | deploy | 머신 위의 파일들 | `servers` | `chain deploy` | `ChainProvision` |
+| ⑧ | run(살아 있는 체인) | 초기화+기동 | — | `chain init`·`chain start` | `ChainInit`·`ChainStart` |
+| — | 전체 | ①~⑧ 한 번에 | 케이스 실행이 곧 이것 | `chain up` | `ChainUp` |
 
 **저작 verb (2026-09-07, N5 추가):** `chain blueprint` 는 사전에도 운영에도 들지 않는 네 번째
 갈래다. 대상을 건드리지 않고 키 세트를 읽어 선언 문서를 찍어 낸다. 조립이 `preset → (내부 조립)
@@ -206,7 +206,7 @@
 `stop`·`rm` 과 같은 칸에 넣으면 도는 체인에 무언가를 한다고 말하는 셈이라 갈래를 나눴다.
 
 **공유 코어 원칙(C4):** CLI 의 각 `chain <stage>` 와 DSL(케이스 실행 `testengine.RunSuite`
-→ `compositionOf` → `NetUp`)은 **같은 chainsetup verb** 로 수렴한다. 두 표면은 병렬 구현을
+→ `compositionOf` → `ChainUp`)은 **같은 chainsetup verb** 로 수렴한다. 두 표면은 병렬 구현을
 갖지 않는다. `chaincmd` 의 `TestChainCommandSurface` 가 chain 명령 집합을 이 사전 + 운영
 verb 로 고정해(사전 밖 명령·개명 잔재를 막아) 표면 드리프트를 CI 에서 잡는다.
 

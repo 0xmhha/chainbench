@@ -45,7 +45,7 @@ func TestRegistry_CoversMoreOfAppEachTime(t *testing.T) {
 			continue
 		}
 		// The registry spells a feature "chain.genesis"; app spells it
-		// NetGenesis. Only the count is compared here — the names converge as
+		// ChainGenesis. Only the count is compared here — the names converge as
 		// features move, and pinning a mapping now would be a third spelling
 		// of something being actively renamed.
 		registered[d.Name] = true

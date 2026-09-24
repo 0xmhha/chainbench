@@ -111,8 +111,8 @@ func (w *Workspace) CheckBaseline(ctx context.Context) (BaselineCheck, error) {
 	return out, nil
 }
 
-// NetBaselineIn names the workspace to check or approve.
-type NetBaselineIn struct {
+// ChainBaselineIn names the workspace to check or approve.
+type ChainBaselineIn struct {
 	DataDir string `json:"dataDir,omitempty"`
 	// Note is the approver's reason, recorded with an approval.
 	Note string `json:"note,omitempty"`
@@ -121,42 +121,42 @@ type NetBaselineIn struct {
 	ApprovedAt string `json:"approvedAt,omitempty"`
 }
 
-// NetBaselineOut carries the check result.
-type NetBaselineOut struct {
+// ChainBaselineOut carries the check result.
+type ChainBaselineOut struct {
 	Check BaselineCheck `json:"check"`
 }
 
-// NetBaselineCheck compares a composed workspace against its environment's
+// ChainBaselineCheck compares a composed workspace against its environment's
 // approved baseline. It writes nothing.
-func NetBaselineCheck(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+func ChainBaselineCheck(ctx context.Context, d Deps, in ChainBaselineIn) (ChainBaselineOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetBaselineOut{}, err
+		return ChainBaselineOut{}, err
 	}
 	ws.SetEnv(d.Env)
 	check, err := ws.CheckBaseline(ctx)
-	return NetBaselineOut{Check: check}, err
+	return ChainBaselineOut{Check: check}, err
 }
 
-// NetBaselineApprove records this composition as the environment's approved
+// ChainBaselineApprove records this composition as the environment's approved
 // baseline. It is the one path that writes a baseline, and it exists as its own
 // verb because approving is a decision a person makes after looking at what
 // changed — never a side effect of a run.
-func NetBaselineApprove(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+func ChainBaselineApprove(ctx context.Context, d Deps, in ChainBaselineIn) (ChainBaselineOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetBaselineOut{}, err
+		return ChainBaselineOut{}, err
 	}
 	ws.SetEnv(d.Env)
 	if ws.state.WorkspaceConfig == "" {
-		return NetBaselineOut{}, fmt.Errorf("chainsetup: baseline: this workspace was composed without a --workspace-config, so there is no environment to approve a baseline for")
+		return ChainBaselineOut{}, fmt.Errorf("chainsetup: baseline: this workspace was composed without a --workspace-config, so there is no environment to approve a baseline for")
 	}
 	obs, err := ws.ObserveBaseline(ctx)
 	if err != nil {
-		return NetBaselineOut{}, err
+		return ChainBaselineOut{}, err
 	}
 	if obs.Genesis == "" && len(obs.Configs) == 0 && len(obs.Validators) == 0 {
-		return NetBaselineOut{}, fmt.Errorf("chainsetup: baseline: nothing to approve — compose the network first")
+		return ChainBaselineOut{}, fmt.Errorf("chainsetup: baseline: nothing to approve — compose the network first")
 	}
 	path := resource.BaselinePathFor(ws.state.WorkspaceConfig)
 	b := resource.Baseline{
@@ -164,7 +164,7 @@ func NetBaselineApprove(ctx context.Context, d Deps, in NetBaselineIn) (NetBasel
 		Genesis: obs.Genesis, Configs: obs.Configs, Validators: obs.Validators,
 	}
 	if err := resource.SaveBaseline(path, b); err != nil {
-		return NetBaselineOut{}, err
+		return ChainBaselineOut{}, err
 	}
-	return NetBaselineOut{Check: BaselineCheck{Path: path, Approved: true, Match: true}}, nil
+	return ChainBaselineOut{Check: BaselineCheck{Path: path, Approved: true, Match: true}}, nil
 }

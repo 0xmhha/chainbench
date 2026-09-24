@@ -13,7 +13,7 @@ import (
 )
 
 // newNetStatusCmd shows the workspace composition state and which steps have
-// run. Rendering only — the read goes through app.NetStatus, shared with the
+// run. Rendering only — the read goes through app.ChainStatus, shared with the
 // MCP tool.
 func newNetStatusCmd() *cobra.Command {
 	var dataDir string
@@ -25,7 +25,7 @@ func newNetStatusCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			res, err := app.NetStatus(cmd.Context(), surface.Deps(cmd), app.NetStatusIn{DataDir: dataDir})
+			res, err := app.ChainStatus(cmd.Context(), surface.Deps(cmd), app.ChainStatusIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}

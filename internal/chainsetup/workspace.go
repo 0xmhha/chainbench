@@ -127,6 +127,13 @@ func (w *Workspace) SetDriver(fn func() (process.Driver, error)) {
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
 
+// SetStatePath records where the composition machine is, for the next Save.
+//
+// It takes the already-joined path rather than a state, because the path is
+// what the machine computes and this package's record has no opinion about the
+// shape of a machine's tree.
+func (w *Workspace) SetStatePath(path string) { w.state.StatePath = path }
+
 // keysBase is where a node's identity files (nodekey, keystore, password)
 // live at launch, from the target's point of view: the local key set for a
 // local target, or keys/ under the data root for a remote one — where the
@@ -309,7 +316,7 @@ func (w *Workspace) RPCHost() string {
 func (w *Workspace) NodeSet() node.NodeSet {
 	host := w.RPCHost()
 	// RPCURL is the address the harness dials, so it is the reachable one Health
-	// and NetEndpoints use — a docker node's URL is the mapped one, not the
+	// and ChainEndpoints use — a docker node's URL is the mapped one, not the
 	// container-internal address. Host keeps the node's own address, which is
 	// what a display or record wants.
 	ns := node.NodeSet{

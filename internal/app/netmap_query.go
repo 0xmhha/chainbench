@@ -16,9 +16,9 @@ import (
 // server set says otherwise. It matches what the composition uses.
 const defaultPortBand = 100
 
-// NetMapIn asks the composed network where a node is. The selectors are
+// NetworkMapIn asks the composed network where a node is. The selectors are
 // alternatives: give one, or none for the whole map.
-type NetMapIn struct {
+type NetworkMapIn struct {
 	DataDir string
 	// Node selects by identity (the 1-based node number).
 	Node int
@@ -51,40 +51,40 @@ type MapEntry struct {
 	DataDir string `json:"dataDir,omitempty"`
 }
 
-// NetMapOut is the answer, plus the counts an operator scanning a network wants
+// NetworkMapOut is the answer, plus the counts an operator scanning a network wants
 // without having to tally the rows.
-type NetMapOut struct {
+type NetworkMapOut struct {
 	Entries []MapEntry     `json:"entries"`
 	Roles   map[string]int `json:"roles"`
 	Total   int            `json:"total"`
 }
 
-// NetMap answers where nodes are, in either direction: label to address, or
+// NetworkMap answers where nodes are, in either direction: label to address, or
 // address to label. It reads the composed workspace and never dials — a node
 // that is not running still has a place in the map.
-func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
+func NetworkMap(_ context.Context, d Deps, in NetworkMapIn) (NetworkMapOut, error) {
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	m, err := ws.Netmap()
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	all := m.Placements()
 	if len(all) == 0 {
-		return NetMapOut{}, fmt.Errorf("app: netmap show: no node table — run `chain place` first")
+		return NetworkMapOut{}, fmt.Errorf("app: netmap show: no node table — run `chain place` first")
 	}
 
 	roles := map[string]int{}
 	for _, p := range all {
 		roles[string(p.Role)]++
 	}
-	out := NetMapOut{Roles: roles, Total: len(all)}
+	out := NetworkMapOut{Roles: roles, Total: len(all)}
 
 	match, err := mapFilter(m, in)
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	for _, p := range all {
 		if !match(p) {
@@ -97,14 +97,14 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 		})
 	}
 	if len(out.Entries) == 0 {
-		return NetMapOut{}, fmt.Errorf("app: netmap show: nothing matches (the network has %d node(s))", len(all))
+		return NetworkMapOut{}, fmt.Errorf("app: netmap show: nothing matches (the network has %d node(s))", len(all))
 	}
 	return out, nil
 }
 
 // mapFilter turns the selectors into one predicate, rejecting a combination
 // that asks two questions at once rather than silently honouring one.
-func mapFilter(m *node.Map, in NetMapIn) (func(node.Placement) bool, error) {
+func mapFilter(m *node.Map, in NetworkMapIn) (func(node.Placement) bool, error) {
 	given := 0
 	for _, on := range []bool{in.Node > 0, in.Label != "", in.Host != "", in.Port > 0, in.Addr != ""} {
 		if on {
@@ -158,19 +158,19 @@ func mapFilter(m *node.Map, in NetMapIn) (func(node.Placement) bool, error) {
 	}
 }
 
-// NetPoolIn asks what the network may be allocated from. A workspace is
+// NetworkPoolIn asks what the network may be allocated from. A workspace is
 // optional: without one the answer is the server set (or the built-ins) alone.
-type NetPoolIn struct {
+type NetworkPoolIn struct {
 	DataDir string
 	Server  ServerRef
 }
 
-// NetPoolOut is the resource, how much of it is spoken for, and by whom.
+// NetworkPoolOut is the resource, how much of it is spoken for, and by whom.
 //
 // It deliberately carries no credentials. The pool says where nodes may run;
 // how to log in belongs to the server set and the environment, and a summary an
 // agent can read should not be the place a password leaks.
-type NetPoolOut struct {
+type NetworkPoolOut struct {
 	Origin string   `json:"origin"`
 	Hosts  []string `json:"hosts"`
 	Slots  int      `json:"slots"`
@@ -182,17 +182,17 @@ type NetPoolOut struct {
 	ByNetwork map[string]int `json:"byNetwork,omitempty"`
 }
 
-// NetPool reports the addresses and port slots a network may be composed from,
+// NetworkPool reports the addresses and port slots a network may be composed from,
 // and how many are already taken. It is what answers "why was 15 refused".
 //
 // Taken is what the resource module's inventory says after adopting every
 // workspace it can see: the one named (optional) and every composition under
 // the default root. A workspace composed somewhere else is counted only when
 // it is named — there is no registry of workspaces, only the directories.
-func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
+func NetworkPool(_ context.Context, d Deps, in NetworkPoolIn) (NetworkPoolOut, error) {
 	resolved, err := ResolveServer(d, in.Server, 1, defaultPortBand)
 	if err != nil {
-		return NetPoolOut{}, err
+		return NetworkPoolOut{}, err
 	}
 	pool := resolved.Pool
 	if pool.Slots < 1 {
@@ -200,10 +200,10 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	}
 	inv, err := chainsetup.Inventory(pool, "", in.DataDir)
 	if err != nil {
-		return NetPoolOut{}, err
+		return NetworkPoolOut{}, err
 	}
 	u := inv.Usage()
-	out := NetPoolOut{Origin: pool.Origin, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
+	out := NetworkPoolOut{Origin: pool.Origin, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
 	for _, h := range pool.Hosts {
 		name := h.Name
 		if name == "" || name == h.Addr {
@@ -215,23 +215,23 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	return out, nil
 }
 
-// NetPlanIn asks what placement a network of this shape would get, before any
+// NetworkPlanIn asks what placement a network of this shape would get, before any
 // workspace exists. The chain matters because a family reserves a different
 // number of ports per node; the default is stablenet.
-type NetPlanIn struct {
+type NetworkPlanIn struct {
 	Chain   string
 	BPCount int
 	ENCount int
 	Server  ServerRef
 }
 
-// NetPlan runs the allocator as a question: the same deterministic assignment
+// NetworkPlan runs the allocator as a question: the same deterministic assignment
 // a composition would record, computed from the server set (or the built-in
 // pool) and the requested shape, with nothing written anywhere. It is how a
 // placement change is inspected — and tested — without composing a network.
-func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
+func NetworkPlan(_ context.Context, d Deps, in NetworkPlanIn) (NetworkMapOut, error) {
 	if in.BPCount < 1 {
-		return NetMapOut{}, fmt.Errorf("app: netmap plan: a network needs at least one validator — nothing seals without one")
+		return NetworkMapOut{}, fmt.Errorf("app: netmap plan: a network needs at least one validator — nothing seals without one")
 	}
 	chain := in.Chain
 	if chain == "" {
@@ -239,11 +239,11 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	}
 	plugin, err := registry.Get(chain)
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	resolved, err := ResolveServer(d, in.Server, in.BPCount, defaultPortBand)
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	pool := resolved.Pool
 	if pool.Slots < 1 {
@@ -262,14 +262,14 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	// the taken part ends — without claiming anything.
 	inv, err := chainsetup.Inventory(pool, "")
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	m, err := inv.Assign(reqs, "")
 	if err != nil {
-		return NetMapOut{}, err
+		return NetworkMapOut{}, err
 	}
 	all := m.Placements()
-	out := NetMapOut{Roles: map[string]int{}, Total: len(all)}
+	out := NetworkMapOut{Roles: map[string]int{}, Total: len(all)}
 	for _, p := range all {
 		out.Roles[string(p.Role)]++
 		out.Entries = append(out.Entries, MapEntry{

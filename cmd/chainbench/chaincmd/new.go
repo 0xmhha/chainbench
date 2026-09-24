@@ -11,7 +11,7 @@ import (
 )
 
 // newNetNewCmd initializes a composition workspace: the target chain and where
-// its data plane lives (local, or a remote SSH host). Flag binding + app.NetNew
+// its data plane lives (local, or a remote SSH host). Flag binding + app.ChainNew
 // + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
@@ -37,7 +37,7 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetNew(cmd.Context(), surface.Deps(cmd), app.NetNewIn{
+			out, err := app.ChainNew(cmd.Context(), surface.Deps(cmd), app.ChainNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
 				ServerSet: serverSet, WorkspaceConfigPath: workspaceConfig,

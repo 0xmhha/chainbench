@@ -90,7 +90,7 @@ flowchart TD
 > 두 목록의 순서는 일부러 다르다 — `core` 안에 L0·L1·L3 이 함께 있고 L3 인 `dsl/*`·`testhelper` 는
 > `core` 밖이라, 경로만 보고는 층을 알 수 없다.
 
-## 3. 모듈 배치 (51개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22)
+## 3. 모듈 배치 (52개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22 / core/statemachine 신설; 2026-09-22)
 
 ### L0 커널 — 공용 어휘
 
@@ -100,6 +100,7 @@ flowchart TD
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
 | `core/wait` | **취소 가능한 유일한 멈춤** — `Sleep(ctx, d)`. 폴링 루프는 시도 사이에 멈춰야 하고 쓰는 법이 둘인데, `time.Sleep` 은 짧고 **틀렸다**: context 가 끼어들 수 없어 포기한 호출자가 남은 예산을 다 기다린다. 올바른 `select` 형태가 **11곳에 손으로** 쓰여 있었고, 그것은 짧은 쪽을 실수로 쓸 기회가 11번이라는 뜻이다 — 실제로 한 번 그랬다(핸드오프의 엔드포인트 대기, 취소된 실행이 죽은 엔드포인트를 30초 더 찔렀다). 이름 하나로 **올바른 형태를 짧은 쪽으로** 만든다. 내부 import 0 |
 | `core/lifecycle` | **상태 어휘와 그것을 걷는 기계** — `Status`(한 값에 영역·단계·자리가 들어 있다) · `Machine` · 전이 표. 무엇을 하는지는 핸들러의 것이고 이 패키지는 모른다. 그래서 체인 조립과 테스트 수행이 **값이 겹치지 않는 두 영역**으로 한 기계 위에 설 수 있다. 실패에 자리를 주는 것이 설계의 본체다 — 단계마다 0x100 칸을 갖고 위 절반이 실패라, 기계가 이름을 몰라도 "실패인가"와 "누구의 실패인가"를 답한다. 내부 import 0 |
+| `core/statemachine` | **state 가 이끄는 기계** — `State`(`Enter`·`Exit`·`Process`) · `Machine`(트리 · `Send` · self queue · inbox · `LogRec`). `core/lifecycle` 와 같은 자리에 있지만 반대 물건이다: 저쪽은 전이 표를 검사하는 루프이고 이쪽은 message 로 이어지는 state 객체의 사슬이다. Enter 가 그 state 의 일을 하고 결과를 self message 로 남기며, Process 가 그것을 transition 으로 바꾼다 — 그래서 "다음에 무엇이 오나" 가 표가 아니라 그 일을 한 state 안에 적힌다. 동기 모델이라 Looper·지연·defer 는 없다. 둘은 한동안 공존하고, HSM 이관이 끝나면 `core/lifecycle` 이 사라진다([[../../research/chainbench/analyses/14-hsm-pattern-review-2026-09-21]]). 내부 import 0 |
 | `core/origin` | **값이 어디서 왔는지를 말하는 어휘 하나** — `Origin` 과 일곱 rung, 그리고 그 순서. 해결된 망과 조립 계획이 각자 낱말을 만들어 쓰고 있었고(`blueprint/inventory/keyset/chain/default` 와 `declaration/command/harness`), 같은 rung 을 두 이름으로 부르면서 chain-preset 과 server-set 은 부를 이름이 아예 없었다. **기제가 아니다** — 무엇이 이기는지는 상류에서 정해지고, 이 패키지는 그 결과를 적을 낱말과 순서만 갖는다. 내부 import 0 |
 | `testsupport` | **테스트 게이트**(제품 코드 없음) — 여러 패키지의 _test.go 가 공유하는 스킵 헬퍼(`ServersBuildDir`·`EnvDockerServers`). 패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0 |
 
@@ -164,7 +165,7 @@ flowchart TD
 |---|---|
 | `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/tc/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
-| `chainsetup/verb` | 셋업 동사 — 표면이 부르는 함수들(`NetUp`·`NetKeys`·`NetGenesis`·`NetStart`…)과 그것들을 몰고 가는 상태 기계 핸들러(`statedriven.go`·`compare.go`). `chainsetup` 객체 위에 얹히며 반대 방향 의존은 없다(2026-09-21 측정: 아래에서 위를 보는 간선 0). 나눈 이유는 `chainsetup` 이 파일 39개가 흩어진 것이 아니라 `Workspace` 객체 하나이고, 그 메서드 본문은 비공개 내부를 40곳 가까이 써서 나눌 수 없기 때문이다 — 나눌 수 있는 유일한 선이 동사층이었다 |
+| `chainsetup/verb` | 셋업 동사 — 표면이 부르는 함수들(`ChainUp`·`ChainKeys`·`ChainGenesis`·`ChainStart`…)과 그것들을 machine 에 태우는 얇은 진입점(`step.go`·`compare.go`). `chainsetup` 객체 위에 얹히며 반대 방향 의존은 없다(2026-09-21 측정: 아래에서 위를 보는 간선 0). 나눈 이유는 `chainsetup` 이 파일 39개가 흩어진 것이 아니라 `Workspace` 객체 하나이고, 그 메서드 본문은 비공개 내부를 40곳 가까이 써서 나눌 수 없기 때문이다 — 나눌 수 있는 유일한 선이 동사층이었다 |
 | `nodemonitor` | 테스트 실행 허가 판정 + 제한 복구(E6). `health`·`collector`·`inspector`·`process/inspect`·`preflight` 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 을 판정하고(`Classify`), WAITABLE 은 `MaxNodeMonitorTimeout` 까지 대기·RESTARTABLE 은 `MaxRestarts` 상한으로 재시작·FATAL 은 파괴적 조치 없이 즉시 종료한다(`Gate`). 관측과 재시작은 재구현하지 않고 seam(`Observer`·`Restarter`)으로 기존 함수를 주입받는다. `testengine`(재사용 전·각 테스트 전)과 app/MCP 가 소비한다 |
 
 ### L5 유스케이스

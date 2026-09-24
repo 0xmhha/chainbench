@@ -21,6 +21,12 @@ PATTERN="${2:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/bin/chainbench"
 WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
+# Extra flags for every `chainbench run`. A sweep against the docker fleet needs
+# four of them and they belong to the environment, not to this script:
+#   TCSWEEP_FLAGS="--server-set env/docker/build/server-set.yaml \
+#     --workspace-config env/docker/build/workspace-config.yaml --docker \
+#     --keys-source generate"
+read -r -a EXTRA <<<"${TCSWEEP_FLAGS:-}"
 
 [ -x "$BIN" ] || { echo "no $BIN — run make build" >&2; exit 2; }
 
@@ -72,7 +78,7 @@ for spec in "${CASES[@]}"; do
   ws="$WS_BASE/c$i"
   rm -rf "$ws"
   start=$SECONDS
-  out=$("$BIN" run "$spec" --workspace-dir "$ws" 2>&1)
+  out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
   code=$?
   took=$((SECONDS - start))
 
@@ -101,8 +107,22 @@ for spec in "${CASES[@]}"; do
     # The last lines hold the refusal, including the state it failed in.
     tail -3 <<<"$out" | sed 's/^/          /' | tee -a "$OUT"
   fi
-  # Leaving a network up would let it collide with the next case's ports.
-  rm -rf "$ws"
+  # Stop always: a network left running holds the next case's ports. Remove
+  # only what passed. On a remote target `chain rm` deletes the datadir and
+  # the node logs on the server, and `rm -rf $ws` takes the record that could
+  # ask for them later — so for a case that did not pass, both stay and the
+  # sweep says where. The session under ~/.chainbench already holds the logs
+  # gathered at the moment of failure; what is kept here is the machine state
+  # behind them, which is what a second look needs.
+  if [ -n "${TCSWEEP_FLAGS:-}" ]; then
+    "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+  fi
+  if [ "$verdict" = PASS ]; then
+    [ -n "${TCSWEEP_FLAGS:-}" ] && "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1
+    rm -rf "$ws"
+  else
+    printf '          kept for inspection: %s\n' "$ws" | tee -a "$OUT"
+  fi
 done
 
 {

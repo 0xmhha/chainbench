@@ -68,7 +68,7 @@ func NewVerify() *cobra.Command {
 				if dataDir == "" {
 					return fmt.Errorf("--validators needs --workspace-dir (it reads the composed keys to compare against)")
 				}
-				vres, verr := app.VerifyValidators(cmd.Context(), surface.Deps(cmd), app.NetVerifyValidatorsIn{DataDir: dataDir})
+				vres, verr := app.VerifyValidators(cmd.Context(), surface.Deps(cmd), app.ChainVerifyValidatorsIn{DataDir: dataDir})
 				if verr != nil {
 					return verr
 				}
@@ -83,7 +83,7 @@ func NewVerify() *cobra.Command {
 				if dataDir == "" {
 					return fmt.Errorf("--baseline needs --workspace-dir (the composition to check against the approved record)")
 				}
-				bres, berr := app.BaselineCheck(cmd.Context(), surface.Deps(cmd), app.NetBaselineIn{DataDir: dataDir})
+				bres, berr := app.BaselineCheck(cmd.Context(), surface.Deps(cmd), app.ChainBaselineIn{DataDir: dataDir})
 				if berr != nil {
 					return berr
 				}

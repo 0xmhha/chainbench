@@ -15,7 +15,7 @@ import (
 // a key in the bundle's configs map resolves to that file; a direct reference and an
 // empty value are left alone.
 func TestApplyExistingConfigs_MapsLogicalNames(t *testing.T) {
-	up := &chainsetup.NetUpIn{Topology: &node.Topology{
+	up := &chainsetup.ChainUpIn{Topology: &node.Topology{
 		Chain: "stablenet",
 		Nodes: []node.Entry{
 			{Index: 1, Role: "bp", Config: "validator"},        // logical name -> mapped
@@ -84,13 +84,13 @@ func TestCompositionOf_ExistingConfigsResolveThroughTheDSL(t *testing.T) {
 // config map, there is nothing to resolve and nothing changes.
 func TestApplyExistingConfigs_NoTopologyOrNoMapIsANoop(t *testing.T) {
 	// No topology.
-	up := &chainsetup.NetUpIn{}
+	up := &chainsetup.ChainUpIn{}
 	applyExistingConfigs(up, resource.ExistingInputs{Configs: map[string]string{"a": "b"}})
 	if up.Topology != nil {
 		t.Fatal("no topology must stay nil")
 	}
 	// No config map.
-	up = &chainsetup.NetUpIn{Topology: &node.Topology{Nodes: []node.Entry{{Index: 1, Config: "validator"}}}}
+	up = &chainsetup.ChainUpIn{Topology: &node.Topology{Nodes: []node.Entry{{Index: 1, Config: "validator"}}}}
 	applyExistingConfigs(up, resource.ExistingInputs{})
 	if up.Topology.Nodes[0].Config != "validator" {
 		t.Fatalf("no config map must leave the value: %q", up.Topology.Nodes[0].Config)

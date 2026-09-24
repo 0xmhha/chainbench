@@ -1,24 +1,7 @@
 {
- "repo": "/Users/wm-it-25_0220/Work/github/chainbench",
+ "repo": ".",
  "module_depth": 2,
  "modules": {
-  "scripts": {
-   "languages": {
-    "python": 3
-   },
-   "files": 3,
-   "loc": 308,
-   "imports": {
-    "json": 2,
-    "sys": 2,
-    "re,io,os,sys": 1,
-    "tempfile": 1,
-    "os": 1
-   },
-   "types": 0,
-   "funcs": 13,
-   "lang_hint": "python"
-  },
   "cmd/chainbench-dashboard": {
    "languages": {
     "go": 1
@@ -42,7 +25,7 @@
     "go": 100
    },
    "files": 100,
-   "loc": 14068,
+   "loc": 14149,
    "imports": {
     "cobra": 64,
     "strings": 50,
@@ -113,7 +96,7 @@
     "testsupport": 1
    },
    "types": 26,
-   "funcs": 490,
+   "funcs": 492,
    "lang_hint": "go"
   },
   "cmd/chainbench-mcp": {
@@ -139,7 +122,7 @@
     "go": 13
    },
    "files": 13,
-   "loc": 1561,
+   "loc": 1597,
    "imports": {
     "testing": 13,
     "time": 12,
@@ -161,7 +144,48 @@
     "hex": 1
    },
    "types": 2,
-   "funcs": 61,
+   "funcs": 62,
+   "lang_hint": "go"
+  },
+  "internal/consensus": {
+   "languages": {
+    "go": 26
+   },
+   "files": 26,
+   "loc": 3787,
+   "imports": {
+    "strings": 17,
+    "json": 14,
+    "fmt": 13,
+    "testing": 12,
+    "context": 11,
+    "node": 8,
+    "os": 7,
+    "registry": 6,
+    "time": 5,
+    "big": 5,
+    "poa": 4,
+    "filepath": 4,
+    "process": 3,
+    "resource": 3,
+    "genesis": 3,
+    "strconv": 3,
+    "wait": 3,
+    "hex": 3,
+    "wemix": 2,
+    "path": 2,
+    "filestore": 2,
+    "sync": 1,
+    "net": 1,
+    "rpc": 1,
+    "httptest": 1,
+    "http": 1,
+    "exec": 1,
+    "preset": 1,
+    "wbft": 1
+   },
+   "types": 16,
+   "funcs": 154,
    "lang_hint": "go"
   },
   "internal/testsupport": {
@@ -176,6 +200,99 @@
    },
    "types": 0,
    "funcs": 1,
+   "lang_hint": "go"
+  },
+  "internal/core": {
+   "languages": {
+    "go": 247
+   },
+   "files": 247,
+   "loc": 31121,
+   "imports": {
+    "testing": 109,
+    "strings": 101,
+    "context": 97,
+    "fmt": 93,
+    "filepath": 67,
+    "os": 65,
+    "time": 50,
+    "node": 48,
+    "json": 36,
+    "errors": 29,
+    "sort": 26,
+    "strconv": 25,
+    "preset": 20,
+    "derive": 20,
+    "process": 19,
+    "registry": 17,
+    "keyring": 17,
+    "sync": 16,
+    "filestore": 14,
+    "session": 14,
+    "bytes": 14,
+    "fs": 13,
+    "remote": 12,
+    "http": 12,
+    "store": 12,
+    "exec": 11,
+    "collector": 11,
+    "io": 9,
+    "regexp": 8,
+    "net": 7,
+    "hex": 6,
+    "httptest": 6,
+    "reflect": 6,
+    "syscall": 6,
+    "bufio": 5,
+    "all": 5,
+    "slices": 5,
+    "resource": 5,
+    "big": 5,
+    "genesis": 5,
+    "inspector": 4,
+    "health": 3,
+    "rand": 3,
+    "v3": 3,
+    "origin": 3,
+    "blueprint": 3,
+    "base64": 3,
+    "ssh": 3,
+    "home": 2,
+    "wait": 2,
+    "atomic": 2,
+    "path": 2,
+    "sha256": 2,
+    "slog": 2,
+    "keystore": 2,
+    "maps": 2,
+    "report": 2,
+    "websocket": 2,
+    "wbft": 2,
+    "preflight": 2,
+    "testsupport": 2,
+    "nodeconfig": 2,
+    "knownhosts": 2,
+    "ed25519": 2,
+    "rpc": 1,
+    "url": 1,
+    "token": 1,
+    "parser": 1,
+    "ast": 1,
+    "hardfork": 1,
+    "hdwallet": 1,
+    "account": 1,
+    "operation": 1,
+    "bls12-381": 1,
+    "binary": 1,
+    "hkdf": 1,
+    "accounts": 1,
+    "v4": 1,
+    "protocol": 1,
+    "stablenet": 1,
+    "pem": 1
+   },
+   "types": 285,
+   "funcs": 1221,
    "lang_hint": "go"
   },
   "internal/app": {
@@ -201,11 +318,12 @@
     "session": 4,
     "collector": 4,
     "rpc": 3,
-    "chainsetup": 3,
     "reflect": 2,
     "errors": 2,
     "testengine": 2,
     "all": 2,
+    "chainsetup": 2,
+    "verb": 2,
     "store": 2,
     "big": 2,
     "dsl": 2,
@@ -238,91 +356,90 @@
   },
   "internal/preset": {
    "languages": {
-    "go": 7
+    "go": 3
    },
-   "files": 7,
-   "loc": 872,
+   "files": 3,
+   "loc": 528,
    "imports": {
-    "preset": 3,
-    "testing": 3,
-    "filepath": 3,
-    "strings": 3,
-    "os": 3,
-    "fmt": 3,
-    "json": 2,
     "keyring": 2,
-    "registry": 1,
-    "all": 1,
-    "wbft": 1,
+    "fmt": 2,
     "slices": 1,
-    "v3": 1,
     "filestore": 1,
+    "strings": 1,
     "sort": 1,
+    "filepath": 1,
+    "os": 1,
     "derive": 1,
+    "json": 1,
     "context": 1
    },
-   "types": 6,
-   "funcs": 26,
+   "types": 3,
+   "funcs": 17,
    "lang_hint": "go"
   },
   "internal/chainsetup": {
    "languages": {
-    "go": 94
+    "go": 120
    },
-   "files": 94,
-   "loc": 17458,
+   "files": 120,
+   "loc": 21483,
    "imports": {
-    "context": 62,
-    "node": 55,
-    "testing": 55,
-    "strings": 48,
-    "filepath": 41,
-    "fmt": 40,
-    "os": 39,
-    "resource": 38,
-    "process": 27,
-    "chainsetup": 23,
-    "all": 17,
+    "context": 78,
+    "testing": 61,
+    "node": 57,
+    "strings": 51,
+    "fmt": 45,
+    "filepath": 44,
+    "os": 44,
+    "resource": 37,
+    "chainsetup": 37,
+    "process": 26,
+    "errors": 22,
+    "all": 20,
+    "statemachine": 19,
+    "lifecycle": 17,
+    "verb": 17,
     "preset": 16,
     "time": 14,
     "filestore": 13,
-    "errors": 12,
+    "registry": 11,
     "session": 11,
-    "lifecycle": 11,
-    "registry": 10,
-    "json": 9,
-    "nodeconfig": 7,
-    "sort": 6,
-    "slices": 6,
+    "json": 10,
+    "sort": 8,
+    "nodeconfig": 8,
+    "strconv": 6,
     "external": 5,
-    "strconv": 5,
+    "preflight": 5,
+    "slices": 5,
     "rpc": 4,
-    "preflight": 3,
+    "hardfork": 4,
     "sync": 3,
-    "maps": 3,
-    "path": 3,
     "genesis": 3,
-    "blueprint": 3,
+    "path": 3,
     "testsupport": 2,
     "hex": 2,
     "sha256": 2,
+    "token": 2,
+    "parser": 2,
+    "ast": 2,
+    "maps": 2,
     "derive": 2,
     "reflect": 2,
     "inspector": 2,
+    "blueprint": 2,
     "collector": 2,
+    "store": 2,
     "fs": 2,
     "url": 1,
     "httptest": 1,
     "http": 1,
-    "hardfork": 1,
     "home": 1,
-    "store": 1,
     "keyring": 1,
     "wbft": 1,
     "poa": 1
    },
-   "types": 97,
-   "funcs": 528,
+   "types": 169,
+   "funcs": 756,
    "lang_hint": "go"
   },
   "internal/mcp": {
@@ -424,20 +541,20 @@
   },
   "internal/arch": {
    "languages": {
-    "go": 21
+    "go": 22
    },
-   "files": 21,
-   "loc": 3370,
+   "files": 22,
+   "loc": 3500,
    "imports": {
-    "strings": 17,
-    "testing": 15,
-    "filepath": 15,
-    "sort": 13,
-    "os": 9,
+    "strings": 18,
+    "testing": 16,
+    "filepath": 16,
+    "sort": 14,
+    "os": 10,
     "token": 9,
     "parser": 9,
     "ast": 7,
-    "regexp": 6,
+    "regexp": 7,
     "exec": 4,
     "bytes": 3,
     "strconv": 3,
@@ -445,38 +562,40 @@
     "fmt": 3
    },
    "types": 13,
-   "funcs": 84,
+   "funcs": 85,
    "lang_hint": "go"
   },
   "internal/testengine": {
    "languages": {
-    "go": 58
+    "go": 61
    },
-   "files": 58,
-   "loc": 9591,
+   "files": 61,
+   "loc": 10255,
    "imports": {
-    "context": 37,
-    "testing": 34,
+    "context": 38,
+    "testing": 35,
     "filepath": 28,
     "os": 28,
-    "dsl": 26,
-    "chainsetup": 23,
+    "dsl": 27,
+    "chainsetup": 24,
+    "strings": 22,
     "node": 21,
     "json": 21,
     "time": 20,
-    "strings": 20,
-    "fmt": 19,
+    "fmt": 20,
+    "session": 15,
     "testengine": 14,
-    "session": 14,
     "collector": 9,
     "resource": 8,
     "interp": 7,
+    "registry": 6,
     "rpc": 6,
-    "preset": 5,
-    "registry": 5,
+    "sort": 6,
+    "verb": 5,
+    "origin": 5,
     "stablenet": 5,
-    "sort": 5,
     "health": 4,
+    "preset": 4,
     "testhelper": 4,
     "errors": 4,
     "all": 4,
@@ -486,6 +605,7 @@
     "keyring": 3,
     "httptest": 3,
     "http": 3,
+    "statemachine": 3,
     "nodemonitor": 2,
     "nodeconfig": 2,
     "big": 2,
@@ -509,8 +629,8 @@
     "bufio": 1,
     "preflight": 1
    },
-   "types": 36,
-   "funcs": 302,
+   "types": 57,
+   "funcs": 350,
    "lang_hint": "go"
   },
   "internal/testhelper": {
@@ -632,220 +752,6 @@
    "funcs": 23,
    "lang_hint": "go"
   },
-  "internal/resource": {
-   "languages": {
-    "go": 34
-   },
-   "files": 34,
-   "loc": 5635,
-   "imports": {
-    "strings": 19,
-    "fmt": 18,
-    "testing": 17,
-    "os": 17,
-    "filepath": 16,
-    "resource": 13,
-    "remote": 7,
-    "context": 6,
-    "filestore": 5,
-    "node": 5,
-    "sort": 4,
-    "strconv": 3,
-    "errors": 3,
-    "v3": 3,
-    "testsupport": 3,
-    "process": 3,
-    "net": 2,
-    "bytes": 2,
-    "fs": 2,
-    "json": 1,
-    "sync": 1,
-    "path": 1,
-    "url": 1,
-    "runtime": 1,
-    "exec": 1
-   },
-   "types": 43,
-   "funcs": 213,
-   "lang_hint": "go"
-  },
-  "internal/dsl": {
-   "languages": {
-    "go": 34
-   },
-   "files": 34,
-   "loc": 6533,
-   "imports": {
-    "testing": 16,
-    "strings": 14,
-    "json": 14,
-    "dsl": 13,
-    "fmt": 13,
-    "sort": 8,
-    "session": 8,
-    "node": 7,
-    "reflect": 6,
-    "filepath": 5,
-    "os": 5,
-    "context": 5,
-    "interp": 5,
-    "regexp": 4,
-    "time": 4,
-    "embed": 3,
-    "errors": 3,
-    "bytes": 2,
-    "maps": 2,
-    "nodeconfig": 2,
-    "big": 2,
-    "fs": 1,
-    "hex": 1,
-    "sha256": 1,
-    "testhelper": 1,
-    "rpc": 1,
-    "store": 1,
-    "collector": 1,
-    "accounts": 1,
-    "strconv": 1,
-    "assert": 1,
-    "math": 1
-   },
-   "types": 51,
-   "funcs": 261,
-   "lang_hint": "go"
-  },
-  "internal/consensus": {
-   "languages": {
-    "go": 27
-   },
-   "files": 27,
-   "loc": 3785,
-   "imports": {
-    "strings": 17,
-    "json": 14,
-    "fmt": 13,
-    "testing": 12,
-    "context": 11,
-    "node": 8,
-    "os": 6,
-    "registry": 6,
-    "time": 5,
-    "big": 5,
-    "poa": 4,
-    "filepath": 4,
-    "process": 3,
-    "resource": 3,
-    "genesis": 3,
-    "preset": 3,
-    "strconv": 3,
-    "wait": 3,
-    "hex": 3,
-    "wemix": 2,
-    "path": 2,
-    "filestore": 2,
-    "sync": 1,
-    "net": 1,
-    "rpc": 1,
-    "httptest": 1,
-    "http": 1,
-    "exec": 1,
-    "wbft": 1
-   },
-   "types": 16,
-   "funcs": 155,
-   "lang_hint": "go"
-  },
-  "internal/core": {
-   "languages": {
-    "go": 236
-   },
-   "files": 236,
-   "loc": 29611,
-   "imports": {
-    "testing": 106,
-    "strings": 97,
-    "context": 96,
-    "fmt": 92,
-    "filepath": 67,
-    "os": 64,
-    "node": 48,
-    "time": 47,
-    "json": 36,
-    "errors": 29,
-    "sort": 25,
-    "strconv": 24,
-    "preset": 20,
-    "derive": 20,
-    "process": 19,
-    "registry": 17,
-    "keyring": 17,
-    "sync": 16,
-    "filestore": 14,
-    "session": 14,
-    "bytes": 14,
-    "fs": 13,
-    "remote": 12,
-    "http": 12,
-    "store": 12,
-    "exec": 11,
-    "collector": 11,
-    "io": 9,
-    "regexp": 8,
-    "net": 7,
-    "hex": 6,
-    "httptest": 6,
-    "reflect": 6,
-    "syscall": 6,
-    "bufio": 5,
-    "all": 5,
-    "slices": 5,
-    "big": 5,
-    "resource": 5,
-    "genesis": 5,
-    "inspector": 4,
-    "health": 3,
-    "v3": 3,
-    "blueprint": 3,
-    "base64": 3,
-    "ssh": 3,
-    "rand": 3,
-    "home": 2,
-    "wait": 2,
-    "atomic": 2,
-    "path": 2,
-    "sha256": 2,
-    "slog": 2,
-    "report": 2,
-    "websocket": 2,
-    "wbft": 2,
-    "maps": 2,
-    "preflight": 2,
-    "testsupport": 2,
-    "nodeconfig": 2,
-    "knownhosts": 2,
-    "ed25519": 2,
-    "keystore": 2,
-    "rpc": 1,
-    "url": 1,
-    "token": 1,
-    "parser": 1,
-    "ast": 1,
-    "hardfork": 1,
-    "hdwallet": 1,
-    "account": 1,
-    "protocol": 1,
-    "stablenet": 1,
-    "pem": 1,
-    "operation": 1,
-    "bls12-381": 1,
-    "binary": 1,
-    "hkdf": 1,
-    "accounts": 1,
-    "v4": 1
-   },
-   "types": 274,
-   "funcs": 1169,
-   "lang_hint": "go"
-  },
   "internal/chains": {
    "languages": {
     "go": 15
@@ -884,6 +790,146 @@
    "types": 0,
    "funcs": 55,
    "lang_hint": "go"
+  },
+  "internal/resource": {
+   "languages": {
+    "go": 32
+   },
+   "files": 32,
+   "loc": 5550,
+   "imports": {
+    "strings": 18,
+    "os": 17,
+    "fmt": 17,
+    "testing": 16,
+    "filepath": 16,
+    "resource": 13,
+    "remote": 7,
+    "context": 6,
+    "filestore": 5,
+    "node": 5,
+    "sort": 4,
+    "errors": 3,
+    "v3": 3,
+    "testsupport": 3,
+    "process": 3,
+    "strconv": 2,
+    "net": 2,
+    "bytes": 2,
+    "fs": 2,
+    "json": 1,
+    "sync": 1,
+    "path": 1,
+    "url": 1,
+    "runtime": 1,
+    "exec": 1
+   },
+   "types": 43,
+   "funcs": 207,
+   "lang_hint": "go"
+  },
+  "internal/dsl": {
+   "languages": {
+    "go": 34
+   },
+   "files": 34,
+   "loc": 6529,
+   "imports": {
+    "testing": 16,
+    "strings": 14,
+    "json": 14,
+    "dsl": 13,
+    "fmt": 13,
+    "sort": 8,
+    "session": 8,
+    "node": 7,
+    "reflect": 6,
+    "filepath": 5,
+    "os": 5,
+    "context": 5,
+    "interp": 5,
+    "regexp": 4,
+    "time": 4,
+    "embed": 3,
+    "errors": 3,
+    "bytes": 2,
+    "maps": 2,
+    "nodeconfig": 2,
+    "big": 2,
+    "fs": 1,
+    "hex": 1,
+    "sha256": 1,
+    "testhelper": 1,
+    "rpc": 1,
+    "store": 1,
+    "collector": 1,
+    "accounts": 1,
+    "strconv": 1,
+    "assert": 1,
+    "math": 1
+   },
+   "types": 51,
+   "funcs": 261,
+   "lang_hint": "go"
+  },
+  "docs/research": {
+   "languages": {
+    "python": 19
+   },
+   "files": 19,
+   "loc": 2917,
+   "imports": {
+    "json": 13,
+    "collections": 6,
+    "re": 5,
+    "pathlib": 3,
+    "re,glob,sys": 1,
+    "unicodedata": 1,
+    "sys": 1,
+    "html": 1,
+    "ct_data": 1
+   },
+   "types": 0,
+   "funcs": 37,
+   "lang_hint": "python"
+  },
+  "docs/dev": {
+   "languages": {
+    "go": 1
+   },
+   "files": 1,
+   "loc": 257,
+   "imports": {
+    "strings": 1,
+    "sort": 1,
+    "filepath": 1,
+    "os": 1,
+    "token": 1,
+    "parser": 1,
+    "ast": 1,
+    "fmt": 1,
+    "json": 1
+   },
+   "types": 3,
+   "funcs": 7,
+   "lang_hint": "go"
+  },
+  "scripts": {
+   "languages": {
+    "python": 3
+   },
+   "files": 3,
+   "loc": 308,
+   "imports": {
+    "json": 2,
+    "sys": 2,
+    "re,io,os,sys": 1,
+    "tempfile": 1,
+    "os": 1
+   },
+   "types": 0,
+   "funcs": 13,
+   "lang_hint": "python"
   },
   "scripts/inventory": {
    "languages": {
@@ -967,7 +1013,7 @@
    "module": "cmd/chainbench",
    "lang": "go",
    "file": "cmd/chainbench/suitecmd/run.go",
-   "line": 368
+   "line": 400
   },
   "cmd/chainbench::sequenceRunReport": {
    "name": "sequenceRunReport",
@@ -975,7 +1021,7 @@
    "module": "cmd/chainbench",
    "lang": "go",
    "file": "cmd/chainbench/suitecmd/run.go",
-   "line": 360
+   "line": 392
   },
   "cmd/chainbench::runReport": {
    "name": "runReport",
@@ -1112,6 +1158,2246 @@
    "lang": "go",
    "file": "tests/e2e/harness_test.go",
    "line": 88
+  },
+  "internal/consensus::fakeChain": {
+   "name": "fakeChain",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/executor_test.go",
+   "line": 21
+  },
+  "internal/consensus::Step": {
+   "name": "Step",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/bootstrap.go",
+   "line": 4
+  },
+  "internal/consensus::Family": {
+   "name": "Family",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/poa.go",
+   "line": 16
+  },
+  "internal/consensus::Account": {
+   "name": "Account",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/wemixconfig.go",
+   "line": 57
+  },
+  "internal/consensus::Member": {
+   "name": "Member",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/wemixconfig.go",
+   "line": 46
+  },
+  "internal/consensus::Env": {
+   "name": "Env",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/wemixconfig.go",
+   "line": 28
+  },
+  "internal/consensus::Config": {
+   "name": "Config",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/wemixconfig.go",
+   "line": 15
+  },
+  "internal/consensus::GenesisSource": {
+   "name": "GenesisSource",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/genesis_source.go",
+   "line": 27
+  },
+  "internal/consensus::NodeAccess": {
+   "name": "NodeAccess",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/executor.go",
+   "line": 99
+  },
+  "internal/consensus::Bootstrap": {
+   "name": "Bootstrap",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/executor.go",
+   "line": 58
+  },
+  "internal/consensus::Info": {
+   "name": "Info",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/info.go",
+   "line": 26
+  },
+  "internal/consensus::EtcdState": {
+   "name": "EtcdState",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/info.go",
+   "line": 20
+  },
+  "internal/consensus::Runner": {
+   "name": "Runner",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/poa/bootstrap_exec.go",
+   "line": 17
+  },
+  "internal/consensus::rlpNode": {
+   "name": "rlpNode",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/wbft/extradata_decode.go",
+   "line": 19
+  },
+  "internal/consensus::GenesisParams": {
+   "name": "GenesisParams",
+   "kind": "type_spec",
+   "module": "internal/consensus",
+   "lang": "go",
+   "file": "internal/consensus/wbft/genesis.go",
+   "line": 16
+  },
+  "internal/core::Path": {
+   "name": "Path",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/inspector/paths.go",
+   "line": 13
+  },
+  "internal/core::Host": {
+   "name": "Host",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/inspector/hosts.go",
+   "line": 13
+  },
+  "internal/core::DialFunc": {
+   "name": "DialFunc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/inspector/ports.go",
+   "line": 38
+  },
+  "internal/core::Addr": {
+   "name": "Addr",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/inspector/ports.go",
+   "line": 19
+  },
+  "internal/core::presentStore": {
+   "name": "presentStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/inspector/paths_test.go",
+   "line": 12
+  },
+  "internal/core::Message": {
+   "name": "Message",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/message.go",
+   "line": 17
+  },
+  "internal/core::What": {
+   "name": "What",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/message.go",
+   "line": 10
+  },
+  "internal/core::tree": {
+   "name": "tree",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/machine_test.go",
+   "line": 75
+  },
+  "internal/core::probe": {
+   "name": "probe",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/machine_test.go",
+   "line": 32
+  },
+  "internal/core::note": {
+   "name": "note",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/machine_test.go",
+   "line": 18
+  },
+  "internal/core::Machine": {
+   "name": "Machine",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/machine.go",
+   "line": 32
+  },
+  "internal/core::stateInfo": {
+   "name": "stateInfo",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/machine.go",
+   "line": 20
+  },
+  "internal/core::Base": {
+   "name": "Base",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/state.go",
+   "line": 46
+  },
+  "internal/core::State": {
+   "name": "State",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/state.go",
+   "line": 18
+  },
+  "internal/core::StateName": {
+   "name": "StateName",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/state.go",
+   "line": 10
+  },
+  "internal/core::ring": {
+   "name": "ring",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/logrec.go",
+   "line": 28
+  },
+  "internal/core::LogRec": {
+   "name": "LogRec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/statemachine/logrec.go",
+   "line": 19
+  },
+  "internal/core::Report": {
+   "name": "Report",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 98
+  },
+  "internal/core::NodeInfo": {
+   "name": "NodeInfo",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 86
+  },
+  "internal/core::Agreement": {
+   "name": "Agreement",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 71
+  },
+  "internal/core::BlockHasher": {
+   "name": "BlockHasher",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 61
+  },
+  "internal/core::Options": {
+   "name": "Options",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 39
+  },
+  "internal/core::Prober": {
+   "name": "Prober",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health.go",
+   "line": 31
+  },
+  "internal/core::blindProber": {
+   "name": "blindProber",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/agreement_test.go",
+   "line": 44
+  },
+  "internal/core::chainProber": {
+   "name": "chainProber",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/agreement_test.go",
+   "line": 25
+  },
+  "internal/core::Participation": {
+   "name": "Participation",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/participation.go",
+   "line": 36
+  },
+  "internal/core::Sealer": {
+   "name": "Sealer",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/participation.go",
+   "line": 13
+  },
+  "internal/core::chain": {
+   "name": "chain",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/participation_test.go",
+   "line": 13
+  },
+  "internal/core::staticBlock": {
+   "name": "staticBlock",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health_test.go",
+   "line": 150
+  },
+  "internal/core::delayedProber": {
+   "name": "delayedProber",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health_test.go",
+   "line": 134
+  },
+  "internal/core::fakeProber": {
+   "name": "fakeProber",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/health/health_test.go",
+   "line": 15
+  },
+  "internal/core::fakeStore": {
+   "name": "fakeStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore_test.go",
+   "line": 80
+  },
+  "internal/core::Local": {
+   "name": "Local",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 129
+  },
+  "internal/core::Provisioner": {
+   "name": "Provisioner",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 83
+  },
+  "internal/core::Result": {
+   "name": "Result",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 76
+  },
+  "internal/core::NodeInputs": {
+   "name": "NodeInputs",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 68
+  },
+  "internal/core::File": {
+   "name": "File",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 61
+  },
+  "internal/core::Store": {
+   "name": "Store",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/filestore/filestore.go",
+   "line": 31
+  },
+  "internal/core::ReconnectingLogReader": {
+   "name": "ReconnectingLogReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/logreader.go",
+   "line": 47
+  },
+  "internal/core::LocalLogReader": {
+   "name": "LocalLogReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/logreader.go",
+   "line": 20
+  },
+  "internal/core::LogReader": {
+   "name": "LogReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/logreader.go",
+   "line": 14
+  },
+  "internal/core::chainSignature": {
+   "name": "chainSignature",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_signatures.go",
+   "line": 13
+  },
+  "internal/core::Event": {
+   "name": "Event",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/event.go",
+   "line": 33
+  },
+  "internal/core::Kind": {
+   "name": "Kind",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/event.go",
+   "line": 21
+  },
+  "internal/core::Phase": {
+   "name": "Phase",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/event.go",
+   "line": 11
+  },
+  "internal/core::collector": {
+   "name": "collector",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector_impl.go",
+   "line": 63
+  },
+  "internal/core::Deps": {
+   "name": "Deps",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector_impl.go",
+   "line": 41
+  },
+  "internal/core::Sample": {
+   "name": "Sample",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector_impl.go",
+   "line": 32
+  },
+  "internal/core::MemStore": {
+   "name": "MemStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/store.go",
+   "line": 48
+  },
+  "internal/core::RunRecord": {
+   "name": "RunRecord",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/store.go",
+   "line": 26
+  },
+  "internal/core::RunStatus": {
+   "name": "RunStatus",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/store.go",
+   "line": 10
+  },
+  "internal/core::rpcResponse": {
+   "name": "rpcResponse",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_test.go",
+   "line": 27
+  },
+  "internal/core::rpcError": {
+   "name": "rpcError",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_test.go",
+   "line": 22
+  },
+  "internal/core::rpcRequest": {
+   "name": "rpcRequest",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_test.go",
+   "line": 16
+  },
+  "internal/core::Chainstate": {
+   "name": "Chainstate",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector.go",
+   "line": 34
+  },
+  "internal/core::LogMatch": {
+   "name": "LogMatch",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector.go",
+   "line": 26
+  },
+  "internal/core::Collector": {
+   "name": "Collector",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/collector.go",
+   "line": 12
+  },
+  "internal/core::flakyReader": {
+   "name": "flakyReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/reconnect_test.go",
+   "line": 13
+  },
+  "internal/core::jsonRPCResponse": {
+   "name": "jsonRPCResponse",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_rpc.go",
+   "line": 22
+  },
+  "internal/core::jsonRPCError": {
+   "name": "jsonRPCError",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/detect_rpc.go",
+   "line": 17
+  },
+  "internal/core::SearchOpts": {
+   "name": "SearchOpts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/logs.go",
+   "line": 30
+  },
+  "internal/core::Match": {
+   "name": "Match",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/logs.go",
+   "line": 22
+  },
+  "internal/core::Bus": {
+   "name": "Bus",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/bus.go",
+   "line": 16
+  },
+  "internal/core::chunkReader": {
+   "name": "chunkReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/tail_test.go",
+   "line": 90
+  },
+  "internal/core::FileStore": {
+   "name": "FileStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/collector/filestore.go",
+   "line": 16
+  },
+  "internal/core::marked": {
+   "name": "marked",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/lifecycle/mark.go",
+   "line": 21
+  },
+  "internal/core::Status": {
+   "name": "Status",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/lifecycle/status.go",
+   "line": 23
+  },
+  "internal/core::SwapPlan": {
+   "name": "SwapPlan",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/hardfork/hardfork.go",
+   "line": 46
+  },
+  "internal/core::NodeSwap": {
+   "name": "NodeSwap",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/hardfork/hardfork.go",
+   "line": 26
+  },
+  "internal/core::Values": {
+   "name": "Values",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/config.go",
+   "line": 20
+  },
+  "internal/core::RunView": {
+   "name": "RunView",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/parseargv.go",
+   "line": 9
+  },
+  "internal/core::Args": {
+   "name": "Args",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/args.go",
+   "line": 21
+  },
+  "internal/core::entry": {
+   "name": "entry",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/args.go",
+   "line": 12
+  },
+  "internal/core::Builder": {
+   "name": "Builder",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/builder.go",
+   "line": 21
+  },
+  "internal/core::Override": {
+   "name": "Override",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/builder.go",
+   "line": 11
+  },
+  "internal/core::Spec": {
+   "name": "Spec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/nodeconfig.go",
+   "line": 110
+  },
+  "internal/core::Network": {
+   "name": "Network",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/nodeconfig.go",
+   "line": 76
+  },
+  "internal/core::Chain": {
+   "name": "Chain",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/nodeconfig.go",
+   "line": 31
+  },
+  "internal/core::Dialect": {
+   "name": "Dialect",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/launchopt.go",
+   "line": 213
+  },
+  "internal/core::flagSpec": {
+   "name": "flagSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/launchopt.go",
+   "line": 206
+  },
+  "internal/core::Layer": {
+   "name": "Layer",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/launchopt.go",
+   "line": 184
+  },
+  "internal/core::OptionKey": {
+   "name": "OptionKey",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/launchopt.go",
+   "line": 25
+  },
+  "internal/core::ChainExt": {
+   "name": "ChainExt",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 312
+  },
+  "internal/core::Metrics": {
+   "name": "Metrics",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 282
+  },
+  "internal/core::Mining": {
+   "name": "Mining",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 256
+  },
+  "internal/core::RPCPolicy": {
+   "name": "RPCPolicy",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 227
+  },
+  "internal/core::AuthIPC": {
+   "name": "AuthIPC",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 197
+  },
+  "internal/core::WSRPC": {
+   "name": "WSRPC",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 163
+  },
+  "internal/core::HTTPRPC": {
+   "name": "HTTPRPC",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 125
+  },
+  "internal/core::P2P": {
+   "name": "P2P",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 90
+  },
+  "internal/core::Storage": {
+   "name": "Storage",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 60
+  },
+  "internal/core::Identity": {
+   "name": "Identity",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 25
+  },
+  "internal/core::Module": {
+   "name": "Module",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/nodeconfig/modules.go",
+   "line": 12
+  },
+  "internal/core::presetNode": {
+   "name": "presetNode",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/keyring_test.go",
+   "line": 21
+  },
+  "internal/core::Entry": {
+   "name": "Entry",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/preset.go",
+   "line": 16
+  },
+  "internal/core::stubStore": {
+   "name": "stubStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source_test.go",
+   "line": 19
+  },
+  "internal/core::Label": {
+   "name": "Label",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/label.go",
+   "line": 5
+  },
+  "internal/core::FileSource": {
+   "name": "FileSource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 113
+  },
+  "internal/core::MnemonicSource": {
+   "name": "MnemonicSource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 87
+  },
+  "internal/core::PrivateKeySource": {
+   "name": "PrivateKeySource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 76
+  },
+  "internal/core::RandomSource": {
+   "name": "RandomSource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 54
+  },
+  "internal/core::Source": {
+   "name": "Source",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 49
+  },
+  "internal/core::HDPath": {
+   "name": "HDPath",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/source.go",
+   "line": 26
+  },
+  "internal/core::OnceThenFile": {
+   "name": "OnceThenFile",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/password.go",
+   "line": 47
+  },
+  "internal/core::FilePassword": {
+   "name": "FilePassword",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/password.go",
+   "line": 31
+  },
+  "internal/core::StaticPassword": {
+   "name": "StaticPassword",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/password.go",
+   "line": 25
+  },
+  "internal/core::PasswordSource": {
+   "name": "PasswordSource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/password.go",
+   "line": 20
+  },
+  "internal/core::KeyRef": {
+   "name": "KeyRef",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/import.go",
+   "line": 184
+  },
+  "internal/core::ImportIn": {
+   "name": "ImportIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/import.go",
+   "line": 41
+  },
+  "internal/core::SaveKeyIn": {
+   "name": "SaveKeyIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 373
+  },
+  "internal/core::passwordFunc": {
+   "name": "passwordFunc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 273
+  },
+  "internal/core::EntryIn": {
+   "name": "EntryIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 248
+  },
+  "internal/core::ListIn": {
+   "name": "ListIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 221
+  },
+  "internal/core::CreateIn": {
+   "name": "CreateIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 147
+  },
+  "internal/core::EntryOut": {
+   "name": "EntryOut",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 135
+  },
+  "internal/core::SetOut": {
+   "name": "SetOut",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 118
+  },
+  "internal/core::SetRef": {
+   "name": "SetRef",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 70
+  },
+  "internal/core::OpenerFor": {
+   "name": "OpenerFor",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 30
+  },
+  "internal/core::Opener": {
+   "name": "Opener",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/operation.go",
+   "line": 23
+  },
+  "internal/core::recordingOpener": {
+   "name": "recordingOpener",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/disclosure_test.go",
+   "line": 59
+  },
+  "internal/core::recordingStore": {
+   "name": "recordingStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/operation/disclosure_test.go",
+   "line": 29
+  },
+  "internal/core::PrivateKey": {
+   "name": "PrivateKey",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/derive/privatekey.go",
+   "line": 34
+  },
+  "internal/core::BLS": {
+   "name": "BLS",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/derive/identity.go",
+   "line": 42
+  },
+  "internal/core::Derivation": {
+   "name": "Derivation",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/derive/identity.go",
+   "line": 18
+  },
+  "internal/core::GenerateOpts": {
+   "name": "GenerateOpts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/generate.go",
+   "line": 33
+  },
+  "internal/core::KeySet": {
+   "name": "KeySet",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/keyset.go",
+   "line": 48
+  },
+  "internal/core::entryFile": {
+   "name": "entryFile",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/keyset.go",
+   "line": 34
+  },
+  "internal/core::KeystoreBackend": {
+   "name": "KeystoreBackend",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/backend.go",
+   "line": 57
+  },
+  "internal/core::RawFileBackend": {
+   "name": "RawFileBackend",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/backend.go",
+   "line": 36
+  },
+  "internal/core::Backend": {
+   "name": "Backend",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/backend.go",
+   "line": 26
+  },
+  "internal/core::DeclaredKeys": {
+   "name": "DeclaredKeys",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/declared.go",
+   "line": 29
+  },
+  "internal/core::GeneratedKeys": {
+   "name": "GeneratedKeys",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/source.go",
+   "line": 85
+  },
+  "internal/core::PresetKeys": {
+   "name": "PresetKeys",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/source.go",
+   "line": 46
+  },
+  "internal/core::KeySource": {
+   "name": "KeySource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/keyring/store/source.go",
+   "line": 31
+  },
+  "internal/core::ProbeSpec": {
+   "name": "ProbeSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 159
+  },
+  "internal/core::ConsensusSpec": {
+   "name": "ConsensusSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 153
+  },
+  "internal/core::GenesisSpec": {
+   "name": "GenesisSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 136
+  },
+  "internal/core::BuildSpec": {
+   "name": "BuildSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 126
+  },
+  "internal/core::BootstrapSpec": {
+   "name": "BootstrapSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 107
+  },
+  "internal/core::Manifest": {
+   "name": "Manifest",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/manifest.go",
+   "line": 18
+  },
+  "internal/core::StaticPlugin": {
+   "name": "StaticPlugin",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 244
+  },
+  "internal/core::ChainPlugin": {
+   "name": "ChainPlugin",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 210
+  },
+  "internal/core::RuntimeValidatorReader": {
+   "name": "RuntimeValidatorReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 203
+  },
+  "internal/core::RingAccountReader": {
+   "name": "RingAccountReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 190
+  },
+  "internal/core::RingAccount": {
+   "name": "RingAccount",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 160
+  },
+  "internal/core::GenesisValidatorReader": {
+   "name": "GenesisValidatorReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 141
+  },
+  "internal/core::LaunchPolicy": {
+   "name": "LaunchPolicy",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 103
+  },
+  "internal/core::ConsensusFamily": {
+   "name": "ConsensusFamily",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 33
+  },
+  "internal/core::GenesisParams": {
+   "name": "GenesisParams",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/registry.go",
+   "line": 20
+  },
+  "internal/core::NodeComposition": {
+   "name": "NodeComposition",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capabilities.go",
+   "line": 20
+  },
+  "internal/core::Capabilities": {
+   "name": "Capabilities",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capabilities.go",
+   "line": 7
+  },
+  "internal/core::Caller": {
+   "name": "Caller",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/consensus.go",
+   "line": 16
+  },
+  "internal/core::Capability": {
+   "name": "Capability",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capability.go",
+   "line": 71
+  },
+  "internal/core::Handler": {
+   "name": "Handler",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capability.go",
+   "line": 68
+  },
+  "internal/core::Descriptor": {
+   "name": "Descriptor",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capability.go",
+   "line": 41
+  },
+  "internal/core::Param": {
+   "name": "Param",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/capability.go",
+   "line": 33
+  },
+  "internal/core::fakeCaller": {
+   "name": "fakeCaller",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/registry/consensus_test.go",
+   "line": 11
+  },
+  "internal/core::TestReport": {
+   "name": "TestReport",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/report/report.go",
+   "line": 48
+  },
+  "internal/core::Origin": {
+   "name": "Origin",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/origin/origin.go",
+   "line": 29
+  },
+  "internal/core::RoleSupport": {
+   "name": "RoleSupport",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/peering.go",
+   "line": 45
+  },
+  "internal/core::Peering": {
+   "name": "Peering",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/peering.go",
+   "line": 11
+  },
+  "internal/core::Reservation": {
+   "name": "Reservation",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/reservation.go",
+   "line": 9
+  },
+  "internal/core::LaunchReq": {
+   "name": "LaunchReq",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/launchreq.go",
+   "line": 16
+  },
+  "internal/core::Layout": {
+   "name": "Layout",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/layout.go",
+   "line": 13
+  },
+  "internal/core::RPCEndpoint": {
+   "name": "RPCEndpoint",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/attached.go",
+   "line": 14
+  },
+  "internal/core::Topology": {
+   "name": "Topology",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/topology.go",
+   "line": 24
+  },
+  "internal/core::Record": {
+   "name": "Record",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/record.go",
+   "line": 14
+  },
+  "internal/core::NodeSet": {
+   "name": "NodeSet",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/node.go",
+   "line": 129
+  },
+  "internal/core::Auth": {
+   "name": "Auth",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/node.go",
+   "line": 124
+  },
+  "internal/core::Node": {
+   "name": "Node",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/node.go",
+   "line": 77
+  },
+  "internal/core::Endpoints": {
+   "name": "Endpoints",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/node.go",
+   "line": 57
+  },
+  "internal/core::Role": {
+   "name": "Role",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/node.go",
+   "line": 27
+  },
+  "internal/core::Map": {
+   "name": "Map",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/placement.go",
+   "line": 32
+  },
+  "internal/core::Placement": {
+   "name": "Placement",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/node/placement.go",
+   "line": 10
+  },
+  "internal/core::Subscription": {
+   "name": "Subscription",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/rpc/subscribe.go",
+   "line": 13
+  },
+  "internal/core::SendTxArgs": {
+   "name": "SendTxArgs",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/rpc/client.go",
+   "line": 341
+  },
+  "internal/core::Block": {
+   "name": "Block",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/rpc/client.go",
+   "line": 273
+  },
+  "internal/core::LogFilter": {
+   "name": "LogFilter",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/rpc/client.go",
+   "line": 201
+  },
+  "internal/core::Client": {
+   "name": "Client",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/rpc/client.go",
+   "line": 21
+  },
+  "internal/core::scView": {
+   "name": "scView",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/genesis_test.go",
+   "line": 173
+  },
+  "internal/core::genesisView": {
+   "name": "genesisView",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/genesis_test.go",
+   "line": 24
+  },
+  "internal/core::SourceMode": {
+   "name": "SourceMode",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/builder.go",
+   "line": 6
+  },
+  "internal/core::NetworkOptions": {
+   "name": "NetworkOptions",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/genesis.go",
+   "line": 66
+  },
+  "internal/core::Inputs": {
+   "name": "Inputs",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/genesis.go",
+   "line": 25
+  },
+  "internal/core::SourceProvider": {
+   "name": "SourceProvider",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 199
+  },
+  "internal/core::Config": {
+   "name": "Config",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 143
+  },
+  "internal/core::PresetSource": {
+   "name": "PresetSource",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 71
+  },
+  "internal/core::Artifacts": {
+   "name": "Artifacts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 56
+  },
+  "internal/core::Request": {
+   "name": "Request",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 38
+  },
+  "internal/core::CommandRunner": {
+   "name": "CommandRunner",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/genesis/source.go",
+   "line": 19
+  },
+  "internal/core::ChainFacts": {
+   "name": "ChainFacts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/resolve.go",
+   "line": 36
+  },
+  "internal/core::FromTopologyIn": {
+   "name": "FromTopologyIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/fromtopology.go",
+   "line": 63
+  },
+  "internal/core::FileReader": {
+   "name": "FileReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/keyset.go",
+   "line": 17
+  },
+  "internal/core::FromPresetIn": {
+   "name": "FromPresetIn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/frompreset.go",
+   "line": 13
+  },
+  "internal/core::WeiText": {
+   "name": "WeiText",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 153
+  },
+  "internal/core::GovernanceDecl": {
+   "name": "GovernanceDecl",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 141
+  },
+  "internal/core::GenesisDecl": {
+   "name": "GenesisDecl",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 130
+  },
+  "internal/core::Alloc": {
+   "name": "Alloc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 123
+  },
+  "internal/core::ValidatorsDecl": {
+   "name": "ValidatorsDecl",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 113
+  },
+  "internal/core::AccountRef": {
+   "name": "AccountRef",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 105
+  },
+  "internal/core::NodeKeyRef": {
+   "name": "NodeKeyRef",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 98
+  },
+  "internal/core::BinaryOverride": {
+   "name": "BinaryOverride",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 60
+  },
+  "internal/core::Binaries": {
+   "name": "Binaries",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 53
+  },
+  "internal/core::Blueprint": {
+   "name": "Blueprint",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/blueprint.go",
+   "line": 19
+  },
+  "internal/core::ResolvedNode": {
+   "name": "ResolvedNode",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/resolved.go",
+   "line": 45
+  },
+  "internal/core::ResolvedNetwork": {
+   "name": "ResolvedNetwork",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/blueprint/resolved.go",
+   "line": 18
+  },
+  "internal/core::Liveness": {
+   "name": "Liveness",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/preflight/preflight.go",
+   "line": 244
+  },
+  "internal/core::Decision": {
+   "name": "Decision",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/preflight/preflight.go",
+   "line": 130
+  },
+  "internal/core::Verdict": {
+   "name": "Verdict",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/preflight/preflight.go",
+   "line": 98
+  },
+  "internal/core::Want": {
+   "name": "Want",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/preflight/preflight.go",
+   "line": 81
+  },
+  "internal/core::Have": {
+   "name": "Have",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/preflight/preflight.go",
+   "line": 52
+  },
+  "internal/core::Plan": {
+   "name": "Plan",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/plan.go",
+   "line": 12
+  },
+  "internal/core::ledgerFile": {
+   "name": "ledgerFile",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/ledger.go",
+   "line": 33
+  },
+  "internal/core::Ledger": {
+   "name": "Ledger",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/ledger.go",
+   "line": 24
+  },
+  "internal/core::LocalDriver": {
+   "name": "LocalDriver",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/local.go",
+   "line": 19
+  },
+  "internal/core::ExecFn": {
+   "name": "ExecFn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/local.go",
+   "line": 16
+  },
+  "internal/core::PortProber": {
+   "name": "PortProber",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote.go",
+   "line": 196
+  },
+  "internal/core::RemoteDriver": {
+   "name": "RemoteDriver",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote.go",
+   "line": 58
+  },
+  "internal/core::Runner": {
+   "name": "Runner",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote.go",
+   "line": 20
+  },
+  "internal/core::Proc": {
+   "name": "Proc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/process.go",
+   "line": 12
+  },
+  "internal/core::RemoteFileStore": {
+   "name": "RemoteFileStore",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote_store.go",
+   "line": 20
+  },
+  "internal/core::fakeRunner": {
+   "name": "fakeRunner",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote_test.go",
+   "line": 14
+  },
+  "internal/core::CmdlineInspector": {
+   "name": "CmdlineInspector",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/inspect.go",
+   "line": 39
+  },
+  "internal/core::Commander": {
+   "name": "Commander",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/inspect.go",
+   "line": 30
+  },
+  "internal/core::ProcessInspector": {
+   "name": "ProcessInspector",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/inspect.go",
+   "line": 19
+  },
+  "internal/core::FileProvisioner": {
+   "name": "FileProvisioner",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/driver.go",
+   "line": 78
+  },
+  "internal/core::Initializer": {
+   "name": "Initializer",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/driver.go",
+   "line": 69
+  },
+  "internal/core::Driver": {
+   "name": "Driver",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/driver.go",
+   "line": 48
+  },
+  "internal/core::Handle": {
+   "name": "Handle",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/driver.go",
+   "line": 42
+  },
+  "internal/core::NodeSpec": {
+   "name": "NodeSpec",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/driver.go",
+   "line": 21
+  },
+  "internal/core::recordingDriver": {
+   "name": "recordingDriver",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/lifecycle_test.go",
+   "line": 15
+  },
+  "internal/core::FailureMode": {
+   "name": "FailureMode",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/failuremode.go",
+   "line": 6
+  },
+  "internal/core::RemoteLogReader": {
+   "name": "RemoteLogReader",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/process/remote_log.go",
+   "line": 19
+  },
+  "internal/core::authFailed": {
+   "name": "authFailed",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh_test.go",
+   "line": 129
+  },
+  "internal/core::execFn": {
+   "name": "execFn",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh_test.go",
+   "line": 30
+  },
+  "internal/core::sshTestServer": {
+   "name": "sshTestServer",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh_test.go",
+   "line": 23
+  },
+  "internal/core::headerTransport": {
+   "name": "headerTransport",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/auth.go",
+   "line": 24
+  },
+  "internal/core::AddrMap": {
+   "name": "AddrMap",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/addrmap.go",
+   "line": 12
+  },
+  "internal/core::HostKeyPolicy": {
+   "name": "HostKeyPolicy",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh.go",
+   "line": 258
+  },
+  "internal/core::ExecResult": {
+   "name": "ExecResult",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh.go",
+   "line": 200
+  },
+  "internal/core::Credentials": {
+   "name": "Credentials",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/remote/ssh.go",
+   "line": 39
+  },
+  "internal/core::envDoc": {
+   "name": "envDoc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/environment_impl.go",
+   "line": 142
+  },
+  "internal/core::env": {
+   "name": "env",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/environment_impl.go",
+   "line": 15
+  },
+  "internal/core::compState": {
+   "name": "compState",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/composition_test.go",
+   "line": 15
+  },
+  "internal/core::TestRecord": {
+   "name": "TestRecord",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session.go",
+   "line": 64
+  },
+  "internal/core::Environment": {
+   "name": "Environment",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session.go",
+   "line": 43
+  },
+  "internal/core::Session": {
+   "name": "Session",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session.go",
+   "line": 29
+  },
+  "internal/core::TestStatus": {
+   "name": "TestStatus",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session.go",
+   "line": 14
+  },
+  "internal/core::Fingerprint": {
+   "name": "Fingerprint",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session.go",
+   "line": 11
+  },
+  "internal/core::sess": {
+   "name": "sess",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/session_impl.go",
+   "line": 95
+  },
+  "internal/core::TestArtifacts": {
+   "name": "TestArtifacts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record.go",
+   "line": 63
+  },
+  "internal/core::ArtifactRef": {
+   "name": "ArtifactRef",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record.go",
+   "line": 48
+  },
+  "internal/core::PostResult": {
+   "name": "PostResult",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record.go",
+   "line": 36
+  },
+  "internal/core::AssertResult": {
+   "name": "AssertResult",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record.go",
+   "line": 23
+  },
+  "internal/core::StepResult": {
+   "name": "StepResult",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record.go",
+   "line": 5
+  },
+  "internal/core::Held": {
+   "name": "Held",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/lock.go",
+   "line": 54
+  },
+  "internal/core::LockState": {
+   "name": "LockState",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/lock.go",
+   "line": 33
+  },
+  "internal/core::Lock": {
+   "name": "Lock",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/lock.go",
+   "line": 25
+  },
+  "internal/core::statusDoc": {
+   "name": "statusDoc",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record_impl.go",
+   "line": 87
+  },
+  "internal/core::record": {
+   "name": "record",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/record_impl.go",
+   "line": 23
+  },
+  "internal/core::Counts": {
+   "name": "Counts",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/read.go",
+   "line": 31
+  },
+  "internal/core::TestResult": {
+   "name": "TestResult",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/read.go",
+   "line": 23
+  },
+  "internal/core::Composition": {
+   "name": "Composition",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/composition.go",
+   "line": 85
+  },
+  "internal/core::Step": {
+   "name": "Step",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/composition.go",
+   "line": 70
+  },
+  "internal/core::StepState": {
+   "name": "StepState",
+   "kind": "type_spec",
+   "module": "internal/core",
+   "lang": "go",
+   "file": "internal/core/session/composition.go",
+   "line": 46
   },
   "internal/app::NodeReadings": {
    "name": "NodeReadings",
@@ -1401,32 +3687,32 @@
    "file": "internal/app/transfer.go",
    "line": 32
   },
-  "internal/app::NetPlanIn": {
-   "name": "NetPlanIn",
+  "internal/app::NetworkPlanIn": {
+   "name": "NetworkPlanIn",
    "kind": "type_spec",
    "module": "internal/app",
    "lang": "go",
    "file": "internal/app/netmap_query.go",
    "line": 221
   },
-  "internal/app::NetPoolOut": {
-   "name": "NetPoolOut",
+  "internal/app::NetworkPoolOut": {
+   "name": "NetworkPoolOut",
    "kind": "type_spec",
    "module": "internal/app",
    "lang": "go",
    "file": "internal/app/netmap_query.go",
    "line": 173
   },
-  "internal/app::NetPoolIn": {
-   "name": "NetPoolIn",
+  "internal/app::NetworkPoolIn": {
+   "name": "NetworkPoolIn",
    "kind": "type_spec",
    "module": "internal/app",
    "lang": "go",
    "file": "internal/app/netmap_query.go",
    "line": 163
   },
-  "internal/app::NetMapOut": {
-   "name": "NetMapOut",
+  "internal/app::NetworkMapOut": {
+   "name": "NetworkMapOut",
    "kind": "type_spec",
    "module": "internal/app",
    "lang": "go",
@@ -1441,8 +3727,8 @@
    "file": "internal/app/netmap_query.go",
    "line": 40
   },
-  "internal/app::NetMapIn": {
-   "name": "NetMapIn",
+  "internal/app::NetworkMapIn": {
+   "name": "NetworkMapIn",
    "kind": "type_spec",
    "module": "internal/app",
    "lang": "go",
@@ -1481,30 +3767,6 @@
    "file": "internal/preset/key.go",
    "line": 22
   },
-  "internal/preset::Governance": {
-   "name": "Governance",
-   "kind": "type_spec",
-   "module": "internal/preset",
-   "lang": "go",
-   "file": "internal/preset/chain.go",
-   "line": 90
-  },
-  "internal/preset::ChainBinding": {
-   "name": "ChainBinding",
-   "kind": "type_spec",
-   "module": "internal/preset",
-   "lang": "go",
-   "file": "internal/preset/chain.go",
-   "line": 81
-  },
-  "internal/preset::Chain": {
-   "name": "Chain",
-   "kind": "type_spec",
-   "module": "internal/preset",
-   "lang": "go",
-   "file": "internal/preset/chain.go",
-   "line": 27
-  },
   "internal/preset::KeyFile": {
    "name": "KeyFile",
    "kind": "type_spec",
@@ -1521,76 +3783,68 @@
    "file": "internal/preset/loadkey.go",
    "line": 26
   },
-  "internal/chainsetup::upPlan": {
-   "name": "upPlan",
+  "internal/chainsetup::NewOpts": {
+   "name": "NewOpts",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_up.go",
-   "line": 161
+   "file": "internal/chainsetup/workspace_new.go",
+   "line": 37
   },
-  "internal/chainsetup::NetUpOut": {
-   "name": "NetUpOut",
+  "internal/chainsetup::band": {
+   "name": "band",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_up.go",
-   "line": 123
+   "file": "internal/chainsetup/protocol_test.go",
+   "line": 21
   },
-  "internal/chainsetup::NetUpIn": {
-   "name": "NetUpIn",
+  "internal/chainsetup::verifying": {
+   "name": "verifying",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_up.go",
-   "line": 35
+   "file": "internal/chainsetup/stage_compare.go",
+   "line": 170
   },
-  "internal/chainsetup::UpStage": {
-   "name": "UpStage",
+  "internal/chainsetup::restartingNodes": {
+   "name": "restartingNodes",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_up.go",
-   "line": 22
+   "file": "internal/chainsetup/stage_compare.go",
+   "line": 139
   },
-  "internal/chainsetup::NetEnodesOut": {
-   "name": "NetEnodesOut",
+  "internal/chainsetup::stoppingToRebuild": {
+   "name": "stoppingToRebuild",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_enode.go",
-   "line": 36
+   "file": "internal/chainsetup/stage_compare.go",
+   "line": 111
   },
-  "internal/chainsetup::NodeEnode": {
-   "name": "NodeEnode",
+  "internal/chainsetup::comparing": {
+   "name": "comparing",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_enode.go",
-   "line": 29
+   "file": "internal/chainsetup/stage_compare.go",
+   "line": 30
   },
-  "internal/chainsetup::NetEnodesIn": {
-   "name": "NetEnodesIn",
+  "internal/chainsetup::ChainBaselineOut": {
+   "name": "ChainBaselineOut",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_enode.go",
-   "line": 20
-  },
-  "internal/chainsetup::NetBaselineOut": {
-   "name": "NetBaselineOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/baseline.go",
+   "file": "internal/chainsetup/observe_baseline.go",
    "line": 125
   },
-  "internal/chainsetup::NetBaselineIn": {
-   "name": "NetBaselineIn",
+  "internal/chainsetup::ChainBaselineIn": {
+   "name": "ChainBaselineIn",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/baseline.go",
+   "file": "internal/chainsetup/observe_baseline.go",
    "line": 115
   },
   "internal/chainsetup::BaselineCheck": {
@@ -1598,24 +3852,72 @@
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/baseline.go",
+   "file": "internal/chainsetup/observe_baseline.go",
    "line": 76
   },
-  "internal/chainsetup::NetResumeOut": {
-   "name": "NetResumeOut",
+  "internal/chainsetup::genesisLeaf": {
+   "name": "genesisLeaf",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_resume.go",
-   "line": 31
+   "file": "internal/chainsetup/stage_genesis.go",
+   "line": 97
   },
-  "internal/chainsetup::NetResumeIn": {
-   "name": "NetResumeIn",
+  "internal/chainsetup::buildingGenesis": {
+   "name": "buildingGenesis",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_resume.go",
-   "line": 23
+   "file": "internal/chainsetup/stage_genesis.go",
+   "line": 26
+  },
+  "internal/chainsetup::buildingNodeTable": {
+   "name": "buildingNodeTable",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_nodetable.go",
+   "line": 15
+  },
+  "internal/chainsetup::recordingRun": {
+   "name": "recordingRun",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_launch.go",
+   "line": 176
+  },
+  "internal/chainsetup::runningPhaseActions": {
+   "name": "runningPhaseActions",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_launch.go",
+   "line": 145
+  },
+  "internal/chainsetup::launchingPhase": {
+   "name": "launchingPhase",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_launch.go",
+   "line": 120
+  },
+  "internal/chainsetup::launching": {
+   "name": "launching",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_launch.go",
+   "line": 28
+  },
+  "internal/chainsetup::Deps": {
+   "name": "Deps",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/deps.go",
+   "line": 19
   },
   "internal/chainsetup::stubDriver": {
    "name": "stubDriver",
@@ -1623,23 +3925,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/network_test.go",
-   "line": 25
-  },
-  "internal/chainsetup::runningNode": {
-   "name": "runningNode",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/introspect.go",
-   "line": 45
-  },
-  "internal/chainsetup::nodeAddr": {
-   "name": "nodeAddr",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/introspect.go",
-   "line": 34
+   "line": 26
   },
   "internal/chainsetup::initStub": {
    "name": "initStub",
@@ -1647,39 +3933,31 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse_up_test.go",
-   "line": 125
+   "line": 126
   },
-  "internal/chainsetup::HardforkExecuteOut": {
-   "name": "HardforkExecuteOut",
+  "internal/chainsetup::initializingDatadirs": {
+   "name": "initializingDatadirs",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_hardfork.go",
-   "line": 86
+   "file": "internal/chainsetup/stage_init.go",
+   "line": 15
   },
-  "internal/chainsetup::HardforkExecuteIn": {
-   "name": "HardforkExecuteIn",
+  "internal/chainsetup::genesisOverlayFile": {
+   "name": "genesisOverlayFile",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_hardfork.go",
-   "line": 76
+   "file": "internal/chainsetup/steps_genesis.go",
+   "line": 732
   },
-  "internal/chainsetup::HardforkPlanOut": {
-   "name": "HardforkPlanOut",
+  "internal/chainsetup::ChainGenesisIn": {
+   "name": "ChainGenesisIn",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_hardfork.go",
-   "line": 34
-  },
-  "internal/chainsetup::HardforkPlanIn": {
-   "name": "HardforkPlanIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_hardfork.go",
-   "line": 19
+   "file": "internal/chainsetup/steps_genesis.go",
+   "line": 615
   },
   "internal/chainsetup::ForkCarrier": {
    "name": "ForkCarrier",
@@ -1687,7 +3965,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_genesis.go",
-   "line": 144
+   "line": 145
   },
   "internal/chainsetup::GenesisFork": {
    "name": "GenesisFork",
@@ -1695,7 +3973,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_genesis.go",
-   "line": 110
+   "line": 111
   },
   "internal/chainsetup::GenesisOpts": {
    "name": "GenesisOpts",
@@ -1703,71 +3981,303 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_genesis.go",
-   "line": 59
-  },
-  "internal/chainsetup::NetLaunchOptsOut": {
-   "name": "NetLaunchOptsOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 463
-  },
-  "internal/chainsetup::NetLaunchOptsIn": {
-   "name": "NetLaunchOptsIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 453
-  },
-  "internal/chainsetup::NetConfigIn": {
-   "name": "NetConfigIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 415
-  },
-  "internal/chainsetup::genesisOverlayFile": {
-   "name": "genesisOverlayFile",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 394
-  },
-  "internal/chainsetup::NetGenesisIn": {
-   "name": "NetGenesisIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 263
-  },
-  "internal/chainsetup::NetAllocateIn": {
-   "name": "NetAllocateIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 130
-  },
-  "internal/chainsetup::NetKeysIn": {
-   "name": "NetKeysIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 100
+   "line": 60
   },
   "internal/chainsetup::StepOut": {
    "name": "StepOut",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_steps.go",
-   "line": 90
+   "file": "internal/chainsetup/state_step.go",
+   "line": 13
+  },
+  "internal/chainsetup::reconciling": {
+   "name": "reconciling",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_reconcile.go",
+   "line": 24
+  },
+  "internal/chainsetup::stoppedToRebuild": {
+   "name": "stoppedToRebuild",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 457
+  },
+  "internal/chainsetup::nodesRestarted": {
+   "name": "nodesRestarted",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 452
+  },
+  "internal/chainsetup::comparisonMade": {
+   "name": "comparisonMade",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 447
+  },
+  "internal/chainsetup::reconcileRefused": {
+   "name": "reconcileRefused",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 442
+  },
+  "internal/chainsetup::reconciled": {
+   "name": "reconciled",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 437
+  },
+  "internal/chainsetup::nodesLaunched": {
+   "name": "nodesLaunched",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 428
+  },
+  "internal/chainsetup::phaseActionsDone": {
+   "name": "phaseActionsDone",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 423
+  },
+  "internal/chainsetup::phaseLaunched": {
+   "name": "phaseLaunched",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 418
+  },
+  "internal/chainsetup::launchPlanned": {
+   "name": "launchPlanned",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 413
+  },
+  "internal/chainsetup::datadirsInitialized": {
+   "name": "datadirsInitialized",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 405
+  },
+  "internal/chainsetup::inputsDeployed": {
+   "name": "inputsDeployed",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 398
+  },
+  "internal/chainsetup::inputsPresent": {
+   "name": "inputsPresent",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 390
+  },
+  "internal/chainsetup::nodeCommandBuilt": {
+   "name": "nodeCommandBuilt",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 381
+  },
+  "internal/chainsetup::nodeConfigBuilt": {
+   "name": "nodeConfigBuilt",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 374
+  },
+  "internal/chainsetup::genesisBuilt": {
+   "name": "genesisBuilt",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 367
+  },
+  "internal/chainsetup::genesisWayChosen": {
+   "name": "genesisWayChosen",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 362
+  },
+  "internal/chainsetup::keysEnsured": {
+   "name": "keysEnsured",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 354
+  },
+  "internal/chainsetup::keySourceChosen": {
+   "name": "keySourceChosen",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 349
+  },
+  "internal/chainsetup::nodeTableBuilt": {
+   "name": "nodeTableBuilt",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 341
+  },
+  "internal/chainsetup::stageFailed": {
+   "name": "stageFailed",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 333
+  },
+  "internal/chainsetup::workspaceOpened": {
+   "name": "workspaceOpened",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 326
+  },
+  "internal/chainsetup::stageReport": {
+   "name": "stageReport",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 318
+  },
+  "internal/chainsetup::NodeDied": {
+   "name": "NodeDied",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 304
+  },
+  "internal/chainsetup::OnQuit": {
+   "name": "OnQuit",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 298
+  },
+  "internal/chainsetup::PostCompose": {
+   "name": "PostCompose",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 288
+  },
+  "internal/chainsetup::ClearError": {
+   "name": "ClearError",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 278
+  },
+  "internal/chainsetup::Stop": {
+   "name": "Stop",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 272
+  },
+  "internal/chainsetup::ComposeComparing": {
+   "name": "ComposeComparing",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 266
+  },
+  "internal/chainsetup::productionHandedOver": {
+   "name": "productionHandedOver",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 260
+  },
+  "internal/chainsetup::forkBoundaryReached": {
+   "name": "forkBoundaryReached",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 255
+  },
+  "internal/chainsetup::forkStandingRead": {
+   "name": "forkStandingRead",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 247
+  },
+  "internal/chainsetup::operationDone": {
+   "name": "operationDone",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 238
+  },
+  "internal/chainsetup::Operate": {
+   "name": "Operate",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 232
+  },
+  "internal/chainsetup::RunStep": {
+   "name": "RunStep",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 219
+  },
+  "internal/chainsetup::Compose": {
+   "name": "Compose",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/protocol.go",
+   "line": 204
   },
   "internal/chainsetup::inspectingDriver": {
    "name": "inspectingDriver",
@@ -1775,87 +4285,55 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/resume_test.go",
-   "line": 21
+   "line": 22
   },
-  "internal/chainsetup::NetHealthOut": {
-   "name": "NetHealthOut",
+  "internal/chainsetup::hardforking": {
+   "name": "hardforking",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 127
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 109
   },
-  "internal/chainsetup::NetHealthIn": {
-   "name": "NetHealthIn",
+  "internal/chainsetup::swapping": {
+   "name": "swapping",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 122
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 90
   },
-  "internal/chainsetup::NetLogsOut": {
-   "name": "NetLogsOut",
+  "internal/chainsetup::restarting": {
+   "name": "restarting",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 106
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 71
   },
-  "internal/chainsetup::NetLogsIn": {
-   "name": "NetLogsIn",
+  "internal/chainsetup::removing": {
+   "name": "removing",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 99
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 53
   },
-  "internal/chainsetup::NetRmIn": {
-   "name": "NetRmIn",
+  "internal/chainsetup::stopping": {
+   "name": "stopping",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 86
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 35
   },
-  "internal/chainsetup::NetRestartIn": {
-   "name": "NetRestartIn",
+  "internal/chainsetup::operation": {
+   "name": "operation",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 72
-  },
-  "internal/chainsetup::NetStopIn": {
-   "name": "NetStopIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 59
-  },
-  "internal/chainsetup::NetStartIn": {
-   "name": "NetStartIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 45
-  },
-  "internal/chainsetup::NetInitIn": {
-   "name": "NetInitIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 31
-  },
-  "internal/chainsetup::NetProvisionIn": {
-   "name": "NetProvisionIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_lifecycle.go",
-   "line": 17
+   "file": "internal/chainsetup/stage_operate.go",
+   "line": 28
   },
   "internal/chainsetup::recordingDriver": {
    "name": "recordingDriver",
@@ -1871,7 +4349,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/occupancy.go",
-   "line": 246
+   "line": 254
   },
   "internal/chainsetup::portKey": {
    "name": "portKey",
@@ -1879,127 +4357,47 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/occupancy.go",
-   "line": 237
+   "line": 245
   },
-  "internal/chainsetup::NetForkOut": {
-   "name": "NetForkOut",
+  "internal/chainsetup::buildingNodeCommand": {
+   "name": "buildingNodeCommand",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 325
+   "file": "internal/chainsetup/stage_nodecommand.go",
+   "line": 16
   },
-  "internal/chainsetup::NetForkIn": {
-   "name": "NetForkIn",
+  "internal/chainsetup::crossedFork": {
+   "name": "crossedFork",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 319
+   "file": "internal/chainsetup/stage_crossfork.go",
+   "line": 182
   },
-  "internal/chainsetup::NetCrossForkOut": {
-   "name": "NetCrossForkOut",
+  "internal/chainsetup::handingOver": {
+   "name": "handingOver",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 284
+   "file": "internal/chainsetup/stage_crossfork.go",
+   "line": 153
   },
-  "internal/chainsetup::NetCrossForkIn": {
-   "name": "NetCrossForkIn",
+  "internal/chainsetup::beforeFork": {
+   "name": "beforeFork",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 276
+   "file": "internal/chainsetup/stage_crossfork.go",
+   "line": 128
   },
-  "internal/chainsetup::NetworkRemoveOut": {
-   "name": "NetworkRemoveOut",
+  "internal/chainsetup::crossingFork": {
+   "name": "crossingFork",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 241
-  },
-  "internal/chainsetup::NetworkRemoveIn": {
-   "name": "NetworkRemoveIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 236
-  },
-  "internal/chainsetup::NodeSwapIn": {
-   "name": "NodeSwapIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 162
-  },
-  "internal/chainsetup::NodeStartOut": {
-   "name": "NodeStartOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 139
-  },
-  "internal/chainsetup::NodeStartIn": {
-   "name": "NodeStartIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 133
-  },
-  "internal/chainsetup::NodeStopIn": {
-   "name": "NodeStopIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 113
-  },
-  "internal/chainsetup::NetworkStopOut": {
-   "name": "NetworkStopOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 77
-  },
-  "internal/chainsetup::NetworkStopIn": {
-   "name": "NetworkStopIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 72
-  },
-  "internal/chainsetup::NetworkStatusOut": {
-   "name": "NetworkStatusOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 29
-  },
-  "internal/chainsetup::NetworkStatusIn": {
-   "name": "NetworkStatusIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs_network.go",
-   "line": 22
-  },
-  "internal/chainsetup::NewOpts": {
-   "name": "NewOpts",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/new.go",
-   "line": 29
+   "file": "internal/chainsetup/stage_crossfork.go",
+   "line": 31
   },
   "internal/chainsetup::runNode": {
    "name": "runNode",
@@ -2007,7 +4405,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/record.go",
-   "line": 51
+   "line": 53
   },
   "internal/chainsetup::runTarget": {
    "name": "runTarget",
@@ -2015,7 +4413,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/record.go",
-   "line": 42
+   "line": 44
   },
   "internal/chainsetup::runManifest": {
    "name": "runManifest",
@@ -2023,23 +4421,31 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/record.go",
-   "line": 28
+   "line": 30
   },
-  "internal/chainsetup::composeRun": {
-   "name": "composeRun",
+  "internal/chainsetup::buildingNodeConfig": {
+   "name": "buildingNodeConfig",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/statedriven.go",
-   "line": 130
+   "file": "internal/chainsetup/stage_config.go",
+   "line": 15
   },
-  "internal/chainsetup::composeStage": {
-   "name": "composeStage",
+  "internal/chainsetup::deployOutcome": {
+   "name": "deployOutcome",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/statedriven.go",
-   "line": 31
+   "file": "internal/chainsetup/stage_deploy.go",
+   "line": 86
+  },
+  "internal/chainsetup::deployingInputs": {
+   "name": "deployingInputs",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_deploy.go",
+   "line": 22
   },
   "internal/chainsetup::verbNeed": {
    "name": "verbNeed",
@@ -2047,7 +4453,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/verb_needs.go",
-   "line": 65
+   "line": 67
   },
   "internal/chainsetup::nodeNeed": {
    "name": "nodeNeed",
@@ -2055,7 +4461,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/verb_needs.go",
-   "line": 51
+   "line": 53
   },
   "internal/chainsetup::runNeed": {
    "name": "runNeed",
@@ -2063,7 +4469,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/verb_needs.go",
-   "line": 30
+   "line": 32
   },
   "internal/chainsetup::candidateInputs": {
    "name": "candidateInputs",
@@ -2071,15 +4477,15 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 328
+   "line": 327
   },
-  "internal/chainsetup::reuseSnapshot": {
-   "name": "reuseSnapshot",
+  "internal/chainsetup::ReuseSnapshot": {
+   "name": "ReuseSnapshot",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 126
+   "line": 125
   },
   "internal/chainsetup::reusePlan": {
    "name": "reusePlan",
@@ -2087,7 +4493,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 56
+   "line": 55
   },
   "internal/chainsetup::reuseDisposition": {
    "name": "reuseDisposition",
@@ -2095,7 +4501,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 46
+   "line": 45
   },
   "internal/chainsetup::nodeTarget": {
    "name": "nodeTarget",
@@ -2103,7 +4509,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 38
+   "line": 37
   },
   "internal/chainsetup::nodeBaseline": {
    "name": "nodeBaseline",
@@ -2111,7 +4517,31 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/reuse.go",
-   "line": 29
+   "line": 28
+  },
+  "internal/chainsetup::runningNode": {
+   "name": "runningNode",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/observe_introspect.go",
+   "line": 45
+  },
+  "internal/chainsetup::nodeAddr": {
+   "name": "nodeAddr",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/observe_introspect.go",
+   "line": 34
+  },
+  "internal/chainsetup::ChainAllocateIn": {
+   "name": "ChainAllocateIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/steps_place.go",
+   "line": 408
   },
   "internal/chainsetup::AllocateOpts": {
    "name": "AllocateOpts",
@@ -2119,18 +4549,18 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_place.go",
-   "line": 17
+   "line": 21
   },
-  "internal/chainsetup::NetVerifyValidatorsOut": {
-   "name": "NetVerifyValidatorsOut",
+  "internal/chainsetup::ChainVerifyValidatorsOut": {
+   "name": "ChainVerifyValidatorsOut",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/verify_validators.go",
    "line": 83
   },
-  "internal/chainsetup::NetVerifyValidatorsIn": {
-   "name": "NetVerifyValidatorsIn",
+  "internal/chainsetup::ChainVerifyValidatorsIn": {
+   "name": "ChainVerifyValidatorsIn",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
@@ -2145,21 +4575,37 @@
    "file": "internal/chainsetup/verify_validators.go",
    "line": 17
   },
-  "internal/chainsetup::KeysOpts": {
-   "name": "KeysOpts",
+  "internal/chainsetup::keyWay": {
+   "name": "keyWay",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_keys.go",
    "line": 77
   },
-  "internal/chainsetup::keyFail": {
-   "name": "keyFail",
+  "internal/chainsetup::KeysOpts": {
+   "name": "KeysOpts",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_keys.go",
-   "line": 52
+   "line": 56
+  },
+  "internal/chainsetup::ChainUpIn": {
+   "name": "ChainUpIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/state_request.go",
+   "line": 29
+  },
+  "internal/chainsetup::UpStage": {
+   "name": "UpStage",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/state_request.go",
+   "line": 16
   },
   "internal/chainsetup::NodeHealth": {
    "name": "NodeHealth",
@@ -2177,21 +4623,29 @@
    "file": "internal/chainsetup/reuse_attach_store_test.go",
    "line": 28
   },
+  "internal/chainsetup::openingWorkspace": {
+   "name": "openingWorkspace",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_opening.go",
+   "line": 16
+  },
+  "internal/chainsetup::ForkStanding": {
+   "name": "ForkStanding",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/steps_crossfork.go",
+   "line": 80
+  },
   "internal/chainsetup::CrossForkOpts": {
    "name": "CrossForkOpts",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/steps_crossfork.go",
-   "line": 53
-  },
-  "internal/chainsetup::recorder": {
-   "name": "recorder",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/statedriven_test.go",
-   "line": 20
+   "line": 59
   },
   "internal/chainsetup::State": {
    "name": "State",
@@ -2199,23 +4653,71 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/state.go",
-   "line": 27
+   "line": 31
   },
-  "internal/chainsetup::CompareOut": {
-   "name": "CompareOut",
+  "internal/chainsetup::Manager": {
+   "name": "Manager",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/compare.go",
-   "line": 52
+   "file": "internal/chainsetup/manager.go",
+   "line": 75
   },
-  "internal/chainsetup::CompareIn": {
-   "name": "CompareIn",
+  "internal/chainsetup::failedState": {
+   "name": "failedState",
    "kind": "type_spec",
    "module": "internal/chainsetup",
    "lang": "go",
-   "file": "internal/chainsetup/compare.go",
-   "line": 46
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 210
+  },
+  "internal/chainsetup::readyState": {
+   "name": "readyState",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 182
+  },
+  "internal/chainsetup::composedState": {
+   "name": "composedState",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 166
+  },
+  "internal/chainsetup::composingState": {
+   "name": "composingState",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 122
+  },
+  "internal/chainsetup::stoppedState": {
+   "name": "stoppedState",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 54
+  },
+  "internal/chainsetup::compositionState": {
+   "name": "compositionState",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 32
+  },
+  "internal/chainsetup::stage": {
+   "name": "stage",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/manager_states.go",
+   "line": 21
   },
   "internal/chainsetup::SwapNodeOpts": {
    "name": "SwapNodeOpts",
@@ -2223,55 +4725,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/node_ops.go",
-   "line": 110
-  },
-  "internal/chainsetup::NetEndpointsIn": {
-   "name": "NetEndpointsIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 127
-  },
-  "internal/chainsetup::NetStatusOut": {
-   "name": "NetStatusOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 110
-  },
-  "internal/chainsetup::NetStatusIn": {
-   "name": "NetStatusIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 105
-  },
-  "internal/chainsetup::NetNewOut": {
-   "name": "NetNewOut",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 78
-  },
-  "internal/chainsetup::NetNewIn": {
-   "name": "NetNewIn",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 48
-  },
-  "internal/chainsetup::Deps": {
-   "name": "Deps",
-   "kind": "type_spec",
-   "module": "internal/chainsetup",
-   "lang": "go",
-   "file": "internal/chainsetup/verbs.go",
-   "line": 16
+   "line": 123
   },
   "internal/chainsetup::ConfigProvenance": {
    "name": "ConfigProvenance",
@@ -2279,7 +4733,7 @@
    "module": "internal/chainsetup",
    "lang": "go",
    "file": "internal/chainsetup/provenance.go",
-   "line": 57
+   "line": 71
   },
   "internal/chainsetup::fakeIntrospectDriver": {
    "name": "fakeIntrospectDriver",
@@ -2289,6 +4743,22 @@
    "file": "internal/chainsetup/introspect_test.go",
    "line": 18
   },
+  "internal/chainsetup::keysLeaf": {
+   "name": "keysLeaf",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_keys.go",
+   "line": 116
+  },
+  "internal/chainsetup::ensuringKeys": {
+   "name": "ensuringKeys",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/stage_keys.go",
+   "line": 30
+  },
   "internal/chainsetup::Workspace": {
    "name": "Workspace",
    "kind": "type_spec",
@@ -2296,6 +4766,374 @@
    "lang": "go",
    "file": "internal/chainsetup/workspace.go",
    "line": 21
+  },
+  "internal/chainsetup::upPlan": {
+   "name": "upPlan",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_up.go",
+   "line": 37
+  },
+  "internal/chainsetup::ChainUpOut": {
+   "name": "ChainUpOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_up.go",
+   "line": 27
+  },
+  "internal/chainsetup::ChainEnodesOut": {
+   "name": "ChainEnodesOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_enode.go",
+   "line": 37
+  },
+  "internal/chainsetup::NodeEnode": {
+   "name": "NodeEnode",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_enode.go",
+   "line": 30
+  },
+  "internal/chainsetup::ChainEnodesIn": {
+   "name": "ChainEnodesIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_enode.go",
+   "line": 21
+  },
+  "internal/chainsetup::ChainResumeOut": {
+   "name": "ChainResumeOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_resume.go",
+   "line": 25
+  },
+  "internal/chainsetup::ChainResumeIn": {
+   "name": "ChainResumeIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_resume.go",
+   "line": 17
+  },
+  "internal/chainsetup::HardforkExecuteOut": {
+   "name": "HardforkExecuteOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_hardfork.go",
+   "line": 86
+  },
+  "internal/chainsetup::HardforkExecuteIn": {
+   "name": "HardforkExecuteIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_hardfork.go",
+   "line": 76
+  },
+  "internal/chainsetup::HardforkPlanOut": {
+   "name": "HardforkPlanOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_hardfork.go",
+   "line": 34
+  },
+  "internal/chainsetup::HardforkPlanIn": {
+   "name": "HardforkPlanIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_hardfork.go",
+   "line": 19
+  },
+  "internal/chainsetup::ChainLaunchOptsOut": {
+   "name": "ChainLaunchOptsOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_steps.go",
+   "line": 108
+  },
+  "internal/chainsetup::ChainLaunchOptsIn": {
+   "name": "ChainLaunchOptsIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_steps.go",
+   "line": 98
+  },
+  "internal/chainsetup::ChainConfigIn": {
+   "name": "ChainConfigIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_steps.go",
+   "line": 65
+  },
+  "internal/chainsetup::ChainKeysIn": {
+   "name": "ChainKeysIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_steps.go",
+   "line": 18
+  },
+  "internal/chainsetup::ChainHealthOut": {
+   "name": "ChainHealthOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 113
+  },
+  "internal/chainsetup::ChainHealthIn": {
+   "name": "ChainHealthIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 108
+  },
+  "internal/chainsetup::ChainLogsOut": {
+   "name": "ChainLogsOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 92
+  },
+  "internal/chainsetup::ChainLogsIn": {
+   "name": "ChainLogsIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 85
+  },
+  "internal/chainsetup::ChainRmIn": {
+   "name": "ChainRmIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 73
+  },
+  "internal/chainsetup::ChainRestartIn": {
+   "name": "ChainRestartIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 60
+  },
+  "internal/chainsetup::ChainStopIn": {
+   "name": "ChainStopIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 48
+  },
+  "internal/chainsetup::ChainStartIn": {
+   "name": "ChainStartIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 37
+  },
+  "internal/chainsetup::ChainInitIn": {
+   "name": "ChainInitIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 26
+  },
+  "internal/chainsetup::ChainProvisionIn": {
+   "name": "ChainProvisionIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_lifecycle.go",
+   "line": 15
+  },
+  "internal/chainsetup::ChainForkOut": {
+   "name": "ChainForkOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 327
+  },
+  "internal/chainsetup::ChainForkIn": {
+   "name": "ChainForkIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 321
+  },
+  "internal/chainsetup::ChainCrossForkOut": {
+   "name": "ChainCrossForkOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 286
+  },
+  "internal/chainsetup::ChainCrossForkIn": {
+   "name": "ChainCrossForkIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 278
+  },
+  "internal/chainsetup::NetworkRemoveOut": {
+   "name": "NetworkRemoveOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 243
+  },
+  "internal/chainsetup::NetworkRemoveIn": {
+   "name": "NetworkRemoveIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 238
+  },
+  "internal/chainsetup::NodeSwapIn": {
+   "name": "NodeSwapIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 163
+  },
+  "internal/chainsetup::NodeStartOut": {
+   "name": "NodeStartOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 140
+  },
+  "internal/chainsetup::NodeStartIn": {
+   "name": "NodeStartIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 134
+  },
+  "internal/chainsetup::NodeStopIn": {
+   "name": "NodeStopIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 114
+  },
+  "internal/chainsetup::NetworkStopOut": {
+   "name": "NetworkStopOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 78
+  },
+  "internal/chainsetup::NetworkStopIn": {
+   "name": "NetworkStopIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 73
+  },
+  "internal/chainsetup::NetworkStatusOut": {
+   "name": "NetworkStatusOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 30
+  },
+  "internal/chainsetup::NetworkStatusIn": {
+   "name": "NetworkStatusIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs_network.go",
+   "line": 23
+  },
+  "internal/chainsetup::CompareOut": {
+   "name": "CompareOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/compare.go",
+   "line": 30
+  },
+  "internal/chainsetup::CompareIn": {
+   "name": "CompareIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/compare.go",
+   "line": 24
+  },
+  "internal/chainsetup::ChainEndpointsIn": {
+   "name": "ChainEndpointsIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs.go",
+   "line": 82
+  },
+  "internal/chainsetup::ChainStatusOut": {
+   "name": "ChainStatusOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs.go",
+   "line": 65
+  },
+  "internal/chainsetup::ChainStatusIn": {
+   "name": "ChainStatusIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs.go",
+   "line": 60
+  },
+  "internal/chainsetup::ChainNewOut": {
+   "name": "ChainNewOut",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs.go",
+   "line": 42
+  },
+  "internal/chainsetup::ChainNewIn": {
+   "name": "ChainNewIn",
+   "kind": "type_spec",
+   "module": "internal/chainsetup",
+   "lang": "go",
+   "file": "internal/chainsetup/verb/verbs.go",
+   "line": 12
   },
   "internal/mcp::rpcError": {
    "name": "rpcError",
@@ -2543,7 +5381,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodegate.go",
-   "line": 244
+   "line": 245
   },
   "internal/testengine::ctxClock": {
    "name": "ctxClock",
@@ -2551,7 +5389,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodegate.go",
-   "line": 229
+   "line": 230
   },
   "internal/testengine::restartAdapter": {
    "name": "restartAdapter",
@@ -2559,7 +5397,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodegate.go",
-   "line": 218
+   "line": 219
   },
   "internal/testengine::forkGate": {
    "name": "forkGate",
@@ -2567,7 +5405,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodegate.go",
-   "line": 57
+   "line": 58
   },
   "internal/testengine::healthObserver": {
    "name": "healthObserver",
@@ -2575,7 +5413,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodegate.go",
-   "line": 26
+   "line": 27
   },
   "internal/testengine::composition": {
    "name": "composition",
@@ -2583,7 +5421,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/compose.go",
-   "line": 131
+   "line": 133
   },
   "internal/testengine::blockedRun": {
    "name": "blockedRun",
@@ -2591,7 +5429,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/suite.go",
-   "line": 346
+   "line": 334
   },
   "internal/testengine::composed": {
    "name": "composed",
@@ -2599,7 +5437,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/suite.go",
-   "line": 137
+   "line": 157
   },
   "internal/testengine::RunSuiteOut": {
    "name": "RunSuiteOut",
@@ -2607,7 +5445,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/suite.go",
-   "line": 119
+   "line": 120
   },
   "internal/testengine::RunSuiteIn": {
    "name": "RunSuiteIn",
@@ -2615,7 +5453,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/suite.go",
-   "line": 25
+   "line": 26
   },
   "internal/testengine::PlanKnob": {
    "name": "PlanKnob",
@@ -2623,7 +5461,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 151
+   "line": 124
   },
   "internal/testengine::PlanField": {
    "name": "PlanField",
@@ -2631,15 +5469,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 131
-  },
-  "internal/testengine::PlanSource": {
-   "name": "PlanSource",
-   "kind": "type_spec",
-   "module": "internal/testengine",
-   "lang": "go",
-   "file": "internal/testengine/plan.go",
-   "line": 113
+   "line": 104
   },
   "internal/testengine::PlanGenesis": {
    "name": "PlanGenesis",
@@ -2647,7 +5477,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 88
+   "line": 89
   },
   "internal/testengine::PlanKeys": {
    "name": "PlanKeys",
@@ -2655,7 +5485,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 77
+   "line": 78
   },
   "internal/testengine::PlanNodes": {
    "name": "PlanNodes",
@@ -2663,7 +5493,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 62
+   "line": 63
   },
   "internal/testengine::ComposePlan": {
    "name": "ComposePlan",
@@ -2671,7 +5501,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/plan.go",
-   "line": 30
+   "line": 31
   },
   "internal/testengine::AttachWorkspaceIn": {
    "name": "AttachWorkspaceIn",
@@ -2679,7 +5509,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/attach_workspace.go",
-   "line": 92
+   "line": 93
   },
   "internal/testengine::attachWiring": {
    "name": "attachWiring",
@@ -2687,7 +5517,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/attach_workspace.go",
-   "line": 52
+   "line": 53
   },
   "internal/testengine::chainStub": {
    "name": "chainStub",
@@ -2737,6 +5567,78 @@
    "file": "internal/testengine/attach.go",
    "line": 44
   },
+  "internal/testengine::stageStopped": {
+   "name": "stageStopped",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 90
+  },
+  "internal/testengine::collected": {
+   "name": "collected",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 85
+  },
+  "internal/testengine::casesRun": {
+   "name": "casesRun",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 80
+  },
+  "internal/testengine::chainPrepared": {
+   "name": "chainPrepared",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 75
+  },
+  "internal/testengine::networkReached": {
+   "name": "networkReached",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 70
+  },
+  "internal/testengine::networkWayChosen": {
+   "name": "networkWayChosen",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 65
+  },
+  "internal/testengine::sessionOpened": {
+   "name": "sessionOpened",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 60
+  },
+  "internal/testengine::declarationRead": {
+   "name": "declarationRead",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 55
+  },
+  "internal/testengine::startRun": {
+   "name": "startRun",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runprotocol.go",
+   "line": 49
+  },
   "internal/testengine::evidence": {
    "name": "evidence",
    "kind": "type_spec",
@@ -2783,7 +5685,7 @@
    "module": "internal/testengine",
    "lang": "go",
    "file": "internal/testengine/nodecontrol.go",
-   "line": 23
+   "line": 24
   },
   "internal/testengine::RunSpecFunc": {
    "name": "RunSpecFunc",
@@ -2792,6 +5694,110 @@
    "lang": "go",
    "file": "internal/testengine/wire.go",
    "line": 13
+  },
+  "internal/testengine::runFailedState": {
+   "name": "runFailedState",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 557
+  },
+  "internal/testengine::doneState": {
+   "name": "doneState",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 545
+  },
+  "internal/testengine::collecting": {
+   "name": "collecting",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 503
+  },
+  "internal/testengine::runningCases": {
+   "name": "runningCases",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 467
+  },
+  "internal/testengine::preparingRun": {
+   "name": "preparingRun",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 438
+  },
+  "internal/testengine::attachingToNetwork": {
+   "name": "attachingToNetwork",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 413
+  },
+  "internal/testengine::composingNetwork": {
+   "name": "composingNetwork",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 383
+  },
+  "internal/testengine::reachingNetwork": {
+   "name": "reachingNetwork",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 329
+  },
+  "internal/testengine::openingSession": {
+   "name": "openingSession",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 275
+  },
+  "internal/testengine::readingDeclaration": {
+   "name": "readingDeclaration",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 215
+  },
+  "internal/testengine::pendingState": {
+   "name": "pendingState",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 197
+  },
+  "internal/testengine::runState": {
+   "name": "runState",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 179
+  },
+  "internal/testengine::runner": {
+   "name": "runner",
+   "kind": "type_spec",
+   "module": "internal/testengine",
+   "lang": "go",
+   "file": "internal/testengine/runmachine.go",
+   "line": 41
   },
   "internal/testengine::ValidateResult": {
    "name": "ValidateResult",
@@ -3711,7 +6717,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 463
+   "line": 450
   },
   "internal/dsl::CaseV2": {
    "name": "CaseV2",
@@ -3719,7 +6725,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 445
+   "line": 432
   },
   "internal/dsl::HooksV2": {
    "name": "HooksV2",
@@ -3727,7 +6733,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 438
+   "line": 425
   },
   "internal/dsl::GenesisSideV2": {
    "name": "GenesisSideV2",
@@ -3735,7 +6741,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 359
+   "line": 352
   },
   "internal/dsl::GenesisV2": {
    "name": "GenesisV2",
@@ -3743,7 +6749,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 306
+   "line": 299
   },
   "internal/dsl::KeySourceV2": {
    "name": "KeySourceV2",
@@ -3751,7 +6757,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 286
+   "line": 279
   },
   "internal/dsl::KeysV2": {
    "name": "KeysV2",
@@ -3759,7 +6765,7 @@
    "module": "internal/dsl",
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
-   "line": 281
+   "line": 274
   },
   "internal/dsl::UpgradeV2": {
    "name": "UpgradeV2",
@@ -3793,8 +6799,8 @@
    "file": "internal/dsl/spec_v2.go",
    "line": 111
   },
-  "internal/dsl::EnvV2": {
-   "name": "EnvV2",
+  "internal/dsl::ChainPresetV2": {
+   "name": "ChainPresetV2",
    "kind": "type_spec",
    "module": "internal/dsl",
    "lang": "go",
@@ -3808,2150 +6814,6 @@
    "lang": "go",
    "file": "internal/dsl/spec_v2.go",
    "line": 47
-  },
-  "internal/consensus::fakeChain": {
-   "name": "fakeChain",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/executor_test.go",
-   "line": 21
-  },
-  "internal/consensus::Step": {
-   "name": "Step",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/bootstrap.go",
-   "line": 4
-  },
-  "internal/consensus::Family": {
-   "name": "Family",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/poa.go",
-   "line": 16
-  },
-  "internal/consensus::Account": {
-   "name": "Account",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/wemixconfig.go",
-   "line": 57
-  },
-  "internal/consensus::Member": {
-   "name": "Member",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/wemixconfig.go",
-   "line": 46
-  },
-  "internal/consensus::Env": {
-   "name": "Env",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/wemixconfig.go",
-   "line": 28
-  },
-  "internal/consensus::Config": {
-   "name": "Config",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/wemixconfig.go",
-   "line": 15
-  },
-  "internal/consensus::GenesisSource": {
-   "name": "GenesisSource",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/genesis_source.go",
-   "line": 27
-  },
-  "internal/consensus::NodeAccess": {
-   "name": "NodeAccess",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/executor.go",
-   "line": 99
-  },
-  "internal/consensus::Bootstrap": {
-   "name": "Bootstrap",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/executor.go",
-   "line": 58
-  },
-  "internal/consensus::Info": {
-   "name": "Info",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/info.go",
-   "line": 26
-  },
-  "internal/consensus::EtcdState": {
-   "name": "EtcdState",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/info.go",
-   "line": 20
-  },
-  "internal/consensus::Runner": {
-   "name": "Runner",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/poa/bootstrap_exec.go",
-   "line": 17
-  },
-  "internal/consensus::rlpNode": {
-   "name": "rlpNode",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/wbft/extradata_decode.go",
-   "line": 19
-  },
-  "internal/consensus::GenesisParams": {
-   "name": "GenesisParams",
-   "kind": "type_spec",
-   "module": "internal/consensus",
-   "lang": "go",
-   "file": "internal/consensus/wbft/genesis.go",
-   "line": 16
-  },
-  "internal/core::Path": {
-   "name": "Path",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/inspector/paths.go",
-   "line": 13
-  },
-  "internal/core::Host": {
-   "name": "Host",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/inspector/hosts.go",
-   "line": 13
-  },
-  "internal/core::DialFunc": {
-   "name": "DialFunc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/inspector/ports.go",
-   "line": 38
-  },
-  "internal/core::Addr": {
-   "name": "Addr",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/inspector/ports.go",
-   "line": 19
-  },
-  "internal/core::presentStore": {
-   "name": "presentStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/inspector/paths_test.go",
-   "line": 12
-  },
-  "internal/core::Report": {
-   "name": "Report",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 98
-  },
-  "internal/core::NodeInfo": {
-   "name": "NodeInfo",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 86
-  },
-  "internal/core::Agreement": {
-   "name": "Agreement",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 71
-  },
-  "internal/core::BlockHasher": {
-   "name": "BlockHasher",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 61
-  },
-  "internal/core::Options": {
-   "name": "Options",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 39
-  },
-  "internal/core::Prober": {
-   "name": "Prober",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health.go",
-   "line": 31
-  },
-  "internal/core::blindProber": {
-   "name": "blindProber",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/agreement_test.go",
-   "line": 44
-  },
-  "internal/core::chainProber": {
-   "name": "chainProber",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/agreement_test.go",
-   "line": 25
-  },
-  "internal/core::Participation": {
-   "name": "Participation",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/participation.go",
-   "line": 36
-  },
-  "internal/core::Sealer": {
-   "name": "Sealer",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/participation.go",
-   "line": 13
-  },
-  "internal/core::chain": {
-   "name": "chain",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/participation_test.go",
-   "line": 13
-  },
-  "internal/core::staticBlock": {
-   "name": "staticBlock",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health_test.go",
-   "line": 150
-  },
-  "internal/core::delayedProber": {
-   "name": "delayedProber",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health_test.go",
-   "line": 134
-  },
-  "internal/core::fakeProber": {
-   "name": "fakeProber",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/health/health_test.go",
-   "line": 15
-  },
-  "internal/core::fakeStore": {
-   "name": "fakeStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore_test.go",
-   "line": 80
-  },
-  "internal/core::Local": {
-   "name": "Local",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 129
-  },
-  "internal/core::Provisioner": {
-   "name": "Provisioner",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 83
-  },
-  "internal/core::Result": {
-   "name": "Result",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 76
-  },
-  "internal/core::NodeInputs": {
-   "name": "NodeInputs",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 68
-  },
-  "internal/core::File": {
-   "name": "File",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 61
-  },
-  "internal/core::Store": {
-   "name": "Store",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/filestore/filestore.go",
-   "line": 31
-  },
-  "internal/core::ReconnectingLogReader": {
-   "name": "ReconnectingLogReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/logreader.go",
-   "line": 47
-  },
-  "internal/core::LocalLogReader": {
-   "name": "LocalLogReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/logreader.go",
-   "line": 20
-  },
-  "internal/core::LogReader": {
-   "name": "LogReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/logreader.go",
-   "line": 14
-  },
-  "internal/core::chainSignature": {
-   "name": "chainSignature",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_signatures.go",
-   "line": 13
-  },
-  "internal/core::Event": {
-   "name": "Event",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/event.go",
-   "line": 33
-  },
-  "internal/core::Kind": {
-   "name": "Kind",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/event.go",
-   "line": 21
-  },
-  "internal/core::Phase": {
-   "name": "Phase",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/event.go",
-   "line": 11
-  },
-  "internal/core::collector": {
-   "name": "collector",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector_impl.go",
-   "line": 63
-  },
-  "internal/core::Deps": {
-   "name": "Deps",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector_impl.go",
-   "line": 41
-  },
-  "internal/core::Sample": {
-   "name": "Sample",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector_impl.go",
-   "line": 32
-  },
-  "internal/core::MemStore": {
-   "name": "MemStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/store.go",
-   "line": 48
-  },
-  "internal/core::RunRecord": {
-   "name": "RunRecord",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/store.go",
-   "line": 26
-  },
-  "internal/core::RunStatus": {
-   "name": "RunStatus",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/store.go",
-   "line": 10
-  },
-  "internal/core::rpcResponse": {
-   "name": "rpcResponse",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_test.go",
-   "line": 27
-  },
-  "internal/core::rpcError": {
-   "name": "rpcError",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_test.go",
-   "line": 22
-  },
-  "internal/core::rpcRequest": {
-   "name": "rpcRequest",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_test.go",
-   "line": 16
-  },
-  "internal/core::Chainstate": {
-   "name": "Chainstate",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector.go",
-   "line": 34
-  },
-  "internal/core::LogMatch": {
-   "name": "LogMatch",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector.go",
-   "line": 26
-  },
-  "internal/core::Collector": {
-   "name": "Collector",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/collector.go",
-   "line": 12
-  },
-  "internal/core::flakyReader": {
-   "name": "flakyReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/reconnect_test.go",
-   "line": 13
-  },
-  "internal/core::jsonRPCResponse": {
-   "name": "jsonRPCResponse",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_rpc.go",
-   "line": 22
-  },
-  "internal/core::jsonRPCError": {
-   "name": "jsonRPCError",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/detect_rpc.go",
-   "line": 17
-  },
-  "internal/core::SearchOpts": {
-   "name": "SearchOpts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/logs.go",
-   "line": 30
-  },
-  "internal/core::Match": {
-   "name": "Match",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/logs.go",
-   "line": 22
-  },
-  "internal/core::Bus": {
-   "name": "Bus",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/bus.go",
-   "line": 16
-  },
-  "internal/core::chunkReader": {
-   "name": "chunkReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/tail_test.go",
-   "line": 90
-  },
-  "internal/core::FileStore": {
-   "name": "FileStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/collector/filestore.go",
-   "line": 16
-  },
-  "internal/core::Machine": {
-   "name": "Machine",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/lifecycle/machine.go",
-   "line": 28
-  },
-  "internal/core::Handler": {
-   "name": "Handler",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/lifecycle/machine.go",
-   "line": 19
-  },
-  "internal/core::Status": {
-   "name": "Status",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/lifecycle/status.go",
-   "line": 23
-  },
-  "internal/core::SwapPlan": {
-   "name": "SwapPlan",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/hardfork/hardfork.go",
-   "line": 46
-  },
-  "internal/core::NodeSwap": {
-   "name": "NodeSwap",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/hardfork/hardfork.go",
-   "line": 26
-  },
-  "internal/core::Values": {
-   "name": "Values",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/config.go",
-   "line": 20
-  },
-  "internal/core::RunView": {
-   "name": "RunView",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/parseargv.go",
-   "line": 9
-  },
-  "internal/core::Args": {
-   "name": "Args",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/args.go",
-   "line": 16
-  },
-  "internal/core::entry": {
-   "name": "entry",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/args.go",
-   "line": 7
-  },
-  "internal/core::Builder": {
-   "name": "Builder",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/builder.go",
-   "line": 21
-  },
-  "internal/core::Override": {
-   "name": "Override",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/builder.go",
-   "line": 11
-  },
-  "internal/core::Spec": {
-   "name": "Spec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/nodeconfig.go",
-   "line": 67
-  },
-  "internal/core::Chain": {
-   "name": "Chain",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/nodeconfig.go",
-   "line": 31
-  },
-  "internal/core::Dialect": {
-   "name": "Dialect",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/launchopt.go",
-   "line": 213
-  },
-  "internal/core::flagSpec": {
-   "name": "flagSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/launchopt.go",
-   "line": 206
-  },
-  "internal/core::Layer": {
-   "name": "Layer",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/launchopt.go",
-   "line": 184
-  },
-  "internal/core::OptionKey": {
-   "name": "OptionKey",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/launchopt.go",
-   "line": 25
-  },
-  "internal/core::ChainExt": {
-   "name": "ChainExt",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 312
-  },
-  "internal/core::Metrics": {
-   "name": "Metrics",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 282
-  },
-  "internal/core::Mining": {
-   "name": "Mining",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 256
-  },
-  "internal/core::RPCPolicy": {
-   "name": "RPCPolicy",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 227
-  },
-  "internal/core::AuthIPC": {
-   "name": "AuthIPC",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 197
-  },
-  "internal/core::WSRPC": {
-   "name": "WSRPC",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 163
-  },
-  "internal/core::HTTPRPC": {
-   "name": "HTTPRPC",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 125
-  },
-  "internal/core::P2P": {
-   "name": "P2P",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 90
-  },
-  "internal/core::Storage": {
-   "name": "Storage",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 60
-  },
-  "internal/core::Identity": {
-   "name": "Identity",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 25
-  },
-  "internal/core::Module": {
-   "name": "Module",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/nodeconfig/modules.go",
-   "line": 12
-  },
-  "internal/core::presetNode": {
-   "name": "presetNode",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/keyring_test.go",
-   "line": 21
-  },
-  "internal/core::Network": {
-   "name": "Network",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/preset.go",
-   "line": 64
-  },
-  "internal/core::Entry": {
-   "name": "Entry",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/preset.go",
-   "line": 16
-  },
-  "internal/core::stubStore": {
-   "name": "stubStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source_test.go",
-   "line": 19
-  },
-  "internal/core::Label": {
-   "name": "Label",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/label.go",
-   "line": 5
-  },
-  "internal/core::FileSource": {
-   "name": "FileSource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 113
-  },
-  "internal/core::MnemonicSource": {
-   "name": "MnemonicSource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 87
-  },
-  "internal/core::PrivateKeySource": {
-   "name": "PrivateKeySource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 76
-  },
-  "internal/core::RandomSource": {
-   "name": "RandomSource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 54
-  },
-  "internal/core::Source": {
-   "name": "Source",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 49
-  },
-  "internal/core::HDPath": {
-   "name": "HDPath",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/source.go",
-   "line": 26
-  },
-  "internal/core::OnceThenFile": {
-   "name": "OnceThenFile",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/password.go",
-   "line": 47
-  },
-  "internal/core::FilePassword": {
-   "name": "FilePassword",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/password.go",
-   "line": 31
-  },
-  "internal/core::StaticPassword": {
-   "name": "StaticPassword",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/password.go",
-   "line": 25
-  },
-  "internal/core::PasswordSource": {
-   "name": "PasswordSource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/password.go",
-   "line": 20
-  },
-  "internal/core::ProbeSpec": {
-   "name": "ProbeSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 165
-  },
-  "internal/core::ConsensusSpec": {
-   "name": "ConsensusSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 159
-  },
-  "internal/core::GenesisSpec": {
-   "name": "GenesisSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 142
-  },
-  "internal/core::BuildSpec": {
-   "name": "BuildSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 132
-  },
-  "internal/core::UpgradeSpec": {
-   "name": "UpgradeSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 113
-  },
-  "internal/core::BootstrapSpec": {
-   "name": "BootstrapSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 99
-  },
-  "internal/core::Manifest": {
-   "name": "Manifest",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/manifest.go",
-   "line": 18
-  },
-  "internal/core::StaticPlugin": {
-   "name": "StaticPlugin",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 244
-  },
-  "internal/core::ChainPlugin": {
-   "name": "ChainPlugin",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 210
-  },
-  "internal/core::RuntimeValidatorReader": {
-   "name": "RuntimeValidatorReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 203
-  },
-  "internal/core::RingAccountReader": {
-   "name": "RingAccountReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 190
-  },
-  "internal/core::RingAccount": {
-   "name": "RingAccount",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 160
-  },
-  "internal/core::GenesisValidatorReader": {
-   "name": "GenesisValidatorReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 141
-  },
-  "internal/core::LaunchPolicy": {
-   "name": "LaunchPolicy",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 103
-  },
-  "internal/core::ConsensusFamily": {
-   "name": "ConsensusFamily",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 33
-  },
-  "internal/core::GenesisParams": {
-   "name": "GenesisParams",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/registry.go",
-   "line": 20
-  },
-  "internal/core::NodeComposition": {
-   "name": "NodeComposition",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/capabilities.go",
-   "line": 20
-  },
-  "internal/core::Capabilities": {
-   "name": "Capabilities",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/capabilities.go",
-   "line": 7
-  },
-  "internal/core::Caller": {
-   "name": "Caller",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/consensus.go",
-   "line": 16
-  },
-  "internal/core::Capability": {
-   "name": "Capability",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/capability.go",
-   "line": 71
-  },
-  "internal/core::Descriptor": {
-   "name": "Descriptor",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/capability.go",
-   "line": 41
-  },
-  "internal/core::Param": {
-   "name": "Param",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/capability.go",
-   "line": 33
-  },
-  "internal/core::fakeCaller": {
-   "name": "fakeCaller",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/registry/consensus_test.go",
-   "line": 11
-  },
-  "internal/core::TestReport": {
-   "name": "TestReport",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/report/report.go",
-   "line": 48
-  },
-  "internal/core::RoleSupport": {
-   "name": "RoleSupport",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/peering.go",
-   "line": 45
-  },
-  "internal/core::Peering": {
-   "name": "Peering",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/peering.go",
-   "line": 11
-  },
-  "internal/core::Reservation": {
-   "name": "Reservation",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/reservation.go",
-   "line": 9
-  },
-  "internal/core::LaunchReq": {
-   "name": "LaunchReq",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/launchreq.go",
-   "line": 16
-  },
-  "internal/core::Layout": {
-   "name": "Layout",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/layout.go",
-   "line": 13
-  },
-  "internal/core::RPCEndpoint": {
-   "name": "RPCEndpoint",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/attached.go",
-   "line": 14
-  },
-  "internal/core::Topology": {
-   "name": "Topology",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/topology.go",
-   "line": 24
-  },
-  "internal/core::Record": {
-   "name": "Record",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/record.go",
-   "line": 14
-  },
-  "internal/core::NodeSet": {
-   "name": "NodeSet",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/node.go",
-   "line": 129
-  },
-  "internal/core::Auth": {
-   "name": "Auth",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/node.go",
-   "line": 124
-  },
-  "internal/core::Node": {
-   "name": "Node",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/node.go",
-   "line": 77
-  },
-  "internal/core::Endpoints": {
-   "name": "Endpoints",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/node.go",
-   "line": 57
-  },
-  "internal/core::Role": {
-   "name": "Role",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/node.go",
-   "line": 27
-  },
-  "internal/core::Map": {
-   "name": "Map",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/placement.go",
-   "line": 32
-  },
-  "internal/core::Placement": {
-   "name": "Placement",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/node/placement.go",
-   "line": 10
-  },
-  "internal/core::Subscription": {
-   "name": "Subscription",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/rpc/subscribe.go",
-   "line": 13
-  },
-  "internal/core::SendTxArgs": {
-   "name": "SendTxArgs",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/rpc/client.go",
-   "line": 341
-  },
-  "internal/core::Block": {
-   "name": "Block",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/rpc/client.go",
-   "line": 273
-  },
-  "internal/core::LogFilter": {
-   "name": "LogFilter",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/rpc/client.go",
-   "line": 201
-  },
-  "internal/core::Client": {
-   "name": "Client",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/rpc/client.go",
-   "line": 21
-  },
-  "internal/core::scView": {
-   "name": "scView",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/genesis_test.go",
-   "line": 173
-  },
-  "internal/core::genesisView": {
-   "name": "genesisView",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/genesis_test.go",
-   "line": 24
-  },
-  "internal/core::SourceMode": {
-   "name": "SourceMode",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/builder.go",
-   "line": 6
-  },
-  "internal/core::NetworkOptions": {
-   "name": "NetworkOptions",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/genesis.go",
-   "line": 66
-  },
-  "internal/core::Inputs": {
-   "name": "Inputs",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/genesis.go",
-   "line": 25
-  },
-  "internal/core::SourceProvider": {
-   "name": "SourceProvider",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 199
-  },
-  "internal/core::Config": {
-   "name": "Config",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 143
-  },
-  "internal/core::PresetSource": {
-   "name": "PresetSource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 71
-  },
-  "internal/core::Artifacts": {
-   "name": "Artifacts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 56
-  },
-  "internal/core::Request": {
-   "name": "Request",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 38
-  },
-  "internal/core::CommandRunner": {
-   "name": "CommandRunner",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/genesis/source.go",
-   "line": 19
-  },
-  "internal/core::ChainFacts": {
-   "name": "ChainFacts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/resolve.go",
-   "line": 35
-  },
-  "internal/core::FromTopologyIn": {
-   "name": "FromTopologyIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/fromtopology.go",
-   "line": 63
-  },
-  "internal/core::FileReader": {
-   "name": "FileReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/keyset.go",
-   "line": 17
-  },
-  "internal/core::FromPresetIn": {
-   "name": "FromPresetIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/frompreset.go",
-   "line": 13
-  },
-  "internal/core::WeiText": {
-   "name": "WeiText",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 153
-  },
-  "internal/core::GovernanceDecl": {
-   "name": "GovernanceDecl",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 141
-  },
-  "internal/core::GenesisDecl": {
-   "name": "GenesisDecl",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 130
-  },
-  "internal/core::Alloc": {
-   "name": "Alloc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 123
-  },
-  "internal/core::ValidatorsDecl": {
-   "name": "ValidatorsDecl",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 113
-  },
-  "internal/core::AccountRef": {
-   "name": "AccountRef",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 105
-  },
-  "internal/core::NodeKeyRef": {
-   "name": "NodeKeyRef",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 98
-  },
-  "internal/core::BinaryOverride": {
-   "name": "BinaryOverride",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 60
-  },
-  "internal/core::Binaries": {
-   "name": "Binaries",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 53
-  },
-  "internal/core::Blueprint": {
-   "name": "Blueprint",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/blueprint.go",
-   "line": 19
-  },
-  "internal/core::ResolvedNode": {
-   "name": "ResolvedNode",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/resolved.go",
-   "line": 68
-  },
-  "internal/core::ResolvedNetwork": {
-   "name": "ResolvedNetwork",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/blueprint/resolved.go",
-   "line": 41
-  },
-  "internal/core::Liveness": {
-   "name": "Liveness",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/preflight/preflight.go",
-   "line": 244
-  },
-  "internal/core::Decision": {
-   "name": "Decision",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/preflight/preflight.go",
-   "line": 130
-  },
-  "internal/core::Verdict": {
-   "name": "Verdict",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/preflight/preflight.go",
-   "line": 98
-  },
-  "internal/core::Want": {
-   "name": "Want",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/preflight/preflight.go",
-   "line": 81
-  },
-  "internal/core::Have": {
-   "name": "Have",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/preflight/preflight.go",
-   "line": 52
-  },
-  "internal/core::Plan": {
-   "name": "Plan",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/plan.go",
-   "line": 12
-  },
-  "internal/core::ledgerFile": {
-   "name": "ledgerFile",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/ledger.go",
-   "line": 33
-  },
-  "internal/core::Ledger": {
-   "name": "Ledger",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/ledger.go",
-   "line": 24
-  },
-  "internal/core::LocalDriver": {
-   "name": "LocalDriver",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/local.go",
-   "line": 19
-  },
-  "internal/core::ExecFn": {
-   "name": "ExecFn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/local.go",
-   "line": 16
-  },
-  "internal/core::PortProber": {
-   "name": "PortProber",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote.go",
-   "line": 196
-  },
-  "internal/core::RemoteDriver": {
-   "name": "RemoteDriver",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote.go",
-   "line": 58
-  },
-  "internal/core::Runner": {
-   "name": "Runner",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote.go",
-   "line": 20
-  },
-  "internal/core::Proc": {
-   "name": "Proc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/process.go",
-   "line": 12
-  },
-  "internal/core::RemoteFileStore": {
-   "name": "RemoteFileStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote_store.go",
-   "line": 20
-  },
-  "internal/core::fakeRunner": {
-   "name": "fakeRunner",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote_test.go",
-   "line": 14
-  },
-  "internal/core::CmdlineInspector": {
-   "name": "CmdlineInspector",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/inspect.go",
-   "line": 39
-  },
-  "internal/core::Commander": {
-   "name": "Commander",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/inspect.go",
-   "line": 30
-  },
-  "internal/core::ProcessInspector": {
-   "name": "ProcessInspector",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/inspect.go",
-   "line": 19
-  },
-  "internal/core::FileProvisioner": {
-   "name": "FileProvisioner",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/driver.go",
-   "line": 78
-  },
-  "internal/core::Initializer": {
-   "name": "Initializer",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/driver.go",
-   "line": 69
-  },
-  "internal/core::Driver": {
-   "name": "Driver",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/driver.go",
-   "line": 48
-  },
-  "internal/core::Handle": {
-   "name": "Handle",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/driver.go",
-   "line": 42
-  },
-  "internal/core::NodeSpec": {
-   "name": "NodeSpec",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/driver.go",
-   "line": 21
-  },
-  "internal/core::recordingDriver": {
-   "name": "recordingDriver",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/lifecycle_test.go",
-   "line": 15
-  },
-  "internal/core::FailureMode": {
-   "name": "FailureMode",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/failuremode.go",
-   "line": 6
-  },
-  "internal/core::RemoteLogReader": {
-   "name": "RemoteLogReader",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/process/remote_log.go",
-   "line": 19
-  },
-  "internal/core::authFailed": {
-   "name": "authFailed",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh_test.go",
-   "line": 129
-  },
-  "internal/core::execFn": {
-   "name": "execFn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh_test.go",
-   "line": 30
-  },
-  "internal/core::sshTestServer": {
-   "name": "sshTestServer",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh_test.go",
-   "line": 23
-  },
-  "internal/core::headerTransport": {
-   "name": "headerTransport",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/auth.go",
-   "line": 24
-  },
-  "internal/core::AddrMap": {
-   "name": "AddrMap",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/addrmap.go",
-   "line": 12
-  },
-  "internal/core::HostKeyPolicy": {
-   "name": "HostKeyPolicy",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh.go",
-   "line": 258
-  },
-  "internal/core::ExecResult": {
-   "name": "ExecResult",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh.go",
-   "line": 200
-  },
-  "internal/core::Credentials": {
-   "name": "Credentials",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/remote/ssh.go",
-   "line": 39
-  },
-  "internal/core::envDoc": {
-   "name": "envDoc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/environment_impl.go",
-   "line": 142
-  },
-  "internal/core::env": {
-   "name": "env",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/environment_impl.go",
-   "line": 15
-  },
-  "internal/core::compState": {
-   "name": "compState",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/composition_test.go",
-   "line": 15
-  },
-  "internal/core::TestRecord": {
-   "name": "TestRecord",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session.go",
-   "line": 64
-  },
-  "internal/core::Environment": {
-   "name": "Environment",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session.go",
-   "line": 43
-  },
-  "internal/core::Session": {
-   "name": "Session",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session.go",
-   "line": 29
-  },
-  "internal/core::TestStatus": {
-   "name": "TestStatus",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session.go",
-   "line": 14
-  },
-  "internal/core::Fingerprint": {
-   "name": "Fingerprint",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session.go",
-   "line": 11
-  },
-  "internal/core::sess": {
-   "name": "sess",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/session_impl.go",
-   "line": 95
-  },
-  "internal/core::TestArtifacts": {
-   "name": "TestArtifacts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record.go",
-   "line": 63
-  },
-  "internal/core::ArtifactRef": {
-   "name": "ArtifactRef",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record.go",
-   "line": 48
-  },
-  "internal/core::PostResult": {
-   "name": "PostResult",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record.go",
-   "line": 36
-  },
-  "internal/core::AssertResult": {
-   "name": "AssertResult",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record.go",
-   "line": 23
-  },
-  "internal/core::StepResult": {
-   "name": "StepResult",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record.go",
-   "line": 5
-  },
-  "internal/core::Held": {
-   "name": "Held",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/lock.go",
-   "line": 54
-  },
-  "internal/core::LockState": {
-   "name": "LockState",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/lock.go",
-   "line": 33
-  },
-  "internal/core::Lock": {
-   "name": "Lock",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/lock.go",
-   "line": 25
-  },
-  "internal/core::statusDoc": {
-   "name": "statusDoc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record_impl.go",
-   "line": 87
-  },
-  "internal/core::record": {
-   "name": "record",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/record_impl.go",
-   "line": 23
-  },
-  "internal/core::Counts": {
-   "name": "Counts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/read.go",
-   "line": 31
-  },
-  "internal/core::TestResult": {
-   "name": "TestResult",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/read.go",
-   "line": 23
-  },
-  "internal/core::Composition": {
-   "name": "Composition",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/composition.go",
-   "line": 85
-  },
-  "internal/core::Step": {
-   "name": "Step",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/composition.go",
-   "line": 70
-  },
-  "internal/core::StepState": {
-   "name": "StepState",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/session/composition.go",
-   "line": 46
-  },
-  "internal/core::KeyRef": {
-   "name": "KeyRef",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/import.go",
-   "line": 184
-  },
-  "internal/core::ImportIn": {
-   "name": "ImportIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/import.go",
-   "line": 41
-  },
-  "internal/core::SaveKeyIn": {
-   "name": "SaveKeyIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 373
-  },
-  "internal/core::passwordFunc": {
-   "name": "passwordFunc",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 273
-  },
-  "internal/core::EntryIn": {
-   "name": "EntryIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 248
-  },
-  "internal/core::ListIn": {
-   "name": "ListIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 221
-  },
-  "internal/core::CreateIn": {
-   "name": "CreateIn",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 147
-  },
-  "internal/core::EntryOut": {
-   "name": "EntryOut",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 135
-  },
-  "internal/core::SetOut": {
-   "name": "SetOut",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 118
-  },
-  "internal/core::SetRef": {
-   "name": "SetRef",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 70
-  },
-  "internal/core::OpenerFor": {
-   "name": "OpenerFor",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 30
-  },
-  "internal/core::Opener": {
-   "name": "Opener",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/operation.go",
-   "line": 23
-  },
-  "internal/core::recordingOpener": {
-   "name": "recordingOpener",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/disclosure_test.go",
-   "line": 59
-  },
-  "internal/core::recordingStore": {
-   "name": "recordingStore",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/operation/disclosure_test.go",
-   "line": 29
-  },
-  "internal/core::PrivateKey": {
-   "name": "PrivateKey",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/derive/privatekey.go",
-   "line": 34
-  },
-  "internal/core::BLS": {
-   "name": "BLS",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/derive/identity.go",
-   "line": 42
-  },
-  "internal/core::Derivation": {
-   "name": "Derivation",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/derive/identity.go",
-   "line": 18
-  },
-  "internal/core::GenerateOpts": {
-   "name": "GenerateOpts",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/generate.go",
-   "line": 33
-  },
-  "internal/core::KeySet": {
-   "name": "KeySet",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/keyset.go",
-   "line": 48
-  },
-  "internal/core::entryFile": {
-   "name": "entryFile",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/keyset.go",
-   "line": 34
-  },
-  "internal/core::KeystoreBackend": {
-   "name": "KeystoreBackend",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/backend.go",
-   "line": 57
-  },
-  "internal/core::RawFileBackend": {
-   "name": "RawFileBackend",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/backend.go",
-   "line": 36
-  },
-  "internal/core::Backend": {
-   "name": "Backend",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/backend.go",
-   "line": 26
-  },
-  "internal/core::DeclaredKeys": {
-   "name": "DeclaredKeys",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/declared.go",
-   "line": 29
-  },
-  "internal/core::GeneratedKeys": {
-   "name": "GeneratedKeys",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/source.go",
-   "line": 85
-  },
-  "internal/core::PresetKeys": {
-   "name": "PresetKeys",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/source.go",
-   "line": 46
-  },
-  "internal/core::KeySource": {
-   "name": "KeySource",
-   "kind": "type_spec",
-   "module": "internal/core",
-   "lang": "go",
-   "file": "internal/core/keyring/store/source.go",
-   "line": 31
   },
   "internal/dsl::fpInput": {
    "name": "fpInput",
@@ -6216,6 +7078,30 @@
    "lang": "go",
    "file": "internal/dsl/assert/assert.go",
    "line": 14
+  },
+  "docs/dev::Graph": {
+   "name": "Graph",
+   "kind": "type_spec",
+   "module": "docs/dev",
+   "lang": "go",
+   "file": "docs/dev/codegraph/main.go",
+   "line": 46
+  },
+  "docs/dev::CallEdge": {
+   "name": "CallEdge",
+   "kind": "type_spec",
+   "module": "docs/dev",
+   "lang": "go",
+   "file": "docs/dev/codegraph/main.go",
+   "line": 38
+  },
+  "docs/dev::Pkg": {
+   "name": "Pkg",
+   "kind": "type_spec",
+   "module": "docs/dev",
+   "lang": "go",
+   "file": "docs/dev/codegraph/main.go",
+   "line": 28
   },
   "scripts/inventory::Graph": {
    "name": "Graph",

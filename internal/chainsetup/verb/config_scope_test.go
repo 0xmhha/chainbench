@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+// TestRecordConfigSet_RefusesAScopeNothingWouldRead is the hole this change
+// closed.
+//
+// The scope was not checked at all. A typo stored the overrides under a key no
+// node ever looks up, the step reported success, and the node came up with a
+// config that silently lacked them — the failure showed later as behaviour, not
 // as an error.
 func TestRecordConfigSet_RefusesAScopeNothingWouldRead(t *testing.T) {
 	for _, scope := range []string{"all", "bp", "en", "pn", "node1", "node12"} {
@@ -31,7 +37,7 @@ func TestRecordConfigSet_RefusesAScopeNothingWouldRead(t *testing.T) {
 // order they will be applied, so a reader of chain-record.json sees them in the
 // order that decides the outcome, and the walk does not depend on map order.
 func TestSortedScopes_OrdersMostGeneralFirst(t *testing.T) {
-	got := strings.Join(sortedScopes(map[string][]string{
+	got := strings.Join(chainsetup.SortedScopes(map[string][]string{
 		"node10": {"a"}, "pn": {"b"}, "all": {"c"}, "node2": {"d"}, "bp": {"e"}, "en": {"f"},
 	}), ",")
 	if want := "all,bp,en,pn,node10,node2"; got != want {

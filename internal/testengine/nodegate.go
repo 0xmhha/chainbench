@@ -1,8 +1,6 @@
 package testengine
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
@@ -19,7 +17,7 @@ import (
 // The run path gates a composed network through nodemonitor before running any
 // test on it (E6): a network that is up but not yet producing, or missing a
 // node, is waited on or restarted within limits rather than run against blind.
-// The observation reuses health.Run and the restart reuses verb.NetRestart
+// The observation reuses health.Run and the restart reuses verb.ChainRestart
 // — nodemonitor re-implements neither.
 
 // healthObserver produces one round of nodemonitor.Facts for a composed network
@@ -224,7 +222,7 @@ type restartAdapter struct {
 }
 
 func (r restartAdapter) Restart(ctx context.Context, n int) error {
-	_, err := verb.NetRestart(ctx, r.deps, verb.NetRestartIn{DataDir: r.dataDir, Node: n})
+	_, err := verb.ChainRestart(ctx, r.deps, verb.ChainRestartIn{DataDir: r.dataDir, Node: n})
 	return err
 }
 
@@ -292,7 +290,7 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 		return fmt.Errorf("nodemonitor: %w", err)
 	}
 	if !res.OK {
-		return lifecycle.Mark(errUnreachable, fmt.Errorf("network not ready to test: %s", res.Terminate))
+		return fmt.Errorf("network not ready to test: %s", res.Terminate)
 	}
 	return nil
 }

@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -57,9 +56,8 @@ var epochOpKeys = []string{
 func TestWemixGovernanceEpochDecidesTheValidatorSetE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
-	if fromBin == "" || toBin == "" || template == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	if fromBin == "" || toBin == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
@@ -93,12 +91,7 @@ func TestWemixGovernanceEpochDecidesTheValidatorSetE2E(t *testing.T) {
 	overlayJSON := `{"genesis":{` +
 		fmt.Sprintf(`"config":{"croissant":{"wBFT":{"stabilizingStakersThreshold":%d}}},`, validators) +
 		`"alloc":{` + strings.Join(alloc, ",") + `}}}`
-	overlay := filepath.Join(t.TempDir(), "epoch-threshold.json")
-	if err := os.WriteFile(overlay, []byte(overlayJSON), 0o644); err != nil {
-		t.Fatalf("write overlay: %v", err)
-	}
-
-	url := runGovHandoffArgs(t, fromBin, toBin, template, []string{"--genesis-overlay", overlay})
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlayFromJSON(t, overlayJSON))
 	c := rpc.Dial(url)
 
 	// Pre-state: the stage is on and nothing has staked, which is what makes the

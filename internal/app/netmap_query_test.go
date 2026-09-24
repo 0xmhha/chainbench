@@ -32,24 +32,24 @@ func composeChainForQuery(t *testing.T, chain string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: chain, KeysDir: keysAbs}); err != nil {
+	if _, err := app.ChainNew(ctx, d, app.ChainNewIn{DataDir: dir, Chain: chain, KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, BPCount: 3, ENCount: 1}); err != nil {
+	if _, err := app.ChainAllocate(ctx, d, app.ChainAllocateIn{DataDir: dir, BPCount: 3, ENCount: 1}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	return dir
 }
 
-// TestNetMap_AnswersInBothDirections is the point of keeping a map rather than
+// TestChainMap_AnswersInBothDirections is the point of keeping a map rather than
 // a list: an address in a log line has to lead back to a node, and a role in a
 // test definition has to lead to an address.
-func TestNetMap_AnswersInBothDirections(t *testing.T) {
+func TestChainMap_AnswersInBothDirections(t *testing.T) {
 	dir := composeForQuery(t)
 	ctx := context.Background()
 	d := app.Deps{Clock: fixedClock}
 
-	all, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir})
+	all, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("map: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestNetMap_AnswersInBothDirections(t *testing.T) {
 	}
 
 	// Forward: the role alias a spec would use.
-	byAlias, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Label: "en1"})
+	byAlias, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Label: "en1"})
 	if err != nil {
 		t.Fatalf("map by alias: %v", err)
 	}
@@ -77,14 +77,14 @@ func TestNetMap_AnswersInBothDirections(t *testing.T) {
 		t.Fatalf("en1 = %+v", byAlias.Entries)
 	}
 	// Forward: the identity an artifact would carry.
-	byLabel, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Label: "node2"})
+	byLabel, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Label: "node2"})
 	if err != nil || len(byLabel.Entries) != 1 || byLabel.Entries[0].Node != 2 {
 		t.Fatalf("node2 = %+v, %v", byLabel.Entries, err)
 	}
 
 	// Reverse: a port back to its owner, including the derived etcd port that
 	// used to be unknowable once a network was running.
-	byPort, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Port: first.Etcd})
+	byPort, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Port: first.Etcd})
 	if err != nil {
 		t.Fatalf("map by port: %v", err)
 	}
@@ -92,39 +92,39 @@ func TestNetMap_AnswersInBothDirections(t *testing.T) {
 		t.Fatalf("port %d = %+v, want node%d", first.Etcd, byPort.Entries, first.Node)
 	}
 	// Reverse: an address to everything on it.
-	byHost, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Host: first.Host})
+	byHost, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Host: first.Host})
 	if err != nil || len(byHost.Entries) != 4 {
 		t.Fatalf("host %s = %d entries, %v", first.Host, len(byHost.Entries), err)
 	}
 }
 
-func TestNetMap_RefusesAmbiguousAndUnknownQuestions(t *testing.T) {
+func TestChainMap_RefusesAmbiguousAndUnknownQuestions(t *testing.T) {
 	dir := composeForQuery(t)
 	ctx := context.Background()
 	d := app.Deps{Clock: fixedClock}
 
 	// Two selectors ask two questions; honouring one silently would answer the
 	// one the caller did not mean.
-	if _, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Node: 1, Port: 8600}); err == nil {
+	if _, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Node: 1, Port: 8600}); err == nil {
 		t.Fatal("two selectors must be refused")
 	}
-	if _, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Label: "sideways1"}); err == nil {
+	if _, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Label: "sideways1"}); err == nil {
 		t.Fatal("a label that is neither an identity nor a role must be refused")
 	}
 	// A question with no answer says so, rather than returning an empty map
 	// that reads as "nothing is listening there".
-	_, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Port: 65000})
+	_, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Port: 65000})
 	if err == nil || !strings.Contains(err.Error(), "nothing matches") {
 		t.Fatalf("unmatched port error = %v", err)
 	}
 }
 
-// TestNetPool_ReportsCapacityWithoutCredentials: the pool answers "why was that
+// TestChainPool_ReportsCapacityWithoutCredentials: the pool answers "why was that
 // refused" — and must not become the place a password reaches an agent
 // transcript. The absence is asserted, since a leak here would be silent.
-func TestNetPool_ReportsCapacityWithoutCredentials(t *testing.T) {
+func TestChainPool_ReportsCapacityWithoutCredentials(t *testing.T) {
 	dir := composeForQuery(t)
-	out, err := app.NetPool(context.Background(), app.Deps{Clock: fixedClock}, app.NetPoolIn{DataDir: dir})
+	out, err := app.NetworkPool(context.Background(), app.Deps{Clock: fixedClock}, app.NetworkPoolIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("pool: %v", err)
 	}
@@ -141,7 +141,7 @@ func TestNetPool_ReportsCapacityWithoutCredentials(t *testing.T) {
 	// a deliberate act that fails this test first.
 	for _, field := range []string{"Password", "KeyFile", "User", "SSH"} {
 		if hasField(out, field) {
-			t.Fatalf("NetPoolOut exposes %s — credentials do not belong in a summary", field)
+			t.Fatalf("NetworkPoolOut exposes %s — credentials do not belong in a summary", field)
 		}
 	}
 }
@@ -156,24 +156,24 @@ func hasField(v any, name string) bool {
 	return false
 }
 
-// TestNetMap_TracesAnAddressFromALogLine is the question a map exists to
+// TestChainMap_TracesAnAddressFromALogLine is the question a map exists to
 // answer: a bind failure or a peer error prints host:port, and that has to lead
 // back to a node without the operator matching numbers by eye. It answers for
 // the derived etcd port too, which is exactly the one a wemix bind failure
 // names and the one nothing could resolve before.
-func TestNetMap_TracesAnAddressFromALogLine(t *testing.T) {
+func TestChainMap_TracesAnAddressFromALogLine(t *testing.T) {
 	dir := composeForQuery(t)
 	ctx := context.Background()
 	d := app.Deps{Clock: fixedClock}
 
-	all, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir})
+	all, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("map: %v", err)
 	}
 	want := all.Entries[1]
 	addr := fmt.Sprintf("%s:%d", want.Host, want.Etcd)
 
-	got, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Addr: addr})
+	got, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Addr: addr})
 	if err != nil {
 		t.Fatalf("map by addr %s: %v", addr, err)
 	}
@@ -181,17 +181,17 @@ func TestNetMap_TracesAnAddressFromALogLine(t *testing.T) {
 		t.Fatalf("addr %s = %+v, want node%d", addr, got.Entries, want.Node)
 	}
 	// A malformed address says so rather than matching nothing quietly.
-	if _, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Addr: "127.0.0.1"}); err == nil {
+	if _, err := app.NetworkMap(ctx, d, app.NetworkMapIn{DataDir: dir, Addr: "127.0.0.1"}); err == nil {
 		t.Fatal("an address without a port must be refused")
 	}
 }
 
-// TestNetAllocate_PersistsTheLabel: the label is stored, and every path is
+// TestChainAllocate_PersistsTheLabel: the label is stored, and every path is
 // named after it. Deriving it at each read is how four different spellings of a
 // node's name came to exist.
-func TestNetAllocate_PersistsTheLabel(t *testing.T) {
+func TestChainAllocate_PersistsTheLabel(t *testing.T) {
 	dir := composeForQuery(t)
-	out, err := app.NetStatus(context.Background(), app.Deps{Clock: fixedClock}, app.NetStatusIn{DataDir: dir})
+	out, err := app.ChainStatus(context.Background(), app.Deps{Clock: fixedClock}, app.ChainStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}

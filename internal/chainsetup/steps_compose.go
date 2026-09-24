@@ -112,14 +112,10 @@ func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 		detail += fmt.Sprintf(", %d identity file(s) shipped to %s", shipped, w.keysBase())
 	}
 	w.markStep("deploy", detail)
-	// Which of the two the deploy did, said by the step that counted it.
-	// Nothing outside can: whether anything was shipped is the difference
-	// between a local target and a remote one, and it is counted here.
-	at := lifecycle.ChainDeployNodesVerifiedLocal
-	if shipped > 0 {
-		at = lifecycle.ChainDeployNodesShippedRemote
-	}
-	return StepOut{Detail: detail, Passed: []lifecycle.Status{at}}, nil
+	// Shipped is what says which of the two ways the deploy went, and only this
+	// step can: whether anything was sent is the difference between a local
+	// target and a remote one, and it is counted here.
+	return StepOut{Detail: detail, Shipped: shipped}, nil
 }
 
 // shipIdentities uploads each node's identity files — the devp2p nodekey, the

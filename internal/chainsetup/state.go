@@ -14,7 +14,11 @@ import (
 // process reads this rather than inferring from files on disk, because a file
 // can be present for reasons the composition never chose.
 
-const StateFormatVersion = 1
+// StateFormatVersion is 2 because a record now carries where the composition's
+// machine was, and a resume trusts it. A version 1 record has no position, and
+// a build that read one would resume from the beginning of a network that is
+// half up.
+const StateFormatVersion = 2
 
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step
@@ -96,6 +100,21 @@ type State struct {
 	// wrong launch into a refusal that names the file.
 	LaunchInputs map[string]string `json:"launchInputs,omitempty"`
 	Nodes        []node.Record     `json:"nodes,omitempty"`
+	// StatePath is where the composition machine was when this record was last
+	// written: the state and its ancestors, outermost first, as
+	// "Composition/Composing/BuildingGenesis/GenesisFromTemplate".
+	//
+	// It is the thing Steps cannot say. Steps names the rungs that finished,
+	// so "where is this composition now" has to be worked out from it by
+	// walking UpStepNames and looking for the first one not done — which is a
+	// second account of the composition's position, kept in a different place
+	// from the first, and the two have disagreed.
+	//
+	// Nothing reads it yet. It is written before it is read on purpose: a
+	// workspace composed by this build already carries its position by the
+	// time the resume path starts trusting it, so the change of format and the
+	// change of behaviour are not the same commit.
+	StatePath string `json:"statePath,omitempty"`
 	// Steps is what has been done to this composition, by name. It holds two
 	// kinds: a rung of the composition ladder (UpStepNames) and an operation on
 	// a network already up (OpStepNames). Every reader names the subset it
@@ -174,7 +193,7 @@ type State struct {
 	// what it was asked, not re-asked. Its DataDir is left empty: the
 	// workspace's location is where this file is. It is the one fact of a
 	// composition that is otherwise nowhere on disk (F1).
-	Request *NetUpIn `json:"request,omitempty"`
+	Request *ChainUpIn `json:"request,omitempty"`
 }
 
 // Workspace is an open composition workspace: the session-owned persistence

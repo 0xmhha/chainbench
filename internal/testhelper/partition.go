@@ -173,5 +173,6 @@ func flatten(groups [][]node.Node) []node.Node {
 	return out
 }
 
-// compile-time assertion that the RPC client satisfies what the actions need.
+// rpc.Client must satisfy what the actions need; this fails to compile if
+// it stops.
 var _ = func(c *rpc.Client) { _ = c.AddPeer }

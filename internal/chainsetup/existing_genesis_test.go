@@ -10,7 +10,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
@@ -59,17 +58,12 @@ func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	if _, err := ws.Keys(ctx, chainsetup.KeysOpts{}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
-	done, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath})
-	if err != nil {
+	if _, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath}); err != nil {
 		t.Fatalf("genesis (existing): %v", err)
 	}
-	// The step says where the genesis came from. Nothing else can: the handler
-	// driving it sees the same request the CLI does, and this method is
-	// exported, so the request and what the step did are two facts.
-	if len(done.Passed) != 1 || done.Passed[0] != lifecycle.ChainBuildGenesisFromExisting {
-		t.Errorf("the step reported %v, want [ChainBuildGenesisFromExisting]", done.Passed)
-	}
-
+	// That the genesis came from the file rather than the template is the next
+	// check: the bytes are the file's, verbatim. Which state a composition
+	// walks to get there is held in manager_test.go, where the machine is.
 	got, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
 	if err != nil {
 		t.Fatalf("read genesis: %v", err)
@@ -115,16 +109,16 @@ func TestGenesis_ExistingRejectsInvalidJSON(t *testing.T) {
 func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 	cases := []struct {
 		name string
-		in   chainsetup.NetGenesisIn
+		in   chainsetup.ChainGenesisIn
 		want string
 	}{
-		{"chain id", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", ChainID: 424243}, "chain id"},
-		{"hardfork height", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", Set: []string{"bohoBlock=10"}}, "override"},
-		{"both", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", ChainID: 7, Set: []string{"bohoBlock=10"}}, "chain id"},
+		{"chain id", chainsetup.ChainGenesisIn{GenesisExisting: "/g.json", ChainID: 424243}, "chain id"},
+		{"hardfork height", chainsetup.ChainGenesisIn{GenesisExisting: "/g.json", Set: []string{"bohoBlock=10"}}, "override"},
+		{"both", chainsetup.ChainGenesisIn{GenesisExisting: "/g.json", ChainID: 7, Set: []string{"bohoBlock=10"}}, "chain id"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
+			_, err := verb.ChainGenesis(context.Background(), chainsetup.Deps{}, tc.in)
 			if err == nil {
 				t.Fatal("a change alongside an existing genesis must be refused")
 			}
@@ -140,8 +134,8 @@ func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
 func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 	// A missing workspace fails later than the conflict check, which is enough
 	// to show the conflict check did not fire.
-	_, err := verb.NetGenesis(context.Background(), chainsetup.Deps{},
-		chainsetup.NetGenesisIn{DataDir: t.TempDir(), GenesisExisting: "/g.json"})
+	_, err := verb.ChainGenesis(context.Background(), chainsetup.Deps{},
+		chainsetup.ChainGenesisIn{DataDir: t.TempDir(), GenesisExisting: "/g.json"})
 	if err != nil && strings.Contains(err.Error(), "used verbatim") {
 		t.Fatalf("an existing genesis on its own must not be refused: %v", err)
 	}
@@ -150,7 +144,7 @@ func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
 // TestWorkspaceGenesis_RefusesChangeRequestsOnTheMethodItself puts MON-007's
 // rule where the operation is rather than where one caller happens to be.
 //
-// The check lived in GenesisOptsFor, the helper that turns a NetGenesisIn into
+// The check lived in GenesisOptsFor, the helper that turns a ChainGenesisIn into
 // options. Every caller went through it, so the behaviour was right — but
 // Workspace.Genesis is exported and takes the options directly, so "a finished
 // genesis is never quietly changed" was a property of the callers, not of the

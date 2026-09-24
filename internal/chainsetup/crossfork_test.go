@@ -1,12 +1,12 @@
 package chainsetup
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"testing"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
 // crossWorkspace is a composed network standing at its fork: one pre-fork
@@ -52,10 +52,13 @@ func TestForkSuccessors_TheBuildDecidesWhoTakesOver(t *testing.T) {
 // TestCrossFork_ANetworkWithNoForkIsRefusedByName: the step is only meaningful
 // on a network composed to cross one, and saying so beats waiting out a timeout
 // on a chain that was never going to stop.
+//
+// Asked of the first moment, because that is where the crossing begins: a
+// refusal that arrived later would already have moved a network.
 func TestCrossFork_ANetworkWithNoForkIsRefusedByName(t *testing.T) {
 	w := crossWorkspace(t)
 	w.state.Fork = nil
-	if _, err := w.CrossFork(t.Context(), CrossForkOpts{}); err == nil {
+	if _, err := w.ForkStanding(); err == nil {
 		t.Fatal("a network that crosses no fork accepted the step")
 	}
 }
@@ -66,7 +69,7 @@ func TestCrossFork_ANetworkWithNoForkIsRefusedByName(t *testing.T) {
 func TestCrossFork_AForkWithNoSuccessorIsRefused(t *testing.T) {
 	w := crossWorkspace(t)
 	w.state.Nodes = []node.Record{{Index: 1, Role: string(node.RoleBP)}}
-	if _, err := w.CrossFork(t.Context(), CrossForkOpts{}); err == nil {
+	if _, err := w.ForkStanding(); err == nil {
 		t.Fatal("a fork with nobody to hand over to was accepted")
 	}
 }
@@ -85,23 +88,70 @@ func TestCrossFork_ANetworkAlreadyAcrossIsLeftAlone(t *testing.T) {
 			w.state.Nodes[i].Role = string(node.RoleBP)
 		}
 	}
-	done, err := w.CrossFork(t.Context(), CrossForkOpts{})
+	standing, err := w.ForkStanding()
 	if err != nil {
-		t.Fatalf("CrossFork on a crossed network: %v", err)
+		t.Fatalf("ForkStanding on a crossed network: %v", err)
 	}
-	if done.Detail == "" {
+	if !standing.Crossed {
+		t.Fatal("a network whose every successor produces read as not yet across")
+	}
+	detail, err := w.ReportAlreadyCrossed()
+	if err != nil {
+		t.Fatalf("ReportAlreadyCrossed: %v", err)
+	}
+	if detail == "" {
 		t.Fatal("the step reported nothing")
-	}
-	// A network already past the fork went through all three moments, and says
-	// so: the answer is "it is crossed", not "nothing happened".
-	if len(done.Passed) != 3 || done.Passed[2] != lifecycle.ChainOpCrossForkCrossed {
-		t.Errorf("an already-crossed network reported %v", done.Passed)
 	}
 
 	// One left behind is not "already crossed".
 	w.state.Nodes[3].Role = string(node.RoleEN)
 	if w.alreadyCrossed(*w.state.Fork, w.forkSuccessors(*w.state.Fork)) {
 		t.Error("a network with one successor still an endpoint read as fully crossed")
+	}
+}
+
+// TestCrossingFork_TheMomentsAreStatesAndTheyAreWalkedInOrder.
+//
+// The three moments were a list the verb appended to as it went. What a reader
+// wants from a stopped crossing is which of them it got through, and a list
+// kept by hand could not answer it for the one case that walks none of them:
+// an already-crossed network was reported as having passed all three. So the
+// moments are states, and where the machine is is the answer.
+func TestCrossingFork_TheMomentsAreStatesAndTheyAreWalkedInOrder(t *testing.T) {
+	mg := newTestManager(t)
+	x := mg.crossingFork
+	for _, c := range []struct {
+		name string
+		msg  statemachine.Message
+		want statemachine.StateName
+	}{
+		{"a network still short of the fork begins at the boundary",
+			forkStandingRead{Crossed: false}, nameBeforeFork},
+		{"the boundary reached hands production over",
+			forkBoundaryReached{Head: 99}, nameHandingOver},
+		{"the hand-over done is the crossing",
+			productionHandedOver{}, nameCrossed},
+		{"a network already across walks none of it",
+			forkStandingRead{Crossed: true}, nameCrossed},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			got, ok := x.nextMoment(c.msg)
+			if !ok {
+				t.Fatalf("%T is not one of this crossing's messages", c.msg)
+			}
+			if got.Name() != c.want {
+				t.Errorf("%T moves to %s, want %s", c.msg, got.Name(), c.want)
+			}
+		})
+	}
+	// The head the boundary reported is what the last moment writes its
+	// sentence from, so it is kept rather than read again from a chain that has
+	// moved on since.
+	if x.head != 99 {
+		t.Errorf("the crossing kept head %d, want the one the boundary reported", x.head)
+	}
+	if !x.already {
+		t.Error("a crossing told the network was already across did not remember it")
 	}
 }
 

@@ -5,7 +5,8 @@
 > `/Users/wm-it-25_0220/Work/github/references/android/READING-ORDER.md` 가 가리키는 코드를
 > 다섯 갈래로 전부 읽은 뒤 썼다. 근거는 전부 파일·줄이다.
 >
-> 대상 chainbench 코드는 커밋 `80e29fbe` 와 작업 트리다. 13번 문서의 판정("지금 `lifecycle` 는
+> 대상 chainbench 코드는 커밋 `80e29fbe` 와 작업 트리다. **2026-09-22 에 HEAD `ea267fd8` 로 경로와 줄을
+> 다시 맞췄다**(verb 층이 `internal/chainsetup/verb/` 로 갔고, 운영·테스트 영역의 `Status` 가 선언됐다. 13번 5장). 13번 문서의 판정("지금 `lifecycle` 는
 > 상태를 추인하는 테이블 기반 state machine다")은 그대로 유효하고, 이 문서는 그 대안이 정확히 무엇인지를
 > 적는다.
 >
@@ -196,12 +197,12 @@ SyncStateMachine 은 위 기제에서 Looper · 지연 메시지 · `deferMessag
 | 상태 | `enter/exit/processMessage` 를 가진 객체 | `uint32` 값. 행동은 `map[Status]Handler` | `internal/core/lifecycle/status.go:23` |
 | 전이 | 상태가 `transitionTo`. 표 없음 | 전역 `allowed` 표가 `Request` 를 거절 | `internal/core/lifecycle/transitions.go` |
 | 무엇이 움직이나 | 메시지 | 루프가 목표까지 핸들러를 부름 | `internal/core/lifecycle/machine.go:130` |
-| 일은 어디서 | `enter()` | verb 가 밖에서 하고 `Passed` 로 지나온 상태를 재생 | 13번 2장 |
+| 일은 어디서 | `enter()` | verb 가 밖에서 하고 `Passed` 로 지나온 state 를 재생 (16곳) | `internal/chainsetup/verb/statedriven.go:162`~`204` |
 | 결과는 어떻게 | 메시지 | 반환값 | 위와 같음 |
 | self message | 있음. 기제의 핵심 | 없음 | — |
 | parent 위임 | 있음 | 없음 | — |
 | 정리 | `exit()` | 없음 | — |
-| parent·child | child이 parent 큐에 보고 | 두 state machine, parent 없음 | `internal/chainsetup/compare.go:72` |
+| parent·child | child이 parent 큐에 보고 | 두 state machine, parent 없음 | `internal/chainsetup/verb/compare.go:73` |
 | 기록 | `LogRec` | 없음 | — |
 
 한 줄로: 지금 것은 상태 **표를 검사하는 루프**이고, 참조는 **메시지로 이어지는 상태 객체
@@ -282,6 +283,17 @@ func (m *Machine) Dump() []LogRec
 깊은 쪽부터, enter 바깥부터, 마지막에 current 갱신) → `self` 소진 → `inbox` 소진. 돌아오면
 state machine는 정지 상태다. `LogRec` 은 메시지마다 (what, 처리 상태, 원 상태, 목적지)를 남긴다.
 
+**한 곳만 SyncStateMachine 이 아니라 StateMachine 을 따른다 — 자기 자신으로의 transition**
+(2026-09-22, commit 1 을 쓰면서 정함). SyncStateMachine 은 `performTransitions` 첫 줄에서
+`mDestState == mCurrentState` 면 그냥 돌아간다(279). 그래서 `transitionTo(자기 자신)` 이 아무
+일도 하지 않고, 부른 쪽은 그것을 알 방법이 없다. 비동기 StateMachine 은 반대로 목적지를 **언제나**
+enter 한다 — "the destState must always be entered even if it is active. This can happen if we are
+exiting/entering the current state"(StateMachine 1105~1112). 우리는 뒤쪽을 쓴다. 이유 둘이다.
+첫째, "이 단계를 다시 한다" 가 여기서는 실제로 필요한 동작이고(재시도, resume 뒤 같은 leaf state
+재실행), 그것을 말할 방법이 `TransitionTo(self)` 말고는 없다. 둘째, `Exit` 은 `Enter` 가 건 것을
+거두는 자리라 둘이 짝이어야 하는데, 조용한 no-op 은 두 번째 `Enter` 가 첫 번째가 건 것 위에 다시
+거는 모양이 된다. 그 밖의 순서·규칙은 전부 SyncStateMachine 그대로다.
+
 ---
 
 ## 4. chainbench 에 씌우면
@@ -326,6 +338,7 @@ composition                  root. 공통: CmdStop, 모르는 메시지 → unha
     launching                공통: 포트·바이너리 검사. EventPhaseLaunched 를 세어 다음 phase 또는 verifying
       launchingPhase
       runningPhaseActions
+      recordingRun           (2026-09-22 추가) 마지막 phase 뒤의 마무리
   composed                   --stage=deploy 처럼 중간에 멈춘 자리. record 에 남는다. CmdStep 은 여기서만 받는다
   verifying                  Enter 가 준비 게이트를 돌린다 (게이트 함수는 testengine 이 주입)
   ready                      운영 Cmd 를 받는 유일한 자리. EventNodeDied 도 여기만
@@ -390,6 +403,33 @@ func (s buildingGenesis) Process(ctx context.Context, m *lifecycle.Machine, msg 
 leaf state을 고르는 것은 **앞 단계**다. `ensuringKeys` 의 parent `Process` 가 `EventKeysEnsured` 를 받으면
 요청을 보고 `genesisFromTemplate` 인지 `genesisFromExisting` 인지 골라 `TransitionTo` 한다.
 `StoppedState` 가 `CMD_START_DHCP` 를 받아 갈래를 고르는 것과 같다.
+
+**고를 때 보는 것은 request 만이 아니다** (2026-09-22, commit 7 을 쓰면서 정함). `ws.Keys` 는 요청의
+source 문자열보다 **앞 단계가 만든 노드 표**를 먼저 본다 — 키를 선언한 표는 이미 자기 신원의 출처를
+말한 것이기 때문이다(`steps_keys.go` 의 주석, 그리고 13번이 "요청에서 읽던 것이 틀렸던 사례" 로 든
+자리: 인라인 topology 로 조립한 것이 preset 을 썼다고 기록됐다). 그러니 문장을 한 번 넓힌다 —
+**고르는 자리는 request 와 workspace 를 본다.**
+
+그리고 고르는 일 자체에 준비가 필요할 때가 있다. 키 단계는 서버에 있는 ring 을 먼저 내려받아야
+표를 읽을 수 있다. 그런 단계는 **parent 의 `Enter` 가 준비하고 고른 뒤 self message 로 말하고,
+parent 의 `Process` 가 그것을 leaf 로 바꾼다.** 기제 그대로다 — Enter 가 일하고, 결과는 message 이고,
+Process 가 transition 이다. 고르는 데 일이 필요 없는 단계는 앞 단계의 `Process` 에서 바로 골라도 된다.
+
+**갈래가 일 앞에 오지 않는 단계도 있다** (2026-09-22, commit 11 을 쓰면서 확인). deploy 는 어느
+쪽인지를 **하고 나서야** 안다 — 원격에 무언가를 올렸는지는 올려 봐야 세어지고, 그 수가 곧 갈래다
+(`steps_compose.go` 의 주석: "Nothing outside can"). 이때는 parent 의 `Enter` 가 일을 하고 결과를
+self message 에 실어 보내며, `Process` 가 그것을 보고 leaf 를 고른다. leaf 는 일을 하지 않고
+**결과의 이름**이다. 이것도 기제 그대로이고 참조에도 있다 — `DataNetwork` 의 setup 응답이 성공이면
+`Connected`, 실패면 `Disconnected` 로 가는 것과 같은 꼴이다(1.5).
+
+즉 갈래는 두 자리 중 하나에 선다. **일 앞**(요청이나 workspace 를 보고 정할 수 있을 때)이거나
+**일 뒤**(해 봐야 알 때)다. 어느 쪽이든 고르는 것은 `Process` 이고 leaf 는 state 다.
+
+**`recordingRun` 을 더한 이유** (2026-09-22, commit 13). 마지막 phase 가 끝나면 남는 일이 있다 —
+바이너리를 기록하고, 단계를 완료로 적고, 실행 기록을 남긴다. 그것은 일이고, 이 설계에서 일은
+state 의 `Enter` 안에서 한다. parent 의 `Process` 에 두면 "Process 는 전이를 정할 뿐" 이 깨지고,
+parent 의 `Exit` 에 두면 "Exit 은 Enter 가 건 것을 거둔다" 가 깨진다. 그래서 자리를 하나 준다.
+부수적으로 얻는 것이 있다 — 실행 기록에 실패했지만 망은 떠 있는 상태가 경로로 보인다.
 
 ### 시나리오
 
@@ -514,6 +554,15 @@ func (PostCompose) What() lifecycle.What { return CmdPostCompose }
 5. **이름 표 한 곳.** `whatNames map[What]string` 을 protocol 파일에 두고 `String()` 이 쓴다.
    `MessageUtils` 의 리플렉션 대신 테스트가 빠짐을 잡는다.
 
+**구현하며 바뀐 것 둘 (2026-09-22, commit 2).**
+
+- `CmdStep` 의 본체 이름은 `Step` 이 아니라 **`RunStep`** 이다. `chainsetup` 에 이미 `Step`
+  (기록된 조립의 한 단계, `session.Step` 의 별칭)이 있고, 한 패키지에 같은 이름 둘은 Go 가 주지
+  않는다. 나머지 본체 이름은 이 문서 그대로다.
+- `String()` 은 `What` 에 붙일 수 없다. `What` 은 state machine 패키지의 타입이고 이름은 도메인의
+  것이라, 도메인이 자기 이름을 그 패키지에 등록하는 전역 가변 상태를 만들지 않으려면 방향이 반대여야
+  한다. 대신 도메인 패키지가 `WhatName(w) string` 을 내놓는다. 표와 "빠진 이름" 테스트는 그대로다.
+
 ### 5.2 상태 이름
 
 | 자리 | 형태 | 예 |
@@ -557,7 +606,8 @@ leaf state에 parent를 접두로 붙이지 않는다. 기록에는 state machin
 `lifecycle` 의 `Status` 상수 · `names` · `allowed` · 표를 붙드는 테스트. `statedriven.go`
 (작업 트리에서는 `internal/chainsetup/verb/statedriven.go`)의 `composition` 표 · `handlersFor` ·
 `run` · `failed` · `startFor` · `targetFor`. `composeNeeds` · `require` · `verbNeeds` · `allow`.
-`compareHandlers` · `reconcileHandler`. verb 의 `inWorkspace` 감싸기. `app.Start.At` 의 `Status`.
+`verb/compare.go` 의 `compareHandlers` · `chainsetup.ReconcileHandler`. verb 의 `InWorkspace` / `WithWorkspace` 감싸기.
+운영 영역의 값(`ChainOp*`)과 테스트 영역의 값(`Test*`)은 각각 17 · 18번 commit 에서 leaf state 와 `failed` reason 으로 흡수된다(13번 5장). `app.Start.At` 의 `Status`.
 
 ### 순서 — 옛 state machine와 새 state machine를 같이 두고 leaf state을 하나씩
 

@@ -70,20 +70,6 @@ func (w *Workspace) genesisConfigFor(ns node.Record) string {
 	return ""
 }
 
-// pluginFor resolves the chain one node runs: the one recorded for its binary
-// when that binary is a different chain, otherwise the composition's.
-//
-// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
-// same question: which of this network's builds is this node. Keeping them the
-// same shape is what stops one of them answering differently from the others.
-// network is what every node of this composition shares, whichever binary it
-// runs: the chain id it was composed with and the devp2p id that follows it.
-//
-// Every caller that builds a node's configuration takes it from here, so the
-// config writer and the argv assembler cannot answer differently. They used to:
-// the config writer read the node's own plugin and the assembler the
-// composition's, which wrote one devp2p id into a successor's config file and
-// passed another on its command line.
 func (w *Workspace) network() (nodeconfig.Network, error) {
 	p, err := w.plugin()
 	if err != nil {
@@ -123,6 +109,20 @@ func (w *Workspace) checkUniformNetworkID() error {
 	return nil
 }
 
+// pluginFor resolves the chain one node runs: the one recorded for its binary
+// when that binary is a different chain, otherwise the composition's.
+//
+// It is the third of these — binaryFor, genesisFor, pluginFor — and they ask the
+// same question: which of this network's builds is this node. Keeping them the
+// same shape is what stops one of them answering differently from the others.
+// network is what every node of this composition shares, whichever binary it
+// runs: the chain id it was composed with and the devp2p id that follows it.
+//
+// Every caller that builds a node's configuration takes it from here, so the
+// config writer and the argv assembler cannot answer differently. They used to:
+// the config writer read the node's own plugin and the assembler the
+// composition's, which wrote one devp2p id into a successor's config file and
+// passed another on its command line.
 func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
 	if ns.Binary != "" {
 		if id := w.state.BinaryChains[ns.Binary]; id != "" {
@@ -280,87 +280,106 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	return detail, nil
 }
 
-// Start launches every stopped node. Argv comes from the launchopts step when
-// it ran; otherwise it is assembled here through the same single site
-// (nodeconfig.Argv) with no overrides.
-func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
+// LaunchPlan is the checks a launch makes before it starts anything, and the
+// phases the family says to start in.
+//
+// Split out of Start so the state that prepares and the states that walk the
+// phases can be separate states. A family decides how many phases there are —
+// wbft declares one, a poa network declares a boot plus one join per producer —
+// so the count is not this package's to know.
+func (w *Workspace) LaunchPlan(ctx context.Context, binaryArg string) (string, []registry.Phase, error) {
 	if err := w.require("start"); err != nil {
-		return StepOut{}, err
+		return "", nil, err
 	}
 	p, err := w.plugin()
 	if err != nil {
-		return StepOut{}, err
+		return "", nil, err
 	}
 	if len(w.state.Nodes) == 0 {
-		return StepOut{}, fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
+		return "", nil, fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
-		return StepOut{}, err
+		return "", nil, err
 	}
-	// With accounts: a producer unlocks the account its keystore holds, which is
-	// not always the address its nodekey derives.
-	preset, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
-	if err != nil {
-		return StepOut{}, fmt.Errorf("chainsetup: start: %w", err)
-	}
-	// The family orders the launch. A wbft network declares one phase and this
-	// is the loop it always was; a wemix network starts its producer alone so
-	// the etcd cluster can form, and the bootstrap runs in the gap before the
-	// rest join. Launching everything at once produced a network that came up
-	// and never agreed on anything.
 	roles := make([]node.Role, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
 		roles = append(roles, node.Role(ns.Role))
 	}
 	phases := p.Family().BringUpPhases(roles)
-
 	if err := w.checkUnmanaged(ctx, bin); err != nil {
-		return StepOut{}, err
+		return "", nil, err
 	}
 	if err := w.checkPaths(ctx, bin); err != nil {
-		return StepOut{}, err
+		return "", nil, err
 	}
-	// The walk through the phases, as states. A family decides how many there
-	// are — wbft declares one, a poa network declares a boot plus one join per
-	// producer — so the count is not this package's to know, and the path is
-	// built as the loop runs rather than assumed in front of it.
-	//
-	// The state says what the launch was doing; how many times it has been
-	// through says which phase. A launch that dies in the third join reports
-	// three PhaseLaunching and stops there, which is the thing the loop alone
-	// could not say: the record used to hold "start" and nothing else.
-	var passed []lifecycle.Status
-	started := 0
-	for _, phase := range phases {
-		passed = append(passed, lifecycle.ChainLaunchNodesPhaseLaunching)
-		launched, err := w.startPhase(ctx, p, preset, bin, phase)
-		if err != nil {
-			return StepOut{Passed: passed}, err
-		}
-		started += launched
-		if len(phase.Actions) > 0 {
-			passed = append(passed, lifecycle.ChainLaunchNodesPhaseActions)
-			if err := w.runPhaseActions(ctx, bin, phase); err != nil {
-				return StepOut{Passed: passed}, err
-			}
-		}
-		passed = append(passed, lifecycle.ChainLaunchNodesPhaseDone)
+	return bin, phases, nil
+}
+
+// StartPhase launches one phase and says how many nodes it started.
+func (w *Workspace) StartPhase(ctx context.Context, bin string, phase registry.Phase) (int, error) {
+	p, err := w.plugin()
+	if err != nil {
+		return 0, err
 	}
+	// With accounts: a producer unlocks the account its keystore holds, which is
+	// not always the address its nodekey derives.
+	keys, err := preset.LoadKeyPresetWithAccounts(w.state.KeysDir)
+	if err != nil {
+		return 0, fmt.Errorf("chainsetup: start: %w", err)
+	}
+	return w.startPhase(ctx, p, keys, bin, phase)
+}
+
+// RunPhaseActions runs what a phase declares after its nodes are up.
+func (w *Workspace) RunPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
+	return w.runPhaseActions(ctx, bin, phase)
+}
+
+// FinishLaunch records the binary the network runs and the run itself.
+func (w *Workspace) FinishLaunch(ctx context.Context, bin string, started int) (string, error) {
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
 	rec, err := w.machineFor(w.state.Nodes[0])
 	if err != nil {
-		return StepOut{}, err
+		return "", err
 	}
-	if dir, err := w.recordRun(ctx, rec, bin); err == nil {
+	if dir, rerr := w.recordRun(ctx, rec, bin); rerr == nil {
 		detail += fmt.Sprintf("; run recorded at %s", dir)
 	} else {
 		// The record must never take the network it records down with it.
-		detail += fmt.Sprintf("; run record failed: %v", err)
+		detail += fmt.Sprintf("; run record failed: %v", rerr)
 	}
-	return StepOut{Detail: detail, Passed: passed}, nil
+	return detail, nil
+}
+
+// Start launches every stopped node. Argv comes from the launchopts step when
+// it ran; otherwise it is assembled here through the same single site
+// (nodeconfig.Argv) with no overrides.
+func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
+	bin, phases, err := w.LaunchPlan(ctx, binaryArg)
+	if err != nil {
+		return StepOut{}, err
+	}
+	started := 0
+	for _, phase := range phases {
+		launched, perr := w.StartPhase(ctx, bin, phase)
+		if perr != nil {
+			return StepOut{}, perr
+		}
+		started += launched
+		if len(phase.Actions) > 0 {
+			if aerr := w.RunPhaseActions(ctx, bin, phase); aerr != nil {
+				return StepOut{}, aerr
+			}
+		}
+	}
+	detail, err := w.FinishLaunch(ctx, bin, started)
+	if err != nil {
+		return StepOut{}, err
+	}
+	return StepOut{Detail: detail}, nil
 }
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
@@ -435,8 +454,8 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// nodeAt finds a node's position in the table by its index.
-
+// Rm removes the composed data plane (node datadirs, configs, genesis, logs)
+// for a local target. Running nodes must be stopped first.
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	if err := w.allow("Rm"); err != nil {
 		return "", err

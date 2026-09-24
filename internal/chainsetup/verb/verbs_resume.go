@@ -13,16 +13,16 @@ import (
 // machine, and continues from the first step that never finished. It adds
 // no record of its own.
 
-// NetResumeIn identifies the workspace to resume.
-type NetResumeIn struct {
+// ChainResumeIn identifies the workspace to resume.
+type ChainResumeIn struct {
 	// DataDir is the workspace directory.
 	DataDir string
 	// Binary overrides the recorded node binary for the steps that run.
 	Binary string
 }
 
-// NetResumeOut is what the resume found and did.
-type NetResumeOut struct {
+// ChainResumeOut is what the resume found and did.
+type ChainResumeOut struct {
 	// Reconciled is one line per node: what its record said, what the
 	// machine said, and what was done about it.
 	Reconciled []string
@@ -43,16 +43,16 @@ type NetResumeOut struct {
 // step by step.
 var ErrNoRequest = errors.New("chainsetup: resume: the workspace records no request — compose it with `chain up`, or finish the steps by hand")
 
-// NetResume recovers a workspace whose run died: reconcile the recorded pids
+// ChainResume recovers a workspace whose run died: reconcile the recorded pids
 // with the machine, continue the composition from the first step that never
 // finished, bring back the nodes that should be running, and read the
 // network back.
-func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResumeOut, error) {
+func ChainResume(ctx context.Context, d chainsetup.Deps, in ChainResumeIn) (ChainResumeOut, error) {
 	if in.DataDir == "" {
-		return NetResumeOut{}, ErrNoDataDir
+		return ChainResumeOut{}, ErrNoDataDir
 	}
-	var out NetResumeOut
-	var req *chainsetup.NetUpIn
+	var out ChainResumeOut
+	var req *chainsetup.ChainUpIn
 	var first string
 	// WithWorkspace takes over a stale lock and refuses a live one, which is
 	// exactly resume's rule: a run that is still going is not resumed.
@@ -63,7 +63,9 @@ func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResum
 			return "", err
 		}
 		req = ws.State().Request
-		first = ws.FirstUndone()
+		// Where the machine was, not where the step map suggests it should be.
+		// The two used to be worked out separately and could disagree.
+		first = ws.ResumeStep()
 		return "", nil
 	})
 	if err != nil {
@@ -80,7 +82,7 @@ func NetResume(ctx context.Context, d chainsetup.Deps, in NetResumeIn) (NetResum
 
 	if first != "" {
 		out.Resumed = first
-		res, err := netUpFrom(ctx, d, up, first)
+		res, err := composeFrom(ctx, d, up, first)
 		out.Steps = res.Steps
 		if err != nil {
 			return out, err

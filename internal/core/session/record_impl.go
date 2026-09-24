@@ -144,7 +144,7 @@ func (r *record) Observation(name string, content []byte) {
 	r.capture(WriteFileAtomic(filepath.Join(dir, name), Scrub(content), 0o644))
 }
 
-// record collects a non-nil write error for later surfacing by session.Save.
+// capture collects a non-nil write error for later surfacing by session.Save.
 func (r *record) capture(err error) {
 	if err != nil {
 		r.errs = append(r.errs, fmt.Errorf("record %s: %w", r.id, err))

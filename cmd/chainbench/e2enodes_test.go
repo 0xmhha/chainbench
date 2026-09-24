@@ -3,8 +3,6 @@
 package main
 
 import (
-	"regexp"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -19,20 +17,6 @@ import (
 // could not see is that these files did, because a build tag hid them from the
 // compiler. The lesson is in the CI job that now builds this tag, not in
 // bringing the type back for two tests.
-
-// pidLine matches the "pid=NNNN" the node table prints.
-var pidLine = regexp.MustCompile(`pid=(\d+)`)
-
-// pidsFrom reads the node pids out of a command's output.
-func pidsFrom(out string) []int {
-	var pids []int
-	for _, m := range pidLine.FindAllStringSubmatch(out, -1) {
-		if pid, err := strconv.Atoi(m[1]); err == nil && pid > 0 {
-			pids = append(pids, pid)
-		}
-	}
-	return pids
-}
 
 // stopPIDs asks each pid to exit, waits up to grace, then reports the ones
 // still alive. A survivor is worth failing over: it holds ports the next test

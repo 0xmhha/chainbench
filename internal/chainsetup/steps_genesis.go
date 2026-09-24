@@ -221,12 +221,6 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 	if err != nil {
 		return StepOut{}, err
 	}
-	// passed is the states this step goes through, appended where each is
-	// decided so the path and the work cannot drift apart.
-	passed := []lifecycle.Status{lifecycle.ChainBuildGenesisFromTemplate}
-	if opts.Existing != "" {
-		passed[0] = lifecycle.ChainBuildGenesisFromExisting
-	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
 	// The genesis is a generated file, so it sits under the composition's
@@ -236,7 +230,24 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 	w.state.Fork = nil
 	if opts.Fork != nil {
 		if gen, forkConfigs, err = w.applyFork(gen, *opts.Fork); err != nil {
-			return StepOut{Passed: passed}, err
+			return StepOut{}, err
+		}
+		// The fork's section is built from the ring and REPLACES config.<fork>,
+		// so an overlay merged into the base genesis is gone by the time it is
+		// written. The handoff this path absorbed applied the overlay AFTER
+		// composing the fork for exactly that reason — upgrade.Handoff.Run ran
+		// ComposePlan and then ApplyOverlay — and the order inverted when the
+		// work moved here. Re-merge, so an overlay that names something inside
+		// the fork section still means what it says.
+		//
+		// Measured before this: an overlay asking for a
+		// stabilizingStakersThreshold of 2 produced the template's 5, and one
+		// naming a single governance member produced all four. Neither was
+		// reported; the declaration was simply dropped.
+		if len(opts.Overlay) > 0 {
+			if gen, err = genesis.Customize(gen, genesis.NetworkOptions{Overlay: opts.Overlay}); err != nil {
+				return StepOut{}, fmt.Errorf("chainsetup: genesis: overlay after the %s fork: %w", opts.Fork.Name, err)
+			}
 		}
 		art.Genesis = gen
 		// Recorded because crossing the fork is a later step's work: it has to
@@ -244,11 +255,10 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		// over, and the request that said so is gone by then.
 		fork := *opts.Fork
 		w.state.Fork = &fork
-		passed = append(passed, lifecycle.ChainBuildGenesisForkApplied)
 	}
 	lay, err := w.layout()
 	if err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	path := lay.GenesisPath()
 	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
@@ -271,17 +281,14 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		return nil
 	})
 	if err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	w.state.GenesisPath = path
 	if err := w.writeGenesisVariants(ctx, lay, gen, opts.Variants); err != nil {
-		return StepOut{Passed: passed}, err
-	}
-	if len(opts.Variants) > 0 {
-		passed = append(passed, lifecycle.ChainBuildGenesisVariantsWritten)
+		return StepOut{}, err
 	}
 	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
-		return StepOut{Passed: passed}, err
+		return StepOut{}, err
 	}
 	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts)
 	w.state.HaltsAt = opts.HaltsAt
@@ -303,7 +310,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 		detail += fmt.Sprintf(", %s fork at %d carried by %s", opts.Fork.Name, opts.Fork.At, opts.Fork.carrier())
 	}
 	w.markStep("genesis", detail)
-	return StepOut{Detail: detail, Passed: passed}, nil
+	return StepOut{Detail: detail}, nil
 }
 
 // applyFork schedules the fork on the built genesis, taking its consensus
@@ -613,16 +620,16 @@ func GenesisFailure(err error) lifecycle.Status {
 	return lifecycle.FailStageUnclassified
 }
 
-// NetGenesisIn customizes the built genesis.
+// ChainGenesisIn customizes the built genesis.
 //
 // The cb tags are what a surface renders this from: one declaration behind the
 // cobra flags a person types and the JSON schema an agent reads, so the two
 // cannot describe the same argument differently (feature.Flags / feature.Schema,
 // surface-unification-design §3.2). They are inert until a surface reads them —
-// this struct is unchanged otherwise — and TestNetGenesis_TagsMatchTheCommand
+// this struct is unchanged otherwise — and TestChainGenesis_TagsMatchTheCommand
 // holds them to the flags the command declares by hand today, so the derivation
 // is proven to reproduce the shipped surface before anything switches to it.
-type NetGenesisIn struct {
+type ChainGenesisIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	ChainID int64  `cb:"chain-id"               help:"override the manifest chain id (0 = manifest)"`
 	// Set carries genesis config overrides as key=value on the bare config key,
@@ -655,7 +662,7 @@ type NetGenesisIn struct {
 // from the dropped fork heights, so a capability-gated fork test would run
 // against a chain that has no such fork. Saying no here, before anything is
 // written, is the only answer that leaves the request and the result equal.
-func GenesisOptsFor(in NetGenesisIn) (GenesisOpts, error) {
+func GenesisOptsFor(in ChainGenesisIn) (GenesisOpts, error) {
 	opts, err := buildGenesisOpts(in)
 	if err != nil {
 		return opts, err
@@ -691,7 +698,7 @@ func (o GenesisOpts) checkExistingIsUnchanged() error {
 		o.Existing, strings.Join(asked, " and "))
 }
 
-func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
+func buildGenesisOpts(in ChainGenesisIn) (GenesisOpts, error) {
 	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting, Fork: in.Fork}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")
@@ -758,4 +765,4 @@ func readGenesisOverlay(path string) (genesisOverlayFile, error) {
 	return overlay, nil
 }
 
-// NetConfigIn identifies the workspace and, optionally, per-node config
+// ChainConfigIn identifies the workspace and, optionally, per-node config

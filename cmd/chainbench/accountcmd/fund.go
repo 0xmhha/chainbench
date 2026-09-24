@@ -11,7 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newAccountFundCmd funds an account: it sends amount wei to a recipient from a
+// newFundCmd funds an account: it sends amount wei to a recipient from a
 // funding account resolved through the shared key model (a private key,
 // mnemonic, or a local/remote key file), using the chain's account provider.
 // This is the account-layer sibling of `faucet`, but the funding key can come

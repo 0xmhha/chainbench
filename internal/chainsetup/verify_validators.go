@@ -74,27 +74,27 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	return check, nil
 }
 
-// NetVerifyValidatorsIn names the composed workspace to check.
-type NetVerifyValidatorsIn struct {
+// ChainVerifyValidatorsIn names the composed workspace to check.
+type ChainVerifyValidatorsIn struct {
 	DataDir string `json:"dataDir,omitempty"`
 }
 
-// NetVerifyValidatorsOut carries the check result.
-type NetVerifyValidatorsOut struct {
+// ChainVerifyValidatorsOut carries the check result.
+type ChainVerifyValidatorsOut struct {
 	Check ValidatorCheck `json:"check"`
 }
 
-// NetVerifyValidators opens a workspace and runs the runtime validator check,
+// ChainVerifyValidators opens a workspace and runs the runtime validator check,
 // the step-verb behind the surface's `verify --validators`.
-func NetVerifyValidators(ctx context.Context, d Deps, in NetVerifyValidatorsIn) (NetVerifyValidatorsOut, error) {
+func ChainVerifyValidators(ctx context.Context, d Deps, in ChainVerifyValidatorsIn) (ChainVerifyValidatorsOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
-		return NetVerifyValidatorsOut{}, err
+		return ChainVerifyValidatorsOut{}, err
 	}
 	ws.SetEnv(d.Env)
 	ws.SetDriver(d.Driver)
 	check, err := ws.VerifyValidators(ctx)
-	return NetVerifyValidatorsOut{Check: check}, err
+	return ChainVerifyValidatorsOut{Check: check}, err
 }
 
 // nodeHTTPURL is the URL to dial for a node's HTTP RPC.

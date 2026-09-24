@@ -1,8 +1,6 @@
 package testengine
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
-
 	"github.com/0xmhha/chainbench/internal/core/origin"
 
 	"context"
@@ -133,7 +131,7 @@ func countFrom(from map[PlanField]origin.Origin, f PlanField, count int) {
 // candidates: once the merge is done, a value that came from the command and
 // one that came from the document are the same string.
 type composition struct {
-	up   *chainsetup.NetUpIn
+	up   *chainsetup.ChainUpIn
 	from map[PlanField]origin.Origin
 }
 
@@ -143,7 +141,7 @@ type composition struct {
 func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (composition, error) {
 	chain := spec.Chain.Name
 	if in.Chain != "" && in.Chain != chain {
-		return composition{}, lifecycle.Mark(errContradicted, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain))
+		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
 	}
 	from := map[PlanField]origin.Origin{}
 	keysDir := in.KeysDir
@@ -205,7 +203,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// track removed.
 	if u := spec.EnvUpgrade; u != nil {
 		if len(spec.Topology) == 0 {
-			return composition{}, lifecycle.Mark(errIncomplete, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])"))
+			return composition{}, fmt.Errorf("a hardfork declares which build each node runs, so its env needs a node table (topology.nodes[])")
 		}
 		fork, ferr := forkOf(u)
 		if ferr != nil {
@@ -277,12 +275,12 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		// out is now the normal case, and chainsetup places the name.
 		p, err := registry.Get(chain)
 		if err != nil {
-			return composition{}, lifecycle.Mark(errUnknownName, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err))
+			return composition{}, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err)
 		}
 		binary = p.Manifest().Binary
 	}
 	if binary == "" {
-		return composition{}, lifecycle.Mark(errIncomplete, fmt.Errorf("no binary was given and chain %q names none", chain))
+		return composition{}, fmt.Errorf("no binary was given and chain %q names none", chain)
 	}
 
 	var validators, endpoints, proxies int
@@ -329,7 +327,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if in.NetworkID != 0 {
 		launch = append(launch, fmt.Sprintf("%s=%d", nodeconfig.KeyNetworkID, in.NetworkID))
 	}
-	up := &chainsetup.NetUpIn{
+	up := &chainsetup.ChainUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
@@ -418,7 +416,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 // bundle. A field the DSL already declared is a conflict rather than a silent
 // override. It runs only for inputs.mode existing; a generated run names no
 // bundle (workspace-config validation ensures that).
-func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+func applyExistingInputs(up *chainsetup.ChainUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
 	if wc.Inputs.Mode != resource.InputExisting {
 		return nil
 	}
@@ -460,7 +458,7 @@ func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, sp
 // direct file reference, which is how a node named its config before bundles
 // existed. With no node table there is nothing to map onto, and the map is
 // simply unused.
-func applyExistingConfigs(up *chainsetup.NetUpIn, existing resource.ExistingInputs) {
+func applyExistingConfigs(up *chainsetup.ChainUpIn, existing resource.ExistingInputs) {
 	if len(existing.Configs) == 0 || up.Topology == nil {
 		return
 	}

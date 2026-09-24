@@ -130,7 +130,7 @@ func PlaceBinary(ref string, wc *resource.WorkspaceConfig) (string, error) {
 //
 // A nil wc is no environment file, and a name then stays a name for the
 // target's PATH to resolve.
-func PlaceRequest(in *NetUpIn, wc *resource.WorkspaceConfig) error {
+func PlaceRequest(in *ChainUpIn, wc *resource.WorkspaceConfig) error {
 	if in == nil {
 		return nil
 	}

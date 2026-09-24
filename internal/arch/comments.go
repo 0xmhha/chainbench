@@ -233,13 +233,17 @@ func namingClaims(fset *token.FileSet, rel string, f *ast.File, decls map[string
 	}
 	for _, d := range f.Decls {
 		name, doc := documented(d)
-		if name == "" || doc == nil || !ast.IsExported(name) {
+		// A blank identifier has no name to open with: the idiomatic comment on
+		// a compile-time assertion names the type being asserted.
+		if name == "" || name == "_" || doc == nil {
 			continue
 		}
 		first := strings.TrimSpace(doc.Text())
-		opener := first
-		for _, article := range []string{"A ", "An ", "The "} {
-			opener = strings.TrimPrefix(opener, article)
+		opener, article := first, false
+		for _, a := range []string{"A ", "An ", "The "} {
+			if strings.HasPrefix(opener, a) {
+				opener, article = strings.TrimPrefix(opener, a), true
+			}
 		}
 		if strings.HasPrefix(first, name) || strings.HasPrefix(opener, name) {
 			continue
@@ -247,6 +251,11 @@ func namingClaims(fset *token.FileSet, rel string, f *ast.File, decls map[string
 		words := strings.FieldsFunc(opener, func(r rune) bool {
 			return r == ' ' || r == ':' || r == ',' || r == '(' || r == '.' || r == '\n'
 		})
+		// "The compose stage: ..." is a sentence. An article in front means the
+		// word after it is prose even when something happens to declare it.
+		if article && !reCompound.MatchString(words[0]) {
+			continue
+		}
 		if len(words) == 0 || words[0] == name || !namesCode(words[0], decls) {
 			continue // prose describing the case, which is a style choice
 		}
@@ -263,14 +272,31 @@ func namingClaims(fset *token.FileSet, rel string, f *ast.File, decls map[string
 
 // documented returns the name and doc comment of a declaration that carries
 // exactly one, and empty otherwise.
+//
+// var and const are read as well as func and type. A mover that leaves a doc
+// comment behind does not care which keyword follows it, and the comment it
+// stranded on a var reads as the var's own description to the next person.
 func documented(d ast.Decl) (string, *ast.CommentGroup) {
 	switch x := d.(type) {
 	case *ast.FuncDecl:
+		// init has no name a comment could open with, so what sits above it is
+		// a banner for the file by convention.
+		if x.Name.Name == "init" {
+			return "", nil
+		}
 		return x.Name.Name, x.Doc
 	case *ast.GenDecl:
-		if len(x.Specs) == 1 {
-			if ts, ok := x.Specs[0].(*ast.TypeSpec); ok {
-				return ts.Name.Name, x.Doc
+		// A parenthesised block is introduced, not documented: the comment above
+		// `const (` names the group even when the group holds one member today.
+		if x.Lparen.IsValid() || len(x.Specs) != 1 {
+			return "", nil
+		}
+		switch spec := x.Specs[0].(type) {
+		case *ast.TypeSpec:
+			return spec.Name.Name, x.Doc
+		case *ast.ValueSpec:
+			if len(spec.Names) == 1 {
+				return spec.Names[0].Name, x.Doc
 			}
 		}
 	}
@@ -279,13 +305,22 @@ func documented(d ast.Decl) (string, *ast.CommentGroup) {
 
 // namesCode reports whether a doc comment's first word names code rather than
 // opening a sentence. A compound identifier is unmistakable even after the
-// symbol was renamed away; a single capitalised word counts only when
-// something still declares it, since "Argument" opens a sentence too.
+// symbol was renamed away.
+//
+// A lowercase word counts when something declares it: a doc comment opens with
+// the name it documents and prose opens with a capital, so "nodeAt finds ..."
+// sitting on another function is a comment the mover stranded.
 func namesCode(word string, decls map[string]bool) bool {
 	if reCompound.MatchString(word) {
 		return true
 	}
-	if word == "" || word[0] < 'A' || word[0] > 'Z' {
+	if word == "" {
+		return false
+	}
+	if word[0] >= 'a' && word[0] <= 'z' {
+		return decls[word]
+	}
+	if word[0] < 'A' || word[0] > 'Z' {
 		return false
 	}
 	return decls[word]
