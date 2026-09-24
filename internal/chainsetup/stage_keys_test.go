@@ -51,7 +51,7 @@ func TestKeySource_ATableThatNamesAKeyIsTheDeclaredWay(t *testing.T) {
 	if way != wayDeclared {
 		t.Errorf("a table that pins node1's key settled on %q, want %q", way, wayDeclared)
 	}
-	if got := newEnsuringKeys(&Manager{}).leaves[way].Name(); got != nameKeysDeclared {
-		t.Errorf("the declared way is carried out by %s, want %s", got, nameKeysDeclared)
+	if got := newEnsuringKeys(&Manager{}).leaves[way].Name(); got != nameChainEnsureKeysFromBlueprint {
+		t.Errorf("the declared way is carried out by %s, want %s", got, nameChainEnsureKeysFromBlueprint)
 	}
 }

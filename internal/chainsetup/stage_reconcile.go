@@ -7,9 +7,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/statemachine"
 )
 
-// nameReconciling is the state that compares a running network with what this
+// nameChainReconcile is the state that compares a running network with what this
 // run would compose.
-const nameReconciling statemachine.StateName = "Reconciling"
+const nameChainReconcile statemachine.StateName = "CHAIN_RECONCILE"
 
 // reconciling is reuse-if-matching: what is already running, held against what
 // this request would build.
@@ -27,7 +27,12 @@ type reconciling struct {
 }
 
 // Name says what this state is called.
-func (reconciling) Name() statemachine.StateName { return nameReconciling }
+func (reconciling) Name() statemachine.StateName { return nameChainReconcile }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (reconciling) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventReconciled, eventReconcileRefused, eventStageFailed}}
+}
 
 // Enter makes the comparison and says what it decided.
 //

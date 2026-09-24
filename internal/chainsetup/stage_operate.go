@@ -11,12 +11,12 @@ import (
 
 // What a composed network can be asked to do.
 const (
-	nameStopping     statemachine.StateName = "Stopping"
-	nameRestarting   statemachine.StateName = "Restarting"
-	nameSwapping     statemachine.StateName = "Swapping"
-	nameHardforking  statemachine.StateName = "Hardforking"
-	nameCrossingFork statemachine.StateName = "CrossingFork"
-	nameRemoving     statemachine.StateName = "Removing"
+	nameChainOpStop        statemachine.StateName = "CHAIN_OP_STOP"
+	nameChainOpRestartNode statemachine.StateName = "CHAIN_OP_RESTART_NODE"
+	nameChainOpSwapNode    statemachine.StateName = "CHAIN_OP_SWAP_NODE"
+	nameChainOpHardfork    statemachine.StateName = "CHAIN_OP_HARDFORK"
+	nameChainOpCrossFork   statemachine.StateName = "CHAIN_OP_CROSS_FORK"
+	nameChainOpRemove      statemachine.StateName = "CHAIN_OP_REMOVE"
 )
 
 // operation is one thing a composed network can be asked to do.
@@ -38,7 +38,12 @@ type stopping struct {
 }
 
 // Name says what this state is called.
-func (stopping) Name() statemachine.StateName { return nameStopping }
+func (stopping) Name() statemachine.StateName { return nameChainOpStop }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (stopping) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // verb is the name this operation's conditions are declared under.
 func (stopping) verb() string { return "Stop" }
@@ -56,7 +61,12 @@ type removing struct {
 }
 
 // Name says what this state is called.
-func (removing) Name() statemachine.StateName { return nameRemoving }
+func (removing) Name() statemachine.StateName { return nameChainOpRemove }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (removing) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // verb is the name this operation's conditions are declared under.
 func (removing) verb() string { return "Rm" }
@@ -75,7 +85,12 @@ type restarting struct {
 }
 
 // Name says what this state is called.
-func (restarting) Name() statemachine.StateName { return nameRestarting }
+func (restarting) Name() statemachine.StateName { return nameChainOpRestartNode }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (restarting) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // verb is the name this operation's conditions are declared under.
 func (restarting) verb() string { return "Restart" }
@@ -94,7 +109,12 @@ type swapping struct {
 }
 
 // Name says what this state is called.
-func (swapping) Name() statemachine.StateName { return nameSwapping }
+func (swapping) Name() statemachine.StateName { return nameChainOpSwapNode }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (swapping) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // verb is the name this operation's conditions are declared under.
 func (swapping) verb() string { return "SwapNode" }
@@ -117,7 +137,12 @@ type hardforking struct {
 }
 
 // Name says what this state is called.
-func (hardforking) Name() statemachine.StateName { return nameHardforking }
+func (hardforking) Name() statemachine.StateName { return nameChainOpHardfork }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (hardforking) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // verb is the name this operation's conditions are declared under.
 func (hardforking) verb() string { return "Hardfork" }

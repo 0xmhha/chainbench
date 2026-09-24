@@ -19,7 +19,12 @@ type buildingNodeCommand struct {
 }
 
 // Name says what this state is called.
-func (buildingNodeCommand) Name() statemachine.StateName { return nameBuildingNodeCommand }
+func (buildingNodeCommand) Name() statemachine.StateName { return nameChainBuildNodeCommand }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (buildingNodeCommand) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNodeCommandBuilt, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (buildingNodeCommand) step() string { return stepBuild }

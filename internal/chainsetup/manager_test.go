@@ -84,45 +84,50 @@ func newTestManager(t *testing.T) *Manager {
 func TestManagerTreeIsTheTreeTheDesignDrew(t *testing.T) {
 	mg := newTestManager(t)
 	want := strings.Join([]string{
-		"Composition",
-		"  Stopped",
-		"  Comparing",
-		"    RestartingNodes",
-		"    StoppingToRebuild",
-		"  Composing",
-		"    OpeningWorkspace",
-		"    BuildingNodeTable",
-		"    EnsuringKeys",
-		"      KeysFromPreset",
-		"      KeysGenerated",
-		"      KeysDeclared",
-		"    Reconciling",
-		"    BuildingGenesis",
-		"      GenesisFromTemplate",
-		"      GenesisFromExisting",
-		"    BuildingNodeConfig",
-		"    BuildingNodeCommand",
-		"    DeployingInputs",
-		"      InputsVerifiedLocal",
-		"      InputsShippedRemote",
-		"    InitializingDatadirs",
-		"    Launching",
-		"      LaunchingPhase",
-		"      RunningPhaseActions",
-		"      RecordingRun",
-		"  Composed",
-		"  Verifying",
-		"  Ready",
-		"    Stopping",
-		"    Restarting",
-		"    Swapping",
-		"    Hardforking",
-		"    CrossingFork",
-		"      BeforeFork",
-		"      HandingOver",
-		"      Crossed",
-		"    Removing",
-		"  Failed",
+		"CHAIN",
+		"  CHAIN_IDLE",
+		"  CHAIN_COMPARE",
+		"    CHAIN_COMPARE_SAME",
+		"    CHAIN_COMPARE_NODES_DIFFER",
+		"    CHAIN_COMPARE_NETWORK_DIFFERS",
+		"    CHAIN_COMPARE_NOTHING_COMPOSED",
+		"    CHAIN_COMPARE_NETWORK_STOPPED",
+		"  CHAIN_BUILD_UP",
+		"    CHAIN_OPEN_WORKSPACE",
+		"    CHAIN_BUILD_NODE_TABLE",
+		"    CHAIN_ENSURE_KEYS",
+		"      CHAIN_ENSURE_KEYS_FROM_PRESET",
+		"      CHAIN_ENSURE_KEYS_GENERATE",
+		"      CHAIN_ENSURE_KEYS_FROM_BLUEPRINT",
+		"    CHAIN_RECONCILE",
+		"    CHAIN_BUILD_GENESIS",
+		"      CHAIN_BUILD_GENESIS_FROM_TEMPLATE",
+		"      CHAIN_BUILD_GENESIS_FROM_EXISTING",
+		"    CHAIN_BUILD_NODE_CONFIG",
+		"    CHAIN_BUILD_NODE_COMMAND",
+		"    CHAIN_DEPLOY_NODES",
+		"      CHAIN_DEPLOY_NODES_VERIFIED_LOCAL",
+		"      CHAIN_DEPLOY_NODES_SHIPPED_REMOTE",
+		"    CHAIN_INIT_NODES",
+		"    CHAIN_LAUNCH_NODES",
+		"      CHAIN_LAUNCH_NODES_PHASE",
+		"      CHAIN_LAUNCH_NODES_PHASE_ACTIONS",
+		"      CHAIN_LAUNCH_NODES_RECORD_RUN",
+		"  CHAIN_BUILD_UP_STOPPED_AT_STEP",
+		"  CHAIN_READY",
+		"  CHAIN_OP",
+		"    CHAIN_OP_STOP",
+		"    CHAIN_OP_RESTART_NODE",
+		"    CHAIN_OP_SWAP_NODE",
+		"    CHAIN_OP_HARDFORK",
+		"    CHAIN_OP_CROSS_FORK",
+		"      CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY",
+		"      CHAIN_OP_CROSS_FORK_HAND_OVER",
+		"      CHAIN_OP_CROSS_FORK_CONFIRM",
+		"    CHAIN_OP_REMOVE",
+		"  CHAIN_STOPPED",
+		"  CHAIN_REMOVED",
+		"  CHAIN_FAILED",
 		"",
 	}, "\n")
 	if got := mg.Tree(); got != want {
@@ -157,8 +162,8 @@ func TestCompose_WalksEveryStageInOrderAndEndsComposed(t *testing.T) {
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v", got, want)
 	}
-	if got := mg.m.Path(mg.m.Current()); got != "Composition/Composed" {
-		t.Errorf("finished at %q, want Composition/Composed", got)
+	if got := mg.m.Path(mg.m.Current()); got != "CHAIN/CHAIN_BUILD_UP_STOPPED_AT_STEP" {
+		t.Errorf("finished at %q, want CHAIN/CHAIN_BUILD_UP_STOPPED_AT_STEP", got)
 	}
 }
 
@@ -172,7 +177,7 @@ func TestCompose_StopsWhereTheRequestSaid(t *testing.T) {
 	if err := mg.Compose(context.Background(), withStage(upRequest(t), UpDeploy), ""); err != nil {
 		t.Fatal(err)
 	}
-	if got := entered(mg); slices.Contains(got, "InitializingDatadirs") {
+	if got := entered(mg); slices.Contains(got, "CHAIN_INIT_NODES") {
 		t.Errorf("a run told to stop at deploy went on to init: %v", got)
 	}
 }
@@ -189,10 +194,10 @@ func TestCompose_BeginsAtTheNamedStep(t *testing.T) {
 		t.Fatal("a composition begun at config on an empty workspace was accepted")
 	}
 	got := entered(mg)
-	if len(got) == 0 || got[0] != "BuildingNodeConfig" {
+	if len(got) == 0 || got[0] != "CHAIN_BUILD_NODE_CONFIG" {
 		t.Errorf("the walk went through %v, and did not begin at BuildingNodeConfig", got)
 	}
-	if slices.Contains(got, "OpeningWorkspace") {
+	if slices.Contains(got, "CHAIN_OPEN_WORKSPACE") {
 		t.Error("it ran a stage before the one it was told to begin at")
 	}
 }
@@ -226,8 +231,8 @@ func TestCompose_AFailedStageStopsTheWalkAndKeepsTheReason(t *testing.T) {
 	if got := reported(mg); !slices.Equal(got, want) {
 		t.Errorf("reported %v, want %v — a stage after the failure ran", got, want)
 	}
-	if got := mg.m.Path(mg.m.Current()); got != "Composition/Failed" {
-		t.Errorf("stopped at %q, want Composition/Failed", got)
+	if got := mg.m.Path(mg.m.Current()); got != "CHAIN/CHAIN_FAILED" {
+		t.Errorf("stopped at %q, want CHAIN/CHAIN_FAILED", got)
 	}
 }
 
@@ -246,8 +251,8 @@ func TestFailed_RefusesEverythingButBeingCleared(t *testing.T) {
 	if err := mg.m.Send(context.Background(), ClearError{}); err != nil {
 		t.Fatalf("the failure could not be cleared: %v", err)
 	}
-	if got := mg.m.Path(mg.m.Current()); got != "Composition/Stopped" {
-		t.Errorf("a cleared failure left the machine at %q, want Composition/Stopped", got)
+	if got := mg.m.Path(mg.m.Current()); got != "CHAIN/CHAIN_IDLE" {
+		t.Errorf("a cleared failure left the machine at %q, want CHAIN/CHAIN_IDLE", got)
 	}
 }
 
@@ -270,7 +275,7 @@ func TestCompose_RecordsWhereItIsBeforeTheStageRuns(t *testing.T) {
 	}
 	// The stage that did not finish, not the word "failed": that is what a
 	// resume re-enters, and the step record below is where the failure is.
-	if got := ws.State().StatePath; got != "Composition/Composing/BuildingGenesis/GenesisFromExisting" {
+	if got := ws.State().StatePath; got != "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_GENESIS/CHAIN_BUILD_GENESIS_FROM_EXISTING" {
 		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 	if step, ok := ws.State().Steps["genesis"]; !ok || step.Err == "" {
@@ -319,14 +324,14 @@ func TestOpeningWorkspace_AnUnknownChainFailsTheComposition(t *testing.T) {
 	if !strings.Contains(err.Error(), "new") {
 		t.Errorf("refused with %q, want it to name the stage", err)
 	}
-	if got := entered(mg); slices.Contains(got, "BuildingNodeTable") {
+	if got := entered(mg); slices.Contains(got, "CHAIN_BUILD_NODE_TABLE") {
 		t.Errorf("a stage after the failure ran: %v", got)
 	}
 	ws, oerr := Open(mg.ws.Dir(), nil)
 	if oerr != nil {
 		t.Fatal(oerr)
 	}
-	if got := ws.State().StatePath; got != "Composition/Composing/OpeningWorkspace" {
+	if got := ws.State().StatePath; got != "CHAIN/CHAIN_BUILD_UP/CHAIN_OPEN_WORKSPACE" {
 		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 	if step, ok := ws.State().Steps["new"]; !ok || step.Err == "" {
@@ -380,7 +385,7 @@ func TestBuildingNodeTable_RefusesTwoLayouts(t *testing.T) {
 	if oerr != nil {
 		t.Fatal(oerr)
 	}
-	if got := ws.State().StatePath; got != "Composition/Composing/BuildingNodeTable" {
+	if got := ws.State().StatePath; got != "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_NODE_TABLE" {
 		t.Errorf("the record says %q, want the stage that did not finish", got)
 	}
 }
@@ -413,7 +418,7 @@ func TestEnsuringKeys_SaysWhichWayTheKeysCameFrom(t *testing.T) {
 		{
 			name: "generated into this run's own ring",
 			arm:  func(*ChainUpIn) {},
-			want: "KeysGenerated",
+			want: "CHAIN_ENSURE_KEYS_GENERATE",
 		},
 		{
 			name: "taken from the committed preset",
@@ -423,7 +428,7 @@ func TestEnsuringKeys_SaysWhichWayTheKeysCameFrom(t *testing.T) {
 				// The preset ring holds five identities.
 				in.BPCount, in.ENCount = 4, 1
 			},
-			want: "KeysFromPreset",
+			want: "CHAIN_ENSURE_KEYS_FROM_PRESET",
 		},
 	}
 	for _, c := range cases {
@@ -438,7 +443,7 @@ func TestEnsuringKeys_SaysWhichWayTheKeysCameFrom(t *testing.T) {
 			if !slices.Contains(got, c.want) {
 				t.Errorf("the machine went through %v, and never entered %s", got, c.want)
 			}
-			for _, other := range []string{"KeysFromPreset", "KeysGenerated", "KeysDeclared"} {
+			for _, other := range []string{"CHAIN_ENSURE_KEYS_FROM_PRESET", "CHAIN_ENSURE_KEYS_GENERATE", "CHAIN_ENSURE_KEYS_FROM_BLUEPRINT"} {
 				if other != c.want && slices.Contains(got, other) {
 					t.Errorf("it also entered %s, and a composition takes one way", other)
 				}
@@ -459,7 +464,7 @@ func TestBuildingGenesis_SaysWhereTheGenesisCameFrom(t *testing.T) {
 	if err := first.Compose(context.Background(), firstIn, ""); err != nil {
 		t.Fatal(err)
 	}
-	if got := entered(first); !slices.Contains(got, "GenesisFromTemplate") {
+	if got := entered(first); !slices.Contains(got, "CHAIN_BUILD_GENESIS_FROM_TEMPLATE") {
 		t.Fatalf("a run with no genesis named went through %v, and never built one from the template", got)
 	}
 	existing := filepath.Join(first.ws.Dir(), "genesis.json")
@@ -475,10 +480,10 @@ func TestBuildingGenesis_SaysWhereTheGenesisCameFrom(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := entered(second)
-	if !slices.Contains(got, "GenesisFromExisting") {
+	if !slices.Contains(got, "CHAIN_BUILD_GENESIS_FROM_EXISTING") {
 		t.Errorf("a run given a genesis went through %v, and never took it", got)
 	}
-	if slices.Contains(got, "GenesisFromTemplate") {
+	if slices.Contains(got, "CHAIN_BUILD_GENESIS_FROM_TEMPLATE") {
 		t.Error("it also built one from the template, and a composition takes one way")
 	}
 }
@@ -495,10 +500,10 @@ func TestDeployingInputs_SaysWhetherAnythingWasShipped(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := entered(mg)
-	if !slices.Contains(got, "InputsVerifiedLocal") {
+	if !slices.Contains(got, "CHAIN_DEPLOY_NODES_VERIFIED_LOCAL") {
 		t.Errorf("a local composition went through %v, and never verified its inputs in place", got)
 	}
-	if slices.Contains(got, "InputsShippedRemote") {
+	if slices.Contains(got, "CHAIN_DEPLOY_NODES_SHIPPED_REMOTE") {
 		t.Error("a local composition shipped something, and a local target has nowhere to ship to")
 	}
 	// The stage still reports its line, from the state that named the outcome.
@@ -518,10 +523,10 @@ func TestResumeStep_ReadsThePositionTheMachineRecorded(t *testing.T) {
 		path string
 		want string
 	}{
-		{"died in the genesis stage", "Composition/Composing/BuildingGenesis/GenesisFromTemplate", "genesis"},
-		{"died in the launch, third phase", "Composition/Composing/Launching/LaunchingPhase", "start"},
-		{"died on the way in", "Composition/Composing/OpeningWorkspace", "new"},
-		{"finished", "Composition/Ready", ""},
+		{"died in the genesis stage", "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_GENESIS/CHAIN_BUILD_GENESIS_FROM_TEMPLATE", "genesis"},
+		{"died in the launch, third phase", "CHAIN/CHAIN_BUILD_UP/CHAIN_LAUNCH_NODES/CHAIN_LAUNCH_NODES_PHASE", "start"},
+		{"died on the way in", "CHAIN/CHAIN_BUILD_UP/CHAIN_OPEN_WORKSPACE", "new"},
+		{"finished", "CHAIN/CHAIN_READY", ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -550,8 +555,8 @@ func TestResumeStep_AWorkspaceWithNoPositionFallsBackToTheStepMap(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := ws.State().StatePath; got != "Composition/Composed" {
-		t.Fatalf("the run stopped at %q, want Composition/Composed", got)
+	if got := ws.State().StatePath; got != "CHAIN/CHAIN_BUILD_UP_STOPPED_AT_STEP" {
+		t.Fatalf("the run stopped at %q, want CHAIN/CHAIN_BUILD_UP_STOPPED_AT_STEP", got)
 	}
 	// A request that asked to stop at deploy has nothing left to resume.
 	if got := ws.ResumeStep(); got != "" {
@@ -571,10 +576,11 @@ func TestComparing_EachVerdictGoesItsOwnWay(t *testing.T) {
 		v    preflight.Verdict
 		want statemachine.StateName
 	}{
-		{preflight.Reuse, nameVerifying},
-		{preflight.RebuildNodes, nameRestartingNodes},
-		{preflight.RebuildAll, nameStoppingToRebuild},
-		{preflight.Compose, nameOpeningWorkspace},
+		{preflight.Reuse, nameChainCompareSame},
+		{preflight.RebuildNodes, nameChainCompareNodesDiffer},
+		{preflight.RebuildAll, nameChainCompareNetworkDiffers},
+		{preflight.Compose, nameChainCompareNothingComposed},
+		{preflight.Relaunch, nameChainCompareNetworkStopped},
 	} {
 		got, err := c.nextFor(tc.v)
 		if err != nil {
@@ -601,10 +607,10 @@ func TestComposeComparing_NothingComposedComposes(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := entered(mg)
-	if !slices.Contains(got, "Comparing") {
+	if !slices.Contains(got, "CHAIN_COMPARE") {
 		t.Errorf("the run went through %v, and never compared", got)
 	}
-	if !slices.Contains(got, "OpeningWorkspace") {
+	if !slices.Contains(got, "CHAIN_OPEN_WORKSPACE") {
 		t.Errorf("the run went through %v, and never composed", got)
 	}
 	if mg.Decision() == "" {

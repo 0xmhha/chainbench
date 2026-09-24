@@ -18,7 +18,12 @@ type buildingNodeTable struct {
 }
 
 // Name says what this state is called.
-func (buildingNodeTable) Name() statemachine.StateName { return nameBuildingNodeTable }
+func (buildingNodeTable) Name() statemachine.StateName { return nameChainBuildNodeTable }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (buildingNodeTable) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNodeTableBuilt, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (buildingNodeTable) step() string { return stepPlace }

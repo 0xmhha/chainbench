@@ -1,14 +1,15 @@
-# 상태 기계 설계 6 — 이름, 상태별 계약, 예외 원칙 — [제안]
+# 상태 기계 설계 6 — 이름, 상태별 계약, 예외 원칙 — [결정]
 
-> **등급: [제안] ([proposal]).** 검토가 끝나면 [결정]으로 올리고, 02 문서 머리에 이 문서를
-> 가리키는 줄을 넣는다. 그 전까지 02·05 는 바꾸지 않는다.
+> **등급: [결정].** 2026-09-24 에 [제안] ([proposal]) 으로 올렸고, 같은 날 검토에서 §12 의 셋이 정해져
+> [결정] 으로 올렸다. 02 문서 머리가 이 문서를 가리킨다. 02 의 이름 규약은 그대로이고, 이 문서는 그
+> 규약으로 지금 코드의 상태를 하나씩 이름 짓고 계약과 예외 원칙을 더한다.
 >
 > 기준 코드: `cde3a08f`(PR #425 머지) 위의 `cd9664b3`. 2026-09-24.
 > 근거 분석: [19 — 빈 경로](../../../research/chainbench/analyses/19-state-machine-gaps-2026-09-24.md),
 > [20 — 이름 재검토](../../../research/chainbench/analyses/20-state-naming-review-2026-09-24.md).
 > 결정 기록: ouroboros 인터뷰 `interview_20260924_082220`, 시드 `seed_c07a39436198`.
 >
-> **이 문서는 설계만 한다.** Go 코드는 이 문서가 검토를 통과한 뒤에 바꾼다.
+> 구현은 같은 PR 에서 들어왔다. §10 의 증거가 그 결과다.
 
 ## 1. 왜 이 문서가 필요한가
 
@@ -48,6 +49,9 @@ PR #425 는 chainbench 의 두 상태 기계를 계층형 상태 기계(HSM)로 
 | Q5 | 계약 위치 | **코드 선언**, CHAIN·TEST 두 머신 모두. 이 문서의 계약 표는 선언과 대조된다 (§5) |
 | Q6 | 리포트 | 한 번에 전환. 저장소 안의 소비처는 같은 변경에서 새 이름으로 |
 | Q7 | 완료 기준 | 결함별 RED 먼저 회귀 테스트, 선언 점검 테스트, golden, 기록 테스트, 재실행 재현, 209건 스위프 (§10) |
+| R1 | 원격 대상의 로컬 원본 | workspace-config 의 `control.binaries`(로컬 디렉터리)와 체인 매니페스트의 바이너리 이름(또는 `binaryAliases`)으로 찾는다 (§7) |
+| R2 | 판정 "아무것도 없다" | 상태 `CHAIN_COMPARE_NOTHING_COMPOSED` 로 둔다. 빈 워크스페이스로 처음 망을 세우는 모든 실행이 지난다 |
+| R3 | 노드만 멈춘 같은 망 | 새 판정 `relaunch` 와 상태 `CHAIN_COMPARE_NETWORK_STOPPED`. 설정 단계를 건너 `CHAIN_LAUNCH_NODES` 로 간다 (§4) |
 
 `COMPOSE`·`BUILD` 를 조립 영역 낱말로 쓰지 않은 이유: `BUILD` 는 단계 이름 넷(`CHAIN_BUILD_NODE_TABLE` 등)과
 CLI `chain build`(실행 인자만 조립)와 겹친다. `BUILD_UP` 은 겹치는 곳이 없고 CLI `chain up` 과 맞는다.
@@ -70,7 +74,7 @@ CLI `chain build`(실행 인자만 조립)와 겹친다. `BUILD_UP` 은 겹치�
 경로 문자열은 `chain-record.json` 의 `statePath`, 로그, 리포트의 `failedAt`·`ComposeFailedAt` 에 그대로
 찍힌다.
 
-### 3.2 CHAIN 머신 (`internal/chainsetup`) — 43개
+### 3.2 CHAIN 머신 (`internal/chainsetup`) — 44개
 
 들여쓰기가 트리다. "지금" 열은 #425 의 이름, "하는 일" 은 `Enter`·`Process` 에서 옮겼다.
 
@@ -83,42 +87,43 @@ CLI `chain build`(실행 인자만 조립)와 겹친다. `BUILD_UP` 은 겹치�
 | 5 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_COMPARE_NODES_DIFFER` | `RestartingNodes` | 판정 "일부 노드가 다르다". 그 노드만 다시 띄운다 | |
 | 6 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_COMPARE_NETWORK_DIFFERS` | `StoppingToRebuild` | 판정 "망 전체가 다르다". 망을 내리고 조립을 처음부터 | |
 | 7 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_COMPARE_NOTHING_COMPOSED` | (새로) | 판정 "아무것도 없다". 조립을 처음부터 | |
-| 8 | &nbsp;&nbsp;`CHAIN_BUILD_UP` | `Composing` | 조립 단계들의 부모. 단계 보고를 받아 다음 단계로 | |
-| 9 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OPEN_WORKSPACE` | `OpeningWorkspace` | 워크스페이스를 열고 요청을 기록 | |
-| 10 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_TABLE` | `BuildingNodeTable` | 역할·경로·포트로 노드 표를 만든다 | |
-| 11 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS` | `EnsuringKeys` | 키 출처를 정하고(원격 키링이면 가져와) 세부로 | |
-| 12 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_FROM_PRESET` | `KeysFromPreset` | 있는 키 세트를 쓴다 | |
-| 13 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_GENERATE` | `KeysGenerated` | 새 키 세트를 만든다 | |
-| 14 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_FROM_BLUEPRINT` | `KeysDeclared` | blueprint 가 노드마다 적은 키를 쓴다 | |
-| 15 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_RECONCILE` | `Reconciling` | reuse-if-matching 일 때 키 다음에 돌고 있는 망과 견준다 (S3 대상) | |
-| 16 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS` | `BuildingGenesis` | 템플릿/기존 genesis 를 고른다 | |
-| 17 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS_FROM_TEMPLATE` | `GenesisFromTemplate` | 체인 템플릿으로 만든다 | |
-| 18 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS_FROM_EXISTING` | `GenesisFromExisting` | 주어진 genesis 를 쓴다 | |
-| 19 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_CONFIG` | `BuildingNodeConfig` | 노드마다 config 를 렌더 | |
-| 20 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_COMMAND` | `BuildingNodeCommand` | 노드마다 실행 인자를 조립 | |
-| 21 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES` | `DeployingInputs` | 실행 입력(genesis·config·키)과 **바이너리**(§7)를 대상에 둔다 | |
-| 22 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES_VERIFIED_LOCAL` | `InputsVerifiedLocal` | 보낼 것이 없었다는 기록 | |
-| 23 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES_SHIPPED_REMOTE` | `InputsShippedRemote` | 원격으로 보냈다는 기록 | |
-| 24 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_INIT_NODES` | `InitializingDatadirs` | 노드마다 datadir 를 genesis 로 init | |
-| 25 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES` | `Launching` | 체인 집안의 phase 목록을 받아 phase 마다 띄운다 | |
-| 26 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_PHASE` | `LaunchingPhase` | phase 하나의 노드를 띄운다 | |
-| 27 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_PHASE_ACTIONS` | `RunningPhaseActions` | 그 phase 의 뒷작업 | |
-| 28 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_RECORD_RUN` | `RecordingRun` | 모든 phase 뒤 실행 기록을 쓴다 | |
-| 29 | &nbsp;&nbsp;`CHAIN_BUILD_UP_STOPPED_AT_STEP` | `Composed` | `--stage` 나 한 단계 실행이 요청한 곳에서 멈춘 조립 | 예 |
-| 30 | &nbsp;&nbsp;`CHAIN_READY` | `Ready` | 조립이 끝났고 망이 요청대로 서 있다 **(S2: 운영의 부모가 아니다)** | 예 |
-| 31 | &nbsp;&nbsp;`CHAIN_OP` | (새로) | 운영 동작의 부모. 끝나면 동작별 결과 상태로 **(S2)** | |
-| 32 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_STOP` | `Stopping` | 떠 있는 노드를 모두 내린다 | |
-| 33 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_REMOVE` | `Removing` | 조립한 망의 데이터를 지운다 | |
-| 34 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_RESTART_NODE` | `Restarting` | 노드 하나를 내렸다 올린다 | |
-| 35 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_SWAP_NODE` | `Swapping` | 노드 하나의 바이너리를 바꿔 다시 띄운다 | |
-| 36 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_HARDFORK` | `Hardforking` | 포크 블록에서 망 전체의 바이너리를 바꾼다 | |
-| 37 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK` | `CrossingFork` | 망이 포크를 넘을 때까지 지켜보며 생산을 넘긴다 | |
-| 38 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY` | `BeforeFork` | 포크 직전 블록까지 기다린다 | |
-| 39 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_HAND_OVER` | `HandingOver` | 포크 전 노드를 내리고 포크 후 빌드를 올린다 | |
-| 40 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_CONFIRM` | `Crossed` | 넘었는지 확인한다 | |
-| 41 | &nbsp;&nbsp;`CHAIN_STOPPED` | (새로) | `CHAIN_OP_STOP` 뒤. 망이 내려가 있다 **(S2)** | 예 |
-| 42 | &nbsp;&nbsp;`CHAIN_REMOVED` | (새로) | `CHAIN_OP_REMOVE` 뒤. 데이터가 없다 **(S2)** | 예 |
-| 43 | &nbsp;&nbsp;`CHAIN_FAILED` | `Failed` | 실패 이유를 들고 멈춘다. `ClearError` 만 받는다 | 예 |
+| 8 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_COMPARE_NETWORK_STOPPED` | (새로) | 판정 "같은 망, 노드는 모두 멈춤"(`relaunch`). 설정을 건너 노드 실행 단계로 **(R3)** | |
+| 9 | &nbsp;&nbsp;`CHAIN_BUILD_UP` | `Composing` | 조립 단계들의 부모. 단계 보고를 받아 다음 단계로 | |
+| 10 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OPEN_WORKSPACE` | `OpeningWorkspace` | 워크스페이스를 열고 요청을 기록 | |
+| 11 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_TABLE` | `BuildingNodeTable` | 역할·경로·포트로 노드 표를 만든다 | |
+| 12 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS` | `EnsuringKeys` | 키 출처를 정하고(원격 키링이면 가져와) 세부로 | |
+| 13 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_FROM_PRESET` | `KeysFromPreset` | 있는 키 세트를 쓴다 | |
+| 14 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_GENERATE` | `KeysGenerated` | 새 키 세트를 만든다 | |
+| 15 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_ENSURE_KEYS_FROM_BLUEPRINT` | `KeysDeclared` | blueprint 가 노드마다 적은 키를 쓴다 | |
+| 16 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_RECONCILE` | `Reconciling` | reuse-if-matching 일 때 키 다음에 돌고 있는 망과 견준다 (S3 대상) | |
+| 17 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS` | `BuildingGenesis` | 템플릿/기존 genesis 를 고른다 | |
+| 18 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS_FROM_TEMPLATE` | `GenesisFromTemplate` | 체인 템플릿으로 만든다 | |
+| 19 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_GENESIS_FROM_EXISTING` | `GenesisFromExisting` | 주어진 genesis 를 쓴다 | |
+| 20 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_CONFIG` | `BuildingNodeConfig` | 노드마다 config 를 렌더 | |
+| 21 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_BUILD_NODE_COMMAND` | `BuildingNodeCommand` | 노드마다 실행 인자를 조립 | |
+| 22 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES` | `DeployingInputs` | 실행 입력(genesis·config·키)과 **바이너리**(§7)를 대상에 둔다 | |
+| 23 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES_VERIFIED_LOCAL` | `InputsVerifiedLocal` | 보낼 것이 없었다는 기록 | |
+| 24 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_DEPLOY_NODES_SHIPPED_REMOTE` | `InputsShippedRemote` | 원격으로 보냈다는 기록 | |
+| 25 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_INIT_NODES` | `InitializingDatadirs` | 노드마다 datadir 를 genesis 로 init | |
+| 26 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES` | `Launching` | 체인 집안의 phase 목록을 받아 phase 마다 띄운다 | |
+| 27 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_PHASE` | `LaunchingPhase` | phase 하나의 노드를 띄운다 | |
+| 28 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_PHASE_ACTIONS` | `RunningPhaseActions` | 그 phase 의 뒷작업 | |
+| 29 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_LAUNCH_NODES_RECORD_RUN` | `RecordingRun` | 모든 phase 뒤 실행 기록을 쓴다 | |
+| 30 | &nbsp;&nbsp;`CHAIN_BUILD_UP_STOPPED_AT_STEP` | `Composed` | `--stage` 나 한 단계 실행이 요청한 곳에서 멈춘 조립 | 예 |
+| 31 | &nbsp;&nbsp;`CHAIN_READY` | `Ready` | 조립이 끝났고 망이 요청대로 서 있다 **(S2: 운영의 부모가 아니다)** | 예 |
+| 32 | &nbsp;&nbsp;`CHAIN_OP` | (새로) | 운영 동작의 부모. 끝나면 동작별 결과 상태로 **(S2)** | |
+| 33 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_STOP` | `Stopping` | 떠 있는 노드를 모두 내린다 | |
+| 34 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_REMOVE` | `Removing` | 조립한 망의 데이터를 지운다 | |
+| 35 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_RESTART_NODE` | `Restarting` | 노드 하나를 내렸다 올린다 | |
+| 36 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_SWAP_NODE` | `Swapping` | 노드 하나의 바이너리를 바꿔 다시 띄운다 | |
+| 37 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_HARDFORK` | `Hardforking` | 포크 블록에서 망 전체의 바이너리를 바꾼다 | |
+| 38 | &nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK` | `CrossingFork` | 망이 포크를 넘을 때까지 지켜보며 생산을 넘긴다 | |
+| 39 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY` | `BeforeFork` | 포크 직전 블록까지 기다린다 | |
+| 40 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_HAND_OVER` | `HandingOver` | 포크 전 노드를 내리고 포크 후 빌드를 올린다 | |
+| 41 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`CHAIN_OP_CROSS_FORK_CONFIRM` | `Crossed` | 넘었는지 확인한다 | |
+| 42 | &nbsp;&nbsp;`CHAIN_STOPPED` | (새로) | `CHAIN_OP_STOP` 뒤. 망이 내려가 있다 **(S2)** | 예 |
+| 43 | &nbsp;&nbsp;`CHAIN_REMOVED` | (새로) | `CHAIN_OP_REMOVE` 뒤. 데이터가 없다 **(S2)** | 예 |
+| 44 | &nbsp;&nbsp;`CHAIN_FAILED` | `Failed` | 실패 이유를 들고 멈춘다. `ClearError` 만 받는다 | 예 |
 
 없어지는 상태: `Verifying`(S1). 들어오는 길은 판정 "같다" 하나였고 일이 없었다.
 
@@ -157,9 +162,11 @@ stateDiagram-v2
         verdict --> CHAIN_COMPARE_NODES_DIFFER : RebuildNodes
         verdict --> CHAIN_COMPARE_NETWORK_DIFFERS : RebuildAll
         verdict --> CHAIN_COMPARE_NOTHING_COMPOSED : Compose
+        verdict --> CHAIN_COMPARE_NETWORK_STOPPED : Relaunch
     }
     CHAIN_COMPARE --> CHAIN_READY : networkKept · nodesRestarted
     CHAIN_COMPARE --> CHAIN_OPEN_WORKSPACE : stoppedToRebuild · nothingComposed
+    CHAIN_COMPARE --> CHAIN_LAUNCH_NODES : networkStopped
 
     state CHAIN_BUILD_UP {
         CHAIN_OPEN_WORKSPACE --> CHAIN_LAUNCH_NODES : stageReport (단계 순서대로)
@@ -199,9 +206,14 @@ stateDiagram-v2
 `CHAIN_BUILD_UP` 에 있던 두 case(`manager_states.go:143-148`)는 도달할 수 없으므로 지운다.
 
 **재조립이 실제로 다시 도는지.** 판정 "망 전체가 다르다" 뒤 `CHAIN_OPEN_WORKSPACE` 부터 다시 들어갈 때
-단계들이 기록의 `done: true` 를 보고 건너뛰지 않아야 한다. 지금 단계 본문은 기록을 보지 않고 일을
-하므로(`steps_*.go` 에 `Steps[..].Done` 을 읽는 곳이 preflight 한 곳뿐이다) 다시 돈다고 본다. **확인되지
-않았다** — §10 의 재실행 재현이 이것을 확인한다.
+단계들이 기록의 `done: true` 를 보고 건너뛰지 않아야 한다. 단계 본문은 기록을 보지 않고 일을 한다.
+E1(`TestComposeComparing_RebuildAllComposesAgain`)이 네트워크 없이 이것을 확인한다.
+
+**노드만 멈춘 같은 망 (R3).** 지금까지 preflight 는 설정이 같아도 살아 있는 노드가 하나도 없으면
+"망 전체가 다르다" 로 판정했다(`preflight.go` 의 `Check`). 그래서 한 번 돈 워크스페이스에 같은 명령을
+다시 걸면 설정을 처음부터 다시 했다. 이제 서류상 다른 것이 없고 노드만 모두 멈췄으면 새 판정
+`relaunch` 가 나오고, `CHAIN_COMPARE_NETWORK_STOPPED` 를 지나 설정 단계를 건너 `CHAIN_LAUNCH_NODES` 로
+간다. 서류상 다른 것이 있으면 지금처럼 "망 전체가 다르다" 다.
 
 **`ResumeStep` 이 새 끝 상태를 읽는 법.** `CHAIN_READY`·`CHAIN_STOPPED`·`CHAIN_REMOVED` 는 조립이 끝난
 것이므로 다시 할 단계가 없다(`""`). `CHAIN_IDLE`·`CHAIN_BUILD_UP_STOPPED_AT_STEP` 은 지금처럼 기록의 첫
@@ -256,6 +268,7 @@ type Declared interface{ Contract() Contract }
 | `comparisonMade` | EVT | `CHAIN_COMPARE` | `CHAIN_COMPARE` | 판정 넷 중 하나 |
 | `networkKept` | EVT (새로) | `CHAIN_COMPARE_SAME` | `CHAIN_COMPARE` | 할 일 없음 |
 | `nothingComposed` | EVT (새로) | `CHAIN_COMPARE_NOTHING_COMPOSED` | `CHAIN_COMPARE` | 조립을 처음부터 |
+| `networkStopped` | EVT (새로) | `CHAIN_COMPARE_NETWORK_STOPPED` | `CHAIN_COMPARE` | 설정을 건너 노드 실행으로 |
 | `nodesRestarted` | EVT | `CHAIN_COMPARE_NODES_DIFFER` | `CHAIN_COMPARE` (**바뀜**) | 다른 노드를 다시 띄웠다 |
 | `stoppedToRebuild` | EVT | `CHAIN_COMPARE_NETWORK_DIFFERS` | `CHAIN_COMPARE` (**바뀜**) | 망을 내렸다 |
 | `workspaceOpened` … `nodesLaunched` (9종, `stageReport`) | EVT | 각 조립 단계 | `CHAIN_BUILD_UP` | 단계가 끝났다 |
@@ -276,41 +289,50 @@ type Declared interface{ Contract() Contract }
 <!-- contract:begin chain -->
 | 상태 | Accepts | Emits | Ignores |
 |---|---|---|---|
-| `CHAIN` | `stageFailed` | — | — |
-| `CHAIN_IDLE` | `Compose`, `ComposeComparing`, `Operate`, `RunStep` | — | — |
-| `CHAIN_COMPARE` | `comparisonMade`, `networkKept`, `nothingComposed`, `nodesRestarted`, `stoppedToRebuild` | `comparisonMade` | — |
-| `CHAIN_COMPARE_SAME` | — | `networkKept` | — |
-| `CHAIN_COMPARE_NODES_DIFFER` | — | `nodesRestarted`, `stageFailed` | — |
-| `CHAIN_COMPARE_NETWORK_DIFFERS` | — | `stoppedToRebuild`, `stageFailed` | — |
-| `CHAIN_COMPARE_NOTHING_COMPOSED` | — | `nothingComposed` | — |
-| `CHAIN_BUILD_UP` | `stageReport` 9종, `reconciled`, `reconcileRefused` | — | — |
-| `CHAIN_OPEN_WORKSPACE` | — | `workspaceOpened`, `stageFailed` | — |
-| `CHAIN_BUILD_NODE_TABLE` | — | `nodeTableBuilt`, `stageFailed` | — |
-| `CHAIN_ENSURE_KEYS` | `keySourceChosen` | `keySourceChosen`, `stageFailed` | — |
-| `CHAIN_ENSURE_KEYS_FROM_PRESET` · `_GENERATE` · `_FROM_BLUEPRINT` | — | `keysEnsured`, `stageFailed` | — |
-| `CHAIN_RECONCILE` | — | `reconciled`, `reconcileRefused`, `stageFailed` | — |
-| `CHAIN_BUILD_GENESIS` | `genesisWayChosen` | `genesisWayChosen`, `stageFailed` | — |
-| `CHAIN_BUILD_GENESIS_FROM_TEMPLATE` · `_FROM_EXISTING` | — | `genesisBuilt`, `stageFailed` | — |
-| `CHAIN_BUILD_NODE_CONFIG` | — | `nodeConfigBuilt`, `stageFailed` | — |
-| `CHAIN_BUILD_NODE_COMMAND` | — | `nodeCommandBuilt`, `stageFailed` | — |
-| `CHAIN_DEPLOY_NODES` | `inputsPresent` | `inputsPresent`, `stageFailed` | — |
-| `CHAIN_DEPLOY_NODES_VERIFIED_LOCAL` · `_SHIPPED_REMOTE` | — | `inputsDeployed` | — |
-| `CHAIN_INIT_NODES` | — | `datadirsInitialized`, `stageFailed` | — |
-| `CHAIN_LAUNCH_NODES` | `launchPlanned`, `phaseLaunched`, `phaseActionsDone` | `launchPlanned`, `stageFailed` | — |
-| `CHAIN_LAUNCH_NODES_PHASE` | — | `phaseLaunched`, `stageFailed` | — |
-| `CHAIN_LAUNCH_NODES_PHASE_ACTIONS` | — | `phaseActionsDone`, `stageFailed` | — |
-| `CHAIN_LAUNCH_NODES_RECORD_RUN` | — | `nodesLaunched`, `stageFailed` | — |
+| `CHAIN` | `eventStageFailed` | — | — |
+| `CHAIN_IDLE` | `CmdCompose`, `CmdCompare`, `CmdOperate`, `CmdStep` | — | — |
+| `CHAIN_COMPARE` | `eventComparisonMade`, `eventNetworkKept`, `eventNothingComposed`, `eventNodesRestarted`, `eventStoppedToRebuild`, `eventNetworkStopped` | `eventComparisonMade` | — |
+| `CHAIN_COMPARE_SAME` | — | `eventNetworkKept` | — |
+| `CHAIN_COMPARE_NODES_DIFFER` | — | `eventNodesRestarted`, `eventStageFailed` | — |
+| `CHAIN_COMPARE_NETWORK_DIFFERS` | — | `eventStoppedToRebuild`, `eventStageFailed` | — |
+| `CHAIN_COMPARE_NOTHING_COMPOSED` | — | `eventNothingComposed` | — |
+| `CHAIN_COMPARE_NETWORK_STOPPED` | — | `eventNetworkStopped` | — |
+| `CHAIN_BUILD_UP` | `eventWorkspaceOpened`, `eventNodeTableBuilt`, `eventKeysEnsured`, `eventGenesisBuilt`, `eventNodeConfigBuilt`, `eventNodeCommandBuilt`, `eventInputsDeployed`, `eventDatadirsInitialized`, `eventNodesLaunched`, `eventReconciled`, `eventReconcileRefused` | — | — |
+| `CHAIN_OPEN_WORKSPACE` | — | `eventWorkspaceOpened`, `eventStageFailed` | — |
+| `CHAIN_BUILD_NODE_TABLE` | — | `eventNodeTableBuilt`, `eventStageFailed` | — |
+| `CHAIN_ENSURE_KEYS` | `eventKeySourceChosen` | `eventKeySourceChosen`, `eventStageFailed` | — |
+| `CHAIN_ENSURE_KEYS_FROM_PRESET` | — | `eventKeysEnsured`, `eventStageFailed` | — |
+| `CHAIN_ENSURE_KEYS_GENERATE` | — | `eventKeysEnsured`, `eventStageFailed` | — |
+| `CHAIN_ENSURE_KEYS_FROM_BLUEPRINT` | — | `eventKeysEnsured`, `eventStageFailed` | — |
+| `CHAIN_RECONCILE` | — | `eventReconciled`, `eventReconcileRefused`, `eventStageFailed` | — |
+| `CHAIN_BUILD_GENESIS` | `eventGenesisWayChosen` | `eventGenesisWayChosen`, `eventStageFailed` | — |
+| `CHAIN_BUILD_GENESIS_FROM_TEMPLATE` | — | `eventGenesisBuilt`, `eventStageFailed` | — |
+| `CHAIN_BUILD_GENESIS_FROM_EXISTING` | — | `eventGenesisBuilt`, `eventStageFailed` | — |
+| `CHAIN_BUILD_NODE_CONFIG` | — | `eventNodeConfigBuilt`, `eventStageFailed` | — |
+| `CHAIN_BUILD_NODE_COMMAND` | — | `eventNodeCommandBuilt`, `eventStageFailed` | — |
+| `CHAIN_DEPLOY_NODES` | `eventInputsPresent` | `eventInputsPresent`, `eventStageFailed` | — |
+| `CHAIN_DEPLOY_NODES_VERIFIED_LOCAL` | — | `eventInputsDeployed` | — |
+| `CHAIN_DEPLOY_NODES_SHIPPED_REMOTE` | — | `eventInputsDeployed` | — |
+| `CHAIN_INIT_NODES` | — | `eventDatadirsInitialized`, `eventStageFailed` | — |
+| `CHAIN_LAUNCH_NODES` | `eventLaunchPlanned`, `eventPhaseLaunched`, `eventPhaseActionsDone` | `eventLaunchPlanned`, `eventStageFailed` | — |
+| `CHAIN_LAUNCH_NODES_PHASE` | — | `eventPhaseLaunched`, `eventStageFailed` | — |
+| `CHAIN_LAUNCH_NODES_PHASE_ACTIONS` | — | `eventPhaseActionsDone`, `eventStageFailed` | — |
+| `CHAIN_LAUNCH_NODES_RECORD_RUN` | — | `eventNodesLaunched`, `eventStageFailed` | — |
 | `CHAIN_BUILD_UP_STOPPED_AT_STEP` | — | — | — |
 | `CHAIN_READY` | — | — | — |
-| `CHAIN_OP` | `operationDone` | — | — |
-| `CHAIN_OP_STOP` · `_REMOVE` · `_RESTART_NODE` · `_SWAP_NODE` · `_HARDFORK` | — | `operationDone`, `stageFailed` | — |
-| `CHAIN_OP_CROSS_FORK` | `forkStandingRead`, `forkBoundaryReached`, `productionHandedOver` | `forkStandingRead`, `stageFailed` | — |
-| `CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY` | — | `forkBoundaryReached`, `stageFailed` | — |
-| `CHAIN_OP_CROSS_FORK_HAND_OVER` | — | `productionHandedOver`, `stageFailed` | — |
-| `CHAIN_OP_CROSS_FORK_CONFIRM` | — | `operationDone`, `stageFailed` | — |
+| `CHAIN_OP` | `eventOperationDone` | — | — |
+| `CHAIN_OP_STOP` | — | `eventOperationDone`, `eventStageFailed` | — |
+| `CHAIN_OP_RESTART_NODE` | — | `eventOperationDone`, `eventStageFailed` | — |
+| `CHAIN_OP_SWAP_NODE` | — | `eventOperationDone`, `eventStageFailed` | — |
+| `CHAIN_OP_HARDFORK` | — | `eventOperationDone`, `eventStageFailed` | — |
+| `CHAIN_OP_CROSS_FORK` | `eventForkStandingRead`, `eventForkBoundaryReached`, `eventProductionHandedOver` | `eventForkStandingRead`, `eventStageFailed` | — |
+| `CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY` | — | `eventForkBoundaryReached`, `eventStageFailed` | — |
+| `CHAIN_OP_CROSS_FORK_HAND_OVER` | — | `eventProductionHandedOver`, `eventStageFailed` | — |
+| `CHAIN_OP_CROSS_FORK_CONFIRM` | — | `eventOperationDone`, `eventStageFailed` | — |
+| `CHAIN_OP_REMOVE` | — | `eventOperationDone`, `eventStageFailed` | — |
 | `CHAIN_STOPPED` | — | — | — |
 | `CHAIN_REMOVED` | — | — | — |
-| `CHAIN_FAILED` | `ClearError` (Refuses: 그 밖 전부) | — | — |
+| `CHAIN_FAILED` | `CmdClearError` (그 밖은 거절) | — | — |
 <!-- contract:end chain -->
 
 ### 5.4 TEST 계약
@@ -318,16 +340,16 @@ type Declared interface{ Contract() Contract }
 <!-- contract:begin test -->
 | 상태 | Accepts | Emits | Ignores |
 |---|---|---|---|
-| `TEST` | `stageStopped` | — | — |
-| `TEST_IDLE` | `startRun` | — | — |
-| `TEST_READ_DECLARATION` | `declarationRead` | `declarationRead`, `stageStopped` | — |
-| `TEST_OPEN_SESSION` | `sessionOpened` | `sessionOpened`, `stageStopped` | — |
-| `TEST_STAND_UP_NETWORK` | `networkWayChosen`, `networkReached` | `networkWayChosen` | — |
-| `TEST_STAND_UP_NETWORK_COMPOSE` | — | `networkReached`, `stageStopped` | — |
-| `TEST_STAND_UP_NETWORK_ATTACH` | — | `networkReached`, `stageStopped` | — |
-| `TEST_PREPARE` | `chainPrepared` | `chainPrepared`, `stageStopped` | — |
-| `TEST_RUN_CASES` | `casesRun` | `casesRun`, `stageStopped` | — |
-| `TEST_COLLECT` | `collected` | `collected` | — |
+| `TEST` | `eventStageStopped` | — | — |
+| `TEST_IDLE` | `CmdRun` | — | — |
+| `TEST_READ_DECLARATION` | `eventDeclarationRead` | `eventDeclarationRead`, `eventStageStopped` | — |
+| `TEST_OPEN_SESSION` | `eventSessionOpened` | `eventSessionOpened`, `eventStageStopped` | — |
+| `TEST_STAND_UP_NETWORK` | `eventNetworkWayChosen`, `eventNetworkReached` | `eventNetworkWayChosen` | — |
+| `TEST_STAND_UP_NETWORK_COMPOSE` | — | `eventNetworkReached`, `eventStageStopped` | — |
+| `TEST_STAND_UP_NETWORK_ATTACH` | — | `eventNetworkReached`, `eventStageStopped` | — |
+| `TEST_PREPARE` | `eventChainPrepared` | `eventChainPrepared`, `eventStageStopped` | — |
+| `TEST_RUN_CASES` | `eventCasesRun` | `eventCasesRun`, `eventStageStopped` | — |
+| `TEST_COLLECT` | `eventCollected` | `eventCollected` | — |
 | `TEST_DONE` | — | — | — |
 | `TEST_FAILED` | — | — | — |
 <!-- contract:end test -->
@@ -350,11 +372,12 @@ type Declared interface{ Contract() Contract }
 링 로그에만 남기고 버린다. 에러가 없다. 바꾼 뒤:
 
 1. 경로 위의 어느 상태의 `Ignores`(무시 목록, ignore list)에 있으면 기록만 하고 넘어간다.
-2. 그 밖이면 `ErrUnhandled`(메시지 이름, 현재 경로 포함)를 만들고, 머신에 지정된 실패 상태로 옮긴다.
-   `Machine.SetFailed(state)` 로 머신마다 하나 정한다 — CHAIN 은 `CHAIN_FAILED`, TEST 는 `TEST_FAILED`.
-   `Send` 는 그 에러를 돌려준다.
-3. 실패 상태가 지정되지 않은 머신에서 이 일이 생기면 `Send` 가 에러를 돌려주고 머신은 그 자리에
-   멈춘다(설정 오류로 본다).
+2. 그 밖이면 머신이 `Machine.OnUnhandled` 로 정한 **자기 실패 사건**으로 바꿔 곧바로 처리한다. 그래서
+   다른 실패와 같은 길로 끝난다 — CHAIN 은 `stageFailed` → `CHAIN_FAILED`(진입점이 그 이유를 돌려준다),
+   TEST 는 `stageStopped` → `TEST_COLLECT`(망을 내리고 증거를 모은다) → `TEST_FAILED`. 이유에는
+   `ErrUnhandled`, 메시지 이름, 처리되지 않은 자리가 들어간다.
+3. `OnUnhandled` 를 정하지 않은 머신, 또는 그 실패 사건마저 아무도 받지 않으면 `Send` 가
+   `ErrUnhandled` 를 돌려준다.
 
 `CHAIN_FAILED` 가 `ClearError` 밖의 메시지를 에러로 거절하는 지금 동작(`manager_states.go:229-236`)은
 `Refuses: true` 로 선언된 것으로 유지한다.
@@ -369,7 +392,7 @@ type Declared interface{ Contract() Contract }
 | 진입점 | 끝 상태 집합 |
 |---|---|
 | `Manager.Compose` | `CHAIN_READY`, `CHAIN_BUILD_UP_STOPPED_AT_STEP`, `CHAIN_FAILED` |
-| `Manager.ComposeComparing` | `CHAIN_READY`, `CHAIN_FAILED` |
+| `Manager.ComposeComparing` | `CHAIN_READY`, `CHAIN_BUILD_UP_STOPPED_AT_STEP`(요청이 한 단계에서 멈추라 했을 때), `CHAIN_FAILED` |
 | `Manager.Operate` | `CHAIN_READY`, `CHAIN_STOPPED`, `CHAIN_REMOVED`, `CHAIN_FAILED` |
 | `Manager.Step` (`RunStep`) | `CHAIN_BUILD_UP_STOPPED_AT_STEP`, `CHAIN_FAILED` |
 | `runner.Run` | `TEST_DONE`, `TEST_FAILED` |
@@ -398,9 +421,12 @@ type Declared interface{ Contract() Contract }
 지금 이 단계는 genesis·config·키만 대상에 두고, 바이너리는 대상의 `paths.binaries` 에 미리 있어야
 한다. 바꾼 뒤 이 단계가 바이너리도 둔다.
 
-1. **어떤 파일을 어디로.** 로컬 원본은 명령이 받은 바이너리 경로(`--binary`, 또는 chain-preset 이 가리키는
-   파일)다. 대상 경로는 지금처럼 workspace-config 의 `dataRoot`·`paths.binaries`·`binaryAliases` 로 정한다.
-   로컬 대상이면 원본을 그 자리에서 쓰므로 배포할 것이 없다.
+1. **어떤 파일을 어디로 (R1).** 로컬 원본은 workspace-config 의 `control.binaries`(로컬 디렉터리, `~` 와
+   상대경로는 `artifactRoot` 처럼 푼다) 아래, 대상이 실행하는 것과 같은 파일 이름이다. 그 이름은 체인
+   매니페스트의 바이너리 이름이거나 `binaryAliases` 값이다. 대상 경로는 지금처럼 `dataRoot`·
+   `paths.binaries`·`binaryAliases` 로 정해져 기록에 있다(`State.Binary`, 노드별 `State.Binaries`).
+   로컬 대상이거나 `control.binaries` 가 없으면 보낼 것이 없다 — 대상이 바이너리를 갖고 있어야 한다는
+   지금 규칙 그대로다.
 2. **이미 있다의 판단.** 로컬 원본의 sha256 과 대상 파일의 sha256 을 비교한다. 같으면 보내지 않는다.
    다르거나 대상에 파일이 없으면 보낸다.
 3. **보낸 뒤 확인.** 올린 파일의 sha256 을 다시 구해 로컬과 같은지 본다. 기록된 값이 아니라 대상 파일을
@@ -411,9 +437,8 @@ type Declared interface{ Contract() Contract }
 6. **기록.** 보낸 파일 수에 바이너리가 포함된다. 하나라도 보냈으면 `CHAIN_DEPLOY_NODES_SHIPPED_REMOTE`,
    아니면 `CHAIN_DEPLOY_NODES_VERIFIED_LOCAL`.
 
-**검토가 필요한 것.** 원격 대상일 때 "로컬 원본" 을 어디서 얻을지는 지금 코드에 자리가 없다(원격
-대상에서는 바이너리 이름만 나른다). 위 1 의 규칙이 맞는지, workspace-config 에 로컬 원본 자리를 따로
-둘지 검토에서 정한다.
+구현: `steps_compose.go` 의 `shipNodeBinaries`·`shipBinaries`. 신원 파일을 보내는 `shipIdentities` 와
+같은 방식(대상 `Checksum` 과 비교)이고, 원격 해시가 안 되면 `Checksum` 의 에러로 실패한다.
 
 ---
 
@@ -465,19 +490,20 @@ type Declared interface{ Contract() Contract }
 
 - 상태 이름 const 와 트리: `internal/chainsetup`(manager·manager_states·stage_*), `internal/testengine`
   (runmachine·runprotocol).
-- 프레임워크: `internal/core/statemachine`(`Contract`, `Declared`, `SetFailed`, `RequireAt`, dispatch).
+- 프레임워크: `internal/core/statemachine`(`Contract`, `Declared`, `RequireContracts`, `OnUnhandled`,
+  `RequireAt`, `Audit`, `ContractTable`, dispatch).
+- preflight: 새 판정 `Relaunch`(`internal/core/preflight`).
 - gate: `internal/testengine/nodegate.go`.
-- 배포: `internal/chainsetup/stage_deploy.go`, `steps_compose.go`.
+- 배포: `internal/chainsetup/steps_compose.go`, workspace-config 의 `control.binaries`(`internal/resource`).
 - 기록: `internal/chainsetup/state.go`, `workspace.go`, `ResumeStep`(`manager.go:273-289`).
 - 선언 점검 테스트: `internal/arch` 에 새로.
 - 리포트: `cmd/chainbench/suitecmd/run.go`(출력 문자열이 바뀐다).
 - 문서: 19·20번 분석의 그림과 표, 이 문서의 §5 표(테스트가 다시 쓴다), 02 머리의 가리킴 줄(검토 뒤).
 
-## 12. 검토에서 정할 것
+## 12. 검토 결과 (2026-09-24)
 
-1. §7 의 원격 대상 "로컬 원본" 자리 — 명령이 받은 경로로 충분한가, workspace-config 에 따로 두나.
-2. `CHAIN_COMPARE_NOTHING_COMPOSED` 를 상태로 둘지(02 는 세부로 둔다), 지금처럼 곧장
-   `CHAIN_OPEN_WORKSPACE` 로 갈지. 이 문서는 02 를 따라 상태로 두었다.
-3. 재실행 때 preflight 가 "살아 있는 노드가 없다" 를 "망 전체가 다르다" 로 판정하는 것 — 설정이 같고
-   노드만 내려가 있는 망은 다시 띄우기(`NODES_DIFFER`)가 맞을 수 있다. 이번 설계의 범위 밖이지만
-   E10 의 결과를 보고 판단한다.
+1. 원격 대상의 로컬 원본은 workspace-config 와 체인 매니페스트로 안다 → `control.binaries` + 매니페스트
+   이름 (§7, R1).
+2. `CHAIN_COMPARE_NOTHING_COMPOSED` 는 빈 워크스페이스로 처음 망을 세우는 판정이다. 상태로 둔다 (R2).
+3. 노드만 내려간 같은 망을 다시 실행하면, preflight 가 망이 같다고 판단하므로 설정 단계를 건너 노드
+   실행 단계로 가야 한다 → 판정 `relaunch` (§4, R3).

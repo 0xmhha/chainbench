@@ -10,10 +10,12 @@ import (
 
 // Composing against a target that may already hold what the request wants.
 const (
-	nameComparing         statemachine.StateName = "Comparing"
-	nameRestartingNodes   statemachine.StateName = "RestartingNodes"
-	nameStoppingToRebuild statemachine.StateName = "StoppingToRebuild"
-	nameVerifying         statemachine.StateName = "Verifying"
+	nameChainCompare                statemachine.StateName = "CHAIN_COMPARE"
+	nameChainCompareNodesDiffer     statemachine.StateName = "CHAIN_COMPARE_NODES_DIFFER"
+	nameChainCompareNetworkDiffers  statemachine.StateName = "CHAIN_COMPARE_NETWORK_DIFFERS"
+	nameChainCompareSame            statemachine.StateName = "CHAIN_COMPARE_SAME"
+	nameChainCompareNothingComposed statemachine.StateName = "CHAIN_COMPARE_NOTHING_COMPOSED"
+	nameChainCompareNetworkStopped  statemachine.StateName = "CHAIN_COMPARE_NETWORK_STOPPED"
 )
 
 // comparing is the check a suite makes before it builds anything: what is on
@@ -23,61 +25,86 @@ const (
 // run WAS: one that recomposed and then failed in the genesis reported a
 // genesis failure with no trace of the comparison that sent it there.
 //
-// The four answers are four moves. The network is the one wanted, so there is
-// nothing to do. Some nodes differ, so those come back. A network-wide fact
-// differs, so the network stops and is composed again. Nothing is composed, so
-// compose.
+// The five answers are five moves, and each is a state of its own so the record
+// says which one a run took. The network is the one wanted, so there is nothing
+// to do. Some nodes differ, so those come back. A network-wide fact differs, so
+// the network stops and is composed again. Nothing is composed, so compose. The
+// network is the one wanted and none of it runs, so its nodes are launched.
+//
+// Every one of them reports back here, to the parent that chose it. The two
+// that used to report to the composition instead — a sibling of this state —
+// were dropped, and a rebuild stalled with no error.
 type comparing struct {
 	statemachine.Base
 	mg *Manager
 
 	decision preflight.Decision
 
+	same       *compareOutcome
 	restarting *restartingNodes
 	stopping   *stoppingToRebuild
+	nothing    *compareOutcome
+	relaunch   *compareOutcome
 }
 
 // newComparing builds the comparison and the one move out of it that works.
 func newComparing(mg *Manager) *comparing {
 	s := &comparing{mg: mg}
+	s.same = &compareOutcome{parent: s, name: nameChainCompareSame, report: networkKept{}}
 	s.restarting = &restartingNodes{parent: s}
 	s.stopping = &stoppingToRebuild{parent: s}
+	s.nothing = &compareOutcome{parent: s, name: nameChainCompareNothingComposed, report: nothingComposed{}}
+	s.relaunch = &compareOutcome{parent: s, name: nameChainCompareNetworkStopped, report: networkStopped{}}
 	return s
 }
 
 // Name says what this state is called.
-func (comparing) Name() statemachine.StateName { return nameComparing }
+func (comparing) Name() statemachine.StateName { return nameChainCompare }
 
-// leafStates is the moves out of the comparison that have work of their own.
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (comparing) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventComparisonMade, eventNetworkKept, eventNothingComposed, eventNodesRestarted, eventStoppedToRebuild, eventNetworkStopped}, Emits: []statemachine.What{eventComparisonMade}}
+}
+
+// leafStates is the moves out of the comparison, one per verdict.
 func (s *comparing) leafStates() []statemachine.State {
-	return []statemachine.State{s.restarting, s.stopping}
+	return []statemachine.State{s.same, s.restarting, s.stopping, s.nothing, s.relaunch}
 }
 
 // Enter asks the workspace what it has against what is wanted.
 func (s *comparing) Enter(ctx context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
-	s.decision = compareWorkspace(ctx, s.mg.d, s.mg.request)
+	s.decision = s.mg.compare(ctx, s.mg.d, s.mg.request)
 	s.mg.note("preflight", s.decision.String())
 	m.SendSelf(comparisonMade{Verdict: s.decision.Verdict})
 	return nil
 }
 
-// Process turns the verdict into the move it is.
-//
-// Deciding only. Two of the four moves have work in them — bringing nodes back,
-// and stopping before a rebuild — and that work is in the states they name.
+// Process turns the verdict into the move it is, and each move's report into
+// where the run goes next.
 func (s *comparing) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
-	c, ok := msg.(comparisonMade)
-	if !ok {
+	switch c := msg.(type) {
+	case comparisonMade:
+		next, err := s.nextFor(c.Verdict)
+		if err != nil {
+			s.mg.failure = err
+			m.TransitionTo(s.mg.failed)
+			return true, nil
+		}
+		m.TransitionTo(next)
+	case networkKept, nodesRestarted:
+		m.TransitionTo(s.mg.ready)
+	case stoppedToRebuild, nothingComposed:
+		m.TransitionTo(s.mg.stages[0])
+	case networkStopped:
+		launch, err := s.mg.stageFor(stepStart)
+		if err != nil {
+			return true, err
+		}
+		m.TransitionTo(launch)
+	default:
 		return false, nil
 	}
-	next, err := s.nextFor(c.Verdict)
-	if err != nil {
-		s.mg.failure = err
-		m.TransitionTo(s.mg.failed)
-		return true, nil
-	}
-	m.TransitionTo(next)
 	return true, nil
 }
 
@@ -90,14 +117,16 @@ func (s *comparing) Process(_ context.Context, m *statemachine.Machine, msg stat
 func (s *comparing) nextFor(v preflight.Verdict) (statemachine.State, error) {
 	switch v {
 	case preflight.Reuse:
-		return s.mg.verifying, nil
+		return s.same, nil
 	case preflight.RebuildNodes:
 		return s.restarting, nil
 	case preflight.RebuildAll:
 		return s.stopping, nil
 	case preflight.Compose:
 		// Nothing composed has nothing to stop.
-		return s.mg.stages[0], nil
+		return s.nothing, nil
+	case preflight.Relaunch:
+		return s.relaunch, nil
 	}
 	return nil, fmt.Errorf("chainsetup: preflight returned %s, which is not a verdict this knows", v)
 }
@@ -114,7 +143,12 @@ type stoppingToRebuild struct {
 }
 
 // Name says what this state is called.
-func (stoppingToRebuild) Name() statemachine.StateName { return nameStoppingToRebuild }
+func (stoppingToRebuild) Name() statemachine.StateName { return nameChainCompareNetworkDiffers }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (stoppingToRebuild) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventStoppedToRebuild, eventStageFailed}}
+}
 
 // Enter stops the network.
 func (l *stoppingToRebuild) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -142,7 +176,12 @@ type restartingNodes struct {
 }
 
 // Name says what this state is called.
-func (restartingNodes) Name() statemachine.StateName { return nameRestartingNodes }
+func (restartingNodes) Name() statemachine.StateName { return nameChainCompareNodesDiffer }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (restartingNodes) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNodesRestarted, eventStageFailed}}
+}
 
 // Enter restarts each named node.
 func (l *restartingNodes) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -162,22 +201,32 @@ func (l *restartingNodes) Enter(ctx context.Context, m *statemachine.Machine) er
 	return nil
 }
 
-// verifying is where a comparison-led composition hands over.
+// compareOutcome is a verdict with no work of its own: the record keeps the
+// path, and the report tells the comparison where the run goes.
 //
-// Whether the network that resulted is producing is a question this package
-// cannot answer — the readiness gate belongs to whoever owns the monitor — so
-// the walk stops here rather than guessing.
-type verifying struct {
+// The network being the one wanted used to end in a state called Verifying,
+// which verified nothing — whether the network produces is the readiness
+// gate's question, and the gate is not in this package. A verdict that needs no
+// work now says so and hands the run on.
+type compareOutcome struct {
 	statemachine.Base
-	mg *Manager
+	parent *comparing
+	name   statemachine.StateName
+	report statemachine.Message
 }
 
 // Name says what this state is called.
-func (verifying) Name() statemachine.StateName { return nameVerifying }
+func (l *compareOutcome) Name() statemachine.StateName { return l.name }
 
-// Enter records that the composition reached the hand-over.
-func (s *verifying) Enter(context.Context, *statemachine.Machine) error {
-	s.mg.recordPath(s)
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (l *compareOutcome) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{l.report.What()}}
+}
+
+// Enter records the verdict and reports it.
+func (l *compareOutcome) Enter(_ context.Context, m *statemachine.Machine) error {
+	l.parent.mg.recordPath(l)
+	m.SendSelf(l.report)
 	return nil
 }
 

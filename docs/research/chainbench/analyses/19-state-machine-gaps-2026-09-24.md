@@ -1,5 +1,10 @@
 # 상태 머신의 빈 경로 — 코드에서 그린 상태 다이어그램
 
+> **기록 문서다.** 여기 그림과 표의 상태 이름은 `cd9664b3` 시점의 옛 이름(진행형)이다. 이름은
+> 2026-09-24 [state-machine-06](../../../dev/architecture/design-v3/state-machine-06-naming-and-contract.md)
+> 대로 바뀌었고(§3 의 "지금" 열이 옛→새 대응표), 이 문서가 그린 결함은 같은 PR 에서 고쳐졌다.
+> 옛 코드를 설명하는 기록이라 이름을 새로 바꿔 쓰지 않는다.
+
 > 기준: main `cde3a08f` (PR #425 머지 직후) 위의 `386a78ee`. 2026-09-24.
 > 대상: `internal/chainsetup` 의 composition 머신과 `internal/testengine` 의 run 머신.
 > 목적: 재실행 실패에서 드러난 빈 경로를 코드 그대로 그려, 수정안을 다시 검토할 근거로 쓴다.

@@ -19,7 +19,12 @@ type openingWorkspace struct {
 }
 
 // Name says what this state is called.
-func (openingWorkspace) Name() statemachine.StateName { return nameOpeningWorkspace }
+func (openingWorkspace) Name() statemachine.StateName { return nameChainOpenWorkspace }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (openingWorkspace) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventWorkspaceOpened, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (openingWorkspace) step() string { return stepNew }

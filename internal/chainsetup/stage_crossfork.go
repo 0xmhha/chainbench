@@ -8,9 +8,9 @@ import (
 
 // The three moments crossing a fork goes through.
 const (
-	nameBeforeFork  statemachine.StateName = "BeforeFork"
-	nameHandingOver statemachine.StateName = "HandingOver"
-	nameCrossed     statemachine.StateName = "Crossed"
+	nameChainOpCrossForkAwaitBoundary statemachine.StateName = "CHAIN_OP_CROSS_FORK_AWAIT_BOUNDARY"
+	nameChainOpCrossForkHandOver      statemachine.StateName = "CHAIN_OP_CROSS_FORK_HAND_OVER"
+	nameChainOpCrossForkConfirm       statemachine.StateName = "CHAIN_OP_CROSS_FORK_CONFIRM"
 )
 
 // crossingFork waits for the network to cross the fork it is planned for.
@@ -57,7 +57,12 @@ func newCrossingFork(mg *Manager) *crossingFork {
 }
 
 // Name says what this state is called.
-func (crossingFork) Name() statemachine.StateName { return nameCrossingFork }
+func (crossingFork) Name() statemachine.StateName { return nameChainOpCrossFork }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (crossingFork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventForkStandingRead, eventForkBoundaryReached, eventProductionHandedOver}, Emits: []statemachine.What{eventForkStandingRead, eventStageFailed}}
+}
 
 // verb is the name verbNeeds declares this operation's conditions under. It is
 // the first thing the crossing does, and what it may do is what that asks.
@@ -131,7 +136,12 @@ type beforeFork struct {
 }
 
 // Name says what this state is called.
-func (beforeFork) Name() statemachine.StateName { return nameBeforeFork }
+func (beforeFork) Name() statemachine.StateName { return nameChainOpCrossForkAwaitBoundary }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (beforeFork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventForkBoundaryReached, eventStageFailed}}
+}
 
 // Enter brings the network to the point where it can be moved.
 func (s *beforeFork) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -156,7 +166,12 @@ type handingOver struct {
 }
 
 // Name says what this state is called.
-func (handingOver) Name() statemachine.StateName { return nameHandingOver }
+func (handingOver) Name() statemachine.StateName { return nameChainOpCrossForkHandOver }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (handingOver) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventProductionHandedOver, eventStageFailed}}
+}
 
 // Enter hands production over.
 func (s *handingOver) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -185,7 +200,12 @@ type crossedFork struct {
 }
 
 // Name says what this state is called.
-func (crossedFork) Name() statemachine.StateName { return nameCrossed }
+func (crossedFork) Name() statemachine.StateName { return nameChainOpCrossForkConfirm }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (crossedFork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventOperationDone, eventStageFailed}}
+}
 
 // Enter confirms the crossing, records the step and ends the operation.
 func (s *crossedFork) Enter(ctx context.Context, m *statemachine.Machine) error {

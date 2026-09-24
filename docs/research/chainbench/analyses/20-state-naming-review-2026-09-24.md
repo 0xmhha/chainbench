@@ -1,5 +1,10 @@
 # 상태 이름 재검토 — 02 규약으로 되돌리기
 
+> **기록 문서다.** 여기 그림과 표의 상태 이름은 `cd9664b3` 시점의 옛 이름(진행형)이다. 이름은
+> 2026-09-24 [state-machine-06](../../../dev/architecture/design-v3/state-machine-06-naming-and-contract.md)
+> 대로 바뀌었고(§3 의 "지금" 열이 옛→새 대응표), 이 문서가 그린 결함은 같은 PR 에서 고쳐졌다.
+> 옛 코드를 설명하는 기록이라 이름을 새로 바꿔 쓰지 않는다.
+
 > 기준: `386a78ee` (main `cde3a08f` 위). 2026-09-24.
 > 짝 문서: [`19-state-machine-gaps-2026-09-24.md`](19-state-machine-gaps-2026-09-24.md) — 같은 두 머신의 전이와 빈 경로.
 > 이름의 기준: [`state-machine-02-states.md`](../../../dev/architecture/design-v3/state-machine-02-states.md) §2 (조립·운영),

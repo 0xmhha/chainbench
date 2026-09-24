@@ -35,7 +35,12 @@ type compositionState struct {
 }
 
 // Name says what this state is called.
-func (compositionState) Name() statemachine.StateName { return nameComposition }
+func (compositionState) Name() statemachine.StateName { return nameChain }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (compositionState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventStageFailed}, Emits: nil}
+}
 
 // Process takes a failure from anywhere below and goes to failed.
 func (s *compositionState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
@@ -57,7 +62,12 @@ type stoppedState struct {
 }
 
 // Name says what this state is called.
-func (stoppedState) Name() statemachine.StateName { return nameStopped }
+func (stoppedState) Name() statemachine.StateName { return nameChainIdle }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (stoppedState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{CmdCompose, CmdCompare, CmdOperate, CmdStep}, Emits: nil}
+}
 
 // Process takes the request and goes to the stage the run begins at.
 //
@@ -125,7 +135,12 @@ type composingState struct {
 }
 
 // Name says what this state is called.
-func (composingState) Name() statemachine.StateName { return nameComposing }
+func (composingState) Name() statemachine.StateName { return nameChainBuildUp }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (composingState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventWorkspaceOpened, eventNodeTableBuilt, eventKeysEnsured, eventGenesisBuilt, eventNodeConfigBuilt, eventNodeCommandBuilt, eventInputsDeployed, eventDatadirsInitialized, eventNodesLaunched, eventReconciled, eventReconcileRefused}, Emits: nil}
+}
 
 // Process routes a stage's report.
 func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
@@ -139,12 +154,6 @@ func (s *composingState) Process(_ context.Context, m *statemachine.Machine, msg
 			return true, nil
 		}
 		m.TransitionTo(s.mg.after(step))
-		return true, nil
-	case nodesRestarted:
-		m.TransitionTo(s.mg.verifying)
-		return true, nil
-	case stoppedToRebuild:
-		m.TransitionTo(s.mg.stages[0])
 		return true, nil
 	case reconciled:
 		// Either way the composition goes on: what has to be redone is redone
@@ -169,7 +178,12 @@ type composedState struct {
 }
 
 // Name says what this state is called.
-func (composedState) Name() statemachine.StateName { return nameComposed }
+func (composedState) Name() statemachine.StateName { return nameChainBuildUpStoppedAtStep }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (composedState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: nil}
+}
 
 // Enter records that the composition stopped here.
 func (s *composedState) Enter(context.Context, *statemachine.Machine) error {
@@ -185,7 +199,12 @@ type readyState struct {
 }
 
 // Name says what this state is called.
-func (readyState) Name() statemachine.StateName { return nameReady }
+func (readyState) Name() statemachine.StateName { return nameChainReady }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (readyState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: nil}
+}
 
 // Enter records that the composition finished.
 func (s *readyState) Enter(context.Context, *statemachine.Machine) error {
@@ -193,13 +212,59 @@ func (s *readyState) Enter(context.Context, *statemachine.Machine) error {
 	return nil
 }
 
-// Process takes an operation's report and comes to rest.
-func (s *readyState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
+// opState is the operations' parent. Once an operation is done it says where
+// the network now stands: a stopped network is not ready, and a removed one is
+// not there at all.
+type opState struct {
+	statemachine.Base
+	mg *Manager
+}
+
+// Name says what this state is called.
+func (opState) Name() statemachine.StateName { return nameChainOp }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (opState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventOperationDone}, Emits: nil}
+}
+
+// Process takes an operation's report and rests where that operation leaves
+// the network.
+func (s *opState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
 	if _, ok := msg.(operationDone); !ok {
 		return false, nil
 	}
-	m.TransitionTo(s)
+	switch s.mg.operating {
+	case s.mg.stopping:
+		m.TransitionTo(s.mg.opStopped)
+	case s.mg.removing:
+		m.TransitionTo(s.mg.opRemoved)
+	default:
+		m.TransitionTo(s.mg.ready)
+	}
 	return true, nil
+}
+
+// opResult is where a network rests after an operation that left it other than
+// ready: CHAIN_STOPPED after a stop, CHAIN_REMOVED after a remove.
+type opResult struct {
+	statemachine.Base
+	mg   *Manager
+	name statemachine.StateName
+}
+
+// Name says what this state is called.
+func (s *opResult) Name() statemachine.StateName { return s.name }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (s *opResult) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: nil}
+}
+
+// Enter records where the network rests.
+func (s *opResult) Enter(context.Context, *statemachine.Machine) error {
+	s.mg.recordPath(s)
+	return nil
 }
 
 // failedState is a composition that stopped because a stage could not finish.
@@ -213,7 +278,12 @@ type failedState struct {
 }
 
 // Name says what this state is called.
-func (failedState) Name() statemachine.StateName { return nameFailed }
+func (failedState) Name() statemachine.StateName { return nameChainFailed }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (failedState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{CmdClearError}, Emits: nil, Refuses: true}
+}
 
 // Enter leaves the recorded position alone on purpose.
 //

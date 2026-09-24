@@ -9,9 +9,9 @@ import (
 
 // What a launch is doing, phase by phase.
 const (
-	nameLaunchingPhase      statemachine.StateName = "LaunchingPhase"
-	nameRunningPhaseActions statemachine.StateName = "RunningPhaseActions"
-	nameRecordingRun        statemachine.StateName = "RecordingRun"
+	nameChainLaunchNodesPhase        statemachine.StateName = "CHAIN_LAUNCH_NODES_PHASE"
+	nameChainLaunchNodesPhaseActions statemachine.StateName = "CHAIN_LAUNCH_NODES_PHASE_ACTIONS"
+	nameChainLaunchNodesRecordRun    statemachine.StateName = "CHAIN_LAUNCH_NODES_RECORD_RUN"
 )
 
 // launching starts the network in the phases the family declares.
@@ -49,7 +49,12 @@ func newLaunching(mg *Manager) *launching {
 }
 
 // Name says what this state is called.
-func (launching) Name() statemachine.StateName { return nameLaunching }
+func (launching) Name() statemachine.StateName { return nameChainLaunchNodes }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (launching) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventLaunchPlanned, eventPhaseLaunched, eventPhaseActionsDone}, Emits: []statemachine.What{eventLaunchPlanned, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (launching) step() string { return stepStart }
@@ -123,7 +128,12 @@ type launchingPhase struct {
 }
 
 // Name says what this state is called.
-func (launchingPhase) Name() statemachine.StateName { return nameLaunchingPhase }
+func (launchingPhase) Name() statemachine.StateName { return nameChainLaunchNodesPhase }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (launchingPhase) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventPhaseLaunched, eventStageFailed}}
+}
 
 // Enter starts this phase and says how many nodes went up.
 func (l *launchingPhase) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -148,7 +158,12 @@ type runningPhaseActions struct {
 }
 
 // Name says what this state is called.
-func (runningPhaseActions) Name() statemachine.StateName { return nameRunningPhaseActions }
+func (runningPhaseActions) Name() statemachine.StateName { return nameChainLaunchNodesPhaseActions }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (runningPhaseActions) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventPhaseActionsDone, eventStageFailed}}
+}
 
 // Enter runs this phase's actions.
 func (l *runningPhaseActions) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -179,7 +194,12 @@ type recordingRun struct {
 }
 
 // Name says what this state is called.
-func (recordingRun) Name() statemachine.StateName { return nameRecordingRun }
+func (recordingRun) Name() statemachine.StateName { return nameChainLaunchNodesRecordRun }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (recordingRun) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNodesLaunched, eventStageFailed}}
+}
 
 // Enter records the run and reports the stage finished.
 func (l *recordingRun) Enter(ctx context.Context, m *statemachine.Machine) error {

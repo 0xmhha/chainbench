@@ -79,12 +79,19 @@ func TestCheck_ADeadNodeJoinsTheRebuild(t *testing.T) {
 }
 
 // TestCheck_EveryNodeDeadIsNotARestart: a network with nothing alive comes
-// back whole through the composition, not node by node.
+// back whole, not node by node. When nothing on paper differs it is relaunched
+// — the composition is the one wanted and only its processes are gone — and
+// when something does, it is rebuilt.
 func TestCheck_EveryNodeDeadIsNotARestart(t *testing.T) {
 	dead := func(context.Context, preflight.Node) (bool, string) { return false, "" }
 	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "stablenet"}, dead)
+	if d.Verdict != preflight.Relaunch {
+		t.Fatalf("decision = %s, want relaunch", d)
+	}
+	changed := preflight.Want{Chain: "stablenet", Nodes: []preflight.Node{{Index: 3, SyncMode: "snap"}}}
+	d = preflight.Check(context.Background(), have(), changed, dead)
 	if d.Verdict != preflight.RebuildAll {
-		t.Fatalf("decision = %s, want rebuild-all", d)
+		t.Fatalf("decision = %s, want rebuild-all when a dead network also differs on paper", d)
 	}
 }
 

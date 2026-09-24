@@ -122,20 +122,20 @@ func TestFailedAtOf_OneSuffixForBothAreas(t *testing.T) {
 		},
 		{
 			name: "a failure of the run's own",
-			res:  app.RunSuiteOut{FailedAt: "Run/ReadingDeclaration"},
-			want: "Run/ReadingDeclaration",
+			res:  app.RunSuiteOut{FailedAt: "TEST/TEST_READ_DECLARATION"},
+			want: "TEST/TEST_READ_DECLARATION",
 		},
 		{
 			name: "the chain refused, and says which of its stages",
 			res: app.RunSuiteOut{
-				FailedAt:        "Run/ReachingNetwork",
-				ComposeFailedAt: "Composition/Composing/Launching",
+				FailedAt:        "TEST/TEST_STAND_UP_NETWORK",
+				ComposeFailedAt: "CHAIN/CHAIN_BUILD_UP/CHAIN_LAUNCH_NODES",
 			},
-			want: "Run/ReachingNetwork / Composition/Composing/Launching",
+			want: "TEST/TEST_STAND_UP_NETWORK / CHAIN/CHAIN_BUILD_UP/CHAIN_LAUNCH_NODES",
 		},
 		{
 			name: "a chain state with no run state is not a suffix",
-			res:  app.RunSuiteOut{ComposeFailedAt: "Composition/Composing/Launching"},
+			res:  app.RunSuiteOut{ComposeFailedAt: "CHAIN/CHAIN_BUILD_UP/CHAIN_LAUNCH_NODES"},
 			want: "",
 		},
 	}

@@ -115,7 +115,7 @@ func TestRecord_KeepsTheStatePath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const path = "Composition/Composing/BuildingGenesis/GenesisFromTemplate"
+	const path = "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_GENESIS/CHAIN_BUILD_GENESIS_FROM_TEMPLATE"
 	ws.SetStatePath(path)
 	if err := ws.Save(); err != nil {
 		t.Fatal(err)

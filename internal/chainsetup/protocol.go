@@ -125,6 +125,15 @@ const (
 	// eventStageFailed: a stage could not finish. The stage above writes the
 	// reason down and goes to failed.
 	eventStageFailed
+	// eventNetworkKept: the comparison found the network it wanted, running.
+	eventNetworkKept
+	// eventNothingComposed: the comparison found nothing composed, so the
+	// composition starts from its first stage.
+	eventNothingComposed
+	// eventNetworkStopped: the comparison found the network it wanted with
+	// none of its nodes running, so its nodes are launched and nothing is
+	// built again.
+	eventNetworkStopped
 )
 
 // What something below posts up to this machine. A node monitor watching a
@@ -177,6 +186,10 @@ var whatNames = map[statemachine.What]string{
 	eventProductionHandedOver: "eventProductionHandedOver",
 
 	eventStageFailed: "eventStageFailed",
+
+	eventNetworkKept:     "eventNetworkKept",
+	eventNothingComposed: "eventNothingComposed",
+	eventNetworkStopped:  "eventNetworkStopped",
 
 	EventNodeDied: "EventNodeDied",
 }
@@ -457,6 +470,21 @@ func (nodesRestarted) What() statemachine.What { return eventNodesRestarted }
 type stoppedToRebuild struct{}
 
 func (stoppedToRebuild) What() statemachine.What { return eventStoppedToRebuild }
+
+// networkKept: the comparison found the network it wanted, running.
+type networkKept struct{}
+
+func (networkKept) What() statemachine.What { return eventNetworkKept }
+
+// nothingComposed: the comparison found nothing composed.
+type nothingComposed struct{}
+
+func (nothingComposed) What() statemachine.What { return eventNothingComposed }
+
+// networkStopped: the comparison found the network it wanted, not running.
+type networkStopped struct{}
+
+func (networkStopped) What() statemachine.What { return eventNetworkStopped }
 
 // The rest are declared with their leaf states, one commit
 // each. Their What values are above so that the whole protocol is one file to

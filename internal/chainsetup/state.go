@@ -14,11 +14,15 @@ import (
 // process reads this rather than inferring from files on disk, because a file
 // can be present for reasons the composition never chose.
 
-// StateFormatVersion is 2 because a record now carries where the composition's
-// machine was, and a resume trusts it. A version 1 record has no position, and
-// a build that read one would resume from the beginning of a network that is
-// half up.
-const StateFormatVersion = 2
+// StateFormatVersion is 3 because the names in a record's position changed.
+//
+// Version 2 added the position, and a resume trusts it. Version 3 renamed every
+// state to the STATE_<AREA>_<STAGE> vocabulary of design-v3 state-machine-02
+// (see state-machine-06). A version 2 record's path names states this build
+// does not have, and ResumeStep reads a name it does not know as "begin at the
+// first step not done" — a quiet reinterpretation. The version is what turns
+// that into a refusal that names the record and says to compose it again.
+const StateFormatVersion = 3
 
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step
@@ -102,7 +106,7 @@ type State struct {
 	Nodes        []node.Record     `json:"nodes,omitempty"`
 	// StatePath is where the composition machine was when this record was last
 	// written: the state and its ancestors, outermost first, as
-	// "Composition/Composing/BuildingGenesis/GenesisFromTemplate".
+	// "CHAIN/CHAIN_BUILD_UP/CHAIN_BUILD_GENESIS/CHAIN_BUILD_GENESIS_FROM_TEMPLATE".
 	//
 	// It is the thing Steps cannot say. Steps names the rungs that finished,
 	// so "where is this composition now" has to be worked out from it by
@@ -110,10 +114,8 @@ type State struct {
 	// second account of the composition's position, kept in a different place
 	// from the first, and the two have disagreed.
 	//
-	// Nothing reads it yet. It is written before it is read on purpose: a
-	// workspace composed by this build already carries its position by the
-	// time the resume path starts trusting it, so the change of format and the
-	// change of behaviour are not the same commit.
+	// ResumeStep reads it: the stage named in the path is where a composition
+	// that stopped part way picks up.
 	StatePath string `json:"statePath,omitempty"`
 	// Steps is what has been done to this composition, by name. It holds two
 	// kinds: a rung of the composition ladder (UpStepNames) and an operation on
