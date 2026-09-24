@@ -132,3 +132,6 @@ env/docker/build/
 # only accounts.env.sample is tracked
 env/docker/accounts.env
 chainbench-out/
+
+# ouroboros local session artifacts
+.ouroboros/
