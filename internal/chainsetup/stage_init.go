@@ -18,7 +18,12 @@ type initializingDatadirs struct {
 }
 
 // Name says what this state is called.
-func (initializingDatadirs) Name() statemachine.StateName { return nameInitializingDatadirs }
+func (initializingDatadirs) Name() statemachine.StateName { return nameChainInitNodes }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (initializingDatadirs) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventDatadirsInitialized, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (initializingDatadirs) step() string { return stepInit }

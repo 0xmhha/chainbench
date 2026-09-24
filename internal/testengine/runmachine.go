@@ -18,18 +18,18 @@ import (
 // a run's position and the classification of its failures are one thing instead
 // of a walk and a table that have to agree.
 const (
-	nameRun                statemachine.StateName = "Run"
-	namePending            statemachine.StateName = "Pending"
-	nameReadingDeclaration statemachine.StateName = "ReadingDeclaration"
-	nameOpeningSession     statemachine.StateName = "OpeningSession"
-	nameReachingNetwork    statemachine.StateName = "ReachingNetwork"
-	nameComposingNetwork   statemachine.StateName = "ComposingNetwork"
-	nameAttachingToNetwork statemachine.StateName = "AttachingToNetwork"
-	namePreparing          statemachine.StateName = "Preparing"
-	nameRunningCases       statemachine.StateName = "RunningCases"
-	nameCollecting         statemachine.StateName = "Collecting"
-	nameDone               statemachine.StateName = "Done"
-	nameRunFailed          statemachine.StateName = "Failed"
+	nameTest                      statemachine.StateName = "TEST"
+	nameTestIdle                  statemachine.StateName = "TEST_IDLE"
+	nameTestReadDeclaration       statemachine.StateName = "TEST_READ_DECLARATION"
+	nameTestOpenSession           statemachine.StateName = "TEST_OPEN_SESSION"
+	nameTestStandUpNetwork        statemachine.StateName = "TEST_STAND_UP_NETWORK"
+	nameTestStandUpNetworkCompose statemachine.StateName = "TEST_STAND_UP_NETWORK_COMPOSE"
+	nameTestStandUpNetworkAttach  statemachine.StateName = "TEST_STAND_UP_NETWORK_ATTACH"
+	nameTestPrepare               statemachine.StateName = "TEST_PREPARE"
+	nameTestRunCases              statemachine.StateName = "TEST_RUN_CASES"
+	nameTestCollect               statemachine.StateName = "TEST_COLLECT"
+	nameTestDone                  statemachine.StateName = "TEST_DONE"
+	nameTestFailed                statemachine.StateName = "TEST_FAILED"
 )
 
 // runner walks one suite.
@@ -95,6 +95,7 @@ func newRunner(sd chainsetup.Deps, in RunSuiteIn) *runner {
 	r.done = &doneState{r: r}
 	r.failed = &runFailedState{r: r}
 
+	r.m.RequireContracts()
 	r.m.Add(root, nil)
 	r.m.Add(r.pending, root)
 	r.m.Add(r.reading, root)
@@ -108,6 +109,18 @@ func newRunner(sd chainsetup.Deps, in RunSuiteIn) *runner {
 	r.m.Add(r.collect, root)
 	r.m.Add(r.done, root)
 	r.m.Add(r.failed, root)
+
+	// A message no state handles is a run that cannot go on. It takes the same
+	// way out as any stage that stops — through collecting, so the network
+	// still comes down and what it left behind is still gathered.
+	r.m.OnUnhandled(func(msg statemachine.Message, at statemachine.StateName) statemachine.Message {
+		if r.failure == nil {
+			r.failure = fmt.Errorf("engine: run suite: %w: %s in %s",
+				statemachine.ErrUnhandled, whatName(msg.What()), at)
+			r.failedIn = string(at)
+		}
+		return stageStopped{}
+	})
 	return r
 }
 
@@ -118,6 +131,13 @@ func (r *runner) Run(ctx context.Context) (RunSuiteOut, error) {
 	}
 	if err := r.m.Send(ctx, startRun{}); err != nil {
 		return r.out, err
+	}
+	// A run that returns has finished or failed. Anywhere else is a walk that
+	// stalled, and reporting it as a result would be reporting a run that
+	// never ran its cases.
+	if err := r.m.RequireAt(r.done, r.failed); err != nil && r.failure == nil {
+		r.failure = fmt.Errorf("engine: run suite: %w", err)
+		r.failedIn = r.m.Path(r.m.Current())
 	}
 	if r.failure != nil {
 		r.out.FailedAt = r.failedIn
@@ -182,7 +202,12 @@ type runState struct {
 }
 
 // Name says what this state is called.
-func (runState) Name() statemachine.StateName { return nameRun }
+func (runState) Name() statemachine.StateName { return nameTest }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (runState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventStageStopped}, Emits: nil}
+}
 
 // Process takes a stage's stop from anywhere below.
 func (s *runState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
@@ -200,7 +225,12 @@ type pendingState struct {
 }
 
 // Name says what this state is called.
-func (pendingState) Name() statemachine.StateName { return namePending }
+func (pendingState) Name() statemachine.StateName { return nameTestIdle }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (pendingState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{CmdRun}, Emits: nil}
+}
 
 // Process begins the run.
 func (s *pendingState) Process(_ context.Context, m *statemachine.Machine, msg statemachine.Message) (bool, error) {
@@ -218,7 +248,12 @@ type readingDeclaration struct {
 }
 
 // Name says what this state is called.
-func (readingDeclaration) Name() statemachine.StateName { return nameReadingDeclaration }
+func (readingDeclaration) Name() statemachine.StateName { return nameTestReadDeclaration }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (readingDeclaration) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventDeclarationRead}, Emits: []statemachine.What{eventDeclarationRead, eventStageStopped}}
+}
 
 // Enter reads the specs and settles what network they ask for.
 //
@@ -278,7 +313,12 @@ type openingSession struct {
 }
 
 // Name says what this state is called.
-func (openingSession) Name() statemachine.StateName { return nameOpeningSession }
+func (openingSession) Name() statemachine.StateName { return nameTestOpenSession }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (openingSession) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventSessionOpened}, Emits: []statemachine.What{eventSessionOpened, eventStageStopped}}
+}
 
 // Enter opens the session.
 //
@@ -343,7 +383,12 @@ func newReachingNetwork(r *runner) *reachingNetwork {
 }
 
 // Name says what this state is called.
-func (reachingNetwork) Name() statemachine.StateName { return nameReachingNetwork }
+func (reachingNetwork) Name() statemachine.StateName { return nameTestStandUpNetwork }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (reachingNetwork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventNetworkWayChosen, eventNetworkReached}, Emits: []statemachine.What{eventNetworkWayChosen}}
+}
 
 // leafStates is the two ways to reach a network, in the order the tree shows.
 func (s *reachingNetwork) leafStates() []statemachine.State {
@@ -386,7 +431,12 @@ type composingNetwork struct {
 }
 
 // Name says what this state is called.
-func (composingNetwork) Name() statemachine.StateName { return nameComposingNetwork }
+func (composingNetwork) Name() statemachine.StateName { return nameTestStandUpNetworkCompose }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (composingNetwork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNetworkReached, eventStageStopped}}
+}
 
 // Enter composes the network and checks it is the one the plan described.
 func (s *composingNetwork) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -416,7 +466,12 @@ type attachingToNetwork struct {
 }
 
 // Name says what this state is called.
-func (attachingToNetwork) Name() statemachine.StateName { return nameAttachingToNetwork }
+func (attachingToNetwork) Name() statemachine.StateName { return nameTestStandUpNetworkAttach }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (attachingToNetwork) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventNetworkReached, eventStageStopped}}
+}
 
 // Enter reads the network the workspace already has, and holds it to the same
 // readiness gate a composed one is held to.
@@ -441,7 +496,12 @@ type preparingRun struct {
 }
 
 // Name says what this state is called.
-func (preparingRun) Name() statemachine.StateName { return namePreparing }
+func (preparingRun) Name() statemachine.StateName { return nameTestPrepare }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (preparingRun) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventChainPrepared}, Emits: []statemachine.What{eventChainPrepared, eventStageStopped}}
+}
 
 // Enter crosses the declared fork, waits for the height and funds the accounts.
 func (s *preparingRun) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -470,7 +530,12 @@ type runningCases struct {
 }
 
 // Name says what this state is called.
-func (runningCases) Name() statemachine.StateName { return nameRunningCases }
+func (runningCases) Name() statemachine.StateName { return nameTestRunCases }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (runningCases) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventCasesRun}, Emits: []statemachine.What{eventCasesRun, eventStageStopped}}
+}
 
 // Enter runs every case.
 //
@@ -506,7 +571,12 @@ type collecting struct {
 }
 
 // Name says what this state is called.
-func (collecting) Name() statemachine.StateName { return nameCollecting }
+func (collecting) Name() statemachine.StateName { return nameTestCollect }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (collecting) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventCollected}, Emits: []statemachine.What{eventCollected}}
+}
 
 // Enter gathers and tears down.
 func (s *collecting) Enter(ctx context.Context, m *statemachine.Machine) error {
@@ -548,7 +618,12 @@ type doneState struct {
 }
 
 // Name says what this state is called.
-func (doneState) Name() statemachine.StateName { return nameDone }
+func (doneState) Name() statemachine.StateName { return nameTestDone }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (doneState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: nil}
+}
 
 // runFailedState is a run that could not go on.
 //
@@ -560,4 +635,9 @@ type runFailedState struct {
 }
 
 // Name says what this state is called.
-func (runFailedState) Name() statemachine.StateName { return nameRunFailed }
+func (runFailedState) Name() statemachine.StateName { return nameTestFailed }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (runFailedState) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: nil}
+}

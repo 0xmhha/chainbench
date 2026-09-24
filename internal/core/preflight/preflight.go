@@ -109,6 +109,9 @@ const (
 	RebuildAll
 	// Compose: nothing is composed on the target yet.
 	Compose
+	// Relaunch: the composed network is the one wanted and none of it runs.
+	// Nothing about it has to be built again; its nodes have to be launched.
+	Relaunch
 )
 
 // String renders a verdict the way a report prints it.
@@ -122,6 +125,8 @@ func (v Verdict) String() string {
 		return "rebuild-all"
 	case Compose:
 		return "compose"
+	case Relaunch:
+		return "relaunch"
 	}
 	return fmt.Sprintf("verdict(%d)", int(v))
 }
@@ -275,9 +280,18 @@ func Check(ctx context.Context, have Have, want Want, live Liveness) Decision {
 	}
 	sort.Ints(idx)
 	// Every node dead is not a restart; it is a network that has to come back
-	// whole, which the composition knows how to do and a node loop does not.
+	// whole, which the composition's launch knows how to do (a family boots its
+	// producer before the rest join) and a node loop does not. When the paper
+	// half found nothing to change, nothing has to be built again either: the
+	// network is the one wanted and only its processes are gone, so it is
+	// launched, not recomposed. Recomposing it is what made a second run into
+	// the same workspace stop and rebuild a chain that had only been stopped.
 	if len(idx) == len(have.Nodes) {
-		return Decision{Verdict: RebuildAll, Reasons: append([]string{"no composed node is alive"}, d.Reasons...)}
+		reasons := append([]string{"no composed node is alive"}, d.Reasons...)
+		if d.Verdict == Reuse {
+			return Decision{Verdict: Relaunch, Reasons: reasons}
+		}
+		return Decision{Verdict: RebuildAll, Reasons: reasons}
 	}
 	return Decision{Verdict: RebuildNodes, Nodes: idx, Reasons: d.Reasons}
 }

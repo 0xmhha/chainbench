@@ -8,8 +8,8 @@ import (
 
 // The two ways a composition arrives at its genesis.
 const (
-	nameGenesisFromTemplate statemachine.StateName = "GenesisFromTemplate"
-	nameGenesisFromExisting statemachine.StateName = "GenesisFromExisting"
+	nameChainBuildGenesisFromTemplate statemachine.StateName = "CHAIN_BUILD_GENESIS_FROM_TEMPLATE"
+	nameChainBuildGenesisFromExisting statemachine.StateName = "CHAIN_BUILD_GENESIS_FROM_EXISTING"
 )
 
 // buildingGenesis writes the document every node initialises from.
@@ -37,13 +37,18 @@ type buildingGenesis struct {
 // newBuildingGenesis builds the stage and its two ways.
 func newBuildingGenesis(mg *Manager) *buildingGenesis {
 	s := &buildingGenesis{mg: mg}
-	s.fromTemplate = &genesisLeaf{parent: s, name: nameGenesisFromTemplate}
-	s.fromExisting = &genesisLeaf{parent: s, name: nameGenesisFromExisting}
+	s.fromTemplate = &genesisLeaf{parent: s, name: nameChainBuildGenesisFromTemplate}
+	s.fromExisting = &genesisLeaf{parent: s, name: nameChainBuildGenesisFromExisting}
 	return s
 }
 
 // Name says what this state is called.
-func (buildingGenesis) Name() statemachine.StateName { return nameBuildingGenesis }
+func (buildingGenesis) Name() statemachine.StateName { return nameChainBuildGenesis }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (buildingGenesis) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventGenesisWayChosen}, Emits: []statemachine.What{eventGenesisWayChosen, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (buildingGenesis) step() string { return stepGenesis }
@@ -102,6 +107,11 @@ type genesisLeaf struct {
 
 // Name says what this state is called.
 func (l *genesisLeaf) Name() statemachine.StateName { return l.name }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (l *genesisLeaf) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventGenesisBuilt, eventStageFailed}}
+}
 
 // Enter writes the genesis and says what it wrote.
 func (l *genesisLeaf) Enter(ctx context.Context, m *statemachine.Machine) error {

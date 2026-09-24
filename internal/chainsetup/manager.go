@@ -28,21 +28,24 @@ const (
 // [statemachine.Machine.Path], so these strings are read by people and by the
 // resume that will follow one.
 const (
-	nameComposition          statemachine.StateName = "Composition"
-	nameStopped              statemachine.StateName = "Stopped"
-	nameComposing            statemachine.StateName = "Composing"
-	nameOpeningWorkspace     statemachine.StateName = "OpeningWorkspace"
-	nameBuildingNodeTable    statemachine.StateName = "BuildingNodeTable"
-	nameEnsuringKeys         statemachine.StateName = "EnsuringKeys"
-	nameBuildingGenesis      statemachine.StateName = "BuildingGenesis"
-	nameBuildingNodeConfig   statemachine.StateName = "BuildingNodeConfig"
-	nameBuildingNodeCommand  statemachine.StateName = "BuildingNodeCommand"
-	nameDeployingInputs      statemachine.StateName = "DeployingInputs"
-	nameInitializingDatadirs statemachine.StateName = "InitializingDatadirs"
-	nameLaunching            statemachine.StateName = "Launching"
-	nameComposed             statemachine.StateName = "Composed"
-	nameReady                statemachine.StateName = "Ready"
-	nameFailed               statemachine.StateName = "Failed"
+	nameChain                     statemachine.StateName = "CHAIN"
+	nameChainIdle                 statemachine.StateName = "CHAIN_IDLE"
+	nameChainBuildUp              statemachine.StateName = "CHAIN_BUILD_UP"
+	nameChainOpenWorkspace        statemachine.StateName = "CHAIN_OPEN_WORKSPACE"
+	nameChainBuildNodeTable       statemachine.StateName = "CHAIN_BUILD_NODE_TABLE"
+	nameChainEnsureKeys           statemachine.StateName = "CHAIN_ENSURE_KEYS"
+	nameChainBuildGenesis         statemachine.StateName = "CHAIN_BUILD_GENESIS"
+	nameChainBuildNodeConfig      statemachine.StateName = "CHAIN_BUILD_NODE_CONFIG"
+	nameChainBuildNodeCommand     statemachine.StateName = "CHAIN_BUILD_NODE_COMMAND"
+	nameChainDeployNodes          statemachine.StateName = "CHAIN_DEPLOY_NODES"
+	nameChainInitNodes            statemachine.StateName = "CHAIN_INIT_NODES"
+	nameChainLaunchNodes          statemachine.StateName = "CHAIN_LAUNCH_NODES"
+	nameChainBuildUpStoppedAtStep statemachine.StateName = "CHAIN_BUILD_UP_STOPPED_AT_STEP"
+	nameChainReady                statemachine.StateName = "CHAIN_READY"
+	nameChainFailed               statemachine.StateName = "CHAIN_FAILED"
+	nameChainOp                   statemachine.StateName = "CHAIN_OP"
+	nameChainStopped              statemachine.StateName = "CHAIN_STOPPED"
+	nameChainRemoved              statemachine.StateName = "CHAIN_REMOVED"
 )
 
 // stageOrder pairs each composition step with the state that runs it.
@@ -53,15 +56,15 @@ var stageOrder = []struct {
 	step string
 	name statemachine.StateName
 }{
-	{stepNew, nameOpeningWorkspace},
-	{stepPlace, nameBuildingNodeTable},
-	{stepKeys, nameEnsuringKeys},
-	{stepGenesis, nameBuildingGenesis},
-	{stepConfig, nameBuildingNodeConfig},
-	{stepBuild, nameBuildingNodeCommand},
-	{stepDeploy, nameDeployingInputs},
-	{stepInit, nameInitializingDatadirs},
-	{stepStart, nameLaunching},
+	{stepNew, nameChainOpenWorkspace},
+	{stepPlace, nameChainBuildNodeTable},
+	{stepKeys, nameChainEnsureKeys},
+	{stepGenesis, nameChainBuildGenesis},
+	{stepConfig, nameChainBuildNodeConfig},
+	{stepBuild, nameChainBuildNodeCommand},
+	{stepDeploy, nameChainDeployNodes},
+	{stepInit, nameChainInitNodes},
+	{stepStart, nameChainLaunchNodes},
 }
 
 // Manager composes a network by walking states.
@@ -97,16 +100,24 @@ type Manager struct {
 	// failure is why the composition stopped, written just before the move to
 	// failed so that state can report it once.
 	failure error
+	// compare asks the target what it holds against the request. It is a field
+	// so a test can hand the comparison a verdict without a live network.
+	compare func(context.Context, Deps, ChainUpIn) preflight.Decision
 
 	stopped     *stoppedState
 	comparing   *comparing
 	composing   *composingState
 	reconciling *reconciling
-	verifying   *verifying
 	stages      []stage
 	composed    *composedState
 	ready       *readyState
+	op          *opState
 	ops         []operation
+	opStopped   *opResult
+	opRemoved   *opResult
+	// operating is the operation this run was asked for, which is what says
+	// where the machine rests once it is done.
+	operating operation
 
 	stopping     *stopping
 	restarting   *restarting
@@ -123,7 +134,7 @@ type Manager struct {
 // can be read rather than reconstructed, which is what the reference does with
 // its own addState block.
 func NewManager(d Deps, ws *Workspace) *Manager {
-	mg := &Manager{d: d, ws: ws, m: statemachine.New("composition", nil)}
+	mg := &Manager{d: d, ws: ws, m: statemachine.New("composition", nil), compare: compareWorkspace}
 
 	root := &compositionState{mg: mg}
 	mg.stopped = &stoppedState{mg: mg}
@@ -139,10 +150,12 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 		mg.stopping, mg.restarting, mg.swapping,
 		mg.hardforking, mg.crossingFork, mg.removing,
 	}
-	mg.verifying = &verifying{mg: mg}
 	mg.composing = &composingState{mg: mg}
 	mg.composed = &composedState{mg: mg}
 	mg.ready = &readyState{mg: mg}
+	mg.op = &opState{mg: mg}
+	mg.opStopped = &opResult{mg: mg, name: nameChainStopped}
+	mg.opRemoved = &opResult{mg: mg, name: nameChainRemoved}
 	mg.failed = &failedState{mg: mg}
 	// One state per stage, in the order a composition runs them.
 	mg.stages = []stage{
@@ -157,6 +170,9 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 		newLaunching(mg),
 	}
 
+	// Every state says what it handles and sends, and the machine holds it to
+	// that (design-v3 state-machine-06 §5).
+	mg.m.RequireContracts()
 	mg.m.Add(root, nil)
 	mg.m.Add(mg.stopped, root)
 	mg.m.Add(mg.comparing, root)
@@ -183,10 +199,12 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 		}
 	}
 	mg.m.Add(mg.composed, root)
-	mg.m.Add(mg.verifying, root)
 	mg.m.Add(mg.ready, root)
+	// Operations are not children of ready: stopping a network does not leave
+	// it ready, and a parent is what a state is read as being part of.
+	mg.m.Add(mg.op, root)
 	for _, op := range mg.ops {
-		mg.m.Add(op, mg.ready)
+		mg.m.Add(op, mg.op)
 		// An operation that goes somewhere on the way says so, and its moments
 		// go in right under it — the same shape a stage with more than one way
 		// of working has.
@@ -198,8 +216,26 @@ func NewManager(d Deps, ws *Workspace) *Manager {
 			}
 		}
 	}
+	mg.m.Add(mg.opStopped, root)
+	mg.m.Add(mg.opRemoved, root)
 	mg.m.Add(mg.failed, root)
+
+	// A message no state handles ends the composition the way a failed stage
+	// does, so the caller reads one reason from one place.
+	mg.m.OnUnhandled(func(msg statemachine.Message, at statemachine.StateName) statemachine.Message {
+		return stageFailed{Step: "machine", Err: fmt.Errorf("chainsetup: %w: %s in %s",
+			statemachine.ErrUnhandled, WhatName(msg.What()), at)}
+	})
 	return mg
+}
+
+// ends is where an entry point may leave the machine. Returning from anywhere
+// else would report a stalled walk as a success.
+func (mg *Manager) ends(ctx context.Context, states ...statemachine.State) error {
+	if mg.failure != nil {
+		return mg.failure
+	}
+	return mg.m.RequireAt(states...)
 }
 
 // Compose walks the composition described by the request.
@@ -224,10 +260,7 @@ func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error
 	if err := mg.m.Send(ctx, Compose{Request: in, From: from}); err != nil {
 		return err
 	}
-	if mg.failure != nil {
-		return mg.failure
-	}
-	return nil
+	return mg.ends(ctx, mg.ready, mg.composed, mg.failed)
 }
 
 // Step runs one composition step by name, on a workspace that has got that far.
@@ -246,8 +279,8 @@ func (mg *Manager) Step(ctx context.Context, step string, in ChainUpIn) (string,
 	if err := mg.m.Send(ctx, RunStep{Name: step, Request: in}); err != nil {
 		return "", err
 	}
-	if mg.failure != nil {
-		return "", mg.failure
+	if err := mg.ends(ctx, mg.composed, mg.failed); err != nil {
+		return "", err
 	}
 	if len(mg.steps) == 0 {
 		return "", fmt.Errorf("chainsetup: %s reported nothing", step)
@@ -272,10 +305,12 @@ func (mg *Manager) Step(ctx context.Context, step string, in ChainUpIn) (string,
 // whether there is more to do.
 func (w *Workspace) ResumeStep() string {
 	switch w.state.StatePath {
-	case string(nameComposition) + "/" + string(nameReady):
+	case string(nameChain) + "/" + string(nameChainReady),
+		string(nameChain) + "/" + string(nameChainStopped),
+		string(nameChain) + "/" + string(nameChainRemoved):
 		return ""
-	case "", string(nameComposition) + "/" + string(nameStopped),
-		string(nameComposition) + "/" + string(nameComposed):
+	case "", string(nameChain) + "/" + string(nameChainIdle),
+		string(nameChain) + "/" + string(nameChainBuildUpStoppedAtStep):
 		return w.FirstUndone()
 	}
 	for _, part := range strings.Split(w.state.StatePath, "/") {
@@ -329,13 +364,17 @@ func (mg *Manager) ReuseFrom(snap ReuseSnapshot) {
 // owns the monitor.
 func (mg *Manager) ComposeComparing(ctx context.Context, in ChainUpIn) error {
 	mg.request = in
+	mg.stopAfter = ""
+	if in.Stage == UpDeploy {
+		mg.stopAfter = stepDeploy
+	}
 	if err := mg.m.Start(ctx, mg.stopped); err != nil {
 		return err
 	}
 	if err := mg.m.Send(ctx, ComposeComparing{Request: in}); err != nil {
 		return err
 	}
-	return mg.failure
+	return mg.ends(ctx, mg.ready, mg.composed, mg.failed)
 }
 
 // Operate runs one operation on a composed network.
@@ -343,14 +382,15 @@ func (mg *Manager) ComposeComparing(ctx context.Context, in ChainUpIn) error {
 // The arguments are already on the state that will run it; this says which one,
 // and the machine says whether a network in this condition may be asked.
 func (mg *Manager) Operate(ctx context.Context, op operation) (string, error) {
+	mg.operating = op
 	if err := mg.m.Start(ctx, mg.stopped); err != nil {
 		return "", err
 	}
 	if err := mg.m.Send(ctx, Operate{Name: op.Name()}); err != nil {
 		return "", err
 	}
-	if mg.failure != nil {
-		return "", mg.failure
+	if err := mg.ends(ctx, mg.ready, mg.opStopped, mg.opRemoved, mg.failed); err != nil {
+		return "", err
 	}
 	if len(mg.steps) == 0 {
 		return "", nil

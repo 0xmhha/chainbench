@@ -3,8 +3,8 @@
 > **[정본]** **작업 순서·상태의 단일 출처.**
 > 이 문서는 *무엇을 만들어야 하는가* 를 정한다. 설계 제안이 여기와 어긋나면 **제안을 고친다.**
 
-> 근거: `chainbench-component-architecture.md`(§2b 실측·§3 컴포넌트·§5 Phase·§1b DDD) · `chainbench-design.md`(§3 인터페이스) ·
-> `chainbench-feature-spec.md`(F1~F16 AC) · `chainbench-refactoring.md`(WP1~6).
+> 근거: `chainbench-component-architecture.md` (2026-09-24 삭제)(§2b 실측·§3 컴포넌트·§5 Phase·§1b DDD) · `chainbench-design.md`(§3 인터페이스) ·
+> `chainbench-feature-spec.md`(F1~F16 AC) · `chainbench-refactoring.md` (2026-09-24 삭제)(WP1~6).
 > 원칙: **Low는 TDD 먼저 → walking skeleton으로 조기 통합 → 수직 슬라이스 확장**(big-bang 금지). 코드는 [[go-code-quality-guidelines]] 준수.
 > 상태 표기: 본문은 ☐ 미착수 · ◐ 진행 · ☑ 완료. **열린 작업은 본문이 아니라 아래 §0 을 본다.**
 
@@ -48,7 +48,7 @@
 - [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. **막힘이 풀렸다 (2026-09-20)** — N1~N6 이 전부 끝난
       것으로 확인돼 3단계의 선행 조건이 충족됐다. 3단계는 A8 을 다시 재고 이어서 A7b 를 결정하는 일이다.
 - [x] **통폐합 — 닫을지 판단** — **완료 (2026-09-20). 닫았다.**
-      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) 을 `[이력]` 으로 내렸다.
+      `architecture/consolidation-plan.md` (2026-09-24 삭제) 을 `[이력]` 으로 내렸다.
       진단("작은 형제 24개")이 7개로 해소됐고, 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다.
       **방향 뒤집기(큰 덩어리)는 이 문서를 이어받지 않고 백지에서 새로 설계한다** — 이 계획은 "조각이 너무 많다"
       는 진단 위에 서 있어 이어받으면 반대 방향으로 끌린다. 제약 셋은 문서가 아니라 코드가 지킨다
@@ -91,14 +91,14 @@
       정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
 
 - [x] **`R` 접두사가 두 계획에서 충돌한다** — **해소 (2026-09-20). 개명하지 않고 한쪽을 닫아서 풀었다.**
-      근거: §1n 표 `R1` 행(원격 트랙)과 [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) §R1(소형 모듈 흡수)이
+      근거: §1n 표 `R1` 행(원격 트랙)과 `architecture/consolidation-plan.md` (2026-09-24 삭제) §R1(소형 모듈 흡수)이
       같은 `R1`~`R5/R6` 으로 다른 것을 가리켰다. 통폐합 계획이 `[이력]` 이 되면서 **살아 있는 `R` 은 원격 트랙 하나뿐**이다.
       새 리팩토링은 백지에서 번호 체계를 새로 잡으므로 재충돌하지 않는다.
-- [x] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — **완료 (2026-09-20).** [이력]로 내렸다. 내린 근거는 실측이다: 그 문서가 L1 로 그리는 모듈 이름 일곱
+- [x] **`architecture/target-architecture.md` (2026-09-24 삭제) 가 [현행 설계]인데 낡았다** — **완료 (2026-09-20).** [이력]로 내렸다. 내린 근거는 실측이다: 그 문서가 L1 로 그리는 모듈 이름 일곱
       (`driver`·`netmap`·`place`·`portplan`·`target`·`serverset`·`peering`)이 **전부 `internal/` 에 없고**,
       지금 쓰는 `internal/resource` 는 **0회** 나온다. 흡수된 자리를 문서 머리에 적었고, 인덱스 행도 바꿨다.
-      같이 고친 둘: `refactoring-proposal/` 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
-      `consolidation-plan.md` 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
+      같이 고친 둘: `refactoring-proposal/` (2026-09-24 삭제) 6종이 무등급·미등재였고(**[제안]** 등급을 새로 정의해 등재),
+      `consolidation-plan.md` (2026-09-24 삭제) 의 인덱스 행이 문서 스스로 "낡았다"고 적는 것과 어긋나 있었다.
 
 - [x] ~~**T. 테스트 영역(0x8000)의 상태**~~ — **완료 (2026-09-22).** 근거: [`architecture/design-v3/state-machine-05-test-failures.md`](architecture/design-v3/state-machine-05-test-failures.md).
       실패 102곳을 재고(T1), 여섯 블록에 실패 스물을 붙여 전이표를 쓰고(T2), 실행이 자기 상태를
@@ -178,17 +178,17 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 - [x] **레거시 경로 정리 — 완료 (2026-09-12 실측).** 이 항목이 "소비자 이관 전 제거 금지" 로
   끝나 있었는데, **제거가 이미 끝났다**: `internal/testkit`·`internal/testrun`·`internal/testspec`
   세 디렉토리가 모두 없고, `RunCase` 는 프로덕션에서 참조되지 않으며, 은퇴 계획 문서는
-  `docs/dev/archive/legacy-retirement-plan.md` 로 보관됐다.
+  `docs/dev/archive/legacy-retirement-plan.md` (2026-09-24 삭제) 로 보관됐다.
   재확인: `for p in internal/testkit internal/testrun internal/testspec; do [ -d $p ] && echo "$p EXISTS"; done`
   (아무것도 출력되지 않아야 한다) · `grep -rn "RunCase" internal/ cmd/ | grep -v _test`
-  **(원래 기록)** 착수: 죽은 심볼 제거(`testkit.RunCase`)·레거시 패키지 signpost(testkit·testrun→engine+testspec)·**은퇴 계획 문서**([[legacy-retirement-plan]] = `docs/dev/archive/legacy-retirement-plan.md`: 매핑·순서·블로커·DSL 표현력 갭). **suite 이관 착수**: `tests/` Go-func 케이스는 repo 에 있어 DSL 포팅 가능(라이브만 바이너리 필요) — `onEach` 다중노드 어세션 수정 + 신규 빌트인(`blockAdvance` 헤드 전진·`sameBlockHash` 노드간 no-fork, `rpc.BlockByNumber` 기반) 추가로 **`tests/network` 3케이스 전부 DSL 포팅 완료**(`network-peers.json`·`network-health.json`). **`tests/anzeon` 착수**: read-shape 계열(adapter-code `codeAt NotEqual`, balanceOf/isAuthorized `call Regexp`)→`stablenet-system-contracts.json`, base fee 경계(`baseFee` 신규 빌트인, `rpc.BlockByNumber` baseFeePerGas)→`stablenet-gas-policy.json`, 하드포크 아티팩트(P-256 precompile `call`·GovMinter `codeAt`·chainId/blockNumber)→`stablenet-hardfork.json`, 가스 추정(`estimateGas`=`rpc.EstimateGas`)→`stablenet-estimate-gas.json`, token-metadata(`call`+`Contains` 심볼)→`stablenet-token-metadata.json` 포팅. **read-기반 anzeon 이관 완료**(시스템컨트랙트·getter·base fee·하드포크·estimate-gas·token-metadata). **잔여 anzeon 6범주(교차-call 비교·거버넌스 다단계·gasTip 조합·fee-cap tx·명시 nonce·WS)의 표현력 블로커는 2026-08-09 전부 해소** — `save`/`$ref` 바인딩+`read`(T4.2a)·`logs`(eth_getLogs)·`gasPrice`+범용 `rpcCall`·tx fee-cap/nonce 인자·`wsSubscribe`. 예제: `stablenet-token-invariants`·`governance-event-flow`·`gas-policy-derived`·`stablenet-fee-boundary`·`stablenet-nonce-ordering`·`ws-subscribe-heads`. **라이브 증명**: `TestEngine_Live_NewVocabulary`(실 gstable 4노드, GSTABLE_BIN). 남은 건 표현력이 아니라 **케이스별 이관 작업량**([[legacy-retirement-plan]] §4.3). `test`/MCP/upgrade 가 아직 레거시 사용 → 소비자 이관 전 제거 금지.
+  **(원래 기록)** 착수: 죽은 심볼 제거(`testkit.RunCase`)·레거시 패키지 signpost(testkit·testrun→engine+testspec)·**은퇴 계획 문서**(`legacy-retirement-plan` (2026-09-24 삭제) = `docs/dev/archive/legacy-retirement-plan.md`: 매핑·순서·블로커·DSL 표현력 갭). **suite 이관 착수**: `tests/` Go-func 케이스는 repo 에 있어 DSL 포팅 가능(라이브만 바이너리 필요) — `onEach` 다중노드 어세션 수정 + 신규 빌트인(`blockAdvance` 헤드 전진·`sameBlockHash` 노드간 no-fork, `rpc.BlockByNumber` 기반) 추가로 **`tests/network` 3케이스 전부 DSL 포팅 완료**(`network-peers.json`·`network-health.json`). **`tests/anzeon` 착수**: read-shape 계열(adapter-code `codeAt NotEqual`, balanceOf/isAuthorized `call Regexp`)→`stablenet-system-contracts.json`, base fee 경계(`baseFee` 신규 빌트인, `rpc.BlockByNumber` baseFeePerGas)→`stablenet-gas-policy.json`, 하드포크 아티팩트(P-256 precompile `call`·GovMinter `codeAt`·chainId/blockNumber)→`stablenet-hardfork.json`, 가스 추정(`estimateGas`=`rpc.EstimateGas`)→`stablenet-estimate-gas.json`, token-metadata(`call`+`Contains` 심볼)→`stablenet-token-metadata.json` 포팅. **read-기반 anzeon 이관 완료**(시스템컨트랙트·getter·base fee·하드포크·estimate-gas·token-metadata). **잔여 anzeon 6범주(교차-call 비교·거버넌스 다단계·gasTip 조합·fee-cap tx·명시 nonce·WS)의 표현력 블로커는 2026-08-09 전부 해소** — `save`/`$ref` 바인딩+`read`(T4.2a)·`logs`(eth_getLogs)·`gasPrice`+범용 `rpcCall`·tx fee-cap/nonce 인자·`wsSubscribe`. 예제: `stablenet-token-invariants`·`governance-event-flow`·`gas-policy-derived`·`stablenet-fee-boundary`·`stablenet-nonce-ordering`·`ws-subscribe-heads`. **라이브 증명**: `TestEngine_Live_NewVocabulary`(실 gstable 4노드, GSTABLE_BIN). 남은 건 표현력이 아니라 **케이스별 이관 작업량**(`legacy-retirement-plan` §4.3). `test`/MCP/upgrade 가 아직 레거시 사용 → 소비자 이관 전 제거 금지.
 
 ---
 
 ## 1c. 재계획 (2026-08-11) — 배경요구 재대조 후 잔여 작업
 
-> 근거: [[dsl-v2-proposal]] · [[chain-binary-flag-graph]] · `archive/structure-and-atomic-cli-proposal`
-> (2026-08-11 검토 3종 — 셋째는 제안분이 구현되어 [[archive/README|archive]] 로 이동했다).
+> 근거: [[dsl-v2-proposal]] · `chain-binary-flag-graph` (2026-09-24 삭제) · `archive/structure-and-atomic-cli-proposal`
+> (2026-08-11 검토 3종 — 셋째는 제안분이 구현되어 `archive/README` (2026-09-24 삭제) 로 이동했다).
 > 이 절은 §2 의 Phase 목록을 대체하지 않고, **배경 요구(체인 구성 5요소 · 실행옵션 · 3-검증원)** 대조에서
 > 새로 드러난 갭과 그 순서를 얹는다. §2 의 미완 항목(T5.2·T5.5·레거시 제거)은 그대로 유효하다.
 
@@ -219,7 +219,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | **T7.9** | **metric 검증원** — portplan 이 metrics 포트(HTTP+3, rpcStep≥4) 할당, collector.ScrapeMetrics(Prometheus 텍스트), `expect:"metric"` 어세션(기본 GreaterOrEqual). metrics 포트 없는 노드는 명시적 실패 | 3-검증원(log·rpc·metric) 완성 | ☑ |
 | **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
 | **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료**(§1d) · **패키지 이동 완료**(§1e: `pipeline/setup`→`core/bringup`) · **netcompose 대체 진행 중**(§1f: b-1~b-4 완료, b-5·b-6 은 라이브 검증 선행). **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 — 남은 건 라이브 검증 후 전환·삭제, 그리고 케이스 이관(작업량) | ☑ **완료 확인 2026-09-07.** 대상 셋이 전부 없다 — `core/probe`·`core/driver`·`internal/pipeline` 어느 것도 트리에 없고, 흡수처(`core/collector`·`core/health`·`core/node`)만 남았다. 게이트로 재고 닫는다 |
-| **T7.12** | **`overlays/account-extra.json` params 형식 교정** — `internal/chains/stablenet/overlays/account-extra.json` 의 `govCouncil.params.authorizedAddresses`·`blacklistedAddresses` 가 JSON 배열인데, genesis 의 `SystemContract.params` 는 `map[string]string` 이라 `gstable init` 이 `cannot unmarshal array ... of type string` 으로 거부한다. 콤마로 이어붙인 문자열로 고쳐야 `setup --genesis-overlay` 기동이 성공한다. 다른 소비자(레거시 testkit setup 경로)도 이 오버레이를 쓰는지 확인 후 일괄 교정. **게이트**: 이 오버레이로 `tests/repro/stablenet-account-extra.sh` 가 스킵 없이 통과 | 라이브 검증 때 스크래치 사본으로만 우회했고 원본은 그대로다 — 오버레이 경로가 실제로는 깨져 있다 ([[remaining-work]] §1.1) | ☑ **완료 확인 2026-09-07.** 오버레이에 `params` 키가 아예 없고, **왜 넣으면 안 되는지**가 파일 주석에 남아 있다(base 템플릿의 `govCouncil.params` 는 평평한 string-map 이라 배열을 넣으면 `gstable init` 이 거부한다). 이 오버레이를 쓰는 스펙 4건 전부 `validate` 통과 |
+| **T7.12** | **`overlays/account-extra.json` params 형식 교정** — `internal/chains/stablenet/overlays/account-extra.json` 의 `govCouncil.params.authorizedAddresses`·`blacklistedAddresses` 가 JSON 배열인데, genesis 의 `SystemContract.params` 는 `map[string]string` 이라 `gstable init` 이 `cannot unmarshal array ... of type string` 으로 거부한다. 콤마로 이어붙인 문자열로 고쳐야 `setup --genesis-overlay` 기동이 성공한다. 다른 소비자(레거시 testkit setup 경로)도 이 오버레이를 쓰는지 확인 후 일괄 교정. **게이트**: 이 오버레이로 `tests/repro/stablenet-account-extra.sh` 가 스킵 없이 통과 | 라이브 검증 때 스크래치 사본으로만 우회했고 원본은 그대로다 — 오버레이 경로가 실제로는 깨져 있다 (`remaining-work` (2026-09-24 삭제) §1.1) | ☑ **완료 확인 2026-09-07.** 오버레이에 `params` 키가 아예 없고, **왜 넣으면 안 되는지**가 파일 주석에 남아 있다(base 템플릿의 `govCouncil.params` 는 평평한 string-map 이라 배열을 넣으면 `gstable init` 이 거부한다). 이 오버레이를 쓰는 스펙 4건 전부 `validate` 통과 |
 | — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☑ 셋 다 닫혔다 (T5.2 §2 에 ☑ · T5.5 2026-09-12 확인 · SSH e2e 2026-09-11 docker 15대) |
 
 ---
@@ -355,7 +355,7 @@ K0·S0 가 추측 위에 서게 된다.
 |---|---|---|---|
 | **P-1** | BLS 파생을 순수 Go 로 실증 | `kilic/bls12-381` + stdlib `crypto/hkdf` 로 **preset node1~5 의 BLS 공개키·PoP 이 바이트 동일**하게 재현됨, `CGO_ENABLED=0` 에서. → **K1(`--bootnode` 제거)이 가능하다는 것이 증명됨.** 함정 둘: PoP 의 DST(`..._POP_`) 누락 시 형식은 멀쩡한데 검증 실패 · `blst_keygen` v4 는 salt 를 루프 **이전에** 한 번 해시 | ☑ |
 | **P-2** | `netcompose/target.go` → `core/target` 이동 | L4 에 있던 타깃 해석이 L1 로 내려감(`driver`/`provision`/`remote` 만 import). S 계열의 선행 조건 | ☑ |
-| **P-3** | **문서 통치 구조** — 전 문서에 등급(정본/현행 설계/이력/대체됨) 표기 + `docs/README.md` 에 권위 순서 + 대체된 2건 `dev/archive/` 이동 | 문서끼리 어긋날 때 **무엇이 이기는지**가 정해짐. 이걸 한 이유는 아래 참조 | ☑ |
+| **P-3** | **문서 통치 구조** — 전 문서에 등급(정본/현행 설계/이력/대체됨) 표기 + `docs/README.md` 에 권위 순서 + 대체된 2건 `dev/archive/` (2026-09-24 삭제) 이동 | 문서끼리 어긋날 때 **무엇이 이기는지**가 정해짐. 이걸 한 이유는 아래 참조 | ☑ |
 
 **P-3 을 한 이유**는 낡은 문서가 아니라 **등급이 없는 문서**였다. 23개 `dev/` 문서 중 자기 지위를
 밝힌 것이 4개뿐이어서, 정본인 [[chainbench-requirements-review]] §D-2.8 을 제안 문서로 오인해
@@ -764,7 +764,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | # | 작업 | 선행 | 게이트 | 상태 |
 |---|---|---|---|---|
 | **V0.1** | 아키텍처 v2 결정 기록 — 레이어 그림·모듈 책임·CLI/MCP 비대칭·네이밍 규칙을 architecture 문서로 | — | 문서 등급 표기(현행 설계) + docs/README 권위 순서 반영 | ☑ |
-| **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☑ (8패키지 541심볼, [[v2-move-map]](archive/v2-move-map.md)) |
+| **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☑ (8패키지 541심볼, `v2-move-map` (2026-09-24 삭제)) |
 | **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☑ |
 | **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 제거: app keyring 로컬 지름길(해석기로 단일화)·netcompose 구조 검증(`Spec.Validate` 신설로 이동). 잔여 분기는 래칫 테스트가 유예 목록으로 고정(V2.2·V2.3·V5 에서 소멸, 축소만 허용) — `internal/arch` TestMachineConsumersDoNotBranchOnKind | ☑ |
 | **V2.1** | netmap 접근 wrapper 신설 — 서버 이름 → 능력 손잡이(FileStore·Driver), `--docker` 치환·치환 보고·자격 결합 내장. 추가만, 기존 코드 무변경 | V1.1 | 단위: 치환·보고·자격이 wrapper 한 곳에서 재현 | ☑ (`netmap.Opener`) |
@@ -794,7 +794,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 
 ## 1i. 모듈 재편 — 관심사 단위 (사용자 결정 2026-08-27)
 
-> 설계·근거·이동표는 [[module-plan]](architecture/module-plan.md). 실측은
+> 설계·근거·이동표는 `module-plan` (2026-09-24 삭제). 실측은
 > `go run ./scripts/inventory/code-graph -symbols .` 이며, **단계마다 재측정으로 열고
 > 재측정으로 닫는다**(같은 문서 §1).
 >
@@ -830,8 +830,8 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 
 ### 1j. 사용자 주도 통폐합 (2026-08-31 ~ 2026-09-20 — **닫혔다**)
 
-> **완료로 닫혔다 (2026-09-20).** 정본이던 `docs/dev/architecture/consolidation-plan.md` 은
-> `[이력]` 이고, 같은 날 그 선행 계획 `module-plan.md` 도 닫혔다. 진단("작은 형제 24개")이
+> **완료로 닫혔다 (2026-09-20).** 정본이던 `docs/dev/architecture/consolidation-plan.md` (2026-09-24 삭제) 은
+> `[이력]` 이고, 같은 날 그 선행 계획 `module-plan.md` (2026-09-24 삭제) 도 닫혔다. 진단("작은 형제 24개")이
 > 7개로 해소됐고 남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행이다.
 > **다음 리팩토링은 이 절도 그 문서들도 이어받지 않는다** — 백지에서 다시 설계한다.
 > 아래는 그때의 기록이고, 인용하는 수치는 전부 2026-09-12 이전이다.
@@ -847,7 +847,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 **R1 완료 (2026-08-31, PR #325 — 9 relocation, internal 46).** 소형 흡수 8건 계획 중,
 측정된 층 그래프와 대조해 arch-안전한 것만 실행했다: topology→node · launchopt·config→nodeconfig ·
 netid→resource · consensus·capability→registry · obs·logs→collector · netreg→session. 상세·근거는
-정본(`consolidation-plan.md` §R1 실행 결과). **~~다음은 R2(DSL 분리).~~ 2026-09-12 정정: R2·R4·R5 는 이미 끝났다** — R2 는 배치가 계획과 다르지만 게이트를 만족한다(`dsl` fanOut 0). 남은 것은 R3 의 3분의 1 이고, 그 3건에 반대 근거가 있다. `consolidation-plan.md` §5 를 본다.
+정본(`consolidation-plan.md` (2026-09-24 삭제) §R1 실행 결과). **~~다음은 R2(DSL 분리).~~ 2026-09-12 정정: R2·R4·R5 는 이미 끝났다** — R2 는 배치가 계획과 다르지만 게이트를 만족한다(`dsl` fanOut 0). 남은 것은 R3 의 3분의 1 이고, 그 3건에 반대 근거가 있다. `consolidation-plan.md` §5 를 본다.
 
 **R1 에서 갈라져 나온 후속 작업 (별도 트랙):**
 
@@ -878,7 +878,7 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 ## 1k. 체인 실행·테스트 증적 완결 (사용자 확인 2026-09-02)
 
 > 제품 방향은 [[chainbench-system-direction]](chainbench-system-direction.md), 현재 코드와의 차이와
-> 완료 조건은 [[refactoring-follow-up-handoff-2026-09-02]](refactoring-follow-up-handoff-2026-09-02.md)를
+> 완료 조건은 `refactoring-follow-up-handoff-2026-09-02` (2026-09-24 삭제)를
 > 따른다. 이 절만 작업 순서와 상태를 소유한다. 기존 완료 기능을 다시 만들지 말고 각 항목의 첫 단계에서
 > 코드·테스트·CLI를 재측정해 남은 차이만 구현한다.
 
@@ -1808,9 +1808,9 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 ## 1r. 모니터링 이슈 재검토와 수정 계획 (2026-09-10)
 
 모니터링 세션이 제기한 16건(MON-001~016,
-`docs/research/chainbench/analyses/11-monitoring-open-issues.md`)을 HEAD `2cc82692` 기준으로
+`docs/research/chainbench/analyses/11-monitoring-open-issues.md` (2026-09-24 삭제))을 HEAD `2cc82692` 기준으로
 다시 판정했다. 판정 근거·추가 발견·검증 계획은 정본
-[`monitoring-issue-review-2026-09-10.md`](monitoring-issue-review-2026-09-10.md)에 있다.
+`monitoring-issue-review-2026-09-10.md` (2026-09-24 삭제)에 있다.
 
 결과: **유효 14건, 해결·검증 완료 2건(MON-004·MON-006), 오탐 0건.** 기준 시점의 전체
 테스트는 통과 상태였으므로, 남은 14건은 모두 기존 테스트가 잡지 못하는 결함이다.
@@ -2389,7 +2389,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통과, 린터 0건. 중복과 문서
 두 갈래만 남았고, 중복은 **표면·상위 계층이 프리미티브를 각자 다시 만든** 한 가지
 경향이었다. 근거와 위치는 정본
-[`architecture/code-health-review-2026-09-10.md`](architecture/code-health-review-2026-09-10.md).
+`architecture/code-health-review-2026-09-10.md` (2026-09-24 삭제).
 
 - [x] `shellQuote` 4곳 통합 → `remote.ShellQuote` 하나. 셸을 실제로 태워 왕복시키는
       테스트를 붙였다(따옴표·개행·`$(id)`·`;id;` 18케이스). 네 사본 중 어느 것도

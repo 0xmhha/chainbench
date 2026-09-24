@@ -5,7 +5,7 @@
 
 - **레이어 축**(어느 패키지가 L0~L6 중 어디이고 의존이 어느 방향으로 흐르는지) — [[layers]](layers.md) §2·§3
 - **관심사 축**(어떤 관심사의 주인이 누구인지) — [[module-responsibilities]](module-responsibilities.md)
-- **통폐합 판단** — 닫혔다 (2026-09-20). 이력은 [[consolidation-plan]](consolidation-plan.md)
+- **통폐합 판단** — 닫혔다 (2026-09-20). 이력은 `consolidation-plan` (2026-09-24 삭제)
 
 숫자는 **비테스트 줄 수**다. `[L0]`~`[L6]` 은 `layers.md` §2 의 레이어이고, 그 배치는
 `internal/arch/layers_test.go` 가 강제한다.
@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 57,633 |
+| `internal/` | 52 | 58,442 |
 | `cmd/` | 19 | 5,055 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **63,478** |
+| **합계** | **74** | **64,287** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,19 +35,19 @@
 
 ---
 
-## 1. `internal/core` — 25패키지 17,227줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 17,498줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
 ├── home            52  [L0] 약속된 위치의 소유자 ~/.chainbench. 경로를 안 대면 키셋·세션·구성이 다 여기로 (요구 7)
-├── node         1,184  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
+├── node         1,185  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
 ├── lifecycle     704  [L0] 상태 어휘와 그것을 걷는 기계 — Status(한 값에 영역·단계·자리)·Machine·전이 표.
 │                            무엇을 하는지는 핸들러의 것이라 체인 조립과 테스트 수행이 한 기계 위에 선다.
 │                            단계마다 0x100 칸, 위 절반이 실패. 내부 import 0
-├── statemachine   652  [L0] state 가 이끄는 기계 — State(Enter·Exit·Process)·Machine(트리·Send·
+├── statemachine   906  [L0] state 가 이끄는 기계 — State(Enter·Exit·Process)·Machine(트리·Send·
 │                            self queue·inbox·LogRec). lifecycle 과 같은 자리의 반대 물건이다:
 │                            저쪽은 전이 표를 검사하는 루프, 이쪽은 message 로 이어지는 state 사슬.
 │                            동기 모델이라 Looper·지연·defer 가 없다. 내부 import 0
@@ -61,7 +61,7 @@ internal/core/
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,625  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,627  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -75,7 +75,7 @@ internal/core/
 ├── registry     1,085  [L1] ChainPlugin/ConsensusFamily 인터페이스 + 레지스트리, 그리고 그 플러그인이 선언하는 것 —
 │                            capability 카탈로그·핸들러(LoadCatalog·RegisterHandler·GetByAddress)·검증자 조회(Validators)
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
-├── preflight      297  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
+├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
 │                            reuse / rebuild-nodes N / rebuild-all / compose 를 답한다. 판단만 하고 보지 않는다
 ├── session      1,491  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
 │                            이름 붙인 네트워크 레지스트리(SaveNetwork·LoadNetwork·ListNetworks·RemoveNetwork)
@@ -120,14 +120,14 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 36,633줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 37,171줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
-internal/resource  3,050  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
+internal/resource  3,076  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
@@ -145,12 +145,12 @@ internal/testhelper 4,277 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 4,946 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 5,054 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 10,901 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 11,305 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
                           ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
@@ -224,8 +224,8 @@ cmd/chainbench-dashboard  37  main. 대시보드 데몬(요구 19) — obs 이�
 
 ## 5. `scripts/inventory/` — 3패키지 790줄
 
-측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` 의 숫자가
-여기서 나온다. (`consolidation-plan.md` 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
+측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` (2026-09-24 삭제) 의 숫자가
+여기서 나온다. (`consolidation-plan.md` (2026-09-24 삭제) 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
 
 ```
 scripts/inventory/
@@ -248,7 +248,7 @@ scripts/inventory/
 **깊이가 있는 곳은 `core` 와 `dsl` 뿐이다.** `core` 22패키지 depth 3, `dsl` 3패키지, `consensus` 3,
 `chains` 7(depth 3). 나머지 최상위는 자식이 없다. 즉 트리를 더 읽기 쉽게 만드는 여지는 "최상위를
 줄이는" 쪽보다 "큰 최상위에 자식을 만드는" 쪽에 있다. **판단은 2026-09-20 에 닫혔다** —
-[[consolidation-plan]](consolidation-plan.md) 은 이력이고, 다음 리팩토링은 그것을 이어받지 않고
+`consolidation-plan` (2026-09-24 삭제) 은 이력이고, 다음 리팩토링은 그것을 이어받지 않고
 백지에서 다시 설계한다. 그때 이 문서의 수치는 **다시 잰다.**
 
 **층과 디렉토리가 어긋나는 자리가 셋 있다.** `core` 안의 L3 다섯 개(`session`·`collector`·`health`·

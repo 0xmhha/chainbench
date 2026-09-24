@@ -15,9 +15,10 @@ type Override struct {
 }
 
 // Builder assembles modules into a command line in a fixed order and then runs
-// the cross-module checks no single module can see. Module order is the
-// declaration order in docs/dev/archive/chain-binary-flag-graph.md §3.3 — deterministic
-// output is part of the contract.
+// the cross-module checks no single module can see. Module order is fixed —
+// deterministic output is part of the contract. It followed §3.3 of a design
+// since retired (formerly docs/dev/archive/chain-binary-flag-graph.md;
+// `git show cde3a08f:docs/dev/archive/chain-binary-flag-graph.md`).
 type Builder struct {
 	dialect   Dialect
 	modules   []Module

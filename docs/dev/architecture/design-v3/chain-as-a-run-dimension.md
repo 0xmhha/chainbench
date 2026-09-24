@@ -1,7 +1,7 @@
 # 체인을 실행 시점 차원으로 — 공통 TC 한 벌이 세 체인에 돈다 — [제안]
 
 > **[제안] (2026-09-20).** 결정이 아니다. 아래 수치는 이날 실측이고, 인용 전에 다시 잰다.
-> 이 문서는 닫힌 세 계획([[consolidation-plan]]·[[module-plan]]·`refactoring-proposal/`)을
+> 이 문서는 닫힌 세 계획(`consolidation-plan` (2026-09-24 삭제)·`module-plan`·`refactoring-proposal/`)을
 > **이어받지 않는다.** 전제는 코드 실측과 아래 §1 의 역할 경계뿐이다.
 
 ## 1. 전제 — 모듈의 역할 경계

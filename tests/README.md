@@ -3,7 +3,7 @@
 > **[가이드]** 검증 기준 2026-09-11 (`3cf992db`). 이 README 는 이전에 은퇴한 Go
 > **testkit** 모델(`internal/testkit` · `testrun` 페이즈 · `testkit.Case` 등록 ·
 > `ChainCompat`/`RequiresCaps` 게이팅 · coverage 지표)을 서술하고 있었다. 그 모델은
-> 2026-09-01 (R5) 에 삭제됐다 — [`../docs/dev/archive/legacy-retirement-plan.md`](../docs/dev/archive/legacy-retirement-plan.md).
+> 2026-09-01 (R5) 에 삭제됐다 — `../docs/dev/archive/legacy-retirement-plan.md` (2026-09-24 삭제).
 > 아래는 지금의 트리다.
 
 이 디렉터리는 chainbench 의 **테스트 자산**을 담는다. 테스트가 어디에 있느냐는

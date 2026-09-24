@@ -10,9 +10,9 @@ import (
 
 // The names of the three ways a composition gets its identities.
 const (
-	nameKeysFromPreset statemachine.StateName = "KeysFromPreset"
-	nameKeysGenerated  statemachine.StateName = "KeysGenerated"
-	nameKeysDeclared   statemachine.StateName = "KeysDeclared"
+	nameChainEnsureKeysFromPreset    statemachine.StateName = "CHAIN_ENSURE_KEYS_FROM_PRESET"
+	nameChainEnsureKeysGenerate      statemachine.StateName = "CHAIN_ENSURE_KEYS_GENERATE"
+	nameChainEnsureKeysFromBlueprint statemachine.StateName = "CHAIN_ENSURE_KEYS_FROM_BLUEPRINT"
 )
 
 // ensuringKeys is the first stage with more than one way of doing its work.
@@ -44,15 +44,20 @@ type ensuringKeys struct {
 func newEnsuringKeys(mg *Manager) *ensuringKeys {
 	s := &ensuringKeys{mg: mg}
 	s.leaves = map[keyWay]*keysLeaf{
-		wayPreset:    {parent: s, way: wayPreset, name: nameKeysFromPreset},
-		wayGenerated: {parent: s, way: wayGenerated, name: nameKeysGenerated},
-		wayDeclared:  {parent: s, way: wayDeclared, name: nameKeysDeclared},
+		wayPreset:    {parent: s, way: wayPreset, name: nameChainEnsureKeysFromPreset},
+		wayGenerated: {parent: s, way: wayGenerated, name: nameChainEnsureKeysGenerate},
+		wayDeclared:  {parent: s, way: wayDeclared, name: nameChainEnsureKeysFromBlueprint},
 	}
 	return s
 }
 
 // Name says what this state is called.
-func (ensuringKeys) Name() statemachine.StateName { return nameEnsuringKeys }
+func (ensuringKeys) Name() statemachine.StateName { return nameChainEnsureKeys }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (ensuringKeys) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventKeySourceChosen}, Emits: []statemachine.What{eventKeySourceChosen, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (ensuringKeys) step() string { return stepKeys }
@@ -122,6 +127,11 @@ type keysLeaf struct {
 
 // Name says what this state is called.
 func (l *keysLeaf) Name() statemachine.StateName { return l.name }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (l *keysLeaf) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventKeysEnsured, eventStageFailed}}
+}
 
 // Enter writes the ring and says what it made.
 func (l *keysLeaf) Enter(ctx context.Context, m *statemachine.Machine) error {

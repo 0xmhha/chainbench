@@ -1,6 +1,10 @@
 package testengine
 
-import "github.com/0xmhha/chainbench/internal/core/statemachine"
+import (
+	"fmt"
+
+	"github.com/0xmhha/chainbench/internal/core/statemachine"
+)
 
 // The run machine's messages.
 //
@@ -43,6 +47,14 @@ var runWhatNames = map[statemachine.What]string{
 	eventCasesRun:         "eventCasesRun",
 	eventCollected:        "eventCollected",
 	eventStageStopped:     "eventStageStopped",
+}
+
+// whatName is what a message of this machine is called, for a log or an error.
+func whatName(w statemachine.What) string {
+	if name, ok := runWhatNames[w]; ok {
+		return name
+	}
+	return fmt.Sprintf("What(%#x)", int(w))
 }
 
 // startRun begins the suite.

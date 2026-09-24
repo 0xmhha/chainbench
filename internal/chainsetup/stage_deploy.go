@@ -8,8 +8,8 @@ import (
 
 // The two ways the launch inputs end up where a node will look for them.
 const (
-	nameInputsVerifiedLocal statemachine.StateName = "InputsVerifiedLocal"
-	nameInputsShippedRemote statemachine.StateName = "InputsShippedRemote"
+	nameChainDeployNodesVerifiedLocal statemachine.StateName = "CHAIN_DEPLOY_NODES_VERIFIED_LOCAL"
+	nameChainDeployNodesShippedRemote statemachine.StateName = "CHAIN_DEPLOY_NODES_SHIPPED_REMOTE"
 )
 
 // deployingInputs puts every file a node needs where that node will look.
@@ -30,13 +30,18 @@ type deployingInputs struct {
 // newDeployingInputs builds the stage and the two results it can have.
 func newDeployingInputs(mg *Manager) *deployingInputs {
 	s := &deployingInputs{mg: mg}
-	s.verifiedLocal = &deployOutcome{parent: s, name: nameInputsVerifiedLocal}
-	s.shippedRemote = &deployOutcome{parent: s, name: nameInputsShippedRemote}
+	s.verifiedLocal = &deployOutcome{parent: s, name: nameChainDeployNodesVerifiedLocal}
+	s.shippedRemote = &deployOutcome{parent: s, name: nameChainDeployNodesShippedRemote}
 	return s
 }
 
 // Name says what this state is called.
-func (deployingInputs) Name() statemachine.StateName { return nameDeployingInputs }
+func (deployingInputs) Name() statemachine.StateName { return nameChainDeployNodes }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (deployingInputs) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: []statemachine.What{eventInputsPresent}, Emits: []statemachine.What{eventInputsPresent, eventStageFailed}}
+}
 
 // step is which of the composition's steps this state runs.
 func (deployingInputs) step() string { return stepDeploy }
@@ -92,6 +97,11 @@ type deployOutcome struct {
 
 // Name says what this state is called.
 func (o *deployOutcome) Name() statemachine.StateName { return o.name }
+
+// Contract is what this state handles and sends (design-v3 state-machine-06 §5).
+func (o *deployOutcome) Contract() statemachine.Contract {
+	return statemachine.Contract{Accepts: nil, Emits: []statemachine.What{eventInputsDeployed}}
+}
 
 // Enter records where the composition is and reports the stage finished.
 func (o *deployOutcome) Enter(_ context.Context, m *statemachine.Machine) error {

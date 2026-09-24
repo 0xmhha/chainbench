@@ -9,7 +9,7 @@
 > structural refactors; **do not hand-edit the numbers here.**
 >
 > 같은 수치 위에서 중복·패키지 문서·함수 크기까지 본 검토는
-> [`code-health-review-2026-09-10.md`](code-health-review-2026-09-10.md) 에 있다.
+> `code-health-review-2026-09-10.md` (2026-09-24 삭제) 에 있다.
 > 호출(선택자) 그래프는 별도 도구다 — [`../codegraph/`](../codegraph/README.md).
 >
 > 측정 이력: 08-27 = 75/268 · 09-07 = 65/209 · 09-10 = 70/225 · 09-11 = 70/225.
@@ -136,7 +136,7 @@ flowchart TD
 - **`chainsetup -> resource` 가 67 refs 로 가장 굵다.** 구성 단계가 자원 소유자를
   통해서만 서버·포트를 만진다는 뜻이고, 그것이 이 통폐합의 목적이었다.
 - `resource` 는 3,016줄로 core 에서 가장 크다. 다음 통폐합 검토 대상이라면 여기다 —
-  [`code-health-review-2026-09-10.md`](code-health-review-2026-09-10.md) §패키지 문서 참조.
+  `code-health-review-2026-09-10.md` (2026-09-24 삭제) §패키지 문서 참조.
 
 ## 4. Launch-argument assembly — 완료된 리팩토링 *(2026-08 이력)*
 
@@ -144,7 +144,7 @@ flowchart TD
 > `internal/engine`·`internal/core/pipeline/setup`·`internal/chains/wemix/deploy` 는
 > **모두 존재하지 않는다.** 실행 옵션 조립은 `internal/core/nodeconfig` 로 단일화됐다
 > (`internal/core/nodeconfig/launchopt.go`). 그때의 설계 근거는
-> [`../archive/chain-binary-flag-graph.md`](../archive/chain-binary-flag-graph.md) §3.3 이다.
+> `../archive/chain-binary-flag-graph.md` (2026-09-24 삭제) §3.3 이다.
 
 그래프가 "실행 인자가 5곳에 흩어져 있다"는 주장(worklist T7.3/T7.4)을 정확한 지점으로
 고정했던 기록이다.

@@ -126,13 +126,13 @@ func TestCrossingFork_TheMomentsAreStatesAndTheyAreWalkedInOrder(t *testing.T) {
 		want statemachine.StateName
 	}{
 		{"a network still short of the fork begins at the boundary",
-			forkStandingRead{Crossed: false}, nameBeforeFork},
+			forkStandingRead{Crossed: false}, nameChainOpCrossForkAwaitBoundary},
 		{"the boundary reached hands production over",
-			forkBoundaryReached{Head: 99}, nameHandingOver},
+			forkBoundaryReached{Head: 99}, nameChainOpCrossForkHandOver},
 		{"the hand-over done is the crossing",
-			productionHandedOver{}, nameCrossed},
+			productionHandedOver{}, nameChainOpCrossForkConfirm},
 		{"a network already across walks none of it",
-			forkStandingRead{Crossed: true}, nameCrossed},
+			forkStandingRead{Crossed: true}, nameChainOpCrossForkConfirm},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			got, ok := x.nextMoment(c.msg)

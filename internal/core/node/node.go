@@ -13,8 +13,9 @@
 // to a placement. The division is deliberate: a module that decides something
 // about a node should not also be the place that remembers it, or the memory
 // forks the moment a second decider appears — which is how ten types came to
-// mean "one node" and four places came to compute the same paths
-// (docs/dev/architecture/module-plan.md §2).
+// mean "one node" and four places came to compute the same paths (formerly
+// recorded in docs/dev/architecture/module-plan.md §2, a plan since closed and
+// retired; `git show cde3a08f:docs/dev/architecture/module-plan.md`).
 //
 // NodeSet remains the hand-off object between the three pipeline phases
 // (setup -> verify -> test): every phase takes a NodeSet and returns a
