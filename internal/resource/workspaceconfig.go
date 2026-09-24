@@ -77,6 +77,13 @@ type Control struct {
 	// leading ~ expands to the local home; a relative value is relative to the
 	// config file's directory.
 	ArtifactRoot string `yaml:"artifactRoot"`
+	// Binaries is the local directory that holds the node binaries a remote
+	// target is given, each under the name the target runs it by — the chain
+	// manifest's binary name, or its binaryAlias. The deploy step sends a
+	// binary from here when the target's copy is absent or its sha256 differs.
+	// Empty means binaries are the target's to provide, as before. Expanded
+	// like ArtifactRoot.
+	Binaries string `yaml:"binaries,omitempty"`
 }
 
 // Inputs selects where a composition's inputs come from.
@@ -356,6 +363,25 @@ func (c WorkspaceConfig) ArtifactRoot() (string, error) {
 		return root, nil
 	}
 	return filepath.Join(c.dir, root), nil
+}
+
+// LocalBinaries resolves control.binaries the way ArtifactRoot is resolved, or
+// returns "" when it is not set.
+func (c WorkspaceConfig) LocalBinaries() (string, error) {
+	dir := c.Control.Binaries
+	switch {
+	case dir == "":
+		return "", nil
+	case strings.HasPrefix(dir, "~"):
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("workspace-config: expand ~ in control.binaries: %w", err)
+		}
+		return filepath.Join(home, strings.TrimPrefix(dir, "~")), nil
+	case filepath.IsAbs(dir):
+		return dir, nil
+	}
+	return filepath.Join(c.dir, dir), nil
 }
 
 // validateTargetRoot checks dataRoot is an absolute POSIX target path with no

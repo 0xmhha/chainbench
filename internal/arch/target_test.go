@@ -34,6 +34,7 @@ var targetBranches = map[string]string{
 	"steps_place.go:Allocate":           "only a remote pool has host names distinct from addresses, so only then is there a name to record",
 	"steps_compose.go:genesisArtifacts": "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
 	"steps_compose.go:shipIdentities":   "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
+	"steps_compose.go:shipNodeBinaries": "a local target launches the binary where it already is — the same operation as shipping it, with no work to do",
 	"occupancy.go:scanPorts":            "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
 	"phases.go:runPhaseActions":         "the bootstrap's keystore, socket and config are on the target, so the paths point there",
 	"verbs_network.go:NetworkRunner":    "there is a command runner only when there is a machine to run commands on",

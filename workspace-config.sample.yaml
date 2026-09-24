@@ -79,6 +79,12 @@ control:
   # 최종 report는 <artifactRoot>/<날짜시간>/ 바로 아래에 생성한다.
   artifactRoot: ~/.chainbench
 
+  # 원격 대상에 줄 노드 바이너리가 있는 로컬 디렉터리. 파일 이름은 대상이 실행하는
+  # 이름(체인 매니페스트의 binary, 또는 binaryAliases 값)과 같아야 한다. deploy
+  # 단계가 대상의 사본이 없거나 sha256 이 다를 때만 여기서 보낸다. 비우면 지금처럼
+  # 대상이 바이너리를 미리 갖고 있어야 한다. ~ 와 상대경로는 artifactRoot 와 같이 푼다.
+  # binaries: ~/cbbin
+
 # 입력 준비 방식. generated는 키와 genesis/config를 Builder로 준비한다.
 # 바이너리 자체를 빌드하거나 다운로드하는 옵션이 아니다.
 # 노드 수와 역할은 DSL/Blueprint에서 지정한다.

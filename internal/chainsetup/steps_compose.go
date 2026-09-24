@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
@@ -102,6 +103,11 @@ func (w *Workspace) Provision(ctx context.Context) (StepOut, error) {
 		}
 		n, err := w.shipIdentities(ctx, t, nodes)
 		shipped += n
+		if err != nil {
+			return err
+		}
+		n, err = w.shipNodeBinaries(ctx, t)
+		shipped += n
 		return err
 	})
 	if err != nil {
@@ -181,6 +187,90 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *resource.Access, node
 				return shipped, fmt.Errorf("chainsetup: provision: node%d keystore: %w", ns.Index, err)
 			}
 		}
+	}
+	return shipped, nil
+}
+
+// shipNodeBinaries gives a remote target the node binaries this composition
+// launches, from the local directory control.binaries names. A local target,
+// or a workspace-config without control.binaries, ships nothing: the target
+// provides its own binaries, as it always had to.
+func (w *Workspace) shipNodeBinaries(ctx context.Context, t *resource.Access) (int, error) {
+	if !t.Spec.IsRemote() {
+		return 0, nil
+	}
+	wc, err := w.wc()
+	if err != nil || wc == nil {
+		return 0, err
+	}
+	local, err := wc.LocalBinaries()
+	if err != nil || local == "" {
+		return 0, err
+	}
+	return shipBinaries(ctx, t.Files, local, w.binaryTargets())
+}
+
+// binaryTargets is every placed binary path this composition launches: the
+// composition's own and each per-node one, once each.
+func (w *Workspace) binaryTargets() []string {
+	seen := map[string]bool{}
+	var out []string
+	add := func(p string) {
+		if filepath.IsAbs(p) && !seen[p] {
+			seen[p] = true
+			out = append(out, p)
+		}
+	}
+	add(w.state.Binary)
+	for _, p := range w.state.Binaries {
+		add(p)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// shipBinaries puts each target binary in place from localDir, where it sits
+// under the same file name. A target copy with the same sha256 is left alone;
+// an absent one, or one whose sha256 differs, is written — a same-named but
+// different build must not be launched in place of the one asked for — and a
+// write counts only once the file it left hashes to what was sent. A target
+// that cannot hash a file fails the deploy through Checksum's error rather than
+// being shipped to blind.
+func shipBinaries(ctx context.Context, files filestore.Store, localDir string, targets []string) (int, error) {
+	shipped := 0
+	for _, dst := range targets {
+		src := filepath.Join(localDir, filepath.Base(dst))
+		b, err := os.ReadFile(src)
+		if err != nil {
+			return shipped, fmt.Errorf("chainsetup: provision: binary %s: control.binaries has no %s: %w",
+				dst, filepath.Base(dst), err)
+		}
+		want := filestore.Hash(b)
+		exists, err := files.Exists(ctx, dst)
+		if err != nil {
+			return shipped, err
+		}
+		if exists {
+			have, err := files.Checksum(ctx, dst)
+			if err != nil {
+				return shipped, fmt.Errorf("chainsetup: provision: binary %s: sha256 on the target: %w", dst, err)
+			}
+			if have == want {
+				continue
+			}
+		}
+		if err := files.Write(ctx, dst, b, 0o755); err != nil {
+			return shipped, fmt.Errorf("chainsetup: provision: binary %s: %w", dst, err)
+		}
+		have, err := files.Checksum(ctx, dst)
+		if err != nil {
+			return shipped, fmt.Errorf("chainsetup: provision: binary %s: sha256 on the target: %w", dst, err)
+		}
+		if have != want {
+			return shipped, fmt.Errorf("chainsetup: provision: binary %s: the target's sha256 is %s after the write, sent %s",
+				dst, short(have), short(want))
+		}
+		shipped++
 	}
 	return shipped, nil
 }
