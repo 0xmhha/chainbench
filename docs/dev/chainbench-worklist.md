@@ -69,7 +69,9 @@
       P4 는 preset→케이스 방향이라 케이스 파일 사이를 잇지 못한다. 회귀 실행 묶음 A·C 가 준비물 공유를 전제한다.
       **R 묶음을 다 끝내도 공통 TC 는 열리지 않는다.**
 
-- [ ] **go-wemix 코어: 거버넌스가 반만 지어진 구간에서 full sync 가 영구히 멈춘다** — 근거: §1s G6.
+- [ ] **go-wemix 코어: 거버넌스가 반만 지어진 구간에서 full sync 가 영구히 멈춘다** — 근거: §1s G6,
+      인계는 [`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md) **W3**.
+      **W1 과 같은 블록의 이웃한 줄이다**(`admin.go:997-1003`) — 함께 고치는 것이 맞다.
       **chainbench 가 고칠 수 없다 — 체인팀 인계 건이다.** 거버넌스는 블록 4~13에 걸쳐 지어지고
       (proxy 가 imp 주소를, registry 등록이 proxy 주소를 필요로 하는 의존 사슬), 그 중간 블록의
       상태를 쥔 채 다음 블록을 검증한 노드는 "registry 는 있는데 주소록이 비었다" 를 본다.
@@ -104,7 +106,9 @@
       209/209 통과**(71분, 실패·blocked·skip 0건) — stablenet 181 · wbft 15 · wemix 13, 하드포크
       세 건과 포크 전 빌드를 요구하는 `01-boho-crossed-by-restart` 포함. 스위프 도구는
       `scripts/tcsweep.sh` 에 남겼다.
-- [ ] **선언 모델 — 남은 여섯 (P-3 ~ P-8)** — 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
+- [x] **선언 모델 — 닫힘 (2026-09-24 표시 정정).** 제목은 "남은 여섯" 이라고 적고 본문은 "이것으로
+      닫힌다" 로 끝나 있었다. 설계 문서의 표에서 P-1~P-8 이 전부 취소선이고 D-a·D-b·D-c 도
+      끝났다 — 일이 아니라 **표시가 남아 있었다**. 근거: [`architecture/design-v3/declaration-model-2026-09-22.md` §5](architecture/design-v3/declaration-model-2026-09-22.md).
       결함 셋(D-a·D-b·D-c)과 P-1·P-1b·P-2·P-3·P-8 은 끝났다. **P-5 는 할 일이 없었다** —
       `suite run` 에는 이미 `--server-set` 이 있고(`resourcecmd.ServerFlags` 를 빌려 쓴다),
       MCP 도 마찬가지다. **P-4 도 끝났다** — `internal/core/origin` 에 rung 일곱을 둔 어휘 하나를
