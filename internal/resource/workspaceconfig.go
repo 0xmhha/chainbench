@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -47,6 +48,9 @@ type WorkspaceConfig struct {
 	// Execution decides how a chain is used: a fresh isolated composition, a
 	// matching one reused, or an already-running one attached to.
 	Execution Execution `yaml:"execution"`
+	// Limits are the floors a target has to clear before a composition is
+	// placed on it.
+	Limits Limits `yaml:"limits,omitempty"`
 	// ExistingInputs are the named bundles this file offers, referenced by
 	// Inputs.Name when Inputs.Mode is InputExisting.
 	ExistingInputs map[string]ExistingInputs `yaml:"existingInputs,omitempty"`
@@ -93,6 +97,55 @@ type Inputs struct {
 	// Name is the ExistingInputs entry to use; required when Mode is
 	// InputExisting, forbidden when generated.
 	Name string `yaml:"name,omitempty"`
+}
+
+// Limits are what a target must have before anything is written to it.
+type Limits struct {
+	// MinFreeDisk is the free space the data root's filesystem must have on
+	// every machine a composition is placed on: "2GiB", "500MiB", a plain byte
+	// count, or "0" to turn the check off. Empty means DefaultMinFreeDisk.
+	MinFreeDisk string `yaml:"minFreeDisk,omitempty"`
+}
+
+// DefaultMinFreeDisk is the floor when a workspace-config names none, or there
+// is no workspace-config. A 15-node network of a geth-family chain writes a
+// few hundred MiB before its first block and grows from there; 2 GiB leaves a
+// run room to reach its assertions.
+const DefaultMinFreeDisk uint64 = 2 << 30
+
+// MinFreeDiskBytes is MinFreeDisk in bytes.
+func (l Limits) MinFreeDiskBytes() (uint64, error) {
+	if strings.TrimSpace(l.MinFreeDisk) == "" {
+		return DefaultMinFreeDisk, nil
+	}
+	return ParseSize(l.MinFreeDisk)
+}
+
+// ParseSize reads a byte count: a plain integer, or one with a B, KiB, MiB,
+// GiB or TiB suffix (binary units; KB, MB, GB and TB are read the same way,
+// because a disk floor is not the place to split that hair).
+func ParseSize(v string) (uint64, error) {
+	v = strings.TrimSpace(v)
+	units := []struct {
+		suffix string
+		mult   uint64
+	}{
+		{"TiB", 1 << 40}, {"GiB", 1 << 30}, {"MiB", 1 << 20}, {"KiB", 1 << 10},
+		{"TB", 1 << 40}, {"GB", 1 << 30}, {"MB", 1 << 20}, {"KB", 1 << 10},
+		{"B", 1},
+	}
+	mult := uint64(1)
+	for _, u := range units {
+		if strings.HasSuffix(v, u.suffix) {
+			v, mult = strings.TrimSpace(strings.TrimSuffix(v, u.suffix)), u.mult
+			break
+		}
+	}
+	n, err := strconv.ParseUint(v, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%q is not a size (want e.g. 2GiB, 500MiB or a byte count)", v)
+	}
+	return n * mult, nil
 }
 
 // Execution selects how the chain is used across runs.
@@ -251,6 +304,9 @@ func (c WorkspaceConfig) validate() error {
 		if _, found := c.ExistingInputs[name]; !found {
 			return fmt.Errorf("workspace-config: inputs.name %q has no entry in existingInputs", name)
 		}
+	}
+	if _, err := c.Limits.MinFreeDiskBytes(); err != nil {
+		return fmt.Errorf("workspace-config: limits.minFreeDisk: %w", err)
 	}
 	return c.Execution.validate()
 }

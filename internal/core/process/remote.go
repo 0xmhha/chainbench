@@ -197,6 +197,29 @@ type PortProber interface {
 	ProbePorts(ctx context.Context, host string, ports []int) ([]int, error)
 }
 
+// SpaceReporter is an optional Driver capability: how many bytes are free on
+// the filesystem that holds a path, asked on the machine the path is on.
+type SpaceReporter interface {
+	FreeBytes(ctx context.Context, path string) (uint64, error)
+}
+
+// FreeBytes reports the space available to an unprivileged writer on the
+// filesystem that holds path. A path that does not exist yet is measured at its
+// nearest existing parent — a data root is asked about before anything is
+// written under it.
+func (d *RemoteDriver) FreeBytes(ctx context.Context, p string) (uint64, error) {
+	script := "d=" + remote.ShellQuote(p) + `; while [ ! -e "$d" ]; do d=$(dirname "$d"); done; df -Pk "$d" | awk 'NR==2{print $4}'`
+	out, err := d.sh(ctx, "sh -c "+remote.ShellQuote(script))
+	if err != nil {
+		return 0, fmt.Errorf("driver: remote free space %s: %w", p, err)
+	}
+	kb, err := strconv.ParseUint(strings.TrimSpace(out), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("driver: remote free space %s: df said %q", p, strings.TrimSpace(out))
+	}
+	return kb * 1024, nil
+}
+
 // ProbePorts dials each port on the remote host FROM the remote host, via
 // bash's /dev/tcp, and returns the ports that accepted. Both faces are tried —
 // loopback and the host's own address — because a listener may be bound to
