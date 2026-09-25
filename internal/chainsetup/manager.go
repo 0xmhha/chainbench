@@ -514,6 +514,26 @@ func (mg *Manager) fail(m *statemachine.Machine, step string, cause error) {
 	m.SendSelf(stageFailed{Step: step, Err: err})
 }
 
+// failLaunch fails the start stage after stopping the nodes this launch
+// started — every node with a pid now that was not in wasRunning.
+//
+// A composition that failed is not a network anyone will use: the caller gets
+// an error and no way to stop what came up, so the nodes that did come up are
+// taken down here, where it is still known which ones they are. When the
+// rollback itself fails, both are said — the launch's error first, because it
+// is the one the operator came for.
+func (mg *Manager) failLaunch(ctx context.Context, m *statemachine.Machine, wasRunning map[int]bool, cause error) {
+	detail, rerr := InWorkspace(mg.d, mg.ws.Dir(), func(ws *Workspace) (string, error) {
+		return ws.RollBackLaunch(ctx, wasRunning)
+	})
+	if rerr != nil {
+		cause = fmt.Errorf("%w (and %v)", cause, rerr)
+	} else {
+		mg.note("rollback", detail)
+	}
+	mg.fail(m, stepStart, cause)
+}
+
 // markFailed writes a failed stage into the record.
 //
 // Best effort and silent: this runs while a composition is already failing, and

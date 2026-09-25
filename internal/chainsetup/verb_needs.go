@@ -145,6 +145,8 @@ var verbNeeds = map[string]verbNeed{
 	"LogExcerpt":          {why: "same as Logs, which it calls"},
 	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
 	"StopNode":            {why: "same as Stop, for one node"},
+	"RollBackLaunch":      {why: "undoes a launch that failed part way, so it runs exactly where the launch's own requirements were not met"},
+	"RunningNodes":        {why: "accessor"},
 	"ResumeStep":          {why: "accessor: where a resume begins, read from the record"},
 	"FirstUndone":         {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
 	"RecordRequest":       {why: "it writes what was asked for, which is the first thing a composition records"},
