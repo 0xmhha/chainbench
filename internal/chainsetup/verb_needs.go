@@ -141,7 +141,6 @@ var verbNeeds = map[string]verbNeed{
 		"workspace yields an empty snapshot, which is the answer that composes everything"},
 	"Retarget":            {why: "rewrites where the workspace points, which is what a stale target needs"},
 	"Logs":                {why: "a dead node's log is the reason to ask for it; it refuses an unknown index by name"},
-	"LogExcerpt":          {why: "same as Logs, which it calls"},
 	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
 	"StopNode":            {why: "same as Stop, for one node"},
 	"RollBackLaunch":      {why: "undoes a launch that failed part way, so it runs exactly where the launch's own requirements were not met"},
