@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 58,966 |
+| `internal/` | 52 | 58,973 |
 | `cmd/` | 19 | 5,094 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **64,850** |
+| **합계** | **74** | **64,857** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 37,633줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 37,640줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -172,7 +172,7 @@ internal/app       2,794  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP �
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
-internal/feature     502  [L5] 기능 등록의 한 자리 — Descriptor·Register[In,Out]·Stage·ReadOnly, 그리고 입력 struct
+internal/feature     509  [L5] 기능 등록의 한 자리 — Descriptor·Register[In,Out]·Stage·ReadOnly, 그리고 입력 struct
                           태그 하나가 만드는 두 바인딩(Flags → cobra 플래그, Schema → MCP JSON 스키마).
                           명령을 생성하지는 않는다 — 이름·계층·도움말은 사람이 정한다
 
