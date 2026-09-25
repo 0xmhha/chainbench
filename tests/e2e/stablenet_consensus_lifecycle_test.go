@@ -52,6 +52,11 @@ func TestE2E_StablenetConsensusLifecycle(t *testing.T) {
 	// b-08: stop two validators (2 remain, < quorum 3) → production halts.
 	n.nodeStop(1)
 	n.nodeStop(2)
+	// A block sealed while quorum still held can reach the observer after the
+	// stops return (measured: sealed at .133, both stopped by .415, imported by
+	// the endpoint at .648), which read as production continuing. Let it land
+	// before the head is sampled.
+	time.Sleep(3 * time.Second)
 	if grewWithin(t, obs, 12*time.Second) {
 		t.Fatal("b-08: production continued below quorum (should halt)")
 	}

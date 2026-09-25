@@ -259,9 +259,6 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 	for _, step := range res.SetupSteps {
 		fmt.Fprintln(notes, step)
 	}
-	if res.Preflight != "" {
-		fmt.Fprintf(notes, "preflight: %s\n", res.Preflight)
-	}
 	if err != nil {
 		return setupFailure(cmd.OutOrStdout(), err, failedAtOf(res), jsonOut)
 	}
@@ -346,9 +343,6 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips
 		fmt.Fprintf(notes, "\n=== [%d/%d] %s ===\n", i+1, len(res.Runs), r.Spec)
 		for _, step := range r.Out.SetupSteps {
 			fmt.Fprintln(notes, step)
-		}
-		if r.Out.Preflight != "" {
-			fmt.Fprintf(notes, "preflight: %s\n", r.Out.Preflight)
 		}
 		if r.Err != "" {
 			fmt.Fprintf(notes, "error: %s\n", r.Err)

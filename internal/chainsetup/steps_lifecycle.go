@@ -354,34 +354,6 @@ func (w *Workspace) FinishLaunch(ctx context.Context, bin string, started int) (
 	return detail, nil
 }
 
-// Start launches every stopped node. Argv comes from the launchopts step when
-// it ran; otherwise it is assembled here through the same single site
-// (nodeconfig.Argv) with no overrides.
-func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
-	bin, phases, err := w.LaunchPlan(ctx, binaryArg)
-	if err != nil {
-		return StepOut{}, err
-	}
-	started := 0
-	for _, phase := range phases {
-		launched, perr := w.StartPhase(ctx, bin, phase)
-		if perr != nil {
-			return StepOut{}, perr
-		}
-		started += launched
-		if len(phase.Actions) > 0 {
-			if aerr := w.RunPhaseActions(ctx, bin, phase); aerr != nil {
-				return StepOut{}, aerr
-			}
-		}
-	}
-	detail, err := w.FinishLaunch(ctx, bin, started)
-	if err != nil {
-		return StepOut{}, err
-	}
-	return StepOut{Detail: detail}, nil
-}
-
 // Stop terminates every running node by its recorded PID and clears the PIDs.
 //
 // Every node is attempted. A node whose machine cannot be resolved used to end
@@ -396,6 +368,50 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error
 // measured at 15s each, so a network that will not go down quietly held the
 // next run's ports for over a minute. Done together they take one.
 func (w *Workspace) Stop(ctx context.Context) (string, error) {
+	stopped, attempts, errs := w.stopNodes(ctx, func(node.Record) bool { return true })
+	if len(errs) > 0 {
+		return "", lifecycle.Mark(errOpSomeStillUp,
+			fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
+				stopped, attempts, strings.Join(errs, "; ")))
+	}
+	detail := fmt.Sprintf("%d node(s) stopped", stopped)
+	w.markStep("stop", detail)
+	return detail, nil
+}
+
+// RollBackLaunch stops the nodes a failed launch started: every node that has a
+// recorded pid now and was not running before the launch began.
+//
+// A launch that dies at node13 has already started node1..node12, and their
+// pids are in the record. Nothing else takes them down — the run that failed
+// hands back no network to stop — so they kept their ports and datadirs locked
+// until someone noticed, and the next run on the same servers could not
+// compose. Nodes that were running before the launch are left alone: they are
+// not this launch's to stop.
+func (w *Workspace) RollBackLaunch(ctx context.Context, wasRunning map[int]bool) (string, error) {
+	stopped, attempts, errs := w.stopNodes(ctx, func(ns node.Record) bool { return !wasRunning[ns.Index] })
+	if len(errs) > 0 {
+		return "", fmt.Errorf("chainsetup: roll back launch: %d of %d node(s) stopped; %s",
+			stopped, attempts, strings.Join(errs, "; "))
+	}
+	return fmt.Sprintf("%d node(s) this launch started were stopped", stopped), nil
+}
+
+// RunningNodes is the index of every node with a recorded pid.
+func (w *Workspace) RunningNodes() map[int]bool {
+	running := map[int]bool{}
+	for _, ns := range w.state.Nodes {
+		if ns.PID > 0 {
+			running[ns.Index] = true
+		}
+	}
+	return running
+}
+
+// stopNodes stops, concurrently, every running node pick selects, and clears
+// the pid of each one that went down. It returns how many stopped, how many
+// were attempted, and one message per node that did not.
+func (w *Workspace) stopNodes(ctx context.Context, pick func(node.Record) bool) (int, int, []string) {
 	type outcome struct {
 		i   int
 		err error
@@ -407,7 +423,7 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		attempts int
 	)
 	for i, ns := range w.state.Nodes {
-		if ns.PID <= 0 {
+		if ns.PID <= 0 || !pick(ns) {
 			continue
 		}
 		attempts++
@@ -444,18 +460,12 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		w.clearPID(r.i)
 		stopped++
 	}
-	if len(errs) > 0 {
-		return "", lifecycle.Mark(errOpSomeStillUp,
-			fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
-				stopped, attempts, strings.Join(errs, "; ")))
-	}
-	detail := fmt.Sprintf("%d node(s) stopped", stopped)
-	w.markStep("stop", detail)
-	return detail, nil
+	return stopped, attempts, errs
 }
 
-// Rm removes the composed data plane (node datadirs, configs, genesis, logs)
-// for a local target. Running nodes must be stopped first.
+// Rm removes the composed data plane — node datadirs, configs, genesis, logs,
+// and the composition's own directories — on every machine it was placed on.
+// Running nodes must be stopped first.
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	if err := w.allow("Rm"); err != nil {
 		return "", err
@@ -486,19 +496,32 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	// cleared once per machine rather than once — a set, because two nodes on
 	// the same server share the file and removing it twice is not an error but
 	// is a second round trip.
+	layout, err := w.layout()
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: rm: %w", err)
+	}
 	genesisDone := map[string]bool{}
 	for _, ns := range w.state.Nodes {
 		acc, err := w.machineFor(ns)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: rm: node%d: %w", ns.Index, err)
 		}
-		for _, p := range []string{ns.DataDir, ns.ConfigPath} {
+		for _, p := range []string{ns.DataDir, ns.ConfigPath, ns.LogPath} {
 			if err := remove(acc, p); err != nil {
 				return "", err
 			}
 		}
 		if !genesisDone[ns.Server] {
 			for _, p := range w.genesisPaths() {
+				if err := remove(acc, p); err != nil {
+					return "", err
+				}
+			}
+			// The composition's own directories go last, once the files in
+			// them are gone: a composition isolated by id left an empty
+			// node/<id>, runtime/<id> and logs/<id> on every server it ever
+			// ran on, and a data root that saw a few hundred runs filled up.
+			for _, p := range layout.CompositionDirs() {
 				if err := remove(acc, p); err != nil {
 					return "", err
 				}

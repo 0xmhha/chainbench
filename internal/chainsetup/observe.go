@@ -42,42 +42,6 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 	return "", fmt.Errorf("chainsetup: logs: no node %d in the table", index)
 }
 
-// LogExcerpt returns the first head lines and the last tail lines of one node's
-// log, with a line in between saying how much was left out.
-//
-// The tail alone is not enough for the failure this exists to explain. A node
-// that refuses its genesis, or cannot bind a port, says so in its first few
-// lines and then exits; a node that dies after an hour says so in its last. At
-// one block per second a geth-family node writes several lines a second, so a
-// 200-line tail is the last half minute — which is exactly the window that does
-// NOT contain a startup failure.
-//
-// A log shorter than head+tail is returned whole: eliding nothing is not worth
-// a marker saying so.
-func (w *Workspace) LogExcerpt(ctx context.Context, index, head, tail int) (string, error) {
-	full, err := w.Logs(ctx, index, 0)
-	if err != nil {
-		return "", err
-	}
-	return excerpt(full, head, tail), nil
-}
-
-// excerpt keeps both ends of s and says what it dropped.
-func excerpt(s string, head, tail int) string {
-	if head <= 0 && tail <= 0 {
-		return s
-	}
-	lines := strings.Split(s, "\n")
-	if len(lines) <= head+tail {
-		return s
-	}
-	out := make([]string, 0, head+tail+1)
-	out = append(out, lines[:head]...)
-	out = append(out, fmt.Sprintf("... %d line(s) elided ...", len(lines)-head-tail))
-	out = append(out, lines[len(lines)-tail:]...)
-	return strings.Join(out, "\n")
-}
-
 // LivePIDs asks each node's machine whether its recorded pid is still a
 // process, for the nodes that have one.
 //

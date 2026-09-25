@@ -403,7 +403,8 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// Once, here, because this path asks two questions about the launch before
 	// the launch runs: the plan it prints, and the preflight comparison that
 	// decides whether to reuse what is composed. Both were asking in the other
-	// language. chainsetup places again on the way in, which is harmless.
+	// language. This is the only place a run's request is placed: the
+	// comparing walk it is handed to does not place it again.
 	if err := chainsetup.PlaceRequest(up, wcOrNil); err != nil {
 		return composition{}, err
 	}

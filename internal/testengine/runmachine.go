@@ -444,14 +444,17 @@ func (s *composingNetwork) Enter(ctx context.Context, m *statemachine.Machine) e
 	net, err := composeWorkspace(ctx, r.sd, *r.comp.up, &r.out, r.in.NodeMonitorTimeout)
 	r.net = net
 	r.networkUp = true
-	if verr := verifyAgainstPlan(r.plan, r.comp.up.DataDir, &r.out); err == nil && verr != nil {
-		r.fail(m, s, verr)
-		return nil
-	}
 	if err != nil {
 		// The chain area refused. Which of its stages did is its own state's,
-		// recorded by the compose itself, and this one does not repeat it.
+		// recorded by the compose itself, and this one does not repeat it. Nor
+		// is the plan checked: a composition that failed launched nothing to
+		// check, and "the launched network matches the plan" printed above the
+		// error read as the opposite of what happened.
 		r.fail(m, s, err)
+		return nil
+	}
+	if verr := verifyAgainstPlan(r.plan, r.comp.up.DataDir, &r.out); verr != nil {
+		r.fail(m, s, verr)
 		return nil
 	}
 	r.out.Endpoints = net.endpoints

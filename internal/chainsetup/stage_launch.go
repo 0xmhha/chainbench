@@ -33,6 +33,9 @@ type launching struct {
 	phases  []registry.Phase
 	at      int
 	started int
+	// wasRunning is every node that had a pid before this launch began, so a
+	// launch that fails stops only what it started.
+	wasRunning map[int]bool
 
 	phase     *launchingPhase
 	actions   *runningPhaseActions
@@ -69,18 +72,19 @@ func (s *launching) Enter(ctx context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
 	s.at, s.started = 0, 0
 	type plan struct {
-		bin    string
-		phases []registry.Phase
+		bin     string
+		phases  []registry.Phase
+		running map[int]bool
 	}
 	p, err := InWorkspace(s.mg.d, s.mg.ws.Dir(), func(ws *Workspace) (plan, error) {
 		bin, phases, perr := ws.LaunchPlan(ctx, s.mg.request.Binary)
-		return plan{bin, phases}, perr
+		return plan{bin, phases, ws.RunningNodes()}, perr
 	})
 	if err != nil {
 		s.mg.fail(m, stepStart, err)
 		return nil
 	}
-	s.bin, s.phases = p.bin, p.phases
+	s.bin, s.phases, s.wasRunning = p.bin, p.phases, p.running
 	m.SendSelf(launchPlanned{Phases: len(p.phases)})
 	return nil
 }
@@ -144,7 +148,7 @@ func (l *launchingPhase) Enter(ctx context.Context, m *statemachine.Machine) err
 		return ws.StartPhase(ctx, s.bin, phase)
 	})
 	if err != nil {
-		s.mg.fail(m, stepStart, err)
+		s.mg.failLaunch(ctx, m, s.wasRunning, err)
 		return nil
 	}
 	m.SendSelf(phaseLaunched{Started: started})
@@ -174,7 +178,7 @@ func (l *runningPhaseActions) Enter(ctx context.Context, m *statemachine.Machine
 		return struct{}{}, ws.RunPhaseActions(ctx, s.bin, phase)
 	})
 	if err != nil {
-		s.mg.fail(m, stepStart, err)
+		s.mg.failLaunch(ctx, m, s.wasRunning, err)
 		return nil
 	}
 	m.SendSelf(phaseActionsDone{})
@@ -209,7 +213,7 @@ func (l *recordingRun) Enter(ctx context.Context, m *statemachine.Machine) error
 		return ws.FinishLaunch(ctx, s.bin, s.started)
 	})
 	if err != nil {
-		s.mg.fail(m, stepStart, err)
+		s.mg.failLaunch(ctx, m, s.wasRunning, err)
 		return nil
 	}
 	m.SendSelf(nodesLaunched{Detail: detail})

@@ -83,3 +83,10 @@ func init() {
 	}, app.ChainLogs)
 
 }
+
+func init() {
+	Register(Registration{
+		Name: "clean.stale-compositions", Stage: StageCompose,
+		Summary: "List, and with apply remove, compositions a server set's servers hold that no known workspace refers to",
+	}, app.StaleCompositions)
+}

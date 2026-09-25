@@ -17,11 +17,23 @@ func NewClean() *cobra.Command {
 		artifactRoot string
 		olderThan    string
 		keepLast     int
+		stale        bool
+		serverSet    string
+		wcPath       string
+		docker       bool
+		keepUnder    []string
+		apply        bool
 	)
 	cmd := &cobra.Command{
 		Use:   "clean",
-		Short: "Remove a launched network's data dir, or GC old session artifacts",
+		Short: "Remove a launched network's data dir, or GC old session artifacts or stale compositions",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if stale {
+				return cleanStaleCompositions(cmd, app.StaleCompositionsIn{
+					ServerSet: serverSet, Docker: docker, WorkspaceConfigPath: wcPath,
+					KeepUnder: keepUnder, Apply: apply,
+				})
+			}
 			if artifactRoot != "" {
 				return cleanSessions(cmd, artifactRoot, olderThan, keepLast)
 			}
@@ -42,7 +54,40 @@ func NewClean() *cobra.Command {
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "", "session artifact root to garbage-collect")
 	cmd.Flags().StringVar(&olderThan, "older-than", "", "GC sessions older than this age (e.g. 7d, 12h)")
 	cmd.Flags().IntVar(&keepLast, "keep-last", 0, "GC keeps the newest N sessions")
+	cmd.Flags().BoolVar(&stale, "stale-compositions", false,
+		"list compositions the servers hold that no known workspace refers to (with --server-set and --workspace-config)")
+	cmd.Flags().StringVar(&serverSet, "server-set", "", "server-set file whose servers are searched (--stale-compositions)")
+	cmd.Flags().StringVar(&wcPath, "workspace-config", "", "workspace-config giving the data root and its directories (--stale-compositions)")
+	cmd.Flags().BoolVar(&docker, "docker", false, "reach the servers through the localmap next to the server set (--stale-compositions)")
+	cmd.Flags().StringArrayVar(&keepUnder, "keep-under", nil,
+		"directory searched for workspaces whose compositions are kept; repeatable. ~/.chainbench is always searched (--stale-compositions)")
+	cmd.Flags().BoolVar(&apply, "apply", false, "remove what --stale-compositions lists; without it nothing is changed")
 	return cmd
+}
+
+// cleanStaleCompositions lists the compositions nothing refers to, and removes
+// them only when --apply is given.
+func cleanStaleCompositions(cmd *cobra.Command, in app.StaleCompositionsIn) error {
+	res, err := app.StaleCompositions(cmd.Context(), app.Deps{}, in)
+	if err != nil {
+		return err
+	}
+	out := cmd.OutOrStdout()
+	for _, c := range res.Running {
+		fmt.Fprintf(out, "kept     %s %s (a process runs from it)\n", c.Server, c.ID)
+	}
+	verb := "stale   "
+	if in.Apply {
+		verb = "removed "
+	}
+	for _, c := range res.Stale {
+		fmt.Fprintf(out, "%s %s %s (%d dir(s))\n", verb, c.Server, c.ID, len(c.Dirs))
+	}
+	fmt.Fprintf(out, "%d stale composition(s), %d kept running, %d known workspace(s)\n", len(res.Stale), len(res.Running), res.Known)
+	if !in.Apply && len(res.Stale) > 0 {
+		fmt.Fprintln(out, "nothing was removed — rerun with --apply to remove them")
+	}
+	return nil
 }
 
 // cleanSessions garbage-collects completed session directories under root,

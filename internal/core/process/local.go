@@ -144,3 +144,24 @@ func (d *LocalDriver) Stop(ctx context.Context, h Handle) error {
 func isFinished(err error) bool {
 	return err != nil && err.Error() == "os: process already finished"
 }
+
+// FreeBytes reports the space available to an unprivileged writer on the
+// filesystem that holds path, measured at its nearest existing parent when the
+// path does not exist yet.
+func (d *LocalDriver) FreeBytes(_ context.Context, p string) (uint64, error) {
+	for {
+		if _, err := os.Stat(p); err == nil {
+			break
+		}
+		parent := filepath.Dir(p)
+		if parent == p {
+			break
+		}
+		p = parent
+	}
+	var st syscall.Statfs_t
+	if err := syscall.Statfs(p, &st); err != nil {
+		return 0, fmt.Errorf("process: free space %s: %w", p, err)
+	}
+	return uint64(st.Bavail) * uint64(st.Bsize), nil
+}

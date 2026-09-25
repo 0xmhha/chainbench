@@ -158,6 +158,18 @@ func ChainUp(ctx context.Context, d Deps, in ChainUpIn) (verb.ChainUpOut, error)
 	return verb.ChainUp(ctx, d.chainsetupDeps(), in)
 }
 
+// StaleCompositionsIn and StaleCompositionsOut are relayed for the surfaces.
+type (
+	StaleCompositionsIn  = chainsetupmod.StaleCompositionsIn
+	StaleCompositionsOut = chainsetupmod.StaleCompositionsOut
+)
+
+// StaleCompositions lists, and with Apply removes, the compositions a server
+// set's servers hold that no known workspace refers to.
+func StaleCompositions(ctx context.Context, d Deps, in StaleCompositionsIn) (StaleCompositionsOut, error) {
+	return chainsetupmod.StaleCompositions(ctx, d.chainsetupDeps(), in)
+}
+
 func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (verb.NetworkRemoveOut, error) {
 	return verb.NetworkRemove(ctx, d.chainsetupDeps(), in)
 }

@@ -64,6 +64,24 @@ func (l Layout) ConfigPath(label Label) string {
 	return filepath.Join(l.runtimeBase(), "configs", string(label)+".toml")
 }
 
+// CompositionDirs is every directory that holds only this composition's
+// files: its node datadirs, its generated genesis and configs, and its logs.
+// Removing them removes the composition from a machine and nothing else. A flat
+// layout (no CompositionID) shares its directories with whatever else sits on
+// the data root, so it has none.
+func (l Layout) CompositionDirs() []string {
+	if l.CompositionID == "" {
+		return nil
+	}
+	pick := func(dir, def string) string {
+		if dir == "" {
+			dir = def
+		}
+		return filepath.Join(l.Root, dir, l.CompositionID)
+	}
+	return []string{pick(l.NodesDir, "node"), pick(l.RuntimeDir, "runtime"), pick(l.LogsDir, "logs")}
+}
+
 // LogPath is where the node's stdout/stderr is captured. Isolated per
 // composition when an id is set; otherwise one shared logs directory.
 func (l Layout) LogPath(label Label) string {

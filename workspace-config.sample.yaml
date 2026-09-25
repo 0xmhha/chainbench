@@ -97,6 +97,11 @@ inputs:
 execution:
   chain: fresh
 
+# genesis 를 쓰기 전(대상에 처음 쓰는 시점)에 노드가 놓일 모든 서버에서 dataRoot 의 여유 공간을
+# 확인한다. 이보다 적으면 구성을 시작하지 않는다. 비우면 2GiB, "0" 이면 검사하지 않는다.
+# limits:
+#   minFreeDisk: 2GiB
+
 # 대상에 이미 있는 입력을 쓰려면 위 inputs 블록을 아래 블록으로 교체한다.
 # inputs 키를 두 번 작성하지 않는다. existing에서는 name이 필수다.
 # 파일이 없으면 오류로 종료하며 generated로 자동 전환하지 않는다.

@@ -14,20 +14,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-// failureLogHeadLines and failureLogTailLines are how much of each node's log a
-// failure keeps, from each end.
-//
-// Both ends, because the two failures this evidence explains live at opposite
-// ones. A node that refuses its genesis or cannot bind a port says so in its
-// first lines and exits; a node that dies after an hour says so in its last.
-// The tail alone used to be kept, and at one block per second a geth-family
-// node writes several lines a second — so 200 lines was the last half minute,
-// which is exactly the window a startup failure is not in.
-const (
-	failureLogHeadLines = 200
-	failureLogTailLines = 200
-)
-
 // evidence is one gathered file: what to call it and what is in it.
 type evidence struct {
 	Name string
@@ -96,12 +82,18 @@ func gatherFailureData(ctx context.Context, sd chainsetup.Deps, dataDir string, 
 				note("%s: the node table records no log path", name)
 				continue
 			}
-			excerpt, lerr := ws.LogExcerpt(ctx, n.Index, failureLogHeadLines, failureLogTailLines)
+			// The whole log, as the node wrote it. Only its two ends used to be
+			// kept, and a failure whose cause is in the middle — a node that
+			// fell out of sync two minutes in, a round change that kept
+			// repeating — left no trace of it; nor could two nodes be lined up
+			// by time, because each was cut in a different place. The whole
+			// file is read either way, so keeping it costs only the space.
+			full, lerr := ws.Logs(ctx, n.Index, 0)
 			if lerr != nil {
 				note("%s: %v", name, lerr)
 				continue
 			}
-			add(name, []byte(excerpt))
+			add(name, []byte(full+"\n"))
 		}
 	}
 
