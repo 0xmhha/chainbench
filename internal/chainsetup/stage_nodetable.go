@@ -29,7 +29,7 @@ func (buildingNodeTable) Contract() statemachine.Contract {
 func (buildingNodeTable) step() string { return stepPlace }
 
 // Enter places the nodes and says how many went where.
-func (s *buildingNodeTable) Enter(ctx context.Context, m *statemachine.Machine) error {
+func (s *buildingNodeTable) Enter(_ context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
 	in := s.mg.request
 	detail, err := PlaceNodes(s.mg.d, ChainAllocateIn{
@@ -45,16 +45,6 @@ func (s *buildingNodeTable) Enter(ctx context.Context, m *statemachine.Machine) 
 		s.mg.fail(m, stepPlace, err)
 		return nil
 	}
-	// Placement is the first moment the machines are known and the last one
-	// before anything is written to them.
-	space, err := InWorkspace(s.mg.d, s.mg.ws.Dir(), func(ws *Workspace) (string, error) {
-		return ws.CheckFreeSpace(ctx)
-	})
-	if err != nil {
-		s.mg.fail(m, stepPlace, err)
-		return nil
-	}
-	s.mg.note("disk", space)
 	m.SendSelf(nodeTableBuilt{Detail: detail})
 	return nil
 }

@@ -147,7 +147,7 @@ var verbNeeds = map[string]verbNeed{
 	"StopNode":            {why: "same as Stop, for one node"},
 	"RollBackLaunch":      {why: "undoes a launch that failed part way, so it runs exactly where the launch's own requirements were not met"},
 	"RunningNodes":        {why: "accessor"},
-	"CheckFreeSpace":      {why: "a question about the machines, asked right after placement and before any step writes to them"},
+	"CheckFreeSpace":      {why: "a question about the machines, asked before the genesis, the first step that writes to them"},
 	"ResumeStep":          {why: "accessor: where a resume begins, read from the record"},
 	"FirstUndone":         {why: "it reads the record to find where to resume, so it must run on a half-composed one"},
 	"RecordRequest":       {why: "it writes what was asked for, which is the first thing a composition records"},

@@ -63,7 +63,7 @@ func (s *buildingGenesis) leafStates() []statemachine.State {
 // The request is read before any workspace is opened: one that contradicts
 // itself needs no workspace, and refusing here keeps the lock and the state out
 // of a request that was never going to be carried out.
-func (s *buildingGenesis) Enter(_ context.Context, m *statemachine.Machine) error {
+func (s *buildingGenesis) Enter(ctx context.Context, m *statemachine.Machine) error {
 	s.mg.recordPath(s)
 	in := s.mg.request
 	opts, err := GenesisOptsFor(ChainGenesisIn{
@@ -72,6 +72,15 @@ func (s *buildingGenesis) Enter(_ context.Context, m *statemachine.Machine) erro
 		PerBinary: in.GenesisPerBinary, Fork: in.GenesisFork,
 	})
 	if err != nil {
+		s.mg.fail(m, stepGenesis, err)
+		return nil
+	}
+	// The genesis is the first thing written to the machines the network was
+	// placed on, so this is the last moment to find one that has no room —
+	// before anything lands on any of them.
+	if _, err := InWorkspace(s.mg.d, s.mg.ws.Dir(), func(ws *Workspace) (string, error) {
+		return ws.CheckFreeSpace(ctx)
+	}); err != nil {
 		s.mg.fail(m, stepGenesis, err)
 		return nil
 	}

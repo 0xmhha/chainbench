@@ -97,7 +97,7 @@ inputs:
 execution:
   chain: fresh
 
-# 배치 직후, 무엇이든 쓰기 전에 노드가 놓일 모든 서버에서 dataRoot 의 여유 공간을
+# genesis 를 쓰기 전(대상에 처음 쓰는 시점)에 노드가 놓일 모든 서버에서 dataRoot 의 여유 공간을
 # 확인한다. 이보다 적으면 구성을 시작하지 않는다. 비우면 2GiB, "0" 이면 검사하지 않는다.
 # limits:
 #   minFreeDisk: 2GiB

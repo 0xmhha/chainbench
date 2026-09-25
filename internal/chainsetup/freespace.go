@@ -15,9 +15,9 @@ import (
 //
 // A full disk used to surface as whatever the first write that did not fit
 // happened to be — on the 15-node docker set, "mkdir: cannot create directory"
-// from node13's launch, after twelve nodes were already running. Asked here,
-// right after placement, it is one message naming every machine that is short,
-// before anything is written to any of them.
+// from node13's launch, after twelve nodes were already running. Asked before
+// the genesis, the first write, it is one message naming every machine that is
+// short, before anything is written to any of them.
 //
 // The floor is the workspace-config's limits.minFreeDisk, or
 // resource.DefaultMinFreeDisk; "0" turns the check off. A machine whose driver
