@@ -102,9 +102,8 @@ var verbNeeds = map[string]verbNeed{
 	"Config":     {step: "config"},
 	"Provision":  {step: "deploy"},
 	"Init":       {step: "init"},
-	"Start":      {step: "start"},
 	// The launch in four parts, for the states that walk it. Each needs what
-	// Start needed, because together they are Start.
+	// the start step needs, because together they are the start step.
 	"LaunchPlan":      {step: "start"},
 	"StartPhase":      {step: "start"},
 	"RunPhaseActions": {step: "start"},

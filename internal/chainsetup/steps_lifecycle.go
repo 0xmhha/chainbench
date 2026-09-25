@@ -354,34 +354,6 @@ func (w *Workspace) FinishLaunch(ctx context.Context, bin string, started int) (
 	return detail, nil
 }
 
-// Start launches every stopped node. Argv comes from the launchopts step when
-// it ran; otherwise it is assembled here through the same single site
-// (nodeconfig.Argv) with no overrides.
-func (w *Workspace) Start(ctx context.Context, binaryArg string) (StepOut, error) {
-	bin, phases, err := w.LaunchPlan(ctx, binaryArg)
-	if err != nil {
-		return StepOut{}, err
-	}
-	started := 0
-	for _, phase := range phases {
-		launched, perr := w.StartPhase(ctx, bin, phase)
-		if perr != nil {
-			return StepOut{}, perr
-		}
-		started += launched
-		if len(phase.Actions) > 0 {
-			if aerr := w.RunPhaseActions(ctx, bin, phase); aerr != nil {
-				return StepOut{}, aerr
-			}
-		}
-	}
-	detail, err := w.FinishLaunch(ctx, bin, started)
-	if err != nil {
-		return StepOut{}, err
-	}
-	return StepOut{Detail: detail}, nil
-}
-
 // Stop terminates every running node by its recorded PID and clears the PIDs.
 //
 // Every node is attempted. A node whose machine cannot be resolved used to end

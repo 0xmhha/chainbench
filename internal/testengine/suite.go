@@ -205,7 +205,7 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 	}
 	specs := in.SpecContent
 	if len(specs) > 0 && in.Env != "" {
-		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against")
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --chain-preset moves a case onto another declaration, and inline spec content names no file to resolve it against")
 	}
 	if len(specs) == 0 {
 		var err error
