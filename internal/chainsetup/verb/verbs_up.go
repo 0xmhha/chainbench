@@ -101,44 +101,17 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn
 	}
 	stage, mode := up.stage, up.mode
 
-	// The composite holds the workspace for its whole run. Each step it calls
-	// takes the lock too, but a run cannot conflict with itself (session
-	// Acquire is re-entrant per process); what this closes is the gap between
-	// steps, where another run used to slip in and compose over a half-built
-	// network.
-	lockWS, err := chainsetup.Open(in.DataDir, d.Clock)
+	lockWS, release, err := holdWorkspace(d, in.DataDir)
 	if err != nil {
 		return ChainUpOut{}, err
 	}
-	lockWS.SetEnv(d.Env)
-	lockWS.SetDriver(d.Driver)
-	held, prev, lockState, err := lockWS.Acquire(d.Owner())
-	if err != nil {
-		return ChainUpOut{}, err
-	}
-	defer func() { _ = held.Release() }()
-	if lockState == session.LockStale {
-		d.Logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
-	}
-
-	// reuse-if-matching reconciles a running network node by node. Its baseline
-	// — what each node hashed to and whether it answers — must be captured now,
-	// before the compose steps re-run and reset the node table. A first up over
-	// an empty workspace yields an empty snapshot, which composes everything.
-	reuseMode := mode == resource.ChainReuseIfMatching && stage == chainsetup.UpStart
-	var snap chainsetup.ReuseSnapshot
-	if reuseMode {
-		snap = lockWS.SnapshotForReuse(ctx)
-	}
+	defer release()
 
 	var out ChainUpOut
 
 	// The machine is given the workspace and the request; every stage does its
 	// own work, so nothing of this function's is handed in.
-	mgr := chainsetup.NewManager(d, lockWS)
-	if reuseMode {
-		mgr.ReuseFrom(snap)
-	}
+	mgr := newManagerFor(ctx, d, lockWS, stage, mode)
 	cerr := mgr.Compose(ctx, in, from)
 	// Read before the error is returned: how far a dead run got is the first
 	// thing its reader wants.
@@ -153,6 +126,44 @@ func composeFrom(ctx context.Context, d chainsetup.Deps, in chainsetup.ChainUpIn
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// holdWorkspace opens the workspace and holds its lock until release is
+// called.
+//
+// A composition holds the workspace for its whole run. Each step it calls
+// takes the lock too, but a run cannot conflict with itself (session Acquire
+// is re-entrant per process); what this closes is the gap between steps, where
+// another run used to slip in and compose over a half-built network.
+func holdWorkspace(d chainsetup.Deps, dir string) (*chainsetup.Workspace, func(), error) {
+	ws, err := chainsetup.Open(dir, d.Clock)
+	if err != nil {
+		return nil, nil, err
+	}
+	ws.SetEnv(d.Env)
+	ws.SetDriver(d.Driver)
+	held, prev, lockState, err := ws.Acquire(d.Owner())
+	if err != nil {
+		return nil, nil, err
+	}
+	if lockState == session.LockStale {
+		d.Logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
+	}
+	return ws, func() { _ = held.Release() }, nil
+}
+
+// newManagerFor is the machine for a composition in the given execution mode.
+//
+// reuse-if-matching reconciles a running network node by node. Its baseline —
+// what each node hashed to and whether it answers — must be captured now,
+// before the compose steps re-run and reset the node table. A first up over an
+// empty workspace yields an empty snapshot, which composes everything.
+func newManagerFor(ctx context.Context, d chainsetup.Deps, ws *chainsetup.Workspace, stage chainsetup.UpStage, mode resource.ChainMode) *chainsetup.Manager {
+	mgr := chainsetup.NewManager(d, ws)
+	if mode == resource.ChainReuseIfMatching && stage == chainsetup.UpStart {
+		mgr.ReuseFrom(ws.SnapshotForReuse(ctx))
+	}
+	return mgr
 }
 
 // placeUpRequest places the request's binary references through the environment

@@ -46,13 +46,25 @@ type CompareOut struct {
 // It stops before the readiness gate. Whether the network that resulted is
 // producing is a question this package cannot answer — the gate belongs to
 // whoever owns the monitor — so the walk hands it over rather than guessing.
+//
+// It is held to what `chain up` is held to — the same request checks, the
+// workspace-config's execution.chain, and the workspace locked for the whole
+// walk. It used to skip all three: a run's request was never checked for inline
+// key material before it was recorded, execution.chain was read by `chain up`
+// and ignored by a run, and another run could compose over this one between
+// two of its stages.
 func ChainUpComparing(ctx context.Context, d chainsetup.Deps, in CompareIn) (CompareOut, error) {
 	var out CompareOut
-	ws, err := chainsetup.Open(in.Up.DataDir, d.Clock)
+	up, err := planUp(in.Up)
 	if err != nil {
 		return out, err
 	}
-	mgr := chainsetup.NewManager(d, ws)
+	ws, release, err := holdWorkspace(d, in.Up.DataDir)
+	if err != nil {
+		return out, err
+	}
+	defer release()
+	mgr := newManagerFor(ctx, d, ws, up.stage, up.mode)
 	cerr := mgr.ComposeComparing(ctx, in.Up)
 	out.Steps = mgr.Steps()
 	out.Decision = mgr.Decision()
