@@ -81,6 +81,14 @@ func ResolveServer(ref ServerRef, minValidators, portBand int) (ResolveServerOut
 	}, nil
 }
 
+// TargetOf is where one server of a set keeps its data plane, under dataRoot —
+// the spec every step that reaches that server opens.
+func TargetOf(s Server, dataRoot string) Spec {
+	spec := serverTarget(s)
+	spec.DataRoot = dataRoot
+	return spec
+}
+
 // serverTarget describes where one server's data plane lives. A remote server
 // is recorded as a KindServer spec naming its set entry — not flattened to a
 // host/user pair — so every later step resolves the login from the server set
