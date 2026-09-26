@@ -104,6 +104,11 @@ func TestLaunch_AFailedLaunchStopsTheNodesItStarted(t *testing.T) {
 			t.Errorf("node%d still has pid %d recorded after the rollback", ns.Index, ns.PID)
 		}
 	}
+	// The record names the failure state the launch stage classified, not only
+	// the message: the driver's refusal carries no kind the stage knows.
+	if got := ws.State().Steps["start"].Failed; got != "FailStageUnclassified" {
+		t.Errorf("the start step records failure state %q, want FailStageUnclassified", got)
+	}
 	if !slices.ContainsFunc(out.Steps, func(s string) bool { return strings.HasPrefix(s, "rollback: 2 node(s)") }) {
 		t.Errorf("the rollback is not in the steps a run prints: %v", out.Steps)
 	}

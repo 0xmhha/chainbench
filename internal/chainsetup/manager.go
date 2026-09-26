@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
@@ -100,6 +101,9 @@ type Manager struct {
 	// failure is why the composition stopped, written just before the move to
 	// failed so that state can report it once.
 	failure error
+	// failStatus is which of the designed failure states failure is, from the
+	// failing stage's classifier (FailureStatus). Zero while nothing failed.
+	failStatus lifecycle.Status
 	// compare asks the target what it holds against the request. It is a field
 	// so a test can hand the comparison a verdict without a live network.
 	compare func(context.Context, Deps, ChainUpIn) preflight.Decision
@@ -491,6 +495,10 @@ func (mg *Manager) Decision() string {
 // At is where the machine ended, as a path, for a caller that reports it.
 func (mg *Manager) At() string { return mg.m.Path(mg.m.Current()) }
 
+// FailStatus is which failure state the composition ended in, or zero when it
+// did not fail.
+func (mg *Manager) FailStatus() lifecycle.Status { return mg.failStatus }
+
 // Tree is the machine's state tree, for a test to compare against the design.
 func (mg *Manager) Tree() string { return mg.m.Tree() }
 
@@ -543,7 +551,7 @@ func (mg *Manager) markFailed(step string, cause error) {
 	if err != nil {
 		return
 	}
-	ws.MarkStepFailed(step, cause)
+	ws.MarkStepFailed(step, cause, FailureStatus(step, cause))
 	_ = ws.Save()
 }
 

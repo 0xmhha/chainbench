@@ -51,6 +51,7 @@ func (s *compositionState) Process(_ context.Context, m *statemachine.Machine, m
 	// The reason is written before the move, so the failed state reads a fact
 	// rather than being handed one. Transitions carry no values.
 	s.mg.failure = e.Err
+	s.mg.failStatus = FailureStatus(e.Step, e.Err)
 	m.TransitionTo(s.mg.failed)
 	return true, nil
 }
@@ -300,6 +301,7 @@ func (s *failedState) Process(_ context.Context, m *statemachine.Machine, msg st
 	switch msg.(type) {
 	case ClearError:
 		s.mg.failure = nil
+		s.mg.failStatus = 0
 		m.TransitionTo(s.mg.stopped)
 		return true, nil
 	}

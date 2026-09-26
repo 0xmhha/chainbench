@@ -131,7 +131,7 @@ func TestMarkStepFailed_TheRecordSaysWhereItDied(t *testing.T) {
 	}
 	w := &Workspace{state: State{Steps: map[string]Step{}}, comp: comp}
 
-	w.MarkStepFailed("init", errors.New(`driver: "gstable": executable file not found`))
+	w.MarkStepFailed("init", errors.New(`driver: "gstable": executable file not found`), 0)
 
 	got, ok := w.state.Steps["init"]
 	if !ok {
