@@ -221,6 +221,9 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 		}
 		parsed = append(parsed, s)
 	}
+	if err := composable(parsed, in.SpecPaths); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
 	if err := sameChain(parsed); err != nil {
 		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
@@ -238,6 +241,30 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return specs, parsed, comp, nil
+}
+
+// composable refuses to compose for a spec that declares env.attach.
+//
+// Such a spec says it runs against a network that is already up and that it
+// builds none. A --workspace-dir run composes before the specs are read — the
+// operator's flags outrank the document — and used to compose one anyway: a
+// default network from a declaration that describes none, which the case then
+// passed on. basic/08, the one case that checks attaching by declaration,
+// never attached. The run is refused and told the two ways that do what the
+// operator meant.
+func composable(parsed []dsl.Spec, paths []string) error {
+	for i, s := range parsed {
+		if s.EnvAttach == nil {
+			continue
+		}
+		name := s.ID
+		if i < len(paths) {
+			name = paths[i]
+		}
+		return fmt.Errorf("%s declares env.attach — it runs against a network that is already up and composes none — and --workspace-dir composes one; "+
+			"run it without --workspace-dir to attach to the network it declares, or give --chain-preset <preset> to compose that network instead", name)
+	}
+	return nil
 }
 
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
