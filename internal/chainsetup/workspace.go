@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"os"
 	"path/filepath"
 	"time"
@@ -241,11 +242,15 @@ func (w *Workspace) markStep(step, detail string) {
 // It is exported because the failure is noticed by the runner that drives the
 // steps, not by the step itself: a step that fails returns an error and never
 // reaches its own markStep call.
-func (w *Workspace) MarkStepFailed(step string, cause error) {
+func (w *Workspace) MarkStepFailed(step string, cause error, status lifecycle.Status) {
 	if w.state.Steps == nil {
 		w.state.Steps = map[string]Step{}
 	}
-	w.state.Steps[step] = w.comp.StepEnd(w.comp.StepBegin(), "", cause)
+	rec := w.comp.StepEnd(w.comp.StepBegin(), "", cause)
+	if status != 0 {
+		rec.Failed = status.String()
+	}
+	w.state.Steps[step] = rec
 }
 
 // Save writes the composition state to the manifest.

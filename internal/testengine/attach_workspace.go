@@ -157,6 +157,11 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Cha
 		// The chain's own state rides on the result, not in the sentence. The
 		// surface prints one suffix for both areas.
 		out.ComposeFailedAt = res.At
+		if res.Failed != "" {
+			// Which of the designed failures it was, next to where: "CHAIN_FAILED"
+			// alone said a stage failed and left the reader to find out how.
+			out.ComposeFailedAt += " (" + res.Failed + ")"
+		}
 		return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
 	}
 

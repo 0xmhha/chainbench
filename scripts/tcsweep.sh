@@ -63,6 +63,76 @@ while True:
 PY
 }
 
+# attachOf says whether a case declares env.attach: it runs against a network
+# that is already up and composes none. `run --workspace-dir` refuses such a
+# case, so the sweep brings a network up for it first (runAttach).
+attachOf() {
+  python3 - "$1" "$ROOT" <<'PY'
+import json, pathlib, sys
+spec, root = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+try:
+    d = json.loads(spec.read_text())
+except Exception:
+    print(0); raise SystemExit
+cp, seen = d.get("chainPreset"), set()
+while True:
+    if isinstance(cp, str):
+        f = root / "presets/chain" / (cp + ".json")
+        if not f.exists() or cp in seen:
+            print(0); break
+        seen.add(cp)
+        cp = json.loads(f.read_text())
+        continue
+    if isinstance(cp, dict):
+        if cp.get("attach"):
+            print(1); break
+        cp = cp.get("extends")
+        continue
+    print(0); break
+PY
+}
+
+# attachTarget prints the RPC URL of node1 of the network composed in $1, as
+# this machine reaches it, and the key set it was composed from. Under
+# --docker the node's own address is translated through the localmap next to
+# the server set, the same way chainbench dials it.
+attachTarget() {
+  "$BIN" chain show --workspace-dir "$1" --node 1 --json 2>/dev/null | python3 - "$1" "$ROOT" ${EXTRA[@]+"${EXTRA[@]}"} <<'PY'
+import json, pathlib, re, sys
+ws, root, extra = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3:]
+e = json.load(sys.stdin)["entries"][0]
+host, port = e["host"], e["http"]
+if "--docker" in extra and "--server-set" in extra:
+    lm = pathlib.Path(extra[extra.index("--server-set") + 1]).parent / "localmap.yaml"
+    m = re.search(re.escape(host) + r":\s*\n\s*host:\s*(\S+)\s*\n\s*ports:\s*\{([^}]*)\}", lm.read_text())
+    if m:
+        ports = dict(p.split(":") for p in m.group(2).replace(" ", "").split(","))
+        host, port = m.group(1), ports.get(str(port), port)
+keys = json.loads((ws / "chain-record.json").read_text()).get("keysDir", "")
+if keys and not pathlib.Path(keys).is_absolute():
+    keys = str(root / keys)
+print(f"http://{host}:{port} {keys}")
+PY
+}
+
+# runAttach runs an attach case against a network it brings up for it: the
+# basic consensus case's network, kept up in $2, then stopped. The case is
+# given node1's address and the key set the network was composed from, which
+# is what the case's own declaration would name on a machine that set one up.
+runAttach() {
+  local spec=$1 ws=$2 host="$ROOT/tests/tc/basic/01-basic-consensus.json" up rpc keys
+  if ! up=$("$BIN" run "$host" --workspace-dir "$ws" --keep-up ${EXTRA[@]+"${EXTRA[@]}"} 2>&1); then
+    printf '%s\nthe network to attach to did not come up\n' "$up"
+    "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+    return 2
+  fi
+  read -r rpc keys < <(attachTarget "$ws")
+  CHAINBENCH_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
+  local code=$?
+  "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+  return $code
+}
+
 mapfile -t CASES < <(find "$ROOT/tests/tc" -name '*.json' | sort | { [ -n "$PATTERN" ] && grep "$PATTERN" || cat; })
 total=${#CASES[@]}
 : > "$OUT"
@@ -78,7 +148,11 @@ for spec in "${CASES[@]}"; do
   ws="$WS_BASE/c$i"
   rm -rf "$ws"
   start=$SECONDS
-  out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
+  if [ "$(attachOf "$spec")" = 1 ]; then
+    out=$(runAttach "$spec" "$ws")
+  else
+    out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
+  fi
   code=$?
   took=$((SECONDS - start))
 

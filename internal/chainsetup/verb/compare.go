@@ -33,6 +33,9 @@ type CompareOut struct {
 	Decision string
 	// At is where the walk ended, as a path.
 	At string
+	// Failed is the failure state the failing stage named, when the walk ended
+	// in CHAIN_FAILED; empty otherwise.
+	Failed string
 }
 
 // ChainUpComparing composes the network the request declares, reusing what is
@@ -69,5 +72,8 @@ func ChainUpComparing(ctx context.Context, d chainsetup.Deps, in CompareIn) (Com
 	out.Steps = mgr.Steps()
 	out.Decision = mgr.Decision()
 	out.At = mgr.At()
+	if st := mgr.FailStatus(); st != 0 {
+		out.Failed = st.String()
+	}
 	return out, cerr
 }

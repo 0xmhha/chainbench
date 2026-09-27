@@ -72,6 +72,10 @@ type Step struct {
 	Result StepState `json:"result,omitempty"`
 	Detail string    `json:"detail,omitempty"`
 	Err    string    `json:"err,omitempty"`
+	// Failed is the failure state the failing stage's classifier named for Err
+	// (for example ChainLaunchNodesFailPortBusy). Empty when the step did not
+	// fail, or failed before its stage could classify it.
+	Failed string `json:"failed,omitempty"`
 	// StartedAt and At are RFC3339 UTC. A step that is still running has the
 	// first and not the second.
 	StartedAt string `json:"startedAt,omitempty"`

@@ -184,8 +184,13 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-wbft-
 **008. `attached-chain-produces`** — stablenet · bp4 · 직전 PASS 19s  
 이미 떠 있는 망에 선언만으로 붙어서 블록이 나오는지 본다. 명령행에 망을 가리키는 플래그가 하나도 없고, env.attach 가 그 자리를 대신한다.  
 
+이 케이스만 명령이 세 부분이다. 붙을 망이 먼저 떠 있어야 해서, `basic/01` 의 망을 `--keep-up` 으로
+세워 두고(node1 이 8600, 키는 `presets/keys` — 선언이 가리키는 그대로), 08 을 **`--workspace-dir` 없이**
+돌린 뒤 망을 내린다. 08 에 `--workspace-dir` 를 주면 이제 거부된다 — 예전에는 기본 망을 새로 만들어
+그 위에서 pass 해서, attach 를 한 번도 거치지 않았다.
+
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/attached-chain-produces" && bin/chainbench run tests/tc/basic/08-attached-chain-produces.json --workspace-dir "$HOME/cbw/manual/attached-chain-produces" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/attached-chain-produces" && bin/chainbench run tests/tc/basic/01-basic-consensus.json --workspace-dir "$HOME/cbw/manual/attached-chain-produces" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable" --keep-up && bin/chainbench run tests/tc/basic/08-attached-chain-produces.json; bin/chainbench chain stop --workspace-dir "$HOME/cbw/manual/attached-chain-produces"
 ```
 
 
