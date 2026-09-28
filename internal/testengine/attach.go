@@ -182,6 +182,8 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Keys:      keys,
 		Nodes:     cfg.Control,
 		Contracts: chainContracts(cfg.Chain),
+
+		ConsensusMethods: chainConsensusMethods(cfg.Chain),
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
@@ -306,4 +308,30 @@ func chainContracts(chain string) map[string]string {
 		return nil
 	}
 	return p.Manifest().SystemContracts
+}
+
+// The roles a spec may ask a consensus method for. One so far: the question
+// every chain answers and each spells differently.
+const roleValidators = "validators"
+
+// chainConsensusMethods is the chain's consensus RPC methods by role.
+//
+// It reads the manifest rather than the family so the table has one source —
+// the family's ValidatorsMethod() and the manifest's validators_method are the
+// same fact, and the manifest is what a project supplies for a chain the
+// binary does not know.
+//
+// A chain whose manifest leaves the method empty contributes no entry, so
+// asking for the role there fails by name instead of calling "".
+func chainConsensusMethods(chain string) map[string]string {
+	p, err := registry.Get(chain)
+	if err != nil {
+		return nil
+	}
+	m := p.Manifest().Consensus
+	out := map[string]string{}
+	if m.ValidatorsMethod != "" {
+		out[roleValidators] = m.ValidatorsMethod
+	}
+	return out
 }

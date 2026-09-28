@@ -37,7 +37,7 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	args, aerr := resolveNamedArgs(ac.Deps, ac.Args)
 	if aerr != nil {
 		return aerr
 	}
@@ -185,7 +185,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	if event == "" {
 		event = "newHeads"
 	}
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr

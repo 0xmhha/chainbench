@@ -42,7 +42,7 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr

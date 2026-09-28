@@ -26,6 +26,15 @@ type Deps struct {
 	// processes — attach mode — and those actions then fail with a clear reason
 	// rather than silently doing nothing.
 	Nodes NodeControl
+	// ConsensusMethods are the chain's consensus RPC methods by the role they
+	// play, so a spec can ask for the role instead of writing the method name.
+	//
+	// The same question has a different name on each chain: the validator set
+	// is istanbul_getValidators on a wbft chain and wemix_getValidators on a
+	// poa one. A common case that writes either name runs on one chain and
+	// fails on the other, and the fact it needs is already in that chain's
+	// manifest. So it is resolved per run, the way Contracts is.
+	ConsensusMethods map[string]string
 	// Contracts are the chain's own contracts by the name that chain calls
 	// them, so a spec can name one instead of writing the address.
 	//

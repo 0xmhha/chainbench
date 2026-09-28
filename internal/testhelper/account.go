@@ -249,11 +249,29 @@ func ComparedAsWritten(actual any) bool {
 	return ok && s != "" && !addressLiteral.MatchString(s)
 }
 
-// resolveAddressArgs returns spec with every address-shaped argument resolved,
-// leaving everything else untouched. The input map is not modified: a spec is
-// read more than once (an assertion runs against each target node), and
-// rewriting it in place would resolve against a spec that had already changed.
-func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
+// methodRole marks a "method" argument that names the ROLE a call plays rather
+// than the method itself, so the chain under test supplies the name.
+//
+// The prefix is "@", which readRPCCall already uses for the "@latest" params
+// sentinel. One mark for "the harness fills this in" beats a second spelling
+// for the same idea.
+const methodRole = "@"
+
+// resolveNamedArgs returns spec with every argument that NAMES something
+// resolved to what it names, leaving everything else untouched.
+//
+// Two kinds so far. An address-shaped argument that holds an account label or a
+// contract name becomes the address. A "method" argument that holds a role
+// becomes the method that chain answers it with.
+//
+// Both are the same problem: a spec says what it means and the run supplies the
+// value, because the value differs by chain and a spec that wrote it would run
+// on one chain and fail on the next.
+//
+// The input map is not modified: a spec is read more than once (an assertion
+// runs against each target node), and rewriting it in place would resolve
+// against a spec that had already changed.
+func resolveNamedArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
 	var out map[string]any
 	copyOnce := func() {
 		if out != nil {
@@ -300,10 +318,34 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 		copyOnce()
 		out[key] = resolved
 	}
+	if role, ok := spec["method"].(string); ok && strings.HasPrefix(role, methodRole) {
+		name := strings.TrimPrefix(role, methodRole)
+		method, known := d.ConsensusMethods[name]
+		if !known {
+			return nil, fmt.Errorf("dsl: method %q: this chain names no %q method (it answers %s)",
+				role, name, knownRoles(d))
+		}
+		copyOnce()
+		out["method"] = method
+	}
 	if out == nil {
 		return spec, nil
 	}
 	return out, nil
+}
+
+// knownRoles is what a chain does answer, for the refusal above. Sorted, so the
+// message is the same on every run.
+func knownRoles(d *interp.Deps) string {
+	if len(d.ConsensusMethods) == 0 {
+		return "no roles at all"
+	}
+	roles := make([]string, 0, len(d.ConsensusMethods))
+	for r := range d.ConsensusMethods {
+		roles = append(roles, methodRole+r)
+	}
+	sort.Strings(roles)
+	return strings.Join(roles, ", ")
 }
 
 // resolveNames returns v with every name the key set or the chain's contract

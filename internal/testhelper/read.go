@@ -30,7 +30,7 @@ func (readAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if source == "" {
 		return fmt.Errorf("dsl: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
-	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	args, aerr := resolveNamedArgs(ac.Deps, ac.Args)
 	if aerr != nil {
 		return aerr
 	}
@@ -71,7 +71,7 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if source == "" {
 		return fmt.Errorf("dsl: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
-	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	args, aerr := resolveNamedArgs(ac.Deps, ac.Args)
 	if aerr != nil {
 		return aerr
 	}
@@ -205,11 +205,11 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}
-	// Once, before the loop. resolveAddressArgs does not modify its input, so
+	// Once, before the loop. resolveNamedArgs does not modify its input, so
 	// the per-target call inside the loop was resolving the same spec again and
 	// — because "expected" was read from ac.Spec — leaving the compared value
 	// unresolved however many times it ran.
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr

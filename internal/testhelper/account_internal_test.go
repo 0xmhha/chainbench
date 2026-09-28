@@ -38,7 +38,7 @@ func TestResolveAddressArgs_ResolvesLabelsInAValueList(t *testing.T) {
 		"source": "derive", "op": "abiCall", "selector": "0xb03d36cd",
 		"of": []any{"node2"},
 	}
-	out, err := resolveAddressArgs(d, spec)
+	out, err := resolveNamedArgs(d, spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestResolveAddressArgs_LeavesAListItCannotResolve(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			spec := map[string]any{"of": tc.of}
-			out, err := resolveAddressArgs(d, spec)
+			out, err := resolveNamedArgs(d, spec)
 			if err != nil {
 				t.Fatalf("an unresolvable element must not be an error here: %v", err)
 			}
@@ -93,10 +93,10 @@ func TestResolveAddressArgs_LeavesAListItCannotResolve(t *testing.T) {
 func TestResolveAddressArgs_AnUnknownLabelInAnAddressArgumentStillFails(t *testing.T) {
 	d, _ := depsWithRing(t)
 
-	if _, err := resolveAddressArgs(d, map[string]any{"from": "nosuchlabel"}); err == nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"from": "nosuchlabel"}); err == nil {
 		t.Fatal("an unknown account in \"from\" must fail")
 	}
-	if _, err := resolveAddressArgs(d, map[string]any{"of": []any{"nosuchlabel"}}); err != nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"of": []any{"nosuchlabel"}}); err != nil {
 		t.Fatalf("an unknown name in \"of\" must be left alone: %v", err)
 	}
 }
@@ -170,11 +170,11 @@ func TestResolveAddressArgs_ASignerIsNeverAContract(t *testing.T) {
 	d, _ := depsWithRing(t)
 	d.Contracts = map[string]string{"govMinter": "0x0000000000000000000000000000000000001003"}
 
-	if _, err := resolveAddressArgs(d, map[string]any{"from": "govMinter"}); err == nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"from": "govMinter"}); err == nil {
 		t.Error("a contract name in \"from\" must be refused")
 	}
 	// The same name in an address position resolves.
-	out, err := resolveAddressArgs(d, map[string]any{"to": "govMinter"})
+	out, err := resolveNamedArgs(d, map[string]any{"to": "govMinter"})
 	if err != nil {
 		t.Fatalf("\"to\" must accept a contract: %v", err)
 	}
@@ -207,5 +207,66 @@ func TestResolveAccount_TellsAContractFromATypo(t *testing.T) {
 	_, err = ResolveAccount(d, "nosuchthing")
 	if err == nil || !strings.Contains(err.Error(), "unknown account") {
 		t.Errorf("a plain typo must still say unknown account: %v", err)
+	}
+}
+
+// TestResolveNamedArgs_AMethodRoleBecomesTheChainsOwnMethod.
+//
+// The validator set is one question with three names —
+// istanbul_getValidators on stablenet and wbft, wemix_getValidators on wemix.
+// A common case that writes either one runs on the chains that have it and
+// fails on the chain that does not, which is how a test ends up looking
+// chain-specific when only its spelling is.
+func TestResolveNamedArgs_AMethodRoleBecomesTheChainsOwnMethod(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.ConsensusMethods = map[string]string{"validators": "wemix_getValidators"}
+
+	spec := map[string]any{"source": "rpcCall", "method": "@validators"}
+	out, err := resolveNamedArgs(d, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := out["method"]; got != "wemix_getValidators" {
+		t.Errorf("method = %v, want the chain's own method", got)
+	}
+	// Read again on every target node, so the input must not be rewritten.
+	if spec["method"] != "@validators" {
+		t.Errorf("the input spec was modified: %v", spec["method"])
+	}
+}
+
+// TestResolveNamedArgs_AMethodWithoutARoleIsLeftAlone: the prefix is what marks
+// a role, so a spec that names a method outright still calls that method.
+func TestResolveNamedArgs_AMethodWithoutARoleIsLeftAlone(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.ConsensusMethods = map[string]string{"validators": "wemix_getValidators"}
+
+	out, err := resolveNamedArgs(d, map[string]any{"method": "eth_blockNumber"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := out["method"]; got != "eth_blockNumber" {
+		t.Errorf("method = %v, want it untouched", got)
+	}
+}
+
+// TestResolveNamedArgs_AnUnansweredRoleIsRefusedByName.
+//
+// Not silently left as "@validators", which would reach the node as a method
+// name and come back as a JSON-RPC "method not found" — a message about the
+// chain rather than about the case that asked a chain something it cannot
+// answer.
+func TestResolveNamedArgs_AnUnansweredRoleIsRefusedByName(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.ConsensusMethods = map[string]string{"validators": "istanbul_getValidators"}
+
+	_, err := resolveNamedArgs(d, map[string]any{"method": "@rewards"})
+	if err == nil {
+		t.Fatal("a role no chain answers was accepted")
+	}
+	for _, want := range []string{"@rewards", "@validators"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the refusal does not mention %q: %v", want, err)
+		}
 	}
 }

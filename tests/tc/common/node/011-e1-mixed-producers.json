@@ -15,7 +15,7 @@
     },
     {
       "expect": "rpc",
-      "method": "istanbul_getValidators",
+      "method": "@validators",
       "params": [
         "latest"
       ],
