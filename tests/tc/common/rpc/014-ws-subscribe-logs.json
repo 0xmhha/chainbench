@@ -38,7 +38,7 @@
       "address": "$addr",
       "do": "wsOpen",
       "event": "logs",
-      "on": "en1",
+      "on": "node2",
       "save": "logsub"
     },
     {

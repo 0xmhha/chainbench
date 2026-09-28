@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-two-down",
-  "description": "Stop 2/4 validators - consensus should halt, recover when 1 returns (원본 fault/two-down.sh)",
+  "description": "Stop 2/4 validators - consensus should halt, recover when 1 returns (원본 fault/two-down.sh) 판정은 세 체인이 같다. go-stablenet 과 go-wbft 는 4대 중 3대의 서명이 있어야 블록을 확정하고, go-wemix 는 etcd 과반(4대 중 3대)이 있어야 리더를 정한다. 그래서 4대 중 2대를 멈추면 셋 모두 멈추고, 1대를 되살려 3대가 되면 셋 모두 재개한다. 노드 수가 달라지면 이 둘이 갈릴 수 있으므로, 이 판정은 4대 구성에만 해당한다.",
   "requires": [
     "rpc",
     "consensus",

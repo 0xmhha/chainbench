@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "remote-balance-check",
-  "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. \"0 주소의 잔액이 0 이상\" 을 보던 것을 고쳤다. 잔액은 음수가 될 수 없어 언제나 참이었다. 0 주소는 어느 체인에나 있고 값이 변하지 않으므로 형식 확인에는 그대로 쓰고, 값을 실제로 읽어 오는지는 자금이 있는 노드 계정으로 본다. CT-RPC-007 의 기대 결과가 \"0보다 크고\" 이기 때문이다.",
+  "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. \"0 주소의 잔액이 0 이상\" 을 보던 것을 고쳤다. 잔액은 음수가 될 수 없어 언제나 참이었다. 0 주소는 어느 체인에나 있고 값이 변하지 않으므로 형식 확인에는 그대로 쓰고, 값을 실제로 읽어 오는지는 자금이 있는 노드 계정으로 본다. CT-RPC-007 의 기대 결과가 \"0보다 크고\" 이기 때문이다. 송금 전후 변화도 본다(CT-RPC-007 절차 2). 블록 생성 노드의 잔액은 보상·수수료로 함께 움직이므로, 새 계정 둘 사이에서 1 ETH 를 보내고 받는 쪽은 정확히 1 ETH, 보내는 쪽은 1 ETH 와 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
   "requires": [
     "rpc"
   ],
@@ -29,6 +29,102 @@
         "0x0000000000000000000000000000000000000000",
         "latest"
       ]
+    },
+    {
+      "do": "newAccount",
+      "save": "payer",
+      "saveKey": "payerKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "payee",
+      "saveKey": "payeeKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "on": "node1",
+      "to": "$payer",
+      "value": "10000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$payer",
+      "save": "payerBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payee",
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "do": "sendTx",
+      "key": "$payerKey",
+      "on": "node1",
+      "to": "$payee",
+      "value": "1000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "save": "moveHash",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$moveHash"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$moveHash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$used",
+        "$price"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$payerBefore",
+        "1000000000000000000",
+        "$fee"
+      ],
+      "save": "payerWant"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payee",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payer",
+      "compare": "Equal",
+      "is": "$payerWant"
     }
   ]
 }

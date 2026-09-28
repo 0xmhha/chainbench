@@ -27,7 +27,10 @@
       "isPerChain": {
         "wbft": "8284",
         "wemix": "8285"
-      }
+      },
+      "onEach": [
+        "all"
+      ]
     }
   ]
 }

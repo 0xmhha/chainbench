@@ -46,9 +46,9 @@
       "value": "1"
     },
     {
-      "compare": "GreaterOrEqual",
-      "expect": "blockNumber",
-      "is": "0x1"
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
     }
   ]
 }

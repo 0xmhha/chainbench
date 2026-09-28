@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-p2p-topology",
-  "description": "Test consensus and TX propagation under restricted hub-spoke P2P topology (원본 fault/p2p-topology.sh)",
+  "description": "Test consensus and TX propagation under restricted hub-spoke P2P topology (원본 fault/p2p-topology.sh) Propagation is checked where it matters: the recipient's balance must reach every spoke (node2..node4), not only the hub that mined it, and each spoke must have exactly one peer (the hub) while partitioned, so the balance can only have arrived through node1.",
   "requires": [
     "rpc",
     "consensus",
@@ -63,8 +63,56 @@
       "expect": "balanceAt",
       "on": "node1",
       "address": "$r",
-      "compare": "Greater",
-      "is": "0"
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "balanceAt",
+      "address": "$r",
+      "compare": "Equal",
+      "expected": "1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node3",
+      "source": "balanceAt",
+      "address": "$r",
+      "compare": "Equal",
+      "expected": "1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node4",
+      "source": "balanceAt",
+      "address": "$r",
+      "compare": "Equal",
+      "expected": "1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node2",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node3",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node4",
+      "compare": "Equal",
+      "is": "1"
     },
     {
       "do": "healPartition"

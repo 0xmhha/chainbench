@@ -15,9 +15,13 @@
   },
   "steps": [
     {
-      "compare": "Greater",
       "expect": "chainId",
-      "is": "0"
+      "compare": "Equal",
+      "is": "8283",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
     },
     {
       "expect": "rpcCall",

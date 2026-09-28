@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stress-block-time",
-  "description": "Measure block production time statistics over last 100 blocks (원본 stress/block-time.sh)",
+  "description": "Measure block production time statistics over last 100 blocks (원본 stress/block-time.sh) The average interval must sit at the configured period, not merely under a minute: every preset this runs on is configured for one block per second (blockPeriodSeconds 1 in the stablenet and wbft genesis), so the average must be at most 2 seconds. There is no lower bound because go-wemix, as chainbench composes it, averaged 0.79-0.86s — some blocks share a timestamp second — measured both right after start and after block 90 (2026-09-29). A lower bound of 1 would fail wemix on a behaviour this case does not own.",
   "requires": [
     "rpc",
     "consensus"
@@ -19,7 +19,7 @@
       "expect": "blockInterval",
       "on": "node1",
       "blocks": 15,
-      "maxSeconds": 60
+      "maxSeconds": 2
     }
   ]
 }

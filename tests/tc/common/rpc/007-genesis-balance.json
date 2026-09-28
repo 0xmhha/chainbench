@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "genesis-balance",
-  "description": "RT-A-4-02 — eth_getBalance 정상 조회 (원본 regression/ethereum/27-test-eth-get-balance)",
+  "description": "RT-A-4-02 — eth_getBalance 정상 조회 (원본 regression/ethereum/27-test-eth-get-balance) 송금 전후 변화도 본다(CT-RPC-007 절차 2). 블록 생성 노드의 잔액은 보상·수수료로 함께 움직이므로, 새 계정 둘 사이에서 1 ETH 를 보내고 받는 쪽은 정확히 1 ETH, 보내는 쪽은 1 ETH 와 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
   "requires": [
     "rpc"
   ],
@@ -19,6 +19,102 @@
       "compare": "Greater",
       "expect": "balanceAt",
       "is": "0"
+    },
+    {
+      "do": "newAccount",
+      "save": "payer",
+      "saveKey": "payerKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "payee",
+      "saveKey": "payeeKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "on": "node1",
+      "to": "$payer",
+      "value": "10000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$payer",
+      "save": "payerBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payee",
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "do": "sendTx",
+      "key": "$payerKey",
+      "on": "node1",
+      "to": "$payee",
+      "value": "1000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "save": "moveHash",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$moveHash"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$moveHash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$used",
+        "$price"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$payerBefore",
+        "1000000000000000000",
+        "$fee"
+      ],
+      "save": "payerWant"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payee",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$payer",
+      "compare": "Equal",
+      "is": "$payerWant"
     }
   ]
 }

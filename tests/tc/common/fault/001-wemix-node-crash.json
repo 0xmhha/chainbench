@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "wemix-node-crash",
-  "description": "Stop one wemix (poa) producer and verify block production continues, then restart it (WA25 — wemix had no fault coverage).",
+  "description": "Stop one wemix (poa) producer and verify block production continues, then restart it (WA25 — wemix had no fault coverage). After the restart the node must catch up (CT-FAULT-001): node1's head right after the restart includes the blocks made while node3 was down, so node3 reaching that height means it synced them; then every node must agree on the latest hash, and node3's state root at that height must equal node1's — the root node3 computed by executing the blocks, not a header it was handed.",
   "requires": [
     "rpc",
     "consensus",
@@ -29,6 +29,60 @@
     {
       "do": "restartNode",
       "on": "node3"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "caught"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "node3",
+      "compare": "GreaterOrEqual",
+      "expected": "$caught",
+      "timeout": "300s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$caught",
+        "0"
+      ],
+      "format": "hex",
+      "save": "caughtHex"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$caughtHex",
+        false
+      ],
+      "select": "stateRoot",
+      "save": "root"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node3",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$caughtHex",
+        false
+      ],
+      "select": "stateRoot",
+      "compare": "Equal",
+      "is": "$root"
     }
   ]
 }

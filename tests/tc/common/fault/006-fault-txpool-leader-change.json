@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-txpool-leader-change",
-  "description": "Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh)",
+  "description": "Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh) The transaction has to be pending when node1 stops, which a 1-second chain does not allow if the send waits for its receipt: the tx is mined before the stop. So consensus is halted first (node3 and node4 down, 2 of 4), the tx goes to node1 without waiting, and node1 stops only once node2's pool holds it. node3 and node4 then return, the three remaining validators resume without node1, and node2 must report the tx mined with status 0x1 and an empty pending pool.",
   "requires": [
     "rpc",
     "consensus",
@@ -22,22 +22,72 @@
       "saveKey": "acctKey"
     },
     {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "stopNode",
+      "on": "node4"
+    },
+    {
+      "expect": "blockHalt",
+      "on": "node1",
+      "within": "12s",
+      "maxAdvance": 1
+    },
+    {
       "do": "sendTx",
       "on": "node1",
       "from": "node1",
       "to": "$acct",
       "value": "1",
-      "expect": "receipt"
+      "gas": "21000",
+      "wait": false,
+      "save": "pendingHash"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "txpool_status",
+      "select": "pending",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "30s",
+      "pollInterval": "1s"
     },
     {
       "do": "stopNode",
       "on": "node1"
     },
     {
-      "expect": "blockAdvance",
+      "do": "startNode",
+      "on": "node3"
+    },
+    {
+      "do": "startNode",
+      "on": "node4"
+    },
+    {
+      "do": "waitFor",
       "on": "node2",
-      "timeout": "90s",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$pendingHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "180s",
       "pollInterval": "2s"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "node2",
+      "address": "$acct",
+      "compare": "Equal",
+      "is": "1"
     },
     {
       "expect": "rpc",

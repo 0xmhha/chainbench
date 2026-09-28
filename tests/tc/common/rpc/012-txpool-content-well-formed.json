@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "txpool-content-well-formed",
-  "description": "RT-G-4-03 — txpool_content 의 항목에 보낸 이, nonce, 가스 가격이 들어 있는지 본다 (원본 regression/api/19-test-txpool-content, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-012). 전에는 pending 과 queued 키가 있는지만 봤다. 그러면 둘 다 빈 객체여도 통과한다. CT-RPC-011 과 같은 상태를 만든다. 새 계정에서 nonce 0 을 건너뛰고 3 으로 보내면 그 트랜잭션은 실행할 수 없어 보류 칸에 남는다. 읽을 때는 txpool_content 대신 txpool_contentFrom 을 쓴다. txpool_content 는 주소를 지도의 열쇠로 돌려주어 그 열쇠를 경로에 적어야 하는데, 주소는 실행할 때마다 달라진다. contentFrom 은 주소를 인자로 받으므로 경로에 nonce 만 적으면 된다. nonce 를 직접 적은 전송은 로컬에서 서명해 eth_sendRawTransaction 으로 보내는 길을 타고, 그 길은 수수료 상한을 스스로 적어야 한다(internal/testhelper/sendtx.go 의 SendDynamicFeeTx 분기). 적지 않으면 \"nil value or fee cap\" 으로 보내기 전에 걸린다. 값은 nonce-ordering 이 쓰는 것과 같게 두었다. 세 체인 모두에서 통과가 확인된 값이다. 격차 전송은 expect 를 걸지 않고 wait 를 false 로 둔다. 이 트랜잭션은 받아들여진 뒤 보류 칸에 남아야 하므로, 제출이 거절되면 그대로 실패여야 한다.",
+  "description": "RT-G-4-03 — txpool_content 의 항목에 보낸 이, nonce, 가스 가격이 들어 있는지 본다 (원본 regression/api/19-test-txpool-content, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-012). CT-RPC-011 과 같은 상태를 만든다: 검증 노드 둘을 멈춰 합의를 세운 뒤 연속 nonce 0, 1 과 격차 nonce 3, 4 를 넣는다. 대기(pending) 칸에 0, 1 이, 보류(queued) 칸에 3, 4 가 보낸 이, gas, 가스 가격과 함께 있어야 한다. 끝나면 두 노드를 다시 켜고 연속 두 건이 채굴되는 것까지 기다린다.",
   "requires": [
     "rpc"
   ],
@@ -22,14 +22,54 @@
     {
       "do": "sendTx",
       "from": "faucet",
+      "on": "node1",
       "to": "$spender",
-      "value": "1000000000000000000",
+      "value": "10000000000000000000",
       "expect": "receipt",
       "timeout": "120s"
     },
     {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "stopNode",
+      "on": "node4"
+    },
+    {
+      "expect": "blockHalt",
+      "on": "node1",
+      "within": "12s",
+      "maxAdvance": 1
+    },
+    {
       "do": "sendTx",
       "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "0",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "1",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
       "to": "0x00000000000000000000000000000000C0FFEE11",
       "value": "1",
       "gas": "21000",
@@ -39,7 +79,108 @@
       "wait": false
     },
     {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "4",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
       "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.nonce",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.from",
+      "compare": "EqualCI",
+      "is": "$spender"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.gas",
+      "compare": "Equal",
+      "is": "0x5208"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.gasPrice",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.1.nonce",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.1.from",
+      "compare": "EqualCI",
+      "is": "$spender"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.1.gas",
+      "compare": "Equal",
+      "is": "0x5208"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.1.gasPrice",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
       "method": "txpool_contentFrom",
       "params": [
         "$spender"
@@ -50,6 +191,7 @@
     },
     {
       "expect": "rpcCall",
+      "on": "node1",
       "method": "txpool_contentFrom",
       "params": [
         "$spender"
@@ -60,6 +202,7 @@
     },
     {
       "expect": "rpcCall",
+      "on": "node1",
       "method": "txpool_contentFrom",
       "params": [
         "$spender"
@@ -70,6 +213,7 @@
     },
     {
       "expect": "rpcCall",
+      "on": "node1",
       "method": "txpool_contentFrom",
       "params": [
         "$spender"
@@ -77,6 +221,68 @@
       "select": "queued.3.gasPrice",
       "compare": "NotNil",
       "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.4.nonce",
+      "compare": "Equal",
+      "is": "0x4"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.4.from",
+      "compare": "EqualCI",
+      "is": "$spender"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.4.gas",
+      "compare": "Equal",
+      "is": "0x5208"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.4.gasPrice",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "do": "startNode",
+      "on": "node3"
+    },
+    {
+      "do": "startNode",
+      "on": "node4"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "nonceAt",
+      "address": "$spender",
+      "compare": "Equal",
+      "expected": "2",
+      "timeout": "90s",
+      "pollInterval": "2s"
     }
   ]
 }

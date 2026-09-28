@@ -18,6 +18,9 @@
       "compare": "Greater",
       "expect": "gasPrice",
       "is": "0"
+    },
+    {
+      "expect": "gasPriceIsBaseFeePlusTip"
     }
   ]
 }

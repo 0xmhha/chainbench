@@ -42,7 +42,7 @@
     },
     {
       "do": "waitFor",
-      "on": "en1",
+      "on": "node2",
       "source": "rpcCall",
       "method": "eth_getTransactionReceipt",
       "params": [
@@ -59,7 +59,7 @@
       "expect": "reject",
       "feePayerKey": "$feePayerKey",
       "key": "$senderKey",
-      "on": "en1",
+      "on": "node2",
       "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       "value": "1",
       "reason": "insufficient feePayer's funds"
@@ -70,9 +70,9 @@
       "is": "0x1"
     },
     {
-      "compare": "GreaterOrEqual",
-      "expect": "blockNumber",
-      "is": "1"
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
     }
   ]
 }

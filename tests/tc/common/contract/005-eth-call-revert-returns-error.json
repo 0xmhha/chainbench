@@ -48,7 +48,8 @@
     {
       "expect": "callError",
       "to": "$addr",
-      "data": "0xa9cc4718"
+      "data": "0xa9cc4718",
+      "reason": "execution reverted"
     }
   ]
 }

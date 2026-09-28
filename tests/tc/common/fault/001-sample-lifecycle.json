@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "sample-lifecycle-node-restart",
-  "description": "작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md)",
+  "description": "작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md) 멈추는 노드는 블록 생성 노드(node3)다. CT-FAULT-001 은 생성 노드 하나가 빠져도 합의가 이어지는지를 보며, 종단 노드를 멈추면 합의에는 아무 일도 일어나지 않는다. 다시 띄운 뒤에는 node1 의 그 시점 높이까지 node3 이 따라잡기를 기다렸다가 해시를 견준다. 고정 높이(8)는 체인이 이미 지나간 뒤라 아무것도 기다리지 않았다.",
   "requires": [
     "rpc",
     "consensus",
@@ -57,7 +57,7 @@
     },
     {
       "do": "stopNode",
-      "on": "en1"
+      "on": "node3"
     },
     {
       "expect": "blockAdvance",
@@ -67,13 +67,22 @@
     },
     {
       "do": "startNode",
-      "on": "en1"
+      "on": "node3"
     },
     {
-      "do": "waitBlock",
-      "on": "en1",
-      "target": 8,
-      "timeout": "120s"
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "caught"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "node3",
+      "compare": "GreaterOrEqual",
+      "expected": "$caught",
+      "timeout": "180s",
+      "pollInterval": "2s"
     },
     {
       "expect": "sameBlockHash",
@@ -81,9 +90,9 @@
     },
     {
       "do": "readNodeLog",
-      "on": "en1",
+      "on": "node3",
       "maxBytes": 4096,
-      "save": "en1Log"
+      "save": "node3Log"
     }
   ]
 }
