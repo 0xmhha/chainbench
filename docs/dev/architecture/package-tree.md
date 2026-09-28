@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 60,000 |
+| `internal/` | 52 | 60,017 |
 | `cmd/` | 19 | 5,094 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **65,884** |
+| **합계** | **74** | **65,901** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -94,7 +94,7 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 3,793줄
+## 2. 체인·합의 정의 — 11패키지 3,810줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
@@ -113,7 +113,7 @@ internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안�
 ├── wbft             52  go-wbft 플러그인 등록 — wbft 패밀리 + wbft accounts 프로토콜 + 매니페스트·croissant 템플릿(embed)
 └── wemix            68  wemix 특화 capability (poa/etcd 부트스트랩)
 
-internal/accounts    981  [L1] tx 서명 — 외부 accounts SDK 경계. EncodeABI·EncodeCall·EncodeCallArgs·Selector·
+internal/accounts    998  [L1] tx 서명 — 외부 accounts SDK 경계. EncodeABI·EncodeCall·EncodeCallArgs·Selector·
                           EventTopic·FindLog·CreateAddress·Word/WordAt/WordToBig·ForChain·GenerateKey
 internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 검증자셋과 관련 역할을 Load
 ```
