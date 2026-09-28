@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "accesslist-gasprice-below-min-rejected",
-  "description": "TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert) 값 1 wei 는 \"최소값보다 낮은 값\" 이 아니었다. 2026-09-28 go-wbft 에서 이 트랜잭션이 받아들여졌다. 세 체인의 txpool 기본 pricelimit 은 모두 1 wei 인데(각 저장소 core/txpool/legacypool/legacypool.go, core/tx_pool.go), go-stablenet 은 params.MinBaseFee 가 20,000 Gwei 라 바닥이 높고 go-wemix 는 뜬 뒤 거버넌스 값(기본 100 Gwei)으로 덮어쓴다(wemix/admin.go:648). go-wbft 만 1 wei 그대로라 1 < 1 이 거짓이 되어 통과했다. 0 으로 보내면 세 체인의 최소값 어디에도 못 미치므로 모두 거부한다.",
+  "description": "TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert) 값은 1 wei 로 둔다. 0 으로 낮춰 보았으나 더 나빴다(2026-09-28 실측). legacy·accessList 형식은 go-wbft 와 go-stablenet 이 London 이후 gasPrice 0 을 따로 막아(internal/ethapi/transaction_args.go:231) 다른 문구로 거부하고, dynamic 형식은 go-wbft 에서 여전히 통과한다. go-wbft 가 통과시키는 진짜 이유는 값의 크기가 아니라 로컬 트랜잭션에 최소 팁 검사를 면제하기 때문이다 — core/txpool/legacypool/legacypool.go:652 의 `if local { opts.MinTip = new(big.Int) }`. chainbench 는 노드의 잠금 해제 계정으로 eth_sendTransaction 을 부르므로 보내는 것이 전부 로컬이다. go-wemix 는 로컬에도 적용되는 가지를 따로 두어(core/tx_pool.go:697) 거부한다. 즉 어떤 값을 넣어도 go-wbft 에서 제출 거부를 끌어낼 수 없다. CT-FEE-002 의 기대 결과가 이미 \"거부되거나 블록에 포함되지 않은 채 남는다\" 로 적고 있으므로, 이 케이스가 세 체인에서 돌려면 두 결말을 모두 통과로 보는 판정이 필요하다.",
   "requires": [
     "rpc"
   ],
@@ -20,7 +20,7 @@
       "expect": "reject",
       "from": "node1",
       "gas": "21000",
-      "gasPrice": "0",
+      "gasPrice": "1",
       "to": "0x00000000000000000000000000000000C0FFEE0E",
       "value": "1",
       "reason": "transaction underpriced"
