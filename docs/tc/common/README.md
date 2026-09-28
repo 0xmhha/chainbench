@@ -44,7 +44,7 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 ## 결과 요약
 
-같은 목적의 테스트를 하나로 합쳐 공통 테스트 74개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다.
+같은 목적의 테스트를 하나로 합쳐 공통 테스트 72개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다.
 
 | 영역 | 뜻 | 수 |
 | --- | --- | --- |
@@ -79,7 +79,7 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 | 페이지 | 내용 |
 | --- | --- |
-| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 74개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응 |
+| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 72개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응 |
 | [메인넷별 의존 요소](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988376101) | 테스트 계정, RPC 주소, 컨트랙트 주소, 체인 ID, 그 밖의 설정 |
 | [별도 구현이 필요한 항목](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987884735) | 체인별 기대값 계산과 실행 도구에 추가할 기능 |
 | [공통 테스트 분리 변경 범위](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987720853) | 작업 순서와 완료 기준 |
@@ -104,6 +104,22 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 저장소 쪽 반영과 케이스별 내역은
 [`tests/tc/common/README.md`](../../../tests/tc/common/README.md) §4 에 있다.
+
+## 2026-09-28 개정 (2차)
+
+1차 개정은 노드 프로그램을 읽어서 했다. 그 뒤 공통 91건을 세 체인에 각각 돌려 보니
+읽어서는 보이지 않던 것이 나왔다. WEMIX3.0 의 EVM 은 London 세대에서 멈춰 있어 Shanghai 가
+들여온 PUSH0 옵코드가 없다. StableNet 의 anzeon 과 WEMIX4.0 의 croissant 는 각자 그 옵코드를
+켠다. 요즘 컴파일러는 별도 지정이 없으면 PUSH0 를 쓰는 바이트코드를 내므로, 컨트랙트를
+배포하는 테스트가 WEMIX3.0 에서만 배포 단계부터 실패한다.
+
+- **CT-CONTRACT-002·CT-CONTRACT-005 를 목록에서 빼 부록 B 로 옮겼다.** 74개 → 72개.
+  CONTRACT 영역이 7개에서 5개가 되고, 분리 방식별로는 기대값을 체인별로 계산하는 것이
+  30개에서 28개가 된다.
+- 부록 B 에 "WEMIX3.0 의 EVM 세대 때문에 뺀 것" 절을 더하고, 자동 테스트 두 건도
+  "제외한 자동 테스트" 표에 넣었다.
+- 옵코드를 낮춰 다시 컴파일하면 세 체인에서 돈다. 그래도 공통으로 세지 않기로 한 것은,
+  요즘 컴파일러가 기본으로 내는 컨트랙트를 실행하지 못하는 것 자체가 체인 차이여서다.
 
 ## 이 저장소가 더한 것 (Confluence 본문 아님)
 

@@ -1,12 +1,12 @@
 # 부록 B. 공통에서 제외한 테스트와 이유
 
-> 출처: Confluence [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189) (페이지 ID 2987524189, 버전 3, 최종 수정 2026-09-11)  
+> 출처: Confluence [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189) (페이지 ID 2987524189, 버전 6, 최종 수정 2026-09-28)  
 > 상위 페이지: [Common] Test  
 > 가져온 날짜: 2026-09-18 (본문은 Confluence markdown 변환 결과를 그대로 옮김)
 
 ---
 
-한 체인에만 있는 기능이거나 노드 실행 테스트가 아닌 항목이다. ID는 기존 것을 그대로 적는다.
+한 체인에만 있는 기능이거나, 한 체인의 EVM 세대가 낮아 실행되지 않거나, 노드 실행 테스트가 아닌 항목이다. ID는 기존 것을 그대로 적는다.
 
 ## StableNet 전용 (107개)
 
@@ -182,6 +182,17 @@
 | NODE-001 | \[WEMIX4.0\] Test, \[WEMIX 4.0\] 테스트 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |
 | NODE-002 | \[WEMIX4.0\] Test, \[WEMIX 4.0\] 테스트 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |
 
+## WEMIX3.0 의 EVM 세대 때문에 뺀 것 (2개)
+
+세 체인이 모두 하는 동작인데 WEMIX3.0 에서만 실행되지 않는다. WEMIX3.0 의 노드 프로그램은 EVM 이 London 세대에서 멈춰 있어 Shanghai 가 들여온 PUSH0 옵코드를 모른다. StableNet 과 WEMIX4.0 은 각자의 하드포크에서 그 옵코드를 켠다. 요즘 컴파일러는 별도 지정이 없으면 PUSH0 를 쓰는 바이트코드를 내므로, 컨트랙트를 배포해 확인하는 테스트가 WEMIX3.0 에서만 배포 단계부터 실패한다. 2026-09-28 에 세 체인으로 돌려 확인했다. 배포 영수증이 준 가스 한도를 전부 쓰고 실패 상태로 돌아왔는데, 이는 가스가 모자란 것이 아니라 없는 옵코드를 만난 모양이다.
+
+옵코드를 낮춰 다시 컴파일하면 세 체인에서 돈다. 그래도 공통으로 세지 않는 것은, 요즘 컴파일러가 기본으로 내는 컨트랙트를 실행하지 못하는 것 자체가 체인 사이의 차이이기 때문이다.
+
+| 기존 ID | 출처 | 이유 |
+| --- | --- | --- |
+| RT-A-3-02 | Regression Test Case with scenario, Regression Test Case | 상태 변경 함수를 호출해 확인하는데, 쓰는 컨트랙트가 PUSH0 를 담고 있어 WEMIX3.0 에서는 배포되지 않는다. 공통 목록의 CT-CONTRACT-002 였다 |
+| RT-A-3-05 | Regression Test Case with scenario, Regression Test Case | 되돌리는 함수를 조회 호출해 확인하는데, 쓰는 컨트랙트가 PUSH0 를 담고 있어 WEMIX3.0 에서는 배포되지 않는다. 공통 목록의 CT-CONTRACT-005 였다 |
+
 ## 노드를 띄우는 테스트가 아님(단위 테스트·빌드 확인) (11개)
 
 | 기존 ID | 출처 | 이유 |
@@ -277,5 +288,7 @@
 | validator-add-member-epoch-activates | go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json | StableNet 전용 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | validator-remove-member-executes | go-stablenet/regression/wbft/05-validator-remove-member-executes.json | StableNet 전용 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | stablenet-gastip-field | go-stablenet/regression/wbft/14-stablenet-gastip-field.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| register-contract | go-stablenet/vocabulary/03-register-contract.json | WEMIX3.0 의 EVM 세대 | 배포하는 NodeRegistry 바이트코드가 PUSH0 를 45번 쓴다. WEMIX3.0 에서 배포가 가스를 전부 쓰고 실패한다 |
+| eth-call-revert-returns-error | go-stablenet/regression/ethereum/23-eth-call-revert-returns-error.json | WEMIX3.0 의 EVM 세대 | 배포하는 컨트랙트가 PUSH0 를 9번 쓴다. WEMIX3.0 에서 배포가 가스를 전부 쓰고 실패한다 |
 | stablenet-derived-vocabulary | go-stablenet/vocabulary/01-derived-address-and-checksum.json | 실행 도구 자체 검사(체인 무관) | 실행 도구 자체의 계산 기능 검사다 |
 | wemix-wbft-handoff | go-wemix/handoff/01-wemix-wbft-handoff.json | WEMIX3.0에서 WEMIX4.0으로 넘어가는 전환 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |
