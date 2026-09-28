@@ -436,14 +436,27 @@ type CaseV2 struct {
 	// Description says what this case verifies, in prose. Strict parsing means
 	// a case cannot carry a note unless the grammar has a place for one, and a
 	// test that cannot say what it is for is read by opening its steps.
-	Description      string            `json:"description,omitempty"`
-	ChainPreset      json.RawMessage   `json:"chainPreset"`
-	ApplicableChains string            `json:"applicableChains,omitempty"`
-	Requires         []string          `json:"requires,omitempty"`
-	On               string            `json:"on,omitempty"`
-	Timeouts         map[string]string `json:"timeouts,omitempty"`
-	Hooks            *HooksV2          `json:"hooks,omitempty"`
-	Steps            []map[string]any  `json:"steps"`
+	Description      string          `json:"description,omitempty"`
+	ChainPreset      json.RawMessage `json:"chainPreset"`
+	ApplicableChains string          `json:"applicableChains,omitempty"`
+	Requires         []string        `json:"requires,omitempty"`
+	// SkipsOn are the chains this spec is expected NOT to run on, by chain id.
+	//
+	// It turns a silent skip into a decision. An unmet requirement skips a spec
+	// rather than failing it, so a run can report no failure while never having
+	// asked a third of its questions — measured on the common set, where 31 of
+	// 99 cases skipped on go-wemix and nothing said so.
+	//
+	// Absent, nothing changes: the spec may skip anywhere, as before. Present,
+	// it is exact — a skip on a chain it does not name fails, and so does
+	// running on a chain it does name, because a declaration that stopped being
+	// true is how the next reader is misled. An empty list is the useful case:
+	// "this must run everywhere".
+	SkipsOn  []string          `json:"skipsOn,omitempty"`
+	On       string            `json:"on,omitempty"`
+	Timeouts map[string]string `json:"timeouts,omitempty"`
+	Hooks    *HooksV2          `json:"hooks,omitempty"`
+	Steps    []map[string]any  `json:"steps"`
 }
 
 // sniff reads just enough to route a raw spec to its grammar.

@@ -322,6 +322,13 @@
             "type": "string"
           }
         },
+        "skipsOn": {
+          "description": "Chain ids this case is expected NOT to run on. Absent, it may skip anywhere. Present, it is exact: a skip on a chain it does not name fails, and so does running on one it does. An empty list means it must run everywhere.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "on": {
           "type": "string",
           "description": "default target selector"

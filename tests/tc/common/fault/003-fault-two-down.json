@@ -8,6 +8,7 @@
     "consensus",
     "process"
   ],
+  "skipsOn": [],
   "chainPreset": "stablenet-bp4",
   "steps": [
     {

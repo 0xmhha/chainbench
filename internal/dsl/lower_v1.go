@@ -95,6 +95,7 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		ID:               c.ID,
 		ApplicableChains: c.ApplicableChains,
 		Requires:         c.Requires,
+		SkipsOn:          c.SkipsOn,
 		Chain:            ChainSpec{Name: env.Chain},
 		Topology:         env.Topology,
 		Hardforks:        env.Hardforks,

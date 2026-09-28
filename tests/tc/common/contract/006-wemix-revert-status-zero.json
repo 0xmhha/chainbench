@@ -6,6 +6,7 @@
   "requires": [
     "rpc"
   ],
+  "skipsOn": [],
   "chainPreset": "wemix-bp4",
   "steps": [
     {

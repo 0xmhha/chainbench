@@ -6,6 +6,7 @@
   "requires": [
     "rpc"
   ],
+  "skipsOn": [],
   "chainPreset": "wbft-bp2-en1-pn1",
   "steps": [
     {

@@ -8,6 +8,7 @@
     "consensus",
     "process"
   ],
+  "skipsOn": [],
   "chainPreset": {
     "extends": "stablenet-bp4-en1-binvar",
     "genesis": {

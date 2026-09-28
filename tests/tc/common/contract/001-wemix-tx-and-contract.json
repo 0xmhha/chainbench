@@ -5,6 +5,7 @@
   "requires": [
     "rpc"
   ],
+  "skipsOn": [],
   "chainPreset": {
     "extends": "wemix-bp4-binvar",
     "genesis": {

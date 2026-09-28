@@ -8,6 +8,7 @@
     "consensus",
     "process"
   ],
+  "skipsOn": [],
   "chainPreset": "wemix-bp4",
   "steps": [
     {

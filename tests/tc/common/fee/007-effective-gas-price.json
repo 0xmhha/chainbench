@@ -6,6 +6,7 @@
   "requires": [
     "rpc"
   ],
+  "skipsOn": [],
   "chainPreset": {
     "extends": "stablenet-bp4",
     "capabilities": [

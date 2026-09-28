@@ -28,9 +28,9 @@ type Deps struct {
 	// RunSpec starts collection and runs the interpreter for one test, recording
 	// into rec.
 	RunSpec func(ctx context.Context, spec dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
-	// Applicable reports whether a spec applies to this run's target chain. Nil
-	// means always applicable.
-	Applicable func(spec dsl.Spec) bool
+	// Applicable reports whether a spec applies to this run's target chain and,
+	// when it does not, whether the spec said so. Nil means always applicable.
+	Applicable func(spec dsl.Spec) Applicability
 	// PreSpec gates the environment right before each test runs on it (E6): a
 	// network left unfit by a prior fault test is waited on or restarted within
 	// limits, and a state needing a destructive remedy blocks the test. A
@@ -124,13 +124,32 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		rec.Spec(raw)
 		e.recordArtifacts(rec)
 
-		if e.deps.Applicable != nil && !e.deps.Applicable(spec) {
-			rec.Status(session.StatusSkip)
-			// A skip with no reason reads as "this did not matter"; it usually
-			// means a capability the target does not advertise.
-			rec.Reason("does not apply to this target (chain or required capabilities)")
-			e.emit(collector.PhaseTest, collector.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
-			continue
+		if e.deps.Applicable != nil {
+			switch a := e.deps.Applicable(spec); {
+			case a.Stale:
+				// The spec says it skips here and it does not. Left alone, the
+				// declaration tells the next reader this test asks nothing on
+				// this chain while it is asking and answering.
+				rec.Status(session.StatusFail)
+				rec.Reason("this spec declares it skips on this target and it does not — remove this chain from skipsOn")
+				e.emit(collector.PhaseTest, collector.KindError, "stale skipsOn", map[string]any{"seq": seq, "id": spec.ID})
+				continue
+			case !a.Runs && !a.Foreseen:
+				// A skip nobody foresaw is a hole in the coverage wearing the
+				// colour of a pass. The spec declared where it skips, and this
+				// is not one of those places.
+				rec.Status(session.StatusFail)
+				rec.Reason("this spec was skipped on a target its skipsOn does not name — the run asked nothing and would have reported no failure")
+				e.emit(collector.PhaseTest, collector.KindError, "undeclared skip", map[string]any{"seq": seq, "id": spec.ID})
+				continue
+			case !a.Runs:
+				rec.Status(session.StatusSkip)
+				// A skip with no reason reads as "this did not matter"; it
+				// usually means a capability the target does not advertise.
+				rec.Reason("does not apply to this target (chain or required capabilities)")
+				e.emit(collector.PhaseTest, collector.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
+				continue
+			}
 		}
 
 		env, ok := sess.Environment(e.deps.Fingerprint(spec))

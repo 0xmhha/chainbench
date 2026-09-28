@@ -49,20 +49,33 @@ type ChainSpec struct {
 
 // Spec is a parsed, validated test definition (schema in design §4.3).
 type Spec struct {
-	SchemaVersion    string            `json:"schemaVersion"`
-	ID               string            `json:"id"`
-	ApplicableChains string            `json:"applicableChains,omitempty"`
-	Requires         []string          `json:"requires,omitempty"`
-	Chain            ChainSpec         `json:"chain"`
-	Topology         map[string]any    `json:"topology,omitempty"`
-	Hardforks        map[string]int    `json:"hardforks,omitempty"`
-	Placement        string            `json:"placement,omitempty"`
-	DefaultOn        string            `json:"defaultOn,omitempty"`
-	PreActions       []map[string]any  `json:"preActions,omitempty"`
-	Steps            []map[string]any  `json:"steps,omitempty"`
-	Assertions       []map[string]any  `json:"assertions"`
-	PostActions      []map[string]any  `json:"postActions,omitempty"`
-	Timeouts         map[string]string `json:"timeouts,omitempty"`
+	SchemaVersion    string   `json:"schemaVersion"`
+	ID               string   `json:"id"`
+	ApplicableChains string   `json:"applicableChains,omitempty"`
+	Requires         []string `json:"requires,omitempty"`
+	// SkipsOn are the chains this spec is expected NOT to run on, by chain id.
+	//
+	// It turns a silent skip into a decision. An unmet requirement skips a spec
+	// rather than failing it, so a run can report no failure while never having
+	// asked a third of its questions — measured on the common set, where 31 of
+	// 99 cases skipped on go-wemix and nothing said so.
+	//
+	// Absent, nothing changes: the spec may skip anywhere, as before. Present,
+	// it is exact — a skip on a chain it does not name fails, and so does
+	// running on a chain it does name, because a declaration that stopped being
+	// true is how the next reader is misled. An empty list is the useful case:
+	// "this must run everywhere".
+	SkipsOn     []string          `json:"skipsOn,omitempty"`
+	Chain       ChainSpec         `json:"chain"`
+	Topology    map[string]any    `json:"topology,omitempty"`
+	Hardforks   map[string]int    `json:"hardforks,omitempty"`
+	Placement   string            `json:"placement,omitempty"`
+	DefaultOn   string            `json:"defaultOn,omitempty"`
+	PreActions  []map[string]any  `json:"preActions,omitempty"`
+	Steps       []map[string]any  `json:"steps,omitempty"`
+	Assertions  []map[string]any  `json:"assertions"`
+	PostActions []map[string]any  `json:"postActions,omitempty"`
+	Timeouts    map[string]string `json:"timeouts,omitempty"`
 
 	// Sequence is the unified statement list (v2 steps; v1 desugars its steps
 	// then assertions into it). Runtime-only — never serialized.
