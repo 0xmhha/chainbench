@@ -1,158 +1,291 @@
 graph LR
-  cmd_chainbench["cmd/chainbench<br/>23f · 4823L"]
+  cmd_chainbench["cmd/chainbench<br/>23f · 4994L"]
   cmd_chainbench_accountcmd["cmd/chainbench/accountcmd<br/>5f · 472L"]
-  cmd_chainbench_chaincmd["cmd/chainbench/chaincmd<br/>13f · 1518L"]
+  cmd_chainbench_chaincmd["cmd/chainbench/chaincmd<br/>13f · 1520L"]
   cmd_chainbench_exitcode["cmd/chainbench/exitcode<br/>2f · 90L"]
   cmd_chainbench_keyringcmd["cmd/chainbench/keyringcmd<br/>14f · 2783L"]
-  cmd_chainbench_lifecyclecmd["cmd/chainbench/lifecyclecmd<br/>9f · 699L"]
+  cmd_chainbench_lifecyclecmd["cmd/chainbench/lifecyclecmd<br/>9f · 744L"]
   cmd_chainbench_resourcecmd["cmd/chainbench/resourcecmd<br/>7f · 555L"]
-  cmd_chainbench_suitecmd["cmd/chainbench/suitecmd<br/>6f · 1165L"]
+  cmd_chainbench_suitecmd["cmd/chainbench/suitecmd<br/>6f · 1159L"]
   cmd_chainbench_surface["cmd/chainbench/surface<br/>2f · 81L"]
   internal_accounts["internal/accounts<br/>22f · 1664L"]
-  internal_app["internal/app<br/>35f · 4421L"]
+  internal_app["internal/app<br/>35f · 4434L"]
   internal_chains_all["internal/chains/all<br/>3f · 226L"]
-  internal_chains_external["internal/chains/external<br/>2f · 177L"]
+  internal_chains_external["internal/chains/external<br/>2f · 175L"]
   internal_chains_stablenet["internal/chains/stablenet<br/>5f · 571L"]
-  internal_chainsetup["internal/chainsetup<br/>106f · 19905L"]
-  internal_chainsetup_verb["internal/chainsetup/verb<br/>14f · 1578L"]
+  internal_chainsetup["internal/chainsetup<br/>117f · 21338L"]
+  internal_chainsetup_verb["internal/chainsetup/verb<br/>15f · 1674L"]
   internal_consensus_poa["internal/consensus/poa<br/>18f · 2661L"]
   internal_core_blueprint["internal/core/blueprint<br/>14f · 2255L"]
   internal_core_collector["internal/core/collector<br/>28f · 2710L"]
   internal_core_filestore["internal/core/filestore<br/>5f · 664L"]
   internal_core_genesis["internal/core/genesis<br/>11f · 1813L"]
   internal_core_hardfork["internal/core/hardfork<br/>2f · 271L"]
-  internal_core_health["internal/core/health<br/>5f · 878L"]
-  internal_core_keyring["internal/core/keyring<br/>28f · 4574L"]
+  internal_core_health["internal/core/health<br/>5f · 875L"]
+  internal_core_keyring["internal/core/keyring<br/>28f · 4573L"]
   internal_core_lifecycle["internal/core/lifecycle<br/>4f · 846L"]
-  internal_core_node["internal/core/node<br/>21f · 1908L"]
-  internal_core_nodeconfig["internal/core/nodeconfig<br/>16f · 2461L"]
+  internal_core_node["internal/core/node<br/>21f · 1927L"]
+  internal_core_nodeconfig["internal/core/nodeconfig<br/>16f · 2463L"]
   internal_core_origin["internal/core/origin<br/>2f · 170L"]
-  internal_core_preflight["internal/core/preflight<br/>3f · 483L"]
-  internal_core_process["internal/core/process<br/>35f · 3318L"]
+  internal_core_preflight["internal/core/preflight<br/>3f · 504L"]
+  internal_core_process["internal/core/process<br/>35f · 3401L"]
   internal_core_registry["internal/core/registry<br/>14f · 1724L"]
   internal_core_remote["internal/core/remote<br/>10f · 1153L"]
   internal_core_report["internal/core/report<br/>4f · 472L"]
   internal_core_rpc["internal/core/rpc<br/>4f · 811L"]
-  internal_core_session["internal/core/session<br/>20f · 2455L"]
-  internal_core_statemachine["internal/core/statemachine<br/>8f · 1361L"]
+  internal_core_session["internal/core/session<br/>20f · 2459L"]
+  internal_core_statemachine["internal/core/statemachine<br/>10f · 1773L"]
   internal_core_wait["internal/core/wait<br/>2f · 144L"]
   internal_dashboard["internal/dashboard<br/>8f · 671L"]
   internal_dsl["internal/dsl<br/>18f · 3914L"]
   internal_dsl_assert["internal/dsl/assert<br/>3f · 587L"]
   internal_dsl_interp["internal/dsl/interp<br/>13f · 2028L"]
-  internal_feature["internal/feature<br/>8f · 784L"]
+  internal_feature["internal/feature<br/>8f · 791L"]
   internal_mcp["internal/mcp<br/>31f · 3958L"]
-  internal_preset["internal/preset<br/>3f · 528L"]
-  internal_resource["internal/resource<br/>32f · 5550L"]
-  internal_testengine["internal/testengine<br/>61f · 10255L"]
+  internal_preset["internal/preset<br/>3f · 553L"]
+  internal_resource["internal/resource<br/>33f · 5662L"]
+  internal_testengine["internal/testengine<br/>65f · 10614L"]
   internal_testhelper["internal/testhelper<br/>37f · 7887L"]
   internal_testsupport["internal/testsupport<br/>1f · 26L"]
 
-  internal_chainsetup -->|53| internal_core_node
-  internal_chainsetup -->|35| internal_resource
+  internal_chainsetup -->|55| internal_core_node
+  internal_chainsetup -->|39| internal_resource
+  internal_chainsetup -->|29| internal_core_process
   internal_testhelper -->|29| internal_dsl_interp
   internal_testengine -->|27| internal_dsl
-  internal_chainsetup -->|25| internal_core_process
-  internal_testengine -->|24| internal_chainsetup
-  internal_testengine -->|21| internal_core_node
+  internal_testengine -->|26| internal_chainsetup
+  internal_testengine -->|23| internal_core_node
+  internal_chainsetup -->|21| internal_core_lifecycle
+  internal_chainsetup -->|20| internal_core_statemachine
   internal_chainsetup -->|19| internal_chains_all
-  internal_chainsetup -->|19| internal_core_statemachine
-  internal_chainsetup -->|17| internal_core_lifecycle
-  internal_chainsetup -->|17| internal_chainsetup_verb
+  internal_chainsetup -->|18| internal_chainsetup_verb
   internal_mcp -->|17| internal_app
+  internal_testengine -->|16| internal_core_session
+  internal_chainsetup -->|15| internal_core_filestore
   internal_chainsetup -->|15| internal_preset
-  internal_testengine -->|15| internal_core_session
-  internal_chainsetup_verb -->|14| internal_chainsetup
+  internal_chainsetup_verb -->|15| internal_chainsetup
   internal_testhelper -->|14| internal_core_rpc
-  internal_chainsetup -->|13| internal_core_filestore
   internal_core_keyring -->|12| internal_preset
   internal_core_blueprint -->|11| internal_core_node
   internal_testhelper -->|11| internal_core_node
   internal_chainsetup -->|10| internal_core_registry
+  internal_chainsetup -->|10| internal_core_session
   internal_testhelper -->|10| internal_core_session
   cmd_chainbench_chaincmd -->|9| internal_app
-  internal_core_process -->|9| internal_core_remote
   internal_core_process -->|9| internal_core_node
-  internal_chainsetup -->|9| internal_core_session
-  internal_testengine -->|9| internal_core_collector
+  internal_core_process -->|9| internal_core_remote
   internal_dsl_interp -->|9| internal_dsl
-  internal_core_keyring -->|8| internal_core_filestore
+  internal_testengine -->|9| internal_core_collector
+  internal_testengine -->|9| internal_resource
   internal_app -->|8| internal_resource
   internal_chainsetup -->|8| internal_core_nodeconfig
-  internal_testengine -->|8| internal_resource
+  internal_core_keyring -->|8| internal_core_filestore
   internal_dsl_interp -->|8| internal_core_session
   cmd_chainbench -->|7| internal_core_rpc
   cmd_chainbench_chaincmd -->|7| cmd_chainbench_surface
-  internal_testengine -->|7| internal_dsl_interp
   internal_resource -->|7| internal_core_remote
+  internal_testengine -->|7| internal_dsl_interp
   cmd_chainbench -->|6| internal_accounts
-  cmd_chainbench_lifecyclecmd -->|6| internal_app
   cmd_chainbench_keyringcmd -->|6| internal_app
+  cmd_chainbench_lifecyclecmd -->|6| internal_app
+  internal_app -->|6| internal_core_node
+  internal_chainsetup -->|6| internal_core_preflight
   internal_consensus_poa -->|6| internal_core_node
   internal_core_genesis -->|6| internal_core_registry
-  internal_app -->|6| internal_core_node
   internal_dashboard -->|6| internal_core_collector
+  internal_feature -->|6| internal_app
   internal_testengine -->|6| internal_core_registry
   internal_testengine -->|6| internal_core_rpc
-  internal_feature -->|6| internal_app
   cmd_chainbench_suitecmd -->|5| cmd_chainbench_exitcode
-  internal_consensus_poa -->|5| internal_core_registry
-  internal_core_session -->|5| internal_core_node
   internal_app -->|5| internal_core_registry
   internal_chainsetup -->|5| internal_chains_external
-  internal_chainsetup -->|5| internal_core_preflight
-  internal_testengine -->|5| internal_chainsetup_verb
-  internal_testengine -->|5| internal_core_origin
-  internal_testengine -->|5| internal_chains_stablenet
-  internal_testhelper -->|5| internal_accounts
+  internal_chainsetup_verb -->|5| internal_core_node
+  internal_consensus_poa -->|5| internal_core_registry
+  internal_core_session -->|5| internal_core_node
+  internal_dsl_interp -->|5| internal_core_node
   internal_resource -->|5| internal_core_filestore
   internal_resource -->|5| internal_core_node
-  internal_dsl_interp -->|5| internal_core_node
-  cmd_chainbench_suitecmd -->|4| internal_app
-  cmd_chainbench_lifecyclecmd -->|4| cmd_chainbench_surface
+  internal_testengine -->|5| internal_chains_stablenet
+  internal_testengine -->|5| internal_chainsetup_verb
+  internal_testengine -->|5| internal_core_health
+  internal_testengine -->|5| internal_core_origin
+  internal_testhelper -->|5| internal_accounts
   cmd_chainbench_keyringcmd -->|4| cmd_chainbench_surface
-  internal_core_collector -->|4| internal_core_node
+  cmd_chainbench_lifecyclecmd -->|4| cmd_chainbench_surface
+  cmd_chainbench_suitecmd -->|4| internal_app
+  internal_app -->|4| internal_core_collector
   internal_app -->|4| internal_core_lifecycle
   internal_app -->|4| internal_core_session
-  internal_app -->|4| internal_core_collector
   internal_chainsetup -->|4| internal_core_rpc
-  internal_chainsetup_verb -->|4| internal_core_node
+  internal_core_collector -->|4| internal_core_node
   internal_mcp -->|4| internal_core_session
-  internal_testengine -->|4| internal_core_health
+  internal_testengine -->|4| internal_chains_all
   internal_testengine -->|4| internal_preset
   internal_testengine -->|4| internal_testhelper
-  internal_testengine -->|4| internal_chains_all
-  internal_testhelper -->|4| internal_dsl_assert
   internal_testhelper -->|4| internal_dsl
+  internal_testhelper -->|4| internal_dsl_assert
   cmd_chainbench -->|3| cmd_chainbench_exitcode
-  cmd_chainbench_resourcecmd -->|3| internal_app
+  cmd_chainbench_accountcmd -->|3| cmd_chainbench_surface
+  cmd_chainbench_accountcmd -->|3| internal_app
   cmd_chainbench_chaincmd -->|3| cmd_chainbench_resourcecmd
   cmd_chainbench_chaincmd -->|3| internal_chains_all
-  cmd_chainbench_accountcmd -->|3| internal_app
-  cmd_chainbench_accountcmd -->|3| cmd_chainbench_surface
-  internal_consensus_poa -->|3| internal_core_process
-  internal_consensus_poa -->|3| internal_core_genesis
-  internal_consensus_poa -->|3| internal_core_wait
-  internal_core_health -->|3| internal_core_node
-  internal_core_collector -->|3| internal_core_session
-  internal_core_nodeconfig -->|3| internal_core_node
-  internal_core_report -->|3| internal_core_session
-  internal_core_blueprint -->|3| internal_preset
-  internal_core_blueprint -->|3| internal_core_origin
+  cmd_chainbench_resourcecmd -->|3| internal_app
   internal_app -->|3| internal_core_rpc
+  internal_chains_stablenet -->|3| internal_core_registry
   internal_chainsetup -->|3| internal_core_genesis
   internal_chainsetup -->|3| internal_core_hardfork
+  internal_consensus_poa -->|3| internal_core_genesis
+  internal_consensus_poa -->|3| internal_core_process
+  internal_consensus_poa -->|3| internal_core_wait
+  internal_core_blueprint -->|3| internal_core_origin
+  internal_core_blueprint -->|3| internal_preset
+  internal_core_collector -->|3| internal_core_session
+  internal_core_health -->|3| internal_core_node
+  internal_core_nodeconfig -->|3| internal_core_node
+  internal_core_report -->|3| internal_core_session
   internal_mcp -->|3| internal_core_node
+  internal_resource -->|3| internal_core_process
+  internal_resource -->|3| internal_testsupport
   internal_testengine -->|3| internal_core_keyring
   internal_testengine -->|3| internal_core_statemachine
   internal_testhelper -->|3| internal_core_keyring
-  internal_chains_stablenet -->|3| internal_core_registry
-  internal_resource -->|3| internal_testsupport
-  internal_resource -->|3| internal_core_process
-
-  classDef entry fill:#1f3a5f,stroke:#5b8dd9,color:#e8f0fe
-  class cmd_chainbench,cmd_chainbench_accountcmd,cmd_chainbench_chaincmd,cmd_chainbench_exitcode,cmd_chainbench_keyringcmd,cmd_chainbench_lifecyclecmd,cmd_chainbench_resourcecmd,cmd_chainbench_suitecmd,cmd_chainbench_surface entry
-  classDef core fill:#2d1f3f,stroke:#a97bd6,color:#f3e8fe
-  class internal_core_blueprint,internal_core_collector,internal_core_filestore,internal_core_genesis,internal_core_hardfork,internal_core_health,internal_core_keyring,internal_core_lifecycle,internal_core_node,internal_core_nodeconfig,internal_core_origin,internal_core_preflight,internal_core_process,internal_core_registry,internal_core_remote,internal_core_report,internal_core_rpc,internal_core_session,internal_core_statemachine,internal_core_wait core
-  classDef internal fill:#1f3f33,stroke:#5fbf9b,color:#e8fef6
-  class internal_accounts,internal_app,internal_chains_all,internal_chains_external,internal_chains_stablenet,internal_chainsetup,internal_chainsetup_verb,internal_consensus_poa,internal_dashboard,internal_dsl,internal_dsl_assert,internal_dsl_interp,internal_feature,internal_mcp,internal_preset,internal_resource,internal_testengine,internal_testhelper,internal_testsupport internal
+  cmd_chainbench -->|2| cmd_chainbench_surface
+  cmd_chainbench_chaincmd -->|2| internal_preset
+  cmd_chainbench_keyringcmd -->|2| internal_core_remote
+  cmd_chainbench_resourcecmd -->|2| cmd_chainbench_surface
+  cmd_chainbench_resourcecmd -->|2| internal_chains_all
+  internal_app -->|2| internal_chains_all
+  internal_app -->|2| internal_chainsetup
+  internal_app -->|2| internal_chainsetup_verb
+  internal_app -->|2| internal_dsl
+  internal_app -->|2| internal_testengine
+  internal_chains_all -->|2| internal_core_registry
+  internal_chains_stablenet -->|2| internal_accounts
+  internal_chainsetup -->|2| internal_core_blueprint
+  internal_chainsetup -->|2| internal_core_collector
+  internal_chainsetup -->|2| internal_testsupport
+  internal_chainsetup_verb -->|2| internal_core_session
+  internal_chainsetup_verb -->|2| internal_resource
+  internal_consensus_poa -->|2| internal_core_filestore
+  internal_consensus_poa -->|2| internal_resource
+  internal_core_blueprint -->|2| internal_core_keyring
+  internal_core_genesis -->|2| internal_chains_all
+  internal_core_genesis -->|2| internal_core_node
+  internal_core_genesis -->|2| internal_preset
+  internal_core_hardfork -->|2| internal_core_node
+  internal_core_hardfork -->|2| internal_core_process
+  internal_core_hardfork -->|2| internal_core_registry
+  internal_core_keyring -->|2| internal_resource
+  internal_core_preflight -->|2| internal_core_node
+  internal_core_process -->|2| internal_core_filestore
+  internal_core_process -->|2| internal_core_nodeconfig
+  internal_core_process -->|2| internal_core_registry
+  internal_core_process -->|2| internal_preset
+  internal_core_process -->|2| internal_resource
+  internal_core_process -->|2| internal_testsupport
+  internal_dashboard -->|2| internal_core_session
+  internal_dsl -->|2| internal_core_node
+  internal_dsl_interp -->|2| internal_core_nodeconfig
+  internal_mcp -->|2| internal_chains_all
+  internal_preset -->|2| internal_core_keyring
+  internal_testengine -->|2| internal_core_nodeconfig
+  internal_testengine -->|2| internal_core_process
+  internal_testengine -->|2| internal_core_report
+  internal_testhelper -->|2| internal_core_filestore
+  cmd_chainbench -->|1| cmd_chainbench_accountcmd
+  cmd_chainbench -->|1| cmd_chainbench_chaincmd
+  cmd_chainbench -->|1| cmd_chainbench_keyringcmd
+  cmd_chainbench -->|1| cmd_chainbench_lifecyclecmd
+  cmd_chainbench -->|1| cmd_chainbench_resourcecmd
+  cmd_chainbench -->|1| cmd_chainbench_suitecmd
+  cmd_chainbench -->|1| internal_chains_all
+  cmd_chainbench -->|1| internal_chainsetup
+  cmd_chainbench -->|1| internal_core_collector
+  cmd_chainbench -->|1| internal_core_node
+  cmd_chainbench -->|1| internal_core_process
+  cmd_chainbench -->|1| internal_core_session
+  cmd_chainbench -->|1| internal_dashboard
+  cmd_chainbench -->|1| internal_mcp
+  cmd_chainbench -->|1| internal_resource
+  cmd_chainbench_accountcmd -->|1| cmd_chainbench_keyringcmd
+  cmd_chainbench_accountcmd -->|1| internal_mcp
+  cmd_chainbench_chaincmd -->|1| internal_chainsetup
+  cmd_chainbench_chaincmd -->|1| internal_feature
+  cmd_chainbench_chaincmd -->|1| internal_mcp
+  cmd_chainbench_keyringcmd -->|1| internal_chains_all
+  cmd_chainbench_keyringcmd -->|1| internal_mcp
+  cmd_chainbench_keyringcmd -->|1| internal_preset
+  cmd_chainbench_keyringcmd -->|1| internal_resource
+  cmd_chainbench_keyringcmd -->|1| internal_testsupport
+  cmd_chainbench_lifecyclecmd -->|1| internal_chains_all
+  cmd_chainbench_lifecyclecmd -->|1| internal_dashboard
+  cmd_chainbench_resourcecmd -->|1| internal_chainsetup
+  cmd_chainbench_resourcecmd -->|1| internal_mcp
+  cmd_chainbench_resourcecmd -->|1| internal_resource
+  cmd_chainbench_suitecmd -->|1| cmd_chainbench_resourcecmd
+  cmd_chainbench_suitecmd -->|1| cmd_chainbench_surface
+  cmd_chainbench_suitecmd -->|1| internal_chains_all
+  cmd_chainbench_suitecmd -->|1| internal_dashboard
+  cmd_chainbench_suitecmd -->|1| internal_preset
+  cmd_chainbench_surface -->|1| internal_app
+  internal_app -->|1| internal_accounts
+  internal_app -->|1| internal_chains_external
+  internal_app -->|1| internal_core_blueprint
+  internal_app -->|1| internal_core_filestore
+  internal_app -->|1| internal_core_health
+  internal_app -->|1| internal_core_keyring
+  internal_app -->|1| internal_core_process
+  internal_app -->|1| internal_core_remote
+  internal_app -->|1| internal_core_report
+  internal_app -->|1| internal_preset
+  internal_app -->|1| internal_testsupport
+  internal_chains_all -->|1| internal_accounts
+  internal_chains_all -->|1| internal_chains_stablenet
+  internal_chains_all -->|1| internal_consensus_poa
+  internal_chains_external -->|1| internal_chains_all
+  internal_chains_external -->|1| internal_core_registry
+  internal_chains_stablenet -->|1| internal_core_rpc
+  internal_chainsetup -->|1| internal_consensus_poa
+  internal_chainsetup -->|1| internal_core_keyring
+  internal_chainsetup -->|1| internal_core_remote
+  internal_chainsetup_verb -->|1| internal_chains_all
+  internal_chainsetup_verb -->|1| internal_core_hardfork
+  internal_chainsetup_verb -->|1| internal_core_process
+  internal_chainsetup_verb -->|1| internal_core_registry
+  internal_chainsetup_verb -->|1| internal_preset
+  internal_consensus_poa -->|1| internal_core_rpc
+  internal_consensus_poa -->|1| internal_preset
+  internal_core_collector -->|1| internal_chains_all
+  internal_core_collector -->|1| internal_core_registry
+  internal_core_collector -->|1| internal_core_wait
+  internal_core_genesis -->|1| internal_chains_stablenet
+  internal_core_genesis -->|1| internal_core_filestore
+  internal_core_genesis -->|1| internal_core_keyring
+  internal_core_genesis -->|1| internal_core_process
+  internal_core_hardfork -->|1| internal_chains_all
+  internal_core_health -->|1| internal_core_collector
+  internal_core_health -->|1| internal_core_rpc
+  internal_core_keyring -->|1| internal_accounts
+  internal_core_node -->|1| internal_resource
+  internal_core_nodeconfig -->|1| internal_core_registry
+  internal_core_nodeconfig -->|1| internal_preset
+  internal_core_process -->|1| internal_core_collector
+  internal_core_process -->|1| internal_core_keyring
+  internal_core_registry -->|1| internal_chains_all
+  internal_core_registry -->|1| internal_core_node
+  internal_core_session -->|1| internal_core_keyring
+  internal_dsl_interp -->|1| internal_accounts
+  internal_dsl_interp -->|1| internal_core_collector
+  internal_dsl_interp -->|1| internal_core_rpc
+  internal_dsl_interp -->|1| internal_testhelper
+  internal_mcp -->|1| internal_chainsetup
+  internal_mcp -->|1| internal_core_report
+  internal_mcp -->|1| internal_resource
+  internal_preset -->|1| internal_core_filestore
+  internal_testengine -->|1| internal_accounts
+  internal_testengine -->|1| internal_core_filestore
+  internal_testengine -->|1| internal_core_preflight
+  internal_testhelper -->|1| internal_chains_all
+  internal_testhelper -->|1| internal_core_collector
+  internal_testhelper -->|1| internal_core_registry
+  internal_testhelper -->|1| internal_preset
