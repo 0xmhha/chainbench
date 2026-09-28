@@ -365,7 +365,7 @@ chainbench validate $(find tests/tc -name '*.json')
 선언과 명령행 옵션을 합친 결과를 찍고, 아무것도 만들지 않고 멈춘다.
 
 ```
-chainbench run --plan --workspace-dir /tmp/ws tests/tc/basic/01-basic-consensus.json
+chainbench run --plan --workspace-dir /tmp/ws tests/tc/common/node/009-basic-consensus.json
 ```
 
 ```

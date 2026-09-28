@@ -116,11 +116,13 @@ PY
 }
 
 # runAttach runs an attach case against a network it brings up for it: the
-# basic consensus case's network, kept up in $2, then stopped. The case is
-# given node1's address and the key set the network was composed from, which
-# is what the case's own declaration would name on a machine that set one up.
+# consensus case's network, kept up in $2, then stopped. The case is given
+# node1's address and the key set the network was composed from, which is what
+# the case's own declaration would name on a machine that set one up.
+#
+# The host case is a common one, so this reaches it under tests/tc/common.
 runAttach() {
-  local spec=$1 ws=$2 host="$ROOT/tests/tc/basic/01-basic-consensus.json" up rpc keys
+  local spec=$1 ws=$2 host="$ROOT/tests/tc/common/node/009-basic-consensus.json" up rpc keys
   if ! up=$("$BIN" run "$host" --workspace-dir "$ws" --keep-up ${EXTRA[@]+"${EXTRA[@]}"} 2>&1); then
     printf '%s\nthe network to attach to did not come up\n' "$up"
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
