@@ -64,7 +64,7 @@ chainbench run tests/tc/common/tx/001-value-transfer.json \
   --workspace-dir ~/cbw/x --chain-preset wemix-bp4
 ```
 
-세 체인이 모두 갖춘 모양은 `bp4` 와 `bp7-en7-pn1` 둘이고 `presets/chain/` 에 세 벌씩 있다.
+세 체인이 모두 갖춘 모양은 `bp4`, `bp7-en7-pn1`, `bp9` 셋이고 `presets/chain/` 에 세 벌씩 있다.
 
 ## 4. 공통 판정을 다시 한 내역 (2026-09-28)
 
@@ -250,3 +250,32 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 | CT-FAULT-004 | 네트워크 분리와 복구 | `fault/004-fault-network-partition.json` |
 | CT-FAULT-005 | 허브형 연결에서 합의와 전파 | `fault/005-fault-p2p-topology.json` |
 | CT-FAULT-006 | 생산 노드 중단 시 대기 트랜잭션 처리 | `fault/006-fault-txpool-leader-change.json` |
+
+## 7. 남은 실패와 목적을 검증하지 못하는 케이스 (2026-09-29)
+
+세 체인(go-stablenet 740526d0, go-wbft, go-wemix)에 하나씩 차례로 돌린 결과다. 케이스가 문서의
+기대 결과를 실제로 비교하도록 고친 뒤(`ceb79098`)에도 남은 것을 적는다. 고치지 않은 이유는 모두
+케이스 밖에 있다. 클라이언트의 동작, 없는 빌드, 아직 고치지 않은 검사 구현이다.
+
+### 7.1 실패하는 것
+
+| 케이스 | 실패하는 체인 | 원인 | 정할 것 |
+| --- | --- | --- | --- |
+| `fault/004-fault-network-partition` | go-wemix | go-wemix 는 30초마다 거버넌스에 등록된 멤버 모두에게 `admin_addPeer` 를 스스로 건다(`wemix/admin.go` 의 `update`, `addPeer`). 케이스가 선언한 연결 구성(`peering.groups`)대로 static 목록을 써도 생산 노드는 모두 이어진다. 측정: 분리 전 node1 피어 8(선언 4), 다리 node5 를 멈춘 뒤에도 양쪽이 계속 블록을 만든다 | wemix 를 capability 로 건너뛸지(`skipsOn`), 케이스를 공통에서 뺄지 |
+| `fault/005-fault-p2p-topology` | go-stablenet, go-wemix (실행마다 다르다) | `partition` 이 `admin_removePeer` 로 끊는데 끊긴 피어가 다시 붙는다. 같은 체인에서도 실행마다 spoke 피어 수가 1~3 으로 달랐다. wemix 는 위와 같은 원인이고, stablenet·wbft 에서 다시 붙는 원인은 확인하지 못했다 | fault/004 처럼 선언한 연결 구성으로 다시 쓸지. wemix 에는 같은 한계가 남는다 |
+| `node/012-signature-compat-across-swap` | go-wbft, go-wemix | 교체 전후 `web3_clientVersion` 이 달라야 하는데 같다. 두 체인에는 업그레이드용 두 번째 빌드가 없어 같은 바이너리로 바꿔 끼운다. stablenet 은 1.0.1 → 1.1.0 으로 통과한다 | 두 체인의 업그레이드 빌드를 어느 커밋으로 만들지 |
+
+### 7.2 통과하지만 목적을 검증하지 못하는 것
+
+| 케이스 | 검증하지 못하는 것 | 원인 |
+| --- | --- | --- |
+| `node/010-wbft-proxied-routing` | `blockAdvance onEach [bp1,bp2,pn1,en1]` 중 bp1 만 본다 | `blockAdvance`·`blockHalt`·`blockInterval` 이 대상 중 첫 노드만 본다(`internal/testhelper/blockassert.go`, `blockprobe.go`) |
+| `rpc/009-contract-event-emitted` | 이벤트의 topic0 이 기대값과 같은지 | 필터에 넣은 topic 과 같은 값을 비교하므로 늘 참이다. 실제로는 로그가 있는지만 확인된다 |
+| `node/016-block-period-one-second` | 블록 간격이 설정 주기와 같은지 | 두 간격만 본다. go-wemix 는 평균 간격이 0.79~0.86초라(같은 초의 블록이 있다) 우연히 통과하거나 실패한다 |
+| `node/016-stress-block-time` | 간격의 하한 | 위 wemix 측정 때문에 상한(2초)만 둔다. `blockInterval` 의 범위는 체인별로 줄 수 없다 |
+
+### 7.3 도구와 문서
+
+- `chainbench validate` 는 `newAccount` 에 `saveKey` 가 없는 것을 잡지 못한다. 실행해야 드러난다.
+- `docs/tc/common/06-detailed-procedures/06-fault.md` 의 CT-FAULT-004 절차는 아직 "4대를 2대씩, 피어 연결을 끊는다" 이다. 케이스는 생산 노드 9대를 4-1-4 로 선언하고 다리 노드를 멈추는 방식으로 바꿨다. 8대가 살아 있어 정족수(6)를 넘으므로, 멈춘다면 노드가 빠져서가 아니라 갈라져서다. wemix 처리를 정한 뒤 문서를 함께 고친다.
+

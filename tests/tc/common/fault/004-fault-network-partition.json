@@ -2,57 +2,120 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-network-partition",
-  "description": "Simulate network partition via admin_removePeer - verify consensus halts and recovers after heal (원본 fault/network-partition.sh)",
+  "description": "Split a running network into two sets of producers and join it again (CT-FAULT-004). Nine producers are wired as two groups of four joined by one bridge, node5, which is in both groups; the graph is declared in the case (peering.groups) and written into each node's static-node list, so nothing else connects the two sides. Stopping node5 is the partition: eight producers stay up, which is more than the six a nine-validator BFT quorum needs, so if the chain stops it is because the eight are split four and four, not because a node is missing. Both sides must halt; restarting node5 must join them, and every node must agree on the head again. Partitioning by admin_removePeer, which this replaced, did not keep peers apart: dropped peers came back within seconds, differently per run and chain.",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
   "skipsOn": [],
-  "chainPreset": "stablenet-bp4",
+  "chainPreset": {
+    "extends": "stablenet-bp9",
+    "peering": {
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node4",
+          "node5"
+        ],
+        [
+          "node5",
+          "node6",
+          "node7",
+          "node8",
+          "node9"
+        ]
+      ]
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",
       "target": 3,
-      "timeout": "120s"
+      "timeout": "180s"
     },
     {
       "expect": "sameBlockHash",
       "block": "latest"
     },
     {
-      "do": "partition",
-      "groups": [
-        [
-          "node1",
-          "node2"
-        ],
-        [
-          "node3",
-          "node4"
-        ]
-      ]
+      "expect": "peerCount",
+      "on": "node1",
+      "compare": "Equal",
+      "is": "4"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node5",
+      "compare": "Equal",
+      "is": "8"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node9",
+      "compare": "Equal",
+      "is": "4"
+    },
+    {
+      "do": "stopNode",
+      "on": "node5"
     },
     {
       "expect": "peerCount",
       "on": "node1",
-      "compare": "LessOrEqual",
-      "is": "2"
+      "compare": "Equal",
+      "is": "3"
     },
     {
       "expect": "peerCount",
-      "on": "node3",
-      "compare": "LessOrEqual",
-      "is": "2"
+      "on": "node9",
+      "compare": "Equal",
+      "is": "3"
     },
     {
-      "do": "healPartition"
+      "expect": "blockHalt",
+      "on": "node1",
+      "within": "12s",
+      "maxAdvance": 1
     },
     {
-      "do": "waitBlock",
-      "on": "node3",
-      "target": 8,
-      "timeout": "150s"
+      "expect": "blockHalt",
+      "on": "node9",
+      "within": "12s",
+      "maxAdvance": 1
+    },
+    {
+      "do": "startNode",
+      "on": "node5"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node9",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "joined"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "node9",
+      "compare": "GreaterOrEqual",
+      "expected": "$joined",
+      "timeout": "120s",
+      "pollInterval": "2s"
     },
     {
       "expect": "sameBlockHash",
