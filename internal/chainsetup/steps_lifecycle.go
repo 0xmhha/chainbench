@@ -374,7 +374,18 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 			fmt.Errorf("chainsetup: stop: %d of %d node(s) stopped; %s",
 				stopped, attempts, strings.Join(errs, "; ")))
 	}
-	detail := fmt.Sprintf("%d node(s) stopped", stopped)
+	// Then the ones the record cannot name. A run killed between launching a
+	// node and saving its pid leaves it up with nothing pointing at it, and
+	// stopping only what is recorded answers "0 node(s) stopped" while the
+	// ports stay held. See steps_orphan.go.
+	extra, oerr := w.StopUnrecorded(ctx)
+	if oerr != nil {
+		return "", lifecycle.Mark(errOpSomeStillUp, oerr)
+	}
+	detail := fmt.Sprintf("%d node(s) stopped", stopped+extra)
+	if extra > 0 {
+		detail += fmt.Sprintf(" (%d of them had no recorded pid)", extra)
+	}
 	w.markStep("stop", detail)
 	return detail, nil
 }

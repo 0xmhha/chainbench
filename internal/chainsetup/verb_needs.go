@@ -142,6 +142,7 @@ var verbNeeds = map[string]verbNeed{
 	"Retarget":            {why: "rewrites where the workspace points, which is what a stale target needs"},
 	"Logs":                {why: "a dead node's log is the reason to ask for it; it refuses an unknown index by name"},
 	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
+	"StopUnrecorded":      {why: "it exists for the case where the record is empty and nodes are up, so requiring the record to say anything would disable it"},
 	"StopNode":            {why: "same as Stop, for one node"},
 	"RollBackLaunch":      {why: "undoes a launch that failed part way, so it runs exactly where the launch's own requirements were not met"},
 	"RunningNodes":        {why: "accessor"},
