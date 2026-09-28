@@ -196,6 +196,23 @@ type assertTarget struct {
 	url  string
 }
 
+// allTargets is every node of the environment, for an assertion whose question
+// is about all of them rather than one.
+func allTargets(ac *interp.AssertCtx) []assertTarget {
+	if ac.Env == nil {
+		return nil
+	}
+	nodes := ac.Env.Nodes()
+	out := make([]assertTarget, 0, len(nodes))
+	for _, n := range nodes {
+		if n.RPCURL == "" {
+			continue
+		}
+		out = append(out, assertTarget{name: string(node.LabelFor(n.Index)), url: n.RPCURL})
+	}
+	return out
+}
+
 // assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"
 // node, else the environment's primary node.
 func assertTargets(ac *interp.AssertCtx) []assertTarget {

@@ -20,23 +20,42 @@ import (
 
 // sameBlockHashAssertion passes when every target node reports the same hash for
 // a block — a cross-node no-fork / same-chain check. Spec: block (tag, default
-// "latest"; use "0x0" for genesis agreement), onEach. Non-answering nodes are
-// skipped; it fails if no node answers.
+// "latest"; use "0x0" for genesis agreement), on/onEach (default: every node).
+// A node that does not answer fails the check; a node that answers without the
+// block is skipped, and it fails if none has it.
 type sameBlockHashAssertion struct{}
 
+// Check compares the targets' hashes for the block.
+//
+// Without "on"/"onEach" it compares every node of the network. It used to fall
+// back to the primary node like the single-node assertions do, which made it a
+// comparison of one hash with itself: every case that asked "do the nodes
+// agree" without naming them passed whatever the other nodes held.
+//
+// "latest" is read as the lowest head among the nodes, not each node's own
+// latest: nodes a block apart hold different latest blocks, and comparing those
+// failed a network that agreed on everything it had in common.
 func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
 	targets := assertTargets(ac)
+	if len(ac.On) == 0 {
+		targets = allTargets(ac)
+	}
 	if len(targets) == 0 {
 		err := fmt.Errorf("dsl: sameBlockHash: no target node RPC URL")
 		res.Actual = err.Error()
 		return res, err
 	}
 	tag, _ := ac.Spec["block"].(string)
-	if tag == "" {
-		tag = "latest"
+	if tag == "" || tag == "latest" {
+		lowest, err := lowestHead(ctx, ac.Deps, targets)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		tag = fmt.Sprintf("0x%x", lowest)
 	}
-	res.Expected = "all nodes agree on block " + tag + " hash"
+	res.Expected = fmt.Sprintf("all %d node(s) agree on block %s hash", len(targets), tag)
 
 	var hashes []string
 	perNode := make(map[string]any, len(targets))
@@ -68,6 +87,26 @@ func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 		res.Source = detail
 	}
 	return res, nil
+}
+
+// lowestHead is the smallest head block number among targets: the newest block
+// every one of them holds.
+func lowestHead(ctx context.Context, deps *interp.Deps, targets []assertTarget) (uint64, error) {
+	var lowest uint64
+	for i, tgt := range targets {
+		c, err := clientFor(deps, tgt.url)
+		if err != nil {
+			return 0, err
+		}
+		n, err := c.BlockNumber(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("dsl: sameBlockHash: %s head: %w", tgt.name, err)
+		}
+		if i == 0 || n < lowest {
+			lowest = n
+		}
+	}
+	return lowest, nil
 }
 
 // blockStalledAssertion is the negation of blockAdvance: it passes when the
