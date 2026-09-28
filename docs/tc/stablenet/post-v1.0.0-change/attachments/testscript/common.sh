@@ -13,22 +13,26 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 # ===================== 환경 변수 =====================
-export RPC=${RPC:-http://172.21.132.1:8601}
-# Validator 노드 RPC (172.21.132.1~7, HTTPPort=8601)
-export BP1_RPC=${BP1_RPC:-http://172.21.132.1:8601}
-export BP2_RPC=${BP2_RPC:-http://172.21.132.2:8601}
-export BP3_RPC=${BP3_RPC:-http://172.21.132.3:8601}
-# EN 노드 - Snap Sync (172.21.132.8~10)
-export EN_SNAP1_RPC=${EN_SNAP1_RPC:-http://172.21.132.8:8601}
-export EN_SNAP2_RPC=${EN_SNAP2_RPC:-http://172.21.132.9:8601}
-export EN_SNAP3_RPC=${EN_SNAP3_RPC:-http://172.21.132.10:8601}
-# EN 노드 - Full Sync (172.21.132.11~14)
-export EN_FULL1_RPC=${EN_FULL1_RPC:-http://172.21.132.11:8601}
-export EN_FULL2_RPC=${EN_FULL2_RPC:-http://172.21.132.12:8601}
-export EN_FULL3_RPC=${EN_FULL3_RPC:-http://172.21.132.13:8601}
-export EN_FULL4_RPC=${EN_FULL4_RPC:-http://172.21.132.14:8601}
-# PN (EN + Bootnode, 172.21.132.15)
-export PN_RPC=${PN_RPC:-http://172.21.132.15:8601}
+# 폐쇄망 서버 서브넷은 민감정보다. 리터럴을 박지 않고 환경변수로 주입한다.
+#   예: export NODE_SUBNET=10.0.0   (마지막 옥텟이 노드 번호 node1~15)
+NODE_SUBNET="${NODE_SUBNET:?NODE_SUBNET 환경변수를 설정하세요 (예: export NODE_SUBNET=10.0.0)}"
+
+export RPC=${RPC:-http://${NODE_SUBNET}.1:8601}
+# Validator 노드 RPC (node1~7, HTTPPort=8601)
+export BP1_RPC=${BP1_RPC:-http://${NODE_SUBNET}.1:8601}
+export BP2_RPC=${BP2_RPC:-http://${NODE_SUBNET}.2:8601}
+export BP3_RPC=${BP3_RPC:-http://${NODE_SUBNET}.3:8601}
+# EN 노드 - Snap Sync (node8~10)
+export EN_SNAP1_RPC=${EN_SNAP1_RPC:-http://${NODE_SUBNET}.8:8601}
+export EN_SNAP2_RPC=${EN_SNAP2_RPC:-http://${NODE_SUBNET}.9:8601}
+export EN_SNAP3_RPC=${EN_SNAP3_RPC:-http://${NODE_SUBNET}.10:8601}
+# EN 노드 - Full Sync (node11~14)
+export EN_FULL1_RPC=${EN_FULL1_RPC:-http://${NODE_SUBNET}.11:8601}
+export EN_FULL2_RPC=${EN_FULL2_RPC:-http://${NODE_SUBNET}.12:8601}
+export EN_FULL3_RPC=${EN_FULL3_RPC:-http://${NODE_SUBNET}.13:8601}
+export EN_FULL4_RPC=${EN_FULL4_RPC:-http://${NODE_SUBNET}.14:8601}
+# PN (EN + Bootnode, node15)
+export PN_RPC=${PN_RPC:-http://${NODE_SUBNET}.15:8601}
 # 호환 alias
 export EN1_RPC=${EN1_RPC:-$EN_SNAP1_RPC}
 
@@ -55,13 +59,13 @@ export QUORUM=${QUORUM:-2}                 # GovMinter/GovValidator quorum
 export EXPIRY=${EXPIRY:-3}                  # 제안 만료 시간 (초, genesis 설정에 맞춤)
 
 # ── Validator 계정 (genesis.json validators + nodekey) ──
-# BP 노드 1 (172.21.132.1)
+# BP 노드 1 (node1)
 export VAL1_ADDR="0x518b3Efa7dB538F29615Cb9d76f4ac234EBE5893"
 export VAL1_KEY="<REDACTED_PRIVATE_KEY>"
-# BP 노드 2 (172.21.132.2)
+# BP 노드 2 (node2)
 export VAL2_ADDR="0xD76975b29BDE03F4C644851393D988CcEa9d1471"
 export VAL2_KEY="<REDACTED_PRIVATE_KEY>"
-# BP 노드 3 (172.21.132.3)
+# BP 노드 3 (node3)
 export VAL3_ADDR="0x0f51a9c1E728CAfD808F570773b4DcA201E0892D"
 export VAL3_KEY="<REDACTED_PRIVATE_KEY>"
 # BP 노드 4~7 (키 미제공 — 투표 TC 실행 시 환경변수로 주입)

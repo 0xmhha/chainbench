@@ -7,7 +7,8 @@ set -euo pipefail
 # =============================================================================
 
 GOV_MINTER="0x0000000000000000000000000000000000001003"
-RPC_URL="http://172.21.132.1:8601"
+# RPC 엔드포인트는 환경변수로 주입한다(서버 IP 리터럴을 박지 않는다).
+RPC_URL="${RPC_URL:-}"
 
 # ProposalStatus enum (GovBase.sol:96-105)
 PROPOSAL_STATUS=(
@@ -28,7 +29,7 @@ PROPOSAL_STATUS=(
 check_env() {
     if [[ -z "${RPC_URL:-}" ]]; then
         echo "ERROR: RPC_URL 환경 변수를 설정하세요" >&2
-        echo "  export RPC_URL=\"http://172.21.132.15:8545\"" >&2
+        echo "  export RPC_URL=\"http://<REMOTE_IP>:8545\"" >&2
         exit 1
     fi
 }
@@ -366,7 +367,7 @@ Block / Tx:
   verify-propose <hash>   proposeBurn tx 종합 검증
 
 Environment:
-  RPC_URL    RPC endpoint (e.g. http://172.21.132.15:8545)
+  RPC_URL    RPC endpoint (e.g. http://<REMOTE_IP>:8545)
 
 Examples:
   $0 proposal 1

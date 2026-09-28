@@ -43,17 +43,17 @@
 
 ### 3-1. 네트워크 토폴로지
 
-| IP | 역할 | 타입 |
+| 노드 | 역할 | 타입 |
 | --- | --- | --- |
-| 172.21.132.1 \~ .7 | Validator Node | 블록 생성·합의 |
-| 172.21.132.8 | EN Node (Snap Sync) | 동기화 노드 |
-| 172.21.132.9 | EN Node (Snap Sync) | 동기화 노드 |
-| 172.21.132.10 | EN Node (Snap Sync) | 동기화 노드 |
-| 172.21.132.11 | EN Node (Full Sync) | 동기화 노드 |
-| 172.21.132.12 | EN Node (Full Sync) | 동기화 노드 |
-| 172.21.132.13 | EN Node (Full Sync) | 동기화 노드 |
-| 172.21.132.14 | EN Node (Full Sync) | 동기화 노드 |
-| 172.21.132.15 | PN (EN + Bootnode) | P2P 연결 기준점 |
+| node1 ~ node7 | Validator Node | 블록 생성·합의 |
+| node8 | EN Node (Snap Sync) | 동기화 노드 |
+| node9 | EN Node (Snap Sync) | 동기화 노드 |
+| node10 | EN Node (Snap Sync) | 동기화 노드 |
+| node11 | EN Node (Full Sync) | 동기화 노드 |
+| node12 | EN Node (Full Sync) | 동기화 노드 |
+| node13 | EN Node (Full Sync) | 동기화 노드 |
+| node14 | EN Node (Full Sync) | 동기화 노드 |
+| node15 | PN (EN + Bootnode) | P2P 연결 기준점 |
 
 #### 3-2. 거버넌스 파라미터 
 

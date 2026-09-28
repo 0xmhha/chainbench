@@ -14,14 +14,14 @@
 
 - 폐쇄망 서버
 
-| IP | 역할 | 타입 |
+| 노드 | 역할 | 타입 |
 | --- | --- | --- |
-| 172.21.132.1 | WEMIX3.0 BP | 블록 생성·합의 ( \~99 블록) |
-| 172.21.132.2 | WEMIX3.0 BP(0\~99),WEMIX4.0 (100\~) | 블록 생성·합의 ( \~99 ),데이터 마이그레이션 테스트 (3.0 데이터 + 4.0 바이너리) |
-| 172.21.132.3 \~ .9 | 4.0 Validator Node | 블록 생성·합의 (100 \~ ), |
-| 172.21.132.10 \~ .13 | EN Node (Full Sync) | 동기화 노드 |
-| 172.21.132.14 | EN Node (Snap Sync) | 동기화 노드 |
-| 172.21.132.15 | PN (EN + Bootnode) | P2P 연결 기준점 |
+| node1 | WEMIX3.0 BP | 블록 생성·합의 ( \~99 블록) |
+| node2 | WEMIX3.0 BP(0\~99),WEMIX4.0 (100\~) | 블록 생성·합의 ( \~99 ),데이터 마이그레이션 테스트 (3.0 데이터 + 4.0 바이너리) |
+| node3 ~ node9 | 4.0 Validator Node | 블록 생성·합의 (100 \~ ), |
+| node10 ~ node13 | EN Node (Full Sync) | 동기화 노드 |
+| node14 | EN Node (Snap Sync) | 동기화 노드 |
+| node15 | PN (EN + Bootnode) | P2P 연결 기준점 |
 
 
 ## 테스트 사전 작업
@@ -40,5 +40,5 @@
     - 
 
 ```
---bootnodes enode://ed62b9e5410eb4ae3e1f08b305c9b623faefda632d1f435934b888fda8dbc131f2894b9e9fa0107945df49b4f3e2d054589b8f5c10aa6e543d5d6aa179a9d31f@172.21.132.15:30301
+--bootnodes enode://ed62b9e5410eb4ae3e1f08b305c9b623faefda632d1f435934b888fda8dbc131f2894b9e9fa0107945df49b4f3e2d054589b8f5c10aa6e543d5d6aa179a9d31f@node15:30301
 ```

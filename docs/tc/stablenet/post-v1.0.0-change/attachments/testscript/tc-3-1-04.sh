@@ -2,7 +2,7 @@
 # TC-3-1-04: Full Sync 검증
 # 네트워크: Privatenet
 # 선행조건: 체인 가동 중, Full Sync EN 노드 가동 중
-# Full Sync EN: 172.21.132.11~14
+# Full Sync EN: node11~14 (common.sh의 EN_FULL1~4_RPC)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"

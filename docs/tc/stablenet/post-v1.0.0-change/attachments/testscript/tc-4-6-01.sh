@@ -2,7 +2,7 @@
 # TC-4-6-01: Snap Sync EffectiveGasPrice 일치 검증
 # 네트워크: Privatenet
 # 선행조건: 체인 가동, Snap Sync EN 노드 동기화 완료
-# Snap Sync EN: 172.21.132.8~10
+# Snap Sync EN: node8~10 (common.sh의 EN_SNAP1~3_RPC)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
