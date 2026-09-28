@@ -251,17 +251,17 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 }
 
 // lowerHooks lowers the three hook lists a case may declare.
-func lowerHooks(c CaseV2, _ ChainPresetV2, spec *Spec) error {
+func lowerHooks(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// Hooks.
 	if h := c.Hooks; h != nil {
 		var err error
-		if spec.PreActions, err = lowerHookActions(c.ID, "pre", h.Pre); err != nil {
+		if spec.PreActions, err = lowerHookActions(c.ID, "pre", env.Chain, h.Pre); err != nil {
 			return err
 		}
-		if spec.PostActions, err = lowerHookActions(c.ID, "post", h.Post); err != nil {
+		if spec.PostActions, err = lowerHookActions(c.ID, "post", env.Chain, h.Post); err != nil {
 			return err
 		}
-		if spec.OnFailActions, err = lowerHookActions(c.ID, "onFail", h.OnFail); err != nil {
+		if spec.OnFailActions, err = lowerHookActions(c.ID, "onFail", env.Chain, h.OnFail); err != nil {
 			return err
 		}
 	}
@@ -271,14 +271,14 @@ func lowerHooks(c CaseV2, _ ChainPresetV2, spec *Spec) error {
 // lowerStatements lowers the steps, and refuses a case that verifies nothing —
 // a sequence with no expect runs and proves nothing, which is worse than one
 // that fails.
-func lowerStatements(c CaseV2, _ ChainPresetV2, spec *Spec) error {
+func lowerStatements(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// Statements.
 	if len(c.Steps) == 0 {
 		return fmt.Errorf("dsl: case %s has no steps", c.ID)
 	}
 	expects := 0
 	for i, raw := range c.Steps {
-		st, err := lowerStatement(raw)
+		st, err := lowerStatement(raw, env.Chain)
 		if err != nil {
 			return fmt.Errorf("dsl: case %s: step %d: %w", c.ID, i+1, err)
 		}
@@ -363,8 +363,42 @@ func timeoutKeyList() string {
 // the default success.
 var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "fail": true}
 
+// perChainKey is where a statement writes the answers that differ by chain.
+//
+// The procedure is one and the right answer is not. CT-FEE-002 is the case
+// that named it: a gas price under the floor is refused on StableNet and, on
+// the WEMIX chains, may instead sit unmined. Writing that as two cases copies
+// the procedure, and the copy is what drifts.
+const perChainKey = "isPerChain"
+
+// expectedFor is what a statement expects on this chain, and whether it
+// expects anything at all.
+//
+// "is" is the answer everywhere it is not overridden, so a statement that
+// carries isPerChain must still carry it: a chain the map does not name would
+// otherwise assert nothing and pass. That is the failure this whole change
+// exists to stop, so it is refused rather than defaulted.
+func expectedFor(m map[string]any, chain string) (any, bool, error) {
+	is, hasIs := m["is"]
+	raw, hasPerChain := m[perChainKey]
+	if !hasPerChain {
+		return is, hasIs, nil
+	}
+	byChain, ok := raw.(map[string]any)
+	if !ok || len(byChain) == 0 {
+		return nil, false, fmt.Errorf("%s must be a non-empty object of chain to expected value", perChainKey)
+	}
+	if !hasIs {
+		return nil, false, fmt.Errorf("%s needs \"is\" beside it, for the chains it does not name", perChainKey)
+	}
+	if v, named := byChain[chain]; named {
+		return v, true, nil
+	}
+	return is, true, nil
+}
+
 // lowerStatement lowers one v2 statement map onto the runtime vocabulary.
-func lowerStatement(m map[string]any) (Statement, error) {
+func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	doName, hasDo := m["do"].(string)
 	exName, hasEx := m["expect"].(string)
 	// A do statement may carry expect as an ADJUNCT ("expect":"receipt"|"revert"
@@ -382,16 +416,26 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	if _, isOverride := m["override"]; isOverride {
 		return Statement{}, fmt.Errorf("override hooks (G5) have no execution semantics yet and are not accepted")
 	}
+	// What this statement expects, with the per-chain answer applied if it
+	// declared one. Resolved here because this is the one place "is" becomes
+	// "expected"; five places read "expected" afterwards.
+	expected, hasExpected, err := expectedFor(m, chain)
+	if err != nil {
+		return Statement{}, err
+	}
 	args := make(map[string]any, len(m))
 	for k, v := range m {
 		switch k {
 		case "do":
 			// head, not an arg
-		case "is":
-			args["expected"] = v
+		case "is", perChainKey:
+			// Folded into "expected" above.
 		default:
 			args[k] = v
 		}
+	}
+	if hasExpected {
+		args["expected"] = expected
 	}
 	if hasDo {
 		return Statement{Do: doName, Args: args}, nil
@@ -432,10 +476,10 @@ func mergeDotPath(m map[string]any, path string, v any) {
 }
 
 // lowerHookActions lowers hook statements (do form) onto v1 action maps.
-func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string]any, error) {
+func lowerHookActions(caseID, hook, chain string, stmts []map[string]any) ([]map[string]any, error) {
 	out := make([]map[string]any, 0, len(stmts))
 	for i, raw := range stmts {
-		st, err := lowerStatement(raw)
+		st, err := lowerStatement(raw, chain)
 		if err != nil {
 			return nil, fmt.Errorf("dsl: case %s: hooks.%s[%d]: %w", caseID, hook, i, err)
 		}
