@@ -39,7 +39,7 @@
     {
       "compare": "EqualCI",
       "expect": "rpcCall",
-      "is": "node1",
+      "is": "$sender",
       "method": "eth_getTransactionByHash",
       "params": [
         "$hash"
