@@ -8,7 +8,7 @@
 
 한 체인에만 있는 기능이거나 노드 실행 테스트가 아닌 항목이다. ID는 기존 것을 그대로 적는다.
 
-## StableNet 전용 (105개)
+## StableNet 전용 (107개)
 
 | 기존 ID | 출처 | 이유 |
 | --- | --- | --- |
@@ -18,6 +18,7 @@
 | RT-B-06 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
 | RT-C-01 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
 | RT-C-02 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| RT-C-06 | Regression Test Case with scenario, Regression Test Case | 2026-09-28 추가 — 기본 수수료 하한(`params.MinBaseFee`)은 StableNet 에만 있는 상수다. 다른 두 체인의 노드 프로그램에는 상수도 검사 경로도 없다. 옛 CT-FEE-006 |
 | RT-E-01 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
 | RT-E-02 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
 | RT-E-03 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
@@ -56,6 +57,7 @@
 | RT-F-5-08 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-F-5-09 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-1-06 | Regression Test Case with scenario, Regression Test Case, \[WEMIX 4.0\] 테스트 시나리오 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
+| RT-G-2-02 | Regression Test Case with scenario, Regression Test Case | 2026-09-28 추가 — 권장 팁의 비교 대상이 StableNet 블록 헤더의 `GasTip` 이다. 같은 `istanbul_getWbftExtraInfo` API 를 가진 WEMIX4.0 도 응답에 이 필드가 없고 WEMIX3.0 은 API 자체가 없다. 옛 CT-FEE-011 |
 | RT-G-2-04 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-5-02 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-5-03 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |

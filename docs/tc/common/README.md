@@ -44,13 +44,13 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 ## 결과 요약
 
-같은 목적의 테스트를 하나로 합쳐 공통 테스트 76개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다.
+같은 목적의 테스트를 하나로 합쳐 공통 테스트 74개를 만들었다. 각 테스트에 새 ID(CT-)를 붙였고, 합쳐진 기존 ID는 비고에 모두 적었다.
 
 | 영역 | 뜻 | 수 |
 | --- | --- | --- |
 | NODE | 노드·동기화·네트워크 | 16 |
 | TX | 트랜잭션 전송·거부 | 20 |
-| FEE | 수수료·가스 정책 | 12 |
+| FEE | 수수료·가스 정책 | 10 |
 | CONTRACT | 컨트랙트 실행 | 7 |
 | RPC | 조회·구독 API | 15 |
 | FAULT | 장애·복구 | 6 |
@@ -60,10 +60,10 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 | 분리 방식 | 뜻 | 수 |
 | --- | --- | --- |
 | 설정으로 분리 | 절차를 그대로 두고 체인별 값만 바꾸면 된다 | 32 |
-| 기대값은 체인별 계산 | 같은 입력에서 나와야 할 정답이 체인마다 달라 정답을 따로 구해야 한다 | 32 |
+| 기대값은 체인별 계산 | 같은 입력에서 나와야 할 정답이 체인마다 달라 정답을 따로 구해야 한다 | 30 |
 | 별도 구현 필요 | 실행 도구에 없는 기능이 필요하거나 노드를 직접 다뤄야 한다 | 12 |
 
-두 체인에서만 가능한 테스트(63개)와 한 체인 전용 테스트(150개)는 부록에 기존 ID로 정리했다.
+두 체인에서만 가능한 테스트(63개)와 한 체인 전용 테스트(152개)는 부록에 기존 ID로 정리했다.
 
 ## 세 체인이 갈리는 곳
 
@@ -79,7 +79,7 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 
 | 페이지 | 내용 |
 | --- | --- |
-| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 76개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응 |
+| [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) | 74개 테스트의 ID, 목적, 기대 결과, 분리 방식, 기존 ID 대응 |
 | [메인넷별 의존 요소](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988376101) | 테스트 계정, RPC 주소, 컨트랙트 주소, 체인 ID, 그 밖의 설정 |
 | [별도 구현이 필요한 항목](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987884735) | 체인별 기대값 계산과 실행 도구에 추가할 기능 |
 | [공통 테스트 분리 변경 범위](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987720853) | 작업 순서와 완료 기준 |
@@ -90,6 +90,20 @@ WEMIX3.0, WEMIX4.0, StableNet 세 체인에서 같은 목적으로 실행할 수
 | [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189/B.) | 기존 ID로 정리 |
 
 ---
+
+## 2026-09-28 개정
+
+세 체인의 노드 프로그램을 직접 읽어 공통 판정을 다시 했다. `header.GasTip()`,
+`params.MinBaseFee`, `params.InitialGasTip` 은 StableNet 에만 있고, 같은
+`istanbul_getWbftExtraInfo` API 를 가진 WEMIX4.0 도 응답에 `gasTip` 을 담지 않는다.
+
+- **CT-FEE-006·CT-FEE-011 을 목록에서 빼 부록 B 로 옮겼다.** 76개 → 74개.
+- CT-TX-002·003·016 과 CT-FEE-002·010 은 목록에 남기고, 자동 테스트 중 무엇이 StableNet
+  전용인지 비고에 적었다. 검사하려는 동작 자체는 세 체인 공통이다.
+- CT-NODE-016 은 블록 주기 1초를 WEMIX3.0 이 거버넌스로 정한다는 점을 비고에 적었다.
+
+저장소 쪽 반영과 케이스별 내역은
+[`tests/tc/common/README.md`](../../../tests/tc/common/README.md) §4 에 있다.
 
 ## 이 저장소가 더한 것 (Confluence 본문 아님)
 
