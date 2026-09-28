@@ -226,6 +226,13 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}
 	spec.EnvBlueprint = env.Blueprint
+	if env.Peering != nil {
+		p, err := node.GroupsPeering(env.Peering.Groups)
+		if err != nil {
+			return fmt.Errorf("dsl: case %s: peering: %w", c.ID, err)
+		}
+		spec.EnvPeering = string(p)
+	}
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {

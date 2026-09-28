@@ -2,6 +2,8 @@ package node
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 )
 
 // Peering is the shape of the peer graph a network is wired into. It is
@@ -21,6 +23,95 @@ const (
 	Proxied Peering = "proxied"
 )
 
+// groupsPrefix marks a declared peer graph: "groups:" followed by groups of
+// node labels, groups separated by ";" and labels by ",". Every node in a
+// group dials every other member, and nothing else.
+//
+// This one is declared, not derived. A test that isolates part of a network
+// has to say which part, and no role rule knows that: a fault case splits
+// nine producers into two sets joined by one of them, and stopping that one
+// is the partition. Groups may overlap, which is how a bridge is written —
+// the bridge is the node in both groups.
+//
+// It rides in the same string every other peering does, so the request, the
+// workspace state, the run record and reuse's comparison all carry the graph
+// with no new field, and two networks wired differently never compare equal.
+const groupsPrefix = "groups:"
+
+// GroupsPeering builds the declared peer graph from its groups. It checks the
+// shape a declaration can get wrong on its own; whether the labels exist is
+// Validate's question, asked against the network they are placed in.
+func GroupsPeering(groups [][]string) (Peering, error) {
+	if len(groups) == 0 {
+		return "", fmt.Errorf("node: peering groups: none declared")
+	}
+	parts := make([]string, 0, len(groups))
+	for i, g := range groups {
+		if len(g) < 2 {
+			return "", fmt.Errorf("node: peering group %d has %d node(s) — a group is the nodes that dial each other, so it needs two", i+1, len(g))
+		}
+		seen := map[string]bool{}
+		for _, l := range g {
+			if _, err := Label(l).Index(); err != nil {
+				return "", fmt.Errorf("node: peering group %d: %w (name nodes by index, e.g. node5)", i+1, err)
+			}
+			if seen[l] {
+				return "", fmt.Errorf("node: peering group %d lists %s twice", i+1, l)
+			}
+			seen[l] = true
+		}
+		parts = append(parts, strings.Join(g, ","))
+	}
+	return Peering(groupsPrefix + strings.Join(parts, ";")), nil
+}
+
+// groups splits a declared peer graph back into its groups; ok is false for
+// any other peering.
+func (p Peering) groups() ([][]Label, bool) {
+	body, ok := strings.CutPrefix(string(p), groupsPrefix)
+	if !ok {
+		return nil, false
+	}
+	var out [][]Label
+	for part := range strings.SplitSeq(body, ";") {
+		var g []Label
+		for l := range strings.SplitSeq(part, ",") {
+			g = append(g, Label(l))
+		}
+		out = append(out, g)
+	}
+	return out, true
+}
+
+// neighbours is the set of labels that share a group with label.
+func (p Peering) neighbours(label Label) map[Label]bool {
+	gs, _ := p.groups()
+	out := map[Label]bool{}
+	for _, g := range gs {
+		if !slices.Contains(g, label) {
+			continue
+		}
+		for _, l := range g {
+			if l != label {
+				out[l] = true
+			}
+		}
+	}
+	return out
+}
+
+// DeclaredPeers is how many peers label should have under a declared peer
+// graph; ok is false for a derived one (mesh, proxied), whose count the caller
+// cannot know from the graph alone. A readiness check uses it to hold a
+// network until every declared connection is up — a network wired otherwise
+// than declared is not the network the test asked for.
+func (p Peering) DeclaredPeers(label Label) (int, bool) {
+	if _, ok := p.groups(); !ok {
+		return 0, false
+	}
+	return len(p.neighbours(label)), true
+}
+
 // ParsePeering resolves a peering name; an empty name is Mesh, so a caller that
 // does not care keeps the behaviour it already had.
 func ParsePeering(s string) (Peering, error) {
@@ -29,9 +120,17 @@ func ParsePeering(s string) (Peering, error) {
 		return Mesh, nil
 	case Proxied:
 		return Proxied, nil
-	default:
-		return "", fmt.Errorf("node: unknown peering %q (want %s or %s)", s, Mesh, Proxied)
 	}
+	if gs, ok := Peering(s).groups(); ok {
+		raw := make([][]string, len(gs))
+		for i, g := range gs {
+			for _, l := range g {
+				raw[i] = append(raw[i], string(l))
+			}
+		}
+		return GroupsPeering(raw)
+	}
+	return "", fmt.Errorf("node: unknown peering %q (want %s, %s or %s<groups>)", s, Mesh, Proxied, groupsPrefix)
 }
 
 // RoleSupport answers whether a family can run a role. It is injected because
@@ -66,6 +165,9 @@ func (p Peering) Validate(m *Map, supports RoleSupport) error {
 			}
 		}
 	}
+	if _, ok := p.groups(); ok {
+		return p.validateGroups(m)
+	}
 	if p == Proxied && counts[RolePN] == 0 {
 		return fmt.Errorf("node: peering %q needs at least one pn — with no proxy tier there is nothing between bp and en", Proxied)
 	}
@@ -75,6 +177,62 @@ func (p Peering) Validate(m *Map, supports RoleSupport) error {
 	// tier the operator asked for.
 	if p == Mesh && counts[RolePN] > 0 {
 		return fmt.Errorf("node: peering %q with %d pn(s) — a proxy tier only takes effect under %s peering; under mesh endpoints would still dial producers", Mesh, counts[RolePN], Proxied)
+	}
+	return nil
+}
+
+// validateGroups holds a declared graph to the network it is placed in: every
+// label is a node of it, every node is in some group, and the producers can
+// reach each other through producers.
+//
+// The last rule is the one a declaration gets wrong without noticing. A pn
+// does not carry consensus traffic (see Proxied below — measured), so
+// producers joined only through a pn never seal a block, and the network
+// would sit in round changes until the readiness wait ran out. It is refused
+// here, before anything is written, with the reason.
+func (p Peering) validateGroups(m *Map) error {
+	gs, _ := p.groups()
+	member := map[Label]bool{}
+	for i, g := range gs {
+		for _, l := range g {
+			if _, ok := m.Lookup(l); !ok {
+				return fmt.Errorf("node: peering group %d names %s, which is not in this network", i+1, l)
+			}
+			member[l] = true
+		}
+	}
+	var bps []Label
+	for _, pl := range m.Placements() {
+		if !member[pl.Label] {
+			return fmt.Errorf("node: peering groups leave %s out — a node in no group has no peers", pl.Label)
+		}
+		if Is(pl.Role, RoleBP) {
+			bps = append(bps, pl.Label)
+		}
+	}
+	if len(bps) < 2 {
+		return nil
+	}
+	isBP := map[Label]bool{}
+	for _, l := range bps {
+		isBP[l] = true
+	}
+	reached := map[Label]bool{bps[0]: true}
+	queue := []Label{bps[0]}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		for n := range p.neighbours(cur) {
+			if isBP[n] && !reached[n] {
+				reached[n] = true
+				queue = append(queue, n)
+			}
+		}
+	}
+	for _, l := range bps {
+		if !reached[l] {
+			return fmt.Errorf("node: peering groups leave producer %s unreachable from %s through producers — a pn does not relay consensus, so these producers could never seal a block together", l, bps[0])
+		}
 	}
 	return nil
 }
@@ -99,6 +257,21 @@ func (p Peering) Peers(m *Map, label Label) ([]Label, error) {
 		out := make([]Label, 0, len(all))
 		for _, pl := range all {
 			out = append(out, pl.Label)
+		}
+		return out, nil
+	}
+
+	// Declared groups: exactly the nodes that share a group with label. Both
+	// ends of every connection list each other, because membership is shared —
+	// a one-sided entry would still connect the pair, since a node accepts the
+	// dial it did not make.
+	if _, ok := p.groups(); ok {
+		near := p.neighbours(label)
+		out := make([]Label, 0, len(near))
+		for _, pl := range all {
+			if near[pl.Label] {
+				out = append(out, pl.Label)
+			}
 		}
 		return out, nil
 	}

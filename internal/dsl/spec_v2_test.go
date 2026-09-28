@@ -982,3 +982,29 @@ func TestV2_ARestartSaysItsForkItselfAndNamesNoPreset(t *testing.T) {
 		}
 	}
 }
+
+// TestParseV2PeeringLowersToDeclaredGraph: a declared peering reaches the
+// composer as the graph the node package wires, and a group the node package
+// could not wire is refused when the case is read, not when the network is.
+func TestParseV2PeeringLowersToDeclaredGraph(t *testing.T) {
+	const tmpl = `{"schemaVersion":"2","kind":"case","id":"x",
+		"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"},"topology":{"bp":3},
+			"peering":{"groups":%s}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	s, err := Parse(fmt.Appendf(nil, tmpl, `[["node1","node2"],["node2","node3"]]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "groups:node1,node2;node2,node3"; s.EnvPeering != want {
+		t.Fatalf("EnvPeering = %q, want %q", s.EnvPeering, want)
+	}
+	for name, groups := range map[string]string{
+		"role alias": `[["bp1","bp2"]]`,
+		"lone node":  `[["node1"]]`,
+		"no groups":  `[]`,
+	} {
+		if _, err := Parse(fmt.Appendf(nil, tmpl, groups)); err == nil {
+			t.Errorf("%s: must fail", name)
+		}
+	}
+}

@@ -27,6 +27,9 @@ import (
 type healthObserver struct {
 	nodes node.NodeSet
 	fork  forkGate
+	// peering is the graph the network was wired into. Under a declared one
+	// each node is held to its declared peer count instead of the floor of one.
+	peering node.Peering
 	// load re-reads the node set from the workspace record each round.
 	load func(ctx context.Context) (node.NodeSet, error)
 	// opts reaches health.Run; a test sets its Dial.
@@ -47,7 +50,25 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 	if err != nil {
 		return nil, err
 	}
-	return factsFromReport(rep, ns, o.fork), nil
+	facts := factsFromReport(rep, ns, o.fork)
+	wantDeclaredPeers(facts, o.peering)
+	return facts, nil
+}
+
+// wantDeclaredPeers raises each node's wanted peer count to what a declared
+// graph gives it.
+//
+// The floor of one is right for a derived graph, whose shape this cannot
+// know. A declared graph says exactly who dials whom, and a test written
+// against it — isolate these nodes, stop the bridge — is about that network
+// and no other. A node still short of a declared peer is waited on, so the
+// test starts on the network the case declared, not on one half-wired.
+func wantDeclaredPeers(facts []nodemonitor.Facts, p node.Peering) {
+	for i := range facts {
+		if n, ok := p.DeclaredPeers(node.LabelFor(facts[i].Node)); ok {
+			facts[i].WantPeers = n
+		}
+	}
 }
 
 // forkGate is what the readiness gate has to know about a network that stops on
@@ -289,8 +310,15 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 	if nodes == nil || len(nodes.Nodes) == 0 {
 		return nil
 	}
+	// The graph comes from the workspace record, where the composition put it.
+	// A workspace that cannot be read leaves it empty, which is the derived
+	// graph's floor — the check this replaced.
+	var peering node.Peering
+	if ws, werr := chainsetup.Open(dataDir, deps.Now); werr == nil {
+		peering = node.Peering(ws.State().Peering)
+	}
 	res, err := nodemonitor.Gate(ctx,
-		healthObserver{nodes: *nodes, fork: fork, load: func(ctx context.Context) (node.NodeSet, error) {
+		healthObserver{nodes: *nodes, fork: fork, peering: peering, load: func(ctx context.Context) (node.NodeSet, error) {
 			st, err := verb.NetworkStatus(ctx, deps, verb.NetworkStatusIn{DataDir: dataDir})
 			return st.Nodes, err
 		}},

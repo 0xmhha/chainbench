@@ -179,3 +179,91 @@ func itoa(n int) string {
 	}
 	return string(b)
 }
+
+// bridged builds nine producers on one host.
+func bridged(t *testing.T) *node.Map {
+	t.Helper()
+	pool := resource.Pool{
+		Hosts: []resource.Host{{Addr: "127.0.0.1"}},
+		Slots: 12,
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}
+	reqs := make([]resource.Request, 9)
+	for i := range reqs {
+		reqs[i] = resource.Request{Role: node.RoleBP}
+	}
+	m, err := resource.Assign(pool, reqs)
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	return m
+}
+
+// TestPeering_GroupsWireOnlyWhatIsDeclared: two groups of four joined by the
+// node in both — each side lists only its own members and the bridge, the
+// bridge lists everyone, and the declaration survives its own string form.
+func TestPeering_GroupsWireOnlyWhatIsDeclared(t *testing.T) {
+	m := bridged(t)
+	p, err := node.GroupsPeering([][]string{
+		{"node1", "node2", "node3", "node4", "node5"},
+		{"node5", "node6", "node7", "node8", "node9"},
+	})
+	if err != nil {
+		t.Fatalf("GroupsPeering: %v", err)
+	}
+	if err := p.Validate(m, nil); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	for of, want := range map[node.Label]string{
+		"node1": "node2,node3,node4,node5",
+		"node5": "node1,node2,node3,node4,node6,node7,node8,node9",
+		"node9": "node5,node6,node7,node8",
+	} {
+		if got := strings.Join(labels(t, m, p, of), ","); got != want {
+			t.Errorf("%s peers = %s, want %s", of, got, want)
+		}
+		if n, ok := p.DeclaredPeers(of); !ok || n != len(strings.Split(want, ",")) {
+			t.Errorf("%s DeclaredPeers = %d, %v", of, n, ok)
+		}
+	}
+	back, err := node.ParsePeering(string(p))
+	if err != nil || back != p {
+		t.Fatalf("ParsePeering(%q) = %q, %v", p, back, err)
+	}
+	if _, ok := node.Mesh.DeclaredPeers("node1"); ok {
+		t.Error("mesh claims a declared peer count")
+	}
+}
+
+// TestPeering_GroupsRefuseWhatCannotRun: a declaration naming a node the
+// network lacks, leaving one out, or splitting the producers from the start is
+// refused before anything is written.
+func TestPeering_GroupsRefuseWhatCannotRun(t *testing.T) {
+	m := bridged(t)
+	for name, c := range map[string]struct {
+		groups [][]string
+		want   string
+	}{
+		"unknown node":     {[][]string{{"node1", "node2", "node3", "node4", "node5", "node6", "node7", "node8", "node9", "node10"}}, "not in this network"},
+		"node left out":    {[][]string{{"node1", "node2", "node3", "node4", "node5", "node6", "node7", "node8"}}, "leave node9 out"},
+		"split from start": {[][]string{{"node1", "node2", "node3", "node4"}, {"node5", "node6", "node7", "node8", "node9"}}, "unreachable"},
+	} {
+		p, err := node.GroupsPeering(c.groups)
+		if err != nil {
+			t.Fatalf("%s: GroupsPeering: %v", name, err)
+		}
+		if err := p.Validate(m, nil); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: Validate = %v, want %q", name, err, c.want)
+		}
+	}
+	for name, g := range map[string][][]string{
+		"lone node":  {{"node1"}},
+		"role alias": {{"bp1", "bp2"}},
+		"duplicate":  {{"node1", "node1"}},
+		"no groups":  nil,
+	} {
+		if _, err := node.GroupsPeering(g); err == nil {
+			t.Errorf("%s: GroupsPeering accepted %v", name, g)
+		}
+	}
+}

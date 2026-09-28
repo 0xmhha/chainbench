@@ -135,6 +135,24 @@
             "type": "integer"
           }
         },
+        "peering": {
+          "type": "object",
+          "description": "declared peer graph: groups of node labels (node<N>) that dial each other and no one else. Groups may overlap; the node in two groups bridges them. Every node must be in a group, and producers must reach each other through producers.",
+          "additionalProperties": false,
+          "required": ["groups"],
+          "properties": {
+            "groups": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "uniqueItems": true,
+                "items": { "type": "string", "pattern": "^node[1-9][0-9]*$" }
+              }
+            }
+          }
+        },
         "launch": {
           "type": "object",
           "description": "scope -> launchopt knobs. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
