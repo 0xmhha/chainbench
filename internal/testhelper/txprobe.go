@@ -153,6 +153,15 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 		return fmt.Errorf("dsl: sendRawTampered: node accepted a tx with a corrupt %s signature (hash %s)", which, h)
 	}
 	ac.Value = sendErr.Error()
+	// Any refusal used to pass. A tampered signature recovers to some other
+	// address, so the node could refuse for that address's empty balance and
+	// the case would pass without the signature check ever being the reason.
+	// "reason" names what the refusal has to say.
+	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
+		if !strings.Contains(strings.ToLower(sendErr.Error()), strings.ToLower(reason)) {
+			return fmt.Errorf("dsl: sendRawTampered: the %s-tampered tx was refused, but not for %q: %v", which, reason, sendErr)
+		}
+	}
 	return nil
 }
 
@@ -336,6 +345,15 @@ func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 		return res, nil
 	}
 	res.Actual = callErr.Error()
+	// Any error used to pass, a refused connection included. "reason" names
+	// what the error has to say — "execution reverted" for a revert.
+	if reason, ok := ac.Spec["reason"].(string); ok && reason != "" {
+		res.Expected = "eth_call returns an error containing " + strconvQuote(reason)
+		if !strings.Contains(strings.ToLower(callErr.Error()), strings.ToLower(reason)) {
+			res.Pass = false
+			res.Source = "eth_call failed, but not for " + strconvQuote(reason)
+		}
+	}
 	return res, nil
 }
 
@@ -403,3 +421,6 @@ func isMethodNotFound(err error) bool {
 		strings.Contains(m, "does not exist") ||
 		strings.Contains(m, "not available")
 }
+
+// strconvQuote renders s in double quotes for a message.
+func strconvQuote(s string) string { return fmt.Sprintf("%q", s) }

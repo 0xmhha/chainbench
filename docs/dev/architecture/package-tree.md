@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 59,774 |
+| `internal/` | 52 | 60,000 |
 | `cmd/` | 19 | 5,094 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **65,658** |
+| **합계** | **74** | **65,884** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,12 +35,12 @@
 
 ---
 
-## 1. `internal/core` — 25패키지 17,583줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 17,600줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
 ├── home            52  [L0] 약속된 위치의 소유자 ~/.chainbench. 경로를 안 대면 키셋·세션·구성이 다 여기로 (요구 7)
-├── node         1,203  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
+├── node         1,208  [L0] 노드에 대해 아는 것 전부 — Node·NodeSet·Role·Endpoints·Label·Placement·Map·
 │                            Peering·Layout·Enode + 노드 레이아웃 선언(Topology·Entry·Load).
 │                            최다 피참조. 내부 import 0
 ├── wait            43  [L0] 취소 가능한 유일한 멈춤 — Sleep(ctx, d). 내부 import 0
@@ -77,7 +77,7 @@ internal/core/
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
 │                            reuse / rebuild-nodes N / rebuild-all / compose 를 답한다. 판단만 하고 보지 않는다
-├── session      1,495  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
+├── session      1,507  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
 │                            이름 붙인 네트워크 레지스트리(SaveNetwork·LoadNetwork·ListNetworks·RemoveNetwork)
 ├── collector    1,440  [L3] live tail·chainstate·bp 참여·reorg + 이벤트(Bus·Event·Kind·Phase)
 │                            + 로그 검색·타임라인(Search·Timeline) + RPC 로부터의 체인 종류·능력 감지
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 38,398줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 38,607줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -141,11 +141,11 @@ internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인
                       + Unresolved(오프라인 이름 검증) + caseTimeout. 계약이 여기 사는 것이 핵심 —
                       testhelper(L3)가 구현하므로 testengine(L4)으로 올릴 수 없다
 
-internal/testhelper 4,543 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
+internal/testhelper 4,749 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 5,159 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 5,162 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약

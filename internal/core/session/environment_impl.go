@@ -129,6 +129,15 @@ func (e *env) Resolve(selector string) (node.Node, error) {
 func (e *env) ResolveEach(selectors []string) ([]node.Node, error) {
 	out := make([]node.Node, 0, len(selectors))
 	for _, sel := range selectors {
+		// "all" is every node of the network, in index order: what a spec
+		// means by "on each node" without knowing how many there are, which
+		// differs by the preset it runs on.
+		if sel == AllNodes {
+			all := append([]node.Node(nil), e.nodes...)
+			sort.Slice(all, func(i, j int) bool { return all[i].Index < all[j].Index })
+			out = append(out, all...)
+			continue
+		}
 		n, err := e.Resolve(sel)
 		if err != nil {
 			return nil, err
@@ -137,6 +146,9 @@ func (e *env) ResolveEach(selectors []string) ([]node.Node, error) {
 	}
 	return out, nil
 }
+
+// AllNodes is the onEach selector that names every node of the network.
+const AllNodes = node.SelectAll
 
 // envDoc is the env.json schema.
 type envDoc struct {

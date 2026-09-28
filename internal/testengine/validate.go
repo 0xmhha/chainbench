@@ -306,6 +306,9 @@ func selectorWellFormed(sel string) bool {
 	if sel == "" {
 		return false
 	}
+	if sel == node.SelectAll {
+		return true
+	}
 	if n, ok := strings.CutPrefix(sel, "node"); ok {
 		v, err := strconv.Atoi(n)
 		return err == nil && v >= 1

@@ -43,3 +43,8 @@ func Is(role, canonical Role) bool {
 	}
 	return got == want
 }
+
+// SelectAll is the onEach selector that names every node of the network, in
+// index order — what a spec means by "on each node" without knowing how many
+// the preset it runs on composes.
+const SelectAll = "all"

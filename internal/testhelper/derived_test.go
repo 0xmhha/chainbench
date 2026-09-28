@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
@@ -211,6 +212,17 @@ func TestRPCCall_LatestParamSentinel(t *testing.T) {
 // notifications.
 func wsHeadServer(t *testing.T, n int) *httptest.Server {
 	t.Helper()
+	numbers := make([]string, n)
+	for i := range numbers {
+		numbers[i] = fmt.Sprintf("0x%x", i+1)
+	}
+	return wsHeadServerOf(t, numbers)
+}
+
+// wsHeadServerOf sends one newHeads notification per number, in order.
+func wsHeadServerOf(t *testing.T, numbers []string) *httptest.Server {
+	t.Helper()
+	n := len(numbers)
 	up := websocket.Upgrader{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := up.Upgrade(w, r, nil)
@@ -228,7 +240,7 @@ func wsHeadServer(t *testing.T, n int) *httptest.Server {
 		for i := 0; i < n; i++ {
 			_ = conn.WriteJSON(map[string]any{
 				"jsonrpc": "2.0", "method": "eth_subscription",
-				"params": map[string]any{"subscription": "0xsub", "result": map[string]any{"number": "0x1"}},
+				"params": map[string]any{"subscription": "0xsub", "result": map[string]any{"number": numbers[i]}},
 			})
 		}
 		// Hold the connection open until the client hangs up.
@@ -540,5 +552,25 @@ func TestWSCollected_RequiresHandle(t *testing.T) {
 		Spec: map[string]any{"assert": assertWSCollected, "sub": "not-a-handle"}})
 	if err == nil || res.Pass {
 		t.Fatal("wsCollected must fail when sub is not a subscription handle")
+	}
+}
+
+// TestWSSubscribeAssertion_HeadsMustAdvance: newHeads that repeat a block number
+// fail. Counting valid notifications alone passed a node that sent the same
+// head twice.
+func TestWSSubscribeAssertion_HeadsMustAdvance(t *testing.T) {
+	srv := wsHeadServerOf(t, []string{"0x5", "0x5"})
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	as, _ := d.Actions.Assertion(assertWSSubscribe)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
+		Env: envWithWS(t, host, port), Deps: &d,
+		Spec: map[string]any{"assert": assertWSSubscribe, "event": "newHeads", "count": 2, "timeout": "5s"},
+	})
+	if err != nil {
+		t.Fatalf("wsSubscribe: %v", err)
+	}
+	if res.Pass {
+		t.Fatalf("two heads with the same number passed: %v", res.Actual)
 	}
 }

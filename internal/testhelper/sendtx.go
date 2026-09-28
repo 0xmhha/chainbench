@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
@@ -157,6 +158,7 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	}
 	feePayerKey, _ := ac.Args["feePayerKey"].(string)
 	data, _ := ac.Args["data"].(string)
+	gasHex, hasGas := hexQuantity(ac.Args["gas"])
 	var hash string
 	switch {
 	// A "feePayerKey" arg makes this a 0x16 fee-delegated transfer: the "key"
@@ -173,6 +175,12 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 			value = new(big.Int)
 		}
 		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	// An explicit "gas" is the limit the case asked for. Every other branch
+	// picks its own — SendCoin fixes 21000, Execute estimates — so a case that
+	// sent 100000 gas to a reverting contract ran out at 21000 instead, and
+	// measured out-of-gas where it meant to measure a revert.
+	case hasGas:
+		hash, err = sendWithGas(ctx, ac, w, to, value, data, gasHex, rpcURL)
 	case data != "" && data != "0x":
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
@@ -280,3 +288,66 @@ func parseValueWei(v any) (*big.Int, error) {
 // steps: the address under "save" (referenceable as "$name") and the private
 // key hex under "saveKey". The key is an ephemeral, throwaway test key — a spec
 // funds it from a node account, then uses it as sendTx "key" to sign locally.
+
+// sendWithGas signs a type-0x02 transaction with the gas limit the case named,
+// its data if any, and its fee caps if given — else the node's suggestion:
+// tip from eth_maxPriorityFeePerGas, cap twice the latest base fee plus the tip.
+func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string) (string, error) {
+	gas, err := strconv.ParseUint(strings.TrimPrefix(gasHex, "0x"), 16, 64)
+	if err != nil {
+		return "", fmt.Errorf("dsl: sendTx gas: %w", err)
+	}
+	if value == nil {
+		value = new(big.Int)
+	}
+	args := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: gas}
+	if data != "" && data != "0x" {
+		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+		if derr != nil {
+			return "", fmt.Errorf("dsl: sendTx: data: %w", derr)
+		}
+		args.Data = b
+	}
+	nonce, err := noncePointer(ac.Args["nonce"])
+	if err != nil {
+		return "", err
+	}
+	args.Nonce = nonce
+	maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
+	tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
+	if hasMaxFee != hasTip {
+		return "", fmt.Errorf("dsl: sendTx key: maxFeePerGas and maxPriorityFeePerGas come together")
+	}
+	if hasMaxFee {
+		feeCap, ok1 := new(big.Int).SetString(strings.TrimPrefix(maxFee, "0x"), 16)
+		tipCap, ok2 := new(big.Int).SetString(strings.TrimPrefix(tip, "0x"), 16)
+		if !ok1 || !ok2 {
+			return "", fmt.Errorf("dsl: sendTx key: bad fee quantity")
+		}
+		args.GasFeeCap, args.GasTipCap = feeCap, tipCap
+	} else {
+		c, cerr := clientFor(ac.Deps, rpcURL)
+		if cerr != nil {
+			return "", cerr
+		}
+		var tipHex string
+		if err := c.Call(ctx, "eth_maxPriorityFeePerGas", &tipHex); err != nil {
+			return "", fmt.Errorf("dsl: sendTx: suggested tip: %w", err)
+		}
+		tipCap, ok := new(big.Int).SetString(strings.TrimPrefix(tipHex, "0x"), 16)
+		if !ok {
+			return "", fmt.Errorf("dsl: sendTx: bad suggested tip %q", tipHex)
+		}
+		blk, berr := c.BlockByNumber(ctx, "latest")
+		if berr != nil {
+			return "", fmt.Errorf("dsl: sendTx: base fee: %w", berr)
+		}
+		base := blk.BaseFeePerGas
+		if base == nil {
+			base = new(big.Int)
+		}
+		args.GasTipCap = tipCap
+		args.GasFeeCap = new(big.Int).Add(new(big.Int).Mul(base, big.NewInt(2)), tipCap)
+	}
+	return w.SendDynamicFeeTx(ctx, args)
+}

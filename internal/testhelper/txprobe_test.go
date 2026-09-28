@@ -117,3 +117,27 @@ func TestMethodPresent(t *testing.T) {
 		t.Error("a method-not-found response must fail methodPresent")
 	}
 }
+
+// TestCallError_ReasonMustMatch: with "reason", an error that does not say it
+// fails. Without it any error passed, a refused connection included.
+func TestCallError_ReasonMustMatch(t *testing.T) {
+	reverting := mockRPCReject(t, "execution reverted: BAD_INPUT")
+	other := mockRPCReject(t, "connection refused")
+	d := deps()
+	as, _ := d.Actions.Assertion(assertCallError)
+	check := func(url string) bool {
+		t.Helper()
+		spec := map[string]any{"assert": assertCallError, "to": "0xabc", "data": "0xa9cc4718", "reason": "execution reverted"}
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: url}}, Spec: spec})
+		if err != nil {
+			t.Fatalf("callError: %v", err)
+		}
+		return r.Pass
+	}
+	if !check(reverting.URL) {
+		t.Error("a revert did not satisfy reason \"execution reverted\"")
+	}
+	if check(other.URL) {
+		t.Error("an unrelated error satisfied reason \"execution reverted\"")
+	}
+}
