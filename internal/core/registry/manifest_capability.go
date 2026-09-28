@@ -42,6 +42,25 @@ const (
 	// manifest says what its ordinary network provides, and a network that
 	// turns the fork on declares the capability alongside its overlay.
 	CapPrecompile = "precompile:"
+	// CapEVM asks for an opcode set the chain's EVM answers, named by the
+	// Ethereum fork that introduced it.
+	//
+	// It is declared rather than derived, for the reason CapPrecompile is. A
+	// chain's own fork names say nothing about which opcodes came with them:
+	// go-wemix's brioche, go-wbft's croissant and go-stablenet's anzeon are
+	// three different names, and only two of the three tables turn PUSH0 on.
+	// Nor is the Ethereum fork name in any of the three genesis templates, so
+	// there is nothing to derive it from.
+	//
+	// Measured 2026-09-28 on the common-set sweep. A case deployed a contract
+	// solc 0.8.28 had compiled for its default target, so the initcode carried
+	// PUSH0 forty-five times. go-stablenet and go-wbft ran it. go-wemix's jump
+	// table stops at London — core/vm/interpreter.go has no branch above
+	// IsMerge and core/vm/jump_table.go builds no table above it, so enable3855
+	// is reachable only through ExtraEips — and the deploy met an opcode that
+	// is not there, burned the whole limit and came back status 0x0. Nothing
+	// could have gated it: no capability said what the contract needed.
+	CapEVM = "evm:"
 )
 
 // ForkActiveIn reports whether a genesis template switches the named fork on.
@@ -80,7 +99,7 @@ func ForkActiveIn(genesisTemplate []byte, fork string) bool {
 
 // CapabilityPrefixes is every prefix a requirement may carry, for the message
 // that refuses one it does not know.
-var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile}
+var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile, CapEVM}
 
 // DerivedCapabilities is what this manifest's own data says the chain provides.
 //

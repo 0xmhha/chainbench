@@ -43,7 +43,8 @@
     "rpc",
     "ws",
     "consensus",
-    "precompile:secp256r1"
+    "precompile:secp256r1",
+    "evm:shanghai"
   ],
   "system_contracts": {
     "govConfig": "0x0000000000000000000000000000000000001000",
