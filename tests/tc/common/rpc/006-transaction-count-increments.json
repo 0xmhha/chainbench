@@ -4,8 +4,7 @@
   "id": "transaction-count-increments",
   "description": "RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count)",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

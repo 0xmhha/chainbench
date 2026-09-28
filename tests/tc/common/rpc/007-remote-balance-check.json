@@ -4,8 +4,7 @@
   "id": "remote-balance-check",
   "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. 레거시 기본값과 같이 0 주소를 본다 — 어느 체인에나 있고 값이 변하지 않는다.",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

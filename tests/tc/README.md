@@ -8,7 +8,7 @@
 
 ```
 tests/tc/
-├── common/                 ← 세 체인에서 같은 목적으로 도는 것 (99건)
+├── common/                 ← 세 체인에서 같은 목적으로 도는 것 (91건)
 │   └── {node,tx,fee,contract,rpc,fault}/
 ├── go-stablenet/           ← 레거시 tests/stablenet
 │   ├── regression/{ethereum,wbft,anzeon,
@@ -28,6 +28,10 @@ tests/tc/
 전부 공통으로 갔고, `basic/` 은 8건 중 6건이 갔다. 남은 둘은
 `07-basic-wbft-consensus`(wbft 합의 전용)와 `08-attached-chain-produces`(attach 선언을
 검사하는 유일한 케이스)다.
+
+공통으로 갔다가 되돌아온 것이 여덟 있다. 2026-09-28 에 세 체인 소스를 대조하니
+go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내역은
+[`common/README.md`](common/README.md) §4.1 이다.
 
 파일명은 `<레거시 번호>-<테스트 id>.json` 이다. 번호는 레거시 스위트의 순번을 그대로
 가져와 대조가 되게 했고, 뒤의 id 가 무엇을 검증하는지 말한다. 레거시 하나가 여러

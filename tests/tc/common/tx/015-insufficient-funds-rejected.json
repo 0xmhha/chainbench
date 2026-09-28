@@ -4,8 +4,7 @@
   "id": "insufficient-funds-rejected",
   "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds)",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

@@ -4,8 +4,7 @@
   "id": "value-transfer",
   "description": "RT-A-4-03 — eth_sendRawTransaction 서명된 tx 전파 (원본 regression/ethereum/28-test-send-raw-tx)",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

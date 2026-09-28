@@ -3,8 +3,7 @@
   "kind": "case",
   "id": "contract-event-emitted",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

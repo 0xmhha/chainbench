@@ -4,8 +4,7 @@
   "id": "dynamic-fee-below-basefee-rejected",
   "description": "RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced)",
   "requires": [
-    "rpc",
-    "engine:anzeon"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

@@ -4,8 +4,7 @@
   "id": "block-period-one-second",
   "description": "RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)",
   "requires": [
-    "rpc",
-    "family:wbft"
+    "rpc"
   ],
   "chainPreset": {
     "extends": "stablenet-bp4",

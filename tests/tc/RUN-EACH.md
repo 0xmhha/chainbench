@@ -589,7 +589,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/anzeon-base
 RT-C-06 — baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음 (원본 regression/anzeon/06-test-min-basefee)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basefee-minimum" && bin/chainbench run tests/tc/common/fee/006-basefee-minimum.json --workspace-dir "$HOME/cbw/manual/basefee-minimum" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basefee-minimum" && bin/chainbench run tests/tc/go-stablenet/regression/anzeon/06-basefee-minimum.json --workspace-dir "$HOME/cbw/manual/basefee-minimum" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **063. `basefee-maximum`** — stablenet · bp4 · 직전 PASS 53s  
@@ -602,19 +602,19 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basefee-max
 **064. `feecap-above-min-accepted`** — stablenet · bp4 · 직전 PASS 52s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-above-min-accepted" && bin/chainbench run tests/tc/common/fee/002-feecap-above-min-accepted.json --workspace-dir "$HOME/cbw/manual/feecap-above-min-accepted" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-above-min-accepted" && bin/chainbench run tests/tc/go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json --workspace-dir "$HOME/cbw/manual/feecap-above-min-accepted" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **065. `feecap-exact-min-accepted`** — stablenet · bp4 · 직전 PASS 56s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-exact-min-accepted" && bin/chainbench run tests/tc/common/fee/002-feecap-exact-min-accepted.json --workspace-dir "$HOME/cbw/manual/feecap-exact-min-accepted" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-exact-min-accepted" && bin/chainbench run tests/tc/go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json --workspace-dir "$HOME/cbw/manual/feecap-exact-min-accepted" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **066. `gaslimit-exceeded-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gaslimit-exceeded-rejected" && bin/chainbench run tests/tc/common/tx/016-gaslimit-exceeded-rejected.json --workspace-dir "$HOME/cbw/manual/gaslimit-exceeded-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gaslimit-exceeded-rejected" && bin/chainbench run tests/tc/go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json --workspace-dir "$HOME/cbw/manual/gaslimit-exceeded-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **067. `basefee-redistributed-not-burned`** — stablenet · bp4 · 직전 PASS 56s  
@@ -679,14 +679,14 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-p
 **075. `gas-price-equals-basefee-plus-tip`** — stablenet · bp4 · 직전 PASS 56s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-equals-basefee-plus-tip" && bin/chainbench run tests/tc/common/fee/010-gas-price-equals-basefee-plus-tip.json --workspace-dir "$HOME/cbw/manual/gas-price-equals-basefee-plus-tip" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-equals-basefee-plus-tip" && bin/chainbench run tests/tc/go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json --workspace-dir "$HOME/cbw/manual/gas-price-equals-basefee-plus-tip" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **076. `max-priority-fee-equals-gastip`** — stablenet · bp4 · 직전 PASS 52s  
 RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/max-priority-fee-equals-gastip" && bin/chainbench run tests/tc/common/fee/011-max-priority-fee-equals-gastip.json --workspace-dir "$HOME/cbw/manual/max-priority-fee-equals-gastip" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/max-priority-fee-equals-gastip" && bin/chainbench run tests/tc/go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json --workspace-dir "$HOME/cbw/manual/max-priority-fee-equals-gastip" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **077. `fee-history-well-formed`** — stablenet · bp4 · 직전 PASS 52s  
@@ -885,14 +885,14 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-c
 RT-A-2-01 — Legacy Tx (type 0x0) 발행 (원본 regression/ethereum/08-test-legacy-tx)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-transfer" && bin/chainbench run tests/tc/common/tx/002-legacy-transfer.json --workspace-dir "$HOME/cbw/manual/legacy-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-transfer" && bin/chainbench run tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json --workspace-dir "$HOME/cbw/manual/legacy-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **105. `dynamic-fee-tx`** — stablenet · bp4 · 직전 PASS 57s  
 RT-A-2-02 — EIP-1559 DynamicFeeTx (type 0x2) 발행 (원본 regression/ethereum/09-test-dynamic-fee-tx)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/dynamic-fee-tx" && bin/chainbench run tests/tc/common/tx/003-dynamic-fee-tx.json --workspace-dir "$HOME/cbw/manual/dynamic-fee-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/dynamic-fee-tx" && bin/chainbench run tests/tc/go-stablenet/regression/ethereum/09-dynamic-fee-tx.json --workspace-dir "$HOME/cbw/manual/dynamic-fee-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **106. `access-list-tx`** — stablenet · bp4 · 직전 PASS 56s  
