@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "access-list-tx",
-  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다.",
+  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다. 가스 가격은 계산하지 않고 노드에게 묻는다. 기본 수수료의 두 배로 잡던 것이 2026-09-28 go-wemix 에서 'transaction underpriced' 로 거부됐다. go-wemix 는 풀의 최소 가격을 거버넌스에서 받아 설정하고(wemix/admin.go:648) 기본값이 100 Gwei 인데, 그 체인의 기본 수수료는 1 wei 까지 내려가 있어 두 배가 2 wei 였다. eth_gasPrice 는 세 체인 모두 '거버넌스 팁 + 기본 수수료' 를 돌려주므로 풀이 요구하는 값과 맞는다. 이 케이스가 묻는 것은 접근 목록 트랜잭션이 처리되고 형식이 0x1 인가이지 가스 가격이 아니다.",
   "requires": [
     "rpc"
   ],
@@ -16,18 +16,8 @@
   "steps": [
     {
       "do": "read",
-      "save": "base",
-      "source": "baseFee"
-    },
-    {
-      "do": "read",
-      "of": [
-        "$base",
-        "$base"
-      ],
-      "op": "sum",
       "save": "gp",
-      "source": "derive"
+      "source": "gasPrice"
     },
     {
       "do": "read",
