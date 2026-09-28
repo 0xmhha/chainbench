@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "remote-rpc-health",
-  "description": "레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다.",
+  "description": "레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다. \"블록 번호가 0 이상\" 을 보던 것을 고쳤다. 블록 번호는 음수가 될 수 없어 언제나 참이었고, 창세 블록에서 멈춘 엔드포인트도 통과했다. 대신 blockAdvance 로 번호가 실제로 올라가는지 본다 — 살아 있다는 말의 뜻이 그것이다.",
   "requires": [
     "rpc"
   ],
@@ -15,9 +15,8 @@
   },
   "steps": [
     {
-      "compare": "GreaterOrEqual",
-      "expect": "blockNumber",
-      "is": "0x0"
+      "expect": "blockAdvance",
+      "timeout": "60s"
     },
     {
       "compare": "NotEqual",

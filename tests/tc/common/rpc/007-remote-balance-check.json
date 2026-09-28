@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "remote-balance-check",
-  "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. 레거시 기본값과 같이 0 주소를 본다 — 어느 체인에나 있고 값이 변하지 않는다.",
+  "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. \"0 주소의 잔액이 0 이상\" 을 보던 것을 고쳤다. 잔액은 음수가 될 수 없어 언제나 참이었다. 0 주소는 어느 체인에나 있고 값이 변하지 않으므로 형식 확인에는 그대로 쓰고, 값을 실제로 읽어 오는지는 자금이 있는 노드 계정으로 본다. CT-RPC-007 의 기대 결과가 \"0보다 크고\" 이기 때문이다.",
   "requires": [
     "rpc"
   ],
@@ -15,15 +15,15 @@
   },
   "steps": [
     {
-      "address": "0x0000000000000000000000000000000000000000",
-      "compare": "GreaterOrEqual",
+      "address": "node1",
+      "compare": "Greater",
       "expect": "balanceAt",
       "is": "0"
     },
     {
-      "compare": "NotEqual",
+      "compare": "Regexp",
       "expect": "rpcCall",
-      "is": "",
+      "is": "^0x[0-9a-fA-F]+$",
       "method": "eth_getBalance",
       "params": [
         "0x0000000000000000000000000000000000000000",

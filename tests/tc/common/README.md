@@ -11,14 +11,14 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **86개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
+케이스 **81개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
 있기 때문이다 — `CT-NODE-001` 은 `wemix-chain-up`·`wbft-chain-up`·`stablenet-chain-up`
 셋이다.
 
 ```
 tests/tc/common/
 ├── node/       21건   노드·동기화·네트워크
-├── tx/         23건   트랜잭션 전송·거부
+├── tx/         18건   트랜잭션 전송·거부
 ├── fee/         8건   수수료·가스 정책
 ├── contract/    9건   컨트랙트 실행
 ├── rpc/        16건   조회·구독 API
@@ -33,7 +33,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 `CT-RPC-008`, `remote-chain-info` 는 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 86개를 CT 수만큼 합치지 않았나
+## 2. 왜 81개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -46,11 +46,11 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 86건 중 게이트 통과 |
+| 체인 | 81건 중 게이트 통과 |
 | --- | --- |
-| go-stablenet | 86 |
-| go-wbft | 86 |
-| go-wemix | 86 |
+| go-stablenet | 81 |
+| go-wbft | 81 |
+| go-wemix | 81 |
 
 **게이트를 통과한다는 것은 "돌 수 있다" 이지 "통과한다" 가 아니다.** 91건이던 때도 이 표는
 91/91/91 이었고, 그대로 세 체인에 돌리자 다섯이 깨졌다. 게이트가 막지 못한 것은 케이스가
@@ -180,14 +180,14 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 | CT-TX-003 | 동적 수수료 트랜잭션 | **없다**공통 아님: `go-stablenet/regression/ethereum/09-dynamic-fee-tx.json` |
 | CT-TX-004 | 접근 목록 트랜잭션 | `tx/004-access-list-tx.json` |
 | CT-TX-005 | 수수료 대납 트랜잭션 | `tx/005-fee-delegated-transfer.json` |
-| CT-TX-006 | 대납 트랜잭션의 보낸 이 서명 변조 거부 | `tx/006-fd-sender-sig-invalid-rejected.json` · `tx/006-fee-delegated-sender-sig-invalid-rejected.json` |
-| CT-TX-007 | 대납 트랜잭션의 대납자 서명 변조 거부 | `tx/007-fd-feepayer-sig-invalid-rejected.json` · `tx/007-fee-delegated-feepayer-sig-invalid-rejected.json` |
-| CT-TX-008 | 대납자 잔액 부족 거부 | `tx/008-feepayer-insufficient-rejected.json` · `tx/008-fee-delegated-unfunded-feepayer-rejected.json` |
+| CT-TX-006 | 대납 트랜잭션의 보낸 이 서명 변조 거부 | `tx/006-fd-sender-sig-invalid-rejected.json` |
+| CT-TX-007 | 대납 트랜잭션의 대납자 서명 변조 거부 | `tx/007-fd-feepayer-sig-invalid-rejected.json` |
+| CT-TX-008 | 대납자 잔액 부족 거부 | `tx/008-feepayer-insufficient-rejected.json` |
 | CT-TX-009 | 대납 서명 API 존재 | `tx/009-fee-delegate-sign-rpc-present.json` |
 | CT-TX-010 | 접근 목록을 붙인 대납 트랜잭션 | **없다** |
 | CT-TX-011 | 노드 키 저장소 경유 대납 서명 | **없다** |
-| CT-TX-012 | 계정별 nonce 순서 보장 | `tx/012-nonce-ordering.json` · `tx/012-out-of-order-nonces-mine.json` |
-| CT-TX-013 | 같은 nonce 트랜잭션 교체 | `tx/013-replacement-tx.json` · `tx/013-same-nonce-replacement.json` |
+| CT-TX-012 | 계정별 nonce 순서 보장 | `tx/012-nonce-ordering.json` |
+| CT-TX-013 | 같은 nonce 트랜잭션 교체 | `tx/013-replacement-tx.json` |
 | CT-TX-014 | 미포함 트랜잭션의 이월과 교체 | **없다** |
 | CT-TX-015 | 잔액 부족 트랜잭션 거부 | `tx/015-insufficient-funds-rejected.json` · `tx/015-wbft-insufficient-funds-rejected.json` · `tx/015-wemix-insufficient-funds-rejected.json` |
 | CT-TX-016 | 블록 가스 한도 초과 트랜잭션 거부 | `tx/016-gas-limit-exceeds-block-rejected.json` / 공통 아님: `go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json` |

@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "insufficient-funds-rejected",
-  "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds)",
+  "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds) 거부된 뒤 보낸 계정의 nonce 가 그대로인지 확인한다. CT-TX-015 의 기대 결과가 \"보낸 계정의 잔액과 nonce는 그대로다\" 인데 전에는 거부와 블록 진행만 보았다. 거부된 트랜잭션은 nonce 를 쓰지 않아야 하며, 그것이 풀 진입 단계 거부와 실행 실패를 가르는 지점이다. 잔액은 함께 보지 않는다 — 보내는 계정이 블록 생성 노드라 보상으로 잔액이 움직이므로, 같은지 물으면 체인이 정상일 때도 실패한다.",
   "requires": [
     "rpc"
   ],
@@ -31,6 +31,12 @@
       "source": "derive"
     },
     {
+      "address": "node1",
+      "do": "read",
+      "save": "nonceBefore",
+      "source": "nonceAt"
+    },
+    {
       "do": "sendTx",
       "expect": "reject",
       "from": "node1",
@@ -38,6 +44,12 @@
       "to": "0x00000000000000000000000000000000C0FFEE07",
       "value": "$over",
       "reason": "insufficient funds"
+    },
+    {
+      "address": "node1",
+      "compare": "Equal",
+      "expect": "nonceAt",
+      "is": "$nonceBefore"
     },
     {
       "compare": "GreaterOrEqual",

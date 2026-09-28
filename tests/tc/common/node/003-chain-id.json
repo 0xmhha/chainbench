@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "chain-id",
-  "description": "RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init)",
+  "description": "RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init) 체인 ID 를 \"0보다 크다\" 로 보던 것을 설정값과 같은지로 바꿨다. CT-NODE-003 과 CT-RPC-008 의 기대 결과가 \"제네시스 값과 같다\"·\"설정값과 같은 값을 돌려준다\" 인데, 0보다 큰지만 보면 다른 체인의 제네시스로 뜬 노드도 통과한다. 값이 체인마다 달라(stablenet 8283, wbft 8284, wemix 8285) isPerChain 으로 적는다. 프리셋은 체인 ID 를 덮어쓰지 않으므로 매니페스트 값이 그대로 온다.",
   "requires": [
     "rpc"
   ],
@@ -21,9 +21,13 @@
       "method": "eth_chainId"
     },
     {
-      "compare": "Greater",
       "expect": "chainId",
-      "is": "0"
+      "is": "8283",
+      "compare": "Equal",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
     }
   ]
 }
