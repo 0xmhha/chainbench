@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // assertLogs is the event-log assertion name.
@@ -30,7 +31,7 @@ const (
 // Spec: address, topics ([]string; "" is a wildcard position), fromBlock,
 // toBlock, select (count | data | address | blockNumber | txHash | topic0..3),
 // index (which matching log, default 0).
-func readLogs(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readLogs(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	filter := rpc.LogFilter{}
 	filter.Address, _ = spec["address"].(string)
 	filter.FromBlock, _ = spec["fromBlock"].(string)

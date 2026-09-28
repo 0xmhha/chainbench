@@ -324,26 +324,26 @@ func TestReadReceiptLog(t *testing.T) {
 	c := rpc.Dial(srv.URL)
 
 	// Default: log 0, topic 1 — the proposalId.
-	got, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh"})
+	got, err := readReceiptLog(context.Background(), nil, c, map[string]any{"hash": "0xh"})
 	if err != nil || got != id1 {
 		t.Fatalf("default topic1: got %v err %v", got, err)
 	}
 	// topic0 filter selects the ProposalCreated log regardless of order.
-	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": created, "topic": float64(1)})
+	got, err = readReceiptLog(context.Background(), nil, c, map[string]any{"hash": "0xh", "topic0": created, "topic": float64(1)})
 	if err != nil || got != id1 {
 		t.Fatalf("topic0 filter: got %v err %v", got, err)
 	}
 	// select:"data" returns the log data.
-	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "select": "data"})
+	got, err = readReceiptLog(context.Background(), nil, c, map[string]any{"hash": "0xh", "select": "data"})
 	if err != nil || got != "0xabcd" {
 		t.Fatalf("select data: got %v err %v", got, err)
 	}
 	// A topic index past the end is an error, not a panic.
-	if _, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": other, "topic": float64(5)}); err == nil {
+	if _, err := readReceiptLog(context.Background(), nil, c, map[string]any{"hash": "0xh", "topic0": other, "topic": float64(5)}); err == nil {
 		t.Fatal("out-of-range topic must fail")
 	}
 	// Missing hash is an error.
-	if _, err := readReceiptLog(context.Background(), c, map[string]any{}); err == nil {
+	if _, err := readReceiptLog(context.Background(), nil, c, map[string]any{}); err == nil {
 		t.Fatal("missing hash must fail")
 	}
 }

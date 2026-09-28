@@ -50,7 +50,7 @@ func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSCollected, wsCollectedAssertion{})
 }
 
-func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+func readGasPrice(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	var s string
 	if err := c.Call(ctx, "eth_gasPrice", &s); err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 // Spec: method (required), params ([]any, optional), select (dot path into the
 // result — numeric segments index arrays and a "#" segment yields a length;
 // omitted, the whole result is compared).
-func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readRPCCall(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {
 		return nil, fmt.Errorf("dsl: rpcCall requires \"method\"")
@@ -174,7 +174,7 @@ func dotPath(v any, path string) (any, bool) {
 	return cur, true
 }
 
-func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
+func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)
 	if op == "abiCall" {
 		return deriveAbiCall(spec)

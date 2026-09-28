@@ -15,11 +15,7 @@
       "timeout": "120s"
     },
     {
-      "expect": "rpc",
-      "method": "@validators",
-      "params": [
-        "latest"
-      ],
+      "expect": "validators",
       "compare": "Len",
       "is": 3
     },

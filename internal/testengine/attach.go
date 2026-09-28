@@ -183,7 +183,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Nodes:     cfg.Control,
 		Contracts: chainContracts(cfg.Chain),
 
-		ConsensusMethods: chainConsensusMethods(cfg.Chain),
+		Validators: chainValidators(cfg.Chain),
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
@@ -310,28 +310,28 @@ func chainContracts(chain string) map[string]string {
 	return p.Manifest().SystemContracts
 }
 
-// The roles a spec may ask a consensus method for. One so far: the question
-// every chain answers and each spells differently.
-const roleValidators = "validators"
-
-// chainConsensusMethods is the chain's consensus RPC methods by role.
+// chainValidators binds this run to the way THIS chain's validator set is read.
 //
-// It reads the manifest rather than the family so the table has one source —
-// the family's ValidatorsMethod() and the manifest's validators_method are the
-// same fact, and the manifest is what a project supplies for a chain the
-// binary does not know.
+// registry.RunningValidators makes the choice: a family with its own reader
+// answers through that (wemix asks the governance contract its nodes agree on),
+// and otherwise the manifest's method is called (istanbul_getValidators on
+// wbft and stablenet). Its doc says it is the single place that choice is made
+// so the verify check and the validators query cannot diverge — a run is the
+// third caller and makes it there rather than a fourth time here.
 //
-// A chain whose manifest leaves the method empty contributes no entry, so
-// asking for the role there fails by name instead of calling "".
-func chainConsensusMethods(chain string) map[string]string {
+// Reading the manifest method directly is what this did before, and on wemix
+// that is wemix_getValidators, a method go-wemix does not serve. Measured
+// 2026-09-28: the call came back -32601 and the case failed on a chain that
+// can answer the question perfectly well by its own route.
+//
+// nil when the chain is unknown, so Deps.Validators is nil and asking says so.
+func chainValidators(chain string) func(context.Context, *rpc.Client) ([]string, error) {
 	p, err := registry.Get(chain)
 	if err != nil {
 		return nil
 	}
-	m := p.Manifest().Consensus
-	out := map[string]string{}
-	if m.ValidatorsMethod != "" {
-		out[roleValidators] = m.ValidatorsMethod
+	return func(ctx context.Context, c *rpc.Client) ([]string, error) {
+		_, vals, verr := registry.RunningValidators(ctx, p, c)
+		return vals, verr
 	}
-	return out
 }

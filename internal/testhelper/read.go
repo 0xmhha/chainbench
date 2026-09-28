@@ -42,7 +42,7 @@ func (readAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	v, err := read(ctx, c, args)
+	v, err := read(ctx, ac.Deps, c, args)
 	if err != nil {
 		return fmt.Errorf("dsl: read %s: %w", source, err)
 	}
@@ -103,7 +103,7 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	var lastActual any
 	var lastErr error
 	for {
-		if v, rerr := read(ctx, c, args); rerr == nil {
+		if v, rerr := read(ctx, ac.Deps, c, args); rerr == nil {
 			lastActual, lastErr = v, nil
 			want := expected
 			if ComparedAsWritten(v) {
@@ -179,11 +179,16 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
 		{name: assertRPCCall, defaultOp: "Equal", read: readRPCCall},
 		{name: assertDerive, defaultOp: "Equal", read: readDerive},
+		{name: assertValidators, defaultOp: "Len", read: readValidators},
 	}
 }
 
-// reader reads one value from a node for an assertion. The value is returned in
-// a form the assert primitives compare (decimal string or 0x-hex).
+// reader reads one value for an assertion. The value is returned in a form the
+// assert primitives compare (decimal string, 0x-hex, or a slice for Len).
+//
+// It takes the run's Deps as well as the node, because a few values are not
+// the node's to give alone: how to ask differs by chain, and only the run
+// knows which chain it composed. Most readers ignore it.
 type reader = interp.Reader
 
 // rpcAssertion compares one RPC-read value to the spec's expected value.
@@ -237,7 +242,7 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
-		actual, err := a.read(ctx, c, spec)
+		actual, err := a.read(ctx, ac.Deps, c, spec)
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
@@ -265,7 +270,7 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 
 // readEstimateGas returns eth_estimateGas for a call as a decimal string, for
 // gas-cost bounds (e.g. a contract call exceeds the 21000 bare-transfer floor).
-func readEstimateGas(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readEstimateGas(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	to, _ := spec["to"].(string)
 	if to == "" {
 		return nil, fmt.Errorf("dsl: estimateGas requires \"to\"")
@@ -284,7 +289,7 @@ func readEstimateGas(ctx context.Context, c *rpc.Client, spec map[string]any) (a
 
 // readBaseFee returns the latest block's baseFeePerGas as a decimal string, for
 // gas-policy bounds checks. It errors on a pre-EIP-1559 block (no base fee).
-func readBaseFee(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+func readBaseFee(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	b, err := c.BlockByNumber(ctx, "latest")
 	if err != nil {
 		return nil, err
@@ -295,22 +300,22 @@ func readBaseFee(ctx context.Context, c *rpc.Client, _ map[string]any) (any, err
 	return b.BaseFeePerGas.String(), nil
 }
 
-func readChainID(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+func readChainID(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	v, err := c.ChainID(ctx)
 	return strconv.FormatUint(v, 10), err
 }
 
-func readBlockNumber(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+func readBlockNumber(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	v, err := c.BlockNumber(ctx)
 	return strconv.FormatUint(v, 10), err
 }
 
-func readPeerCount(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+func readPeerCount(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	v, err := c.PeerCount(ctx)
 	return strconv.FormatUint(v, 10), err
 }
 
-func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readBalanceAt(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	addr, ok := spec["address"].(string)
 	if !ok || addr == "" {
 		return nil, fmt.Errorf("dsl: balanceAt requires \"address\"")
@@ -328,7 +333,7 @@ func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any
 // deployer's current on-chain nonce, so `deployContract` right after lands at
 // the returned address. It reuses accounts.CreateAddress (the SDK's own
 // computation); nothing is deployed here.
-func readCreateAddress(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readCreateAddress(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	deployer, _ := spec["deployer"].(string)
 	if deployer == "" {
 		deployer, _ = spec["from"].(string)
@@ -353,7 +358,7 @@ func readCreateAddress(ctx context.Context, c *rpc.Client, spec map[string]any) 
 // saves and asserts (§8): pin the init code, or verify a deploy's runtime code
 // matches an expected checksum. It reuses filestore.Hash, the same digest the
 // artifact store records.
-func readContractChecksum(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readContractChecksum(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	code, _ := spec["bytecode"].(string)
 	if code == "" {
 		code, _ = spec["data"].(string)
@@ -377,7 +382,7 @@ func readContractChecksum(ctx context.Context, c *rpc.Client, spec map[string]an
 	return filestore.Hash(raw), nil
 }
 
-func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readCodeAt(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	addr, ok := spec["address"].(string)
 	if !ok || addr == "" {
 		return nil, fmt.Errorf("dsl: codeAt requires \"address\"")
@@ -385,7 +390,7 @@ func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, e
 	return c.CodeAt(ctx, addr)
 }
 
-func readNonceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readNonceAt(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	addr, ok := spec["address"].(string)
 	if !ok || addr == "" {
 		return nil, fmt.Errorf("dsl: nonceAt requires \"address\"")
@@ -399,7 +404,7 @@ func readNonceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 
 // readCall runs a read-only contract call (eth_call) and returns the 0x-hex
 // result, for asserting on-chain state (e.g. a governance getter).
-func readCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readCall(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	to, ok := spec["to"].(string)
 	if !ok || to == "" {
 		return nil, fmt.Errorf("dsl: call requires \"to\"")
@@ -413,7 +418,7 @@ func readCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, err
 
 // readTxStatus returns a transaction receipt's status ("0x1" success, "0x0"
 // reverted), for asserting positive and negative (expectRevert) tx outcomes.
-func readTxStatus(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readTxStatus(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	hash, ok := spec["hash"].(string)
 	if !ok || hash == "" {
 		return nil, fmt.Errorf("dsl: txStatus requires \"hash\"")
@@ -441,7 +446,7 @@ func readTxStatus(ctx context.Context, c *rpc.Client, spec map[string]any) (any,
 // (optional filters, hex-case-insensitive); index (which matching log, default
 // 0); topic (which topic to return, default 1) or select:"data" for the log
 // data. The returned 32-byte 0x-hex is directly usable as an abiCall argument.
-func readReceiptLog(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readReceiptLog(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	hash, ok := spec["hash"].(string)
 	if !ok || hash == "" {
 		return nil, fmt.Errorf("dsl: receiptLog requires \"hash\"")

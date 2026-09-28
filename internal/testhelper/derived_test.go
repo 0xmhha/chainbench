@@ -356,7 +356,7 @@ func TestReadDerive(t *testing.T) {
 		{map[string]any{"op": "diff", "of": []any{"0x64", "40", "0x4"}}, "56"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -370,7 +370,7 @@ func TestReadDerive(t *testing.T) {
 		"unknown op": {"op": "mul", "of": []any{"1", "2"}},
 		"bad value":  {"op": "sum", "of": []any{"zzz"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -396,7 +396,7 @@ func TestReadDerive_AbiCall(t *testing.T) {
 		{map[string]any{"op": "abiCall", "selector": "0x12345678"}, "0x12345678"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -410,7 +410,7 @@ func TestReadDerive_AbiCall(t *testing.T) {
 		"short selector": {"op": "abiCall", "selector": "0x1234"},
 		"bad arg":        {"op": "abiCall", "selector": "0x98951b56", "of": []any{"zzz"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -437,7 +437,7 @@ func TestReadDerive_Word(t *testing.T) {
 			"0x00000000000000000000000000000000000000000000000000000000000000bb"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -453,7 +453,7 @@ func TestReadDerive_Word(t *testing.T) {
 		"bad hex":       {"op": "word", "of": []any{"0xzz"}},
 		"out of range":  {"op": "word", "index": 9, "of": []any{blob}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -472,7 +472,7 @@ func TestReadDerive_Quorum(t *testing.T) {
 		{"10", "7"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
+		got, err := readDerive(context.Background(), nil, nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
 		if err != nil {
 			t.Fatalf("quorum(%s): %v", tc.n, err)
 		}
@@ -486,7 +486,7 @@ func TestReadDerive_Quorum(t *testing.T) {
 		"zero":     {"op": "quorum", "of": []any{"0"}},
 		"negative": {"op": "quorum", "of": []any{"-1"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}

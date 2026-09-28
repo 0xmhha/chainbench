@@ -26,15 +26,23 @@ type Deps struct {
 	// processes — attach mode — and those actions then fail with a clear reason
 	// rather than silently doing nothing.
 	Nodes NodeControl
-	// ConsensusMethods are the chain's consensus RPC methods by the role they
-	// play, so a spec can ask for the role instead of writing the method name.
+	// Validators reads the chain's current validator set the way that chain
+	// exposes it, so a case can ask who the validators are without naming a
+	// method.
 	//
-	// The same question has a different name on each chain: the validator set
-	// is istanbul_getValidators on a wbft chain and wemix_getValidators on a
-	// poa one. A common case that writes either name runs on one chain and
-	// fails on the other, and the fact it needs is already in that chain's
-	// manifest. So it is resolved per run, the way Contracts is.
-	ConsensusMethods map[string]string
+	// It is a function rather than a method name because a name is not enough.
+	// wbft and stablenet answer istanbul_getValidators; wemix has no such
+	// method at all and its set is read from the governance contract its
+	// nodes agree on. A case that wrote either spelling would run on one chain
+	// and be refused by the other, and the chain-shaped half of that choice is
+	// registry.RunningValidators, which already makes it in one place for the
+	// verify check and the validators query. This carries that one choice into
+	// a run instead of making it a second time.
+	//
+	// nil when the run has no chain plugin to ask (attach mode against an
+	// endpoint whose chain was not resolved); asking then fails with that
+	// reason rather than guessing a method.
+	Validators func(ctx context.Context, c *rpc.Client) ([]string, error)
 	// Contracts are the chain's own contracts by the name that chain calls
 	// them, so a spec can name one instead of writing the address.
 	//
@@ -65,7 +73,7 @@ type Registry interface {
 }
 
 // Reader reads one value from a target node for the spec's arguments.
-type Reader func(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error)
+type Reader func(ctx context.Context, d *Deps, c *rpc.Client, spec map[string]any) (any, error)
 
 // ActionRead and ActionWaitFor are the action names the grammar itself knows:
 // each names a read source by string, and Unresolved checks that source

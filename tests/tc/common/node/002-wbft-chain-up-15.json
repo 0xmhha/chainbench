@@ -25,11 +25,7 @@
       "is": "2"
     },
     {
-      "expect": "rpc",
-      "method": "@validators",
-      "params": [
-        "latest"
-      ],
+      "expect": "validators",
       "compare": "Len",
       "is": 7
     },

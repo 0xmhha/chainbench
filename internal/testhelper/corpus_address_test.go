@@ -68,7 +68,7 @@ func TestCorpus_AddressesResolveToWhatTheyDidBefore(t *testing.T) {
 		if perr != nil {
 			return fmt.Errorf("%s: %w", p, perr)
 		}
-		deps := &interp.Deps{Keys: ring, Contracts: contractsOf(spec.Chain.Name), ConsensusMethods: consensusMethodsOf(spec.Chain.Name)}
+		deps := &interp.Deps{Keys: ring, Contracts: contractsOf(spec.Chain.Name)}
 
 		var doc any
 		if uerr := json.Unmarshal(raws[0], &doc); uerr != nil {
@@ -130,22 +130,6 @@ func contractsOf(chain string) map[string]string {
 		return nil
 	}
 	return p.Manifest().SystemContracts
-}
-
-// consensusMethodsOf is the chain's consensus methods by role, the same table
-// the run builds. A case that asks for "@validators" resolves here to whatever
-// that chain answers with, which is what makes this record show the METHOD a
-// case would call rather than the role it wrote.
-func consensusMethodsOf(chain string) map[string]string {
-	p, err := registry.Get(chain)
-	if err != nil {
-		return nil
-	}
-	out := map[string]string{}
-	if m := p.Manifest().Consensus.ValidatorsMethod; m != "" {
-		out["validators"] = m
-	}
-	return out
 }
 
 // stepKeys mark a map as a step. Only steps are resolved, because only steps

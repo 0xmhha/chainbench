@@ -25,7 +25,7 @@ import (
 // one tx to mine (waitFor source:txMined compare:Equal expected:"true") and
 // assert another did not (assert txMined expected:"false") — the replacement-tx
 // scenario, where the replaced transaction must never mine.
-func readTxMined(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readTxMined(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	hash, ok := spec["hash"].(string)
 	if !ok || hash == "" {
 		return nil, fmt.Errorf("dsl: txMined requires \"hash\"")
@@ -66,7 +66,7 @@ func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessio
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
 	}
-	actual, err := readTxMined(ctx, c, ac.Spec)
+	actual, err := readTxMined(ctx, ac.Deps, c, ac.Spec)
 	if err != nil {
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
