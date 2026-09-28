@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "transaction-count-increments",
-  "description": "RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count)",
+  "description": "RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count) 시험 대상 트랜잭션은 노드가 아니라 별도 계정이 서명해 eth_sendRawTransaction 으로 보낸다. from 에 노드 이름을 적으면 eth_sendTransaction 이 되어 노드가 자기 계정으로 서명하는데, 그것은 실제 사용자가 보내는 모양이 아니고 원본 시험 스크립트가 cast send --private-key 로 하던 것과도 다르다. 계정을 새로 만들어 faucet 에서 자금을 받은 뒤 그 열쇠로 서명한다. 자금을 넣는 첫 전송만 노드 서명인데, 제네시스가 자금을 준 계정의 열쇠는 노드가 들고 있어 달리 할 수가 없다. 세는 대상도 노드 계정이 아니라 보낸 계정의 nonce 여야 한다. 노드 계정은 다른 테스트 단계가 함께 쓰므로 하나 올랐다는 것을 그 계정으로는 못 박기 어렵다.",
   "requires": [
     "rpc"
   ],
@@ -15,32 +15,37 @@
   },
   "steps": [
     {
-      "do": "read",
-      "method": "eth_getTransactionCount",
-      "params": [
-        "node1",
-        "latest"
-      ],
-      "save": "before",
-      "source": "rpcCall"
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
     },
     {
       "do": "sendTx",
-      "from": "node1",
+      "from": "faucet",
+      "to": "$sender",
+      "value": "3000000000000000000",
       "gas": "21000",
-      "save": "hash",
-      "to": "0x00000000000000000000000000000000C0FFEE04",
-      "value": "1"
+      "expect": "receipt",
+      "timeout": "120s"
     },
     {
       "do": "read",
+      "source": "rpcCall",
       "method": "eth_getTransactionCount",
       "params": [
-        "node1",
+        "$sender",
         "latest"
       ],
-      "save": "after",
-      "source": "rpcCall"
+      "save": "before"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE04",
+      "value": "1",
+      "save": "hash",
+      "expect": "receipt",
+      "timeout": "120s"
     },
     {
       "expect": "txStatus",
@@ -48,14 +53,24 @@
       "is": "0x1"
     },
     {
-      "compare": "Equal",
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "$sender",
+        "latest"
+      ],
+      "save": "after"
+    },
+    {
       "expect": "derive",
-      "is": "1",
+      "op": "diff",
       "of": [
         "$after",
         "$before"
       ],
-      "op": "diff"
+      "compare": "Equal",
+      "is": "1"
     }
   ]
 }

@@ -2,7 +2,10 @@ package testhelper
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"strings"
+
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -78,8 +81,8 @@ func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // transaction with no "to"; the address only appears in the receipt, which is
 // why this cannot be a plain sendTx.
 //
-// Args: bytecode (required), from (defaults to the node coinbase), on, gas,
-// value, save, timeout, pollInterval.
+// Args: bytecode (required), key (sign here instead of at the node), from
+// (defaults to the node coinbase), on, gas, value, save, timeout, pollInterval.
 type deployContractAction struct{}
 
 func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
@@ -89,6 +92,14 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	}
 	if code == "" {
 		return fmt.Errorf("dsl: deployContract requires \"bytecode\"")
+	}
+	// A "key" signs here and posts the deployment with eth_sendRawTransaction,
+	// which is the shape a user deploying a contract has. Without one the node
+	// signs with its own account over eth_sendTransaction: that needs the
+	// account namespace open, and it puts a validator's balance and nonce
+	// behind the deployment, which no test means to measure.
+	if keyHex, ok := ac.Args["key"].(string); ok && keyHex != "" {
+		return deployContractLocal(ctx, ac, keyHex, code)
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -256,5 +267,60 @@ func applyFeeArgs(args *rpc.SendTxArgs, in map[string]any) error {
 	if nonce, ok := hexQuantity(in["nonce"]); ok {
 		args.Nonce = nonce
 	}
+	return nil
+}
+
+// deployContractLocal deploys with a key this harness holds, through the
+// account provider's Deploy. The node-signed path cannot serve here: a
+// creation has no "to", and the local sendTx path refuses a missing one.
+//
+// The created address comes from the wallet when it reports one and from the
+// receipt otherwise, so a provider that only returns a hash still works.
+func deployContractLocal(ctx context.Context, ac *interp.ActionCtx, keyHex, code string) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("dsl: deployContract: no account provider")
+	}
+	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
+	if err != nil {
+		return fmt.Errorf("dsl: deployContract key: decode: %w", err)
+	}
+	initCode, err := hex.DecodeString(strings.TrimPrefix(code, "0x"))
+	if err != nil {
+		return fmt.Errorf("dsl: deployContract: bytecode: %w", err)
+	}
+	rpcURL := selectorTarget(ac.Env, ac.Args)
+	w, err := ac.Deps.Accounts.OpenWallet(ctx, priv, rpcURL)
+	if err != nil {
+		return fmt.Errorf("dsl: deployContract: open wallet: %w", err)
+	}
+	value, err := parseValueWei(ac.Args["value"])
+	if err != nil {
+		return err
+	}
+	hash, addr, err := w.Deploy(ctx, initCode, value)
+	if err != nil {
+		return fmt.Errorf("dsl: deployContract: %w", err)
+	}
+	c, err := clientFor(ac.Deps, rpcURL)
+	if err != nil {
+		return err
+	}
+	receipt, err := waitReceipt(ctx, c, hash,
+		durationArg(ac.Args, "timeout", defaultTxTimeout),
+		durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+	if err != nil {
+		return err
+	}
+	ac.Hash, ac.Receipt = hash, receipt
+	if statusReverted(receipt) {
+		return fmt.Errorf("dsl: deployContract %s reverted", hash)
+	}
+	if addr == "" {
+		addr, _ = receipt["contractAddress"].(string)
+	}
+	if addr == "" {
+		return fmt.Errorf("dsl: deployContract %s: receipt carries no contract address", hash)
+	}
+	ac.Value = addr
 	return nil
 }

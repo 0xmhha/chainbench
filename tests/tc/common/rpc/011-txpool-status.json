@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "txpool-status",
-  "description": "RT-G-4-02 — txpool_status: pending(연속 nonce) + queued(nonce gap) 분리 (원본 regression/api/18-test-txpool-status)",
+  "description": "RT-G-4-02 — txpool_status 의 건수가 넣은 수와 맞는지 본다 (원본 regression/api/18-test-txpool-status, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-011). 전에는 두 숫자가 16진수 꼴인지만 봤다. 그러면 풀이 비어 있어도 통과하므로 건수를 세는 능력을 재지 못한다. 새 계정을 만들어 nonce 1 과 2 로 보낸다. 0 번을 건너뛰었으므로 둘 다 실행할 수 없어 보류 칸에 쌓이고, 실행할 수 있는 것이 하나도 없으므로 대기 칸은 비어 있다. 그래서 보류 2, 대기 0 이라는 정확한 수를 견줄 수 있다. 마지막에 nonce 0 을 채워 넣으면 셋이 함께 실행 가능해져 블록에 들어가고 풀이 빈다. 보류에서 대기로 올라가는 승격까지 확인하는 셈이다. 대기 칸에 0 이 아닌 수를 못 박지는 않는다. 블록이 1초마다 나오는 망에서 실행 가능한 트랜잭션은 넣자마자 채굴되므로, 그 수를 재려면 블록 생성을 멈춰야 한다. nonce 를 직접 적은 전송은 로컬에서 서명해 eth_sendRawTransaction 으로 보내는 길을 타고, 그 길은 수수료 상한을 스스로 적어야 한다(internal/testhelper/sendtx.go 의 SendDynamicFeeTx 분기). 적지 않으면 \"nil value or fee cap\" 으로 보내기 전에 걸린다. 값은 nonce-ordering 이 쓰는 것과 같게 두었다. 세 체인 모두에서 통과가 확인된 값이다. 격차 전송은 expect 를 걸지 않고 wait 를 false 로 둔다. 이 트랜잭션은 받아들여진 뒤 보류 칸에 남아야 하므로, 제출이 거절되면 그대로 실패여야 한다.",
   "requires": [
     "rpc"
   ],
@@ -15,18 +15,75 @@
   },
   "steps": [
     {
-      "compare": "Regexp",
-      "expect": "rpcCall",
-      "is": "^0x[0-9a-fA-F]+$",
-      "method": "txpool_status",
-      "select": "pending"
+      "do": "newAccount",
+      "save": "spender",
+      "saveKey": "spenderKey"
     },
     {
-      "compare": "Regexp",
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$spender",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "1",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "2",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
       "expect": "rpcCall",
-      "is": "^0x[0-9a-fA-F]+$",
       "method": "txpool_status",
-      "select": "queued"
+      "select": "queued",
+      "compare": "Equal",
+      "is": "0x2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "txpool_status",
+      "select": "pending",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "0",
+      "expect": "receipt",
+      "timeout": "120s",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "txpool_status",
+      "select": "queued",
+      "compare": "Equal",
+      "expected": "0x0",
+      "timeout": "60s",
+      "pollInterval": "1s"
     }
   ]
 }

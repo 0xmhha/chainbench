@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "txpool-content-well-formed",
-  "description": "RT-G-4-03 — txpool_content: pending/queued 분리 내용 확인 (원본 regression/api/19-test-txpool-content)",
+  "description": "RT-G-4-03 — txpool_content 의 항목에 보낸 이, nonce, 가스 가격이 들어 있는지 본다 (원본 regression/api/19-test-txpool-content, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-012). 전에는 pending 과 queued 키가 있는지만 봤다. 그러면 둘 다 빈 객체여도 통과한다. CT-RPC-011 과 같은 상태를 만든다. 새 계정에서 nonce 0 을 건너뛰고 3 으로 보내면 그 트랜잭션은 실행할 수 없어 보류 칸에 남는다. 읽을 때는 txpool_content 대신 txpool_contentFrom 을 쓴다. txpool_content 는 주소를 지도의 열쇠로 돌려주어 그 열쇠를 경로에 적어야 하는데, 주소는 실행할 때마다 달라진다. contentFrom 은 주소를 인자로 받으므로 경로에 nonce 만 적으면 된다. nonce 를 직접 적은 전송은 로컬에서 서명해 eth_sendRawTransaction 으로 보내는 길을 타고, 그 길은 수수료 상한을 스스로 적어야 한다(internal/testhelper/sendtx.go 의 SendDynamicFeeTx 분기). 적지 않으면 \"nil value or fee cap\" 으로 보내기 전에 걸린다. 값은 nonce-ordering 이 쓰는 것과 같게 두었다. 세 체인 모두에서 통과가 확인된 값이다. 격차 전송은 expect 를 걸지 않고 wait 를 false 로 둔다. 이 트랜잭션은 받아들여진 뒤 보류 칸에 남아야 하므로, 제출이 거절되면 그대로 실패여야 한다.",
   "requires": [
     "rpc"
   ],
@@ -15,18 +15,68 @@
   },
   "steps": [
     {
-      "compare": "NotNil",
-      "expect": "rpcCall",
-      "is": null,
-      "method": "txpool_content",
-      "select": "pending"
+      "do": "newAccount",
+      "save": "spender",
+      "saveKey": "spenderKey"
     },
     {
-      "compare": "NotNil",
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$spender",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "3",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
       "expect": "rpcCall",
-      "is": null,
-      "method": "txpool_content",
-      "select": "queued"
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.3.nonce",
+      "compare": "Equal",
+      "is": "0x3"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.3.from",
+      "compare": "EqualCI",
+      "is": "$spender"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.3.gas",
+      "compare": "Equal",
+      "is": "0x5208"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.3.gasPrice",
+      "compare": "NotNil",
+      "is": null
     }
   ]
 }

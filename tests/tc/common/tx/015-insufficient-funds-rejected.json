@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "insufficient-funds-rejected",
-  "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds) 거부된 뒤 보낸 계정의 nonce 가 그대로인지 확인한다. CT-TX-015 의 기대 결과가 \"보낸 계정의 잔액과 nonce는 그대로다\" 인데 전에는 거부와 블록 진행만 보았다. 거부된 트랜잭션은 nonce 를 쓰지 않아야 하며, 그것이 풀 진입 단계 거부와 실행 실패를 가르는 지점이다. 잔액은 함께 보지 않는다 — 보내는 계정이 블록 생성 노드라 보상으로 잔액이 움직이므로, 같은지 물으면 체인이 정상일 때도 실패한다.",
+  "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds) 거부된 뒤 보낸 계정의 nonce 가 그대로인지 확인한다. CT-TX-015 의 기대 결과가 \"보낸 계정의 잔액과 nonce는 그대로다\" 인데 전에는 거부와 블록 진행만 보았다. 거부된 트랜잭션은 nonce 를 쓰지 않아야 하며, 그것이 풀 진입 단계 거부와 실행 실패를 가르는 지점이다. 잔액은 함께 보지 않는다 — 보내는 계정이 블록 생성 노드라 보상으로 잔액이 움직이므로, 같은지 물으면 체인이 정상일 때도 실패한다. 시험 대상 트랜잭션은 노드가 아니라 별도 계정이 서명해 eth_sendRawTransaction 으로 보낸다. from 에 노드 이름을 적으면 eth_sendTransaction 이 되어 노드가 자기 계정으로 서명하는데, 그것은 실제 사용자가 보내는 모양이 아니고 원본 시험 스크립트가 cast send --private-key 로 하던 것과도 다르다. 계정을 새로 만들어 faucet 에서 자금을 받은 뒤 그 열쇠로 서명한다. 자금을 넣는 첫 전송만 노드 서명인데, 제네시스가 자금을 준 계정의 열쇠는 노드가 들고 있어 달리 할 수가 없다. 잔액을 아는 계정에서 보내므로 더 보낼 값도 간단해진다. 받은 자금보다 큰 값을 그대로 적는다.",
   "requires": [
     "rpc"
   ],
@@ -15,45 +15,42 @@
   },
   "steps": [
     {
-      "address": "node1",
-      "do": "read",
-      "save": "bal",
-      "source": "balanceAt"
-    },
-    {
-      "do": "read",
-      "of": [
-        "$bal",
-        "1000000000000000000"
-      ],
-      "op": "sum",
-      "save": "over",
-      "source": "derive"
-    },
-    {
-      "address": "node1",
-      "do": "read",
-      "save": "nonceBefore",
-      "source": "nonceAt"
+      "do": "newAccount",
+      "save": "poor",
+      "saveKey": "poorKey"
     },
     {
       "do": "sendTx",
-      "expect": "reject",
-      "from": "node1",
+      "from": "faucet",
+      "to": "$poor",
+      "value": "1000000000000000000",
       "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$poor",
+      "save": "nonceBefore"
+    },
+    {
+      "do": "sendTx",
+      "key": "$poorKey",
       "to": "0x00000000000000000000000000000000C0FFEE07",
-      "value": "$over",
+      "value": "5000000000000000000",
+      "expect": "reject",
       "reason": "insufficient funds"
     },
     {
-      "address": "node1",
-      "compare": "Equal",
       "expect": "nonceAt",
+      "address": "$poor",
+      "compare": "Equal",
       "is": "$nonceBefore"
     },
     {
-      "compare": "GreaterOrEqual",
       "expect": "blockNumber",
+      "compare": "GreaterOrEqual",
       "is": "0x1"
     }
   ]

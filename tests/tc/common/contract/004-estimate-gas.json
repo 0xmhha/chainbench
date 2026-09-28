@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "estimate-gas",
-  "description": "RT-A-3-04 — eth_estimateGas 정상 동작 (원본 regression/ethereum/22-test-estimate-gas). 전에는 추정값이 21000 이상인지만 보았다. CT-CONTRACT-004 의 기대 결과는 \"성공하고 사용 가스가 추정값 이하다\" 인데, 추정값 하나만 보면 실제 실행과 견주지 않으므로 추정이 모자라도 통과한다. 그래서 추정값을 읽어 그 값을 그대로 가스 한도로 주고 보낸 뒤, 영수증의 사용 가스가 추정값을 넘지 않는지 본다. 한도를 추정값으로 준 것 자체가 추정이 충분했는지에 대한 검사이기도 하다 — 모자랐다면 가스 소진으로 실패한다.",
+  "description": "RT-A-3-04 — eth_estimateGas 가 내놓은 값이 실제 사용 가스 이상인지 본다. 원본 시나리오는 \"임의 함수 + 파라미터\" 로 추정하고, 같은 호출의 영수증 gasUsed 와 견주라고 적는다(docs/tc/stablenet/regression/02-regression-test-case-with-scenario.md). 그래서 컨트랙트를 배포해 호출 데이터를 실어 추정하고, 그 추정값을 한도로 같은 호출을 실제로 보낸 뒤 영수증을 견준다. 단순 송금은 언제나 21000 이라 추정을 시험하는 힘이 없어 쓰지 않는다. 추정값이 21000 을 넘는지도 함께 보는데, 넘지 않으면 실행 비용과 호출 데이터 비용을 세지 않았다는 뜻이다. 값은 싣지 않는다 — anzeon 은 프리컴파일이나 0 주소로 값을 보내는 것을 막고(go-stablenet core/vm/evm.go:216), 이 테스트는 그 규칙과 무관해야 한다. 배포하는 런타임은 42를 돌려주는 조각으로 contract-roundtrip 과 같다.",
   "requires": [
     "rpc"
   ],
@@ -15,26 +15,41 @@
   },
   "steps": [
     {
-      "data": "0x",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "do": "deployContract",
+      "from": "node1",
+      "gas": "200000",
+      "save": "contract"
+    },
+    {
+      "address": "$contract",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "data": "0xdeadbeef",
       "do": "read",
+      "from": "node1",
       "save": "est",
       "source": "estimateGas",
-      "to": "0x0000000000000000000000000000000000000001"
+      "to": "$contract"
     },
     {
-      "compare": "GreaterOrEqual",
-      "data": "0x",
+      "compare": "Greater",
+      "data": "0xdeadbeef",
       "expect": "estimateGas",
+      "from": "node1",
       "is": "21000",
-      "to": "0x0000000000000000000000000000000000000001"
+      "to": "$contract"
     },
     {
+      "data": "0xdeadbeef",
       "do": "sendTx",
       "from": "node1",
       "gas": "$est",
       "save": "hash",
-      "to": "0x0000000000000000000000000000000000000001",
-      "value": "1"
+      "to": "$contract"
     },
     {
       "expect": "txStatus",

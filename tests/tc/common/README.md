@@ -11,7 +11,7 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **81개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
+케이스 **83개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
 있기 때문이다 — `CT-NODE-001` 은 `wemix-chain-up`·`wbft-chain-up`·`stablenet-chain-up`
 셋이다.
 
@@ -33,7 +33,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 `CT-RPC-008`, `remote-chain-info` 는 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 81개를 CT 수만큼 합치지 않았나
+## 2. 왜 83개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -46,7 +46,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 81건 중 게이트 통과 |
+| 체인 | 83건 중 게이트 통과 |
 | --- | --- |
 | go-stablenet | 81 |
 | go-wbft | 81 |
@@ -200,7 +200,7 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
-| CT-FEE-001 | 최소 팁 미달 거부 | `fee/001-dynamic-fee-below-basefee-rejected.json` |
+| CT-FEE-001 | 최소 팁 미달 거부 | `fee/001-tip-below-min-rejected.json` |
 | CT-FEE-002 | 최소 가스비 경계값 | `fee/002-legacy-gasprice-below-min-rejected.json` · `fee/002-accesslist-gasprice-below-min-rejected.json` · `fee/002-feecap-below-min-rejected.json` / 공통 아님: `go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json` · `go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json` |
 | CT-FEE-006 | 기본 수수료 하한 | **없다**공통 아님: `go-stablenet/regression/anzeon/06-basefee-minimum.json` |
 | CT-FEE-007 | 실제 적용 가스 가격 기록 | `fee/007-effective-gas-price.json` |

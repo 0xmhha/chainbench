@@ -89,6 +89,9 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	// An expect:"reject" step inverts the submit outcome: the node must refuse
 	// the transaction at submit time (no hash). It is checked before the receipt
 	// wait because a rejected tx never enters a block.
+	if wantKeptOut(ac.Args) {
+		return checkKeptOut(ctx, c, hash, err, ac)
+	}
 	if wantReject(ac.Args) {
 		return checkSubmitRejected(hash, err, ac)
 	}
@@ -208,6 +211,15 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 			break
 		}
 		hash, err = w.SendCoin(ctx, to, value)
+	}
+	if wantKeptOut(ac.Args) {
+		// This path signs locally and has no client of its own; keptOut has to
+		// watch the same node the wallet posted to.
+		c, cerr := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
+		if cerr != nil {
+			return cerr
+		}
+		return checkKeptOut(ctx, c, hash, err, ac)
 	}
 	if wantReject(ac.Args) {
 		return checkSubmitRejected(hash, err, ac)

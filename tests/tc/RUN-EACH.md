@@ -915,11 +915,11 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/nonce-order
 cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/out-of-order-nonces-mine" && bin/chainbench run tests/tc/common/tx/012-out-of-order-nonces-mine.json --workspace-dir "$HOME/cbw/manual/out-of-order-nonces-mine" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
-**109. `dynamic-fee-below-basefee-rejected`** — stablenet · bp4 · 직전 PASS 51s  
+**109. `tip-below-min-rejected`** — stablenet · bp4 · 직전 PASS 51s  
 RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/dynamic-fee-below-basefee-rejected" && bin/chainbench run tests/tc/common/fee/001-dynamic-fee-below-basefee-rejected.json --workspace-dir "$HOME/cbw/manual/dynamic-fee-below-basefee-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/tip-below-min-rejected" && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/tip-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **110. `insufficient-funds-rejected`** — stablenet · bp4 · 직전 PASS 52s  

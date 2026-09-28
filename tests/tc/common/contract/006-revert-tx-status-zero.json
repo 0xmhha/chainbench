@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "revert-tx-status-zero",
-  "description": "RT-A-3-06 — revert tx: receipt.status == 0x0, gasUsed만 차감 검증 (원본 regression/ethereum/24-test-revert-tx)",
+  "description": "RT-A-3-06 — 되돌리는 호출의 영수증 상태와 차감액 (원본 regression/ethereum/24-test-revert-tx, 절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-006). 문서의 기대 결과는 \"배포는 성공, 호출은 실패 상태다. 쓴 가스만 차감된다\" 인데, 전에는 두 상태만 보고 차감액은 보지 않았다. 되돌린 호출이 값을 옮기지 않았는지, 가스 한도가 아니라 실제로 쓴 가스만 물렸는지는 잔액으로만 드러난다. 그래서 호출자를 새 계정으로 두고 잔액을 앞뒤로 읽어 견준다. 기대값은 앞의 잔액에서 영수증의 gasUsed 와 effectiveGasPrice 를 곱한 값을 뺀 것이다. node1 을 쓰지 않는 것은 그 계정이 블록 보상을 받아 잔액이 저절로 움직이기 때문이다.",
   "requires": [
     "rpc"
   ],
@@ -32,17 +32,38 @@
       "source": "rpcCall"
     },
     {
-      "do": "sendTx",
-      "expect": "revert",
-      "from": "node1",
-      "gas": "100000",
-      "save": "chash",
-      "to": "$addr"
-    },
-    {
       "expect": "txStatus",
       "hash": "$dhash",
       "is": "0x1"
+    },
+    {
+      "do": "newAccount",
+      "save": "caller",
+      "saveKey": "callerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$caller",
+      "value": "10000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$caller",
+      "save": "before"
+    },
+    {
+      "do": "sendTx",
+      "key": "$callerKey",
+      "to": "$addr",
+      "gas": "100000",
+      "expect": "revert",
+      "save": "chash",
+      "timeout": "120s"
     },
     {
       "compare": "Equal",
@@ -53,6 +74,52 @@
         "$chash"
       ],
       "select": "status"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$used",
+        "$price"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$before",
+        "$fee"
+      ],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$caller",
+      "compare": "Equal",
+      "is": "$want"
     }
   ]
 }

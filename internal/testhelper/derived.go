@@ -204,8 +204,13 @@ func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[strin
 			acc.Add(acc, v)
 		case "diff":
 			acc.Sub(acc, v)
+		case "mul":
+			// A fee is gas times a price, and CT-CONTRACT-006 has to compute one
+			// to say what a reverted call cost: the balance it expects afterwards
+			// is the balance before minus gasUsed times effectiveGasPrice.
+			acc.Mul(acc, v)
 		default:
-			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum or diff)", op)
+			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum, diff or mul)", op)
 		}
 	}
 	switch f, _ := spec["format"].(string); f {

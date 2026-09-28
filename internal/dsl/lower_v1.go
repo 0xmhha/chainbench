@@ -359,10 +359,28 @@ func timeoutKeyList() string {
 
 // expectAdjuncts is the outcome vocabulary a do step's "expect" may name:
 // receipt (the default — the tx must be mined), revert (mined with status 0x0),
-// reject (the submit itself must fail), and fail (a launched node must not come
-// up). A value outside this set is a typo that must be refused, not treated as
-// the default success.
-var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "fail": true}
+// reject (the submit itself must fail), keptOut (the submit may be accepted but
+// no block may carry it), and fail (a launched node must not come up). A value
+// outside this set is a typo that must be refused, not treated as the default
+// success.
+//
+// The keys are spelled as the schema spells them, because a ratchet compares
+// the two sets letter for letter. Case is not what a case gets wrong, so the
+// lookup goes through isExpectAdjunct and ignores it.
+var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "keptOut": true, "fail": true}
+
+// isExpectAdjunct reports whether name is in the outcome vocabulary, ignoring
+// case. Folding here rather than at the keys keeps the keys canonical for the
+// schema ratchet, and matches how the runtime reads the same words back
+// (testhelper compares them with EqualFold).
+func isExpectAdjunct(name string) bool {
+	for k := range expectAdjuncts {
+		if strings.EqualFold(k, name) {
+			return true
+		}
+	}
+	return false
+}
 
 // perChainKey is where a statement writes the answers that differ by chain.
 //
@@ -398,6 +416,45 @@ func expectedFor(m map[string]any, chain string) (any, bool, error) {
 	return is, true, nil
 }
 
+// outcomePerChainKey is where a do statement writes the OUTCOME that differs by
+// chain, as perChainKey does for the answer.
+//
+// The two are not the same question. isPerChain varies what a statement
+// compares against; this varies what counts as the statement happening at all.
+// CT-FEE-002 needs both: the price under the floor is read from the chain, and
+// what the chain then does with it is a refusal on one and an acceptance that
+// never reaches a block on another. Both are definite per chain — refusing to
+// say which is a weaker test, not a more tolerant one.
+const outcomePerChainKey = "expectPerChain"
+
+// outcomeFor is the outcome a do statement expects on this chain.
+//
+// Like expectedFor, a map that does not name the chain falls back to "expect",
+// and the fallback must be written: a chain the map forgets would otherwise
+// expect nothing and take any outcome as success.
+func outcomeFor(m map[string]any, chain string) (string, bool, error) {
+	ex, hasEx := m["expect"].(string)
+	raw, hasPerChain := m[outcomePerChainKey]
+	if !hasPerChain {
+		return ex, hasEx, nil
+	}
+	byChain, ok := raw.(map[string]any)
+	if !ok || len(byChain) == 0 {
+		return "", false, fmt.Errorf("%s must be a non-empty object of chain to outcome", outcomePerChainKey)
+	}
+	if !hasEx {
+		return "", false, fmt.Errorf("%s needs \"expect\" beside it, for the chains it does not name", outcomePerChainKey)
+	}
+	if v, named := byChain[chain]; named {
+		s, ok := v.(string)
+		if !ok {
+			return "", false, fmt.Errorf("%s[%s] must be an outcome name", outcomePerChainKey, chain)
+		}
+		return s, true, nil
+	}
+	return ex, true, nil
+}
+
 // lowerStatement lowers one v2 statement map onto the runtime vocabulary.
 func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	doName, hasDo := m["do"].(string)
@@ -411,8 +468,18 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	// here rather than by Unresolved (which resolves head expects as assertion
 	// names). A value outside the outcome vocabulary would otherwise fall through
 	// to the default "must succeed", silently turning a negative case positive.
-	if hasDo && hasEx && !expectAdjuncts[strings.ToLower(exName)] {
-		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, or fail)", exName)
+	// The outcome this statement expects, with the per-chain one applied if it
+	// declared one. Done before the vocabulary check so a per-chain outcome is
+	// held to the same vocabulary as a plain one.
+	if hasDo {
+		picked, hasPicked, oerr := outcomeFor(m, chain)
+		if oerr != nil {
+			return Statement{}, oerr
+		}
+		exName, hasEx = picked, hasPicked
+	}
+	if hasDo && hasEx && !isExpectAdjunct(exName) {
+		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, keptOut, or fail)", exName)
 	}
 	if _, isOverride := m["override"]; isOverride {
 		return Statement{}, fmt.Errorf("override hooks (G5) have no execution semantics yet and are not accepted")
@@ -431,6 +498,8 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 			// head, not an arg
 		case "is", perChainKey:
 			// Folded into "expected" above.
+		case outcomePerChainKey:
+			// Folded into "expect" above.
 		default:
 			args[k] = v
 		}
@@ -439,6 +508,9 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 		args["expected"] = expected
 	}
 	if hasDo {
+		if hasEx {
+			args["expect"] = exName
+		}
 		return Statement{Do: doName, Args: args}, nil
 	}
 	delete(args, "expect")

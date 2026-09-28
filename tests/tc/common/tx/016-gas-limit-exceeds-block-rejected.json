@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "gas-limit-exceeds-block-rejected",
-  "description": "RT-A-2-07 — Gas Limit 초과 tx 거부 (블록 gas limit 초과) (원본 regression/ethereum/15-test-gaslimit-exceeded)",
+  "description": "RT-A-2-07 — 블록 가스 한도보다 큰 가스 한도로 보내면 거부되는지 본다 (원본 regression/ethereum/15-test-gaslimit-exceeded). 한도는 노드에게 물어 읽고 거기에 1을 더한다. 가스 가격을 1 Gwei 로 못 박는 것은 RPC 의 수수료 상한을 피하기 위해서다. 상한은 가스 × 가격을 보는데(SubmitTransaction 이 풀에 넘기기 전에 checkTxFee 를 부른다), 이 테스트는 가스를 일부러 크게 잡으므로 가격을 노드가 채우게 두면 곱이 상한을 넘는다. 2026-09-28 실측에서 go-wbft 가 \"tx fee (2.00 ether) exceeds the configured cap (1.00 ether)\" 로 거부해 재려던 검사에 닿지 못했다. 상한은 체인마다 다르다 — go-wbft 만 1 ether 이고 go-stablenet 과 go-wemix 는 0(무제한)이다. 1 Gwei 면 블록 한도가 2천만이어도 곱이 0.02 ether 라 세 체인 모두 상한 아래다. 가격을 낮춰도 안전한 것은 풀의 검사 순서 때문이다. 블록 가스 한도 검사가 수수료 검사보다 앞에 있어(core/txpool/validation.go 의 ErrGasLimit 이 MinTip·anzeon 검사보다 위) 가격이 낮아도 가스 한도로 먼저 걸린다.",
   "requires": [
     "rpc"
   ],
@@ -40,9 +40,10 @@
       "expect": "reject",
       "from": "node1",
       "gas": "$over",
+      "gasPrice": "1000000000",
+      "reason": "exceeds block gas limit",
       "to": "0x00000000000000000000000000000000C0FFEE10",
-      "value": "1",
-      "reason": "exceeds block gas limit"
+      "value": "1"
     },
     {
       "compare": "GreaterOrEqual",

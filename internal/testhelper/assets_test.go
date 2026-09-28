@@ -2,14 +2,18 @@ package testhelper
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // txRPC serves the send/receipt pair and records the transaction arguments it
@@ -241,5 +245,80 @@ func TestSendTx_RejectsMixedFeeForms(t *testing.T) {
 	}})
 	if err == nil {
 		t.Fatal("expected an error: gasPrice and maxFeePerGas are mutually exclusive")
+	}
+}
+
+// A deployment may sign here instead of at the node. The node-signed path puts
+// a validator's account behind a contract creation and needs the account
+// namespace open; a key makes it the eth_sendRawTransaction a user would send.
+
+type fakeDeployWallet struct {
+	accounts.Wallet // only Deploy is called
+	hash, addr      string
+	gotCode         []byte
+}
+
+func (w *fakeDeployWallet) Deploy(_ context.Context, initCode []byte, _ *big.Int) (string, string, error) {
+	w.gotCode = initCode
+	return w.hash, w.addr, nil
+}
+
+type fakeDeployProvider struct {
+	accounts.AccountProvider // only OpenWallet is called
+	wallet                   *fakeDeployWallet
+	gotKey                   []byte
+	gotURL                   string
+}
+
+func (p *fakeDeployProvider) OpenWallet(_ context.Context, privKey []byte, rpcURL string) (accounts.Wallet, error) {
+	p.gotKey, p.gotURL = privKey, rpcURL
+	return p.wallet, nil
+}
+
+func TestDeployContractAction_SignsHereWhenGivenAKey(t *testing.T) {
+	rpcSrv := &txRPC{
+		coinbase: "0xcoinbase",
+		receipt:  map[string]any{"status": "0x1", "contractAddress": "0xdeployed"},
+	}
+	srv := rpcSrv.server(t)
+	w := &fakeDeployWallet{hash: "0xdeadbeef", addr: "0xdeployed"}
+	p := &fakeDeployProvider{wallet: w}
+	d := deps()
+	d.Accounts = p
+
+	act, _ := d.Actions.Action(actionDeployContract)
+	ac := &interp.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
+		"bytecode": "0x6080604052",
+		"key":      "0x01020304",
+		"save":     "addr",
+	}}
+	if err := act.Do(context.Background(), ac); err != nil {
+		t.Fatalf("deployContract with a key: %v", err)
+	}
+	if ac.Value != "0xdeployed" {
+		t.Errorf("Value = %#v, want the address the wallet reported", ac.Value)
+	}
+	if got := hex.EncodeToString(w.gotCode); got != "6080604052" {
+		t.Errorf("init code = %s, want the bytecode with its 0x stripped", got)
+	}
+	if got := hex.EncodeToString(p.gotKey); got != "01020304" {
+		t.Errorf("key = %s, want the decoded key", got)
+	}
+	rpcSrv.mu.Lock()
+	defer rpcSrv.mu.Unlock()
+	if len(rpcSrv.sent) != 0 {
+		t.Errorf("the node was asked to sign %d transaction(s); a key means it signs none", len(rpcSrv.sent))
+	}
+}
+
+func TestDeployContractAction_KeyPathNeedsAnAccountProvider(t *testing.T) {
+	d := deps() // no Accounts
+	act, _ := d.Actions.Action(actionDeployContract)
+	err := act.Do(context.Background(), &interp.ActionCtx{
+		Env: envWithNode(t, "http://unused"), Deps: &d,
+		Args: map[string]any{"bytecode": "0x60", "key": "0x01"},
+	})
+	if err == nil {
+		t.Fatal("a key with no account provider must fail, not fall back to the node")
 	}
 }
