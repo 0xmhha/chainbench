@@ -11,7 +11,7 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **91개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
+케이스 **86개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
 있기 때문이다 — `CT-NODE-001` 은 `wemix-chain-up`·`wbft-chain-up`·`stablenet-chain-up`
 셋이다.
 
@@ -19,8 +19,8 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 tests/tc/common/
 ├── node/       21건   노드·동기화·네트워크
 ├── tx/         23건   트랜잭션 전송·거부
-├── fee/        11건   수수료·가스 정책
-├── contract/   11건   컨트랙트 실행
+├── fee/         8건   수수료·가스 정책
+├── contract/    9건   컨트랙트 실행
 ├── rpc/        16건   조회·구독 API
 └── fault/       9건   장애·복구
 ```
@@ -33,7 +33,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 `CT-RPC-008`, `remote-chain-info` 는 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 91개를 CT 수만큼 합치지 않았나
+## 2. 왜 86개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -46,14 +46,16 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 91건 중 게이트 통과 |
+| 체인 | 86건 중 게이트 통과 |
 | --- | --- |
-| go-stablenet | 91 |
-| go-wbft | 91 |
-| go-wemix | 91 |
+| go-stablenet | 86 |
+| go-wbft | 86 |
+| go-wemix | 86 |
 
-**게이트를 통과한다는 것은 "돌 수 있다" 이지 "통과한다" 가 아니다.** 실제로 통과하는지는
-라이브로 재야 하고, 아직 재지 않았다.
+**게이트를 통과한다는 것은 "돌 수 있다" 이지 "통과한다" 가 아니다.** 91건이던 때도 이 표는
+91/91/91 이었고, 그대로 세 체인에 돌리자 다섯이 깨졌다. 게이트가 막지 못한 것은 케이스가
+무엇을 필요로 하는지 말하지 않았기 때문이다. 다섯은 빠졌고, 무엇이 필요한지 이제
+`requires` 에 적혀 있다(5절).
 
 케이스가 이름 붙인 `chainPreset` 은 아직 대부분 stablenet 이다. 실행할 때 덮는다.
 
@@ -124,6 +126,28 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 `CT-NODE-004`·`005`·`006`·`007`(동기화 네 가지) · `CT-NODE-015` · `CT-TX-010`·`011`·
 `014`·`017` · `CT-FEE-009` · `CT-CONTRACT-003` · `CT-RPC-010`
 
+### 세 체인에 돌려 보고 되돌린 다섯 (2026-09-28)
+
+처음에 91개를 옮겼다가 다섯을 go-stablenet 영역으로 되돌렸다. 읽어서는 보이지 않고
+돌려야 나오는 차이였다. 되돌리면서 무엇이 필요한지 `requires` 에 적었으므로, 이제는 다른
+체인에서 실패하지 않고 건너뛴다.
+
+| 케이스 | 되돌아간 곳 | 필요한 것 | 왜 |
+| --- | --- | --- | --- |
+| `register-contract` | `go-stablenet/vocabulary/03-` | `evm:shanghai` | 배포하는 바이트코드가 PUSH0 를 45번 쓴다. go-wemix 의 EVM 은 London 세대라 그 옵코드가 없어 배포가 가스를 전부 태우고 실패한다 |
+| `eth-call-revert-returns-error` | `go-stablenet/regression/ethereum/23-` | `evm:shanghai` | 같은 이유. PUSH0 9번 |
+| `anzeon-basefee-increase` | `go-stablenet/regression/anzeon/03-` | `engine:anzeon` | anzeon 만 상승·하강 문턱 두 개를 쓴다. 표준 EIP-1559 는 목표 하나뿐이라 25% 채우기가 목표 미달이 되어 반대로 내려간다 |
+| `anzeon-basefee-stable` | `go-stablenet/regression/anzeon/04-` | `engine:anzeon` | 표준 EIP-1559 에는 유지 구간이 없다 |
+| `anzeon-basefee-decrease` | `go-stablenet/regression/anzeon/05-` | `engine:anzeon` | go-wbft 에서 통과했으나 재려던 것과 다른 이유였다 |
+
+마지막 줄이 이 절의 요점이다. **통과했다고 잰 것은 아니다.** 표준 EIP-1559 에서 25%
+채우기는 부하가 아니라 목표 미달이라, 부하를 거는 동안에도 기본 수수료가 이미 내려가고
+있었다. 셋을 묶어 빼지 않으면 그 하나가 "wbft 에서 도는 공통 테스트" 로 남는다.
+
+`evm:shanghai` 는 이번에 더한 capability 다. 세 체인이 포크를 brioche·croissant·anzeon
+이라 부르고 어느 genesis 에도 이더리움 포크 이름이 없어 뽑아낼 데가 없으므로,
+`precompile:` 과 같이 매니페스트가 선언한다.
+
 ## 6. CT 와 케이스 대응
 
 ### NODE — CT 16개 중 11개가 공통 케이스를 갖고 있다
@@ -172,15 +196,12 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 | CT-TX-019 | 부하 전송 중 블록 진행 | `tx/019-stress-tx-flood.json` |
 | CT-TX-020 | 테스트 계정 자금 지급 | `tx/020-faucet-funds-account.json` |
 
-### FEE — CT 12개 중 9개가 공통 케이스를 갖고 있다
+### FEE — CT 9개 중 6개가 공통 케이스를 갖고 있다
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
 | CT-FEE-001 | 최소 팁 미달 거부 | `fee/001-dynamic-fee-below-basefee-rejected.json` |
 | CT-FEE-002 | 최소 가스비 경계값 | `fee/002-legacy-gasprice-below-min-rejected.json` · `fee/002-accesslist-gasprice-below-min-rejected.json` · `fee/002-feecap-below-min-rejected.json` / 공통 아님: `go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json` · `go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json` |
-| CT-FEE-003 | 사용률 높을 때 기본 수수료 증가 | `fee/003-anzeon-basefee-increase.json` |
-| CT-FEE-004 | 사용률 보통일 때 기본 수수료 유지 | `fee/004-anzeon-basefee-stable.json` |
-| CT-FEE-005 | 사용률 낮을 때 기본 수수료 감소 | `fee/005-anzeon-basefee-decrease.json` |
 | CT-FEE-006 | 기본 수수료 하한 | **없다**공통 아님: `go-stablenet/regression/anzeon/06-basefee-minimum.json` |
 | CT-FEE-007 | 실제 적용 가스 가격 기록 | `fee/007-effective-gas-price.json` |
 | CT-FEE-008 | 실제 적용 가스 가격 노드 간 일치 | `fee/008-effective-gas-price-regular-bp-en.json` |
@@ -189,15 +210,13 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 | CT-FEE-011 | 권장 팁 조회 | **없다**공통 아님: `go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json` |
 | CT-FEE-012 | 수수료 이력 조회 | `fee/012-fee-history-well-formed.json` |
 
-### CONTRACT — CT 7개 중 6개가 공통 케이스를 갖고 있다
+### CONTRACT — CT 5개 중 4개가 공통 케이스를 갖고 있다
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
 | CT-CONTRACT-001 | 컨트랙트 배포 | `contract/001-contract-roundtrip.json` · `contract/001-wemix-tx-and-contract.json` · `contract/001-wbft-tx-and-contract.json` |
-| CT-CONTRACT-002 | 상태 변경 함수 호출 | `contract/002-register-contract.json` |
 | CT-CONTRACT-003 | 조회 함수 호출 | **없다** |
 | CT-CONTRACT-004 | 가스 추정 | `contract/004-estimate-gas.json` |
-| CT-CONTRACT-005 | 조회 호출의 되돌림 오류 | `contract/005-eth-call-revert-returns-error.json` |
 | CT-CONTRACT-006 | 되돌림 트랜잭션의 실패 상태 | `contract/006-revert-tx-status-zero.json` · `contract/006-wbft-revert-status-zero.json` · `contract/006-wemix-revert-status-zero.json` · `contract/006-negative-tx-revert.json` |
 | CT-CONTRACT-007 | 가스 소진 트랜잭션 | `contract/007-out-of-gas-consumes-all.json` |
 
