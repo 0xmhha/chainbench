@@ -15,13 +15,13 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **99개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
-있기 때문이다 — `CT-NODE-001` 은 `wemix-chain-up`·`wbft-chain-up`·`stablenet-chain-up`
-셋이다.
+케이스 **89개**다. CT 하나에 케이스가 여럿인 것은 원본 자동 테스트 여럿을 CT 하나로 묶었거나
+세 체인이 각자의 케이스를 갖고 있기 때문이다 — `CT-CONTRACT-001` 은 `contract-roundtrip`·
+`wbft-tx-and-contract`·`wemix-tx-and-contract` 셋이다.
 
 ```
 tests/tc/common/
-├── node/       25건   노드·동기화·네트워크
+├── node/       15건   노드·동기화·네트워크
 ├── tx/         24건   트랜잭션 전송·거부
 ├── fee/        12건   수수료·가스 정책
 ├── contract/   12건   컨트랙트 실행
@@ -29,15 +29,20 @@ tests/tc/common/
 └── fault/       9건   장애·복구
 ```
 
-파일명은 `<CT 번호>-<테스트 id>.json` 이다. 앞의 번호가 같은 파일들이 한 CT 를 이룬다.
+파일명 규칙은 `CT-<영역>-<번호>-<간략설명>.json` 이다(예: `node/CT-NODE-001-startup-block-production.json`).
+CT 하나에 파일 하나를 두고, 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다.
+2026-09-29 에 `node/` 부터 이 규칙으로 바꿨다. 다른 영역은 아직 예전 규칙
+`<CT 번호>-<테스트 id>.json` 이고, 앞의 번호가 같은 파일들이 한 CT 를 이룬다. 파일 이름을
+바꿔도 파일 안의 `id` 는 그대로 둔다. 아래 설명은 예전 규칙에 대한 것이다.
 번호 뒤의 이름은 옮기기 전과 한 글자도 바꾸지 않았다(몇몇 옮긴 케이스는 파일 이름과 `id` 가 다르다) — `id` 로 케이스를 부르는 문서와
 검사가 여럿이라, 이름을 같이 바꾸면 무엇이 깨졌는지 옮긴 것과 구별할 수 없다.
 
-CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `CT-NODE-003` 과
-`CT-RPC-008`, `remote-chain-info` 는 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
+CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id`(지금은 `CT-NODE-003-genesis-init` 안) 는
+`CT-NODE-003` 과 `CT-RPC-008`, `remote-chain-info`(지금은 `CT-NODE-014-sync-complete` 안) 는
+`CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 99개를 CT 수만큼 합치지 않았나
+## 2. 왜 89개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -46,15 +51,24 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 그래서 이번 단계는 자리만 옮긴다. 세 체인의 케이스가 한 디렉터리에서 번호로 묶여 나란히
 보이게 된 것이 전부다. 나란히 놓고 봐야 무엇이 같고 무엇이 다른지 셀 수 있다.
 
+2026-09-29 에 NODE 의 셋을 합쳤다(`CT-NODE-001`·`002`·`010`, 파일 다섯을 지웠다). 나란히 놓고
+보니 wbft 사본은 preset 이름만 달랐고, wemix 사본이 뺀 검증자 수 검사는 이제 wemix 에서도
+거버넌스 컨트랙트로 읽는다(`internal/consensus/poa/validators.go`). 남은 차이는 기동 대기
+시간뿐이라 가장 느린 wemix 값으로 통일했다. `CT-NODE-010` 의 두 파일은 체인 차이가 아니라
+원본 테스트 둘이었고, 세 체인이 모두 갖춘 `bp4-en2-pn1` 모양 하나로 합쳤다.
+
+같은 날 NODE 는 CT 하나에 파일 하나가 되었다. 한 CT 를 여러 파일이 나눠 보던 다섯
+(`003`·`008`·`009`·`014`·`016`)도 한 파일 안에서 차례로 검증하도록 합쳐, `node/` 는 15개다.
+
 ## 3. 세 체인 모두에서 게이트를 통과한다
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 99건 중 게이트 통과 |
+| 체인 | 89건 중 게이트 통과 |
 | --- | --- |
-| go-stablenet | 98 |
-| go-wbft | 98 |
-| go-wemix | 98 |
+| go-stablenet | 88 |
+| go-wbft | 88 |
+| go-wemix | 88 |
 
 남은 하나는 `fault/004-fault-network-partition` 이다. 체인이 아니라 실행 대상에 `target:remote` 를
 요구해, 노드가 원격이나 Docker 서버에 있을 때만 돈다(2026-09-29 기준).
@@ -118,7 +132,7 @@ gasPrice 를 1 wei 로 보내거나 블록 가스 한도를 넘겨 거부를 기
 
 ### 4.3 아직 답을 못 낸 둘
 
-`CT-NODE-016`(`016-block-period-one-second`·`016-stress-block-time`)은 블록 주기가
+`CT-NODE-016`(`CT-NODE-016-block-period`·`CT-NODE-016-block-period`)은 블록 주기가
 1초라는 것에 기댄다. go-stablenet 과 go-wbft 는 genesis 템플릿에 `blockPeriodSeconds: 1`
 을 적지만 **go-wemix 는 적지 않는다** — 거버넌스 값이고 부트스트랩 때 정해진다. 둘은
 게이트를 통과하므로 건너뛰지 않고 **돌아서 실패하거나 운으로 통과한다.** 체인별 기대값을
@@ -134,11 +148,11 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 | CT | 새 케이스 | 전에 있던 것 |
 | --- | --- | --- |
-| CT-NODE-004 | `node/004-full-sync.json` | bash 스크립트가 있었으나 go-stablenet 전용 Go 테스트로 옮겨졌다 |
-| CT-NODE-005 | `node/005-snap-sync.json` | 위와 같다. 이미 블록을 가진 노드를 다시 띄워 실제로는 full 로 동기화했다 |
-| CT-NODE-006 | `node/006-downloader-catch-up.json` | 위와 같다 |
-| CT-NODE-007 | `node/007-live-block-receive.json` | 위와 같다 |
-| CT-NODE-015 | `node/015-block-timestamp-monotonic.json` | 없었다 |
+| CT-NODE-004 | `node/CT-NODE-004-full-sync.json` | bash 스크립트가 있었으나 go-stablenet 전용 Go 테스트로 옮겨졌다 |
+| CT-NODE-005 | `node/CT-NODE-005-snap-sync.json` | 위와 같다. 이미 블록을 가진 노드를 다시 띄워 실제로는 full 로 동기화했다 |
+| CT-NODE-006 | `node/CT-NODE-006-missing-block-catch-up.json` | 위와 같다 |
+| CT-NODE-007 | `node/CT-NODE-007-live-block-receive.json` | 위와 같다 |
+| CT-NODE-015 | `node/CT-NODE-015-timestamp-monotonic.json` | 없었다 |
 | CT-TX-002 | `tx/002-legacy-value-transfer.json` | go-stablenet 전용 `legacy-transfer` |
 | CT-TX-003 | `tx/003-dynamic-fee-transfer.json` | go-stablenet 전용 `dynamic-fee-tx` |
 | CT-TX-010 | `tx/010-fee-delegated-access-list.json` | 없었다 |
@@ -187,21 +201,21 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
-| CT-NODE-001 | 노드 기동과 블록 생성 | `node/001-wemix-chain-up.json` · `node/001-wbft-chain-up.json` · `node/001-stablenet-chain-up.json` |
-| CT-NODE-002 | 15노드 구성 기동 | `node/002-wemix-chain-up-15.json` · `node/002-wbft-chain-up-15.json` · `node/002-stablenet-chain-up-15.json` |
-| CT-NODE-003 | 제네시스 초기화와 블록 0 해시 일치 | `node/003-genesis-block-hash-consistent.json` · `node/003-chain-id.json` |
-| CT-NODE-004 | Full Sync 동기화 | `node/004-full-sync.json` (2026-09-29 신규) |
-| CT-NODE-005 | Snap Sync 동기화 | `node/005-snap-sync.json` (2026-09-29 신규) |
-| CT-NODE-006 | 누락 블록 일괄 동기화 | `node/006-downloader-catch-up.json` (2026-09-29 신규) |
-| CT-NODE-007 | 새 블록 실시간 수신 | `node/007-live-block-receive.json` (2026-09-29 신규) |
-| CT-NODE-008 | 피어 연결과 피어 조회 | `node/008-basic-peers.json` · `node/008-admin-peers-populated.json` |
-| CT-NODE-009 | 노드 간 최신 블록 해시 일치 | `node/009-basic-consensus.json` · `node/009-basic-sync.json` |
-| CT-NODE-010 | 전달 노드 경유 동기화 | `node/010-proxied-pn-routing.json` · `node/010-wbft-proxied-routing.json` |
-| CT-NODE-011 | 종단 노드가 먼저 오는 혼합 배치 | `node/011-e1-mixed-producers.json` |
-| CT-NODE-013 | 제네시스 불일치 시 기동 거부 | `node/013-genesis-mismatch.json` |
-| CT-NODE-014 | 동기화 완료 상태 확인 | `node/014-chain-not-syncing.json` · `node/014-remote-chain-info.json` |
-| CT-NODE-015 | 블록 시각 단조 증가 | `node/015-block-timestamp-monotonic.json` (2026-09-29 신규) |
-| CT-NODE-016 | 블록 생성 주기 | `node/016-block-period-one-second.json` · `node/016-stress-block-time.json` |
+| CT-NODE-001 | 노드 기동과 블록 생성 | `node/CT-NODE-001-startup-block-production.json` (세 체인 공통) |
+| CT-NODE-002 | 15노드 구성 기동 | `node/CT-NODE-002-startup-15-nodes.json` (세 체인 공통) |
+| CT-NODE-003 | 제네시스 초기화와 블록 0 해시 일치 | `node/CT-NODE-003-genesis-init.json` |
+| CT-NODE-004 | Full Sync 동기화 | `node/CT-NODE-004-full-sync.json` (2026-09-29 신규) |
+| CT-NODE-005 | Snap Sync 동기화 | `node/CT-NODE-005-snap-sync.json` (2026-09-29 신규) |
+| CT-NODE-006 | 누락 블록 일괄 동기화 | `node/CT-NODE-006-missing-block-catch-up.json` (2026-09-29 신규) |
+| CT-NODE-007 | 새 블록 실시간 수신 | `node/CT-NODE-007-live-block-receive.json` (2026-09-29 신규) |
+| CT-NODE-008 | 피어 연결과 피어 조회 | `node/CT-NODE-008-peers.json` |
+| CT-NODE-009 | 노드 간 최신 블록 해시 일치 | `node/CT-NODE-009-head-hash-agreement.json` |
+| CT-NODE-010 | 전달 노드 경유 동기화 | `node/CT-NODE-010-sync-via-proxy.json` |
+| CT-NODE-011 | 종단 노드가 먼저 오는 혼합 배치 | `node/CT-NODE-011-endpoint-first-layout.json` |
+| CT-NODE-013 | 제네시스 불일치 시 기동 거부 | `node/CT-NODE-013-genesis-mismatch-refused.json` |
+| CT-NODE-014 | 동기화 완료 상태 확인 | `node/CT-NODE-014-sync-complete.json` |
+| CT-NODE-015 | 블록 시각 단조 증가 | `node/CT-NODE-015-timestamp-monotonic.json` (2026-09-29 신규) |
+| CT-NODE-016 | 블록 생성 주기 | `node/CT-NODE-016-block-period.json` |
 
 ### TX — CT 20개 모두 공통 케이스를 갖고 있다
 
@@ -263,7 +277,7 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 | CT-RPC-005 | 영수증 조회 | `rpc/005-transaction-receipt-fields.json` |
 | CT-RPC-006 | 계정 nonce 조회 | `rpc/006-transaction-count-increments.json` |
 | CT-RPC-007 | 잔액 조회 | `rpc/007-genesis-balance.json` · `rpc/007-remote-balance-check.json` |
-| CT-RPC-008 | 체인 ID 조회 | `node/003-chain-id.json` · `node/014-remote-chain-info.json` |
+| CT-RPC-008 | 체인 ID 조회 | `node/CT-NODE-003-genesis-init.json` · `node/CT-NODE-014-sync-complete.json` |
 | CT-RPC-009 | 이벤트 로그 조회 | `rpc/009-logs-query-well-formed.json` · `rpc/009-contract-event-emitted.json` |
 | CT-RPC-010 | 서명된 트랜잭션 전송과 풀 조회 | `rpc/010-signed-tx-seen-in-pool.json` (2026-09-29 신규) |
 | CT-RPC-011 | 트랜잭션 풀 건수 조회 | `rpc/011-txpool-status.json` |
@@ -300,13 +314,13 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 ### 7.2 목적을 검증하지 못하던 넷 — 2026-09-29 에 정리했다
 
-**`node/010-wbft-proxied-routing`** — `blockAdvance` 가 `onEach` 의 첫 노드만 읽고 있었다. 여기서 첫 노드는 bp1 이고, 이 케이스가 확인해야 하는 것은 en1 이 전달 노드를 거쳐 블록을 받는가다. 전달이 끊겨 en1 이 멈춰 있어도 통과했다. `blockAdvance` 와 `blockHalt` 가 적힌 노드를 모두 보도록 고쳤고, 실패하면 움직이지 않은 노드의 이름을 말한다. `onEach` 를 쓰는 다른 케이스도 함께 고쳐졌다.
+**`node/010-wbft-proxied-routing`** (지금은 `node/CT-NODE-010-sync-via-proxy` 에 합쳤다) — `blockAdvance` 가 `onEach` 의 첫 노드만 읽고 있었다. 여기서 첫 노드는 bp1 이고, 이 케이스가 확인해야 하는 것은 en1 이 전달 노드를 거쳐 블록을 받는가다. 전달이 끊겨 en1 이 멈춰 있어도 통과했다. `blockAdvance` 와 `blockHalt` 가 적힌 노드를 모두 보도록 고쳤고, 실패하면 움직이지 않은 노드의 이름을 말한다. `onEach` 를 쓰는 다른 케이스도 함께 고쳐졌다.
 
 **`rpc/009-contract-event-emitted`** — 필터에 토픽을 넣고 돌아온 로그의 topic0 이 그 토픽과 같은지 봤다. 필터가 그것만 골라 주니 늘 참이고, 실제로는 로그가 하나라도 있는지만 확인됐다. 셋으로 나눴다. 주소와 토픽으로 거르면 로그가 하나 나오는가, 토픽 없이 주소로만 거른 로그의 topic0 이 기대값과 같은가, 다른 토픽으로 거르면 하나도 안 나오는가.
 
-**`node/016-block-period-one-second`** — 블록 시각은 초 단위 정수라, 주기가 1초 언저리면 연속 두 블록의 차이가 0이 되기도 1이 되기도 한다. 표본이 둘뿐이어서 결과가 동전 던지기였다. 20블록 평균으로 바꾸고 경계를 밀리초로 받게 했다(`minMillis`/`maxMillis`). 정수 초로는 하한을 0 아니면 1로밖에 못 적는데 0은 아무것도 말하지 않는 값이다.
+**`node/CT-NODE-016-block-period`** — 블록 시각은 초 단위 정수라, 주기가 1초 언저리면 연속 두 블록의 차이가 0이 되기도 1이 되기도 한다. 표본이 둘뿐이어서 결과가 동전 던지기였다. 20블록 평균으로 바꾸고 경계를 밀리초로 받게 했다(`minMillis`/`maxMillis`). 정수 초로는 하한을 0 아니면 1로밖에 못 적는데 0은 아무것도 말하지 않는 값이다.
 
-**`node/016-stress-block-time`** — 같은 이유로 상한만 있었다. 밀리초 경계가 생겨 60블록에 [0.5, 2]초를 잡는다. 이제 블록이 쏟아지는 쪽 고장도 잡는다.
+**`node/CT-NODE-016-block-period`** — 같은 이유로 상한만 있었다. 밀리초 경계가 생겨 60블록에 [0.5, 2]초를 잡는다. 이제 블록이 쏟아지는 쪽 고장도 잡는다.
 
 세 체인에서 돌려 확인했다(2026-09-29). go-wemix 의 `016-block-period` 는 평균 0.8초 언저리로 안정적으로 통과한다.
 
@@ -319,7 +333,7 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 ## 8. 케이스를 돌리는 명령
 
-여기 있는 99개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
+여기 있는 89개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
 어떻게 읽는지, Docker 함대는 어떻게 준비하는지는 [`HOW-TO-USE.md`](HOW-TO-USE.md) 에
 있다 — 처음이라면 그것부터 읽는다. 이 절은 명령만 놓는다.
 
@@ -337,39 +351,34 @@ export GWEMIX="$HOME/work/github/go-wemix/build/bin/gwemix"
 
 줄 하나가 케이스 하나다. 앞의 `rm -rf` 가 그 워크스페이스에 남은 것을 지우고(안 지우면
 다음 실행이 `incompatible genesis` 로 막힌다), `--binary` 가 노드가 돌 실행 파일을 준다.
-`node/001-wbft-chain-up` 과 `node/001-wemix-chain-up` 둘만 바이너리를 `--binary` 대신
-환경변수(`GWBFT_BIN`·`GWEMIX_BIN`)로 받는다 — 프리셋이 그렇게 선언돼 있다
+node/001·002·010 은 wbft·wemix 줄도 함께 적었다 — 한 파일에 `--chain-preset` 만 바꾼다
 ([`HOW-TO-USE.md`](HOW-TO-USE.md) 3.2). `fault/004` 는 `target:remote` 라 로컬에선 skip 되고
 Docker(8.2)에서만 돈다.
 
 #### node — 노드·동기화·네트워크
 
 ```sh
-rm -rf ~/cbw/m/001-stablenet-chain-up && bin/chainbench run tests/tc/common/node/001-stablenet-chain-up.json --workspace-dir ~/cbw/m/001-stablenet-chain-up --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-wbft-chain-up && GWBFT_BIN="$GWBFT" bin/chainbench run tests/tc/common/node/001-wbft-chain-up.json --workspace-dir ~/cbw/m/001-wbft-chain-up
-rm -rf ~/cbw/m/001-wemix-chain-up && GWEMIX_BIN="$GWEMIX" bin/chainbench run tests/tc/common/node/001-wemix-chain-up.json --workspace-dir ~/cbw/m/001-wemix-chain-up
-rm -rf ~/cbw/m/002-stablenet-chain-up-15 && bin/chainbench run tests/tc/common/node/002-stablenet-chain-up-15.json --workspace-dir ~/cbw/m/002-stablenet-chain-up-15 --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-wbft-chain-up-15 && bin/chainbench run tests/tc/common/node/002-wbft-chain-up-15.json --workspace-dir ~/cbw/m/002-wbft-chain-up-15 --binary "$GWBFT"
-rm -rf ~/cbw/m/002-wemix-chain-up-15 && bin/chainbench run tests/tc/common/node/002-wemix-chain-up-15.json --workspace-dir ~/cbw/m/002-wemix-chain-up-15 --binary "$GWEMIX"
-rm -rf ~/cbw/m/003-chain-id && bin/chainbench run tests/tc/common/node/003-chain-id.json --workspace-dir ~/cbw/m/003-chain-id --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-genesis-block-hash-consistent && bin/chainbench run tests/tc/common/node/003-genesis-block-hash-consistent.json --workspace-dir ~/cbw/m/003-genesis-block-hash-consistent --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-full-sync && bin/chainbench run tests/tc/common/node/004-full-sync.json --workspace-dir ~/cbw/m/004-full-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-snap-sync && bin/chainbench run tests/tc/common/node/005-snap-sync.json --workspace-dir ~/cbw/m/005-snap-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-downloader-catch-up && bin/chainbench run tests/tc/common/node/006-downloader-catch-up.json --workspace-dir ~/cbw/m/006-downloader-catch-up --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-live-block-receive && bin/chainbench run tests/tc/common/node/007-live-block-receive.json --workspace-dir ~/cbw/m/007-live-block-receive --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-admin-peers-populated && bin/chainbench run tests/tc/common/node/008-admin-peers-populated.json --workspace-dir ~/cbw/m/008-admin-peers-populated --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-basic-peers && bin/chainbench run tests/tc/common/node/008-basic-peers.json --workspace-dir ~/cbw/m/008-basic-peers --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-basic-consensus && bin/chainbench run tests/tc/common/node/009-basic-consensus.json --workspace-dir ~/cbw/m/009-basic-consensus --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-basic-sync && bin/chainbench run tests/tc/common/node/009-basic-sync.json --workspace-dir ~/cbw/m/009-basic-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-proxied-pn-routing && bin/chainbench run tests/tc/common/node/010-proxied-pn-routing.json --workspace-dir ~/cbw/m/010-proxied-pn-routing --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-wbft-proxied-routing && bin/chainbench run tests/tc/common/node/010-wbft-proxied-routing.json --workspace-dir ~/cbw/m/010-wbft-proxied-routing --binary "$GWBFT"
-rm -rf ~/cbw/m/011-e1-mixed-producers && bin/chainbench run tests/tc/common/node/011-e1-mixed-producers.json --workspace-dir ~/cbw/m/011-e1-mixed-producers --binary "$GSTABLE"
-rm -rf ~/cbw/m/013-genesis-mismatch && bin/chainbench run tests/tc/common/node/013-genesis-mismatch.json --workspace-dir ~/cbw/m/013-genesis-mismatch --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-chain-not-syncing && bin/chainbench run tests/tc/common/node/014-chain-not-syncing.json --workspace-dir ~/cbw/m/014-chain-not-syncing --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-remote-chain-info && bin/chainbench run tests/tc/common/node/014-remote-chain-info.json --workspace-dir ~/cbw/m/014-remote-chain-info --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-block-timestamp-monotonic && bin/chainbench run tests/tc/common/node/015-block-timestamp-monotonic.json --workspace-dir ~/cbw/m/015-block-timestamp-monotonic --binary "$GSTABLE"
-rm -rf ~/cbw/m/016-block-period-one-second && bin/chainbench run tests/tc/common/node/016-block-period-one-second.json --workspace-dir ~/cbw/m/016-block-period-one-second --binary "$GSTABLE"
-rm -rf ~/cbw/m/016-stress-block-time && bin/chainbench run tests/tc/common/node/016-stress-block-time.json --workspace-dir ~/cbw/m/016-stress-block-time --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-001-startup-block-production && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/CT-NODE-001-startup-block-production --binary "$GSTABLE"
+rm -rf ~/cbw/m/001-chain-up-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/001-chain-up-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/001-chain-up-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/001-chain-up-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-002-startup-15-nodes && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/CT-NODE-002-startup-15-nodes --binary "$GSTABLE"
+rm -rf ~/cbw/m/002-chain-up-15-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/002-chain-up-15-wbft --chain-preset wbft-bp7-en7-pn1 --binary "$GWBFT"
+rm -rf ~/cbw/m/002-chain-up-15-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/002-chain-up-15-wemix --chain-preset wemix-bp7-en7-pn1 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-003-genesis-init && bin/chainbench run tests/tc/common/node/CT-NODE-003-genesis-init.json --workspace-dir ~/cbw/m/CT-NODE-003-genesis-init --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-004-full-sync && bin/chainbench run tests/tc/common/node/CT-NODE-004-full-sync.json --workspace-dir ~/cbw/m/CT-NODE-004-full-sync --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-005-snap-sync && bin/chainbench run tests/tc/common/node/CT-NODE-005-snap-sync.json --workspace-dir ~/cbw/m/CT-NODE-005-snap-sync --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-006-missing-block-catch-up && bin/chainbench run tests/tc/common/node/CT-NODE-006-missing-block-catch-up.json --workspace-dir ~/cbw/m/CT-NODE-006-missing-block-catch-up --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-007-live-block-receive && bin/chainbench run tests/tc/common/node/CT-NODE-007-live-block-receive.json --workspace-dir ~/cbw/m/CT-NODE-007-live-block-receive --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-008-peers && bin/chainbench run tests/tc/common/node/CT-NODE-008-peers.json --workspace-dir ~/cbw/m/CT-NODE-008-peers --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-009-head-hash-agreement && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir ~/cbw/m/CT-NODE-009-head-hash-agreement --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-010-sync-via-proxy && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/CT-NODE-010-sync-via-proxy --binary "$GSTABLE"
+rm -rf ~/cbw/m/010-stablenet-proxied-pn-routing-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/010-stablenet-proxied-pn-routing-wbft --chain-preset wbft-bp4-en2-pn1 --binary "$GWBFT"
+rm -rf ~/cbw/m/010-stablenet-proxied-pn-routing-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/010-stablenet-proxied-pn-routing-wemix --chain-preset wemix-bp4-en2-pn1 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-011-endpoint-first-layout && bin/chainbench run tests/tc/common/node/CT-NODE-011-endpoint-first-layout.json --workspace-dir ~/cbw/m/CT-NODE-011-endpoint-first-layout --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-013-genesis-mismatch-refused && bin/chainbench run tests/tc/common/node/CT-NODE-013-genesis-mismatch-refused.json --workspace-dir ~/cbw/m/CT-NODE-013-genesis-mismatch-refused --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-014-sync-complete && bin/chainbench run tests/tc/common/node/CT-NODE-014-sync-complete.json --workspace-dir ~/cbw/m/CT-NODE-014-sync-complete --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-015-timestamp-monotonic && bin/chainbench run tests/tc/common/node/CT-NODE-015-timestamp-monotonic.json --workspace-dir ~/cbw/m/CT-NODE-015-timestamp-monotonic --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-016-block-period && bin/chainbench run tests/tc/common/node/CT-NODE-016-block-period.json --workspace-dir ~/cbw/m/CT-NODE-016-block-period --binary "$GSTABLE"
 ```
 
 #### tx — 트랜잭션 전송·거부
@@ -486,7 +495,7 @@ bin/chainbench run \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys ~/cbw/m/dk/genkeys --keys-source generate \
-  tests/tc/common/node/002-stablenet-chain-up-15.json
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 go-wemix(poa)는 서버 세트가 다르고(`server-set-wemix.yaml`) 합류가 느려 대기를 늘린다.
@@ -500,7 +509,8 @@ bin/chainbench run \
   --docker --all-servers \
   --keys ~/cbw/m/dk/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
-  tests/tc/common/node/002-wemix-chain-up-15.json
+  --chain-preset wemix-bp7-en7-pn1 \
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 로컬에선 skip 되던 `fault/004-fault-network-partition` 은 여기서만 실제로 돈다(위

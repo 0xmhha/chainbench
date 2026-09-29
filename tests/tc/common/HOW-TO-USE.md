@@ -44,8 +44,8 @@ export GWBFT="$HOME/work/github/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/go-wemix/build/bin/gwemix"
 ```
 
-공통 99개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
-붙은 13개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
+공통 89개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
+붙은 8개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
 공통의 대부분을 돌릴 수 있다.**
 
 **(원격을 흉내 낼 때만) Docker 함대.** 로컬 바이너리가 없는 기계, 또는 노드가 서로 다른
@@ -87,7 +87,7 @@ rm -rf ~/cbw/m/<이름> && bin/chainbench run <케이스.json> --workspace-dir ~
 
 ### 3.1 대부분은 stablenet
 
-공통 99개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
+공통 89개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
 `--binary "$GSTABLE"` 를 준다. 8절 목록에서 `$GSTABLE` 로 찍힌 것이 그것이다.
 
 같은 케이스를 다른 체인에서 보고 싶으면 프리셋을 실행할 때 덮는다. 이때는 그 체인의
@@ -101,26 +101,17 @@ rm -rf ~/cbw/m/x && bin/chainbench run tests/tc/common/tx/001-value-transfer.jso
 세 체인이 모두 갖춘 프리셋은 `bp4`·`bp4-en1`·`bp4-en2-pn1`·`bp7-en7-pn1`·`bp9` 다섯이고
 `presets/chain/` 에 `<체인>-<모양>.json` 으로 세 벌씩 있다.
 
-### 3.2 이름에 체인이 붙은 13개
+### 3.2 이름에 체인이 붙은 8개
 
 이 케이스들은 그 체인 바이너리가 있어야 돈다. stablenet 만 있으면 나머지는 건너뛴다.
 
 | 케이스 | 바이너리 |
 | --- | --- |
-| `node/001-wbft-chain-up` · `node/002-wbft-chain-up-15` · `node/010-wbft-proxied-routing` | `$GWBFT` |
-| `node/001-wemix-chain-up` · `node/002-wemix-chain-up-15` | `$GWEMIX` |
 | `tx/015-wbft-insufficient-funds-rejected` · `contract/001-wbft-tx-and-contract` · `contract/006-wbft-revert-status-zero` · `fault/001-wbft-node-crash` | `$GWBFT` |
 | `tx/015-wemix-insufficient-funds-rejected` · `contract/001-wemix-tx-and-contract` · `contract/006-wemix-revert-status-zero` · `fault/001-wemix-node-crash` | `$GWEMIX` |
 
-이 중 **`node/001-wbft-chain-up` 과 `node/001-wemix-chain-up` 둘만 `--binary` 를 안
-쓴다.** 이 둘의 프리셋(`wbft-bp4-binvar`·`wemix-bp4-binvar`)이 바이너리를 환경변수로 받게
-선언돼 있어서, 줄 앞에 환경변수를 붙인다.
-
-```sh
-rm -rf ~/cbw/m/001-wbft-chain-up && GWBFT_BIN="$GWBFT" \
-  bin/chainbench run tests/tc/common/node/001-wbft-chain-up.json \
-  --workspace-dir ~/cbw/m/001-wbft-chain-up
-```
+`node/` 의 파일은 모두 세 체인 공통이다(2026-09-29 에 체인별 사본을 지우고 합쳤다). 다른 체인은
+3.1 처럼 `--chain-preset` 과 `--binary` 를 바꿔 돌린다.
 
 ### 3.3 로컬에서 안 도는 하나
 
@@ -156,16 +147,16 @@ pass=1 fail=0 blocked=0 skip=0
 가장 단순한 합의 케이스로 한 번 해 본다. 1절의 변수를 잡아 뒀다고 본다.
 
 ```sh
-rm -rf ~/cbw/m/009-basic-consensus && \
-  bin/chainbench run tests/tc/common/node/009-basic-consensus.json \
-  --workspace-dir ~/cbw/m/009-basic-consensus --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-009-head-hash-agreement && \
+  bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json \
+  --workspace-dir ~/cbw/m/CT-NODE-009-head-hash-agreement --binary "$GSTABLE"
 ```
 
 노드가 뜨고 블록이 몇 개 진행되면 `pass=1 ...` 로 끝난다. 끝나면 chainbench 가 망을 스스로
 내린다. 몇 가지 자주 쓰는 손잡이가 있다.
 
 - `--keep-up` — 끝나고 망을 안 내린다. 노드에 붙어 더 보고 싶을 때. 다 보면
-  `bin/chainbench chain stop --workspace-dir ~/cbw/m/009-basic-consensus` 로 내린다.
+  `bin/chainbench chain stop --workspace-dir ~/cbw/m/CT-NODE-009-head-hash-agreement` 로 내린다.
 - `--plan` — 돌리지 않고 무엇을 세울지만 보여 준다.
 - `--chain-preset <이름>` — 케이스가 선언한 프리셋을 덮는다(3.1).
 
@@ -193,7 +184,7 @@ bin/chainbench run \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys ~/cbw/m/dk/genkeys --keys-source generate \
-  tests/tc/common/node/002-stablenet-chain-up-15.json
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 go-wemix 는 두 가지가 다르다. poa 노드가 p2p 옆에 포트를 셋씩 잡아 서버 세트가 다르고
@@ -207,7 +198,8 @@ bin/chainbench run \
   --docker --all-servers \
   --keys ~/cbw/m/dk/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
-  tests/tc/common/node/002-wemix-chain-up-15.json
+  --chain-preset wemix-bp7-en7-pn1 \
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 Docker 는 원격 datadir 을 지워야 다음 실행의 genesis 가 안 막힌다. 로컬처럼 `rm -rf` 만으로는
@@ -258,45 +250,41 @@ scripts/tcsweep.sh sweep.log tests/tc/common
 
 ---
 
-## 9. 케이스별 실행 명령 (99개 전부)
+## 9. 케이스별 실행 명령 (89개 전부)
 
-`tests/tc/common/` 아래 99개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
+`tests/tc/common/` 아래 89개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
 `$GWEMIX`)를 잡아 두면 원하는 줄을 그대로 붙여 넣어 돌릴 수 있다. 각 줄은 로컬 실행이다 —
 같은 케이스를 Docker 함대에서 돌리려면 6절의 형태에 그 줄의 케이스 경로만 넣는다
 (`--binary` 는 빼고 Docker 플래그를 붙인다).
 
-`node/001-wbft-chain-up`·`node/001-wemix-chain-up` 둘만 `--binary` 대신 환경변수로 바이너리를
-받고(3.2), `fault/004-fault-network-partition` 은 `target:remote` 라 로컬에선 skip 되고
+node/001·002·010 은 wbft·wemix 줄도 함께 적었다(같은 파일에 `--chain-preset` 만 바꾼다).
+`fault/004-fault-network-partition` 은 `target:remote` 라 로컬에선 skip 되고
 Docker 에서만 돈다(3.3).
 
 ### node — 노드·동기화·네트워크
 
 ```sh
-rm -rf ~/cbw/m/001-stablenet-chain-up && bin/chainbench run tests/tc/common/node/001-stablenet-chain-up.json --workspace-dir ~/cbw/m/001-stablenet-chain-up --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-wbft-chain-up && GWBFT_BIN="$GWBFT" bin/chainbench run tests/tc/common/node/001-wbft-chain-up.json --workspace-dir ~/cbw/m/001-wbft-chain-up
-rm -rf ~/cbw/m/001-wemix-chain-up && GWEMIX_BIN="$GWEMIX" bin/chainbench run tests/tc/common/node/001-wemix-chain-up.json --workspace-dir ~/cbw/m/001-wemix-chain-up
-rm -rf ~/cbw/m/002-stablenet-chain-up-15 && bin/chainbench run tests/tc/common/node/002-stablenet-chain-up-15.json --workspace-dir ~/cbw/m/002-stablenet-chain-up-15 --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-wbft-chain-up-15 && bin/chainbench run tests/tc/common/node/002-wbft-chain-up-15.json --workspace-dir ~/cbw/m/002-wbft-chain-up-15 --binary "$GWBFT"
-rm -rf ~/cbw/m/002-wemix-chain-up-15 && bin/chainbench run tests/tc/common/node/002-wemix-chain-up-15.json --workspace-dir ~/cbw/m/002-wemix-chain-up-15 --binary "$GWEMIX"
-rm -rf ~/cbw/m/003-chain-id && bin/chainbench run tests/tc/common/node/003-chain-id.json --workspace-dir ~/cbw/m/003-chain-id --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-genesis-block-hash-consistent && bin/chainbench run tests/tc/common/node/003-genesis-block-hash-consistent.json --workspace-dir ~/cbw/m/003-genesis-block-hash-consistent --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-full-sync && bin/chainbench run tests/tc/common/node/004-full-sync.json --workspace-dir ~/cbw/m/004-full-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-snap-sync && bin/chainbench run tests/tc/common/node/005-snap-sync.json --workspace-dir ~/cbw/m/005-snap-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-downloader-catch-up && bin/chainbench run tests/tc/common/node/006-downloader-catch-up.json --workspace-dir ~/cbw/m/006-downloader-catch-up --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-live-block-receive && bin/chainbench run tests/tc/common/node/007-live-block-receive.json --workspace-dir ~/cbw/m/007-live-block-receive --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-admin-peers-populated && bin/chainbench run tests/tc/common/node/008-admin-peers-populated.json --workspace-dir ~/cbw/m/008-admin-peers-populated --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-basic-peers && bin/chainbench run tests/tc/common/node/008-basic-peers.json --workspace-dir ~/cbw/m/008-basic-peers --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-basic-consensus && bin/chainbench run tests/tc/common/node/009-basic-consensus.json --workspace-dir ~/cbw/m/009-basic-consensus --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-basic-sync && bin/chainbench run tests/tc/common/node/009-basic-sync.json --workspace-dir ~/cbw/m/009-basic-sync --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-proxied-pn-routing && bin/chainbench run tests/tc/common/node/010-proxied-pn-routing.json --workspace-dir ~/cbw/m/010-proxied-pn-routing --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-wbft-proxied-routing && bin/chainbench run tests/tc/common/node/010-wbft-proxied-routing.json --workspace-dir ~/cbw/m/010-wbft-proxied-routing --binary "$GWBFT"
-rm -rf ~/cbw/m/011-e1-mixed-producers && bin/chainbench run tests/tc/common/node/011-e1-mixed-producers.json --workspace-dir ~/cbw/m/011-e1-mixed-producers --binary "$GSTABLE"
-rm -rf ~/cbw/m/013-genesis-mismatch && bin/chainbench run tests/tc/common/node/013-genesis-mismatch.json --workspace-dir ~/cbw/m/013-genesis-mismatch --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-chain-not-syncing && bin/chainbench run tests/tc/common/node/014-chain-not-syncing.json --workspace-dir ~/cbw/m/014-chain-not-syncing --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-remote-chain-info && bin/chainbench run tests/tc/common/node/014-remote-chain-info.json --workspace-dir ~/cbw/m/014-remote-chain-info --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-block-timestamp-monotonic && bin/chainbench run tests/tc/common/node/015-block-timestamp-monotonic.json --workspace-dir ~/cbw/m/015-block-timestamp-monotonic --binary "$GSTABLE"
-rm -rf ~/cbw/m/016-block-period-one-second && bin/chainbench run tests/tc/common/node/016-block-period-one-second.json --workspace-dir ~/cbw/m/016-block-period-one-second --binary "$GSTABLE"
-rm -rf ~/cbw/m/016-stress-block-time && bin/chainbench run tests/tc/common/node/016-stress-block-time.json --workspace-dir ~/cbw/m/016-stress-block-time --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-001-startup-block-production && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/CT-NODE-001-startup-block-production --binary "$GSTABLE"
+rm -rf ~/cbw/m/001-chain-up-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/001-chain-up-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/001-chain-up-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir ~/cbw/m/001-chain-up-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-002-startup-15-nodes && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/CT-NODE-002-startup-15-nodes --binary "$GSTABLE"
+rm -rf ~/cbw/m/002-chain-up-15-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/002-chain-up-15-wbft --chain-preset wbft-bp7-en7-pn1 --binary "$GWBFT"
+rm -rf ~/cbw/m/002-chain-up-15-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir ~/cbw/m/002-chain-up-15-wemix --chain-preset wemix-bp7-en7-pn1 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-003-genesis-init && bin/chainbench run tests/tc/common/node/CT-NODE-003-genesis-init.json --workspace-dir ~/cbw/m/CT-NODE-003-genesis-init --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-004-full-sync && bin/chainbench run tests/tc/common/node/CT-NODE-004-full-sync.json --workspace-dir ~/cbw/m/CT-NODE-004-full-sync --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-005-snap-sync && bin/chainbench run tests/tc/common/node/CT-NODE-005-snap-sync.json --workspace-dir ~/cbw/m/CT-NODE-005-snap-sync --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-006-missing-block-catch-up && bin/chainbench run tests/tc/common/node/CT-NODE-006-missing-block-catch-up.json --workspace-dir ~/cbw/m/CT-NODE-006-missing-block-catch-up --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-007-live-block-receive && bin/chainbench run tests/tc/common/node/CT-NODE-007-live-block-receive.json --workspace-dir ~/cbw/m/CT-NODE-007-live-block-receive --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-008-peers && bin/chainbench run tests/tc/common/node/CT-NODE-008-peers.json --workspace-dir ~/cbw/m/CT-NODE-008-peers --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-009-head-hash-agreement && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir ~/cbw/m/CT-NODE-009-head-hash-agreement --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-010-sync-via-proxy && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/CT-NODE-010-sync-via-proxy --binary "$GSTABLE"
+rm -rf ~/cbw/m/010-stablenet-proxied-pn-routing-wbft && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/010-stablenet-proxied-pn-routing-wbft --chain-preset wbft-bp4-en2-pn1 --binary "$GWBFT"
+rm -rf ~/cbw/m/010-stablenet-proxied-pn-routing-wemix && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir ~/cbw/m/010-stablenet-proxied-pn-routing-wemix --chain-preset wemix-bp4-en2-pn1 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-NODE-011-endpoint-first-layout && bin/chainbench run tests/tc/common/node/CT-NODE-011-endpoint-first-layout.json --workspace-dir ~/cbw/m/CT-NODE-011-endpoint-first-layout --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-013-genesis-mismatch-refused && bin/chainbench run tests/tc/common/node/CT-NODE-013-genesis-mismatch-refused.json --workspace-dir ~/cbw/m/CT-NODE-013-genesis-mismatch-refused --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-014-sync-complete && bin/chainbench run tests/tc/common/node/CT-NODE-014-sync-complete.json --workspace-dir ~/cbw/m/CT-NODE-014-sync-complete --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-015-timestamp-monotonic && bin/chainbench run tests/tc/common/node/CT-NODE-015-timestamp-monotonic.json --workspace-dir ~/cbw/m/CT-NODE-015-timestamp-monotonic --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-NODE-016-block-period && bin/chainbench run tests/tc/common/node/CT-NODE-016-block-period.json --workspace-dir ~/cbw/m/CT-NODE-016-block-period --binary "$GSTABLE"
 ```
 
 ### tx — 트랜잭션 전송·거부

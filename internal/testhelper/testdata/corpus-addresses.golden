@@ -97,10 +97,10 @@ common/fee/008-effective-gas-price-regular-bp-en.json	.steps[3]	to	0x70997970c51
 common/fee/009-snap-receipt-gas-price.json	.steps[4]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/fee/009-snap-receipt-gas-price.json	.steps[4]	to	$sender
 common/fee/009-snap-receipt-gas-price.json	.steps[8]	to	$payee
-common/node/005-snap-sync.json	.steps[24]	address	$payee
-common/node/005-snap-sync.json	.steps[4]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
-common/node/005-snap-sync.json	.steps[4]	to	$sender
-common/node/005-snap-sync.json	.steps[8]	to	$payee
+common/node/CT-NODE-005-snap-sync.json	.steps[24]	address	$payee
+common/node/CT-NODE-005-snap-sync.json	.steps[4]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/node/CT-NODE-005-snap-sync.json	.steps[4]	to	$sender
+common/node/CT-NODE-005-snap-sync.json	.steps[8]	to	$payee
 common/rpc/004-transaction-by-hash-fields.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/rpc/004-transaction-by-hash-fields.json	.steps[1]	to	$sender
 common/rpc/004-transaction-by-hash-fields.json	.steps[2]	to	0x00000000000000000000000000000000c0ffee05

@@ -1,7 +1,7 @@
 # CT ↔ DSL 파일 매핑
 
 > 근거: 이 저장소의 `docs/tc/common/01-common-test-list.md`(문서화된 70개 CT)와
-> `tests/tc/common/` 아래 실제 DSL 파일(99개)을 대조해 만든 파생 문서다.
+> `tests/tc/common/` 아래 실제 DSL 파일(89개)을 대조해 만든 파생 문서다.
 > 대조 기준일: 2026-09-29. 파일이 추가·삭제되면 이 표도 다시 맞춰야 한다.
 
 ---
@@ -9,7 +9,7 @@
 ## 1. 개요
 
 문서에는 세 체인 공통 테스트가 **70개(CT)** 있고, `tests/tc/common/` 아래에는 실행용
-DSL 파일이 **99개** 있다. "70개를 세 체인용으로 각각 만들었다면 210개여야 한다"는
+DSL 파일이 **89개** 있다. "70개를 세 체인용으로 각각 만들었다면 210개여야 한다"는
 예상과 숫자가 다른 이유는 chainbench DSL 이 **체인-파라미터 방식**이기 때문이다.
 
 공통 DSL 한 파일은 `stablenet-*` 프리셋을 기준으로 작성하고, 실행할 때
@@ -18,7 +18,12 @@ DSL 파일이 **99개** 있다. "70개를 세 체인용으로 각각 만들었�
 파일을 체인별로 물리적으로 나눈 경우는 **런타임 프리셋 교체로는 공유할 수 없는**
 소수의 CT(합의 방식·바이너리 동작이 갈리는 것)뿐이다.
 
-정리하면 99 = **체인 이름이 붙은 물리 분리 파일 15개** + **공통 파일 84개**(§4 참조).
+정리하면 89 = **체인별로 물리 분리한 파일 8개** + **공통 파일 81개**(§4 참조).
+NODE 의 001·002·010 은 2026-09-29 에 체인별 파일을 지우고 공통 파일 하나로 합쳤다(§4).
+
+파일명 규칙은 `CT-<영역>-<번호>-<간략설명>.json` 이고 CT 하나에 파일 하나를 둔다(2026-09-29,
+NODE 부터 적용). 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다. 다른 영역은 아직
+예전 규칙 `<번호>-<테스트 id>.json` 이다.
 
 한편 한 CT 에 파일이 여러 개인 경우도 있다. 예전부터 있던 자동 테스트(실행 이름이 여럿)를
 CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의 "비고"에 모두 적혀 있다.
@@ -30,13 +35,13 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 
 | 영역 | CT 수 | DSL 파일 수 | 파일이 CT 수보다 많은 이유 |
 | --- | --- | --- | --- |
-| NODE | 15 | 25 | 001·002 체인 3분할, 003/008/009/010/014/016 이 CT당 2파일 |
+| NODE | 15 | 15 | CT당 1파일(2026-09-29 합침) |
 | TX | 20 | 24 | 001·015 이 CT당 3파일 |
 | FEE | 7 | 12 | 002 가 경계값 형식별 6파일 |
 | CONTRACT | 7 | 12 | 001(3)·006(4) 다파일 |
 | RPC | 15 | 17 | 001·007·009 가 CT당 2파일, 008 은 전용 파일 없음 |
 | FAULT | 6 | 9 | 001 이 4파일 |
-| **합계** | **70** | **99** | orphan(문서에 없는) 파일 0 |
+| **합계** | **70** | **89** | orphan(문서에 없는) 파일 0 |
 
 ---
 
@@ -44,25 +49,25 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 
 각 행은 `CT ID → tests/tc/common/<영역>/ 아래 파일`. 파일명은 디렉터리 안 기준.
 
-### NODE (25파일)
+### NODE (15파일)
 
 | CT | 파일 | 비고 |
 | --- | --- | --- |
-| CT-NODE-001 | `001-stablenet-chain-up.json`, `001-wbft-chain-up.json`, `001-wemix-chain-up.json` | 체인 3분할. wbft/wemix 는 binvar 프리셋(env로 바이너리 지정) |
-| CT-NODE-002 | `002-stablenet-chain-up-15.json`, `002-wbft-chain-up-15.json`, `002-wemix-chain-up-15.json` | 체인 3분할 |
-| CT-NODE-003 | `003-genesis-block-hash-consistent.json`, `003-chain-id.json` | |
-| CT-NODE-004 | `004-full-sync.json` | 신규(2026-09-29) |
-| CT-NODE-005 | `005-snap-sync.json` | 신규(2026-09-29) |
-| CT-NODE-006 | `006-downloader-catch-up.json` | 신규(2026-09-29) |
-| CT-NODE-007 | `007-live-block-receive.json` | 신규(2026-09-29) |
-| CT-NODE-008 | `008-basic-peers.json`, `008-admin-peers-populated.json` | |
-| CT-NODE-009 | `009-basic-consensus.json`, `009-basic-sync.json` | |
-| CT-NODE-010 | `010-proxied-pn-routing.json`, `010-wbft-proxied-routing.json` | wbft 물리 분리 |
-| CT-NODE-011 | `011-e1-mixed-producers.json` | |
-| CT-NODE-013 | `013-genesis-mismatch.json` | |
-| CT-NODE-014 | `014-chain-not-syncing.json`, `014-remote-chain-info.json` | |
-| CT-NODE-015 | `015-block-timestamp-monotonic.json` | 신규(2026-09-29) |
-| CT-NODE-016 | `016-block-period-one-second.json`, `016-stress-block-time.json` | |
+| CT-NODE-001 | `CT-NODE-001-startup-block-production.json` | 세 체인 공통. 2026-09-29 에 wbft·wemix 사본을 합쳤다 |
+| CT-NODE-002 | `CT-NODE-002-startup-15-nodes.json` | 세 체인 공통. 2026-09-29 에 wbft·wemix 사본을 합쳤다 |
+| CT-NODE-003 | `CT-NODE-003-genesis-init.json` | 2026-09-29 에 genesis-block-hash-consistent·chain-id 를 합쳤다 |
+| CT-NODE-004 | `CT-NODE-004-full-sync.json` | 신규(2026-09-29) |
+| CT-NODE-005 | `CT-NODE-005-snap-sync.json` | 신규(2026-09-29) |
+| CT-NODE-006 | `CT-NODE-006-missing-block-catch-up.json` | 신규(2026-09-29) |
+| CT-NODE-007 | `CT-NODE-007-live-block-receive.json` | 신규(2026-09-29) |
+| CT-NODE-008 | `CT-NODE-008-peers.json` | 2026-09-29 에 basic-peers·admin-peers-populated 를 합쳤다 |
+| CT-NODE-009 | `CT-NODE-009-head-hash-agreement.json` | 2026-09-29 에 basic-sync·basic-consensus 를 합쳤다 |
+| CT-NODE-010 | `CT-NODE-010-sync-via-proxy.json` | `bp4-en2-pn1` 기준 공통. 2026-09-29 에 `010-wbft-proxied-routing` 을 합쳤다 |
+| CT-NODE-011 | `CT-NODE-011-endpoint-first-layout.json` | |
+| CT-NODE-013 | `CT-NODE-013-genesis-mismatch-refused.json` | |
+| CT-NODE-014 | `CT-NODE-014-sync-complete.json` | 2026-09-29 에 chain-not-syncing·remote-chain-info 를 합쳤다 |
+| CT-NODE-015 | `CT-NODE-015-timestamp-monotonic.json` | 신규(2026-09-29) |
+| CT-NODE-016 | `CT-NODE-016-block-period.json` | 2026-09-29 에 block-period-one-second·stress-block-time 을 합쳤다 |
 
 ### TX (24파일)
 
@@ -124,7 +129,7 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 | CT-RPC-005 | `005-transaction-receipt-fields.json` | |
 | CT-RPC-006 | `006-transaction-count-increments.json` | |
 | CT-RPC-007 | `007-genesis-balance.json`, `007-remote-balance-check.json` | |
-| CT-RPC-008 | (전용 파일 없음) | `node/003-chain-id.json`, `node/014-remote-chain-info.json` 와 목적이 겹쳐 공유 |
+| CT-RPC-008 | (전용 파일 없음) | `node/CT-NODE-003-genesis-init.json`, `node/CT-NODE-014-sync-complete.json` 와 목적이 겹쳐 공유 |
 | CT-RPC-009 | `009-logs-query-well-formed.json`, `009-contract-event-emitted.json` | |
 | CT-RPC-010 | `010-signed-tx-seen-in-pool.json` | 신규(2026-09-29) |
 | CT-RPC-011 | `011-txpool-status.json` | |
@@ -146,34 +151,37 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 
 ---
 
-## 4. 체인별 물리 분리 파일 (15개)
+## 4. 체인별 물리 분리 파일 (8개)
 
-런타임 프리셋 교체로 공유하지 못해 체인 이름을 붙여 따로 둔 파일이다. 나머지 84개는
+체인 이름을 붙여 따로 둔 파일이다. 나머지 86개는
 `stablenet-*` 프리셋 기준으로 쓰고 실행 시 프리셋·바이너리를 갈아 세 체인을 덮는다.
 
 | CT | stablenet(공통) | wbft | wemix |
 | --- | --- | --- | --- |
-| CT-NODE-001 | `node/001-stablenet-chain-up.json` | `node/001-wbft-chain-up.json` | `node/001-wemix-chain-up.json` |
-| CT-NODE-002 | `node/002-stablenet-chain-up-15.json` | `node/002-wbft-chain-up-15.json` | `node/002-wemix-chain-up-15.json` |
-| CT-NODE-010 | `node/010-proxied-pn-routing.json` | `node/010-wbft-proxied-routing.json` | (공통 파일로 덮음) |
 | CT-TX-015 | `tx/015-insufficient-funds-rejected.json` | `tx/015-wbft-insufficient-funds-rejected.json` | `tx/015-wemix-insufficient-funds-rejected.json` |
 | CT-CONTRACT-001 | `contract/001-contract-roundtrip.json` | `contract/001-wbft-tx-and-contract.json` | `contract/001-wemix-tx-and-contract.json` |
 | CT-CONTRACT-006 | `contract/006-revert-tx-status-zero.json` (+`006-negative-tx-revert.json`) | `contract/006-wbft-revert-status-zero.json` | `contract/006-wemix-revert-status-zero.json` |
 | CT-FAULT-001 | `fault/001-fault-node-crash.json` (+`001-sample-lifecycle.json`) | `fault/001-wbft-node-crash.json` | `fault/001-wemix-node-crash.json` |
 
-체인 이름이 붙은 파일만 세면 wbft 7개 + wemix 6개 + stablenet-접두 2개(node/001·002) = 15개다.
+체인별 파일은 wbft 4개 + wemix 4개 = 8개다.
+
+NODE 의 셋(001·002·010)은 2026-09-29 에 합쳤다. 파일을 대조해 보니 wbft 사본은 preset 이름만
+달랐고, wemix 사본은 검증자 수 검사를 뺐다(go-wemix 에 검증자 조회 RPC 가 없어서). 지금은
+wemix 검증자를 거버넌스 컨트랙트로 읽으므로 뺄 이유가 없다. 010 의 두 파일은 체인 차이가
+아니라 원본 테스트 둘(stablenet-proxied-pn-routing, wbft-proxied-routing)이었다.
+위 표의 나머지 넷은 아직 대조하지 않았다.
 
 ---
 
 ## 5. 특이사항
 
-- **CT-RPC-008(체인 ID 조회)** 은 전용 DSL 파일이 없다. `node/003-chain-id.json`,
-  `node/014-remote-chain-info.json` 와 목적이 같아 그 파일을 공유한다.
+- **CT-RPC-008(체인 ID 조회)** 은 전용 DSL 파일이 없다. `node/CT-NODE-003-genesis-init.json`,
+  `node/CT-NODE-014-sync-complete.json` 와 목적이 같아 그 파일을 공유한다.
 - **stablenet 전용으로 분류돼 공통에서 빠진 자동 테스트**: `legacy-transfer`,
   `dynamic-fee-tx`, `gaslimit-exceeded-rejected`, `feecap-above-min-accepted`,
   `feecap-exact-min-accepted`, `gas-price-equals-basefee-plus-tip`.
   이들은 StableNet 전용 `gasTip` 을 읽어 세 체인
   공통이 아니므로 `tests/tc/common/` 에는 없다(01 문서 각 CT 비고 참조).
-- **binvar 예외**: `node/001-wbft-chain-up.json`·`node/001-wemix-chain-up.json` 두 개만
-  `--binary` 대신 `GWBFT_BIN`/`GWEMIX_BIN` 환경변수로 바이너리를 받는다.
+- **binvar**: 바이너리를 환경변수(`GWEMIX_BIN`)로 받는 preset 은 이제 `contract/001-wemix-tx-and-contract.json`
+  만 쓴다. node/001 의 wbft·wemix 사본이 쓰던 것은 합치면서 없어졌다.
 - 이 매핑의 파일별 실행 명령은 `tests/tc/common/HOW-TO-USE.md` §9 에 정리돼 있다.

@@ -243,9 +243,9 @@ CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
 ```sh
 chainbench validate tests/tc/*/*.json                                      # 오프라인 검증
 chainbench run --workspace-dir /tmp/x --binary <gstable> \
-  tests/tc/common/node/001-stablenet-chain-up.json
-chainbench run --workspace-dir /tmp/x --keep-up \
-  tests/tc/common/node/001-wemix-chain-up.json                        # 네트워크를 남긴다
+  tests/tc/common/node/CT-NODE-001-startup-block-production.json
+chainbench run --workspace-dir /tmp/x --keep-up --chain-preset wemix-bp4 --binary <gwemix> \
+  tests/tc/common/node/CT-NODE-001-startup-block-production.json                    # 네트워크를 남긴다
 chainbench status --workspace-dir /tmp/x                                   # 남긴 네트워크 상태
 chainbench stop   --workspace-dir /tmp/x                                   # 종료
 ```
@@ -254,9 +254,9 @@ chainbench stop   --workspace-dir /tmp/x                                   # 종
 
 | 케이스 | 정의서 | 비고 |
 |---|---|---|
-| stablenet | `tests/tc/common/node/001-stablenet-chain-up.json` | 라이브 통과(gstable) |
-| wbft | `tests/tc/common/node/001-wbft-chain-up.json` | `GWBFT_BIN=<go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
-| wemix | `tests/tc/common/node/001-wemix-chain-up.json` | 패밀리가 선언한 2-페이즈 부트스트랩이 `chain up` 안에서 돈다 |
+| stablenet | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` | 라이브 통과(gstable) |
+| wbft | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` + `--chain-preset wbft-bp4` | `--binary <go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
+| wemix | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` + `--chain-preset wemix-bp4` | 패밀리가 선언한 2-페이즈 부트스트랩이 `chain up` 안에서 돈다 |
 | wemix-wbft | `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
 
 실행은 **단계마다 이름과 결과를 한 줄씩** 찍고, 실패하면 거기서 멈춘다. 어느 단계가 깨졌는지가
