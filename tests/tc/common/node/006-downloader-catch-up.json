@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "downloader-catch-up",
-  "description": "CT-NODE-006 — 끊겼던 노드가 다시 들어오면 누락 블록을 한꺼번에 받아 높이와 해시가 맞춰진다 (기존 명세 RT-A-1-06, 절차는 docs/tc/common/06-detailed-procedures/01-node.md 의 CT-NODE-006). 종단 노드 en1 을 멈추고 생성 노드가 블록을 40개 이상 더 만들게 한 뒤 다시 띄운다. 32블록 넘게 벌어지면 새 블록 전파(fetcher)는 그 블록을 버리므로 누락분은 downloader 가 받는다. 세 클라이언트가 같은 이름으로 내는 metric eth_downloader_headers_in 이 1 이상인지로 그 경로를 확인한다. 문서가 말한 '노드 로그로 확인' 대신 metric 을 쓰는 것은 로그 문구는 세 체인이 같지만 해당 줄이 Debug 수준이라 기본 설정에서 남지 않기 때문이다. 연결만 끊으면 프로세스가 살아 있어 카운터가 초기화되지 않으므로 노드를 멈춘다. 따라잡은 뒤 같은 높이의 블록 해시와 상태 루트를 node1 과 비교한다. 지표는 동기화가 끝나고 블록 10개를 더 받은 뒤 읽는다. go-wemix 는 계량기 값을 5초마다 도는 타이머가 옮겨야 Prometheus 출력에 나타나서, 바로 읽으면 0 이 나온다.",
+  "description": "CT-NODE-006 — 끊겼던 노드가 다시 들어오면 누락 블록을 한꺼번에 받아 높이와 해시가 맞춰진다 (기존 명세 RT-A-1-06, 절차는 docs/tc/common/06-detailed-procedures/01-node.md 의 CT-NODE-006). 종단 노드 en1 을 멈추고 생성 노드가 블록을 40개 이상 더 만들게 한 뒤 다시 띄운다. 32블록 넘게 벌어지면 새 블록 전파(fetcher)는 그 블록을 버리므로 누락분은 downloader 가 받는다. 세 클라이언트가 같은 이름으로 내는 metric eth_downloader_headers_in 이 1 이상인지로 그 경로를 확인한다. 문서가 말한 '노드 로그로 확인' 대신 metric 을 쓰는 것은 로그 문구는 세 체인이 같지만 해당 줄이 Debug 수준이라 기본 설정에서 남지 않기 때문이다. 연결만 끊으면 프로세스가 살아 있어 카운터가 초기화되지 않으므로 노드를 멈춘다. 따라잡은 뒤 같은 높이의 블록 해시와 상태 루트를 node1 과 비교한다. 지표는 동기화가 끝난 뒤 종단 노드가 블록 10개를 더 받고 나서 읽는다(기준은 종단 노드가 따라잡은 높이다). go-wemix 는 계량기 값을 5초마다 도는 타이머가 옮겨야 Prometheus 출력에 나타나서, 바로 읽으면 0 이 나온다.",
   "requires": [
     "rpc"
   ],
@@ -136,10 +136,17 @@
     },
     {
       "do": "read",
+      "source": "rpcCall",
+      "on": "en1",
+      "method": "eth_blockNumber",
+      "save": "caughtUp"
+    },
+    {
+      "do": "read",
       "source": "derive",
       "op": "sum",
       "of": [
-        "$top",
+        "$caughtUp",
         "10"
       ],
       "save": "settled"
