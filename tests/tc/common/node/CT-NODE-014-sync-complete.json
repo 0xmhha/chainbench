@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "chain-not-syncing",
+  "description": "CT-NODE-014 — 운영 중인 노드가 동기화 중이 아니라고 보고한다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 chain-not-syncing 과 remote-chain-info 두 파일을 합쳤다. 모든 노드의 eth_syncing 이 false 인지 보고, 체인 ID 가 체인별 설정값인지, 최신 블록 해시가 비어 있지 않은지도 본다(remote-chain-info 가 보던 것).",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "expect": "rpcCall",
+      "onEach": [
+        "all"
+      ],
+      "is": false,
+      "method": "eth_syncing"
+    },
+    {
+      "expect": "chainId",
+      "compare": "Equal",
+      "is": "8283",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
+    },
+    {
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "hash"
+    }
+  ]
+}

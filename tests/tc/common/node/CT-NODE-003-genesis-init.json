@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "genesis-block-hash-consistent",
+  "description": "CT-NODE-003 — 제네시스로 초기화한 모든 노드의 블록 0 해시가 같고, 블록 0 의 부모 해시가 0 이고, 모든 노드의 체인 ID 가 제네시스 값과 같다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 genesis-block-hash-consistent 와 chain-id 두 파일을 합쳤다. 블록 0 해시: TC-5-3-01: block 0 해시가 모든 노드에서 같고 parentHash 가 0 이다. 레거시는 릴리스 고정 해시와 비교했으나, 사설망은 env 마다 genesis 가 달라 노드 간 일치와 genesis 형태로 검증한다. 체인 ID: RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init) 체인 ID 를 \"0보다 크다\" 로 보던 것을 설정값과 같은지로 바꿨다. CT-NODE-003 과 CT-RPC-008 의 기대 결과가 \"제네시스 값과 같다\"·\"설정값과 같은 값을 돌려준다\" 인데, 0보다 큰지만 보면 다른 체인의 제네시스로 뜬 노드도 통과한다. 값이 체인마다 달라(stablenet 8283, wbft 8284, wemix 8285) isPerChain 으로 적는다. 프리셋은 체인 ID 를 덮어쓰지 않으므로 매니페스트 값이 그대로 온다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x0",
+        false
+      ],
+      "save": "genesisHash",
+      "select": "hash",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "0x",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x0",
+        false
+      ],
+      "select": "hash"
+    },
+    {
+      "block": "0x0",
+      "expect": "sameBlockHash"
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x0",
+        false
+      ],
+      "select": "parentHash"
+    },
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]+$",
+      "method": "eth_chainId"
+    },
+    {
+      "expect": "chainId",
+      "is": "8283",
+      "compare": "Equal",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      },
+      "onEach": [
+        "all"
+      ]
+    }
+  ]
+}

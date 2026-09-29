@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "basic-consensus",
+  "description": "CT-NODE-009 — 운영 중인 모든 노드가 같은 최신 블록을 갖는다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 basic-sync 와 basic-consensus 두 파일을 합쳤다. 블록 3 에서 한 번, 블록 20 을 지나 블록이 계속 나오는 것을 본 뒤 한 번 더, 모든 노드의 최신 블록 해시를 모두가 가진 가장 낮은 높이에서 비교한다.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4-en1",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "waitBlock",
+      "target": 20,
+      "timeout": "180s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
+  ]
+}

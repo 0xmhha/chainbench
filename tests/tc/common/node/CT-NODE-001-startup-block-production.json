@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-chain-up",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "180s"
+    },
+    {
+      "expect": "chainId",
+      "compare": "Equal",
+      "is": "8283",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "validators",
+      "compare": "Len",
+      "is": 4
+    },
+    {
+      "expect": "rpc",
+      "method": "net_peerCount",
+      "compare": "NotEqual",
+      "is": "0x0",
+      "onEach": [
+        "all"
+      ]
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "0x0"
+    }
+  ],
+  "description": "CT-NODE-001 — 생성 노드 4대로 띄운 망이 블록을 만들고, 체인 ID가 설정값과 같고, 생산자가 4대이고, 모든 노드에 피어가 있는지 본다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 세 체인을 이 파일 하나로 돈다. 실행할 때 --chain-preset 과 --binary 로 체인을 바꾼다. 전에는 wbft·wemix 용 파일이 따로 있었다. wbft 파일은 이 파일과 preset 이름만 달랐고, wemix 파일은 생산자 수 검사를 뺐다 — go-wemix 에는 검증자 조회 RPC 가 없어서였다. 지금은 wemix 의 생산자를 거버넌스 컨트랙트에서 읽는다(internal/consensus/poa/validators.go). 대기 시간은 기동이 가장 느린 wemix 에 맞춰 180초다. waitBlock 은 목표에 닿는 즉시 끝나므로 다른 체인을 늦추지 않는다."
+}

@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "genesis-mismatch-refuses-to-start",
-  "description": "TC-4-1-03 — 이 체인과 다른 genesis 로 빌드된 바이너리는 GenesisMismatch 로 기동에 실패한다",
+  "description": "TC-4-1-03 — 이 체인과 다른 genesis 로 빌드된 바이너리는 GenesisMismatch 로 기동에 실패한다 기동 실패 사유는 문서가 적은 문구(database contains incompatible genesis)의 핵심 'incompatible genesis' 로 본다. 'genesis' 한 단어로는 다른 genesis 오류도 통과한다.",
   "requires": [
     "rpc",
     "consensus",
@@ -25,7 +25,7 @@
       "on": "node4",
       "purpose": "genesis-mismatch",
       "expect": "fail",
-      "reason": "genesis",
+      "reason": "incompatible genesis",
       "save": "mismatchEvidence",
       "genesisOverlay": {
         "alloc": {
