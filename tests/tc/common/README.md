@@ -11,7 +11,7 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **83개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
+케이스 **82개**다. CT 하나에 케이스가 여럿인 것은 지금 세 체인이 각자의 케이스를 갖고
 있기 때문이다 — `CT-NODE-001` 은 `wemix-chain-up`·`wbft-chain-up`·`stablenet-chain-up`
 셋이다.
 
@@ -33,7 +33,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 `CT-RPC-008`, `remote-chain-info` 는 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 83개를 CT 수만큼 합치지 않았나
+## 2. 왜 82개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -46,7 +46,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id` 는 `C
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 83건 중 게이트 통과 |
+| 체인 | 82건 중 게이트 통과 |
 | --- | --- |
 | go-stablenet | 81 |
 | go-wbft | 81 |
@@ -165,7 +165,7 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 | CT-NODE-009 | 노드 간 최신 블록 해시 일치 | `node/009-basic-consensus.json` · `node/009-basic-sync.json` |
 | CT-NODE-010 | 전달 노드 경유 동기화 | `node/010-proxied-pn-routing.json` · `node/010-wbft-proxied-routing.json` |
 | CT-NODE-011 | 종단 노드가 먼저 오는 혼합 배치 | `node/011-e1-mixed-producers.json` |
-| CT-NODE-012 | 노드 프로그램 교체 후 서명 호환 | `node/012-signature-compat-across-swap.json` |
+| CT-NODE-012 | 노드 프로그램 교체 후 서명 호환 | **없다** (부록 B — 체인마다 두 번째 빌드가 필요하다) |
 | CT-NODE-013 | 제네시스 불일치 시 기동 거부 | `node/013-genesis-mismatch.json` |
 | CT-NODE-014 | 동기화 완료 상태 확인 | `node/014-chain-not-syncing.json` · `node/014-remote-chain-info.json` |
 | CT-NODE-015 | 블록 시각 단조 증가 | **없다** |
@@ -259,11 +259,12 @@ CT 12개는 자동 테스트가 없어 옮길 것이 없었다.
 
 ### 7.1 실패하는 것
 
+`node/012-signature-compat-across-swap` 은 2026-09-29 에 공통에서 뺐다. 재료(체인별 두 번째 빌드)가 없어 생긴 실패라 케이스로는 고칠 수 없다. 사유는 부록 B 에 적었다.
+
 | 케이스 | 실패하는 체인 | 원인 | 정할 것 |
 | --- | --- | --- | --- |
 | `fault/004-fault-network-partition` | go-wemix | go-wemix 는 30초마다 거버넌스에 등록된 멤버 모두에게 `admin_addPeer` 를 스스로 건다(`wemix/admin.go` 의 `update`, `addPeer`). 케이스가 선언한 연결 구성(`peering.groups`)대로 static 목록을 써도 생산 노드는 모두 이어진다. 측정: 분리 전 node1 피어 8(선언 4), 다리 node5 를 멈춘 뒤에도 양쪽이 계속 블록을 만든다 | wemix 를 capability 로 건너뛸지(`skipsOn`), 케이스를 공통에서 뺄지 |
-| `fault/005-fault-p2p-topology` | go-stablenet, go-wemix (실행마다 다르다) | `partition` 이 `admin_removePeer` 로 끊는데 끊긴 피어가 다시 붙는다. 같은 체인에서도 실행마다 spoke 피어 수가 1~3 으로 달랐다. wemix 는 위와 같은 원인이고, stablenet·wbft 에서 다시 붙는 원인은 확인하지 못했다 | fault/004 처럼 선언한 연결 구성으로 다시 쓸지. wemix 에는 같은 한계가 남는다 |
-| `node/012-signature-compat-across-swap` | go-wbft, go-wemix | 교체 전후 `web3_clientVersion` 이 달라야 하는데 같다. 두 체인에는 업그레이드용 두 번째 빌드가 없어 같은 바이너리로 바꿔 끼운다. stablenet 은 1.0.1 → 1.1.0 으로 통과한다 | 두 체인의 업그레이드 빌드를 어느 커밋으로 만들지 |
+| `fault/005-fault-p2p-topology` | (다시 씀, 2026-09-29) | 전에는 `admin_removePeer` 로 spoke 사이를 끊었는데 끊긴 피어가 다시 붙어 실행마다 피어 수가 1~3 으로 흔들렸다. `admin_addPeer` 로 들어간 상대는 static peer 가 되고 devp2p 가 계속 다시 걸기 때문이다. 끊는 대신 bp4·en2·pn1 로 세워 처음부터 허브형을 만들고, 허브인 pn1 을 멈춰 en 이 정말 그 길 하나였는지 보인다 | 세 체인 실행 결과를 확인해야 한다 |
 
 ### 7.2 통과하지만 목적을 검증하지 못하는 것
 

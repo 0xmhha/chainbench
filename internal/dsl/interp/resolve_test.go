@@ -185,3 +185,33 @@ func TestUnresolved_AcceptsAValidReadSource(t *testing.T) {
 		t.Fatalf("Unresolved = %v, want none", got)
 	}
 }
+
+// A newAccount that forgets saveKey throws the generated key away, and nothing
+// can sign for the account afterwards. It used to surface only at run time,
+// after a network was up; tests/tc/common/README.md recorded it as a gap and a
+// case hit it on 2026-09-29.
+func TestUnresolved_NewAccountWithoutSaveKey(t *testing.T) {
+	reg := testhelper.Registry()
+
+	spec := dsl.Spec{Sequence: []dsl.Statement{
+		{Do: "newAccount", Args: map[string]any{"save": "r"}},
+	}}
+	got := interp.Unresolved(spec, reg)
+	if !containsString(got, "newAccount:saveKey(missing)") {
+		t.Errorf("unresolved = %v, want the missing saveKey named", got)
+	}
+
+	spec.Sequence[0].Args["saveKey"] = "rKey"
+	if got := interp.Unresolved(spec, reg); len(got) != 0 {
+		t.Errorf("unresolved = %v, want nothing once saveKey is written", got)
+	}
+}
+
+func containsString(xs []string, want string) bool {
+	for _, x := range xs {
+		if x == want {
+			return true
+		}
+	}
+	return false
+}

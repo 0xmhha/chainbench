@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 60,250 |
+| `internal/` | 52 | 60,266 |
 | `cmd/` | 19 | 5,094 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **66,134** |
+| **합계** | **74** | **66,150** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 38,667줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 38,683줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -136,7 +136,7 @@ internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인
 ├── (dsl)      2,055  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
 │                     순수 — 실행 인프라(rpc·session·collector)를 import 하지 않는다
 ├── assert       399  타입 인식 비교 프리미티브 — 해석기가 어세션을 검사할 때 쓰는 비교기(Equal·InDelta 등)
-└── interp       997  실행 계약(Action·Assertion·Registry·Reader·Deps·ActionCtx·AssertCtx·NodeControl)
+└── interp     1,013  실행 계약(Action·Assertion·Registry·Reader·Deps·ActionCtx·AssertCtx·NodeControl)
                       + 해석기(NewInterpreter·Run) + $ref/save 바인딩 + Fingerprint(환경 재사용 키)
                       + Unresolved(오프라인 이름 검증) + caseTimeout. 계약이 여기 사는 것이 핵심 —
                       testhelper(L3)가 구현하므로 testengine(L4)으로 올릴 수 없다

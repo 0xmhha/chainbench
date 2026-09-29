@@ -1,6 +1,8 @@
 package interp
 
 import (
+	"strings"
+
 	"sort"
 
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -45,6 +47,15 @@ func Unresolved(s dsl.Spec, reg Registry) []string {
 				seen["source:(missing)"] = true
 			} else if _, ok := reg.Reader(source); !ok {
 				seen["source:"+source] = true
+			}
+		}
+		// newAccount generates a key and hands it back only through "saveKey".
+		// A step that omits it discards the key, so nothing can ever sign for
+		// the account it just made. It fails today at run time, after a network
+		// is up — the very failure this function exists to move offline.
+		if name == ActionNewAccount {
+			if sk, _ := args["saveKey"].(string); strings.TrimSpace(sk) == "" {
+				seen["newAccount:saveKey(missing)"] = true
 			}
 		}
 		if save := saveName(args); save != "" {
