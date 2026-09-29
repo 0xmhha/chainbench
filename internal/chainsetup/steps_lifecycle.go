@@ -178,6 +178,20 @@ var (
 	errInitDatadir = errors.New("the datadir cannot be cleared")
 )
 
+// reinitDatadir removes a stopped node's datadir and initialises it again from
+// the genesis genesisOf returns, leaving the node at block 0. Init does it for
+// every stopped node; ResetNode does it for one.
+func reinitDatadir(ctx context.Context, t *resource.Access, initer process.Initializer, spec process.NodeSpec, genesisOf func() ([]byte, error)) error {
+	if err := t.Files.Remove(ctx, spec.DataDir); err != nil {
+		return lifecycle.Mark(errInitDatadir, fmt.Errorf("clear datadir: %w", err))
+	}
+	gen, err := genesisOf()
+	if err != nil {
+		return err
+	}
+	return initer.InitDatadir(ctx, spec, gen)
+}
+
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -250,18 +264,13 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			// from the key set (--nodekey), and a node that is still running is
 			// skipped above — so what is removed is the chain this node built,
 			// which is what a rebuild discards.
-			if err := t.Files.Remove(ctx, ns.DataDir); err != nil {
-				return lifecycle.Mark(errInitDatadir,
-					fmt.Errorf("chainsetup: init: node%d: clear datadir: %w", ns.Index, err))
-			}
-			// The genesis this node's binary accepts, which is not always the
-			// network's: two builds in one network need not take the same
-			// document.
-			gen, err := readGenesis(w.genesisFor(ns))
-			if err != nil {
-				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
-			}
-			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
+			//
+			// The genesis is the one this node's binary accepts, which is not
+			// always the network's: two builds in one network need not take the
+			// same document.
+			if err := reinitDatadir(ctx, t, initer, spec, func() ([]byte, error) {
+				return readGenesis(w.genesisFor(ns))
+			}); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
 			inited++

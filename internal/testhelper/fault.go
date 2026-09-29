@@ -32,6 +32,7 @@ const (
 	actionStartNode     = "startNode"
 	actionRestartNode   = "restartNode"
 	actionSwapNode      = "swapNode"
+	actionResetNode     = "resetNode"
 	actionPartition     = "partition"
 	actionHealPartition = "healPartition"
 	actionReadNodeLog   = "readNodeLog"
@@ -60,6 +61,7 @@ func seedFaultBuiltins(r interp.Registry) {
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
 	r.RegisterAction(actionSwapNode, swapNodeAction{})
+	r.RegisterAction(actionResetNode, resetNodeAction{})
 	r.RegisterAction(actionPartition, partitionAction{})
 	r.RegisterAction(actionHealPartition, healPartitionAction{})
 	r.RegisterAction(actionReadNodeLog, readNodeLogAction{})
@@ -258,6 +260,29 @@ func (restartNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		return fmt.Errorf("dsl: restartNode node%d: start: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(started)
+	return nil
+}
+
+// resetNodeAction stops one non-producing node and initialises its datadir
+// again, leaving it down at the genesis block; a later startNode brings it up
+// at head 0, which is the only state in which a client grants snap sync.
+// Args: on (required).
+type resetNodeAction struct{}
+
+func (resetNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	n, ctrl, err := faultTarget(ac, actionResetNode)
+	if err != nil {
+		return err
+	}
+	resetter, ok := ctrl.(interp.NodeResetter)
+	if !ok {
+		return fmt.Errorf("dsl: resetNode node%d: this run's node control cannot reset a node", n.Index)
+	}
+	reset, err := resetter.Reset(ctx, n)
+	if err != nil {
+		return fmt.Errorf("dsl: resetNode node%d: %w", n.Index, err)
+	}
+	ac.Env.UpdateNode(reset)
 	return nil
 }
 

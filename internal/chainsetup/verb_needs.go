@@ -158,6 +158,7 @@ var verbNeeds = map[string]verbNeed{
 	"StartNode":           {node: []nodeNeed{down, launched}},
 	"SwapNode":            {node: []nodeNeed{launched}},
 	"Restart":             {why: "delegates to StopNode and StartNode, which each answer for themselves"},
+	"ResetNode":           {why: "delegates the stop to StopNode; the re-init needs only a node the table holds, which nodeAt answers"},
 	// Crossing a fork, one verb per moment. Each names the node or binary the
 	// fork has nobody to run on, which a table-wide state cannot — and a
 	// crossing is asked for on a network that is running, which "stopped" and

@@ -118,6 +118,55 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
+// ResetNode stops one non-producing node and initialises its datadir again, so
+// it holds only the genesis block. The node keeps its arming and is left down;
+// a later StartNode brings it up at head 0.
+//
+// That is the only state in which a node grants snap sync: every client turns
+// a snap request into full sync once its head is above 0. Stopping a node that
+// has run is not enough, since it has already imported blocks. A producer is
+// refused: wiping it takes a sealer out of the quorum.
+func (w *Workspace) ResetNode(ctx context.Context, index int) (string, error) {
+	ni, err := w.nodeAt(index)
+	if err != nil {
+		return "", err
+	}
+	if node.Is(node.Role(w.state.Nodes[ni].Role), node.RoleBP) {
+		return "", fmt.Errorf("chainsetup: reset node%d: a block producer cannot be reset", index)
+	}
+	if _, err := w.StopNode(ctx, index); err != nil {
+		return "", fmt.Errorf("chainsetup: reset: %w", err)
+	}
+	ns := w.state.Nodes[ni]
+	bin, err := w.binary("")
+	if err != nil {
+		return "", err
+	}
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return "", err
+	}
+	initer, ok := t.Driver.(process.Initializer)
+	if !ok {
+		return "", lifecycle.Mark(errInitTargetUnable,
+			fmt.Errorf("chainsetup: reset node%d: target driver cannot initialize datadirs", index))
+	}
+	spec := process.SpecOf(ns)
+	spec.Binary = w.binaryFor(ns, bin)
+	if err := reinitDatadir(ctx, t, initer, spec, func() ([]byte, error) {
+		gen, err := t.Files.Read(ctx, w.genesisFor(ns))
+		if err != nil {
+			return nil, lifecycle.Mark(errInitGenesisUnreadable, fmt.Errorf("read genesis: %w", err))
+		}
+		return gen, nil
+	}); err != nil {
+		return "", fmt.Errorf("chainsetup: reset node%d: %w", index, err)
+	}
+	detail := fmt.Sprintf("node%d reset to its genesis and left stopped", index)
+	w.markStep("reset-node", detail)
+	return detail, nil
+}
+
 // SwapNodeOpts is what one node is relaunched with. Every field is optional on
 // its own, but at least one must be set — a swap that changes nothing is a
 // restart, and saying so is clearer than doing it silently.

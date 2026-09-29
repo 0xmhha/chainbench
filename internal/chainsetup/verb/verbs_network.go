@@ -130,6 +130,24 @@ func NodeStop(ctx context.Context, d chainsetup.Deps, in NodeStopIn) error {
 	return err
 }
 
+// NodeResetIn selects one non-producing node of a network.
+type NodeResetIn struct {
+	DataDir string
+	Index   int
+}
+
+// NodeReset stops one non-producing node and initialises its datadir again,
+// leaving it down at the genesis block for a later NodeStart.
+func NodeReset(ctx context.Context, d chainsetup.Deps, in NodeResetIn) error {
+	if in.DataDir == "" || in.Index <= 0 {
+		return ErrNoDataDirAndIndex
+	}
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		return ws.ResetNode(ctx, in.Index)
+	})
+	return err
+}
+
 // NodeStartIn selects one stopped node of a network.
 type NodeStartIn struct {
 	DataDir string

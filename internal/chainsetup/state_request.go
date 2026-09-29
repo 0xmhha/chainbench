@@ -144,5 +144,5 @@ var UpStepNames = []string{"new", "place", "keys", "genesis", "config", "build",
 // happens when asked, as often as asked, and its record is the last time.
 var OpStepNames = []string{
 	"stop", "rm", "restart", "hardfork", "cross-fork",
-	"start-node", "stop-node", "swap-node",
+	"start-node", "stop-node", "swap-node", "reset-node",
 }

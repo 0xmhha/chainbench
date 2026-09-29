@@ -12,7 +12,7 @@
 //	builtins.go   tx, waitBlock, waitFor, read, newAccount, and the block and
 //	              call assertions every chain shares
 //	assets.go     faucet, deployContract, registerContract
-//	fault.go      stopNode, startNode, restartNode, swapNode, partition,
+//	fault.go      stopNode, startNode, restartNode, swapNode, resetNode, partition,
 //	              healPartition, readNodeLog — the per-node control a fault
 //	              scenario drives
 //	derived.go    the websocket pair (wsOpen, wsSubscribe, wsCollected)

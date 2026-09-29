@@ -49,6 +49,17 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 	return out.Node, nil
 }
 
+// Reset stops one non-producing node and initialises its datadir again
+// through the workspace, satisfying interp.NodeResetter so the resetNode
+// action reaches it.
+func (w workspaceNodes) Reset(ctx context.Context, n node.Node) (node.Node, error) {
+	if err := verb.NodeReset(ctx, w.sd, verb.NodeResetIn{DataDir: w.dataDir, Index: n.Index}); err != nil {
+		return n, err
+	}
+	n.PID = 0
+	return n, nil
+}
+
 // Swap relaunches one node with a different binary and/or config through the
 // workspace, satisfying interp.NodeSwapper so the swapNode action reaches it.
 func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {

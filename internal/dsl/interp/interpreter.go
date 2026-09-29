@@ -115,6 +115,16 @@ type NodeSwapper interface {
 	Swap(ctx context.Context, n node.Node, change NodeChange) (node.Node, error)
 }
 
+// NodeResetter is an optional NodeControl capability: stopping a
+// non-producing node and initialising its datadir again, so a later Start
+// brings it up at the genesis block. A control that owns the datadirs
+// implements it; attach mode does not.
+type NodeResetter interface {
+	// Reset stops n, clears its chain data and re-initialises its datadir,
+	// and returns it stopped (pid 0).
+	Reset(ctx context.Context, n node.Node) (node.Node, error)
+}
+
 // NodeLogReader is an optional NodeControl capability: reading the tail of a
 // node's captured stdout/stderr. A control that owns the node processes
 // implements it; attach mode does not, and the readNodeLog action reports that
