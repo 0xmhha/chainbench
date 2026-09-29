@@ -1,0 +1,331 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fee-delegated-access-list",
+  "description": "CT-TX-010 — 접근 목록을 붙인 트랜잭션을 대납 형식으로 조립해도 처리된다 (기존 명세 T-2, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-010). T-2 가 겨냥한 결함은 대납자가 보낸 이의 트랜잭션을 0x16 으로 옮길 때 접근 목록을 복사하는 SetSenderTx 에 있었고, 그 함수는 노드가 eth_signRawFeeDelegateTransaction 으로 조립할 때만 불린다. 로컬 키로 0x16 을 직접 만들어 보내면 그 경로를 지나지 않는다. 그래서 세 번의 RPC 로 노드가 조립하게 한다. node1 이 eth_signTransaction 으로 접근 목록을 붙인 0x2 에 서명하고, node2 가 eth_signRawFeeDelegateTransaction 으로 대납 서명을 붙이고, eth_sendRawTransaction 으로 보낸다. 접근 목록은 tx/004 의 BALANCE 읽기 컨트랙트에 eth_createAccessList 로 만든다. 성공 상태, 형식 0x16, 대납자, 복사된 접근 목록 주소를 본다. 절차 3 대로 접근 목록 없는 대납도 한 건 보낸다. 노드 키 저장소를 쓰므로 소유한 네트워크에서만 돈다. 대납 형식은 Applepie 하드포크부터 받으므로 tx/005 처럼 genesis 에 applepieBlock 0 을 얹는다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node2",
+      "method": "eth_coinbase",
+      "save": "payer"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x6018600c60003960186000f37300000000000000000000000000000000c0ffee0d315000",
+      "save": "dhash",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "select": "contractAddress",
+      "save": "reader"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_createAccessList",
+      "params": [
+        {
+          "from": "node1",
+          "to": "$reader",
+          "value": "0x0"
+        },
+        "latest"
+      ],
+      "select": "accessList",
+      "save": "al"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "format": "hex",
+      "save": "feeCap"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "pending"
+      ],
+      "save": "nonceA"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_signTransaction",
+      "params": [
+        {
+          "from": "node1",
+          "to": "$reader",
+          "value": "0x0",
+          "gas": "0xea60",
+          "maxFeePerGas": "$feeCap",
+          "maxPriorityFeePerGas": "$tip",
+          "nonce": "$nonceA",
+          "accessList": "$al"
+        }
+      ],
+      "select": "raw",
+      "save": "senderRawA"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node2",
+      "method": "eth_signRawFeeDelegateTransaction",
+      "params": [
+        {
+          "feePayer": "node2"
+        },
+        "$senderRawA"
+      ],
+      "select": "raw",
+      "save": "fdRawA"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "$fdRawA"
+      ],
+      "save": "hA"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$nonceA",
+        "1"
+      ],
+      "save": "nextA"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "nonceAt",
+      "address": "node1",
+      "compare": "GreaterOrEqual",
+      "expected": "$nextA",
+      "timeout": "90s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hA"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hA"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x16"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hA"
+      ],
+      "select": "feePayer",
+      "compare": "EqualCI",
+      "is": "$payer"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hA"
+      ],
+      "select": "accessList.0.address",
+      "compare": "EqualCI",
+      "is": "0x00000000000000000000000000000000C0FFEE0D"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "pending"
+      ],
+      "save": "nonceB"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_signTransaction",
+      "params": [
+        {
+          "from": "node1",
+          "to": "$reader",
+          "value": "0x0",
+          "gas": "0xea60",
+          "maxFeePerGas": "$feeCap",
+          "maxPriorityFeePerGas": "$tip",
+          "nonce": "$nonceB"
+        }
+      ],
+      "select": "raw",
+      "save": "senderRawB"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node2",
+      "method": "eth_signRawFeeDelegateTransaction",
+      "params": [
+        {
+          "feePayer": "node2"
+        },
+        "$senderRawB"
+      ],
+      "select": "raw",
+      "save": "fdRawB"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "$fdRawB"
+      ],
+      "save": "hB"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$nonceB",
+        "1"
+      ],
+      "save": "nextB"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "nonceAt",
+      "address": "node1",
+      "compare": "GreaterOrEqual",
+      "expected": "$nextB",
+      "timeout": "90s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hB"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hB"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x16"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hB"
+      ],
+      "select": "feePayer",
+      "compare": "EqualCI",
+      "is": "$payer"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hB"
+      ],
+      "select": "accessList",
+      "compare": "Equal",
+      "is": []
+    }
+  ]
+}

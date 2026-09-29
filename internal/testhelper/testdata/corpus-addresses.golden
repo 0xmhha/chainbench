@@ -203,6 +203,16 @@ common/tx/008-feepayer-insufficient-rejected.json	.steps[2]	from	0xc17d493883eaa
 common/tx/008-feepayer-insufficient-rejected.json	.steps[2]	to	$sender
 common/tx/008-feepayer-insufficient-rejected.json	.steps[4]	to	0x70997970c51812dc3a010c7d01b50e0d17dc79c8
 common/tx/009-fee-delegate-sign-rpc-present.json	.steps[0]	params[0].from	0x00000000000000000000000000000000c0ffee08
+common/tx/010-fee-delegated-access-list.json	.steps[12]	address	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[17]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[18]	params[0].from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[19]	params[0].feePayer	0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c
+common/tx/010-fee-delegated-access-list.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[22]	address	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[3]	params[0].from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[7]	params[0]	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[8]	params[0].from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/tx/010-fee-delegated-access-list.json	.steps[9]	params[0].feePayer	0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c
 common/tx/012-nonce-ordering.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/tx/012-nonce-ordering.json	.steps[1]	to	$acct
 common/tx/012-nonce-ordering.json	.steps[2]	to	0x00000000000000000000000000000000c0ffee10
