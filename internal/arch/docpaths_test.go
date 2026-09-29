@@ -23,12 +23,12 @@ const docPathBudget = 0
 // note past this is not near the title, so it does not exempt the body.
 const docNoteWindow = 4000
 
-// pathNote and pathFix are the two spellings this repository uses for that
-// declaration.
-const (
-	pathNote = "경로 안내"
-	pathFix  = "경로 정정"
-)
+// pathNote is the spelling of that declaration. It is deliberately not the
+// other one this repository uses, "경로 정정": a correction table names the
+// handful of paths it corrects and each row carries both spellings, so the
+// same-line rule already covers it. Exempting a whole document on a targeted
+// table would put a fifth of the live design documents outside this check.
+const pathNote = "경로 안내"
 
 // docRoots are the documents a reader is expected to act on.
 //
@@ -88,13 +88,11 @@ func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 			// rewriting the record line by line, and this repository already
 			// writes it that way. The note has to be near the title, so it is
 			// read before the body, not buried after it.
-			if head := string(b); len(head) > docNoteWindow {
+			head := string(b)
+			if len(head) > docNoteWindow {
 				head = head[:docNoteWindow]
-			} else if strings.Contains(head, pathNote) || strings.Contains(head, pathFix) {
-				return nil
 			}
-			if h := string(b); len(h) > docNoteWindow &&
-				(strings.Contains(h[:docNoteWindow], pathNote) || strings.Contains(h[:docNoteWindow], pathFix)) {
+			if strings.Contains(head, pathNote) {
 				return nil
 			}
 			for _, line := range strings.Split(string(b), "\n") {

@@ -603,7 +603,7 @@ case     테스트 정의
 | 이름 | 하는 일 | 쓰는 곳 |
 |---|---|---|
 | `internal/testengine/capability.go` | spec 의 `requires` 를 체인 제공집합과 대조해 **skip 판정** | 엔진 (DSL 게이팅) |
-| `internal/core/capability` | `Catalog`·`Descriptor`·`Handler` — **MCP/CLI 기능 카탈로그** | `cmd capabilities` · `mcp` · `chains/*/caps.go` |
+| `internal/core/capability`(지금 `internal/core/registry`) | `Catalog`·`Descriptor`·`Handler` — **MCP/CLI 기능 카탈로그** | `cmd capabilities` · `mcp` · `chains/*/caps.go` |
 
 **서로 무관하다.** DSL 게이팅은 앞의 것이고, 뒤의 것은 표면 카탈로그다.
 S 계열(표면 통일)에서 뒤의 것이 `feature` 레지스트리와 겹치므로 함께 정리해야 한다.

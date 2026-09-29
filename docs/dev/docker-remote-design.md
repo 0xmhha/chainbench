@@ -41,7 +41,7 @@
    변환 파일(`localmap.yaml`)은 **로컬 환경에만 존재**하고, 없으면 아무 일도 없다
    (원격에서는 파일이 없어서 no-op). 무엇을 바꿨는지 **적용 내역을 반환해 보고**한다
    — "서버 세트에 적힌 곳이 아닌 데로 조용히 접속하는 하네스는 디버깅할 수 없다."
-3. **환경 생성은 스크립트가 한다** (wemix-bp-test 의 `env/local/scripts/gen-env.sh`). ubuntu 컨테이너에
+3. **환경 생성은 스크립트가 한다** (`wemix-bp-test/env/local/scripts/gen-env.sh`). ubuntu 컨테이너에
    sshd(키 인증, 포트 10022)를 넣고, 노드별 퍼블리시 포트 규칙(bp1→10101, …)으로
    compose 파일·호스트 목록·localmap.yaml 을 함께 생성한다. 손으로 쓰는 파일이 없다.
 
@@ -109,7 +109,7 @@ MCP 도구도 같은 옵션을 받는다(K8 선례: 두 표면은 같은 유스�
 
 ## 4. docker 환경 준비 (Rancher Desktop)
 
-wemix-bp-test 의 `env/local` 패턴을 차용한다. ubuntu 이미지는 이미 있다.
+`wemix-bp-test/env/local` 패턴을 차용한다. ubuntu 이미지는 이미 있다.
 
 - **컨테이너 = 가상 서버**: ubuntu + openssh-server(키 인증), bridge 네트워크에
   고정 주소. 체인 바이너리는 나중 단계에서 provision 이 올린다 (서버는 빈 서버).
