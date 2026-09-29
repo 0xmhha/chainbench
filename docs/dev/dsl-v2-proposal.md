@@ -117,7 +117,7 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 | **G4** | 배경 3 — 검증에 **log·rpc·metric** 활용 | design §3.6 collector 는 log·chainstate 만 | 어세션 16종 중 metric 소스 0 | **1/3 미구현** |
 | **G5** | 배경 4 — pre/post hook 의 **override 동작** 정의 | design §3.2 는 액션 리스트로만 해석 | preActions/postActions = 액션 배열 | **시맨틱 부재** |
 | **G6** | key point 2 — local/remote 를 단일 "경로"로 | design §7 은 `remote.cluster` 참조 | §2.3 문제 ④ 참조 | **표현 분산** |
-| **G7** | 알고리즘 11–12 — 스텝과 검증의 **인터리브** | design §5 는 `runSteps → runAssertions` 순차 고정 | `tests/specs/README.md` 가 "이관불가 4건(순서…)" 로 기록 | **표현력 한계** (부분 해소: `save`/`$ref`) |
+| **G7** | 알고리즘 11–12 — 스텝과 검증의 **인터리브** | design §5 는 `runSteps → runAssertions` 순차 고정 | `tests/tc/SPECS.md`(그때 `tests/specs/README.md`) 가 "이관불가 4건(순서…)" 로 기록 | **표현력 한계** (부분 해소: `save`/`$ref`) |
 
 ---
 
@@ -163,7 +163,7 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   "binaries": { "default": "gwbft", "bp1": "gwemix" },     // 1.1 (handoff = 역할별 상이)
   // 구현(2026-08-28, P7): 핸드오프는 "upgrade" 블록으로 선언하고, 그때 binaries 는
   // {"producer": ..., "validator": ...} 역할 이름만 받는다. 실행기는 이 블록의
-  // 유무로 조립기를 고른다(tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json 의 env 블록).
+  // 유무로 조립기를 고른다(tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json 의 env 블록).
   // "upgrade": { "profile": "presets/chain/wemix-upgrade.yaml", "template": "${GOWEMIX_TEMPLATE}" },
 
   "keys": {                                                 // 1.4 · 1.5 — G1 해소
@@ -306,11 +306,12 @@ v1 은 **v2 의 부분집합으로 기계 변환 가능**하다. 파서에 desug
 | `defaultOn` | `on` |
 
 변환기는 `chainbench migrate-spec <v1.json>` 로 제공하고, 기존 `examples/specs/*.json` 22건과
-`tests/specs/**` 를 일괄 변환해 골든 비교(v1 실행 결과 == v2 실행 결과)로 검증한다.
+`tests/specs/**`(지금 `tests/tc/**`) 를 일괄 변환해 골든 비교(v1 실행 결과 == v2 실행 결과)로 검증한다.
 
 ### 3.7 문법 정본화 (구조적 문제 ① 해소)
 
-- `internal/testspec/schema/v2.schema.json` 을 **문법 정본**으로 두고 `Parse` 가 이를 강제한다.
+- `internal/dsl/schema/v2.schema.json`(그때 `internal/testspec/schema/…`) 을 **문법 정본**으로
+  두고 `Parse` 가 이를 강제한다.
   (구현 위치: `internal/dsl/schema/v2.schema.json`.)
 - design §4.3 의 jsonc 예시는 스키마를 **참조**만 하고 필드 목록을 중복 기재하지 않는다.
 - CI 가드: `chainbench validate` 가 `examples/specs/**` 전량 + 스키마 self-check 를 돌린다

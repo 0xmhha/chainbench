@@ -137,8 +137,7 @@ file the same way.
 
 - `paths` 와 나머지 `inputs`/`existingInputs` 의 소비(용도 디렉터리 해석, 서버 파일 참조,
   existing/generated 배선)는 점진적으로 들어온다 — 인계 문서
-  `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`,
-  `10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
+  `docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
   아직 아무 일도 하지 않는다.
 - **`existingInputs` 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
   디렉터리 아래를 가리키는 상대 파일명, 그리고 이 기계의 절대경로(로컬 키셋을 가리킬 때).

@@ -182,7 +182,7 @@ KeystoreAccount   LoadKeyPresetWithAccountsAt   NodeKeyAt
 
 이력을 보면 왜 이렇게 됐는지가 나온다. `git log -S` 로 각 절을 마지막으로 읽은 커밋을
 찾으면 `chains`·`ports`·`validators` 가 전부 #419(`6ed4b37c`, 하드포크 핸드오프 흡수)와
-#422 에서 사라진다. 그 전에는 `internal/consensus/upgrade/` 가 읽고 있었다.
+#422 에서 사라진다. 그 전에는 `internal/consensus/upgrade/` 가 읽고 있었고, 그 일은 지금 `internal/preset` 과 `internal/core/hardfork` 가 나눠 갖는다.
 
 ```
 upgrade.go:114   prof.Roles.Producers + prof.Roles.Validators

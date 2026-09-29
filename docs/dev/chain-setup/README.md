@@ -257,7 +257,7 @@ chainbench stop   --workspace-dir /tmp/x                                   # 종
 | stablenet | `tests/tc/common/node/001-stablenet-chain-up.json` | 라이브 통과(gstable) |
 | wbft | `tests/tc/common/node/001-wbft-chain-up.json` | `GWBFT_BIN=<go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
 | wemix | `tests/tc/common/node/001-wemix-chain-up.json` | 패밀리가 선언한 2-페이즈 부트스트랩이 `chain up` 안에서 돈다 |
-| wemix-wbft | `tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
+| wemix-wbft | `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
 
 실행은 **단계마다 이름과 결과를 한 줄씩** 찍고, 실패하면 거기서 멈춘다. 어느 단계가 깨졌는지가
 곧 답이 되도록 만든 것은 그대로다.

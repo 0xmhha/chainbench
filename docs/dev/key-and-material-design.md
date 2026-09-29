@@ -229,7 +229,7 @@ type EnvV2 struct {
 }
 ```
 
-테스트도 이미 약속된 이름을 갖는다 — `tests/specs/consensus/istanbul-status-fields.json` 의
+테스트도 이미 약속된 이름을 갖는다 — `tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json` 의
 `id` 는 `istanbul-status-fields` 다. 자료 경로는 **그 이름을 그대로 쓴다.**
 
 런타임은 그 이름과 서버 정보를 조합해 실제 경로를 만든다. 선언에는 경로가 없고, 경로에는
@@ -271,7 +271,7 @@ DSL:      { "id": "delayed-fork-4bp", "chain": "stablenet", "config": "delayed-f
 
 **`config/` 아래에 분류 폴더(`api/`·`consensus/`…)를 두지 않는다.** `env-id` 만으로 이미
 유일하고, 분류를 넣으면 런타임이 경로를 만들기 위해 **선언에 없는 정보(어느 분류인가)를 따로
-알아야 한다.** 분류는 저장소의 `tests/specs/<분류>/` 가 갖고, 배치는 이름만 갖는다.
+알아야 한다.** 분류는 저장소의 `tests/tc/<체인>/<분류>/` 가 갖고, 배치는 이름만 갖는다.
 분류가 정말로 경로에 필요해지면 그때 `env.id` 에 접두사를 넣는 편이 낫다 — 선언 안에 남는다.
 
 **`<keyset>`** 은 키셋의 이름이다(`preset`·`dev4`·운영자가 정한 이름). 키는 env 보다 수명이

@@ -337,7 +337,7 @@ endpoint 로 셌고, 그래서 `pn` 이 endpoint 로 보고됐다. 무엇이 놓
 **기록 형식이 바뀐다.** `State.Validators` 필드 이름이 바뀐다. W5 에서 형식 버전을
 넣었으므로 옛 기록은 조용히 이상해지지 않고 이름을 대며 거부된다.
 
-**정의서 하나가 바뀐다.** `tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json` 이
+**정의서 하나가 바뀐다.** `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json` 이
 `producer`/`validator` 키를 쓴다.
 
 ---

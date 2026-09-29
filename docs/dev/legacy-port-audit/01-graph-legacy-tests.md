@@ -54,7 +54,7 @@ flowchart LR
 
 | 역할 | 개수 | 설명 |
 |---|---:|---|
-| `scenario` | 151 | stablenet 의 `tests/NN-test-*.sh` — 실제 검증 로직 |
+| `scenario` | 151 | go-stablenet 저장소의 `go-stablenet/tests/NN-test-*.sh` — 실제 검증 로직 |
 | `setup` | 151 | stablenet 의 체인 구성 스크립트 |
 | `test` | 114 | wemix4 · basic · fault · stress · remote (구성+검증 한 파일) |
 
