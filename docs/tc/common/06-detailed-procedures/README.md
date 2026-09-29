@@ -17,13 +17,13 @@
 
 ---
 
-공통 테스트 76개의 준비, 절차, 기대 결과, 체인별 차이를 영역별 하위 페이지에 적는다. 목록과 ID 규칙은 [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) 페이지에 있다.
+공통 테스트 70개의 준비, 절차, 기대 결과, 체인별 차이를 영역별 하위 페이지에 적는다. 목록과 ID 규칙은 [공통 테스트 목록](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988965889) 페이지에 있다.
 
 | 영역 | 뜻 | 테스트 수 | 페이지 |
 | --- | --- | --- | --- |
-| NODE | 노드·동기화·네트워크 | 16 | [상세 실행 절차 NODE](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988539943/NODE) |
+| NODE | 노드·동기화·네트워크 | 15 | [상세 실행 절차 NODE](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988539943/NODE) |
 | TX | 트랜잭션 전송·거부 | 20 | [상세 실행 절차 TX](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987720880/TX) |
-| FEE | 수수료·가스 정책 | 12 | [상세 실행 절차 FEE](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987819122/FEE) |
+| FEE | 수수료·가스 정책 | 7 | [상세 실행 절차 FEE](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987819122/FEE) |
 | CONTRACT | 컨트랙트 실행 | 7 | [상세 실행 절차 CONTRACT](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987786466/CONTRACT) |
 | RPC | 조회·구독 API | 15 | [상세 실행 절차 RPC](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2988638234/RPC+API) |
 | FAULT | 장애·복구 | 6 | [상세 실행 절차 FAULT](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524207/FAULT) |
@@ -35,4 +35,5 @@
 - **분리 방식**: 설정으로 분리 / 기대값은 체인별 계산 / 별도 구현 필요
 - **절차**와 **기대 결과**: 세 체인이 같이 따르는 부분
 - **체인별 차이**: 값이나 규칙이 다른 곳. 그 값은 실행 설정(프로필)에 둔다
-- **비고**: 기존 명세 ID, 자동 테스트 이름, PR196 우선순위
+- **비고**: 기존 명세 ID, 자동 테스트 이름, PR196 우선순위. "공통 케이스(2026-09-29 신규)" 는 이번에 새로 만든 세 체인 공통 자동 테스트다
+- **자동 테스트**: 공통 케이스가 실제로 하는 일. 절차와 다른 방법을 쓴 경우 그 이유
