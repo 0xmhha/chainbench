@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "basic-txpool-propagation",
-  "description": "Verify TX propagation across nodes and txpool drain under load (원본 basic/txpool-propagation.sh)",
+  "description": "CT-TX-018 — 노드 1에 보낸 트랜잭션이 노드 2에서 처리 결과로 보인다 (원본 basic/txpool-propagation.sh, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md). node1 에 1 ETH 송금을 보내고, node2 에서 받는 새 계정의 잔액이 정확히 1 ETH 인지 본다. 전에는 1 wei 를 보내고 0 보다 큰지만 봤다.",
   "requires": [
     "rpc"
   ],
@@ -24,15 +24,15 @@
       "on": "node1",
       "from": "node1",
       "to": "$r",
-      "value": "1",
+      "value": "1000000000000000000",
       "expect": "receipt"
     },
     {
       "expect": "balanceAt",
       "on": "node2",
       "address": "$r",
-      "compare": "Greater",
-      "is": "0"
+      "compare": "Equal",
+      "is": "1000000000000000000"
     }
   ]
 }

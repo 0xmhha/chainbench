@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stress-tx-flood",
+  "description": "CT-TX-019 — 블록 가스의 30%를 쓰는 트랜잭션을 15블록 동안 보내는 동안에도 블록이 진행되는지 본다 (원본 stress/tx-flood.sh). 처리량은 재지 않는다(문서: 처리량 측정은 아니다). 부하 한 건이 블록 가스의 30%를 쓰고 가스 가격은 노드가 정하므로, 수수료가 노드의 RPC 수수료 상한(--rpc.txfeecap, geth 기본 1 ETH)을 넘을 수 있다 — go-wbft 에서 3.15 ETH 로 거부됐다. 이 케이스가 보려는 것은 부하 중 블록 진행이지 그 상한이 아니므로 모든 노드에서 상한을 끈다(0).",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "launch": {
+      "all": {
+        "rpc.txfeecap": "0"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "60s"
+    },
+    {
+      "do": "load",
+      "from": "node1",
+      "fillPercent": 30,
+      "blocks": 15,
+      "timeout": "90s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    }
+  ]
+}

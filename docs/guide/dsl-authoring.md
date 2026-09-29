@@ -183,8 +183,8 @@ env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴
 어떤 케이스가 다른지 이름을 대고 거부한다(`sameComposition`). 그런 묶음은 나눠서
 돌려야 한다.
 
-샘플은 공통 묶음 안에 두 개 있다. `tests/tc/common/tx/001-sample-minimal.json` 은 값
-전송 하나를 확인하는 가장 작은 형태이고, `tests/tc/common/fault/001-sample-lifecycle.json`
+샘플은 공통 묶음 안에 두 개 있다. `tests/tc/common/tx/CT-TX-001-value-transfer.json` 은 값
+전송을 확인하는 형태이고(노드 계정 송금과 자기 키로 서명한 송금을 차례로 본다), `tests/tc/common/fault/001-sample-lifecycle.json`
 은 노드를 멈췄다 살리는 형태다.
 둘 다 다른 문서와 함께 `chainbench validate` 를 받으므로 낡으면 바로 드러난다.
 

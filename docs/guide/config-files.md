@@ -82,7 +82,7 @@ path.
 ## Run with both files
 
 ```sh
-chainbench run tests/tc/common/tx/001-sample-minimal.json \
+chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
   --server-set  ./server-set.yaml \
   --workspace-config ./workspace-config.yaml \
   --workspace-dir /tmp/control/chain-a

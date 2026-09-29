@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "basic-tx-send",
+  "description": "CT-TX-001 — 계정 간 송금이 블록에 포함되고 받는 쪽 잔액이 보낸 금액만큼 늘어난다 (절차는 docs/tc/common/06-detailed-procedures/02-tx.md). 두 경로를 차례로 본다. 먼저 문서 절차대로 노드 계정에서 새 계정으로 1 ETH 를 보내고(eth_sendTransaction), 영수증이 성공이고 받는 잔액이 정확히 1 ETH 인지 본다. 다음으로 새 계정이 자기 키로 서명해 보내는 송금(eth_sendRawTransaction, RT-A-4-03 의 서명된 트랜잭션 전파)을 같은 기준으로 본다. 받는 쪽은 둘 다 새 계정이다 — 블록 생성 노드는 보상과 수수료로 잔액이 함께 움직여 '늘었다' 가 송금 없이도 참이 된다. 2026-09-29 에 basic-tx-send, sample-minimal-value-transfer, value-transfer 세 파일을 합쳤다. 셋은 체인 차이가 아니라 원본 테스트 셋이었다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "nodePayee",
+      "saveKey": "nodePayeeKey"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "$nodePayee",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "save": "nodeHash",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$nodeHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$nodePayee",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "recipient",
+      "saveKey": "recipientKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$sender",
+      "value": "3000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "key": "$senderKey",
+      "to": "$recipient",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "save": "rawHash",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rawHash",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rawHash"
+      ],
+      "select": "blockNumber",
+      "save": "rawBlock"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$rawBlock",
+        "0"
+      ],
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$recipient",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    }
+  ]
+}

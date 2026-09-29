@@ -15,14 +15,14 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **89개**다. CT 하나에 케이스가 여럿인 것은 원본 자동 테스트 여럿을 CT 하나로 묶었거나
+케이스 **85개**다. CT 하나에 케이스가 여럿인 것은 원본 자동 테스트 여럿을 CT 하나로 묶었거나
 세 체인이 각자의 케이스를 갖고 있기 때문이다 — `CT-CONTRACT-001` 은 `contract-roundtrip`·
 `wbft-tx-and-contract`·`wemix-tx-and-contract` 셋이다.
 
 ```
 tests/tc/common/
 ├── node/       15건   노드·동기화·네트워크
-├── tx/         24건   트랜잭션 전송·거부
+├── tx/         20건   트랜잭션 전송·거부
 ├── fee/        12건   수수료·가스 정책
 ├── contract/   12건   컨트랙트 실행
 ├── rpc/        17건   조회·구독 API
@@ -31,7 +31,7 @@ tests/tc/common/
 
 파일명 규칙은 `CT-<영역>-<번호>-<간략설명>.json` 이다(예: `node/CT-NODE-001-startup-block-production.json`).
 CT 하나에 파일 하나를 두고, 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다.
-2026-09-29 에 `node/` 부터 이 규칙으로 바꿨다. 다른 영역은 아직 예전 규칙
+2026-09-29 에 `node/`·`tx/` 를 이 규칙으로 바꿨다. 다른 영역은 아직 예전 규칙
 `<CT 번호>-<테스트 id>.json` 이고, 앞의 번호가 같은 파일들이 한 CT 를 이룬다. 파일 이름을
 바꿔도 파일 안의 `id` 는 그대로 둔다. 아래 설명은 예전 규칙에 대한 것이다.
 번호 뒤의 이름은 옮기기 전과 한 글자도 바꾸지 않았다(몇몇 옮긴 케이스는 파일 이름과 `id` 가 다르다) — `id` 로 케이스를 부르는 문서와
@@ -42,7 +42,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id`(지금
 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 89개를 CT 수만큼 합치지 않았나
+## 2. 왜 85개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -60,15 +60,19 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id`(지금
 같은 날 NODE 는 CT 하나에 파일 하나가 되었다. 한 CT 를 여러 파일이 나눠 보던 다섯
 (`003`·`008`·`009`·`014`·`016`)도 한 파일 안에서 차례로 검증하도록 합쳐, `node/` 는 15개다.
 
+TX 도 같은 날 CT 하나에 파일 하나가 되었다(`tx/` 20개). `CT-TX-001` 의 세 파일은 원본 테스트 셋이라
+노드 계정 송금과 자기 키로 서명한 송금을 한 파일에서 차례로 보고, `CT-TX-015` 의 wbft·wemix 사본은
+단계가 같아 지웠다.
+
 ## 3. 세 체인 모두에서 게이트를 통과한다
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 89건 중 게이트 통과 |
+| 체인 | 85건 중 게이트 통과 |
 | --- | --- |
-| go-stablenet | 88 |
-| go-wbft | 88 |
-| go-wemix | 88 |
+| go-stablenet | 84 |
+| go-wbft | 84 |
+| go-wemix | 84 |
 
 남은 하나는 `fault/004-fault-network-partition` 이다. 체인이 아니라 실행 대상에 `target:remote` 를
 요구해, 노드가 원격이나 Docker 서버에 있을 때만 돈다(2026-09-29 기준).
@@ -81,7 +85,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id`(지금
 케이스가 이름 붙인 `chainPreset` 은 아직 대부분 stablenet 이다. 실행할 때 덮는다.
 
 ```sh
-chainbench run tests/tc/common/tx/001-value-transfer.json \
+chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
   --workspace-dir ~/cbw/x --chain-preset wemix-bp4
 ```
 
@@ -153,16 +157,16 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 | CT-NODE-006 | `node/CT-NODE-006-missing-block-catch-up.json` | 위와 같다 |
 | CT-NODE-007 | `node/CT-NODE-007-live-block-receive.json` | 위와 같다 |
 | CT-NODE-015 | `node/CT-NODE-015-timestamp-monotonic.json` | 없었다 |
-| CT-TX-002 | `tx/002-legacy-value-transfer.json` | go-stablenet 전용 `legacy-transfer` |
-| CT-TX-003 | `tx/003-dynamic-fee-transfer.json` | go-stablenet 전용 `dynamic-fee-tx` |
-| CT-TX-010 | `tx/010-fee-delegated-access-list.json` | 없었다 |
-| CT-TX-011 | `tx/011-keystore-fee-delegate-sign.json` | 없었다(메서드 존재만 CT-TX-009 가 본다) |
-| CT-TX-014 | `tx/014-carry-over-and-replace.json` | 없었다 |
-| CT-TX-017 | `tx/017-reject-vs-execution-failure.json` | 없었다 |
+| CT-TX-002 | `tx/CT-TX-002-legacy-transfer.json` | go-stablenet 전용 `legacy-transfer` |
+| CT-TX-003 | `tx/CT-TX-003-dynamic-fee-transfer.json` | go-stablenet 전용 `dynamic-fee-tx` |
+| CT-TX-010 | `tx/CT-TX-010-fee-delegated-access-list.json` | 없었다 |
+| CT-TX-011 | `tx/CT-TX-011-keystore-fee-delegate-sign.json` | 없었다(메서드 존재만 CT-TX-009 가 본다) |
+| CT-TX-014 | `tx/CT-TX-014-carry-over-and-replace.json` | 없었다 |
+| CT-TX-017 | `tx/CT-TX-017-reject-vs-execution-failure.json` | 없었다 |
 | CT-FEE-002 (초과) | `fee/002-legacy-gasprice-above-min-accepted.json` · `fee/002-accesslist-gasprice-above-min-accepted.json` · `fee/002-dynamic-feecap-above-min-accepted.json` | 동적 수수료만 go-stablenet 전용으로 있었다 |
 | CT-FEE-009 | `fee/009-snap-receipt-gas-price.json` | 없었다 |
 | CT-CONTRACT-003 | `contract/003-view-call-leaves-state.json` | 값 읽기만 CT-CONTRACT-001·002 가 부수적으로 했다 |
-| CT-RPC-010 | `rpc/010-signed-tx-seen-in-pool.json` | 전송만 `tx/001-value-transfer` 가 했다 |
+| CT-RPC-010 | `rpc/010-signed-tx-seen-in-pool.json` | 전송만 `tx/CT-TX-001-value-transfer` 가 했다 |
 
 공통이 아니라 뺀 부분이 둘 있다. CT-FEE-002 의 "최소 가스비와 같으면 받아들여진다" 는 세 체인이
 경계를 다르게 정해 부록 B 로, CT-TX-011 의 "대납자 키 서명의 형식 검사" 는 go-wemix 에 없어
@@ -221,26 +225,26 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
-| CT-TX-001 | 일반 송금 | `tx/001-basic-tx-send.json` · `tx/001-sample-minimal.json` · `tx/001-value-transfer.json` |
-| CT-TX-002 | Legacy 트랜잭션 | `tx/002-legacy-value-transfer.json` (2026-09-29 신규) / 공통 아님: `go-stablenet/regression/ethereum/08-legacy-transfer.json` |
-| CT-TX-003 | 동적 수수료 트랜잭션 | `tx/003-dynamic-fee-transfer.json` (2026-09-29 신규) / 공통 아님: `go-stablenet/regression/ethereum/09-dynamic-fee-tx.json` |
-| CT-TX-004 | 접근 목록 트랜잭션 | `tx/004-access-list-tx.json` |
-| CT-TX-005 | 수수료 대납 트랜잭션 | `tx/005-fee-delegated-transfer.json` |
-| CT-TX-006 | 대납 트랜잭션의 보낸 이 서명 변조 거부 | `tx/006-fd-sender-sig-invalid-rejected.json` |
-| CT-TX-007 | 대납 트랜잭션의 대납자 서명 변조 거부 | `tx/007-fd-feepayer-sig-invalid-rejected.json` |
-| CT-TX-008 | 대납자 잔액 부족 거부 | `tx/008-feepayer-insufficient-rejected.json` |
-| CT-TX-009 | 대납 서명 API 존재 | `tx/009-fee-delegate-sign-rpc-present.json` |
-| CT-TX-010 | 접근 목록을 붙인 대납 트랜잭션 | `tx/010-fee-delegated-access-list.json` (2026-09-29 신규) |
-| CT-TX-011 | 노드 키 저장소 경유 대납 서명 | `tx/011-keystore-fee-delegate-sign.json` (2026-09-29 신규) |
-| CT-TX-012 | 계정별 nonce 순서 보장 | `tx/012-nonce-ordering.json` |
-| CT-TX-013 | 같은 nonce 트랜잭션 교체 | `tx/013-replacement-tx.json` |
-| CT-TX-014 | 미포함 트랜잭션의 이월과 교체 | `tx/014-carry-over-and-replace.json` (2026-09-29 신규) |
-| CT-TX-015 | 잔액 부족 트랜잭션 거부 | `tx/015-insufficient-funds-rejected.json` · `tx/015-wbft-insufficient-funds-rejected.json` · `tx/015-wemix-insufficient-funds-rejected.json` |
-| CT-TX-016 | 블록 가스 한도 초과 트랜잭션 거부 | `tx/016-gas-limit-exceeds-block-rejected.json` / 공통 아님: `go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json` |
-| CT-TX-017 | 거부와 실행 실패의 상태 구분 | `tx/017-reject-vs-execution-failure.json` (2026-09-29 신규) |
-| CT-TX-018 | 트랜잭션 풀 전파 | `tx/018-basic-txpool-propagation.json` |
-| CT-TX-019 | 부하 전송 중 블록 진행 | `tx/019-stress-tx-flood.json` |
-| CT-TX-020 | 테스트 계정 자금 지급 | `tx/020-faucet-funds-account.json` |
+| CT-TX-001 | 일반 송금 | `tx/CT-TX-001-value-transfer.json` |
+| CT-TX-002 | Legacy 트랜잭션 | `tx/CT-TX-002-legacy-transfer.json` (2026-09-29 신규) / 공통 아님: `go-stablenet/regression/ethereum/08-legacy-transfer.json` |
+| CT-TX-003 | 동적 수수료 트랜잭션 | `tx/CT-TX-003-dynamic-fee-transfer.json` (2026-09-29 신규) / 공통 아님: `go-stablenet/regression/ethereum/09-dynamic-fee-tx.json` |
+| CT-TX-004 | 접근 목록 트랜잭션 | `tx/CT-TX-004-access-list-tx.json` |
+| CT-TX-005 | 수수료 대납 트랜잭션 | `tx/CT-TX-005-fee-delegated-transfer.json` |
+| CT-TX-006 | 대납 트랜잭션의 보낸 이 서명 변조 거부 | `tx/CT-TX-006-fd-sender-sig-tampered-rejected.json` |
+| CT-TX-007 | 대납 트랜잭션의 대납자 서명 변조 거부 | `tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json` |
+| CT-TX-008 | 대납자 잔액 부족 거부 | `tx/CT-TX-008-feepayer-insufficient-rejected.json` |
+| CT-TX-009 | 대납 서명 API 존재 | `tx/CT-TX-009-fee-delegate-sign-rpc-present.json` |
+| CT-TX-010 | 접근 목록을 붙인 대납 트랜잭션 | `tx/CT-TX-010-fee-delegated-access-list.json` (2026-09-29 신규) |
+| CT-TX-011 | 노드 키 저장소 경유 대납 서명 | `tx/CT-TX-011-keystore-fee-delegate-sign.json` (2026-09-29 신규) |
+| CT-TX-012 | 계정별 nonce 순서 보장 | `tx/CT-TX-012-nonce-ordering.json` |
+| CT-TX-013 | 같은 nonce 트랜잭션 교체 | `tx/CT-TX-013-same-nonce-replacement.json` |
+| CT-TX-014 | 미포함 트랜잭션의 이월과 교체 | `tx/CT-TX-014-carry-over-and-replace.json` (2026-09-29 신규) |
+| CT-TX-015 | 잔액 부족 트랜잭션 거부 | `tx/CT-TX-015-insufficient-funds-rejected.json` |
+| CT-TX-016 | 블록 가스 한도 초과 트랜잭션 거부 | `tx/CT-TX-016-gas-limit-exceeds-block-rejected.json` / 공통 아님: `go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json` |
+| CT-TX-017 | 거부와 실행 실패의 상태 구분 | `tx/CT-TX-017-reject-vs-execution-failure.json` (2026-09-29 신규) |
+| CT-TX-018 | 트랜잭션 풀 전파 | `tx/CT-TX-018-txpool-propagation.json` |
+| CT-TX-019 | 부하 전송 중 블록 진행 | `tx/CT-TX-019-block-progress-under-load.json` |
+| CT-TX-020 | 테스트 계정 자금 지급 | `tx/CT-TX-020-test-account-funding.json` |
 
 ### FEE — CT 7개 모두 공통 케이스를 갖고 있다
 
@@ -333,7 +337,7 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 ## 8. 케이스를 돌리는 명령
 
-여기 있는 89개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
+여기 있는 85개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
 어떻게 읽는지, Docker 함대는 어떻게 준비하는지는 [`HOW-TO-USE.md`](HOW-TO-USE.md) 에
 있다 — 처음이라면 그것부터 읽는다. 이 절은 명령만 놓는다.
 
@@ -384,30 +388,28 @@ rm -rf ~/cbw/m/CT-NODE-016-block-period && bin/chainbench run tests/tc/common/no
 #### tx — 트랜잭션 전송·거부
 
 ```sh
-rm -rf ~/cbw/m/001-basic-tx-send && bin/chainbench run tests/tc/common/tx/001-basic-tx-send.json --workspace-dir ~/cbw/m/001-basic-tx-send --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-sample-minimal && bin/chainbench run tests/tc/common/tx/001-sample-minimal.json --workspace-dir ~/cbw/m/001-sample-minimal --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-value-transfer && bin/chainbench run tests/tc/common/tx/001-value-transfer.json --workspace-dir ~/cbw/m/001-value-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-value-transfer && bin/chainbench run tests/tc/common/tx/002-legacy-value-transfer.json --workspace-dir ~/cbw/m/002-legacy-value-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-dynamic-fee-transfer && bin/chainbench run tests/tc/common/tx/003-dynamic-fee-transfer.json --workspace-dir ~/cbw/m/003-dynamic-fee-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-access-list-tx && bin/chainbench run tests/tc/common/tx/004-access-list-tx.json --workspace-dir ~/cbw/m/004-access-list-tx --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-fee-delegated-transfer && bin/chainbench run tests/tc/common/tx/005-fee-delegated-transfer.json --workspace-dir ~/cbw/m/005-fee-delegated-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-fd-sender-sig-invalid-rejected && bin/chainbench run tests/tc/common/tx/006-fd-sender-sig-invalid-rejected.json --workspace-dir ~/cbw/m/006-fd-sender-sig-invalid-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-fd-feepayer-sig-invalid-rejected && bin/chainbench run tests/tc/common/tx/007-fd-feepayer-sig-invalid-rejected.json --workspace-dir ~/cbw/m/007-fd-feepayer-sig-invalid-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-feepayer-insufficient-rejected && bin/chainbench run tests/tc/common/tx/008-feepayer-insufficient-rejected.json --workspace-dir ~/cbw/m/008-feepayer-insufficient-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-fee-delegate-sign-rpc-present && bin/chainbench run tests/tc/common/tx/009-fee-delegate-sign-rpc-present.json --workspace-dir ~/cbw/m/009-fee-delegate-sign-rpc-present --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-fee-delegated-access-list && bin/chainbench run tests/tc/common/tx/010-fee-delegated-access-list.json --workspace-dir ~/cbw/m/010-fee-delegated-access-list --binary "$GSTABLE"
-rm -rf ~/cbw/m/011-keystore-fee-delegate-sign && bin/chainbench run tests/tc/common/tx/011-keystore-fee-delegate-sign.json --workspace-dir ~/cbw/m/011-keystore-fee-delegate-sign --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-nonce-ordering && bin/chainbench run tests/tc/common/tx/012-nonce-ordering.json --workspace-dir ~/cbw/m/012-nonce-ordering --binary "$GSTABLE"
-rm -rf ~/cbw/m/013-replacement-tx && bin/chainbench run tests/tc/common/tx/013-replacement-tx.json --workspace-dir ~/cbw/m/013-replacement-tx --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-carry-over-and-replace && bin/chainbench run tests/tc/common/tx/014-carry-over-and-replace.json --workspace-dir ~/cbw/m/014-carry-over-and-replace --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-insufficient-funds-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-wbft-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-wbft-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-wbft-insufficient-funds-rejected --binary "$GWBFT"
-rm -rf ~/cbw/m/015-wemix-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-wemix-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-wemix-insufficient-funds-rejected --binary "$GWEMIX"
-rm -rf ~/cbw/m/016-gas-limit-exceeds-block-rejected && bin/chainbench run tests/tc/common/tx/016-gas-limit-exceeds-block-rejected.json --workspace-dir ~/cbw/m/016-gas-limit-exceeds-block-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/017-reject-vs-execution-failure && bin/chainbench run tests/tc/common/tx/017-reject-vs-execution-failure.json --workspace-dir ~/cbw/m/017-reject-vs-execution-failure --binary "$GSTABLE"
-rm -rf ~/cbw/m/018-basic-txpool-propagation && bin/chainbench run tests/tc/common/tx/018-basic-txpool-propagation.json --workspace-dir ~/cbw/m/018-basic-txpool-propagation --binary "$GSTABLE"
-rm -rf ~/cbw/m/019-stress-tx-flood && bin/chainbench run tests/tc/common/tx/019-stress-tx-flood.json --workspace-dir ~/cbw/m/019-stress-tx-flood --binary "$GSTABLE"
-rm -rf ~/cbw/m/020-faucet-funds-account && bin/chainbench run tests/tc/common/tx/020-faucet-funds-account.json --workspace-dir ~/cbw/m/020-faucet-funds-account --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-001-value-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir ~/cbw/m/CT-TX-001-value-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-002-legacy-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-002-legacy-transfer.json --workspace-dir ~/cbw/m/CT-TX-002-legacy-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-003-dynamic-fee-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json --workspace-dir ~/cbw/m/CT-TX-003-dynamic-fee-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-004-access-list-tx && bin/chainbench run tests/tc/common/tx/CT-TX-004-access-list-tx.json --workspace-dir ~/cbw/m/CT-TX-004-access-list-tx --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-005-fee-delegated-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-005-fee-delegated-transfer.json --workspace-dir ~/cbw/m/CT-TX-005-fee-delegated-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-006-fd-sender-sig-tampered-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-006-fd-sender-sig-tampered-rejected.json --workspace-dir ~/cbw/m/CT-TX-006-fd-sender-sig-tampered-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-007-fd-feepayer-sig-tampered-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json --workspace-dir ~/cbw/m/CT-TX-007-fd-feepayer-sig-tampered-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-008-feepayer-insufficient-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-008-feepayer-insufficient-rejected.json --workspace-dir ~/cbw/m/CT-TX-008-feepayer-insufficient-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-009-fee-delegate-sign-rpc-present && bin/chainbench run tests/tc/common/tx/CT-TX-009-fee-delegate-sign-rpc-present.json --workspace-dir ~/cbw/m/CT-TX-009-fee-delegate-sign-rpc-present --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-010-fee-delegated-access-list && bin/chainbench run tests/tc/common/tx/CT-TX-010-fee-delegated-access-list.json --workspace-dir ~/cbw/m/CT-TX-010-fee-delegated-access-list --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-011-keystore-fee-delegate-sign && bin/chainbench run tests/tc/common/tx/CT-TX-011-keystore-fee-delegate-sign.json --workspace-dir ~/cbw/m/CT-TX-011-keystore-fee-delegate-sign --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-012-nonce-ordering && bin/chainbench run tests/tc/common/tx/CT-TX-012-nonce-ordering.json --workspace-dir ~/cbw/m/CT-TX-012-nonce-ordering --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-013-same-nonce-replacement && bin/chainbench run tests/tc/common/tx/CT-TX-013-same-nonce-replacement.json --workspace-dir ~/cbw/m/CT-TX-013-same-nonce-replacement --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-014-carry-over-and-replace && bin/chainbench run tests/tc/common/tx/CT-TX-014-carry-over-and-replace.json --workspace-dir ~/cbw/m/CT-TX-014-carry-over-and-replace --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wbft && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wemix && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-TX-016-gas-limit-exceeds-block-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-016-gas-limit-exceeds-block-rejected.json --workspace-dir ~/cbw/m/CT-TX-016-gas-limit-exceeds-block-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-017-reject-vs-execution-failure && bin/chainbench run tests/tc/common/tx/CT-TX-017-reject-vs-execution-failure.json --workspace-dir ~/cbw/m/CT-TX-017-reject-vs-execution-failure --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-018-txpool-propagation && bin/chainbench run tests/tc/common/tx/CT-TX-018-txpool-propagation.json --workspace-dir ~/cbw/m/CT-TX-018-txpool-propagation --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-019-block-progress-under-load && bin/chainbench run tests/tc/common/tx/CT-TX-019-block-progress-under-load.json --workspace-dir ~/cbw/m/CT-TX-019-block-progress-under-load --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-020-test-account-funding && bin/chainbench run tests/tc/common/tx/CT-TX-020-test-account-funding.json --workspace-dir ~/cbw/m/CT-TX-020-test-account-funding --binary "$GSTABLE"
 ```
 
 #### fee — 수수료·가스 정책
