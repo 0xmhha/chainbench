@@ -115,6 +115,22 @@ type NodeSwapper interface {
 	Swap(ctx context.Context, n node.Node, change NodeChange) (node.Node, error)
 }
 
+// HostCommander is an optional NodeControl capability: running a command on
+// the machine a node runs on. A control over a network composed on machines
+// this harness reaches implements it; a local composition and plain attach do
+// not, and an action that needs it says so rather than failing obscurely.
+//
+// It exists for the one fault a node's own RPC cannot arrange. Splitting a
+// network means the halves cannot carry packets to each other, and
+// admin_removePeer only drops a peer that devp2p re-dials — on a chain whose
+// governance lists its producers, they are re-added besides. A firewall on the
+// machine can, and this is the reach a step needs to program one.
+type HostCommander interface {
+	// RunOnHost runs a shell command on the machine n runs on, elevated when
+	// the target granted elevation, and returns its standard output.
+	RunOnHost(ctx context.Context, n node.Node, command string) (string, error)
+}
+
 // NodeResetter is an optional NodeControl capability: stopping a
 // non-producing node and initialising its datadir again, so a later Start
 // brings it up at the genesis block. A control that owns the datadirs

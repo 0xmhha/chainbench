@@ -17,12 +17,29 @@ import (
 // that is said. Healing re-adds the peers the split removed, so a case can
 // watch a chain recover rather than only fail.
 
+// partitionByFirewall is the "method" a case writes to split with rules on the
+// machines instead of peer drops over RPC.
+const partitionByFirewall = "firewall"
+
 type partitionAction struct{}
 
 func (partitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	groups, err := partitionGroups(ac)
 	if err != nil {
 		return err
+	}
+	// Which way the split is made. The default drops peers over RPC, which is
+	// what every case used before a measurement showed it does not hold (see
+	// partition_firewall.go). "firewall" programs the machines instead.
+	if method, _ := ac.Args["method"].(string); method == partitionByFirewall {
+		cmd, cerr := hostCommanderFor(ac)
+		if cerr != nil {
+			return cerr
+		}
+		if perr := fwPreflight(ctx, cmd, flatten(groups)); perr != nil {
+			return perr
+		}
+		return fwApply(ctx, cmd, groups, true)
 	}
 	enodes, err := enodesFor(ctx, ac, flatten(groups))
 	if err != nil {
@@ -59,12 +76,26 @@ func (healPartitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		return fmt.Errorf("dsl: healPartition: no environment")
 	}
 	nodes := ac.Env.Nodes()
+	var groups [][]node.Node
 	if raw, ok := ac.Args["groups"]; ok {
-		groups, err := resolveGroups(ac, raw)
+		g, err := resolveGroups(ac, raw)
 		if err != nil {
 			return err
 		}
-		nodes = flatten(groups)
+		groups, nodes = g, flatten(g)
+	}
+	// A firewall split is undone by removing the rules that made it. Adding
+	// peers back would not: the rules stay, and the peer that is re-added is
+	// dropped at the wire the moment it is dialled.
+	if method, _ := ac.Args["method"].(string); method == partitionByFirewall {
+		if groups == nil {
+			return fmt.Errorf("dsl: healPartition method firewall needs the same \"groups\" the partition declared")
+		}
+		cmd, cerr := hostCommanderFor(ac)
+		if cerr != nil {
+			return cerr
+		}
+		return fwApply(ctx, cmd, groups, false)
 	}
 	if len(nodes) < 2 {
 		return fmt.Errorf("dsl: healPartition needs at least 2 nodes, got %d", len(nodes))

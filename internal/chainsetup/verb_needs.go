@@ -126,6 +126,7 @@ var verbNeeds = map[string]verbNeed{
 	"Dir":            {why: "accessor"},
 	"State":          {why: "accessor"},
 	"RPCHost":        {why: "accessor"},
+	"OpenHost":       {why: "opens the machine a placed node runs on; it asks the node record for an address and the server set for the way there, and requires no step of its own"},
 	"Have":           {why: "accessor: it answers whether a step ran, so requiring one would be circular"},
 	"NodeSet":        {why: "accessor over the node table; an empty table is an empty set, which is the true answer"},
 	"Netmap":         {why: "derives a view from whatever is placed; an empty table is an empty map"},

@@ -149,3 +149,18 @@ func (c *Set) names() []string {
 // key_passphrase_file reference a separate file (0600, one line), which is
 // also the shape a secret manager renders to disk. It errors if the server is
 // local (there is nothing to authenticate to) or if no user or auth resolves.
+
+// NameAt returns the name of the server at an address.
+//
+// A node record carries the address it binds, not the name the set gave the
+// machine, and everything that reaches a machine is keyed by the name. This is
+// the join, and it is a lookup rather than a scan at each call site so the
+// "which server is this node on" question has one answer.
+func (c *Set) NameAt(addr string) (string, error) {
+	for _, s := range c.Servers {
+		if c.resolve(s).Host == addr {
+			return s.Name, nil
+		}
+	}
+	return "", fmt.Errorf("serverset: no server at %s in %s (available: %v)", addr, c.path, c.names())
+}

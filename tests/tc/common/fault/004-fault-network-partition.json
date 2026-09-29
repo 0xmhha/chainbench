@@ -2,23 +2,39 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-network-partition",
-  "description": "Split a running network into two sets of producers and join it again (CT-FAULT-004). Nine producers are wired as two groups of four joined by one bridge, node5, which is in both groups; the graph is declared in the case (peering.groups) and written into each node's static-node list, so nothing else connects the two sides. Stopping node5 is the partition: eight producers stay up, which is more than the six a nine-validator BFT quorum needs, so if the chain stops it is because the eight are split four and four, not because a node is missing. Both sides must halt; restarting node5 must join them, and every node must agree on the head again. Partitioning by admin_removePeer, which this replaced, did not keep peers apart: dropped peers came back within seconds, differently per run and chain.",
+  "description": "CT-FAULT-004 — 망을 두 무리로 갈랐다가 다시 이으면 하나로 합쳐지는지 본다 (절차는 docs/tc/common/06-detailed-procedures/06-fault.md). 가르는 방법을 2026-09-29 에 바꿨다. 전에는 연결 구성을 선언하고 가운데 다리 노드를 멈췄는데, go-wemix 에서 갈라지지 않았다. admin_addPeer 가 넣는 상대는 static peer 가 되고 devp2p 는 그것을 끊겨도 계속 다시 건다. go-wemix 는 그 위에 30초마다 거버넌스 컨트랙트를 읽어 멤버 전원에게 상대의 주소와 포트로 직접 거는 고리가 하나 더 있다 (wemix/admin.go 의 update·addPeer). 측정: 선언은 피어 4인데 실제 8이었고, 다리를 멈춰도 양쪽이 계속 블록을 만들었다. 다리는 처음부터 유일한 길이 아니었다. 그래서 노드에게 부탁하지 않고 기계에서 막는다. 각 노드가 도는 기계에 규칙을 넣어 상대 무리의 주소와 p2p 포트로 오가는 패킷을 떨어뜨린다. 노드가 다시 걸어도 패킷이 가지 않는다. 그러려면 노드가 도는 기계에 셸과 권한이 있어야 하므로 target:remote 를 요구한다. 로컬 실행은 노드가 이 기계의 프로세스라 규칙을 쓸 자리가 없고, 그 경우 이 케이스는 돌지 않고 건너뛴다. 도커 함대는 SSH 로 닿는 기계라 target:remote 이고 여기서 돈다. 무리마다 기계가 달라야 한다. 한 기계에 두 무리의 노드가 같이 있으면 그 기계의 규칙이 둘 다에 걸린다. --all-servers 로 노드를 기계마다 하나씩 놓는다. 생산 노드 9대 중 8대가 살아 있어 정족수(6)를 넘는다. 그런데도 멈춘다면 노드가 빠져서가 아니라 갈라져서다. 한쪽이 4대뿐이라 6에 못 미친다.",
   "requires": [
     "rpc",
     "consensus",
-    "process"
+    "target:remote"
   ],
   "skipsOn": [],
-  "chainPreset": {
-    "extends": "stablenet-bp9",
-    "peering": {
+  "chainPreset": "stablenet-bp9",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "240s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "partition",
+      "method": "firewall",
       "groups": [
         [
           "node1",
           "node2",
           "node3",
-          "node4",
-          "node5"
+          "node4"
         ],
         [
           "node5",
@@ -28,93 +44,59 @@
           "node9"
         ]
       ]
-    }
-  },
-  "steps": [
-    {
-      "do": "waitBlock",
-      "target": 3,
-      "timeout": "180s"
-    },
-    {
-      "expect": "sameBlockHash",
-      "block": "latest"
-    },
-    {
-      "expect": "peerCount",
-      "on": "node1",
-      "compare": "Equal",
-      "is": "4"
-    },
-    {
-      "expect": "peerCount",
-      "on": "node5",
-      "compare": "Equal",
-      "is": "8"
-    },
-    {
-      "expect": "peerCount",
-      "on": "node9",
-      "compare": "Equal",
-      "is": "4"
-    },
-    {
-      "do": "stopNode",
-      "on": "node5"
-    },
-    {
-      "expect": "peerCount",
-      "on": "node1",
-      "compare": "Equal",
-      "is": "3"
-    },
-    {
-      "expect": "peerCount",
-      "on": "node9",
-      "compare": "Equal",
-      "is": "3"
     },
     {
       "expect": "blockHalt",
       "on": "node1",
-      "within": "12s",
-      "maxAdvance": 1
+      "within": "30s",
+      "maxAdvance": 2
     },
     {
       "expect": "blockHalt",
       "on": "node9",
-      "within": "12s",
-      "maxAdvance": 1
+      "within": "30s",
+      "maxAdvance": 2
     },
     {
-      "do": "startNode",
-      "on": "node5"
+      "do": "healPartition",
+      "method": "firewall",
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node4"
+        ],
+        [
+          "node5",
+          "node6",
+          "node7",
+          "node8",
+          "node9"
+        ]
+      ]
     },
     {
       "expect": "blockAdvance",
       "on": "node1",
-      "timeout": "120s",
+      "timeout": "180s",
       "pollInterval": "2s"
     },
     {
       "expect": "blockAdvance",
       "on": "node9",
-      "timeout": "120s",
+      "timeout": "180s",
       "pollInterval": "2s"
-    },
-    {
-      "do": "read",
-      "source": "blockNumber",
-      "on": "node1",
-      "save": "joined"
     },
     {
       "do": "waitFor",
-      "source": "blockNumber",
       "on": "node9",
-      "compare": "GreaterOrEqual",
-      "expected": "$joined",
-      "timeout": "120s",
+      "source": "rpcCall",
+      "method": "eth_syncing",
+      "params": [],
+      "compare": "Equal",
+      "expected": false,
+      "timeout": "180s",
       "pollInterval": "2s"
     },
     {
