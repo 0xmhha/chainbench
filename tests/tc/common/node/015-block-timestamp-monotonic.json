@@ -1,0 +1,223 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "block-timestamp-monotonic",
+  "description": "CT-NODE-015 — 블록 시각 단조 증가 (기존 명세 MINING-01, 절차는 docs/tc/common/06-detailed-procedures/01-node.md 의 CT-NODE-015). 블록 1~10 의 시각을 읽어 이웃한 두 블록마다 뒤 블록의 시각이 앞 블록 이상인지 본다. 같음을 허용하는 것은 go-wemix 가 같은 초에 블록을 만들 수 있어서다(miner/worker.go 가 시각을 부모 이상으로만 맞춘다). 번호가 고정된 블록을 읽으므로 head 가 움직여도 비교 대상이 바뀌지 않는다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 11,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x1",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x2",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t2"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x3",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t3"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x4",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t4"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x5",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t5"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x6",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t6"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x7",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t7"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x8",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t8"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x9",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t9"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0xa",
+        false
+      ],
+      "select": "timestamp",
+      "save": "t10"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t2",
+        "$t1"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t3",
+        "$t2"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t4",
+        "$t3"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t5",
+        "$t4"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t6",
+        "$t5"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t7",
+        "$t6"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t8",
+        "$t7"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t9",
+        "$t8"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$t10",
+        "$t9"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    }
+  ]
+}
