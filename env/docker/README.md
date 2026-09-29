@@ -71,7 +71,7 @@ bin/chainbench run \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys <ws>/genkeys \
-  tests/tc/common/node/002-stablenet-chain-up-15.json
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 `chain-up-15` 의 env 블록이 15노드 topology 를 선언한다. 바이너리 경로는 선언하지
@@ -122,17 +122,18 @@ CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test -p 1 -timeout 60m ./...
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
-  tests/tc/common/node/002-stablenet-chain-up-15.json
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 
 # wbft                      — server-set.yaml, 기본 게이트
-bin/chainbench run ... tests/tc/common/node/002-wbft-chain-up-15.json
+bin/chainbench run ... --chain-preset wbft-bp7-en7-pn1 tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 
 # go-wemix (poa)           — server-set-wemix.yaml 필요, 게이트 예산 상향
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set-wemix.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
-  tests/tc/common/node/002-wemix-chain-up-15.json
+  --chain-preset wemix-bp7-en7-pn1 \
+  tests/tc/common/node/CT-NODE-002-startup-15-nodes.json
 ```
 
 go-wemix(poa)는 stablenet/wbft 와 두 가지가 다르다:

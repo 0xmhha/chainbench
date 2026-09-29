@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-chain-up-15",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp7-en7-pn1",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "300s"
+    },
+    {
+      "expect": "chainId",
+      "compare": "Equal",
+      "is": "8283",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "validators",
+      "compare": "Len",
+      "is": 7
+    },
+    {
+      "expect": "rpc",
+      "method": "net_peerCount",
+      "compare": "NotEqual",
+      "is": "0x0",
+      "onEach": [
+        "all"
+      ]
+    }
+  ],
+  "description": "The standard 15-node shape brought up and producing: 7 bp, 7 en and 1 pn. Endpoints reach the producers through the pn rather than dialling one, so this is also the smallest check that a proxied network of the standard size comes up at all. One file runs all three chains; swap the chain with --chain-preset and --binary. The wbft and wemix copies this replaced differed only in the preset, and the wemix one dropped the validator count because go-wemix has no validator RPC — the count is now read from its governance contract. The wait is wemix's (300s), the slowest to come up; waitBlock returns as soon as the height is reached."
+}

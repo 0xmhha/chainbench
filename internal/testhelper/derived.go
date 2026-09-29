@@ -228,9 +228,30 @@ func resolveLatestParams(ctx context.Context, c *rpc.Client, params []any) ([]an
 // indexes into an array ("peers.0.id"), and a "#" segment yields the length of
 // the array or object it lands on (decimal, so it compares as a number) — the
 // two pieces an "at least one entry" check needs from a JSON array result.
+//
+// A "*" segment applies the rest of the path to every element of the array it
+// lands on and yields the list ("*.id" is every peer's id). An index can only
+// ask about the entry that happens to sit there, and admin_peers promises no
+// order, so "node2 is among node1's peers" needs the whole list and Contains.
+// An element the rest of the path does not reach is left out.
 func dotPath(v any, path string) (any, bool) {
 	cur := v
-	for _, part := range strings.Split(path, ".") {
+	parts := strings.Split(path, ".")
+	for i, part := range parts {
+		if list, ok := cur.([]any); ok && part == "*" {
+			rest := strings.Join(parts[i+1:], ".")
+			out := make([]any, 0, len(list))
+			for _, el := range list {
+				if rest == "" {
+					out = append(out, el)
+					continue
+				}
+				if got, ok := dotPath(el, rest); ok {
+					out = append(out, got)
+				}
+			}
+			return out, true
+		}
 		switch c := cur.(type) {
 		case map[string]any:
 			if part == "#" {

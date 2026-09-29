@@ -138,7 +138,7 @@ chainbench stop   --workspace-dir /tmp/cb   # stop the nodes
 ```
 
 Or declare the network in a DSL env and let one command compose, run, and
-tear down: `chainbench run --workspace-dir /tmp/cb tests/tc/common/node/001-stablenet-chain-up.json`.
+tear down: `chainbench run --workspace-dir /tmp/cb tests/tc/common/node/CT-NODE-001-startup-block-production.json`.
 
 > [!WARNING]
 > `--keys-dir presets/keys` and every address it produces are **test-only

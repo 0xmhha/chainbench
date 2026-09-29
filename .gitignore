@@ -133,5 +133,8 @@ env/docker/build/
 env/docker/accounts.env
 chainbench-out/
 
+# graphify skill output (graph.json, cache, reports)
+graphify-out/
+
 # ouroboros local session artifacts
 .ouroboros/

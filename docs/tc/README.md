@@ -8,7 +8,7 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 - markdown 변환에서 빠진 매크로는 목차(TOC) 매크로뿐이다. HTML 원문을 대조해 본문 손실이 없음을 확인했다.
 - 첨부 파일이 붙은 페이지는 3개다. 첨부는 해당 폴더의 `attachments/`에 넣었다.
 - 첨부 `testscript.zip`(1st Test Script 페이지) 안의 `common.sh`, `gov_burn_proposal.sh`에 검증자 개인 키가 그대로 적혀 있었다. 저장소에는 `<REDACTED_PRIVATE_KEY>`로 가려서 넣었다. 그 밖의 내용은 원본 그대로다.
-- 테스트 환경 표와 `node_ctrl.sh`에 폐쇄망 서버 IP(172.21.132.x)와 부트노드 enode가 원본 그대로 들어 있다.
+- 원본의 테스트 환경 표·스크립트에 있던 폐쇄망 서버 IP는 보안상 이름으로 치환했다. 표는 `node1`~`node15`, 스크립트는 `NODE_SUBNET` 환경변수(`common.sh`)·`RPC_URL` 환경변수로 주입하며, 부트노드 enode의 호스트도 `node15`로 바꿨다.
 
 ## 파일 목록
 
@@ -32,7 +32,7 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | [stablenet/post-v1.0.0-change/04-1st-test-script.md](stablenet/post-v1.0.0-change/04-1st-test-script.md) | 1st Test Script | 2610399285 | 첨부: testscript.zip(스크립트 43개, 개인 키 가림) |
 | [stablenet/post-v1.0.0-change/05-commit-changelog.md](stablenet/post-v1.0.0-change/05-commit-changelog.md) | Commit ChangeLog | 2875326583 | |
 | [stablenet/post-v1.0.0-change/06-2nd-change-test-cases.md](stablenet/post-v1.0.0-change/06-2nd-change-test-cases.md) | 2nd Change Test Cases | 2874802346 | |
-| [stablenet/node-script.md](stablenet/node-script.md) | node script | 2611871801 | 첨부: node_ctrl.sh |
+| [stablenet/node-script.md](stablenet/node-script.md) | node script | 2611871801 | 스크립트 본문은 문서에 포함. 첨부 node_ctrl.sh는 보안상 제거 |
 | [wemix3.0/README.md](wemix3.0/README.md) | [WEMIX3.0] Test | 2918023219 | 본문 없음 |
 | [wemix3.0/01-test-items.md](wemix3.0/01-test-items.md) | [WEMIX3.0] 테스트 항목 | 2918154299 | |
 | [wemix3.0/02-test-scenarios.md](wemix3.0/02-test-scenarios.md) | [WEMIX3.0] 테스트 시나리오 | 2918252564 | ETCD/MINING/BRIOCHE/GOV/RPC 14개 |
@@ -65,5 +65,4 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | --- | --- | --- |
 | `stablenet/post-v1.0.0-change/attachments/genesis-standard.json` | 1st Test Scenarios | |
 | `stablenet/post-v1.0.0-change/attachments/genesis-expiry60.json` | 1st Test Scenarios | standard와 `govMinter.params.expiry`(604800 → 60)만 다름 |
-| `stablenet/post-v1.0.0-change/attachments/testscript/` | 1st Test Script | `testscript.zip`을 푼 것. 같은 내용의 `testscript.txt`도 페이지에 붙어 있음. 개인 키 4곳 가림 |
-| `stablenet/attachments/node_ctrl.sh` | node script | 페이지 본문의 스크립트와 같음 |
+| `stablenet/post-v1.0.0-change/attachments/testscript/` | 1st Test Script | `testscript.zip`을 푼 것. 같은 내용의 `testscript.txt`도 페이지에 붙어 있음. 개인 키 4곳 가림. `node_ctrl.sh`는 보안상 제거 |

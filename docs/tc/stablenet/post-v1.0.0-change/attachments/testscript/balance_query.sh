@@ -10,21 +10,22 @@ set -euo pipefail
 # =============================================================================
 
 NCA="0x0000000000000000000000000000000000001000"
-RPC_URL="${RPC_URL:-http://172.21.132.1:8601}"
+# RPC 엔드포인트는 환경변수로 주입한다(서버 IP 리터럴을 박지 않는다).
+RPC_URL="${RPC_URL:-}"
 
 # --------------- Gas 최소값 (StableNet 프로토콜 파라미터) ---------------
 MIN_BASE_FEE="20000000000000"
 MIN_GAS_TIP="27600000000000"
 
 # --------------- 환경 변수 ---------------
-# RPC_URL     : RPC 엔드포인트 (기본: 172.21.132.1:8601)
+# RPC_URL     : RPC 엔드포인트 (환경변수로 지정)
 # PRIVATE_KEY : send/transfer 시 필요
 # -----------------------------------------
 
 check_env() {
     if [[ -z "${RPC_URL:-}" ]]; then
         echo "ERROR: RPC_URL 환경 변수를 설정하세요" >&2
-        echo "  export RPC_URL=\"http://172.21.132.1:8601\"" >&2
+        echo "  export RPC_URL=\"http://<REMOTE_IP>:8601\"" >&2
         exit 1
     fi
 }
@@ -451,7 +452,7 @@ NativeCoinAdapter (0x1000):
   compare <address>                             native vs NCA 잔액 비교
 
 Environment:
-  RPC_URL      RPC endpoint (default: http://172.21.132.1:8601)
+  RPC_URL      RPC endpoint (e.g. http://<REMOTE_IP>:8601)
   PRIVATE_KEY  send/transfer 시 필요
 
 Examples:

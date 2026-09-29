@@ -7,7 +7,8 @@ set -euo pipefail
 # =============================================================================
 
 GOV_MINTER="0x0000000000000000000000000000000000001003"
-RPC_URL="http://172.21.132.1:8601"
+# RPC 엔드포인트는 환경변수로 주입한다(서버 IP 리터럴을 박지 않는다).
+RPC_URL="${RPC_URL:-}"
 PRIVATE_KEY="<REDACTED_PRIVATE_KEY>"
 
 
@@ -28,7 +29,7 @@ check_env() {
     [[ -z "${PRIVATE_KEY:-}" ]] && missing+=("PRIVATE_KEY")
     if [[ ${#missing[@]} -gt 0 ]]; then
         echo "ERROR: 다음 환경 변수를 설정하세요: ${missing[*]}" >&2
-        echo "  export RPC_URL=\"http://172.21.132.15:8545\"" >&2
+        echo "  export RPC_URL=\"http://<REMOTE_IP>:8545\"" >&2
         echo "  export PRIVATE_KEY=\"0x...\"" >&2
         exit 1
     fi
@@ -210,11 +211,11 @@ Commands:
       Proposal에 NO 투표
 
 Environment:
-  RPC_URL       RPC endpoint (e.g. http://172.21.132.15:8545)
+  RPC_URL       RPC endpoint (e.g. http://<REMOTE_IP>:8545)
   PRIVATE_KEY   Governance member private key
 
 Examples:
-  export RPC_URL="http://172.21.132.15:8545"
+  export RPC_URL="http://<REMOTE_IP>:8545"
   export PRIVATE_KEY="0xac0974..."
 
   $0 propose-burn 100 "WD-20260413-001" "REF-20260413-001" "test burn"

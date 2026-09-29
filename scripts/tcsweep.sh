@@ -122,7 +122,7 @@ PY
 #
 # The host case is a common one, so this reaches it under tests/tc/common.
 runAttach() {
-  local spec=$1 ws=$2 host="$ROOT/tests/tc/common/node/009-basic-consensus.json" up rpc keys
+  local spec=$1 ws=$2 host="$ROOT/tests/tc/common/node/CT-NODE-009-head-hash-agreement.json" up rpc keys
   if ! up=$("$BIN" run "$host" --workspace-dir "$ws" --keep-up ${EXTRA[@]+"${EXTRA[@]}"} 2>&1); then
     printf '%s\nthe network to attach to did not come up\n' "$up"
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1

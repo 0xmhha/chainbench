@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "block-period-one-second",
+  "description": "CT-NODE-016 — 블록이 나오는 평균 간격이 설정 주기 언저리인지 본다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 block-period-one-second 와 stress-block-time 두 파일을 합쳤다. 창 두 개를 차례로 잰다. 20블록 창: CT-NODE-016 — 블록 생성 주기가 설정한 값 언저리인지 본다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 재는 방법을 고쳤다. 전에는 연속한 세 블록의 시각을 읽어 차이가 정확히 1초인지 두 번 봤다. 블록 시각은 초 단위 정수라 실제 주기가 1초 언저리인 체인에서는 그 차이가 0이 되기도 1이 되기도 한다. 표본이 둘뿐이라 결과가 동전 던지기였다. 측정: go-wemix 는 평균 0.79~0.86초로 돌아 우연히 통과하거나 실패했다. 그래서 20블록에 걸친 평균을 본다. 표본이 늘면 초 단위 반올림이 상쇄되어 평균이 실제 주기에 수렴한다. 경계는 밀리초로 준다. 정수 초로는 0 아니면 1밖에 못 적고 0은 아무것도 말하지 않는 값이다. 구간이 [0.6, 1.4]초로 넓은 것은 체인마다 주기가 달라서다. go-stablenet 과 go-wbft 는 genesis 의 blockPeriodSeconds 가 1이고, go-wemix 는 거버넌스가 정하며 측정값이 0.8초 언저리다. isPerChain 은 기댓값 하나만 바꾸므로 두 경계를 체인별로 줄 수 없다. 좁히려면 체인이 설정한 주기를 RPC 로 읽어 그 값과 견주어야 하는데, 세 체인이 그것을 같은 방법으로 내놓지 않는다. 지금 구간도 멈춘 체인(평균이 한없이 커진다)과 설정보다 두 배 빠른 체인은 잡는다. 60블록 창: PR196-TC-017 — 블록을 오래 만들어도 간격이 유지되는지 본다(CT-NODE-016 의 부하 쪽). 2026-09-29 에 하한을 넣었다. 전에는 상한(2초)만 두었다. 초 단위 정수 경계로는 하한을 1로밖에 못 적는데, go-wemix 의 평균이 0.8초 언저리라 그러면 그 체인에서 늘 실패한다. 그래서 하한을 0으로 두었고, 그건 \"아무리 느려도 2초\" 만 말할 뿐 빨라지는 쪽은 아무것도 말하지 않았다. 블록이 한꺼번에 쏟아지는 고장은 이 테스트가 잡아야 할 것인데 잡지 못했다. 이제 밀리초로 [0.5, 2]초를 잡는다. 60블록을 보므로 016-block-period 보다 창이 길고 경계는 느슨하다. 부하 아래서도 무너지지 않는 것을 보는 것이지 주기를 다시 재는 것이 아니다.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 25,
+      "timeout": "240s"
+    },
+    {
+      "expect": "blockInterval",
+      "on": "node1",
+      "blocks": 20,
+      "minMillis": 600,
+      "maxMillis": 1400
+    },
+    {
+      "do": "waitBlock",
+      "target": 65,
+      "timeout": "300s"
+    },
+    {
+      "expect": "blockInterval",
+      "on": "node1",
+      "blocks": 60,
+      "minMillis": 500,
+      "maxMillis": 2000
+    }
+  ]
+}

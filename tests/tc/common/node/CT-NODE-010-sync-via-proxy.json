@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-proxied-pn-routing",
+  "description": "CT-NODE-010 — 종단 노드가 생성 노드와 직접 잇지 않고 전달 노드만 거쳐 블록을 받는지 본다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 생성 노드 4, 전달 노드 1, 종단 노드 2로 띄운다. 이 모양은 세 체인 preset 이 모두 갖추고 있어 파일 하나로 세 체인을 돈다. 연결 형태는 피어 수로 본다: 종단 노드는 전달 노드 하나(1), 전달 노드는 전부(6), 생성 노드는 다른 생성 노드 셋과 전달 노드(4). 생성 노드끼리 직접 잇는 것은 전달 노드가 합의 메시지를 중계하지 않아서다. 그다음 일곱 노드 모두의 높이가 올라가는지 본다. 전에는 stablenet(bp3-en1-pn1)과 wbft(bp2-en1-pn1)용 파일이 따로 있었다. 체인 차이 때문이 아니라 원본 테스트 둘을 옮겨 온 결과였고, stablenet 쪽은 종단 노드의 피어 수만, 높이는 1 이상인지 한 번만 봤다. 피어 수는 연결이 다 맺어질 때까지(생산 노드마다 최대 60초) 기다린 뒤 비교한다. 기동 게이트는 이 구성에서 피어가 하나만 있어도 통과시키므로, 블록이 나오기 시작한 직후에는 생산 노드끼리의 연결이 아직 덜 맺어져 있을 수 있다(측정: stablenet node1 이 블록 3 시점에 pn 하나만 연결). 60초 안에 모양이 안 나오면 실패다.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4-en2-pn1",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "source": "peerCount",
+      "on": "bp1",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "waitFor",
+      "source": "peerCount",
+      "on": "bp2",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "waitFor",
+      "source": "peerCount",
+      "on": "bp3",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "waitFor",
+      "source": "peerCount",
+      "on": "bp4",
+      "compare": "Equal",
+      "expected": "4",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "peerCount",
+      "on": "en1",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "en2",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "pn1",
+      "compare": "Equal",
+      "is": "6"
+    },
+    {
+      "expect": "peerCount",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "bp4"
+      ],
+      "compare": "Equal",
+      "is": "4"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "bp4",
+        "pn1",
+        "en1",
+        "en2"
+      ],
+      "timeout": "90s"
+    }
+  ]
+}

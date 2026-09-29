@@ -45,7 +45,7 @@ strings ~/cbw/gs-prefork/build/bin/gstable | grep -ci bohoblock    # 0 이어야
 ## 2. 한 케이스를 돌리고 읽는 법
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-consensus" && bin/chainbench run tests/tc/common/node/009-basic-consensus.json --workspace-dir "$HOME/cbw/manual/basic-consensus" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-consensus" && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir "$HOME/cbw/manual/basic-consensus" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 끝에 이런 세 줄이 나온다.
@@ -136,14 +136,14 @@ session: ~/.chainbench/sessions/<시각>/UTC-<시각>
 Verify blocks are being produced and all validators participate (원본 basic/consensus.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-consensus" && bin/chainbench run tests/tc/common/node/009-basic-consensus.json --workspace-dir "$HOME/cbw/manual/basic-consensus" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-consensus" && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir "$HOME/cbw/manual/basic-consensus" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **002. `basic-peers`** — stablenet · bp4 en1 · 직전 PASS 44s  
 Verify all nodes have proper peer connectivity (원본 basic/peers.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-peers" && bin/chainbench run tests/tc/common/node/008-basic-peers.json --workspace-dir "$HOME/cbw/manual/basic-peers" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-peers" && bin/chainbench run tests/tc/common/node/CT-NODE-008-peers.json --workspace-dir "$HOME/cbw/manual/basic-peers" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **003. `basic-rpc-health`** — stablenet · bp4 en1 · 직전 PASS 29s  
@@ -157,7 +157,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-rpc-h
 Verify all running nodes have synchronized block heights (원본 basic/sync.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-sync" && bin/chainbench run tests/tc/common/node/009-basic-sync.json --workspace-dir "$HOME/cbw/manual/basic-sync" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-sync" && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir "$HOME/cbw/manual/basic-sync" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **005. `basic-tx-send`** — stablenet · bp4 en1 · 직전 PASS 35s  
@@ -190,7 +190,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-wbft-
 그 위에서 pass 해서, attach 를 한 번도 거치지 않았다.
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/attached-chain-produces" && bin/chainbench run tests/tc/common/node/009-basic-consensus.json --workspace-dir "$HOME/cbw/manual/attached-chain-produces" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable" --keep-up && bin/chainbench run tests/tc/basic/08-attached-chain-produces.json; bin/chainbench chain stop --workspace-dir "$HOME/cbw/manual/attached-chain-produces"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/attached-chain-produces" && bin/chainbench run tests/tc/common/node/CT-NODE-009-head-hash-agreement.json --workspace-dir "$HOME/cbw/manual/attached-chain-produces" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable" --keep-up && bin/chainbench run tests/tc/basic/08-attached-chain-produces.json; bin/chainbench chain stop --workspace-dir "$HOME/cbw/manual/attached-chain-produces"
 ```
 
 
@@ -486,7 +486,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/signature-c
 TC-4-1-03 — 이 체인과 다른 genesis 로 빌드된 바이너리는 GenesisMismatch 로 기동에 실패한다  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/genesis-mismatch-refuses-to-start" && bin/chainbench run tests/tc/common/node/013-genesis-mismatch.json --workspace-dir "$HOME/cbw/manual/genesis-mismatch-refuses-to-start" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/genesis-mismatch-refuses-to-start" && bin/chainbench run tests/tc/common/node/CT-NODE-013-genesis-mismatch-refused.json --workspace-dir "$HOME/cbw/manual/genesis-mismatch-refuses-to-start" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **049. `unsupported-system-contract-version`** — stablenet · bp4 · 직전 PASS 71s  
@@ -500,7 +500,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/unsupported
 TC-5-3-01: block 0 해시가 모든 노드에서 같고 parentHash 가 0 이다. 레거시는 릴리스 고정 해시와 비교했으나, 사설망은 env 마다 genesis 가 달라 노드 간 일치와 genesis 형태로 검증한다.  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/genesis-block-hash-consistent" && bin/chainbench run tests/tc/common/node/003-genesis-block-hash-consistent.json --workspace-dir "$HOME/cbw/manual/genesis-block-hash-consistent" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/genesis-block-hash-consistent" && bin/chainbench run tests/tc/common/node/CT-NODE-003-genesis-init.json --workspace-dir "$HOME/cbw/manual/genesis-block-hash-consistent" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 
@@ -776,7 +776,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/txpool-cont
 RT-A-1-05 — P2P 피어 연결 확인 (원본 regression/ethereum/05-test-p2p-peers)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/admin-peers-populated" && bin/chainbench run tests/tc/common/node/008-admin-peers-populated.json --workspace-dir "$HOME/cbw/manual/admin-peers-populated" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/admin-peers-populated" && bin/chainbench run tests/tc/common/node/CT-NODE-008-peers.json --workspace-dir "$HOME/cbw/manual/admin-peers-populated" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **090. `fee-delegate-sign-rpc-present`** — stablenet · bp4 · 직전 PASS 51s  
@@ -803,7 +803,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/token-appro
 **093. `chain-not-syncing`** — stablenet · bp4 · 직전 PASS 52s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/chain-not-syncing" && bin/chainbench run tests/tc/common/node/014-chain-not-syncing.json --workspace-dir "$HOME/cbw/manual/chain-not-syncing" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/chain-not-syncing" && bin/chainbench run tests/tc/common/node/CT-NODE-014-sync-complete.json --workspace-dir "$HOME/cbw/manual/chain-not-syncing" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 
@@ -878,7 +878,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/authorized-
 **103. `stablenet-chain-up`** — stablenet · bp4 · 직전 PASS 52s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-chain-up" && bin/chainbench run tests/tc/common/node/001-stablenet-chain-up.json --workspace-dir "$HOME/cbw/manual/stablenet-chain-up" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-chain-up" && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir "$HOME/cbw/manual/stablenet-chain-up" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **104. `legacy-transfer`** — stablenet · bp4 · 직전 PASS 53s  
@@ -1023,7 +1023,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/logs-query-
 RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/chain-id" && bin/chainbench run tests/tc/common/node/003-chain-id.json --workspace-dir "$HOME/cbw/manual/chain-id" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/chain-id" && bin/chainbench run tests/tc/common/node/CT-NODE-003-genesis-init.json --workspace-dir "$HOME/cbw/manual/chain-id" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **125. `ws-subscribe-new-heads`** — stablenet · bp4 · 직전 PASS 53s  
@@ -1045,7 +1045,7 @@ The standard 15-node shape brought up and producing: 7 bp, 7 en and 1 pn. Endpoi
 > 키를 새로 만든다(선언이 generate)
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-chain-up-15" && bin/chainbench run tests/tc/common/node/002-stablenet-chain-up-15.json --workspace-dir "$HOME/cbw/manual/stablenet-chain-up-15" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-chain-up-15" && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir "$HOME/cbw/manual/stablenet-chain-up-15" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **128. `contract-event-emitted`** — stablenet · bp4 · 직전 PASS 58s  
@@ -1270,7 +1270,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/minter-stat
 RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/block-period-one-second" && bin/chainbench run tests/tc/common/node/016-block-period-one-second.json --workspace-dir "$HOME/cbw/manual/block-period-one-second" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/block-period-one-second" && bin/chainbench run tests/tc/common/node/CT-NODE-016-block-period.json --workspace-dir "$HOME/cbw/manual/block-period-one-second" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **160. `wbft-seals-quorum`** — stablenet · bp4 · 직전 PASS 56s  
@@ -1334,7 +1334,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-g
 Compose the proxied tier (bp <-> pn <-> en) and prove the endpoint stays in sync through the pn: under proxied peering an endpoint never …  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-proxied-pn-routing" && bin/chainbench run tests/tc/common/node/010-proxied-pn-routing.json --workspace-dir "$HOME/cbw/manual/stablenet-proxied-pn-routing" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-proxied-pn-routing" && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir "$HOME/cbw/manual/stablenet-proxied-pn-routing" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 
@@ -1405,7 +1405,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/secp256r1-p
 **177. `wbft-chain-up`** — wbft · bp4 · 직전 PASS 56s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-chain-up" && GWBFT_BIN="$HOME/work/github/wemade/go-wbft/build/bin/gwemix" bin/chainbench run tests/tc/common/node/001-wbft-chain-up.json --workspace-dir "$HOME/cbw/manual/wbft-chain-up"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-chain-up" && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir "$HOME/cbw/manual/wbft-chain-up" --chain-preset wbft-bp4 --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
 ```
 
 **178. `wbft-chain-up-15`** — wbft · bp7 en7 pn1 (proxied) · 직전 PASS 56s  
@@ -1413,7 +1413,7 @@ The standard 15-node shape brought up and producing: 7 bp, 7 en and 1 pn. Endpoi
 > 키를 새로 만든다(선언이 generate)
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-chain-up-15" && bin/chainbench run tests/tc/common/node/002-wbft-chain-up-15.json --workspace-dir "$HOME/cbw/manual/wbft-chain-up-15" --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-chain-up-15" && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir "$HOME/cbw/manual/wbft-chain-up-15" --chain-preset wbft-bp7-en7-pn1 --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
 ```
 
 
@@ -1422,7 +1422,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-chain-
 **179. `e1-mixed-producers`** — stablenet · bp3 en1 · 직전 PASS 55s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/e1-mixed-producers" && bin/chainbench run tests/tc/common/node/011-e1-mixed-producers.json --workspace-dir "$HOME/cbw/manual/e1-mixed-producers" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/e1-mixed-producers" && bin/chainbench run tests/tc/common/node/CT-NODE-011-endpoint-first-layout.json --workspace-dir "$HOME/cbw/manual/e1-mixed-producers" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **180. `wbft-quorum-halt-and-recover`** — wbft · bp4 · 직전 PASS 98s  
@@ -1475,7 +1475,7 @@ WA25: verify the proxied peer graph's SHAPE — bp <-> bp direct, bp <-> pn and 
 > 키를 새로 만든다(선언이 generate)
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-proxied-routing" && bin/chainbench run tests/tc/common/node/010-wbft-proxied-routing.json --workspace-dir "$HOME/cbw/manual/wbft-proxied-routing" --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-proxied-routing" && bin/chainbench run tests/tc/common/node/CT-NODE-010-sync-via-proxy.json --workspace-dir "$HOME/cbw/manual/wbft-proxied-routing" --chain-preset wbft-bp4-en2-pn1 --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
 ```
 
 
@@ -1516,7 +1516,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-tx-cro
 **190. `wemix-chain-up`** — wemix · bp4 · 직전 PASS 103s  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-chain-up" && GWEMIX_BIN="$HOME/work/github/wemade/go-wemix/build/bin/gwemix" bin/chainbench run tests/tc/common/node/001-wemix-chain-up.json --workspace-dir "$HOME/cbw/manual/wemix-chain-up"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-chain-up" && bin/chainbench run tests/tc/common/node/CT-NODE-001-startup-block-production.json --workspace-dir "$HOME/cbw/manual/wemix-chain-up" --chain-preset wemix-bp4 --binary "$HOME/work/github/wemade/go-wemix/build/bin/gwemix"
 ```
 
 **191. `wemix-chain-up-15`** — wemix · bp7 en7 pn1 (proxied) · 직전 BLOCKED 672s  
@@ -1524,7 +1524,7 @@ The standard 15-node shape brought up and producing: 7 bp, 7 en and 1 pn. Endpoi
 > 키를 새로 만든다(선언이 generate) · docker 에서 BLOCKED — go-wemix 코어 결함(worklist G6)으로 endpoint 하나가 합류하지 못한다
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-chain-up-15" && bin/chainbench run tests/tc/common/node/002-wemix-chain-up-15.json --workspace-dir "$HOME/cbw/manual/wemix-chain-up-15" --binary "$HOME/work/github/wemade/go-wemix/build/bin/gwemix"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-chain-up-15" && bin/chainbench run tests/tc/common/node/CT-NODE-002-startup-15-nodes.json --workspace-dir "$HOME/cbw/manual/wemix-chain-up-15" --chain-preset wemix-bp7-en7-pn1 --binary "$HOME/work/github/wemade/go-wemix/build/bin/gwemix"
 ```
 
 
@@ -1638,7 +1638,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/remote-rpc-
 레거시 remote/chain-info: 붙은 체인이 chainId 를 보고하고 동기화가 끝나 있다.  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/remote-chain-info" && bin/chainbench run tests/tc/common/node/014-remote-chain-info.json --workspace-dir "$HOME/cbw/manual/remote-chain-info" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/remote-chain-info" && bin/chainbench run tests/tc/common/node/CT-NODE-014-sync-complete.json --workspace-dir "$HOME/cbw/manual/remote-chain-info" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **205. `remote-balance-check`** — stablenet · bp4 · 직전 PASS 56s  
@@ -1672,7 +1672,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/sample-life
 Measure block production time statistics over last 100 blocks (원본 stress/block-time.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stress-block-time" && bin/chainbench run tests/tc/common/node/016-stress-block-time.json --workspace-dir "$HOME/cbw/manual/stress-block-time" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stress-block-time" && bin/chainbench run tests/tc/common/node/CT-NODE-016-block-period.json --workspace-dir "$HOME/cbw/manual/stress-block-time" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **209. `stress-tx-flood`** — stablenet · bp4 · 직전 PASS 69s  
