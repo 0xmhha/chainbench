@@ -1,5 +1,10 @@
 # 리팩토링 설계 v3 — 방향 — [제안]
 
+> **경로 안내 (2026-09-29).** 이 문서의 실측은 `#422` 앞의 트리를 잰 것이다.
+> 본문이 부르는 `internal/consensus/upgrade`·`internal/netmap`·`internal/testkit`·
+> `presets/hardfork/`·`scripts/merge_profile.py` 는 그 뒤로 없어졌고, 제안 이름이던
+> `internal/chainpreset` 은 `internal/preset` 으로 들어갔다.
+
 > **[제안] (2026-09-21).** 근거는 전부 [`measurement-2026-09-21.md`](measurement-2026-09-21.md) 에
 > 있고, 이 문서는 그 위에서 무엇을 할지만 적는다. 닫힌 세 계획을 이어받지 않는다.
 
@@ -273,6 +278,7 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 `testengine` 한 곳뿐이다(`core/hardfork` 는 주석 언급). **패키지가 곧 chain preset 이었다.**
 
 그래서 `internal/chainpreset` 으로 옮기고, 패키지가 갈래를 말하므로 타입은 `Preset`,
+(구현은 `internal/preset` 이라는 이름으로 들어갔다)
 읽는 함수는 `Load` 로 줄였다. 호출부가 문장이 된다 — `chainpreset.Load(path)`.
 
 ### 래칫 다섯이 동시에 울렸고, 그것이 설계대로였다
@@ -314,7 +320,7 @@ preset 이 그 아래 살고 있었다 — 3번에서 종류로 이름을 좁힌
 
 ### 디스크
 
-`keys/preset/` 과 `presets/hardfork/` 가 같은 갈래를 두 자리에서, 한쪽은 **종류(hardfork)로**
+`keys/preset/` 과 `presets/hardfork/`(`#422` 에서 없어지고 `presets/chain/` 으로 합쳐졌다) 가 같은 갈래를 두 자리에서, 한쪽은 **종류(hardfork)로**
 부르고 있었다. `presets/keys/` · `presets/chain/` 으로 모았다. 경로를 들고 있던 파일이 119개였고,
 그중 21개는 체인 선언이 키 세트를 경로로 참조하는 자리다. `filepath.Join` 으로 조립한 것은 문자열
 치환이 못 잡아 세그먼트를 따로 옮겼다.

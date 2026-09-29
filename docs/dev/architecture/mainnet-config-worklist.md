@@ -337,7 +337,7 @@ usage 를 붙이는 것은 명령 전체에 걸리는 설정이라 이 항목에
 
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
-| V1 | 바이너리 이름을 논리 이름으로 좁힌다. 매니페스트 기본값 → 워크스페이스 별칭 → 경로 조합 순으로 해석한다 | 지금 DSL 값은 검증 없이 `exec.CommandContext` 로 간다(`internal/core/process/local.go:48`). 매핑 함수 `BinaryPath` 는 있으나 호출처가 `internal/app/upgrade.go:249` 한 곳뿐이다 | D5 | 조사 완료, 미착수 |
+| V1 | 바이너리 이름을 논리 이름으로 좁힌다. 매니페스트 기본값 → 워크스페이스 별칭 → 경로 조합 순으로 해석한다 | 지금 DSL 값은 검증 없이 `exec.CommandContext` 로 간다(`internal/core/process/local.go:48`). 매핑 함수 `BinaryPath` 는 있으나 호출처가 `internal/app/upgrade.go:249` 한 곳뿐이다(그 파일은 `#419` 에서 흡수됐다 — 함수는 지금 `internal/resource/workspaceconfig.go:395`, 호출처는 `internal/chainsetup/binary.go:103`) | D5 | 조사 완료, 미착수 |
 | V2 | 테스트 정의서에서 절대 경로를 거부한다 | 파싱 단계에서 거부한다(`binaryRefIsAName`). 절대·상대 경로와 `~`, 그리고 `${VAR:-/경로}` 형태까지 본다. 5건(3건이 아니라 5건이었다)의 선언을 지웠고, 도커 워크스페이스 설정이 같은 경로를 만든다 | ~~V1~~ | **완료 (2026-09-14)** |
 | V3 | 역할 어휘를 `bp`·`en`·`pn` 으로 좁힌다 | `RoleValidator`·`RoleEndpoint`·`RoleBoot` 상수를 지우고 `NormalizeRole` 의 접기를 없앴다. 카운트 형식의 `validators`·`endpoints` 별칭, 접기만 하던 두 `UnmarshalJSON`, 라벨의 옛 철자도 함께 지웠다. `chainbench validate` 가 노드 표의 역할을 오프라인으로 검사한다 | D2 | **완료 (2026-09-14)** |
 | V4 | 스코프 규칙을 어휘에 묻게 한다 | 규칙이 네 군데에 흩어져 있었고 `node<N>` 정규식은 두 번 정의돼 있었다. 손으로 적은 두 목록이 `bp`·`en` 만 적어 `pn` 이 빠졌다. `node` 에 `ScopeAll`·`ValidScope`·`ScopeIndex`·`ScopeFor`·`ScopeWords` 를 두고 문법과 워크스페이스가 그것을 묻는다 | V3 | **완료 (2026-09-14)** |
@@ -420,7 +420,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
-| P1 | 반복되는 체인 선언을 파일로 뽑고 205건이 참조하게 한다 | 체인 선언의 밑바탕(chain·topology·keys·binaries)은 **17개 모양**뿐이었고 그중 하나가 161개 파일에 복사돼 있었다. `tests/tc/env/` 에 17개를 두고, 51건은 이름으로만 부르고 154건은 `extends` 로 다른 것만 덮는다. **205건의 `--plan` 출력이 전후로 바이트까지 같다** | ~~V1~~~V7, ~~M1~~~M5, ~~M4-a~~ | **완료 (2026-09-15)** |
+| P1 | 반복되는 체인 선언을 파일로 뽑고 205건이 참조하게 한다 | 체인 선언의 밑바탕(chain·topology·keys·binaries)은 **17개 모양**뿐이었고 그중 하나가 161개 파일에 복사돼 있었다. `tests/tc/env/` 에 17개를 두고, 51건은 이름으로만 부르고 154건은 `extends` 로 다른 것만 덮는다. (그 트리는 `a5386b0e` 에서 `presets/chain/` 으로 옮겼다.) **205건의 `--plan` 출력이 전후로 바이트까지 같다** | ~~V1~~~V7, ~~M1~~~M5, ~~M4-a~~ | **완료 (2026-09-15)** |
 | P2 | preset 에 `values` 블록을 둔다 | 주소·수수료는 `env` 항목이 아니라 step 인자다. preset 만으로는 내려가지 않는다 | D5, P1 | **미착수 — §11.5** |
 | P3 | `${…}` 바인딩의 초기값을 preset 이 채운다 | 문법은 이미 있고 118개 파일이 쓴다(`internal/dsl/interp/binding.go:23`). 값의 출처가 실행 중 `read` 결과뿐이다. **R1·R5 가 여기 걸려 있다**(§8) | P2 | **미착수 — §11.5** |
 | P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
@@ -1571,7 +1571,7 @@ phase 액션은 노드가 실제로 도는 바이너리로 돌지 않는다.
 
 #### 그래서 무엇이 중복인가
 
-`internal/consensus/upgrade` 가 **비테스트 1,959줄**로 두 번째 컴포저를 들고 있다
+`internal/consensus/upgrade`(`#419`·`#422` 에서 `internal/preset` 과 `internal/core/hardfork` 로 갈라졌다) 가 **비테스트 1,959줄**로 두 번째 컴포저를 들고 있다
 (handoff 1039 · plan 326 · exec 263 · profile 153 · mesh 125 · launch 53).
 자기만의 `WriteConfig` `BaseGenesis` `ComposePlan` `ApplyOverlay` `Launch`
 `WireMesh` `machineFiles` `provisionKeys` `label` 포트 계산이 다 있다. 보통 경로에
@@ -1932,7 +1932,7 @@ ConfigPath leaves the auth port to the file"), 그 override 들이 파일 쪽으
 1. **순서를 뒤집었다.** 세션을 망 구축 **전에** 연다. 그래서 망이 안 뜨면 그
    테스트의 폴더가 생기고 `blocked` 로 적히고 증거가 `observations/` 로 간다.
    워크스페이스의 `failures/` 는 없앴다. **실측: `--binary /nonexistent/x` 로
-   구성을 깨뜨리면 `tests/001_basic-consensus/status.json` 에 이유가, 그 아래
+   구성을 깨뜨리면 세션 아래 `…/tests/001_basic-consensus/status.json` 에 이유가, 그 아래
    `observations/` 에 수집 결과가 남는다.** 요약도 `blocked=1` 로 센다 — 전에는
    오류 문자열뿐이었다.
 2. **세션(프로세스) 층을 넣었다.** `session.New` 한 곳에서 붙이므로 구성·attach·

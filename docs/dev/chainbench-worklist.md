@@ -10,6 +10,18 @@
 
 ---
 
+> **경로 안내 (2026-09-29).** 열린 작업은 §0 뿐이고 그 아래는 이력이다. 이력 문단의
+> 경로·명령은 **그때의 트리**를 그대로 적은 것이라 지금 없는 것이 많다 — 옮겨진 것은
+> `internal/engine`→`internal/chainsetup`+`internal/testengine`,
+> `internal/testspec`→`internal/dsl`, `internal/testkit`→`internal/testsupport`,
+> `internal/netmap`→`internal/core/node`+`internal/resource`,
+> `internal/keyring`→`internal/core/keyring`,
+> `internal/core/launchopt`→`internal/core/nodeconfig`,
+> `internal/core/capability`→`internal/core/registry`,
+> `internal/consensus/upgrade`→`internal/preset`+`internal/core/hardfork`,
+> `tests/cases/`·`tests/specs/`→`tests/tc/` 다. 없어진 것은 git 이력에 있다.
+> **§0 의 경로는 현재 트리를 가리켜야 한다.**
+
 ## 0. 열린 작업 — 정본 목록 (2026-09-12)
 
 > **여기만 보면 된다.** 아래 본문 2,900여 줄은 **이력**이고, 본문의 `☐`/`◐` 는 *그 시점의*
@@ -763,7 +775,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 
 | # | 작업 | 선행 | 게이트 | 상태 |
 |---|---|---|---|---|
-| **V0.1** | 아키텍처 v2 결정 기록 — 레이어 그림·모듈 책임·CLI/MCP 비대칭·네이밍 규칙을 architecture 문서로 | — | 문서 등급 표기(현행 설계) + docs/README 권위 순서 반영 | ☑ |
+| **V0.1** | 아키텍처 v2 결정 기록 — 레이어 그림·모듈 책임·CLI/MCP 비대칭·네이밍 규칙을 architecture 문서로 | — | 문서 등급 표기(현행 설계) + `docs/README.md` 권위 순서 반영 | ☑ |
 | **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☑ (8패키지 541심볼, `v2-move-map` (2026-09-24 삭제)) |
 | **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☑ |
 | **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 제거: app keyring 로컬 지름길(해석기로 단일화)·netcompose 구조 검증(`Spec.Validate` 신설로 이동). 잔여 분기는 래칫 테스트가 유예 목록으로 고정(V2.2·V2.3·V5 에서 소멸, 축소만 허용) — `internal/arch` TestMachineConsumersDoNotBranchOnKind | ☑ |
@@ -2497,7 +2509,8 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     나란히 적을 필요가 없어졌다.
   - **DSL 쪽 단정도 같은 강도로 올렸다.** `miner NotEqual <producer>` 는 **세상의 다른 모든
     주소**를 통과시킨다. `assert.In`(멤버십, 집합이 `is` 쪽·주소 대소문자 무시·빈 집합은
-    거부)을 더하고 `tests/tc/go-wemix/handoff/01-*.json` 이 선언된 successor 집합을 쓰게 했다.
+    거부)을 더하고 `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json`(그때 `handoff/01-*.json`)
+이 선언된 successor 집합을 쓰게 했다.
   - **profile 의 `extra_data` 는 핸드오프에서 무효다(실측).** 병합은 `config.croissant`
     섹션만 들어올리므로 wbft 제네시스의 top-level extraData 는 버려지고, 병합 파일은 wemix
     템플릿의 것을 유지한다(ASCII `"chainbench handoff…"` 149바이트). validator 집합은
@@ -2855,7 +2868,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 
 | 검증 | 덮은 사이트 | 결과 |
 |---|---|---|
-| **15노드 wemix 브링업** (docker 15대, 13 bp + 2 en, `tests/tc/go-wemix/chain-up/02`) | poa 8곳 — `WaitForIPC`·`WaitForIPCOn`·`WaitSelf`·`VerifyEtcd`·`WaitForMember`·`joinOne`·`WaitProducing`·`WaitEtcdCluster` | **pass.** 직렬 내림차순 브링업 완주, 13 bp 전부 etcd 형성, 블록 생산 |
+| **15노드 wemix 브링업** (docker 15대, 13 bp + 2 en, `tests/tc/common/node/002-wemix-chain-up-15.json`, 그때 `tests/tc/go-wemix/chain-up/02`) | poa 8곳 — `WaitForIPC`·`WaitForIPCOn`·`WaitSelf`·`VerifyEtcd`·`WaitForMember`·`joinOne`·`WaitProducing`·`WaitEtcdCluster` | **pass.** 직렬 내림차순 브링업 완주, 13 bp 전부 etcd 형성, 블록 생산 |
 | **golden 5노드 핸드오프** (로컬, `presets/chain/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
 | 단위 테스트 | `collector.WaitLog` 1곳 | 타임아웃 경로(`"nonexistent"`, 100ms)가 그 루프를 실제로 돈다. **프로덕션 호출자는 없다** — 인터페이스 계약이다 |
 
@@ -2951,6 +2964,7 @@ WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
 브랜치 `refactor/hsm-state-machine`. `internal/core/lifecycle` 의 표를 걸어 다니던 머신을
 계층형 상태 머신으로 바꿨다. 설계는 `docs/research/chainbench/analyses/14`, 작업 prompt 는
 `15`, 들어온 구현의 검토는 `16`, 수정 prompt 는 `17`, 두 머신의 state diagram 은 `18` 이다.
+14~17 은 `5a206871` 에서 지웠다(`git show 5a206871^:<경로>`). 남은 것은 `18` 뿐이다.
 
 **원칙(사용자 지시).** 길을 다 만들고, 동작을 확인하고, 그다음에 기존 것을 지운다. 그래서
 삭제는 마지막 세 커밋에 모였다.
@@ -3306,7 +3320,7 @@ offset 0 이 파일 전체, 직전 읽기가 끝난 오프셋에서 읽으면 **
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
 - ☑ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 없음 — 원격 로그 tail 의 실 SSH 라이브 e2e 는 T3.3 항목에 적은 대로 완료(2026-09-11).
-원격 기동 자체는 핸드오프·`chain rm`·metric 이 이미 docker 에서 라이브로 돌았다. · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
+원격 기동 자체는 핸드오프·`chain rm`·metric 이 이미 docker 에서 라이브로 돌았다. · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브(그때 `tests/tc/go-wemix/handoff/01-*`, 지금 `hardfork/01-croissant-successors-take-over.json`): 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
 
 ### Phase 6 — 표면·마감
 - ☑ **T6.7 spec 오프라인 검증 + 예제** `chainbench validate [spec…]` — 실행 없이 (1) 파싱 검증(OK/INVALID), (2) **이름 해결**(`testspec.Unresolved`: 스텝 액션·어세션 이름을 빌트인 registry 와 대조 → 미등록 시 `UNRESOLVED: action:…/assert:…`, 오타를 런타임 전 포착), 무효/미해결 시 exit 1. `--chain` 은 manifest capability·applicableChains 대조로 실행/스킵(OK·SKIP(chain not applicable)·SKIP(needs caps))을 정보 표시(파싱/해결 오류만 실패). `examples/specs/*.json`(RPC-read·tx/waitBlock 스텝·expectRevert negative·call/txStatus) + CI 가드 테스트(`validate --chain stablenet` 전부 OK)로 DSL 문서-파서 드리프트 방지. → 이관 작성자 빠른 피드백.

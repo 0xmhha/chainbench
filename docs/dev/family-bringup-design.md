@@ -31,7 +31,7 @@
 | `poa.GenerateGenesis` / `DeployGovernance` / `EtcdInit` | `consensus/poa/bootstrap_exec.go` | ✅ 커맨드 정확, `Runner` boundary 있음 |
 | `poa.BootstrapPlan()` — 5단계 순서 데이터 | `consensus/poa/bootstrap.go` | ✅ 순서 정확 |
 | `supervisor.Deps.LeaderGate` — "미배선이면 오류" 계약 | `core/supervisor` | ✅ 자리만 비어 있음 |
-| `engine.GenesisSource` / `KeySource` boundary | `internal/engine` | ✅ |
+| `engine.GenesisSource` / `KeySource` boundary | `internal/engine`(지금 `internal/chainsetup`) | ✅ |
 
 **작성 당시에는 이 프리미티브를 부르는 곳이 3군데로 흩어져 있었다** — 업그레이드 CLI,
 핸드오프 드라이버, 원격 서버셋 부트스트랩. 그리고 정작 평범한 기동 경로에는 없었다.
@@ -188,7 +188,7 @@ core/supervisor   페이즈 실행 · 액션 호출 · 진단 · 재시도 · te
       ↑ 주입
 consensus/poa     wemix 액션 구현(GenerateGenesis/DeployGovernance/EtcdInit) — 이미 존재
 consensus/wbft    액션 없음
-internal/engine   WemixGenesisSource · poaActions 배선
+internal/engine(지금 internal/chainsetup)   WemixGenesisSource · poaActions 배선
 internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
 ```
 

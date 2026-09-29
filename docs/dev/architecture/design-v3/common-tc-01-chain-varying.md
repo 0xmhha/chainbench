@@ -90,7 +90,7 @@ WEMIX3.0과 WEMIX4.0에서는 거부되거나 블록에 포함되지 않은 채 
 읽어서는 안 나왔다. B단계에서 공통 91건을 go-wemix 로 강제해 돌리다가 세 번째 건에서
 나왔다.
 
-`tests/tc/common/contract/002-register-contract.json` 의 배포가 되돌려졌다. 영수증의
+`tests/tc/go-stablenet/vocabulary/03-register-contract.json` 의 배포가 되돌려졌다. 영수증의
 `gasUsed` 가 케이스가 준 한도와 정확히 같은 1,500,000 이고 `status` 가 `0x0` 이었다.
 962바이트 컨트랙트 배포에 드는 가스는 20만 남짓이니 모자란 것이 아니라, 없는 옵코드를
 만나 전액을 태운 모양이다.

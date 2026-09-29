@@ -156,7 +156,7 @@ chainbench chain up --workspace-dir /tmp/n1 --chain stablenet \
 
 # DSL 실행도 같은 서버 세트를 읽는다
 chainbench run --chain stablenet --binary $GSTABLE --keys presets/keys \
-  --server local tests/specs/api/*.json
+  --server local tests/tc/go-stablenet/regression/api/*.json
 ```
 
 선택 플래그: `--server-set <path>`(기본 `server-set.yaml`) ·

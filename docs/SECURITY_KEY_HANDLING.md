@@ -79,8 +79,10 @@ memory.
       screenshots.
 - [ ] Prefer short-lived test keys over long-lived production keys.
 - [ ] Scrub `.env` files from CI artifact uploads and dev-machine backups.
-- [ ] Verify on every release that `tests/unit/tests/security-key-boundary.sh`
-      is part of the required-green CI suite.
+- [ ] Verify on every release that the two boundary tests above stay in the
+      required-green CI suite (`go test ./internal/core/keyring/...
+      ./internal/core/session/...`). The end-to-end shell check they replaced
+      went away with the legacy bash suite in `#43`.
 
 ## Developer Contract
 
@@ -109,7 +111,27 @@ memory.
 
 ## Boundary Enforcement
 
-Two tests enforce the boundary:
+> **경로 정정 (2026-09-29).** 아래 두 이름은 그때의 트리다. `network/internal/signer/`
+> 는 `internal/core/keyring/` 이 되었고, `tests/unit/` 의 셸 스위트는 `#43` 에서
+> 레거시 bash 스택과 함께 없어졌다. `RedactionBoundary` 라는 타입도 코드에 없다.
+> 지금 경계를 지키는 것은 아래 둘이다.
+
+오늘 경계를 지키는 테스트:
+
+1. **단위 — `internal/core/keyring/keyring_test.go`** —
+   `TestNodekey_DoesNotLeakWhenFormatted` 가 `%v`·`%+v`·`%#v`·`%s` 와 `slog` 출력에서
+   비밀이 `redacted` 로 나오는지 본다. 비밀 자체는
+   `internal/core/keyring/derive/privatekey.go` 가 갖고, `String`·`GoString` 이
+   `keyring.PrivateKey(redacted)` 만 내놓는다.
+2. **증적 — `internal/core/session/scrub_test.go`** —
+   `TestScrub` 가 실행 증적을 쓰기 전에 비밀을 지우는지 본다. 대상은
+   `internal/core/session/scrub.go` 의 두 규칙이다: JSON 필드
+   (`key`·`privateKey`·`saveKey`·`password`·`mnemonic`·`secret`)와 기록된 명령줄의
+   `--password`/`--unlock` 값. 해시·주소는 건드리지 않는다.
+
+둘 다 signer 코드나 signer 별칭을 받는 핸들러를 건드리는 PR 에서 녹색이어야 한다.
+
+### 그때의 기록 (2026-04, 경로는 위 정정을 따른다)
 
 1. **Unit — `network/internal/signer/signer_test.go`** — verifies
    redaction across `%v`, `%+v`, `%#v`, `%s`, `slog.TextHandler`,
