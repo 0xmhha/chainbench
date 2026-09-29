@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "signed-tx-seen-in-pool",
+  "description": "CT-RPC-010 — 직접 서명한 트랜잭션이 포함 전에 풀에서 보이고 그다음 블록에 들어간다 (기존 명세 RT-A-4-03, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-010). 블록 주기가 1초라 그냥 보내면 풀을 조회하기 전에 포함되므로, rpc/012 처럼 생성 노드 두 대를 멈춰 합의를 세운 뒤 보낸다. 새 계정의 키로 로컬 서명하고, 수수료는 노드가 제안한 값(eth_maxPriorityFeePerGas 와 최신 기본 수수료)을 써서 체인마다 따로 적지 않는다. 풀에서는 보낸 해시가 그 계정의 pending 첫 건인지, eth_getTransactionByHash 의 blockNumber 가 아직 비어 있는지 본다. 두 노드를 되살린 뒤에는 같은 해시가 성공으로 포함되고 풀의 pending 이 비는지 본다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "spender",
+      "saveKey": "spenderKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$spender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "stopNode",
+      "on": "node4"
+    },
+    {
+      "expect": "blockHalt",
+      "on": "node1",
+      "within": "12s",
+      "maxAdvance": 1
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE12",
+      "value": "1",
+      "gas": "21000",
+      "wait": false,
+      "save": "h"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.hash",
+      "compare": "EqualCI",
+      "is": "$h"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "blockNumber",
+      "compare": "Nil",
+      "is": null
+    },
+    {
+      "do": "startNode",
+      "on": "node3"
+    },
+    {
+      "do": "startNode",
+      "on": "node4"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "nonceAt",
+      "address": "$spender",
+      "compare": "Equal",
+      "expected": "1",
+      "timeout": "90s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$h",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "blockNumber",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending",
+      "compare": "Equal",
+      "is": {}
+    }
+  ]
+}
