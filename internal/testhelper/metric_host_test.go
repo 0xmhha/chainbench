@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
@@ -77,5 +78,42 @@ func TestMetricAssertion_BothPathsFailingNamesBoth(t *testing.T) {
 	}})
 	if err == nil || !strings.Contains(err.Error(), "ssh: connection refused") || !strings.Contains(err.Error(), "127.0.0.1:1") {
 		t.Fatalf("err = %v, want both the scrape and the on-machine failure", err)
+	}
+}
+
+// TestMetricAssertion_PrefersTheMachineOverALoopbackThatAnswers: a docker
+// node's recorded URL is loopback with a port nothing publishes, so whatever
+// answers there on the harness is some other process. When the machine can be
+// reached, the sample comes from the node itself, not from that answer.
+func TestMetricAssertion_PrefersTheMachineOverALoopbackThatAnswers(t *testing.T) {
+	stranger, done := metricNode(t, "eth_downloader_headers_in 0\n")
+	defer done()
+	n := unreachableMetricsNode()
+	n.MetricsURL = stranger.MetricsURL
+	if n.MetricsURL == "" {
+		n.MetricsURL = collector.MetricsURL(stranger.Host, stranger.Ports.Metrics)
+	}
+	ctrl := &hostControl{out: "eth_downloader_headers_in 42\n"}
+	d := interp.Deps{Nodes: ctrl}
+	r, err := metricAssertion{}.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{n}, Spec: map[string]any{
+		"assert": assertMetric, "name": "eth_downloader_headers_in", "expected": 1,
+	}})
+	if err != nil || !r.Pass || r.Actual != 42.0 {
+		t.Fatalf("pass=%v err=%v actual=%v, want the node's own 42", r.Pass, err, r.Actual)
+	}
+}
+
+// TestMetricAssertion_ALocalRunReadsTheRecordedURL: a local composition
+// refuses commands on its machine; the recorded URL is then the node's own.
+func TestMetricAssertion_ALocalRunReadsTheRecordedURL(t *testing.T) {
+	local, done := metricNode(t, "chain_head_block 9\n")
+	defer done()
+	ctrl := &hostControl{err: errors.New("verb: host 127.0.0.1 has no command runner — a local target runs no commands")}
+	d := interp.Deps{Nodes: ctrl}
+	r, err := metricAssertion{}.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{local}, Spec: map[string]any{
+		"assert": assertMetric, "name": "chain_head_block", "expected": 1,
+	}})
+	if err != nil || !r.Pass || r.Actual != 9.0 {
+		t.Fatalf("pass=%v err=%v actual=%v, want 9 from the recorded URL", r.Pass, err, r.Actual)
 	}
 }
