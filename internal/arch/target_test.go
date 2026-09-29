@@ -40,6 +40,7 @@ var targetBranches = map[string]string{
 	"verbs_network.go:NetworkRunner":    "there is a command runner only when there is a machine to run commands on",
 	"workspace.go:keysBase":             "where the keys are: under the target's data root when remote, the key set itself when local",
 	"workspace.go:RPCHost":              "which host answers RPC",
+	"steps_genesis.go:Genesis":          "where the network runs is a fact about it, advertised as target:remote or target:local so a case that needs a shell on a node's machine can ask for one",
 
 	// The list is exhausted: every entry left is a fact about the target, not a
 	// branch around a missing capability.

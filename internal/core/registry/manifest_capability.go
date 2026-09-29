@@ -61,6 +61,29 @@ const (
 	// is not there, burned the whole limit and came back status 0x0. Nothing
 	// could have gated it: no capability said what the contract needed.
 	CapEVM = "evm:"
+
+	// CapTarget is where the network runs rather than what the chain can do:
+	// "target:remote" for a network on machines this harness reaches over SSH,
+	// "target:local" for one in processes on this machine.
+	//
+	// It is not a manifest's to declare — no chain is remote — so it is
+	// advertised by the composed network. It earns a prefix because a case has
+	// to be able to ask for it: a fault that programs a firewall needs a target
+	// with a shell and NET_ADMIN, which a local run does not have, and without
+	// the capability such a case can only be remembered rather than declared.
+	// Asking for it turns a run on the wrong target into a SKIP with a reason.
+	CapTarget = "target:"
+)
+
+// The two values CapTarget takes. A composed network advertises exactly one.
+const (
+	// TargetRemote: the nodes run on machines reached over SSH. A server set
+	// names them; the docker fleet is one, standing in for servers this machine
+	// cannot reach, and it is not a third kind of target.
+	TargetRemote = CapTarget + "remote"
+	// TargetLocal: the nodes run as processes here, with no shell to run a
+	// command in and no privilege to program a firewall with.
+	TargetLocal = CapTarget + "local"
 )
 
 // ForkActiveIn reports whether a genesis template switches the named fork on.
@@ -99,7 +122,7 @@ func ForkActiveIn(genesisTemplate []byte, fork string) bool {
 
 // CapabilityPrefixes is every prefix a requirement may carry, for the message
 // that refuses one it does not know.
-var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile, CapEVM}
+var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile, CapEVM, CapTarget}
 
 // DerivedCapabilities is what this manifest's own data says the chain provides.
 //
