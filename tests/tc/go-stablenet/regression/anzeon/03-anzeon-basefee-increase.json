@@ -3,8 +3,10 @@
   "kind": "case",
   "id": "anzeon-basefee-increase",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
+  "skipsOn": [],
   "chainPreset": "stablenet-bp4",
   "steps": [
     {
@@ -29,5 +31,6 @@
       "compare": "Greater",
       "is": "$bf0"
     }
-  ]
+  ],
+  "description": " anzeon 의 기본 수수료 규칙은 문턱 두 개를 쓴다. 사용률이 상승 문턱을 넘으면 오르고 하강 문턱 아래면 내린다(go-stablenet consensus/misc/eip1559/eip1559.go:62). 표준 EIP-1559 는 목표가 gasLimit/ElasticityMultiplier 하나뿐이라 25% 채우기가 목표 미달이 되어 반대로 내려간다. 2026-09-28 실측: go-wbft 에서 0.34 Gwei 가 0.22 Gwei 로 내려갔고, go-wemix 는 기본 수수료가 1 wei 고정점에 박혀 움직이지 않았다. 그래서 이 케이스는 공통이 아니다."
 }

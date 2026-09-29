@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "stablenet-bp9",
+  "description": "stablenet: 9 bp. Used by 1 case.",
+  "chain": "stablenet",
+  "keys": {
+    "nodekeys": {
+      "source": "generate"
+    }
+  },
+  "topology": {
+    "bp": 9
+  }
+}

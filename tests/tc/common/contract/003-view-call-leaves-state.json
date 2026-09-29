@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "view-call-leaves-state",
+  "description": "CT-CONTRACT-003 — 조회 호출은 값을 돌려주고 상태를 바꾸지 않는다 (기존 명세 RT-A-3-03, 절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-003). contract/002 의 저장 컨트랙트(PUSH0 없는 26바이트)를 배포하고 0x2a 를 트랜잭션으로 써 둔다. 그다음 조회 호출로 0x2a 가 돌아오는지 보고, 쓰기 분기로 가는 데이터(0x63)를 조회 호출로 보낸다. 조회 호출도 코드를 실행하므로 0번 슬롯에 0x63 을 쓰지만, 그 결과는 호출이 끝나면 버려진다. 그래서 뒤이어 읽은 저장소와 조회 값이 여전히 0x2a 이고 호출한 계정의 nonce 가 그대로여야 한다. 기대값이 손으로 쓴 컨트랙트에서 나오므로 체인별로 다르지 않다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x601a600c600039601a6000f336602011600e57600035600055005b60005460005260206000f3",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "select": "contractAddress",
+      "save": "box"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$box",
+      "compare": "NotEqual",
+      "expected": "0x",
+      "pollInterval": "1s",
+      "timeout": "60s"
+    },
+    {
+      "expect": "call",
+      "to": "$box",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$box",
+      "data": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "gas": "100000",
+      "expect": "receipt",
+      "save": "whash"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$whash",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "latest"
+      ],
+      "save": "n0"
+    },
+    {
+      "expect": "call",
+      "to": "$box",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "node1",
+          "to": "$box",
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000063"
+        },
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$box",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "call",
+      "to": "$box",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "node1",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "$n0"
+    }
+  ]
+}

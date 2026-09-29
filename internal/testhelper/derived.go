@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/session"
+
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
@@ -28,6 +30,7 @@ const (
 	assertWSSubscribe = "wsSubscribe"
 	assertWSCollected = "wsCollected"
 	assertDerive      = "derive"
+	assertGasPriceSum = "gasPriceIsBaseFeePlusTip"
 	actionWSOpen      = "wsOpen"
 )
 
@@ -48,9 +51,89 @@ func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
 	r.RegisterAction(actionWSOpen, wsOpenAction{})
 	r.RegisterAssertion(assertWSCollected, wsCollectedAssertion{})
+	r.RegisterAssertion(assertGasPriceSum, gasPriceSumAssertion{})
 }
 
-func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+// gasPriceSumAssertion checks that the node's suggested gas price is the head
+// block's base fee plus its suggested tip (eth_maxPriorityFeePerGas) — how a
+// London-rules node builds eth_gasPrice. Spec: on.
+//
+// The three values are read against one head. Read separately they can straddle
+// a block, and the base fee changes every block on an idle chain; so the head
+// is read before and after, and the reading is taken only when it did not move.
+type gasPriceSumAssertion struct{}
+
+func (gasPriceSumAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertGasPriceSum, Provenance: ac.Spec, Expected: "eth_gasPrice == baseFee(head) + eth_maxPriorityFeePerGas"}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("dsl: %s: no target node RPC URL", assertGasPriceSum)
+		res.Actual = err.Error()
+		return res, err
+	}
+	c, err := clientFor(ac.Deps, targets[0].url)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	hexBig := func(method string) (*big.Int, error) {
+		var s string
+		if err := c.Call(ctx, method, &s); err != nil {
+			return nil, err
+		}
+		v, ok := new(big.Int).SetString(strings.TrimPrefix(s, "0x"), 16)
+		if !ok {
+			return nil, fmt.Errorf("%s: bad quantity %q", method, s)
+		}
+		return v, nil
+	}
+	for attempt := 0; attempt < 5; attempt++ {
+		before, err := c.BlockNumber(ctx)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		blk, err := c.BlockByNumber(ctx, fmt.Sprintf("0x%x", before))
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		tip, err := hexBig("eth_maxPriorityFeePerGas")
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		price, err := hexBig("eth_gasPrice")
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		after, err := c.BlockNumber(ctx)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		if after != before {
+			continue
+		}
+		base := blk.BaseFeePerGas
+		if base == nil {
+			base = new(big.Int)
+		}
+		sum := new(big.Int).Add(base, tip)
+		res.Actual = map[string]any{"block": before, "baseFee": base.String(), "tip": tip.String(), "gasPrice": price.String()}
+		res.Pass = price.Cmp(sum) == 0
+		if !res.Pass {
+			res.Source = fmt.Sprintf("gasPrice %s != baseFee %s + tip %s (= %s) at block %d", price, base, tip, sum, before)
+		}
+		return res, nil
+	}
+	err = fmt.Errorf("dsl: %s: the head moved on every one of 5 readings", assertGasPriceSum)
+	res.Actual = err.Error()
+	return res, err
+}
+
+func readGasPrice(ctx context.Context, _ *interp.Deps, c *rpc.Client, _ map[string]any) (any, error) {
 	var s string
 	if err := c.Call(ctx, "eth_gasPrice", &s); err != nil {
 		return nil, err
@@ -71,7 +154,7 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 // Spec: method (required), params ([]any, optional), select (dot path into the
 // result — numeric segments index arrays and a "#" segment yields a length;
 // omitted, the whole result is compared).
-func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readRPCCall(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {
 		return nil, fmt.Errorf("dsl: rpcCall requires \"method\"")
@@ -174,7 +257,7 @@ func dotPath(v any, path string) (any, bool) {
 	return cur, true
 }
 
-func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
+func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)
 	if op == "abiCall" {
 		return deriveAbiCall(spec)
@@ -204,8 +287,13 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 			acc.Add(acc, v)
 		case "diff":
 			acc.Sub(acc, v)
+		case "mul":
+			// A fee is gas times a price, and CT-CONTRACT-006 has to compute one
+			// to say what a reverted call cost: the balance it expects afterwards
+			// is the balance before minus gasUsed times effectiveGasPrice.
+			acc.Mul(acc, v)
 		default:
-			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum or diff)", op)
+			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum, diff or mul)", op)
 		}
 	}
 	switch f, _ := spec["format"].(string); f {

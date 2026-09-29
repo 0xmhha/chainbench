@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -206,4 +208,69 @@ func requiresAny(doc map[string]any, prefixes ...string) bool {
 		}
 	}
 	return false
+}
+
+// TestCorpus_EveryPerChainAnswerNamesAChainThatExists.
+//
+// isPerChain is keyed by chain id, and a key nothing matches is invisible: the
+// statement quietly falls back to "is" and the chain the author meant to
+// single out never gets its own answer. The whole point of the key is to make
+// a per-chain difference explicit, so a misspelling that hides one is worse
+// than not writing it.
+//
+// Checked over the corpus rather than at lowering, because lowering resolves
+// one chain at a time and cannot tell a key for another chain from a typo.
+func TestCorpus_EveryPerChainAnswerNamesAChainThatExists(t *testing.T) {
+	known := map[string]bool{}
+	for _, n := range registry.Names() {
+		known[n] = true
+	}
+	if len(known) == 0 {
+		t.Fatal("no chains are registered, so this test asserts nothing")
+	}
+
+	var offenders []string
+	var walk func(n any, where string)
+	walk = func(n any, where string) {
+		switch v := n.(type) {
+		case map[string]any:
+			if byChain, ok := v["isPerChain"].(map[string]any); ok {
+				for id := range byChain {
+					if !known[id] {
+						offenders = append(offenders, where+": isPerChain names "+id)
+					}
+				}
+			}
+			for k, sub := range v {
+				walk(sub, where+"."+k)
+			}
+		case []any:
+			for i, sub := range v {
+				walk(sub, where+"["+strconv.Itoa(i)+"]")
+			}
+		}
+	}
+	err := filepath.WalkDir(corpusRoot, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
+			return nil
+		}
+		raw, rerr := os.ReadFile(p)
+		if rerr != nil {
+			return rerr
+		}
+		var doc map[string]any
+		if json.Unmarshal(raw, &doc) != nil {
+			return nil
+		}
+		walk(doc, strings.TrimPrefix(p, corpusRoot+"/"))
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(offenders)
+	if len(offenders) > 0 {
+		t.Errorf("these per-chain answers name a chain that is not registered (%s):\n  %s",
+			strings.Join(registry.Names(), ", "), strings.Join(offenders, "\n  "))
+	}
 }

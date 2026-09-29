@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
@@ -37,7 +38,7 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	args, aerr := resolveNamedArgs(ac.Deps, ac.Args)
 	if aerr != nil {
 		return aerr
 	}
@@ -185,7 +186,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	if event == "" {
 		event = "newHeads"
 	}
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr
@@ -215,6 +216,10 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	defer func() { _ = sub.Close() }()
 
 	got := 0
+	// newHeads says a chain is advancing only if each head is past the one
+	// before it; counting valid JSON alone passed a node that sent the same head
+	// twice. The numbers are kept so a failure can say which ones arrived.
+	var numbers []uint64
 	for got < want {
 		select {
 		case msg, ok := <-sub.Notifications():
@@ -223,9 +228,32 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 				res.Source = "subscription closed after " + strconv.Itoa(got) + " notification(s)"
 				return res, nil
 			}
-			if len(msg) > 0 && json.Valid(msg) {
-				got++
+			if len(msg) == 0 || !json.Valid(msg) {
+				continue
 			}
+			if event == "newHeads" {
+				var head struct {
+					Number string `json:"number"`
+				}
+				if err := json.Unmarshal(msg, &head); err != nil || head.Number == "" {
+					res.Actual = string(msg)
+					res.Source = "a newHeads notification carried no block number"
+					return res, nil
+				}
+				n, perr := strconv.ParseUint(strings.TrimPrefix(head.Number, "0x"), 16, 64)
+				if perr != nil {
+					res.Actual = head.Number
+					res.Source = "a newHeads notification carried a bad block number"
+					return res, nil
+				}
+				if len(numbers) > 0 && n <= numbers[len(numbers)-1] {
+					res.Actual = fmt.Sprint(append(numbers, n))
+					res.Source = "newHeads did not advance: block numbers received in this order"
+					return res, nil
+				}
+				numbers = append(numbers, n)
+			}
+			got++
 		case <-sctx.Done():
 			res.Actual = strconv.Itoa(got)
 			res.Source = fmt.Sprintf("only %d of %d %s notification(s) within %s", got, want, event, timeout)
@@ -233,6 +261,9 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 		}
 	}
 	res.Actual = strconv.Itoa(got)
+	if len(numbers) > 0 {
+		res.Actual = fmt.Sprintf("%d head(s), blocks %v", got, numbers)
+	}
 	res.Pass = true
 	return res, nil
 }

@@ -8,7 +8,7 @@
 
 세 체인 중 두 체인에서만 같은 목적으로 실행할 수 있는 기존 테스트다. 새 ID는 부여하지 않고 기존 ID로 적는다. 대부분 WEMIX4.0과 StableNet이 같은 합의 방식(WBFT)을 쓰기 때문에 생기는 묶음이다.
 
-## WEMIX4.0 + StableNet (58개)
+## WEMIX4.0 + StableNet (59개)
 
 | 기존 ID | 출처 | 내용 | 비고 |
 | --- | --- | --- | --- |
@@ -37,6 +37,7 @@
 | RT-G-3-05 | Regression Test Case with scenario, Regression Test Case, \[WEMIX 4.0\] 테스트 시나리오 | 합의 정보 조회 API를 쓴다. WEMIX3.0에는 이 API가 없다 |  |
 | RT-G-3-06 | Regression Test Case with scenario, Regression Test Case, \[WEMIX 4.0\] 테스트 시나리오 | 합의 정보 조회 API를 쓴다. WEMIX3.0에는 이 API가 없다 |  |
 | T-1 (StableNet) | 2nd Change Test Cases (StableNet) | 트랜잭션 풀의 누적 잔액 검사를 겨냥한다. WEMIX3.0은 건별 검사만 확인됐다 |  |
+| T-3 (StableNet, WEMIX4.0 · 부분) | 2nd Change Test Cases (StableNet), \[WEMIX 4.0\] 2nd Change Test Cases | 대납자 키로 서명할 때 트랜잭션 형식이 맞지 않으면 거부하는 검사(checkFeeDelegateTx, PR #114)다. WEMIX3.0 에는 이 검사가 없어, feePayer 만 준 일반 트랜잭션을 대납자 키로 그대로 서명한다 | 세 체인 공통인 부분(키 저장소 대납 서명과 조립 요청 거부)은 CT-TX-011. 2026-09-29 추가 |
 | T-4 (StableNet) | 2nd Change Test Cases (StableNet) | WBFT 합의 정보(서명, 에폭, 라운드)를 검사한다. WEMIX3.0 합의에는 없다 |  |
 | T-5 (StableNet) | 2nd Change Test Cases (StableNet) | 합의 정보 조회 API를 쓴다. WEMIX3.0에는 이 API가 없다 |  |
 | T-1 (WEMIX4.0) | \[WEMIX 4.0\] 2nd Change Test Cases | 트랜잭션 풀의 누적 잔액 검사를 겨냥한다. WEMIX3.0은 건별 검사만 확인됐다 |  |

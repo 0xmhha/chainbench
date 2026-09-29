@@ -5,6 +5,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/health"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/nodemonitor"
 )
 
 // TestFactsFromReport_FillsTheWantsTheClassifierChecks is the test the gate never
@@ -116,5 +117,26 @@ func TestFactsFromReport_ACheckedDisagreementIsAFork(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestWantDeclaredPeers: under a declared graph each node wants exactly its
+// declared peers; under a derived one the floor of one stays.
+func TestWantDeclaredPeers(t *testing.T) {
+	p, err := node.GroupsPeering([][]string{{"node1", "node2", "node3"}, {"node3", "node4"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	facts := []nodemonitor.Facts{{Node: 1, WantPeers: 1}, {Node: 3, WantPeers: 1}, {Node: 4, WantPeers: 1}}
+	wantDeclaredPeers(facts, p)
+	for i, want := range []int{2, 3, 1} {
+		if facts[i].WantPeers != want {
+			t.Errorf("node%d WantPeers = %d, want %d", facts[i].Node, facts[i].WantPeers, want)
+		}
+	}
+	mesh := []nodemonitor.Facts{{Node: 1, WantPeers: 1}}
+	wantDeclaredPeers(mesh, node.Mesh)
+	if mesh[0].WantPeers != 1 {
+		t.Errorf("mesh WantPeers = %d, want the floor of 1", mesh[0].WantPeers)
 	}
 }

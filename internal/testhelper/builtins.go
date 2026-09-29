@@ -49,6 +49,7 @@ const (
 	assertTxMined          = "txMined"
 	assertCallError        = "callError"
 	assertMethodPresent    = "methodPresent"
+	assertRPCError         = "rpcError"
 	assertCreateAddress    = "createAddress"
 	assertContractChecksum = "contractChecksum"
 )
@@ -106,6 +107,7 @@ func Register(r interp.Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	r.RegisterAssertion(assertCallError, callErrorAssertion{})
 	r.RegisterAssertion(assertMethodPresent, methodPresentAssertion{})
+	r.RegisterAssertion(assertRPCError, rpcErrorAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
 		r.RegisterReader(a.name, interp.Reader(a.read))

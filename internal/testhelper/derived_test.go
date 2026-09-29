@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
@@ -211,6 +212,17 @@ func TestRPCCall_LatestParamSentinel(t *testing.T) {
 // notifications.
 func wsHeadServer(t *testing.T, n int) *httptest.Server {
 	t.Helper()
+	numbers := make([]string, n)
+	for i := range numbers {
+		numbers[i] = fmt.Sprintf("0x%x", i+1)
+	}
+	return wsHeadServerOf(t, numbers)
+}
+
+// wsHeadServerOf sends one newHeads notification per number, in order.
+func wsHeadServerOf(t *testing.T, numbers []string) *httptest.Server {
+	t.Helper()
+	n := len(numbers)
 	up := websocket.Upgrader{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := up.Upgrade(w, r, nil)
@@ -228,7 +240,7 @@ func wsHeadServer(t *testing.T, n int) *httptest.Server {
 		for i := 0; i < n; i++ {
 			_ = conn.WriteJSON(map[string]any{
 				"jsonrpc": "2.0", "method": "eth_subscription",
-				"params": map[string]any{"subscription": "0xsub", "result": map[string]any{"number": "0x1"}},
+				"params": map[string]any{"subscription": "0xsub", "result": map[string]any{"number": numbers[i]}},
 			})
 		}
 		// Hold the connection open until the client hangs up.
@@ -354,9 +366,11 @@ func TestReadDerive(t *testing.T) {
 		{map[string]any{"op": "sum", "of": []any{"0x10", "0x6"}}, "22"},
 		{map[string]any{"op": "sum", "of": []any{"100", float64(11)}}, "111"},
 		{map[string]any{"op": "diff", "of": []any{"0x64", "40", "0x4"}}, "56"},
+		// The product CT-CONTRACT-006 needs: gasUsed times effectiveGasPrice.
+		{map[string]any{"op": "mul", "of": []any{"0x5208", "1000000000"}}, "21000000000000"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -367,10 +381,10 @@ func TestReadDerive(t *testing.T) {
 
 	for name, bad := range map[string]map[string]any{
 		"no of":      {"op": "sum"},
-		"unknown op": {"op": "mul", "of": []any{"1", "2"}},
+		"unknown op": {"op": "pow", "of": []any{"1", "2"}},
 		"bad value":  {"op": "sum", "of": []any{"zzz"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -396,7 +410,7 @@ func TestReadDerive_AbiCall(t *testing.T) {
 		{map[string]any{"op": "abiCall", "selector": "0x12345678"}, "0x12345678"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -410,7 +424,7 @@ func TestReadDerive_AbiCall(t *testing.T) {
 		"short selector": {"op": "abiCall", "selector": "0x1234"},
 		"bad arg":        {"op": "abiCall", "selector": "0x98951b56", "of": []any{"zzz"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -437,7 +451,7 @@ func TestReadDerive_Word(t *testing.T) {
 			"0x00000000000000000000000000000000000000000000000000000000000000bb"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, tc.spec)
+		got, err := readDerive(context.Background(), nil, nil, tc.spec)
 		if err != nil {
 			t.Fatalf("%v: %v", tc.spec, err)
 		}
@@ -453,7 +467,7 @@ func TestReadDerive_Word(t *testing.T) {
 		"bad hex":       {"op": "word", "of": []any{"0xzz"}},
 		"out of range":  {"op": "word", "index": 9, "of": []any{blob}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -472,7 +486,7 @@ func TestReadDerive_Quorum(t *testing.T) {
 		{"10", "7"},
 	}
 	for _, tc := range cases {
-		got, err := readDerive(context.Background(), nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
+		got, err := readDerive(context.Background(), nil, nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
 		if err != nil {
 			t.Fatalf("quorum(%s): %v", tc.n, err)
 		}
@@ -486,7 +500,7 @@ func TestReadDerive_Quorum(t *testing.T) {
 		"zero":     {"op": "quorum", "of": []any{"0"}},
 		"negative": {"op": "quorum", "of": []any{"-1"}},
 	} {
-		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+		if _, err := readDerive(context.Background(), nil, nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
 	}
@@ -538,5 +552,25 @@ func TestWSCollected_RequiresHandle(t *testing.T) {
 		Spec: map[string]any{"assert": assertWSCollected, "sub": "not-a-handle"}})
 	if err == nil || res.Pass {
 		t.Fatal("wsCollected must fail when sub is not a subscription handle")
+	}
+}
+
+// TestWSSubscribeAssertion_HeadsMustAdvance: newHeads that repeat a block number
+// fail. Counting valid notifications alone passed a node that sent the same
+// head twice.
+func TestWSSubscribeAssertion_HeadsMustAdvance(t *testing.T) {
+	srv := wsHeadServerOf(t, []string{"0x5", "0x5"})
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	as, _ := d.Actions.Assertion(assertWSSubscribe)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
+		Env: envWithWS(t, host, port), Deps: &d,
+		Spec: map[string]any{"assert": assertWSSubscribe, "event": "newHeads", "count": 2, "timeout": "5s"},
+	})
+	if err != nil {
+		t.Fatalf("wsSubscribe: %v", err)
+	}
+	if res.Pass {
+		t.Fatalf("two heads with the same number passed: %v", res.Actual)
 	}
 }

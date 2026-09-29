@@ -361,3 +361,35 @@ func (w *Workspace) NodeSet() node.NodeSet {
 // and the launch reads it back from here — so the two have to be the same field
 // rather than one passed alongside the other.
 func (w *Workspace) SetBinary(path string) { w.state.Binary = path }
+
+// OpenHost opens the machine a node is placed on, found by the address the
+// node binds.
+//
+// The server set is the only thing that knows how to reach a machine — its
+// name, its login, whether dials are translated — and a node record carries
+// only an address. This joins the two so a step that has a node can reach the
+// machine under it.
+//
+// A local composition has no such machine: its nodes are processes here, the
+// set has no entry for them, and the error says so rather than opening this
+// machine and letting a command run against the harness itself.
+func (w *Workspace) OpenHost(addr string) (*resource.Access, error) {
+	if addr == "" {
+		return nil, fmt.Errorf("chainsetup: open host: no address")
+	}
+	if !w.state.Target.IsRemote() {
+		return nil, fmt.Errorf("chainsetup: open host %s: this composition is local — its nodes are processes here, not machines", addr)
+	}
+	if w.state.ServerSet == "" {
+		return nil, fmt.Errorf("chainsetup: open host %s: this composition records no server set", addr)
+	}
+	set, err := resource.LoadSet(w.state.ServerSet)
+	if err != nil {
+		return nil, err
+	}
+	name, err := set.NameAt(addr)
+	if err != nil {
+		return nil, err
+	}
+	return w.opener().Open(resource.Spec{Server: name, DataRoot: w.state.Target.DataRoot})
+}

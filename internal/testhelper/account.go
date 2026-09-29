@@ -249,11 +249,20 @@ func ComparedAsWritten(actual any) bool {
 	return ok && s != "" && !addressLiteral.MatchString(s)
 }
 
-// resolveAddressArgs returns spec with every address-shaped argument resolved,
-// leaving everything else untouched. The input map is not modified: a spec is
-// read more than once (an assertion runs against each target node), and
-// rewriting it in place would resolve against a spec that had already changed.
-func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
+// resolveNamedArgs returns spec with every argument that NAMES something
+// resolved to what it names, leaving everything else untouched.
+//
+// One kind so far: an address-shaped argument that holds an account label or a
+// contract name becomes the address.
+//
+// The point is that a spec says what it means and the run supplies the value,
+// because the value differs by chain and a spec that wrote it would run on one
+// chain and fail on the next.
+//
+// The input map is not modified: a spec is read more than once (an assertion
+// runs against each target node), and rewriting it in place would resolve
+// against a spec that had already changed.
+func resolveNamedArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
 	var out map[string]any
 	copyOnce := func() {
 		if out != nil {

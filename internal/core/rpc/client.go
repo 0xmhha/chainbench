@@ -51,6 +51,20 @@ type rpcError struct {
 	Message string `json:"message"`
 }
 
+// ServerError is a JSON-RPC error the node answered with, as opposed to a
+// request that never got an answer. A caller that must judge what the node
+// said — a refusal with a given reason — tells the two apart with errors.As.
+type ServerError struct {
+	Method  string
+	Code    int
+	Message string
+}
+
+// Error keeps the text callers matched on before the type existed.
+func (e *ServerError) Error() string {
+	return fmt.Sprintf("rpc: %s: server error %d: %s", e.Method, e.Code, e.Message)
+}
+
 type rpcResponse struct {
 	Result json.RawMessage `json:"result"`
 	Error  *rpcError       `json:"error"`
@@ -83,7 +97,7 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 		return fmt.Errorf("rpc: decode %s: %w", method, err)
 	}
 	if rr.Error != nil {
-		return fmt.Errorf("rpc: %s: server error %d: %s", method, rr.Error.Code, rr.Error.Message)
+		return &ServerError{Method: method, Code: rr.Error.Code, Message: rr.Error.Message}
 	}
 	if out != nil {
 		if err := json.Unmarshal(rr.Result, out); err != nil {

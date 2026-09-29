@@ -3,12 +3,13 @@ package testhelper
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/dsl/interp"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl/assert"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // assertMetric is the metric-source assertion name — the third verification
@@ -42,7 +43,7 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr
@@ -74,6 +75,9 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 		}
 		samples, err := collector.ScrapeMetrics(ctx, url)
 		if err != nil {
+			samples, err = scrapeOnMachine(ctx, ac.Deps, t.node, err)
+		}
+		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
@@ -91,6 +95,58 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 		}
 	}
 	return res, nil
+}
+
+// onMachineScrapeTimeoutSeconds bounds the request a scrape on the node's
+// machine makes, so a metrics endpoint that accepts and never answers cannot
+// hold the step.
+const onMachineScrapeTimeoutSeconds = 10
+
+// scrapeOnMachine reads a node's metrics on the machine it runs on, for when
+// the harness cannot reach the endpoint itself: a docker or remote node whose
+// metrics port is not published. The request goes to the node's own address,
+// which is reachable from its machine, through curl when the machine has it
+// and bash's /dev/tcp otherwise (a minimal image carries neither curl nor
+// wget). A run that cannot reach the machine keeps the scrape error.
+func scrapeOnMachine(ctx context.Context, d *interp.Deps, n node.Node, scrapeErr error) (map[string]float64, error) {
+	if d == nil || n.Ports.Metrics == 0 {
+		return nil, scrapeErr
+	}
+	cmd, ok := d.Nodes.(interp.HostCommander)
+	if !ok {
+		return nil, scrapeErr
+	}
+	const path = "/debug/metrics/prometheus"
+	url := collector.MetricsURL(n.Host, n.Ports.Metrics)
+	command := fmt.Sprintf(
+		"if command -v curl >/dev/null 2>&1; then timeout %d curl -s %s; "+
+			"else timeout %d bash -c 'exec 3<>/dev/tcp/%s/%d && printf \"GET %s HTTP/1.0\\r\\nHost: %s\\r\\n\\r\\n\" >&3 && cat <&3'; fi",
+		onMachineScrapeTimeoutSeconds, url,
+		onMachineScrapeTimeoutSeconds, n.Host, n.Ports.Metrics, path, n.Host)
+	out, err := cmd.RunOnHost(ctx, n, command)
+	if err != nil {
+		return nil, fmt.Errorf("%w; on node%d's machine: %v", scrapeErr, n.Index, err)
+	}
+	samples, err := collector.ParseMetrics(strings.NewReader(httpBody(out)))
+	if err != nil {
+		return nil, fmt.Errorf("%w; on node%d's machine: %v", scrapeErr, n.Index, err)
+	}
+	return samples, nil
+}
+
+// httpBody drops a raw HTTP response's status line and headers, leaving the
+// body; output that is not a response (curl prints only the body) is returned
+// as it is.
+func httpBody(out string) string {
+	if !strings.HasPrefix(out, "HTTP/") {
+		return out
+	}
+	for _, sep := range []string{"\r\n\r\n", "\n\n"} {
+		if i := strings.Index(out, sep); i >= 0 {
+			return out[i+len(sep):]
+		}
+	}
+	return ""
 }
 
 // metricTarget pairs a target node with its display name.

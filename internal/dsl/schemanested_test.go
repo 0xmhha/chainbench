@@ -33,6 +33,7 @@ var nestedObjects = map[string]reflect.Type{
 	"envSpec.upgrade":                        reflect.TypeOf(UpgradeV2{}),
 	"envSpec.accounts[additionalProperties]": reflect.TypeOf(AccountV2{}),
 	"envSpec.attach":                         reflect.TypeOf(AttachV2{}),
+	"envSpec.peering":                        reflect.TypeOf(PeeringV2{}),
 	"envSpec.genesis.perBinary[additionalProperties]": reflect.TypeOf(GenesisSideV2{}),
 	"caseSpec.hooks": reflect.TypeOf(HooksV2{}),
 }

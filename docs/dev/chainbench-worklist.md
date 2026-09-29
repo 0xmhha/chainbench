@@ -1701,7 +1701,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
   - **`boot` 는 죽은 어휘가 아니다.** `core/node/node.go:50` 이 **RoleBP 의 레거시 철자**라고 적어 두었다 — 별칭이지 쓰이지 않는 능력이 아니다. 목록에서 성격이 잘못 분류돼 있었다.
   - **남은 것 둘, 각각 이유가 다르다**: `hooks.onFail` 은 **실패할 때만** 돈다 — 통과하는 tc 케이스로는 도달할 수 없고(스위트에 일부러 실패하는 케이스를 둘 수 없다), 낮춤(lowering)은 `spec_v2_test.go` 가 이미 고정한다. 실행까지 보려면 인터프리터 레벨 테스트가 맞다. `placement`(= `env.target`)는 **WA19 와 같은 항목**이다 — 파싱은 되는데 배치를 하지 않고 fingerprint 만 바꾼다. 어휘 문제가 아니라 오배선이라 WA19 로 남긴다.
 - [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn) 라우팅 — **이미 고쳐져 있다 (2026-09-12 확인).** `interp/run.go:57` 이 매 statement 마다 `applyDefaultOn` 을 부르고, 명시적 `on`/`onEach` 가 있으면 비켜난다. 인터프리터 테스트(`TestRun_DefaultOnRoutesStatements`)가 WA14 를 지목해 고정하고 있다. 이번에 라이브 스펙까지 붙였다(위 WA24 참고).
-- [x] **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **해소 — 아래 §1p 의 `WA25. go-wemix·go-wbft 커버리지` 항목이 정본이다**(각각 9건·15건, 2026-09-11). 이 줄은 §1o 의 원본 표시이며 닫힌 것을 부분으로 보이고 있었다. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
+- [x] **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **해소 — 아래 §1p 의 `WA25. go-wemix·go-wbft 커버리지` 항목이 정본이다**(각각 9건·15건, 2026-09-11). 이 줄은 §1o 의 원본 표시이며 닫힌 것을 부분으로 보이고 있었다. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/common/node/010-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
 - [x] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.) **확인(2026-09-12): 완료.** `grep -c internal/testspec tests/tc/SPECS.md` == 0
 
 
@@ -1725,7 +1725,7 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   라이브가 더 찾은 둘도 고쳐져 있다: `env/docker/gen-env.sh` 가 metrics 포트를
   퍼블리시하고(`METRICS_PUB_BASE`, 기본 16060) localmap 에 `6060: 1606N` 이 들어가며,
   경로는 `collector.MetricsURLOn` 이 붙인다(주소만 해석하던 `HTTPEndpoint` 와 분리). 되살린
-  스펙도 자리에 있다(`tests/tc/go-stablenet/vocabulary/03-metric-head-block.json`).
+  스펙도 자리에 있다(`tests/tc/common/rpc/015-metric-head-block.json`).
   재확인: `grep -n "METRICS_PUB_BASE" env/docker/gen-env.sh` ·
   `grep -n "func MetricsURLOn" internal/core/collector/metrics.go`
   **(원래 기록)** 코드 경로는 열렸다 (2026-09-11), 라이브 검증만 남았다. 진단이 셋 중 하나 틀렸다 — ②수집 경로는 이미
@@ -2047,7 +2047,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   제네시스 거버넌스(wbft·poa 각각), 15노드 엣지 제출. 아래는 그 과정의 기록이다.
   **(원래 진단)** **부분 해소 (2026-09-11 재측정).** 각각
   **8건·11건**으로 늘었고(go-stablenet 은 156건), 없다고 적혀 있던 **pn/proxied 라우팅
-  스펙은 생겼다** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`(bp 2·pn 1·en 1,
+  스펙은 생겼다** — `tests/tc/common/node/010-wbft-proxied-routing.json`(bp 2·pn 1·en 1,
   네 노드의 peerCount 를 각각 단정한 뒤 blockAdvance). 남은 것은 **깊이**다: 두 체인 모두
   fault 가 노드 크래시 1건뿐이고, 15노드 스펙은 chain-up 뿐이라 규모에서의 tx·합의 거동을
   보는 스펙이 없다. 확인: `find tests/tc/go-wemix tests/tc/go-wbft -name '*.json' | wc -l`.

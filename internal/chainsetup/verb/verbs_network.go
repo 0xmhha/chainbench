@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -126,6 +127,24 @@ func NodeStop(ctx context.Context, d chainsetup.Deps, in NodeStopIn) error {
 	}
 	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 		return ws.StopNode(ctx, in.Index)
+	})
+	return err
+}
+
+// NodeResetIn selects one non-producing node of a network.
+type NodeResetIn struct {
+	DataDir string
+	Index   int
+}
+
+// NodeReset stops one non-producing node and initialises its datadir again,
+// leaving it down at the genesis block for a later NodeStart.
+func NodeReset(ctx context.Context, d chainsetup.Deps, in NodeResetIn) error {
+	if in.DataDir == "" || in.Index <= 0 {
+		return ErrNoDataDirAndIndex
+	}
+	_, err := chainsetup.WithWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		return ws.ResetNode(ctx, in.Index)
 	})
 	return err
 }
@@ -366,4 +385,56 @@ func ChainFork(_ context.Context, d chainsetup.Deps, in ChainForkIn) (ChainForkO
 		return ChainForkOut{}, err
 	}
 	return out, nil
+}
+
+// HostRunIn names the machine a command runs on by the address a node binds.
+type HostRunIn struct {
+	DataDir string
+	// Host is the address a node is placed at (node.Node.Host). The server set
+	// is searched for the entry with that address, and the command runs there.
+	Host string
+	// Command is the shell command, run through the target's elevation when the
+	// server set granted it (ssh.sudo) and directly otherwise.
+	Command string
+}
+
+// HostRun runs a command on the machine a node runs on.
+//
+// It exists for a fault that has to reach past a node's RPC. Splitting a
+// network in two means the halves cannot carry packets to each other, and
+// nothing a node exposes can arrange that: admin_removePeer drops a peer that
+// devp2p re-dials, and a chain whose governance lists its producers re-adds
+// them besides. A firewall on the machine can, and this is how a step reaches
+// one.
+//
+// It refuses a local target rather than running the command here. A local
+// composition's nodes share this machine, so a rule written for one would
+// apply to the harness and to every other node — and there is no privilege
+// boundary to ask for. A case that needs this asks for target:remote and is
+// skipped elsewhere; the refusal here is for the case that did not ask.
+func HostRun(ctx context.Context, d chainsetup.Deps, in HostRunIn) (string, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
+	if err != nil {
+		return "", err
+	}
+	acc, err := ws.OpenHost(in.Host)
+	if err != nil {
+		return "", err
+	}
+	run := acc.ElevatedRunner
+	if run == nil {
+		run = acc.Runner
+	}
+	if run == nil {
+		return "", fmt.Errorf("verb: host %s has no command runner — a local target runs no commands", in.Host)
+	}
+	res, err := run(ctx, in.Command)
+	if err != nil {
+		return res.Stdout + res.Stderr, err
+	}
+	if res.ExitCode != 0 {
+		return res.Stdout + res.Stderr, fmt.Errorf("verb: host %s: command exited %d: %s",
+			in.Host, res.ExitCode, strings.TrimSpace(res.Stderr))
+	}
+	return res.Stdout, nil
 }

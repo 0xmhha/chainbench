@@ -333,3 +333,21 @@ func TestEnvironmentResolve_RoleAbsentFallsBackToIndexOrder(t *testing.T) {
 		t.Fatalf("bp1 = %+v, %v", n, err)
 	}
 }
+
+// TestEnvironment_ResolveEachAll: "all" is every node, in index order, however
+// many the preset composed — so a case can say "on each node" without knowing
+// the topology it will run on.
+func TestEnvironment_ResolveEachAll(t *testing.T) {
+	s := newSession(t)
+	env, _ := s.NewEnvironment(session.Fingerprint("ffffffffffff0000"))
+	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
+		{Index: 3, Role: node.RoleEN}, {Index: 1, Role: node.RoleBP}, {Index: 2, Role: node.RoleBP},
+	}})
+	got, err := env.ResolveEach([]string{session.AllNodes})
+	if err != nil {
+		t.Fatalf("ResolveEach(all): %v", err)
+	}
+	if len(got) != 3 || got[0].Index != 1 || got[1].Index != 2 || got[2].Index != 3 {
+		t.Fatalf("ResolveEach(all) = %+v, want nodes 1, 2, 3", got)
+	}
+}

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "legacy-value-transfer",
+  "description": "CT-TX-002 — Legacy(0x0) 송금이 처리되고 보낸 쪽 잔액이 송금액과 수수료만큼 준다 (기존 명세 RT-A-2-01, TX-006, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-002). go-stablenet 전용인 regression/ethereum/08-legacy-transfer 는 가스 가격을 istanbul_getWbftExtraInfo.gasTip 으로 구해 다른 두 체인에서 돌지 않고, 받는 쪽만 본다. 여기서는 가스 가격을 eth_gasPrice 로 읽는다. 세 체인 모두 이 값이 풀의 하한을 넘는다. 새 계정이 자기 키로 legacy 를 서명해 보낸다(sendTx 의 key 와 gasPrice). 수수료는 영수증의 gasUsed × effectiveGasPrice 로 구하므로 체인마다 적용 가격 규칙이 달라도(go-stablenet 은 일반 계정에 min(gasTip + baseFee, gasPrice) 을 적용한다) 같은 식으로 확인된다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "recipient",
+      "saveKey": "recipientKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "before"
+    },
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "save": "gp"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "$recipient",
+      "value": "1000000000000000",
+      "gasPrice": "$gp",
+      "expect": "receipt",
+      "save": "h",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$h",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$used",
+        "$price"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$before",
+        "1000000000000000",
+        "$fee"
+      ],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "is": "$want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$recipient",
+      "compare": "Equal",
+      "is": "1000000000000000"
+    }
+  ]
+}

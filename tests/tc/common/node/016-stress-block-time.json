@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stress-block-time",
+  "description": "PR196-TC-017 — 블록을 오래 만들어도 간격이 유지되는지 본다(CT-NODE-016 의 부하 쪽). 2026-09-29 에 하한을 넣었다. 전에는 상한(2초)만 두었다. 초 단위 정수 경계로는 하한을 1로밖에 못 적는데, go-wemix 의 평균이 0.8초 언저리라 그러면 그 체인에서 늘 실패한다. 그래서 하한을 0으로 두었고, 그건 \"아무리 느려도 2초\" 만 말할 뿐 빨라지는 쪽은 아무것도 말하지 않았다. 블록이 한꺼번에 쏟아지는 고장은 이 테스트가 잡아야 할 것인데 잡지 못했다. 이제 밀리초로 [0.5, 2]초를 잡는다. 60블록을 보므로 016-block-period 보다 창이 길고 경계는 느슨하다. 부하 아래서도 무너지지 않는 것을 보는 것이지 주기를 다시 재는 것이 아니다.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 65,
+      "timeout": "300s"
+    },
+    {
+      "expect": "blockInterval",
+      "on": "node1",
+      "blocks": 60,
+      "minMillis": 500,
+      "maxMillis": 2000
+    }
+  ]
+}

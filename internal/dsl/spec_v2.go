@@ -82,6 +82,10 @@ type ChainPresetV2 struct {
 	Launch       map[string]map[string]any `json:"launch,omitempty"`
 	Config       map[string]map[string]any `json:"config,omitempty"`
 	Capabilities []string                  `json:"capabilities,omitempty"`
+	// Peering declares which nodes dial which, overriding the graph the
+	// composer would derive from the roles. A fault case that isolates part of
+	// a network says here which part; see PeeringV2.
+	Peering *PeeringV2 `json:"peering,omitempty"`
 	// Accounts declares test accounts by name, created and funded when the
 	// network comes up. They are not in the genesis on purpose: an account
 	// funded at run time is one the genesis never has to mention, so preparing
@@ -436,14 +440,27 @@ type CaseV2 struct {
 	// Description says what this case verifies, in prose. Strict parsing means
 	// a case cannot carry a note unless the grammar has a place for one, and a
 	// test that cannot say what it is for is read by opening its steps.
-	Description      string            `json:"description,omitempty"`
-	ChainPreset      json.RawMessage   `json:"chainPreset"`
-	ApplicableChains string            `json:"applicableChains,omitempty"`
-	Requires         []string          `json:"requires,omitempty"`
-	On               string            `json:"on,omitempty"`
-	Timeouts         map[string]string `json:"timeouts,omitempty"`
-	Hooks            *HooksV2          `json:"hooks,omitempty"`
-	Steps            []map[string]any  `json:"steps"`
+	Description      string          `json:"description,omitempty"`
+	ChainPreset      json.RawMessage `json:"chainPreset"`
+	ApplicableChains string          `json:"applicableChains,omitempty"`
+	Requires         []string        `json:"requires,omitempty"`
+	// SkipsOn are the chains this spec is expected NOT to run on, by chain id.
+	//
+	// It turns a silent skip into a decision. An unmet requirement skips a spec
+	// rather than failing it, so a run can report no failure while never having
+	// asked a third of its questions — measured on the common set, where 31 of
+	// 99 cases skipped on go-wemix and nothing said so.
+	//
+	// Absent, nothing changes: the spec may skip anywhere, as before. Present,
+	// it is exact — a skip on a chain it does not name fails, and so does
+	// running on a chain it does name, because a declaration that stopped being
+	// true is how the next reader is misled. An empty list is the useful case:
+	// "this must run everywhere".
+	SkipsOn  []string          `json:"skipsOn,omitempty"`
+	On       string            `json:"on,omitempty"`
+	Timeouts map[string]string `json:"timeouts,omitempty"`
+	Hooks    *HooksV2          `json:"hooks,omitempty"`
+	Steps    []map[string]any  `json:"steps"`
 }
 
 // sniff reads just enough to route a raw spec to its grammar.
@@ -453,3 +470,15 @@ type sniff struct {
 }
 
 // IsV2 reports whether raw declares the v2 grammar.
+
+// PeeringV2 is a declared peer graph. Each group is a set of node labels
+// ("node5") that dial each other and no one else; groups may overlap, and the
+// node in two groups is the bridge between them. Every node of the network must
+// be in some group, and the producers must reach each other through producers
+// (a pn does not relay consensus).
+//
+// It is written into each node's static-node list, and the readiness gate
+// holds the network until every node has exactly its declared peers.
+type PeeringV2 struct {
+	Groups [][]string `json:"groups"`
+}

@@ -38,7 +38,7 @@ func TestResolveAddressArgs_ResolvesLabelsInAValueList(t *testing.T) {
 		"source": "derive", "op": "abiCall", "selector": "0xb03d36cd",
 		"of": []any{"node2"},
 	}
-	out, err := resolveAddressArgs(d, spec)
+	out, err := resolveNamedArgs(d, spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestResolveAddressArgs_LeavesAListItCannotResolve(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			spec := map[string]any{"of": tc.of}
-			out, err := resolveAddressArgs(d, spec)
+			out, err := resolveNamedArgs(d, spec)
 			if err != nil {
 				t.Fatalf("an unresolvable element must not be an error here: %v", err)
 			}
@@ -93,10 +93,10 @@ func TestResolveAddressArgs_LeavesAListItCannotResolve(t *testing.T) {
 func TestResolveAddressArgs_AnUnknownLabelInAnAddressArgumentStillFails(t *testing.T) {
 	d, _ := depsWithRing(t)
 
-	if _, err := resolveAddressArgs(d, map[string]any{"from": "nosuchlabel"}); err == nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"from": "nosuchlabel"}); err == nil {
 		t.Fatal("an unknown account in \"from\" must fail")
 	}
-	if _, err := resolveAddressArgs(d, map[string]any{"of": []any{"nosuchlabel"}}); err != nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"of": []any{"nosuchlabel"}}); err != nil {
 		t.Fatalf("an unknown name in \"of\" must be left alone: %v", err)
 	}
 }
@@ -170,11 +170,11 @@ func TestResolveAddressArgs_ASignerIsNeverAContract(t *testing.T) {
 	d, _ := depsWithRing(t)
 	d.Contracts = map[string]string{"govMinter": "0x0000000000000000000000000000000000001003"}
 
-	if _, err := resolveAddressArgs(d, map[string]any{"from": "govMinter"}); err == nil {
+	if _, err := resolveNamedArgs(d, map[string]any{"from": "govMinter"}); err == nil {
 		t.Error("a contract name in \"from\" must be refused")
 	}
 	// The same name in an address position resolves.
-	out, err := resolveAddressArgs(d, map[string]any{"to": "govMinter"})
+	out, err := resolveNamedArgs(d, map[string]any{"to": "govMinter"})
 	if err != nil {
 		t.Fatalf("\"to\" must accept a contract: %v", err)
 	}

@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fd-feepayer-sig-invalid-rejected",
+  "description": "RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid) 보낸 이와 대납자는 서로 다른 계정이고, 거부 사유가 대납자 서명 검사('fee delegation: invalid feePayer')인지 확인한다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "payer",
+      "saveKey": "payerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundSenderHash",
+      "to": "$sender",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundPayerHash",
+      "to": "$payer",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundSenderHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundPayerHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "sendRawTampered",
+      "feePayerKey": "$payerKey",
+      "on": "node2",
+      "senderKey": "$senderKey",
+      "to": "0x00000000000000000000000000000000C0FFEE21",
+      "value": "1",
+      "which": "feepayer",
+      "save": "refusal",
+      "reason": "fee delegation: invalid feePayer"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
+    }
+  ]
+}

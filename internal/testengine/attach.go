@@ -182,6 +182,8 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Keys:      keys,
 		Nodes:     cfg.Control,
 		Contracts: chainContracts(cfg.Chain),
+
+		Validators: chainValidators(cfg.Chain),
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
@@ -306,4 +308,30 @@ func chainContracts(chain string) map[string]string {
 		return nil
 	}
 	return p.Manifest().SystemContracts
+}
+
+// chainValidators binds this run to the way THIS chain's validator set is read.
+//
+// registry.RunningValidators makes the choice: a family with its own reader
+// answers through that (wemix asks the governance contract its nodes agree on),
+// and otherwise the manifest's method is called (istanbul_getValidators on
+// wbft and stablenet). Its doc says it is the single place that choice is made
+// so the verify check and the validators query cannot diverge — a run is the
+// third caller and makes it there rather than a fourth time here.
+//
+// Reading the manifest method directly is what this did before, and on wemix
+// that is wemix_getValidators, a method go-wemix does not serve. Measured
+// 2026-09-28: the call came back -32601 and the case failed on a chain that
+// can answer the question perfectly well by its own route.
+//
+// nil when the chain is unknown, so Deps.Validators is nil and asking says so.
+func chainValidators(chain string) func(context.Context, *rpc.Client) ([]string, error) {
+	p, err := registry.Get(chain)
+	if err != nil {
+		return nil
+	}
+	return func(ctx context.Context, c *rpc.Client) ([]string, error) {
+		_, vals, verr := registry.RunningValidators(ctx, p, c)
+		return vals, verr
+	}
 }

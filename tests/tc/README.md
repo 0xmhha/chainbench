@@ -8,16 +8,30 @@
 
 ```
 tests/tc/
+├── common/                 ← 세 체인에서 같은 목적으로 도는 것 (91건)
+│   └── {node,tx,fee,contract,rpc,fault}/
 ├── go-stablenet/           ← 레거시 tests/stablenet
-│   ├── regression/{ethereum,wbft,anzeon,fee-delegation,
+│   ├── regression/{ethereum,wbft,anzeon,
 │   │                blacklist-authorized,system-contracts,api}
 │   └── post-v1.0.0-change/{common-all,extra-state,
 │                           effectivegasprice,string-handling,stand-alone}
 ├── go-wbft/                ← 레거시 tests/wemix4 중 wbft 대상 + wbft 전용
 ├── go-wemix/               ← 레거시 tests/wemix4 중 wemix(poa) 대상
-├── basic/  fault/  stress/  remote/   ← 레거시 동명 폴더
-└── samples/                ← 작성 샘플
+└── basic/                  ← 레거시 동명 폴더 중 공통으로 가지 않은 것
 ```
+
+`common/` 이 1단에 있는 것은 체인이 아니어서다. 나머지 1단은 한 체인의 것이고,
+`common/` 은 어느 체인에서도 같은 목적으로 돌 수 있는 것이다. 무엇이 왜 거기 있는지는
+[`common/README.md`](common/README.md) 가 적는다.
+
+레거시 동명 폴더였던 `fault/`·`stress/`·`remote/`·`samples/` 는 담고 있던 케이스가
+전부 공통으로 갔고, `basic/` 은 8건 중 6건이 갔다. 남은 둘은
+`07-basic-wbft-consensus`(wbft 합의 전용)와 `08-attached-chain-produces`(attach 선언을
+검사하는 유일한 케이스)다.
+
+공통으로 갔다가 되돌아온 것이 여덟 있다. 2026-09-28 에 세 체인 소스를 대조하니
+go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내역은
+[`common/README.md`](common/README.md) §4.1 이다.
 
 파일명은 `<레거시 번호>-<테스트 id>.json` 이다. 번호는 레거시 스위트의 순번을 그대로
 가져와 대조가 되게 했고, 뒤의 id 가 무엇을 검증하는지 말한다. 레거시 하나가 여러
@@ -370,7 +384,7 @@ tests/tc/
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
-| `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-minimal.json | stablenet | `default=gstable` | bp=4 | — |
+| `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/common/tx/001-sample-minimal.json | stablenet | `default=gstable` | bp=4 | — |
 | `02-sample-lifecycle.json` | 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md) | stablenet | `default=${GSTABLE_BIN:-gstable}` | bp=4, en=1 | 있음 |
 
 ### `stress` (2)

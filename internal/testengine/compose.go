@@ -354,6 +354,11 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if proxies > 0 || topologyHasProxy(inlineTopo) {
 		up.Peering = string(node.Proxied)
 	}
+	// A declared graph wins over the derived one: the case said which node
+	// dials which, and that is the network it is about.
+	if spec.EnvPeering != "" {
+		up.Peering = spec.EnvPeering
+	}
 	// The env's target selects where the network is placed (local data root, a
 	// server-set entry, or an ssh host). It fed only the reuse fingerprint
 	// before, so a declared target shifted the key without moving the nodes;

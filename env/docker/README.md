@@ -34,6 +34,30 @@ ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server
 실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을 띄우지 않기
 위해서다.
 
+## 바이너리를 먼저 넣는다
+
+컨테이너의 `/data/chainbench/bin/` 에 대상 체인의 **리눅스** 바이너리가 있어야 한다. 맥에서 만든 것은 Mach-O 라 돌지 않는다. 골랑 컨테이너에서 만들어 넣는다(2026-09-29 에 이렇게 만들었다).
+
+```bash
+# 저장소는 읽기 전용으로 붙인다 — 산출물이 기존 build/bin 을 덮지 않게.
+docker run --rm -v ~/Work/github/chain/go-stablenet:/src:ro -v /tmp/out:/out \
+  -v cbgocache:/gocache -e GOCACHE=/gocache/build -e GOMODCACHE=/gocache/mod \
+  -w /src golang:1.25 go build -o /out/gstable ./cmd/gstable
+
+for i in $(seq 1 15); do
+  docker exec -u root chainbench-server$i mkdir -p /data/chainbench/bin
+  docker cp /tmp/out/gstable chainbench-server$i:/data/chainbench/bin/gstable
+done
+```
+
+go-wbft 는 `./cmd/gwemix` 를 빌드해 `gwbft` 로 넣는다(저장소가 go-wemix 에서 갈라져 나와 이름이 남았고, 매니페스트는 `gwbft` 를 부른다). go-wemix 는 go.mod 이 요구하는 `golang:1.19` 로 빌드한다.
+
+## 어느 서버 세트인가
+
+go-wemix 는 `server-set-wemix.yaml` 을 쓴다. poa 가 p2p 옆 포트를 3개 잡아 `p2p_step` 이 3이어야 하고, 기본 세트는 1이라 거절당한다.
+
+노드를 여러 대에 퍼뜨리려면 `--all-servers` 가 필요하다. 세트에 서버가 15대라 이름을 대지 않으면 거절하고, 하나를 대면 그 서버의 슬롯(4개)만 쓴다. 방화벽으로 망을 가르는 케이스는 무리마다 기계가 달라야 하므로 이 옵션이 필수다.
+
 ## 15대에 테스트 돌리기
 
 `--all-servers` 는 노드를 서버당 하나씩 15대에 퍼뜨리고, `--docker` 는 dial 을
@@ -47,7 +71,7 @@ bin/chainbench run \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys <ws>/genkeys \
-  tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
+  tests/tc/common/node/002-stablenet-chain-up-15.json
 ```
 
 `chain-up-15` 의 env 블록이 15노드 topology 를 선언한다. 바이너리 경로는 선언하지
@@ -98,17 +122,17 @@ CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test -p 1 -timeout 60m ./...
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
-  tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
+  tests/tc/common/node/002-stablenet-chain-up-15.json
 
 # wbft                      — server-set.yaml, 기본 게이트
-bin/chainbench run ... tests/tc/go-wbft/chain-up/02-wbft-chain-up-15.json
+bin/chainbench run ... tests/tc/common/node/002-wbft-chain-up-15.json
 
 # go-wemix (poa)           — server-set-wemix.yaml 필요, 게이트 예산 상향
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set-wemix.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
-  tests/tc/go-wemix/chain-up/02-wemix-chain-up-15.json
+  tests/tc/common/node/002-wemix-chain-up-15.json
 ```
 
 go-wemix(poa)는 stablenet/wbft 와 두 가지가 다르다:

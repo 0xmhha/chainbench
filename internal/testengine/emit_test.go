@@ -82,8 +82,10 @@ func TestEngine_EmitResultCarriesStatus(t *testing.T) {
 
 func TestEngine_EmitSkipsInapplicable(t *testing.T) {
 	h := &harness{
-		fpByChain:  map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
-		applicable: func(s dsl.Spec) bool { return s.Chain.Name == "wbft" },
+		fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
+		applicable: func(s dsl.Spec) testengine.Applicability {
+			return testengine.Applicability{Runs: s.Chain.Name == "wbft", Foreseen: true}
+		},
 	}
 	evs := collectEvents(t, h, [][]byte{specJSON("T1", "stablenet")}, "wbft")
 	if !containsMsg(evs, "spec skipped") {

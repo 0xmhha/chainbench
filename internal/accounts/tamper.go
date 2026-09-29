@@ -15,6 +15,16 @@ import (
 // signature; which is "sender" or "feepayer". The caller submits the bytes with
 // eth_sendRawTransaction and expects an error.
 func EncodeFeeDelegatedTampered(senderKey, feePayerKey []byte, toHex string, amountWei *big.Int, chainID int64, nonce uint64, gasFeeCap, gasTipCap *big.Int, which string) ([]byte, error) {
+	tx, err := feeDelegatedTampered(senderKey, feePayerKey, toHex, amountWei, chainID, nonce, gasFeeCap, gasTipCap, which)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Encode()
+}
+
+// feeDelegatedTampered is EncodeFeeDelegatedTampered before encoding, so a test
+// can recover the signers from what it built.
+func feeDelegatedTampered(senderKey, feePayerKey []byte, toHex string, amountWei *big.Int, chainID int64, nonce uint64, gasFeeCap, gasTipCap *big.Int, which string) (*sdktx.FeeDelegateTx, error) {
 	if amountWei == nil || gasFeeCap == nil || gasTipCap == nil {
 		return nil, fmt.Errorf("accounts: nil amount or fee cap")
 	}
@@ -45,13 +55,20 @@ func EncodeFeeDelegatedTampered(senderKey, feePayerKey []byte, toHex string, amo
 
 	switch which {
 	case "sender":
-		tx.Sender.R = corruptSig(tx.Sender.R)
+		// S, not R. A changed R is a valid x-coordinate about half the time, so
+		// the node refused either at sender recovery ("invalid sender") or, when
+		// recovery found some other address, at the fee-payer signature that
+		// covers the sender's ("invalid feePayer") — a coin toss per run. A
+		// changed S always recovers, to another address, so the refusal is
+		// always the fee-payer check: the one check that can tell an altered
+		// sender signature from a genuine one.
+		tx.Sender.S = corruptSig(tx.Sender.S)
 	case "feepayer":
 		tx.FR = corruptSig(tx.FR)
 	default:
 		return nil, fmt.Errorf("accounts: which must be \"sender\" or \"feepayer\", got %q", which)
 	}
-	return tx.Encode()
+	return tx, nil
 }
 
 // AddressOf returns the 0x-prefixed hex address of a raw secp256k1 private key.

@@ -126,6 +126,7 @@ var verbNeeds = map[string]verbNeed{
 	"Dir":            {why: "accessor"},
 	"State":          {why: "accessor"},
 	"RPCHost":        {why: "accessor"},
+	"OpenHost":       {why: "opens the machine a placed node runs on; it asks the node record for an address and the server set for the way there, and requires no step of its own"},
 	"Have":           {why: "accessor: it answers whether a step ran, so requiring one would be circular"},
 	"NodeSet":        {why: "accessor over the node table; an empty table is an empty set, which is the true answer"},
 	"Netmap":         {why: "derives a view from whatever is placed; an empty table is an empty map"},
@@ -142,6 +143,7 @@ var verbNeeds = map[string]verbNeed{
 	"Retarget":            {why: "rewrites where the workspace points, which is what a stale target needs"},
 	"Logs":                {why: "a dead node's log is the reason to ask for it; it refuses an unknown index by name"},
 	"Stop":                {why: "stopping what is already stopped is the outcome the caller asked for"},
+	"StopUnrecorded":      {why: "it exists for the case where the record is empty and nodes are up, so requiring the record to say anything would disable it"},
 	"StopNode":            {why: "same as Stop, for one node"},
 	"RollBackLaunch":      {why: "undoes a launch that failed part way, so it runs exactly where the launch's own requirements were not met"},
 	"RunningNodes":        {why: "accessor"},
@@ -157,6 +159,7 @@ var verbNeeds = map[string]verbNeed{
 	"StartNode":           {node: []nodeNeed{down, launched}},
 	"SwapNode":            {node: []nodeNeed{launched}},
 	"Restart":             {why: "delegates to StopNode and StartNode, which each answer for themselves"},
+	"ResetNode":           {why: "delegates the stop to StopNode; the re-init needs only a node the table holds, which nodeAt answers"},
 	// Crossing a fork, one verb per moment. Each names the node or binary the
 	// fork has nobody to run on, which a table-wide state cannot — and a
 	// crossing is asked for on a network that is running, which "stopped" and

@@ -1,0 +1,209 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fee-delegated-transfer",
+  "description": "RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal) 문서(CT-TX-005)의 기대 결과대로 형식이 0x16 인지, 보낸 계정은 송금액(1 ETH)만 줄고 대납 계정은 수수료(gasUsed × effectiveGasPrice)만 줄었는지 확인한다. 대납 트랜잭션은 node2 로 보낸다 — 이 preset 에는 종단 노드가 없어 예전의 en1 은 node1 이었다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "feePayer",
+      "saveKey": "feePayerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundSenderHash",
+      "to": "$sender",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundFeeHash",
+      "to": "$feePayer",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundFeeHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$fundSenderHash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "senderBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$feePayer",
+      "save": "payerBefore"
+    },
+    {
+      "do": "sendTx",
+      "feePayerKey": "$feePayerKey",
+      "key": "$senderKey",
+      "on": "node2",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE02",
+      "value": "1000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "expected": "0x1",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "gasUsed",
+      "save": "gasUsed"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "gasPrice"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$gasUsed",
+        "$gasPrice"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "senderAfter"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$feePayer",
+      "save": "payerAfter"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundSenderHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundFeeHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "address": "0x00000000000000000000000000000000C0FFEE02",
+      "compare": "Equal",
+      "expect": "balanceAt",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hash"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x16"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$senderBefore",
+        "$senderAfter"
+      ],
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$payerBefore",
+        "$payerAfter"
+      ],
+      "compare": "Equal",
+      "is": "$fee"
+    }
+  ]
+}

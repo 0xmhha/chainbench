@@ -2,10 +2,12 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-register-contract",
-  "description": "registerContract against a contract with a real ABI and real storage. The earlier version of this case deployed a stub that accepted any call and returned a constant, and asserted only that the transaction did not revert - which any four bytes of data would satisfy, so it exercised the action and proved nothing about registering. This deploys a NodeRegistry with register(address), registered(address) and count(), and reads the registration back. Source (compiled with solc 0.8.28, bytecode inlined so the repository needs no compiler): mapping(address => bool) registered; uint256 count; function register(address node) external { require(!registered[node], \"already registered\"); registered[node] = true; count += 1; } Selectors: register 0x4420e486, registered 0xb2dd5c07, count 0x06661abd. Four claims. The address reads as unregistered before and registered after, so the write is what changed it. A second node answers the same, so the state reached consensus rather than one node's view. count is exactly 1, so one call registered one node. And registering the same address twice reverts on the contract's own require, which is the ABI-level negative path.",
+  "description": "registerContract against a contract with a real ABI and real storage. The earlier version of this case deployed a stub that accepted any call and returned a constant, and asserted only that the transaction did not revert - which any four bytes of data would satisfy, so it exercised the action and proved nothing about registering. This deploys a NodeRegistry with register(address), registered(address) and count(), and reads the registration back. Source (compiled with solc 0.8.28, bytecode inlined so the repository needs no compiler): mapping(address => bool) registered; uint256 count; function register(address node) external { require(!registered[node], \"already registered\"); registered[node] = true; count += 1; } Selectors: register 0x4420e486, registered 0xb2dd5c07, count 0x06661abd. Four claims. The address reads as unregistered before and registered after, so the write is what changed it. A second node answers the same, so the state reached consensus rather than one node's view. count is exactly 1, so one call registered one node. And registering the same address twice reverts on the contract's own require, which is the ABI-level negative path. 배포하는 NodeRegistry 바이트코드가 PUSH0 를 45번 쓴다. go-wemix 의 EVM 은 London 세대에서 멈춰 있어 그 옵코드가 없고, 배포가 가스 한도를 전부 태우고 실패한다(2026-09-28 실측). go-wbft 는 croissant 가, go-stablenet 은 anzeon 이 PUSH0 를 켜므로 둘에서는 돈다.",
   "requires": [
-    "rpc"
+    "rpc",
+    "evm:shanghai"
   ],
+  "skipsOn": [],
   "chainPreset": "stablenet-bp4",
   "steps": [
     {

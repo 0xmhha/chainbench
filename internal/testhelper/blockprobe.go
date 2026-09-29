@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -48,15 +49,23 @@ func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 		res.Actual = err.Error()
 		return res, err
 	}
-	c, err := clientFor(ac.Deps, targets[0].url)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
-	start, err := c.BlockNumber(ctx)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
+	// Every target. "These nodes have stopped" is the claim, and reading one of
+	// them cannot support it: a partition halts both sides, and a case that
+	// watched only the first would pass while the other kept sealing.
+	clients := make([]*rpc.Client, len(targets))
+	starts := make([]uint64, len(targets))
+	for i, t := range targets {
+		c, err := clientFor(ac.Deps, t.url)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		start, err := c.BlockNumber(ctx)
+		if err != nil {
+			res.Actual = fmt.Sprintf("%s: %v", t.name, err)
+			return res, err
+		}
+		clients[i], starts[i] = c, start
 	}
 
 	maxAdv := uint64(defaultBlockHaltMaxAdv)
@@ -75,19 +84,29 @@ func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 	case <-time.After(window):
 	}
 
-	end, err := c.BlockNumber(ctx)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
+	var report []string
+	var moving []string
+	pass := true
+	for i, t := range targets {
+		end, err := clients[i].BlockNumber(ctx)
+		if err != nil {
+			res.Actual = fmt.Sprintf("%s: %v", t.name, err)
+			return res, err
+		}
+		advanced := end - starts[i]
+		if end < starts[i] {
+			advanced = 0
+		}
+		report = append(report, fmt.Sprintf("%s %d->%d (+%d)", t.name, starts[i], end, advanced))
+		if advanced > maxAdv {
+			pass = false
+			moving = append(moving, t.name)
+		}
 	}
-	advanced := end - start
-	if end < start {
-		advanced = 0
-	}
-	res.Actual = fmt.Sprintf("advanced %d (head %d -> %d)", advanced, start, end)
-	res.Pass = advanced <= maxAdv
-	if !res.Pass {
-		res.Source = "head kept advancing — network did not halt"
+	res.Actual = strings.Join(report, ", ")
+	res.Pass = pass
+	if !pass {
+		res.Source = "head kept advancing on " + strings.Join(moving, ", ") + " — those did not halt"
 	}
 	return res, nil
 }
@@ -98,7 +117,8 @@ func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 // bounded, positive cadence.
 //
 // Args: on, blocks (sample count; default 20), maxSeconds (default 60),
-// minSeconds (default 0).
+// minSeconds (default 0), maxMillis / minMillis (the same bounds where a whole
+// second is too coarse; they win when both are given).
 type blockIntervalAssertion struct{}
 
 func (blockIntervalAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
@@ -149,15 +169,32 @@ func (blockIntervalAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 		return res, err
 	}
 
+	// Bounds in seconds, or in milliseconds when a second is too coarse to say
+	// what is meant. A block timestamp is a whole second, so a chain sealing
+	// near one second a block averages a little under or over it; measured
+	// 2026-09-29, WEMIX3.0 ran 0.79-0.86s. Against integer-second bounds the
+	// only bound that fits is 0, which asserts nothing — the case passed while
+	// saying nothing about the cadence. Milliseconds let it say 900 and mean it.
 	maxSecs := float64(defaultIntervalMaxSecs)
 	if v, ok := uintArg(ac.Spec["maxSeconds"]); ok {
 		maxSecs = float64(v)
+	}
+	if v, ok := uintArg(ac.Spec["maxMillis"]); ok {
+		maxSecs = float64(v) / 1000
 	}
 	minSecs := float64(defaultIntervalMinSecs)
 	if v, ok := uintArg(ac.Spec["minSeconds"]); ok {
 		minSecs = float64(v)
 	}
-	res.Expected = fmt.Sprintf("avg interval in [%.0f, %.0f]s over %d blocks", minSecs, maxSecs, samples)
+	if v, ok := uintArg(ac.Spec["minMillis"]); ok {
+		minSecs = float64(v) / 1000
+	}
+	if minSecs > maxSecs {
+		err := fmt.Errorf("dsl: blockInterval: the floor (%.3fs) is above the ceiling (%.3fs)", minSecs, maxSecs)
+		res.Actual = err.Error()
+		return res, err
+	}
+	res.Expected = fmt.Sprintf("avg interval in [%.3f, %.3f]s over %d blocks", minSecs, maxSecs, samples)
 	res.Actual = fmt.Sprintf("%.2fs", avg)
 	res.Pass = avg >= minSecs && avg <= maxSecs
 	if !res.Pass {

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "txpool-status",
+  "description": "RT-G-4-02 — txpool_status 의 건수가 넣은 수와 맞는지 본다 (원본 regression/api/18-test-txpool-status, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-011). 블록이 나오는 동안에는 실행 가능한 트랜잭션이 넣자마자 채굴되어 대기(pending) 건수를 셀 수 없다. 그래서 검증 노드 넷 중 둘(node3, node4)을 멈춰 합의를 세우고, 멈췄는지 blockHalt 로 확인한 뒤 넣는다. 새 계정에서 연속 nonce 0, 1 두 건과 nonce 2 를 건너뛴 3, 4 두 건을 node1 에 넣으면 대기 2, 보류(queued) 2 가 정확한 수다. 두 노드를 다시 켜면 연속 두 건만 채굴되어 계정 nonce 가 2 가 되고, 격차 두 건은 보류에 남는다(대기 0, 보류 2). 건수는 트랜잭션을 받은 node1 에서 본다. 멈춘 노드는 조회할 수 없고, 다른 노드의 풀은 전파 시점에 따라 다르다. nonce 를 직접 적은 전송은 로컬 서명 경로를 타므로 수수료 상한을 적는다. 네 건의 최대 비용을 감당하도록 10 ETH 를 준다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "spender",
+      "saveKey": "spenderKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$spender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "stopNode",
+      "on": "node4"
+    },
+    {
+      "expect": "blockHalt",
+      "on": "node1",
+      "within": "12s",
+      "maxAdvance": 1
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "0",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "1",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "3",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$spenderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE11",
+      "value": "1",
+      "gas": "21000",
+      "nonce": "4",
+      "maxFeePerGas": "35000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "wait": false
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_status",
+      "select": "pending",
+      "compare": "Equal",
+      "is": "0x2"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_status",
+      "select": "queued",
+      "compare": "Equal",
+      "is": "0x2"
+    },
+    {
+      "do": "startNode",
+      "on": "node3"
+    },
+    {
+      "do": "startNode",
+      "on": "node4"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "nonceAt",
+      "address": "$spender",
+      "compare": "Equal",
+      "expected": "2",
+      "timeout": "90s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_status",
+      "select": "pending",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_status",
+      "select": "queued",
+      "compare": "Equal",
+      "is": "0x2"
+    }
+  ]
+}

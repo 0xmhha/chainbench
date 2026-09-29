@@ -49,6 +49,17 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 	return out.Node, nil
 }
 
+// Reset stops one non-producing node and initialises its datadir again
+// through the workspace, satisfying interp.NodeResetter so the resetNode
+// action reaches it.
+func (w workspaceNodes) Reset(ctx context.Context, n node.Node) (node.Node, error) {
+	if err := verb.NodeReset(ctx, w.sd, verb.NodeResetIn{DataDir: w.dataDir, Index: n.Index}); err != nil {
+		return n, err
+	}
+	n.PID = 0
+	return n, nil
+}
+
 // Swap relaunches one node with a different binary and/or config through the
 // workspace, satisfying interp.NodeSwapper so the swapNode action reaches it.
 func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
@@ -132,3 +143,12 @@ func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (strin
 // Reading the record rather than the in-memory state is deliberate: the record
 // is what a later reader sees, so a fact that never reached it is a fact the
 // run cannot show afterwards either.
+
+// RunOnHost runs a command on the machine a node runs on, satisfying
+// interp.HostCommander so a fault step that has to program a firewall can
+// reach one. The workspace resolves the machine from the address the node
+// binds, and refuses a local composition, where there is no machine to reach
+// and no privilege boundary to cross.
+func (w workspaceNodes) RunOnHost(ctx context.Context, n node.Node, command string) (string, error) {
+	return verb.HostRun(ctx, w.sd, verb.HostRunIn{DataDir: w.dataDir, Host: n.Host, Command: command})
+}

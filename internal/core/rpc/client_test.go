@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -132,6 +133,31 @@ func TestClient_ServerError(t *testing.T) {
 	defer srv.Close()
 	if _, err := Dial(srv.URL).BlockNumber(context.Background()); err == nil {
 		t.Error("expected server error")
+	}
+}
+
+// TestClient_ServerErrorIsTyped: an error the node answered with can be told
+// apart from one that never reached it, and its text is what callers matched
+// before the type existed.
+func TestClient_ServerErrorIsTyped(t *testing.T) {
+	srv := rpcServer(t, map[string]any{})
+	defer srv.Close()
+	err := Dial(srv.URL).Call(context.Background(), "eth_nothing", nil)
+	var se *ServerError
+	if !errors.As(err, &se) {
+		t.Fatalf("error %v is not a *ServerError", err)
+	}
+	if se.Code != -32601 || se.Message != "method not found" {
+		t.Errorf("ServerError = %+v, want code -32601 and the node's message", se)
+	}
+	if want := "rpc: eth_nothing: server error -32601: method not found"; err.Error() != want {
+		t.Errorf("text = %q, want %q", err.Error(), want)
+	}
+
+	srv.Close()
+	err = Dial(srv.URL).Call(context.Background(), "eth_nothing", nil)
+	if errors.As(err, &se) {
+		t.Errorf("a refused connection %v reads as a server error", err)
 	}
 }
 

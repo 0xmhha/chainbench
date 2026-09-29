@@ -26,6 +26,23 @@ type Deps struct {
 	// processes — attach mode — and those actions then fail with a clear reason
 	// rather than silently doing nothing.
 	Nodes NodeControl
+	// Validators reads the chain's current validator set the way that chain
+	// exposes it, so a case can ask who the validators are without naming a
+	// method.
+	//
+	// It is a function rather than a method name because a name is not enough.
+	// wbft and stablenet answer istanbul_getValidators; wemix has no such
+	// method at all and its set is read from the governance contract its
+	// nodes agree on. A case that wrote either spelling would run on one chain
+	// and be refused by the other, and the chain-shaped half of that choice is
+	// registry.RunningValidators, which already makes it in one place for the
+	// verify check and the validators query. This carries that one choice into
+	// a run instead of making it a second time.
+	//
+	// nil when the run has no chain plugin to ask (attach mode against an
+	// endpoint whose chain was not resolved); asking then fails with that
+	// reason rather than guessing a method.
+	Validators func(ctx context.Context, c *rpc.Client) ([]string, error)
 	// Contracts are the chain's own contracts by the name that chain calls
 	// them, so a spec can name one instead of writing the address.
 	//
@@ -56,15 +73,20 @@ type Registry interface {
 }
 
 // Reader reads one value from a target node for the spec's arguments.
-type Reader func(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error)
+type Reader func(ctx context.Context, d *Deps, c *rpc.Client, spec map[string]any) (any, error)
 
-// ActionRead and ActionWaitFor are the action names the grammar itself knows:
-// each names a read source by string, and Unresolved checks that source
-// against the registered readers offline so a typo fails before a network is
-// up rather than in the middle of a live run.
+// The action names the grammar itself knows, because Unresolved has to look
+// inside their arguments.
+//
+// ActionRead and ActionWaitFor each name a read source by string, and
+// Unresolved checks that source against the registered readers offline so a
+// typo fails before a network is up rather than in the middle of a live run.
+// ActionNewAccount binds the generated key under "saveKey", and a step that
+// omits it throws the key away.
 const (
-	ActionRead    = "read"
-	ActionWaitFor = "waitFor"
+	ActionRead       = "read"
+	ActionWaitFor    = "waitFor"
+	ActionNewAccount = "newAccount"
 )
 
 // NodeControl stops and restarts individual node processes. It is the boundary
@@ -91,6 +113,32 @@ type NodeSwapper interface {
 	// Swap stops n and relaunches it with change applied, keeping the same
 	// datadir and genesis, and returns it with its new pid.
 	Swap(ctx context.Context, n node.Node, change NodeChange) (node.Node, error)
+}
+
+// HostCommander is an optional NodeControl capability: running a command on
+// the machine a node runs on. A control over a network composed on machines
+// this harness reaches implements it; a local composition and plain attach do
+// not, and an action that needs it says so rather than failing obscurely.
+//
+// It exists for the one fault a node's own RPC cannot arrange. Splitting a
+// network means the halves cannot carry packets to each other, and
+// admin_removePeer only drops a peer that devp2p re-dials — on a chain whose
+// governance lists its producers, they are re-added besides. A firewall on the
+// machine can, and this is the reach a step needs to program one.
+type HostCommander interface {
+	// RunOnHost runs a shell command on the machine n runs on, elevated when
+	// the target granted elevation, and returns its standard output.
+	RunOnHost(ctx context.Context, n node.Node, command string) (string, error)
+}
+
+// NodeResetter is an optional NodeControl capability: stopping a
+// non-producing node and initialising its datadir again, so a later Start
+// brings it up at the genesis block. A control that owns the datadirs
+// implements it; attach mode does not.
+type NodeResetter interface {
+	// Reset stops n, clears its chain data and re-initialises its datadir,
+	// and returns it stopped (pid 0).
+	Reset(ctx context.Context, n node.Node) (node.Node, error)
 }
 
 // NodeLogReader is an optional NodeControl capability: reading the tail of a

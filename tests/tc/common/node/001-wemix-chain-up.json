@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-chain-up",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": "wemix-bp4-binvar",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "180s"
+    },
+    {
+      "expect": "chainId",
+      "compare": "Equal",
+      "is": "8283",
+      "isPerChain": {
+        "wbft": "8284",
+        "wemix": "8285"
+      }
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "rpc",
+      "method": "net_peerCount",
+      "compare": "NotEqual",
+      "is": "0x0"
+    }
+  ]
+}

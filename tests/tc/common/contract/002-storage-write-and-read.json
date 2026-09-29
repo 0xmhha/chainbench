@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "storage-write-and-read",
+  "description": "RT-A-3-02 — 저장값을 바꾸는 함수를 부르면 바뀐 값이 조회되는지 본다 (절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-002). 한동안 공통에서 빠져 있었다. 이유는 쓰던 컨트랙트가 PUSH0 를 담아 go-wemix 에서 배포되지 않는다는 것이었는데, go-wemix 의 EVM 은 London 세대에서 멈춰 있어 Shanghai 가 들여온 PUSH0(0x5f)를 모른다. 그것은 체인의 성질이고 바꿀 수 없다. 다만 재려던 것은 \"저장값을 바꾸고 다시 읽는다\" 이고 그 동작은 세 체인이 다 한다. 그래서 컨트랙트를 PUSH0 없이 손으로 써서 공통으로 되돌린다. solc 가 낸 바이트코드는 따로 지정하지 않으면 PUSH0 를 내므로 쓰지 않는다. 런타임 26바이트는 이렇게 돈다. 호출 데이터가 32바이트보다 길면 앞 32바이트를 0번 슬롯에 쓰고 멈추고, 짧으면 0번 슬롯을 읽어 돌려준다. 선택자를 두지 않은 것은 손으로 쓴 분기를 짧게 유지하기 위해서다. 쓰기는 32바이트 값을 그대로 보내고 읽기는 1바이트를 보낸다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x601a600c600039601a6000f336602011600e57600035600055005b60005460005260206000f3",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "select": "contractAddress",
+      "save": "box"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$box",
+      "compare": "NotEqual",
+      "expected": "0x",
+      "pollInterval": "1s",
+      "timeout": "60s"
+    },
+    {
+      "expect": "call",
+      "to": "$box",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$box",
+      "data": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "gas": "100000",
+      "expect": "receipt",
+      "save": "whash"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$whash",
+      "is": "0x1"
+    },
+    {
+      "expect": "call",
+      "to": "$box",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    }
+  ]
+}

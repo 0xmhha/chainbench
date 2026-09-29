@@ -42,6 +42,48 @@ const (
 	// manifest says what its ordinary network provides, and a network that
 	// turns the fork on declares the capability alongside its overlay.
 	CapPrecompile = "precompile:"
+	// CapEVM asks for an opcode set the chain's EVM answers, named by the
+	// Ethereum fork that introduced it.
+	//
+	// It is declared rather than derived, for the reason CapPrecompile is. A
+	// chain's own fork names say nothing about which opcodes came with them:
+	// go-wemix's brioche, go-wbft's croissant and go-stablenet's anzeon are
+	// three different names, and only two of the three tables turn PUSH0 on.
+	// Nor is the Ethereum fork name in any of the three genesis templates, so
+	// there is nothing to derive it from.
+	//
+	// Measured 2026-09-28 on the common-set sweep. A case deployed a contract
+	// solc 0.8.28 had compiled for its default target, so the initcode carried
+	// PUSH0 forty-five times. go-stablenet and go-wbft ran it. go-wemix's jump
+	// table stops at London — core/vm/interpreter.go has no branch above
+	// IsMerge and core/vm/jump_table.go builds no table above it, so enable3855
+	// is reachable only through ExtraEips — and the deploy met an opcode that
+	// is not there, burned the whole limit and came back status 0x0. Nothing
+	// could have gated it: no capability said what the contract needed.
+	CapEVM = "evm:"
+
+	// CapTarget is where the network runs rather than what the chain can do:
+	// "target:remote" for a network on machines this harness reaches over SSH,
+	// "target:local" for one in processes on this machine.
+	//
+	// It is not a manifest's to declare — no chain is remote — so it is
+	// advertised by the composed network. It earns a prefix because a case has
+	// to be able to ask for it: a fault that programs a firewall needs a target
+	// with a shell and NET_ADMIN, which a local run does not have, and without
+	// the capability such a case can only be remembered rather than declared.
+	// Asking for it turns a run on the wrong target into a SKIP with a reason.
+	CapTarget = "target:"
+)
+
+// The two values CapTarget takes. A composed network advertises exactly one.
+const (
+	// TargetRemote: the nodes run on machines reached over SSH. A server set
+	// names them; the docker fleet is one, standing in for servers this machine
+	// cannot reach, and it is not a third kind of target.
+	TargetRemote = CapTarget + "remote"
+	// TargetLocal: the nodes run as processes here, with no shell to run a
+	// command in and no privilege to program a firewall with.
+	TargetLocal = CapTarget + "local"
 )
 
 // ForkActiveIn reports whether a genesis template switches the named fork on.
@@ -80,7 +122,7 @@ func ForkActiveIn(genesisTemplate []byte, fork string) bool {
 
 // CapabilityPrefixes is every prefix a requirement may carry, for the message
 // that refuses one it does not know.
-var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile}
+var CapabilityPrefixes = []string{CapContract, CapFork, CapEngine, CapFamily, CapTx, CapPrecompile, CapEVM, CapTarget}
 
 // DerivedCapabilities is what this manifest's own data says the chain provides.
 //

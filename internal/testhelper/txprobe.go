@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -25,7 +26,7 @@ import (
 // one tx to mine (waitFor source:txMined compare:Equal expected:"true") and
 // assert another did not (assert txMined expected:"false") — the replacement-tx
 // scenario, where the replaced transaction must never mine.
-func readTxMined(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+func readTxMined(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
 	hash, ok := spec["hash"].(string)
 	if !ok || hash == "" {
 		return nil, fmt.Errorf("dsl: txMined requires \"hash\"")
@@ -48,7 +49,7 @@ type txMinedAssertion struct{}
 
 func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertTxMined, Provenance: ac.Spec, Pass: true}
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr
@@ -66,7 +67,7 @@ func (txMinedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sessio
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
 	}
-	actual, err := readTxMined(ctx, c, ac.Spec)
+	actual, err := readTxMined(ctx, ac.Deps, c, ac.Spec)
 	if err != nil {
 		res.Pass, res.Actual = false, err.Error()
 		return res, err
@@ -153,6 +154,15 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 		return fmt.Errorf("dsl: sendRawTampered: node accepted a tx with a corrupt %s signature (hash %s)", which, h)
 	}
 	ac.Value = sendErr.Error()
+	// Any refusal used to pass. A tampered signature recovers to some other
+	// address, so the node could refuse for that address's empty balance and
+	// the case would pass without the signature check ever being the reason.
+	// "reason" names what the refusal has to say.
+	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
+		if !strings.Contains(strings.ToLower(sendErr.Error()), strings.ToLower(reason)) {
+			return fmt.Errorf("dsl: sendRawTampered: the %s-tampered tx was refused, but not for %q: %v", which, reason, sendErr)
+		}
+	}
 	return nil
 }
 
@@ -336,6 +346,79 @@ func (callErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (sess
 		return res, nil
 	}
 	res.Actual = callErr.Error()
+	// Any error used to pass, a refused connection included. "reason" names
+	// what the error has to say — "execution reverted" for a revert.
+	if reason, ok := ac.Spec["reason"].(string); ok && reason != "" {
+		res.Expected = "eth_call returns an error containing " + strconvQuote(reason)
+		if !strings.Contains(strings.ToLower(callErr.Error()), strings.ToLower(reason)) {
+			res.Pass = false
+			res.Source = "eth_call failed, but not for " + strconvQuote(reason)
+		}
+	}
+	return res, nil
+}
+
+// rpcErrorAssertion passes when the node answers a JSON-RPC call with an error
+// that contains reason (case-insensitive). Args: method, reason (both
+// required), params (optional array; node labels resolve to addresses), on.
+//
+// A value, another reason, or a method the node lacks fails it. A request that
+// never got an answer is returned as an error: it says nothing about what the
+// node would have refused. reason is required because "any error passes" is
+// how callError once counted a refused connection as a revert.
+type rpcErrorAssertion struct{}
+
+func (rpcErrorAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertRPCError, Provenance: ac.Spec}
+	method, _ := ac.Spec["method"].(string)
+	reason, _ := ac.Spec["reason"].(string)
+	if method == "" || reason == "" {
+		err := fmt.Errorf("dsl: %s requires \"method\" and \"reason\"", assertRPCError)
+		res.Actual = err.Error()
+		return res, err
+	}
+	res.Expected = method + " fails with an error containing " + strconvQuote(reason)
+	spec, err := resolveNamedArgs(ac.Deps, ac.Spec)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	var params []any
+	if raw, ok := spec["params"].([]any); ok {
+		params = raw
+	}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("dsl: %s: no target node RPC URL", assertRPCError)
+		res.Actual = err.Error()
+		return res, err
+	}
+	c, err := clientFor(ac.Deps, targets[0].url)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	var out any
+	callErr := c.Call(ctx, method, &out, params...)
+	if callErr == nil {
+		res.Actual = out
+		res.Source = method + " returned a value, want an error"
+		return res, nil
+	}
+	var se *rpc.ServerError
+	if !errors.As(callErr, &se) {
+		res.Actual = callErr.Error()
+		return res, fmt.Errorf("dsl: %s: %w", assertRPCError, callErr)
+	}
+	res.Actual = se.Message
+	switch {
+	case isMethodNotFound(se):
+		res.Source = method + " is not a registered method"
+	case !strings.Contains(strings.ToLower(se.Message), strings.ToLower(reason)):
+		res.Source = method + " failed, but not for " + strconvQuote(reason)
+	default:
+		res.Pass = true
+	}
 	return res, nil
 }
 
@@ -355,7 +438,7 @@ func (methodPresentAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 		return res, err
 	}
 	res.Expected = method + " is a registered method"
-	spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+	spec, rerr := resolveNamedArgs(ac.Deps, ac.Spec)
 	if rerr != nil {
 		res.Pass, res.Actual = false, rerr.Error()
 		return res, rerr
@@ -403,3 +486,6 @@ func isMethodNotFound(err error) bool {
 		strings.Contains(m, "does not exist") ||
 		strings.Contains(m, "not available")
 }
+
+// strconvQuote renders s in double quotes for a message.
+func strconvQuote(s string) string { return fmt.Sprintf("%q", s) }

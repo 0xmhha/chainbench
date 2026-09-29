@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "wemix-bp9",
+  "description": "wemix: 9 bp. Used by 1 case.",
+  "chain": "wemix",
+  "keys": {
+    "nodekeys": {
+      "source": "generate"
+    }
+  },
+  "topology": {
+    "bp": 9
+  }
+}

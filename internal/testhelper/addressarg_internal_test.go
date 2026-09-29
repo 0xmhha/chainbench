@@ -30,13 +30,13 @@ var addressShapedKeys = map[string]bool{
 // counts: it resolves "from" through ResolveAccount on the caller's behalf.
 var resolvers = map[string]bool{
 	"ResolveAccount": true, "ResolveAddress": true,
-	"resolveAddressArgs": true, "resolveNames": true, "funder": true,
+	"resolveNamedArgs": true, "resolveNames": true, "funder": true,
 }
 
 // alwaysResolved are the resolvers themselves: they read the keys in order to
 // resolve them.
 var alwaysResolved = map[string]bool{
-	"resolveAddressArgs": true, "resolveNames": true,
+	"resolveNamedArgs": true, "resolveNames": true,
 	"ResolveAccount": true, "ResolveAddress": true,
 }
 
@@ -180,9 +180,9 @@ func scanBody(body *ast.BlockStmt) []string {
 					resolved[ai.Name] = true
 				}
 			}
-			// resolveAddressArgs and funder take the whole map, so everything
+			// resolveNamedArgs and funder take the whole map, so everything
 			// read out of it afterwards is already resolved.
-			if id.Name == "resolveAddressArgs" || id.Name == "funder" {
+			if id.Name == "resolveNamedArgs" || id.Name == "funder" {
 				resolved["*"] = true
 			}
 		}

@@ -82,6 +82,72 @@ func checkSubmitRejected(hash string, submitErr error, ac *interp.ActionCtx) err
 	return nil
 }
 
+// defaultKeptOutBlocks is how far a keptOut step watches before it believes the
+// transaction is staying out.
+//
+// A block is produced every second on all three chains, so five is five seconds
+// of a producer having every chance to take it. The number is small on purpose:
+// this outcome is only declared where the chain cannot include the transaction
+// at all — a fee cap under the base fee is refused by the state transition
+// itself — so waiting longer would only make a passing run slower.
+const defaultKeptOutBlocks = 5
+
+// checkKeptOut enforces an expect:"keptOut" step: the transaction must not reach
+// a block. It is satisfied two ways, and BOTH are checked rather than either
+// being a free pass.
+//
+// A pool that refuses the transaction at submit satisfies it immediately, and
+// the optional "reason" still has to match — a refusal for some other cause is
+// not this outcome. A pool that accepts it satisfies it only by never mining
+// it, which is watched for "blocks" blocks and fails the moment a receipt
+// appears.
+//
+// The two shapes are one rule seen from two pools. A transaction priced under
+// the base fee cannot be executed on any of the three chains; whether its pool
+// says so at submit or lets it sit is the chain's own manner, and a case that
+// insisted on one manner would be asserting the manner rather than the rule.
+func checkKeptOut(ctx context.Context, c *rpc.Client, hash string, submitErr error, ac *interp.ActionCtx) error {
+	if submitErr != nil {
+		// Refused at submit: the same reason check a reject step gets.
+		return checkSubmitRejected(hash, submitErr, ac)
+	}
+	ac.Hash = hash
+	blocks := uint64(defaultKeptOutBlocks)
+	if n, ok := uintArg(ac.Args["blocks"]); ok && n > 0 {
+		blocks = n
+	}
+	start, err := c.BlockNumber(ctx)
+	if err != nil {
+		return fmt.Errorf("dsl: sendTx keptOut: read head: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(ctx, durationArg(ac.Args, "timeout", defaultTxTimeout))
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+	defer t.Stop()
+	for {
+		raw, rerr := c.TxReceipt(ctx, hash)
+		if rerr == nil && raw != nil && strings.TrimSpace(string(raw)) != "null" {
+			return fmt.Errorf("dsl: sendTx %s was accepted and mined, but this chain must keep it out of a block", hash)
+		}
+		head, herr := c.BlockNumber(ctx)
+		if herr == nil && head >= start+blocks {
+			ac.Value = "kept out for " + strconv.FormatUint(blocks, 10) + " block(s)"
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("dsl: sendTx keptOut: %d block(s) did not pass within the timeout: %w", blocks, ctx.Err())
+		case <-t.C:
+		}
+	}
+}
+
+// wantKeptOut reports whether a tx step declares the keptOut outcome.
+func wantKeptOut(args map[string]any) bool {
+	s, ok := args["expect"].(string)
+	return ok && strings.EqualFold(s, "keptOut")
+}
+
 // statusReverted reports whether a receipt's status is an explicit revert (0x0).
 // A missing status (legacy pre-Byzantium receipts) is treated as success.
 func statusReverted(receipt map[string]any) bool {
@@ -128,6 +194,23 @@ func clientFor(deps *interp.Deps, url string) (*rpc.Client, error) {
 type assertTarget struct {
 	name string
 	url  string
+}
+
+// allTargets is every node of the environment, for an assertion whose question
+// is about all of them rather than one.
+func allTargets(ac *interp.AssertCtx) []assertTarget {
+	if ac.Env == nil {
+		return nil
+	}
+	nodes := ac.Env.Nodes()
+	out := make([]assertTarget, 0, len(nodes))
+	for _, n := range nodes {
+		if n.RPCURL == "" {
+			continue
+		}
+		out = append(out, assertTarget{name: string(node.LabelFor(n.Index)), url: n.RPCURL})
+	}
+	return out
 }
 
 // assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"

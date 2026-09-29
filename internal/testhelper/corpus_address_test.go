@@ -153,7 +153,7 @@ func addressesIn(d *interp.Deps, node any, declared map[string]bool) ([]string, 
 		switch v := n.(type) {
 		case map[string]any:
 			if isStep(v) {
-				resolved, err := resolveAddressArgs(d, withoutBindings(v, declared))
+				resolved, err := resolveNamedArgs(d, withoutBindings(v, declared))
 				if err != nil {
 					return fmt.Errorf("%s: %w", path, err)
 				}

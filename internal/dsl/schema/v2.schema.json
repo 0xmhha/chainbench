@@ -135,6 +135,24 @@
             "type": "integer"
           }
         },
+        "peering": {
+          "type": "object",
+          "description": "declared peer graph: groups of node labels (node<N>) that dial each other and no one else. Groups may overlap; the node in two groups bridges them. Every node must be in a group, and producers must reach each other through producers.",
+          "additionalProperties": false,
+          "required": ["groups"],
+          "properties": {
+            "groups": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "uniqueItems": true,
+                "items": { "type": "string", "pattern": "^node[1-9][0-9]*$" }
+              }
+            }
+          }
+        },
         "launch": {
           "type": "object",
           "description": "scope -> launchopt knobs. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
@@ -322,6 +340,13 @@
             "type": "string"
           }
         },
+        "skipsOn": {
+          "description": "Chain ids this case is expected NOT to run on. Absent, it may skip anywhere. Present, it is exact: a skip on a chain it does not name fails, and so does running on one it does. An empty list means it must run everywhere.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "on": {
           "type": "string",
           "description": "default target selector"
@@ -411,11 +436,12 @@
         },
         "expect": {
           "type": "string",
-          "description": "adjunct on a do statement: the outcome the step must reach. receipt = mined, revert = mined with status 0x0, reject = the submit itself must fail, fail = a launched node must not come up. The parser refuses anything else (dsl.expectAdjuncts), because a typo would otherwise fall through to the default \"must succeed\" and turn a negative case positive.",
+          "description": "adjunct on a do statement: the outcome the step must reach. receipt = mined, revert = mined with status 0x0, reject = the submit itself must fail, keptOut = the transaction must not reach a block, whether the pool refuses it at submit or accepts it and never mines it, fail = a launched node must not come up. The parser refuses anything else (dsl.expectAdjuncts), because a typo would otherwise fall through to the default \"must succeed\" and turn a negative case positive.",
           "enum": [
             "receipt",
             "revert",
             "reject",
+            "keptOut",
             "fail"
           ]
         }

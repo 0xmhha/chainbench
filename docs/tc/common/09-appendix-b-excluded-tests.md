@@ -1,14 +1,14 @@
 # 부록 B. 공통에서 제외한 테스트와 이유
 
-> 출처: Confluence [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189) (페이지 ID 2987524189, 버전 3, 최종 수정 2026-09-11)  
+> 출처: Confluence [부록 B. 공통에서 제외한 테스트와 이유](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2987524189) (페이지 ID 2987524189, 버전 7, 최종 수정 2026-09-28)  
 > 상위 페이지: [Common] Test  
 > 가져온 날짜: 2026-09-18 (본문은 Confluence markdown 변환 결과를 그대로 옮김)
 
 ---
 
-한 체인에만 있는 기능이거나 노드 실행 테스트가 아닌 항목이다. ID는 기존 것을 그대로 적는다.
+한 체인에만 있는 기능이거나, 같은 기능이라도 규칙이 갈려 정답이 하나로 모이지 않거나, 한 체인의 EVM 세대가 낮아 실행되지 않거나, 노드 실행 테스트가 아닌 항목이다. ID는 기존 것을 그대로 적는다.
 
-## StableNet 전용 (105개)
+## StableNet 전용 (107개)
 
 | 기존 ID | 출처 | 이유 |
 | --- | --- | --- |
@@ -18,6 +18,7 @@
 | RT-B-06 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
 | RT-C-01 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
 | RT-C-02 | Regression Test Case with scenario, Regression Test Case | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| RT-C-06 | Regression Test Case with scenario, Regression Test Case | 기본 수수료 하한(`params.MinBaseFee`)은 StableNet 에만 있는 상수다. 다른 두 체인의 노드 프로그램에는 상수도 검사 경로도 없다. 공통 목록의 CT-FEE-006 이었다 |
 | RT-E-01 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
 | RT-E-02 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
 | RT-E-03 | Regression Test Case with scenario, Regression Test Case | StableNet 계정 차단·인증 정책을 검사한다 |
@@ -56,6 +57,7 @@
 | RT-F-5-08 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-F-5-09 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-1-06 | Regression Test Case with scenario, Regression Test Case, \[WEMIX 4.0\] 테스트 시나리오 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
+| RT-G-2-02 | Regression Test Case with scenario, Regression Test Case | 권장 팁의 비교 대상이 StableNet 블록 헤더의 `GasTip` 이다. 같은 `istanbul_getWbftExtraInfo` API 를 가진 WEMIX4.0 도 응답에 이 필드가 없고 WEMIX3.0 은 API 자체가 없다. 공통 목록의 CT-FEE-011 이었다 |
 | RT-G-2-04 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-5-02 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | RT-G-5-03 | Regression Test Case with scenario, Regression Test Case | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
@@ -180,6 +182,56 @@
 | NODE-001 | \[WEMIX4.0\] Test, \[WEMIX 4.0\] 테스트 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |
 | NODE-002 | \[WEMIX4.0\] Test, \[WEMIX 4.0\] 테스트 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |
 
+## StableNet 의 기본 수수료 규칙 때문에 뺀 것 (3개)
+
+세 체인이 모두 기본 수수료를 쓰지만 움직이는 규칙이 다르다. StableNet 의 anzeon 은 상승 문턱과 하강 문턱 두 개를 두고, 사용률이 상승 문턱을 넘으면 올리고 하강 문턱 아래면 내린다. WEMIX3.0 과 WEMIX4.0 은 표준 EIP-1559 대로 블록 한도의 절반 하나를 목표로 삼아, 목표보다 많이 쓰면 올리고 적게 쓰면 내린다.
+
+그래서 같은 사용률이 한쪽에서는 상승이고 다른 쪽에서는 하락이다. 세 테스트가 쓰는 25% 채우기가 StableNet 에서는 상승 문턱을 넘지만 다른 두 체인에서는 목표에 못 미친다.
+
+2026-09-28 에 세 체인으로 돌려 확인했다. WEMIX4.0 에서 기본 수수료가 0.34 Gwei 에서 0.22 Gwei 로 내려갔고, WEMIX3.0 에서는 이미 최저값에 닿아 있어 움직이지 않았다.
+
+셋을 함께 뺀다. 감소 테스트는 WEMIX4.0 에서 통과했지만 재려던 것과 다른 이유였다. 표준 규칙에서 25% 채우기는 부하가 아니라 목표 미달이라, 부하를 거는 동안에도 이미 내려가고 있었다. 이 하나만 남기면 아무것도 검증하지 않는 테스트가 공통 목록에 남는다.
+
+| 기존 ID | 출처 | 이유 |
+| --- | --- | --- |
+| RT-C-03 | Regression Test Case with scenario, Regression Test Case | 사용률이 높을 때 기본 수수료가 오르는지 본다. 상승 문턱은 StableNet 의 anzeon 에만 있다. 공통 목록의 CT-FEE-003 이었다 |
+| RT-C-04 | Regression Test Case with scenario, Regression Test Case | 사용률이 보통일 때 기본 수수료가 그대로인지 본다. 표준 EIP-1559 에는 유지 구간이 없다. 공통 목록의 CT-FEE-004 였다 |
+| RT-C-05 | Regression Test Case with scenario, Regression Test Case | 사용률이 낮을 때 기본 수수료가 내리는지 본다. 하강 문턱은 StableNet 에만 있다. 공통 목록의 CT-FEE-005 였다 |
+
+## WEMIX3.0 의 EVM 세대 때문에 뺀 것 (0개)
+
+한때 두 건을 여기에 두었다가 2026-09-28 에 둘 다 공통으로 되돌렸다. RT-A-3-02(CT-CONTRACT-002)와 RT-A-3-05(CT-CONTRACT-005)다.
+
+뺀 이유는 배포하던 컨트랙트가 PUSH0 옵코드를 담아 WEMIX3.0 에서 배포되지 않는다는 것이었다. WEMIX3.0 의 EVM 이 London 세대에서 멈춰 있어 Shanghai 가 들여온 PUSH0(`0x5f`)를 모르는 것은 사실이고 바뀌지 않는다. 다만 그것은 체인이 그 테스트를 못 한다는 뜻이 아니라, 우리가 고른 바이트코드를 못 읽는다는 뜻이었다. 두 테스트가 재려던 것은 "저장값을 바꾸고 다시 읽는다" 와 "되돌리는 함수를 조회 호출하면 에러가 온다" 이고, 둘 다 세 체인이 하는 동작이다.
+
+그래서 컨트랙트를 PUSH0 없이 손으로 써서 되돌렸다. 공통에 이미 있던 CT-CONTRACT-004 와 CT-CONTRACT-006 이 같은 방식의 조각을 쓰고 세 체인에서 돌고 있었다.
+
+앞으로 공통 테스트에 컨트랙트를 쓸 때는 solc 가 기본으로 내는 바이트코드를 그대로 싣지 않는다. 지정 없이 컴파일하면 PUSH0 가 섞여 WEMIX3.0 에서만 배포가 실패한다.
+
+## 체인마다 두 번째 빌드가 있어야 성립하는 것 (1개)
+
+2026-09-29 에 뺐다. 케이스는 통과하는데 재려던 것을 확인하지 못했다.
+
+CT-NODE-012 는 노드 프로그램을 바꿔 끼워도 이미 처리한 트랜잭션이 그대로 조회되는지 본다. 특히 보낸 이는 영수증에 적힌 값이 아니라 서명에서 되찾는 값이라, 새 프로그램이 같은 값을 내놓는지가 곧 서명 호환성이다. 그러려면 **바꿔 낄 두 번째 빌드**가 있어야 하고, 그 빌드는 체인마다 따로다. 세 체인이면 여섯 개를 만들어 관리해야 한다.
+
+지금은 StableNet 만 1.0.1 과 1.1.0 두 개를 갖고 있다. WEMIX3.0 과 WEMIX4.0 에서는 같은 바이너리를 바꿔 끼우게 되어 `web3_clientVersion` 이 교체 전후로 같다. 교체가 일어났는지 자체를 확인할 수 없으니, 뒤따르는 비교가 무엇을 증명하는지도 말할 수 없다.
+
+재료가 없는 것이지 테스트가 틀린 것이 아니다. 두 체인의 업그레이드 빌드를 어느 커밋으로 만들지 정해지면 다시 공통으로 올릴 수 있다.
+
+| 기존 ID | 출처 | 이유 |
+| --- | --- | --- |
+| TC-3-1-04 | 1st Test Scenarios, 1st Test Cases (v1.0.0+) | 교체할 두 번째 빌드가 체인마다 필요하다. 세 체인이면 여섯 개다. 공통 목록의 CT-NODE-012 였고, `go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json` 으로 돌아갔다 |
+
+## 경계를 체인마다 다르게 정해 뺀 부분 (1건, 부분)
+
+2026-09-29 에 뺐다. 기존 ID 전체가 아니라 CT-FEE-002(최소 가스비 경계값)의 한 부분이다. CT-FEE-002 는 "미만은 거부, 초과는 성공" 으로 목록에 남는다.
+
+뺀 것은 "최소 가스비와 같은 값을 보내면 받아들여진다" 다. RPC 로 보낸 트랜잭션에 대해 세 체인은 하한을 다르게 정하고 다른 시점에 검사한다. StableNet 은 최대 수수료가 고정 상수(최소 기본 수수료)보다 낮으면 풀에서 거부한다. WEMIX3.0 은 최대 수수료가 "다음 블록 기본 수수료 + 거버넌스 팁" 보다 낮거나 팁이 거버넌스 팁보다 낮으면 거부한다. WEMIX4.0 은 RPC 로 받은 트랜잭션을 제출 때 가격으로 거부하지 않고, 최대 수수료가 포함 블록의 기본 수수료보다 낮으면 블록에 넣지 않는다. 포함 블록의 기본 수수료는 블록마다 움직이므로 "같은 값" 을 결정적으로 만들 수도 없다.
+
+| 기존 ID | 출처 | 이유 |
+| --- | --- | --- |
+| TC-1-3-01~06, TS-1-3-01·02 (같음 부분) | 1st Test Scenarios, 1st Test Cases (v1.0.0+) | 최소 가스비와 같은 값의 결과가 체인마다 다르다. 미만과 초과 부분은 공통 목록의 CT-FEE-002 로 남았다 |
+
 ## 노드를 띄우는 테스트가 아님(단위 테스트·빌드 확인) (11개)
 
 | 기존 ID | 출처 | 이유 |
@@ -275,5 +327,18 @@
 | validator-add-member-epoch-activates | go-stablenet/regression/wbft/04b-validator-add-member-epoch-activates.json | StableNet 전용 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | validator-remove-member-executes | go-stablenet/regression/wbft/05-validator-remove-member-executes.json | StableNet 전용 | StableNet 시스템 컨트랙트(코인 어댑터, 검증자, 발행, 위원회)를 검사한다 |
 | stablenet-gastip-field | go-stablenet/regression/wbft/14-stablenet-gastip-field.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| anzeon-basefee-increase | go-stablenet/regression/anzeon/03-anzeon-basefee-increase.json | StableNet 전용 | anzeon 의 상승 문턱을 검사한다. 다른 두 체인은 표준 EIP-1559 라 같은 사용률에서 반대로 내려간다 |
+| anzeon-basefee-stable | go-stablenet/regression/anzeon/04-anzeon-basefee-stable.json | StableNet 전용 | anzeon 의 유지 구간을 검사한다. 표준 EIP-1559 에는 유지 구간이 없다 |
+| anzeon-basefee-decrease | go-stablenet/regression/anzeon/05-anzeon-basefee-decrease.json | StableNet 전용 | anzeon 의 하강 문턱을 검사한다. WEMIX4.0 에서 통과하지만 재려던 것과 다른 이유다 |
+| register-contract | go-stablenet/vocabulary/03-register-contract.json | WEMIX3.0 의 EVM 세대 | 배포하는 NodeRegistry 바이트코드가 PUSH0 를 45번 쓴다. WEMIX3.0 에서 배포가 가스를 전부 쓰고 실패한다 |
+| feecap-above-min-accepted | go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json | StableNet 전용 | 경계값을 StableNet 헤더 팁으로 구한다. 세 체인 공통의 '초과' 는 공통 케이스 dynamic-feecap-above-min-accepted 가 본다(CT-FEE-002) |
+| feecap-exact-min-accepted | go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json | StableNet 전용 | '최소 가스비와 같으면 받아들여진다' 를 본다. 경계가 체인마다 달라 공통이 아니다(아래 '경계를 체인마다 다르게 정해 뺀 부분') |
+| basefee-minimum | go-stablenet/regression/anzeon/06-basefee-minimum.json | StableNet 전용 | StableNet 의 최소 기본 수수료(MinBaseFee)를 본다. 공통 목록의 CT-FEE-006 이었다 |
+| gas-price-equals-basefee-plus-tip | go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json | StableNet 전용 | 팁을 StableNet 헤더 팁으로 읽는다. 세 체인 공통은 gas-price-positive 가 본다(CT-FEE-010) |
+| max-priority-fee-equals-gastip | go-stablenet/regression/api/08-max-priority-fee-equals-gastip.json | StableNet 전용 | 권장 팁이 StableNet 헤더 팁과 같은지 본다. 공통 목록의 CT-FEE-011 이었다 |
+| legacy-transfer | go-stablenet/regression/ethereum/08-legacy-transfer.json | StableNet 전용 | 가스 가격을 StableNet 헤더 팁으로 구한다. 세 체인 공통은 legacy-value-transfer 가 본다(CT-TX-002) |
+| dynamic-fee-tx | go-stablenet/regression/ethereum/09-dynamic-fee-tx.json | StableNet 전용 | 팁을 StableNet 헤더 팁으로 읽는다. 세 체인 공통은 dynamic-fee-transfer 가 본다(CT-TX-003) |
+| gaslimit-exceeded-rejected | go-stablenet/regression/anzeon/11-gaslimit-exceeded-rejected.json | StableNet 전용 | 수수료를 StableNet 헤더 팁으로 구한다. 세 체인 공통은 gas-limit-exceeds-block-rejected 가 본다(CT-TX-016) |
+| signature-compat-across-swap | go-stablenet/post-v1.0.0-change/stand-alone/01b-signature-compat-across-swap.json | 두 번째 빌드 필요 | 교체할 두 번째 빌드가 StableNet 에만 있다(위 '체인마다 두 번째 빌드가 있어야 성립하는 것') |
 | stablenet-derived-vocabulary | go-stablenet/vocabulary/01-derived-address-and-checksum.json | 실행 도구 자체 검사(체인 무관) | 실행 도구 자체의 계산 기능 검사다 |
 | wemix-wbft-handoff | go-wemix/handoff/01-wemix-wbft-handoff.json | WEMIX3.0에서 WEMIX4.0으로 넘어가는 전환 시나리오 | WEMIX3.0 데이터로 WEMIX4.0을 띄우는 전환 시나리오다 |

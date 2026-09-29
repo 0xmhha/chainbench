@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "wbft-bp4-en1",
+  "description": "wbft: 4 bp + 1 en. The endpoint peers with the producers directly (mesh); the common sync cases (CT-NODE-004, 006, 007) watch it catch up.",
+  "chain": "wbft",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "bp": 4,
+    "en": 1
+  }
+}

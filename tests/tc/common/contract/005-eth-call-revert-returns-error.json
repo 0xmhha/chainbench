@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "eth-call-revert-returns-error",
+  "description": "RT-A-3-05 — eth_call 로 되돌리는 함수를 부르면 에러가 돌아오는지 본다 (원본 regression/ethereum/23-test-eth-call-revert, 절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-005). 한동안 공통에서 빠져 있었다. 이유는 배포하던 컨트랙트가 PUSH0 를 아홉 번 써서 go-wemix 에서 배포가 가스를 전부 태우고 실패한다는 것이었다(2026-09-28 실측). 그런데 그것은 체인의 한계가 아니라 우리가 고른 바이트코드의 문제였다. 재는 것은 \"되돌리는 호출에 에러가 온다\" 이고 그 동작은 세 체인이 다 한다. 그래서 컨트랙트를 London 세대 조각으로 바꿔 공통으로 되돌린다. 런타임 0x60006000fd 는 무엇을 부르든 되돌리며, revert-tx-status-zero 가 이미 같은 조각을 세 체인에서 쓰고 있다. 원본은 사유 문자열을 담아 되돌렸고 이 조각은 빈 사유로 되돌린다. 판정이 에러가 왔는지만 보므로 재는 내용은 같다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x600580600b6000396000f360006000fd",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "select": "contractAddress",
+      "save": "addr"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$addr",
+      "compare": "NotEqual",
+      "expected": "0x",
+      "pollInterval": "1s",
+      "timeout": "60s"
+    },
+    {
+      "expect": "callError",
+      "to": "$addr",
+      "data": "0xa9cc4718",
+      "reason": "execution reverted"
+    }
+  ]
+}

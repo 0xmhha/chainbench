@@ -32,7 +32,7 @@ func specJSON(id, chain string) []byte {
 type harness struct {
 	buildCount, runCount, teardownCount int
 	fpByChain                           map[string]session.Fingerprint
-	applicable                          func(dsl.Spec) bool
+	applicable                          func(dsl.Spec) testengine.Applicability
 }
 
 func (h *harness) deps(t *testing.T) testengine.Deps {
@@ -162,8 +162,10 @@ func TestEngine_DifferentFingerprintsBuildTwice(t *testing.T) {
 
 func TestEngine_SkipsInapplicable(t *testing.T) {
 	h := &harness{
-		fpByChain:  map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
-		applicable: func(s dsl.Spec) bool { return s.Chain.Name == "wbft" },
+		fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
+		applicable: func(s dsl.Spec) testengine.Applicability {
+			return testengine.Applicability{Runs: s.Chain.Name == "wbft", Foreseen: true}
+		},
 	}
 	e := testengine.New(h.deps(t))
 	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "stablenet")}); err != nil {
@@ -260,5 +262,85 @@ func TestAttachWorkspaceRun_RefusesNoWorkspace(t *testing.T) {
 		DataDir: t.TempDir(), Chain: "wbft",
 	}); err == nil {
 		t.Fatal("attach to a workspace that composed nothing must fail, not attach to nothing")
+	}
+}
+
+// verdictOf reads the status a run recorded for its single test. It goes
+// through session.LoadDir, the one reader of the session schema, rather than
+// parsing the files a second way.
+func verdictOf(t *testing.T, root string) string {
+	t.Helper()
+	res, err := session.LoadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Tests) != 1 {
+		t.Fatalf("the run recorded %d tests, want 1", len(res.Tests))
+	}
+	return res.Tests[0].Status
+}
+
+// TestEngine_AnUndeclaredSkipFails.
+//
+// A skip is how one corpus runs against several chains, and it is also how a
+// run reports no failure while never asking a third of its questions — on the
+// common set, 31 of 99 cases skipped on go-wemix and the summary said nothing.
+// A spec that declares where it skips is held to it.
+func TestEngine_AnUndeclaredSkipFails(t *testing.T) {
+	h := &harness{
+		fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
+		applicable: func(dsl.Spec) testengine.Applicability {
+			return testengine.Applicability{Runs: false, Foreseen: false}
+		},
+	}
+	e := testengine.New(h.deps(t))
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if got := verdictOf(t, root); got != string(session.StatusFail) {
+		t.Errorf("an undeclared skip was recorded as %q, want fail", got)
+	}
+	if h.buildCount != 0 || h.runCount != 0 {
+		t.Error("a skipped spec must not build or run, however it is scored")
+	}
+}
+
+// TestEngine_ADeclaredSkipStillSkips keeps the ordinary path: saying where a
+// spec skips must not turn those skips into failures.
+func TestEngine_ADeclaredSkipStillSkips(t *testing.T) {
+	h := &harness{
+		fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
+		applicable: func(dsl.Spec) testengine.Applicability {
+			return testengine.Applicability{Runs: false, Foreseen: true}
+		},
+	}
+	e := testengine.New(h.deps(t))
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if got := verdictOf(t, root); got != string(session.StatusSkip) {
+		t.Errorf("a declared skip was recorded as %q, want skip", got)
+	}
+}
+
+// TestEngine_AStaleSkipDeclarationFails: the spec says it skips here and it
+// does not. Left standing, the declaration tells the next reader this test
+// asks nothing on this chain while it is asking and answering.
+func TestEngine_AStaleSkipDeclarationFails(t *testing.T) {
+	h := &harness{
+		fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
+		applicable: func(dsl.Spec) testengine.Applicability {
+			return testengine.Applicability{Runs: true, Foreseen: true, Stale: true}
+		},
+	}
+	e := testengine.New(h.deps(t))
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if got := verdictOf(t, root); got != string(session.StatusFail) {
+		t.Errorf("a stale skipsOn was recorded as %q, want fail", got)
 	}
 }

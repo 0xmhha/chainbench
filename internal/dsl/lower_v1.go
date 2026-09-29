@@ -95,6 +95,7 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		ID:               c.ID,
 		ApplicableChains: c.ApplicableChains,
 		Requires:         c.Requires,
+		SkipsOn:          c.SkipsOn,
 		Chain:            ChainSpec{Name: env.Chain},
 		Topology:         env.Topology,
 		Hardforks:        env.Hardforks,
@@ -225,6 +226,13 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}
 	spec.EnvBlueprint = env.Blueprint
+	if env.Peering != nil {
+		p, err := node.GroupsPeering(env.Peering.Groups)
+		if err != nil {
+			return fmt.Errorf("dsl: case %s: peering: %w", c.ID, err)
+		}
+		spec.EnvPeering = string(p)
+	}
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
@@ -251,17 +259,17 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 }
 
 // lowerHooks lowers the three hook lists a case may declare.
-func lowerHooks(c CaseV2, _ ChainPresetV2, spec *Spec) error {
+func lowerHooks(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// Hooks.
 	if h := c.Hooks; h != nil {
 		var err error
-		if spec.PreActions, err = lowerHookActions(c.ID, "pre", h.Pre); err != nil {
+		if spec.PreActions, err = lowerHookActions(c.ID, "pre", env.Chain, h.Pre); err != nil {
 			return err
 		}
-		if spec.PostActions, err = lowerHookActions(c.ID, "post", h.Post); err != nil {
+		if spec.PostActions, err = lowerHookActions(c.ID, "post", env.Chain, h.Post); err != nil {
 			return err
 		}
-		if spec.OnFailActions, err = lowerHookActions(c.ID, "onFail", h.OnFail); err != nil {
+		if spec.OnFailActions, err = lowerHookActions(c.ID, "onFail", env.Chain, h.OnFail); err != nil {
 			return err
 		}
 	}
@@ -271,14 +279,14 @@ func lowerHooks(c CaseV2, _ ChainPresetV2, spec *Spec) error {
 // lowerStatements lowers the steps, and refuses a case that verifies nothing —
 // a sequence with no expect runs and proves nothing, which is worse than one
 // that fails.
-func lowerStatements(c CaseV2, _ ChainPresetV2, spec *Spec) error {
+func lowerStatements(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// Statements.
 	if len(c.Steps) == 0 {
 		return fmt.Errorf("dsl: case %s has no steps", c.ID)
 	}
 	expects := 0
 	for i, raw := range c.Steps {
-		st, err := lowerStatement(raw)
+		st, err := lowerStatement(raw, env.Chain)
 		if err != nil {
 			return fmt.Errorf("dsl: case %s: step %d: %w", c.ID, i+1, err)
 		}
@@ -358,13 +366,104 @@ func timeoutKeyList() string {
 
 // expectAdjuncts is the outcome vocabulary a do step's "expect" may name:
 // receipt (the default — the tx must be mined), revert (mined with status 0x0),
-// reject (the submit itself must fail), and fail (a launched node must not come
-// up). A value outside this set is a typo that must be refused, not treated as
-// the default success.
-var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "fail": true}
+// reject (the submit itself must fail), keptOut (the submit may be accepted but
+// no block may carry it), and fail (a launched node must not come up). A value
+// outside this set is a typo that must be refused, not treated as the default
+// success.
+//
+// The keys are spelled as the schema spells them, because a ratchet compares
+// the two sets letter for letter. Case is not what a case gets wrong, so the
+// lookup goes through isExpectAdjunct and ignores it.
+var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "keptOut": true, "fail": true}
+
+// isExpectAdjunct reports whether name is in the outcome vocabulary, ignoring
+// case. Folding here rather than at the keys keeps the keys canonical for the
+// schema ratchet, and matches how the runtime reads the same words back
+// (testhelper compares them with EqualFold).
+func isExpectAdjunct(name string) bool {
+	for k := range expectAdjuncts {
+		if strings.EqualFold(k, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// perChainKey is where a statement writes the answers that differ by chain.
+//
+// The procedure is one and the right answer is not. CT-FEE-002 is the case
+// that named it: a gas price under the floor is refused on StableNet and, on
+// the WEMIX chains, may instead sit unmined. Writing that as two cases copies
+// the procedure, and the copy is what drifts.
+const perChainKey = "isPerChain"
+
+// expectedFor is what a statement expects on this chain, and whether it
+// expects anything at all.
+//
+// "is" is the answer everywhere it is not overridden, so a statement that
+// carries isPerChain must still carry it: a chain the map does not name would
+// otherwise assert nothing and pass. That is the failure this whole change
+// exists to stop, so it is refused rather than defaulted.
+func expectedFor(m map[string]any, chain string) (any, bool, error) {
+	is, hasIs := m["is"]
+	raw, hasPerChain := m[perChainKey]
+	if !hasPerChain {
+		return is, hasIs, nil
+	}
+	byChain, ok := raw.(map[string]any)
+	if !ok || len(byChain) == 0 {
+		return nil, false, fmt.Errorf("%s must be a non-empty object of chain to expected value", perChainKey)
+	}
+	if !hasIs {
+		return nil, false, fmt.Errorf("%s needs \"is\" beside it, for the chains it does not name", perChainKey)
+	}
+	if v, named := byChain[chain]; named {
+		return v, true, nil
+	}
+	return is, true, nil
+}
+
+// outcomePerChainKey is where a do statement writes the OUTCOME that differs by
+// chain, as perChainKey does for the answer.
+//
+// The two are not the same question. isPerChain varies what a statement
+// compares against; this varies what counts as the statement happening at all.
+// CT-FEE-002 needs both: the price under the floor is read from the chain, and
+// what the chain then does with it is a refusal on one and an acceptance that
+// never reaches a block on another. Both are definite per chain — refusing to
+// say which is a weaker test, not a more tolerant one.
+const outcomePerChainKey = "expectPerChain"
+
+// outcomeFor is the outcome a do statement expects on this chain.
+//
+// Like expectedFor, a map that does not name the chain falls back to "expect",
+// and the fallback must be written: a chain the map forgets would otherwise
+// expect nothing and take any outcome as success.
+func outcomeFor(m map[string]any, chain string) (string, bool, error) {
+	ex, hasEx := m["expect"].(string)
+	raw, hasPerChain := m[outcomePerChainKey]
+	if !hasPerChain {
+		return ex, hasEx, nil
+	}
+	byChain, ok := raw.(map[string]any)
+	if !ok || len(byChain) == 0 {
+		return "", false, fmt.Errorf("%s must be a non-empty object of chain to outcome", outcomePerChainKey)
+	}
+	if !hasEx {
+		return "", false, fmt.Errorf("%s needs \"expect\" beside it, for the chains it does not name", outcomePerChainKey)
+	}
+	if v, named := byChain[chain]; named {
+		s, ok := v.(string)
+		if !ok {
+			return "", false, fmt.Errorf("%s[%s] must be an outcome name", outcomePerChainKey, chain)
+		}
+		return s, true, nil
+	}
+	return ex, true, nil
+}
 
 // lowerStatement lowers one v2 statement map onto the runtime vocabulary.
-func lowerStatement(m map[string]any) (Statement, error) {
+func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	doName, hasDo := m["do"].(string)
 	exName, hasEx := m["expect"].(string)
 	// A do statement may carry expect as an ADJUNCT ("expect":"receipt"|"revert"
@@ -376,24 +475,49 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	// here rather than by Unresolved (which resolves head expects as assertion
 	// names). A value outside the outcome vocabulary would otherwise fall through
 	// to the default "must succeed", silently turning a negative case positive.
-	if hasDo && hasEx && !expectAdjuncts[strings.ToLower(exName)] {
-		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, or fail)", exName)
+	// The outcome this statement expects, with the per-chain one applied if it
+	// declared one. Done before the vocabulary check so a per-chain outcome is
+	// held to the same vocabulary as a plain one.
+	if hasDo {
+		picked, hasPicked, oerr := outcomeFor(m, chain)
+		if oerr != nil {
+			return Statement{}, oerr
+		}
+		exName, hasEx = picked, hasPicked
+	}
+	if hasDo && hasEx && !isExpectAdjunct(exName) {
+		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, keptOut, or fail)", exName)
 	}
 	if _, isOverride := m["override"]; isOverride {
 		return Statement{}, fmt.Errorf("override hooks (G5) have no execution semantics yet and are not accepted")
+	}
+	// What this statement expects, with the per-chain answer applied if it
+	// declared one. Resolved here because this is the one place "is" becomes
+	// "expected"; five places read "expected" afterwards.
+	expected, hasExpected, err := expectedFor(m, chain)
+	if err != nil {
+		return Statement{}, err
 	}
 	args := make(map[string]any, len(m))
 	for k, v := range m {
 		switch k {
 		case "do":
 			// head, not an arg
-		case "is":
-			args["expected"] = v
+		case "is", perChainKey:
+			// Folded into "expected" above.
+		case outcomePerChainKey:
+			// Folded into "expect" above.
 		default:
 			args[k] = v
 		}
 	}
+	if hasExpected {
+		args["expected"] = expected
+	}
 	if hasDo {
+		if hasEx {
+			args["expect"] = exName
+		}
 		return Statement{Do: doName, Args: args}, nil
 	}
 	delete(args, "expect")
@@ -432,10 +556,10 @@ func mergeDotPath(m map[string]any, path string, v any) {
 }
 
 // lowerHookActions lowers hook statements (do form) onto v1 action maps.
-func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string]any, error) {
+func lowerHookActions(caseID, hook, chain string, stmts []map[string]any) ([]map[string]any, error) {
 	out := make([]map[string]any, 0, len(stmts))
 	for i, raw := range stmts {
-		st, err := lowerStatement(raw)
+		st, err := lowerStatement(raw, chain)
 		if err != nil {
 			return nil, fmt.Errorf("dsl: case %s: hooks.%s[%d]: %w", caseID, hook, i, err)
 		}
