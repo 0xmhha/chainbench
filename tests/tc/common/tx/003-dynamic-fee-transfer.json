@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "dynamic-fee-transfer",
+  "description": "CT-TX-003 — 동적 수수료(EIP-1559, 0x2) 송금이 처리되고 실제 적용 가스 가격이 규칙대로 계산된다 (기존 명세 RT-A-2-02, TX-003, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-003). go-stablenet 전용인 regression/ethereum/09-dynamic-fee-tx 는 팁을 istanbul_getWbftExtraInfo.gasTip 에서 읽어 다른 두 체인에서 돌지 않는다. 여기서는 팁을 eth_maxPriorityFeePerGas 로 읽는다. 세 체인 모두 이 값을 트랜잭션 팁으로 쓰면 적용 가격이 '포함 블록의 기본 수수료 + 팁' 이 된다. go-stablenet 은 일반 계정의 팁을 헤더 gasTip 으로 바꾸는데 eth_maxPriorityFeePerGas 가 그 gasTip 을 돌려주므로 결과가 같고, go-wemix 는 거버넌스 팁, go-wbft 는 표준 규칙이다. 최대 수수료는 최신 기본 수수료의 두 배에 팁을 더해 넉넉히 둔다. 새 계정이 자기 키로 보내고, 형식 0x2 와 성공 상태, 적용 가격, 그리고 보낸 쪽 잔액이 송금액과 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "recipient",
+      "saveKey": "recipientKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "before"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "save": "feeCap"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "$recipient",
+      "value": "1000000000000000",
+      "gas": "21000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "$tip",
+      "expect": "receipt",
+      "save": "h",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$h",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$h"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x2"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "blockNumber",
+      "save": "bn"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$bn",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "blockBase"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$blockBase",
+        "$tip"
+      ],
+      "save": "wantPrice"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "effectiveGasPrice",
+      "compare": "Equal",
+      "is": "$wantPrice"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$used",
+        "$price"
+      ],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$before",
+        "1000000000000000",
+        "$fee"
+      ],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "is": "$want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$recipient",
+      "compare": "Equal",
+      "is": "1000000000000000"
+    }
+  ]
+}
