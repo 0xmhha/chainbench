@@ -2,6 +2,7 @@ package arch
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -56,6 +57,46 @@ var docRoots = []string{"docs/dev", "docs/guide"}
 // A match ending in `_` is a stem in a diagram (`tests/001_<id>/`), not a path.
 var goPathInProse = regexp.MustCompile(`(^|[\s` + "`" + `(|\[])((?:internal|cmd|tests|presets|scripts|env|examples|web)/[A-Za-z0-9_./-]*[A-Za-z0-9])`)
 
+// inTree answers whether a path a document names is one a reader can reach.
+//
+// It asks git, not the filesystem, and the difference is the whole point. The
+// first version called os.Stat, so the verdict depended on who ran it: a
+// developer with a local server-set.yaml saw green and CI, which has only what
+// is committed, saw red. A gate that answers differently per machine is not a
+// gate.
+//
+// Two things count as reachable. A tracked path, file or directory. And an
+// ignored one — this repository commits server-set.sample.yaml and
+// accounts.env.sample and tells the reader to make the real file beside it
+// (.gitignore §7), so a guide naming server-set.yaml is naming the file the
+// reader creates, not a file that went away.
+func inTree(t *testing.T, root string) func(string) bool {
+	t.Helper()
+	out, err := exec.Command("git", "-C", root, "ls-files", "-z").Output()
+	if err != nil {
+		t.Skipf("git ls-files: %v — this check reads the tracked tree, so it cannot run here", err)
+	}
+	tracked := map[string]bool{}
+	for _, f := range strings.Split(string(out), "\x00") {
+		if f == "" {
+			continue
+		}
+		tracked[f] = true
+		for d := filepath.Dir(f); d != "." && d != "/"; d = filepath.Dir(d) {
+			tracked[d] = true
+		}
+	}
+	return func(path string) bool {
+		path = strings.TrimSuffix(path, "/")
+		if tracked[path] {
+			return true
+		}
+		// git check-ignore exits 1 when the path is not ignored, which is not
+		// an error here, so only the exit status is read.
+		return exec.Command("git", "-C", root, "check-ignore", "-q", path).Run() == nil
+	}
+}
+
 // TestDocsDoNotNameFilesThatAreGone holds the live documents to the tree.
 //
 // It exists because they drifted and nothing said so. Splitting the verb layer
@@ -68,6 +109,7 @@ var goPathInProse = regexp.MustCompile(`(^|[\s` + "`" + `(|\[])((?:internal|cmd|
 // document was not, and a document is what somebody reads first.
 func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 	root := "../.."
+	reachable := inTree(t, root)
 	type miss struct{ path, doc string }
 	var missing []miss
 	seen := 0
@@ -128,7 +170,7 @@ func TestDocsDoNotNameFilesThatAreGone(t *testing.T) {
 				// text used to say.
 				live, dead := 0, []string{}
 				for _, h := range hits {
-					if _, err := os.Stat(filepath.Join(root, h)); err == nil {
+					if reachable(h) {
 						live++
 					} else {
 						dead = append(dead, h)
