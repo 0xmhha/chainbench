@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl/assert"
 )
@@ -180,36 +182,77 @@ func (blockAdvanceAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (s
 		res.Actual = err.Error()
 		return res, err
 	}
-	c, err := clientFor(ac.Deps, targets[0].url)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
+	// Every target, not the first. A case writes onEach because it means all of
+	// them: node/010 lists a producer, the proxy and the endpoint and asks that
+	// each is advancing, which is the whole claim — an endpoint that receives
+	// nothing through the tier is the failure the case exists to catch, and
+	// reading only the producer could never see it.
+	clients := make([]*rpc.Client, len(targets))
+	starts := make([]uint64, len(targets))
+	for i, t := range targets {
+		c, err := clientFor(ac.Deps, t.url)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		start, err := c.BlockNumber(ctx)
+		if err != nil {
+			res.Actual = fmt.Sprintf("%s: %v", t.name, err)
+			return res, err
+		}
+		clients[i], starts[i] = c, start
 	}
-	start, err := c.BlockNumber(ctx)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
-	res.Expected = "head > " + strconv.FormatUint(start, 10)
+	res.Expected = fmt.Sprintf("every one of %d node(s) past its head", len(targets))
 
 	timeout := durationArg(ac.Spec, "timeout", defaultBlockAdvanceTimeout)
 	pctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	t := time.NewTicker(durationArg(ac.Spec, "pollInterval", defaultBlockAdvancePoll))
 	defer t.Stop()
+	moved := make([]bool, len(targets))
+	heads := make([]uint64, len(targets))
+	copy(heads, starts)
 	for {
-		if cur, err := c.BlockNumber(pctx); err == nil && cur > start {
-			res.Pass, res.Actual = true, cur
+		all := true
+		for i := range targets {
+			if moved[i] {
+				continue
+			}
+			cur, err := clients[i].BlockNumber(pctx)
+			if err == nil {
+				heads[i] = cur
+				moved[i] = cur > starts[i]
+			}
+			all = all && moved[i]
+		}
+		if all {
+			res.Pass, res.Actual = true, headReport(targets, starts, heads)
 			return res, nil
 		}
 		select {
 		case <-pctx.Done():
-			res.Pass, res.Actual = false, start
-			res.Source = "head did not advance within " + timeout.String()
+			res.Pass, res.Actual = false, headReport(targets, starts, heads)
+			var stuck []string
+			for i, t := range targets {
+				if !moved[i] {
+					stuck = append(stuck, t.name)
+				}
+			}
+			res.Source = "head did not advance within " + timeout.String() + " on " + strings.Join(stuck, ", ")
 			return res, nil
 		case <-t.C:
 		}
 	}
+}
+
+// headReport names each node with where its head started and stands, so a
+// failure says which node did not move rather than only that one did not.
+func headReport(targets []assertTarget, starts, heads []uint64) string {
+	parts := make([]string, len(targets))
+	for i, t := range targets {
+		parts[i] = fmt.Sprintf("%s %d->%d", t.name, starts[i], heads[i])
+	}
+	return strings.Join(parts, ", ")
 }
 
 // readAction reads one RPC value and, with "save", binds it for later steps and

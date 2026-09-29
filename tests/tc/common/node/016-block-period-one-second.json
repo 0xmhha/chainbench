@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "block-period-one-second",
-  "description": "RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)",
+  "description": "CT-NODE-016 — 블록 생성 주기가 설정한 값 언저리인지 본다 (절차는 docs/tc/common/06-detailed-procedures/01-node.md). 2026-09-29 에 재는 방법을 고쳤다. 전에는 연속한 세 블록의 시각을 읽어 차이가 정확히 1초인지 두 번 봤다. 블록 시각은 초 단위 정수라 실제 주기가 1초 언저리인 체인에서는 그 차이가 0이 되기도 1이 되기도 한다. 표본이 둘뿐이라 결과가 동전 던지기였다. 측정: go-wemix 는 평균 0.79~0.86초로 돌아 우연히 통과하거나 실패했다. 그래서 20블록에 걸친 평균을 본다. 표본이 늘면 초 단위 반올림이 상쇄되어 평균이 실제 주기에 수렴한다. 경계는 밀리초로 준다. 정수 초로는 0 아니면 1밖에 못 적고 0은 아무것도 말하지 않는 값이다. 구간이 [0.6, 1.4]초로 넓은 것은 체인마다 주기가 달라서다. go-stablenet 과 go-wbft 는 genesis 의 blockPeriodSeconds 가 1이고, go-wemix 는 거버넌스가 정하며 측정값이 0.8초 언저리다. isPerChain 은 기댓값 하나만 바꾸므로 두 경계를 체인별로 줄 수 없다. 좁히려면 체인이 설정한 주기를 RPC 로 읽어 그 값과 견주어야 하는데, 세 체인이 그것을 같은 방법으로 내놓지 않는다. 지금 구간도 멈춘 체인(평균이 한없이 커진다)과 설정보다 두 배 빠른 체인은 잡는다.",
   "requires": [
     "rpc"
   ],
@@ -15,85 +15,16 @@
   },
   "steps": [
     {
-      "do": "read",
-      "method": "eth_blockNumber",
-      "save": "n",
-      "source": "rpcCall"
+      "do": "waitBlock",
+      "target": 25,
+      "timeout": "240s"
     },
     {
-      "do": "read",
-      "method": "eth_getBlockByNumber",
-      "params": [
-        "$n",
-        false
-      ],
-      "save": "t1",
-      "select": "timestamp",
-      "source": "rpcCall"
-    },
-    {
-      "do": "read",
-      "method": "eth_getBlockByNumber",
-      "params": [
-        "$n",
-        false
-      ],
-      "save": "ph1",
-      "select": "parentHash",
-      "source": "rpcCall"
-    },
-    {
-      "do": "read",
-      "method": "eth_getBlockByHash",
-      "params": [
-        "$ph1",
-        false
-      ],
-      "save": "t0",
-      "select": "timestamp",
-      "source": "rpcCall"
-    },
-    {
-      "do": "read",
-      "method": "eth_getBlockByHash",
-      "params": [
-        "$ph1",
-        false
-      ],
-      "save": "ph0",
-      "select": "parentHash",
-      "source": "rpcCall"
-    },
-    {
-      "do": "read",
-      "method": "eth_getBlockByHash",
-      "params": [
-        "$ph0",
-        false
-      ],
-      "save": "tm1",
-      "select": "timestamp",
-      "source": "rpcCall"
-    },
-    {
-      "compare": "Equal",
-      "expect": "derive",
-      "is": "1",
-      "of": [
-        "$t1",
-        "$t0"
-      ],
-      "op": "diff"
-    },
-    {
-      "compare": "Equal",
-      "expect": "derive",
-      "is": "1",
-      "of": [
-        "$t0",
-        "$tm1"
-      ],
-      "op": "diff"
+      "expect": "blockInterval",
+      "on": "node1",
+      "blocks": 20,
+      "minMillis": 600,
+      "maxMillis": 1400
     }
   ]
 }
