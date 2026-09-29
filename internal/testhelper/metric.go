@@ -73,10 +73,7 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 			}
 			url = collector.MetricsURL(t.node.Host, t.node.Ports.Metrics)
 		}
-		samples, err := collector.ScrapeMetrics(ctx, url)
-		if err != nil {
-			samples, err = scrapeOnMachine(ctx, ac.Deps, t.node, err)
-		}
+		samples, err := scrapeNode(ctx, ac.Deps, t.node, url)
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
@@ -102,20 +99,54 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 // hold the step.
 const onMachineScrapeTimeoutSeconds = 10
 
-// scrapeOnMachine reads a node's metrics on the machine it runs on, for when
-// the harness cannot reach the endpoint itself: a docker or remote node whose
-// metrics port is not published. The request goes to the node's own address,
-// which is reachable from its machine, through curl when the machine has it
-// and bash's /dev/tcp otherwise (a minimal image carries neither curl nor
-// wget). A run that cannot reach the machine keeps the scrape error.
-func scrapeOnMachine(ctx context.Context, d *interp.Deps, n node.Node, scrapeErr error) (map[string]float64, error) {
-	if d == nil || n.Ports.Metrics == 0 {
-		return nil, scrapeErr
+// scrapeNode reads a node's metrics, on its machine first when the node runs
+// elsewhere and the run can reach that machine, else at url.
+//
+// The order matters. A docker node's recorded URL is loopback with the node's
+// own metrics port, which nothing publishes; whatever answers there on the
+// harness is some other process, and its numbers would pass for the node's.
+// The machine is asked first so that cannot happen. A local node, or a run
+// that cannot reach the machine, reads url as before.
+func scrapeNode(ctx context.Context, d *interp.Deps, n node.Node, url string) (map[string]float64, error) {
+	cmd, ok := machineReader(d, n)
+	if !ok {
+		return collector.ScrapeMetrics(ctx, url)
+	}
+	samples, machineErr := scrapeOnMachine(ctx, cmd, n)
+	if machineErr == nil {
+		return samples, nil
+	}
+	samples, err := collector.ScrapeMetrics(ctx, url)
+	if err != nil {
+		return nil, fmt.Errorf("%w; on node%d's machine: %v", err, n.Index, machineErr)
+	}
+	return samples, nil
+}
+
+// machineReader returns the run's reach into n's machine when n runs on
+// another machine and has a metrics port.
+func machineReader(d *interp.Deps, n node.Node) (interp.HostCommander, bool) {
+	if d == nil || n.Ports.Metrics == 0 || isLoopbackHost(n.Host) {
+		return nil, false
 	}
 	cmd, ok := d.Nodes.(interp.HostCommander)
-	if !ok {
-		return nil, scrapeErr
+	return cmd, ok
+}
+
+// isLoopbackHost reports whether host names this machine.
+func isLoopbackHost(host string) bool {
+	switch host {
+	case "", "localhost", "127.0.0.1", "::1":
+		return true
 	}
+	return strings.HasPrefix(host, "127.")
+}
+
+// scrapeOnMachine reads n's metrics on the machine it runs on, at the node's
+// own address, which is reachable from there. The request goes through curl
+// when the machine has it and bash's /dev/tcp otherwise (a minimal image
+// carries neither curl nor wget).
+func scrapeOnMachine(ctx context.Context, cmd interp.HostCommander, n node.Node) (map[string]float64, error) {
 	const path = "/debug/metrics/prometheus"
 	url := collector.MetricsURL(n.Host, n.Ports.Metrics)
 	command := fmt.Sprintf(
@@ -125,13 +156,9 @@ func scrapeOnMachine(ctx context.Context, d *interp.Deps, n node.Node, scrapeErr
 		onMachineScrapeTimeoutSeconds, n.Host, n.Ports.Metrics, path, n.Host)
 	out, err := cmd.RunOnHost(ctx, n, command)
 	if err != nil {
-		return nil, fmt.Errorf("%w; on node%d's machine: %v", scrapeErr, n.Index, err)
+		return nil, err
 	}
-	samples, err := collector.ParseMetrics(strings.NewReader(httpBody(out)))
-	if err != nil {
-		return nil, fmt.Errorf("%w; on node%d's machine: %v", scrapeErr, n.Index, err)
-	}
-	return samples, nil
+	return collector.ParseMetrics(strings.NewReader(httpBody(out)))
 }
 
 // httpBody drops a raw HTTP response's status line and headers, leaving the
