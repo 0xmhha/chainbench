@@ -1,0 +1,218 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "snap-receipt-gas-price",
+  "description": "CT-FEE-009 — 스냅 동기화로 받은 영수증의 실제 적용 가스 가격이 생성 노드와 같다 (기존 명세 TC-4-6-03, TS-4-6 의 공통 부분, 절차는 docs/tc/common/06-detailed-procedures/03-fee.md 의 CT-FEE-009). 종단 노드 en1 을 syncMode snap 으로 두고 resetNode 로 genesis 만 가진 상태로 멈춰 둔다. 세 클라이언트 모두 head 가 0 인 노드에서만 snap 을 켜고, 블록을 하나라도 가진 노드는 full 로 바꾼다(eth/handler.go). 그래서 네트워크와 함께 떠서 블록을 받은 노드로는 snap 을 볼 수 없다. 새 계정이 송금한 블록을 적어 두고 그 뒤로 150블록이 쌓이면 en1 을 띄운다. pivot 은 head 에서 64 블록 아래라서 송금 블록은 pivot 아래에 놓이고, snap 은 pivot 아래 블록의 영수증을 내려받는다. full 은 영수증을 내려받지 않고 실행해서 만든다. 그래서 metric eth_downloader_receipts_in 이 1 이상이면 snap 을 실제로 탄 것이고, full 로 바뀌어 끝났다면 이 검사에서 실패한다. 네트워크 인코딩의 영수증에는 가스 가격이 없어 받는 노드가 다시 구한다. go-stablenet 은 헤더 gasTip 과 인가 계정 여부로, go-wbft 는 트랜잭션과 기본 수수료로, go-wemix 는 API 에서 계산한다. 구하는 방법은 달라도 결과는 생성 노드의 값과 같아야 한다. 인가 계정이 아닌 새 계정의 동적 수수료 송금으로 보고, effectiveGasPrice, gasUsed, status 를 en1 과 node1 에서 비교한다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "topology": {
+      "syncMode": "snap"
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "resetNode",
+      "on": "en1"
+    },
+    {
+      "do": "newAccount",
+      "save": "payee",
+      "saveKey": "payeeKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "save": "feeCap"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "$payee",
+      "value": "1234567000000000000",
+      "gas": "21000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "$tip",
+      "expect": "receipt",
+      "save": "h",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "blockNumber",
+      "save": "txBlock"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$txBlock",
+        "150"
+      ],
+      "save": "target"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "compare": "GreaterOrEqual",
+      "expected": "$target",
+      "timeout": "600s",
+      "pollInterval": "5s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_blockNumber",
+      "save": "top"
+    },
+    {
+      "do": "startNode",
+      "on": "en1"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "compare": "GreaterOrEqual",
+      "expected": "$top",
+      "timeout": "300s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_syncing",
+      "compare": "Equal",
+      "expected": false,
+      "timeout": "300s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "metric",
+      "on": "en1",
+      "name": "eth_downloader_receipts_in",
+      "compare": "GreaterOrEqual",
+      "is": 1
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "wantPrice"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "gasUsed",
+      "save": "wantUsed"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "effectiveGasPrice",
+      "compare": "Equal",
+      "is": "$wantPrice"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "gasUsed",
+      "compare": "Equal",
+      "is": "$wantUsed"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "is": "0x1"
+    }
+  ]
+}
