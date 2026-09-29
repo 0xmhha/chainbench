@@ -83,6 +83,46 @@ chainbench run --workspace-dir /tmp/ws --env wbft-bp4 tests/tc/.../08-legacy-tra
 wbft 로 옮기면 돌지 않고 SKIP 된다 — 그게 맞는 동작이고, 정말 그 체인 전용인지
 케이스가 다시 답해야 한다는 뜻이다.
 
+### 답이 체인마다 다를 때
+
+같은 절차인데 정답이 갈리는 경우가 있다. 두 가지를 쓴다.
+
+**`isPerChain` — 비교할 값이 다를 때.** 판정에 붙이면 그 체인의 기댓값을 쓰고, 이름이 없는
+체인은 `is` 를 쓴다. `is` 는 반드시 적는다. 안 적으면 지도가 빠뜨린 체인이 아무것도
+기대하지 않게 되고, 아무것도 기대하지 않는 문장은 무슨 결과든 통과시킨다.
+
+```json
+{ "expect": "chainId", "is": "8283", "isPerChain": { "wbft": "8284", "wemix": "8285" } }
+```
+
+**`expectPerChain` — 결과 자체가 다를 때.** `do` 문장에 붙여 그 체인에서 기대할 결과를
+바꾼다. 마찬가지로 `expect` 를 함께 적는다.
+
+```json
+{ "do": "sendTx", "gasPrice": "1", "reason": "transaction underpriced",
+  "expect": "reject", "expectPerChain": { "wbft": "keptOut" }, "blocks": 5 }
+```
+
+둘 다 낮추는 단계에서 한 값으로 정해진다. 실행기는 체인이 갈린다는 것을 모른다.
+
+**값을 넓히는 것으로 때우지 않는다.** "거부되거나 안 들어가거나" 로 적으면 두 체인 모두에서
+더 약한 테스트가 된다. 각 체인이 무엇을 하는지 코드에서 확인해 못 박는 편이 낫다.
+
+### 어디서 도는지 요구하기
+
+`requires` 는 체인의 능력만 묻는 자리가 아니다. 망이 **어디서 도는지**도 능력으로 붙는다.
+
+| 값 | 뜻 |
+|---|---|
+| `target:remote` | 노드가 SSH 로 닿는 기계에 있다 |
+| `target:local` | 노드가 이 기계의 프로세스다 |
+
+노드가 도는 기계에서 명령을 돌려야 하는 케이스가 쓴다 — 방화벽으로 망을 가르는 것이
+그렇다. 로컬 실행에서는 SKIP 되고, 이유가 찍힌다.
+
+도커 함대는 따로가 아니다. 컨테이너를 SSH 로 닿으므로 `target:remote` 이고, 진짜 원격
+서버용으로 쓴 케이스가 거기서 그대로 돈다.
+
 ### 망 파일 이름
 
 `<체인>-bp<수>[-en<수>][-pn<수>]` 다. `stablenet-bp4`, `stablenet-bp4-en1`,
@@ -163,7 +203,9 @@ v2 의 `is` 는 낮추는 단계에서 `expected` 로 바뀐다. 둘 다 통하�
 
 `expect` 는 자리에 따라 뜻이 다르다. 문장의 머리로 오면 판정이고, `do` 가 있는 문장에 붙으면 그 동작의 기대 결과다 — `{"do":"sendTx", "expect":"receipt"}` 처럼.
 
-**붙는 자리의 `expect` 는 네 값만 받는다**: `receipt`(채굴돼야 한다 — 기본값) · `revert`(채굴되지만 status 0x0) · `reject`(제출 자체가 거부돼야 한다) · `fail`(기동한 노드가 뜨지 않아야 한다). 그 밖의 값은 **거부된다** — 오타를 허용하면 기본값 "성공해야 한다" 로 흘러가 부정 케이스가 조용히 통과한다. 스키마(`internal/dsl/schema/v2.schema.json`)도 같은 네 값만 받고, 파서와 어긋나지 않는지는 테스트가 지킨다.
+**붙는 자리의 `expect` 는 다섯 값만 받는다**: `receipt`(채굴돼야 한다 — 기본값) · `revert`(채굴되지만 status 0x0) · `reject`(제출 자체가 거부돼야 한다) · `keptOut`(제출은 받아들여져도 좋지만 어떤 블록도 실어서는 안 된다) · `fail`(기동한 노드가 뜨지 않아야 한다). 그 밖의 값은 **거부된다** — 오타를 허용하면 기본값 "성공해야 한다" 로 흘러가 부정 케이스가 조용히 통과한다. 스키마(`internal/dsl/schema/v2.schema.json`)도 같은 다섯 값만 받고, 파서와 어긋나지 않는지는 테스트가 지킨다.
+
+`keptOut` 은 `blocks` 로 몇 블록을 지켜볼지 정한다(기본 5). 제출이 거부되면 `reject` 와 같게 판정하므로 `reason` 도 함께 적을 수 있다.
 
 `reject` 를 쓸 때는 **`reason` 을 함께 적는다**. 없으면 *어떤* 거절이든 통과하므로, 파일 이름이 주장하는 이유와 다른 이유로 거절돼도 초록불이 된다. 실제 문구를 모를 때는 일부러 틀린 `reason` 을 넣고 한 번 돌리면 실패 메시지가 진짜 문구를 찍어 준다 — 부분 문자열을 추측하지 않는다.
 
@@ -239,8 +281,14 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 `unknown account` 로 실패하는데, 이 메시지는 키스토어 이야기일 뿐 토폴로지 이야기가 아니라서
 원인을 짐작하기 어렵다.
 
-엣지 노드처럼 **키를 갖지 않은 곳에서 트랜잭션을 넣고 싶으면 하네스가 서명하게 한다.**
-`sendTx` 에 `key` 를 주면 로컬 서명 후 `eth_sendRawTransaction` 으로 보낸다.
+**시험 대상 트랜잭션은 노드가 아니라 별도 계정이 서명한다.** `from` 에 노드 이름을 적으면
+`eth_sendTransaction` 이 되어 노드가 자기 계정으로 서명하는데, 그건 사용자가 보내는 모양이
+아니고 계정을 열어 두는 설정을 전제한다. 게다가 그 계정은 검증자라 블록 보상으로 잔액이
+저절로 움직여서, 수수료가 얼마 빠졌는지 같은 것을 잴 수가 없다.
+
+`sendTx` 나 `deployContract` 에 `key` 를 주면 로컬 서명 후 `eth_sendRawTransaction` 으로
+보낸다. 자금을 처음 넣는 전송만 `from: "faucet"` 으로 두는데, 제네시스가 자금을 준 계정의
+열쇠는 노드가 들고 있어 달리 할 수가 없다.
 
 ```json
 { "do": "newAccount", "save": "s", "saveKey": "sk" },
@@ -279,12 +327,12 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 | 이름 | 인자 | 스펙 사용 | 구현 |
 |---|---|---:|---|
-| `deployContract` | `bytecode`, `data`, `gas`, `on`, `value` | 2 | `internal/testhelper/assets.go` |
+| `deployContract` | `bytecode`, `data`, `gas`, `key`, `on`, `value` | 2 | `internal/testhelper/assets.go` |
 | `faucet` | `amount`, `gas`, `on`, `to` | 0 | `internal/testhelper/assets.go` |
-| `healPartition` | `groups` | 2 | `internal/testhelper/fault.go` |
+| `healPartition` | `groups`, `method` | 2 | `internal/testhelper/fault.go` |
 | `load` | `blocks`, `on` | 4 | `internal/testhelper/builtins.go` |
 | `newAccount` | `saveKey` | 29 | `internal/testhelper/builtins.go` |
-| `partition` | — | 2 | `internal/testhelper/fault.go` |
+| `partition` | `groups`, `method` | 2 | `internal/testhelper/fault.go` |
 | `readNodeLog` | `maxBytes`, `on` | 4 | `internal/testhelper/fault.go` |
 | `registerContract` | `data`, `gas`, `on`, `to`, `value` | 0 | `internal/testhelper/assets.go` |
 | `restartNode` | `on` | 2 | `internal/testhelper/fault.go` |
@@ -301,11 +349,14 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 ### 판정 (expect / assert) — 11개
 
+`blockAdvance`·`blockHalt`·`sameBlockHash` 는 `onEach` 에 적힌 **모든** 노드를 본다. 실패하면
+어느 노드가 그랬는지 말한다.
+
 | 이름 | 인자 | 스펙 사용 | 구현 |
 |---|---|---:|---|
 | `blockAdvance` | `on`, `pollInterval`, `timeout` | 9 | `internal/testhelper/builtins.go` |
 | `blockHalt` | `maxAdvance`, `on`, `within` | 1 | `internal/testhelper/builtins.go` |
-| `blockInterval` | `blocks`, `maxSeconds`, `minSeconds`, `on` | 1 | `internal/testhelper/builtins.go` |
+| `blockInterval` | `blocks`, `maxMillis`, `maxSeconds`, `minMillis`, `minSeconds`, `on` | 2 | `internal/testhelper/builtins.go` |
 | `blockStalled` | `on`, `pollInterval`, `timeout` | 1 | `internal/testhelper/builtins.go` |
 | `callError` | `data`, `on`, `to` | 1 | `internal/testhelper/builtins.go` |
 | `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/builtins.go` |
