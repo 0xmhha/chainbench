@@ -1,6 +1,6 @@
 # Code graph — AST-measured package structure
 
-> **측정 문서.** §2~§3 은 **2026-09-11 (main `3cf992db`)** 재측정이다. §4 는 완료된
+> **측정 문서.** §2~§3 은 **2026-09-29 (`127be5a4`)** 재측정이다. §4 는 완료된
 > launchopt 리팩토링의 **[이력]** 이다. 측정은 다시 뽑으면 갱신되지만, 뽑지 않은
 > 사이의 코드 변경은 반영되지 않는다 — 어긋나면 코드가 이긴다.
 >
@@ -12,7 +12,8 @@
 > `code-health-review-2026-09-10.md` (2026-09-24 삭제) 에 있다.
 > 호출(선택자) 그래프는 별도 도구다 — [`../codegraph/`](../codegraph/README.md).
 >
-> 측정 이력: 08-27 = 75/268 · 09-07 = 65/209 · 09-10 = 70/225 · 09-11 = 70/225.
+> 측정 이력: 08-27 = 75/268 · 09-07 = 65/209 · 09-10 = 70/225 · 09-11 = 70/225 ·
+> 09-29 = 75/251.
 
 ## 1. Method
 
@@ -28,41 +29,48 @@ and `tests/` and emits:
   `layerOf` (the per-package placement is `layers.md` §3, which `internal/arch`
   enforces).
 
-## 2. Measured shape — 2026-09-11 (70 packages, 225 edges, 51,151 lines)
+## 2. Measured shape — 2026-09-29 (75 packages, 251 edges, 66,936 lines)
 
-`violations: null` — **zero layer breaks.**
+`violations: 6` — 전부 같은 모양이다: `internal/core/*` 여섯이 `internal/preset` 을
+부른다. **층이 깨진 것이 아니라 이 도구가 `preset` 을 못 보는 것이다** — `layerOf` 의
+분기에 `internal/preset` 이 없어 `default` 인 `other` 로 떨어지고, core → other 가
+역방향으로 보인다. 배치의 정본은 `layers.md` §3 이고 그것을 기계로 강제하는
+`internal/arch` 는 위반 0 으로 통과한다. 도구의 버킷을 고치면 사라진다.
 
 | Layer | Packages | Lines | Outbound edges land in |
 |---|---|---|---|
-| core (`internal/core/*`, `resource`) | 22 | 17,217 | core 44 · domain 1 |
-| orchestration (`chainsetup`, `testengine`, `mcp`, `dashboard`, `nodemonitor`) | 5 | 16,100 | core 40 · domain 6 · other 5 · orchestration 2 · usecase 1 |
-| domain (`chains/*`, `consensus/*`, `accounts`) | 12 | 5,148 | core 28 · domain 12 |
-| entry (`cmd/*`, incl. the 14 per-group `*cmd` packages) | 19 | 5,025 | entry 28 · usecase 14 · orchestration 4 · core 3 · domain 2 |
-| other (`dsl/*`, `feature`, `testhelper`, `testsupport`) | 6 | 3,359 | core 7 · domain 1 · other 1 · usecase 1 |
-| usecase (`app`) | 1 | 2,505 | core 16 · domain 4 · orchestration 2 · other 1 |
-| tests (`tests/*`) | 2 | 1,007 | — |
+| core (`internal/core/*`, `resource`) | 26 | 20,965 | core 46 · other 6 · domain 1 |
+| orchestration (`chainsetup`, `chainsetup/verb`, `testengine`, `testhelper`, `mcp`, `dashboard`) | 6 | 27,085 | core 52 · other 9 · domain 4 · orchestration 4 · usecase 1 |
+| domain (`chains/*`, `consensus/*`, `accounts`, `validatorset`) | 11 | 3,810 | core 15 · domain 11 · other 2 |
+| entry (`cmd/*`, incl. the per-group `*cmd` packages) | 19 | 5,094 | entry 32 · usecase 15 · orchestration 4 · core 3 · other 3 · domain 2 |
+| other (`dsl/*`, `feature`, `preset`, `nodemonitor`, `testsupport`) | 7 | 4,993 | core 11 · domain 1 · other 1 · usecase 1 |
+| usecase (`app`) | 1 | 2,794 | core 17 · domain 3 · orchestration 3 · other 2 |
+| tests (`arch`, `tests/e2e`) | 2 | 1,405 | — |
 | scripts (`scripts/inventory/*`) | 3 | 790 | tests 2 |
 
 ```mermaid
 flowchart TD
-    entry[entry: cmd/chainbench + 14 *cmd groups · -mcp · -dashboard]
+    entry[entry: cmd/chainbench + per-group *cmd · -mcp · -dashboard]
     usecase[usecase: app]
-    orch[orchestration: chainsetup · testengine · mcp · dashboard · nodemonitor]
-    other[other: dsl · dsl/interp · dsl/assert · feature · testhelper]
-    domain[domain: chains · consensus · accounts]
-    core[core: 22 packages incl. resource]
-    entry -->|28| entry
-    entry -->|14| usecase
+    orch[orchestration: chainsetup · chainsetup/verb · testengine · testhelper · mcp · dashboard]
+    other[other: dsl · dsl/interp · dsl/assert · feature · preset · nodemonitor · testsupport]
+    domain[domain: chains · consensus · accounts · validatorset]
+    core[core: 26 packages incl. resource]
+    entry -->|32| entry
+    entry -->|15| usecase
     entry -->|4| orch
     entry -->|3| core
-    usecase -->|16| core
-    usecase -->|4| domain
-    orch -->|40| core
-    orch -->|6| domain
-    orch -->|5| other
-    other -->|7| core
-    domain -->|28| core
-    core -->|44| core
+    usecase -->|17| core
+    usecase -->|3| domain
+    usecase -->|3| orch
+    orch -->|52| core
+    orch -->|9| other
+    orch -->|4| domain
+    other -->|11| core
+    domain -->|15| core
+    domain -->|11| domain
+    core -->|46| core
+    core -->|6| other
 ```
 
 **표면은 app 을 지난다.** `cmd/chainbench/*` 의 최대 목적지는 `usecase`(14 엣지)이고,

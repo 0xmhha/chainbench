@@ -114,6 +114,6 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 |---|---|
 | [`chain-analysis/`](chain-analysis/README.md) | **체인 바이너리의 CLI 표면과 배선** — gstable · gwbft · gwemix 각각의 명령/플래그 그래프와 RPC/metrics 그래프. 실행 옵션 질문은 **체인 소스를 읽기 전에 여기부터.** 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. 대상이 외부 바이너리라 설계 4종과는 별개 축이다. |
 | [`claudedocs/`](claudedocs/README.md) | **[이력] 외부 컨텍스트** — chainbench 가 속한 상위 자동화 시스템의 제안서/지시서(2026-04). 제안 당시 문서라 존재하지 않는 명령이 그대로 있다. 명령 표면은 `chainbench --help` 가 이긴다. |
-| `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다)와 `common-tests/mainnet-dependencies-*`(메인넷 프로파일 계획의 근거). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. |
+| `research/` | 동결된 분석 기록. 살아 있는 문서가 인용하는 것만 남는다 — [`chainbench/analyses/`](research/chainbench/analyses/README.md)(그 README 가 누가 무엇을 인용하는지 적는다)와 `common-tests/doc-vs-tests-20260929.md`(공통 테스트 문서와 케이스 대조). 기록이라 오늘의 코드와 어긋나는 것이 정상이다. 메인넷 의존 분석 2종(2026-09-09 · 09-11)과 그 Confluence 초안은 결론이 `tc/common/` 으로 옮겨간 뒤 2026-09-29 에 지웠다 — 본문은 git 이력에 있다. |
 
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).

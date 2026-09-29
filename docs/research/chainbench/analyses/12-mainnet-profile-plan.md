@@ -4,7 +4,9 @@
 > 대상 작업: "공통 테스트에서 메인넷별 값을 제거하고 설정으로 주입한다"
 > 참조 브랜치: `codex/refactoring-proposal-review` (PR #419), HEAD `6666873a`
 > 참조 제품 리비전: `7f39c5627e0bdaccaa8e207a67767d71579283f5` (main #418)
-> 선행 분석: `docs/research/common-tests/mainnet-dependencies-20260911/analyses/`
+> 선행 분석: 공통 테스트의 메인넷 의존 분석(2026-09-11). 결론은 `docs/tc/common/` 이
+> 이어받았고 분석 원본은 2026-09-29 에 정리됐다 — `git log --diff-filter=D --
+> docs/research/common-tests/` 로 목록을, `git show <커밋>:<경로>` 로 본문을 본다.
 > **작업 정본: `docs/dev/architecture/mainnet-config-worklist.md`** — 항목과 순서는 그 문서를 따른다.
 > 이 문서는 배경 분석이다. 4장(설계)과 5장(순서)은 D1·D4 가 정해진 뒤 preset 기준으로 다시 쓴다.
 
