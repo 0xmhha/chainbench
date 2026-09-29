@@ -1,0 +1,284 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "reject-vs-execution-failure",
+  "description": "CT-TX-017 — 풀에서 거부된 트랜잭션과 블록에 들어가 실행에 실패한 트랜잭션이 서로 다른 흔적을 남긴다 (기존 명세 N-009 의 관측 부분, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-017). 한 계정에서 세 가지를 차례로 보낸다. 잔액보다 1 wei 많은 송금은 제출 때 insufficient funds 로 거부되어 해시가 남지 않으므로, 거부는 계정 단위로 본다. nonce 와 잔액이 그대로이고 txpool_contentFrom 의 pending·queued 가 비어 있다. 항상 되돌리는 컨트랙트(contract/006 과 같은 바이트코드) 호출과 가스를 다 쓰는 무한 반복 컨트랙트(contract/007 과 같은 바이트코드) 호출은 블록에 들어가 영수증 상태가 0x0 이고 blockNumber 가 있다. 가스 소진은 준 가스 50000 을 모두 쓴다. 그래서 nonce 는 둘만큼 늘고 잔액은 두 건의 수수료(gasUsed × effectiveGasPrice)만큼 준다. 두 컨트랙트 모두 PUSH0 없이 손으로 쓴 것이라 go-wemix 에서도 배포된다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x600580600b6000396000f360006000fd",
+      "save": "rdeploy"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rdeploy"
+      ],
+      "select": "contractAddress",
+      "save": "reverter"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rdeploy",
+      "is": "0x1"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x600480600b6000396000f35b600056",
+      "save": "ldeploy"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$ldeploy"
+      ],
+      "select": "contractAddress",
+      "save": "looper"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$ldeploy",
+      "is": "0x1"
+    },
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$acct",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$acct",
+      "save": "n0"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$acct",
+      "save": "b0"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$b0",
+        "1"
+      ],
+      "save": "tooMuch"
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE31",
+      "value": "$tooMuch",
+      "expect": "reject",
+      "reason": "insufficient funds"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$acct",
+      "compare": "Equal",
+      "is": "$n0"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$acct",
+      "compare": "Equal",
+      "is": "$b0"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$acct"
+      ],
+      "select": "pending",
+      "compare": "Equal",
+      "is": {}
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$acct"
+      ],
+      "select": "queued",
+      "compare": "Equal",
+      "is": {}
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "on": "node1",
+      "to": "$reverter",
+      "gas": "100000",
+      "expect": "revert",
+      "save": "rh",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rh",
+      "is": "0x0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rh"
+      ],
+      "select": "blockNumber",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rh"
+      ],
+      "select": "gasUsed",
+      "save": "rUsed"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$rh"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "rPrice"
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "on": "node1",
+      "to": "$looper",
+      "gas": "50000",
+      "expect": "revert",
+      "save": "oh",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$oh",
+      "is": "0x0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$oh"
+      ],
+      "select": "blockNumber",
+      "compare": "NotNil",
+      "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$oh"
+      ],
+      "select": "gasUsed",
+      "compare": "Equal",
+      "is": "50000"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$oh"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "oPrice"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$n0",
+        "2"
+      ],
+      "save": "n2"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$acct",
+      "compare": "Equal",
+      "is": "$n2"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$rUsed",
+        "$rPrice"
+      ],
+      "save": "rFee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "50000",
+        "$oPrice"
+      ],
+      "save": "oFee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$b0",
+        "$rFee",
+        "$oFee"
+      ],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$acct",
+      "compare": "Equal",
+      "is": "$want"
+    }
+  ]
+}
