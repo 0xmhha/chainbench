@@ -8,6 +8,9 @@
 2026-09-24 의 트리(`386a78ee`)에서 뽑았다. 케이스가 늘거나 줄면 이 목록도 고친다. 각 케이스의
 체인·노드 수는 `chainbench run --plan` 이 푼 값이고, "직전" 은 2026-09-23 docker 15대
 스위프의 판정과 소요 시간이다. 로컬 소요 시간은 재지 않았다.
+예외로 CT-FAULT-001 을 쓰는 010 · 181 · 193 · 207 은 2026-09-30 에 이 기계(macOS, 로컬 4노드)에서
+돌려 "로컬" 로 적었다. 바이너리는 gstable 1.1.0-stable, go-wbft `172a1302d`, go-wemix `1ceaa1e6a`
+빌드다. wemix 는 첫 실행이 기계의 유휴 잠자기(약 10분)에 걸려 962s 가 나와 `caffeinate -i` 로 다시 쟀다.
 
 ---
 
@@ -203,7 +206,7 @@ Simulate network partition via admin_removePeer - verify consensus halts and rec
 cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fault-network-partition" && bin/chainbench run tests/tc/common/fault/CT-FAULT-004-network-partition.json --workspace-dir "$HOME/cbw/manual/fault-network-partition" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
-**010. `fault-node-crash`** — stablenet · bp4 · 직전 미측정(2026-09-30 합침)  
+**010. `fault-node-crash`** — stablenet · bp4 · 직전 미측정(2026-09-30 합침) · 로컬 PASS 60s(2026-09-30)  
 Stop 1 validator and verify consensus continues with 3/4 (원본 fault/node-crash.sh)  
 
 ```sh
@@ -1435,7 +1438,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-quorum
 
 ### `go-wbft/fault` (2)
 
-**181. `wbft-node-crash`** — wbft · bp4 · 직전 미측정(2026-09-30 합침)  
+**181. `wbft-node-crash`** — wbft · bp4 · 직전 미측정(2026-09-30 합침) · 로컬 PASS 38s(2026-09-30)  
 Stop one wbft validator and verify consensus continues 3/4, then restart it (WA25 — wbft had no fault coverage).  
 
 ```sh
@@ -1540,7 +1543,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-etcd-
 
 ### `go-wemix/fault` (1)
 
-**193. `wemix-node-crash`** — wemix · bp4 · 직전 미측정(2026-09-30 합침)  
+**193. `wemix-node-crash`** — wemix · bp4 · 직전 미측정(2026-09-30 합침) · 로컬 PASS 105s(2026-09-30)  
 Stop one wemix (poa) producer and verify block production continues, then restart it (WA25 — wemix had no fault coverage).  
 
 ```sh
@@ -1658,7 +1661,7 @@ v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값
 cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/sample-minimal-value-transfer" && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir "$HOME/cbw/manual/sample-minimal-value-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
-**207. `sample-lifecycle-node-restart`** — stablenet · bp4 · 직전 미측정(2026-09-30 CT-FAULT-001 로 합침)  
+**207. `sample-lifecycle-node-restart`** — stablenet · bp4 · 직전 미측정(2026-09-30 CT-FAULT-001 로 합침) · 로컬 PASS 60s(2026-09-30, 010 과 같은 파일·같은 preset)  
 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md)  
 
 ```sh
