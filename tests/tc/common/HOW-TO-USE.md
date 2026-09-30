@@ -44,7 +44,7 @@ export GWBFT="$HOME/work/github/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/go-wemix/build/bin/gwemix"
 ```
 
-공통 85개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
+공통 80개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
 붙은 6개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
 공통의 대부분을 돌릴 수 있다.**
 
@@ -87,7 +87,7 @@ rm -rf ~/cbw/m/<이름> && bin/chainbench run <케이스.json> --workspace-dir ~
 
 ### 3.1 대부분은 stablenet
 
-공통 85개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
+공통 80개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
 `--binary "$GSTABLE"` 를 준다. 8절 목록에서 `$GSTABLE` 로 찍힌 것이 그것이다.
 
 같은 케이스를 다른 체인에서 보고 싶으면 프리셋을 실행할 때 덮는다. 이때는 그 체인의
@@ -250,9 +250,9 @@ scripts/tcsweep.sh sweep.log tests/tc/common
 
 ---
 
-## 9. 케이스별 실행 명령 (85개 전부)
+## 9. 케이스별 실행 명령 (80개 전부)
 
-`tests/tc/common/` 아래 85개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
+`tests/tc/common/` 아래 80개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
 `$GWEMIX`)를 잡아 두면 원하는 줄을 그대로 붙여 넣어 돌릴 수 있다. 각 줄은 로컬 실행이다 —
 같은 케이스를 Docker 함대에서 돌리려면 6절의 형태에 그 줄의 케이스 경로만 넣는다
 (`--binary` 는 빼고 Docker 플래그를 붙인다).
@@ -317,18 +317,13 @@ rm -rf ~/cbw/m/CT-TX-020-test-account-funding && bin/chainbench run tests/tc/com
 ### fee — 수수료·가스 정책
 
 ```sh
-rm -rf ~/cbw/m/001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/001-tip-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-dynamic-feecap-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-dynamic-feecap-above-min-accepted.json --workspace-dir ~/cbw/m/002-dynamic-feecap-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-feecap-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-feecap-below-min-rejected.json --workspace-dir ~/cbw/m/002-feecap-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-legacy-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-legacy-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-effective-gas-price && bin/chainbench run tests/tc/common/fee/007-effective-gas-price.json --workspace-dir ~/cbw/m/007-effective-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-effective-gas-price-regular-bp-en && bin/chainbench run tests/tc/common/fee/008-effective-gas-price-regular-bp-en.json --workspace-dir ~/cbw/m/008-effective-gas-price-regular-bp-en --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/009-snap-receipt-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-gas-price-positive && bin/chainbench run tests/tc/common/fee/010-gas-price-positive.json --workspace-dir ~/cbw/m/010-gas-price-positive --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-fee-history-well-formed && bin/chainbench run tests/tc/common/fee/012-fee-history-well-formed.json --workspace-dir ~/cbw/m/012-fee-history-well-formed --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/CT-FEE-001-tip-below-min-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-002-min-gas-price-boundary && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir ~/cbw/m/CT-FEE-002-min-gas-price-boundary --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-007-effective-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-007-effective-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-007-effective-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes && bin/chainbench run tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json --workspace-dir ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-009-snap-receipt-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-010-suggested-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-010-suggested-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-012-fee-history && bin/chainbench run tests/tc/common/fee/CT-FEE-012-fee-history.json --workspace-dir ~/cbw/m/CT-FEE-012-fee-history --binary "$GSTABLE"
 ```
 
 ### contract — 컨트랙트 실행

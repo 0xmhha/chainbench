@@ -15,7 +15,7 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 
 ## 1. 무엇이 여기 있나
 
-케이스 **85개**다. CT 하나에 케이스가 여럿인 것은 원본 자동 테스트 여럿을 CT 하나로 묶었거나
+케이스 **80개**다. CT 하나에 케이스가 여럿인 것은 원본 자동 테스트 여럿을 CT 하나로 묶었거나
 세 체인이 각자의 케이스를 갖고 있기 때문이다 — `CT-CONTRACT-001` 은 `contract-roundtrip`·
 `wbft-tx-and-contract`·`wemix-tx-and-contract` 셋이다.
 
@@ -23,7 +23,7 @@ Confluence [[Common] Test](https://wemade.atlassian.net/wiki/spaces/platfomDev/p
 tests/tc/common/
 ├── node/       15건   노드·동기화·네트워크
 ├── tx/         20건   트랜잭션 전송·거부
-├── fee/        12건   수수료·가스 정책
+├── fee/         7건   수수료·가스 정책
 ├── contract/   12건   컨트랙트 실행
 ├── rpc/        17건   조회·구독 API
 └── fault/       9건   장애·복구
@@ -31,7 +31,7 @@ tests/tc/common/
 
 파일명 규칙은 `CT-<영역>-<번호>-<간략설명>.json` 이다(예: `node/CT-NODE-001-startup-block-production.json`).
 CT 하나에 파일 하나를 두고, 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다.
-2026-09-29 에 `node/`·`tx/` 를 이 규칙으로 바꿨다. 다른 영역은 아직 예전 규칙
+2026-09-29~30 에 `node/`·`tx/`·`fee/` 를 이 규칙으로 바꿨다. 다른 영역은 아직 예전 규칙
 `<CT 번호>-<테스트 id>.json` 이고, 앞의 번호가 같은 파일들이 한 CT 를 이룬다. 파일 이름을
 바꿔도 파일 안의 `id` 는 그대로 둔다. 아래 설명은 예전 규칙에 대한 것이다.
 번호 뒤의 이름은 옮기기 전과 한 글자도 바꾸지 않았다(몇몇 옮긴 케이스는 파일 이름과 `id` 가 다르다) — `id` 로 케이스를 부르는 문서와
@@ -42,7 +42,7 @@ CT 하나를 두 영역이 함께 거명한 것이 둘 있다. `chain-id`(지금
 `CT-NODE-014` 와 `CT-RPC-008` 이다. 앞의 CT 를
 따라 `node/` 에 두었다.
 
-## 2. 왜 85개를 CT 수만큼 합치지 않았나
+## 2. 왜 80개를 CT 수만큼 합치지 않았나
 
 합치는 것이 목표지만 한 번에 하지 않는다. `CT-NODE-001` 의 세 케이스는 같은 것을 보는
 듯하지만 기대값이 다르다 — 검증자 수를 확인하는 방법이 체인마다 다르고, WEMIX3.0 은
@@ -64,15 +64,19 @@ TX 도 같은 날 CT 하나에 파일 하나가 되었다(`tx/` 20개). `CT-TX-0
 노드 계정 송금과 자기 키로 서명한 송금을 한 파일에서 차례로 보고, `CT-TX-015` 의 wbft·wemix 사본은
 단계가 같아 지웠다.
 
+FEE 도 CT 하나에 파일 하나다(`fee/` 7개, 2026-09-30). `CT-FEE-002` 의 여섯 파일(형식 셋 × 미만·초과)을
+한 파일로 합쳤고, `CT-FEE-001` 은 최소 팁 검사에 실제로 닿도록 다시 썼다(노드를 `txpool.nolocals` 로 띄우고
+최대 수수료는 충분히, 팁만 1 wei).
+
 ## 3. 세 체인 모두에서 게이트를 통과한다
 
 케이스의 `requires` 를 세 체인이 제공하는 capability 집합과 대조한 결과다.
 
-| 체인 | 85건 중 게이트 통과 |
+| 체인 | 80건 중 게이트 통과 |
 | --- | --- |
-| go-stablenet | 84 |
-| go-wbft | 84 |
-| go-wemix | 84 |
+| go-stablenet | 79 |
+| go-wbft | 79 |
+| go-wemix | 79 |
 
 남은 하나는 `fault/004-fault-network-partition` 이다. 체인이 아니라 실행 대상에 `target:remote` 를
 요구해, 노드가 원격이나 Docker 서버에 있을 때만 돈다(2026-09-29 기준).
@@ -163,8 +167,8 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 | CT-TX-011 | `tx/CT-TX-011-keystore-fee-delegate-sign.json` | 없었다(메서드 존재만 CT-TX-009 가 본다) |
 | CT-TX-014 | `tx/CT-TX-014-carry-over-and-replace.json` | 없었다 |
 | CT-TX-017 | `tx/CT-TX-017-reject-vs-execution-failure.json` | 없었다 |
-| CT-FEE-002 (초과) | `fee/002-legacy-gasprice-above-min-accepted.json` · `fee/002-accesslist-gasprice-above-min-accepted.json` · `fee/002-dynamic-feecap-above-min-accepted.json` | 동적 수수료만 go-stablenet 전용으로 있었다 |
-| CT-FEE-009 | `fee/009-snap-receipt-gas-price.json` | 없었다 |
+| CT-FEE-002 (초과) | `fee/CT-FEE-002-min-gas-price-boundary.json` | 동적 수수료만 go-stablenet 전용으로 있었다 |
+| CT-FEE-009 | `fee/CT-FEE-009-snap-receipt-gas-price.json` | 없었다 |
 | CT-CONTRACT-003 | `contract/003-view-call-leaves-state.json` | 값 읽기만 CT-CONTRACT-001·002 가 부수적으로 했다 |
 | CT-RPC-010 | `rpc/010-signed-tx-seen-in-pool.json` | 전송만 `tx/CT-TX-001-value-transfer` 가 했다 |
 
@@ -250,13 +254,13 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 | CT | 무엇을 보나 | 공통에 있는 케이스 |
 | --- | --- | --- |
-| CT-FEE-001 | 최소 팁 미달 거부 | `fee/001-tip-below-min-rejected.json` |
-| CT-FEE-002 | 최소 가스비 경계값 | `fee/002-legacy-gasprice-below-min-rejected.json` · `fee/002-accesslist-gasprice-below-min-rejected.json` · `fee/002-feecap-below-min-rejected.json` · `fee/002-legacy-gasprice-above-min-accepted.json` (2026-09-29 신규) · `fee/002-accesslist-gasprice-above-min-accepted.json` (2026-09-29 신규) · `fee/002-dynamic-feecap-above-min-accepted.json` (2026-09-29 신규) / 공통 아님: `go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json` · `go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json` |
-| CT-FEE-007 | 실제 적용 가스 가격 기록 | `fee/007-effective-gas-price.json` |
-| CT-FEE-008 | 실제 적용 가스 가격 노드 간 일치 | `fee/008-effective-gas-price-regular-bp-en.json` |
-| CT-FEE-009 | 스냅 동기화 노드의 영수증 가스 가격 보존 | `fee/009-snap-receipt-gas-price.json` (2026-09-29 신규) |
-| CT-FEE-010 | 권장 가스 가격 조회 | `fee/010-gas-price-positive.json` / 공통 아님: `go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json` |
-| CT-FEE-012 | 수수료 이력 조회 | `fee/012-fee-history-well-formed.json` |
+| CT-FEE-001 | 최소 팁 미달 거부 | `fee/CT-FEE-001-tip-below-min-rejected.json` |
+| CT-FEE-002 | 최소 가스비 경계값 | `fee/CT-FEE-002-min-gas-price-boundary.json` (초과 부분은 2026-09-29 신규) |
+| CT-FEE-007 | 실제 적용 가스 가격 기록 | `fee/CT-FEE-007-effective-gas-price.json` |
+| CT-FEE-008 | 실제 적용 가스 가격 노드 간 일치 | `fee/CT-FEE-008-effective-gas-price-across-nodes.json` |
+| CT-FEE-009 | 스냅 동기화 노드의 영수증 가스 가격 보존 | `fee/CT-FEE-009-snap-receipt-gas-price.json` (2026-09-29 신규) |
+| CT-FEE-010 | 권장 가스 가격 조회 | `fee/CT-FEE-010-suggested-gas-price.json` / 공통 아님: `go-stablenet/regression/api/07b-gas-price-equals-basefee-plus-tip.json` |
+| CT-FEE-012 | 수수료 이력 조회 | `fee/CT-FEE-012-fee-history.json` |
 
 ### CONTRACT — CT 7개 모두 공통 케이스를 갖고 있다
 
@@ -337,7 +341,7 @@ go-stablenet 전용 케이스만 있었다. 2026-09-29 에 이 14개와 CT-FEE-0
 
 ## 8. 케이스를 돌리는 명령
 
-여기 있는 85개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
+여기 있는 80개를 복사해 붙이면 도는 명령으로 모았다. 무엇을 먼저 갖춰야 하는지, 판정을
 어떻게 읽는지, Docker 함대는 어떻게 준비하는지는 [`HOW-TO-USE.md`](HOW-TO-USE.md) 에
 있다 — 처음이라면 그것부터 읽는다. 이 절은 명령만 놓는다.
 
@@ -415,18 +419,13 @@ rm -rf ~/cbw/m/CT-TX-020-test-account-funding && bin/chainbench run tests/tc/com
 #### fee — 수수료·가스 정책
 
 ```sh
-rm -rf ~/cbw/m/001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/001-tip-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-dynamic-feecap-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-dynamic-feecap-above-min-accepted.json --workspace-dir ~/cbw/m/002-dynamic-feecap-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-feecap-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-feecap-below-min-rejected.json --workspace-dir ~/cbw/m/002-feecap-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-legacy-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-legacy-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-effective-gas-price && bin/chainbench run tests/tc/common/fee/007-effective-gas-price.json --workspace-dir ~/cbw/m/007-effective-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-effective-gas-price-regular-bp-en && bin/chainbench run tests/tc/common/fee/008-effective-gas-price-regular-bp-en.json --workspace-dir ~/cbw/m/008-effective-gas-price-regular-bp-en --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/009-snap-receipt-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-gas-price-positive && bin/chainbench run tests/tc/common/fee/010-gas-price-positive.json --workspace-dir ~/cbw/m/010-gas-price-positive --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-fee-history-well-formed && bin/chainbench run tests/tc/common/fee/012-fee-history-well-formed.json --workspace-dir ~/cbw/m/012-fee-history-well-formed --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/CT-FEE-001-tip-below-min-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-002-min-gas-price-boundary && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir ~/cbw/m/CT-FEE-002-min-gas-price-boundary --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-007-effective-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-007-effective-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-007-effective-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes && bin/chainbench run tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json --workspace-dir ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-009-snap-receipt-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-010-suggested-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-010-suggested-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-012-fee-history && bin/chainbench run tests/tc/common/fee/CT-FEE-012-fee-history.json --workspace-dir ~/cbw/m/CT-FEE-012-fee-history --binary "$GSTABLE"
 ```
 
 #### contract — 컨트랙트 실행

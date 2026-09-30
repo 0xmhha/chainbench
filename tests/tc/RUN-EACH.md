@@ -325,21 +325,21 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/prealloc-pr
 TC-1-3-04 — LegacyTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/12-test-legacy-gasprice-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **027. `accesslist-gasprice-below-min-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **028. `feecap-below-min-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 TC-1-3-06 — DynamicFeeTx gasTipCap 최소값 미만 거부 검증 (원본 post-v1.0.0-change/common-all/14-test-dynamic-fee-tipcap-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-feecap-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/feecap-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/feecap-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **029. `boho-chain-config-active`** — stablenet · bp4 · 직전 PASS 57s  
@@ -404,7 +404,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-g
 TC-4-6-02 — 일반 계정 tx 의 effectiveGasPrice 가 두 노드에서 같다  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price-regular-bp-en" && bin/chainbench run tests/tc/common/fee/008-effective-gas-price-regular-bp-en.json --workspace-dir "$HOME/cbw/manual/effective-gas-price-regular-bp-en" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price-regular-bp-en" && bin/chainbench run tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json --workspace-dir "$HOME/cbw/manual/effective-gas-price-regular-bp-en" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **038. `auth-tx-event-last-bp-en`** — stablenet · bp4 en1 (snap) · 직전 PASS 36s  
@@ -673,7 +673,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/system-cont
 RT-G-2-01 — eth_gasPrice == baseFee + GasTip (원본 regression/api/07-test-gas-price)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-positive" && bin/chainbench run tests/tc/common/fee/010-gas-price-positive.json --workspace-dir "$HOME/cbw/manual/gas-price-positive" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-positive" && bin/chainbench run tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json --workspace-dir "$HOME/cbw/manual/gas-price-positive" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **075. `gas-price-equals-basefee-plus-tip`** — stablenet · bp4 · 직전 PASS 56s  
@@ -693,7 +693,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/max-priorit
 RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-history-well-formed" && bin/chainbench run tests/tc/common/fee/012-fee-history-well-formed.json --workspace-dir "$HOME/cbw/manual/fee-history-well-formed" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-history-well-formed" && bin/chainbench run tests/tc/common/fee/CT-FEE-012-fee-history.json --workspace-dir "$HOME/cbw/manual/fee-history-well-formed" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **078. `estimate-gas-token-transfer`** — stablenet · bp4 · 직전 PASS 51s  
@@ -919,7 +919,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/out-of-orde
 RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/tip-below-min-rejected" && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/tip-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/tip-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/tip-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **110. `insufficient-funds-rejected`** — stablenet · bp4 · 직전 PASS 52s  
@@ -940,7 +940,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-limit-e
 RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price" && bin/chainbench run tests/tc/common/fee/007-effective-gas-price.json --workspace-dir "$HOME/cbw/manual/effective-gas-price" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price" && bin/chainbench run tests/tc/common/fee/CT-FEE-007-effective-gas-price.json --workspace-dir "$HOME/cbw/manual/effective-gas-price" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **113. `replacement-tx`** — stablenet · bp4 · 직전 PASS 56s  
