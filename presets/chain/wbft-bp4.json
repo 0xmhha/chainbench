@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "wbft-bp4",
-  "description": "wbft: 4 bp. Used by 9 cases.",
+  "description": "wbft: 4 bp. Used by 6 cases.",
   "chain": "wbft",
   "keys": {
     "nodekeys": {
