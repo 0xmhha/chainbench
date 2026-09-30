@@ -44,8 +44,8 @@ export GWBFT="$HOME/work/github/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/go-wemix/build/bin/gwemix"
 ```
 
-공통 89개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
-붙은 8개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
+공통 80개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
+붙은 6개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
 공통의 대부분을 돌릴 수 있다.**
 
 **(원격을 흉내 낼 때만) Docker 함대.** 로컬 바이너리가 없는 기계, 또는 노드가 서로 다른
@@ -87,28 +87,28 @@ rm -rf ~/cbw/m/<이름> && bin/chainbench run <케이스.json> --workspace-dir ~
 
 ### 3.1 대부분은 stablenet
 
-공통 89개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
+공통 80개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
 `--binary "$GSTABLE"` 를 준다. 8절 목록에서 `$GSTABLE` 로 찍힌 것이 그것이다.
 
 같은 케이스를 다른 체인에서 보고 싶으면 프리셋을 실행할 때 덮는다. 이때는 그 체인의
 바이너리를 준다.
 
 ```sh
-rm -rf ~/cbw/m/x && bin/chainbench run tests/tc/common/tx/001-value-transfer.json \
+rm -rf ~/cbw/m/x && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
   --workspace-dir ~/cbw/m/x --chain-preset wemix-bp4 --binary "$GWEMIX"
 ```
 
 세 체인이 모두 갖춘 프리셋은 `bp4`·`bp4-en1`·`bp4-en2-pn1`·`bp7-en7-pn1`·`bp9` 다섯이고
 `presets/chain/` 에 `<체인>-<모양>.json` 으로 세 벌씩 있다.
 
-### 3.2 이름에 체인이 붙은 8개
+### 3.2 이름에 체인이 붙은 6개
 
 이 케이스들은 그 체인 바이너리가 있어야 돈다. stablenet 만 있으면 나머지는 건너뛴다.
 
 | 케이스 | 바이너리 |
 | --- | --- |
-| `tx/015-wbft-insufficient-funds-rejected` · `contract/001-wbft-tx-and-contract` · `contract/006-wbft-revert-status-zero` · `fault/001-wbft-node-crash` | `$GWBFT` |
-| `tx/015-wemix-insufficient-funds-rejected` · `contract/001-wemix-tx-and-contract` · `contract/006-wemix-revert-status-zero` · `fault/001-wemix-node-crash` | `$GWEMIX` |
+| `contract/001-wbft-tx-and-contract` · `contract/006-wbft-revert-status-zero` · `fault/001-wbft-node-crash` | `$GWBFT` |
+| `contract/001-wemix-tx-and-contract` · `contract/006-wemix-revert-status-zero` · `fault/001-wemix-node-crash` | `$GWEMIX` |
 
 `node/` 의 파일은 모두 세 체인 공통이다(2026-09-29 에 체인별 사본을 지우고 합쳤다). 다른 체인은
 3.1 처럼 `--chain-preset` 과 `--binary` 를 바꿔 돌린다.
@@ -250,9 +250,9 @@ scripts/tcsweep.sh sweep.log tests/tc/common
 
 ---
 
-## 9. 케이스별 실행 명령 (89개 전부)
+## 9. 케이스별 실행 명령 (80개 전부)
 
-`tests/tc/common/` 아래 89개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
+`tests/tc/common/` 아래 80개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
 `$GWEMIX`)를 잡아 두면 원하는 줄을 그대로 붙여 넣어 돌릴 수 있다. 각 줄은 로컬 실행이다 —
 같은 케이스를 Docker 함대에서 돌리려면 6절의 형태에 그 줄의 케이스 경로만 넣는다
 (`--binary` 는 빼고 Docker 플래그를 붙인다).
@@ -290,47 +290,40 @@ rm -rf ~/cbw/m/CT-NODE-016-block-period && bin/chainbench run tests/tc/common/no
 ### tx — 트랜잭션 전송·거부
 
 ```sh
-rm -rf ~/cbw/m/001-basic-tx-send && bin/chainbench run tests/tc/common/tx/001-basic-tx-send.json --workspace-dir ~/cbw/m/001-basic-tx-send --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-sample-minimal && bin/chainbench run tests/tc/common/tx/001-sample-minimal.json --workspace-dir ~/cbw/m/001-sample-minimal --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-value-transfer && bin/chainbench run tests/tc/common/tx/001-value-transfer.json --workspace-dir ~/cbw/m/001-value-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-value-transfer && bin/chainbench run tests/tc/common/tx/002-legacy-value-transfer.json --workspace-dir ~/cbw/m/002-legacy-value-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-dynamic-fee-transfer && bin/chainbench run tests/tc/common/tx/003-dynamic-fee-transfer.json --workspace-dir ~/cbw/m/003-dynamic-fee-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-access-list-tx && bin/chainbench run tests/tc/common/tx/004-access-list-tx.json --workspace-dir ~/cbw/m/004-access-list-tx --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-fee-delegated-transfer && bin/chainbench run tests/tc/common/tx/005-fee-delegated-transfer.json --workspace-dir ~/cbw/m/005-fee-delegated-transfer --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-fd-sender-sig-invalid-rejected && bin/chainbench run tests/tc/common/tx/006-fd-sender-sig-invalid-rejected.json --workspace-dir ~/cbw/m/006-fd-sender-sig-invalid-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-fd-feepayer-sig-invalid-rejected && bin/chainbench run tests/tc/common/tx/007-fd-feepayer-sig-invalid-rejected.json --workspace-dir ~/cbw/m/007-fd-feepayer-sig-invalid-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-feepayer-insufficient-rejected && bin/chainbench run tests/tc/common/tx/008-feepayer-insufficient-rejected.json --workspace-dir ~/cbw/m/008-feepayer-insufficient-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-fee-delegate-sign-rpc-present && bin/chainbench run tests/tc/common/tx/009-fee-delegate-sign-rpc-present.json --workspace-dir ~/cbw/m/009-fee-delegate-sign-rpc-present --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-fee-delegated-access-list && bin/chainbench run tests/tc/common/tx/010-fee-delegated-access-list.json --workspace-dir ~/cbw/m/010-fee-delegated-access-list --binary "$GSTABLE"
-rm -rf ~/cbw/m/011-keystore-fee-delegate-sign && bin/chainbench run tests/tc/common/tx/011-keystore-fee-delegate-sign.json --workspace-dir ~/cbw/m/011-keystore-fee-delegate-sign --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-nonce-ordering && bin/chainbench run tests/tc/common/tx/012-nonce-ordering.json --workspace-dir ~/cbw/m/012-nonce-ordering --binary "$GSTABLE"
-rm -rf ~/cbw/m/013-replacement-tx && bin/chainbench run tests/tc/common/tx/013-replacement-tx.json --workspace-dir ~/cbw/m/013-replacement-tx --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-carry-over-and-replace && bin/chainbench run tests/tc/common/tx/014-carry-over-and-replace.json --workspace-dir ~/cbw/m/014-carry-over-and-replace --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-insufficient-funds-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-wbft-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-wbft-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-wbft-insufficient-funds-rejected --binary "$GWBFT"
-rm -rf ~/cbw/m/015-wemix-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/015-wemix-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/015-wemix-insufficient-funds-rejected --binary "$GWEMIX"
-rm -rf ~/cbw/m/016-gas-limit-exceeds-block-rejected && bin/chainbench run tests/tc/common/tx/016-gas-limit-exceeds-block-rejected.json --workspace-dir ~/cbw/m/016-gas-limit-exceeds-block-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/017-reject-vs-execution-failure && bin/chainbench run tests/tc/common/tx/017-reject-vs-execution-failure.json --workspace-dir ~/cbw/m/017-reject-vs-execution-failure --binary "$GSTABLE"
-rm -rf ~/cbw/m/018-basic-txpool-propagation && bin/chainbench run tests/tc/common/tx/018-basic-txpool-propagation.json --workspace-dir ~/cbw/m/018-basic-txpool-propagation --binary "$GSTABLE"
-rm -rf ~/cbw/m/019-stress-tx-flood && bin/chainbench run tests/tc/common/tx/019-stress-tx-flood.json --workspace-dir ~/cbw/m/019-stress-tx-flood --binary "$GSTABLE"
-rm -rf ~/cbw/m/020-faucet-funds-account && bin/chainbench run tests/tc/common/tx/020-faucet-funds-account.json --workspace-dir ~/cbw/m/020-faucet-funds-account --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-001-value-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir ~/cbw/m/CT-TX-001-value-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-002-legacy-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-002-legacy-transfer.json --workspace-dir ~/cbw/m/CT-TX-002-legacy-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-003-dynamic-fee-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json --workspace-dir ~/cbw/m/CT-TX-003-dynamic-fee-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-004-access-list-tx && bin/chainbench run tests/tc/common/tx/CT-TX-004-access-list-tx.json --workspace-dir ~/cbw/m/CT-TX-004-access-list-tx --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-005-fee-delegated-transfer && bin/chainbench run tests/tc/common/tx/CT-TX-005-fee-delegated-transfer.json --workspace-dir ~/cbw/m/CT-TX-005-fee-delegated-transfer --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-006-fd-sender-sig-tampered-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-006-fd-sender-sig-tampered-rejected.json --workspace-dir ~/cbw/m/CT-TX-006-fd-sender-sig-tampered-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-007-fd-feepayer-sig-tampered-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json --workspace-dir ~/cbw/m/CT-TX-007-fd-feepayer-sig-tampered-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-008-feepayer-insufficient-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-008-feepayer-insufficient-rejected.json --workspace-dir ~/cbw/m/CT-TX-008-feepayer-insufficient-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-009-fee-delegate-sign-rpc-present && bin/chainbench run tests/tc/common/tx/CT-TX-009-fee-delegate-sign-rpc-present.json --workspace-dir ~/cbw/m/CT-TX-009-fee-delegate-sign-rpc-present --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-010-fee-delegated-access-list && bin/chainbench run tests/tc/common/tx/CT-TX-010-fee-delegated-access-list.json --workspace-dir ~/cbw/m/CT-TX-010-fee-delegated-access-list --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-011-keystore-fee-delegate-sign && bin/chainbench run tests/tc/common/tx/CT-TX-011-keystore-fee-delegate-sign.json --workspace-dir ~/cbw/m/CT-TX-011-keystore-fee-delegate-sign --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-012-nonce-ordering && bin/chainbench run tests/tc/common/tx/CT-TX-012-nonce-ordering.json --workspace-dir ~/cbw/m/CT-TX-012-nonce-ordering --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-013-same-nonce-replacement && bin/chainbench run tests/tc/common/tx/CT-TX-013-same-nonce-replacement.json --workspace-dir ~/cbw/m/CT-TX-013-same-nonce-replacement --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-014-carry-over-and-replace && bin/chainbench run tests/tc/common/tx/CT-TX-014-carry-over-and-replace.json --workspace-dir ~/cbw/m/CT-TX-014-carry-over-and-replace --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wbft && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wemix && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir ~/cbw/m/CT-TX-015-insufficient-funds-rejected-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-TX-016-gas-limit-exceeds-block-rejected && bin/chainbench run tests/tc/common/tx/CT-TX-016-gas-limit-exceeds-block-rejected.json --workspace-dir ~/cbw/m/CT-TX-016-gas-limit-exceeds-block-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-017-reject-vs-execution-failure && bin/chainbench run tests/tc/common/tx/CT-TX-017-reject-vs-execution-failure.json --workspace-dir ~/cbw/m/CT-TX-017-reject-vs-execution-failure --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-018-txpool-propagation && bin/chainbench run tests/tc/common/tx/CT-TX-018-txpool-propagation.json --workspace-dir ~/cbw/m/CT-TX-018-txpool-propagation --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-019-block-progress-under-load && bin/chainbench run tests/tc/common/tx/CT-TX-019-block-progress-under-load.json --workspace-dir ~/cbw/m/CT-TX-019-block-progress-under-load --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-TX-020-test-account-funding && bin/chainbench run tests/tc/common/tx/CT-TX-020-test-account-funding.json --workspace-dir ~/cbw/m/CT-TX-020-test-account-funding --binary "$GSTABLE"
 ```
 
 ### fee — 수수료·가스 정책
 
 ```sh
-rm -rf ~/cbw/m/001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/001-tip-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-accesslist-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-accesslist-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-dynamic-feecap-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-dynamic-feecap-above-min-accepted.json --workspace-dir ~/cbw/m/002-dynamic-feecap-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-feecap-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-feecap-below-min-rejected.json --workspace-dir ~/cbw/m/002-feecap-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-above-min-accepted && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-above-min-accepted.json --workspace-dir ~/cbw/m/002-legacy-gasprice-above-min-accepted --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-legacy-gasprice-below-min-rejected && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-below-min-rejected.json --workspace-dir ~/cbw/m/002-legacy-gasprice-below-min-rejected --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-effective-gas-price && bin/chainbench run tests/tc/common/fee/007-effective-gas-price.json --workspace-dir ~/cbw/m/007-effective-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/008-effective-gas-price-regular-bp-en && bin/chainbench run tests/tc/common/fee/008-effective-gas-price-regular-bp-en.json --workspace-dir ~/cbw/m/008-effective-gas-price-regular-bp-en --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/009-snap-receipt-gas-price --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-gas-price-positive && bin/chainbench run tests/tc/common/fee/010-gas-price-positive.json --workspace-dir ~/cbw/m/010-gas-price-positive --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-fee-history-well-formed && bin/chainbench run tests/tc/common/fee/012-fee-history-well-formed.json --workspace-dir ~/cbw/m/012-fee-history-well-formed --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-001-tip-below-min-rejected && bin/chainbench run tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json --workspace-dir ~/cbw/m/CT-FEE-001-tip-below-min-rejected --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-002-min-gas-price-boundary && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir ~/cbw/m/CT-FEE-002-min-gas-price-boundary --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-007-effective-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-007-effective-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-007-effective-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes && bin/chainbench run tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json --workspace-dir ~/cbw/m/CT-FEE-008-effective-gas-price-across-nodes --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-009-snap-receipt-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-009-snap-receipt-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-009-snap-receipt-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-010-suggested-gas-price && bin/chainbench run tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json --workspace-dir ~/cbw/m/CT-FEE-010-suggested-gas-price --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FEE-012-fee-history && bin/chainbench run tests/tc/common/fee/CT-FEE-012-fee-history.json --workspace-dir ~/cbw/m/CT-FEE-012-fee-history --binary "$GSTABLE"
 ```
 
 ### contract — 컨트랙트 실행

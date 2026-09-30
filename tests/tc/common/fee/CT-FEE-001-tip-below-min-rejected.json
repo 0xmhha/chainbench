@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "tip-below-min-rejected",
+  "description": "CT-FEE-001 — 트랜잭션 풀이 노드의 최소 팁(MinTip)보다 낮은 팁을 거부한다 (기존 명세 RT-A-2-05a, TX-002, 절차는 docs/tc/common/06-detailed-procedures/03-fee.md). 원본 RT-A-2-05a 가 가리키는 검사는 core/txpool/validation.go 의 'gasTipCap < MinTip 이면 transaction underpriced: gas tip cap' 이다. 2026-09-30 에 고쳤다. 전에는 팁과 최대 수수료를 둘 다 1 wei 로 보내서 최대 수수료 검사에서 먼저 거부됐고, 팁 검사에는 닿지 않았다 — CT-FEE-002 의 동적 수수료 미만 건과 같은 것을 봤다. 게다가 RPC 로 제출한 트랜잭션은 로컬로 취급되어 go-stablenet·go-wbft 가 최소 팁 검사를 면제한다(core/txpool/legacypool/legacypool.go 의 local 분기). 측정: 최대 수수료를 충분히 주고 팁 0 을 보내면 두 체인은 받아들여 블록에 넣었다. 운영망에서 사용자 트랜잭션은 대개 p2p 로 들어와 원격으로 취급된다. 그래서 노드를 txpool.nolocals 로 띄워 RPC 트랜잭션도 원격으로 취급하게 하고, 최대 수수료는 '최신 기본 수수료 × 2 + 권장 팁' 으로 충분히 주고, 팁만 1 wei 로 보낸다. 세 체인 모두 transaction underpriced 로 거부한다(측정: go-stablenet 최소 27600 Gwei, go-wbft 100 Gwei, go-wemix 는 거버넌스 팁). go-stablenet·go-wbft 는 뒤에 ': gas tip cap' 설명이 붙고 go-wemix 는 붙지 않아 앞부분으로 판정한다. 정확한 경계(MinTip − 1)는 보지 않는다. 최소 팁을 세 체인에서 같은 방법으로 읽을 수 없고(권장 팁 RPC 가 go-wbft 에서는 가격 오라클 추정값이다), 1 wei 는 셋 모두의 최소 팁보다 확실히 낮다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ],
+    "launch": {
+      "all": {
+        "txpool.nolocals": true
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "save": "feeCap"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1",
+      "gas": "21000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "1",
+      "expect": "reject",
+      "reason": "transaction underpriced"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
+    }
+  ]
+}

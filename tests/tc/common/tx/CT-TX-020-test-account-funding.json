@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-faucet-funds",
-  "description": "Exercise the faucet action (WA24): top up a freshly generated account and read back its balance. LIVE-UNVERIFIED: authored offline (passes validate), needs a fleet run to confirm the target node's coinbase funder is unlocked.",
+  "description": "CT-TX-020 — 새 계정에 노드 계정으로 자금을 넣는 준비 절차가 동작한다 (절차는 docs/tc/common/06-detailed-procedures/02-tx.md). faucet 동작으로 새 계정에 1 ETH 를 넣고 잔액이 그 이상인지 본다. 다른 케이스가 준비 절차로 쓰는 경로다.",
   "requires": [
     "rpc"
   ],

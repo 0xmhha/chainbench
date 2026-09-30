@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "insufficient-funds-rejected",
+  "description": "RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds) 거부된 뒤 보낸 계정의 nonce 가 그대로인지 확인한다. CT-TX-015 의 기대 결과가 \"보낸 계정의 잔액과 nonce는 그대로다\" 인데 전에는 거부와 블록 진행만 보았다. 거부된 트랜잭션은 nonce 를 쓰지 않아야 하며, 그것이 풀 진입 단계 거부와 실행 실패를 가르는 지점이다. 잔액도 거부 전과 같은지 본다. 보내는 계정은 새로 만든 계정이라 블록 보상을 받지 않으므로 잔액이 움직일 이유가 없다. 보내는 금액은 문서대로 잔액에 1 을 더한 값이다(경계값). 시험 대상 트랜잭션은 노드가 아니라 별도 계정이 서명해 eth_sendRawTransaction 으로 보낸다. from 에 노드 이름을 적으면 eth_sendTransaction 이 되어 노드가 자기 계정으로 서명하는데, 그것은 실제 사용자가 보내는 모양이 아니고 원본 시험 스크립트가 cast send --private-key 로 하던 것과도 다르다. 계정을 새로 만들어 faucet 에서 자금을 받은 뒤 그 열쇠로 서명한다. 자금을 넣는 첫 전송만 노드 서명인데, 제네시스가 자금을 준 계정의 열쇠는 노드가 들고 있어 달리 할 수가 없다. 잔액을 아는 계정에서 보내므로 더 보낼 값도 간단해진다. 받은 자금보다 큰 값을 그대로 적는다. 세 체인을 이 파일 하나로 돈다(--chain-preset 과 --binary 로 체인을 바꾼다). 2026-09-29 에 wbft·wemix 사본을 지우고 합쳤다 — 사본은 단계가 같고 id·설명·preset 만 달랐다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "poor",
+      "saveKey": "poorKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "to": "$poor",
+      "value": "1000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$poor",
+      "save": "nonceBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$poor",
+      "save": "balanceBefore"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$balanceBefore",
+        "1"
+      ],
+      "save": "oneMore"
+    },
+    {
+      "do": "sendTx",
+      "key": "$poorKey",
+      "to": "0x00000000000000000000000000000000C0FFEE07",
+      "value": "$oneMore",
+      "expect": "reject",
+      "reason": "insufficient funds"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$poor",
+      "compare": "Equal",
+      "is": "$nonceBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$poor",
+      "compare": "Equal",
+      "is": "$balanceBefore"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
+    }
+  ]
+}

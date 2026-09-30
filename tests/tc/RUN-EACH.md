@@ -164,14 +164,14 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-sync"
 Send a transaction and verify it gets included in a block (원본 basic/tx-send.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-tx-send" && bin/chainbench run tests/tc/common/tx/001-basic-tx-send.json --workspace-dir "$HOME/cbw/manual/basic-tx-send" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-tx-send" && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir "$HOME/cbw/manual/basic-tx-send" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **006. `basic-txpool-propagation`** — stablenet · bp4 en1 · 직전 PASS 37s  
 Verify TX propagation across nodes and txpool drain under load (원본 basic/txpool-propagation.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-txpool-propagation" && bin/chainbench run tests/tc/common/tx/018-basic-txpool-propagation.json --workspace-dir "$HOME/cbw/manual/basic-txpool-propagation" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/basic-txpool-propagation" && bin/chainbench run tests/tc/common/tx/CT-TX-018-txpool-propagation.json --workspace-dir "$HOME/cbw/manual/basic-txpool-propagation" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **007. `basic-wbft-consensus`** — stablenet · bp4 en1 · 직전 PASS 45s  
@@ -325,21 +325,21 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/prealloc-pr
 TC-1-3-04 — LegacyTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/12-test-legacy-gasprice-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-legacy-gasprice-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/legacy-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **027. `accesslist-gasprice-below-min-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-accesslist-gasprice-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/accesslist-gasprice-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **028. `feecap-below-min-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 TC-1-3-06 — DynamicFeeTx gasTipCap 최소값 미만 거부 검증 (원본 post-v1.0.0-change/common-all/14-test-dynamic-fee-tipcap-below-min-revert)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-below-min-rejected" && bin/chainbench run tests/tc/common/fee/002-feecap-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/feecap-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feecap-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json --workspace-dir "$HOME/cbw/manual/feecap-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **029. `boho-chain-config-active`** — stablenet · bp4 · 직전 PASS 57s  
@@ -404,7 +404,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-g
 TC-4-6-02 — 일반 계정 tx 의 effectiveGasPrice 가 두 노드에서 같다  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price-regular-bp-en" && bin/chainbench run tests/tc/common/fee/008-effective-gas-price-regular-bp-en.json --workspace-dir "$HOME/cbw/manual/effective-gas-price-regular-bp-en" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price-regular-bp-en" && bin/chainbench run tests/tc/common/fee/CT-FEE-008-effective-gas-price-across-nodes.json --workspace-dir "$HOME/cbw/manual/effective-gas-price-regular-bp-en" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **038. `auth-tx-event-last-bp-en`** — stablenet · bp4 en1 (snap) · 직전 PASS 36s  
@@ -673,7 +673,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/system-cont
 RT-G-2-01 — eth_gasPrice == baseFee + GasTip (원본 regression/api/07-test-gas-price)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-positive" && bin/chainbench run tests/tc/common/fee/010-gas-price-positive.json --workspace-dir "$HOME/cbw/manual/gas-price-positive" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-price-positive" && bin/chainbench run tests/tc/common/fee/CT-FEE-010-suggested-gas-price.json --workspace-dir "$HOME/cbw/manual/gas-price-positive" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **075. `gas-price-equals-basefee-plus-tip`** — stablenet · bp4 · 직전 PASS 56s  
@@ -693,7 +693,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/max-priorit
 RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-history-well-formed" && bin/chainbench run tests/tc/common/fee/012-fee-history-well-formed.json --workspace-dir "$HOME/cbw/manual/fee-history-well-formed" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-history-well-formed" && bin/chainbench run tests/tc/common/fee/CT-FEE-012-fee-history.json --workspace-dir "$HOME/cbw/manual/fee-history-well-formed" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **078. `estimate-gas-token-transfer`** — stablenet · bp4 · 직전 PASS 51s  
@@ -783,7 +783,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/admin-peers
 RT-G-5-01 — eth_signRawFeeDelegateTransaction (원본 regression/api/21-test-sign-raw-fee-delegate)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-delegate-sign-rpc-present" && bin/chainbench run tests/tc/common/tx/009-fee-delegate-sign-rpc-present.json --workspace-dir "$HOME/cbw/manual/fee-delegate-sign-rpc-present" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-delegate-sign-rpc-present" && bin/chainbench run tests/tc/common/tx/CT-TX-009-fee-delegate-sign-rpc-present.json --workspace-dir "$HOME/cbw/manual/fee-delegate-sign-rpc-present" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **091. `token-total-supply-readable`** — stablenet · bp4 · 직전 PASS 52s  
@@ -899,14 +899,14 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/dynamic-fee
 RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다.  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/access-list-tx" && bin/chainbench run tests/tc/common/tx/004-access-list-tx.json --workspace-dir "$HOME/cbw/manual/access-list-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/access-list-tx" && bin/chainbench run tests/tc/common/tx/CT-TX-004-access-list-tx.json --workspace-dir "$HOME/cbw/manual/access-list-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **107. `nonce-ordering`** — stablenet · bp4 · 직전 PASS 56s  
 RT-A-2-04 — Nonce 순서 보장 (원본 regression/ethereum/11-test-nonce-ordering)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/nonce-ordering" && bin/chainbench run tests/tc/common/tx/012-nonce-ordering.json --workspace-dir "$HOME/cbw/manual/nonce-ordering" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/nonce-ordering" && bin/chainbench run tests/tc/common/tx/CT-TX-012-nonce-ordering.json --workspace-dir "$HOME/cbw/manual/nonce-ordering" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **108. `out-of-order-nonces-mine`** — stablenet · bp4 · 직전 PASS 56s  
@@ -919,35 +919,35 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/out-of-orde
 RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/tip-below-min-rejected" && bin/chainbench run tests/tc/common/fee/001-tip-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/tip-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/tip-below-min-rejected" && bin/chainbench run tests/tc/common/fee/CT-FEE-001-tip-below-min-rejected.json --workspace-dir "$HOME/cbw/manual/tip-below-min-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **110. `insufficient-funds-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/015-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/insufficient-funds-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/insufficient-funds-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **111. `gas-limit-exceeds-block-rejected`** — stablenet · bp4 · 직전 PASS 52s  
 RT-A-2-07 — Gas Limit 초과 tx 거부 (블록 gas limit 초과) (원본 regression/ethereum/15-test-gaslimit-exceeded)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-limit-exceeds-block-rejected" && bin/chainbench run tests/tc/common/tx/016-gas-limit-exceeds-block-rejected.json --workspace-dir "$HOME/cbw/manual/gas-limit-exceeds-block-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/gas-limit-exceeds-block-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-016-gas-limit-exceeds-block-rejected.json --workspace-dir "$HOME/cbw/manual/gas-limit-exceeds-block-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **112. `effective-gas-price`** — stablenet · bp4 · 직전 PASS 56s  
 RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price" && bin/chainbench run tests/tc/common/fee/007-effective-gas-price.json --workspace-dir "$HOME/cbw/manual/effective-gas-price" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/effective-gas-price" && bin/chainbench run tests/tc/common/fee/CT-FEE-007-effective-gas-price.json --workspace-dir "$HOME/cbw/manual/effective-gas-price" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **113. `replacement-tx`** — stablenet · bp4 · 직전 PASS 56s  
 RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/replacement-tx" && bin/chainbench run tests/tc/common/tx/013-replacement-tx.json --workspace-dir "$HOME/cbw/manual/replacement-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/replacement-tx" && bin/chainbench run tests/tc/common/tx/CT-TX-013-same-nonce-replacement.json --workspace-dir "$HOME/cbw/manual/replacement-tx" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **114. `same-nonce-replacement`** — stablenet · bp4 · 직전 PASS 54s  
@@ -1009,7 +1009,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/genesis-bal
 RT-A-4-03 — eth_sendRawTransaction 서명된 tx 전파 (원본 regression/ethereum/28-test-send-raw-tx)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/value-transfer" && bin/chainbench run tests/tc/common/tx/001-value-transfer.json --workspace-dir "$HOME/cbw/manual/value-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/value-transfer" && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir "$HOME/cbw/manual/value-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **123. `logs-query-well-formed`** — stablenet · bp4 · 직전 PASS 52s  
@@ -1061,28 +1061,28 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/contract-ev
 RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-delegated-transfer" && bin/chainbench run tests/tc/common/tx/005-fee-delegated-transfer.json --workspace-dir "$HOME/cbw/manual/fee-delegated-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fee-delegated-transfer" && bin/chainbench run tests/tc/common/tx/CT-TX-005-fee-delegated-transfer.json --workspace-dir "$HOME/cbw/manual/fee-delegated-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **130. `fd-sender-sig-invalid-rejected`** — stablenet · bp4 · 직전 PASS 57s  
 RT-D-03 — Sender 서명 변조 시 거부 (원본 regression/fee-delegation/02-test-sender-sig-invalid)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fd-sender-sig-invalid-rejected" && bin/chainbench run tests/tc/common/tx/006-fd-sender-sig-invalid-rejected.json --workspace-dir "$HOME/cbw/manual/fd-sender-sig-invalid-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fd-sender-sig-invalid-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-006-fd-sender-sig-tampered-rejected.json --workspace-dir "$HOME/cbw/manual/fd-sender-sig-invalid-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **131. `fd-feepayer-sig-invalid-rejected`** — stablenet · bp4 · 직전 PASS 53s  
 RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fd-feepayer-sig-invalid-rejected" && bin/chainbench run tests/tc/common/tx/007-fd-feepayer-sig-invalid-rejected.json --workspace-dir "$HOME/cbw/manual/fd-feepayer-sig-invalid-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/fd-feepayer-sig-invalid-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-007-fd-feepayer-sig-tampered-rejected.json --workspace-dir "$HOME/cbw/manual/fd-feepayer-sig-invalid-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **132. `feepayer-insufficient-rejected`** — stablenet · bp4 · 직전 PASS 55s  
 RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feepayer-insufficient-rejected" && bin/chainbench run tests/tc/common/tx/008-feepayer-insufficient-rejected.json --workspace-dir "$HOME/cbw/manual/feepayer-insufficient-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/feepayer-insufficient-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-008-feepayer-insufficient-rejected.json --workspace-dir "$HOME/cbw/manual/feepayer-insufficient-rejected" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **133. `fee-delegated-sender-sig-invalid-rejected`** — stablenet · bp4 · 직전 PASS 52s  
@@ -1361,7 +1361,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-d
 Exercise the faucet action (WA24): top up a freshly generated account and read back its balance. LIVE-UNVERIFIED: authored offline (passe…  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-faucet-funds" && bin/chainbench run tests/tc/common/tx/020-faucet-funds-account.json --workspace-dir "$HOME/cbw/manual/stablenet-faucet-funds" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stablenet-faucet-funds" && bin/chainbench run tests/tc/common/tx/CT-TX-020-test-account-funding.json --workspace-dir "$HOME/cbw/manual/stablenet-faucet-funds" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **172. `stablenet-metric-head-block`** — stablenet · bp4 · 직전 PASS 51s  
@@ -1492,7 +1492,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-tx-and
 WA25: a transfer above the sender's balance is refused before it reaches a block. Proven on stablenet (regression/ethereum/14); go-wbft n…  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/015-wbft-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/wbft-insufficient-funds-rejected" --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wbft-insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/wbft-insufficient-funds-rejected" --chain-preset wbft-bp4 --binary "$HOME/work/github/wemade/go-wbft/build/bin/gwemix"
 ```
 
 **188. `wbft-revert-status-zero`** — wbft · bp4 · 직전 PASS 55s  
@@ -1604,7 +1604,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-tx-an
 WA25: a transfer above the sender's balance is refused before it reaches a block. Proven on stablenet (regression/ethereum/14); go-wemix …  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/015-wemix-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/wemix-insufficient-funds-rejected" --binary "$HOME/work/github/wemade/go-wemix/build/bin/gwemix"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/wemix-insufficient-funds-rejected" && bin/chainbench run tests/tc/common/tx/CT-TX-015-insufficient-funds-rejected.json --workspace-dir "$HOME/cbw/manual/wemix-insufficient-funds-rejected" --chain-preset wemix-bp4 --binary "$HOME/work/github/wemade/go-wemix/build/bin/gwemix"
 ```
 
 **201. `wemix-revert-status-zero`** — wemix · bp4 · 직전 PASS 109s  
@@ -1652,10 +1652,10 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/remote-bala
 ### `samples` (2)
 
 **206. `sample-minimal-value-transfer`** — stablenet · bp4 · 직전 PASS 53s  
-v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/common/tx/001-sample-minimal.json  
+v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/common/tx/CT-TX-001-value-transfer.json  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/sample-minimal-value-transfer" && bin/chainbench run tests/tc/common/tx/001-sample-minimal.json --workspace-dir "$HOME/cbw/manual/sample-minimal-value-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/sample-minimal-value-transfer" && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json --workspace-dir "$HOME/cbw/manual/sample-minimal-value-transfer" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 **207. `sample-lifecycle-node-restart`** — stablenet · bp4 en1 · 직전 PASS 51s  
@@ -1679,7 +1679,7 @@ cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stress-bloc
 Send N transactions rapidly and measure throughput (원본 stress/tx-flood.sh)  
 
 ```sh
-cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stress-tx-flood" && bin/chainbench run tests/tc/common/tx/019-stress-tx-flood.json --workspace-dir "$HOME/cbw/manual/stress-tx-flood" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
+cd "$HOME/work/github/0xmhha/chainbench" && rm -rf "$HOME/cbw/manual/stress-tx-flood" && bin/chainbench run tests/tc/common/tx/CT-TX-019-block-progress-under-load.json --workspace-dir "$HOME/cbw/manual/stress-tx-flood" --binary "$HOME/work/github/wemade/go-stablenet/build/bin/gstable"
 ```
 
 ---

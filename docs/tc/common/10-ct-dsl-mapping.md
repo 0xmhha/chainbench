@@ -1,7 +1,7 @@
 # CT ↔ DSL 파일 매핑
 
 > 근거: 이 저장소의 `docs/tc/common/01-common-test-list.md`(문서화된 70개 CT)와
-> `tests/tc/common/` 아래 실제 DSL 파일(89개)을 대조해 만든 파생 문서다.
+> `tests/tc/common/` 아래 실제 DSL 파일(80개)을 대조해 만든 파생 문서다.
 > 대조 기준일: 2026-09-29. 파일이 추가·삭제되면 이 표도 다시 맞춰야 한다.
 
 ---
@@ -9,7 +9,7 @@
 ## 1. 개요
 
 문서에는 세 체인 공통 테스트가 **70개(CT)** 있고, `tests/tc/common/` 아래에는 실행용
-DSL 파일이 **89개** 있다. "70개를 세 체인용으로 각각 만들었다면 210개여야 한다"는
+DSL 파일이 **80개** 있다. "70개를 세 체인용으로 각각 만들었다면 210개여야 한다"는
 예상과 숫자가 다른 이유는 chainbench DSL 이 **체인-파라미터 방식**이기 때문이다.
 
 공통 DSL 한 파일은 `stablenet-*` 프리셋을 기준으로 작성하고, 실행할 때
@@ -18,11 +18,11 @@ DSL 파일이 **89개** 있다. "70개를 세 체인용으로 각각 만들었�
 파일을 체인별로 물리적으로 나눈 경우는 **런타임 프리셋 교체로는 공유할 수 없는**
 소수의 CT(합의 방식·바이너리 동작이 갈리는 것)뿐이다.
 
-정리하면 89 = **체인별로 물리 분리한 파일 8개** + **공통 파일 81개**(§4 참조).
+정리하면 80 = **체인별로 물리 분리한 파일 6개** + **공통 파일 74개**(§4 참조).
 NODE 의 001·002·010 은 2026-09-29 에 체인별 파일을 지우고 공통 파일 하나로 합쳤다(§4).
 
 파일명 규칙은 `CT-<영역>-<번호>-<간략설명>.json` 이고 CT 하나에 파일 하나를 둔다(2026-09-29,
-NODE 부터 적용). 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다. 다른 영역은 아직
+NODE·TX·FEE 에 적용). 한 CT 가 여러 가지를 보면 한 파일 안에서 차례로 검증한다. 다른 영역은 아직
 예전 규칙 `<번호>-<테스트 id>.json` 이다.
 
 한편 한 CT 에 파일이 여러 개인 경우도 있다. 예전부터 있던 자동 테스트(실행 이름이 여럿)를
@@ -36,12 +36,12 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 | 영역 | CT 수 | DSL 파일 수 | 파일이 CT 수보다 많은 이유 |
 | --- | --- | --- | --- |
 | NODE | 15 | 15 | CT당 1파일(2026-09-29 합침) |
-| TX | 20 | 24 | 001·015 이 CT당 3파일 |
-| FEE | 7 | 12 | 002 가 경계값 형식별 6파일 |
+| TX | 20 | 20 | CT당 1파일(2026-09-29 합침) |
+| FEE | 7 | 7 | CT당 1파일(2026-09-30 합침) |
 | CONTRACT | 7 | 12 | 001(3)·006(4) 다파일 |
 | RPC | 15 | 17 | 001·007·009 가 CT당 2파일, 008 은 전용 파일 없음 |
 | FAULT | 6 | 9 | 001 이 4파일 |
-| **합계** | **70** | **89** | orphan(문서에 없는) 파일 0 |
+| **합계** | **70** | **80** | orphan(문서에 없는) 파일 0 |
 
 ---
 
@@ -69,42 +69,42 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 | CT-NODE-015 | `CT-NODE-015-timestamp-monotonic.json` | 신규(2026-09-29) |
 | CT-NODE-016 | `CT-NODE-016-block-period.json` | 2026-09-29 에 block-period-one-second·stress-block-time 을 합쳤다 |
 
-### TX (24파일)
+### TX (20파일)
 
 | CT | 파일 | 비고 |
 | --- | --- | --- |
-| CT-TX-001 | `001-basic-tx-send.json`, `001-sample-minimal.json`, `001-value-transfer.json` | |
-| CT-TX-002 | `002-legacy-value-transfer.json` | 신규. stablenet 전용 `legacy-transfer`는 공통 아님(제외) |
-| CT-TX-003 | `003-dynamic-fee-transfer.json` | 신규. stablenet 전용 `dynamic-fee-tx`는 제외 |
-| CT-TX-004 | `004-access-list-tx.json` | |
-| CT-TX-005 | `005-fee-delegated-transfer.json` | |
-| CT-TX-006 | `006-fd-sender-sig-invalid-rejected.json` | |
-| CT-TX-007 | `007-fd-feepayer-sig-invalid-rejected.json` | |
-| CT-TX-008 | `008-feepayer-insufficient-rejected.json` | |
-| CT-TX-009 | `009-fee-delegate-sign-rpc-present.json` | |
-| CT-TX-010 | `010-fee-delegated-access-list.json` | 신규(2026-09-29) |
-| CT-TX-011 | `011-keystore-fee-delegate-sign.json` | 신규(2026-09-29) |
-| CT-TX-012 | `012-nonce-ordering.json` | |
-| CT-TX-013 | `013-replacement-tx.json` | |
-| CT-TX-014 | `014-carry-over-and-replace.json` | 신규(2026-09-29) |
-| CT-TX-015 | `015-insufficient-funds-rejected.json`, `015-wbft-insufficient-funds-rejected.json`, `015-wemix-insufficient-funds-rejected.json` | 체인 3분할(자동 테스트가 이미 셋) |
-| CT-TX-016 | `016-gas-limit-exceeds-block-rejected.json` | stablenet 전용 `gaslimit-exceeded-rejected`는 제외 |
-| CT-TX-017 | `017-reject-vs-execution-failure.json` | 신규(2026-09-29) |
-| CT-TX-018 | `018-basic-txpool-propagation.json` | |
-| CT-TX-019 | `019-stress-tx-flood.json` | |
-| CT-TX-020 | `020-faucet-funds-account.json` | |
+| CT-TX-001 | `CT-TX-001-value-transfer.json` | 2026-09-29 에 basic-tx-send·sample-minimal-value-transfer·value-transfer 를 합쳤다 |
+| CT-TX-002 | `CT-TX-002-legacy-transfer.json` | 신규. stablenet 전용 `legacy-transfer`는 공통 아님(제외) |
+| CT-TX-003 | `CT-TX-003-dynamic-fee-transfer.json` | 신규. stablenet 전용 `dynamic-fee-tx`는 제외 |
+| CT-TX-004 | `CT-TX-004-access-list-tx.json` | |
+| CT-TX-005 | `CT-TX-005-fee-delegated-transfer.json` | |
+| CT-TX-006 | `CT-TX-006-fd-sender-sig-tampered-rejected.json` | |
+| CT-TX-007 | `CT-TX-007-fd-feepayer-sig-tampered-rejected.json` | |
+| CT-TX-008 | `CT-TX-008-feepayer-insufficient-rejected.json` | |
+| CT-TX-009 | `CT-TX-009-fee-delegate-sign-rpc-present.json` | |
+| CT-TX-010 | `CT-TX-010-fee-delegated-access-list.json` | 신규(2026-09-29) |
+| CT-TX-011 | `CT-TX-011-keystore-fee-delegate-sign.json` | 신규(2026-09-29) |
+| CT-TX-012 | `CT-TX-012-nonce-ordering.json` | |
+| CT-TX-013 | `CT-TX-013-same-nonce-replacement.json` | |
+| CT-TX-014 | `CT-TX-014-carry-over-and-replace.json` | 신규(2026-09-29) |
+| CT-TX-015 | `CT-TX-015-insufficient-funds-rejected.json` | 세 체인 공통. 2026-09-29 에 wbft·wemix 사본(단계가 같았다)을 합쳤다 |
+| CT-TX-016 | `CT-TX-016-gas-limit-exceeds-block-rejected.json` | stablenet 전용 `gaslimit-exceeded-rejected`는 제외 |
+| CT-TX-017 | `CT-TX-017-reject-vs-execution-failure.json` | 신규(2026-09-29) |
+| CT-TX-018 | `CT-TX-018-txpool-propagation.json` | |
+| CT-TX-019 | `CT-TX-019-block-progress-under-load.json` | |
+| CT-TX-020 | `CT-TX-020-test-account-funding.json` | |
 
-### FEE (12파일)
+### FEE (7파일)
 
 | CT | 파일 | 비고 |
 | --- | --- | --- |
-| CT-FEE-001 | `001-tip-below-min-rejected.json` | |
-| CT-FEE-002 | `002-legacy-gasprice-below-min-rejected.json`, `002-accesslist-gasprice-below-min-rejected.json`, `002-feecap-below-min-rejected.json`, `002-legacy-gasprice-above-min-accepted.json`, `002-accesslist-gasprice-above-min-accepted.json`, `002-dynamic-feecap-above-min-accepted.json` | 형식별(legacy/accesslist/dynamic) × (미만 거부/초과 수용). above-min 3개는 신규. stablenet 전용 `feecap-above-min-accepted`·`feecap-exact-min-accepted`는 제외 |
-| CT-FEE-007 | `007-effective-gas-price.json` | |
-| CT-FEE-008 | `008-effective-gas-price-regular-bp-en.json` | |
-| CT-FEE-009 | `009-snap-receipt-gas-price.json` | 신규(2026-09-29) |
-| CT-FEE-010 | `010-gas-price-positive.json` | stablenet 전용 `gas-price-equals-basefee-plus-tip`는 제외 |
-| CT-FEE-012 | `012-fee-history-well-formed.json` | |
+| CT-FEE-001 | `CT-FEE-001-tip-below-min-rejected.json` | 2026-09-30 에 다시 썼다. txpool.nolocals, 충분한 최대 수수료, 팁 1 wei |
+| CT-FEE-002 | `CT-FEE-002-min-gas-price-boundary.json` | 2026-09-30 에 형식별 미만·초과 여섯 파일을 합쳤다. 미만 세 건은 계정을 나눠 보낸다 |
+| CT-FEE-007 | `CT-FEE-007-effective-gas-price.json` | |
+| CT-FEE-008 | `CT-FEE-008-effective-gas-price-across-nodes.json` | |
+| CT-FEE-009 | `CT-FEE-009-snap-receipt-gas-price.json` | 신규(2026-09-29) |
+| CT-FEE-010 | `CT-FEE-010-suggested-gas-price.json` | stablenet 전용 `gas-price-equals-basefee-plus-tip`는 제외 |
+| CT-FEE-012 | `CT-FEE-012-fee-history.json` | |
 
 ### CONTRACT (12파일)
 
@@ -151,19 +151,18 @@ CT 하나로 묶었기 때문이며, 묶인 원본 실행 이름은 01 문서의
 
 ---
 
-## 4. 체인별 물리 분리 파일 (8개)
+## 4. 체인별 물리 분리 파일 (6개)
 
-체인 이름을 붙여 따로 둔 파일이다. 나머지 86개는
+체인 이름을 붙여 따로 둔 파일이다. 나머지 74개는
 `stablenet-*` 프리셋 기준으로 쓰고 실행 시 프리셋·바이너리를 갈아 세 체인을 덮는다.
 
 | CT | stablenet(공통) | wbft | wemix |
 | --- | --- | --- | --- |
-| CT-TX-015 | `tx/015-insufficient-funds-rejected.json` | `tx/015-wbft-insufficient-funds-rejected.json` | `tx/015-wemix-insufficient-funds-rejected.json` |
 | CT-CONTRACT-001 | `contract/001-contract-roundtrip.json` | `contract/001-wbft-tx-and-contract.json` | `contract/001-wemix-tx-and-contract.json` |
 | CT-CONTRACT-006 | `contract/006-revert-tx-status-zero.json` (+`006-negative-tx-revert.json`) | `contract/006-wbft-revert-status-zero.json` | `contract/006-wemix-revert-status-zero.json` |
 | CT-FAULT-001 | `fault/001-fault-node-crash.json` (+`001-sample-lifecycle.json`) | `fault/001-wbft-node-crash.json` | `fault/001-wemix-node-crash.json` |
 
-체인별 파일은 wbft 4개 + wemix 4개 = 8개다.
+체인별 파일은 wbft 3개 + wemix 3개 = 6개다. TX 의 015 사본 둘은 2026-09-29 에 합쳤다.
 
 NODE 의 셋(001·002·010)은 2026-09-29 에 합쳤다. 파일을 대조해 보니 wbft 사본은 preset 이름만
 달랐고, wemix 사본은 검증자 수 검사를 뺐다(go-wemix 에 검증자 조회 RPC 가 없어서). 지금은

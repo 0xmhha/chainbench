@@ -1,0 +1,243 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "legacy-gasprice-below-min-rejected",
+  "description": "CT-FEE-002 — 최소 가스비보다 낮으면 거부되고(또는 블록에 들어가지 않고), 높으면 받아들여지는지 세 형식(예전·접근 목록·동적 수수료)별로 본다 (기존 명세 TC-1-3-01~06, TS-1-3-01·02, 절차는 docs/tc/common/06-detailed-procedures/03-fee.md). 2026-09-30 에 legacy/accesslist/feecap-below-min-rejected 와 legacy/accesslist/dynamic-*-above-min-accepted 여섯 파일을 합쳤다. 미만 세 건은 새 계정 셋이 각자 키로 보낸다. 한 계정으로 이어 보내면 go-wbft 에서 첫 건이 풀에 남아(keptOut) 뒤 건들이 가격이 아니라 nonce 때문에 블록에 못 들어가고, 그래도 '미포함' 으로 통과하기 때문이다. 미만: 문서가 정한 절차 그대로 1 wei 를 보낸다(docs/tc/common/06-detailed-procedures/03-fee.md 의 CT-FEE-001·002). 체인에서 읽은 값으로 계산해 낮추지 않는다. 1 wei 는 세 체인 어디의 최소값에도 닿지 못한다. go-stablenet 은 풀이 params.MinBaseFee(20,000 Gwei)와 팁의 합을 요구하고(core/txpool/validation.go), go-wemix 는 뜨면서 풀 최소값을 거버넌스 값(기본 100 Gwei)으로 덮어쓴다(wemix/admin.go). 두 체인은 제출 자리에서 거부한다. go-wbft 는 팁 하한을 RPC 로 들어온 트랜잭션에 면제하므로(core/txpool/legacypool/legacypool.go 의 local 분기) 제출은 통과하지만 블록에는 못 들어간다. 그 체인의 기본 수수료는 B − floor(B/8) 로 줄어 7 wei 에서 멈추므로(floor(7/8) = 0), 1 wei 는 영원히 미달이다. 판정이 체인마다 다른 것은 문서가 적어 둔 그대로다. 미만은 StableNet 에서 거부되고 WEMIX3.0·4.0 에서는 거부되거나 블록에 포함되지 않은 채 남는다. 초과: 경계를 go-stablenet 은 고정 상수(MinBaseFee)로, go-wemix 는 다음 블록 기본 수수료에 거버넌스 팁을 더한 값으로 정하고, go-wbft 는 RPC 로 받은 트랜잭션을 제출 때 가격으로 거부하지 않아 세 체인에 같은 경계값이 없다. 초과로 보내는 값은 노드가 제안한 가격이라 세 체인 모두 하한 위에 있다. 새 계정이 자기 키로 서명해 보내고, 성공 상태와 형식을 본다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "legacyLow",
+      "saveKey": "legacyLowKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$legacyLow",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "newAccount",
+      "save": "accessListLow",
+      "saveKey": "accessListLowKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$accessListLow",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "newAccount",
+      "save": "dynamicLow",
+      "saveKey": "dynamicLowKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$dynamicLow",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "sendTx",
+      "key": "$legacyLowKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE0E",
+      "value": "1",
+      "gasPrice": "1",
+      "expect": "reject",
+      "expectPerChain": {
+        "wbft": "keptOut"
+      },
+      "blocks": 5,
+      "reason": "transaction underpriced"
+    },
+    {
+      "do": "sendTx",
+      "key": "$accessListLowKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE0E",
+      "value": "1",
+      "gasPrice": "1",
+      "accessList": [],
+      "expect": "reject",
+      "expectPerChain": {
+        "wbft": "keptOut"
+      },
+      "blocks": 5,
+      "reason": "transaction underpriced"
+    },
+    {
+      "do": "sendTx",
+      "key": "$dynamicLowKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE0E",
+      "value": "1",
+      "gas": "21000",
+      "maxFeePerGas": "1",
+      "maxPriorityFeePerGas": "1",
+      "expect": "reject",
+      "expectPerChain": {
+        "wbft": "keptOut"
+      },
+      "blocks": 5,
+      "reason": "transaction underpriced"
+    },
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "faucet",
+      "on": "node1",
+      "to": "$sender",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "save": "gp"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE21",
+      "value": "1",
+      "gasPrice": "$gp",
+      "expect": "receipt",
+      "save": "hLegacy",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hLegacy",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hLegacy"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "save": "gp2"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE21",
+      "value": "1",
+      "gasPrice": "$gp2",
+      "accessList": [],
+      "expect": "receipt",
+      "save": "hAccessList",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hAccessList",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hAccessList"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "save": "feeCap"
+    },
+    {
+      "do": "sendTx",
+      "key": "$senderKey",
+      "on": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE21",
+      "value": "1",
+      "gas": "21000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "$tip",
+      "expect": "receipt",
+      "save": "hDynamic",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hDynamic",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hDynamic"
+      ],
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x2"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "30s",
+      "pollInterval": "1s"
+    }
+  ]
+}
