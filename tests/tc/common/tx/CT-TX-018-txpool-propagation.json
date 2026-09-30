@@ -2,34 +2,96 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "basic-txpool-propagation",
-  "description": "CT-TX-018 — 노드 1에 보낸 트랜잭션이 노드 2에서 처리 결과로 보인다 (원본 basic/txpool-propagation.sh, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md). node1 에 1 ETH 송금을 보내고, node2 에서 받는 새 계정의 잔액이 정확히 1 ETH 인지 본다. 전에는 1 wei 를 보내고 0 보다 큰지만 봤다.",
+  "description": "CT-TX-018 — 종단 노드에 낸 트랜잭션이 전달 노드를 거쳐 생성 노드까지 가서 블록에 들어가는지 본다 (원본 basic/txpool-propagation.sh, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-018). 전에는 생성 노드 node1 에 내고 생성 노드 node2 에서 잔액을 읽었다. 그것은 풀 전파가 아니라 블록 전파다. 트랜잭션은 이미 블록에 들어간 뒤였고, node2 는 블록을 받아서 알게 된다. 풀이 옮겼는지는 그 순서로 알 수 없다. 여기서는 생성 노드 4, 전달 노드 1, 종단 노드 2 로 띄우고(proxied) 종단 노드 en1 에 낸다. en1 은 블록을 만들지 못하고 전달 노드 하나하고만 이어져 있다(peerCount 1 로 확인). 그러니 이 트랜잭션이 블록에 들어갔다는 사실 자체가 en1 → pn1 → bp 로 풀이 옮겼다는 증거다. 자금을 넣는 전송은 bp1 에 내고, en1 이 그 결과를 볼 때까지 기다린 뒤에 서명해 보낸다. en1 이 잔액을 모르면 풀이 자금 부족으로 먼저 거부한다. 마지막 잔액은 생성 노드 쪽 bp1 에서 읽어 체인이 실제로 받았는지 본다. 세 체인 preset 이 모두 이 모양을 갖추고 있어 파일 하나로 세 체인을 돈다.",
   "requires": [
-    "rpc"
+    "rpc",
+    "consensus"
   ],
   "skipsOn": [],
-  "chainPreset": "stablenet-bp4-en1",
+  "chainPreset": "stablenet-bp4-en2-pn1",
   "steps": [
     {
       "do": "waitBlock",
-      "target": 2,
-      "timeout": "120s"
+      "target": 3,
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "waitFor",
+      "on": "pn1",
+      "source": "peerCount",
+      "compare": "Equal",
+      "expected": "6",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
     },
     {
       "do": "newAccount",
       "save": "r",
-      "saveKey": "rk"
+      "saveKey": "rKey"
     },
     {
       "do": "sendTx",
-      "on": "node1",
-      "from": "node1",
+      "on": "bp1",
+      "from": "faucet",
+      "to": "$sender",
+      "value": "3000000000000000000",
+      "gas": "21000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "balanceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "expected": "3000000000000000000",
+      "timeout": "90s",
+      "pollInterval": "1s"
+    },
+    {
+      "do": "sendTx",
+      "on": "en1",
+      "key": "$senderKey",
       "to": "$r",
       "value": "1000000000000000000",
-      "expect": "receipt"
+      "expect": "receipt",
+      "save": "h",
+      "timeout": "120s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$h",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "bp1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$h"
+      ],
+      "select": "blockNumber",
+      "compare": "NotNil",
+      "is": null
     },
     {
       "expect": "balanceAt",
-      "on": "node2",
+      "on": "bp1",
       "address": "$r",
       "compare": "Equal",
       "is": "1000000000000000000"

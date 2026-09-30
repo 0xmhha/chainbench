@@ -1737,7 +1737,7 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   라이브가 더 찾은 둘도 고쳐져 있다: `env/docker/gen-env.sh` 가 metrics 포트를
   퍼블리시하고(`METRICS_PUB_BASE`, 기본 16060) localmap 에 `6060: 1606N` 이 들어가며,
   경로는 `collector.MetricsURLOn` 이 붙인다(주소만 해석하던 `HTTPEndpoint` 와 분리). 되살린
-  스펙도 자리에 있다(`tests/tc/common/rpc/015-metric-head-block.json`).
+  스펙도 자리에 있다(`tests/tc/common/rpc/CT-RPC-015-metric-head-block.json`).
   재확인: `grep -n "METRICS_PUB_BASE" env/docker/gen-env.sh` ·
   `grep -n "func MetricsURLOn" internal/core/collector/metrics.go`
   **(원래 기록)** 코드 경로는 열렸다 (2026-09-11), 라이브 검증만 남았다. 진단이 셋 중 하나 틀렸다 — ②수집 경로는 이미

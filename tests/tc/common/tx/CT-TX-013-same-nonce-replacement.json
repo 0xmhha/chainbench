@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "replacement-tx",
-  "description": "RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx)",
+  "description": "RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap 으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-013). nonce 1 을 먼저 보내 격차를 두고(nonce 0 이 없어 대기 상태다), 같은 nonce 1 을 팁과 최대 수수료를 두 배로 올려 다시 보내고, nonce 0 으로 격차를 채워 처리되게 한다. 두 배는 교체에 필요한 인상 비율(txpool.pricebump, 기본 10%)을 넉넉히 넘는다. 나중 것만 블록에 들어가고 처음 것은 영수증이 없는지 본다. 절차 3 의 격차 채우기 트랜잭션도 실제로 처리됐는지 함께 본다 — 그것이 들어가지 않으면 nonce 1 도 들어갈 수 없으므로 이 케이스가 재려는 교체가 성립하지 않는다. 수수료는 못 박지 않고 노드에게 묻는다(tx/003·tx/014 와 같은 식). 값을 박아 두면 기본 수수료가 그 값을 넘는 체인에서만 깨지는데, 이 케이스가 묻는 것은 교체이지 수수료가 아니다.",
   "requires": [
     "rpc"
   ],
@@ -29,10 +29,58 @@
       "value": "10000000000000000000"
     },
     {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "baseFeePerGas",
+      "save": "base"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "save": "feeCap"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$tip",
+        "2"
+      ],
+      "save": "tip2"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$feeCap",
+        "2"
+      ],
+      "save": "feeCap2"
+    },
+    {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "35000000000000",
-      "maxPriorityFeePerGas": "30000000000000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "$tip",
       "nonce": "1",
       "on": "node2",
       "save": "tx1",
@@ -43,8 +91,8 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "42000000000000",
-      "maxPriorityFeePerGas": "36000000000000",
+      "maxFeePerGas": "$feeCap2",
+      "maxPriorityFeePerGas": "$tip2",
       "nonce": "1",
       "on": "node2",
       "save": "tx2",
@@ -55,8 +103,8 @@
     {
       "do": "sendTx",
       "key": "$acctKey",
-      "maxFeePerGas": "35000000000000",
-      "maxPriorityFeePerGas": "30000000000000",
+      "maxFeePerGas": "$feeCap",
+      "maxPriorityFeePerGas": "$tip",
       "nonce": "0",
       "on": "node2",
       "save": "tx3",
@@ -80,8 +128,23 @@
     },
     {
       "expect": "txMined",
+      "hash": "$tx3",
+      "is": "true"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$tx3",
+      "is": "0x1"
+    },
+    {
+      "expect": "txMined",
       "hash": "$tx2",
       "is": "true"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$tx2",
+      "is": "0x1"
     },
     {
       "expect": "txMined",

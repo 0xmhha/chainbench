@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "feepayer-insufficient-rejected",
-  "description": "RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient)",
+  "description": "RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient, 절차는 docs/tc/common/06-detailed-procedures/02-tx.md 의 CT-TX-008). 문서 기대 결과는 \"거부되고 블록에 포함되지 않는다\" 인데 전에는 거부만 보았다. 거부된 트랜잭션은 해시가 남지 않아 해시로는 포함 여부를 볼 수 없으므로, tx/015 와 tx/017 처럼 계정 단위로 본다. 보낸 계정의 nonce 와 잔액이 그대로이고, txpool_contentFrom 의 pending·queued 가 비어 있고, 받을 주소의 잔액이 0 이면 그 트랜잭션은 풀에도 블록에도 없다. 받을 주소는 이 케이스 전용으로 쓰는 빈 주소라 잔액 0 이 곧 미포함이다. 대납 계정에는 자금을 넣지 않는다.",
   "requires": [
     "rpc"
   ],
@@ -55,14 +55,66 @@
       "pollInterval": "1s"
     },
     {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$sender",
+      "save": "nonceBefore"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$sender",
+      "save": "balanceBefore"
+    },
+    {
       "do": "sendTx",
       "expect": "reject",
       "feePayerKey": "$feePayerKey",
       "key": "$senderKey",
       "on": "node2",
-      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "to": "0x00000000000000000000000000000000C0FFEE22",
       "value": "1",
       "reason": "insufficient feePayer's funds"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "is": "$nonceBefore"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$sender",
+      "compare": "Equal",
+      "is": "$balanceBefore"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node2",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$sender"
+      ],
+      "select": "pending",
+      "compare": "Equal",
+      "is": {}
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node2",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$sender"
+      ],
+      "select": "queued",
+      "compare": "Equal",
+      "is": {}
+    },
+    {
+      "expect": "balanceAt",
+      "address": "0x00000000000000000000000000000000C0FFEE22",
+      "compare": "Equal",
+      "is": "0"
     },
     {
       "expect": "txStatus",

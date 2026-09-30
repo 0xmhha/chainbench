@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "genesis-balance",
-  "description": "RT-A-4-02 — eth_getBalance 정상 조회 (원본 regression/ethereum/27-test-eth-get-balance) 송금 전후 변화도 본다(CT-RPC-007 절차 2). 블록 생성 노드의 잔액은 보상·수수료로 함께 움직이므로, 새 계정 둘 사이에서 1 ETH 를 보내고 받는 쪽은 정확히 1 ETH, 보내는 쪽은 1 ETH 와 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
+  "description": "CT-RPC-007 — 잔액이 조회되고 송금 전후 변화가 반영된다 (기존 명세 RT-A-4-02, RPC-012, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-007). 2026-09-30 에 genesis-balance 와 remote-balance-check 를 하나로 합쳤다. 둘은 체인 차이가 아니라 원본 테스트 둘이었고, 단계가 열세 개까지 같았다. remote 판에만 있던 0 주소 잔액의 16진 형식 확인 한 줄을 남겼다. 남은 id 를 genesis-balance 로 한 것은 remote 판이 이름과 달리 스스로 망을 세우기 때문이다. \"0 주소의 잔액이 0 이상\" 을 보던 것은 2026-09-29 에 고쳤다. 잔액은 음수가 될 수 없어 언제나 참이었다. 0 주소는 어느 체인에나 있고 값이 변하지 않으므로 형식 확인에만 쓰고, 값을 실제로 읽어 오는지는 자금이 있는 노드 계정으로 본다. 문서의 기대 결과가 \"0보다 크고\" 이기 때문이다. 송금 전후 변화도 본다(절차 2). 블록 생성 노드의 잔액은 보상·수수료로 함께 움직이므로, 새 계정 둘 사이에서 1 ETH 를 보내고 받는 쪽은 정확히 1 ETH, 보내는 쪽은 1 ETH 와 수수료(gasUsed × effectiveGasPrice)만큼 줄었는지 본다.",
   "requires": [
     "rpc"
   ],
@@ -19,6 +19,16 @@
       "compare": "Greater",
       "expect": "balanceAt",
       "is": "0"
+    },
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]+$",
+      "method": "eth_getBalance",
+      "params": [
+        "0x0000000000000000000000000000000000000000",
+        "latest"
+      ]
     },
     {
       "do": "newAccount",

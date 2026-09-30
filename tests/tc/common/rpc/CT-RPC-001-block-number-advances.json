@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "basic-rpc-health",
+  "description": "CT-RPC-001 — 모든 노드의 블록 번호가 2 이상이고 계속 늘어나며, 기본 RPC 가 응답한다 (기존 명세 RT-A-4-01, RPC-001, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-001). 2026-09-30 에 basic-rpc-health 와 remote-rpc-health 를 하나로 합쳤다. 둘은 체인 차이가 아니라 원본 테스트 둘이었고, remote 판은 이름과 달리 스스로 망을 세워 한 노드만 봤다. 노드마다 \"0 이상\" 을 보던 것은 2026-09-29 에 고쳤다. 블록 번호는 음수가 될 수 없어 그 단언은 노드가 무엇을 답해도 통과했고, 창세 블록에 멈춘 노드도 초록불이었다. waitBlock 이 2를 지난 뒤이므로 따라오고 있는 노드는 모두 2 이상이어야 하고, 멈춘 노드는 여기서 걸린다. 그다음 blockAdvance 로 실제로 더 올라가는지 본다 — 문서의 기대 결과가 \"이전 값 이상으로 늘어난다\" 이기 때문이다. 마지막 둘은 remote 판에서 옮겨 온 것으로, 살아 있다는 말이 블록 번호 하나로만 성립하지 않도록 web3_clientVersion 과 net_peerCount 가 빈 값이 아닌지 본다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4-en1",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "120s"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "node1",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "node2",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "node3",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "node4",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "en1",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "web3_clientVersion",
+      "compare": "NotEqual",
+      "is": ""
+    },
+    {
+      "expect": "rpcCall",
+      "method": "net_peerCount",
+      "compare": "NotEqual",
+      "is": ""
+    }
+  ]
+}
