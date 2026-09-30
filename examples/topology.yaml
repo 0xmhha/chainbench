@@ -1,19 +1,20 @@
 # Example per-node topology for `chainbench chain place|up --topology`.
 #
-# It replaces the positional `--validators N --endpoints M` counts with an
-# explicit, per-node layout: which node index plays which role, its sync mode,
-# and which node is the bootnode. One consistent rule sets up the test
+# It replaces the `--bp N --en M --pn K` counts with an explicit, per-node
+# layout: which node index plays which role, its sync mode, and which node is
+# the bootnode. One consistent rule sets up the test
 # environment, and the resulting node table is recorded in the workspace so the
 # running network's shape is inspectable (chainbench chain show / status).
 #
 #   chainbench chain up --topology examples/topology.yaml --binary <path>
 #
-# role:      bp | validator  (block producer / staker)
-#            en | endpoint    (non-producing RPC node)
-#            pn | proxy       (proxy tier)
-#            boot             (bootstrap node)
-# sync_mode: full (default) | snap | archive
+# role:      bp  (block producer; at least one)
+#            en  (non-producing RPC node)
+#            pn  (proxy tier)
+# sync_mode: full (default) | snap | archive — honored for en only; a bp
+#            always runs full
 # bootnode:  at most one node may set this true
+# index:     a contiguous 1..N set
 chain: wbft
 network: local
 nodes:

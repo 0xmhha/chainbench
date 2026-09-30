@@ -37,9 +37,9 @@ MCP 클라이언트(Claude Code)는 프로젝트의 `.mcp.json` 을 읽어 자�
   `internal/mcp`). 별도 wire 프로세스나 TypeScript 런타임이 없다.
 - 표면 규칙은 비대칭이다(아키텍처 v2 §2). **CLI 는 코어 모듈을 직접 호출하고, MCP 는
   `internal/app` 을 거친다.** 두 표면이 같은 기능을 부르므로 동작은 같다.
-- 아직 코어를 직접 부르는 도구가 남아 있고, 그 목록은 `internal/arch/mcp_imports_test.go`
-  의 허용표에 이유와 함께 적혀 있다. 이 표는 줄어들기만 한다(항목이 사라지면 테스트가
-  삭제를 요구한다).
+- 이 규칙은 `internal/arch/mcp_imports_test.go` 가 고정한다. `internal/mcp` 가 `internal/app`
+  외의 내부 패키지를 임포트하면 테스트가 실패한다. 예외 허용표는 줄어들기만 하며, 지금은
+  비어 있다(코어를 직접 부르는 도구가 없다).
 
 ## 5. 노출 도구
 도구 개수는 고정이 아니다. 정적으로 등록되는 도구(`internal/mcp/tools.go` 의 `Default`)
@@ -48,11 +48,11 @@ MCP 클라이언트(Claude Code)는 프로젝트의 `.mcp.json` 을 읽어 자�
 
 | 그룹 | 도구 |
 |---|---|
-| 체인/셋업 | `chainbench_chains` · `_setup_plan` · `_start` · `_stop` · `_status` · `_run` |
-| 검증/테스트 | `chainbench_verify` · `_test` · `_test_list` · `_report` |
-| 노드/Tx | `chainbench_node_rpc` · `_tx_send` · `_tx_wait` · `_txpool` · `_account_state` · `_contract_call` · `_contract_deploy` · `_faucet` |
+| 체인/워크스페이스 | `chainbench_chains` · `_status` · `_stop` · `_hardfork` |
+| 검증/테스트 | `chainbench_verify` · `_run` · `_validate` · `_test_list` · `_report` |
+| 노드/Tx | `chainbench_node_rpc` · `_node_stop` · `_node_start` · `_tx_send` · `_tx_wait` · `_txpool` · `_account_state` · `_contract_call` · `_contract_deploy` · `_faucet` |
 | 합의 | `chainbench_consensus` · `_consensus_status` · `_consensus_health` · `_consensus_block_info` |
-| 네트워크 구성(`net`) | `chainbench_chain_new` · `_net_keys` · `_net_allocate` · `_net_genesis` · `_net_config` · `_net_launchopts` · `_net_provision` · `_net_init` · `_net_start` · `_net_stop` · `_net_restart` · `_net_rm` · `_net_status` · `_net_health` · `_net_logs` · `_net_show` |
+| 네트워크 구성(`chain`) | `chainbench_chain_up`(전 단계 한 번에) · `_chain_new` · `_chain_keys` · `_chain_place` · `_chain_genesis` · `_chain_config` · `_chain_build` · `_chain_deploy` · `_chain_init` · `_chain_start` · `_chain_stop` · `_chain_restart` · `_chain_resume` · `_chain_rm` · `_chain_status` · `_chain_health` · `_chain_logs` · `_chain_show` |
 | 자원(`resource`) | `chainbench_resource_pool` · `_resource_plan` |
 | 기존 네트워크 attach | `chainbench_network_attach` · `_network_list` · `_network_info` · `_network_detach` · `_network_peers` · `_network_topology` · `_remote_rpc` |
 | 키 재료 | `chainbench_keyring_new` · `_keyring_add` · `_keyring_list` · `_keyring_show` · `_keyring_import` |
@@ -78,7 +78,7 @@ printf '%s\n%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize"}' \
 | 증상 | 원인 / 해결 |
 |---|---|
 | MCP 'chainbench' not connected | `setup.sh` 미실행 또는 `chainbench-mcp` 가 PATH 에 없음 → `bash setup.sh` |
-| 도구 호출이 바이너리 없음으로 실패 | `_start` 등 실행 도구는 빌드된 체인 바이너리 경로(`binary` 인자)가 필요 |
+| 도구 호출이 바이너리 없음으로 실패 | `_chain_up` · `_chain_new` · `_chain_init` · `_chain_start` · `_chain_resume` · `_run` 은 빌드된 체인 바이너리 경로(`binary` 인자)를 받는다 |
 
 ---
 

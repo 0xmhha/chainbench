@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "wemix-bp4-en2-pn1",
-  "description": "wemix: 4 bp + 2 en + 1 pn. A pn in the topology composes the proxied graph, so an en reaches the chain only through the pn. Used by 1 case.",
+  "description": "wemix: 4 bp + 2 en + 1 pn. A pn in the topology composes the proxied graph, so an en reaches the chain only through the pn. Used by no case.",
   "chain": "wemix",
   "keys": {
     "nodekeys": {

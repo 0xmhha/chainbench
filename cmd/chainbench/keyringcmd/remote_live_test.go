@@ -20,7 +20,7 @@ import (
 // docker server set posing as servers. Gated so CI (which has no server set) skips it:
 //
 //	cd env/docker && ./gen-env.sh && docker compose -f build/docker-compose.yml up -d
-//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./cmd/chainbench/ -run Live_Keyring -v
+//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./cmd/chainbench/keyringcmd/ -run Live_Keyring -v
 //
 // The local half (new/add/list/show/export, hex and file imports, env
 // selection) runs unconditionally in keyring_test.go.

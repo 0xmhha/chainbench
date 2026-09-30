@@ -95,7 +95,7 @@ type network struct {
 }
 
 // boot launches `bp` block producers + `en` endpoints of chain on
-// binary via `chainbench net up`, and registers cleanup. extraSet are
+// binary via `chainbench chain up`, and registers cleanup. extraSet are
 // additional genesis config overrides, given either bare ("bohoBlock=40") or
 // in the old "genesis.overrides.<key>=<v>" spelling.
 func boot(t *testing.T, cli, chain, binary string, bp, en int, extraSet ...string) *network {
@@ -114,7 +114,7 @@ func bootOverlay(t *testing.T, cli, chain, binary string, bp, en int, overlay st
 	return launch(t, cli, chain, binary, bp, en, []string{"--overlay", overlay})
 }
 
-// launch runs `chainbench net up` with extraArgs and registers cleanup.
+// launch runs `chainbench chain up` with extraArgs and registers cleanup.
 func launch(t *testing.T, cli, chain, binary string, bp, en int, extraArgs []string) *network {
 	t.Helper()
 	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "presets", "keys"), bp, en, extraArgs)

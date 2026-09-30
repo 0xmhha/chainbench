@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "wemix-bp9",
-  "description": "wemix: 9 bp. Used by 1 case.",
+  "description": "wemix: 9 bp. Used by no case.",
   "chain": "wemix",
   "keys": {
     "nodekeys": {

@@ -46,18 +46,32 @@ Set `dataRoot` to the absolute path on the target under which everything lives
 (on a remote host, a path on that host; local, a path on this machine). Under
 it, `paths` names one directory per purpose. `control.artifactRoot` is the one
 local path — where run results and the final report land on the machine running
-chainbench (`~` expands locally).
+chainbench (`~` expands locally; a relative value is relative to the config
+file's directory; `run --artifact-root` overrides it). The optional
+`control.binaries` is a second local path: a directory of node binaries the
+deploy step sends to a remote target when the target's copy is missing or its
+sha256 differs (unset means the target must already have them).
 
 `inputs.mode` is `generated` (build test keys and genesis/config with the
 in-process builders) or `existing` (use files already on the target, named by an
 `existingInputs` bundle through `inputs.name`). `execution.chain` is `fresh`,
 `reuse-if-matching`, or
-`attach` — see below.
+`attach` — see below. The optional `limits.minFreeDisk` (`2GiB`, `500MiB`, a
+byte count, or `"0"` to skip) is the free space `dataRoot` must have on every
+server a node lands on before genesis is written; unset means 2GiB.
+
+The file is validated strictly: `version` must be `1`; `dataRoot` must be
+absolute with no `~` or `$`; all eight `paths` entries (`binaries`, `configs`,
+`genesis`, `keystore`, `keyrings`, `nodes`, `runtime`, `logs`) are required and
+must be relative with no `..`; `control.artifactRoot`, `inputs.mode`, and
+`execution.chain` are required; and an unknown or duplicated key is an error
+rather than silently ignored.
 
 ## execution.chain: how a run treats an existing composition
 
-`fresh` (the default) composes and launches the network as always; it does not
-disturb another composition's processes or data.
+`execution.chain` is read by `chain up` and by a composing `run` alike. `fresh`
+(what a run without a workspace-config gets) composes and launches the network
+as always; it does not disturb another composition's processes or data.
 
 `reuse-if-matching` reconciles a running network node by node before it deploys
 or launches anything. For each node it compares the config and binary against
@@ -69,15 +83,15 @@ record of a node — a first run against a target something is already up on —
 baseline is read back from the running process itself: its `--config` is
 recovered from the command line and hashed on the machine, so a node already up
 with the config this run would give it is reused in place, and one up with a
-different config is refused as foreign rather than composed over. The one
+different config or binary is refused as foreign rather than composed over. The one
 exception is the
 genesis: it is shared by every node, so a changed genesis is a different chain
 and cannot be reconciled onto a running network — the whole reuse is refused,
 and nothing is touched. Use it to continue an expensive environment across runs.
 
 `attach` tests an already-running chain. It does not create, deploy, or init, so
-`chain up` refuses it — bring the chain up separately and use the attach/run
-path.
+`chain up` (and a composing `run`) refuses it — bring the chain up separately and
+use the attach/run path.
 
 ## Run with both files
 
@@ -93,7 +107,8 @@ is recorded); it is separate from the target's `dataRoot`. Add `--docker` when
 the server-set's hosts are local docker containers.
 
 `--workspace-config` is accepted by the one-shot `run`, by the step-form
-`chain new` and `chain up`, and by the MCP tools `chainbench_chain_new` and
+`chain new` and `chain up`, by `file upload`/`download` (where it is required),
+by `clean --stale-compositions`, and by the MCP tools `chainbench_chain_new` and
 `chainbench_chain_up` — every surface resolves the target's `dataRoot` from the
 file the same way.
 
@@ -104,9 +119,9 @@ file the same way.
   one.
 - `--workspace-config` is wired into the step-form CLI (`chain new`/`chain up`)
   and the MCP step tools, not only the one-shot `run`.
-- `execution.chain` is live for `chain up`: `fresh` (default),
+- `execution.chain` is live for `chain up` and a composing `run`: `fresh`,
   `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
-  up).
+  both).
 - An existing genesis is checked against the composed keys: for a
   wbft-family chain, the validators the genesis names must be exactly the key
   set the network runs, or the compose is refused (block signing would stall
@@ -126,8 +141,8 @@ file the same way.
   a key in the map stays a direct file reference.
 - `binaryAliases` **는 이제 동작한다.** 대상에서 bare 이름으로 바이너리를 가리키면
   `dataRoot` + `paths.binaries` 아래에서 찾고, 그 이름에 별칭이 선언돼 있으면 별칭을 적용한다.
-  즉 `upgrade run --all-servers` 에서 프로파일이 `binary: gwemix` 라고만 적어도 대상의
-  `/data/chainbench/bin/gwemix` 로 풀린다. 아키텍처가 다른 빌드를 나란히 두었다면
+  즉 DSL 이나 `chain up --binary` 가 `gwemix` 라고만 적어도 (`dataRoot: /data`,
+  `paths.binaries: bin` 이면) 대상의 `/data/bin/gwemix` 로 풀린다. 절대경로는 그대로 쓴다. 아키텍처가 다른 빌드를 나란히 두었다면
   `binaryAliases: {gwemix: linux-arm64/gwemix}` 로 한 줄만 바꿔 가른다.
 
   ```yaml
@@ -135,10 +150,11 @@ file the same way.
     gwemix: linux-arm64/gwemix
   ```
 
-- `paths` 와 나머지 `inputs`/`existingInputs` 의 소비(용도 디렉터리 해석, 서버 파일 참조,
-  existing/generated 배선)는 점진적으로 들어온다 — 인계 문서
-  `docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
-  아직 아무 일도 하지 않는다.
+- `paths` 의 여덟 용도 디렉터리는 모두 소비된다. `nodes`/`runtime`/`logs` 는 구성 ID 별로
+  격리된 노드 DB·생성 genesis/config·로그 위치가 되고(`clean --stale-compositions` 도 이 셋을
+  뒤진다), `binaries` 는 위 바이너리 해석, `configs`/`genesis`/`keyrings` 는 상대 파일명 참조의
+  기준, `keystore` 는 `file upload`/`download` 의 목적지다. 배선 경위는 인계 문서
+  `docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 참고.
 - **`existingInputs` 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
   디렉터리 아래를 가리키는 상대 파일명, 그리고 이 기계의 절대경로(로컬 키셋을 가리킬 때).
   객체형 참조(`{server, ref}`·`{serverIndex, ref}`·`{localPath}`)는 **계획을 철회했다

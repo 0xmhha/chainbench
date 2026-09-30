@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-en2-pn1",
-  "description": "stablenet: 4 bp + 2 en + 1 pn. A pn in the topology composes the proxied graph, so an en reaches the chain only through the pn. Used by 1 case.",
+  "description": "stablenet: 4 bp + 2 en + 1 pn. A pn in the topology composes the proxied graph, so an en reaches the chain only through the pn. Used by 2 cases.",
   "chain": "stablenet",
   "keys": {
     "nodekeys": {

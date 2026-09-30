@@ -27,6 +27,7 @@
 # The run that verified this profile, against the 15-container docker environment
 # (env/docker). The binary paths are paths ON the containers: --all-servers moves
 # the data plane to the set, so a local build path is not a path the target has.
+# `upgrade run` has since been removed; the command is kept as it was run.
 #
 #   chainbench upgrade run \
 #     --profile profiles/wemix-upgrade-15.yaml --preset <30-node set> \

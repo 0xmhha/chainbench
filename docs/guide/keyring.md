@@ -34,10 +34,12 @@
 
 ## 2. 어느 링을 쓰는가
 
-우선순위: `--keyring-dir <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `./keys/default`.
+우선순위: `--keyring-dir <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `~/.chainbench/keys/default`
+(홈 디렉토리 기준이라 어느 디렉토리에서 실행해도 같은 링을 가리킨다).
 경로는 로컬 디렉토리 또는 target 문법(`srv://<서버>/경로`, `user@host:/경로`)이다 —
 서버 경로면 `--server-set`(서버 세트)와, docker 서버들라면 `--docker` 를 함께 쓴다.
-모든 명령이 첫 줄에 **어떤 링을 왜 골랐는지** 보고하므로 경로를 추측할 일이 없다.
+`new`·`add`·`list`·`import --from-ring` 은 첫 줄에 **어떤 링을 왜 골랐는지** stderr 로
+보고하므로 경로를 추측할 일이 없다(stdout 은 결과 전용이라 `--json | jq` 가 그대로 된다).
 
 ```
 $ bin/chainbench keyring list --keyring-dir /tmp/myring
@@ -49,7 +51,7 @@ keyring: /tmp/myring (--keyring-dir)
 ### new — 링 생성
 
 ```
-bin/chainbench keyring new --count 3 [--json]                 # ./keys/default 에
+bin/chainbench keyring new --count 3 [--json]                 # ~/.chainbench/keys/default 에
 bin/chainbench keyring new --keyring-dir /tmp/r --count 5 \
     --with-bls --validators 3                                 # 지정 경로, wbft 용
 ```
@@ -110,6 +112,8 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name hd0 \
 ```
 
 - 같은 이름이 이미 있으면 **덮어쓰지 않고 거부**한다.
+- 지정하지 않은 출처를 꾸미는 옵션도 거부한다: `--mnemonic` 없이 `--passphrase`·`--hd-*`,
+  `--from` 없이 `--password` 를 주면 조용히 무시하지 않고 오류다.
 - 니모닉의 표준 파생(m/44'/60'/0'/0/0)은 개발용 니모닉 → `0xf39F…92266` 골든
   벡터로 고정되어 있다. `--hd-coin-type` 을 바꾸면 다른 키가 나온다(체인 등록
   코인타입 사용 시 필수).
@@ -143,7 +147,7 @@ bin/chainbench keyring import --keyring-dir ./keys/pulled \
 export 해 둔 값이 접속을 조용히 바꾸는 일이 없다. 비밀번호를 파일에 직접 적기
 싫으면 `ssh.password_file: <경로>` 로 한 줄짜리 0600 파일을 참조한다.
 
-환경변수는 두 경우에만 쓰인다.
+환경변수는 한 경우에만 쓰인다.
 
 | 환경변수 | 의미 |
 |---|---|
@@ -173,7 +177,7 @@ docker compose -f build/docker-compose.yml up -d
 
 | 상황 | 동작 |
 |---|---|
-| `--docker` + localmap 있음 | 접속 직전에만 주소 치환, 내역 출력 (`docker: dialing 172.30.0.11:22 as 127.0.0.1:2201`) |
+| `--docker` + localmap 있음 | 접속 직전에만 주소 치환, 내역 출력 (`docker: dialing 172.30.0.11:10022 as 127.0.0.1:2201`) |
 | `--docker` + localmap 없음 | 오류 (생성 방법 안내) |
 | 옵션 없음 + 파일 있음 | 무시 — 진짜 원격 모드 오염 없음 |
 
@@ -231,9 +235,9 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 
 | # | 할 일 | 기대 결과 | 자동 테스트 |
 |---|---|---|---|
-| A1 | `keyring new --count 2` (지정 없음) | `keys/default` 생성, `keyring: keys/default (default)` 보고 | ReportsWhichRingItUsed |
+| A1 | `keyring new --count 2` (지정 없음) | `~/.chainbench/keys/default` 생성, `keyring: <홈>/.chainbench/keys/default (default)` 보고 | ReportsWhichRingItUsed |
 | A2 | `keyring new --keyring-dir /tmp/r --count 3 --with-bls --validators 2` | 3신원·2검증자, BLS yes | NewCreatesAUsableRing |
-| A3 | 같은 경로에 다시 `new` | 거부 (add 안내) | (core) Generate 거부 |
+| A3 | 같은 경로에 다시 `new` | 거부 (add 안내) | NewRefusesToOverwriteARing |
 | A4 | `add --count 1 --with-bls` | 4신원·**여전히 2검증자**, 기존 주소 불변 | AddDoesNotPromote / AddKeeps |
 | A5 | `list --verify` | 통과. metadata.json 한 글자 변조 후 재실행 → 실패 | VerifyCatchesDrift |
 | A6 | `export --name node1` → 거부, `--yes` → 키 출력 | `--yes` 게이트 동작 | ExportRequiresConfirmation |

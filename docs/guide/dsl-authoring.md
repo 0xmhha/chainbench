@@ -1,16 +1,17 @@
 # DSL 작성 가이드
 
-이 문서는 사람이 정리한 요약이 아니라 **코드에서 뽑은 것**이다. `internal/testhelper`·`internal/dsl`·`internal/testengine`·`internal/core/session` 을 tree-sitter-go 로 파싱해 등록 지점(`RegisterAction`/`RegisterAssertion`/`RegisterReader`)을 찾고, 각 구현의 본문에서 읽는 인자 키를 모았다. 그래서 코드가 바뀌면 이 목록도 바뀐다.
+이 문서는 사람이 정리한 요약이 아니라 **코드에서 뽑은 것**이다(e4feb738 기준). `internal/testhelper` 의 등록 지점(`RegisterAction`/`RegisterAssertion`/`RegisterReader`)을 모두 부른 결과에서 이름을 얻고, Go 소스를 파싱해 각 구현의 본문과 그 본문이 부르는 같은 패키지 함수가 읽는 인자 키를 모았다. 코드가 바뀌면 다시 뽑아야 한다.
 
-등록된 어휘는 47개다. 액션 19, 단언 11, 리더 17.
+등록된 이름은 53개다. 동작 22(그중 `read` 는 §2·§6 의 읽기 source 를 부르는 틀이다), 판정 전용 13, 읽기 겸 판정 18.
 
 ---
 
 ## 1. 케이스는 망을 고르고, 망은 따로 산다
 
 `tests/tc` 아래 문서는 모두 `schemaVersion: "2"` 의 케이스다. 케이스는 **무엇을
-검증하는지**를 말하고, **어떤 망 위에서 도는지**는 `presets/chain/` 의 선언을 이름으로
-고른다.
+검증하는지**를 말하고, **어떤 망 위에서 도는지**는 `chainPreset` 에 선언의 id 를 적어
+고른다. id 는 케이스 파일의 폴더, 그 위의 폴더들(`<dir>/<id>.json`,
+`<dir>/chain-preset/<id>.json`), 마지막으로 `presets/chain/` 순으로 찾는다.
 
 ```json
 {
@@ -37,8 +38,8 @@
 }
 ```
 
-이 망 하나를 161개 케이스가 쓴다. 전에는 같은 선언이 161번 복사돼 있었고, bp 수를
-하나 바꾸려면 161개 파일을 고쳐야 했다.
+이 망 하나를 140개 케이스가 쓴다(id 로 부르는 것 14, `extends` 로 덮는 것 126). 전에는
+같은 선언이 케이스마다 복사돼 있었고, bp 수를 하나 바꾸려면 그 파일을 모두 고쳐야 했다.
 
 **대신 파일을 두 개 열게 됐다.** 케이스만 보고는 노드가 몇 대인지 알 수 없다. 그
 값은 `chainbench run --plan` 이 대신 답한다(§7).
@@ -49,7 +50,7 @@
 깊은 병합이라 **다른 것만 적고 나머지는 물려받는다.**
 
 ```json
-"env": {
+"chainPreset": {
   "extends": "stablenet-bp4",
   "genesis": { "overlay": { "config": { "applepieBlock": 0 } } },
   "capabilities": ["rpc"]
@@ -64,10 +65,10 @@
 
 ### 같은 케이스를 다른 체인에서 돌리기
 
-`--env` 가 케이스가 부른 선언 대신 다른 선언 위에 올린다. **정의서는 고치지 않는다.**
+`--chain-preset` 이 케이스가 부른 선언 대신 다른 선언 위에 올린다. **정의서는 고치지 않는다.**
 
 ```
-chainbench run --workspace-dir /tmp/ws --env wbft-bp4 tests/tc/.../08-legacy-transfer.json
+chainbench run --workspace-dir /tmp/ws --chain-preset wbft-bp4 tests/tc/go-stablenet/regression/ethereum/08-legacy-transfer.json
 ```
 
 케이스가 `extends` 로 덮은 것은 남는다. 물려받는 밑바탕만 바뀐다. 그 케이스가 genesis
@@ -76,7 +77,7 @@ chainbench run --workspace-dir /tmp/ws --env wbft-bp4 tests/tc/.../08-legacy-tra
 값이 경로처럼 생겼으면(`/` 가 있거나 `.json` 으로 끝나면) 파일로 읽는다. 이 트리에
 아직 자리가 없는 체인의 선언도 그렇게 넘길 수 있다.
 
-**인라인 env 를 가진 케이스는 거부한다.** 그 객체가 곧 그 케이스의 선언이라, 갈아끼우면
+**선언 객체를 인라인으로 가진 케이스는 거부한다.** 그 객체가 곧 그 케이스의 선언이라, 갈아끼우면
 무엇이 중요했는지 모르는 채로 버리게 된다. 먼저 `extends` 형태로 바꾼다.
 
 옮겨도 `applicableChains` 는 그대로 걸린다. `applicableChains: "stablenet"` 인 케이스를
@@ -126,41 +127,43 @@ wbft 로 옮기면 돌지 않고 SKIP 된다 — 그게 맞는 동작이고, 정
 ### 망 파일 이름
 
 `<체인>-bp<수>[-en<수>][-pn<수>]` 다. `stablenet-bp4`, `stablenet-bp4-en1`,
-`wbft-bp7-en7-pn1` 처럼 읽는다. 0인 역할은 적지 않는다.
+`wbft-bp7-en7-pn1` 처럼 읽는다. 0인 역할은 적지 않는다. 노드 구성 말고 다른 것이
+다른 망은 뒤에 그 차이를 붙인다(`stablenet-bp4-boho`, `stablenet-bp4-en1-snap`).
 
 바이너리 이름이나 chain id 는 이름에 넣지 않는다. **그 파일이 말하지 않는 사실이기
 때문이다** — 둘 다 매니페스트가 정하고, 체인 이름이 이미 그 둘을 결정한다.
 
 ### `kind` 는 두 가지뿐이다
 
-`kind` 는 이 문서가 무엇인지 말한다. 값은 `case` 와 `env` 둘뿐이고, 스키마가 그 둘로
-닫혀 있다(`v2.schema.json` 의 `oneOf`).
+`kind` 는 이 문서가 무엇인지 말한다. 값은 `case` 와 `chain-preset` 둘뿐이고, 스키마가
+그 둘로 닫혀 있다(`internal/dsl/schema/v2.schema.json` 의 `oneOf`).
 
 `case` 는 **실행되는 문서**다. `steps` 를 갖고, 그 단계들이 어떤 네트워크 위에서
-도는지를 `env` 로 말한다.
+도는지를 `chainPreset` 으로 말한다. 스키마는 `schemaVersion`·`kind`·`id`·`chainPreset`·`steps`
+를 필수로 둔다.
 
-`env` 는 **네트워크 선언**이다. 체인·바이너리·토폴로지·genesis·키 세트를 담는다.
-그 자체로는 실행되지 않는다 — env 파일만 `chainbench run` 에 넘기면 실행기가
+`chain-preset` 은 **네트워크 선언**이다. 체인·바이너리·토폴로지·genesis·키 세트를 담는다.
+그 자체로는 실행되지 않는다 — 선언 파일만 `chainbench run` 에 넘기면 실행기가
 runnable 하지 않다고 거부한다. 테스트가 없으니 돌릴 것이 없다.
 
-그래서 한 문서 안에 `kind` 가 두 번 나온다. 바깥은 `case`, 그 안의 `env` 객체는
-`env` 다. 위 예시에서 보이는 중첩이 그것이고, 잘못된 것이 아니다.
+그래서 선언을 인라인으로 넣은 문서 안에는 `kind` 가 두 번 나온다. 바깥은 `case`, 그 안의
+`chainPreset` 객체는 `chain-preset` 이다. 잘못된 것이 아니다.
 
 ```json
 { "kind": "case",              ← 이 문서는 테스트다
-  "env": { "kind": "chain-preset",      ← 이 안은 네트워크 선언이다
-           "chain": "stablenet" } }
+  "chainPreset": { "kind": "chain-preset",      ← 이 안은 네트워크 선언이다
+                   "chain": "stablenet" } }
 ```
 
-`lowerCase` 가 인라인 env 의 `kind` 를 검사한다. 비어 있으면 통과시키고, 값이 있는데
-`"chainPreset"` 가 아니면 거부한다.
+`casePreset`(`internal/dsl/lower_v1.go`)이 인라인 선언의 `kind` 를 검사한다. 비어 있으면
+통과시키고, 값이 있는데 `"chain-preset"` 이 아니면 거부한다.
 
-`env` 는 문법상 세 가지를 받는다. 다른 파일에 있는 선언의 id 를 문자열로 부르거나,
+`chainPreset` 은 문법상 세 가지를 받는다. 다른 파일에 있는 선언의 id 를 문자열로 부르거나,
 `extends` 로 부르면서 일부를 덮거나, 선언 객체를 그대로 넣거나. **`tests/tc` 는 앞의
 두 가지만 쓴다.** 객체를 그대로 넣는 형태는 문법이 받지만, 같은 선언이 파일마다
 복사되는 것이 P1 이 없앤 문제다.
 
-env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — bp 4대와
+선언에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — bp 4대와
 `presets/keys` 이다(`internal/testengine/compose.go`). `presets/chain` 의 선언은 그
 기본값도 적어 둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을
 막기 위해서다.
@@ -210,7 +213,7 @@ v2 의 `is` 는 낮추는 단계에서 `expected` 로 바뀐다. 둘 다 통하�
 
 `reject` 를 쓸 때는 **`reason` 을 함께 적는다**. 없으면 *어떤* 거절이든 통과하므로, 파일 이름이 주장하는 이유와 다른 이유로 거절돼도 초록불이 된다. 실제 문구를 모를 때는 일부러 틀린 `reason` 을 넣고 한 번 돌리면 실패 메시지가 진짜 문구를 찍어 준다 — 부분 문자열을 추측하지 않는다.
 
-`rpc` 는 `rpcCall` 의 별칭이다.
+판정 머리에서 `rpc` 는 `rpcCall` 의 별칭이다(`{"expect": "rpc", …}`).
 
 v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 통일했으므로 새 문서는 v2 로 쓴다. 손에 v1 문서가 있으면 `chainbench migrate-spec <파일>` 이 v2 로 바꿔 준다.
 
@@ -236,9 +239,11 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 리터럴에 이름을 붙이고 싶으면 `derive` 를 값 하나로 쓴다. `sum` 은 값이 하나면 그 값을 그대로 돌려주므로 상수 선언이 된다.
 
 ```json
-{ "read": { "source": "derive", "op": "sum", "of": ["21000"],
-            "save": "transferGas" } }
+{ "do": "read", "source": "derive", "op": "sum", "of": ["21000"], "save": "transferGas" }
 ```
+
+`derive` 의 결과는 기본이 10진 문자열이다. `"format": "hex"` 를 주면 `0x` 16진으로 준다
+(음수는 거부한다).
 
 ---
 
@@ -252,9 +257,13 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 |---|---|---|
 | 번호 | `node1`, `node5` | 노드 표의 1번부터 |
 | 역할+서수 | `bp1`, `en1` | 그 역할의 첫 번째. **1부터 센다** |
-| 역할:색인 | `bp:0`, `en:any` | 콜론 뒤는 **0부터 센다**. `any` 는 아무거나 |
+| 역할:색인 | `bp:0`, `en:any` | 콜론 뒤는 **0부터 센다**. `any` 는 그 역할의 첫 번째 |
 
-역할 이름은 `bp`(= `validator`), `en`(= `endpoint`), `pn`, `boot` 이다.
+역할 이름은 `bp`, `en`, `pn` 셋뿐이다. 그 밖의 이름은 `unknown role` 로 거부된다
+(`internal/core/node/role.go`). 망에 그 역할의 노드가 하나도 없으면 서수는 노드 번호 순으로
+센다 — attach 한 망은 모두 endpoint 라서, bp 를 부른 케이스도 그 위에서 돈다.
+
+`onEach` 는 노드 이름의 배열이고, `"all"` 은 망의 모든 노드를 번호 순으로 뜻한다.
 
 ### 계정
 
@@ -308,88 +317,108 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 ## 5. 비교 연산
 
-`compare` 에 쓸 수 있는 것은 16개다.
+`compare` 에 쓸 수 있는 것은 18개다(`internal/dsl/assert/assert.go` 의 17개와 `InDelta`).
 
-`Equal` `NotEqual` `EqualCI` `Len` `Greater` `GreaterOrEqual` `Less` `LessOrEqual` `Contains` `NotContains` `In` `Regexp` `True` `False` `Nil` `NotNil` `ElementsMatch`
+`Equal` `NotEqual` `EqualCI` `Len` `Greater` `GreaterOrEqual` `Less` `LessOrEqual` `Contains` `NotContains` `In` `Regexp` `True` `False` `Nil` `NotNil` `ElementsMatch` `InDelta`
+
+`InDelta` 는 허용 오차를 `delta`(또는 `tol`)로 받는다 — `{"expect": "balanceAt", …, "compare": "InDelta", "delta": "21000"}`.
+`compare` 를 적지 않으면 읽기 source 마다 정해진 기본 비교를 쓴다(대부분 `Equal`, `blockNumber`·`peerCount`·`baseFee`·`estimateGas`·`gasPrice` 는 `GreaterOrEqual`, `validators` 는 `Len`).
 
 `In` 은 멤버십이고, 집합이 `is` 쪽에 온다(`Contains` 는 컨테이너가 앞에 오는 반대 방향이다).
 주소는 대소문자를 무시하며, 빈 집합은 아무것도 통과시키지 않는다. "이 주소가 아니다"를
 `NotEqual` 로 쓰면 세상의 다른 모든 주소가 통과하므로, 허용 집합이 있으면 `In` 을 쓴다.
 
-`derive` 의 `op` 는 다섯 가지다. `sum` `diff` `word` `quorum` `abiCall`.
+`derive` 의 `op` 는 여섯 가지다. `sum` `diff` `mul` `word` `quorum` `abiCall`.
 
 ---
 
 ## 6. 어휘 전체
 
-각 항목의 인자는 구현 본문에서 읽는 키를 뽑은 것이다. `save` 는 실행기가 처리하므로 여기 나오지 않지만 어느 문장에나 붙일 수 있다.
+각 항목의 인자는 구현 본문과 그 본문이 부르는 같은 패키지 함수에서 읽는 키를 뽑은 것이다. `save` 는 실행기가 처리하므로 대개 나오지 않지만 어느 문장에나 붙일 수 있다.
 
-### 동작 (do) — 19개
+표에서 **수수료 인자**는 전송을 만드는 공통 함수가 읽는 `gasPrice`·`maxFeePerGas`·`maxPriorityFeePerGas`·`nonce` 를 줄여 쓴 것이다. `expectRevert`·`expectReject`·`expectFail` 은 `expect: "revert"`·`"reject"`·`"fail"` 과 같은 뜻의 bool 키다.
+
+### 동작 (do) — 21개 (`read` 제외)
 
 | 이름 | 인자 | 스펙 사용 | 구현 |
 |---|---|---:|---|
-| `deployContract` | `bytecode`, `data`, `gas`, `key`, `on`, `value` | 2 | `internal/testhelper/assets.go` |
-| `faucet` | `amount`, `gas`, `on`, `to` | 0 | `internal/testhelper/assets.go` |
-| `healPartition` | `groups`, `method` | 2 | `internal/testhelper/fault.go` |
-| `load` | `blocks`, `on` | 4 | `internal/testhelper/builtins.go` |
-| `newAccount` | `saveKey` | 29 | `internal/testhelper/builtins.go` |
-| `partition` | `groups`, `method` | 2 | `internal/testhelper/fault.go` |
-| `readNodeLog` | `maxBytes`, `on` | 4 | `internal/testhelper/fault.go` |
-| `registerContract` | `data`, `gas`, `on`, `to`, `value` | 0 | `internal/testhelper/assets.go` |
-| `restartNode` | `on` | 2 | `internal/testhelper/fault.go` |
-| `sendRawTampered` | `feePayerKey`, `on`, `senderKey`, `to`, `value`, `which` | 4 | `internal/testhelper/builtins.go` |
-| `sendSetCode` | `authorityKey`, `delegate`, `key`, `on` | 1 | `internal/testhelper/builtins.go` |
-| `sendTx` | `accessList`, `data`, `from`, `gas`, `key`, `on`, `pollInterval`, `timeout`, `to`, `value`, `wait` | 83 | `internal/testhelper/builtins.go` |
-| `signAuthorization` | `authorityKey`, `delegate`, `on` | 1 | `internal/testhelper/builtins.go` |
-| `startNode` | `on` | 2 | `internal/testhelper/fault.go` |
-| `stopNode` | `on` | 4 | `internal/testhelper/fault.go` |
-| `swapNode` | `binary`, `config`, `genesisOverlay`, `on`, `purpose` | 3 | `internal/testhelper/fault.go` |
-| `waitBlock` | `on`, `pollInterval`, `target`, `timeout` | 41 | `internal/testhelper/builtins.go` |
-| `waitFor` | `compare`, `expected`, `on`, `pollInterval`, `source`, `timeout` | 18 | `internal/testhelper/builtins.go` |
-| `wsOpen` | `event`, `params`, `save` | 1 | `internal/testhelper/derived.go` |
+| `crossFork` | `timeout` | 1 | `internal/testhelper/crossfork.go` |
+| `deployContract` | `bytecode`, `data`, `from`, `gas`, `key`, `on`, `pollInterval`, `timeout`, `value`, 수수료 인자 | 6 | `internal/testhelper/assets.go` |
+| `faucet` | `amount`, `from`, `gas`, `on`, `pollInterval`, `timeout`, `to`, 수수료 인자 | 1 | `internal/testhelper/assets.go` |
+| `healPartition` | `groups`, `method` | 1 | `internal/testhelper/partition.go` |
+| `load` | `blocks`, `fillPercent`, `from`, `gas`, `on`, `pollInterval`, `timeout`, 수수료 인자 | 4 | `internal/testhelper/load.go` |
+| `newAccount` | `saveKey` | 52 | `internal/testhelper/builtins.go` |
+| `partition` | `groups`, `method` | 1 | `internal/testhelper/partition.go` |
+| `readNodeLog` | `maxBytes`, `on` | 5 | `internal/testhelper/fault.go` |
+| `registerContract` | `data`, `from`, `gas`, `on`, `pollInterval`, `timeout`, `to`, `value`, 수수료 인자 | 1 | `internal/testhelper/assets.go` |
+| `resetNode` | `on` | 3 | `internal/testhelper/fault.go` |
+| `restartNode` | `on` | 6 | `internal/testhelper/fault.go` |
+| `sendRawTampered` | `feePayerKey`, `on`, `reason`, `senderKey`, `to`, `value`, `which` | 2 | `internal/testhelper/txprobe.go` |
+| `sendSetCode` | `authorityKey`, `delegate`, `key`, `on` | 1 | `internal/testhelper/txprobe.go` |
+| `sendTx` | `accessList`, `blocks`, `data`, `expect`, `expectReject`, `expectRevert`, `feePayerKey`, `from`, `gas`, `key`, `on`, `pollInterval`, `reason`, `timeout`, `to`, `value`, `wait`, 수수료 인자 | 102 | `internal/testhelper/sendtx.go` |
+| `signAuthorization` | `authorityKey`, `delegate`, `on` | 1 | `internal/testhelper/txprobe.go` |
+| `startNode` | `expect`, `expectFail`, `on`, `reason` | 11 | `internal/testhelper/fault.go` |
+| `stopNode` | `on` | 14 | `internal/testhelper/fault.go` |
+| `swapNode` | `binary`, `config`, `expect`, `expectFail`, `genesisOverlay`, `on`, `purpose`, `reason` | 3 | `internal/testhelper/fault.go` |
+| `waitBlock` | `on`, `pollInterval`, `target`, `timeout` | 66 | `internal/testhelper/builtins.go` |
+| `waitFor` | `compare`, `delta`, `expected`, `on`, `pollInterval`, `source`, `timeout`, `tol`, 그리고 `source` 의 인자 | 54 | `internal/testhelper/read.go` |
+| `wsOpen` | `address`, `event`, `on`, `params`, `save`, `topics` | 1 | `internal/testhelper/websocket.go` |
 
-### 판정 (expect / assert) — 11개
+`crossFork` 는 `on` 을 받지 않는다. 선언된 hardfork 직전 블록까지 기다렸다가 생산을 fork 뒤의 빌드에 넘기는 것은 노드 하나가 아니라 망의 일이다. fork 전에 할 일이 없는 케이스는 이 문장을 쓰지 않아도 합성이 알아서 넘어간다.
+
+`resetNode` 는 생산하지 않는 노드 하나를 멈추고 datadir 를 다시 초기화해 genesis 에 둔 채로 남긴다. 뒤이은 `startNode` 가 높이 0 에서 띄우는데, snap sync 는 그 상태에서만 허락된다.
+
+### 판정 전용 (expect / assert) — 13개
 
 `blockAdvance`·`blockHalt`·`sameBlockHash` 는 `onEach` 에 적힌 **모든** 노드를 본다. 실패하면
 어느 노드가 그랬는지 말한다.
 
 | 이름 | 인자 | 스펙 사용 | 구현 |
 |---|---|---:|---|
-| `blockAdvance` | `on`, `pollInterval`, `timeout` | 9 | `internal/testhelper/builtins.go` |
-| `blockHalt` | `maxAdvance`, `on`, `within` | 1 | `internal/testhelper/builtins.go` |
-| `blockInterval` | `blocks`, `maxMillis`, `maxSeconds`, `minMillis`, `minSeconds`, `on` | 2 | `internal/testhelper/builtins.go` |
-| `blockStalled` | `on`, `pollInterval`, `timeout` | 1 | `internal/testhelper/builtins.go` |
-| `callError` | `data`, `on`, `to` | 1 | `internal/testhelper/builtins.go` |
-| `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/builtins.go` |
-| `metric` | `compare`, `expected`, `name` | 0 | `internal/testhelper/builtins.go` |
-| `sameBlockHash` | `block`, `on` | 10 | `internal/testhelper/builtins.go` |
-| `txMined` | `expected`, `on` | 2 | `internal/testhelper/builtins.go` |
-| `wsCollected` | `count`, `sub`, `timeout` | 1 | `internal/testhelper/derived.go` |
-| `wsSubscribe` | `count`, `event`, `expected`, `params`, `timeout` | 1 | `internal/testhelper/derived.go` |
+| `blockAdvance` | `on`, `pollInterval`, `timeout` | 29 | `internal/testhelper/blockassert.go` |
+| `blockHalt` | `maxAdvance`, `on`, `within` | 7 | `internal/testhelper/blockprobe.go` |
+| `blockInterval` | `blocks`, `maxMillis`, `maxSeconds`, `minMillis`, `minSeconds`, `on` | 1 | `internal/testhelper/blockprobe.go` |
+| `blockStalled` | `on`, `pollInterval`, `timeout` | 3 | `internal/testhelper/blockassert.go` |
+| `callError` | `data`, `on`, `reason`, `to` | 1 | `internal/testhelper/txprobe.go` |
+| `gasPriceIsBaseFeePlusTip` | `on` | 1 | `internal/testhelper/derived.go` |
+| `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/txprobe.go` |
+| `metric` | `compare`, `expected`, `name`, `on` | 6 | `internal/testhelper/metric.go` |
+| `rpcError` | `method`, `on`, `params`, `reason` | 1 | `internal/testhelper/txprobe.go` |
+| `sameBlockHash` | `block`, `on` | 13 | `internal/testhelper/blockassert.go` |
+| `txMined` | `expected`, `hash`, `on` | 1 | `internal/testhelper/txprobe.go` |
+| `wsCollected` | `count`, `sub`, `timeout` | 1 | `internal/testhelper/websocket.go` |
+| `wsSubscribe` | `count`, `event`, `expected`, `on`, `params`, `timeout` | 1 | `internal/testhelper/websocket.go` |
 
-### 읽기 source (read / waitFor) — 17개
+`txMined` 는 읽기 source 로도 등록돼 있다. `rpcError` 는 `method`·`reason` 이 둘 다 필수다 — "어떤 오류든 통과" 는 거절된 연결을 revert 로 센 적이 있다. `gasPriceIsBaseFeePlusTip` 은 `eth_gasPrice` 가 head 의 base fee 와 `eth_maxPriorityFeePerGas` 의 합인지를, head 가 움직이지 않은 한 번의 읽기에서 본다.
 
-| 이름 | 인자 | 스펙 사용 | 구현 |
-|---|---|---:|---|
-| `balanceAt` | `address` | 12 | `internal/testhelper/read.go` |
-| `baseFee` | — | 7 | `internal/testhelper/read.go` |
-| `blockNumber` | — | 48 | `internal/testhelper/read.go` |
-| `call` | `data`, `to` | 46 | `internal/testhelper/read.go` |
-| `chainId` | — | 9 | `internal/testhelper/read.go` |
-| `codeAt` | `address` | 7 | `internal/testhelper/read.go` |
-| `contractChecksum` | `address`, `bytecode`, `data` | 0 | `internal/testhelper/read.go` |
-| `createAddress` | `deployer`, `from`, `nonce` | 0 | `internal/testhelper/read.go` |
-| `derive` | `of`, `op` | 56 | `internal/testhelper/read.go` |
-| `estimateGas` | `data`, `from`, `to` | 2 | `internal/testhelper/read.go` |
-| `gasPrice` | — | 6 | `internal/testhelper/read.go` |
-| `logs` | `address`, `fromBlock`, `index`, `select`, `toBlock`, `topics` | 15 | `internal/testhelper/read.go` |
-| `nonceAt` | `address` | 2 | `internal/testhelper/read.go` |
-| `peerCount` | — | 3 | `internal/testhelper/read.go` |
-| `receiptLog` | `address`, `hash`, `index`, `select`, `topic`, `topic0` | 31 | `internal/testhelper/read.go` |
-| `rpcCall` | `method`, `params`, `select` | 75 | `internal/testhelper/read.go` |
-| `txStatus` | `hash` | 60 | `internal/testhelper/read.go` |
+### 읽기 겸 판정 source (read / waitFor / expect) — 18개
 
-"스펙 사용" 은 `tests/tc` 아래 문서에서 그 이름이 나온 파일 수다. 0인 것은 구현은 있는데 아직 아무 테스트도 쓰지 않는 어휘다.
+아래 이름은 `read`·`waitFor` 의 `source` 로 읽을 수도 있고, 같은 이름을 `expect` 머리에 써서 판정할 수도 있다.
+
+| 이름 | 인자 | 기본 비교 | 스펙 사용 | 구현 |
+|---|---|---|---:|---|
+| `balanceAt` | `address` | `Equal` | 25 | `internal/testhelper/read.go` |
+| `baseFee` | — | `GreaterOrEqual` | 4 | `internal/testhelper/read.go` |
+| `blockNumber` | — | `GreaterOrEqual` | 20 | `internal/testhelper/read.go` |
+| `call` | `data`, `to` | `Equal` | 55 | `internal/testhelper/read.go` |
+| `chainId` | — | `Equal` | 4 | `internal/testhelper/read.go` |
+| `codeAt` | `address` | `Equal` | 15 | `internal/testhelper/read.go` |
+| `contractChecksum` | `address`, `bytecode`, `data` | `Equal` | 1 | `internal/testhelper/read.go` |
+| `createAddress` | `deployer`, `from`, `nonce` | `Equal` | 1 | `internal/testhelper/read.go` |
+| `derive` | `format`, `index`, `of`, `op`, `selector` | `Equal` | 79 | `internal/testhelper/derived.go` |
+| `estimateGas` | `data`, `from`, `to` | `GreaterOrEqual` | 2 | `internal/testhelper/read.go` |
+| `gasPrice` | — | `GreaterOrEqual` | 5 | `internal/testhelper/derived.go` |
+| `logs` | `address`, `fromBlock`, `index`, `select`, `toBlock`, `topics` | `Equal` | 13 | `internal/testhelper/logs.go` |
+| `nonceAt` | `address` | `Equal` | 9 | `internal/testhelper/read.go` |
+| `peerCount` | — | `GreaterOrEqual` | 3 | `internal/testhelper/read.go` |
+| `receiptLog` | `address`, `hash`, `index`, `select`, `topic`, `topic0` | `Equal` | 32 | `internal/testhelper/read.go` |
+| `rpcCall` | `method`, `params`, `select` | `Equal` | 118 | `internal/testhelper/derived.go` |
+| `txStatus` | `hash` | `Equal` | 67 | `internal/testhelper/read.go` |
+| `validators` | — | `Len` | 3 | `internal/testhelper/validators.go` |
+
+`validators` 는 체인의 합의가 인정하는 현재 검증자 주소의 배열을 준다. 개수가 아니라 배열이라 `Len`("넷이다")과 `Contains`("이 노드가 그중 하나다")를 모두 쓸 수 있다.
+
+"스펙 사용" 은 `tests/tc` 아래 문서 중 그 이름을 `do`·`expect`·`source` 의 값으로 쓴 파일 수다(e4feb738 기준). `rpc` 별칭으로 쓴 21건은 `rpcCall` 에 넣지 않았다.
 
 ---
 
@@ -401,7 +430,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 chainbench validate tests/tc/<path>.json
 ```
 
-`UNRESOLVED` 가 나오면 없는 어휘를 불렀거나, 정의되지 않은 `$이름` 을 참조했거나, 나중에 저장할 값을 먼저 쓴 것이다. 참조는 실행 순서대로 검사한다 — preActions, steps, assertions, postActions 순이다.
+`UNRESOLVED` 가 나오면 없는 어휘를 불렀거나, 정의되지 않은 `$이름` 을 참조했거나, 나중에 저장할 값을 먼저 쓴 것이다. 참조는 실행 순서대로 검사한다 — `hooks.pre`, `steps`(v2 는 적힌 순서대로, v1 은 steps 다음 assertions), `hooks.post` 순이다.
 
 `tests/tc` 아래 전체를 한 번에 보려면 다음처럼 한다.
 
@@ -421,6 +450,7 @@ chainbench run --plan --workspace-dir /tmp/ws tests/tc/common/node/CT-NODE-009-h
 ```
 
 ```
+tests/tc/common/node/CT-NODE-009-head-hash-agreement.json
   chain      stablenet
   workspace  /tmp/ws
   target     this machine
@@ -428,9 +458,10 @@ chainbench run --plan --workspace-dir /tmp/ws tests/tc/common/node/CT-NODE-009-h
   nodes      bp 4 · en 1 · pn 0, peering mesh
   keys       keyPreset  presets/keys
   genesis    built from the chain template
+  chosen by  binary: default · target: default
 ```
 
-`--plan` 없이 그냥 돌려도 같은 내용이 **합성 직전에** stderr 로 한 번 찍힌다.
+`--plan` 없이 그냥 돌려도 같은 내용이 **합성 직전에** `composing:` 머리와 함께 stderr 로 한 번 찍힌다.
 `--json` 으로 받는 문서는 그대로다. 정의서 여러 개를 넘겼을 때, 앞 것과 계획이 같으면
 찍지 않는다 — 망이 바뀌는 순간만 새 블록이 나온다.
 
