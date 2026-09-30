@@ -57,10 +57,10 @@
 
 | 변곡점 | 설정 | 예 |
 |---|---|---|
-| 검증자 수 | `--validators` / `topology.bp` | n=6 쿼럼 케이스는 6노드 프리셋 필요 |
-| 프리셋 생성 | `validator set --nodes 6 --validators 6 --bootnode <go-wbft/build/bin/bootnode> --binary <gwemix> --out /tmp/preset6` | 커밋 프리셋은 5노드가 상한 |
-| **useNCP 거버넌스** | `--genesis-overlay` 로 `croissant.wBFT.{useNCP,targetValidators,stabilizingStakersThreshold}` + `govContracts.govNCP.params.ncps` | staking 기반 검증자 선정을 켠다 |
-| 하드포크 블록 | `--set genesis.overrides.<fork>Block=N` | |
+| 검증자 수 | `--bp` / chain-preset `topology` | n=6 쿼럼 케이스는 6노드 프리셋 필요 |
+| 프리셋 생성 | `validator set --nodes 6 --validators 6 --out /tmp/preset6` | 커밋 프리셋은 5노드가 상한 |
+| **useNCP 거버넌스** | `--overlay` 로 `croissant.wBFT.{useNCP,targetValidators,stabilizingStakersThreshold}` + `govContracts.govNCP.params.ncps` | staking 기반 검증자 선정을 켠다 |
+| 하드포크 블록 | `--set <fork>Block=N` (`chain up`·`chain genesis`) | |
 | 에폭 | genesis `croissant.wBFT.epochLength` (overlay) | 에폭 전이 관측 |
 | 저장 방식 | `sync_mode` | `snap` 동기화 케이스 |
 | 포트/배치/원격 | README §2.6·2.7 | |
@@ -103,13 +103,14 @@ chainbench run --chain wbft \
 
 ### 4.3 단계별 경로
 
-`chain up` 은 `chain new → keys → place → genesis → config → init → build → deploy → start`
-를 한 번에 돈다. 단계를 따로 보려면 각 스텝을 직접 부른다.
+`chain up` 은 `chain new → place → keys → genesis → config → build → deploy → init → start`
+를 한 번에 돈다(`internal/chainsetup/state_request.go` 의 `UpStepNames`). 단계를 따로 보려면
+각 스텝을 직접 부른다.
 
 ```sh
 chainbench chain new   --chain wbft --workspace-dir /tmp/x
+chainbench chain place --workspace-dir /tmp/x --bp 4
 chainbench chain keys  --workspace-dir /tmp/x
-chainbench chain place --workspace-dir /tmp/x --validators 4
 chainbench chain status --workspace-dir /tmp/x   # 어느 스텝까지 돌았는지
 ```
 

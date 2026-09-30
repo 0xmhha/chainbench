@@ -191,11 +191,6 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{}, err
 	}
 
-	// An upgrade env that declares a node table composes like any other network:
-	// the nodes say which build each of them runs, and the fork's configuration
-	// is scheduled on the one genesis they all initialize from. One without a
-	// table still goes to the handoff composer, which sizes the network from its
-	// preset's roles.
 	// A hardfork is composed like any other network: the nodes say which build
 	// each of them runs, and the fork's configuration is scheduled on the one
 	// genesis they all initialize from. It used to have a composer of its own —

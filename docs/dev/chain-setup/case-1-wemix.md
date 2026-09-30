@@ -1,7 +1,7 @@
 # 케이스 1 — gwemix 단독 체인 구성
 
 > 목표: `gwemix` 만으로 wemix(wpoa) 체인을 세우고 블록을 만들게 한다.
-> 상태: ✅ **자동화됨**(2026-08-23) — `chainbench chain up --chain wemix --validators 4` 가
+> 상태: ✅ **자동화됨**(2026-08-23) — `chainbench chain up --chain wemix --bp 4` 가
 > 15스텝을 전부 수행한다.
 > 선언돼 있던 절차에는 오류가 둘 있었고 구현하면서 정정했다: **genesis 가 allocate 앞에 있었으나**
 > 거버넌스 멤버는 배치에서 나오는 ip/port 를 담으므로 순서가 반대여야 하고, **나머지 노드의
@@ -55,6 +55,11 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 
 절차(§5)에 필요한 조각은 대부분 이미 있고, **이들을 엮는 오케스트레이터만 없다.**
 
+> **2026-09-30 확인.** 이 표는 자동화 전의 현황 기록이다. 지금은 poa 패밀리가 엮는다:
+> genesis 는 플러그인 내장 템플릿을 `poa.PrepareTemplate` 로 먼저 치환한 뒤
+> `gwemix wemix genesis` 에 넘기므로(`internal/consensus/poa/genesis_source.go`) go-wemix
+> 저장소의 템플릿은 필요 없고, 핸드오프 프로파일(`poaConfig`·`liveHandoff`)은 코드에 없다.
+
 | 조각 | 상태 |
 |---|---|
 | 체인 플러그인(`registry.Get("wemix")`, `bootstrap.type="governance-etcd"`) | ✅ |
@@ -64,7 +69,7 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 | 키 배치(nodekey → `geth/`, static-nodes, keystore) | ⚠️ `liveHandoff.provisionKeys` 안에 있음 — 재사용 불가 |
 | `poa.DeployGovernance` | ✅ 2-인자 형태(3-인자는 gwemix 버그) |
 | `poa.EtcdInit` | ✅ 단, **결과 미검증** |
-| verify-etcd(`admin.wemixInfo.etcd.cluster`) | ✅ `chainsetup.WaitEtcdCluster` |
+| verify-etcd(`admin.wemixInfo.etcd.cluster`) | ✅ `poa.WaitEtcdCluster` |
 | 블록 전진 헬스게이트 | ✅ |
 
 ---
@@ -77,10 +82,10 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 | 멤버(생산자) | `poa.Member` | `addr`(unlock 가능 계정), `stake`, `id`(devp2p 공개키), `ip`, `port`, `bootnode` |
 | 역할 계정 | `poa.Config` | `staker`, `ecosystem`, `maintenance`, `feeCollector` |
 | alloc | `poa.Account[]` | 멤버 + 필요한 계정의 초기 잔액 |
-| genesis 템플릿 | `--template` | **go-wemix 저장소의 것**(§3-5) |
+| genesis 템플릿 | 플러그인 내장(`internal/chains/wemix/genesis.json`) | `poa.PrepareTemplate` 가 chain id·coinbase 를 먼저 치환 |
 | 하드포크 | 템플릿 config | `istanbul`, `pangyo`, `applepie`, `brioche` |
-| etcd | (파생) | 포트 `p2p+1`, 클러스터 토큰은 바이너리 내장 |
-| 조인 슬롯 | `supervisor.JoinGap(N)` | ≤11→7s, ≤23→11s, ≤41→17s, else 23s |
+| etcd | (파생) | 포트 `p2p+1`·`p2p+2`, 클러스터 토큰은 바이너리 내장 |
+| 조인 슬롯 | — | 옛 `supervisor.JoinGap(N)` 은 코드에 없다(2026-09-30 확인) |
 
 프로파일 예시는 `presets/chain/wemix-upgrade.yaml` 의 `producers.governance` 블록이 그대로 참고가 된다.
 
@@ -177,6 +182,11 @@ miners:     "producer/up/*"
 ---
 
 ## 7. 자동화에 남은 일
+
+> **2026-09-30 확인: 이 표의 일은 끝났다.** 1·2·3 은 poa 패밀리 phase 가 `chain up --chain wemix`
+> 안에서 하고, 4 는 `presets/chain/wemix-bp4.json` 같은 chain-preset 이 맡는다. 5 의
+> `supervisor.Deps.LeaderGate` 는 코드에 없고, 같은 확인은 `poa.VerifyEtcd`·`poa.WaitEtcdCluster`
+> 가 한다. 표는 당시 계획으로 남긴다.
 
 재료(§3의 4·5·10·11)는 전부 있고, **이들을 §5 순서로 엮는 오케스트레이터만 없다.**
 

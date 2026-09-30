@@ -30,6 +30,11 @@
 
 `bootstrap.type = static` 이므로 공통 파이프라인 1~10을 그대로 탄다.
 
+> 아래 표의 단계 이름은 옛 이름이다. 지금 이름은 README §1 의 표로 읽는다(allocate → place,
+> assemble-plan → build, provision → deploy, init-datadir → init, launch → start).
+> 2026-09-30 확인: genesis 는 `genesis.PresetSource` 가 만들고, `engine.AssemblePlan` 은 코드에 없다
+> (argv 조립은 `chain build`). config 파일은 워크스페이스에 `config_node<N>.toml` 로 떨어진다.
+
 | # | 단계 | 이 케이스에서 벌어지는 일 |
 |---|---|---|
 | 1 | resolve-chain | `registry.Get("stablenet")` → 매니페스트(engine_field `anzeon`, hardforks `istanbul,boho`) |
@@ -53,15 +58,15 @@
 
 | 변곡점 | 설정 | 예 |
 |---|---|---|
-| 검증자 수 | `--validators` / spec `topology.bp` | `--validators 4` |
-| 엔드포인트 | `--endpoints` / `topology.en` | 비생성 RPC 노드 추가 |
-| 노드별 배치 | `setup --topology <yaml>` | 노드별 role·sync_mode·bootnode |
+| 검증자 수 | `--bp` / chain-preset `topology` | `--bp 4` |
+| 엔드포인트 | `--en` / chain-preset `topology` | 비생성 RPC 노드 추가 |
+| 노드별 배치 | `chain up --topology <yaml>` (예: `examples/topology.yaml`) | 노드별 role·sync_mode·bootnode |
 | 저장 방식 | `sync_mode` | `full`\|`snap`\|`archive` |
-| **Boho 하드포크 블록** | `--set genesis.overrides.bohoBlock=N` | 지연 포크 시나리오 |
-| 계정 Extra 비트 | `--genesis-overlay internal/chains/stablenet/overlays/account-extra.json` | authorized/blacklisted 계정 상태 |
-| 프리셋 크기 | `validator set --nodes 6 --validators 6` | 5노드 초과 네트워크 |
-| 포트 대역 | `ports.base_p2p`/`base_rpc` + step | step 제약(§2.6) 준수 |
-| 아티팩트 | `--artifact-root` | 세션 저장 위치 |
+| **Boho 하드포크 블록** | `--set bohoBlock=N` | 지연 포크 시나리오 |
+| 계정 Extra 비트 | `--overlay internal/chains/stablenet/overlays/account-extra.json` | authorized/blacklisted 계정 상태 |
+| 프리셋 크기 | `validator set --nodes 6 --validators 6 --out <dir>` | 5노드 초과 네트워크 |
+| 포트 대역 | server set / `workspace-config` 의 포트 대역 | step 제약(README §2.6) 준수 |
+| 아티팩트 | `run --artifact-root` (기본 `~/.chainbench/sessions`) | 세션 저장 위치 |
 
 ### stablenet 고유
 
@@ -84,11 +89,12 @@ chainbench chain up --chain stablenet \
   --workspace-dir /tmp/cb-stablenet
 ```
 
-단계마다 PASS/FAIL 이 찍힌다. 특정 단계까지만 보고 싶으면:
+단계마다 `단계: 결과` 한 줄이 찍히고(README §4 의 실제 출력), 실패하면 그 단계에서 멈춘다.
+특정 단계까지만 보고 싶으면:
 
 ```sh
 chainbench chain up --chain stablenet --binary <gstable> --workspace-dir /tmp/x --stage deploy
-ls /tmp/x            # genesis.json + node<N>/config.toml 확인
+ls /tmp/x            # genesis.json + config_node<N>.toml + chain-record.json 확인
 ```
 
 ### 4.2 DSL 스펙 실행 (엔진 경로)
@@ -119,12 +125,19 @@ chainbench stop   --workspace-dir /tmp/x
 
 모두 `GSTABLE_BIN` 게이트. CI 는 바이너리 부재로 clean-skip.
 
+> **2026-09-30 확인.** 위 표는 2026-08-09 기록이다. 지금 있는 이름은
+> `TestPresetGenesisSource_Live_GstableInit`(`internal/core/genesis`)·`TestRunSpec_Live_Stablenet`·
+> `TestSuite_Live_FullRun`·`TestSuite_Live_NewVocabulary`(모두 `internal/testengine`)이고, 뒤 둘이
+> `TestEngine_Live_*` 의 새 이름이다(`testengine.RunSuite` 가 chainsetup 으로 조립한다).
+> `TestBuildEnv_Live_Stablenet` 은 코드에 없다. 같은 게이트로 `TestSuite_Live_AccountLabels`·
+> `TestSuite_Live_DeclaredAccounts` 가 더 있다.
+
 ---
 
 ## 6. 알려진 제약
 
 | 제약 | 내용 |
 |---|---|
-| IPC 경로 길이 | geth IPC 유닉스 소켓은 **104자 제한** → `--artifact-root`/`--data-dir` 를 짧게(`/tmp/x`) |
+| IPC 경로 길이 | geth IPC 유닉스 소켓은 **104자 제한** → `--artifact-root`/`--workspace-dir` 를 짧게(`/tmp/x`) |
 | 블록 웜업 | wbft 블록 생성까지 최대 ~35s → 헬스게이트 타임아웃을 넉넉히 |
 | 검증자셋 출처 | 프리셋 baked(§2) — 랜덤 키만으로 genesis 생성 불가 |

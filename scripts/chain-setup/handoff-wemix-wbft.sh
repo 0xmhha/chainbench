@@ -21,7 +21,6 @@
 #   GWEMIX_BIN         go-wemix build (the producer, up to the fork)
 #   GWBFT_BIN          go-wbft build (the successors; its make target is also
 #                      named gwemix)
-#   GOWEMIX_TEMPLATE   go-wemix's own wemix/scripts/genesis-template.json
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -32,9 +31,8 @@ WS="${1:-/tmp/handoff}"
 
 export GWEMIX_BIN="${GWEMIX_BIN:-$CHAIN_DIR/go-wemix/build/bin/gwemix}"
 export GWBFT_BIN="${GWBFT_BIN:-$CHAIN_DIR/go-wbft/build/bin/gwemix}"
-export GOWEMIX_TEMPLATE="${GOWEMIX_TEMPLATE:-$CHAIN_DIR/go-wemix/wemix/scripts/genesis-template.json}"
 
-for v in GWEMIX_BIN GWBFT_BIN GOWEMIX_TEMPLATE; do
+for v in GWEMIX_BIN GWBFT_BIN; do
   [ -f "${!v}" ] || { echo "$v is not a file: ${!v}" >&2; exit 1; }
 done
 
