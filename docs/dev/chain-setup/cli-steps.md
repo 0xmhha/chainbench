@@ -63,7 +63,7 @@ chainbench chain up --workspace-dir /tmp/cbs --chain stablenet \
 
 chainbench chain health --workspace-dir /tmp/cbs
 chainbench run --attach --chain stablenet --rpc http://127.0.0.1:8600 \
-  tests/tc/common/rpc/001-basic-rpc-health.json   # run 은 디렉터리가 아니라 파일을 받는다
+  tests/tc/common/rpc/CT-RPC-001-block-number-advances.json   # run 은 디렉터리가 아니라 파일을 받는다
 chainbench chain stop --workspace-dir /tmp/cbs
 ```
 

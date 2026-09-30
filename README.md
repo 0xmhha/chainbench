@@ -121,6 +121,11 @@ chainbench chain up --workspace-dir /tmp/cb \
 
 chainbench verify --workspace-dir /tmp/cb    # confirm block production
 chainbench status --workspace-dir /tmp/cb    # show the node set
+
+# run a case against the network already composed here
+chainbench run --attach --workspace-dir /tmp/cb \
+  tests/tc/common/rpc/CT-RPC-001-block-number-advances.json
+
 chainbench chain stop --workspace-dir /tmp/cb
 ```
 
