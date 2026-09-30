@@ -12,6 +12,12 @@
 # 서버 목록, 슬롯, 포트, SSH 설정은 별도 server-set.yaml이 소유한다.
 # 이 파일은 로컬의 chainbench가 읽지만, dataRoot와 paths는 실행 대상 머신의 경로다.
 
+# 최상위 키: version, dataRoot, paths, binaryAliases, control, inputs, execution,
+# limits, existingInputs. 이 밖의 키나 중복 키가 있으면 읽을 때 오류로 멈춘다(오타가
+# 조용히 무시되지 않게). 필수는 version, dataRoot, paths, control.artifactRoot,
+# inputs.mode, execution.chain 이다.
+
+# 1 만 받는다. 다른 값은 추측해 읽지 않고 거부한다.
 version: 1
 
 # 실행 대상 머신의 절대경로. 원격이면 원격 서버 내부 경로다.
@@ -62,7 +68,8 @@ paths:
 # DSL이나 --binary가 bare 이름(gwemix)으로 가리킨 바이너리는 대상의
 # dataRoot/paths.binaries 아래에서 찾는다(/data/bin/gwemix). 이 블록은 그 이름을
 # 환경별 실제 파일명에 대응시키며, 값은 paths.binaries 기준 상대경로다. 키가
-# 없으면 이름을 그대로 쓰고, 절대경로 참조에는 적용하지 않는다. 같은 논리 이름이라도
+# 없으면 이름을 그대로 쓰고, 절대경로 참조에는 적용하지 않는다. 값에도 paths 와 같은
+# 규칙이 걸린다 — 절대경로, .., ~, $VAR, 빈 값은 거부한다. 같은 논리 이름이라도
 # 체인 기능/아키텍처/버전 호환 여부는 사전 검사해야 한다.
 # binaryAliases:
 #   gwemix: linux-amd64/gwemix
@@ -70,7 +77,7 @@ paths:
 
 # 로컬 제어 영역. 이 블록만 chainbench를 실행하는 머신의 경로다.
 control:
-  # 로컬에서 ~를 확장한다. 상대경로를 쓴다면 이 설정 파일의 디렉터리가 기준이다.
+  # 필수. 로컬에서 ~를 확장한다. 상대경로를 쓴다면 이 설정 파일의 디렉터리가 기준이다.
   # <artifactRoot>/<날짜시간>/<테스트이름>/ 아래에 결과와 수집 로그를 저장한다.
   # 최종 report는 <artifactRoot>/<날짜시간>/ 바로 아래에 생성한다.
   artifactRoot: ~/.chainbench
@@ -81,7 +88,8 @@ control:
   # 대상이 바이너리를 미리 갖고 있어야 한다. ~ 와 상대경로는 artifactRoot 와 같이 푼다.
   # binaries: ~/cbbin
 
-# 입력 준비 방식. generated는 키와 genesis/config를 Builder로 준비한다.
+# 입력 준비 방식. mode 는 generated 또는 existing 이다.
+# generated는 키와 genesis/config를 Builder로 준비한다. 이때 name 을 적으면 거부한다.
 # 바이너리 자체를 빌드하거나 다운로드하는 옵션이 아니다.
 # 노드 수와 역할은 DSL/Blueprint에서 지정한다.
 inputs:
@@ -95,12 +103,21 @@ execution:
 
 # genesis 를 쓰기 전(대상에 처음 쓰는 시점)에 노드가 놓일 모든 서버에서 dataRoot 의 여유 공간을
 # 확인한다. 이보다 적으면 구성을 시작하지 않는다. 비우면 2GiB, "0" 이면 검사하지 않는다.
+# 값은 바이트 수 또는 B·KiB·MiB·GiB·TiB 접미사다(KB·MB·GB·TB 도 같은 이진 단위로 읽는다).
 # limits:
 #   minFreeDisk: 2GiB
 
 # 대상에 이미 있는 입력을 쓰려면 위 inputs 블록을 아래 블록으로 교체한다.
-# inputs 키를 두 번 작성하지 않는다. existing에서는 name이 필수다.
-# 파일이 없으면 오류로 종료하며 generated로 자동 전환하지 않는다.
+# inputs 키를 두 번 작성하지 않는다. existing에서는 name이 필수이고, 그 이름이
+# existingInputs 에 있어야 한다. 파일이 없으면 오류로 종료하며 generated로 자동
+# 전환하지 않는다.
+#
+# existingInputs.<이름> 의 키는 genesis, keyring, configs 셋이며 모두 선택이다.
+#   genesis   완성된 genesis 파일. 그대로 쓴다. DSL 도 genesis 를 선언하면 충돌로 거부한다.
+#   keyring   키셋 디렉터리. DSL 도 keys 를 선언하면 충돌로 거부한다.
+#   configs   <논리 이름>: <파일> 의 맵. DSL 노드표의 config 값이 이 맵의 키와 같으면
+#             그 노드의 config 를 오른쪽 파일로 바꾼다. 키가 아닌 값은 파일 참조로 그대로
+#             쓴다. 아래의 default 는 노드가 config: default 라고 적었을 때만 쓰인다.
 # inputs:
 #   mode: existing
 #   name: regression
@@ -120,8 +137,11 @@ execution:
 # existingInputs의 참조로 쓸 수 있는 것은 문자열 세 형식이다. 다른 형식은 없다.
 #
 #   srv://<서버이름>/<절대경로>   지정한 서버의 그 경로 (dataRoot를 덧붙이지 않는다)
-#   <상대 파일명>                대상의 용도별 디렉터리 아래
-#   /<절대경로>                  이 기계의 파일 (keyring에 한해 로컬 키셋을 가리킬 때)
+#   <상대 파일명>                대상의 용도별 디렉터리 아래 (genesis·configs 만)
+#   /<절대경로>                  chainbench 를 돌리는 이 기계의 파일
+#
+# keyring 은 srv:// 또는 절대경로만 받는다. 상대 이름은 로컬 디렉터리로 오인하지 않도록
+# 거부한다. srv:// 키링은 keys 단계가 로컬로 내려받아 쓴다.
 #
 # 예전 이 자리에는 객체형 참조({server, ref} / {serverIndex, ref} / {localPath})가
 # "미구현"이라는 딱지와 함께 예시로 적혀 있었다. 2026-09-12에 그 계획을 철회했다.

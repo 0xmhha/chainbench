@@ -16,15 +16,22 @@
 # With no config file at all, chainbench uses built-in ports and says so, so
 # where a port came from is never a guess.
 
+# Top-level keys: version, pool, ssh. Unknown keys anywhere in the file are
+# rejected, so a typo fails at load instead of leaving a default in place.
+
+# Only 2 is read. A v1 file (a `servers:` list) is refused with migration steps.
 version: 2
 
 pool:
   # Addresses in the order they are consumed. A bare address is named by
   # itself; a named entry can also be referenced as srv://<name>/path.
   #
-  # A loopback address runs nodes on this machine and never dials SSH.
-  # Anything else is reached over ssh: below — the address decides, so the file
-  # cannot say "local" next to a remote IP and be believed.
+  # A loopback address (127.0.0.0/8, ::1, localhost) runs nodes on this machine
+  # and never dials SSH. Anything else is reached over ssh: below — the address
+  # decides, so the file cannot say "local" next to a remote IP and be believed.
+  #
+  # Required, at least one entry. Each entry needs addr; name defaults to addr
+  # and must be unique, since srv://<name>/path and --server select by it.
   hosts:
     - { name: local, addr: 127.0.0.1 }
     # - { name: bp1, addr: 10.0.0.11 }
@@ -34,14 +41,19 @@ pool:
   # address. Defaults to 1.
   slots: 8
 
-  # The bands a slot draws from. Omit either to take the built-in values
-  # (p2p 31000/10, rpc 8600/10).
+  # The bands a slot draws from: p2p, rpc, ws, auth, metrics, each { base, step }.
+  # Omit p2p or rpc, or a base/step inside them, to take the built-in value
+  # (p2p 31000/10, rpc 8600/10). ws, auth and metrics have no built-in value:
+  # omitted, they derive from rpc as below. Slot n takes base + (n-1)*step.
   #
-  #   p2p.step >= 1   the wemix family needs more room (etcd derives as p2p+1,
-  #                   client as p2p+2) and says so itself at allocate time;
-  #                   wbft listens on p2p alone, so packing one apart is legal.
+  #   p2p.step >= 1   the file's own floor. The chain family asks for more at
+  #                   allocate time and names the number: wemix (poa) needs
+  #                   >= 3 (etcd derives as p2p+1, client as p2p+2); wbft
+  #                   listens on p2p alone, so packing one apart is legal.
   #   rpc.step >= 3   when ws/auth DERIVE from it: ws = http+1, auth = http+2,
   #                   and a step of 4 or more also buys metrics (http+3).
+  #                   Declaring BOTH ws and auth bands lowers the floor to 1;
+  #                   declaring only one of them keeps it at 3.
   ports:
     p2p: { base: 31000, step: 10 }
     rpc: { base: 8600, step: 10 }
@@ -56,6 +68,9 @@ pool:
   #    ws:      { base: 8701,  step: 1 }   # 8701..8704
   #    auth:    { base: 8501,  step: 1 }   # 8501..8504
   #    metrics: { base: 6060,  step: 0 }   # one shared scrape port
+  #
+  # ws and auth need a positive base and step >= 1 (every node listens);
+  # metrics needs a positive base and step >= 0.
 
 # How every non-loopback host in the pool is reached.
 #
@@ -68,12 +83,22 @@ pool:
 # Host-key policy is data here too — no environment variable configures it:
 #   known_hosts_file: <path>     verify against this file (default ~/.ssh/known_hosts)
 #   insecure_host_key: true      closed-network throwaway servers ONLY (exactly one)
+#
+# A remote host needs user and at least one of password, password_file or
+# key_file. The *_file paths expand a leading ~ and are otherwise relative to
+# this file's directory, not the working directory. A password_file or
+# key_passphrase_file must be 0600 and non-empty; the value is never echoed.
 ssh:
-  port: 22                    # the Wemix3.5 test servers use 10022
-  # user: chainbench
+  port: 22                    # default 22; the Wemix3.5 test servers use 10022
+  # user: chainbench          # required for a remote host
   # key_file: ~/.ssh/id_ed25519
+  # key_passphrase_file: ~/.chainbench/key-pass   # needs key_file; required when the key is encrypted
   # password: ...             # or reference a secret file instead:
-  # password_file: /etc/chainbench/ssh-pass   # one line, 0600
+  # password_file: /etc/chainbench/ssh-pass   # one line, 0600; not with password
+
+  # Host-key verification. Set at most one of the two.
+  # known_hosts_file: ~/.ssh/known_hosts
+  # insecure_host_key: true   # skips verification — closed-network throwaway servers only
 
   # Whether the login may elevate. It is carried, not consumed: the bring-up
   # decides whether a step needs it.
