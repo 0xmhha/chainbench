@@ -44,9 +44,8 @@ export GWBFT="$HOME/work/github/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/go-wemix/build/bin/gwemix"
 ```
 
-공통 80개 중 stablenet 바이너리만 있으면 도는 것이 대부분이다. 이름에 `wbft`·`wemix` 가
-붙은 6개(3절)만 각 체인 바이너리를 요구한다. **셋 다 없어도 좋다 — stablenet 하나로
-공통의 대부분을 돌릴 수 있다.**
+공통 69개는 전부 stablenet 바이너리 하나로 돈다(3절). 다른 두 체인에서 같은 케이스를 보려면
+그때 그 체인의 바이너리를 준다. **셋 다 없어도 좋다 — stablenet 하나로 공통 전부를 돌릴 수 있다.**
 
 **(원격을 흉내 낼 때만) Docker 함대.** 로컬 바이너리가 없는 기계, 또는 노드가 서로 다른
 기계에 있어야 도는 케이스(3.3의 `fault/004`)는 `env/docker` 의 가상 서버 15대 위에서
@@ -87,7 +86,7 @@ rm -rf ~/cbw/m/<이름> && bin/chainbench run <케이스.json> --workspace-dir ~
 
 ### 3.1 대부분은 stablenet
 
-공통 80개 중 이름에 체인이 안 붙은 케이스는 전부 stablenet 프리셋으로 선언돼 있다.
+공통 69개는 전부 stablenet 프리셋으로 선언돼 있다.
 `--binary "$GSTABLE"` 를 준다. 8절 목록에서 `$GSTABLE` 로 찍힌 것이 그것이다.
 
 같은 케이스를 다른 체인에서 보고 싶으면 프리셋을 실행할 때 덮는다. 이때는 그 체인의
@@ -101,21 +100,16 @@ rm -rf ~/cbw/m/x && bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transf
 세 체인이 모두 갖춘 프리셋은 `bp4`·`bp4-en1`·`bp4-en2-pn1`·`bp7-en7-pn1`·`bp9` 다섯이고
 `presets/chain/` 에 `<체인>-<모양>.json` 으로 세 벌씩 있다.
 
-### 3.2 이름에 체인이 붙은 6개
+### 3.2 이름에 체인이 붙은 케이스는 없다
 
-이 케이스들은 그 체인 바이너리가 있어야 돈다. stablenet 만 있으면 나머지는 건너뛴다.
-
-| 케이스 | 바이너리 |
-| --- | --- |
-| `contract/001-wbft-tx-and-contract` · `contract/006-wbft-revert-status-zero` · `fault/001-wbft-node-crash` | `$GWBFT` |
-| `contract/001-wemix-tx-and-contract` · `contract/006-wemix-revert-status-zero` · `fault/001-wemix-node-crash` | `$GWEMIX` |
-
-`node/` 의 파일은 모두 세 체인 공통이다(2026-09-29 에 체인별 사본을 지우고 합쳤다). 다른 체인은
-3.1 처럼 `--chain-preset` 과 `--binary` 를 바꿔 돌린다.
+2026-09-30 부터 `tests/tc/common/` 에 체인 이름이 붙은 파일은 하나도 없다. 69개 전부가 세 체인
+공통이고, 다른 체인은 3.1 처럼 `--chain-preset` 과 `--binary` 를 바꿔 돌린다. 합친 날짜는
+NODE 가 2026-09-29, TX 가 같은 날, CONTRACT·RPC·FAULT 가 2026-09-30 이다. 9절 목록에서 같은
+파일에 `--chain-preset` 을 붙인 줄이 그 예다.
 
 ### 3.3 로컬에서 안 도는 하나
 
-`fault/004-fault-network-partition` 은 노드가 도는 기계에 방화벽 규칙을 넣어 망을
+`fault/CT-FAULT-004-network-partition` 은 노드가 도는 기계에 방화벽 규칙을 넣어 망을
 가른다. 로컬 한 대에서는 그럴 대상이 없어 `requires` 에 `target:remote` 가 붙어 있고,
 로컬 실행에서는 **건너뛴다(skip).** Docker 함대(6절)에서만 실제로 돈다.
 
@@ -250,15 +244,15 @@ scripts/tcsweep.sh sweep.log tests/tc/common
 
 ---
 
-## 9. 케이스별 실행 명령 (80개 전부)
+## 9. 케이스별 실행 명령 (69개 전부)
 
-`tests/tc/common/` 아래 80개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
+`tests/tc/common/` 아래 69개를 케이스마다 한 줄씩 뽑았다. 1절의 변수(`$GSTABLE`·`$GWBFT`·
 `$GWEMIX`)를 잡아 두면 원하는 줄을 그대로 붙여 넣어 돌릴 수 있다. 각 줄은 로컬 실행이다 —
 같은 케이스를 Docker 함대에서 돌리려면 6절의 형태에 그 줄의 케이스 경로만 넣는다
 (`--binary` 는 빼고 Docker 플래그를 붙인다).
 
 node/001·002·010 은 wbft·wemix 줄도 함께 적었다(같은 파일에 `--chain-preset` 만 바꾼다).
-`fault/004-fault-network-partition` 은 `target:remote` 라 로컬에선 skip 되고
+`fault/CT-FAULT-004-network-partition` 은 `target:remote` 라 로컬에선 skip 되고
 Docker 에서만 돈다(3.3).
 
 ### node — 노드·동기화·네트워크
@@ -329,52 +323,47 @@ rm -rf ~/cbw/m/CT-FEE-012-fee-history && bin/chainbench run tests/tc/common/fee/
 ### contract — 컨트랙트 실행
 
 ```sh
-rm -rf ~/cbw/m/001-contract-roundtrip && bin/chainbench run tests/tc/common/contract/001-contract-roundtrip.json --workspace-dir ~/cbw/m/001-contract-roundtrip --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-wbft-tx-and-contract && bin/chainbench run tests/tc/common/contract/001-wbft-tx-and-contract.json --workspace-dir ~/cbw/m/001-wbft-tx-and-contract --binary "$GWBFT"
-rm -rf ~/cbw/m/001-wemix-tx-and-contract && bin/chainbench run tests/tc/common/contract/001-wemix-tx-and-contract.json --workspace-dir ~/cbw/m/001-wemix-tx-and-contract --binary "$GWEMIX"
-rm -rf ~/cbw/m/002-storage-write-and-read && bin/chainbench run tests/tc/common/contract/002-storage-write-and-read.json --workspace-dir ~/cbw/m/002-storage-write-and-read --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-view-call-leaves-state && bin/chainbench run tests/tc/common/contract/003-view-call-leaves-state.json --workspace-dir ~/cbw/m/003-view-call-leaves-state --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-estimate-gas && bin/chainbench run tests/tc/common/contract/004-estimate-gas.json --workspace-dir ~/cbw/m/004-estimate-gas --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-eth-call-revert-returns-error && bin/chainbench run tests/tc/common/contract/005-eth-call-revert-returns-error.json --workspace-dir ~/cbw/m/005-eth-call-revert-returns-error --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-negative-tx-revert && bin/chainbench run tests/tc/common/contract/006-negative-tx-revert.json --workspace-dir ~/cbw/m/006-negative-tx-revert --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-revert-tx-status-zero && bin/chainbench run tests/tc/common/contract/006-revert-tx-status-zero.json --workspace-dir ~/cbw/m/006-revert-tx-status-zero --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-wbft-revert-status-zero && bin/chainbench run tests/tc/common/contract/006-wbft-revert-status-zero.json --workspace-dir ~/cbw/m/006-wbft-revert-status-zero --binary "$GWBFT"
-rm -rf ~/cbw/m/006-wemix-revert-status-zero && bin/chainbench run tests/tc/common/contract/006-wemix-revert-status-zero.json --workspace-dir ~/cbw/m/006-wemix-revert-status-zero --binary "$GWEMIX"
-rm -rf ~/cbw/m/007-out-of-gas-consumes-all && bin/chainbench run tests/tc/common/contract/007-out-of-gas-consumes-all.json --workspace-dir ~/cbw/m/007-out-of-gas-consumes-all --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-001-deploy-and-call && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json --workspace-dir ~/cbw/m/CT-CONTRACT-001-deploy-and-call --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-001-deploy-and-call-wbft && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json --workspace-dir ~/cbw/m/CT-CONTRACT-001-deploy-and-call-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/CT-CONTRACT-001-deploy-and-call-wemix && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-001-deploy-and-call.json --workspace-dir ~/cbw/m/CT-CONTRACT-001-deploy-and-call-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-CONTRACT-002-storage-write-and-read && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-002-storage-write-and-read.json --workspace-dir ~/cbw/m/CT-CONTRACT-002-storage-write-and-read --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-003-view-call-leaves-state && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-003-view-call-leaves-state.json --workspace-dir ~/cbw/m/CT-CONTRACT-003-view-call-leaves-state --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-004-estimate-gas && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-004-estimate-gas.json --workspace-dir ~/cbw/m/CT-CONTRACT-004-estimate-gas --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-005-eth-call-revert-returns-error && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-005-eth-call-revert-returns-error.json --workspace-dir ~/cbw/m/CT-CONTRACT-005-eth-call-revert-returns-error --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json --workspace-dir ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero-wbft && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json --workspace-dir ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero-wemix && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-006-revert-tx-status-zero.json --workspace-dir ~/cbw/m/CT-CONTRACT-006-revert-tx-status-zero-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-CONTRACT-007-out-of-gas-consumes-all && bin/chainbench run tests/tc/common/contract/CT-CONTRACT-007-out-of-gas-consumes-all.json --workspace-dir ~/cbw/m/CT-CONTRACT-007-out-of-gas-consumes-all --binary "$GSTABLE"
 ```
 
 ### rpc — 조회·구독 API
 
 ```sh
-rm -rf ~/cbw/m/001-basic-rpc-health && bin/chainbench run tests/tc/common/rpc/001-basic-rpc-health.json --workspace-dir ~/cbw/m/001-basic-rpc-health --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-remote-rpc-health && bin/chainbench run tests/tc/common/rpc/001-remote-rpc-health.json --workspace-dir ~/cbw/m/001-remote-rpc-health --binary "$GSTABLE"
-rm -rf ~/cbw/m/002-block-transactions-field && bin/chainbench run tests/tc/common/rpc/002-block-transactions-field.json --workspace-dir ~/cbw/m/002-block-transactions-field --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-block-by-hash-consistency && bin/chainbench run tests/tc/common/rpc/003-block-by-hash-consistency.json --workspace-dir ~/cbw/m/003-block-by-hash-consistency --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-transaction-by-hash-fields && bin/chainbench run tests/tc/common/rpc/004-transaction-by-hash-fields.json --workspace-dir ~/cbw/m/004-transaction-by-hash-fields --binary "$GSTABLE"
-rm -rf ~/cbw/m/005-transaction-receipt-fields && bin/chainbench run tests/tc/common/rpc/005-transaction-receipt-fields.json --workspace-dir ~/cbw/m/005-transaction-receipt-fields --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-transaction-count-increments && bin/chainbench run tests/tc/common/rpc/006-transaction-count-increments.json --workspace-dir ~/cbw/m/006-transaction-count-increments --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-genesis-balance && bin/chainbench run tests/tc/common/rpc/007-genesis-balance.json --workspace-dir ~/cbw/m/007-genesis-balance --binary "$GSTABLE"
-rm -rf ~/cbw/m/007-remote-balance-check && bin/chainbench run tests/tc/common/rpc/007-remote-balance-check.json --workspace-dir ~/cbw/m/007-remote-balance-check --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-contract-event-emitted && bin/chainbench run tests/tc/common/rpc/009-contract-event-emitted.json --workspace-dir ~/cbw/m/009-contract-event-emitted --binary "$GSTABLE"
-rm -rf ~/cbw/m/009-logs-query-well-formed && bin/chainbench run tests/tc/common/rpc/009-logs-query-well-formed.json --workspace-dir ~/cbw/m/009-logs-query-well-formed --binary "$GSTABLE"
-rm -rf ~/cbw/m/010-signed-tx-seen-in-pool && bin/chainbench run tests/tc/common/rpc/010-signed-tx-seen-in-pool.json --workspace-dir ~/cbw/m/010-signed-tx-seen-in-pool --binary "$GSTABLE"
-rm -rf ~/cbw/m/011-txpool-status && bin/chainbench run tests/tc/common/rpc/011-txpool-status.json --workspace-dir ~/cbw/m/011-txpool-status --binary "$GSTABLE"
-rm -rf ~/cbw/m/012-txpool-content-well-formed && bin/chainbench run tests/tc/common/rpc/012-txpool-content-well-formed.json --workspace-dir ~/cbw/m/012-txpool-content-well-formed --binary "$GSTABLE"
-rm -rf ~/cbw/m/013-ws-subscribe-new-heads && bin/chainbench run tests/tc/common/rpc/013-ws-subscribe-new-heads.json --workspace-dir ~/cbw/m/013-ws-subscribe-new-heads --binary "$GSTABLE"
-rm -rf ~/cbw/m/014-ws-subscribe-logs && bin/chainbench run tests/tc/common/rpc/014-ws-subscribe-logs.json --workspace-dir ~/cbw/m/014-ws-subscribe-logs --binary "$GSTABLE"
-rm -rf ~/cbw/m/015-metric-head-block && bin/chainbench run tests/tc/common/rpc/015-metric-head-block.json --workspace-dir ~/cbw/m/015-metric-head-block --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-001-block-number-advances && bin/chainbench run tests/tc/common/rpc/CT-RPC-001-block-number-advances.json --workspace-dir ~/cbw/m/CT-RPC-001-block-number-advances --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-002-block-transactions-field && bin/chainbench run tests/tc/common/rpc/CT-RPC-002-block-transactions-field.json --workspace-dir ~/cbw/m/CT-RPC-002-block-transactions-field --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-003-block-by-hash-consistency && bin/chainbench run tests/tc/common/rpc/CT-RPC-003-block-by-hash-consistency.json --workspace-dir ~/cbw/m/CT-RPC-003-block-by-hash-consistency --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-004-transaction-by-hash-fields && bin/chainbench run tests/tc/common/rpc/CT-RPC-004-transaction-by-hash-fields.json --workspace-dir ~/cbw/m/CT-RPC-004-transaction-by-hash-fields --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-005-transaction-receipt-fields && bin/chainbench run tests/tc/common/rpc/CT-RPC-005-transaction-receipt-fields.json --workspace-dir ~/cbw/m/CT-RPC-005-transaction-receipt-fields --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-006-transaction-count-increments && bin/chainbench run tests/tc/common/rpc/CT-RPC-006-transaction-count-increments.json --workspace-dir ~/cbw/m/CT-RPC-006-transaction-count-increments --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-007-balance-query && bin/chainbench run tests/tc/common/rpc/CT-RPC-007-balance-query.json --workspace-dir ~/cbw/m/CT-RPC-007-balance-query --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-009-event-logs-query && bin/chainbench run tests/tc/common/rpc/CT-RPC-009-event-logs-query.json --workspace-dir ~/cbw/m/CT-RPC-009-event-logs-query --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-010-signed-tx-seen-in-pool && bin/chainbench run tests/tc/common/rpc/CT-RPC-010-signed-tx-seen-in-pool.json --workspace-dir ~/cbw/m/CT-RPC-010-signed-tx-seen-in-pool --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-011-txpool-status && bin/chainbench run tests/tc/common/rpc/CT-RPC-011-txpool-status.json --workspace-dir ~/cbw/m/CT-RPC-011-txpool-status --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-012-txpool-content-well-formed && bin/chainbench run tests/tc/common/rpc/CT-RPC-012-txpool-content-well-formed.json --workspace-dir ~/cbw/m/CT-RPC-012-txpool-content-well-formed --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-013-ws-subscribe-new-heads && bin/chainbench run tests/tc/common/rpc/CT-RPC-013-ws-subscribe-new-heads.json --workspace-dir ~/cbw/m/CT-RPC-013-ws-subscribe-new-heads --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-014-ws-subscribe-logs && bin/chainbench run tests/tc/common/rpc/CT-RPC-014-ws-subscribe-logs.json --workspace-dir ~/cbw/m/CT-RPC-014-ws-subscribe-logs --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-RPC-015-metric-head-block && bin/chainbench run tests/tc/common/rpc/CT-RPC-015-metric-head-block.json --workspace-dir ~/cbw/m/CT-RPC-015-metric-head-block --binary "$GSTABLE"
 ```
 
 ### fault — 장애·복구
 
 ```sh
-rm -rf ~/cbw/m/001-fault-node-crash && bin/chainbench run tests/tc/common/fault/001-fault-node-crash.json --workspace-dir ~/cbw/m/001-fault-node-crash --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-sample-lifecycle && bin/chainbench run tests/tc/common/fault/001-sample-lifecycle.json --workspace-dir ~/cbw/m/001-sample-lifecycle --binary "$GSTABLE"
-rm -rf ~/cbw/m/001-wbft-node-crash && bin/chainbench run tests/tc/common/fault/001-wbft-node-crash.json --workspace-dir ~/cbw/m/001-wbft-node-crash --binary "$GWBFT"
-rm -rf ~/cbw/m/001-wemix-node-crash && bin/chainbench run tests/tc/common/fault/001-wemix-node-crash.json --workspace-dir ~/cbw/m/001-wemix-node-crash --binary "$GWEMIX"
-rm -rf ~/cbw/m/002-fault-node-recover && bin/chainbench run tests/tc/common/fault/002-fault-node-recover.json --workspace-dir ~/cbw/m/002-fault-node-recover --binary "$GSTABLE"
-rm -rf ~/cbw/m/003-fault-two-down && bin/chainbench run tests/tc/common/fault/003-fault-two-down.json --workspace-dir ~/cbw/m/003-fault-two-down --binary "$GSTABLE"
-rm -rf ~/cbw/m/004-fault-network-partition && bin/chainbench run tests/tc/common/fault/004-fault-network-partition.json --workspace-dir ~/cbw/m/004-fault-network-partition --binary "$GSTABLE"   # target:remote — 로컬은 skip, docker에서만 돈다
-rm -rf ~/cbw/m/005-fault-p2p-topology && bin/chainbench run tests/tc/common/fault/005-fault-p2p-topology.json --workspace-dir ~/cbw/m/005-fault-p2p-topology --binary "$GSTABLE"
-rm -rf ~/cbw/m/006-fault-txpool-leader-change && bin/chainbench run tests/tc/common/fault/006-fault-txpool-leader-change.json --workspace-dir ~/cbw/m/006-fault-txpool-leader-change --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FAULT-001-producer-crash-and-restart && bin/chainbench run tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json --workspace-dir ~/cbw/m/CT-FAULT-001-producer-crash-and-restart --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FAULT-001-producer-crash-and-restart-wbft && bin/chainbench run tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json --workspace-dir ~/cbw/m/CT-FAULT-001-producer-crash-and-restart-wbft --chain-preset wbft-bp4 --binary "$GWBFT"
+rm -rf ~/cbw/m/CT-FAULT-001-producer-crash-and-restart-wemix && bin/chainbench run tests/tc/common/fault/CT-FAULT-001-producer-crash-and-restart.json --workspace-dir ~/cbw/m/CT-FAULT-001-producer-crash-and-restart-wemix --chain-preset wemix-bp4 --binary "$GWEMIX"
+rm -rf ~/cbw/m/CT-FAULT-002-node-recover-and-sync && bin/chainbench run tests/tc/common/fault/CT-FAULT-002-node-recover-and-sync.json --workspace-dir ~/cbw/m/CT-FAULT-002-node-recover-and-sync --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FAULT-003-two-producers-down && bin/chainbench run tests/tc/common/fault/CT-FAULT-003-two-producers-down.json --workspace-dir ~/cbw/m/CT-FAULT-003-two-producers-down --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FAULT-004-network-partition && bin/chainbench run tests/tc/common/fault/CT-FAULT-004-network-partition.json --workspace-dir ~/cbw/m/CT-FAULT-004-network-partition --binary "$GSTABLE"   # target:remote — 로컬은 skip, docker에서만 돈다
+rm -rf ~/cbw/m/CT-FAULT-005-hub-topology && bin/chainbench run tests/tc/common/fault/CT-FAULT-005-hub-topology.json --workspace-dir ~/cbw/m/CT-FAULT-005-hub-topology --binary "$GSTABLE"
+rm -rf ~/cbw/m/CT-FAULT-006-txpool-leader-change && bin/chainbench run tests/tc/common/fault/CT-FAULT-006-txpool-leader-change.json --workspace-dir ~/cbw/m/CT-FAULT-006-txpool-leader-change --binary "$GSTABLE"
 ```

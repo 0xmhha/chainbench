@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fault-node-crash",
+  "description": "CT-FAULT-001 — 생성 노드 하나를 멈춰도 블록이 계속 나오고, 다시 띄우면 기준 노드 높이까지 따라잡아 해시와 상태 루트가 같아진다 (기존 명세 RT-A-1-04, NODE-005, 절차는 docs/tc/common/06-detailed-procedures/06-fault.md 의 CT-FAULT-001). 2026-09-30 에 fault-node-crash, sample-lifecycle-node-restart, wbft-node-crash, wemix-node-crash 네 파일을 하나로 합쳤다. 남긴 모양은 wbft·wemix 사본 쪽이다. stablenet 판은 다시 띄운 노드를 고정 높이 8 까지만 기다렸는데, 그 높이는 체인이 이미 지나간 뒤라 아무것도 기다리지 않는다. 사본은 멈춘 사이에 나아간 node1 의 그 시점 높이를 읽어 두고 node3 가 거기까지 오기를 기다린다. 대기 시간은 셋 중 가장 긴 wemix 값으로 통일했다. sample-lifecycle 이 더 들고 있던 송금 세 단계는 옮기지 않았다. 그것은 CT-TX-001 이 재는 것이고, 그 케이스가 파일 하나로 세 체인을 돈다. sample-lifecycle 이 쓰던 binvar preset 도 옮기지 않았다. 마지막 readNodeLog 는 옮겨 왔다. 이 파일이 docs/guide/dsl-authoring.md 가 가리키는 작성 샘플 둘 중 하나이고, 그 동작을 보여 주는 곳이 여기였다. 판정에는 들어가지 않고 실패했을 때 읽을 로그 꼬리를 남긴다.",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "300s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "180s",
+      "pollInterval": "3s"
+    },
+    {
+      "do": "restartNode",
+      "on": "node3"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "node1",
+      "save": "caught"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "node3",
+      "compare": "GreaterOrEqual",
+      "expected": "$caught",
+      "timeout": "300s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$caught",
+        "0"
+      ],
+      "format": "hex",
+      "save": "caughtHex"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$caughtHex",
+        false
+      ],
+      "select": "stateRoot",
+      "save": "root"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node3",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$caughtHex",
+        false
+      ],
+      "select": "stateRoot",
+      "compare": "Equal",
+      "is": "$root"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "node3",
+      "maxBytes": 4096,
+      "save": "node3Log"
+    }
+  ]
+}

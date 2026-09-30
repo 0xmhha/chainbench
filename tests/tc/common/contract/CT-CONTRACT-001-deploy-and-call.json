@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "contract-roundtrip",
+  "description": "CT-CONTRACT-001 — 컨트랙트를 배포하면 주소가 생기고 코드가 조회되며 호출이 42를 돌려준다 (기존 명세 RT-A-3-01, TX-005, 절차는 docs/tc/common/06-detailed-procedures/04-contract.md 의 CT-CONTRACT-001). 2026-09-30 에 contract-roundtrip, wbft-tx-and-contract, wemix-tx-and-contract 세 파일을 하나로 합쳤다. 세 파일의 배포 바이트코드와 기대값은 같았고, 체인별 파일은 preset 과 id 만 달랐다. 체인별 파일이 더 들고 있던 송금 두 단계는 옮기지 않았다. 그것은 CT-TX-001 이 재는 것이고, 그 케이스가 2026-09-29 부터 파일 하나로 세 체인을 돈다. 체인별 파일이 genesis 에 얹던 node1 잔액도 옮기지 않았다. 같은 디렉터리의 006 이 세 체인에서 node1 으로 배포하며 그 얹기 없이 돌고 있다. 남긴 것은 앞에서 블록이 나오기를 기다리는 단계다. 배포 바이트코드는 PUSH0 없이 손으로 쓴 것이라 London 세대에 멈춘 WEMIX3.0 에서도 배포된다. 런타임 10바이트는 0x2a 를 메모리에 넣고 32바이트를 돌려준다.",
+  "requires": [
+    "rpc"
+  ],
+  "skipsOn": [],
+  "chainPreset": {
+    "extends": "stablenet-bp4",
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "120s"
+    },
+    {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "gas": "200000",
+      "save": "contract"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$contract",
+      "compare": "NotEqual",
+      "is": "0x"
+    },
+    {
+      "expect": "call",
+      "to": "$contract",
+      "data": "0x",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    }
+  ]
+}
