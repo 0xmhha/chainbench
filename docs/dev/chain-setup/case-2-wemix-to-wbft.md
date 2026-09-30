@@ -2,7 +2,13 @@
 
 > 목표: gwemix(wpoa)가 포크 블록까지 블록을 만들고, 그 이후로는 **같은 체인**을 gwbft 검증자들이
 > 이어서 생성한다.
-> 상태: ✅ **절차 검증 완료** — 2026-08-09 실 바이너리로 블록 100 인계 확인(§5). 단, **`chain up` 자동화는 아직 옛 순서**라 그대로 돌리면 실패한다(§6).
+> 상태: ✅ **자동화됨** — DSL case `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json`
+> (`chainPreset: wemix-to-wbft`)가 하드포크를 일반 조립 경로(place → … → start)로 세운다(§4).
+> 수동 절차는 2026-08-09 실 바이너리로 블록 100 인계를 확인한 기록이다(§5).
+>
+> **2026-09-30 확인.** §1-§3·§6·§7 이 말하는 핸드오프 조립기(`upgrade run`,
+> `chain up --case handoff`, `consensus/upgrade.Handoff`)와 프로파일 YAML 입력은 코드에 없다.
+> `internal/consensus` 에는 `poa`·`wbft` 만 남았다. 그 절들은 당시 기록으로 남긴다.
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
 > **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
@@ -26,7 +32,8 @@
 | network id | 8285 (**전 노드 균일**) |
 
 > **type-1 업그레이드**다: 프로듀서와 후계자가 **처음부터 서로 다른 바이너리로 동시에** 뜬다.
-> 바이너리를 중간에 바꾸는 type-2(같은 체인, fork 전 교체)는 `supervisor.ForkSwaps` 소관이며 미배선이다.
+> 바이너리를 중간에 바꾸는 type-2(같은 체인, fork 전 교체)는 `chainbench hardfork` 가 계획한다
+> (옛 `supervisor.ForkSwaps` 는 코드에 없다).
 
 ---
 
@@ -75,7 +82,7 @@ to-chain 의 자기 genesis 템플릿에서 **데이터로 추출**해 from-chai
 | 데이터 루트 | `data.directory` | |
 | 포트 | `ports.base_p2p`/`step_p2p`/`base_rpc`/`step_rpc` | step 제약(README §2.6) |
 | 노드 옵션 | `nodes.verbosity`/`gcmode`/`cache` | |
-| genesis 오버레이 | CLI `--genesis-overlay` | `useNCP`/`targetValidators`/`stabilizingStakersThreshold`, `govNCP.params.ncps` |
+| genesis 오버레이 | CLI `--overlay` (당시 이름 `--genesis-overlay`) | `useNCP`/`targetValidators`/`stabilizingStakersThreshold`, `govNCP.params.ncps` |
 
 ### 프로파일이 인코딩한 "한 번씩 조용히 깨졌던" 조건
 
@@ -88,7 +95,29 @@ to-chain 의 자기 genesis 템플릿에서 **데이터로 추출**해 from-chai
 
 ## 4. 실행
 
-### 4.1 점검용 CLI (단계별)
+### 4.0 지금의 실행 (2026-09-30)
+
+하드포크는 chain-preset 이 선언한다. `presets/chain/wemix-to-wbft.json` 은 바이너리 두 개
+(`default` = `${GWEMIX_BIN:-gwemix}`, `next` = `${GWBFT_BIN:-gwbft}`, chain `wbft`)와
+`upgrade`(fork `croissant`, at 20, `default` → `next`, style `concurrent`), 노드별 토폴로지
+(node1-4 = `en` + `next`, node5 = `bp`)를 담는다. 조립은 다른 네트워크와 같은 9단계를 탄다.
+
+```sh
+GWEMIX_BIN=<go-wemix>/build/bin/gwemix \
+GWBFT_BIN=<go-wbft>/build/bin/gwemix \
+chainbench run --workspace-dir /tmp/handoff --binary "$GWEMIX_BIN" --no-skips \
+  tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json
+
+# 같은 것을 한 줄로
+scripts/chain-setup/handoff-wemix-wbft.sh /tmp/handoff
+```
+
+case 는 블록 22 를 기다린 뒤, 블록 21(`0x15`)의 miner 가 node1-4 중 하나이고
+`istanbul_getValidators` 가 4 명인지 본다. 이 명령은 이번 대조에서 돌려 보지 않았다.
+
+아래 4.1-4.3 은 2026-08-09 당시의 명령과 출력이다. `upgrade run` 은 지금 없다.
+
+### 4.1 점검용 CLI (단계별, 기록)
 
 ```sh
 CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
@@ -118,7 +147,7 @@ SKIP  await-fork
 `method handler crashed` 로 실패할 수 있어(노드가 거버넌스 상태를 아직 배선 중), 한 번 읽고
 판정하면 일시적 현상을 결함으로 보고하게 된다.
 
-### 4.2 기존 CLI (단일 명령)
+### 4.2 기존 CLI (단일 명령, 기록)
 
 ```sh
 chainbench upgrade run \
@@ -132,7 +161,7 @@ chainbench upgrade run \
 ### 4.3 상태 확인
 
 ```sh
-chainbench chain status --data-dir /tmp/cb-handoff     # 높이·피어·엔진·etcd 클러스터
+chainbench chain status --workspace-dir /tmp/cb-handoff   # 조립 단계 상태 (높이는 chain health)
 # 또는 직접
 $CHAIN/go-wemix/build/bin/gwemix attach /tmp/hand/node1/gwemix.ipc \
   --exec 'JSON.stringify(admin.wemixInfo)'
@@ -147,15 +176,14 @@ $CHAIN/go-wemix/build/bin/gwemix attach /tmp/hand/node1/gwemix.ipc \
 
 ### 5.1 절차 — 실행 가능한 스크립트
 
-순서 자체가 요점이라 산문이 아니라 스크립트로 둔다. **실제로 실행해 성공한 그대로**다.
+순서 자체가 요점이라 산문이 아니라 스크립트로 뒀다. 아래 표는 2026-08-09 에 **실제로 실행해
+성공한 그대로**의 스크립트 내용이다.
 
-```sh
-CHAIN_DIR=/Users/0xtopaz/work/github/0xmhha/chain \
-PROFILE=presets/chain/wemix-upgrade.yaml \
-  scripts/chain-setup/handoff-wemix-wbft.sh /tmp/handoff
-```
+> **2026-09-30 확인.** `scripts/chain-setup/handoff-wemix-wbft.sh` 는 지금 §4.0 의 `run` 한 줄을
+> 감싼 래퍼다(`CHAIN_DIR`·`GWEMIX_BIN`·`GWBFT_BIN` 을 읽는다; `PROFILE` 은 읽지 않는다).
+> 아래 표의 단계별 본문은 옛 스크립트의 것이다.
 
-스크립트가 하는 일:
+옛 스크립트가 하던 일:
 
 | 구간 | 내용 |
 |---|---|
@@ -231,10 +259,16 @@ block 101 (0x65)  miner = 0x2493a8…   ← go-wbft 검증자 2  (라운드로�
   판정은 반드시 `admin.wemixInfo.etcd.cluster` 로 해야 한다.
 
 2·3 은 **static 경로(`engine.armSpecs`)가 이미 올바르게 하는 것**을 핸드오프 경로가 빠뜨린 것이다.
+(2026-09-30: 두 경로 모두 코드에 없다. 지금은 하드포크도 static 과 같은 조립 경로를 탄다.)
 
 ---
 
 ## 7. 자동화에 남은 일
+
+> **2026-09-30 확인: 이 표는 지나간 계획이다.** 하드포크는 별도 조립기 없이 chain-preset 의
+> `upgrade` 블록으로 선언하고 일반 조립 경로가 세운다(§4.0). 6 번의 `chain up --case handoff`·
+> `upgrade run`·`consensus/upgrade.Handoff` 는 모두 코드에서 사라졌고, 5 번의
+> `Deps.LeaderGate` 도 없다. 포크 블록은 chain-preset 에서 20 이다.
 
 절차는 확정됐고, `chain up --case wemix-wbft` 를 그 순서로 재구성하면 된다.
 

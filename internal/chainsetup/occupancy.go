@@ -146,7 +146,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 }
 
 // scanPorts asks whether the plan's ports are taken, from where the
-// answer is true. A local target asks this machine's kernel (inspector.Scan's
+// answer is true. A local target asks this machine's kernel (inspector.Ports'
 // bind probe). A remote target is asked ON the target through the driver's
 // PortProber: probing from here lies in both directions — a loopback-bound
 // listener on the server is invisible from outside, and a docker-published

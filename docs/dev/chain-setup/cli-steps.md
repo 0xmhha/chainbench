@@ -33,21 +33,21 @@
 
 ---
 
-## 1. 공통 9스텝 (`net`)
+## 1. 공통 9스텝 (`chain`)
 
-세 체인이 같은 순서를 탄다. `net up` 은 이 9개를 한 번에 실행한다.
+세 체인이 같은 순서를 탄다. `chain up` 은 이 9개를 한 번에 실행한다(2026-09-30 현재 명령으로 갱신).
 
 | # | 스텝 | 명령 | 하는 일 |
 |---|---|---|---|
-| 1 | new | `net new --chain X --binary B --keys K --server S` | 워크스페이스 초기화: 체인·키셋·타깃 기록 |
-| 2 | allocate | `net allocate --validators N [--topology T]` | 노드표: 역할·경로·포트 (인벤토리에서) |
-| 3 | keys | `net keys [--keys-source generate --bootnode B]` | 키셋 확보 |
-| 4 | genesis | `net genesis [--chain-id C --set K=V --overlay O]` | **★ 패밀리 분기 ★** |
-| 5 | config | `net config` | 노드별 TOML 렌더 |
-| 6 | launchopts | `net launchopts [--set K=V]` | argv 조립 (실행 안 함) |
-| 7 | provision | `net provision` | 타깃에 입력 존재 확인(skip-if-exists) |
-| 8 | init | `net init` | `<binary> init` 으로 datadir 초기화 |
-| 9 | start | `net start` | **★ 패밀리 분기 ★** 노드 기동 |
+| 1 | new | `chain new --chain X --binary B --keys K [--target T \| --server-set S]` | 워크스페이스 초기화: 체인·키셋·타깃 기록 |
+| 2 | place | `chain place --bp N [--en M --pn K --topology T --server S]` | 노드표: 역할·경로·포트 (인벤토리에서) |
+| 3 | keys | `chain keys [--keys-source generate --nodes N --validators V]` | 키셋 확보 |
+| 4 | genesis | `chain genesis [--chain-id C --set K=V --overlay O]` | **★ 패밀리 분기 ★** |
+| 5 | config | `chain config [--node i --set K=V]` | 노드별 TOML 렌더 |
+| 6 | build | `chain build [--set K=V]` | argv 조립 (실행 안 함) |
+| 7 | deploy | `chain deploy` | 타깃에 입력 존재 확인(skip-if-exists) |
+| 8 | init | `chain init` | `<binary> init` 으로 datadir 초기화 |
+| 9 | start | `chain start [--binary B]` | **★ 패밀리 분기 ★** 노드 기동 |
 
 확인: `chain status` (스텝 진행) · `chain health` (블록 전진) · `chain logs --node i` · `chain stop` · `chain rm`
 
@@ -59,10 +59,11 @@
 CHAIN=/Users/…/Work/github/chain
 chainbench chain up --workspace-dir /tmp/cbs --chain stablenet \
   --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --keys presets/keys --validators 4
+  --keys presets/keys --bp 4
 
 chainbench chain health --workspace-dir /tmp/cbs
-chainbench run --attach --chain stablenet --rpc http://127.0.0.1:8545 tests/tc/basic
+chainbench run --attach --chain stablenet --rpc http://127.0.0.1:8600 \
+  tests/tc/common/rpc/CT-RPC-001-block-number-advances.json   # run 은 디렉터리가 아니라 파일을 받는다
 chainbench chain stop --workspace-dir /tmp/cbs
 ```
 
@@ -77,7 +78,7 @@ stablenet 과 **명령이 완전히 동일**하다. 두 가지만 다르다.
 ```sh
 chainbench chain up --workspace-dir /tmp/cbw --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \   # ← 바이너리 이름이 gwemix 다
-  --keys presets/keys --validators 4
+  --keys presets/keys --bp 4
 ```
 
 | 함정 | 내용 |
@@ -113,7 +114,7 @@ genesis 가 껍데기이기 때문이다 — `alloc:{}`, `minerNodeId:"0x0"`, `c
 | W5 | **부트노드 1대만 기동** | 없음 (`net start` 는 전부 기동) | ❌ **CLI 없음** |
 | W6 | **거버넌스 컨트랙트 배포** | `remote bootstrap`(SSH 전용) | ◐ **로컬 없음** |
 | W7 | **etcd 초기화** | `remote bootstrap`(SSH 전용) | ◐ **로컬 없음** |
-| W8 | **etcd 클러스터 확인** | 없음 | ❌ (`chainsetup.WaitEtcdCluster` 는 있음) |
+| W8 | **etcd 클러스터 확인** | 없음 | ❌ (`poa.WaitEtcdCluster` 는 있음) |
 | W9 | **나머지 노드 기동** | 없음 (페이즈 구분이 없음) | ❌ **CLI 없음** |
 | W10 | 블록 전진 확인 | `net health` | ✅ |
 
@@ -194,6 +195,11 @@ for i in 2 3 4; do P=$((8588+(i-1)*1000)); $G --datadir $D/node$i --mine \
 
 ## 6. 그래서 CLI 에 무엇을 더해야 하는가
 
+> **2026-09-30 확인: 이 절의 계획은 끝났다.** wemix 는 `chain up --chain wemix` 한 줄로 서고
+> ([case-1](case-1-wemix.md) 상단), 갭 6개는 poa 패밀리의 genesis(`gwemix wemix genesis`)와 start phase 액션
+> (`poa.EtcdInit`·`poa.VerifyEtcd`·`poa.WaitEtcdCluster`)으로 흡수됐다. 아래 표의
+> `GenesisArtifacts` 라는 이름은 코드에 없다 — 계획 당시의 이름이다.
+
 §4.1 의 갭 6개는 **새 명령 6개가 아니라, 기존 스텝 2개의 확장**으로 덮인다.
 
 | 갭 | 어디에 흡수되나 | 트래커 |
@@ -205,10 +211,10 @@ for i in 2 3 4; do P=$((8588+(i-1)*1000)); $G --datadir $D/node$i --mine \
 바뀌는 것은 그 아래 `net genesis` 와 `net start` 의 내부다.
 
 ```sh
-# 목표 — 세 체인 모두 이 한 줄
+# 세 체인 모두 이 한 줄 (지금 동작한다)
 chainbench chain up --workspace-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
-  --binary <path> --keys presets/keys --validators 4 --server local
+  --binary <path> --keys presets/keys --bp 4
 ```
 
-보조로 필요한 것은 **관측**뿐이다: `net status` 가 어느 페이즈까지 갔는지,
+보조로 필요한 것은 **관측**뿐이다: `chain status` 가 어느 페이즈까지 갔는지,
 어떤 액션이 실행됐는지 보여주면 부분 실패를 손으로 이어갈 수 있다(이미 스텝 스탬프 구조가 있다).

@@ -16,7 +16,7 @@ Be respectful and constructive in all interactions. We are committed to providin
    - Steps to reproduce
    - Expected vs actual behavior
    - OS and environment details
-   - Relevant log output (`chainbench log --data-dir <dir> --pattern <text>`, or
+   - Relevant log output (`chainbench log --workspace-dir <dir> --pattern <text>`, or
      raw log files)
 
 ### Suggesting Features
@@ -56,8 +56,8 @@ Open an issue with the `enhancement` label. Describe:
    go test -race ./...                                 # make test is not -race
    ```
    To exercise a real network end to end, compose one with
-   `chainbench net up --workspace-dir /tmp/cb --chain stablenet --binary <node>` and
-   tear it down with `chainbench net stop --workspace-dir /tmp/cb`.
+   `chainbench chain up --workspace-dir /tmp/cb --chain stablenet --binary <node>` and
+   tear it down with `chainbench chain stop --workspace-dir /tmp/cb`.
 6. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/):
    ```
    feat: add new stress test for large transactions
@@ -72,11 +72,12 @@ Open an issue with the `enhancement` label. Describe:
 ### Project Layout
 
 ```
-cmd/chainbench/          Go CLI (cobra commands; groups in keyringcmd/, netcmd/, netmapcmd/)
+cmd/chainbench/          Go CLI (cobra; command groups in chaincmd/, suitecmd/,
+                         keyringcmd/, lifecyclecmd/, networkcmd/, txcmd/, ...)
 cmd/chainbench-mcp/      Go MCP server for AI integration (single binary)
 cmd/chainbench-dashboard/ Dashboard daemon
-internal/core/           chain-agnostic core (registry, machine, filestore, driver,
-                         process, keyring, netmap, genesis, nodeconfig, rpc, session, ...)
+internal/core/           chain-agnostic core (registry, filestore, process, keyring,
+                         genesis, nodeconfig, inspector, rpc, session, ...)
 internal/consensus/      consensus families (wbft, poa) + upgrade orchestration
 internal/chains/         chain plugins (stablenet, wbft, wemix, external) + manifests,
                          genesis templates, and capability catalogs
@@ -84,14 +85,15 @@ internal/chainsetup/     composes a chain up to producing blocks
 internal/testengine/     runs tests on an already-composed chain
 internal/app/            workflow layer MCP reaches (DSL -> setup -> test -> report)
 internal/mcp/            MCP tool handlers (through internal/app)
-presets/chain/        hardfork presets
-tests/                   Go test cases (tests/all) + reproduction scripts (tests/repro)
+presets/chain/           chain-presets a case names (chain, nodes, binaries, upgrade)
+tests/                   DSL cases (tests/tc), e2e tests (tests/e2e), repros (tests/repro)
 ```
 
 ### Adding a CLI Command
 
-1. Add `cmd/chainbench/<name>.go` with a `new<Name>Cmd() *cobra.Command`.
-2. Register it in `cmd/chainbench/root.go` (`root.AddCommand(...)`).
+1. Add the command to the group package it belongs to
+   (`cmd/chainbench/<group>cmd/`), exposed as a `New<Name>() *cobra.Command`.
+2. Register a new top-level command in `cmd/chainbench/root.go` (`root.AddCommand(...)`).
 3. Keep the logic in the core module that owns it, never in the command file.
    The CLI calls those modules directly; MCP reaches the same features through
    `internal/app`, so a feature added in a module is reachable from both
@@ -100,8 +102,13 @@ tests/                   Go test cases (tests/all) + reproduction scripts (tests
 
 ### Adding a Test
 
-1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
-2. Run with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
+1. Write a DSL case under `tests/tc/` — see
+   [`docs/guide/dsl-authoring.md`](docs/guide/dsl-authoring.md), and
+   [`tests/README.md`](tests/README.md) for when a case belongs in `tests/e2e/`
+   instead.
+2. Check it offline with `chainbench validate <case.json>`, then run it with
+   `chainbench run <case.json>` (compose) or
+   `chainbench run --attach --rpc <url> --chain <id> <case.json>`.
 
 ### Modifying the MCP Server
 

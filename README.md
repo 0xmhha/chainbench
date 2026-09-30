@@ -121,6 +121,11 @@ chainbench chain up --workspace-dir /tmp/cb \
 
 chainbench verify --workspace-dir /tmp/cb    # confirm block production
 chainbench status --workspace-dir /tmp/cb    # show the node set
+
+# run a case against the network already composed here
+chainbench run --attach --workspace-dir /tmp/cb \
+  tests/tc/common/rpc/CT-RPC-001-block-number-advances.json
+
 chainbench chain stop --workspace-dir /tmp/cb
 ```
 
@@ -200,7 +205,7 @@ Run `chainbench <command> --help` for the full flag set of any command.
 |---|---|
 | `run` | run DSL specs: compose what they declare, or attach with `--rpc` |
 | `validate` | parse and check specs without running them |
-| `test` | discover the DSL cases in a directory |
+| `test list <dir>` | list the runnable DSL cases under a directory |
 | `report` | show a run's report from its session directory |
 | `baseline` | the approved fingerprint of an environment's prepared inputs |
 
@@ -237,14 +242,14 @@ The case names the chain preset
 `upgrade` block points at the golden preset:
 
 ```json
-"upgrade": { "preset": "wemix-upgrade", "fork": "croissant", "at": 20,
+"upgrade": { "fork": "croissant", "at": 20,
              "from": "default", "to": "next", "style": "concurrent" }
 ```
 
-[`presets/chain/wemix-upgrade.yaml`](presets/chain/wemix-upgrade.yaml) encodes
-the conditions: uniform network id, disjoint producers and validators, BFT
-quorum, paired fork sections. To plan a binary swap against a workspace that is
-already running, use `chainbench hardfork`.
+[`presets/chain/README.md`](presets/chain/README.md) records how a hardfork is
+declared and what is checked: uniform network id, disjoint producers and
+validators, BFT quorum, paired fork sections. To plan a binary swap against a
+workspace that is already running, use `chainbench hardfork`.
 
 ---
 

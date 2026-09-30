@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "wemix-bp4-binvar",
-  "description": "wemix: 4 bp. Binaries: default = ${GWEMIX_BIN:-gwemix}. Used by 3 cases.",
+  "description": "wemix: 4 bp. Binaries: default = ${GWEMIX_BIN:-gwemix}. Used by 1 case.",
   "binaries": {
     "default": "${GWEMIX_BIN:-gwemix}"
   },

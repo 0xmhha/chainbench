@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-en1-binvar",
-  "description": "stablenet: 4 bp + 1 en. Binaries: default = ${GSTABLE_BIN:-gstable}. Used by 1 case.",
+  "description": "stablenet: 4 bp + 1 en. Binaries: default = ${GSTABLE_BIN:-gstable}. Used by no case.",
   "binaries": {
     "default": "${GSTABLE_BIN:-gstable}"
   },

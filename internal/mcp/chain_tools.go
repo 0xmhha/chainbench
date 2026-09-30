@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// Net step tools — the MCP mirrors of `chainbench net <step>`. Each handler is
+// Chain step tools — the MCP mirrors of `chainbench chain <step>`. Each handler is
 // schema decoding + one app-layer call: the same function the CLI subcommand
 // binds, so the two surfaces cannot drift.
 

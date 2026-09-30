@@ -41,7 +41,7 @@ func ParseV2(raw []byte) (Spec, error) {
 		}
 		return lowerCase(c)
 	case KindChainPreset:
-		return Spec{}, fmt.Errorf("dsl: an env declaration is not runnable — reference it from a case (\"env\": \"<id>\")")
+		return Spec{}, fmt.Errorf("dsl: a chain-preset declaration is not runnable — reference it from a case (\"chainPreset\": \"<id>\")")
 	default:
 		return Spec{}, fmt.Errorf("dsl: v2 spec needs \"kind\": %q or %q", KindCase, KindChainPreset)
 	}

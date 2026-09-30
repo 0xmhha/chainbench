@@ -1,11 +1,11 @@
 # Per-node topology (`--topology`)
 
-> **[가이드]** 검증 기준 2026-09-11 · 모델 `internal/core/node/topology.go:22` ·
-> 플래그 `cmd/chainbench/chaincmd/steps.go:84`, `chaincmd/up.go:91`.
+> **[가이드]** 검증 기준 2026-09-30 · 모델 `internal/core/node/topology.go:24` ·
+> 플래그 `cmd/chainbench/chaincmd/steps.go:84`, `chaincmd/up.go:93`.
 > 명령·플래그는 `chainbench chain place --help` 가 이긴다.
 
 `chainbench chain place` normally builds a network from positional counts —
-`--validators N --endpoints M --proxies P` — which assigns roles by position and
+`--bp N --en M --pn P` — which assigns roles by position and
 gives every endpoint the same sync mode. A **topology file** replaces that with an
 explicit, per-node layout, so the same file both drives the launch and documents
 exactly how the chain is configured.
@@ -30,11 +30,11 @@ nodes:
 ```
 
 - **index** — 1-based; the set must be contiguous `1..N` (index = launch order).
-- **role** — `bp`/`validator` (block producer / staker), `en`/`endpoint`
-  (non-producing RPC node), `pn`/`proxy` (proxy tier), or `boot`. At least one
-  producer is required.
-- **sync_mode** — `full` (default), `snap`, or `archive`. Set per node; an
-  explicit value wins over the role-based default.
+- **role** — `bp` (block producer / staker), `en` (non-producing RPC node), or
+  `pn` (proxy tier). No other spelling is accepted — the old `validator`,
+  `endpoint`, `proxy` and `boot` are errors. At least one producer is required.
+- **sync_mode** — `full` (default), `snap`, or `archive`. Only an `en` node
+  honors it; `bp` and `pn` nodes always run `full`, whatever the file says.
 - **bootnode** — at most one node may set it.
 - **binary** — a per-node binary *name*, resolved to a path by a repeatable
   `--binaries wbft=/path/gwbft`. This is what lets one network run mixed binaries.
@@ -57,7 +57,8 @@ chainbench chain up --topology examples/topology.yaml \
   --binaries wbft=/path/gwbft --binaries wemix=/path/gwemix
 ```
 
-`--topology` overrides `--validators`/`--endpoints`. The resulting node table —
+`--topology` overrides `--bp`/`--en`/`--pn`. `--peering` picks the peer graph
+either way: `mesh` (default) or `proxied` (bp ↔ pn ↔ en). The resulting node table —
 roles, hosts, deterministic non-colliding ports — is recorded in the workspace, so
 a running network's layout is inspectable with `chainbench chain show` and
 `chainbench status`.
@@ -65,9 +66,10 @@ a running network's layout is inspectable with `chainbench chain show` and
 ## How it plugs in
 
 - `internal/core/node` — the model: `node.Topology`/`node.Entry`, `node.Load`,
-  role/sync normalization (`bp`→validator, `en`→endpoint).
-- `chainsetup.ChainAllocate` (`internal/chainsetup/verb/verbs_steps.go:147`) — resolves the
-  three layout sources and refuses two at once, then allocates the node table
-  under the server-set lock.
+  role validation (`node.NormalizeRole` accepts only `bp`/`en`/`pn`).
+- `chainsetup.PlaceNodes` (`internal/chainsetup/steps_place.go:450`, reached from
+  `verb.ChainAllocate` at `internal/chainsetup/verb/verbs_steps.go:38`) — resolves the
+  three layout sources and refuses two at once (`OneLayoutOnly`), then allocates
+  the node table under the server-set lock.
 - The DSL declares the same thing inline (`ChainAllocateIn.Topology`), so a spec
   needs no side file.

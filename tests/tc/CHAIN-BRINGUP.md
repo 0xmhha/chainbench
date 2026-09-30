@@ -34,9 +34,9 @@ chainbench run --workspace-dir /tmp/cb-wemix --keep-up --chain-preset wemix-bp4 
 go-wbft 의 make 타깃은 `gwemix` 라는 이름의 바이너리를 만들므로, wbft 갈래는 보통
 `GWBFT_BIN=/path/to/go-wbft/build/bin/gwemix` 을 준다.
 
-핸드오프 갈래는 go-wemix 저장소의 **자체** genesis 템플릿이 필요하다:
-`GOWEMIX_TEMPLATE=/path/to/go-wemix/wemix/scripts/genesis-template.json`.
-chainbench 에 내장된 wemix 템플릿은 치환용이라 바이너리가 거부한다.
+핸드오프 갈래는 두 빌드(`GWEMIX_BIN`, `GWBFT_BIN`)만 있으면 된다. wemix genesis 는 chainbench 에
+내장된 템플릿을 `poa.PrepareTemplate` 로 먼저 치환한 뒤 바이너리에 넘기므로, 예전에 필요했던
+`GOWEMIX_TEMPLATE`(go-wemix 저장소의 자체 템플릿)는 지금 아무 코드도 읽지 않는다(2026-09-30 확인).
 
 ## 검증 상태 (2026-08-31)
 

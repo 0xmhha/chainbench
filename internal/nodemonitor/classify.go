@@ -15,7 +15,7 @@ import (
 //     topology and genesis (0 or false = not constrained).
 //   - PIDAlive is from process/inspect; RPCUp, ChainID, Height, Advancing,
 //     Syncing, Peers from health; Forked and Participating from collector;
-//     Failure from a classified launch/bring-up error (process.Classify).
+//     Failure from a classified launch/bring-up error (a process.FailureMode).
 type Facts struct {
 	Node  int
 	Label string

@@ -7,7 +7,7 @@
 | 케이스 | 문서 | 현재 상태 |
 |---|---|---|
 | gwemix 단독 | [case-1-wemix.md](case-1-wemix.md) | ✅ **자동화됨** (2026-08-23) — `chain up --chain wemix`. 2-페이즈 부트스트랩은 poa 패밀리 phase 로 돈다 |
-| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ✅ **수동 절차 검증 완료** (블록 100 인계) · 자동화는 `upgrade run` |
+| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ✅ **자동화됨** — DSL case(`chainPreset: wemix-to-wbft`)가 일반 조립 경로로 포크를 넘긴다. 수동 절차(블록 100 인계)는 기록 |
 | gwbft 단독 | [case-3-wbft.md](case-3-wbft.md) | ✅ **동작 확인** (라이브) |
 | gstable 단독 | [case-4-stablenet.md](case-4-stablenet.md) | ✅ **동작 확인** (라이브·CI 게이트) |
 
@@ -32,7 +32,7 @@
 `bootstrap.type`으로 선언된다.
 
 > **단계 이름·소유자 갱신 (2026-09-11).** 아래는 `chainbench chain up` 이 실제로 도는 순서다
-> (`internal/chainsetup/verb/verbs_up.go:120` 의 `upStepNames`). 각 단계는 같은 이름의 CLI 하위
+> (`internal/chainsetup/state_request.go:127` 의 `UpStepNames`). 각 단계는 같은 이름의 CLI 하위
 > 명령으로 따로 실행할 수도 있다(`chainbench chain place` 등). **`place` 가 `keys` 앞이다** —
 > 거버넌스 멤버가 배치에서 나오는 ip/port 를 담기 때문이며, 이 순서 정정이 case-1 의 발견이었다.
 
@@ -107,6 +107,8 @@ miners: "producer/up/*"   ← 리더 표식 '*'        miners: "producer/up"
 
 BFT 검증자는 **자기 서명키가 열려 있어야** 봉인할 수 있다. static 경로(`engine.armSpecs`)는
 검증자마다 아래를 하지만, 핸드오프 경로는 **프로듀서에만** 해서 포크 후 인계가 실패했다.
+(2026-08-09 기록. `engine.armSpecs` 와 별도 핸드오프 경로는 지금 코드에 없다 — 하드포크도
+일반 조립 경로로 세우므로 모든 bp 가 같은 방식으로 키를 받는다.)
 
 - datadir 에 **keystore 배치**
 - `--unlock <addr>` · `--password <file>` · `--miner.etherbase <addr>`
@@ -125,12 +127,17 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 각 단계에서 바꿀 수 있는 것과, **어디에 쓰는지**.
 
+> **2026-09-30 대조.** 설정 위치는 지금의 `chain up`·`run` 플래그와 chain-preset 키로 고쳤다
+> (근거: 빌드한 CLI 의 `--help`). 이 카탈로그가 가리키던 `supervisor.*`·`place.*`·`engine.*`·
+> 배치 모드 같은 이름은 코드에 없어서, 대응하는 것이 있으면 그 이름을 적고 없으면
+> "코드에 없음"으로 남겼다.
+
 ### 2.1 체인 선택 (단계 1)
 
 | 변곡점 | 설정 위치 | 값 | 비고 |
 |---|---|---|---|
-| 내장 체인 | `--chain` / spec `chain.name` | `stablenet` \| `wbft` \| `wemix` | 기본 `stablenet` |
-| 외부 체인 | `setup --manifest <json> --genesis-template <json>` | 프로젝트 제공 매니페스트 | 내장 family 위에 얹음 |
+| 내장 체인 | `--chain` / chain-preset `chain` | `stablenet` \| `wbft` \| `wemix` | 기본 `stablenet` |
+| 외부 체인 | `chain up --manifest <json> --genesis-template <json>` | 프로젝트 제공 매니페스트 | 내장 family 위에 얹음 |
 | 적용성 | spec `applicableChains` | `"wbft,stablenet"` | 미적용 체인은 SKIP |
 | 기능 요구 | spec `requires` | `["rpc","ws","process"]` | 미충족은 SKIP(fail 아님) |
 
@@ -139,25 +146,25 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 변곡점 | 설정 위치 | 비고 |
 |---|---|---|
 | 노드 바이너리 | `--binary <path>` (없으면 매니페스트 `binary` 를 PATH 에서) | **주의**: go-wbft 의 `make gwemix` 산출물 이름은 `gwemix` 인데 매니페스트는 `gwbft` → **`--binary` 명시 필수** |
-| 혼합 바이너리 | spec `chain.binaries` / 핸드오프 `--from-binary`/`--to-binary` | 노드별 다른 바이너리(type-1 업그레이드) |
-| 포크 전 교체 | `supervisor.Options.ForkSwaps` | type-2 하드포크. **구현체 미배선**(선언 시 오류) |
+| 혼합 바이너리 | chain-preset `binaries` + 노드별 `topology.nodes[].binary` / `chain up --binaries name=path` | 노드별 다른 바이너리(type-1 업그레이드) |
+| 포크 전 교체 | `chainbench hardfork --workspace-dir <ws> --block N --to-binary <path>` | type-2 하드포크 계획(기본 `--dry-run`). 옛 `supervisor.Options.ForkSwaps` 는 코드에 없음 |
 
-### 2.3 토폴로지 · 역할 (단계 4)
+### 2.3 토폴로지 · 역할 (단계 2)
 
 | 변곡점 | 설정 위치 | 값 |
 |---|---|---|
-| 개수 | `--validators` / `--endpoints`, spec `topology.bp`/`topology.en` | 정수 |
-| 명시 배치 | `setup --topology <yaml>` | 노드별 `{index, role, sync_mode, bootnode}` |
-| 역할 | `bp`(=validator) \| `en`(=endpoint) \| `boot` | 도메인 어휘는 `bp`/`en` |
-| 저장 방식 | `sync_mode` | `full`(기본) \| `snap` \| `archive` |
-| 용량 하한 | `place.Capacity.MinValidators` | BFT 진행 최소; 핸드오프는 **검증자 ≥ 4** 강제 |
+| 개수 | `--bp` / `--en` / `--pn`, chain-preset `topology` | 정수 |
+| 명시 배치 | `chain up --topology <yaml>` · `--blueprint <yaml>` | 노드별 `{index, role, sync_mode, bootnode, binary}` |
+| 역할 | `bp` \| `en` \| `pn` | 이 셋만 받는다(`NormalizeRole`) |
+| 저장 방식 | `sync_mode` (`--endpoint-syncmode`) | `full`(기본) \| `snap` \| `archive` — en 에만 적용 |
+| 용량 하한 | `chainsetup` 의 `minValidatorsForPlacement` → `resource.Builtin` / `resource.ResolveServer` | 풀이 받아야 할 최소 검증자 수. 옛 `place.Capacity` 는 코드에 없음 |
 
 ### 2.4 키 · 신원 (단계 3)
 
 | 변곡점 | 설정 위치 | 비고 |
 |---|---|---|
-| 프리셋 경로 | `--keys` / `--keys-dir` (기본 `presets/keys`) | 5노드 커밋본 |
-| 프리셋 생성 | `chainbench validator set --nodes N --validators V --bootnode <path> --binary <path> --out <dir>` | 5노드 초과 네트워크용 |
+| 프리셋 경로 | `--keys` (기본 `presets/keys`), `--keys-source keyPreset\|generate` | 5노드 커밋본 |
+| 프리셋 생성 | `chainbench validator set --nodes N --validators V --out <dir>` | 5노드 초과 네트워크용 |
 | 계정 잔액 | `validator set --balance <0x-hex>` | genesis alloc |
 | 키스토어 암호 | `validator set --password` (기본 `1`) | |
 | **중요 제약** | wbft 계열 검증자셋·BLS 는 **프리셋에 baked** | 랜덤 keyreg 키만으로는 유효 genesis 불가(T4.4b) |
@@ -168,27 +175,27 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 |---|---|---|
 | ① existing | 기존 genesis 파일 그대로 | 외부 체인 재현 |
 | ② build | 플러그인 템플릿 + 프리셋 치환(`genesis.Build`) | 기본 경로 |
-| ③ template+override | ② + `--set genesis.overrides.<key>=<v>` / `--genesis-overlay <json>` | 하드포크 블록 조정, 계정 Extra 비트 |
-| ④ upgrade-inherit | from-chain genesis 를 받아 fork 섹션만 병합 | 핸드오프(케이스 2) |
+| ③ template+override | ② + `--set <key>=<v>` / `--overlay <json>` (`chain up`·`chain genesis`) | 하드포크 블록 조정, 계정 Extra 비트 |
+| ④ upgrade-inherit | chain-preset `upgrade` 블록 — 포크 섹션을 한 genesis 에 예약 | 하드포크(케이스 2), 일반 조립 경로 |
 
-- `--set genesis.overrides.bohoBlock=10` → 지연 하드포크
-- `--genesis-overlay '{"capabilities":[...],"genesis":{...}}'` → 깊은 병합 + capability 광고
-- spec `chain.genesisOverlay` / `hardforks` → DSL 에서 동일 효과
+- `--set bohoBlock=10` → 지연 하드포크
+- `--overlay <file>` (`{"capabilities":[...],"genesis":{...}}`) → 깊은 병합 + capability 광고
+- chain-preset `genesisOverlay` / `hardforks` → DSL 에서 동일 효과
 
-### 2.6 배치 · 포트 (단계 4)
+### 2.6 배치 · 포트 (단계 2)
 
 | 변곡점 | 값 | 비고 |
 |---|---|---|
-| 모드 | `LocalStepped` \| `LocalOSAssigned` \| `RemotePerHost` | 엔진 기본은 Stepped; 설계 권고 기본은 OS 할당(이중바인드 근절) |
-| 포트 기준 | `ports.base_p2p`/`step`, `ports.base_rpc`/`step` | **step 제약**: p2p_step ≥ 2(etcd=p2p+1 예약), rpc_step ≥ 3(ws=http+1, auth=http+2) |
-| 원격 | `RemotePerHost` = 동일 포트 + 서버별 IP | 1서버 1노드 |
+| 모드 | 풀(`resource.Builtin` 또는 server set) → `resource.Assign` | 옛 `LocalStepped`·`LocalOSAssigned`·`RemotePerHost` 는 코드에 없음 |
+| 포트 기준 | server set / `workspace-config` 의 포트 대역 (없으면 내장 기본: p2p 31000, http 8600) | **step 제약**: etcd=p2p+1 예약(wemix 는 p2p+2 까지), ws=http+1, auth=http+2 |
+| 원격 | `--server <name>` / `--all-servers` + `--server-set` | 서버별 IP·포트 대역 |
 
 ### 2.7 실행 위치 (단계 7·9)
 
 | 변곡점 | 설정 위치 |
 |---|---|
 | 로컬 | 기본 |
-| 원격 SSH | `setup --remote-host --remote-user --remote-port`, `CHAINBENCH_REMOTE_PASS` |
+| 원격 SSH | `chain up --target user@host:/path` (옛 `--remote-host/--remote-user/--remote-port` 도 남아 있음), `CHAINBENCH_REMOTE_PASS` |
 | SSH 키인증 | `CHAINBENCH_REMOTE_KEY_FILE` / `_PASSPHRASE` (0600 강제) |
 | 접속정보 파일 | `server-set.yaml` (**gitignore**, `.sample` 만 추적) |
 
@@ -196,20 +203,20 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 | 변곡점 | 설정 위치 | 상태 |
 |---|---|---|
-| 블록 전진 | `engine.NewBlockAdvanceGate(target, timeout)` | ✅ 배선됨 |
-| etcd 리더 | `supervisor.Options.LeaderGate` + `Deps.LeaderGate` | ⚠️ **boundary 만 존재, 구현체 미배선** — 요청 시 오류 |
-| 조인 슬롯 정렬 | `Options.AlignJoinGap` → `JoinWindow(N)` | ✅ 데드라인 파생 |
-| 재시도 | `Options.MaxAttempts` + `Backoff` | ✅ 재시도 시 datadir 삭제로 stale etcd 정리 |
-| 실패 분류 | `supervisor.Classify` | ✅ 5종 방출 |
+| 블록 전진 | `health.NewBlockAdvanceGate` | ✅ 배선됨 |
+| etcd 클러스터 | poa 부트스트랩 phase 의 `poa.VerifyEtcd` / `poa.WaitEtcdCluster` | ✅ `admin.wemixInfo.etcd.cluster` 폴링 |
+| 조인 슬롯 정렬 | — | 옛 `AlignJoinGap`·`JoinWindow` 는 코드에 없음 |
+| 재시도 | — | 옛 `MaxAttempts`·`Backoff` 는 코드에 없음 |
+| 실패 분류 | `process.FailureMode` (`nodemonitor` 가 읽음) | 옛 `supervisor.Classify` 는 코드에 없음 |
 
 ### 2.9 관측 (단계 9 이후)
 
 | 변곡점 | 설정 위치 |
 |---|---|
-| 세션 아티팩트 | `--artifact-root` (기본 `chainbench-out`) |
-| 라이브 대시보드 | `run --dashboard <chainbench-dashboard URL>` |
-| 로그 tail | 로컬 파일 / 원격 `driver.RemoteLogReader`(SSH `tail -c +N`) |
-| chainstate | `chainstate/chainstate.jsonl` + obs 미러 |
+| 세션 아티팩트 | `run --artifact-root` (기본 `~/.chainbench/sessions`) |
+| 라이브 대시보드 | `--dashboard <chainbench-dashboard URL>` (전역 플래그; `run`·`verify` 가 스트림) |
+| 로그 tail | 로컬 파일 / 원격 `process.RemoteLogReader`(SSH) |
+| chainstate | 세션 안의 `chainstate.jsonl` |
 
 ---
 
@@ -250,31 +257,29 @@ chainbench status --workspace-dir /tmp/x                                   # 남
 chainbench stop   --workspace-dir /tmp/x                                   # 종료
 ```
 
-**케이스별 진입점**. env 는 더 이상 별도 파일이 아니라 각 정의서의 `env` 블록이다:
+**케이스별 진입점**. 네트워크 모양은 정의서가 이름으로 부르는 chain-preset(`presets/chain/`)
+이 정하고, `run --chain-preset` 으로 바꿔 끼울 수 있다:
 
 | 케이스 | 정의서 | 비고 |
 |---|---|---|
 | stablenet | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` | 라이브 통과(gstable) |
 | wbft | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` + `--chain-preset wbft-bp4` | `--binary <go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
 | wemix | `tests/tc/common/node/CT-NODE-001-startup-block-production.json` + `--chain-preset wemix-bp4` | 패밀리가 선언한 2-페이즈 부트스트랩이 `chain up` 안에서 돈다 |
-| wemix-wbft | `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
+| wemix-wbft | `tests/tc/go-wemix/hardfork/01-croissant-successors-take-over.json` | `chainPreset: wemix-to-wbft` 의 `upgrade` 블록을 일반 조립 경로가 조립한다. `GWEMIX_BIN`·`GWBFT_BIN` 필요 |
 
 실행은 **단계마다 이름과 결과를 한 줄씩** 찍고, 실패하면 거기서 멈춘다. 어느 단계가 깨졌는지가
-곧 답이 되도록 만든 것은 그대로다.
+곧 답이 되도록 만든 것은 그대로다. 아래는 2026-09-30 에
+`chain up --chain stablenet --workspace-dir /tmp/x --stage deploy` 가 실제로 찍은 줄이다
+(`--stage deploy` 라 init·start 는 돌지 않았다):
 
 ```
 new: stablenet: family wbft, chain id 8283, bootstrap static; keys presets/keys; target local /tmp/x
-allocate: 4 node(s): 4 validator(s) + 0 endpoint(s); ports: built-in defaults; p2p from 31000, http from 8600
-keys: preset:presets/keys: 5 identities, 4 declared validators
+place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600
+keys: keys:presets/keys: 5 identities, 4 declared validators
 genesis: 6273 bytes at /tmp/x/genesis.json, 4 validator(s)
 config: 4 config(s) under /tmp/x
-launchopts: 4 argv(s) assembled
-provision: 5 launch input(s) present on the target
-init: 4 datadir(s) initialized with .../gstable
-start: 4 node(s) started (0 already running); run recorded at /tmp/x/runs/...
-preflight: compose: nothing is composed on the target
-SEQ  ID                  STATUS
-1    stablenet-chain-up  pass
+build: 4 argv(s) assembled
+deploy: 5 launch input(s) present on the target (reused, not rewritten)
 ```
 
 케이스가 부트스트랩의 효과를 확인한다(`waitBlock`, 검증자 수, 피어 수, 핸드오프는 포크 뒤 블록의
@@ -285,6 +290,10 @@ miner). 옛 `chain up` 의 OK/FAIL/TODO 세 결과 중 TODO 는 사라졌다 —
 ## 5. 현재 확인된 결함
 
 문서화 과정에서 실측으로 드러난 것.
+
+> **2026-08-09 기록이다.** 표의 `setup`·`setup.Launch`·`upgrade run`·`upgrade.Handoff` 는 지금
+> 코드에 없다(2026-09-30 확인). 1·3·4 는 poa 패밀리 phase(§1b 순서)로, 2 는 하드포크를 일반
+> 조립 경로로 세우는 것으로 흡수됐고, 5·8 은 명령째 사라졌다. 표는 당시 판단 근거로 남긴다.
 
 | # | 결함 | 영향 | 조치 |
 |---|---|---|---|
@@ -301,4 +310,4 @@ miner). 옛 `chain up` 의 OK/FAIL/TODO 세 결과 중 TODO 는 사라졌다 —
 6 만 go-wemix 와의 계약 차이이며, 2·3 은 static 경로가 이미 올바르게 하는 것을 핸드오프 경로가
 빠뜨린 것이다.
 
-- [`cli-steps.md`](cli-steps.md) — **CLI 기준 3체인 구동 절차 대조.** 공통 9스텝 · 체인별 함정 · wemix 갭 6개와 그것이 `net genesis`/`net start` 두 스텝으로 흡수되는 방식.
+- [`cli-steps.md`](cli-steps.md) — **CLI 기준 3체인 구동 절차 대조.** 공통 9스텝 · 체인별 함정 · wemix 갭 6개와 그것이 `chain genesis`/`chain start` 두 스텝으로 흡수되는 방식.

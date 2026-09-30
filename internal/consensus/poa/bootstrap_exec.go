@@ -19,7 +19,7 @@ type Runner func(ctx context.Context, name string, args ...string) ([]byte, erro
 // GenerateGenesis materializes a wemix genesis from a governance config and a
 // template via `gwemix wemix genesis`. The wemix genesis (extraData bootnode
 // encoding, alloc, wemix fork config) is produced by the binary, not in Go; the
-// caller then injects the croissant section (genesis.InjectCroissant) for the
+// caller then injects the croissant section (genesis.SetConfigSection) for the
 // upgrade.
 func GenerateGenesis(ctx context.Context, r Runner, binary, configPath, templatePath, outPath string) error {
 	out, err := r(ctx, binary, "wemix", "genesis", "--data", configPath, "--genesis", templatePath, "--out", outPath)
