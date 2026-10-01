@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 61,387 |
+| `internal/` | 52 | 61,389 |
 | `cmd/` | 19 | 5,098 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **67,275** |
+| **합계** | **74** | **67,277** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 39,767줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 39,769줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -180,7 +180,7 @@ internal/mcp       2,806  [L6] MCP 표면(요구 14) — 도구 스키마 바인
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
 internal/dashboard   341  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 
-internal/arch      1,405  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
+internal/arch      1,407  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
                           제품 코드 0, import 0 — 문서를 읽고 측정과 맞춰 본다
 internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersBuildDir·EnvDockerServers 스킵 헬퍼.
                           패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0

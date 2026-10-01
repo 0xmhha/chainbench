@@ -14,7 +14,13 @@
 # tests/env/secret/ (docs/SECURITY_KEY_HANDLING.md).
 set -uo pipefail
 
-cd "$(git rev-parse --show-toplevel)" || exit 2
+# The scan root is the tree this script ships in, resolved from its own
+# location rather than from git. Here the two are the same; they are not
+# wherever this tree is vendored into a larger repository, and that has
+# happened. ALLOW_RE below is written in paths relative to THIS tree, so a
+# toplevel that is not this tree would fail to exempt our own fixtures while
+# judging code we do not own.
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || exit 2
 
 # Definite-secret content patterns (no legitimate use in this repo).
 CONTENT_RE='AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{50,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9]{20,}|-----BEGIN (RSA|OPENSSH|EC|DSA|PGP) PRIVATE KEY-----|AWS_SECRET_ACCESS_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9/+]{20,}'
@@ -26,7 +32,12 @@ ALLOW_RE='^(presets/keys/|tests/env/[^/]+\.env$|tests/env/secret\.example/)'
 if [ "${1:-}" = "--all" ]; then
   files=$(git ls-files)
 else
-  files=$(git diff --cached --name-only --diff-filter=ACM)
+  # --relative, because git prints staged paths from the repository root and
+  # this script tests them against the working directory. The two agree here
+  # and the flag changes nothing; where they do not, every path would miss the
+  # `[ -f "$f" ]` guard below and the scan would pass by finding nothing to
+  # read.
+  files=$(git diff --cached --name-only --relative --diff-filter=ACM)
 fi
 [ -z "$files" ] && { echo "check-secrets: nothing to scan"; exit 0; }
 

@@ -24,6 +24,28 @@
 ```bash
 cd env/docker
 cp accounts.env.sample accounts.env            # 열어서 실제 비밀번호로 바꾼다
+./setup.sh                                     # 나머지 전부
+```
+
+`setup.sh` 가 아래 여섯 단계를 순서대로 한다. 단계 이름을 주면 그 단계만 다시
+한다 — 컨테이너를 다시 만든 뒤 `./setup.sh binaries`, 남이 띄운 서버를 점검할 때
+`./setup.sh verify`. `--recreate` 는 컨테이너를 다시 만들고, 그러면 `bin/` 이
+비므로 바이너리를 다시 넣는 단계가 뒤따른다.
+
+| 단계 | 하는 일 |
+|---|---|
+| `check` | docker 가 떠 있나, `accounts.env` 가 sample 그대로가 아닌가 |
+| `generate` | `gen-env.sh` 로 `build/` 재생성 |
+| `image` | 서버 이미지 빌드 |
+| `up` | 컨테이너 기동 |
+| `binaries` | 체인별 **리눅스** 바이너리를 골랑 컨테이너에서 빌드해 전 서버에 넣기 |
+| `verify` | 서버마다 계정과 바이너리 3개가 ELF 로 있는지 |
+
+손으로 하면 이렇다. `setup.sh` 가 하는 일이 이것이다.
+
+```bash
+cd env/docker
+cp accounts.env.sample accounts.env            # 열어서 실제 비밀번호로 바꾼다
 ./gen-env.sh                                   # build/ 에 전부 생성 (손으로 쓰는 파일 0)
 docker build -t chainbench-server:ubuntu24 .
 docker compose -f build/docker-compose.yml up -d
@@ -64,6 +86,9 @@ ws 밴드를 퍼블리시하도록 고쳐졌는데 `build/docker-compose.yml` �
 chainbench-server1` 로 바로 볼 수 있다.
 
 ## 바이너리를 먼저 넣는다
+
+`./setup.sh binaries` 가 이 절의 내용을 그대로 한다(체인 이름을 주면 하나만:
+`./setup.sh binaries go-wemix`). 아래는 그것이 무엇을 하는지와, 왜 그렇게 하는지다.
 
 컨테이너의 `/data/chainbench/bin/` 에 대상 체인의 **리눅스** 바이너리가 있어야 한다. 맥에서 만든 것은 Mach-O 라 돌지 않는다. 골랑 컨테이너에서 만들어 넣는다(2026-09-29 에 이렇게 만들었다).
 
@@ -268,6 +293,112 @@ for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
 > (2026-09-11 수정). 새 포트를 쓰기 시작하면 compose 의 publish 와 localmap 양쪽에 더한다.
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
+
+## 돌아가는 것을 어떻게 보나
+
+스위프를 띄워 놓고 무엇을 보면 되는지. 아래는 모두 읽기만 하므로 도는 스위프에
+영향을 주지 않는다.
+
+### 어디까지 왔나
+
+```bash
+tail -f ~/cbw/sweep-1.log
+```
+
+한 줄에 한 케이스다. 판정은 넷이다 — `PASS`, `FAIL`(케이스가 틀렸다),
+`BLOCKED`(물어보지도 못했다), `NOTRUN`(바이너리를 못 찾았다). **`NOTRUN` 이 보이면
+`TCSWEEP_FLAGS` 를 넘기지 않은 것이다**: 그러면 모든 run 이 로컬로 떨어져 체인
+바이너리를 이 기계의 PATH 에서 찾고, 그것은 컨테이너에만 있다.
+
+지금 어느 케이스를 돌고 있는지는 프로세스가 답한다.
+
+```bash
+ps -eo etime,args | grep '[b]in/chainbench run' | sed -E 's#(--workspace-dir [^ ]*).*#\1#'
+```
+
+### 체인이 정말 도커에 올라갔나
+
+```bash
+W=~/cbw/sweep/c11                                  # 스위프는 cN 을 쓴다
+bin/chainbench chain status --workspace-dir $W     # 8단계 중 어디까지
+bin/chainbench chain show   --workspace-dir $W     # 노드 표
+```
+
+**로컬로 떨어졌는지는 `show` 의 `host` 가 바로 답한다.** `172.30.0.x` 면 컨테이너로
+간 것이고, 맥 경로가 보이면 로컬이다. 노드를 고르는 방법은 여섯 가지다 — `--node`,
+`--label`(`node7`·`en2`), `--host`, `--addr`, `--port`, 그리고 `--json`.
+
+### 노드가 무슨 말을 하나
+
+```bash
+bin/chainbench chain logs --workspace-dir $W --node 1 --lines 50
+```
+
+노드가 올라간 **컨테이너의 로그를 SSH 로 읽어 온다**(필요하면 sudo 로 올라간다).
+로그만 보고 고장이라 읽지 않도록 어느 케이스인지 함께 본다: fault 케이스는 합의를
+일부러 멈추므로 ROUND-CHANGE 반복이 정상이다.
+
+### 테스트가 무엇을 판정했나
+
+증적은 `~/.chainbench/sessions/<id>/UTC-<ts>/` 에 쌓인다.
+
+```bash
+S=$(ls -dt ~/.chainbench/sessions/*/ | head -1)
+cat $S/UTC-*/tests/*/status.json      # 실패 사유 한 줄 — 가장 쓸모 있다
+cat $S/UTC-*/tests/*/steps.json       # 단계별 결과와 오류
+cat $S/UTC-*/session.json             # 케이스별 verdict
+```
+
+여러 세션을 한 판정으로 묶으려면:
+
+```bash
+bin/chainbench report --workspace-dir ~/.chainbench/sessions --all
+```
+
+**플래그 이름이 `--workspace-dir` 인데 받는 것은 세션 디렉터리다.** `--session-dir`
+는 없다.
+
+### 실패한 케이스를 다시 볼 때
+
+스위프는 통과한 것만 지우고, 실패하면 워크스페이스와 컨테이너의 datadir·로그를
+남기고 그 경로를 찍는다(`kept for inspection: ...`). `chain-record.json` 에 구성 id,
+노드별 호스트·포트·pid, `docker`·`serverSet` 설정이 들어 있다. 다 본 뒤 치운다 —
+레코드가 docker 설정을 들고 있으므로 `--docker` 를 다시 줄 필요가 없다.
+
+```bash
+bin/chainbench chain stop --workspace-dir $W   # rm 은 돌고 있는 노드를 거부한다
+bin/chainbench chain rm   --workspace-dir $W
+```
+
+### 컨테이너를 직접 볼 때
+
+하네스를 못 믿을 때의 길이다.
+
+```bash
+for i in $(seq 1 15); do
+  n=$(docker exec chainbench-server$i sh -c 'ps -eo args | grep -c "[/]data/chainbench/bin/"')
+  echo "server$i: $n"
+done
+
+docker exec chainbench-server1 ls /data/chainbench/logs      # <구성id>/node1.log
+docker exec chainbench-server1 ls /data/chainbench/node      # <구성id>/node1
+docker exec chainbench-server1 ls /data/chainbench/runtime   # <구성id>/genesis·config
+docker port chainbench-server1                               # 지금 무엇을 열었나
+```
+
+**로그는 노드가 있는 서버에만 있다.** `--all-servers` 는 서버당 한 노드를 두므로
+server1 에는 `node1.log` 뿐이고 node7 의 로그는 server7 에 있다.
+
+### 스위프를 둘 동시에 돌리지 않는다
+
+경로는 `TCSWEEP_WS` 로 가를 수 있지만 **서버 포트가 겹친다.** 할당기가 서버마다
+슬롯 1을 주므로 두 스위프가 모두 8601 을 원하고, `another composition holds it` 로
+BLOCKED 가 난다. 그러면 남의 구성을 남겨진 것으로 오독하게 된다. 2026-10-01 에 그렇게
+한 번 틀렸다. 먼저 확인한다:
+
+```bash
+ps -eo etime,args | grep '[t]csweep'
+```
 
 ## 개발 계정 주입 (accounts.env)
 
