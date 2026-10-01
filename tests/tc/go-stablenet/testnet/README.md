@@ -64,13 +64,29 @@ bin/chainbench run tests/tc/go-stablenet/testnet/02-block-advances.json
 자금을 최소로 하기 위해서다. 받는 쪽은 그 실행이 방금 만든 주소라 시작 잔액이 0 이고 절대값을
 쓸 수 있다. 보내는 쪽은 절대값을 모르므로 전후 차분이 송금액과 수수료의 합과 같은지만 본다.
 
+## 키 파일의 형식
+
+`keyFile` 은 **평문 hex** 를 담은 파일을 읽는다. keystore JSON 은 비밀번호가 필요한데 선언에
+그것을 적을 자리가 없어 거절하고, 거절할 때 꺼내는 방법을 함께 말한다.
+
+```sh
+chainbench keyring new --keyring-dir ~/.chainbench/keys/gstable-testnet --count 1 --validators 0
+chainbench keyring export --keyring-dir ~/.chainbench/keys/gstable-testnet --name node1 --yes
+```
+
+꺼낸 hex 를 저장소 **밖** 파일에 `chmod 600` 으로 두고 그 경로를 변수에 건다. 그 주소에 자금을
+넣는 것은 사람이 한다 — 남의 망에는 faucet 을 부를 권한이 없다.
+
 ## 확인 범위
 
-다섯 건 모두 **로컬 go-stablenet 망을 testnet 대신 세워** 돌려 통과를 확인했다(2026-10-01).
-05 는 그 망에서 새 계정을 만들어 자금을 보낸 뒤 그 키를 `GSTABLE_TESTNET_KEY_FILE` 로 걸고
-돌렸다. 처음에 `node1` 의 키를 그대로 썼더니 전후 차분이 맞지 않았는데, node1 이 블록을
-만드는 노드여서 같은 구간에 보상이 들어왔기 때문이다. 실제 testnet 의 지불 계정은 생산자가
-아니므로 그 단언은 그대로 둔다.
+다섯 건 모두 **실제 go-stablenet testnet 에 대고** 돌려 통과를 확인했다(2026-10-01). 그 망은
+`Gstable/v1.1.0-stable-71e3f820`, chain id 8283, 높이 약 2,114만이었다. 05 는 그 망에서 1 Gwei
+를 실제로 보냈고, 받는 쪽 잔액과 보낸 쪽 전후 차분이 모두 맞았다.
 
-실제 testnet 에 대고는 돌려 보지 않았다 — 이 기계에 그 주소가 없다. 붙는 기제와 단언이
-성립하는 것까지가 확인된 범위이고, 남의 망의 응답 지연이나 rate limit 은 겪어 보지 않았다.
+**로컬 망에서 먼저 돌릴 때 주의할 것.** testnet 대신 로컬 망을 세워 05 를 돌린다면 payer 에
+`node1` 의 키를 쓰면 안 된다. node1 은 블록을 만드는 노드라 같은 구간에 보상이 들어와 전후
+차분이 맞지 않는다. 그 망에서 새 계정을 만들어 자금을 보내고 그 키를 걸어야 한다. 실제
+testnet 의 지불 계정은 생산자가 아니므로 단언 자체는 고칠 것이 없다.
+
+겪어 보지 않은 것은 남의 망의 응답 지연과 rate limit 이다. 이번 실행은 다섯 건이 연달아
+통과했을 뿐이고, 그 망이 혼잡할 때 어떻게 되는지는 모른다.

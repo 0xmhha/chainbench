@@ -86,7 +86,27 @@ func declaredSource(keysDir, label string, d dsl.AccountV2) (keyring.Source, err
 	if _, err := os.Stat(path); err != nil {
 		return nil, fmt.Errorf("keyFile %s: %w (an unset ${VAR} expands to nothing, which is the usual cause)", path, err)
 	}
+	// A keystore is refused here rather than four frames down in the decoder,
+	// because the message that matters is the way out and the decoder does not
+	// know it: there is no password in a declaration to give it.
+	if looksLikeKeystore(path) {
+		return nil, fmt.Errorf("keyFile %s is a keystore JSON, which needs a password a declaration has nowhere to put; write the hex instead: chainbench keyring export --keyring-dir <dir> --name <label> --yes", path)
+	}
 	return keyring.FileSource{Path: path}, nil
+}
+
+// looksLikeKeystore reports whether a key file is an encrypted keystore rather
+// than a raw hex key, by the one byte that tells them apart — the same test the
+// decoder makes. A file it cannot read is left to the decoder to complain about.
+func looksLikeKeystore(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = f.Close() }()
+	var head [1]byte
+	n, err := f.Read(head[:])
+	return err == nil && n == 1 && head[0] == '{'
 }
 
 // accountSource keeps a declared account's identity stable across runs.

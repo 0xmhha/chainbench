@@ -377,6 +377,11 @@ func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCE
 				endpoint = eps[0].RPCURL
 			}
 			if err := prepareAccounts(ctx, ring, "", endpoint, spec.EnvAccounts, ""); err != nil {
+				// The reason is set here and not left to the engine: the engine
+				// records a RunSpec error as a bare "fail", because every
+				// failure the interpreter raises has already written its own.
+				// This one happens before the interpreter is reached.
+				rec.Reason(fmt.Sprintf("declared accounts could not be prepared: %v", err))
 				return session.StatusFail, fmt.Errorf("engine: attach: accounts: %w", err)
 			}
 		}

@@ -234,7 +234,7 @@
               },
               "keyFile": {
                 "type": "string",
-                "description": "Path to a file holding this account's private key, so the label means an account that already exists and already holds funds. For a network this run did not compose — there is nobody to mint from and nothing to fund with. Exclusive with fund. ${VAR} is expanded, which is how a key path stays out of a committed case."
+                "description": "Path to a file holding this account's private key as raw hex, so the label means an account that already exists and already holds funds. For a network this run did not compose — there is nobody to mint from and nothing to fund with. A keystore JSON is refused for want of a password; chainbench keyring export writes the hex it holds. Exclusive with fund. ${VAR} is expanded, which is how a key path stays out of a committed case."
               }
             },
             "additionalProperties": false

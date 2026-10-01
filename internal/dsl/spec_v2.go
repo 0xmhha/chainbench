@@ -140,11 +140,14 @@ type AccountV2 struct {
 	// 0x-hex). Empty leaves the account at zero.
 	Fund string `json:"fund,omitempty"`
 	// KeyFile is where this account's key already lives, for an account the
-	// run must not mint: a raw hex key, or an encrypted keystore JSON. It takes
-	// "${VAR}" as an endpoint does, which is the point — against a network this
-	// harness did not compose, the account that pays holds funds somebody else
-	// put there, and neither its key nor its address belongs in a committed
-	// case.
+	// run must not mint. It holds a raw hex key. A keystore JSON is refused
+	// for want of a password, and the grammar has nowhere to declare one yet;
+	// `chainbench keyring export` writes the hex a keystore holds.
+	//
+	// It takes "${VAR}" as an endpoint does, which is the point — against a
+	// network this harness did not compose, the account that pays holds funds
+	// somebody else put there, and neither its key nor its address belongs in
+	// a committed case.
 	//
 	// Without it a label is minted on first use and read back after, which is
 	// right for a disposable network and useless anywhere else: a minted

@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-testnet-funded",
-  "description": "stablenet-testnet 과 같되, 자금을 쥔 계정 하나를 라벨 payer 로 엮는다. 키는 GSTABLE_TESTNET_KEY_FILE 이 가리키는 저장소 밖 파일에서 읽는다 — 평문 hex 또는 암호화된 keystore JSON 이다. 케이스에는 주소도 키도 적히지 않고 변수 이름만 남는다. 읽기만 하는 케이스는 keyFile 이 필요 없으므로 stablenet-testnet 을 쓴다. 파일이 없으면 변수를 잊은 것이고 실행이 거기서 멈춘다.",
+  "description": "stablenet-testnet 과 같되, 자금을 쥔 계정 하나를 라벨 payer 로 엮는다. 키는 GSTABLE_TESTNET_KEY_FILE 이 가리키는 저장소 밖 파일에서 평문 hex 로 읽는다. keystore JSON 은 비밀번호를 받을 자리가 아직 없어 거절된다 — chainbench keyring export 가 그 안의 hex 를 꺼낸다. 케이스에는 주소도 키도 적히지 않고 변수 이름만 남는다. 읽기만 하는 케이스는 keyFile 이 필요 없으므로 stablenet-testnet 을 쓴다. 파일이 없으면 변수를 잊은 것이고 실행이 거기서 멈춘다.",
   "chain": "stablenet",
   "attach": { "rpc": ["${GSTABLE_TESTNET_RPC}"], "provides": ["rpc"] },
   "accounts": { "payer": { "keyFile": "${GSTABLE_TESTNET_KEY_FILE}" } }
