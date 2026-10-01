@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "testnet-block-by-hash-consistency",
+  "description": "번호로 조회한 블록을 그 해시로 다시 조회하면 같은 블록이 오는지 본다. 자기 일관성이라 다른 트래픽이 섞여도 흔들리지 않는다. 머리 블록은 재구성될 수 있으므로 latest 를 쓰지 않고, 머리에서 몇 개 뒤로 물러난 블록을 잡아 쓴다.",
+  "requires": ["rpc"],
+  "skipsOn": [],
+  "chainPreset": "stablenet-testnet",
+  "steps": [
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "save": "head"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": ["$head", "4"],
+      "format": "hex",
+      "save": "settled"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["$settled", false],
+      "select": "hash",
+      "save": "h"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": ["$h", false],
+      "select": "number",
+      "compare": "Equal",
+      "is": "$settled"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByHash",
+      "params": ["$h", false],
+      "select": "hash",
+      "compare": "Equal",
+      "is": "$h"
+    }
+  ]
+}

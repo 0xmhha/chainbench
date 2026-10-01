@@ -154,7 +154,14 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	eps := make([]node.RPCEndpoint, len(cfg.RPCURLs))
 	for i, u := range cfg.RPCURLs {
 		if u == "" {
-			return nil, fmt.Errorf("engine: attach RPC URL %d is empty", i+1)
+			// An attach declaration carries "${VAR}" so a machine's address
+			// stays out of a committed case. Unset, the expansion leaves an
+			// empty string, and "URL is empty" sent the reader looking at the
+			// wrong thing — the declaration is fine, the environment is not.
+			return nil, fmt.Errorf(
+				"engine: attach RPC URL %d is empty — the chain-preset's attach.rpc expanded to nothing; "+
+					"set the environment variable it names (a preset with no default refuses rather than "+
+					"quietly attaching to a local address)", i+1)
 		}
 		eps[i] = node.RPCEndpoint{RPCURL: u}
 	}
