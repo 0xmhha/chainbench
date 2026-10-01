@@ -30,18 +30,18 @@ import (
 // shrink. A new entry means a step learned to do two things, and it has to be
 // justified here in front of a reviewer rather than in a diff nobody re-reads.
 var targetBranches = map[string]string{
-	"workspace_new.go:New":              "a local target defaults its data root to the workspace; a remote one was given one",
-	"steps_place.go:Allocate":           "only a remote pool has host names distinct from addresses, so only then is there a name to record",
-	"steps_compose.go:genesisArtifacts": "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
-	"steps_compose.go:shipIdentities":   "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
-	"steps_compose.go:shipNodeBinaries": "a local target launches the binary where it already is — the same operation as shipping it, with no work to do",
-	"occupancy.go:scanPorts":            "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
-	"phases.go:runPhaseActions":         "the bootstrap's keystore, socket and config are on the target, so the paths point there",
-	"verbs_network.go:NetworkRunner":    "there is a command runner only when there is a machine to run commands on",
-	"workspace.go:keysBase":             "where the keys are: under the target's data root when remote, the key set itself when local",
-	"workspace.go:RPCHost":              "which host answers RPC",
-	"workspace.go:OpenHost":             "whether there is a machine under a node at all: a local composition's nodes are processes here, so there is nothing to open and no privilege boundary to cross",
-	"steps_genesis.go:Genesis":          "where the network runs is a fact about it, advertised as target:remote or target:local so a case that needs a shell on a node's machine can ask for one",
+	"workspace_new.go:New":               "a local target defaults its data root to the workspace; a remote one was given one",
+	"steps_place.go:Allocate":            "only a remote pool has host names distinct from addresses, so only then is there a name to record",
+	"steps_compose.go:genesisArtifacts":  "a genesis its own binary writes runs where the binary is; the inputs are staged over the same access init and start use",
+	"steps_compose.go:shipIdentities":    "a local target ships nothing because keysBase already IS the key set — the same operation, with no work to do",
+	"steps_compose.go:shipNodeBinaries":  "a local target launches the binary where it already is — the same operation as shipping it, with no work to do",
+	"occupancy.go:scanPorts":             "a port is probed by whoever can bind it; remotely that means running the probe on that machine, which inspector owns",
+	"phases.go:runPhaseActions":          "the bootstrap's keystore, socket and config are on the target, so the paths point there",
+	"verbs_network.go:NetworkRunner":     "there is a command runner only when there is a machine to run commands on",
+	"workspace.go:keysBase":              "where the keys are: under the target's data root when remote, the key set itself when local",
+	"workspace.go:RPCHost":               "which host answers RPC",
+	"workspace.go:OpenHost":              "whether there is a machine under a node at all: a local composition's nodes are processes here, so there is nothing to open and no privilege boundary to cross",
+	"steps_genesis.go:everyNodeIsRemote": "where the network runs is a fact about it, advertised as target:remote or target:local so a case that needs a shell on a node's machine can ask for one. It moved out of Genesis on 2026-10-01 and now asks the placement rather than the workspace Target: --all-servers takes Target from the set's FIRST entry, so a set of mixed kinds answered by file order",
 
 	// The list is exhausted: every entry left is a fact about the target, not a
 	// branch around a missing capability.
