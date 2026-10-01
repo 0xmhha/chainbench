@@ -20,28 +20,29 @@ import (
 // as English at the call site the way `json.Marshal` and `xml.Marshal` do; the
 // package is part of the sentence rather than a disambiguator bolted on.
 var nameShared = map[string]string{
-	// 동사다. 호출하는 자리에 패키지 이름이 늘 앞에 붙어 문장이 된다.
-	"Build":            "genesis 를 만드는 일과 report 를 만드는 일이다",
-	"Compose":          "genesis 를 조립하는 일과, preflight 가 '아직 아무것도 조립되지 않았다'고 말하는 단계다",
-	"DefaultKeySetDir": "app 에서 operation 을 거쳐 store 까지 그대로 전달한다",
-	"Generate":         "키셋을 만드는 일과 리포트를 만드는 일이다",
-	"List":             "키셋이 무엇을 담았는지와, 아티팩트 루트에 어떤 세션이 있는지를 각각 센다",
-	"Load":             "토폴로지·외부 플러그인·검증자 명부를 각각 읽는다",
-	"Parse":            "테스트 스펙을 읽는 일과 서버 지정자를 읽는 일이다",
-	"Register":         "체인 플러그인을 등록하는 일과 DSL 어휘를 등록하는 일이다",
-	"Resolve":          "설정 계층을 겹치는 일과 네트워크 ID 를 확정하는 일이다",
+	// Verbs. The package name always precedes them at the call site and the two together read as a sentence.
+	"Build":            "building a genesis, and building a report",
+	"Compose":          "assembling a genesis, and the preflight step that says nothing has been assembled yet",
+	"DefaultKeySetDir": "passed straight through from app via operation to store",
+	"Generate":         "generating a key set, and generating a report",
+	"List":             "what a key set holds, and which sessions an artifact root has",
+	"Load":             "reading a topology, an external plugin, and a validator roster",
+	"Parse":            "reading a test spec, and reading a server selector",
+	"Register":         "registering a chain plugin, and registering DSL vocabulary",
+	"Resolve":          "layering configuration, and settling the network id",
 
-	// 구조적 역할 이름이다. 패키지가 앞에 붙어야 뜻이 완성되므로 겹치는 것이 정상이다.
-	"Config":  "각 패키지가 자기 설정 구조체를 갖는다",
-	"Deps":    "각 패키지가 자기 경계에서 받는 의존을 선언한다. 패키지 전역 상태를 두지 않기로 한 결과다",
-	"Inputs":  "각 패키지가 자기 호출의 입력을 선언한다",
-	"Options": "각 패키지가 자기 호출의 선택 인자를 선언한다",
-	"Request": "각 패키지가 자기 요청 구조체를 갖는다",
-	"Result":  "각 패키지가 자기 결과 구조체를 갖는다",
+	// Structural role names. The package completes the meaning, so sharing them is
+	// the expected shape rather than a collision.
+	"Config":  "every package has its own configuration struct",
+	"Deps":    "every package declares what it takes at its boundary. This is what having no package-global state looks like",
+	"Inputs":  "every package declares the inputs of its own call",
+	"Options": "every package declares the optional arguments of its own call",
+	"Request": "every package has its own request struct",
+	"Result":  "every package has its own result struct",
 
-	// 계층을 넘기며 같은 상수를 다시 내놓는다.
-	"KeySetEnv":     "app 과 operation 이 store 의 환경변수 이름을 표면 도움말용으로 되비친다",
-	"GenesisParams": "registry 가 wbft 의 파라미터를 되비쳐, core 가 패밀리를 import 하지 않게 한다. 주석에 그 이유가 적혀 있다",
+	// The same constant offered again as it crosses a layer.
+	"KeySetEnv":     "app and operation mirror store's environment variable name for surface help",
+	"GenesisParams": "registry mirrors wbft's parameters so core need not import the family. The comment there says so",
 }
 
 // nameCollisionDebt holds domain words that two concepts are currently sharing.
@@ -52,41 +53,41 @@ var nameShared = map[string]string{
 //
 // This is the A7 measurement, taken 2026-09-07 with [Collisions].
 var nameCollisionDebt = map[string]string{
-	"Runner":      "poa 는 명령을 실행하는 것을, process 는 원격 셸을 실행하는 것을 가리킨다",
-	"Handler":     "S 트랙 — registry 와 mcp 가 같은 시그니처를 따로 선언한다. MCP 스키마를 줄일 때 하나로 모은다",
-	"NewServer":   "S 트랙 — dashboard 와 mcp 가 각자 서버를 만든다",
-	"Server":      "S 트랙 — 위 둘에 resource 의 '노드가 실제로 도는 기계'까지 셋이다",
-	"Fingerprint": "B2 — session 의 타입과 interp 의 생성 함수다. 타입이 string 으로 돌아가면 함수만 남는다",
-	"Network":     "app 은 붙여 둔 네트워크를 읽고, keyring 은 프리셋의 체인 파라미터를 가리킨다",
-	"Chain":       "app 은 플러그인을 찾아 주고, nodeconfig 는 설정 구조체다",
-	"GenerateKey": "accounts 것은 저장하지 않는 테스트용이라 같은 이름을 쓰면 안 된다",
-	"Identity":    "derive 는 드러내도 되는 파생 신원을, nodeconfig 는 노드가 누구인지를 가리킨다",
-	"Node":        "app 은 core/node 의 별칭이지만 preflight 것은 '원하는 역할을 낼 수 있는가'의 판정 대상이다",
-	"NodeSwap":    "chainsetup 은 노드를 바꾸는 동작이고 hardfork 는 그 교체를 적은 구조체다",
-	"Step":        "chainsetup 은 session.Step 의 별칭인데 poa 것은 부트스트랩의 한 동작이다",
-	"Entry":       "arch 는 등록된 기능을, keyring 은 키 항목을, node 는 부트 항목을 가리킨다",
-	"Account":     "poa 는 제네시스 선충전 계정을, validatorset 은 역할이 붙은 계정을, testhelper 는 DSL 이 쓰는 계정을 가리킨다",
-	"Label":       "core/node 의 주석이 이미 '가끔 철자가 겹치는 다른 개념'이라고 적어 두었다",
-	"Spec":        "노드 하나의 설정, 테스트 정의, 서버 지정자. 셋이 서로 남이다",
-	"Plan":        "핸드오프 계획, 하드포크 계획, 기동 계획, 그리고 resource 의 포트 배치 함수다",
-	"Report":      "app 의 조회, health 의 검증 결과, report 의 세션 리포트다",
-	"Kind":        "collector 는 이벤트 종류를, resource 는 서버가 도는 방식을 가리킨다",
-	"Phase":       "collector 는 파이프라인 구간을, registry 는 먼저 끝나야 하는 동작 묶음을 가리킨다",
-	"Source":      "genesis 는 extraData 를 내놓는 것을, keyring 은 키를 내놓는 것을 가리킨다",
-	"Store":       "collector 는 이벤트 저장소를, filestore 는 파일 저장소를 가리킨다",
-	"Host":        "inspector 는 문을 두드릴 대상을, resource 는 주소가 붙은 기계를 가리킨다",
-	"Ports":       "inspector 는 포트를 확인하는 동작이고 resource 는 배정된 포트 묶음이다. 08-25 에도 진짜 신호로 지목된 자리다",
-	"Auth":        "core/node 와 core/remote 가 같은 map[string]any 를 각자 선언한다. 하나로 모을 수 있다",
-	"Opener":      "operation 은 필요한 것만 추린 인터페이스이고 resource 것은 구현체다",
-	"Registry":    "interp 는 어휘 레지스트리 인터페이스이고 testhelper 는 그것을 만들어 주는 함수다",
-	"Lookup":      "registry 는 기능을, assert 는 단언을 찾고, resource 것은 자격증명을 찾는 함수 타입이다",
-	"Defaults":    "nodeconfig 는 기본값을 만드는 함수이고 resource 는 기본값 구조체다",
-	"Inventory":   "chainsetup 은 재고를 모으는 함수이고 resource 는 그 재고다",
-	"Verdict":     "preflight 는 얼마나 다시 지어야 하는지를, nodemonitor 는 게이트가 다음에 무엇을 할지를 가리킨다",
+	"Runner":      "poa means running a command, process means running a remote shell",
+	"Handler":     "S track -- registry and mcp declare the same signature separately. They merge when the MCP schema shrinks",
+	"NewServer":   "S track -- dashboard and mcp each build a server",
+	"Server":      "S track -- the two above, plus resource's machine a node actually runs on: three",
+	"Fingerprint": "B2 -- session's type and interp's constructor. Only the function remains once the type goes back to a string",
+	"Network":     "app reads an attached network, keyring means a preset's chain parameters",
+	"Chain":       "app resolves a plugin, nodeconfig is a configuration struct",
+	"GenerateKey": "the accounts one is a throwaway for tests and must not carry this name",
+	"Identity":    "derive means a derived identity safe to show, nodeconfig means who a node is",
+	"Node":        "app aliases core/node, while preflight's is the subject of can this fill the role asked for",
+	"NodeSwap":    "chainsetup is the act of swapping a node, hardfork is the struct recording that swap",
+	"Step":        "chainsetup aliases session.Step, while poa's is one act of the bootstrap",
+	"Entry":       "arch means a registered capability, keyring a key entry, node a boot entry",
+	"Account":     "poa means a genesis-prefunded account, validatorset an account with a role, testhelper an account the DSL uses",
+	"Label":       "core/node's comment already calls it a different concept that sometimes shares a spelling",
+	"Spec":        "one node's configuration, a test definition, a server selector. Three strangers",
+	"Plan":        "a handover plan, a hardfork plan, a launch plan, and resource's port placement function",
+	"Report":      "app's lookup, health's verification result, report's session report",
+	"Kind":        "collector means a kind of event, resource means how a server runs",
+	"Phase":       "collector means a pipeline stage, registry a group of actions that must finish first",
+	"Source":      "genesis means what offers extraData, keyring what offers a key",
+	"Store":       "collector means an event store, filestore a file store",
+	"Host":        "inspector means what to knock on, resource a machine with an address",
+	"Ports":       "inspector is the act of checking ports, resource is the set assigned. 08-25 named this a real signal too",
+	"Auth":        "core/node and core/remote each declare the same map[string]any. They can be merged",
+	"Opener":      "operation is the narrowed interface, resource's is the implementation",
+	"Registry":    "interp is the vocabulary registry interface, testhelper the function that builds one",
+	"Lookup":      "registry finds a capability, assert finds an assertion, resource's is the function type that finds a credential",
+	"Defaults":    "nodeconfig is the function that makes defaults, resource is the defaults struct",
+	"Inventory":   "chainsetup is the function that gathers an inventory, resource is that inventory",
+	"Verdict":     "preflight means how much has to be rebuilt, nodemonitor what the gate does next",
 
-	// HSM 이관 동안만이다. Machine 은 옛 core/lifecycle 의 기계가 지워지면서
-	// 사라졌다. State 는 record 이름을 고치는 일이 남아 있다.
-	"State": "core/statemachine 은 Enter·Exit·Process 를 가진 state 객체를, chainsetup 은 디스크에 남는 record 를 가리킨다(app 은 그 별칭이다). 옛 이름을 record 로 고치는 것은 FormatVersion 2 로 올리는 commit 15 의 일이다",
+	// For the duration of the HSM migration only. Machine went when the old
+	// core/lifecycle machine was deleted; State waits on renaming the record.
+	"State": "core/statemachine means a state object with Enter, Exit and Process; chainsetup means the record left on disk (app aliases it). Renaming the old one to record belongs to commit 15, which raises FormatVersion to 2",
 }
 
 // TestNamesDoNotCollide is A7: an exported name declared at package level in

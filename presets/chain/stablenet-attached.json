@@ -2,11 +2,16 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-attached",
-  "description": "stablenet: 이미 떠 있는 망에 붙는다. 이 선언은 망을 만들지 않는다 — 엔드포인트를 가리킬 뿐이다. GSTABLE_RPC 로 주소를 바꾼다(기본값은 stablenet-bp4 의 node1). 이름이 GSTABLE_BIN 과 같은 꼴인 것은, 어느 체인의 무엇인지가 변수 이름에 있어야 체인이 늘어도 섞이지 않기 때문이다. 망을 세운 사람만 그 망이 무엇을 주는지 알기 때문에 keysDir 와 provides 도 여기서 말한다.",
+  "description": "stablenet: attaches to a network that is already up. This declaration composes nothing — it points at an endpoint. GSTABLE_RPC changes the address (the default is stablenet-bp4's node1). The name follows the shape of GSTABLE_BIN because the variable has to say which chain and which thing, or they blur together as chains are added. keysDir and provides are stated here too, since only whoever composed the network knows what it offers.",
   "chain": "stablenet",
   "attach": {
-    "rpc": ["${GSTABLE_RPC:-http://127.0.0.1:8600}"],
+    "rpc": [
+      "${GSTABLE_RPC:-http://127.0.0.1:8600}"
+    ],
     "keysDir": "presets/keys",
-    "provides": ["rpc", "consensus"]
+    "provides": [
+      "rpc",
+      "consensus"
+    ]
   }
 }

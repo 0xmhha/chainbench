@@ -275,7 +275,8 @@ func (ctxClock) Sleep(ctx context.Context, d time.Duration) error {
 }
 
 // stepSink records every verdict and recovery attempt into the run's setup
-// steps, so a run that waited or restarted before testing says so (E6: 판정 증적).
+// steps, so a run that waited or restarted before testing says so (E6: the
+// evidence behind the verdict).
 type stepSink struct{ steps *[]string }
 
 func (s stepSink) Verdict(round int, r nodemonitor.NodeReport) {
