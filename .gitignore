@@ -59,10 +59,6 @@ bin/
 
 .claude/settings.local.json
 
-# Test environment secrets (private keys, SSH credentials, node IP/URL mappings)
-# Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
-tests/env/secret/
-
 # Server set: host addresses, node port assignments, data roots, and SSH
 # access. All of it is site-specific and sensitive — NEVER commit real values.
 # Only server-set.sample.yaml is tracked (design §7).
@@ -84,9 +80,9 @@ remote-server-config.yml
 
 # --- Secrets hardening (defense in depth) --------------------------------------
 # NEVER commit real private keys or credentials. The only intentional key
-# material in this repo is presets/keys/ (labeled TEST FIXTURE ONLY) and the
-# public test addresses in tests/env/*.env. Real secrets belong in the
-# gitignored tests/env/secret/ (see docs/SECURITY_KEY_HANDLING.md).
+# material in this repo is presets/keys/ (labeled TEST FIXTURE ONLY). Real
+# secrets belong outside the repository, referenced from the server set, which
+# the rule above keeps untracked (see docs/SECURITY_KEY_HANDLING.md).
 
 # The keyring's default ring location, from when it WAS the relative
 # keys/default. It is ~/.chainbench/keys/default now (store.DefaultKeySetDir),
@@ -106,8 +102,8 @@ id_rsa.*
 id_ed25519
 id_ed25519.*
 *.keystore
-# Personal/real env overrides (the tracked tests/env/*.env are public fixtures;
-# a literal ".env" or "*.env.local" is treated as private).
+# Personal/real env overrides. No .env file is tracked any more, so a literal
+# ".env" or "*.env.local" is private without exception.
 .env
 .env.*
 *.env.local
