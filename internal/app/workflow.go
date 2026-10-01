@@ -51,6 +51,11 @@ type AttachRunIn struct {
 	// attached: the addresses are the key set's, and without it the run has no
 	// way to turn "node1" into one.
 	KeysDir string
+	// AllowChainMismatch runs even when the endpoint does not answer as the
+	// declared chain. It exists for a network whose operator chose a chain id
+	// other than the built-in default, which the probe reads as another chain;
+	// it is not for silencing a genuinely wrong endpoint.
+	AllowChainMismatch bool
 	// Specs are raw DSL JSON blobs (already env-resolved).
 	Specs [][]byte
 	// Nodes is the network as its composer recorded it, with the roles a spec
@@ -150,6 +155,11 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	}
 	if len(in.RPCURLs) == 0 {
 		return "", fmt.Errorf("app: attach run: no endpoint to attach to")
+	}
+	// The declaration claims a chain; nothing composed this network, so the
+	// claim is only an assertion until the endpoint is asked.
+	if err := testengine.VerifyAttachedChain(ctx, in.Chain, in.RPCURLs[0], in.AllowChainMismatch); err != nil {
+		return "", fmt.Errorf("app: attach run: %w", err)
 	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,

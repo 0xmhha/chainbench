@@ -83,3 +83,63 @@ func TestApplicableWithCaps_SkipsOnTurnsASkipIntoADecision(t *testing.T) {
 		t.Errorf("a spec that runs here gave %+v, want Runs=true Stale=false", got)
 	}
 }
+
+// TestApplicableWithCaps_AMissingTargetIsForeseen pins the one capability whose
+// absence is not a surprise. registry.CapTarget says asking for it "turns a run
+// on the wrong target into a SKIP with a reason", but skipsOn names chains and
+// can never spell "this target is not remote". Without this the only case that
+// asks for it failed on every local run while four documents said it skipped.
+func TestApplicableWithCaps_AMissingTargetIsForeseen(t *testing.T) {
+	local := applicableWithCaps("stablenet", []string{"rpc", "consensus", "target:local"})
+	spec := dsl.Spec{
+		Requires: []string{"rpc", "consensus", "target:remote"},
+		SkipsOn:  []string{},
+	}
+	got := local(spec)
+	if got.Runs {
+		t.Fatal("a spec requiring target:remote must not run on a local target")
+	}
+	if !got.Foreseen {
+		t.Error("requires already declared it; the skip is foreseen, not a failure")
+	}
+	if got.Stale {
+		t.Error("nothing was declared in skipsOn, so nothing can be stale")
+	}
+
+	remote := applicableWithCaps("stablenet", []string{"rpc", "consensus", "target:remote"})
+	if !remote(spec).Runs {
+		t.Error("the same spec must run where the target does provide it")
+	}
+}
+
+// TestApplicableWithCaps_AMissingContractIsStillASurprise is the other half:
+// the narrowing is for target: alone. A contract:, fork: or engine: capability
+// the network does not advertise is a fact about how it was composed, and a
+// spec quietly vanishing over one is what the guard exists to catch.
+func TestApplicableWithCaps_AMissingContractIsStillASurprise(t *testing.T) {
+	applies := applicableWithCaps("stablenet", []string{"rpc"})
+	got := applies(dsl.Spec{
+		Requires: []string{"rpc", "contract:govMinter"},
+		SkipsOn:  []string{},
+	})
+	if got.Runs {
+		t.Fatal("the capability is not provided, so it cannot run")
+	}
+	if got.Foreseen {
+		t.Error("a missing contract: capability is not foreseen by requires alone")
+	}
+}
+
+// TestApplicableWithCaps_MixedUnmetIsNotForeseen guards the boundary: a spec
+// missing BOTH a target: and a contract: capability is still a surprise, so one
+// unmeetable target cannot launder a genuine misconfiguration into a skip.
+func TestApplicableWithCaps_MixedUnmetIsNotForeseen(t *testing.T) {
+	applies := applicableWithCaps("stablenet", []string{"rpc", "target:local"})
+	got := applies(dsl.Spec{
+		Requires: []string{"rpc", "target:remote", "contract:govMinter"},
+		SkipsOn:  []string{},
+	})
+	if got.Foreseen {
+		t.Error("only target: unmet is foreseen; mixed with a real gap it is not")
+	}
+}

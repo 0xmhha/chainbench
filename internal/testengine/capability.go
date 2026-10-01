@@ -3,6 +3,7 @@ package testengine
 import (
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
@@ -51,7 +52,9 @@ type Applicability struct {
 	Runs bool
 	// Foreseen is whether a spec that does not run said it would not. A spec
 	// that declares no skipsOn foresees every skip, which is the behaviour
-	// everything had before the field existed.
+	// everything had before the field existed. A spec whose only unmet
+	// requirement is a target: capability also foresees it — see
+	// unmetAreAllTarget.
 	Foreseen bool
 	// Stale is a spec that declared it would skip on this chain and did not.
 	// The declaration outlived what it described, and a reader who trusts it
@@ -82,6 +85,37 @@ func applicableWithCaps(chain string, provided []string) func(dsl.Spec) Applicab
 				break
 			}
 		}
-		return Applicability{Runs: runs, Foreseen: declared, Stale: runs && declared}
+		// skipsOn names CHAINS, so it cannot say "skipped because this target
+		// is not remote" — and registry.CapTarget already states the intent
+		// for that case: "asking for it turns a run on the wrong target into a
+		// SKIP with a reason". requires is where that was declared, so the
+		// declaration exists; it is just not spelled in skipsOn and never can
+		// be. Only target: is treated this way. A missing contract:, fork: or
+		// engine: capability is a fact about how the network was composed, and
+		// a spec vanishing over one of those is the surprise the guard exists
+		// for.
+		foreseen := declared || (!runs && chainOK(s) && unmetAreAllTarget(s.Requires, provided))
+		return Applicability{Runs: runs, Foreseen: foreseen, Stale: runs && declared}
 	}
+}
+
+// unmetAreAllTarget reports whether every requirement the target does not meet
+// is a target: capability. False when nothing is unmet, so a caller cannot read
+// "all unmet are target" as "this ran".
+func unmetAreAllTarget(required, provided []string) bool {
+	set := make(map[string]bool, len(provided))
+	for _, c := range provided {
+		set[c] = true
+	}
+	unmet := 0
+	for _, r := range required {
+		if set[r] {
+			continue
+		}
+		if !strings.HasPrefix(r, registry.CapTarget) {
+			return false
+		}
+		unmet++
+	}
+	return unmet > 0
 }

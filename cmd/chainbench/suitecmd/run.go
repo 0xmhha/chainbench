@@ -50,29 +50,30 @@ type runReport struct {
 // gone (R4): composition belongs to chainsetup alone.
 func NewRun() *cobra.Command {
 	var (
-		chain           string
-		rpcURLs         []string
-		binary          string
-		keysDir         string
-		keysSource      string
-		artifactRoot    string
-		bpCount         int
-		chainID         int64
-		networkID       int64
-		launchOpts      []string
-		dashboardURL    string
-		jsonOut         bool
-		noSkips         bool
-		workspaceDir    string
-		workspaceConfig string
-		keepUp          bool
-		waitBlocks      uint64
-		nodeMonitorT    time.Duration
-		docker          bool
-		attach          bool
-		planOnly        bool
-		presetRef       string
-		sf              resourcecmd.ServerFlags
+		chain              string
+		rpcURLs            []string
+		binary             string
+		keysDir            string
+		keysSource         string
+		artifactRoot       string
+		bpCount            int
+		chainID            int64
+		networkID          int64
+		launchOpts         []string
+		dashboardURL       string
+		jsonOut            bool
+		noSkips            bool
+		workspaceDir       string
+		workspaceConfig    string
+		keepUp             bool
+		waitBlocks         uint64
+		nodeMonitorT       time.Duration
+		docker             bool
+		attach             bool
+		allowChainMismatch bool
+		planOnly           bool
+		presetRef          string
+		sf                 resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -109,7 +110,7 @@ func NewRun() *cobra.Command {
 					keysDir = ""
 				}
 				return runAttached(cmd, args, start, workspaceDir, chain, rpcURLs,
-					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips)
+					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips, allowChainMismatch)
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
@@ -156,6 +157,8 @@ func NewRun() *cobra.Command {
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
+	cmd.Flags().BoolVar(&allowChainMismatch, "allow-chain-mismatch", false,
+		"attach: run even when the endpoint does not answer as the declared chain (for a network whose chain id differs from the built-in default)")
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
@@ -208,7 +211,7 @@ func defaultArtifactRoot() string {
 // to expand ${VAR} and the other two did not.
 func runAttached(cmd *cobra.Command, args []string, start app.Start,
 	workspaceDir, chain string, rpcURLs []string,
-	artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips bool) error {
+	artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips, allowChainMismatch bool) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -219,6 +222,7 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 		At: start.At, Declared: start.Declared,
 		Chain: chain, RPCURLs: rpcURLs, DataDir: workspaceDir,
 		ArtifactRoot: artifactRoot, KeysDir: keysDir, Specs: specs, Bus: bus,
+		AllowChainMismatch: allowChainMismatch,
 	})
 	if err != nil {
 		return err
