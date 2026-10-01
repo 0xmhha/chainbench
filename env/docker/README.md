@@ -34,6 +34,25 @@ ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server
 실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을 띄우지 않기
 위해서다.
 
+## 스크립트를 고쳤으면 다시 생성하고 다시 만든다
+
+`build/` 는 `gen-env.sh` 의 산출물이고 컨테이너는 그 산출물로 만들어진다. 그래서 스크립트를
+고치는 것만으로는 **도는 컨테이너가 바뀌지 않는다.** 셋을 차례로 해야 한다.
+
+```bash
+cd env/docker
+./gen-env.sh                                                   # build/ 재생성
+docker compose -f build/docker-compose.yml up -d --force-recreate
+# 컨테이너를 다시 만들면 /data/chainbench/bin/ 이 비므로 아래 절차로 바이너리를 다시 넣는다
+```
+
+2026-09-30 에 이것을 건너뛰어 웹소켓 케이스 둘이 실패했다. `gen-env.sh` 는 2026-09-19 에
+ws 밴드를 퍼블리시하도록 고쳐졌는데 `build/docker-compose.yml` 이 2026-09-10 것이었고,
+컨테이너는 그 낡은 compose 로 만들어져 8701 을 열지 않았다. `ws-subscribe-new-heads` 와
+`ws-subscribe-logs` 가 `dial ws://127.0.0.1:8701: connection refused` 로 떨어졌고, 원인을
+찾는 데 시간이 들었다. 지금 도는 컨테이너가 무엇을 퍼블리시하는지는 `docker port
+chainbench-server1` 로 바로 볼 수 있다.
+
 ## 바이너리를 먼저 넣는다
 
 컨테이너의 `/data/chainbench/bin/` 에 대상 체인의 **리눅스** 바이너리가 있어야 한다. 맥에서 만든 것은 Mach-O 라 돌지 않는다. 골랑 컨테이너에서 만들어 넣는다(2026-09-29 에 이렇게 만들었다).

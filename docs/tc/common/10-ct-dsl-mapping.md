@@ -192,11 +192,12 @@ preset 은 옮기지 않았고, `readNodeLog` 만 옮겨 왔다.
   `feecap-exact-min-accepted`, `gas-price-equals-basefee-plus-tip`.
   이들은 StableNet 전용 `gasTip` 을 읽어 세 체인
   공통이 아니므로 `tests/tc/common/` 에는 없다(01 문서 각 CT 비고 참조).
-- **binvar**: 바이너리를 환경변수로 받는 preset 을 `tests/tc/common/` 에서 쓰는 곳은 2026-09-30
-  현재 없다. `wemix-bp4-binvar` 는 `contract/001-wemix-tx-and-contract.json` 이,
-  `stablenet-bp4-en1-binvar` 는 `fault/001-sample-lifecycle.json` 이 합쳐지면서 쓰는 곳을 잃었다.
-  저장소 전체로는 `tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json` 이
-  `wemix-bp4-binvar` 를 쓰고, `stablenet-bp4-en1-binvar` 는 아무 데서도 쓰지 않는다.
+- **binvar**: 바이너리를 환경변수로 받는 preset 을 `tests/tc/common/` 에서 쓰는 곳은 없다.
+  `wemix-bp4-binvar` 는 `contract/001-wemix-tx-and-contract.json` 이,
+  `stablenet-bp4-en1-binvar` 는 `fault/001-sample-lifecycle.json` 이 합쳐지면서(둘 다 2026-09-30)
+  쓰는 곳을 잃었다. 저장소 전체로는 `tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json` 이
+  `wemix-bp4-binvar` 를 쓴다. `stablenet-bp4-en1-binvar` 는 아무 데서도 쓰지 않아 2026-10-01 에
+  지웠다.
 - **작성 샘플**: `docs/guide/dsl-authoring.md` 가 가리키는 공통 묶음 안의 샘플 둘은
   `tx/CT-TX-001-value-transfer.json`(값 전송)과
   `fault/CT-FAULT-001-producer-crash-and-restart.json`(노드 중단·재시작)이다.

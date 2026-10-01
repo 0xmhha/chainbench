@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "testnet-block-fields-well-formed",
+  "description": "최신 블록에 필수 필드가 있고 형식이 맞는지 본다. 형식은 체인 상태와 무관하므로 남의 망에서도 그대로 성립한다. 번호와 해시가 16진수인지, 트랜잭션 목록 필드가 있는지(비어 있어도 된다 — 한가한 망에서는 그것이 정상이다), 부모 해시가 32바이트인지를 본다.",
+  "requires": ["rpc"],
+  "skipsOn": [],
+  "chainPreset": "stablenet-testnet",
+  "steps": [
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["latest", false],
+      "select": "number",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]+$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["latest", false],
+      "select": "hash",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["latest", false],
+      "select": "parentHash",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]{64}$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["latest", false],
+      "select": "transactions.#",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    }
+  ]
+}

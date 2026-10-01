@@ -139,6 +139,25 @@ type AccountV2 struct {
 	// Fund is the balance to send it once the chain is up, in wei (decimal or
 	// 0x-hex). Empty leaves the account at zero.
 	Fund string `json:"fund,omitempty"`
+	// KeyFile is where this account's key already lives, for an account the
+	// run must not mint. It holds a raw hex key. A keystore JSON is refused
+	// for want of a password, and the grammar has nowhere to declare one yet;
+	// `chainbench keyring export` writes the hex a keystore holds.
+	//
+	// It takes "${VAR}" as an endpoint does, which is the point — against a
+	// network this harness did not compose, the account that pays holds funds
+	// somebody else put there, and neither its key nor its address belongs in
+	// a committed case.
+	//
+	// Without it a label is minted on first use and read back after, which is
+	// right for a disposable network and useless anywhere else: a minted
+	// account on a testnet holds nothing and can pay for nothing.
+	//
+	// It cannot be combined with Fund. Fund sends from the network's funded
+	// account, which exists because we composed the network; a run that
+	// attaches has none, and quietly skipping the transfer would leave a case
+	// believing it had a balance.
+	KeyFile string `json:"keyFile,omitempty"`
 }
 
 // The two binaries an upgrade env names, by the key it names them under.

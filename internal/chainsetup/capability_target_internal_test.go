@@ -4,7 +4,9 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Where a network runs is a fact about the target, not about the chain, so no
@@ -42,5 +44,53 @@ func TestTargetIsAKnownRequirementPrefix(t *testing.T) {
 	}
 	if registry.MalformedCapability("targt:remote") == "" {
 		t.Error("a misspelled prefix was accepted")
+	}
+}
+
+// TestEveryNodeIsRemote_AMixedSetIsNotRemote pins the fix for a set whose
+// entries are not all the same kind.
+//
+// The workspace Target comes from the set's FIRST entry under --all-servers, so
+// before this the answer followed file order: one remote entry above fourteen
+// loopback ones advertised target:remote, and reordering the same file flipped
+// it. A case that needs a separate machine per group would have been let
+// through to fail where it could not split the network at all.
+func TestEveryNodeIsRemote_AMixedSetIsNotRemote(t *testing.T) {
+	cases := []struct {
+		name    string
+		servers []string // per node: the server-set entry, "" for this machine
+		want    bool
+	}{
+		{"every node on a server", []string{"s1", "s2", "s3"}, true},
+		{"one node here", []string{"s1", "", "s3"}, false},
+		{"the local one first", []string{"", "s2", "s3"}, false},
+		{"the local one last", []string{"s1", "s2", ""}, false},
+		{"no node on a server", []string{"", "", ""}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := &Workspace{}
+			for i, srv := range tc.servers {
+				w.state.Nodes = append(w.state.Nodes, node.Record{Index: i + 1, Server: srv})
+			}
+			if got := w.everyNodeIsRemote(); got != tc.want {
+				t.Errorf("everyNodeIsRemote() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestEveryNodeIsRemote_NoPlacementFallsBackToTarget keeps the shapes that have
+// no node table — before place, and the single-server and no-server-set runs —
+// answering as they always did.
+func TestEveryNodeIsRemote_NoPlacementFallsBackToTarget(t *testing.T) {
+	local := &Workspace{}
+	if local.everyNodeIsRemote() {
+		t.Error("an empty placement with a local target is not remote")
+	}
+	remote := &Workspace{}
+	remote.state.Target = resource.Spec{Server: "s1"}
+	if !remote.everyNodeIsRemote() {
+		t.Error("an empty placement with a server target is remote")
 	}
 }

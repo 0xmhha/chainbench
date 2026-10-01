@@ -129,7 +129,7 @@ runAttach() {
     return 2
   fi
   read -r rpc keys < <(attachTarget "$ws")
-  CHAINBENCH_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
+  GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
   local code=$?
   "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
   return $code

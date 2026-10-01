@@ -290,7 +290,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (StepOut, err
 	if err := w.writeGenesisConfigs(ctx, lay, forkConfigs); err != nil {
 		return StepOut{}, err
 	}
-	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts, w.state.Target.IsRemote())
+	w.state.Capabilities = networkCapabilities(p.Manifest(), p.GenesisTemplate(), opts, w.everyNodeIsRemote())
 	w.state.HaltsAt = opts.HaltsAt
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
@@ -551,6 +551,36 @@ func (w *Workspace) writeGenesisVariants(ctx context.Context, lay node.Layout, b
 // a network is advertised as delayed-<fork> so the fork-transition cases gate on
 // it and skip on a normal network where the fork is active at genesis.
 const delayedForkSuffix = "Block"
+
+// everyNodeIsRemote reports whether the network advertises target:remote.
+//
+// It asks the placement, not the workspace Target. Target is one spec and
+// --all-servers takes it from the set's FIRST entry (resource.Set.setTarget),
+// so a set whose entries are not all the same kind advertised whatever the top
+// of the file happened to be: one remote entry above fourteen loopback ones
+// advertised target:remote, and CT-FAULT-004 — which needs a separate machine
+// per group to firewall — would have been let through to fail where it could
+// not split the network at all. Reordering the same file flipped the answer.
+//
+// Remote means EVERY node is, because that is what the capability promises the
+// case asking for it. A set with one local node cannot give each group its own
+// machine, so the honest answer there is local: the gated case then skips with
+// a reason instead of running somewhere it cannot work.
+//
+// Nodes is written by place, which runs before genesis, so it is populated by
+// the time this is asked. An empty table falls back to the recorded Target,
+// which covers the single-server and no-server-set shapes where the two agree.
+func (w *Workspace) everyNodeIsRemote() bool {
+	if len(w.state.Nodes) == 0 {
+		return w.state.Target.IsRemote()
+	}
+	for _, n := range w.state.Nodes {
+		if n.Server == "" {
+			return false
+		}
+	}
+	return true
+}
 
 // networkCapabilities is what the composed network advertises: the chain's own
 // capabilities, the ones its manifest data implies (its contracts, hardforks,

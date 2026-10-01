@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "testnet-block-advances",
+  "description": "붙은 망이 블록을 계속 만드는지 본다. 절대 높이는 우리가 모르고 알 필요도 없다. 지금 값을 읽어 두고 그보다 올라가는지만 본다. \"0 이상\" 같은 단언은 쓰지 않는다 — 블록 번호는 음수가 될 수 없어 노드가 무엇을 답해도 통과하고, 창세 블록에 멈춘 노드도 초록불이 된다. 이 저장소가 2026-09-29 에 그런 단언 여럿을 걷어냈다.",
+  "requires": ["rpc"],
+  "skipsOn": [],
+  "chainPreset": "stablenet-testnet",
+  "steps": [
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "save": "before"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "compare": "Greater",
+      "expected": "$before",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    }
+  ]
+}
