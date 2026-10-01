@@ -8,7 +8,7 @@
 
 ```
 tests/tc/
-├── common/                 ← 세 체인에서 같은 목적으로 도는 것 (91건)
+├── common/                 ← 세 체인에서 같은 목적으로 도는 것 (69건)
 │   └── {node,tx,fee,contract,rpc,fault}/
 ├── go-stablenet/           ← 레거시 tests/stablenet
 │   ├── regression/{ethereum,wbft,anzeon,
@@ -33,9 +33,11 @@ tests/tc/
 go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내역은
 [`common/README.md`](common/README.md) §4.1 이다.
 
-파일명은 `<레거시 번호>-<테스트 id>.json` 이다. 번호는 레거시 스위트의 순번을 그대로
-가져와 대조가 되게 했고, 뒤의 id 가 무엇을 검증하는지 말한다. 레거시 하나가 여러
-스펙으로 나뉜 경우 `11-`, `11b-` 처럼 뒤에 글자를 붙였다.
+파일명 규칙은 두 갈래다. `common/` 은 `CT-<영역>-<번호>-<간략설명>.json` 이고 **CT 하나에
+파일 하나**다(2026-09-29·30 에 여섯 영역 모두 적용). 체인별 디렉터리는 레거시 대조를 위해
+`<레거시 번호>-<테스트 id>.json` 을 그대로 쓴다. 번호는 레거시 스위트의 순번이고, 뒤의 id 가
+무엇을 검증하는지 말한다. 레거시 하나가 여러 스펙으로 나뉜 경우 `11-`, `11b-` 처럼 뒤에
+글자를 붙였다.
 
 번호가 비어 있는 자리는 그 레거시 테스트가 DSL 이 아니라 `tests/e2e/` 의 Go 테스트로
 옮겨진 자리다. 3절에 목록이 있다.
@@ -81,318 +83,32 @@ go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내�
 
 ## 2. 디렉터리별 내용
 
-각 줄이 그 문서 하나의 요약이다. 체인·바이너리·토폴로지·genesis 는 문서의 `env` 에서 그대로 읽은 값이다.
+2026-10-01 에 센 값이다. 케이스가 늘거나 줄면 이 표도 고친다.
 
-### `basic` (7)
+| 디렉터리 | 건수 | 무엇이 있나 |
+|---|---|---|
+| `common/node` | 15 | 기동·동기화·네트워크 |
+| `common/tx` | 20 | 트랜잭션 전송·거부 |
+| `common/fee` | 7 | 수수료·가스 정책 |
+| `common/contract` | 7 | 컨트랙트 실행 |
+| `common/rpc` | 14 | 조회·구독 API |
+| `common/fault` | 6 | 장애·복구 |
+| `go-stablenet/regression/*` | 68 | anzeon 11, api 14, blacklist-authorized 9, ethereum 3, system-contracts 23, wbft 8 |
+| `go-stablenet/post-v1.0.0-change/*` | 35 | common-all 16, extra-state 8, string-handling 6, effectivegasprice 3, stand-alone 2 |
+| `go-stablenet/{hardfork,vocabulary}` | 3 | |
+| `go-wbft/*` | 8 | accounts 3, governance 2, consensus 1, fault 1, tx 1 |
+| `go-wemix/*` | 7 | hardfork 3, consensus 1, governance 1, rpc 1, vocabulary 1 |
+| `basic` | 2 | 공통으로 가지 않고 남은 둘 |
+| **합계** | **192** | |
 
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-basic-consensus.json` | Verify blocks are being produced and all validators participate (원본 basic/consensus.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `02-basic-peers.json` | Verify all nodes have proper peer connectivity (원본 basic/peers.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `03-basic-rpc-health.json` | Verify all node RPC endpoints are responding (원본 basic/rpc-health.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `04-basic-sync.json` | Verify all running nodes have synchronized block heights (원본 basic/sync.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `05-basic-tx-send.json` | Send a transaction and verify it gets included in a block (원본 basic/tx-send.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `06-basic-txpool-propagation.json` | Verify TX propagation across nodes and txpool drain under load (원본 basic/txpool-propagation.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `07-basic-wbft-consensus.json` | Verify WBFT protocol properties - validator participation, round stability, commit seals (원본 basic/wbft-consensus.sh) | stablenet | `default=gstable` | bp=4, en=1 | — |
+케이스 하나하나가 무엇을 보는지는 디렉터리의 문서가 적는다. 여기에 같은 목록을 한 벌 더
+두었다가 트리와 어긋났다 — 2026-09-30 까지 이 자리에는 재편 이전의 디렉터리(`fault/`,
+`remote/`, `samples/`, `stress/`)와 없어진 파일 이름이 남아 있었다.
 
-### `fault` (6)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-fault-network-partition.json` | Simulate network partition via admin_removePeer - verify consensus halts and recovers after heal (원본 fault/network-partition.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `02-fault-node-crash.json` | Stop 1 validator and verify consensus continues with 3/4 (원본 fault/node-crash.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `03-fault-node-recover.json` | Stop a node, wait, restart, and measure sync time (원본 fault/node-recover.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `04-fault-p2p-topology.json` | Test consensus and TX propagation under restricted hub-spoke P2P topology (원본 fault/p2p-topology.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `05-fault-two-down.json` | Stop 2/4 validators - consensus should halt, recover when 1 returns (원본 fault/two-down.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `06-fault-txpool-leader-change.json` | Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh) | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/post-v1.0.0-change/common-all` (19)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-stablenet-delayed-fork.json` | — | stablenet | `default=gstable` | bp=4 | 있음 |
-| `02-govminter-v2-code.json` | TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다. | stablenet | `default=gstable` | bp=4 | — |
-| `03-burn-cancel-refundable.json` | TC-1-1-01, TC-1-1-10 — 소각 제안 취소 → refundableBalance 이동 및 BurnDepositRefunded 이벤트 검증 (원본 post-v1.0.0-change/common-all/03-test-burn-cancel-refund) | stablenet | `default=gstable` | bp=4 | — |
-| `04-burn-reject-refundable.json` | TC-1-1-02 — 소각 제안 거부(reject) → refundableBalance 이동 → claimBurnRefund 정상 출금 검증 (원본 post-v1.0.0-change/common-all/04-test-burn-reject-refund) | stablenet | `default=gstable` | bp=4 | — |
-| `05-burn-expire-refundable.json` | TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다. | stablenet | `default=gstable` | bp=4 | — |
-| `06-burn-execute-no-refundable.json` | TC-1-1-04 — 소각 제안 승인(approve) → 자동 실행(execute) → refundableBalance == 0 검증 (원본 post-v1.0.0-change/common-all/06-test-burn-execute-no-refund) | stablenet | `default=gstable` | bp=4 | — |
-| `07-claim-burn-refund-succeeds.json` | TC-1-1-05, TC-1-1-09 — claimBurnRefund 정상 출금 및 BurnRefundClaimed 이벤트 검증 (원본 post-v1.0.0-change/common-all/07-test-claim-refund-success) | stablenet | `default=gstable` | bp=4 | — |
-| `08-claim-zero-refund-reverts.json` | TC-1-1-06 — refundableBalance 0 계정 claimBurnRefund revert 검증 (원본 post-v1.0.0-change/common-all/08-test-claim-refund-zero-revert) | stablenet | `default=gstable` | bp=4 | — |
-| `09-claim-burn-refund-double-reverts.json` | TC-1-1-07 — claimBurnRefund 중복 호출 revert 검증 (원본 post-v1.0.0-change/common-all/09-test-claim-refund-double-revert) | stablenet | `default=gstable` | bp=4 | — |
-| `10-prealloc-preserved-across-boho.json` | TC-1-1-11/12: 하드포크가 prealloc 계정의 잔액·nonce 를 보존하고, 시스템 컨트랙트의 스토리지 슬롯도 그대로 둔다. | stablenet | `default=gstable` | bp=4 | — |
-| `12-legacy-gasprice-below-min-rejected.json` | TC-1-3-04 — LegacyTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/12-test-legacy-gasprice-below-min-revert) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `13-accesslist-gasprice-below-min-rejected.json` | TC-1-3-05 — AccessListTx gasPrice 최소 가스비 하한선 미만 거부 검증 (원본 post-v1.0.0-change/common-all/13-test-accesslist-gasprice-below-min-revert) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `14-feecap-below-min-rejected.json` | TC-1-3-06 — DynamicFeeTx gasTipCap 최소값 미만 거부 검증 (원본 post-v1.0.0-change/common-all/14-test-dynamic-fee-tipcap-below-min-revert) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `15-boho-chain-config-active.json` | TC-4-1-01 — Boho hardfork chain config verification (원본 post-v1.0.0-change/common-all/15-test-chain-config-boho) | stablenet | `default=gstable` | bp=4 | — |
-| `16-anzeon-active-before-boho.json` | TC-4-1-02 — Boho 하드포크 값의 체인 설정 반영 및 런타임 활성화 검증 (원본 post-v1.0.0-change/common-all/16-test-boho-chain-config-activation) | stablenet | `default=gstable` | bp=4 | — |
-| `17-estimategas-authorizationlist-cost.json` | TC-4-2-01/03: EIP-7702 authorizationList 를 1건·2건 붙였을 때 eth_estimateGas 가 그만큼 늘어난다. 경계값은 preActions 에서 이름을 붙여 한 번씩만 적는다. 상한은 노드의 estimateGas 오차 1.5% 정책에서 나온다 — 절대 상한은 하한 x 1.015, 증가분 상한은 절대 상한에서 baseline(21000)을 뺀 값이다. | stablenet | `default=gstable` | bp=4 | — |
-| `19-upgrade-registry-order.json` | TC-5-2-01/02/03: block 0 에 Anzeon baseline 이 등록돼 있고, BohoBlock(100) 전까지 중간 업그레이드가 없으며, BohoBlock 에서 GovMinter 코드가 교체된다. | stablenet | `default=gstable` | bp=4 | — |
-| `20-v1-params-init-storage.json` | TC-5-2-04: v1 시스템 컨트랙트의 Params 가 genesis 에서 초기화된다. GovValidator gasTip 슬롯(0x39)과 GovMinter quorum 슬롯(0x04)이 0이 아니어야 한다. | stablenet | `default=gstable` | bp=4 | — |
-| `21-burn-refund-events.json` | — | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/post-v1.0.0-change/effectivegasprice` (4)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-effective-gas-price-authorized-bp-en.json` | TC-4-6-01 — 인가 계정 tx 의 effectiveGasPrice 가 블록 생산 노드와 snap-sync 엔드포인트에서 같다 | stablenet | `default=gstable` | bp=4, en=1, syncMode=snap | — |
-| `02-effective-gas-price-regular.json` | TC-4-6-02 — EffectiveGasPrice for regular (non-authorized) account (BP vs snap-sync EN comparison) (원본 post-v1.0.0-change/effectivegasprice/02-test-regular-account) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `02b-effective-gas-price-regular-bp-en.json` | TC-4-6-02 — 일반 계정 tx 의 effectiveGasPrice 가 두 노드에서 같다 | stablenet | `default=gstable` | bp=4, en=1, syncMode=snap | — |
-| `03-auth-tx-event-last-bp-en.json` | TC-4-6-04 — AuthorizedTxExecuted 가 영수증 로그의 마지막이고, 두 노드가 같은 값을 보고한다 | stablenet | `default=gstable` | bp=4, en=1, syncMode=snap | — |
-
-### `go-stablenet/post-v1.0.0-change/extra-state` (8)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-authorized-extra-bit-synced.json` | TC-4-5-01,TC-4-5-02 — Account Extra alloc bits reflected in AccountManager (authorized + blacklisted) (원본 post-v1.0.0-change/extra-state/01-test-extra-alloc-to-contract) | stablenet | `default=gstable` | bp=4 | — |
-| `01b-blacklisted-extra-bit-synced.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `02-stablenet-account-extra.json` | — | stablenet | `default=gstable` | bp=4 | 있음 |
-| `03-extra-union-merge.json` | TC-4-5-05/06: alloc.Extra 와 GovCouncil params 가 서로 다른 계정을 인가하면 합집합이 되고, 양쪽에 다 있는 계정은 중복 없이 한 번만 센다 (3개, 4개가 아님). | stablenet | `default=gstable` | bp=4 | 있음 |
-| `04-dual-status-extra.json` | TC-4-5-07 — 동일 주소 dual-status — authorized AND blacklisted 동시 반영 (원본 post-v1.0.0-change/extra-state/04-test-extra-dual-status) | stablenet | `default=gstable` | bp=4 | — |
-| `05-extra-balance-preserved.json` | TC-4-5-08 — 동기화 시 무관 계정 잔액 보존 (원본 post-v1.0.0-change/extra-state/05-test-extra-balance-preserved) | stablenet | `default=gstable` | bp=4 | — |
-| `06-invalid-extra-reject.json` | TC-4-5-09 — 미정의 Extra 비트를 가진 genesis 를 받은 노드는 부팅에 실패한다 | stablenet | `default=gstable` | bp=4, en=1 | — |
-| `07b-extra-state-across-delayed-boho.json` | TC-4-5-10/11/12 — 하드포크가 지연돼도 alloc.Extra 가 AccountManager 에 반영되고 잔액은 보존된다 | stablenet | `default=gstable` | bp=4 | 있음 |
-
-### `go-stablenet/post-v1.0.0-change/stand-alone` (4)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01b-signature-compat-across-swap.json` | TC-3-1-04 — 노드가 다른 바이너리로 재기동해도 기존 tx 의 blockNumber·status·from·to 가 보존된다 | stablenet | `default=gstable, upgrade=${GSTABLE_UPGRADE_BIN:-gstable}` | bp=4, en=1 | — |
-| `02-genesis-mismatch.json` | TC-4-1-03 — 이 체인과 다른 genesis 로 빌드된 바이너리는 GenesisMismatch 로 기동에 실패한다 | stablenet | `default=gstable, mismatch=${GSTABLE_MISMATCH_BIN:-gstable-genesis-mismatch}` | bp=4 | — |
-| `03-unsupported-version.json` | TC-5-2-06 — genesis 가 지원하지 않는 시스템 컨트랙트 버전을 선언하면 BohoBlock 을 커밋하지 못하고 멈춘다 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `04-genesis-block-hash-consistent.json` | TC-5-3-01: block 0 해시가 모든 노드에서 같고 parentHash 가 0 이다. 레거시는 릴리스 고정 해시와 비교했으나, 사설망은 env 마다 genesis 가 달라 노드 간 일치와 genesis 형태로 검증한다. | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/post-v1.0.0-change/string-handling` (6)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-authorized-accounts-no-space.json` | TC-4-3-01: GovCouncil authorizedAccounts splitAndTrim — 공백 없음 "0xaaa,0xbbb,0xccc" → 3 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `02-authorized-accounts-space.json` | TC-4-3-02: GovCouncil authorizedAccounts splitAndTrim — 항목 사이 공백 "0xaaa, 0xbbb, 0xccc" → 3 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `03-authorized-accounts-trim.json` | TC-4-3-03: GovCouncil authorizedAccounts splitAndTrim — 앞뒤 공백 " 0xaaa , 0xbbb " → 2 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `04-authorized-accounts-empty-item.json` | TC-4-3-04: GovCouncil authorizedAccounts splitAndTrim — 빈 항목 "0xaaa,,0xbbb" → 2 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `05-authorized-accounts-single.json` | TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 "0xaaa" → 1 | stablenet | `default=gstable` | bp=4 | 있음 |
-| `06-authorized-accounts-empty.json` | TC-4-3-06: GovCouncil authorizedAccounts splitAndTrim — 빈 문자열 "" → 0 | stablenet | `default=gstable` | bp=4 | 있음 |
-
-### `go-stablenet/regression/anzeon` (11)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-regular-account-gastip-forced.json` | RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨 (원본 regression/anzeon/01-test-regular-account-gastip-forced) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `02-authorized-account-gastip-free.json` | RT-C-02 — Authorized 계정은 tipCap을 자유롭게 설정할 수 있음 (원본 regression/anzeon/02-test-authorized-account-gastip-free) | stablenet | `default=gstable` | bp=4 | — |
-| `03-anzeon-basefee-increase.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `04-anzeon-basefee-stable.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `05-anzeon-basefee-decrease.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `06-basefee-minimum.json` | RT-C-06 — baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음 (원본 regression/anzeon/06-test-min-basefee) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `07-basefee-maximum.json` | RT-C-07 — baseFee가 MaxBaseFee(20,000,000 Gwei) 상한을 초과하지 않음 (원본 regression/anzeon/07-test-max-basefee) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `08-feecap-above-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
-| `09-feecap-exact-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
-| `11-gaslimit-exceeded-rejected.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
-| `12-basefee-redistributed-not-burned.json` | **baseFee 가 소각되지 않고 재분배된다** — 옆의 basefee 6건은 공식만 보므로 소각해도 전부 초록이다. 팁 0(인가 계정)으로 한 건 보내고 validator 4명의 잔액 증분을 본다: 모두 증가(봉인 안 한 셋도) · 네 증분이 동일 · **송신자가 낸 것과 validator 들이 받은 것이 wei 단위로 일치**(공급 보존). 실측: 각 105000000000000000, 합 420000000000000000 | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/regression/api` (26)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-block-transactions-field.json` | RT-G-1-01 — eth_getBlockByNumber(latest) (원본 regression/api/01-test-get-block-by-number) | stablenet | `default=gstable` | bp=4 | — |
-| `02-block-by-hash-consistency.json` | RT-G-1-02 — eth_getBlockByHash (원본 regression/api/02-test-get-block-by-hash) | stablenet | `default=gstable` | bp=4 | — |
-| `03-transaction-by-hash-fields.json` | RT-G-1-03 — eth_getTransactionByHash (원본 regression/api/03-test-get-tx-by-hash) | stablenet | `default=gstable` | bp=4 | — |
-| `04-transaction-receipt-fields.json` | RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인) (원본 regression/api/04-test-get-tx-receipt) | stablenet | `default=gstable` | bp=4 | — |
-| `05-transaction-count-increments.json` | RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count) | stablenet | `default=gstable` | bp=4 | — |
-| `06-system-contracts-deployed.json` | RT-G-1-06 — eth_getCode on NativeCoinAdapter (0x1000) (원본 regression/api/06-test-get-code-system) | stablenet | `default=gstable` | bp=4 | — |
-| `07-gas-price-positive.json` | RT-G-2-01 — eth_gasPrice == baseFee + GasTip (원본 regression/api/07-test-gas-price) | stablenet | `default=gstable` | bp=4 | — |
-| `07b-gas-price-equals-basefee-plus-tip.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
-| `08-max-priority-fee-equals-gastip.json` | RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `09-fee-history-well-formed.json` | RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history) | stablenet | `default=gstable` | bp=4 | — |
-| `10-estimate-gas-token-transfer.json` | RT-G-2-04 — eth_estimateGas (NativeCoinAdapter.transfer) (원본 regression/api/10-test-estimate-system-call) | stablenet | `default=go-stablenet` | bp=4 | — |
-| `11-node-address-returned.json` | RT-G-3-01 — istanbul_nodeAddress (원본 regression/api/11-test-node-address) | stablenet | `default=gstable` | bp=4 | — |
-| `12-validator-set-nonempty.json` | RT-G-3-02 — istanbul_getValidators (원본 regression/api/12-test-get-validators) | stablenet | `default=gstable` | bp=4 | — |
-| `12b-validator-set-count.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `12c-validator-equal-power.json` | **validator 의 가중치가 동등하다** — 옆의 12·12b 는 집합이 비지 않았고 충분히 크다는 것만 본다. 네 validator 각자가 **최신 블록의 제안자로 등장할 때까지 기다려** 아무도 건너뛰어지지 않음을 보이고, `prevCommittedSeal.sealers` 가 **정족수가 아니라 집합 전체**임을 단정한다. 한 사이클 안의 턴 수 동등성은 단정하지 않는다(DSL 이 런타임 높이 기준 상대 블록을 주소지정하지 못한다) | stablenet | `default=gstable` | bp=4 | — |
-| `13-commit-signers-quorum.json` | RT-G-3-03 — istanbul_getCommitSignersFromBlock (원본 regression/api/13-test-get-commit-signers) | stablenet | `default=gstable` | bp=4 | — |
-| `14-wbft-extra-info-fields.json` | RT-G-3-04 — istanbul_getWbftExtraInfo (원본 regression/api/14-test-get-wbft-extra) | stablenet | `default=gstable` | bp=4 | — |
-| `15-istanbul-status-fields.json` | RT-G-3-05 — istanbul_status (원본 regression/api/15-test-istanbul-status) | stablenet | `default=gstable` | bp=4 | — |
-| `16-is-validator-flags.json` | RT-G-3-06 — istanbul_isValidator (원본 regression/api/16-test-is-validator) | stablenet | `default=gstable` | bp=4 | — |
-| `18-txpool-status.json` | RT-G-4-02 — txpool_status: pending(연속 nonce) + queued(nonce gap) 분리 (원본 regression/api/18-test-txpool-status) | stablenet | `default=gstable` | bp=4 | — |
-| `19-txpool-content-well-formed.json` | RT-G-4-03 — txpool_content: pending/queued 분리 내용 확인 (원본 regression/api/19-test-txpool-content) | stablenet | `default=gstable` | bp=4 | — |
-| `20-admin-peers-populated.json` | RT-A-1-05 — P2P 피어 연결 확인 (원본 regression/ethereum/05-test-p2p-peers) | stablenet | `default=gstable` | bp=4 | — |
-| `21-fee-delegate-sign-rpc-present.json` | RT-G-5-01 — eth_signRawFeeDelegateTransaction (원본 regression/api/21-test-sign-raw-fee-delegate) | stablenet | `default=gstable` | bp=4 | — |
-| `22-token-total-supply-readable.json` | RT-G-5-02 — eth_call NativeCoinAdapter.totalSupply (원본 regression/api/22-test-total-supply) | stablenet | `default=gstable` | bp=4 | — |
-| `23-token-approve-sets-allowance.json` | RT-G-5-03 — eth_call NativeCoinAdapter.allowance (원본 regression/api/23-test-allowance) | stablenet | `default=gstable` | bp=4 | — |
-| `24-chain-not-syncing.json` | — | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/regression/blacklist-authorized` (9)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-sender-blacklisted-rejected.json` | RT-E-01 — 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount) (원본 regression/blacklist-authorized/01-test-sender-blacklisted) | stablenet | `default=gstable` | bp=4 | — |
-| `02-recipient-blacklisted-rejected.json` | RT-E-02 — 블랙리스트 계정이 Recipient인 tx 거부 (원본 regression/blacklist-authorized/02-test-recipient-blacklisted) | stablenet | `default=gstable` | bp=4 | — |
-| `03-feepayer-blacklisted-rejected.json` | RT-E-03 — FeePayer가 블랙리스트 계정이면 거부 (원본 regression/blacklist-authorized/03-test-feepayer-blacklisted) | stablenet | `default=gstable` | bp=4 | — |
-| `04-address-unblacklisted-event.json` | RT-E-04 — 블랙리스트 해제 거버넌스 흐름 검증 (원본 regression/blacklist-authorized/04-test-unblacklist) | stablenet | `default=gstable` | bp=4 | — |
-| `05-zero-address-transfer-rejected.json` | RT-E-05: 0x0 주소로의 전송은 제출 단계에서 거부된다 (ErrZeroAddressTransfer). | stablenet | `default=gstable` | bp=4 | — |
-| `06-precompile-transfer-rejected.json` | RT-E-06: 프리컴파일·시스템 컨트랙트 주소로의 값 전송은 5개 주소 모두 거부된다. | stablenet | `default=gstable` | bp=4 | — |
-| `07-account-blacklist-readable.json` | RT-E-07 — AccountManager.isBlacklisted() 조회 검증 (원본 regression/blacklist-authorized/07-test-is-blacklisted) | stablenet | `default=gstable` | bp=4 | — |
-| `08-account-authorization-readable.json` | RT-E-08 — AccountManager.isAuthorized() 조회 검증 (원본 regression/blacklist-authorized/08-test-is-authorized) | stablenet | `default=gstable` | bp=4 | — |
-| `09-authorized-tx-executed-event.json` | RT-E-09 — AuthorizedTxExecuted 이벤트 발생 검증 (원본 regression/blacklist-authorized/09-test-authorized-tx-executed) | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/regression/ethereum` (26)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-stablenet-chain-up.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `08-legacy-transfer.json` | RT-A-2-01 — Legacy Tx (type 0x0) 발행 (원본 regression/ethereum/08-test-legacy-tx) | stablenet | `default=gstable` | bp=4 | — |
-| `09-dynamic-fee-tx.json` | RT-A-2-02 — EIP-1559 DynamicFeeTx (type 0x2) 발행 (원본 regression/ethereum/09-test-dynamic-fee-tx) | stablenet | `default=gstable` | bp=4 | — |
-| `10-access-list-tx.json` | RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다. | stablenet | `default=gstable` | bp=4 | — |
-| `11-nonce-ordering.json` | RT-A-2-04 — Nonce 순서 보장 (원본 regression/ethereum/11-test-nonce-ordering) | stablenet | `default=gstable` | bp=4 | — |
-| `11b-out-of-order-nonces-mine.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `12-dynamic-fee-below-basefee-rejected.json` | RT-A-2-05a — GasTipCap < MinTip tx 거부 검증 (원본 regression/ethereum/12-test-tipcap-underpriced) | stablenet | `default=gstable` | bp=4 | — |
-| `14-insufficient-funds-rejected.json` | RT-A-2-06 — 잔액 부족 tx 거부 (원본 regression/ethereum/14-test-insufficient-funds) | stablenet | `default=gstable` | bp=4 | — |
-| `15-gas-limit-exceeds-block-rejected.json` | RT-A-2-07 — Gas Limit 초과 tx 거부 (블록 gas limit 초과) (원본 regression/ethereum/15-test-gaslimit-exceeded) | stablenet | `default=gstable` | bp=4 | — |
-| `16-effective-gas-price.json` | RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price) | stablenet | `default=gstable` | bp=4 | — |
-| `17-replacement-tx.json` | RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx) | stablenet | `default=gstable` | bp=4 | — |
-| `17b-same-nonce-replacement.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `18-set-code-delegation.json` | RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx) | stablenet | `default=gstable` | bp=4 | 있음 |
-| `19-contract-roundtrip.json` | RT-A-3-01 — 컨트랙트 배포 (원본 regression/ethereum/19-test-contract-deploy) | stablenet | `default=gstable` | bp=4 | — |
-| `22-estimate-gas.json` | RT-A-3-04 — eth_estimateGas 정상 동작 (원본 regression/ethereum/22-test-estimate-gas) | stablenet | `default=gstable` | bp=4 | — |
-| `23-eth-call-revert-returns-error.json` | RT-A-3-05 — eth_call로 revert하는 함수 호출 시 에러 반환 (원본 regression/ethereum/23-test-eth-call-revert) | stablenet | `default=gstable` | bp=4 | — |
-| `24-revert-tx-status-zero.json` | RT-A-3-06 — revert tx: receipt.status == 0x0, gasUsed만 차감 검증 (원본 regression/ethereum/24-test-revert-tx) | stablenet | `default=gstable` | bp=4 | — |
-| `25-out-of-gas-consumes-all.json` | RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas) | stablenet | `default=gstable` | bp=4 | — |
-| `27-genesis-balance.json` | RT-A-4-02 — eth_getBalance 정상 조회 (원본 regression/ethereum/27-test-eth-get-balance) | stablenet | `default=gstable` | bp=4 | — |
-| `27b-value-transfer.json` | RT-A-4-03 — eth_sendRawTransaction 서명된 tx 전파 (원본 regression/ethereum/28-test-send-raw-tx) | stablenet | `default=gstable` | bp=4 | — |
-| `29-logs-query-well-formed.json` | RT-A-4-04 — eth_getLogs 이벤트 로그 조회 (원본 regression/ethereum/29-test-eth-get-logs) | stablenet | `default=gstable` | bp=4 | — |
-| `30-chain-id.json` | RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init) | stablenet | `default=gstable` | bp=4 | — |
-| `31-ws-subscribe-new-heads.json` | RT-A-4-06 — eth_subscribe(newHeads) WebSocket 구독 (원본 regression/ethereum/31-test-ws-subscribe-heads) | stablenet | `default=gstable` | bp=4 | — |
-| `32-ws-subscribe-logs.json` | RT-A-4-07 — eth_subscribe(logs) WebSocket 구독 (원본 regression/ethereum/32-test-ws-subscribe-logs) | stablenet | `default=gstable` | bp=4 | — |
-| `33-stablenet-chain-up-15.json` | — | stablenet | `default=/data/chainbench/bin/gstable` | bp=13, pn=1, en=1 | — |
-| `36-contract-event-emitted.json` | — | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/regression/fee-delegation` (7)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-fee-delegated-transfer.json` | RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal) | stablenet | `default=gstable` | bp=4 | 있음 |
-| `02-fd-sender-sig-invalid-rejected.json` | RT-D-03 — Sender 서명 변조 시 거부 (원본 regression/fee-delegation/02-test-sender-sig-invalid) | stablenet | `default=gstable` | bp=4 | 있음 |
-| `03-fd-feepayer-sig-invalid-rejected.json` | RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid) | stablenet | `default=gstable` | bp=4 | 있음 |
-| `04-feepayer-insufficient-rejected.json` | RT-D-05 — FeePayer 잔액 부족 시 거부 (원본 regression/fee-delegation/04-test-feepayer-insufficient) | stablenet | `default=gstable` | bp=4 | 있음 |
-| `05-fee-delegated-sender-sig-invalid-rejected.json` | — | stablenet | `default=gstable` | bp=4 | 있음 |
-| `06-fee-delegated-feepayer-sig-invalid-rejected.json` | — | stablenet | `default=gstable` | bp=4 | 있음 |
-| `07-fee-delegated-unfunded-feepayer-rejected.json` | — | stablenet | `default=gstable` | bp=4 | 있음 |
-
-### `go-stablenet/regression/system-contracts` (23)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-native-coin-adapter-code.json` | RT-F-1-01 — NativeCoinAdapter.transfer → 기본 코인 전송과 동일 (원본 regression/system-contracts/01-test-native-transfer) | stablenet | `default=gstable` | bp=4 | — |
-| `01b-token-transfer-emits-event.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `02-token-balance-readable.json` | RT-F-1-02 — NativeCoinAdapter.balanceOf == eth_getBalance (원본 regression/system-contracts/02-test-balance-of) | stablenet | `default=gstable` | bp=4 | — |
-| `03-token-transfer-from-moves-balance.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `04-mint-transfer-event.json` | RT-F-1-04 — Mint 실행 시 Transfer(0x0 → beneficiary) 이벤트 발생 (원본 regression/system-contracts/04-test-mint-transfer-event) | stablenet | `default=gstable` | bp=4 | — |
-| `05-burn-transfer-event.json` | RT-F-1-05 — Burn 실행 시 Transfer(account → 0x0) 이벤트 발생 (원본 regression/system-contracts/05-test-burn-transfer-event) | stablenet | `default=gstable` | bp=4 | — |
-| `06-mint-proposal-executes.json` | RT-F-2-01 — 코인 발행: proposeMint(proofData) → 승인 → execute (원본 regression/system-contracts/06-test-mint-proposal) | stablenet | `default=gstable` | bp=4 | — |
-| `07-burn-proposal-executes.json` | RT-F-2-02 — 코인 소각: proposeBurn(proofData) payable → 승인 → execute (원본 regression/system-contracts/07-test-burn-proposal) | stablenet | `default=gstable` | bp=4 | — |
-| `08-quorum-deficient-stays-voting.json` | RT-F-2-03 — quorum 미달 → proposal 상태 Voting 유지, 발행 미실행 (원본 regression/system-contracts/08-test-quorum-deficient) | stablenet | `default=gstable` | bp=4 | — |
-| `09-validator-metadata-readable.json` | RT-F-3-04 — validatorList() + validatorToOperator(v) + validatorToBlsKey(v) 다중 호출 (원본 regression/system-contracts/09-test-validator-metadata) | stablenet | `default=gstable` | bp=4 | — |
-| `10-gastip-governance-updates-header.json` | RT-B-06 — GasTip 거버넌스 변경 → 블록 헤더 WBFTExtra.GasTip 반영 검증 + 원복 (원본 regression/wbft/06-test-gastip-header-sync) | stablenet | `default=gstable` | bp=4 | — |
-| `11-proposal-expiry-transitions.json` | RT-F-3-06 — proposal expiry 초과 → Expired 상태 전환 → execute 불가 (원본 regression/system-contracts/11-test-proposal-expiry) | stablenet | `default=gstable` | bp=4 | — |
-| `12-configure-minter-proposal-executes.json` | RT-F-4-01 — GovMasterMinter.proposeConfigureMinter(address, uint256) → 승인 → execute (원본 regression/system-contracts/12-test-add-minter) | stablenet | `default=gstable` | bp=4 | — |
-| `13-remove-minter-executes.json` | RT-F-4-02 — GovMasterMinter.proposeRemoveMinter(address) → 승인 → execute (원본 regression/system-contracts/13-test-remove-minter) | stablenet | `default=gstable` | bp=4 | — |
-| `14-masterminter-member-add-remove.json` | RT-F-4-03 — GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember) (원본 regression/system-contracts/14-test-masterminter-self-member) | stablenet | `default=gstable` | bp=4 | — |
-| `15-non-member-configure-minter-rejected.json` | RT-F-4-04 — 비멤버 계정의 GovMasterMinter.proposeConfigureMinter 호출 거부 (원본 regression/system-contracts/15-test-non-member-rejected) | stablenet | `default=gstable` | bp=4 | — |
-| `16-blacklist-proposal-executes.json` | RT-F-5-01 — GovCouncil blacklist proposal → execute → isBlacklisted == true (원본 regression/system-contracts/16-test-blacklist) | stablenet | `default=gstable` | bp=4 | — |
-| `18-authorize-proposal-executes.json` | RT-F-5-03 — GovCouncil authorized account proposal → execute → isAuthorized == true (원본 regression/system-contracts/18-test-authorize) | stablenet | `default=gstable` | bp=4 | — |
-| `19-unauthorize-proposal-executes.json` | f5-04-unauthorize (원본 regression/system-contracts/19-test-unauthorize) | stablenet | `default=gstable` | bp=4 | — |
-| `20-direct-blacklist-call-rejected.json` | RT-F-5-05 — 비멤버가 AccountManager.blacklist 직접 호출 → revert (원본 regression/system-contracts/20-test-direct-blacklist-rejected) | stablenet | `default=gstable` | bp=4 | — |
-| `23-authorized-account-added-event.json` | RT-F-5-08 — AuthorizedAccountAdded 이벤트 (원본 regression/system-contracts/23-test-authorized-account-added-event) | stablenet | `default=gstable` | bp=4 | — |
-| `25-token-metadata.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `28-minter-status-readable.json` | — | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-stablenet/regression/wbft` (9)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-block-period-one-second.json` | RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period) | stablenet | `default=gstable` | bp=4 | — |
-| `02-wbft-seals-quorum.json` | RT-B-02 — WBFTExtra에 Committed Seal + Prepared Seal 모두 존재하고 quorum 이상 (원본 regression/wbft/02-test-wbft-extra-seal) | stablenet | `default=gstable` | bp=4 | — |
-| `03-epoch-transition-carries-epoch-info.json` | RT-B-03 — 에폭 전환 — 검증자 집합 갱신 (원본 regression/wbft/03-test-epoch-transition) | stablenet | `default=gstable` | bp=4 | — |
-| `04-validator-add-member-executes.json` | RT-B-04 — 신규 검증자 추가 및 에폭 합의 참여 확인 (원본 regression/wbft/04-test-add-validator) | stablenet | `default=gstable` | bp=4 | — |
-| `04b-validator-add-member-epoch-activates.json` | RT-B-04 — 멤버로 추가된 노드가 에폭 경계에서 실제 검증자 집합에 들어간다 | stablenet | `default=gstable` | bp=4, en=1 | 있음 |
-| `05-validator-remove-member-executes.json` | RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다. | stablenet | `default=gstable` | bp=4 | — |
-| `11-prev-seals-quorum.json` | RT-B-11 — 블록 N+1의 PrevCommittedSeal이 블록 N의 committers를 포함 (원본 regression/wbft/11-test-prev-committed-seal) | stablenet | `default=gstable` | bp=4 | — |
-| `13-randao-and-mixdigest-present.json` | — | stablenet | `default=gstable` | bp=4 | — |
-| `14-stablenet-gastip-field.json` | — | stablenet | `default=gstable` | bp=4 | — |
-
-### `go-wbft/accounts` (3)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-secp256r1-precompile-valid.json` | — | wbft | `default=gwbft` | bp=4 | — |
-| `02-secp256r1-precompile-invalid.json` | — | wbft | `default=gwbft` | bp=4 | — |
-| `03-secp256r1-precompile-short-input.json` | — | wbft | `default=gwbft` | bp=4 | — |
-
-### `go-wbft/chain-up` (2)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-wbft-chain-up.json` | — | wbft | `default=${GWBFT_BIN:-gwbft}` | bp=4 | — |
-| `02-wbft-chain-up-15.json` | — | wbft | `default=/data/chainbench/bin/gwbft` | bp=13, pn=1, en=1 | — |
-
-### `go-wbft/consensus` (1)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-e1-mixed-producers.json` | — | stablenet | `default=gstable` | nodes=[{'index': 1, 'role': 'en'}, {'index': 2, 'role': 'bp'}, {'index': 3, 'role': 'bp'}, {'index': 4, 'role': 'bp'}] | — |
-
-### `go-wemix/chain-up` (2)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-wemix-chain-up.json` | — | wemix | `default=${GWEMIX_BIN:-gwemix}` | bp=4 | — |
-| `02-wemix-chain-up-15.json` | — | wemix | `default=/data/chainbench/bin/gwemix` | bp=13, en=2 | — |
-
-### `go-stablenet/hardfork` (1)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-boho-crossed-by-restart.json` | 같은 체인의 하드포크 — 포크 전에 모든 노드가 포크 이후 바이너리로 교체된다 | stablenet | `default=${GSTABLE_BIN:-gstable}, postfork=${GSTABLE_POSTFORK_BIN:-gstable}` | bp=4 (노드별) | 있음 |
-
-### `go-wemix/hardfork` (3)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-croissant-successors-take-over.json` | 구성이 포크를 넘긴다 | wemix | `default=${GWEMIX_BIN:-gwemix}, next=${GWBFT_BIN:-gwbft}` | bp=1, en=4 (노드별) | — |
-| `02-state-written-before-the-fork-survives-it.json` | 케이스가 포크를 넘긴다 · 포크 이전 상태가 남는다 | wemix | 같음 | 같음 | — |
-| `03-two-producers-hand-over.json` | 생산자 둘이 etcd 군집을 이루고 함께 넘긴다 | wemix | 같음 | bp=2, en=4 (노드별) | — |
-
-### `go-wemix/rpc` (1)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-wemix-brioche-block-reward.json` | — | wemix | `default=${GWEMIX_BIN:-gwemix}` | bp=4 | 있음 |
-
-### `go-wemix/tx` (1)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-wemix-tx-and-contract.json` | — | wemix | `default=${GWEMIX_BIN:-gwemix}` | bp=4 | 있음 |
-
-### `remote` (3)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-remote-rpc-health.json` | 레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다. | stablenet | `default=gstable` | bp=4 | — |
-| `02-remote-chain-info.json` | 레거시 remote/chain-info: 붙은 체인이 chainId 를 보고하고 동기화가 끝나 있다. | stablenet | `default=gstable` | bp=4 | — |
-| `03-remote-balance-check.json` | 레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. 레거시 기본값과 같이 0 주소를 본다 — 어느 체인에나 있고 값이 변하지 않는다. | stablenet | `default=gstable` | bp=4 | — |
-
-### `samples` (2)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/common/tx/CT-TX-001-value-transfer.json | stablenet | `default=gstable` | bp=4 | — |
-| `02-sample-lifecycle.json` | 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md) | stablenet | `default=${GSTABLE_BIN:-gstable}` | bp=4, en=1 | 있음 |
-
-### `stress` (2)
-
-| 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
-|---|---|---|---|---|---|
-| `01-stress-block-time.json` | Measure block production time statistics over last 100 blocks (원본 stress/block-time.sh) | stablenet | `default=gstable` | bp=4 | — |
-| `02-stress-tx-flood.json` | Send N transactions rapidly and measure throughput (원본 stress/tx-flood.sh) | stablenet | `default=gstable` | bp=4 | — |
+- `common/` — [`common/README.md`](common/README.md) 가 CT 별 파일과 그 사정을,
+  [`common/HOW-TO-USE.md`](common/HOW-TO-USE.md) 가 케이스별 실행 명령을 적는다.
+- 체인별 디렉터리 — 각 스펙 파일의 `description` 이 무엇을 왜 그렇게 보는지 적는다.
+  `chainbench test list <디렉터리>` 로 훑을 수 있다.
 
 ## 3. Go e2e 로 옮겨진 레거시 테스트
 
@@ -465,8 +181,8 @@ fee-delegation 4건의 `personal_*` API 경로다. 후자는 로컬 서명으로
 
 ## 7. 실행 전에 있어야 하는 바이너리
 
-케이스 대부분은 `--binary` 로 준 하나면 돈다. **여섯 개 env 는 환경변수로 바이너리를
-더 받는다.** 안 걸어두면 `${VAR:-이름}` 의 기본값인 맨 이름으로 떨어지고, 그 이름은
+케이스 대부분은 `--binary` 로 준 하나면 돈다. **일곱 개 chain-preset 은 환경변수로
+바이너리를 더 받는다.** 안 걸어두면 `${VAR:-이름}` 의 기본값인 맨 이름으로 떨어지고, 그 이름은
 PATH 에 없으므로 실행이 이렇게 멈춘다.
 
 ```
@@ -479,6 +195,7 @@ exec: "gstable": executable file not found in $PATH
 | `wemix-bp4-binvar` | `GWEMIX_BIN` | go-wemix 빌드 |
 | `wemix-to-wbft`, `wemix-to-wbft-bp2` | `GWEMIX_BIN`, `GWBFT_BIN` | 넘겨주는 쪽과 넘겨받는 쪽 |
 | `stablenet-bp4-en1-default-upgrade` | `GSTABLE_UPGRADE_BIN` | **default 와 다른** go-stablenet 빌드 |
+| `stablenet-bp4-default-mismatch` | `GSTABLE_MISMATCH_BIN` | genesis 가 어긋나 기동을 거부해야 하는 빌드 |
 | `stablenet-restart-at-boho` | `GSTABLE_BIN`, `GSTABLE_POSTFORK_BIN` | boho 도입 **양쪽**의 go-stablenet 빌드 |
 
 ### go-stablenet 두 빌드 만들기
