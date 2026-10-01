@@ -64,7 +64,9 @@ func loadPkg(fset *token.FileSet, dir string) *pkgFiles {
 		im := map[string]string{}
 		for _, i := range f.Imports {
 			ip := strings.Trim(i.Path.Value, `"`)
-			if !strings.Contains(ip, "0xmhha/chainbench/internal/") {
+			// modulePrefix, not a literal: the module path moved once already and a
+			// second copy of it here is the thing that would be missed next time.
+			if !strings.Contains(ip, modulePrefix) {
 				continue
 			}
 			name := ip[strings.LastIndex(ip, "/")+1:]

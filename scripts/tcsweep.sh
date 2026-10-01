@@ -22,10 +22,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/bin/chainbench"
 WS_BASE="${TCSWEEP_WS:-$HOME/cbw/sweep}"
 # Extra flags for every `chainbench run`. A sweep against the docker fleet needs
-# four of them and they belong to the environment, not to this script:
+# five of them and they belong to the environment, not to this script:
 #   TCSWEEP_FLAGS="--server-set env/docker/build/server-set.yaml \
-#     --workspace-config env/docker/build/workspace-config.yaml --docker \
-#     --keys-source generate"
+#     --workspace-config env/docker/build/workspace-config.yaml \
+#     --docker --all-servers --keys-source generate"
+# --all-servers is not optional with a 15-server set: without it, and without a
+# --server naming one, the place step refuses because it cannot tell which
+# server to use. Leaving it out of this list once sent a reader straight into
+# that refusal. Unset, every run goes local and wants the chain binary on PATH.
 read -r -a EXTRA <<<"${TCSWEEP_FLAGS:-}"
 
 [ -x "$BIN" ] || { echo "no $BIN — run make build" >&2; exit 2; }
@@ -97,10 +101,23 @@ PY
 # --docker the node's own address is translated through the localmap next to
 # the server set, the same way chainbench dials it.
 attachTarget() {
-  "$BIN" chain show --workspace-dir "$1" --node 1 --json 2>/dev/null | python3 - "$1" "$ROOT" ${EXTRA[@]+"${EXTRA[@]}"} <<'PY'
+  # The record is read into a variable and handed over as an argument, not
+  # piped. `python3 -` takes the script on stdin and the heredoc below is that
+  # stdin, so a pipe into this cannot be read: json.load(sys.stdin) saw the
+  # already-consumed heredoc and raised, every time. The failure was a
+  # traceback rather than a message because the error was discarded and the
+  # empty result then fell through to the preset's default endpoint, so an
+  # attach case failed against 127.0.0.1:8600 with nothing saying why.
+  local show
+  show=$("$BIN" chain show --workspace-dir "$1" --node 1 --json 2>&1) || {
+    printf 'attachTarget: chain show failed for %s: %s\n' "$1" "$show" >&2
+    return 1
+  }
+  [ -n "$show" ] || { printf 'attachTarget: chain show said nothing for %s\n' "$1" >&2; return 1; }
+  python3 - "$1" "$ROOT" "$show" ${EXTRA[@]+"${EXTRA[@]}"} <<'PY'
 import json, pathlib, re, sys
-ws, root, extra = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3:]
-e = json.load(sys.stdin)["entries"][0]
+ws, root, extra = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[4:]
+e = json.loads(sys.argv[3])["entries"][0]
 host, port = e["host"], e["http"]
 if "--docker" in extra and "--server-set" in extra:
     lm = pathlib.Path(extra[extra.index("--server-set") + 1]).parent / "localmap.yaml"
