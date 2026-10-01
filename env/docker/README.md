@@ -30,9 +30,19 @@ docker compose -f build/docker-compose.yml up -d
 ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server1
 ```
 
-`accounts.env` 없이(또는 비밀번호가 sample 값 그대로인 채로) `gen-env.sh` 를
-실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을 띄우지 않기
-위해서다.
+`accounts.env` 없이(또는 비밀번호가 sample 값 `change-me` 그대로인 채로)
+`gen-env.sh` 를 실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을
+띄우지 않기 위해서다. 이 파일은 gitignore 대상이고 커밋되면 안 된다.
+
+`gen-env.sh` 가 `build/` 에 만드는 것은 다섯 개다. 손으로 쓰는 파일은 없다.
+
+| 파일 | 무엇 |
+|---|---|
+| `docker-compose.yml` | 서버 15대. 퍼블리시 포트는 루프백에만 바인딩 |
+| `server-set.yaml` | stablenet·wbft 용. `p2p_step` 1, 서버당 슬롯 4 |
+| `server-set-wemix.yaml` | poa 용. `p2p_step` 3, 서버당 1노드 |
+| `workspace-config.yaml` | `dataRoot=/data/chainbench`, `paths.binaries=bin` |
+| `localmap.yaml` | `--docker` 가 쓰는 주소 번역표 |
 
 ## 스크립트를 고쳤으면 다시 생성하고 다시 만든다
 
@@ -57,19 +67,46 @@ chainbench-server1` 로 바로 볼 수 있다.
 
 컨테이너의 `/data/chainbench/bin/` 에 대상 체인의 **리눅스** 바이너리가 있어야 한다. 맥에서 만든 것은 Mach-O 라 돌지 않는다. 골랑 컨테이너에서 만들어 넣는다(2026-09-29 에 이렇게 만들었다).
 
+**산출물 디렉터리는 홈 아래에 둔다.** `/tmp` 는 쓰면 안 된다 — macOS 의 Docker
+Desktop 에서 `-v /tmp/out:/out` 은 호스트가 아니라 **VM 안의 `/tmp`** 에 붙는다.
+빌드는 성공하는데 다음 줄의 `docker cp` 는 호스트에서 돌아 그 파일을 찾지 못한다.
+2026-10-01 에 재현했다: 컨테이너 안 `/out` 에는 `gstable` 이 보이는데 호스트의
+`/tmp/out` 은 비어 있었다.
+
 ```bash
+OUT=~/cbw/linuxbin && mkdir -p "$OUT"
+
 # 저장소는 읽기 전용으로 붙인다 — 산출물이 기존 build/bin 을 덮지 않게.
-docker run --rm -v ~/Work/github/chain/go-stablenet:/src:ro -v /tmp/out:/out \
+# go-stablenet
+docker run --rm -v ~/Work/github/chain/go-stablenet:/src:ro -v "$OUT":/out \
   -v cbgocache:/gocache -e GOCACHE=/gocache/build -e GOMODCACHE=/gocache/mod \
   -w /src golang:1.25 go build -o /out/gstable ./cmd/gstable
 
+# go-wbft — ./cmd/gwemix 를 빌드해 gwbft 로 넣는다. 저장소가 go-wemix 에서
+# 갈라져 나와 명령 이름이 남았고, 매니페스트는 gwbft 를 부른다.
+docker run --rm -v ~/Work/github/chain/go-wbft:/src:ro -v "$OUT":/out \
+  -v cbgocache:/gocache -e GOCACHE=/gocache/build -e GOMODCACHE=/gocache/mod \
+  -w /src golang:1.25 go build -o /out/gwbft ./cmd/gwemix
+
+# go-wemix — go.mod 이 1.19 를 요구한다.
+docker run --rm -v ~/Work/github/chain/go-wemix:/src:ro -v "$OUT":/out \
+  -v cbgocache:/gocache -e GOCACHE=/gocache/build -e GOMODCACHE=/gocache/mod \
+  -w /src golang:1.19 go build -o /out/gwemix ./cmd/gwemix
+
 for i in $(seq 1 15); do
   docker exec -u root chainbench-server$i mkdir -p /data/chainbench/bin
-  docker cp /tmp/out/gstable chainbench-server$i:/data/chainbench/bin/gstable
+  for b in gstable gwbft gwemix; do
+    docker cp "$OUT/$b" chainbench-server$i:/data/chainbench/bin/$b
+    docker exec -u root chainbench-server$i chmod 755 /data/chainbench/bin/$b
+  done
 done
+
+docker exec chainbench-server1 /data/chainbench/bin/gstable version | head -3
 ```
 
-go-wbft 는 `./cmd/gwemix` 를 빌드해 `gwbft` 로 넣는다(저장소가 go-wemix 에서 갈라져 나와 이름이 남았고, 매니페스트는 `gwbft` 를 부른다). go-wemix 는 go.mod 이 요구하는 `golang:1.19` 로 빌드한다.
+마지막 줄로 무엇이 올라갔는지 확인한다. `gstable` 과 `gwbft` 는 `Git Commit` 을
+찍지만 `gwemix` 는 그 빌드가 커밋을 심지 않아 찍지 않는다 — 바이너리만 보고는
+출처를 되짚을 수 없으므로, 어느 HEAD 에서 빌드했는지는 따로 적어 둔다.
 
 ## 어느 서버 세트인가
 
@@ -102,7 +139,7 @@ bin/chainbench run \
 키는 15개가 필요해 preset(5개) 대신 generate 로 만든다 — 생성 세트는 topology 의
 bp 수(7)만 validator 로 선언한다.
 
-### 209건 전량 스위프를 이 15대에서
+### 전량 스위프를 이 15대에서
 
 `scripts/tcsweep.sh` 는 기본적으로 로컬 바이너리로 돈다. `TCSWEEP_FLAGS` 를 주면 같은
 스위프가 이 컨테이너들을 향한다 — 로컬에 체인 바이너리가 없는 기기에서는 이쪽이
@@ -112,16 +149,45 @@ bp 수(7)만 validator 로 선언한다.
 것은 `~/.chainbench` 의 증적이 아니라 그 뒤의 기계 상태다. 통과한 것을 지우는 이유는
 남겨 두면 다음 케이스의 genesis 가 그것을 만나 `incompatible genesis` 로 막히기 때문이다.
 
+**한 번에 다 돌릴 수 없다. 세 번에 나눈다.** 체인마다 서버 세트가 다르고,
+`tcsweep.sh` 는 `TCSWEEP_FLAGS` 를 전 케이스에 똑같이 적용하기 때문이다.
+
 ```bash
+cd <chainbench 디렉터리>      # env/ 와 scripts/ 가 보이는 곳
+make build
+
 export TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set.yaml \
   --workspace-config $PWD/env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys-source generate"
-scripts/tcsweep.sh sweep.log            # 209건, 케이스당 망 하나
-scripts/tcsweep.sh sweep.log go-wbft    # 일부만
+
+# 1차 — stablenet 177건 + wbft 8건. go-stablenet/testnet 만 뺀다(아래 참조).
+scripts/tcsweep.sh ~/cbw/sweep-1.log \
+  'tests/tc/basic\|tests/tc/common\|tests/tc/go-wbft\|go-stablenet/regression\|go-stablenet/post-v1.0.0-change\|go-stablenet/hardfork\|go-stablenet/vocabulary'
+
+# 2차 — go-wemix 7건. 서버 세트와 기동 예산이 다르다.
+TCSWEEP_FLAGS="--server-set $PWD/env/docker/build/server-set-wemix.yaml \
+  --workspace-config $PWD/env/docker/build/workspace-config.yaml \
+  --docker --all-servers --keys-source generate --node-monitor-timeout 5m" \
+scripts/tcsweep.sh ~/cbw/sweep-2.log 'tests/tc/go-wemix'
 ```
+
+2차가 따로인 이유는 위 "어느 서버 세트인가" 와 같다. poa 는 `p2p_step` 3 이 필요한데
+기본 세트는 1 이라 place 단계에서 거절당하고, 기동도 느려 `--node-monitor-timeout` 을
+올려야 한다.
+
+**3차는 도커가 아니다.** `tests/tc/go-stablenet/testnet/` 의 5건은 우리가 세우지 않은
+망에 붙는 케이스다. `tcsweep.sh` 의 `runAttach` 는 attach 케이스에 `GSTABLE_RPC` 만
+넣어 주는데 이 다섯은 `GSTABLE_TESTNET_RPC` 를 요구하므로, 1차에 섞으면 전부 BLOCKED
+로 떨어진다. 실행 방법은
+[`tests/tc/go-stablenet/testnet/README.md`](../../tests/tc/go-stablenet/testnet/README.md)
+에 있다.
 
 `--server` 없이 `--server-set` 만 주면 15대 중 어느 것인지 몰라 place 단계가 거절한다.
 `--all-servers` 는 노드를 서버당 하나씩 퍼뜨려 그 질문을 없앤다.
+
+케이스 하나는 빠른 것이 30초쯤이다(2026-10-01, CT-RPC-001 을 이 15대에서 실측).
+9노드를 띄워 가르고 다시 잇는 CT-FAULT-004 같은 것은 몇 분씩 걸리므로, 1차는
+`nohup` 이나 `tmux` 로 돌리고 `tail -f` 로 본다.
 
 Go 테스트 쪽 게이트는 `CHAINBENCH_DOCKER_SERVERS` 다:
 
