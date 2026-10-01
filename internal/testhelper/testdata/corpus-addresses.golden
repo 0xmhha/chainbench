@@ -677,6 +677,13 @@ go-stablenet/regression/wbft/05-validator-remove-member-executes.json	.steps[7]	
 go-stablenet/regression/wbft/05-validator-remove-member-executes.json	.steps[8]	of[0]	0x5400d8b543eaf6738c7b44799623bea88fd0f5ee
 go-stablenet/regression/wbft/05-validator-remove-member-executes.json	.steps[9]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 go-stablenet/regression/wbft/05-validator-remove-member-executes.json	.steps[9]	to	0x0000000000000000000000000000000000001001
+go-stablenet/testnet/05-value-transfer.json	.steps[0]	address	payer
+go-stablenet/testnet/05-value-transfer.json	.steps[13]	address	payer
+go-stablenet/testnet/05-value-transfer.json	.steps[2]	address	$r
+go-stablenet/testnet/05-value-transfer.json	.steps[3]	address	payer
+go-stablenet/testnet/05-value-transfer.json	.steps[4]	from	payer
+go-stablenet/testnet/05-value-transfer.json	.steps[4]	to	$r
+go-stablenet/testnet/05-value-transfer.json	.steps[8]	address	$r
 go-stablenet/vocabulary/01-derived-address-and-checksum.json	.steps[1]	deployer	0x1111111111111111111111111111111111111111
 go-stablenet/vocabulary/03-register-contract.json	.steps[10]	to	$reg
 go-stablenet/vocabulary/03-register-contract.json	.steps[11]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8

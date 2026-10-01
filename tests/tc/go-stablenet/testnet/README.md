@@ -22,10 +22,14 @@ bin/chainbench run tests/tc/go-stablenet/testnet/02-block-advances.json
 
 ## 무엇을 쓸 수 있고 무엇을 쓰면 안 되나
 
-**계정 라벨을 쓰지 않는다.** 이 preset 은 `keysDir` 을 적지 않는다. `presets/keys` 의
+**key preset 의 라벨을 쓰지 않는다.** 이 preset 은 `keysDir` 을 적지 않는다. `presets/keys` 의
 `node1`·`faucet`·`dev1` 은 우리 genesis 가 만든 주소라 남의 망에는 없다. 라벨을 쓰면 아무
 상관없는 주소의 잔액을 묻게 된다. 라벨이 안 되면 케이스가 거기서 막히는데, 조용히 틀린
 주소를 묻는 것보다 낫다.
+
+쓸 수 있는 라벨은 케이스가 직접 선언한 것뿐이다. 자금을 쥔 계정은 `stablenet-testnet-funded`
+가 `accounts.payer.keyFile` 로 엮고, 그 키는 `GSTABLE_TESTNET_KEY_FILE` 이 가리키는 저장소
+밖 파일에서 읽는다. 읽기만 하는 케이스는 그 변수가 필요 없으므로 `stablenet-testnet` 을 쓴다.
 
 **절대값과 견주지 않는다.** 블록 높이도 잔액도 우리가 모르는 값에서 시작하고, 다른 트래픽이
 섞인다. "정확히 1 ETH" 같은 단언은 우리 망에서만 성립한다.
@@ -52,15 +56,21 @@ bin/chainbench run tests/tc/go-stablenet/testnet/02-block-advances.json
 | `02-block-advances` | 블록이 계속 나오는가 |
 | `03-block-fields-well-formed` | 최신 블록의 number·hash·parentHash·transactions 형식 |
 | `04-block-by-hash-consistency` | 머리에서 네 칸 물러난 블록을 해시로 다시 조회해도 같은가 |
+| `05-value-transfer` | payer 에서 방금 만든 주소로 1 Gwei 를 보내고, 영수증·받는 쪽 잔액·보낸 쪽 전후 차분 |
 
 머리 블록을 쓰지 않는 것은 재구성될 수 있기 때문이다.
 
+05 만 `stablenet-testnet-funded` 를 쓴다. 보내는 금액을 1 Gwei 로 둔 것은 공용 망에서 쓰는
+자금을 최소로 하기 위해서다. 받는 쪽은 그 실행이 방금 만든 주소라 시작 잔액이 0 이고 절대값을
+쓸 수 있다. 보내는 쪽은 절대값을 모르므로 전후 차분이 송금액과 수수료의 합과 같은지만 본다.
+
 ## 확인 범위
 
-네 건 모두 **로컬 go-stablenet 망을 testnet 대신 세워** 돌려 통과를 확인했다(2026-10-01).
+다섯 건 모두 **로컬 go-stablenet 망을 testnet 대신 세워** 돌려 통과를 확인했다(2026-10-01).
+05 는 그 망에서 새 계정을 만들어 자금을 보낸 뒤 그 키를 `GSTABLE_TESTNET_KEY_FILE` 로 걸고
+돌렸다. 처음에 `node1` 의 키를 그대로 썼더니 전후 차분이 맞지 않았는데, node1 이 블록을
+만드는 노드여서 같은 구간에 보상이 들어왔기 때문이다. 실제 testnet 의 지불 계정은 생산자가
+아니므로 그 단언은 그대로 둔다.
+
 실제 testnet 에 대고는 돌려 보지 않았다 — 이 기계에 그 주소가 없다. 붙는 기제와 단언이
 성립하는 것까지가 확인된 범위이고, 남의 망의 응답 지연이나 rate limit 은 겪어 보지 않았다.
-
-전송 케이스는 아직 없다. 자금이 있는 키를 어디서 받을지가 먼저이고, 그 선언은
-`accounts` 의 `keyFile` 이다 — 케이스에 주소도 키도 적지 않고 환경변수가 가리키는 파일에서
-읽는다.

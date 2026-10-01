@@ -193,6 +193,14 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Validators: chainValidators(cfg.Chain),
 	})
 
+	// Declared accounts are prepared on the way into each spec: the compose
+	// path's prepareChain never runs when attaching, and PreSpec receives the
+	// environment alone. Only keyFile accounts reach this point — the grammar
+	// refuses a minted or funded one alongside attach — so there is nothing to
+	// create and nothing to fund, just a key to read into the ring before the
+	// first step asks for it.
+	run = withDeclaredAccounts(run, keys, eps)
+
 	build := NewAttachBuildEnv(cfg.Chain, eps)
 	if len(cfg.Nodes.Nodes) > 0 {
 		// The recorded set says which nodes produce and which serve RPC, so a
@@ -243,7 +251,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 // truth, instead of failing as if the name were unknown.
 func ringFor(dir string) (*store.KeySet, error) {
 	if dir == "" {
-		return nil, nil
+		// No key set directory does not mean no ring. An attached run can
+		// still declare an account whose key lives in a file of its own
+		// (dsl.AccountV2.KeyFile), and it needs somewhere to be registered.
+		// Labels the declaration does not name still resolve to nothing,
+		// which is the property the nil used to carry.
+		return store.NewKeySet(""), nil
 	}
 	// With keys: the ring this builds is what a spec SIGNS with, so the entries
 	// it registers have to carry their keys. This is the run's own local ring —
@@ -340,5 +353,33 @@ func chainValidators(chain string) func(context.Context, *rpc.Client) ([]string,
 	return func(ctx context.Context, c *rpc.Client) ([]string, error) {
 		_, vals, verr := registry.RunningValidators(ctx, p, c)
 		return vals, verr
+	}
+}
+
+// withDeclaredAccounts registers a spec's declared accounts in the ring before
+// that spec's steps run.
+//
+// It wraps RunSpec rather than BuildEnv because BuildEnv is called once per
+// ENVIRONMENT, not once per spec: two cases whose declared values hash alike
+// share one environment, and the second would reach its first step with the
+// accounts of the first. RunSpec is the only hook the engine calls for every
+// spec, so it is where a per-spec declaration belongs.
+//
+// ring.Add is idempotent for a label already holding the same key, so a suite
+// of several specs sharing one declaration pays for it once. An error here
+// fails the spec rather than the run: a case whose paying account cannot be
+// read has nothing to say, and the ones beside it may.
+func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCEndpoint) RunSpecFunc {
+	return func(ctx context.Context, spec dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
+		if len(spec.EnvAccounts) > 0 && ring != nil {
+			endpoint := ""
+			if len(eps) > 0 {
+				endpoint = eps[0].RPCURL
+			}
+			if err := prepareAccounts(ctx, ring, "", endpoint, spec.EnvAccounts, ""); err != nil {
+				return session.StatusFail, fmt.Errorf("engine: attach: accounts: %w", err)
+			}
+		}
+		return inner(ctx, spec, env, rec)
 	}
 }

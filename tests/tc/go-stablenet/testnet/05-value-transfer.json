@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "testnet-value-transfer",
+  "description": "자금을 쥔 계정에서 새 주소로 소액을 보내고, 그 결과가 체인에 남는지 본다. 남의 망이라 절대값을 쓸 수 없다. 받는 쪽은 이 실행이 방금 만든 주소라 시작 잔액이 0 이고, 보낸 뒤 정확히 보낸 금액이 된다 — 다른 트래픽이 그 주소를 건드릴 이유가 없다. 보낸 쪽은 전후 차분으로 본다. 줄어든 양이 송금액과 수수료(gasUsed × effectiveGasPrice)의 합과 같아야 한다. 영수증은 내가 받은 해시로만 조회하므로 남의 트랜잭션이 끼어들 자리가 없다. 보내는 금액을 1 Gwei 로 둔 것은 공용 망에서 쓰는 자금을 최소로 하기 위해서다. 자금이 모자라면 풀이 거부하고 케이스가 실패하는데, 그것은 준비가 안 된 것이지 체인이 잘못된 것이 아니다 — payer 의 잔액을 먼저 확인하고 들어간다.",
+  "requires": ["rpc"],
+  "skipsOn": [],
+  "chainPreset": "stablenet-testnet-funded",
+  "steps": [
+    {
+      "expect": "balanceAt",
+      "address": "payer",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "do": "newAccount",
+      "save": "r",
+      "saveKey": "rKey"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$r",
+      "compare": "Equal",
+      "is": "0"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "payer",
+      "save": "before"
+    },
+    {
+      "do": "sendTx",
+      "from": "payer",
+      "to": "$r",
+      "value": "1000000000",
+      "expect": "receipt",
+      "save": "h",
+      "timeout": "180s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$h",
+      "is": "0x1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": ["$h"],
+      "select": "to",
+      "compare": "EqualCI",
+      "is": "$r"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": ["$h"],
+      "select": "value",
+      "compare": "Equal",
+      "is": "1000000000"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$r",
+      "compare": "Equal",
+      "is": "1000000000"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": ["$h"],
+      "select": "gasUsed",
+      "save": "used"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": ["$h"],
+      "select": "effectiveGasPrice",
+      "save": "price"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": ["$used", "$price"],
+      "save": "fee"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": ["$before", "1000000000", "$fee"],
+      "save": "want"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "payer",
+      "compare": "Equal",
+      "is": "$want"
+    }
+  ]
+}

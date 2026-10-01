@@ -96,10 +96,11 @@ go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내�
 | `go-stablenet/regression/*` | 68 | anzeon 11, api 14, blacklist-authorized 9, ethereum 3, system-contracts 23, wbft 8 |
 | `go-stablenet/post-v1.0.0-change/*` | 35 | common-all 16, extra-state 8, string-handling 6, effectivegasprice 3, stand-alone 2 |
 | `go-stablenet/{hardfork,vocabulary}` | 3 | |
+| `go-stablenet/testnet` | 5 | 우리가 세우지 않은 go-stablenet 망에 붙어 도는 케이스 |
 | `go-wbft/*` | 8 | accounts 3, governance 2, consensus 1, fault 1, tx 1 |
 | `go-wemix/*` | 7 | hardfork 3, consensus 1, governance 1, rpc 1, vocabulary 1 |
 | `basic` | 2 | 공통으로 가지 않고 남은 둘 |
-| **합계** | **192** | |
+| **합계** | **197** | |
 
 케이스 하나하나가 무엇을 보는지는 디렉터리의 문서가 적는다. 여기에 같은 목록을 한 벌 더
 두었다가 트리와 어긋났다 — 2026-09-30 까지 이 자리에는 재편 이전의 디렉터리(`fault/`,

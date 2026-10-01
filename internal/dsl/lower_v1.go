@@ -692,7 +692,7 @@ func checkAttach(caseID string, env ChainPresetV2) error {
 		"hardforks":       len(env.Hardforks) > 0,
 		"launch":          len(env.Launch) > 0,
 		"config":          len(env.Config) > 0,
-		"accounts":        len(env.Accounts) > 0,
+		"accounts":        composesAnAccount(env.Accounts),
 		"upgrade":         env.Upgrade != nil,
 		"target":          env.Target != "",
 		"manifest":        env.Manifest != "",
@@ -708,4 +708,24 @@ func checkAttach(caseID string, env ChainPresetV2) error {
 			caseID, strings.Join(composing, ", "))
 	}
 	return nil
+}
+
+// composesAnAccount reports whether a declaration's accounts would have the run
+// create something, which is what attach cannot do.
+//
+// An account is composed when the run mints its key on first use, or when it
+// asks for a balance the network's funded account has to send. Neither is
+// possible against a network somebody else set up: there is no key set to mint
+// into and no funder to send from.
+//
+// An account naming a keyFile composes nothing — its key exists and the run
+// only reads it. That is the one shape that makes sense while attached, and
+// barring it with the rest left a case no way to name the account that pays.
+func composesAnAccount(accounts map[string]AccountV2) bool {
+	for _, a := range accounts {
+		if strings.TrimSpace(a.KeyFile) == "" || strings.TrimSpace(a.Fund) != "" {
+			return true
+		}
+	}
+	return false
 }

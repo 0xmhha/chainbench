@@ -231,6 +231,10 @@
               "fund": {
                 "type": "string",
                 "description": "Balance to send once the chain is sealing, in wei (decimal or 0x-hex). Omit for an account that must start at zero — what a test needs to exercise the paths that fail for want of gas."
+              },
+              "keyFile": {
+                "type": "string",
+                "description": "Path to a file holding this account's private key, so the label means an account that already exists and already holds funds. For a network this run did not compose — there is nobody to mint from and nothing to fund with. Exclusive with fund. ${VAR} is expanded, which is how a key path stays out of a committed case."
               }
             },
             "additionalProperties": false
