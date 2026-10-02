@@ -59,8 +59,8 @@ pool:
     rpc: { base: 8600, step: 10 }
 
   # A site whose firewall groups ports by PURPOSE declares each band instead —
-  # then nothing derives from rpc and tight steps become legal. The Wemix3.5
-  # test servers' scheme, for example:
+  # then nothing derives from rpc and tight steps become legal. One such
+  # scheme, for example:
   #
   #  ports:
   #    p2p:     { base: 30301, step: 1 }   # 30301..30304
@@ -89,7 +89,7 @@ pool:
 # this file's directory, not the working directory. A password_file or
 # key_passphrase_file must be 0600 and non-empty; the value is never echoed.
 ssh:
-  port: 22                    # default 22; the Wemix3.5 test servers use 10022
+  port: 22                    # default 22; a site may run sshd elsewhere
   # user: chainbench          # required for a remote host
   # key_file: ~/.ssh/id_ed25519
   # key_passphrase_file: ~/.chainbench/key-pass   # needs key_file; required when the key is encrypted
