@@ -2,7 +2,7 @@
 
 실 원격 서버 없이 chainbench 의 원격 코드 경로를 검증하기 위한 가상 서버들이다.
 설계와 근거는 [`docs/dev/docker-remote-design.md`](../../docs/dev/docker-remote-design.md),
-작업 상태는 worklist §1g R 트랙.
+작업 상태는 worklist §1g R 트랙. 영어판은 [`README-EN.md`](README-EN.md) 에 있다.
 
 - 컨테이너 = 빈 ubuntu 서버 + sshd. **접근은 실서버와 같은 모양**이다:
   `accounts.env` 의 첫 계정(기본 `devuser1`) + 공용 비밀번호, 키 로그인 없음,
