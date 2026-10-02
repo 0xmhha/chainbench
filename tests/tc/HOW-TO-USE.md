@@ -961,11 +961,11 @@ bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/common-all/21-burn-r
 scripts/tcsweep.sh ~/cbw/one.log '21-burn-refund-events'
 ```
 
-### `go-stablenet/post-v1.0.0-change/effectivegasprice` — 3건
+### `go-stablenet/post-v1.0.0-change/effective-gas-price` — 3건
 
 **01-effective-gas-price-authorized-bp-en.json** · `effective-gas-price-authorized-bp-en`
 ```sh
-bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/01-effective-gas-price-authorized-bp-en.json \
+bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effective-gas-price/01-effective-gas-price-authorized-bp-en.json \
   --workspace-dir ~/cbw/one/01-effective-gas-price-authorized-bp-en --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '01-effective-gas-price-authorized-bp-en'
@@ -973,7 +973,7 @@ scripts/tcsweep.sh ~/cbw/one.log '01-effective-gas-price-authorized-bp-en'
 
 **02-effective-gas-price-regular.json** · `effective-gas-price-regular`
 ```sh
-bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json \
+bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effective-gas-price/02-effective-gas-price-regular.json \
   --workspace-dir ~/cbw/one/02-effective-gas-price-regular --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '02-effective-gas-price-regular'
@@ -981,7 +981,7 @@ scripts/tcsweep.sh ~/cbw/one.log '02-effective-gas-price-regular'
 
 **03-auth-tx-event-last-bp-en.json** · `auth-tx-event-last-bp-en`
 ```sh
-bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effectivegasprice/03-auth-tx-event-last-bp-en.json \
+bin/chainbench run tests/tc/go-stablenet/post-v1.0.0-change/effective-gas-price/03-auth-tx-event-last-bp-en.json \
   --workspace-dir ~/cbw/one/03-auth-tx-event-last-bp-en --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '03-auth-tx-event-last-bp-en'
