@@ -20,12 +20,16 @@ the work status is worklist §1g, track R.
   netmap assignment.
 - Published ports bind to **127.0.0.1 only**. Nothing outside this machine can
   reach them.
-- **The firewall matches a real server**: each container's `firewall.sh` opens
-  only the Wemix3.5 test-server allowlist (TCP 10022, 8501-8504, 8601-8604,
-  8701-8704, 6060, 3000, 3001, 9100, 9090, 30301-30304, 1099, 5901, 5044, 9200;
-  UDP 30303) and DROPs the rest of inbound.
-- **sshd listens on 10022**, the real server's port. The port layout is the real
-  one too: p2p 30301 with step 1, http 8601, ws 8701, auth 8501, metrics 6060.
+- **The firewall is shaped like a real server's**: what the allowlist names is
+  open and the rest of inbound is DROPped. What each container's `firewall.sh`
+  opens is TCP 10022, 8501-8504, 8601-8604, 8701-8704, 30301-30313, 6060, 3000,
+  3001, 9100, 9090, 1099, 5901, 5044, 9200, and UDP 30303. The p2p band is the
+  wide one because `firewall.sh` computes it from the slot count: `30301 + SLOTS
+  x 3`, which opens 13 ports at the default settings. Every other band is one
+  port per slot. **How many ports are open is not how many a set uses** — what
+  gets used is the server set's decision.
+- **sshd listens on 10022**. The port layout follows the same scheme as a real
+  server: p2p 30301 with step 1, http 8601, ws 8701, auth 8501, metrics 6060.
 
 ## Using it
 
