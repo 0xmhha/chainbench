@@ -71,7 +71,7 @@ python3 scripts/gen-case-commands.py --write
 | [`HOW-TO-USE.md`](HOW-TO-USE.md) | 돌리는 법 + 케이스별 실행 명령 197건 |
 | [`common/README.md`](common/README.md) | 공통 69건이 무엇이고 무엇이 왜 빠졌나 |
 | [`CHAIN-BRINGUP.md`](CHAIN-BRINGUP.md) | 체인을 세우는 네 갈래와 핸드오프 |
-| [`SPECS.md`](SPECS.md) | 레거시 Go 함수 → DSL 이관 기록. 무엇이 왜 아직 안 옮겨졌는지 포함 |
+| [`SPECS.md`](SPECS.md) | 케이스가 지키는 규약과, 끝내 옮기지 못한 여덟 건과 그 이유 |
 | [`../../env/docker/README.md`](../../env/docker/README.md) | 체인 바이너리가 없는 기계에서 돌리는 길. 원격 서버 행세를 하는 컨테이너 15대 |
 | [`../../docs/tc/common/`](../../docs/tc/common/) | CT 명세 원본(Confluence 사본)과 CT↔DSL 대응 |
 | [`../../docs/dev/legacy-port-audit/`](../../docs/dev/legacy-port-audit/) | 레거시 대비 포팅 감사 |
