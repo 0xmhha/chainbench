@@ -32,7 +32,7 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | [stablenet/post-v1.0.0-change/04-1st-test-script.md](stablenet/post-v1.0.0-change/04-1st-test-script.md) | 1st Test Script | 2610399285 | 첨부: testscript.zip(스크립트 43개, 개인 키 가림) |
 | [stablenet/post-v1.0.0-change/05-commit-changelog.md](stablenet/post-v1.0.0-change/05-commit-changelog.md) | Commit ChangeLog | 2875326583 | |
 | [stablenet/post-v1.0.0-change/06-2nd-change-test-cases.md](stablenet/post-v1.0.0-change/06-2nd-change-test-cases.md) | 2nd Change Test Cases | 2874802346 | |
-| [stablenet/node-script.md](stablenet/node-script.md) | node script | 2611871801 | 스크립트 본문은 문서에 포함. 첨부 node_ctrl.sh는 보안상 제거 |
+| [stablenet/node-script.md](stablenet/node-script.md) | node script | 2611871801 | 스크립트 본문은 문서에 포함. 첨부 node_ctrl.sh는 두지 않음 |
 | [wemix3.0/README.md](wemix3.0/README.md) | [WEMIX3.0] Test | 2918023219 | 본문 없음 |
 | [wemix3.0/01-test-items.md](wemix3.0/01-test-items.md) | [WEMIX3.0] 테스트 항목 | 2918154299 | |
 | [wemix3.0/02-test-scenarios.md](wemix3.0/02-test-scenarios.md) | [WEMIX3.0] 테스트 시나리오 | 2918252564 | ETCD/MINING/BRIOCHE/GOV/RPC 14개 |
@@ -65,4 +65,4 @@ Confluence `platfomDev` 스페이스의 [Chainbench 폴더](https://wemade.atlas
 | --- | --- | --- |
 | `stablenet/post-v1.0.0-change/attachments/genesis-standard.json` | 1st Test Scenarios | |
 | `stablenet/post-v1.0.0-change/attachments/genesis-expiry60.json` | 1st Test Scenarios | standard와 `govMinter.params.expiry`(604800 → 60)만 다름 |
-| `stablenet/post-v1.0.0-change/attachments/testscript/` | 1st Test Script | `testscript.zip`을 푼 것. 같은 내용의 `testscript.txt`도 페이지에 붙어 있음. 개인 키 4곳 가림. `node_ctrl.sh`는 보안상 제거 |
+| `stablenet/post-v1.0.0-change/attachments/testscript/` | 1st Test Script | `testscript.zip`을 푼 것. 같은 내용의 `testscript.txt`도 페이지에 붙어 있음. 개인 키 4곳 가림. `node_ctrl.sh`는 두지 않음 |
