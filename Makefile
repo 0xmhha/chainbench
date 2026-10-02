@@ -18,61 +18,61 @@ GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .PHONY: help build $(CMDS) test test-race test-e2e cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
-help: ## 사용 가능한 타깃 목록
+help: ## list the targets
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
 	  awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 ## --- build ---------------------------------------------------------------
-build: $(CMDS) ## 모든 바이너리 빌드 → bin/
+build: $(CMDS) ## build every binary into bin/
 
-$(CMDS): ## 개별 바이너리 빌드 (예: make chainbench)
+$(CMDS): ## build one binary (e.g. make chainbench)
 	$(GO) build $(LDFLAGS) -o $(BIN_DIR)/$@ ./cmd/$@
 
 ## --- test ----------------------------------------------------------------
-test: ## 유닛/통합 테스트 (e2e 제외)
+test: ## unit and integration tests (e2e excluded)
 	$(GO) test $(PKGS)
 
-test-race: ## -race 로 테스트 (동시성 검증)
+test-race: ## the same under -race
 	$(GO) test -race $(PKGS)
 
-test-e2e: ## e2e 테스트 (바이너리 미제공 시 자동 skip)
+test-e2e: ## e2e tests (they skip themselves without chain binaries)
 	$(GO) test -tags e2e $(PKGS)
 
-cover: ## 커버리지 → coverage.html
+cover: ## coverage into coverage.html
 	$(GO) test -coverprofile=coverage.out $(PKGS)
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
 ## --- lint / fmt / vet ----------------------------------------------------
-lint: lint-tool ## golangci-lint 실행 (.golangci.yml) — CI 와 같은 핀 버전으로
+lint: lint-tool ## golangci-lint (.golangci.yml), at the version CI pins
 	$(GOLANGCI) run
 
-lint-tool: ## .golangci-version 의 golangci-lint 를 bin/ 에 설치 (버전이 맞으면 건너뜀)
-	@if [ -z "$(GOLANGCI_VERSION)" ]; then echo ".golangci-version 이 없다"; exit 1; fi; \
+lint-tool: ## install the pinned golangci-lint into bin/ (skipped when it matches)
+	@if [ -z "$(GOLANGCI_VERSION)" ]; then echo ".golangci-version is missing"; exit 1; fi; \
 	have=$$($(GOLANGCI) version 2>/dev/null | sed -n 's/.*version \([0-9][^ ]*\).*/v\1/p'); \
 	if [ "$$have" = "$(GOLANGCI_VERSION)" ]; then \
 	  echo "golangci-lint $(GOLANGCI_VERSION) ($(GOLANGCI))"; \
 	else \
-	  echo "golangci-lint $${have:-미설치} → $(GOLANGCI_VERSION) 설치"; \
+	  echo "golangci-lint $${have:-not installed} -> installing $(GOLANGCI_VERSION)"; \
 	  GOBIN=$(abspath $(BIN_DIR)) $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION); \
 	fi
 
-fmt: ## gofmt -w (코드 포맷 적용)
+fmt: ## gofmt -w over the tree
 	gofmt -w .
 
-fmt-check: ## gofmt 미적용 파일 검출 (CI 게이트)
-	@out=$$(gofmt -l .); [ -z "$$out" ] || { echo "gofmt 필요:"; echo "$$out"; exit 1; }
+fmt-check: ## name the files gofmt would change (CI gate)
+	@out=$$(gofmt -l .); [ -z "$$out" ] || { echo "these files need gofmt:"; echo "$$out"; exit 1; }
 
-vet: ## go vet 정적 분석
+vet: ## go vet
 	$(GO) vet $(PKGS)
 
 ## --- housekeeping --------------------------------------------------------
 tidy: ## go mod tidy
 	$(GO) mod tidy
 
-secrets: ## 시크릿 스캔 (커밋 전 보안 게이트)
+secrets: ## scan the tree for secrets (pre-commit gate)
 	bash scripts/check-secrets.sh --all
 
-check: fmt-check vet lint test ## 커밋 전 종합 게이트 (fmt+vet+lint+test)
+check: fmt-check vet lint test ## everything a commit should pass
 
-clean: ## 빌드 산출물 정리
+clean: ## remove build output
 	rm -rf $(BIN_DIR) coverage.out coverage.html
