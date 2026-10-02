@@ -109,6 +109,29 @@ memory.
   redaction guarantees as `Sign` — the sealed struct never exposes key
   material on any logging / serialization path.
 
+## 폐쇄망 비밀은 server-set 이 가진다
+
+> **경로 정정 (2026-10-01).** `tests/env/` 가 이 자리에 있었다. 폐쇄망 SSH 자격증명을
+> `tests/env/secret/closednet.ssh` 에, 노드 주소를 `closednet.remotes`·`closednet.hosts`
+> 에 두고, `secret.example/` 이 그 형식을 보였다. 그 디렉터리는 2026-10-01 에 지웠다 —
+> 읽는 코드가 하나도 남아 있지 않았고, 담던 것을 전부 server-set 이 가져갔기 때문이다.
+
+지금 원격 서버의 주소와 자격증명은 **server-set 파일 하나**에 있다.
+
+| 담는 것 | 어디에 |
+|---|---|
+| SSH 사용자·포트 | `ssh.user`, `ssh.port` |
+| SSH 비밀번호 | `ssh.password_file`(한 줄, 0600) 또는 `ssh.password` |
+| SSH 키와 그 암호 | `ssh.key_file`, `ssh.key_passphrase_file` |
+| 노드가 도는 기계의 주소 | `pool.hosts` |
+
+경계는 `.gitignore` 가 긋는다. `server-set*.yaml` 과 `workspace-config*.yaml` 은
+전부 무시되고, 추적되는 것은 값이 없는 `server-set.sample.yaml` 뿐이다. 그 파일
+머리말이 같은 말을 한다 — "NEVER commit the real file."
+
+규칙은 그대로다. 실제 자격증명은 저장소 밖에 두고, 값을 `cat`·`echo`·로그·전송
+어디에도 내놓지 않으며, 리터럴로 커밋되거나 출력에 보이면 즉시 교체한다.
+
 ## Boundary Enforcement
 
 > **경로 정정 (2026-09-29).** 아래 두 이름은 그때의 트리다. `network/internal/signer/`

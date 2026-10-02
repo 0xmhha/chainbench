@@ -1,6 +1,6 @@
 #!/bin/sh
-# firewall.sh — the Wemix3.5 test servers' firewall, applied inside each
-# container at start so the virtual servers refuse what the real ones refuse.
+# firewall.sh — a deployment-shaped firewall, applied inside each container at
+# start so the virtual servers refuse what a real one refuses.
 # Runs as root (before sshd); needs NET_ADMIN (compose grants it).
 #
 # Open (TCP): 10022 ssh · auth/http/ws bands sized by SLOTS (default 4, so

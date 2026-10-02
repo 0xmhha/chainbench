@@ -108,7 +108,7 @@ prevCommittedSeal·prevPreparedSeal·prevRound·randaoReveal·round·vanityData`
 
 **근거**: gasTip 헤더 필드를 읽는다 — 그 필드는 stablenet genesis 의 anzeon 블록에만 있다
 
-- `go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json` — RPC istanbul_getWbftExtraInfo
+- `go-stablenet/post-v1.0.0-change/effective-gas-price/02-effective-gas-price-regular.json` — RPC istanbul_getWbftExtraInfo
 - `go-stablenet/regression/anzeon/01-regular-account-gastip-forced.json` — RPC istanbul_getWbftExtraInfo
 - `go-stablenet/regression/anzeon/08-feecap-above-min-accepted.json` — RPC istanbul_getWbftExtraInfo
 - `go-stablenet/regression/anzeon/09-feecap-exact-min-accepted.json` — RPC istanbul_getWbftExtraInfo
@@ -160,8 +160,8 @@ prevCommittedSeal·prevPreparedSeal·prevRound·randaoReveal·round·vanityData`
 
 **근거**: 주소 자리에서 그 컨트랙트를 부른다
 
-- `go-stablenet/post-v1.0.0-change/effectivegasprice/01-effective-gas-price-authorized-bp-en.json` — 컨트랙트 govCouncil
-- `go-stablenet/post-v1.0.0-change/effectivegasprice/03-auth-tx-event-last-bp-en.json` — 컨트랙트 govCouncil
+- `go-stablenet/post-v1.0.0-change/effective-gas-price/01-effective-gas-price-authorized-bp-en.json` — 컨트랙트 govCouncil
+- `go-stablenet/post-v1.0.0-change/effective-gas-price/03-auth-tx-event-last-bp-en.json` — 컨트랙트 govCouncil
 
 #### `contract:govValidator` — 2건
 

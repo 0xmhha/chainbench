@@ -1,123 +1,148 @@
 # workspace-config.sample.yaml
-# --workspace-config로 넘기는 환경 파일의 샘플이다(run, chain new/up,
-# MCP chainbench_chain_new/chainbench_chain_up).
+# Sample of the environment file passed with --workspace-config (run, chain
+# new/up, MCP chainbench_chain_new/chainbench_chain_up).
 #
-# 주석 처리되지 않은 아래 블록은 그대로 쓸 수 있다. 주석으로 적힌 블록은 선택
-# 항목이며, 필요할 때 주석을 풀어 쓴다.
-# 사용법 요약은 docs/guide/config-files.md를 본다.
+# The uncommented blocks below work as they are. The commented blocks are
+# optional: uncomment one when you need it.
+# For a usage summary see docs/guide/config-files.md.
 #
-# workspace-config.yaml 또는 workspace-config.local.yaml로 복사해 사용한다.
-# 실제 환경 파일은 Git에서 제외한다. 저장소에는 이 샘플만 관리한다.
-# 아래 /data 및 파일명은 설명용 값이다. 실제 서버 주소나 인증 정보는 넣지 않는다.
-# 서버 목록, 슬롯, 포트, SSH 설정은 별도 server-set.yaml이 소유한다.
-# 이 파일은 로컬의 chainbench가 읽지만, dataRoot와 paths는 실행 대상 머신의 경로다.
+# Copy this to workspace-config.yaml or workspace-config.local.yaml. Real
+# environment files stay out of Git; only this sample is tracked.
+# The /data paths and file names below are illustrative. Do not put real server
+# addresses or credentials here.
+# The server list, slots, ports and SSH settings belong to server-set.yaml.
+# chainbench reads this file locally, but dataRoot and paths are paths on the
+# machine that runs the nodes.
 
-# 최상위 키: version, dataRoot, paths, binaryAliases, control, inputs, execution,
-# limits, existingInputs. 이 밖의 키나 중복 키가 있으면 읽을 때 오류로 멈춘다(오타가
-# 조용히 무시되지 않게). 필수는 version, dataRoot, paths, control.artifactRoot,
-# inputs.mode, execution.chain 이다.
+# Top-level keys: version, dataRoot, paths, binaryAliases, control, inputs,
+# execution, limits, existingInputs. Any other key, or a duplicate key, stops
+# the load with an error, so a typo is never silently ignored. Required:
+# version, dataRoot, paths, control.artifactRoot, inputs.mode, execution.chain.
 
-# 1 만 받는다. 다른 값은 추측해 읽지 않고 거부한다.
+# Only 1 is accepted. Any other value is rejected rather than guessed at.
 version: 1
 
-# 실행 대상 머신의 절대경로. 원격이면 원격 서버 내부 경로다.
-# 로컬 실행은 예를 들어 /Users/example/chainbench-data로 변경한다.
-# 대상 경로에서는 ~, $VAR, ${VAR}, 상대 dataRoot를 허용하지 않는다.
-# 서버별 루트가 다른 구성은 아래 문서의 후속 확장 항목으로 다룬다.
+# Absolute path on the target machine. For a remote target this is a path
+# inside the remote server.
+# For a local run change it to something like /Users/example/chainbench-data.
+# Target paths may not use ~, $VAR, ${VAR}, or a relative dataRoot.
+# Per-server roots are a follow-up extension, covered in the doc above.
 dataRoot: /data
 
-# 모든 값은 dataRoot 기준 상대 디렉터리다. 아래 항목을 명시적으로 작성한다.
-# 절대경로, .., 빈 값은 거부한다. 누락값을 현재 작업 디렉터리로 대체하지 않는다.
+# Every value is a directory relative to dataRoot. Write each entry out
+# explicitly. Absolute paths, .., and empty values are rejected. A missing
+# value is not filled in from the current working directory.
 paths:
-  # 실행 바이너리: DSL의 gwemix -> /data/bin/gwemix
+  # Node binaries: gwemix in the DSL -> /data/bin/gwemix
   binaries: bin
 
-  # 재사용할 config 원본. DSL의 config-wemix-test1.yml
+  # Reusable config sources. config-wemix-test1.yml in the DSL
   # -> /data/configs/config-wemix-test1.yml
-  # 확장자만으로 형식을 변환하지 않는다. 바이너리별 지원 형식을 검증해야 한다.
+  # The extension alone does not convert the format. Check which formats the
+  # binary in question supports.
   configs: configs
 
-  # genesis 템플릿 또는 완성본 원본. DSL의 genesis-wemix-test.json
+  # Genesis sources, template or finished. genesis-wemix-test.json in the DSL
   # -> /data/genesis/genesis-wemix-test.json
-  # 템플릿/완성본 여부는 DSL이 선언한다. 경로 설정으로 결정하지 않는다.
+  # Whether a file is a template or a finished genesis is declared in the DSL,
+  # not decided by this path setting.
   genesis: genesis
 
-  # 개별 계정 keystore 파일 원본. DSL 참조 bp1/account.json
+  # Sources for individual account keystore files. bp1/account.json in the DSL
   # -> /data/keystore/bp1/account.json
-  # password나 private key 원문은 이 파일에 작성하지 않는다.
+  # Never write a password or a raw private key into this file.
   keystore: keystore
 
-  # 기존 keyring/preset 전체 디렉터리 원본. keystore 파일 한 개와 구분한다.
-  # DSL의 preset-a -> /data/keys/preset-a
-  # source=generate인 새 키는 공유 원본 대신 구성별 runtime 아래에 생성한다.
+  # Sources for a whole existing keyring or preset directory, as opposed to a
+  # single keystore file. preset-a in the DSL -> /data/keys/preset-a
+  # New keys with source=generate are created under the per-composition runtime
+  # directory instead of this shared source tree.
   keyrings: keys
 
-  # 변경되는 노드 DB: /data/node/<compositionId>/<nodeId>
-  # 바이너리 교체/재시작 때 유지한다. 같은 바이너리의 여러 노드는 서로 격리한다.
+  # Mutable node databases: /data/node/<compositionId>/<nodeId>
+  # Kept across a binary swap or a restart. Several nodes of the same binary
+  # stay isolated from each other.
   nodes: node
 
-  # 생성 또는 배포한 실행용 genesis, 노드별 config, 생성 키, 생성기 작업 파일.
-  # /data/runtime/<compositionId>/ 아래에 소유권을 기록하고 배치한다.
-  # configs/genesis/keystore/keyrings의 공유 원본은 덮어쓰지 않는다.
+  # Generated or deployed runtime genesis, per-node configs, generated keys and
+  # builder work files. Placed under /data/runtime/<compositionId>/ with their
+  # ownership recorded.
+  # The shared sources under configs/genesis/keystore/keyrings are not
+  # overwritten.
   runtime: runtime
 
   # /data/logs/<compositionId>/<nodeId>/<attemptId>.log
-  # 재시작 전 로그를 보존하고, 로컬 세션 결과로 수집한다.
+  # Logs survive a restart and are collected into the local session results.
   logs: logs
 
-# DSL이나 --binary가 bare 이름(gwemix)으로 가리킨 바이너리는 대상의
-# dataRoot/paths.binaries 아래에서 찾는다(/data/bin/gwemix). 이 블록은 그 이름을
-# 환경별 실제 파일명에 대응시키며, 값은 paths.binaries 기준 상대경로다. 키가
-# 없으면 이름을 그대로 쓰고, 절대경로 참조에는 적용하지 않는다. 값에도 paths 와 같은
-# 규칙이 걸린다 — 절대경로, .., ~, $VAR, 빈 값은 거부한다. 같은 논리 이름이라도
-# 체인 기능/아키텍처/버전 호환 여부는 사전 검사해야 한다.
+# A binary that the DSL or --binary names bare (gwemix) is looked up under the
+# target's dataRoot/paths.binaries (/data/bin/gwemix). This block maps that
+# name to the real file name in this environment; values are relative to
+# paths.binaries. A name with no entry is used as written, and the mapping does
+# not apply to absolute-path references. Values follow the same rules as paths:
+# absolute paths, .., ~, $VAR and empty values are rejected. Mapping a logical
+# name does not check that the binary matches the chain's features,
+# architecture or version — verify that yourself.
 # binaryAliases:
 #   gwemix: linux-amd64/gwemix
 #   gwbft: release-candidate/gwbft
 
-# 로컬 제어 영역. 이 블록만 chainbench를 실행하는 머신의 경로다.
+# The local control area. This block alone holds paths on the machine that runs
+# chainbench.
 control:
-  # 필수. 로컬에서 ~를 확장한다. 상대경로를 쓴다면 이 설정 파일의 디렉터리가 기준이다.
-  # <artifactRoot>/<날짜시간>/<테스트이름>/ 아래에 결과와 수집 로그를 저장한다.
-  # 최종 report는 <artifactRoot>/<날짜시간>/ 바로 아래에 생성한다.
+  # Required. ~ is expanded locally. A relative path resolves against the
+  # directory of this config file.
+  # Results and collected logs are stored under
+  # <artifactRoot>/<timestamp>/<test name>/.
+  # The final report is written directly under <artifactRoot>/<timestamp>/.
   artifactRoot: ~/.chainbench
 
-  # 원격 대상에 줄 노드 바이너리가 있는 로컬 디렉터리. 파일 이름은 대상이 실행하는
-  # 이름(체인 매니페스트의 binary, 또는 binaryAliases 값)과 같아야 한다. deploy
-  # 단계가 대상의 사본이 없거나 sha256 이 다를 때만 여기서 보낸다. 비우면 지금처럼
-  # 대상이 바이너리를 미리 갖고 있어야 한다. ~ 와 상대경로는 artifactRoot 와 같이 푼다.
+  # Local directory holding the node binaries to hand to a remote target. Each
+  # file name must match the name the target runs (the chain manifest's binary,
+  # or a binaryAliases value). The deploy step sends a file from here only when
+  # the target has no copy or its sha256 differs. Leave it unset and the target
+  # must already have the binaries, as it does today. ~ and relative paths
+  # resolve the same way as artifactRoot.
   # binaries: ~/cbbin
 
-# 입력 준비 방식. mode 는 generated 또는 existing 이다.
-# generated는 키와 genesis/config를 Builder로 준비한다. 이때 name 을 적으면 거부한다.
-# 바이너리 자체를 빌드하거나 다운로드하는 옵션이 아니다.
-# 노드 수와 역할은 DSL/Blueprint에서 지정한다.
+# How inputs are prepared. mode is either generated or existing.
+# generated prepares keys and genesis/config with the Builder. Writing a name
+# alongside it is rejected.
+# This is not an option for building or downloading the binaries themselves.
+# Node count and roles come from the DSL/Blueprint.
 inputs:
   mode: generated
 
-# fresh는 새 구성 ID와 격리된 DB/포트를 사용한다.
-# 이미 실행 중인 다른 중요 테스트의 프로세스나 DB를 지우지 않는다.
-# 대안: reuse-if-matching(구성·입력·배포·건강 상태 일치 시), attach(기존 체인 검사만).
+# fresh takes a new composition ID and isolated databases and ports.
+# It never removes the processes or databases of another test already running.
+# Alternatives: reuse-if-matching (when composition, inputs, deployment and
+# health all match) and attach (inspect an existing chain only).
 execution:
   chain: fresh
 
-# genesis 를 쓰기 전(대상에 처음 쓰는 시점)에 노드가 놓일 모든 서버에서 dataRoot 의 여유 공간을
-# 확인한다. 이보다 적으면 구성을 시작하지 않는다. 비우면 2GiB, "0" 이면 검사하지 않는다.
-# 값은 바이트 수 또는 B·KiB·MiB·GiB·TiB 접미사다(KB·MB·GB·TB 도 같은 이진 단위로 읽는다).
+# Before genesis is written (the first write to the target), free space under
+# dataRoot is checked on every server that will host a node. Less than this and
+# the composition does not start. Unset means 2GiB; "0" disables the check.
+# The value is a byte count or carries a B/KiB/MiB/GiB/TiB suffix (KB/MB/GB/TB
+# are read as the same binary units).
 # limits:
 #   minFreeDisk: 2GiB
 
-# 대상에 이미 있는 입력을 쓰려면 위 inputs 블록을 아래 블록으로 교체한다.
-# inputs 키를 두 번 작성하지 않는다. existing에서는 name이 필수이고, 그 이름이
-# existingInputs 에 있어야 한다. 파일이 없으면 오류로 종료하며 generated로 자동
-# 전환하지 않는다.
+# To use inputs that already exist on the target, replace the inputs block
+# above with the block below. Do not write the inputs key twice. With existing,
+# name is required and must appear in existingInputs. A missing file is a fatal
+# error; it does not fall back to generated.
 #
-# existingInputs.<이름> 의 키는 genesis, keyring, configs 셋이며 모두 선택이다.
-#   genesis   완성된 genesis 파일. 그대로 쓴다. DSL 도 genesis 를 선언하면 충돌로 거부한다.
-#   keyring   키셋 디렉터리. DSL 도 keys 를 선언하면 충돌로 거부한다.
-#   configs   <논리 이름>: <파일> 의 맵. DSL 노드표의 config 값이 이 맵의 키와 같으면
-#             그 노드의 config 를 오른쪽 파일로 바꾼다. 키가 아닌 값은 파일 참조로 그대로
-#             쓴다. 아래의 default 는 노드가 config: default 라고 적었을 때만 쓰인다.
+# existingInputs.<name> takes three optional keys: genesis, keyring, configs.
+#   genesis   A finished genesis file, used as is. If the DSL also declares a
+#             genesis, the conflict is rejected.
+#   keyring   A keyset directory. If the DSL also declares keys, the conflict
+#             is rejected.
+#   configs   A map of <logical name>: <file>. When a node's config value in
+#             the DSL node table equals a key of this map, that node's config
+#             is replaced by the file on the right. A value that is not a key
+#             is used as a file reference as written. The default below applies
+#             only to a node that wrote config: default.
 # inputs:
 #   mode: existing
 #   name: regression
@@ -129,29 +154,35 @@ execution:
 #     configs:
 #       default: srv://server-01/data/configs/config-wemix-regression.toml
 #
-# srv://server-01/data/...는 server-set에서 name이 server-01인 서버의 /data/...다.
-# dataRoot를 다시 붙이지 않는다. server-01은 목록 순서가 아닌 고정 이름이다.
-# 원본 파일 위치를 지정하는 것이며 노드 배치나 개인 키 전송을 지시하지 않는다.
-# 모든 노드가 다른 서버에 있으면 원본/목적지와 배포 정책을 별도로 검증한다.
+# srv://server-01/data/... means /data/... on the server whose name in the
+# server set is server-01. dataRoot is not prepended again. server-01 is a
+# fixed name, not a position in the list.
+# A reference states where the source file lives. It does not place nodes and
+# does not direct any private key to be transferred.
+# When nodes sit on several servers, verify source, destination and deployment
+# policy separately.
 #
-# existingInputs의 참조로 쓸 수 있는 것은 문자열 세 형식이다. 다른 형식은 없다.
+# An existingInputs reference is one of exactly three string forms:
 #
-#   srv://<서버이름>/<절대경로>   지정한 서버의 그 경로 (dataRoot를 덧붙이지 않는다)
-#   <상대 파일명>                대상의 용도별 디렉터리 아래 (genesis·configs 만)
-#   /<절대경로>                  chainbench 를 돌리는 이 기계의 파일
+#   srv://<server name>/<absolute path>  that path on the named server
+#                                        (dataRoot is not prepended)
+#   <relative file name>                 under the target's directory for that
+#                                        purpose (genesis and configs only)
+#   /<absolute path>                     a file on the machine running
+#                                        chainbench
 #
-# keyring 은 srv:// 또는 절대경로만 받는다. 상대 이름은 로컬 디렉터리로 오인하지 않도록
-# 거부한다. srv:// 키링은 keys 단계가 로컬로 내려받아 쓴다.
+# keyring accepts only srv:// or an absolute path. A relative name is rejected
+# so it cannot be mistaken for a local directory. A srv:// keyring is
+# downloaded locally by the keys step.
 #
-# 예전 이 자리에는 객체형 참조({server, ref} / {serverIndex, ref} / {localPath})가
-# "미구현"이라는 딱지와 함께 예시로 적혀 있었다. 2026-09-12에 그 계획을 철회했다.
-# 이유는 표현력이 아니라 값이다 — srv://와 상대 파일명이 실제로 쓰이는 경우를 모두
-# 덮고 있고, 객체형을 이 묶음에서 끝까지 나르려면 KeysDir/GenesisExisting이 문자열인
-# 32개 파일 105곳을 구조체로 바꿔야 하는데 그 표현력을 요구하는 호출자가 없다.
-# 포기한 것은 serverIndex 하나다: 서버를 이름이 아니라 순번으로 고르는 것은 문자열로
-# 표현할 수 없다. 필요해지면 그때 요구와 함께 다시 연다.
+# Object-shaped references ({server, ref}, {serverIndex, ref}, {localPath}) are
+# not supported and are not planned. The one thing they could express and these
+# strings cannot is serverIndex, picking a server by position rather than by
+# name; reopen that if a caller ever needs it.
 
-# 구성 ID, 노드 ID, 실행 시각, PID, 실제 명령어, 체크섬은 운영자가 입력하지 않는다.
-# chainbench가 생성하여 기존 chain-record.json 및 실행 기록에 저장한다.
-# 바이너리 다운로드/업로드 정책과 로컬 원본 경로는 별도 배포 계약으로 설계한다.
-# 이 샘플의 경로 선언만으로 자동 전송을 의미하지 않는다.
+# Composition IDs, node IDs, run times, PIDs, the actual command lines and
+# checksums are not entered by an operator. chainbench generates them and
+# stores them in chain-record.json and the run records.
+# Binary download/upload policy and local source paths are designed as a
+# separate deployment contract. Declaring a path in this sample does not by
+# itself mean anything is transferred automatically.

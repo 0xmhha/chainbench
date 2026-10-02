@@ -44,9 +44,8 @@ func TestSupportsRole_WbftHasAProxyTier(t *testing.T) {
 }
 
 // TestPortReservation_IsHonest: a wbft node listens on one p2p-side port and
-// reserves one. The span said 2 out of inertia until the Wemix3.5 test-server
-// scheme (p2p packed one apart, 30301..30304) showed the over-reservation
-// rejecting a real deployment. Existing sets keep their spacing regardless —
+// reserves one. The span said 2 out of inertia until a deployment that packs
+// p2p one port apart showed the over-reservation rejecting a real shape. Existing sets keep their spacing regardless —
 // ports come from the configured bands; the span only sets the minimum — and
 // a wbft plan derives no etcd port, so nothing advertises a port nobody
 // listens on.

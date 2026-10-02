@@ -2,10 +2,14 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-testnet",
-  "description": "stablenet: 우리가 세우지 않은 go-stablenet 망에 붙는다. 주소는 GSTABLE_TESTNET_RPC 로만 받고 기본값을 두지 않는다 — 기본값이 있으면 변수를 잊었을 때 조용히 로컬 망을 재고 testnet 을 쟀다고 믿게 된다. keysDir 를 적지 않는 것도 같은 이유다. presets/keys 의 node1·faucet·dev1 은 우리 genesis 가 만든 주소라 남의 망에는 없고, 라벨을 쓰면 엉뚱한 주소의 잔액을 묻는다. 라벨이 안 되면 케이스가 거기서 막히는데, 그 편이 낫다. provides 는 아는 것만 적는다. 관리용 네임스페이스가 열려 있는지 우리는 모르므로 consensus 는 넣지 않았다 — 확인되면 그때 늘린다.",
+  "description": "stablenet: attaches to a go-stablenet network we did not compose. The address comes only from GSTABLE_TESTNET_RPC and has no default — a default would let a forgotten variable measure the local network quietly and report it as the testnet. keysDir is left out for the same reason: node1, faucet and dev1 under presets/keys are addresses our genesis made, so on somebody else's network a label asks for the balance of an unrelated address. A label that does not resolve stops the case there, which is the better failure. provides names only what we know; we cannot tell whether the admin namespaces are open, so consensus is not claimed until it is confirmed.",
   "chain": "stablenet",
   "attach": {
-    "rpc": ["${GSTABLE_TESTNET_RPC}"],
-    "provides": ["rpc"]
+    "rpc": [
+      "${GSTABLE_TESTNET_RPC}"
+    ],
+    "provides": [
+      "rpc"
+    ]
   }
 }

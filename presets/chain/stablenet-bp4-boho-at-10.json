@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-boho-at-10",
-  "description": "stablenet: 4 bp, Applepie 는 처음부터, Boho 는 10번 블록에서 켜진다. 포크 전과 후를 견주는 케이스가 쓴다 — 포크가 0 이면 전후가 같아서 비교가 성립하지 않는다.",
+  "description": "stablenet: 4 bp, Applepie from block 0 and Boho at block 10. Used by cases that compare before and after the fork — at 0 the two sides are the same and the comparison says nothing.",
   "chain": "stablenet",
   "keys": {
     "nodekeys": {

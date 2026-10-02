@@ -1,19 +1,25 @@
 # 커밋 전 민감 *파일명* 검사(보안 정책 §5)의 오탐 면제 목록.
+# 훅 본체는 ~/.claude/hooks/precommit-scan.sh 다.
 #
 # 면제되는 것은 파일명 패턴 검사뿐이다. betterleaks 내용 스캔은 그대로 수행되므로,
 # 여기 적힌 파일이라도 실제 비밀이 들어 있으면 커밋은 차단된다.
 #
-# 한 줄에 하나, 저장소 루트 기준 경로. glob 가능. `#` 뒤는 주석.
+# 한 줄에 하나, 저장소 루트 기준 경로. glob 가능(fnmatch 이므로 `*` 가 `/` 도 넘는다).
+# `#` 뒤는 주석.
 # 새 항목을 넣을 때는 왜 오탐인지 한 줄로 남긴다 — 근거 없는 면제는 검사를 무력화한다.
 
-# ERC-20 '토큰' 전송 테스트. 인증 토큰이 아니라 도메인 어휘가 'token' 패턴과 겹친 것.
-tests/anzeon/token_transfer.go
-
 # ERC-20 '토큰' 회귀 테스트 케이스(JSON). 인증 토큰이 아니라 도메인 어휘가 'token'
-# 패턴과 겹친 것. tests/cases -> tests/tc 통합으로 경로가 바뀌며 검사에 걸렸다.
+# 패턴과 겹친 것.
 tests/tc/go-stablenet/regression/api/*token*.json
 tests/tc/go-stablenet/regression/system-contracts/*token*.json
 
+# 같은 이유의 DSL 예제 스펙.
+examples/specs/*token*.json
+
+# SSH 자격증명을 '푸는' 코드. 비밀 값을 담지 않는다 — 선언된 로그인을 dial 이 쓸
+# 형태로 바꾸고, 비밀은 파일 경로로만 가리킨다.
+internal/resource/serverset_credentials.go
+
 # 비밀 스캐너 자신. 'secret' 이 파일명에 든 이유가 비밀을 담아서가 아니라 비밀을
-# 찾는 스크립트라서다. 이미 추적 중인 파일이고, 내용 스캔(betterleaks)은 그대로 돈다.
+# 찾는 스크립트라서다. 내용 스캔(betterleaks)은 그대로 돈다.
 scripts/check-secrets.sh

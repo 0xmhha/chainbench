@@ -267,9 +267,9 @@ CT-NODE-012 는 노드 프로그램을 바꿔 끼워도 이미 처리한 트랜�
 | upgrade-registry-order | go-stablenet/post-v1.0.0-change/common-all/19-upgrade-registry-order.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |
 | v1-params-init-storage | go-stablenet/post-v1.0.0-change/common-all/20-v1-params-init-storage.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |
 | burn-refund-events | go-stablenet/post-v1.0.0-change/common-all/21-burn-refund-events.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |
-| effective-gas-price-authorized-bp-en | go-stablenet/post-v1.0.0-change/effectivegasprice/01-effective-gas-price-authorized-bp-en.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
-| effective-gas-price-regular | go-stablenet/post-v1.0.0-change/effectivegasprice/02-effective-gas-price-regular.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
-| auth-tx-event-last-bp-en | go-stablenet/post-v1.0.0-change/effectivegasprice/03-auth-tx-event-last-bp-en.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| effective-gas-price-authorized-bp-en | go-stablenet/post-v1.0.0-change/effective-gas-price/01-effective-gas-price-authorized-bp-en.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| effective-gas-price-regular | go-stablenet/post-v1.0.0-change/effective-gas-price/02-effective-gas-price-regular.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
+| auth-tx-event-last-bp-en | go-stablenet/post-v1.0.0-change/effective-gas-price/03-auth-tx-event-last-bp-en.json | StableNet 전용 | StableNet 헤더 팁 강제 규칙을 검사한다 |
 | authorized-extra-bit-synced | go-stablenet/post-v1.0.0-change/extra-state/01-authorized-extra-bit-synced.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |
 | blacklisted-extra-bit-synced | go-stablenet/post-v1.0.0-change/extra-state/01b-blacklisted-extra-bit-synced.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |
 | stablenet-account-extra | go-stablenet/post-v1.0.0-change/extra-state/02-stablenet-account-extra.json | StableNet 전용 | StableNet 1.0.0 이후 변경(발행 컨트랙트 개편, 하드포크 동시 적용, 계정 상태 저장)을 검사한다 |

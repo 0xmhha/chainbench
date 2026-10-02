@@ -64,4 +64,4 @@ for i,l in enumerate(doc):
     if l.startswith("| **합계**"):
         doc[i]=f"| **합계** | **{sum(cnt.values())}** | **{sum(tot.values()):,}** |"
 io.open(p,"w",encoding="utf-8").write("\n".join(doc))
-print(f"  패키지 {fixed}개 · 절 제목 · §0 표 갱신")
+print(f"  refreshed: {fixed} package figures, section headings, the §0 table")

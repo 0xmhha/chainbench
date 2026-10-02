@@ -352,7 +352,7 @@ Run the whole common corpus, one network per case:
 scripts/tcsweep.sh sweep.log tests/tc/common
 ```
 
-See [`tests/tc/common/HOW-TO-USE.md`](tests/tc/common/HOW-TO-USE.md) for the
+See [`tests/tc/HOW-TO-USE.md`](tests/tc/HOW-TO-USE.md) for the
 per-case commands and [`tests/README.md`](tests/README.md) for the conventions.
 
 ---
@@ -400,7 +400,7 @@ See [`presets/keys/README.md`](presets/keys/README.md) and
 
 - [`docs/dev/architecture/architecture-v2.md`](docs/dev/architecture/architecture-v2.md) — layers and the import rule
 - [`docs/guide/dsl-authoring.md`](docs/guide/dsl-authoring.md) — how to write a test case
-- [`tests/tc/common/HOW-TO-USE.md`](tests/tc/common/HOW-TO-USE.md) — running the common corpus
+- [`tests/tc/HOW-TO-USE.md`](tests/tc/HOW-TO-USE.md) — running any case, with a command per case
 - [`docs/dev/chain-setup/README.md`](docs/dev/chain-setup/README.md) — bringing each chain up by hand
 - [`env/docker/README.md`](env/docker/README.md) — the local fleet that stands in for remote servers
 - [`docs/SECURITY_KEY_HANDLING.md`](docs/SECURITY_KEY_HANDLING.md) — key handling

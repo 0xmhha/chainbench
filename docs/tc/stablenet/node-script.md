@@ -3,12 +3,12 @@
 > 출처: Confluence [node script](https://wemade.atlassian.net/wiki/spaces/platfomDev/pages/2611871801) (페이지 ID 2611871801, 버전 4, 최종 수정 2026-04-13)  
 > 상위 페이지: [StableNet] Test  
 > 가져온 날짜: 2026-09-18  
-> 보안 정리: 2026-09-28. 원본 스크립트에 하드코딩돼 있던 사내 IP 15개·SSH 포트·원격
-> 데이터 경로만 `server-set.yaml` / `workspace-config.yaml` 로 옮겼다. 스크립트 구조와
-> 실행 방식(`<user> <password> <command> <target>`)은 원본 그대로 유지한다. 두 설정
-> 파일은 `.gitignore` 로 추적 제외되며 커밋되지 않는다.
+> 보안 정리: 2026-09-28. 원본 스크립트에 박혀 있던 환경 의존 값만 `server-set.yaml` /
+> `workspace-config.yaml` 로 옮겼다. 스크립트 구조와 실행 방식
+> (`<user> <password> <command> <target>`)은 원본 그대로 유지한다. 두 설정 파일은
+> `.gitignore` 로 추적 제외되며 커밋되지 않는다.
 
-원본 페이지는 두 부분이다. 첫 코드 블록은 사용법 설명이고, 두 번째는 "node_ctrl.sh"라는 접기(expand) 블록 안의 스크립트 본문이다. 원본 페이지에는 같은 이름의 첨부 파일 `node_ctrl.sh`도 있었으나, 사내 IP 가 하드코딩돼 있어 이 저장소에서는 보안상 제거했다(스크립트 내용은 아래 본문에 정리된 형태로 남아 있다). 1st Test Script 페이지의 압축 파일에 든 `hardfork/node_ctrl.sh`는 이보다 나중 버전이라 내용이 다르다.
+원본 페이지는 두 부분이다. 첫 코드 블록은 사용법 설명이고, 두 번째는 "node_ctrl.sh"라는 접기(expand) 블록 안의 스크립트 본문이다. 원본 페이지에는 같은 이름의 첨부 파일 `node_ctrl.sh`도 있었으나 이 저장소에는 두지 않았다(스크립트 내용은 아래 본문에 정리된 형태로 남아 있다). 1st Test Script 페이지의 압축 파일에 든 `hardfork/node_ctrl.sh`는 이보다 나중 버전이라 내용이 다르다.
 
 ---
 

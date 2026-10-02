@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-boho",
-  "description": "stablenet: 4 bp, Boho·Applepie 가 처음부터 켜져 있다. v1.0.0 이후 기능(govMinter v2, 소각 환불, 수수료 대납 트랜잭션)을 쓰는 케이스가 쓴다. 포크 전후를 견주는 케이스는 stablenet-bp4-boho-at-10 을 쓴다.",
+  "description": "stablenet: 4 bp, with Boho and Applepie on from block 0. Used by cases that exercise post-v1.0.0 features — govMinter v2, burn refunds, fee-delegated transactions. A case comparing before and after the fork uses stablenet-bp4-boho-at-10 instead.",
   "chain": "stablenet",
   "keys": {
     "nodekeys": {

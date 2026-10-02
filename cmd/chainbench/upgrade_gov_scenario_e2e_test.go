@@ -13,7 +13,8 @@
 // stabilizingStakersThreshold the epoch leaves the stabilizing stage and the top
 // targetValidators candidates by stake become the validator set. "NCP" is wemix
 // terminology; on wbft this is staking-based validator selection with the govNCP
-// layer acting as the current permissioning gate ("약속된 validator") — the
+// layer acting as the current permissioning gate (the spec's "promised
+// validator") — the
 // public/pure-staking mode (useNCP=false) is the future direction.
 //
 // The overlay makes the permissioned operators (funded ephemeral accounts, in

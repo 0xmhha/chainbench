@@ -32,9 +32,10 @@ WS_PUB_BASE="${WS_PUB_BASE:-21600}"  # the ws band, published the same way as rp
 # the two disagree: a subscription resolves to a port nothing on this machine
 # answers. Measured 2026-09-19 — ws-subscribe-new-heads timed out because 8701
 # was in the set and in no container's published list.
-# The port scheme mirrors the Wemix3.5 test servers' firewall: each purpose
-# has its own band (auth 85xx, http 86xx, ws 87xx, p2p 303xx, one metrics
-# port), and firewall.sh opens exactly these inside every container.
+# The port scheme groups ports by purpose, the way a firewalled deployment
+# does: each purpose has its own band (auth 85xx, http 86xx, ws 87xx, p2p
+# 303xx, one metrics port), and firewall.sh opens exactly these inside every
+# container.
 P2P_PORT=30301; P2P_STEP=1
 # The wemix (poa) family needs two consecutive p2p-side ports per node, so it
 # gets its own set off the same body: one node per host, p2p ports 3 apart.
@@ -180,9 +181,9 @@ EOF
     cat <<EOF
   slots: ${slots}
 
-  # The Wemix3.5 test servers' port scheme: one band per purpose, matching
-  # the firewall every server applies (firewall.sh). Ports outside these
-  # bands are DROPPED on the machine, so the set and the firewall agree.
+  # One band per purpose, matching the firewall every server applies
+  # (firewall.sh). Ports outside these bands are DROPPED on the machine, so
+  # the set and the firewall agree.
   ports:
     p2p:     { base: ${P2P_PORT}, step: ${p2p_step} }
     rpc:     { base: ${RPC_PORT}, step: ${RPC_STEP} }

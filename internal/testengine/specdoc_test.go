@@ -8,19 +8,21 @@ import (
 	"testing"
 )
 
-// specDoc is the migration record. It is parsed rather than duplicated, the way
-// the architecture tests read layers.md: a list of blocked cases that lives only
-// in prose goes stale silently, and this one did.
+// specDoc records which legacy cases were never migrated. It is parsed rather
+// than duplicated, the way the architecture tests read layers.md: a list of
+// blocked cases that lives only in prose goes stale silently, and this one did.
 const specDoc = "../../tests/tc/SPECS.md"
 
 // gapHeadings is where a case is recorded as NOT migrated. Everything under one
 // of these headings names cases blocked on a grammar gap.
+//
+// There used to be five: the one below plus a per-category "잔여" subsection for
+// gas-policy, accounts, hardfork and system-contracts. Every blocked row in those
+// four was folded into the single table when the document was cut back to its
+// current state, and a heading listed here that the document no longer carries
+// checks nothing while looking like it does.
 var gapHeadings = []string{
 	"## 이관하지 않은 것과 그 이유",
-	"### gas-policy 잔여",
-	"### accounts 잔여",
-	"### hardfork 잔여",
-	"### system-contracts 잔여",
 }
 
 // leadingNames matches the ids a row opens with. The table's convention is that

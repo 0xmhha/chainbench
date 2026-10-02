@@ -187,17 +187,17 @@ func Collisions(root string) []Collision {
 func (c Collision) Explained() string {
 	switch {
 	case c.Name == "New":
-		return "Go 의 생성자 관용이다. 호출할 때 늘 패키지 이름이 앞에 붙으므로 헷갈릴 자리가 없다"
+		return "Go's constructor idiom. The package name always precedes it at the call site, so there is nothing to confuse"
 	case c.within("internal/chains/", "internal/core/registry"):
-		return "체인 플러그인 계약이다. 패밀리마다 같은 이름을 내놓아야 레지스트리가 하나의 경계로 디스패치한다"
+		return "The chain plugin contract. Every family has to offer the same name for the registry to dispatch through one boundary"
 	case c.within("internal/consensus/"):
-		return "합의 패밀리 계약이다. 위와 같은 이유로 패밀리끼리 이름이 같아야 한다"
+		return "The consensus family contract. The families share a name for the reason above"
 	case c.within("scripts/"):
-		return "따로 도는 도구들이라 어휘를 공유하지 않는다"
+		return "Tools that run on their own, so they share no vocabulary"
 	case c.within("cmd/"):
-		return "명령별 배선이다. 각 명령이 자기 New 를 갖는 것과 같다"
+		return "Per-command wiring, the same shape as every command having its own New"
 	case c.appForwards():
-		return "app 이 같은 개념을 같은 이름으로 다시 내보낸다. 한 개념에 한 이름이라는 규칙이 지켜진 모습이다"
+		return "app re-exports one concept under the name it already had. This is the one-name-per-concept rule being kept, not broken"
 	}
 	return ""
 }
