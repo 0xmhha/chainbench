@@ -1,6 +1,6 @@
 module github.com/0xmhha/chainbench
 
-go 1.25.13
+go 1.26.8
 
 require (
 	github.com/0xmhha/accounts v0.1.0
