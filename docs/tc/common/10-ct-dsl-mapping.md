@@ -201,4 +201,4 @@ preset 은 옮기지 않았고, `readNodeLog` 만 옮겨 왔다.
 - **작성 샘플**: `docs/guide/dsl-authoring.md` 가 가리키는 공통 묶음 안의 샘플 둘은
   `tx/CT-TX-001-value-transfer.json`(값 전송)과
   `fault/CT-FAULT-001-producer-crash-and-restart.json`(노드 중단·재시작)이다.
-- 이 매핑의 파일별 실행 명령은 `tests/tc/common/HOW-TO-USE.md` §9 에 정리돼 있다.
+- 이 매핑의 파일별 실행 명령은 `tests/tc/HOW-TO-USE.md` §7 에 정리돼 있다.

@@ -107,7 +107,7 @@ go-stablenet 에만 있는 `gasTip`·`MinBaseFee` 에 기대고 있었다. 내�
 `remote/`, `samples/`, `stress/`)와 없어진 파일 이름이 남아 있었다.
 
 - `common/` — [`common/README.md`](common/README.md) 가 CT 별 파일과 그 사정을,
-  [`common/HOW-TO-USE.md`](common/HOW-TO-USE.md) 가 케이스별 실행 명령을 적는다.
+  [`HOW-TO-USE.md`](HOW-TO-USE.md) 가 케이스별 실행 명령을 적는다.
 - 체인별 디렉터리 — 각 스펙 파일의 `description` 이 무엇을 왜 그렇게 보는지 적는다.
   `chainbench test list <디렉터리>` 로 훑을 수 있다.
 
@@ -227,8 +227,7 @@ tx 가 보존된다")을 확인하지 못한다.
 
 ## 8. 함께 있는 문서
 
-- `RUN-EACH.md` — 케이스를 하나씩 돌리는 명령과 그 준비
-- `common/HOW-TO-USE.md` — 공통 케이스의 실행 명령과 환경별 차이
+- `HOW-TO-USE.md` — 돌리는 법과 케이스별 실행 명령 197건
 - `../../env/docker/README.md` — 체인 바이너리가 없는 기기에서 돌리는 길. 원격
   서버 행세를 하는 로컬 컨테이너 15대를 세우고, `scripts/tcsweep.sh` 로 전량을
   훑는 절차가 있다
