@@ -5,7 +5,7 @@
 > server, or a live dashboard.
 
 [![CI](https://github.com/0xmhha/chainbench/actions/workflows/ci.yml/badge.svg)](https://github.com/0xmhha/chainbench/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?style=flat&logo=go&logoColor=white)](go.mod)
+[![Go](https://img.shields.io/badge/Go-1.26.8%2B-00ADD8?style=flat&logo=go&logoColor=white)](go.mod)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 **chainbench** brings up local, multi-node blockchain networks without Docker,
@@ -101,7 +101,7 @@ make test         # verify the build; no chain binary needed
 
 | Dependency | Version | Required for |
 |---|---|---|
-| [Go](https://go.dev/dl/) | 1.25+ | building and running chainbench |
+| [Go](https://go.dev/dl/) | 1.26.8+ | building and running chainbench |
 | a chain binary | — | launching real nodes (`gstable` / `gwbft` / `gwemix`), built from its own repo |
 
 The test suite is deterministic (httptest and fake binaries), so it passes

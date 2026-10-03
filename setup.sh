@@ -21,7 +21,7 @@ _check_cmd() {
   fi
 }
 
-_check_cmd go      "Install Go 1.25+: https://go.dev/dl"
+_check_cmd go      "Install Go 1.26.8+: https://go.dev/dl"
 _check_cmd python3 "Install python3 (used by the reproduction scripts)"
 _check_cmd curl    "Install curl"
 
