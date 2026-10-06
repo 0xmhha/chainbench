@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -133,9 +134,24 @@ func lowerChain(c CaseV2, env ChainPresetV2, spec *Spec) error {
 	// A definition names a binary; it does not place one. A path here is a
 	// fact about one machine, and a case that carries it runs nowhere else.
 	names := map[string]string{}
-	for key, ref := range env.Binaries {
+	// What each name resolves to when no variable is set. Two names that land
+	// on the same one are the same file on the target, since a name is resolved
+	// under one directory there — so a case written to tell two builds apart
+	// would be handed one. See TestBinaryNames_CannotCollapseToOne.
+	unset := map[string]string{}
+	for _, key := range slices.Sorted(maps.Keys(env.Binaries)) {
+		ref := env.Binaries[key]
 		if err := binaryRefIsAName(ref.Binary); err != nil {
 			return fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref.Binary, err)
+		}
+		if v := binaryWhenUnset(ref.Binary); v != "" {
+			if other, clash := unset[v]; clash {
+				return fmt.Errorf(
+					"dsl: case %s: binaries.%s and binaries.%s both name the same binary (%s) when their variables are unset — "+
+						"name the second build something else and put it on the target under that name",
+					c.ID, other, key, v)
+			}
+			unset[v] = key
 		}
 		names[key] = ref.Binary
 		if ref.Chain == "" {
@@ -607,6 +623,21 @@ func binaryRefIsAName(ref string) error {
 		return errors.New("is a path — name the binary, and let a workspace-config say where binaries live on the target")
 	}
 	return nil
+}
+
+// binaryWhenUnset is the binary a declaration names when none of its variables
+// are set: the literal as written, or the ${VAR:-default} fallback. An
+// expansion with no fallback promises nothing and answers "" — the composer
+// refuses that empty value before a network is composed, which is a different
+// report from two names agreeing.
+func binaryWhenUnset(ref string) string {
+	if m := envDefaultRE.FindStringSubmatch(ref); m != nil {
+		return strings.TrimSpace(m[1])
+	}
+	if strings.Contains(ref, "$") {
+		return ""
+	}
+	return strings.TrimSpace(ref)
 }
 
 // objectOf decodes a JSON object, naming what failed. A null decodes into a nil
