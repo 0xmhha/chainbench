@@ -46,13 +46,42 @@ cover: ## coverage into coverage.html
 lint: lint-tool ## golangci-lint (.golangci.yml), at the version CI pins
 	$(GOLANGCI) run
 
+# The guard asks two questions, because the pinned version alone is not enough
+# to know a local binary can be used. The linter PARSES our source, so the Go it
+# was built with has to be at least the language version go.mod targets. A build
+# that is too old refuses the whole run:
+#
+#   can't load config: the Go language version (go1.25) used to build
+#   golangci-lint is lower than the targeted Go version (1.26.8)
+#
+# Measured 2026-10-06. bin/golangci-lint was v2.12.2 built with go1.25.13,
+# installed while go.mod still said 1.25. Raising go.mod to 1.26.8 (#440) left
+# the version string matching, so this target reported the linter present and
+# skipped reinstalling, and `make lint` and `make check` failed on every tree
+# while CI stayed green — CI downloads a release binary built with go1.26.2.
+# A gate that only the author's machine fails is a gate nobody runs.
 lint-tool: ## install the pinned golangci-lint into bin/ (skipped when it matches)
 	@if [ -z "$(GOLANGCI_VERSION)" ]; then echo ".golangci-version is missing"; exit 1; fi; \
-	have=$$($(GOLANGCI) version 2>/dev/null | sed -n 's/.*version \([0-9][^ ]*\).*/v\1/p'); \
-	if [ "$$have" = "$(GOLANGCI_VERSION)" ]; then \
-	  echo "golangci-lint $(GOLANGCI_VERSION) ($(GOLANGCI))"; \
+	out=$$($(GOLANGCI) version 2>/dev/null); \
+	have=$$(printf '%s' "$$out" | sed -n 's/.*version \([0-9][^ ]*\).*/v\1/p'); \
+	built=$$(printf '%s' "$$out" | sed -n 's/.*built with go\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p'); \
+	want=$$(sed -n 's/^go \([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' go.mod); \
+	lang=$$($(GO) env GOVERSION | sed -n 's/^go\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/p'); \
+	num() { printf '%s' "$$1" | awk -F. '{print $$1*1000+$$2}'; }; \
+	if [ "$$have" = "$(GOLANGCI_VERSION)" ] && [ -n "$$built" ] && \
+	   [ "$$(num $$built)" -ge "$$(num $$want)" ]; then \
+	  echo "golangci-lint $(GOLANGCI_VERSION), built with go$$built ($(GOLANGCI))"; \
 	else \
-	  echo "golangci-lint $${have:-not installed} -> installing $(GOLANGCI_VERSION)"; \
+	  if [ -n "$$lang" ] && [ "$$(num $$lang)" -lt "$$(num $$want)" ]; then \
+	    echo "this toolchain is go$$lang and go.mod targets $$want — the linter built here could not read this module."; \
+	    echo "install Go $$want or newer, or lower go.mod's go directive."; \
+	    exit 1; \
+	  fi; \
+	  if [ "$$have" = "$(GOLANGCI_VERSION)" ]; then \
+	    echo "golangci-lint $(GOLANGCI_VERSION) is present but built with go$${built:-?}, older than go.mod's $$want -> rebuilding with go$$lang"; \
+	  else \
+	    echo "golangci-lint $${have:-not installed} -> installing $(GOLANGCI_VERSION)"; \
+	  fi; \
 	  GOBIN=$(abspath $(BIN_DIR)) $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION); \
 	fi
 
