@@ -132,6 +132,18 @@ done
 docker exec chainbench-server1 /data/chainbench/bin/gstable version | head -3
 ```
 
+### 두 번째 빌드가 필요한 케이스 둘
+
+`signature-compat-across-swap` 과 `boho-crossed-by-restart` 는 **빌드 둘을 바꿔 끼우는
+것**을 재는 케이스다. 각자 두 번째 빌드를 `gstable-hardfork` 와 `gstable-postfork` 라는
+이름으로 부른다. 이름이 곧 대상의 경로이므로 둘 다 `gstable` 이면 같은 파일을 바꿔 끼우고
+바꾼 것처럼 보인다 — 2026-10-06 까지 실제로 그랬다.
+
+올려 두지 않으면 **망을 세우기 전에 BLOCKED 로 멈추고** 어느 선언의 어느 경로가 비었는지
+적는다. 위 for 루프의 `for b in gstable gwbft gwemix` 에 이름을 더하고, 그 이름으로 빌드를
+만들어 `$OUT` 에 두면 된다. 어느 커밋에서 빌드해야 하는지는
+[`tests/tc/HOW-TO-USE.md`](../../tests/tc/HOW-TO-USE.md) 3.2 절에 있다.
+
 마지막 줄로 무엇이 올라갔는지 확인한다. `gstable` 과 `gwbft` 는 `Git Commit` 을
 찍지만 `gwemix` 는 그 빌드가 커밋을 심지 않아 찍지 않는다 — 바이너리만 보고는
 출처를 되짚을 수 없으므로, 어느 HEAD 에서 빌드했는지는 따로 적어 둔다.

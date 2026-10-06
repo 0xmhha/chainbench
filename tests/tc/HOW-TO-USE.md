@@ -108,8 +108,8 @@ bin/chainbench run tests/tc/common/tx/CT-TX-001-value-transfer.json \
 | `basic/08-attached-chain-produces` | `GSTABLE_RPC` | 이미 떠 있는 망의 주소 |
 | `go-stablenet/testnet/01`~`04` | `GSTABLE_TESTNET_RPC` | 실제 testnet 주소. 기본값 없음 |
 | `go-stablenet/testnet/05` | 위 + `GSTABLE_TESTNET_KEY_FILE` | 자금을 쥔 계정의 평문 hex 키 파일 |
-| `go-stablenet/.../boho-crossed-by-restart` | `GSTABLE_POSTFORK_BIN` | boho 이후 빌드 |
-| `go-stablenet/.../signature-compat-across-swap` | `GSTABLE_UPGRADE_BIN` | 바꿔 낄 다른 빌드 |
+| `go-stablenet/.../boho-crossed-by-restart` | `GSTABLE_POSTFORK_BIN` | boho 이후 빌드. 안 걸면 대상의 `gstable-postfork` 를 찾는다 |
+| `go-stablenet/.../signature-compat-across-swap` | `GSTABLE_UPGRADE_BIN` | 바꿔 낄 다른 빌드. 안 걸면 대상의 `gstable-hardfork` 를 찾는다 |
 
 boho 이전 빌드는 원본 저장소를 건드리지 않게 따로 복제해 만든다. `ad0122af0` 은 boho 를
 넣은 커밋의 부모다.
@@ -120,8 +120,19 @@ git -C ~/cbw/gs-prefork checkout -q ad0122af0 && make -C ~/cbw/gs-prefork gstabl
 strings ~/cbw/gs-prefork/build/bin/gstable | grep -ci bohoblock   # 0 이어야 한다
 ```
 
-`GSTABLE_UPGRADE_BIN` 을 안 걸면 **같은 빌드로 스왑한다.** 실행은 되지만 그 케이스가
-검증한다는 것("노드가 다른 바이너리로 재기동해도 tx 가 보존된다")을 확인하지 못한다.
+**두 케이스는 변수를 안 걸면 돌지 않는다.** 선언이 두 번째 빌드를 각각
+`gstable-hardfork` 와 `gstable-postfork` 라는 **다른 이름**으로 부르기 때문이다. 이름이
+곧 대상의 경로이므로, 예전처럼 둘 다 `gstable` 로 떨어지면 같은 파일을 바꿔 끼우고도
+바꾼 것처럼 보인다. 그래서 이름을 갈랐다.
+
+빌드를 그 이름으로 대상에 올려 두거나, 변수를 이미 있는 빌드로 가리키면 된다. 둘 다
+안 하면 **망을 세우기 전에 BLOCKED 로 멈추고** 어느 선언의 어느 경로가 비었는지 적는다.
+
+```
+binaries.upgrade /data/chainbench/bin/gstable-hardfork: not on the target on server4
+build that binary and place it on the target under the name the declaration uses,
+or point the declaration's variable at a build that is already there
+```
 
 ### 3.3 로컬에서 안 도는 하나
 
