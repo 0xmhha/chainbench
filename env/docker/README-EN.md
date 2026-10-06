@@ -146,6 +146,19 @@ done
 docker exec chainbench-server1 /data/chainbench/bin/gstable version | head -3
 ```
 
+### The two cases that need a second build
+
+`signature-compat-across-swap` and `boho-crossed-by-restart` measure **swapping
+one build for another**. Each names its second build `gstable-hardfork` and
+`gstable-postfork` respectively. A name is the path on the target, so two names
+that are both `gstable` swap one file for itself and look like a swap -- which
+is what happened until 2026-10-06.
+
+Without them in place the run stops at BLOCKED before a network is composed, and
+says which declaration's path was empty. Add the name to the `for b in gstable
+gwbft gwemix` loop above and build it into `$OUT`. Which commit to build from is
+in [`tests/tc/HOW-TO-USE.md`](../../tests/tc/HOW-TO-USE.md) section 3.2.
+
 That last line tells you what actually landed. `gstable` and `gwbft` print a
 `Git Commit`; `gwemix` does not, because that build does not embed one — the
 binary alone cannot be traced back, so note the HEAD you built from somewhere

@@ -2,10 +2,10 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp4-en1-default-upgrade",
-  "description": "stablenet: 4 bp + 1 en. Binaries: default = gstable, upgrade = ${GSTABLE_UPGRADE_BIN:-gstable}. Used by 1 case.",
+  "description": "stablenet: 4 bp + 1 en. Binaries: default = gstable, upgrade = ${GSTABLE_UPGRADE_BIN:-gstable-hardfork}. The two names must name two files: a name is resolved on the target under one directory, so an upgrade that fell back to gstable would be the same executable and a swap onto it would measure nothing. The fallback is therefore a name nothing places by default \u2014 build the second go-stablenet, put it on the target as gstable-hardfork, or point GSTABLE_UPGRADE_BIN at it. Used by 1 case.",
   "binaries": {
     "default": "gstable",
-    "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable}"
+    "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable-hardfork}"
   },
   "chain": "stablenet",
   "keys": {

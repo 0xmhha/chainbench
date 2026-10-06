@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
@@ -270,6 +273,20 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 			lines = append(lines, "  "+err.Error())
 			binaryMissing = true
 		}
+		// Every OTHER binary the declaration names, not just the one this
+		// phase launches. A swap later in the run reaches for one of these,
+		// and finding it absent then costs the whole composition and reports
+		// a closed port rather than an absent file.
+		for _, m := range missingNamedBinaries(w.state.Binaries, func(p string) (bool, error) {
+			return t.Files.Exists(ctx, p)
+		}) {
+			line := "  " + m
+			if ns.Server != "" {
+				line += " on " + ns.Server
+			}
+			lines = append(lines, line)
+			binaryMissing = true
+		}
 		want := []inspector.Path{
 			{Path: w.genesisFor(ns), Purpose: "genesis"},
 			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
@@ -291,12 +308,59 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	if len(lines) == 0 {
 		return nil
 	}
-	err := fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
-		len(lines), strings.Join(uniq(lines), "\n"))
+	err := fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\n%s",
+		len(lines), strings.Join(uniq(lines), "\n"), missingAdvice(binaryMissing, otherMissing))
 	if binaryMissing && !otherMissing {
 		return lifecycle.Mark(errLaunchNoBinary, err)
 	}
 	return err
+}
+
+// missingAdvice is the closing line of the pre-launch refusal: what to do about
+// what was absent.
+//
+// It is split by what was missing because one line cannot answer both. The
+// composition steps produce a genesis, a config and a datadir, so naming them
+// is the lead when one of those is gone. They produce no binary — a binary is
+// built elsewhere and placed — so naming them to someone whose only problem is
+// an unplaced binary sends them to redo work that already succeeded.
+// See TestTheAdviceMatchesWhatIsMissing.
+func missingAdvice(binaryMissing, otherMissing bool) string {
+	if binaryMissing && !otherMissing {
+		return "build that binary and place it on the target under the name the declaration uses, " +
+			"or point the declaration's variable at a build that is already there"
+	}
+	return "run the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary"
+}
+
+// missingNamedBinaries reports every entry of a placed binaries map that the
+// probe says is not there, by its map key and its path.
+//
+// It is separate from checkBinary because the names are already placed paths by
+// the time a launch asks — PlaceRequest resolves each one under the target's
+// binaries directory — so the question is a file lookup, and the answer can
+// name the declaration rather than the file. A probe that errors is reported as
+// a probe that errored: "missing" on a dropped connection sends the operator to
+// rebuild something that is there.
+//
+// Keys are walked in order so two runs of the same broken declaration read the
+// same. See TestNamedBinariesAreCheckedBeforeTheLaunch.
+func missingNamedBinaries(bins map[string]string, exists func(string) (bool, error)) []string {
+	var out []string
+	for _, name := range slices.Sorted(maps.Keys(bins)) {
+		path := bins[name]
+		if path == "" {
+			continue
+		}
+		ok, err := exists(path)
+		switch {
+		case err != nil:
+			out = append(out, fmt.Sprintf("binaries.%s %s: %v", name, path, err))
+		case !ok:
+			out = append(out, fmt.Sprintf("binaries.%s %s: not on the target", name, path))
+		}
+	}
+	return out
 }
 
 // checkBinary reports the binary as missing when the target cannot produce it,

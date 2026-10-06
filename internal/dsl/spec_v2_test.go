@@ -1008,3 +1008,62 @@ func TestParseV2PeeringLowersToDeclaredGraph(t *testing.T) {
 		}
 	}
 }
+
+// TestBinaryNames_CannotCollapseToOne: two declared binary names have to name
+// two binaries. A name is resolved on the target under one directory, so two
+// names that carry the same name carry the same file — and a case written to
+// measure the difference between two builds then measures nothing.
+//
+// Measured 2026-10-06. Two presets declared it this way:
+//
+//	"default": "gstable", "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable}"
+//	"default": "${GSTABLE_BIN:-gstable}", "postfork": "${GSTABLE_POSTFORK_BIN:-gstable}"
+//
+// With the variables unset, both names resolved to gstable. One case failed on
+// its own assertion after 39s of work (web3_clientVersion had not changed,
+// because nothing had been swapped) and the other PASSED — it crossed the fork
+// on a single build and never exercised the restart onto a second one it was
+// written for. The silent pass is the worse of the two.
+//
+// The check is on the value a declaration carries when no variable is set,
+// because that is the value the declaration itself promises. It needs no
+// environment, so `validate` and CI enforce it.
+func TestBinaryNames_CannotCollapseToOne(t *testing.T) {
+	const steps = `,"steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	parse := func(bins string) error {
+		raw := `{"schemaVersion":"2","kind":"case","id":"c","chainPreset":{"schemaVersion":"2",` +
+			`"kind":"chain-preset","id":"e","chain":"stablenet","binaries":` + bins + `}` + steps
+		_, err := Parse([]byte(raw))
+		return err
+	}
+
+	bad := map[string]string{
+		"literal equals the other's fallback": `{"default":"gstable","upgrade":"${GSTABLE_UPGRADE_BIN:-gstable}"}`,
+		"two fallbacks agree":                 `{"default":"${A_BIN:-gstable}","postfork":"${B_BIN:-gstable}"}`,
+		"two literals agree":                  `{"default":"gstable","upgrade":"gstable"}`,
+	}
+	for name, bins := range bad {
+		err := parse(bins)
+		if err == nil {
+			t.Errorf("%s: accepted, so a swap onto the same file would look like a swap", name)
+			continue
+		}
+		if !strings.Contains(err.Error(), "same binary") {
+			t.Errorf("%s: refused for the wrong reason: %v", name, err)
+		}
+	}
+
+	good := map[string]string{
+		"distinct fallbacks": `{"default":"gstable","upgrade":"${GSTABLE_UPGRADE_BIN:-gstable-hardfork}"}`,
+		"distinct literals":  `{"default":"gwemix","next":"gwbft"}`,
+		"one name":           `{"default":"gstable"}`,
+		// No fallback is not a collision: the declaration promises nothing, and
+		// the composer refuses the empty value before a network is composed.
+		"no fallback either side": `{"default":"${A_BIN}","upgrade":"${B_BIN}"}`,
+	}
+	for name, bins := range good {
+		if err := parse(bins); err != nil {
+			t.Errorf("%s: refused: %v", name, err)
+		}
+	}
+}
