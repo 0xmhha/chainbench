@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "wbft-bp3-en1-table",
+  "description": "wbft: 3 bp + 1 en, declared per node. The sibling of stablenet-bp3-en1-table, which differs from it in the chain and nothing else: the binary follows the chain. It exists so the common suite can run its endpoint-first case on this chain too. Used by the common suite.",
+  "chain": "wbft",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "nodes": [
+      {
+        "index": 1,
+        "role": "en"
+      },
+      {
+        "index": 2,
+        "role": "bp"
+      },
+      {
+        "index": 3,
+        "role": "bp"
+      },
+      {
+        "index": 4,
+        "role": "bp"
+      }
+    ]
+  }
+}
