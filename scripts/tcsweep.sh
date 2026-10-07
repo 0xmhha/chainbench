@@ -67,9 +67,18 @@ while True:
 PY
 }
 
-# attachOf says whether a case declares env.attach: it runs against a network
-# that is already up and composes none. `run --workspace-dir` refuses such a
-# case, so the sweep brings a network up for it first (runAttach).
+# attachOf prints the attach endpoint a case's chain-preset declares, or nothing
+# when the case composes its own network. The declaration is printed rather than
+# a yes/no because the caller has to know WHICH variable it names: the sweep can
+# supply GSTABLE_RPC, pointing at a network it brings up, and can supply nothing
+# else.
+#
+# Measured 2026-10-02. The five go-stablenet/testnet cases read
+# ${GSTABLE_TESTNET_RPC}, which names a network nobody here composes. A yes/no
+# answer sent all five through runAttach, so the sweep booted a 15-node network
+# for each of them, handed it a variable the preset does not read, watched the
+# case refuse on an empty endpoint, and tore the network down again: 194 seconds
+# spent to ask nothing, five times.
 attachOf() {
   python3 - "$1" "$ROOT" <<'PY'
 import json, pathlib, sys
@@ -77,22 +86,24 @@ spec, root = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 try:
     d = json.loads(spec.read_text())
 except Exception:
-    print(0); raise SystemExit
+    raise SystemExit
 cp, seen = d.get("chainPreset"), set()
 while True:
     if isinstance(cp, str):
         f = root / "presets/chain" / (cp + ".json")
         if not f.exists() or cp in seen:
-            print(0); break
+            break
         seen.add(cp)
         cp = json.loads(f.read_text())
         continue
     if isinstance(cp, dict):
-        if cp.get("attach"):
-            print(1); break
+        rpc = (cp.get("attach") or {}).get("rpc")
+        if rpc:
+            print(rpc[0] if isinstance(rpc, list) else rpc)
+            break
         cp = cp.get("extends")
         continue
-    print(0); break
+    break
 PY
 }
 
@@ -145,16 +156,60 @@ runAttach() {
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
     return 2
   fi
-  read -r rpc keys < <(attachTarget "$ws")
+  # Checked, not assumed. attachTarget writes its refusal to stderr and returns
+  # non-zero; an unchecked read then leaves both variables empty, and the
+  # preset's own default endpoint takes over, so the case is answered by
+  # whatever happens to be on this machine's 8600. That is the silent failure
+  # the comment above attachTarget describes. Its cause was fixed and this half
+  # was not, so any other cause brings it straight back.
+  local target
+  if ! target=$(attachTarget "$ws" 2>&1); then
+    printf '%s\nthe address of the network to attach to could not be read\n' "$target"
+    "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+    return 2
+  fi
+  read -r rpc keys <<<"$target"
+  if [ -z "$rpc" ]; then
+    printf 'attachTarget named no endpoint: %s\n' "$target"
+    "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
+    return 2
+  fi
   GSTABLE_RPC="$rpc" "$BIN" run "$spec" --keys "$keys" 2>&1
   local code=$?
   "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
   return $code
 }
 
-mapfile -t CASES < <(find "$ROOT/tests/tc" -name '*.json' | sort | { [ -n "$PATTERN" ] && grep "$PATTERN" || cat; })
+# Selection, without mapfile: that is bash 4 and macOS ships bash 3.2, where it
+# is not a builtin and not an error either -- `mapfile -t X < <(echo a)` prints
+# "command not found" and leaves X empty, so the sweep reported "0 cases" and
+# (before the exit contract above) ended 0. A machine with no newer bash on PATH
+# ran nothing and said so in a way that reads like success.
+#
+# The pattern is applied with grep and its result is checked, rather than
+# `grep || cat`: grep has already consumed the stream by the time cat runs, so
+# the fallback could only ever produce nothing, and a typo in the pattern was
+# indistinguishable from a clean sweep.
+CASES=()
+while IFS= read -r case_path; do
+  CASES+=("$case_path")
+done < <(
+  if [ -n "$PATTERN" ]; then
+    find "$ROOT/tests/tc" -name '*.json' | sort | grep -- "$PATTERN"
+  else
+    find "$ROOT/tests/tc" -name '*.json' | sort
+  fi
+)
 total=${#CASES[@]}
 : > "$OUT"
+if [ "$total" -eq 0 ]; then
+  if [ -n "$PATTERN" ]; then
+    echo "no case matched $PATTERN" | tee -a "$OUT" >&2
+  else
+    echo "no case found under $ROOT/tests/tc" | tee -a "$OUT" >&2
+  fi
+  exit 2
+fi
 echo "$total cases, one network each" | tee -a "$OUT"
 echo "" | tee -a "$OUT"
 
@@ -167,10 +222,25 @@ for spec in "${CASES[@]}"; do
   ws="$WS_BASE/c$i"
   rm -rf "$ws"
   start=$SECONDS
-  if [ "$(attachOf "$spec")" = 1 ]; then
+  endpoint="$(attachOf "$spec")"
+  # Whether this case got a workspace at all. The one below does not, and
+  # calling `chain stop --workspace-dir` on a path nothing composed CREATES it,
+  # holding a chain-record.json and a process.json for a network that never
+  # existed -- which the sweep then offered "for inspection".
+  composed=1
+  if [ -z "$endpoint" ]; then
+    out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
+  elif [ "${endpoint#*GSTABLE_RPC}" != "$endpoint" ]; then
+    # The one endpoint this sweep can supply: a network it composes itself.
     out=$(runAttach "$spec" "$ws")
   else
-    out=$("$BIN" run "$spec" --workspace-dir "$ws" ${EXTRA[@]+"${EXTRA[@]}"} 2>&1)
+    # An endpoint naming a network nobody here composes. Composing one for it
+    # would cost a full bring-up and answer nothing, so the case is run as
+    # written: if the operator exported the variable it names, it reaches their
+    # network, and if they did not, the preset refuses in a second and says
+    # which variable is empty.
+    composed=0
+    out=$("$BIN" run "$spec" 2>&1)
   fi
   code=$?
   took=$((SECONDS - start))
@@ -207,13 +277,23 @@ for spec in "${CASES[@]}"; do
   # sweep says where. The session under ~/.chainbench already holds the logs
   # gathered at the moment of failure; what is kept here is the machine state
   # behind them, which is what a second look needs.
-  if [ -n "${TCSWEEP_FLAGS:-}" ]; then
+  # Always, as the paragraph above says. It used to run only with
+  # TCSWEEP_FLAGS set, so a local sweep never stopped anything -- and the one
+  # moment the guard exists for is a run that died with its nodes still up,
+  # which is exactly when nothing else will stop them.
+  if [ "$composed" -eq 1 ]; then
     "$BIN" chain stop --workspace-dir "$ws" >/dev/null 2>&1
   fi
-  if [ "$verdict" = PASS ]; then
-    [ -n "${TCSWEEP_FLAGS:-}" ] && "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1
-    rm -rf "$ws"
-  else
+  if [ "$verdict" = PASS ] && [ "$composed" -eq 1 ]; then
+    # If rm cannot finish, the workspace stays. It holds the composition id and
+    # the per-node paths, and deleting it while a datadir is still on a server
+    # leaves that datadir with nothing left that can name it.
+    if "$BIN" chain rm --workspace-dir "$ws" >/dev/null 2>&1; then
+      rm -rf "$ws"
+    else
+      printf '          chain rm did not finish; kept so it can be removed later: %s\n' "$ws" | tee -a "$OUT"
+    fi
+  elif [ -d "$ws" ]; then
     printf '          kept for inspection: %s\n' "$ws" | tee -a "$OUT"
   fi
 done
@@ -225,3 +305,18 @@ done
     "$pass" "$fail" "$blocked" "$skip" "$notrun"
   echo "DONE"
 } | tee -a "$OUT"
+
+# The exit code the header promises. It was never written, so every sweep ended
+# 0: the 197-case run that reported fail=1 blocked=15 exited 0, and so did a
+# pattern that matched nothing. Anything that reads the code rather than the log
+# -- CI, a wrapper, `&&` -- was told the sweep passed.
+#
+# A failure outranks a block: a case that answered "no" is a result, and one
+# that could not be asked is not, so a sweep with both reports the result.
+if [ "$fail" -gt 0 ]; then
+  exit 1
+fi
+if [ $((blocked + notrun)) -gt 0 ]; then
+  exit 2
+fi
+exit 0
