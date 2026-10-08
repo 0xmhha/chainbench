@@ -15,7 +15,7 @@ while (($#)); do
 done
 [[ "$live" == true ]] || { echo 'requires --require-live' >&2; exit 2; }
 case "$criterion" in
-  WEB-01|WEB-03|WEB-04|WEB-05|WEB-08|WEB-09|WEB-10) ;;
+  WEB-01|WEB-03|WEB-04|WEB-05|WEB-08|WEB-09|WEB-10|WEB-13) ;;
   *) echo "unsupported criterion: $criterion" >&2; exit 2 ;;
 esac
 export PYTHONDONTWRITEBYTECODE=1

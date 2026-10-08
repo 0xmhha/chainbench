@@ -88,8 +88,11 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
             from evidence_web04 import digest
             if not str(state['binary']).startswith(str(runtime / 'd/binaries/')) or digest(Path(state['binary'])) != asset['sha256']:
                 raise RuntimeError('remote binary was not separately uploaded and verified')
-            declared = json.loads(Path(state['genesisPath']).read_text())
-            for node in state['nodes']:
+            removed = state.get('statePath') == 'CHAIN/CHAIN_REMOVED'
+            if removed and (state.get('nodes') or any((runtime / 'd/nodes').glob('*/*'))):
+                raise RuntimeError('selected cleanup left remote nodes or their data')
+            declared = {} if removed else json.loads(Path(state['genesisPath']).read_text())
+            for node in [] if removed else state['nodes']:
                 data = Path(node['dataDir'])
                 if len(list(data.glob('*/chaindata/CURRENT'))) != 1:
                     raise RuntimeError('remote native database missing')
@@ -102,7 +105,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
                     if 'BEGIN OPENSSH PRIVATE KEY' in text or 'BEGIN RSA PRIVATE KEY' in text:
                         raise RuntimeError('SSH private key persisted in plaintext')
             receipt = json.loads((output / 'browser.json').read_text())
-            receipt.update({'nativeDatabaseCheck': 'passed', 'separateBinaryUpload': 'passed', 'privateSSHKeyPlaintextScan': 'passed', 'binaries': provenance, 'runtime': str(runtime), 'seedAcceptanceAwarded': False})
+            receipt.update({'nativeDatabaseCheck': 'removed by selected cleanup' if removed else 'passed', 'separateBinaryUpload': 'passed', 'privateSSHKeyPlaintextScan': 'passed', 'binaries': provenance, 'runtime': str(runtime), 'seedAcceptanceAwarded': False})
             (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
             print(proof_name + ' development proof PASS: real owned SSH deployment, native database, private credential and physical alias checks.')
     finally:

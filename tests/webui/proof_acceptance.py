@@ -48,9 +48,12 @@ def run(criterion, proofs, required, checks, scenarios, source_patterns, verify)
                 raise RuntimeError(command + ' failed')
         source = source_digest(Path.cwd())
         receipts = {}
-        for name, (script, files) in proofs.items():
+        for name, (script, files, *settings) in proofs.items():
             proof_started = now()
-            result = subprocess.run([sys.executable, 'tests/webui/' + script], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
+            # An optional third element names environment settings the proof needs,
+            # such as the SSH fault mode; values come from this process's environment.
+            env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', **(settings[0] if settings else {}))
+            result = subprocess.run([sys.executable, 'tests/webui/' + script], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             log = output / f'{name}-run.log'
             log.write_text(result.stdout)
             if result.returncode:

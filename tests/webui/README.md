@@ -261,3 +261,13 @@ requires a stated refusal otherwise, exports from the UI without secrets,
 refuses deleting a running execution and non-administrator deletion, keeps the
 shared case, and checks retention across a restart. `verify.sh --criterion
 WEB-09` reruns it with `run_history_archive.py` in one invocation.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_cancel_retention.py`
+checks a normal end with retention, user cancel with retention, refusal of a
+non-executor operator, administrator cancel with cleanup, a forced cleanup
+failure and its explicit retry, account deactivation that cancels while
+keeping nodes, and attach refusal in the API and job form.
+`run_ssh_cleanup.py` runs an SSH test job with selected cleanup.
+`WEBUI_REPLACEMENT_BINARY=<native WBFT build> bash tests/webui/verify.sh
+--criterion WEB-13 --require-live --capture` reruns both with the SSH
+credential-revocation transfer proof.
