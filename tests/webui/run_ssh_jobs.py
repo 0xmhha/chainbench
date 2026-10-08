@@ -10,6 +10,7 @@ import time
 import urllib.request
 import uuid
 from runtime_contract import runtime_root
+from browser_process import run_browser
 
 
 def main():
@@ -63,7 +64,7 @@ def main():
             private = runtime / 'browser-fixture.json'
             private.write_text(json.dumps(fixture))
             private.chmod(0o600)
-            result = subprocess.run(['node', 'tests/webui/browser_ssh_jobs.mjs', str(private), str(output.resolve())], capture_output=True, text=True, timeout=600)
+            result = run_browser(['node', 'tests/webui/browser_ssh_jobs.mjs', str(private), str(output.resolve())], timeout=600)
             (output / 'browser.log').write_text(result.stdout + result.stderr)
             if result.returncode:
                 raise RuntimeError('SSH browser deployment failed; see browser.log')

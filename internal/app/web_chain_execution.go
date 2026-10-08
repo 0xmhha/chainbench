@@ -15,6 +15,14 @@ import (
 
 func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webChainPayload, report func(WebJobPhase) error) (WebJobResult, error) {
 	result := WebJobResult{NodeDisposition: "retained", PartialEffects: []string{}}
+	keysDir := ""
+	if p.Input.Operation == "chain.setup" || p.Input.Operation == "chain.deploy" {
+		var err error
+		keysDir, err = e.materializeKeys(ctx, p.Keys)
+		if err != nil {
+			return result, err
+		}
+	}
 	d := Deps{Command: "web " + p.Input.Operation + " by " + a.ID}
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
 	if err != nil {
@@ -75,7 +83,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if err != nil {
 				return err
 			}
-			in := ChainNewIn{DataDir: p.ControlDir, Chain: p.Manifest.ID, Binary: p.ExecutionBinary, KeysDir: e.keys, Target: resource.TargetOf(server, wc.DataRoot), ServerSet: setPath, WorkspaceConfigPath: configPath}
+			in := ChainNewIn{DataDir: p.ControlDir, Chain: p.Manifest.ID, Binary: p.ExecutionBinary, KeysDir: keysDir, Target: resource.TargetOf(server, wc.DataRoot), ServerSet: setPath, WorkspaceConfigPath: configPath}
 			if p.Manifest.Source == "external" {
 				in.ManifestPath, in.TemplatePath, err = e.manifests.files.Pin(p.ControlDir, p.Manifest.Manifest, []byte(p.Manifest.Template))
 				if err != nil {

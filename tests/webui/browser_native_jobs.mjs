@@ -1,8 +1,8 @@
-import {chromium} from 'playwright'
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const [fixturePath,out]=process.argv.slice(2), f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
-const browser=await chromium.launch({headless:true,channel:process.env.WEBUI_BROWSER_CHANNEL??'chrome'})
+const owned=await launchOwnedBrowser(), browser=owned.browser
 let context=await browser.newContext({viewport:{width:1440,height:1100}})
 const records=[]
 async function api(path,method='GET',data,session,key,expected=200){
@@ -83,4 +83,4 @@ try{
   await mobile.screenshot({path:out+'/history-mobile.png',fullPage:true})
   assert.ok(await mobile.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'history mobile horizontal overflow')
   fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:browser.version(),jobs:records,networkCount:networks.items.length,disconnectObserved:true,idempotencyObserved:true,history:{captured:5,exported:exported.run.id,deleted:exported.run.id,remaining:4,jobRecordsPreserved:5,networksPreserved:3,missingTestsComparisonRejected:true}},null,2))
-}finally{await browser.close()}
+}finally{await owned.stop()}

@@ -1,9 +1,9 @@
-import {chromium} from 'playwright'
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const [fixturePath,out]=process.argv.slice(2), f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const key=fs.readFileSync(f.runtime+'/ssh/client','utf8')
-const browser=await chromium.launch({headless:true,channel:process.env.WEBUI_BROWSER_CHANNEL??'chrome'})
+const owned=await launchOwnedBrowser(), browser=owned.browser
 const context=await browser.newContext({viewport:{width:1440,height:1100}})
 let session
 async function api(path,method='GET',data,expected=200,idempotency,revision){
@@ -74,4 +74,4 @@ try{
   await page.reload();await page.getByLabel('서버 실행 작업',{exact:true}).waitFor()
   await page.screenshot({path:out+'/ssh-jobs.png',fullPage:true})
   fs.writeFileSync(out+'/browser.json',JSON.stringify({browser:browser.version(),jobs:phases,physicalLocalSSHAlias:'same identity/root; concurrent alias start refused',acceptedInputEdits:'workspace and binding edits did not redirect accepted job',revokedPlan:'refused',nativeNodes:network.nodes.length},null,2))
-}finally{await context.close();await browser.close()}
+}finally{await owned.stop()}

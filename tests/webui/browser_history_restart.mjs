@@ -1,11 +1,11 @@
-import { chromium } from 'playwright'
+import { launchOwnedBrowser } from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 
 // Development regression against the same native fixture after daemon restart.
 // It does not substitute for the complete WEB-09 acceptance scenarios.
 const [fixturePath, output] = process.argv.slice(2), f = JSON.parse(fs.readFileSync(fixturePath, 'utf8'))
-const browser = await chromium.launch({headless: true, channel: process.env.WEBUI_BROWSER_CHANNEL ?? 'chrome'})
+const owned = await launchOwnedBrowser(), browser = owned.browser
 try {
   const context = await browser.newContext(), api = context.request
   const login = await api.post(f.url + '/api/v1/auth/login', {data: {username: 'native-admin', password: f.password}})
@@ -22,4 +22,4 @@ try {
   await page.getByLabel('히스토리 검색', {exact: true}).waitFor()
   await page.getByRole('button', {name: /^node.start/}).waitFor()
   fs.writeFileSync(output + '/history-restart.json', JSON.stringify({historyPreserved: 4, tombstonePreserved: true, jobsPreserved: 5, networksPreserved: 3, browserVersion: browser.version()}, null, 2))
-} finally { await browser.close() }
+} finally { await owned.stop() }

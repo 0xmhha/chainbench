@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import subprocess
 import sys
@@ -11,6 +12,7 @@ import time
 import urllib.request
 import uuid
 from runtime_contract import runtime_root
+from browser_process import run_browser
 
 def main():
     output=Path('chainbench-out/web-ui-development/native-jobs')
@@ -20,13 +22,15 @@ def main():
     spec=importlib.util.spec_from_file_location('native_fixture','tests/webui/fixtures/prepare_web04.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     provenance=module.prepare(runtime,output)
+    source_keys=runtime/'source-keys'
+    shutil.copytree('presets/keys',source_keys)
     with (output/'build.log').open('w') as log:
         subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
     with socket.socket() as listener:
         listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
     store=runtime/'store'
     log=(output/'server.log').open('w')
-    command=[str(runtime/'dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json'),'-manifest-keys',str(Path('presets/keys').resolve())]
+    command=[str(runtime/'dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json'),'-manifest-keys',str(source_keys)]
     server=subprocess.Popen(command,stdout=log,stderr=log)
     try:
         url='http://127.0.0.1:'+str(port)
@@ -38,9 +42,22 @@ def main():
         else:raise RuntimeError('dashboard did not listen')
         fixture={'url':url,'setupToken':(store/'setup.token').read_text().strip(),'password':secrets.token_urlsafe(24),'runtime':str(runtime),'store':str(store)}
         private=runtime/'browser-fixture.json';private.write_text(json.dumps(fixture));private.chmod(0o600)
-        result=subprocess.run(['node','tests/webui/browser_native_jobs.mjs',str(private),str(output.resolve())],text=True,capture_output=True,timeout=300)
+        result=run_browser(['node','tests/webui/browser_native_jobs.mjs',str(private),str(output.resolve())],timeout=300)
         (output/'browser.log').write_text(result.stdout+result.stderr)
         if result.returncode:raise RuntimeError('native browser jobs failed; see browser.log')
+        pinned=[]
+        for record in (store/'networks').glob('*/chain-record.json'):
+            state=json.loads(record.read_text())
+            directory=Path(state['keysDir'])
+            if directory.parent!=store/'key-material' or len(directory.name)!=64:
+                raise RuntimeError('engine still references mutable source keys')
+            ciphertext=store/'key-snapshots'/(directory.name+'.enc')
+            original=(source_keys/'node1/nodekey').read_bytes()
+            if not ciphertext.is_file() or original in ciphertext.read_bytes():
+                raise RuntimeError('accepted key snapshot absent or not encrypted')
+            pinned.append(str(directory))
+        if len(pinned)!=3:raise RuntimeError('not every native chain used accepted key material')
+        shutil.rmtree(source_keys)
         server.terminate();server.wait(timeout=10)
         server=subprocess.Popen(command,stdout=log,stderr=log)
         for _ in range(200):
@@ -49,7 +66,7 @@ def main():
                 urllib.request.urlopen(url+'/healthz',timeout=1).close();break
             except OSError:time.sleep(.1)
         else:raise RuntimeError('dashboard did not restart')
-        result=subprocess.run(['node','tests/webui/browser_history_restart.mjs',str(private),str(output.resolve())],text=True,capture_output=True,timeout=90)
+        result=run_browser(['node','tests/webui/browser_history_restart.mjs',str(private),str(output.resolve())],timeout=90)
         (output/'history-restart.log').write_text(result.stdout+result.stderr)
         if result.returncode:raise RuntimeError('history restart regression failed; see history-restart.log')
         for record in (store/'networks').glob('*/chain-record.json'):
@@ -62,7 +79,7 @@ def main():
                 declared=json.loads(Path(state['genesisPath']).read_text())
                 if genesis['config']['chainId']!=declared['config']['chainId']:raise RuntimeError('native database genesis differs from declared chain')
         receipt=json.loads((output/'browser.json').read_text())
-        receipt.update({'nativeDatabaseCheck':'passed','historyRestart':json.loads((output/'history-restart.json').read_text()),'binaries':provenance,'runtime':str(runtime),'seedAcceptanceAwarded':False})
+        receipt.update({'nativeDatabaseCheck':'passed','acceptedKeySnapshots':pinned,'sourceKeysRemovedBeforeRestart':True,'historyRestart':json.loads((output/'history-restart.json').read_text()),'binaries':provenance,'runtime':str(runtime),'seedAcceptanceAwarded':False})
         (output/'receipt.json').write_text(json.dumps(receipt,indent=2))
         print('Native development proof PASS: three native chains, owned node start/stop, browser history comparison/export/delete and restart preservation.')
     finally:

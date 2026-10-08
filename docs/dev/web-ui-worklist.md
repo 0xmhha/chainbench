@@ -22,7 +22,7 @@
 |---|---|---|
 | 현재 구현 보존 | 기존 Web UI 변경만 커밋하고 사용자 스테이징 보존 | `0ee43cfa`: secure configuration editors and durable local and SSH jobs. 기존 make check·관련 race·JS/Python·실제 local/SSH 개발 검증 통과. 과거 RED가 없어 인수 완료 아님 |
 | 전체 목록 보호 | 14개 모두 추적하고 누락·근거 없는 완료를 테스트에서 거절 | RED: 목록 파일 부재로 `TestWebWorklistTracksEveryAcceptanceCriterion` 실패. GREEN: `go test ./internal/arch -run 'Test(WebWorklist|WorklistOpenWork)' -count=1` 통과. RED/GREEN 로그는 `/private/tmp/chainbench-web-worklist-{red,green}.log` |
-| 키 자료 고정 | 준비한 키 snapshot을 해시로 고정하고 원본 변경이 승인된 실행을 바꾸지 않음; 링크·특수 파일·과대 자료 거절; 비밀은 계획 응답에 없음 | 다음 구현. WEB-02/06의 부분 작업 |
+| 키 자료 고정 | 준비한 키 snapshot을 해시로 고정하고 원본 변경이 승인된 실행을 바꾸지 않음; 링크·특수 파일·과대 자료 거절; 비밀은 계획 응답에 없음 | RED: `/private/tmp/chainbench-web-key-red.log`에서 모든 사전 기준 실패. GREEN: `/private/tmp/chainbench-web-key-green.log`; make check·관련 race·실제 세 체인 로컬/SSH 개발 검증 통과. 전용 브라우저 종료 지연을 보강해 실제 재검증 통과. WEB-02/06의 부분 작업이며 업로드 미완료 |
 | 전체 구성과 자료 연결 | 프리셋·업로드·매니페스트·노드 배치를 실제 계획/실행에 적용 | 미완료: WEB-01/02/04/06 |
 | 노드 교체와 초기화 | 실제 설정/바이너리 교체·재실행, 비생산자 초기화, attach/생산자 거절 | 미완료: WEB-07 |
 | DSL 실행 작업 | 모든 현행 DSL 구성·내장 어휘·인자 전수 편집 및 실제 실행, job/session 연결 | 미완료: WEB-05 |

@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -24,6 +25,7 @@ type WebChainEngine struct {
 	manifests  *ManifestStore
 	assets     map[string]ManifestBinary
 	authorize  func(DeploymentActor) error
+	keysMu     sync.Mutex
 }
 
 func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests *ManifestStore, assets []ManifestBinary, authorize func(DeploymentActor) error) *WebChainEngine {
@@ -52,6 +54,7 @@ type webChainPayload struct {
 	RecordDigest      string                 `json:"recordDigest"`
 	Target            resource.Inspection    `json:"target"`
 	ExecutionBinary   string                 `json:"executionBinary"`
+	Keys              webKeySnapshot         `json:"keys"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -242,6 +245,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		return out, ErrDeploymentNotFound
 	}
 	if in.Operation == "chain.setup" || in.Operation == "chain.deploy" {
+		p.Keys, err = e.pinKeys(ctx)
+		if err != nil {
+			return out, err
+		}
 		if len(in.NodeIDs) != 0 {
 			return out, errors.New("composition does not select existing nodes")
 		}
@@ -254,6 +261,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, args.Validators, plugin.Protocol().Name)}
+	if p.Keys.SHA256 != "" {
+		out.Changes = append(out.Changes, "Key material pinned to SHA-256 "+p.Keys.SHA256)
+	}
 	out.Payload, err = json.Marshal(p)
 	if err != nil {
 		return out, err
