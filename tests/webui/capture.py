@@ -13,6 +13,7 @@ RUNNERS = {
     'WEB-03': ('run_web03.py', 'evidence_web03'),
     'WEB-04': ('run_web04.py', 'evidence_web04'),
     'WEB-05': ('run_web05.py', 'evidence_web05'),
+    'WEB-08': ('run_web08.py', 'evidence_web08'),
     'WEB-10': ('run_web10.py', 'evidence_web10'),
 }
 

@@ -244,3 +244,12 @@ a dashboard restart, forces one archive rewrite to fail (the run stays, 500),
 then deletes through the UI and requires later samples, the chain record, node
 data and RPC to remain. `WEBUI_DASHBOARD_BINARY=<path>` also applies to the
 local test-job runners.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_logout_continuity.py`
+signs out through the UI while a native test job runs, closes the browser,
+signs in from a new context and requires the job to finish after sign-out; it
+then blocks the stream and snapshot to require the disconnect and stale
+markings, and reconnects. `bash tests/webui/verify.sh --criterion WEB-08
+--require-live --capture` reruns the monitoring, snapshot, SSH log and
+continuity proofs in one invocation and publishes WEB-08 evidence; without
+`--capture` it reproduces them from a staged source copy.
