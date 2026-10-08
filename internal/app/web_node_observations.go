@@ -98,6 +98,9 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 			if ns.Binary == "" {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.restart")
 			}
+			if ns.Binary == "" && ns.Config == "" {
+				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.swap")
+			}
 			if ns.Binary == "" && (ns.Role == "en" || ns.Role == "pn") {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.reset")
 			}

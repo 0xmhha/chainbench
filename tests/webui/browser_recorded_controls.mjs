@@ -205,6 +205,63 @@ try{
   const bouncedObservation=await api('networks/'+w.id+'/observations');assert.ok(bouncedObservation.nodes.every(n=>n.state==='running'),'restart lost a process')
   for(const n of bounced.nodes.filter(n=>n.index!==1))assert.equal(n.pid,beforeRestart.nodes.find(v=>v.index===n.index).pid,'restart changed sibling PID')
   assert.equal(fs.readFileSync(restartMarker,'utf8'),'preserve endpoint data');assert.equal(fs.readFileSync(sibling,'utf8'),'preserved producer data')
+  const configInput={...controlInput,operation:'node.swap',arguments:{...controlInput.arguments,configOverrides:{metricsHost:'127.0.0.1'}}}
+  const configReview=await api('plans','POST',configInput,undefined,201)
+  assert.ok(configReview.changes.includes('metricsHost=127.0.0.1'),'config review omits accepted change')
+  const beforeConfigBytes=fs.readFileSync(recordPath),genesisBytes=fs.readFileSync(record.genesisPath)
+  const siblingConfigs=new Map(bounced.nodes.filter(n=>n.index!==1).map(n=>[n.index,fs.readFileSync(n.configPath)]))
+  for(const patch of [{},{arbitrary:'127.0.0.1'},{metricsHost:'outside.invalid'}])await api('plans','POST',{...configInput,arguments:{...configInput.arguments,configOverrides:patch}},undefined,422)
+  for(const path of [endpoint.configPath,record.genesisPath]){
+   const bytes=fs.readFileSync(path)
+   try{
+    fs.writeFileSync(path,Buffer.concat([bytes,Buffer.from('\nchanged after config review')]))
+    await api('plans','POST',configInput,undefined,409)
+    await api('jobs','POST',{planId:configReview.id},configReview.id,409)
+   }finally{fs.writeFileSync(path,bytes)}
+  }
+  const encryptedPath=f.store+'/key-snapshots/'+bounced.keysDir.split('/').at(-1)+'.enc',encryptedBytes=fs.readFileSync(encryptedPath)
+  try{
+   fs.writeFileSync(encryptedPath,'invalid encrypted config input')
+   await api('plans','POST',configInput,undefined,409)
+   await api('jobs','POST',{planId:configReview.id},configReview.id,409)
+  }finally{fs.writeFileSync(encryptedPath,encryptedBytes)}
+  assert.deepEqual(fs.readFileSync(recordPath),beforeConfigBytes,'rejected config replacement rewrote record')
+  const beforeConfigObservation=await api('networks/'+w.id+'/observations');assert.ok(beforeConfigObservation.nodes.every(n=>n.state==='running'),'config rejection changed a process')
+  await page.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+  await page.getByLabel('작업 종류',{exact:true}).selectOption('node.swap')
+  await page.getByLabel('작업 노드',{exact:true}).selectOption('node1')
+  await page.getByLabel('Add /node-config field',{exact:true}).selectOption('metricsHost')
+  await page.getByLabel('/node-config/metricsHost',{exact:true}).selectOption('127.0.0.1')
+  assert.equal(await page.getByLabel('/node-config/metricsHost',{exact:true}).locator('option').count(),2,'UI widened native config choices')
+  const swapReview=page.waitForResponse(r=>r.url()===f.url+'/api/v1/plans'&&r.request().method()==='POST')
+  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
+  const swapReviewed=await swapReview;assert.equal(swapReviewed.status(),201,await swapReviewed.text())
+  await page.getByLabel('실행 계획',{exact:true}).waitFor()
+  assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes('metricsHost=127.0.0.1'),'UI hides config change')
+  const swapAccepted=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
+  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  const swapResponse=await swapAccepted;assert.equal(swapResponse.status(),202,await swapResponse.text());await waitJob((await swapResponse.json()).id)
+  const swapped=JSON.parse(fs.readFileSync(recordPath,'utf8')),changedNode=swapped.nodes.find(n=>n.index===1)
+  assert.notEqual(changedNode.pid,bounced.nodes.find(n=>n.index===1).pid,'configuration swap kept old PID')
+  assert.ok(fs.readFileSync(changedNode.configPath,'utf8').includes('HTTP = "127.0.0.1"'),'native config did not change metrics bind')
+  assert.equal(changedNode.args[changedNode.args.indexOf('--metrics.addr')+1],'127.0.0.1','launch overrides replaced reviewed config value')
+  assert.equal(swapped.launchInputs[changedNode.configPath],'sha256:'+crypto.createHash('sha256').update(fs.readFileSync(changedNode.configPath)).digest('hex'),'changed launch input was not recorded')
+  assert.deepEqual(fs.readFileSync(record.genesisPath),genesisBytes,'configuration replacement changed genesis')
+  assert.equal(treeDigest(swapped.keysDir),keyInputDigest,'replacement changed accepted keys')
+  assert.equal(fs.readFileSync(restartMarker,'utf8'),'preserve endpoint data');assert.equal(fs.readFileSync(sibling,'utf8'),'preserved producer data')
+  for(const n of swapped.nodes.filter(n=>n.index!==1)){
+   assert.equal(n.pid,bounced.nodes.find(v=>v.index===n.index).pid,'config replacement changed sibling PID')
+   assert.deepEqual(fs.readFileSync(n.configPath),siblingConfigs.get(n.index),'config replacement changed sibling config')
+  }
+  const swappedObservation=await api('networks/'+w.id+'/observations');assert.ok(swappedObservation.nodes.every(n=>n.state==='running'),'config replacement lost a process')
+  const ledger=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/process.json','utf8'))
+  assert.ok(ledger.history.some(n=>n.Label==='node1'&&n.PID===bounced.nodes.find(n=>n.index===1).pid),'swap discarded previous execution history')
+  assert.ok(ledger.procs.find(n=>n.Label==='node1').Command.includes('--metrics.addr 127.0.0.1'),'ledger records stale config arguments')
+  const preservedPlan=await api('plans','POST',restartInput,undefined,201)
+  const preservedRestart=await api('jobs','POST',{planId:preservedPlan.id},preservedPlan.id,202);await waitJob(preservedRestart.id)
+  const preserved=JSON.parse(fs.readFileSync(recordPath,'utf8'))
+  assert.deepEqual(preserved.nodes.find(n=>n.index===1).args,changedNode.args,'later restart discarded reviewed config')
+  assert.equal(fs.readFileSync(restartMarker,'utf8'),'preserve endpoint data')
   await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/'+chain+'-reset.png'})
   // Native genesis reads require the DB lock. Observe live processes first,
   // then stop each owned node explicitly before inspecting its persisted DB.
@@ -218,6 +275,6 @@ try{
   verified.push({chain,jobId:job.id,runIds:job.runIds,nodes:record.nodes.map(n=>({index:n.index,role:n.role,p2p:n.p2p,http:n.http,syncMode:n.syncMode})),historyId:h[0].id})
   await page.close()
  }
- fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,explicitNodeRestart:true,modifiedRestartInputsRefused:true,restartPreservesDataAndSiblings:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,explicitNodeRestart:true,modifiedRestartInputsRefused:true,restartPreservesDataAndSiblings:true,structuredNativeConfigReplacement:true,configReplacementPreservesDataAndSiblings:true,configChoicesAndTamperedKeysRefused:true,configArgumentsRetainedOnRestart:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
  console.log('RECORDED CONTROLS PASS: six-node layouts control five recorded producers without a count override.')
 }finally{await owned.stop()}

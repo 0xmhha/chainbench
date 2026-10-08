@@ -14,7 +14,7 @@ import uuid
 from runtime_contract import runtime_root
 from browser_process import run_browser
 
-def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False, fixture_inputs=None):
+def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False, fixture_inputs=None, browser_timeout=300):
     output=Path('chainbench-out/web-ui-development')/proof_name
     output.mkdir(parents=True,exist_ok=True)
     runtime=runtime_root()/str(uuid.uuid4())
@@ -70,7 +70,7 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
         if restart:
             restart_thread=threading.Thread(target=restart_owned_server,daemon=True)
             restart_thread.start()
-        result=run_browser(['node','tests/webui/'+browser_script,str(private),str(output.resolve())],timeout=300)
+        result=run_browser(['node','tests/webui/'+browser_script,str(private),str(output.resolve())],timeout=browser_timeout)
         (output/'browser.log').write_text(result.stdout+result.stderr)
         if result.returncode:raise RuntimeError('test browser jobs failed:\n'+result.stdout+result.stderr)
         if restart_errors:raise restart_errors[0]

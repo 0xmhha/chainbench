@@ -48,12 +48,13 @@ func (e *WebChainEngine) binaryAsset(id string) (ManifestBinary, error) {
 }
 
 type webChainArguments struct {
-	ManifestID     string                  `json:"manifestId"`
-	AssetID        string                  `json:"assetId"`
-	ServerRef      string                  `json:"serverRef"`
-	Validators     int                     `json:"validators"`
-	CaseRefs       []DeploymentDocumentRef `json:"caseRefs,omitempty"`
-	ChainPresetRef *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
+	ManifestID      string                  `json:"manifestId"`
+	AssetID         string                  `json:"assetId"`
+	ServerRef       string                  `json:"serverRef"`
+	Validators      int                     `json:"validators"`
+	ConfigOverrides map[string]string       `json:"configOverrides,omitempty"`
+	CaseRefs        []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	ChainPresetRef  *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
 }
 type webChainPayload struct {
 	Input             WebPlanInput           `json:"input"`
@@ -97,6 +98,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if dec.Decode(new(any)) != io.EOF {
 		return out, errors.New("one argument object required")
+	}
+	if in.Operation != "node.swap" && args.ConfigOverrides != nil {
+		return out, errors.New("configuration changes require a node replacement job")
 	}
 	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
 		return out, errors.New("a saved chain preset applies to composition and supplies its own node layout")
@@ -338,6 +342,18 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 					return out, err
 				}
 			}
+			if in.Operation == "node.swap" {
+				if _, err = webConfigChanges(state, p); err != nil {
+					return out, err
+				}
+				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
+					return out, err
+				}
+				p.Keys, err = e.bindWebConfigKeys(ctx, state)
+				if err != nil {
+					return out, err
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
 				return out, err
 			}
@@ -384,6 +400,14 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if in.Operation == "node.restart" {
 		out.Changes = append(out.Changes, "Restart only the selected owned node with its recorded executable and arguments; preserve config, genesis, node data and sibling processes")
+	}
+	if in.Operation == "node.swap" {
+		changes, err := webConfigChanges(*controlState, p)
+		if err != nil {
+			return out, err
+		}
+		out.Changes = append(out.Changes, "Replace only the selected generated config and rebuild its recorded launch arguments; preserve genesis, data and sibling nodes")
+		out.Changes = append(out.Changes, changes...)
 	}
 	if p.TestRun != nil {
 		display := p.TestRun.Plan

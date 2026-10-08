@@ -590,3 +590,36 @@ process, refuses a missing replacement executable, and verifies sibling liveness
 unchanged data and retained execution history. The browser replacement adapter and
 its registered file/option bindings remain unfinished. This foundation does not
 award WEB-07 or replace fresh source-bound browser acceptance evidence.
+
+### Generated configuration replacement with reviewed choices
+
+The browser can request `node.swap` for one owned node with generated config and
+the recorded base binary. `arguments.configOverrides` selects native `syncMode`,
+`httpHost` or `metricsHost` choices published by the engine contract. The form
+uses that contract and exposes no arbitrary key or command input. Empty patches,
+unknown fields/values, pinned config files, named per-node binaries and explicit
+launch options that would override the selected field are refused before effects.
+
+Preparation and execution recheck the owned record, ledger, process identity,
+physical paths, private declarations, config/genesis checksums and the accepted
+key snapshot. Config rendering reads the existing authenticated encrypted key
+snapshot and unchanged material, without adopting edits to source keys. Execution
+stops only the selected node, renders its config, rebuilds the corresponding launch
+arguments, and relaunches with the existing genesis and data. Provenance and the
+prior execution revision remain available; a later explicit restart retains the
+new config and arguments. An execution failure reports possible partial effects
+and unresolved resources instead of claiming restoration or successful relaunch.
+
+This slice excludes arbitrary configuration-file upload/replacement, binary
+replacement, pinned or mixed-binary controls and complete SSH replacement failure
+acceptance. The schema offers conservative native bind choices (loopback or all
+interfaces); other existing CLI addresses remain a separate import/contract scope.
+WEB-01/07 and all fourteen full acceptance criteria remain unfinished. RED logs
+are `chainbench-web-config-change-contract-red.log`,
+`chainbench-web-config-change-argv-red.log` and the actual native browser
+`chainbench-web-config-change-live-red.log`. The corrected browser fixture passes
+on all three native chains: actual config/argv and PID replacement, refused bad
+choices and tampered review inputs, unchanged genesis/keys/data/sibling PIDs,
+retained ledger history and the next explicit restart. It publishes a source-bound
+partial development receipt, never a whole WEB-07 acceptance award. Fresh final
+source verification remains required after any subsequent source edit.

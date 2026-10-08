@@ -98,10 +98,7 @@ func ChainPresetContract(chain string) (map[string]any, error) {
 	group := map[string]any{"type": "object", "additionalProperties": false, "properties": dialect.OptionSchemas(false)}
 	nodeGroup := map[string]any{"type": "object", "additionalProperties": false, "properties": dialect.OptionSchemas(true)}
 	props["launch"] = map[string]any{"type": "object", "properties": map[string]any{"all": group, "bp": group, "en": group, "pn": group}, "additionalProperties": nodeGroup, "propertyNames": map[string]any{"pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"}}
-	configProps := map[string]any{}
-	for _, key := range nodeconfig.ConfigKnobs {
-		configProps[key] = map[string]any{"type": "string"}
-	}
+	configProps := nodeconfig.ConfigOptionSchemas()
 	props["config"] = map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "object", "additionalProperties": false, "properties": configProps}, "propertyNames": map[string]any{"pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"}}
 	return schema, nil
 }

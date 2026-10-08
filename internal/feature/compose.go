@@ -58,6 +58,10 @@ func init() {
 		Summary: "Restart one owned node with its recorded inputs while preserving node data",
 	}, app.ChainRestart)
 	Register(Registration{
+		Name: "node.swap", Stage: StageCompose,
+		Summary: "Replace one owned node configuration or binary and preserve its chain data",
+	}, app.NodeSwap)
+	Register(Registration{
 		Name: "node.reset", Stage: StageCompose,
 		Summary: "Reset one non-producing node to its genesis and leave it stopped",
 	}, func(ctx context.Context, deps app.Deps, in app.NodeResetIn) (struct{}, error) {

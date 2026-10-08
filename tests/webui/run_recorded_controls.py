@@ -13,7 +13,7 @@ def extend_fixture_keys(runtime, source_keys, output):
 
 if __name__ == '__main__':
     before = source_digest(Path.cwd())
-    main(browser_script='browser_recorded_controls.mjs', proof_name='recorded-controls', fixture_inputs=extend_fixture_keys)
+    main(browser_script='browser_recorded_controls.mjs', proof_name='recorded-controls', fixture_inputs=extend_fixture_keys, browser_timeout=600)
     if source_digest(Path.cwd()) != before:
         raise RuntimeError('source changed during recorded node verification')
     path = Path('chainbench-out/web-ui-development/recorded-controls/receipt.json')

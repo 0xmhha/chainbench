@@ -78,7 +78,7 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 	// No binary. This is the whole point of the case: a config change alone is
 	// a reason to relaunch a node.
 	out, err := verb.NodeSwap(ctx, d, verb.NodeSwapIn{
-		DataDir: dir, Index: 2, Config: []string{"syncMode=snap"}, Purpose: "resync",
+		DataDir: dir, Index: 2, Config: []string{"syncMode=snap", "metricsHost=127.0.0.1"}, Purpose: "resync",
 	})
 	if err != nil {
 		t.Fatalf("config-only swap: %v", err)
@@ -105,8 +105,17 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 		t.Fatalf("reopen: %v", err)
 	}
 	scoped := ws.State().ConfigSet["node2"]
-	if len(scoped) != 1 || scoped[0] != "syncMode=snap" {
-		t.Errorf("node2's recorded overrides = %v, want [syncMode=snap]", scoped)
+	if len(scoped) != 2 || scoped[0] != "syncMode=snap" || scoped[1] != "metricsHost=127.0.0.1" {
+		t.Errorf("node2's recorded overrides = %v, want both reviewed changes", scoped)
+	}
+	metricsHost := ""
+	for i, arg := range ws.State().Nodes[1].Args {
+		if arg == "--metrics.addr" && i+1 < len(ws.State().Nodes[1].Args) {
+			metricsHost = ws.State().Nodes[1].Args[i+1]
+		}
+	}
+	if metricsHost != "127.0.0.1" {
+		t.Fatalf("new config is overridden by recorded metric launch address %q", metricsHost)
 	}
 	if _, ok := ws.State().ConfigSet["node1"]; ok {
 		t.Errorf("node1 got an override recorded: %v", ws.State().ConfigSet["node1"])

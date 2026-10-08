@@ -188,7 +188,8 @@ type SwapNodeOpts struct {
 }
 
 // SwapNode stops node index and relaunches it with a different binary and/or
-// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// config, keeping the same datadir and genesis. Generated config changes also
+// update the corresponding launch arguments — a per-node swap mid-test
 // (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
 // command are kept as a ledger revision (recordSwap); the node's per-node
 // binary and config provenance are updated so a later restart uses the swapped
@@ -344,6 +345,24 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 	if err != nil {
 		return err
 	}
+	net, err := w.network()
+	if err != nil {
+		return err
+	}
+	ns := w.state.Nodes[ni]
+	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+	if err != nil {
+		return err
+	}
+	overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
+	if err != nil {
+		return err
+	}
+	args, err := w.nodeLaunchArgs(ns, process.NodeConfig(np, net, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides)
+	if err != nil {
+		return err
+	}
+	w.state.Nodes[ni].Args = args
 	w.addConfigProvenance(prov)
 	return nil
 }

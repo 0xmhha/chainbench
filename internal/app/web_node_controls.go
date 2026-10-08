@@ -13,7 +13,7 @@ import (
 
 // webNodeControlOperation identifies operations that use an existing owned record.
 func webNodeControlOperation(operation string) bool {
-	return operation == "node.start" || operation == "node.stop" || operation == "node.reset" || operation == "node.restart"
+	return operation == "node.start" || operation == "node.stop" || operation == "node.reset" || operation == "node.restart" || operation == "node.swap"
 }
 
 // webResetNode checks role, recorded identity and the accepted node directory.

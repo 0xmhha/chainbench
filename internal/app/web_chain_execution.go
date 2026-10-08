@@ -88,11 +88,35 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 					return err
 				}
 			}
+			if p.Input.Operation == "node.swap" {
+				if _, err = webConfigChanges(state, p); err != nil {
+					return err
+				}
+				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
+					return err
+				}
+				keys, err := e.bindWebConfigKeys(ctx, state)
+				if err != nil || keys != p.Keys {
+					return ErrDeploymentConflict
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
 				return err
 			}
 			if p.Input.Operation == "node.start" {
 				_, err := NodeStart(ctx, d, NodeStartIn{DataDir: p.ControlDir, Index: index})
+				return err
+			}
+			if p.Input.Operation == "node.swap" {
+				changes, err := webConfigChanges(state, p)
+				if err != nil {
+					return err
+				}
+				_, err = NodeSwap(ctx, d, NodeSwapIn{DataDir: p.ControlDir, Index: index, Config: changes, Purpose: "web-reviewed-config"})
+				if err != nil {
+					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
+					result.PartialEffects = append(result.PartialEffects, "Configuration replacement attempted; the selected node may be stopped or its config and launch incomplete")
+				}
 				return err
 			}
 			if p.Input.Operation == "node.restart" {

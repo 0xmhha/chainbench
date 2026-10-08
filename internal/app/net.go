@@ -61,6 +61,7 @@ type (
 	NodeStopIn       = verb.NodeStopIn
 	NodeResetIn      = verb.NodeResetIn
 	NodeStartIn      = verb.NodeStartIn
+	NodeSwapIn       = verb.NodeSwapIn
 	NodeStartOut     = verb.NodeStartOut
 	NetworkRemoveIn  = verb.NetworkRemoveIn
 	NetworkRemoveOut = verb.NetworkRemoveOut
@@ -190,6 +191,11 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (verb.NodeStartOut, 
 // NodeStop stops one node by index.
 func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	return verb.NodeStop(ctx, d.chainsetupDeps(), in)
+}
+
+// NodeSwap replaces one node's selected binary or generated configuration.
+func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (verb.NodeStartOut, error) {
+	return verb.NodeSwap(ctx, d.chainsetupDeps(), in)
 }
 
 // NodeReset initializes one non-producing node again and leaves it stopped.
