@@ -24,11 +24,14 @@ func webConfigChanges(state State, p webChainPayload) ([]string, error) {
 			selected = n
 		}
 	}
-	if selected.Config != "" || selected.Binary != "" {
+	if selected.Config != "" || selected.Binary != "" && p.CurrentNodeBinary == nil {
 		return nil, ErrDeploymentConflict
 	}
 	schema := nodeconfig.ConfigOptionSchemas()
 	patch := p.Arguments.ConfigOverrides
+	if len(patch) == 0 && p.Replacement != nil {
+		return nil, nil
+	}
 	if len(patch) == 0 || len(patch) > len(schema) {
 		return nil, errors.New("select at least one supported configuration change")
 	}

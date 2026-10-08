@@ -46,6 +46,7 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	}
 	ledgerMatches := verifyWebRecordLedger(state, dir) == nil
 	var declaration DeploymentDocument
+	p := webChainPayload{ControlDir: dir, Target: target}
 	for _, ref := range workspace.Documents {
 		d, err := e.documents.DocumentRevision(ref.ID, ref.Revision)
 		if err != nil {
@@ -53,6 +54,10 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		}
 		if d.Kind == "server-set" {
 			declaration = d
+			p.Set = d
+		}
+		if d.Kind == "workspace-config" {
+			p.Config = d
 		}
 	}
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, declaration.DeploymentDocumentInput, e.documents.Bindings(a, workspace.ID))
@@ -93,19 +98,24 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		network.Nodes[i].ObservedPID = observed.PID
 		network.Nodes[i].ObservationReason = observed.Reason
 		network.Nodes[i].ObservedAt = time.Now().UTC()
-		if ns.Binary != "" && (observed.State == "running" || observed.State == "stopped") {
-			network.Nodes[i].State = "ownership_mismatch"
-			network.Nodes[i].ObservationReason = "binary_binding_unavailable"
-		}
-		if ns.Binary == "" && (observed.State == "running" || observed.State == "stopped") {
-			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop"}
-			if ns.Binary == "" {
-				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.restart")
+		if observed.State == "running" || observed.State == "stopped" {
+			if ns.Binary != "" {
+				selected := p
+				selected.Input.NodeIDs = []string{string(ns.NodeLabel())}
+				binding, err := e.observedWebBinary(ctx, state, selected, lookup)
+				if err != nil || binding == nil {
+					network.Nodes[i].State = "ownership_mismatch"
+					network.Nodes[i].ObservationReason = "binary_binding_unavailable"
+					continue
+				}
+				network.Nodes[i].BinaryAssetID = binding.Evidence.ID
+				network.Nodes[i].BinarySHA256 = binding.Evidence.SHA256
 			}
-			if ns.Binary == "" && ns.Config == "" {
+			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop", "node.restart"}
+			if ns.Config == "" {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.swap")
 			}
-			if ns.Binary == "" && (ns.Role == "en" || ns.Role == "pn") {
+			if ns.Role == "en" || ns.Role == "pn" {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.reset")
 			}
 		}

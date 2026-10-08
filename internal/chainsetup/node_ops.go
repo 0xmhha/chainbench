@@ -46,7 +46,8 @@ func (w *Workspace) nodeAt(index int) (int, error) {
 	return -1, lifecycle.Mark(errOpNoSuchNode, fmt.Errorf("chainsetup: no node %d in the table", index))
 }
 
-// StopNode stops one node by index and clears its pid; the node keeps its
+// StopNode stops one node by index and archives its execution before clearing
+// its pid; the node keeps its
 // resource and its datadir, so a later StartNode brings the same node back.
 // A node that is not running is left as it is.
 func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
@@ -65,7 +66,8 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 		return "", fmt.Errorf("chainsetup: stop node%d: %w", ns.Index, err)
 	}
-	w.clearPID(ni)
+	w.ledger.Retire(string(ns.NodeLabel()))
+	w.state.Nodes[ni].PID = 0
 	detail := fmt.Sprintf("node%d stopped", index)
 	w.markStep("stop-node", detail)
 	return detail, nil

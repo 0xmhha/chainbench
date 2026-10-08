@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -71,6 +72,13 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 					index = ns.Index
 				}
 			}
+			currentBinding, bindingsDigest, err := e.currentWebNodeBinary(ctx, state, p, lookup)
+			if err != nil {
+				return err
+			}
+			if !reflect.DeepEqual(currentBinding, p.CurrentNodeBinary) || p.NodeBindingsDigest != "" && bindingsDigest != p.NodeBindingsDigest {
+				return ErrDeploymentConflict
+			}
 			bound, err := bindWebControlBinary(ctx, state, p, lookup)
 			if err != nil {
 				return err
@@ -95,10 +103,20 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
 					return err
 				}
-				keys, err := e.bindWebConfigKeys(ctx, state)
-				if err != nil || keys != p.Keys {
+				if len(p.Arguments.ConfigOverrides) > 0 {
+					keys, err := e.bindWebConfigKeys(ctx, state)
+					if err != nil || keys != p.Keys {
+						return ErrDeploymentConflict
+					}
+				}
+				candidate := p
+				if err = e.prepareWebBinaryReplacement(ctx, state, &candidate); err != nil {
+					return err
+				}
+				if !reflect.DeepEqual(candidate.Replacement, p.Replacement) {
 					return ErrDeploymentConflict
 				}
+
 			}
 			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
 				return err
@@ -112,10 +130,42 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				if err != nil {
 					return err
 				}
-				_, err = NodeSwap(ctx, d, NodeSwapIn{DataDir: p.ControlDir, Index: index, Config: changes, Purpose: "web-reviewed-config"})
+				binary := ""
+				if p.Replacement != nil {
+					if err = e.stageWebBinaryReplacement(ctx, state, p, lookup); err != nil {
+						result.UnresolvedResources = []string{p.ControlDir, p.Replacement.Path}
+						result.PartialEffects = append(result.PartialEffects, "Replacement binary staging attempted; the selected node has not been stopped by this phase")
+						return err
+					}
+					result.PartialEffects = append(result.PartialEffects, "Reviewed replacement executable staged and binding retained")
+					result.UnresolvedResources = []string{p.ControlDir, p.Replacement.Path}
+					raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
+					if err != nil || manifestHash(raw) != p.RecordDigest {
+						return ErrDeploymentConflict
+					}
+					if _, err = bindWebControlBinary(ctx, state, p, lookup); err != nil {
+						return err
+					}
+					if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
+						return err
+					}
+					if len(p.Arguments.ConfigOverrides) > 0 {
+						keys, err := e.bindWebConfigKeys(ctx, state)
+						if err != nil || keys != p.Keys {
+							return ErrDeploymentConflict
+						}
+					}
+					if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
+						return err
+					}
+					binary = p.Replacement.Path
+				}
+				_, err = NodeSwap(ctx, d, NodeSwapIn{DataDir: p.ControlDir, Index: index, Binary: binary, Config: changes, Purpose: "web-reviewed-config"})
 				if err != nil {
 					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
-					result.PartialEffects = append(result.PartialEffects, "Configuration replacement attempted; the selected node may be stopped or its config and launch incomplete")
+					result.PartialEffects = append(result.PartialEffects, "Node replacement attempted; the selected node may be stopped or its executable, config and launch incomplete")
+				} else {
+					result.UnresolvedResources = nil
 				}
 				return err
 			}

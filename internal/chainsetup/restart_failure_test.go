@@ -42,6 +42,29 @@ func TestRestartFailurePersistsStoppedNodeAndPreservesSibling(t *testing.T) {
 	if _, ok := ledger.Get(string(node.LabelFor(1))); ok {
 		t.Fatal("failed restart retained a stale running ledger entry")
 	}
+	history := ledger.History(string(node.LabelFor(1)))
+	if len(history) != 1 || history[0].PID != 1001 {
+		t.Fatal("failed restart discarded the stopped execution", history)
+	}
+}
+
+func TestRestartPreservesPriorExecutionsAndRevisionOnExplicitRetry(t *testing.T) {
+	dir, _, deps := launchedNetwork(t)
+	for attempt := 0; attempt < 2; attempt++ {
+		if _, err := verb.ChainRestart(context.Background(), deps, verb.ChainRestartIn{DataDir: dir, Node: 1}); err != nil {
+			t.Fatal(err)
+		}
+		ledger, err := process.OpenLedger(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		label := string(node.LabelFor(1))
+		current, ok := ledger.Get(label)
+		history := ledger.History(label)
+		if !ok || current.Revision != attempt+1 || len(history) != attempt+1 || history[0].PID != 1001 {
+			t.Fatal("restart erased execution history or reset revision", current, history)
+		}
+	}
 }
 
 func TestRestartStopFailureDoesNotLaunchOrClearPID(t *testing.T) {

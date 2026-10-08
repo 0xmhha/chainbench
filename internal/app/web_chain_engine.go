@@ -48,29 +48,33 @@ func (e *WebChainEngine) binaryAsset(id string) (ManifestBinary, error) {
 }
 
 type webChainArguments struct {
-	ManifestID      string                  `json:"manifestId"`
-	AssetID         string                  `json:"assetId"`
-	ServerRef       string                  `json:"serverRef"`
-	Validators      int                     `json:"validators"`
-	ConfigOverrides map[string]string       `json:"configOverrides,omitempty"`
-	CaseRefs        []DeploymentDocumentRef `json:"caseRefs,omitempty"`
-	ChainPresetRef  *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
+	ManifestID         string                  `json:"manifestId"`
+	AssetID            string                  `json:"assetId"`
+	ServerRef          string                  `json:"serverRef"`
+	Validators         int                     `json:"validators"`
+	ReplacementAssetID string                  `json:"replacementAssetId,omitempty"`
+	ConfigOverrides    map[string]string       `json:"configOverrides,omitempty"`
+	CaseRefs           []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	ChainPresetRef     *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
 }
 type webChainPayload struct {
-	Input             WebPlanInput           `json:"input"`
-	Arguments         webChainArguments      `json:"arguments"`
-	WorkspaceRevision int                    `json:"workspaceRevision"`
-	Set               DeploymentDocument     `json:"set"`
-	Config            DeploymentDocument     `json:"config"`
-	Manifest          ManagedManifest        `json:"manifest"`
-	Binary            ManifestBinaryEvidence `json:"binary"`
-	ControlDir        string                 `json:"controlDir"`
-	RecordDigest      string                 `json:"recordDigest"`
-	Target            resource.Inspection    `json:"target"`
-	ExecutionBinary   string                 `json:"executionBinary"`
-	Keys              webKeySnapshot         `json:"keys"`
-	TestRun           *webTestRun            `json:"testRun,omitempty"`
-	Preset            *webPresetComposition  `json:"preset,omitempty"`
+	Input              WebPlanInput           `json:"input"`
+	Arguments          webChainArguments      `json:"arguments"`
+	WorkspaceRevision  int                    `json:"workspaceRevision"`
+	Set                DeploymentDocument     `json:"set"`
+	Config             DeploymentDocument     `json:"config"`
+	Manifest           ManagedManifest        `json:"manifest"`
+	Binary             ManifestBinaryEvidence `json:"binary"`
+	ControlDir         string                 `json:"controlDir"`
+	RecordDigest       string                 `json:"recordDigest"`
+	Target             resource.Inspection    `json:"target"`
+	ExecutionBinary    string                 `json:"executionBinary"`
+	Keys               webKeySnapshot         `json:"keys"`
+	TestRun            *webTestRun            `json:"testRun,omitempty"`
+	Preset             *webPresetComposition  `json:"preset,omitempty"`
+	CurrentNodeBinary  *webNodeBinary         `json:"currentNodeBinary,omitempty"`
+	NodeBindingsDigest string                 `json:"nodeBindingsDigest,omitempty"`
+	Replacement        *webBinaryReplacement  `json:"replacement,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -99,6 +103,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if dec.Decode(new(any)) != io.EOF {
 		return out, errors.New("one argument object required")
 	}
+	if args.ReplacementAssetID != "" && in.Operation != "node.swap" {
+		return out, errors.New("a replacement executable requires a node replacement job")
+	}
 	if in.Operation != "node.swap" && args.ConfigOverrides != nil {
 		return out, errors.New("configuration changes require a node replacement job")
 	}
@@ -115,7 +122,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 257 || args.ChainPresetRef == nil && in.Operation != "test.run" && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
+	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 257 || args.ChainPresetRef == nil && in.Operation != "test.run" && args.ReplacementAssetID == "" && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
 		return out, errors.New("select the binary asset and every registered declaration dependency")
 	}
 	refs, _ := json.Marshal(workspace.Documents)
@@ -274,6 +281,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		return out, err
 	}
 	expectedAssets := map[string]bool{args.AssetID: true}
+	if args.ReplacementAssetID != "" {
+		expectedAssets[args.ReplacementAssetID] = true
+	}
 	if p.Preset != nil {
 		for _, id := range p.Preset.Document.AssetRefs {
 			expectedAssets[id] = true
@@ -319,6 +329,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			}
 		}
 		if webNodeControlOperation(in.Operation) {
+			p.CurrentNodeBinary, p.NodeBindingsDigest, err = e.currentWebNodeBinary(ctx, state, p, lookup)
+			if err != nil {
+				return out, err
+			}
+			if err = e.prepareWebBinaryReplacement(ctx, state, &p); err != nil {
+				return out, err
+			}
 			p.ExecutionBinary, err = bindWebControlBinary(ctx, state, p, lookup)
 			if err != nil {
 				return out, err
@@ -349,9 +366,16 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
 					return out, err
 				}
-				p.Keys, err = e.bindWebConfigKeys(ctx, state)
-				if err != nil {
-					return out, err
+				if len(p.Arguments.ConfigOverrides) > 0 {
+					p.Keys, err = e.bindWebConfigKeys(ctx, state)
+					if err != nil {
+						return out, err
+					}
+				}
+				if p.Replacement != nil {
+					if err = inspectWebBinaryParent(ctx, p, p.Replacement.Path, lookup); err != nil {
+						return out, err
+					}
 				}
 			}
 			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
@@ -406,8 +430,16 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if err != nil {
 			return out, err
 		}
-		out.Changes = append(out.Changes, "Replace only the selected generated config and rebuild its recorded launch arguments; preserve genesis, data and sibling nodes")
-		out.Changes = append(out.Changes, changes...)
+		if len(changes) > 0 {
+			out.Changes = append(out.Changes, "Replace only the selected generated config and rebuild its recorded launch arguments; preserve genesis, data and sibling nodes")
+			out.Changes = append(out.Changes, changes...)
+		}
+	}
+	if p.CurrentNodeBinary != nil {
+		out.Changes = append(out.Changes, fmt.Sprintf("Current node binary asset %s · SHA-256 %s", p.CurrentNodeBinary.Evidence.ID, p.CurrentNodeBinary.Evidence.SHA256))
+	}
+	if p.Replacement != nil {
+		out.Changes = append(out.Changes, fmt.Sprintf("Replace only %s executable with registered asset %s · SHA-256 %s; preserve genesis, node data and sibling processes", p.Input.NodeIDs[0], p.Replacement.Evidence.ID, p.Replacement.Evidence.SHA256))
 	}
 	if p.TestRun != nil {
 		display := p.TestRun.Plan

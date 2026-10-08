@@ -19,6 +19,8 @@ type WebNode struct {
 	PID               int       `json:"pid"`
 	ObservedPID       int       `json:"observedPid,omitempty"`
 	ObservationReason string    `json:"observationReason,omitempty"`
+	BinaryAssetID     string    `json:"binaryAssetId,omitempty"`
+	BinarySHA256      string    `json:"binarySHA256,omitempty"`
 	State             string    `json:"state"`
 	SupportedControls []string  `json:"supportedControls"`
 	ObservedAt        time.Time `json:"observedAt"`

@@ -10,7 +10,7 @@ import (
 
 // bindWebControlBinary accepts only the reviewed executable or the engine's
 // native-name test copy. Matching bytes at arbitrary paths are not sufficient.
-// A selected named per-node executable has no reviewed asset binding yet and
+// Named per-node executables require their own reviewed asset binding; they
 // cannot borrow the base binary verification to authorize start or stop.
 func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) (string, error) {
 	if err := ctx.Err(); err != nil {
@@ -19,7 +19,28 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 	for _, ns := range state.Nodes {
 		for _, id := range p.Input.NodeIDs {
 			if string(ns.NodeLabel()) == id && ns.Binary != "" {
-				return "", ErrDeploymentConflict
+				if !webNodeBinaryDeclarationsMatch(state, ns) {
+					return "", ErrDeploymentConflict
+				}
+				binding := p.CurrentNodeBinary
+				if binding == nil || binding.NodeID != id || binding.Path != state.Binaries[ns.Binary] {
+					return "", ErrDeploymentConflict
+				}
+				expected, err := webNodeBinaryTarget(p, binding.Evidence)
+				if err != nil || expected != binding.Path {
+					return "", ErrDeploymentConflict
+				}
+				access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
+				if err != nil {
+					return "", err
+				}
+				if err = access.VerifyRegularFile(ctx, binding.Path); err != nil {
+					return "", ErrDeploymentConflict
+				}
+				checksum, err := access.Files.Checksum(ctx, binding.Path)
+				if err != nil || checksum != "sha256:"+binding.Evidence.SHA256 {
+					return "", ErrDeploymentConflict
+				}
 			}
 		}
 	}

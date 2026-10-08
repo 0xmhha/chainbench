@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -74,6 +75,53 @@ func TestWebControlBinaryAcceptsOnlyRegisteredOwnedExecutables(t *testing.T) {
 	}
 	if _, err = bindWebControlBinary(context.Background(), state, payload, nil); err == nil {
 		t.Fatal("missing execution binary accepted")
+	}
+}
+
+func TestWebReviewedExecutableCannotChangeItsProtocolOrGenesisMapping(t *testing.T) {
+	root := t.TempDir()
+	raw := []byte("reviewed executable fixture")
+	source := filepath.Join(root, "base")
+	if err := os.WriteFile(source, raw, 0700); err != nil {
+		t.Fatal(err)
+	}
+	config := deploymentTestConfig()
+	var declaration map[string]any
+	if err := json.Unmarshal(config.Content, &declaration); err != nil {
+		t.Fatal(err)
+	}
+	declaration["dataRoot"] = root
+	config.Content, _ = json.Marshal(declaration)
+	evidence := ManifestBinaryEvidence{ID: "reviewed", Chain: "wbft", SHA256: manifestHash(raw), OS: runtime.GOOS, Architecture: runtime.GOARCH}
+	p := webChainPayload{Input: WebPlanInput{NodeIDs: []string{"node1"}}, ExecutionBinary: source, Binary: evidence, Target: resource.Inspection{OS: runtime.GOOS, Architecture: runtime.GOARCH}, Config: DeploymentDocument{DeploymentDocumentInput: config}}
+	target, err := webNodeBinaryTarget(p, evidence)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.MkdirAll(filepath.Dir(target), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(target, raw, 0700); err != nil {
+		t.Fatal(err)
+	}
+	p.CurrentNodeBinary = &webNodeBinary{NodeID: "node1", Evidence: evidence, Path: target}
+	state := State{Chain: "wbft", Binary: source, GenesisPath: "/reviewed/genesis", Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, Label: "node1", Binary: "node1"}}, Binaries: map[string]string{"node1": target}}
+	if _, err = bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+		t.Fatal("valid reviewed executable refused", err)
+	}
+	for _, field := range []string{"chain", "genesis", "genesis-config"} {
+		changed := state
+		switch field {
+		case "chain":
+			changed.BinaryChains = map[string]string{"node1": "wemix"}
+		case "genesis":
+			changed.GenesisPaths = map[string]string{"node1": "/unreviewed/genesis"}
+		case "genesis-config":
+			changed.GenesisConfigPaths = map[string]string{"node1": "/unreviewed/config"}
+		}
+		if _, err = bindWebControlBinary(context.Background(), changed, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+			t.Fatal("reviewed bytes authorized unreviewed node declarations", field, err)
+		}
 	}
 }
 

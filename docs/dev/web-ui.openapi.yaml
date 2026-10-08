@@ -2305,7 +2305,13 @@ components:
           minimum: 0
         observationReason:
           type: string
-          enum: [ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+          enum: [binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+        binaryAssetId:
+          type: string
+          description: Verified registered asset identity for a reviewed per-node executable; omitted when unavailable.
+        binarySHA256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
         state:
           type: string
           enum:
@@ -2410,10 +2416,13 @@ components:
           additionalProperties: *id002
         arguments:
           type: object
-          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap currently accepts configOverrides for generated config on one owned node using its base binary; keys and choices come from the chain-preset contract. It rejects empty patches, unknown choices, pinned files, named node binaries and overriding explicit launch options. Arbitrary file and binary replacement remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected.
+          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract and/or replacementAssetId for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected.
           properties:
             chainPresetRef:
               $ref: '#/components/schemas/DocumentRef'
+            replacementAssetId:
+              type: string
+              description: Registered native binary identity for node.swap; its verified SHA-256 must differ from the selected node executable.
           additionalProperties: true
         retention:
           type: string

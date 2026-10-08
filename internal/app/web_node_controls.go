@@ -30,7 +30,7 @@ func webResetNode(state State, p webChainPayload) (node.Record, error) {
 		if node.Is(node.Role(ns.Role), node.RoleBP) {
 			return node.Record{}, errors.New("a block producer cannot be reset")
 		}
-		if ns.PID < 0 || (!node.Is(node.Role(ns.Role), node.RoleEN) && !node.Is(node.Role(ns.Role), node.RolePN)) || ns.Binary != "" {
+		if ns.PID < 0 || (!node.Is(node.Role(ns.Role), node.RoleEN) && !node.Is(node.Role(ns.Role), node.RolePN)) || ns.Binary != "" && p.CurrentNodeBinary == nil {
 			return node.Record{}, ErrDeploymentConflict
 		}
 		wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
@@ -60,7 +60,7 @@ func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, l
 
 // verifyWebNodeInputs binds a relaunch to the recorded declarations, directory,
 // config and genesis before stopping its current process. Named per-node
-// executables need their own reviewed asset binding and remain unsupported here.
+// executables need their own reviewed asset binding.
 func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) error {
 	if err := webSelectedNode(state, p.Input.NodeIDs); err != nil {
 		return err
@@ -71,7 +71,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 			ns = n
 		}
 	}
-	if ns.Binary != "" {
+	if ns.Binary != "" && p.CurrentNodeBinary == nil {
 		return ErrDeploymentConflict
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
