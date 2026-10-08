@@ -67,8 +67,9 @@ Generate receipts from frozen source with `verify.sh --criterion WEB-NN --requir
 `WEBUI_RUNTIME_ROOT=/private/tmp/cb-holds python3 tests/webui/run_resource_holds.py`
 uses native WBFT setup and an exclusively owned dashboard/browser fixture. It
 checks that a different workspace alias receives 409 after retained completion,
+that the plan UI displays the owning job/workspace/actor and disables execution,
 that owner controls remain allowed, and that verified removal of all four actual
-node directories permits the alias to execute. The engine retains its audit
+node directories permits the alias to refresh its conflict review and execute. The engine retains its audit
 record with an empty node table. Results go to
 `chainbench-out/web-ui-development/resource-holds/receipt.json`.
 This is partial development evidence, not full WEB-11/12 acceptance or a live

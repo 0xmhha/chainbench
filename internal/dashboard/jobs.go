@@ -3,6 +3,7 @@ package dashboard
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
 )
@@ -37,6 +38,10 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			}
 			plan, err := jobs.Plan(r.Context(), a, in)
 			deploymentResponse(w, plan, err, http.StatusCreated)
+		})
+		route("GET /api/v1/plans/{planId}/conflicts", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			conflicts, err := jobs.PlanConflicts(a, r.PathValue("planId"))
+			deploymentResponse(w, map[string]any{"items": conflicts, "observedAt": time.Now().UTC()}, err, http.StatusOK)
 		})
 		route("POST /api/v1/jobs", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in struct {

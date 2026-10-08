@@ -91,3 +91,21 @@ artifact root와 `web:` 참조를 분리해 동일 세션 이름의 충돌을 �
 로그, 전체 DSL 범위의 실행 연결과 캡처 확장이다. 히스토리의 JSON 사본은
 노드 로그·metric archive 전체를 아직 포함하지 않는다. 기존 문서의 전체 인수 조건을 구현하고
 각 조건의 실제 실행 증거를 다시 생성해야 완료를 판정할 수 있다.
+
+## Retained resource ownership and conflict review
+
+Terminal jobs continue to exclude other workspaces while resources are retained,
+unknown, interrupted, or cleanup has failed. The owner workspace can request
+subsequent controls; active overlapping jobs still conflict. A later verified
+cleanup releases only matching physical host and canonical target roots, with
+persisted acceptance order establishing that cleanup follows retained work.
+Incomplete cleanup or missing ordering evidence does not release ownership.
+
+`GET /api/v1/plans/{planId}/conflicts` is restricted to the plan's authenticated
+operator/administrator. It exposes job, workspace and actor identifiers and
+resolved conflicting claims, never the accepted execution payload or credentials.
+Foreign plan identifiers return 404; expired reviews return 409. The SPA shows
+these owners, disables execution while conflicts exist and allows refresh after
+cleanup. Starting a job checks exclusion atomically again; review is not a lock.
+Live node probing after restart and concurrent independent execution coverage
+remain unfinished, so WEB-11/12 are not complete.

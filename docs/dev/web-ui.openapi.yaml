@@ -1192,6 +1192,41 @@ paths:
         schema: *id001
         description: Required for cookie-authenticated changes; publisher bearer ingestion
           uses its own authentication.
+  /api/v1/plans/{planId}/conflicts:
+    get:
+      operationId: getPlanResourceConflicts
+      summary: Review overlapping active or retained jobs for the actor-owned plan
+      description: Ownership metadata only. This snapshot does not reserve resources; starting a job checks conflicts atomically again.
+      x-minimum-role: operator
+      parameters:
+      - name: planId
+        in: path
+        required: true
+        schema: *id002
+      responses:
+        '200':
+          description: Current conflicting jobs; empty items permits review but does not guarantee acceptance
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, observedAt]
+                properties:
+                  observedAt:
+                    type: string
+                    format: date-time
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResourceConflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/jobs:
     get:
       operationId: listJobs
@@ -2270,6 +2305,35 @@ components:
       - ownership
       - nodes
       - version
+    ResourceConflict:
+      type: object
+      required: [jobId, workspaceId, actorId, operation, state, nodeDisposition, resources]
+      properties:
+        jobId: *id002
+        workspaceId: *id002
+        actorId: *id002
+        operation:
+          type: string
+        state:
+          type: string
+        nodeDisposition:
+          type: string
+        resources:
+          type: array
+          items:
+            type: object
+            required: [hostIdentity]
+            properties:
+              hostIdentity:
+                type: string
+              dataPath:
+                type: string
+              ports:
+                type: array
+                items:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
     PlanInput:
       type: object
       properties:

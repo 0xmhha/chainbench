@@ -184,3 +184,37 @@ func TestWebResourceCleanupPortOnlyAndMissingOrder(t *testing.T) {
 		t.Fatal("independent ports blocked")
 	}
 }
+
+func TestWebPlanConflictReviewDetachedAndExpired(t *testing.T) {
+	e := newBlockingJobEngine()
+	s, err := OpenWebJobs(t.TempDir(), e, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := DeploymentActor{ID: "owner", Role: "operator"}
+	closeFixtureJobs(t, s, a)
+	_, owned := startFixtureJob(t, s, a, WebPlanInput{WorkspaceID: "owner", Operation: "chain.deploy"}, "owned")
+	<-e.started
+	alias, err := s.Plan(context.Background(), a, WebPlanInput{WorkspaceID: "alias", Operation: "chain.deploy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	conflicts, err := s.PlanConflicts(a, alias.ID)
+	if err != nil || len(conflicts) != 1 || conflicts[0].JobID != owned.ID {
+		t.Fatal(conflicts, err)
+	}
+	conflicts[0].Resources[0].Ports[0] = 1
+	conflicts[0].Resources[0].DataPath = "/changed"
+	fresh, err := s.PlanConflicts(a, alias.ID)
+	if err != nil || fresh[0].Resources[0].Ports[0] != 8545 || fresh[0].Resources[0].DataPath != "/fixture/nodes" {
+		t.Fatal("caller mutated durable claims", fresh, err)
+	}
+	s.mu.Lock()
+	p := s.state.Plans[alias.ID]
+	p.Public.ExpiresAt = time.Now().Add(-time.Minute)
+	s.state.Plans[alias.ID] = p
+	s.mu.Unlock()
+	if _, err = s.PlanConflicts(a, alias.ID); !errors.Is(err, ErrDeploymentConflict) {
+		t.Fatal("expired plan review accepted", err)
+	}
+}
