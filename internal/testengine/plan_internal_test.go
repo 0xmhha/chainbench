@@ -4,6 +4,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/origin"
 
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -534,5 +535,34 @@ func TestComposition_TheDeclaredDefaultIsExpandedLikeAnyOtherReference(t *testin
 	}
 	if got := comp.up.Binary; got != "/opt/gstable" {
 		t.Errorf("the network's binary = %q, want the expanded /opt/gstable", got)
+	}
+}
+
+func TestPlanNamedBinaryOverrideUsesVerifiedExecutable(t *testing.T) {
+	executable := filepath.Join(t.TempDir(), "verified-node")
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"verified","chain":"stablenet","binaries":{"default":"gstable"},"topology":{"bp":4}}`
+	plan := planFor(t, env, RunSuiteIn{Binary: executable, BinaryOverrides: map[string]string{"default": executable}})
+	if plan.Binary != executable || plan.Binaries["default"] != executable {
+		t.Fatal("named binary restart escapes the verified executable", plan.Binary, plan.Binaries)
+	}
+}
+
+func TestPlanNamedBinaryOverrideSelectsDefaultAndRejectsUnknownOrEmpty(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"chain-preset","id":"verified","chain":"stablenet","binaries":{"default":"gstable"},"topology":{"bp":4}}`
+	executable := filepath.Join(t.TempDir(), "verified-node")
+	plan := planFor(t, env, RunSuiteIn{BinaryOverrides: map[string]string{"default": executable}})
+	if plan.Binary != executable {
+		t.Fatal("default executable override did not reach the launched primary binary", plan.Binary)
+	}
+	spec := caseWithEnv(t, env)
+	original, _ := json.Marshal(spec.Chain.Binaries)
+	for _, overrides := range []map[string]string{{"undeclared": executable}, {"default": ""}} {
+		if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), BinaryOverrides: overrides}); err == nil {
+			t.Fatal("invalid named override accepted")
+		}
+	}
+	after, _ := json.Marshal(spec.Chain.Binaries)
+	if string(original) != string(after) {
+		t.Fatal("caller binary map was modified")
 	}
 }

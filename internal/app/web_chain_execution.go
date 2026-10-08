@@ -14,6 +14,9 @@ import (
 )
 
 func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webChainPayload, report func(WebJobPhase) error) (WebJobResult, error) {
+	if p.Input.Operation == "test.run" {
+		return e.executeTestRun(ctx, a, p, report)
+	}
 	result := WebJobResult{NodeDisposition: "retained", PartialEffects: []string{}}
 	keysDir := ""
 	if p.Input.Operation == "chain.setup" || p.Input.Operation == "chain.deploy" {

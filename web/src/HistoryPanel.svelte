@@ -4,7 +4,7 @@
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
-  let search = $state(''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
+  let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
   const terminal = run => ['succeeded', 'failed', 'cancelled', 'interrupted'].includes(run.state)

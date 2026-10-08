@@ -194,3 +194,57 @@ func TestWebHistoryDeletionWriteFailurePreservesEvidence(t *testing.T) {
 		t.Fatal("prior disk snapshot lost", err)
 	}
 }
+
+func TestWebHistoryCapturesOwnedTestSessionsWithoutLegacyRoot(t *testing.T) {
+	root := t.TempDir()
+	ref, original := historyFixture(t, filepath.Join(root, "sessions"), 6, session.StatusFail)
+	jobs, err := OpenWebJobs(root, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload, _ := json.Marshal(webChainPayload{Binary: ManifestBinaryEvidence{Chain: "stablenet", SHA256: strings.Repeat("b", 64)}})
+	jobs.state.Plans["test-plan"] = savedWebPlan{Prepared: WebPreparedJob{Payload: payload, Fingerprint: strings.Repeat("c", 64)}}
+	history, err := OpenWebHistory(root, "", jobs, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Discovery can race the final durable job commit. It must not freeze an
+	// unlinked or partial session as a successful completed result.
+	if err = history.Sync(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	id := historySessionID("web:" + ref)
+	partial, err := history.Get(id)
+	if err != nil {
+		t.Fatalf("owned engine result is absent with the default daemon settings: %v", err)
+	}
+	if partial.State != "unknown" {
+		t.Fatal("unlinked session incorrectly advertised as complete")
+	}
+	jobs.state.Jobs["test-job"] = WebJob{ID: "test-job", ActorID: "operator", WorkspaceID: "owned", PlanID: "test-plan", Operation: "test.run", State: "failed", RunIDs: []string{"web:" + ref}}
+	if err = history.Sync(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	run, err := history.Get(id)
+	if err != nil || run.JobID != "test-job" || run.WorkspaceID != "owned" || run.Chain != "stablenet" || run.State != "failed" {
+		t.Fatal(run, err)
+	}
+	if counts := run.Summary["counts"].(map[string]any); counts["fail"] != json.Number("1") {
+		t.Fatal("actual failing verdict lost", counts)
+	}
+	exported, err := history.Export(id)
+	if err != nil || !strings.Contains(string(exported), "steps.json") {
+		t.Fatal("assertion/step evidence missing", err)
+	}
+	if err = os.RemoveAll(original); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := OpenWebHistory(root, "", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restored, err := reopened.Get(id)
+	if err != nil || restored.JobID != "test-job" || restored.State != "failed" {
+		t.Fatal("owned session copy lost after source deletion/restart", err)
+	}
+}

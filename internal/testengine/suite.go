@@ -37,6 +37,9 @@ type RunSuiteIn struct {
 	Chain string
 	// Binary overrides the declared binary path for a single-binary network.
 	Binary string
+	// BinaryOverrides binds declared binary names to caller-verified executables.
+	// Names remain in the DSL; callers own path verification and registration.
+	BinaryOverrides map[string]string
 	// BPCount overrides the bp node count the specs declare.
 	BPCount int
 	// Server selects where the nodes run, from the operator's server set.

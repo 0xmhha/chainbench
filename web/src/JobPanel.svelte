@@ -1,15 +1,19 @@
 <script>
   import { onMount } from 'svelte'
-  let { webSession = undefined } = $props()
+  let { webSession = undefined, testOnly = false } = $props()
   let workspaces=$state([]), manifests=$state([]), assets=$state([]), jobs=$state([]), documents=$state([]), networks=$state([])
   let workspaceId=$state(''), manifestId=$state(''), assetId=$state(''), serverRef=$state('')
   let operation=$state('chain.setup'), validators=$state(4), nodeId=$state('node1'), retention=$state('retain')
+  let caseIds=$state([])
   let plan=$state(null), busy=$state(false), error=$state(''), loaded=$state(false)
+  $effect(()=>{if(testOnly)operation='test.run'})
   const actor=$derived(webSession?.user)
   const canEdit=$derived(actor && actor.role!=='viewer')
   const workspace=$derived(workspaces.find(w=>w.id===workspaceId))
   const manifest=$derived(manifests.find(m=>m.id===manifestId))
   const nodeControl=$derived(operation.startsWith('node.'))
+  const testRun=$derived(operation==='test.run')
+  const cases=$derived(documents.filter(d=>d.kind==='case'&&(d.content.chainPreset?.chain??d.content.chain?.name)===(manifest?.manifest.protocol||manifest?.manifest.id)))
   const servers=$derived(documents.find(d=>d.kind==='server-set'&&workspace?.documents.some(r=>r.id===d.id&&r.revision===d.revision))?.content.pool.hosts??[])
   const nodes=$derived(networks.find(n=>n.workspaceId===workspaceId)?.nodes??[])
   const active=j=>['accepted','running','cancelling'].includes(j.state)
@@ -26,7 +30,7 @@
   $effect(()=>{if(webSession)work(load)})
   onMount(()=>{const poll=setInterval(()=>{if(actor&&loaded)refresh().catch(e=>{error=e.message})},3000);return()=>clearInterval(poll)})
   function changed(){plan=null}
-  async function prepare(){const bindings=await api(`workspaces/${workspaceId}/credential-bindings`);plan=await api('plans','POST',{workspaceId,operation,documentRefs:workspace.documents,assetRefs:[assetId],credentialBindings:bindings[serverRef]?{[serverRef]:bindings[serverRef]}:{},nodeIds:nodeControl?[nodeId]:[],retention:nodeControl?'retain':retention,arguments:{manifestId,assetId,serverRef,validators}})}
+  async function prepare(){const bindings=await api(`workspaces/${workspaceId}/credential-bindings`);plan=await api('plans','POST',{workspaceId,operation,documentRefs:workspace.documents,assetRefs:[assetId],credentialBindings:bindings[serverRef]?{[serverRef]:bindings[serverRef]}:{},nodeIds:nodeControl?[nodeId]:[],retention:nodeControl?'retain':retention,arguments:{manifestId,assetId,serverRef,...(testRun?{caseRefs:cases.filter(c=>caseIds.includes(c.id)).map(c=>({id:c.id,revision:c.revision}))}:{validators})}})}
   async function start(){await api('jobs','POST',{planId:plan.id},plan.id);plan=null;await refresh()}
 </script>
 
@@ -35,16 +39,16 @@
   {#if actor}
     {#if canEdit}
       <fieldset disabled={busy} onchange={changed}><legend>새 작업</legend>
-        <p>로컬 또는 SSH 서버에 구성합니다. SSH 대상은 서버 설정에서 연결한 내 자격증명을 사용하며, 장비·경로·바이너리를 실행 전에 검증합니다. 테스트 실행은 준비 중입니다.</p>
+        <p>로컬 또는 SSH 서버에 구성합니다. SSH 대상은 서버 설정에서 연결한 내 자격증명을 사용하며, 장비·경로·바이너리를 실행 전에 검증합니다. 테스트는 선택한 케이스의 구성 선언으로 실행하고 실제 세션 판정을 보관합니다.</p>
         <div class="inputs">
           <label>Workspace<select aria-label="작업 Workspace" bind:value={workspaceId}><option value="">선택</option>{#each workspaces as w}<option value={w.id}>{w.name} · r{w.revision}</option>{/each}</select></label>
-          <label>매니페스트<select aria-label="작업 매니페스트" bind:value={manifestId} onchange={()=>{assetId='';changed()}}><option value="">선택</option>{#each manifests as m}<option value={m.id}>{m.manifest.id}</option>{/each}</select></label>
+          <label>매니페스트<select aria-label="작업 매니페스트" bind:value={manifestId} onchange={()=>{assetId='';caseIds=[];changed()}}><option value="">선택</option>{#each manifests as m}<option value={m.id}>{m.manifest.id}</option>{/each}</select></label>
           <label>바이너리<select aria-label="작업 바이너리" bind:value={assetId}><option value="">등록 파일 선택 · 계획에서 검증</option>{#each assets.filter(a=>a.chain===(manifest?.manifest.protocol||manifest?.manifest.id)) as a}<option value={a.id}>{a.id} · {a.sha256.slice(0,12)}</option>{/each}</select></label>
-          <label>작업<select aria-label="작업 종류" bind:value={operation}><option value="chain.setup">설정 생성 · 노드 초기화</option><option value="chain.deploy">노드 구축 · 실행</option><option value="node.start">노드 시작</option><option value="node.stop">노드 정지</option></select></label>
+          <label>작업<select aria-label="작업 종류" bind:value={operation}>{#if !testOnly}<option value="chain.setup">설정 생성 · 노드 초기화</option><option value="chain.deploy">노드 구축 · 실행</option><option value="node.start">노드 시작</option><option value="node.stop">노드 정지</option>{/if}<option value="test.run">저장한 DSL 케이스 실행</option></select></label>
           <label>서버<select aria-label="작업 서버 이름" bind:value={serverRef}><option value="">서버 선택</option>{#each servers as host}<option value={typeof host==='string'?host:host.name||host.addr}>{typeof host==='string'?host:host.name||host.addr}</option>{/each}</select></label>
-          <label>생산자 수<input aria-label="작업 생산자 수" type="number" min="1" max="128" bind:value={validators} /></label>
+          {#if !testRun}<label>생산자 수<input aria-label="작업 생산자 수" type="number" min="1" max="128" bind:value={validators} /></label>{/if}
           {#if nodeControl}<label>소유 노드<select aria-label="작업 노드" bind:value={nodeId}><option value="">노드 선택</option>{#each nodes as n}<option value={n.id}>{n.id} · {n.role} · {n.state}</option>{/each}</select></label>{:else}<label>종료 후 처리<select aria-label="작업 종료 후 처리" bind:value={retention}><option value="retain">노드와 자료 보존</option><option value="cleanup">소유 노드 정리</option></select></label>{/if}
-        </div><button disabled={!workspace||!manifest||!assetId||!serverRef||(nodeControl&&!nodes.some(n=>n.id===nodeId))||busy} onclick={()=>work(prepare)}>실행 계획 확인</button>
+        </div>{#if testRun}<div class="cases"><h3>실행할 저장 케이스</h3><p>선택한 리비전의 내용을 계획에 고정합니다. 노드 배치는 케이스 선언을 따릅니다.</p>{#each cases as c}<label class="case"><input type="checkbox" aria-label={'실행 케이스 '+c.id} value={c.id} bind:group={caseIds} />{c.name} · r{c.revision}</label>{:else}<p>이 체인의 저장 케이스가 없습니다. 테스트 정의를 저장한 뒤 새로고침하세요.</p>{/each}</div>{/if}<button disabled={!workspace||!manifest||!assetId||!serverRef||(nodeControl&&!nodes.some(n=>n.id===nodeId))||(testRun&&!cases.some(c=>caseIds.includes(c.id)))||busy} onclick={()=>work(prepare)}>실행 계획 확인</button>
       </fieldset>
       {#if plan}<article class="plan" aria-label="실행 계획"><h3>실행 전 검토</h3><p>{plan.changes.join(' · ')}</p><p>순서: {plan.phases.join(' → ')}</p><ul>{#each plan.resources as resource}<li><code>{resource}</code></li>{/each}</ul><p>유효 기한: {new Date(plan.expiresAt).toLocaleString()}</p><button disabled={busy} onclick={()=>work(start)}>검토한 계획 실행</button></article>{/if}
     {/if}
@@ -52,6 +56,7 @@
       <div class="heading"><strong>{job.operation}</strong><span class:active={active(job)}>{job.state}</span></div>
       <p><code>{job.id}</code> · {new Date(job.createdAt).toLocaleString()} · 노드 처리: {job.nodeDisposition}</p>
       <ol>{#each job.phases as phase}<li>{phase.name} · {phase.state}{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>
+      {#if job.runIds?.length}<p>실제 엔진 세션: {job.runIds.join(', ')}</p><a href={'/history?search='+encodeURIComponent(job.id)}>세션 결과 보기</a>{/if}
       {#if job.error}<p class="error">{job.error.message}</p>{/if}
       {#if job.partialEffects?.length}<details><summary>수행된 변경</summary><ul>{#each job.partialEffects as effect}<li>{effect}</li>{/each}</ul></details>{/if}
       {#if job.unresolvedResources?.length}<p class="error">확인이 필요한 자원: {job.unresolvedResources.join(', ')}</p>{/if}
@@ -62,5 +67,5 @@
 </section>
 
 <style>
-.jobs{margin-top:24px;padding:24px;border:1px solid #344154;border-radius:12px;background:#151b24}.heading{display:flex;justify-content:space-between;gap:16px}.heading p{color:#a7b5c7}h2{margin:0 0 8px}h3{margin-top:0}fieldset{border:1px solid #344154;margin-top:20px;padding:16px;border-radius:8px}.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}label{display:flex;flex-direction:column;gap:8px}input,select,button{font:inherit;color:#e3ebf5;background:#202b3b;border:1px solid #47576d;border-radius:6px;min-height:40px;padding:8px 12px;max-width:100%}button{cursor:pointer;margin-top:16px}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #67d8c5;outline-offset:3px}.plan,.records article{margin-top:16px;padding:16px;border:1px solid #344154;border-radius:8px}.active{color:#67d8c5}.error{color:#f9abae}code,pre{font-family:ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap}li{margin-top:8px}summary{cursor:pointer}p{overflow-wrap:anywhere}
+.cases{margin-top:20px}.case{display:flex;flex-direction:row;align-items:center;margin:8px 0}.case input{min-height:20px;width:20px}a{color:#67d8c5}.jobs{margin-top:24px;padding:24px;border:1px solid #344154;border-radius:12px;background:#151b24}.heading{display:flex;justify-content:space-between;gap:16px}.heading p{color:#a7b5c7}h2{margin:0 0 8px}h3{margin-top:0}fieldset{border:1px solid #344154;margin-top:20px;padding:16px;border-radius:8px}.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}label{display:flex;flex-direction:column;gap:8px}input,select,button{font:inherit;color:#e3ebf5;background:#202b3b;border:1px solid #47576d;border-radius:6px;min-height:40px;padding:8px 12px;max-width:100%}button{cursor:pointer;margin-top:16px}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #67d8c5;outline-offset:3px}.plan,.records article{margin-top:16px;padding:16px;border:1px solid #344154;border-radius:8px}.active{color:#67d8c5}.error{color:#f9abae}code,pre{font-family:ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap}li{margin-top:8px}summary{cursor:pointer}p{overflow-wrap:anywhere}
 </style>

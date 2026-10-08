@@ -1,5 +1,6 @@
 """Fresh WEB-10 browser + dedicated SSH acceptance, with no mock or skipped target."""
 from runtime_contract import runtime_root, base_commit
+from browser_process import run_browser
 
 import base64
 import datetime
@@ -115,7 +116,7 @@ def main():
         fixture['setupToken'] = (runtime / 'store' / 'setup.token').read_text()
         private_fixture.write_text(json.dumps(fixture))
         def browser_phase(phase):
-            browser = subprocess.run(['node', 'tests/webui/browser_web10.mjs', url, str(output), str(private_fixture), phase], capture_output=True, text=True)
+            browser = run_browser(['node', 'tests/webui/browser_web10.mjs', url, str(output), str(private_fixture), phase], timeout=180)
             (output / (phase + '-browser.log')).write_text(browser.stdout + browser.stderr)
             if browser.returncode:
                 raise RuntimeError('live browser assertions failed; see ' + phase + '-browser.log')

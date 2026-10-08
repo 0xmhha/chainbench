@@ -59,6 +59,14 @@ func (s *WebHistory) sessionHistory(id, ref string, captured session.CapturedSes
 			state = "unknown"
 		}
 	}
+	if strings.HasPrefix(ref, "web:") {
+		if linked.JobID == "" {
+			state = "unknown"
+			missing = append(missing, "jobId")
+		} else if !terminalWebJob(linked.State) {
+			state = linked.State
+		}
+	}
 	run := WebRun{ID: id, JobID: linked.JobID, WorkspaceID: linked.WorkspaceID, Chain: linked.Chain, ActorID: linked.ActorID, State: state, StartedAt: result.StartedAt, SessionRefs: []string{ref}, Fingerprints: map[string]string{}, ArtifactRefs: []string{}, Summary: map[string]any{"kind": "engine-session", "command": result.Command, "tests": result.Tests, "counts": result.Summary, "captureGaps": captured.Gaps}}
 	if linked.JobID == "" {
 		missing = append(missing, "actorId", "workspaceId", "chain", "binary")

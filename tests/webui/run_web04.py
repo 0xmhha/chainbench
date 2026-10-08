@@ -1,5 +1,6 @@
 """WEB-04 fixture runner; writes incomplete receipts on any missing live evidence."""
 from runtime_contract import runtime_root, base_commit
+from browser_process import run_browser
 
 import datetime
 import importlib.util
@@ -76,7 +77,7 @@ def main():
                 except OSError: time.sleep(.1)
             raise RuntimeError('dashboard health timeout')
         server=launch()
-        browser=subprocess.run(['node','tests/webui/browser_web04.mjs',url,str(out),str(runtime/'browser-fixture.json')],text=True,capture_output=True)
+        browser=run_browser(['node','tests/webui/browser_web04.mjs',url,str(out),str(runtime/'browser-fixture.json')],timeout=300)
         (out/'browser.log').write_text(browser.stdout+browser.stderr)
         if browser.returncode: raise RuntimeError('live browser assertions failed; see browser.log')
         observations=json.loads((out/'browser.json').read_text())

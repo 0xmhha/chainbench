@@ -238,7 +238,25 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		resolvedBins = merged
 	}
 
+	if len(in.BinaryOverrides) > 0 {
+		if resolvedBins == nil {
+			resolvedBins = map[string]string{}
+		}
+		for name, executable := range in.BinaryOverrides {
+			if strings.TrimSpace(executable) == "" {
+				return composition{}, fmt.Errorf("binary override %q requires an executable", name)
+			}
+			if _, declared := resolvedBins[name]; !declared && name != dsl.BinaryDefault {
+				return composition{}, fmt.Errorf("binary override %q is not declared by the test", name)
+			}
+			resolvedBins[name] = executable
+		}
+	}
+
 	binary := in.Binary
+	if binary == "" {
+		binary = in.BinaryOverrides[dsl.BinaryDefault]
+	}
 	from[FieldBinary] = origin.FromCommand
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)

@@ -37,10 +37,11 @@ func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests 
 }
 
 type webChainArguments struct {
-	ManifestID string `json:"manifestId"`
-	AssetID    string `json:"assetId"`
-	ServerRef  string `json:"serverRef"`
-	Validators int    `json:"validators"`
+	ManifestID string                  `json:"manifestId"`
+	AssetID    string                  `json:"assetId"`
+	ServerRef  string                  `json:"serverRef"`
+	Validators int                     `json:"validators"`
+	CaseRefs   []DeploymentDocumentRef `json:"caseRefs,omitempty"`
 }
 type webChainPayload struct {
 	Input             WebPlanInput           `json:"input"`
@@ -55,6 +56,7 @@ type webChainPayload struct {
 	Target            resource.Inspection    `json:"target"`
 	ExecutionBinary   string                 `json:"executionBinary"`
 	Keys              webKeySnapshot         `json:"keys"`
+	TestRun           *webTestRun            `json:"testRun,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -71,7 +73,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err := e.allowed(a); err != nil {
 		return out, err
 	}
-	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && in.Operation != "node.start" && in.Operation != "node.stop" {
+	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && in.Operation != "node.start" && in.Operation != "node.stop" && in.Operation != "test.run" {
 		return out, errors.New("operation requires an execution adapter that is not available")
 	}
 	var args webChainArguments
@@ -83,10 +85,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if dec.Decode(new(any)) != io.EOF {
 		return out, errors.New("one argument object required")
 	}
-	if args.Validators == 0 {
+	if args.Validators == 0 && in.Operation != "test.run" {
 		args.Validators = 4
 	}
-	if args.Validators < 1 || args.Validators > 128 {
+	if in.Operation != "test.run" && (args.Validators < 1 || args.Validators > 128) {
 		return out, errors.New("validator count must be between 1 and 128")
 	}
 	workspace, err := e.documents.Workspace(in.WorkspaceID)
@@ -184,12 +186,25 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
+	requests := []resource.Request{}
+	if in.Operation == "test.run" {
+		if len(in.NodeIDs) != 0 || args.Validators != 0 {
+			return out, errors.New("test jobs use the node layout declared by the selected cases")
+		}
+		requests, err = e.prepareTestRun(ctx, &p)
+		if err != nil {
+			return out, err
+		}
+	} else {
+		if len(args.CaseRefs) != 0 {
+			return out, errors.New("case references belong to a test job")
+		}
+		for range args.Validators {
+			requests = append(requests, resource.Request{Role: node.RoleBP})
+		}
+	}
 	pool := set.PoolFor(server, args.Validators, server.Slots)
 	pool.Reservation = plugin.Family().PortReservation()
-	requests := make([]resource.Request, args.Validators)
-	for i := range requests {
-		requests[i] = resource.Request{Role: node.RoleBP}
-	}
 	placement, err := resource.Assign(pool, requests)
 	if err != nil {
 		return out, err
@@ -244,7 +259,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	} else if in.Operation == "node.start" || in.Operation == "node.stop" {
 		return out, ErrDeploymentNotFound
 	}
-	if in.Operation == "chain.setup" || in.Operation == "chain.deploy" {
+	switch in.Operation {
+	case "chain.setup", "chain.deploy":
 		p.Keys, err = e.pinKeys(ctx)
 		if err != nil {
 			return out, err
@@ -256,11 +272,19 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if in.Operation == "chain.deploy" {
 			out.Phases = append(out.Phases, "start")
 		}
-	} else {
+	case "test.run":
+		out.Phases = []string{"test.inputs", "test.binary", "test.run"}
+	default:
 		out.Phases = []string{in.Operation}
 	}
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
-	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, args.Validators, plugin.Protocol().Name)}
+	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
+	if p.TestRun != nil {
+		out.Changes = append(out.Changes, p.TestRun.Plan.String())
+		for _, c := range p.TestRun.Cases {
+			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
+		}
+	}
 	if p.Keys.SHA256 != "" {
 		out.Changes = append(out.Changes, "Key material pinned to SHA-256 "+p.Keys.SHA256)
 	}

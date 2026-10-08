@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -23,12 +24,13 @@ type historyStorage interface {
 // WebHistory owns redacted evidence copies, independently of live node paths.
 // One server owns this store. Tombstones and audit survive deletion and restart.
 type WebHistory struct {
-	mu           sync.Mutex
-	files        historyStorage
-	state        webHistoryState
-	artifactRoot string
-	jobs         *WebJobs
-	redact       func(string) string
+	mu              sync.Mutex
+	files           historyStorage
+	state           webHistoryState
+	artifactRoot    string
+	webArtifactRoot string
+	jobs            *WebJobs
+	redact          func(string) string
 }
 
 func OpenWebHistory(root, artifactRoot string, jobs *WebJobs, redact func(string) string) (*WebHistory, error) {
@@ -39,7 +41,7 @@ func OpenWebHistory(root, artifactRoot string, jobs *WebJobs, redact func(string
 	if redact == nil {
 		redact = RedactWebText
 	}
-	s := &WebHistory{files: files, artifactRoot: artifactRoot, jobs: jobs, redact: redact, state: webHistoryState{Captures: map[string]webHistoryCapture{}, Deleted: map[string]bool{}, Audit: []webHistoryAudit{}}}
+	s := &WebHistory{files: files, artifactRoot: artifactRoot, webArtifactRoot: webOwnedSessions(root), jobs: jobs, redact: redact, state: webHistoryState{Captures: map[string]webHistoryCapture{}, Deleted: map[string]bool{}, Audit: []webHistoryAudit{}}}
 	b, err := files.Read()
 	if err == nil {
 		if err = decodeHistoryJSON(b, &s.state); err != nil {
@@ -94,8 +96,12 @@ func (s *WebHistory) Sync(ctx context.Context) error {
 			next.Captures[run.ID] = webHistoryCapture{run, map[string]string{"job.json": string(b)}}
 		}
 	}
-	if s.artifactRoot != "" {
-		ids, err := session.List(s.artifactRoot)
+	sources := []struct{ root, prefix string }{{s.webArtifactRoot, "web:"}}
+	if s.artifactRoot != "" && filepath.Clean(s.artifactRoot) != filepath.Clean(s.webArtifactRoot) {
+		sources = append(sources, struct{ root, prefix string }{s.artifactRoot, ""})
+	}
+	for _, source := range sources {
+		ids, err := session.List(source.root)
 		if err != nil {
 			return err
 		}
@@ -103,15 +109,17 @@ func (s *WebHistory) Sync(ctx context.Context) error {
 			if err = ctx.Err(); err != nil {
 				return err
 			}
-			id := historySessionID(ref)
-			if _, found := next.Captures[id]; found || next.Deleted[id] {
+			sourceRef := source.prefix + ref
+			id := historySessionID(sourceRef)
+			previous, found := next.Captures[id]
+			if next.Deleted[id] || found && (source.prefix == "" || previous.Run.JobID != "" && terminalWebJob(previous.Run.State)) {
 				continue
 			}
-			captured, err := session.Capture(s.artifactRoot, ref)
+			captured, err := session.Capture(source.root, ref)
 			if err != nil {
 				return errors.New("session evidence could not be safely captured")
 			}
-			capture := s.sessionHistory(id, ref, captured, refs[ref])
+			capture := s.sessionHistory(id, sourceRef, captured, refs[sourceRef])
 			next.Captures[id] = capture
 		}
 	}

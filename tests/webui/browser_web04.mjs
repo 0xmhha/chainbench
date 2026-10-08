@@ -1,9 +1,9 @@
-import {chromium} from 'playwright'
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 const [url,out,fixturePath]=process.argv.slice(2),fixture=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
-const browser=await chromium.launch({headless:true,channel:process.env.WEBUI_BROWSER_CHANNEL??'chrome'})
+const owned=await launchOwnedBrowser(), browser=owned.browser
 const setups=[],scenarios=[],records=[]
 const observed=(id,text)=>scenarios.push({id,mode:'personal',transport:'local',ownership:'owned',role:'operator',observedAt:new Date().toISOString(),assertions:text.map(message=>({message,passed:true}))})
 async function api(endpoint,method='GET',body,expected=200){const r=await fetch(url+'/api/v1/'+endpoint,{method,headers:{Authorization:'Basic '+Buffer.from(fixture.account.username+':'+fixture.account.password).toString('base64'),'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const text=await r.text();records.push({endpoint,method,status:r.status,body:text});assert.equal(r.status,expected,text);return r.status===200||r.status===201?JSON.parse(text):text}
@@ -68,4 +68,4 @@ try{
  observed('manifest-management',['Browser imported and persisted three external declarations without semantic change','Embedded plugins remain present and external records are content addressed'])
  fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({setups,scenarios,browserVersion:browser.version()},null,2))
  fs.writeFileSync(path.join(out,'api-observations.json'),JSON.stringify(records,null,2))
-}finally{await browser.close()}
+}finally{await owned.stop()}

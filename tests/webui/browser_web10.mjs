@@ -1,9 +1,9 @@
-import {chromium} from 'playwright'
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const [url,out,fixturePath,phase]=process.argv.slice(2)
 const f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
-const browser=await chromium.launch({headless:true,channel:process.env.WEBUI_BROWSER_CHANNEL??'chrome'})
+const owned=await launchOwnedBrowser(), browser=owned.browser
 const responses=[],scenarios=[]
 const secrets=[f.setupToken,...f.accounts.map(a=>a.password),f.sshKey,f.marker,...f.sshKey.split('\n').slice(1,-1)].filter(Boolean)
 function scan(text){for(const s of secrets)assert.ok(!text.includes(s),'secret leaked in response')}
@@ -112,4 +112,4 @@ try{
   observed('secret-free-output',['export and SSE sentinel removed','credential metadata has no material','validation error has no secrets'])
   fs.writeFileSync(out+'/browser.json',JSON.stringify({scenarios,responses,matrix,foreignStatuses:[404,404,404],csrfStatuses:[403,403],sessionStatuses:[401,401],secretScan:{leaks:0,responsesScanned:responses.length},access,credentialId:credential.id,browserVersion:browser.version()},null,2))
  }
-}finally{await browser.close()}
+}finally{await owned.stop()}
