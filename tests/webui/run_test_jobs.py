@@ -13,8 +13,8 @@ import uuid
 from runtime_contract import runtime_root
 from browser_process import run_browser
 
-def main():
-    output=Path('chainbench-out/web-ui-development/test-jobs')
+def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs"):
+    output=Path('chainbench-out/web-ui-development')/proof_name
     output.mkdir(parents=True,exist_ok=True)
     runtime=runtime_root()/str(uuid.uuid4())
     runtime.mkdir(parents=True,mode=0o700)
@@ -41,13 +41,13 @@ def main():
         else:raise RuntimeError('dashboard did not listen')
         fixture={'url':url,'setupToken':(store/'setup.token').read_text().strip(),'password':secrets.token_urlsafe(24),'runtime':str(runtime),'store':str(store)}
         private=runtime/'browser-fixture.json';private.write_text(json.dumps(fixture));private.chmod(0o600)
-        result=run_browser(['node','tests/webui/browser_test_jobs.mjs',str(private),str(output.resolve())],timeout=300)
+        result=run_browser(['node','tests/webui/'+browser_script,str(private),str(output.resolve())],timeout=300)
         (output/'browser.log').write_text(result.stdout+result.stderr)
         if result.returncode:raise RuntimeError('test browser jobs failed:\n'+result.stdout+result.stderr)
         receipt=json.loads((output/'browser.json').read_text())
         receipt.update({'binaries':provenance,'runtime':str(runtime),'seedAcceptanceAwarded':False})
         (output/'receipt.json').write_text(json.dumps(receipt,indent=2))
-        print('Test job development proof PASS: real DSL verdicts, sessions, history and accepted case revisions.')
+        print(proof_name+' development proof PASS; no Seed criterion awarded.')
     finally:
         # Only PIDs from this exclusively owned fixture tree are eligible.
         for record in (store/'networks').glob('*/chain-record.json') if (store/'networks').exists() else []:

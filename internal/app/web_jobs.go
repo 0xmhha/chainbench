@@ -235,17 +235,8 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 	if current.Fingerprint != p.Prepared.Fingerprint || !sameClaims(current.Claims, p.Prepared.Claims) {
 		return WebJob{}, ErrDeploymentConflict
 	}
-	for _, job := range s.state.Jobs {
-		if terminalWebJob(job.State) {
-			continue
-		}
-		for _, c := range p.Prepared.Claims {
-			for _, held := range s.state.Plans[job.PlanID].Prepared.Claims {
-				if claimsOverlap(c, held) {
-					return WebJob{}, ErrDeploymentConflict
-				}
-			}
-		}
+	if s.resourceConflict(p.Input.WorkspaceID, p.Prepared.Claims) {
+		return WebJob{}, ErrDeploymentConflict
 	}
 	job := WebJob{ID: deploymentID(), ActorID: a.ID, WorkspaceID: p.Input.WorkspaceID, PlanID: planID, Operation: p.Input.Operation, State: "accepted", Retention: p.Input.Retention, NodeDisposition: "unknown", CreatedAt: time.Now().UTC(), Phases: []WebJobPhase{}, RunIDs: []string{}, PartialEffects: []string{}, UnresolvedResources: []string{}}
 	if err = s.commit(a.ID, job.ID, "job.accepted", func(next *webJobState) { next.Jobs[job.ID] = job; next.Keys[keyHash] = webJobKey{body, job.ID} }); err != nil {

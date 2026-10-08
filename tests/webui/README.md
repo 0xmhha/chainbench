@@ -61,3 +61,15 @@ host-key verification, authentication, and a read-only data-root permission prob
 ## Immutable verification
 
 Generate receipts from frozen source with `verify.sh --criterion WEB-NN --require-live --capture --output chainbench-out/web-ui-acceptance`. The same command without `--capture` validates source-bound published receipts and runs a fresh independent live reproduction in a staged source tree. Missing, stale or incomplete evidence fails. Rechecks leave source, embedded assets and published evidence unchanged. Set `WEBUI_RUNTIME_ROOT` to an explicitly allowed scratch directory in isolated environments; its default is `/private/tmp/chainbench-web-ui-e2e`. No criterion denominator or live requirement is reduced.
+
+## Resource retention development proof
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cb-holds python3 tests/webui/run_resource_holds.py`
+uses native WBFT setup and an exclusively owned dashboard/browser fixture. It
+checks that a different workspace alias receives 409 after retained completion,
+that owner controls remain allowed, and that verified removal of all four actual
+node directories permits the alias to execute. The engine retains its audit
+record with an empty node table. Results go to
+`chainbench-out/web-ui-development/resource-holds/receipt.json`.
+This is partial development evidence, not full WEB-11/12 acceptance or a live
+restart/reconciliation proof.
