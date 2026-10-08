@@ -125,6 +125,13 @@ def main():
         if (runtime / 'store' / 'setup.token').exists():
             raise RuntimeError('setup capability retained after bootstrap')
         stop(server)
+        fixture['legacyOwnerID'] = next(r['response']['user']['id'] for r in personal['responses'] if r['endpoint'] == '/api/v1/auth/me' and r['status'] == 200)
+        private_fixture.write_text(json.dumps(fixture))
+        seed_legacy = subprocess.run(['go', 'run', './tests/webui/fixtures/legacykeys', str(runtime / 'store'), str(private_fixture)], capture_output=True, text=True)
+        (output / 'legacy-fixture.log').write_text(seed_legacy.stdout + seed_legacy.stderr)
+        if seed_legacy.returncode:
+            raise RuntimeError('owned legacy key fixture preparation failed')
+        fixture = json.loads(private_fixture.read_text())
         server = launch('server-restart.log')
         browser_phase('team')
         observed = json.loads((output / 'browser.json').read_text())
@@ -141,6 +148,8 @@ def main():
             # encrypted credential ciphertext itself must not contain any material.
             if path.name == 'deployment.json':
                 state = json.loads(content)
+                if len(state.get('quarantinedDocuments', {})) != 3:
+                    raise RuntimeError('legacy private declarations were not quarantined')
                 content = json.dumps(state['credentials'])
             if any(secret in content for secret in plaintext):
                 raise RuntimeError('plaintext secret persisted in ' + path.name)
@@ -150,7 +159,7 @@ def main():
         if not any(json.loads(line)['status'] == 403 for line in audit.splitlines()):
             raise RuntimeError('denied operation audit missing')
         (output / 'security-audit.jsonl').write_text(audit)
-        (output / 'storage.json').write_text(json.dumps({'files': [{'name': p.name, 'mode': oct(p.stat().st_mode & 0o777), 'sha256': digest(p)} for p in storefiles], 'encryptedCredentials': len(state['credentials']), 'plaintextLeaks': 0, 'passwordHashes': 'bcrypt', 'setupRemoved': True}, indent=2))
+        (output / 'storage.json').write_text(json.dumps({'files': [{'name': p.name, 'mode': oct(p.stat().st_mode & 0o777), 'sha256': digest(p)} for p in storefiles], 'encryptedCredentials': len(state['credentials']), 'legacyQuarantinedDocuments': len(state['quarantinedDocuments']), 'plaintextLeaks': 0, 'passwordHashes': 'bcrypt', 'setupRemoved': True}, indent=2))
         observed['scenarios'].append({'id': 'encrypted-storage-session', 'observedAt': now(), 'mode': 'team', 'transport': 'SSH', 'ownership': 'owned', 'assertions': [{'description': 'encrypted credential storage and bcrypt account hashes verified', 'passed': True}, {'description': 'logout and deactivation invalidate sessions', 'passed': True}, {'description': 'denied mutations audited without secrets', 'passed': True}], 'artifacts': ['storage.json', 'security-audit.jsonl']})
         evidence['server'] = {'sha256': digest(runtime / 'chainbench-dashboard'), 'baseCommit': base_commit(), 'url': url, 'contractVersion': '2', 'goVersion': subprocess.check_output(['go', 'version'], text=True).strip()}
         evidence['frontend'] = [{'path': str(p), 'sha256': digest(p)} for p in sorted(Path('internal/dashboard/spa').rglob('*')) if p.is_file()]

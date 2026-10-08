@@ -16,7 +16,7 @@ var webSecretField = regexp.MustCompile(`(?i)("(?:password|passwordHash|privateK
 func (s *DeploymentStore) RedactWeb(text string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	secrets := []string{}
+	secrets := append([]string{}, s.quarantinedNodeKeys...)
 	for _, c := range s.state.Credentials {
 		n := s.aead.NonceSize()
 		if len(c.Ciphertext) < n {

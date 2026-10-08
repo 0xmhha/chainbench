@@ -295,9 +295,36 @@ fixture exercises preset and v1/v2 case save, validation and import refusal and
 scans storage for its unique node-key marker. Unit tests cover export refusal,
 file references, public hexadecimal text and encrypted original recovery.
 
-This prevents new shared publication; it does not migrate already published
-legacy documents or award the complete secret-management acceptance criterion.
-Private key upload/selection, execution bindings and any legacy quarantine remain
-open. RED/GREEN logs are recorded in the worklist. The first live run caught a
+This prevents new shared publication. Startup quarantine below protects legacy
+records; neither change awards the complete secret-management acceptance criterion.
+Private key upload/selection and execution bindings remain open.
+RED/GREEN logs are recorded in the worklist. The first live run caught a
 case-editor validation route that bypassed shared validation; the focused HTTP
 RED and subsequent browser GREEN record closure of that additional path.
+
+## Legacy node-key quarantine before API startup
+
+Opening deployment storage checks every public chain/test revision and saved
+import preview for node-key material. If any revision contains it, the entire
+document history leaves the public namespace together; existing revision content
+is never silently rewritten. The original history is preserved as authenticated
+AES-GCM ciphertext bound to its document ID. An affected import preview is
+invalidated and its previous public content is separately encrypted with its ID
+and owner as associated data. Its original actor-private source ciphertext stays
+unchanged. Unaffected documents, credentials, bindings and workspace references
+are retained. References to quarantined documents fail instead of falling back.
+
+One atomic snapshot publishes quarantine and its audit before the store is
+returned to the dashboard. Failure prevents startup publication. Reopening checks
+quarantine authentication and does not rewrite an already migrated snapshot;
+tampered ciphertext fails closed. Known quarantined node-key values are learned
+privately at startup and removed from historical JSON, plain logs and SSE output,
+including keys that appeared only in an import preview. No quarantine originals
+or decryption API are exposed. An owner-facing recovery workflow remains open.
+
+Unit tests decrypt and compare complete histories, previews and source bytes,
+check unaffected revisions and repeated restart, and inject actual write failure
+and ciphertext tampering. The owned WEB-10 fixture seeds old preset/v1/v2 case
+records only while its disposable server is stopped, restarts the dashboard and
+checks public reads/export absence, old import refusal, plaintext storage scans
+and actual SSE masking. This remains partial WEB-10 evidence.

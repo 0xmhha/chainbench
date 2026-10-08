@@ -52,6 +52,11 @@ Shared documents use `POST /api/v1/documents`, `PATCH /api/v1/documents/{id}` wi
 `If-Match`, and `GET /api/v1/documents/{id}?revision=N`. Workspace references pin
 immutable revisions. Validation uses `/api/v1/documents/validate`; the structured
 field contract is `/api/v1/contracts/deployment`. Credentials return metadata only.
+The security runner seeds legacy node-key declarations only into its stopped,
+disposable fixture store through `fixtures/legacykeys`. Restart must quarantine
+their full histories and saved previews before authenticated reads or exports.
+It checks old import refusal, encrypted storage and actual SSE masking. This
+fixture never modifies a user's dashboard storage or bypasses a live API guard.
 The editor's private overlay extension is
 `GET/PUT /api/v1/workspaces/{id}/credential-bindings` (PUT body:
 `{serverRef, credentialId}`). It never changes the shared workspace revision or

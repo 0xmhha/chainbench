@@ -43,11 +43,12 @@ type DocumentImportCommit struct {
 	BaseRevisions map[string]int `json:"baseRevisions,omitempty"`
 }
 type deploymentImport struct {
-	OwnerID    string                `json:"ownerId"`
-	ExpiresAt  time.Time             `json:"expiresAt"`
-	Preview    DocumentImportPreview `json:"preview"`
-	Ciphertext []byte                `json:"ciphertext"`
-	Committed  bool                  `json:"committed"`
+	OwnerID            string                `json:"ownerId"`
+	ExpiresAt          time.Time             `json:"expiresAt"`
+	Preview            DocumentImportPreview `json:"preview"`
+	Ciphertext         []byte                `json:"ciphertext"`
+	Committed          bool                  `json:"committed"`
+	QuarantinedPreview []byte                `json:"quarantinedPreview,omitempty"`
 }
 
 // PreviewImport keeps the original encrypted and returns only the validated

@@ -87,22 +87,24 @@ type deploymentAudit struct {
 	Time      time.Time `json:"time"`
 }
 type deploymentState struct {
-	Documents   map[string][]DeploymentDocument          `json:"documents"`
-	Workspaces  map[string]DeploymentWorkspace           `json:"workspaces"`
-	Credentials map[string]encryptedDeploymentCredential `json:"credentials"`
-	Bindings    map[string]map[string]map[string]string  `json:"bindings"`
-	Audit       []deploymentAudit                        `json:"audit"`
-	Imports     map[string]deploymentImport              `json:"imports,omitempty"`
+	Documents            map[string][]DeploymentDocument          `json:"documents"`
+	Workspaces           map[string]DeploymentWorkspace           `json:"workspaces"`
+	Credentials          map[string]encryptedDeploymentCredential `json:"credentials"`
+	Bindings             map[string]map[string]map[string]string  `json:"bindings"`
+	Audit                []deploymentAudit                        `json:"audit"`
+	Imports              map[string]deploymentImport              `json:"imports,omitempty"`
+	QuarantinedDocuments map[string]deploymentDocumentQuarantine  `json:"quarantinedDocuments,omitempty"`
 }
 
 // DeploymentStore owns team configuration and encrypted, user-owned SSH overlays.
 // Open one store per data directory; all changes are committed atomically.
 type DeploymentStore struct {
-	mu        sync.Mutex
-	storage   *session.WebStore
-	aead      cipher.AEAD
-	state     deploymentState
-	authorize func(DeploymentActor) error
+	mu                  sync.Mutex
+	storage             *session.WebStore
+	aead                cipher.AEAD
+	state               deploymentState
+	authorize           func(DeploymentActor) error
+	quarantinedNodeKeys []string
 }
 
 // SetAuthorizer connects private access checks to current server-owned account
@@ -142,6 +144,9 @@ func OpenDeploymentStore(root string) (*DeploymentStore, error) {
 	}
 	if s.state.Documents == nil || s.state.Workspaces == nil || s.state.Credentials == nil || s.state.Bindings == nil {
 		return nil, errors.New("invalid deployment state")
+	}
+	if err = s.quarantineLegacyNodeKeys(); err != nil {
+		return nil, err
 	}
 	return s, nil
 }

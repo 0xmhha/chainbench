@@ -60,6 +60,11 @@ try{
    await page.screenshot({path:out+`/${role}.png`})
   }
   const [admin,operator,viewer]=users
+  for(const id of f.legacyDocumentIDs){
+   await request(viewer.context,`/api/v1/documents/${id}`,'GET',undefined,undefined,404)
+   await request(admin.context,`/api/v1/documents/${id}/export`,'GET',undefined,undefined,404)
+  }
+  for(const id of f.legacyImportIDs) await request(admin.context,'/api/v1/documents/import/commit','POST',{previewId:id},admin.session.csrfToken,422)
   const docs=(await request(admin.context,'/api/v1/documents')).items
   const set=docs.find(d=>d.name==='operator')
   const config=await request(operator.context,'/api/v1/documents','POST',doc('paths','workspace-config',{version:1,dataRoot:f.ssh.runtime+'/allowed',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:'chainbench-out'},inputs:{mode:'generated'},execution:{chain:'fresh'}}),operator.session.csrfToken,201)
@@ -99,7 +104,7 @@ try{
   const exported=await request(viewer.context,`/api/v1/documents/${sentinelDoc.id}/export`)
   assert.equal(exported.pool.hosts[0].name,'[REDACTED]')
   await request(operator.context,`/api/v1/credentials/${markerCredential.id}`)
-  await request(operator.context,'/api/events','POST',{kind:'info',message:f.marker,fields:{password:f.marker,privateKey:f.sshKey}},operator.session.csrfToken,202)
+  await request(operator.context,'/api/events','POST',{kind:'info',message:f.marker+' '+f.nodeKey,fields:{password:f.marker,privateKey:f.sshKey,nodeKey:f.nodeKey}},operator.session.csrfToken,202)
   await viewer.page.locator('nav a[href="/monitoring"]').click();try{await viewer.page.waitForFunction(()=>[...document.querySelectorAll('.msg')].some(e=>e.textContent.includes('[REDACTED]')),{},{timeout:10000})}catch{throw new Error('SSE observation: '+await viewer.page.locator('main').innerText())}
   scan(await viewer.page.content())
   await request(viewer.context,'/api/events','POST',{kind:'info',message:'denied'},viewer.session.csrfToken,403)
@@ -125,7 +130,7 @@ try{
   observed('role-ui-api-matrix',['administrator contains operator controls','viewer forms absent and writes forbidden','user management administrator only'])
   observed('csrf-ownership',['missing CSRF and foreign Origin forbidden','active account required on every request'])
   observed('foreign-credential-refusal',['foreign keys absent from lists','foreign GET/check/binding rejected including administrator','actual owner SSH access allowed'])
-  observed('secret-free-output',['export and SSE sentinel removed','credential metadata has no material','validation error has no secrets','preset and v1/v2 case node key material refused before shared save or import publication'])
+  observed('secret-free-output',['export and SSE sentinel removed','credential metadata has no material','validation error has no secrets','preset and v1/v2 case node key material refused before shared save or import publication','legacy preset and v1/v2 case histories absent from public reads and exports after restart; old import approvals refused'])
   fs.writeFileSync(out+'/browser.json',JSON.stringify({scenarios,responses,matrix,foreignStatuses:[404,404,404],csrfStatuses:[403,403],sessionStatuses:[401,401],secretScan:{leaks:0,responsesScanned:responses.length},access,credentialId:credential.id,browserVersion:browser.version()},null,2))
  }
 }finally{await owned.stop()}

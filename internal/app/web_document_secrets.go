@@ -32,8 +32,16 @@ func PrepareWebTestCase(in TestCaseInput) (TestCasePrepared, error) {
 // its bytes. Inspect only the parser-owned key reference fields: public hashes,
 // addresses and bytecode elsewhere in the declaration are not private keys.
 func validateWebDocumentSecrets(kind string, content map[string]any) error {
+	if len(webDocumentNodeKeyValues(kind, content)) > 0 {
+		return errors.New("shared node key references must name a private file; inline key material is forbidden")
+	}
+	return nil
+}
+
+func webDocumentNodeKeyValues(kind string, content map[string]any) []string {
+	keys := []string{}
 	if kind != "chain-preset" && kind != "case" {
-		return nil
+		return keys
 	}
 	env := content
 	if kind == "case" {
@@ -47,10 +55,10 @@ func validateWebDocumentSecrets(kind string, content map[string]any) error {
 		n, _ := value.(map[string]any)
 		key, _ := n["key"].(string)
 		if webNodeKeyMaterial(key) {
-			return errors.New("shared node key references must name a private file; inline key material is forbidden")
+			keys = append(keys, key)
 		}
 	}
-	return nil
+	return keys
 }
 
 // webNodeKeyMaterial matches conservative execution-boundary recognition of key
