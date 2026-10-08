@@ -156,3 +156,24 @@ teardown and process exit without affecting an existing browser. The
 `--stalled-close` variant kills only its owned Chrome process group and withholds
 the client close acknowledgement, proving that teardown remains bounded. Native fixture
 shutdown or database-lock mistakes are not product RED evidence.
+
+
+## Control a recorded non-default layout
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_recorded_controls.py`
+extends only the fixture key copy through `chainbench keyring add --keyring-dir`,
+then executes six-node native cases (five producers and one endpoint) on all three
+chains. No control request or control UI supplies a new producer layout. The
+browser verifies all recorded port claims and rejects foreign server/host/path,
+out-of-band ports, colliding ports and a mismatching explicit producer count.
+It also repeats pinned revision, non-producer reset/genesis-head, sibling process
+preservation, explicit restart/stop and actual session verdict checks. The receipt
+is `chainbench-out/web-ui-development/recorded-controls/receipt.json`, bound to the
+source and dashboard SHA-256. This is partial development proof, not full
+WEB-07/11/12 acceptance. Fixture key insufficiency or CLI mistakes are not product
+RED evidence.
+
+The recorded-layout fixture also verifies that test account registration leaves
+the complete accepted key tree unchanged across all three jobs, including the
+minimal files created by the current keyring CLI. The source tree is extended
+before planning; no snapshot integrity check is weakened for derived files.

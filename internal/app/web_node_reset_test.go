@@ -34,6 +34,19 @@ func TestWebNodeResetRechecksProcessBeforeEffects(t *testing.T) {
 	}
 	state, payload := webResetFixture(t)
 	state.Chain, state.Binary = "wbft", "/bin/sleep"
+	state.BPCount = 1
+	payload.Arguments.Validators, payload.Arguments.ServerRef = 1, "ssh"
+	payload.Manifest.Manifest = json.RawMessage(`{"id":"wbft"}`)
+	wc, err := deploymentWorkspace(payload.Config.DeploymentDocumentInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	layout := node.Layout{Root: wc.DataRoot, CompositionID: state.CompositionID, NodesDir: wc.Paths.Nodes, RuntimeDir: wc.Paths.Runtime, LogsDir: wc.Paths.Logs}
+	state.Nodes[0].Host, state.Nodes[0].LogPath = "localhost.", layout.LogPath("node1")
+	producer := state.Nodes[0]
+	producer.Index, producer.Role = 2, "bp"
+	producer.DataDir, producer.ConfigPath, producer.LogPath = layout.DataDir("node2"), layout.ConfigPath("node2"), layout.LogPath("node2")
+	state.Nodes = append(state.Nodes, producer)
 	state.Nodes[0].PID = child.Process.Pid
 	state.Nodes[0].Args = []string{"--config", state.Nodes[0].ConfigPath}
 

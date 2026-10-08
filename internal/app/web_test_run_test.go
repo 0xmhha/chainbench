@@ -93,7 +93,7 @@ func TestWebTestRunPreservesDeclaredLayoutAndDefaultBinary(t *testing.T) {
 		t.Fatal("execution projection rewrote the saved original")
 	}
 	in := e.webSuiteInput(p)
-	if !in.KeepUp || in.BPCount != 0 || in.ArtifactRoot != filepath.Join(e.root, "sessions") {
+	if !in.KeepUp || !in.ReadOnlyKeys || in.BPCount != 0 || in.ArtifactRoot != filepath.Join(e.root, "sessions") {
 		t.Fatal("test default retention/layout/evidence changed")
 	}
 	// A modified cached declaration must be refused rather than changing targets.

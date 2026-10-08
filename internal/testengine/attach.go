@@ -91,6 +91,8 @@ type AttachConfig struct {
 	// somebody else's network and there is no key set to speak of — labels
 	// then fail by name instead of resolving to something arbitrary.
 	KeysDir string
+	// ReadOnlyKeys prevents test account registration from changing its inputs.
+	ReadOnlyKeys bool
 	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
@@ -178,7 +180,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 
-	keys, err := ringFor(cfg.KeysDir)
+	keyOutput := cfg.KeysDir
+	if cfg.ReadOnlyKeys {
+		keyOutput = ""
+	}
+	keys, err := ringForOutput(cfg.KeysDir, keyOutput)
 	if err != nil {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
@@ -250,6 +256,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 // a label then fails saying there is nothing to resolve against, which is the
 // truth, instead of failing as if the name were unknown.
 func ringFor(dir string) (*store.KeySet, error) {
+	return ringForOutput(dir, dir)
+}
+
+// ringForOutput reads source identities while keeping registration writes in
+// the chosen output. Empty output is an in-memory ring for immutable inputs.
+func ringForOutput(dir, output string) (*store.KeySet, error) {
 	if dir == "" {
 		// No key set directory does not mean no ring. An attached run can
 		// still declare an account whose key lives in a file of its own
@@ -272,7 +284,7 @@ func ringFor(dir string) (*store.KeySet, error) {
 		// asked.
 		return nil, nil //nolint:nilerr // absence is a valid state, not a failure
 	}
-	ring := store.NewKeySet(dir)
+	ring := store.NewKeySet(output)
 	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
 		return nil, err
 	}

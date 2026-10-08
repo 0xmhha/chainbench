@@ -432,3 +432,42 @@ document the native `db get` and `dumpgenesis` commands used for these observati
 The fixture also exposed an empty-dependency serialization regression: optional
 genesis snapshots now compare absent and empty lists consistently after accepted
 plan persistence, while file-bearing snapshots still compare their exact contents.
+
+
+## Controls from the recorded placement
+
+Node controls no longer default to four producers or allocate a new producer-only
+placement. Planning reads the owned record, verifies its format, producer count,
+roles, unique IDs, generated data/config/log paths and selected server/host, then
+claims every recorded node port. Each endpoint set must match a permitted slot
+in the reviewed server pool; occupied inventory slots are preserved. Duplicate
+ports are rejected by the existing placement map. The UI omits the producer count
+for controls. A legacy explicit count is accepted only when it matches the record.
+The review lists all recorded placements, and another record read after inspection
+rejects changes during preparation. Acceptance and execution still recheck the
+record digest and executable bytes. The native node index comes from the selected
+record rather than parsing its display label.
+
+Process and reset file checks now open the selected node's actual named server,
+using the same resolution as the core, and require the reviewed physical target.
+This adapter remains a single-target adapter; multi-host placement and complete
+restart reconciliation remain open. The existing foreign-PID tests now include
+valid owned layouts so they continue to reach the process guard.
+
+`run_recorded_controls.py` extends only its disposable copy of the shipped keys
+with the existing `keyring add` command, then runs five producers plus an endpoint
+on each native chain. It verifies count-free browser reset/start/stop, all recorded
+port claims, rejected altered server/host/path/port records, preserved siblings,
+actual genesis database heads and passing engine sessions. Receipts bind source
+and dashboard digests; this does not award full WEB-07/11/12 acceptance.
+
+
+The six-node fixture found a separate repeated-test defect: account registration
+added derived `private`/`bls`/`pop` files to an accepted minimal key input, so the
+next job rejected that snapshot. Web suites now explicitly request read-only key
+inputs through the existing suite/attach wiring. Account registration uses an
+in-memory ring while still loading and verifying the actual source keys; the
+composition's own session keyring remains separate. CLI callers retain their
+existing default persistent registration. Unit construction verifies repeatable
+input bytes and usable signing identities; each native case compares the complete
+accepted key tree to the source before and after execution.

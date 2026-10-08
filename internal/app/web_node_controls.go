@@ -73,7 +73,7 @@ func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, l
 			return ErrDeploymentConflict
 		}
 	}
-	spec := state.Target
+	spec := webNodeTarget(state, ns)
 	spec.DataRoot = ns.DataDir
 	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
 	if err != nil {
@@ -83,7 +83,7 @@ func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, l
 	if actual.HostIdentity != p.Target.HostIdentity || actual.DataPath != expected {
 		return ErrDeploymentConflict
 	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(state.Target)
+	access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
 	if err != nil {
 		return err
 	}
@@ -107,13 +107,21 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		if string(ns.NodeLabel()) != selected[0] || ns.PID == 0 {
 			continue
 		}
-		access, err := (resource.Opener{Lookup: lookup}).Open(state.Target)
+		spec := webNodeTarget(state, ns)
+		access, err := (resource.Opener{Lookup: lookup}).Open(spec)
 		if err != nil {
 			return err
 		}
-		target, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
+		target, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
 		if err != nil {
 			return err
+		}
+		owned, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
+		if err != nil {
+			return err
+		}
+		if target != owned {
+			return ErrDeploymentConflict
 		}
 		observer := webObserverFor(access, target)
 		if observer == nil {

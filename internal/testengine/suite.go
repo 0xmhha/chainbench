@@ -49,6 +49,8 @@ type RunSuiteIn struct {
 	Docker bool
 	// KeysDir overrides the declared key set (default presets/keys).
 	KeysDir string
+	// ReadOnlyKeys keeps account registration from rewriting accepted key inputs.
+	ReadOnlyKeys bool
 	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string
@@ -337,7 +339,7 @@ func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, chain stri
 	eng, err := wiredAttachEngine(sd, net, attachWiring{
 		Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
 		Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
-		Session: sess,
+		Session: sess, ReadOnlyKeys: in.ReadOnlyKeys,
 	})
 	if err != nil {
 		return fmt.Errorf("engine: run suite: engine: %w", err)

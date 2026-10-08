@@ -2408,7 +2408,7 @@ components:
           additionalProperties: *id002
         arguments:
           type: object
-          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs; node controls use validators and nodeIds. Unsupported fields and unresolved file inputs are rejected.
+          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected.
           properties:
             chainPresetRef:
               $ref: '#/components/schemas/DocumentRef'

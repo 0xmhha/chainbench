@@ -232,7 +232,7 @@ func (e *WebChainEngine) webSuiteInput(p webChainPayload) RunSuiteIn {
 	for i, raw := range p.TestRun.Content {
 		content[i] = raw
 	}
-	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true}
+	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true}
 }
 
 func normalizedWebTestPlan(plan ComposePlan, control string) ComposePlan {

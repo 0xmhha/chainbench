@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,7 +91,10 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 	if err = os.Mkdir(control, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	state := State{FormatVersion: 3, Chain: "wbft", Binary: "/bin/sleep", Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, PID: child.Process.Pid, Role: "en", DataDir: filepath.Join(root, "node1"), Args: []string{"--config", filepath.Join(root, "node1.toml")}}}}
+	state, payload := webOwnedControlFixture(t)
+	state.Binary = "/bin/sleep"
+	state.Nodes[0].PID = child.Process.Pid
+	state.Nodes[0].Args = []string{"--config", state.Nodes[0].ConfigPath}
 	raw, err := json.Marshal(state)
 	if err != nil {
 		t.Fatal(err)
@@ -105,7 +107,9 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload := webChainPayload{ExecutionBinary: "/bin/sleep", Binary: ManifestBinaryEvidence{Chain: "wbft", SHA256: strings.TrimPrefix(checksum, "sha256:")}, ControlDir: control, RecordDigest: manifestHash(raw), Input: WebPlanInput{Operation: "node.stop", NodeIDs: []string{"node1"}}, Set: DeploymentDocument{DeploymentDocumentInput: DeploymentDocumentInput{Kind: "server-set", ContractVersion: "2", Content: json.RawMessage(`{"version":2,"pool":{"hosts":[{"name":"local","addr":"127.0.0.1"}],"slots":1}}`)}}}
+	payload.ExecutionBinary, payload.ControlDir, payload.RecordDigest = "/bin/sleep", control, manifestHash(raw)
+	payload.Binary = ManifestBinaryEvidence{Chain: "wbft", SHA256: strings.TrimPrefix(checksum, "sha256:")}
+	payload.Input = WebPlanInput{Operation: "node.stop", NodeIDs: []string{"node1"}}
 	_, err = engine.execute(context.Background(), DeploymentActor{ID: "operator", Role: "operator"}, payload, func(WebJobPhase) error { return nil })
 	if !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatalf("unverified process reached the node stop verb: %v", err)

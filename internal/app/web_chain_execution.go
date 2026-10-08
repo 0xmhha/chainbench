@@ -6,8 +6,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -46,10 +44,6 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 	}
 	d.ServerLookup = lookup
 	if webNodeControlOperation(p.Input.Operation) {
-		index, err := strconv.Atoi(strings.TrimPrefix(p.Input.NodeIDs[0], "node"))
-		if err != nil {
-			return result, err
-		}
 		err = e.phase(ctx, a, p.Input.Operation, report, func() error {
 			raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 			if err != nil {
@@ -61,6 +55,18 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			var state State
 			if err = json.Unmarshal(raw, &state); err != nil {
 				return err
+			}
+			if err = validateWebChainRecord(state, p); err != nil {
+				return err
+			}
+			if err = webSelectedNode(state, p.Input.NodeIDs); err != nil {
+				return err
+			}
+			index := 0
+			for _, ns := range state.Nodes {
+				if string(ns.NodeLabel()) == p.Input.NodeIDs[0] {
+					index = ns.Index
+				}
 			}
 			bound, err := bindWebControlBinary(ctx, state, p, lookup)
 			if err != nil {
@@ -243,8 +249,5 @@ func validateWebChainRecord(state State, p webChainPayload) error {
 	if err != nil {
 		return err
 	}
-	if state.Target.DataRoot != wc.DataRoot || state.BPCount != p.Arguments.Validators {
-		return errors.New("selected placement differs from the owned network")
-	}
-	return nil
+	return validateWebControlLayout(state, p, wc)
 }

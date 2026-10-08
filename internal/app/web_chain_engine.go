@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -100,10 +101,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
 		return out, errors.New("a saved chain preset applies to composition and supplies its own node layout")
 	}
-	if args.Validators == 0 && in.Operation != "test.run" && args.ChainPresetRef == nil {
+	if args.Validators == 0 && in.Operation != "test.run" && !webNodeControlOperation(in.Operation) && args.ChainPresetRef == nil {
 		args.Validators = 4
 	}
-	if in.Operation != "test.run" && args.ChainPresetRef == nil && (args.Validators < 1 || args.Validators > 128) {
+	if in.Operation != "test.run" && !webNodeControlOperation(in.Operation) && args.ChainPresetRef == nil && (args.Validators < 1 || args.Validators > 128) {
 		return out, errors.New("validator count must be between 1 and 128")
 	}
 	workspace, err := e.documents.Workspace(in.WorkspaceID)
@@ -201,7 +202,24 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		return out, err
 	}
 	requests := []resource.Request{}
-	if in.Operation == "test.run" {
+	var controlState *State
+	if webNodeControlOperation(in.Operation) {
+		if len(args.CaseRefs) != 0 {
+			return out, errors.New("case references belong to a test job")
+		}
+		record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
+		if os.IsNotExist(err) {
+			return out, ErrDeploymentNotFound
+		}
+		if err != nil {
+			return out, err
+		}
+		controlState = &State{}
+		if err = json.Unmarshal(record, controlState); err != nil {
+			return out, err
+		}
+		p.RecordDigest = manifestHash(record)
+	} else if in.Operation == "test.run" {
 		if len(in.NodeIDs) != 0 || args.Validators != 0 {
 			return out, errors.New("test jobs use the node layout declared by the selected cases")
 		}
@@ -226,7 +244,14 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	pool := set.PoolFor(server, p.Arguments.Validators, server.Slots)
 	pool.Reservation = plugin.Family().PortReservation()
-	placement, err := resource.Assign(pool, requests)
+	var placement *node.Map
+	if controlState != nil {
+		// Claims come from the owned network, including non-producers and
+		// inventory-assigned slots, rather than a new producer-only allocation.
+		placement, err = webRecordedControlPlacement(*controlState, &p, pool)
+	} else {
+		placement, err = resource.Assign(pool, requests)
+	}
 	if err != nil {
 		return out, err
 	}
@@ -238,6 +263,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			}
 		}
 	}
+	slices.Sort(ports)
+	ports = slices.Compact(ports)
 	controlTarget, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
 		return out, err
@@ -267,6 +294,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	out.Claims = []WebResourceClaim{{HostIdentity: p.Target.HostIdentity, DataPath: p.Target.DataPath, Ports: ports}, {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
+		if controlState != nil && manifestHash(record) != p.RecordDigest {
+			return out, ErrDeploymentConflict
+		}
 		var state State
 		if err = json.Unmarshal(record, &state); err != nil {
 			return out, err
@@ -339,6 +369,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	out.Changes = append(out.Changes, fmt.Sprintf("Binary asset %s · SHA-256 %s", p.Binary.ID, p.Binary.SHA256))
 	if webNodeControlOperation(in.Operation) {
 		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
+		for _, n := range placement.Placements() {
+			out.Changes = append(out.Changes, fmt.Sprintf("Recorded placement %s=%s · P2P %d · RPC %d", n.Label, n.Role, n.Ports.P2P, n.Ports.HTTP))
+		}
 	}
 	if in.Operation == "node.reset" {
 		out.Changes = append(out.Changes, "Replace only the selected non-producer's node data with its recorded genesis; leave it stopped and preserve sibling nodes")
