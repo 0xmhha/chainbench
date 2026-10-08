@@ -4,7 +4,7 @@
   let workspaces=$state([]), manifests=$state([]), assets=$state([]), jobs=$state([]), documents=$state([]), networks=$state([])
   let workspaceId=$state(''), manifestId=$state(''), assetId=$state(''), serverRef=$state('')
   let operation=$state('chain.setup'), validators=$state(4), nodeId=$state('node1'), retention=$state('retain')
-  let caseIds=$state([]), observedNetwork=$state(null)
+  let caseIds=$state([]), observedNetwork=$state(null), presetId=$state('')
   const observationNames={running:'가동 중',missing:'기록된 프로세스 없음',ownership_mismatch:'실행 기록 불일치',unknown:'확인 필요'}
   const observationReasons={probe_unavailable:'관측할 수 없음',no_recorded_pid:'기록된 PID 없음',argv_mismatch:'실행 인자가 기록과 다름',recorded_pid_absent:'기록된 프로세스가 없음'}
   let conflicts=$state([]), conflictsChecked=$state(false), conflictsAt=$state('')
@@ -16,6 +16,8 @@
   const manifest=$derived(manifests.find(m=>m.id===manifestId))
   const nodeControl=$derived(operation.startsWith('node.'))
   const testRun=$derived(operation==='test.run')
+  const presets=$derived(documents.filter(d=>d.kind==='chain-preset'&&d.content.chain===(manifest?.manifest.protocol||manifest?.manifest.id)))
+  const preset=$derived(presets.find(d=>d.id===presetId))
   const cases=$derived(documents.filter(d=>d.kind==='case'&&(d.content.chainPreset?.chain??d.content.chain?.name)===(manifest?.manifest.protocol||manifest?.manifest.id)))
   const servers=$derived(documents.find(d=>d.kind==='server-set'&&workspace?.documents.some(r=>r.id===d.id&&r.revision===d.revision))?.content.pool.hosts??[])
   const nodes=$derived(networks.find(n=>n.workspaceId===workspaceId)?.nodes??[])
@@ -35,7 +37,7 @@
   async function observeNodes(){const result=await api(`networks/${workspaceId}/observations`);observedNetwork=result;networks=networks.map(n=>n.id===result.id?result:n)}
   function changed(){plan=null;conflicts=[];conflictsChecked=false;conflictsAt=''}
   async function checkConflicts(){const id=plan?.id;if(!id)return [];conflictsChecked=false;const result=await api(`plans/${id}/conflicts`);if(plan?.id===id){conflicts=result.items;conflictsAt=result.observedAt;conflictsChecked=true}return result.items}
-  async function prepare(){changed();const bindings=await api(`workspaces/${workspaceId}/credential-bindings`);plan=await api('plans','POST',{workspaceId,operation,documentRefs:workspace.documents,assetRefs:[assetId],credentialBindings:bindings[serverRef]?{[serverRef]:bindings[serverRef]}:{},nodeIds:nodeControl?[nodeId]:[],retention:nodeControl?'retain':retention,arguments:{manifestId,assetId,serverRef,...(testRun?{caseRefs:cases.filter(c=>caseIds.includes(c.id)).map(c=>({id:c.id,revision:c.revision}))}:{validators})}});await checkConflicts()}
+  async function prepare(){changed();const bindings=await api(`workspaces/${workspaceId}/credential-bindings`);plan=await api('plans','POST',{workspaceId,operation,documentRefs:workspace.documents,assetRefs:[assetId],credentialBindings:bindings[serverRef]?{[serverRef]:bindings[serverRef]}:{},nodeIds:nodeControl?[nodeId]:[],retention:nodeControl?'retain':retention,arguments:{manifestId,assetId,serverRef,...(testRun?{caseRefs:cases.filter(c=>caseIds.includes(c.id)).map(c=>({id:c.id,revision:c.revision}))}:!nodeControl&&preset?{chainPresetRef:{id:preset.id,revision:preset.revision}}:{validators})}});await checkConflicts()}
   async function start(){if((await checkConflicts()).length)return;try{await api('jobs','POST',{planId:plan.id},plan.id)}catch(e){await checkConflicts();throw e}changed();await refresh()}
 </script>
 
@@ -47,13 +49,14 @@
         <p>로컬 또는 SSH 서버에 구성합니다. SSH 대상은 서버 설정에서 연결한 내 자격증명을 사용하며, 장비·경로·바이너리를 실행 전에 검증합니다. 테스트는 선택한 케이스의 구성 선언으로 실행하고 실제 세션 판정을 보관합니다.</p>
         <div class="inputs">
           <label>Workspace<select aria-label="작업 Workspace" bind:value={workspaceId}><option value="">선택</option>{#each workspaces as w}<option value={w.id}>{w.name} · r{w.revision}</option>{/each}</select></label>
-          <label>매니페스트<select aria-label="작업 매니페스트" bind:value={manifestId} onchange={()=>{assetId='';caseIds=[];changed()}}><option value="">선택</option>{#each manifests as m}<option value={m.id}>{m.manifest.id}</option>{/each}</select></label>
+          <label>매니페스트<select aria-label="작업 매니페스트" bind:value={manifestId} onchange={()=>{assetId='';caseIds=[];presetId='';changed()}}><option value="">선택</option>{#each manifests as m}<option value={m.id}>{m.manifest.id}</option>{/each}</select></label>
           <label>바이너리<select aria-label="작업 바이너리" bind:value={assetId}><option value="">등록 파일 선택 · 계획에서 검증</option>{#each assets.filter(a=>a.chain===(manifest?.manifest.protocol||manifest?.manifest.id)) as a}<option value={a.id}>{a.id} · {a.sha256.slice(0,12)}</option>{/each}</select></label>
           <label>작업<select aria-label="작업 종류" bind:value={operation}>{#if !testOnly}<option value="chain.setup">설정 생성 · 노드 초기화</option><option value="chain.deploy">노드 구축 · 실행</option><option value="node.start">노드 시작</option><option value="node.stop">노드 정지</option>{/if}<option value="test.run">저장한 DSL 케이스 실행</option></select></label>
           <label>서버<select aria-label="작업 서버 이름" bind:value={serverRef}><option value="">서버 선택</option>{#each servers as host}<option value={typeof host==='string'?host:host.name||host.addr}>{typeof host==='string'?host:host.name||host.addr}</option>{/each}</select></label>
-          {#if !testRun}<label>생산자 수<input aria-label="작업 생산자 수" type="number" min="1" max="128" bind:value={validators} /></label>{/if}
+          {#if !testRun&&!nodeControl}<label>저장한 체인 구성<select aria-label="작업 체인 구성" bind:value={presetId}><option value="">기본 구성 · 생산자 수 지정</option>{#each presets as p}<option value={p.id}>{p.name} · r{p.revision}</option>{/each}</select></label>{/if}
+          {#if !testRun&&(nodeControl||!preset)}<label>생산자 수<input aria-label="작업 생산자 수" type="number" min="1" max="128" bind:value={validators} /></label>{/if}
           {#if nodeControl}<label>소유 노드<select aria-label="작업 노드" bind:value={nodeId}><option value="">노드 선택</option>{#each nodes as n}<option value={n.id}>{n.id} · {n.role} · {n.state}</option>{/each}</select></label>{:else}<label>종료 후 처리<select aria-label="작업 종료 후 처리" bind:value={retention}><option value="retain">노드와 자료 보존</option><option value="cleanup">소유 노드 정리</option></select></label>{/if}
-        </div>{#if testRun}<div class="cases"><h3>실행할 저장 케이스</h3><p>선택한 리비전의 내용을 계획에 고정합니다. 노드 배치는 케이스 선언을 따릅니다.</p>{#each cases as c}<label class="case"><input type="checkbox" aria-label={'실행 케이스 '+c.id} value={c.id} bind:group={caseIds} />{c.name} · r{c.revision}</label>{:else}<p>이 체인의 저장 케이스가 없습니다. 테스트 정의를 저장한 뒤 새로고침하세요.</p>{/each}</div>{/if}<button disabled={!workspace||!manifest||!assetId||!serverRef||(nodeControl&&!nodes.some(n=>n.id===nodeId))||(testRun&&!cases.some(c=>caseIds.includes(c.id)))||busy} onclick={()=>work(prepare)}>실행 계획 확인</button>
+        </div>{#if !testRun&&!nodeControl&&preset}<p>체인 구성 {preset.name} · r{preset.revision}의 노드 배치와 옵션을 적용합니다. 실제 병합 결과는 실행 계획에서 확인하세요.</p>{/if}{#if testRun}<div class="cases"><h3>실행할 저장 케이스</h3><p>선택한 리비전의 내용을 계획에 고정합니다. 노드 배치는 케이스 선언을 따릅니다.</p>{#each cases as c}<label class="case"><input type="checkbox" aria-label={'실행 케이스 '+c.id} value={c.id} bind:group={caseIds} />{c.name} · r{c.revision}</label>{:else}<p>이 체인의 저장 케이스가 없습니다. 테스트 정의를 저장한 뒤 새로고침하세요.</p>{/each}</div>{/if}<button disabled={!workspace||!manifest||!assetId||!serverRef||(nodeControl&&!nodes.some(n=>n.id===nodeId))||(testRun&&!cases.some(c=>caseIds.includes(c.id)))||busy} onclick={()=>work(prepare)}>실행 계획 확인</button>
       </fieldset>
       <button disabled={busy||!workspaceId||!networks.some(n=>n.workspaceId===workspaceId)} onclick={()=>work(observeNodes)}>노드 상태 확인</button>
       {#if observedNetwork?.workspaceId===workspaceId}<section class="observations" aria-label="노드 실제 관측"><h3>현재 프로세스 관측</h3><p>기록된 PID와 실제 실행 인자를 확인합니다. 이 조회는 노드나 실행 기록을 변경하지 않습니다.</p><ul>{#each observedNetwork.nodes as n}<li><strong>{n.id} · {observationNames[n.state]??n.state}</strong><p>기록 PID {n.pid} · 관측 PID {n.observedPid||'확인 안 됨'} · {new Date(n.observedAt).toLocaleString()}</p>{#if n.observationReason}<p>{observationReasons[n.observationReason]??'관측할 수 없음'}</p>{/if}</li>{/each}</ul></section>{/if}

@@ -58,7 +58,7 @@ Chrome을 사용한다. 브라우저에서 개인 binding으로 계획·제출�
 기본 처리는 보존이고, 명시한 정리는 소유 네트워크에만 적용한다.
 
 현재 테스트 작업은 기본 내장 체인, 단일 등록 바이너리, count 배치, 준비된 키 자료를
-연결한 범위다. 외부 테스트 매니페스트, 이름 참조 프리셋, 파일 자료, node table,
+연결한 범위다. 외부 테스트 매니페스트, 테스트의 이름 참조 프리셋, 파일 자료, node table,
 혼합 바이너리/upgrade, generate 키와 선언한 계정, 별도 포트/경로 override,
 attach 실행의 계약은 아직 연결하지 않았다. 이를 무시하거나 다른 구성으로 실행하지
 않고 거절한다. 전체 어휘/인자의 실제 실행 인수는 미완료다. `/tests` 화면에서 저장
@@ -160,3 +160,31 @@ explicit stop and a new native test result while retaining the interrupted job.
 This is development evidence for recorded-process recovery, not full WEB-12
 acceptance: unrecorded residual processes, partial launch failure, stale PIDs and
 unavailable remote access still require reconciliation coverage.
+
+## Saved presets in composition jobs
+
+Composition jobs can select `arguments.chainPresetRef` with a saved document ID
+and explicit revision instead of a separate producer count. The server requires
+the current revision at acceptance, then keeps its immutable content even if the
+shared document is edited. The UI offers saved presets belonging to the selected
+chain and shows the pinned revision and actual engine plan before execution.
+
+The existing suite composition lowering produces the setup request: counts or
+per-node tables, endpoint sync mode, peering, inline genesis overlays/hardforks,
+scoped launch options and configuration knobs reach the same native verbs used by
+the CLI. Launch and config lowering sorts keys so repeated review cannot change
+the fingerprint merely because Go map iteration differs. Binary selection binds
+the declared default to the registered asset and key inputs to the encrypted
+snapshot. Table order also determines physical port claims.
+
+The three-chain browser fixture verifies five actual node databases per preset,
+the reviewed chain ID, scoped launch options, a table beginning with an endpoint,
+stale-revision rejection and preservation of accepted content after edits. Each
+chain also starts its archive endpoint, serves the reviewed chain ID over RPC,
+passes recorded-process observation and stops explicitly. Archive is rendered as
+full native sync with pruning disabled and explicit archive retention flags,
+including config-free relaunches; writing archive as a sync mode was invalid. File
+references, mixed binaries, generated/custom keys, declared accounts, external
+preset execution and attachments remain refused until their pinned contracts are
+connected. This is partial WEB-01/02 evidence, not completion of all preset fields
+or every native option.

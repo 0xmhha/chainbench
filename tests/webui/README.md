@@ -104,3 +104,17 @@ is not a product endpoint and contains no credentials. All launched processes
 and data belong to its private UUID tree. Results are in
 `chainbench-out/web-ui-development/interrupted-test/receipt.json`.
 This does not award WEB-12 or cover PID-free residual discovery/reconciliation.
+
+## Saved preset execution
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cb-preset python3 tests/webui/run_preset_jobs.py`
+selects an immutable saved chain-preset revision for actual composition jobs.
+The browser checks review and submission, revision conflicts and accepted content
+preservation. All three native chains initialize five databases whose dumped
+genesis carries the reviewed chain ID. Recorded launch arguments contain scoped
+`maxpeers` and `cache` options from the engine mapping backed by
+`docs/chain-analysis/`; the endpoint-first table preserves its order. Each archive
+endpoint must actually start, serve its chain ID over RPC, pass process observation
+and stop explicitly. Bounded requests use an available local address. Results are
+in `chainbench-out/web-ui-development/preset-jobs/receipt.json` and do not award
+full WEB-01/02 acceptance or every option/asset scenario.

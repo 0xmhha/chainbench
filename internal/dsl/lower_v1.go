@@ -255,8 +255,8 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 			if !node.ValidScope(scope) {
 				return fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
-			for k, v := range kvs {
-				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
+			for _, k := range slices.Sorted(maps.Keys(kvs)) {
+				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, kvs[k]))
 			}
 		}
 	}
@@ -266,8 +266,8 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 			if !node.ValidScope(scope) {
 				return fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
-			for k, v := range kvs {
-				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
+			for _, k := range slices.Sorted(maps.Keys(kvs)) {
+				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, kvs[k]))
 			}
 		}
 	}

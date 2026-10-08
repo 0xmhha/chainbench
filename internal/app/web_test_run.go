@@ -149,8 +149,7 @@ func validateWebTestInputs(spec dsl.Spec) error {
 	for _, knobs := range spec.EnvLaunch {
 		for _, knob := range knobs {
 			key, _, _ := strings.Cut(knob, "=")
-			switch key {
-			case "datadir", "datadir.ancient", "config", "nodekey", "keystore", "password", "ipcpath", "txpool.journal", "authrpc.jwtsecret", "port", "http.port", "ws.port", "authrpc.port", "metrics.port":
+			if webManagedLaunchInput(key) {
 				return errors.New("test launch paths and ports must use resolved resource or asset references")
 			}
 		}
@@ -182,15 +181,19 @@ func webHookStatements(spec dsl.Spec) []dsl.Statement {
 }
 
 func writeWebTestInputs(ctx context.Context, p *webChainPayload) error {
+	return writeWebDeploymentInputs(ctx, p.TestRun.InputDir, p.Set, p.Config)
+}
+
+func writeWebDeploymentInputs(ctx context.Context, dir string, set, config DeploymentDocument) error {
 	for _, entry := range []struct {
 		name string
 		doc  DeploymentDocument
-	}{{"server-set.yaml", p.Set}, {"workspace-config.yaml", p.Config}} {
+	}{{"server-set.yaml", set}, {"workspace-config.yaml", config}} {
 		data, err := ExportDeploymentDocument(entry.doc.DeploymentDocumentInput, "yaml")
 		if err != nil {
 			return err
 		}
-		name := filepath.Join(p.TestRun.InputDir, entry.name)
+		name := filepath.Join(dir, entry.name)
 		existing, err := os.ReadFile(name)
 		if err == nil {
 			if string(existing) != string(data) {

@@ -163,11 +163,19 @@ func TOML(s Spec) []byte {
 	httpHost := orDefault(s.HTTPHost, "0.0.0.0")
 	metricsHost := orDefault(s.MetricsHost, "0.0.0.0")
 	syncMode := orDefault(s.SyncMode, "full")
+	archive := syncMode == "archive"
+	if archive {
+		syncMode = "full"
+	}
 
 	modules := append(append([]string{}, baseModules...), s.Chain.RPCNamespace)
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
+	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n", syncMode)
+	if archive {
+		b.WriteString("NoPruning = true\n")
+	}
+	b.WriteString("\n")
 
 	if node.Is(s.Role, node.RoleBP) {
 		// miner.Config.Recommit is a time.Duration. Most geth-family binaries
@@ -254,9 +262,15 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 		id.PasswordFile = s.PasswordFile
 		id.Etherbase = s.Unlock
 	}
+	storage := Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath}
+	// Archive describes retention, not a native sync mode. Say both parts on
+	// the command line as well, including relaunches without a config file.
+	if s.SyncMode == "archive" {
+		storage.SyncMode, storage.GCMode = "full", "archive"
+	}
 	modules := []Module{
 		id,
-		Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath},
+		storage,
 		// The network's devp2p id is emitted rather than left to the binary's
 		// default, because the two builds default it differently and a handoff
 		// needs them to agree. It comes from the NETWORK, not from this node's

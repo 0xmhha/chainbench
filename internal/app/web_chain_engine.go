@@ -37,11 +37,12 @@ func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests 
 }
 
 type webChainArguments struct {
-	ManifestID string                  `json:"manifestId"`
-	AssetID    string                  `json:"assetId"`
-	ServerRef  string                  `json:"serverRef"`
-	Validators int                     `json:"validators"`
-	CaseRefs   []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	ManifestID     string                  `json:"manifestId"`
+	AssetID        string                  `json:"assetId"`
+	ServerRef      string                  `json:"serverRef"`
+	Validators     int                     `json:"validators"`
+	CaseRefs       []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	ChainPresetRef *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
 }
 type webChainPayload struct {
 	Input             WebPlanInput           `json:"input"`
@@ -57,6 +58,7 @@ type webChainPayload struct {
 	ExecutionBinary   string                 `json:"executionBinary"`
 	Keys              webKeySnapshot         `json:"keys"`
 	TestRun           *webTestRun            `json:"testRun,omitempty"`
+	Preset            *webPresetComposition  `json:"preset,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -85,10 +87,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if dec.Decode(new(any)) != io.EOF {
 		return out, errors.New("one argument object required")
 	}
-	if args.Validators == 0 && in.Operation != "test.run" {
+	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
+		return out, errors.New("a saved chain preset applies to composition and supplies its own node layout")
+	}
+	if args.Validators == 0 && in.Operation != "test.run" && args.ChainPresetRef == nil {
 		args.Validators = 4
 	}
-	if in.Operation != "test.run" && (args.Validators < 1 || args.Validators > 128) {
+	if in.Operation != "test.run" && args.ChainPresetRef == nil && (args.Validators < 1 || args.Validators > 128) {
 		return out, errors.New("validator count must be between 1 and 128")
 	}
 	workspace, err := e.documents.Workspace(in.WorkspaceID)
@@ -199,11 +204,18 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if len(args.CaseRefs) != 0 {
 			return out, errors.New("case references belong to a test job")
 		}
-		for range args.Validators {
-			requests = append(requests, resource.Request{Role: node.RoleBP})
+		if args.ChainPresetRef != nil {
+			requests, err = e.preparePresetComposition(ctx, &p)
+			if err != nil {
+				return out, err
+			}
+		} else {
+			for range args.Validators {
+				requests = append(requests, resource.Request{Role: node.RoleBP})
+			}
 		}
 	}
-	pool := set.PoolFor(server, args.Validators, server.Slots)
+	pool := set.PoolFor(server, p.Arguments.Validators, server.Slots)
 	pool.Reservation = plugin.Family().PortReservation()
 	placement, err := resource.Assign(pool, requests)
 	if err != nil {
@@ -268,9 +280,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	switch in.Operation {
 	case "chain.setup", "chain.deploy":
-		p.Keys, err = e.pinKeys(ctx)
-		if err != nil {
-			return out, err
+		if p.Keys.SHA256 == "" {
+			p.Keys, err = e.pinKeys(ctx)
+			if err != nil {
+				return out, err
+			}
 		}
 		if len(in.NodeIDs) != 0 {
 			return out, errors.New("composition does not select existing nodes")
@@ -294,6 +308,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		for _, c := range p.TestRun.Cases {
 			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
 		}
+	}
+	if p.Preset != nil {
+		out.Changes = append(out.Changes, fmt.Sprintf("Chain preset %s · r%d · %s", p.Preset.Document.ID, p.Preset.Document.Revision, p.Preset.Document.Name), p.Preset.Plan.String())
 	}
 	if p.Keys.SHA256 != "" {
 		out.Changes = append(out.Changes, "Key material pinned to SHA-256 "+p.Keys.SHA256)

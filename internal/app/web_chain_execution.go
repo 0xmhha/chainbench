@@ -18,6 +18,19 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		return e.executeTestRun(ctx, a, p, report)
 	}
 	result := WebJobResult{NodeDisposition: "retained", PartialEffects: []string{}}
+	composition := ChainUpIn{BPCount: p.Arguments.Validators}
+	if p.Preset != nil {
+		current, err := e.projectPresetComposition(ctx, p)
+		if err != nil {
+			return result, err
+		}
+		before, _ := json.Marshal(p.Preset)
+		after, _ := json.Marshal(current)
+		if string(before) != string(after) {
+			return result, ErrDeploymentConflict
+		}
+		composition = current.Request
+	}
 	keysDir := ""
 	if p.Input.Operation == "chain.setup" || p.Input.Operation == "chain.deploy" {
 		var err error
@@ -124,16 +137,25 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			return files.Write(ctx, filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600)
 		}},
 		{"place", func() error {
-			_, err := ChainAllocate(ctx, d, ChainAllocateIn{DataDir: p.ControlDir, BPCount: p.Arguments.Validators, Server: resource.ServerRef{SetPath: setPath, Name: p.Arguments.ServerRef}})
+			_, err := ChainAllocate(ctx, d, ChainAllocateIn{DataDir: p.ControlDir, BPCount: composition.BPCount, ENCount: composition.ENCount, PNCount: composition.PNCount, EndpointSyncMode: composition.EndpointSyncMode, Topology: composition.Topology, Binaries: composition.Binaries, BinaryChains: composition.BinaryChains, Peering: composition.Peering, Server: resource.ServerRef{SetPath: setPath, Name: p.Arguments.ServerRef}})
 			return err
 		}},
 		{"keys", func() error {
-			_, err := ChainKeys(ctx, d, ChainKeysIn{DataDir: p.ControlDir, Nodes: p.Arguments.Validators})
+			_, err := ChainKeys(ctx, d, ChainKeysIn{DataDir: p.ControlDir})
 			return err
 		}},
-		{"genesis", func() error { _, err := ChainGenesis(ctx, d, ChainGenesisIn{DataDir: p.ControlDir}); return err }},
-		{"config", func() error { _, err := ChainConfig(ctx, d, ChainConfigIn{DataDir: p.ControlDir}); return err }},
-		{"build", func() error { _, err := ChainLaunchOpts(ctx, d, ChainLaunchOptsIn{DataDir: p.ControlDir}); return err }},
+		{"genesis", func() error {
+			_, err := ChainGenesis(ctx, d, ChainGenesisIn{DataDir: p.ControlDir, ChainID: composition.ChainID, Set: composition.GenesisSet, OverlayPath: composition.OverlayPath})
+			return err
+		}},
+		{"config", func() error {
+			_, err := ChainConfig(ctx, d, ChainConfigIn{DataDir: p.ControlDir, ScopedSet: composition.ConfigSet})
+			return err
+		}},
+		{"build", func() error {
+			_, err := ChainLaunchOpts(ctx, d, ChainLaunchOptsIn{DataDir: p.ControlDir, Set: composition.LaunchSet, ScopedSet: composition.LaunchScoped})
+			return err
+		}},
 		{"deploy", func() error {
 			if p.Target.Transport == "ssh" {
 				set, err := deploymentSet(p.Set.DeploymentDocumentInput)
