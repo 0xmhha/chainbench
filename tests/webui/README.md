@@ -216,3 +216,16 @@ at the observed genesis hash, stopped state, sibling process/data preservation a
 explicit relaunch. Zero-PID records with incomplete launch arguments remain unknown
 and cannot be reset, as checked by `run_node_reset.py` and `run_pinned_controls.py`.
 This remains partial control/recovery evidence and awards no full Seed criterion.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_snapshot_restore.py`
+runs a native WBFT test job while the browser is offline, restarts the dashboard,
+signs in again and checks the same job version, a new cursor generation and still
+running owned nodes. It saves `observations-before-restart.json` and
+`observations-after-restart.json` with each recorded PID's `ps` row.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_monitoring.py`
+checks collected RPC and metrics-endpoint series of four native nodes, the chart,
+time-linked lines that exist verbatim in the node's own log, viewer read access
+without process observation, and a `collector_stopped` gap with archived samples
+after a dashboard restart. Both proofs are partial WEB-08 evidence and award no
+Seed criterion.

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -122,6 +123,13 @@ func main() {
 			os.Exit(1)
 		}
 		opts = append(opts, dashboard.WithWebHistory(history, authenticate))
+		monitor, err := app.OpenWebMonitor(*deploymentRoot, deployments.RedactWeb)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "observation store:", err)
+			os.Exit(1)
+		}
+		go monitor.Run(context.Background())
+		opts = append(opts, dashboard.WithWebMonitor(monitor, authenticate))
 	}
 	srv := dashboard.NewServer(bus, store, opts...)
 

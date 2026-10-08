@@ -1,6 +1,6 @@
 # 대시보드 metric 시각화 — 자체 동작 설계와 레퍼런스 코드베이스
 
-> **등급: [현행 설계]** — 아직 구현하지 않는다. 착수 시점의 컨텍스트를 이 문서가 보존한다.
+> **등급: [현행 설계]** — Web UI의 노드 지표 수집·차트·시점 로그가 `internal/app/web_monitor.go`와 `web/src/NodeMetrics.svelte`에 일부 구현되었다. 원격 노드 로그와 실행 단위 archive 삭제는 아직 없다. 착수 시점의 컨텍스트를 이 문서가 보존한다.
 > 작업 상태는 worklist §1g D 트랙이 정본이다.
 
 `chainbench-dashboard` 의 디버깅 지원 1단계는 노드 metric 을 받아 인포그래픽으로

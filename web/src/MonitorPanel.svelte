@@ -1,6 +1,7 @@
 <script>
  import {onMount} from 'svelte'
  import {snapshotState,applyJobChange} from './job-observation.mjs'
+ import NodeMetrics from './NodeMetrics.svelte'
  let snapshot=$state(null),connection=$state('복원 중'),error=$state(''),gap=$state('')
  let drops=$state(null),busDrops=$state(null),lastObserved=$state(null),now=$state(Date.now())
  let refresh=()=>{}
@@ -63,6 +64,8 @@
   {/if}
   <h3>보관된 네트워크 기록</h3><p class="muted">스냅샷 시점: {time(snapshot.observedAt)}. 기록된 PID는 실제 가동 증거가 아닙니다. 체인 화면에서 노드 상태를 확인할 수 있습니다.</p>
   {#each snapshot.networks as network (network.id)}<div class="network"><strong>{network.id}</strong><span>{network.ownership} · {network.nodes.length}개 노드</span>{#each network.nodes as node (node.id)}<small>{node.id} · {node.role} · {node.state} · 기록 PID {node.pid||'없음'}</small>{/each}</div>{/each}
+  <h3>노드 지표</h3><p class="muted">서버가 5초마다 각 노드의 RPC와 metrics endpoint에서 수집해 만료 없이 보관한 값입니다. 점을 선택하면 그 시점 전후의 노드 로그를 보여 줍니다.</p>
+  {#each snapshot.networks as network (network.id)}<div class="network"><strong>{network.id}</strong><NodeMetrics networkId={network.id}/></div>{:else}<p class="empty">지표를 수집할 네트워크가 없습니다.</p>{/each}
  {/if}
 </section>
 <style>

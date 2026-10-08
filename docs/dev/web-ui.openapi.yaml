@@ -1466,23 +1466,24 @@ paths:
       responses:
         '200':
           description: |
-        Committed job revisions and a process-instance cursor. The Last-Event-ID
-        header takes precedence over the cursor query. Replays the last 128
-        committed revisions; initial, invalid, expired or restarted cursors emit
-        resync_required and require a fresh snapshot. Scoped observers receive
-        version_changed for unrelated jobs, preserving the global sequence without
-        disclosing their content. Job payloads exclude private plans and inputs.
-        observation heartbeats carry the current version and global job delivery
-        drop count without an SSE id; they never acknowledge undelivered changes.
-        The stream rechecks authentication on each update and heartbeat, closes
-        on revocation or disconnect, and limits concurrent subscribers to 64.
-        Job snapshots contain cached owned network metadata, not live PID proof;
-        metrics and historical log coverage have separate contracts below.
+            Committed job revisions and a process-instance cursor. The Last-Event-ID
+            header takes precedence over the cursor query. Replays the last 128
+            committed revisions; initial, invalid, expired or restarted cursors emit
+            resync_required and require a fresh snapshot. Scoped observers receive
+            version_changed for unrelated jobs, preserving the global sequence without
+            disclosing their content. Job payloads exclude private plans and inputs.
+            observation heartbeats carry the current version and global job delivery
+            drop count without an SSE id; they never acknowledge undelivered changes.
+            The stream rechecks authentication on each update and heartbeat, closes
+            on revocation or disconnect, and limits concurrent subscribers to 64.
+            Job snapshots contain cached owned network metadata, not live PID proof;
+            metrics and historical log coverage have separate contracts below.
   /api/v1/networks/{networkId}/metrics:
     get:
       operationId: metrics
       summary: Read node series with units, source and collection coverage
       x-minimum-role: viewer
+      description: The server collects every owned node recorded as launched each 5 seconds and archives the results without expiry. RPC series are block_height and peer_count; metrics-endpoint series are chain_head_block, p2p_peers, txpool_pending and txpool_queued. A failed or disabled source, an unexposed gauge and an interval without a running collector are coverage gaps such as "node2 rpc rpc_unavailable", "node1 metrics txpool_pending not_exposed" or "collector collector_stopped"; missing values are never reported as zero. The default window is the last two hours and a window may span at most 31 days; a time before the first collection round is a "collector not_collected" gap. A series above 720 samples is averaged into equal time buckets with coverage.downsampled set. Unreadable archive lines are skipped and reported as an "archive corrupt_record" gap.
       responses:
         '200':
           description: Read node series with units, source and collection coverage
@@ -1539,6 +1540,7 @@ paths:
       operationId: logs
       summary: Read redacted time-linked captured node logs
       x-minimum-role: viewer
+      description: nodeId is "<networkId>.<node label>". Entries are archived complete lines of a local node log, redacted before storage. A geth-family timestamp is used as the entry time (local zone, collection year); otherwise the collection time is used, and coverage.timestampSource reports source, collection or mixed. The default window is the last two hours (at most 31 days), in node log order, paged by limit (at most 100); nextCursor keeps its window. Lines are cut at 64 KiB, a line longer than 1 MiB is skipped as a log_line_oversized gap, a replaced or shrunk file is read from its start with a log_rotated or log_truncated gap, and every line of a PEM block is redacted. Remote SSH node logs are not collected yet and are reported as remote_log_collection_unavailable gaps.
       responses:
         '200':
           description: Read redacted time-linked captured node logs
