@@ -49,6 +49,13 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if err = json.Unmarshal(raw, &state); err != nil {
 				return err
 			}
+			bound, err := bindWebControlBinary(ctx, state, p, lookup)
+			if err != nil {
+				return err
+			}
+			if bound != p.ExecutionBinary {
+				return ErrDeploymentConflict
+			}
 			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
 				return err
 			}

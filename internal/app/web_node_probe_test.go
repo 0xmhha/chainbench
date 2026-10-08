@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -90,7 +92,7 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 	if err = os.Mkdir(control, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	state := State{FormatVersion: 3, Chain: "wbft", Binary: "/owned/gwbft", Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, PID: child.Process.Pid, Role: "en", DataDir: filepath.Join(root, "node1"), Args: []string{"--config", filepath.Join(root, "node1.toml")}}}}
+	state := State{FormatVersion: 3, Chain: "wbft", Binary: "/bin/sleep", Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, PID: child.Process.Pid, Role: "en", DataDir: filepath.Join(root, "node1"), Args: []string{"--config", filepath.Join(root, "node1.toml")}}}}
 	raw, err := json.Marshal(state)
 	if err != nil {
 		t.Fatal(err)
@@ -99,7 +101,11 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 	if err = os.WriteFile(record, raw, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	payload := webChainPayload{ControlDir: control, RecordDigest: manifestHash(raw), Input: WebPlanInput{Operation: "node.stop", NodeIDs: []string{"node1"}}, Set: DeploymentDocument{DeploymentDocumentInput: DeploymentDocumentInput{Kind: "server-set", ContractVersion: "2", Content: json.RawMessage(`{"version":2,"pool":{"hosts":[{"name":"local","addr":"127.0.0.1"}],"slots":1}}`)}}}
+	checksum, err := (filestore.Local{}).Checksum(context.Background(), "/bin/sleep")
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := webChainPayload{ExecutionBinary: "/bin/sleep", Binary: ManifestBinaryEvidence{Chain: "wbft", SHA256: strings.TrimPrefix(checksum, "sha256:")}, ControlDir: control, RecordDigest: manifestHash(raw), Input: WebPlanInput{Operation: "node.stop", NodeIDs: []string{"node1"}}, Set: DeploymentDocument{DeploymentDocumentInput: DeploymentDocumentInput{Kind: "server-set", ContractVersion: "2", Content: json.RawMessage(`{"version":2,"pool":{"hosts":[{"name":"local","addr":"127.0.0.1"}],"slots":1}}`)}}}
 	_, err = engine.execute(context.Background(), DeploymentActor{ID: "operator", Role: "operator"}, payload, func(WebJobPhase) error { return nil })
 	if !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatalf("unverified process reached the node stop verb: %v", err)

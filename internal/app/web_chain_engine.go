@@ -244,6 +244,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			}
 		}
 		if in.Operation == "node.start" || in.Operation == "node.stop" {
+			p.ExecutionBinary, err = bindWebControlBinary(ctx, state, p, lookup)
+			if err != nil {
+				return out, err
+			}
 			if err = validateWebChainRecord(state, p); err != nil {
 				return out, err
 			}
@@ -282,6 +286,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
+	if in.Operation == "node.start" || in.Operation == "node.stop" {
+		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
+	}
 	if p.TestRun != nil {
 		out.Changes = append(out.Changes, p.TestRun.Plan.String())
 		for _, c := range p.TestRun.Cases {
@@ -376,6 +383,19 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	}
 	if (err == nil && manifestHash(record) != p.RecordDigest) || (os.IsNotExist(err) && p.RecordDigest != "") {
 		return WebJobResult{}, ErrDeploymentConflict
+	}
+	if p.Input.Operation == "node.start" || p.Input.Operation == "node.stop" {
+		var state State
+		if err = json.Unmarshal(record, &state); err != nil {
+			return WebJobResult{}, err
+		}
+		bound, err := bindWebControlBinary(ctx, state, p, lookup)
+		if err != nil {
+			return WebJobResult{}, err
+		}
+		if bound != p.ExecutionBinary {
+			return WebJobResult{}, ErrDeploymentConflict
+		}
 	}
 	return e.execute(ctx, a, p, report)
 }

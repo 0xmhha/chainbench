@@ -64,6 +64,13 @@ try{
       const started=await response;assert.equal(started.status(),202)
       await waitJob((await started.json()).id,'succeeded')
       await page.getByText('세션 결과 보기',{exact:true}).first().waitFor()
+      const owned=(await api('networks')).items.find(n=>n.workspaceId===w.id)
+      assert.ok(owned.nodes.find(n=>n.id==='node1').pid>0,'test did not retain the actual node process')
+      const control=await api('plans','POST',{workspaceId:w.id,operation:'node.stop',documentRefs:w.documents,assetRefs:[chain],nodeIds:['node1'],retention:'retain',arguments:{manifestId:chain,assetId:chain,serverRef:'local',validators:4}},undefined,201)
+      assert.ok(control.changes.some(v=>v.includes('gwbft')&&v.includes('SHA-256')),'review omitted the verified owned executable')
+      const stop=await api('jobs','POST',{planId:control.id},control.id,202)
+      await waitJob(stop.id,'succeeded')
+      assert.equal((await api('networks')).items.find(n=>n.workspaceId===w.id).nodes.find(n=>n.id==='node1').pid,0,'retained test node was not stopped')
       await page.screenshot({path:out+'/test-results.png',fullPage:true})
     }
   }

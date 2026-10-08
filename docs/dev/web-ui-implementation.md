@@ -135,3 +135,11 @@ whatever currently owns that PID. Exact argv comparison on Darwin cannot confirm
 arguments containing spaces after its existing process-table splitting; those
 cases are refused. PID-free residual process discovery, executable identity beyond
 launch metadata, persisted reconciliation and live restart recovery remain open.
+
+Retained test networks provision the registered executable under its native name.
+Node controls now bind this owned copy or the reviewed source executable to the
+same selected asset checksum, refusing identical bytes at undeclared locations.
+Target bytes are verified during planning, before execution and immediately before
+the node control verb. This preserves native startup naming without making the
+original asset filename a prerequisite for controlling test-owned nodes. Full
+multi-binary replacement and file upload contracts remain unfinished.
