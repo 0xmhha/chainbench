@@ -621,9 +621,15 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 	if err = recheckWebNetworkRecord(ctx, p, lookup, false); err != nil {
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
-	_, err = ChainRm(ctx, Deps{Command: "web owned composition cleanup", ServerLookup: lookup}, ChainRmIn{DataDir: p.ControlDir})
-	if err != nil {
-		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}}, err
+	d := Deps{Command: "web owned composition cleanup", ServerLookup: lookup}
+	// The recheck above verified every recorded process as this network's own;
+	// a test or deployment leaves them running, and removal requires them stopped.
+	if _, err = ChainStop(ctx, d, ChainStopIn{DataDir: p.ControlDir}); err != nil {
+		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
-	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: []string{"owned composition cleaned"}}, nil
+	_, err = ChainRm(ctx, d, ChainRmIn{DataDir: p.ControlDir})
+	if err != nil {
+		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}, PartialEffects: []string{"owned nodes stopped before removal"}}, err
+	}
+	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: []string{"owned nodes stopped", "owned composition cleaned"}}, nil
 }
