@@ -258,7 +258,14 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		if string(before) != string(after) {
 			return ErrDeploymentConflict
 		}
-		return nil
+		// Save the accepted target before provisioning or launching any nodes.
+		// A daemon interrupted inside RunSuite must still be able to observe
+		// its owned processes without waiting for a final test result.
+		metadata, err := json.Marshal(p.Target)
+		if err != nil {
+			return err
+		}
+		return (filestore.Local{}).Write(ctx, filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600)
 	})
 	if err != nil {
 		return result, err
@@ -283,12 +290,6 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 			err = errors.Join(err, refErr)
 		} else {
 			result.RunIDs = []string{ref}
-		}
-	}
-	if _, recordErr := os.Stat(filepath.Join(p.ControlDir, "chain-record.json")); recordErr == nil {
-		metadata, _ := json.Marshal(p.Target)
-		if saveErr := (filestore.Local{}).Write(context.WithoutCancel(ctx), filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600); saveErr != nil {
-			err = errors.Join(err, saveErr)
 		}
 	}
 	result.PartialEffects = append(result.PartialEffects, out.SetupSteps...)

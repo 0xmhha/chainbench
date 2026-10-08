@@ -3,13 +3,51 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
+
+func TestWebTestRunPersistsTargetBeforeAnyNodeLaunch(t *testing.T) {
+	e, p := webRunPlanFixture(t, `{"bp":4}`)
+	if _, err := e.prepareTestRun(context.Background(), &p); err != nil {
+		t.Fatal(err)
+	}
+	p.Target = resource.Inspection{HostIdentity: "reviewed-target", DataPath: "/reviewed/data", Transport: "local"}
+	stop := errors.New("stop before binary transfer or node launch")
+	seen := false
+	_, err := e.executeTestRun(context.Background(), DeploymentActor{ID: "operator", Role: "operator"}, p, func(phase WebJobPhase) error {
+		if phase.Name != "test.binary" || phase.State != "running" {
+			return nil
+		}
+		seen = true
+		raw, readErr := os.ReadFile(filepath.Join(p.ControlDir, "web-target.json"))
+		if readErr != nil {
+			t.Errorf("target needed for restart observations was not persisted before effects: %v", readErr)
+		} else {
+			var target resource.Inspection
+			if decodeErr := json.Unmarshal(raw, &target); decodeErr != nil || target != p.Target {
+				t.Errorf("persisted target differs from accepted target: %+v %v", target, decodeErr)
+			}
+			info, statErr := os.Stat(filepath.Join(p.ControlDir, "web-target.json"))
+			if statErr != nil || info.Mode().Perm() != 0600 {
+				t.Error("target snapshot must be private")
+			}
+		}
+		return stop
+	})
+	if !seen || !errors.Is(err, stop) {
+		t.Fatalf("did not stop before execution: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(p.ControlDir, "chain-record.json")); !os.IsNotExist(err) {
+		t.Fatal("fixture performed a native composition")
+	}
+}
 
 func webRunPlanFixture(t *testing.T, layout string) (*WebChainEngine, webChainPayload) {
 	t.Helper()

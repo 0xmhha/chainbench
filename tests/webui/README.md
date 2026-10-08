@@ -90,3 +90,17 @@ Its native node must serve the expected chain RPC and pass live process observat
 before the stop check. This avoids mistaking a recorded PID for a surviving node
 when Unix IPC path limits make startup fail. All resources belong to isolated
 UUID fixtures; these checks do not award full restart/reconciliation acceptance.
+
+## Restart during a native test
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cb-restart python3 tests/webui/run_interrupted_test.py`
+runs a native four-node WBFT test and kills only the disposable dashboard while
+the test waits for a deliberately distant block. The runner restarts the same
+service and data store; the browser logs in again and checks interrupted state,
+idempotent replay without execution, unchanged launch record and node directory
+identity, live recorded PIDs, alias exclusion and explicit new control/test jobs.
+It retains the original interrupted result. The fixture's restart request file
+is not a product endpoint and contains no credentials. All launched processes
+and data belong to its private UUID tree. Results are in
+`chainbench-out/web-ui-development/interrupted-test/receipt.json`.
+This does not award WEB-12 or cover PID-free residual discovery/reconciliation.

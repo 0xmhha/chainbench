@@ -107,7 +107,7 @@ resolved conflicting claims, never the accepted execution payload or credentials
 Foreign plan identifiers return 404; expired reviews return 409. The SPA shows
 these owners, disables execution while conflicts exist and allows refresh after
 cleanup. Starting a job checks exclusion atomically again; review is not a lock.
-Live node probing after restart and concurrent independent execution coverage
+PID-free residual reconciliation and concurrent independent execution coverage
 remain unfinished, so WEB-11/12 are not complete.
 
 Job acceptance probes targets outside the durable store lock, keeping job reads,
@@ -134,7 +134,7 @@ executing them. Missing or mismatching processes are refused instead of stopping
 whatever currently owns that PID. Exact argv comparison on Darwin cannot confirm
 arguments containing spaces after its existing process-table splitting; those
 cases are refused. PID-free residual process discovery, executable identity beyond
-launch metadata, persisted reconciliation and live restart recovery remain open.
+launch metadata and persisted reconciliation remain open.
 
 Retained test networks provision the registered executable under its native name.
 Node controls now bind this owned copy or the reviewed source executable to the
@@ -143,3 +143,20 @@ Target bytes are verified during planning, before execution and immediately befo
 the node control verb. This preserves native startup naming without making the
 original asset filename a prerequisite for controlling test-owned nodes. Full
 multi-binary replacement and file upload contracts remain unfinished.
+
+## Restart during a native test
+
+Test execution persists the accepted physical target privately before binary
+provisioning and node launch. A server stopped inside the native suite can then
+observe its recorded owned processes without requiring suite completion first.
+Starting the server only marks unfinished jobs interrupted; it does not resume
+the suite, stop nodes or reset data. Repeating the original idempotency key
+returns the interrupted job. Explicit controls and a rerun use new plans and jobs.
+
+The owned browser fixture kills and restarts only its disposable dashboard while
+a native four-node WBFT test is running. It checks unchanged launch records and
+data-directory identity, authenticated live PID observations, alias exclusion,
+explicit stop and a new native test result while retaining the interrupted job.
+This is development evidence for recorded-process recovery, not full WEB-12
+acceptance: unrecorded residual processes, partial launch failure, stale PIDs and
+unavailable remote access still require reconciliation coverage.
