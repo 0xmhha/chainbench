@@ -25,6 +25,20 @@ func webAssetRefID(ref string) (string, error) {
 // exactly, so import/export cannot lose or invent an execution dependency.
 func webDocumentAssetRefs(kind string, raw json.RawMessage) ([]string, error) {
 	refs := []string{}
+	if kind == "case" {
+		ref, err := webCaseGenesisRef(raw)
+		if err != nil {
+			return nil, err
+		}
+		if strings.HasPrefix(ref, "asset:") {
+			id, err := webAssetRefID(ref)
+			if err != nil {
+				return nil, err
+			}
+			refs = append(refs, id)
+		}
+		return refs, nil
+	}
 	if kind != "chain-preset" {
 		return refs, nil
 	}
@@ -44,6 +58,34 @@ func webDocumentAssetRefs(kind string, raw json.RawMessage) ([]string, error) {
 		refs = append(refs, id)
 	}
 	return refs, nil
+}
+
+func webCaseGenesisRef(raw json.RawMessage) (string, error) {
+	var doc struct {
+		SchemaVersion string          `json:"schemaVersion"`
+		ChainPreset   json.RawMessage `json:"chainPreset"`
+		Chain         struct {
+			GenesisExisting string `json:"genesisExisting"`
+		} `json:"chain"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return "", errors.New("invalid case asset declaration")
+	}
+	if doc.SchemaVersion != "2" {
+		return doc.Chain.GenesisExisting, nil
+	}
+	if !strings.HasPrefix(strings.TrimSpace(string(doc.ChainPreset)), "{") {
+		return "", nil // Named declarations are resolved by the case parser.
+	}
+	var env struct {
+		Genesis struct {
+			Ref string `json:"ref"`
+		} `json:"genesis"`
+	}
+	if err := json.Unmarshal(doc.ChainPreset, &env); err != nil {
+		return "", errors.New("invalid case genesis declaration")
+	}
+	return env.Genesis.Ref, nil
 }
 
 func validateWebDocumentAssetRefs(in DeploymentDocumentInput) error {

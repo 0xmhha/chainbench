@@ -3,6 +3,7 @@ package poa_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
@@ -15,6 +16,43 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
+
+func TestWemixExistingExtrasUseCurrentPlacementWithoutRunningGenerator(t *testing.T) {
+	plugin, err := registry.Get("wemix")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := poa.GenesisSource{KeysDir: filepath.Join(repoRoot(t), "presets", "keys"), Run: func(context.Context, string, ...string) ([]byte, error) {
+		t.Fatal("finished genesis invoked native generation")
+		return nil, nil
+	}}
+	placed := wemixPlacement(t)
+	extra, err := src.ExistingExtras(context.Background(), plugin, genesis.Request{Validators: 2, Nodes: placed})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(extra) != 1 {
+		t.Fatal("unexpected runtime artifacts", keys(extra))
+	}
+	var cfg poa.Config
+	if err = json.Unmarshal(extra[poa.ConfigFileName], &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err = cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Members) != 2 || cfg.Members[1].Port != 31010 || !cfg.Members[1].Bootnode {
+		t.Fatal("runtime governance placement differs from accepted layout", cfg.Members)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err = src.ExistingExtras(ctx, plugin, genesis.Request{Nodes: placed}); !errors.Is(err, context.Canceled) {
+		t.Fatal("cancelled runtime input generation continued", err)
+	}
+	if _, err = src.ExistingExtras(context.Background(), plugin, genesis.Request{}); err == nil {
+		t.Fatal("missing governance placement accepted")
+	}
+}
 
 // wemixPlacement is a small placed network: a producer and two others.
 func wemixPlacement(t *testing.T) *node.Map {

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -19,13 +20,15 @@ import (
 
 // Saved case bytes remain intact; the registered binary selection replaces
 // the default executable through the existing engine request boundary.
-// File assets and mixed binaries need their own pinned contracts before use.
+// Registered finished genesis files use private immutable execution copies.
+// Other file assets and mixed binaries need pinned contracts before use.
 type webTestRun struct {
 	Cases    []webExecutableCase `json:"cases"`
 	Content  []json.RawMessage   `json:"content"`
 	InputDir string              `json:"inputDir"`
 	Plan     ComposePlan         `json:"plan"`
 	Requests []resource.Request  `json:"requests"`
+	Genesis  []webPresetGenesis  `json:"genesis,omitempty"`
 }
 
 func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload) ([]resource.Request, error) {
@@ -57,12 +60,24 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 		if err != nil {
 			return nil, err
 		}
+		// Registered finished files are projected below; all other file and
+		// execution contracts still pass through the strict adapter guard.
+		if spec.Chain.GenesisExisting != "" {
+			if _, err := webAssetRefID(spec.Chain.GenesisExisting); err != nil {
+				return nil, err
+			}
+			spec.Chain.GenesisExisting = ""
+		}
 		if err = validateWebTestInputs(spec); err != nil {
 			return nil, fmt.Errorf("case %s: %w", c.Document.ID, err)
 		}
 		run.Content = append(run.Content, append(json.RawMessage(nil), c.Content...))
 	}
 	p.Keys, err = e.pinKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+	run.Content, run.Genesis, err = e.projectTestGenesis(ctx, *p, *run)
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +113,24 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	if plan.Nodes.BP < 1 || total < 1 || total > 128 {
 		return nil, errors.New("test layout must have producers and at most 128 nodes")
 	}
-	if err = validateWebTableInputs(layout); err != nil {
+	if err = validateWebTestComposition(layout); err != nil {
 		return nil, err
 	}
 	run.Plan = plan
 	run.Requests = webPresetRequests(layout)
 	p.Arguments.Validators = plan.Nodes.BP
 	return run.Requests, nil
+}
+
+func validateWebTestComposition(in ChainUpIn) error {
+	if err := validateWebTableInputs(in); err != nil {
+		return err
+	}
+	if in.GenesisExisting != "" {
+		_, err := chainsetup.GenesisOptsFor(ChainGenesisIn{GenesisExisting: in.GenesisExisting, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath})
+		return err
+	}
+	return nil
 }
 
 func validateWebTestInputs(spec dsl.Spec) error {
@@ -236,6 +262,9 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		return result, err
 	}
 	err = e.phase(ctx, a, "test.inputs", report, func() error {
+		if err := e.recheckTestGenesis(ctx, p); err != nil {
+			return err
+		}
 		if err := writeWebTestInputs(ctx, &p); err != nil {
 			return err
 		}
@@ -251,7 +280,7 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		if string(before) != string(after) {
 			return ErrDeploymentConflict
 		}
-		if err = validateWebTableInputs(layout); err != nil {
+		if err = validateWebTestComposition(layout); err != nil {
 			return err
 		}
 		before, _ = json.Marshal(p.TestRun.Requests)
@@ -278,6 +307,9 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 	result.PartialEffects = append(result.PartialEffects, "Verified test binary provisioned: "+p.ExecutionBinary+" · SHA-256 "+p.Binary.SHA256)
 	var out RunSuiteOut
 	err = e.phase(ctx, a, "test.run", report, func() error {
+		if err := e.recheckTestGenesis(ctx, p); err != nil {
+			return err
+		}
 		var runErr error
 		out, runErr = RunSuite(ctx, Deps{Command: "web test.run by " + a.ID, ServerLookup: lookup}, in)
 		if runErr == nil && out.Summary.Failed() {

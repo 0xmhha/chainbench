@@ -87,7 +87,7 @@
       {#if ready && webSession !== null}
         {#key webSession?.user.id}
           <div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} /><DeploymentEditor {webSession} /></div>
-          <div hidden={route !== '/tests'}><DSLEditor {webSession} /></div>
+          <div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} /></div>
           {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} testOnly={route==='/tests'} />{/key}{/if}
           <div hidden={route !== '/settings'}><AssetManager {webSession} onuploaded={()=>assetRevision++} /><ManifestManager {webSession} {assetRevision} /></div>
           <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>

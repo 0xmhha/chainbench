@@ -328,3 +328,46 @@ and ciphertext tampering. The owned WEB-10 fixture seeds old preset/v1/v2 case
 records only while its disposable server is stopped, restarts the dashboard and
 checks public reads/export absence, old import refusal, plaintext storage scans
 and actual SSE masking. This remains partial WEB-10 evidence.
+
+## Finished genesis assets in saved test execution
+
+The test editor selects registered JSON template assets for inline v2 environments
+and legacy v1 cases. Selecting a finished file replaces generation settings;
+clearing the selection restores the previously selected generation declaration.
+The saved case keeps `asset:<id>` in its original grammar. Its exact dependency
+list survives save, import and export. Filesystem references and unregistered or
+wrong-kind assets cannot execute.
+
+Each reviewed suite pins the source checksum and one private copy per dependency.
+Cases sharing a source share its execution path so compatible environments remain
+compatible. Only the private execution declaration replaces the reference with
+that path; the public document and other values, including large integers, stay
+intact. The plan displays asset IDs and SHA-256 checksums. The job panel includes
+case dependencies alongside its registered default binary. Source and copy bytes
+are checked before writing target metadata and again after binary provisioning,
+immediately before the native suite entry point. A late change fails with any
+already provisioned binary recorded as a partial effect.
+
+The finished-file header check requires `config.chainId`; it does not certify
+consensus compatibility. Native setup remains responsible for validating the
+actual genesis. `run_genesis_test_jobs.py` prepares valid files using the existing
+CLI, drives selection, restoration, validation, save, review and execution in
+Chrome, and verifies three real engine sessions without skips. Its owned nodes
+provide live PID/RPC observations and twelve initialized native databases.
+Explicit stop jobs precede database genesis inspection. The receipt binds results
+to the source digest and compiled dashboard. This is partial WEB-02/05/06 evidence,
+not completion of the full DSL, assets or nine-function acceptance scope. Templates
+for generation, named presets, uploaded key trees, accounts, mixed binaries,
+per-binary genesis and attachments retain separate unfinished contracts.
+
+The live fixture exposed a PoA engine gap: using a finished file skipped the
+governance input needed by `wemix deploy-governance`, documented in
+`docs/chain-analysis/gwemix/cli-graph.md`. The existing genesis source now offers
+an optional auxiliary-input contract. PoA uses its normal governance builder
+with the accepted keys and actual producer placement, without invoking genesis
+generation or replacing the uploaded bytes. Static families need no extra input.
+The ordinary target artifact writer carries the resulting governance file to
+native bootstrap, including remote targets. This uses the same default policy
+as a generated composition; importing a custom governance policy remains a
+separate unfinished configuration contract. Unit tests hold exact genesis bytes,
+producer membership and ports and refuse missing placement or cancellation.

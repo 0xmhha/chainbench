@@ -110,8 +110,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 2 || args.ChainPresetRef == nil && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
-		return out, errors.New("select the binary asset and every registered preset dependency")
+	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 257 || args.ChainPresetRef == nil && in.Operation != "test.run" && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
+		return out, errors.New("select the binary asset and every registered declaration dependency")
 	}
 	refs, _ := json.Marshal(workspace.Documents)
 	selected, _ := json.Marshal(in.DocumentRefs)
@@ -249,6 +249,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			expectedAssets[id] = true
 		}
 	}
+	if p.TestRun != nil {
+		for _, c := range p.TestRun.Cases {
+			for _, id := range c.Document.AssetRefs {
+				expectedAssets[id] = true
+			}
+		}
+	}
 	if len(in.AssetRefs) != len(expectedAssets) {
 		return out, errors.New("selected assets differ from the reviewed declaration")
 	}
@@ -330,7 +337,14 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
 	}
 	if p.TestRun != nil {
-		out.Changes = append(out.Changes, p.TestRun.Plan.String())
+		display := p.TestRun.Plan
+		if len(p.TestRun.Genesis) > 0 {
+			display.Genesis.Existing = "asset:" + p.TestRun.Genesis[0].Asset.ID
+		}
+		out.Changes = append(out.Changes, display.String())
+		for _, g := range p.TestRun.Genesis {
+			out.Changes = append(out.Changes, fmt.Sprintf("Finished test genesis asset %s · SHA-256 %s", g.Asset.ID, g.Asset.Checksum))
+		}
 		for _, n := range placement.Placements() {
 			out.Changes = append(out.Changes, fmt.Sprintf("Test placement %s=%s · P2P %d · RPC %d", n.Label, n.Role, n.Ports.P2P, n.Ports.HTTP))
 		}

@@ -61,3 +61,12 @@ export function references(doc) {
   }
   return {nodes, before}
 }
+
+export function finishedGenesisRef(doc) {
+  if (doc?.schemaVersion === '1') return doc.chain?.genesisExisting ?? ''
+  return typeof doc?.chainPreset === 'object' ? doc.chainPreset?.genesis?.ref ?? '' : ''
+}
+export function caseAssetRefs(doc) {
+  const ref = finishedGenesisRef(doc)
+  return /^asset:[0-9a-f]{32}$/.test(ref) ? [ref.slice(6)] : []
+}
