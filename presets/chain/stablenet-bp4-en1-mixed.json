@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "2",
+  "kind": "chain-preset",
+  "id": "stablenet-bp4-en1-mixed",
+  "description": "stablenet: 4 bp + 1 en on two implementations. node1 and node2 run gstable (default); node3, node4 and the endpoint run wbft-stablenet, an independent implementation that takes gstable's flags and data directories. Binaries: default = gstable, wbft = ${WBFT_STABLENET_BIN:-wbft-stablenet}; the fallback is a name nothing places by default, so build wbft-stablenet and put it on the target under that name or point WBFT_STABLENET_BIN at it. Used by 3 cases.",
+  "binaries": {
+    "default": "gstable",
+    "wbft": "${WBFT_STABLENET_BIN:-wbft-stablenet}"
+  },
+  "chain": "stablenet",
+  "keys": {
+    "nodekeys": {
+      "ref": "presets/keys",
+      "source": "keyPreset"
+    }
+  },
+  "topology": {
+    "nodes": [
+      { "index": 1, "role": "bp" },
+      { "index": 2, "role": "bp" },
+      { "index": 3, "role": "bp", "binary": "wbft" },
+      { "index": 4, "role": "bp", "binary": "wbft" },
+      { "index": 5, "role": "en", "binary": "wbft" }
+    ]
+  }
+}
