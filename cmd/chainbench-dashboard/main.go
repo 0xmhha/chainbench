@@ -129,6 +129,7 @@ func main() {
 			os.Exit(1)
 		}
 		go monitor.Run(context.Background())
+		engine.UseMonitor(monitor)
 		opts = append(opts, dashboard.WithWebMonitor(monitor, authenticate))
 	}
 	srv := dashboard.NewServer(bus, store, opts...)

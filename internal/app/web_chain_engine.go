@@ -27,6 +27,7 @@ type WebChainEngine struct {
 	assets     map[string]ManifestBinary
 	authorize  func(DeploymentActor) error
 	keysMu     sync.Mutex
+	monitor    *WebMonitor
 }
 
 func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests *ManifestStore, assets []ManifestBinary, authorize func(DeploymentActor) error) *WebChainEngine {
@@ -91,7 +92,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err := e.allowed(a); err != nil {
 		return out, err
 	}
-	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" {
+	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" && in.Operation != webNetworkMonitorOperation {
 		return out, errors.New("operation requires an execution adapter that is not available")
 	}
 	var args webChainArguments
@@ -102,6 +103,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if dec.Decode(new(any)) != io.EOF {
 		return out, errors.New("one argument object required")
+	}
+	if in.Operation == webNetworkMonitorOperation {
+		return e.prepareMonitor(ctx, a, in, args)
 	}
 	if args.ReplacementAssetID != "" && in.Operation != "node.swap" {
 		return out, errors.New("a replacement executable requires a node replacement job")
@@ -496,6 +500,9 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	}
 	if manifestHash(prepared.Payload) != prepared.Fingerprint {
 		return WebJobResult{}, ErrDeploymentConflict
+	}
+	if p.Input.Operation == webNetworkMonitorOperation {
+		return e.executeMonitor(ctx, a, p, report)
 	}
 	// Start already checked the latest document revisions before accepting.
 	// Here recheck live targets and assets using that accepted snapshot, so

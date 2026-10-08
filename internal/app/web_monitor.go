@@ -45,6 +45,7 @@ type WebMonitor struct {
 	interval time.Duration
 	mu       sync.Mutex
 	resumed  map[string]bool
+	remote   map[string]int
 }
 
 type webMonitorSample struct {
@@ -75,6 +76,8 @@ type webMonitorCursor struct {
 	Skipping       map[string]bool   `json:"skipping,omitempty"`
 	InSecret       map[string]bool   `json:"inSecret,omitempty"`
 	Open           []webMonitorGap   `json:"open,omitempty"`
+	RemoteLast     time.Time         `json:"remoteLast,omitempty"`
+	RemoteOpen     []webMonitorGap   `json:"remoteOpen,omitempty"`
 }
 
 func OpenWebMonitor(root string, redact func(string) string) (*WebMonitor, error) {
@@ -85,7 +88,7 @@ func OpenWebMonitor(root string, redact func(string) string) (*WebMonitor, error
 	if redact == nil {
 		redact = func(s string) string { return s }
 	}
-	return &WebMonitor{root: root, store: store, redact: redact, now: time.Now, interval: webMonitorInterval, resumed: map[string]bool{}}, nil
+	return &WebMonitor{root: root, store: store, redact: redact, now: time.Now, interval: webMonitorInterval, resumed: map[string]bool{}, remote: map[string]int{}}, nil
 }
 
 // Run collects until ctx ends. Failures are archived as coverage gaps.
@@ -177,10 +180,12 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 		s, g := m.sampleNode(ctx, ns, now, since)
 		samples, gaps = append(samples, s...), append(gaps, g...)
 		if target.Transport != "local" {
-			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "remote_log_collection_unavailable"})
+			if m.remote[network] == 0 { // No operator-started collection job is running.
+				gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "remote_log_collection_unavailable"})
+			}
 			continue
 		}
-		g, err := m.archiveLog(network, label, ns.LogPath, &cursor, since, now)
+		g, err := m.archiveLog(ctx, network, label, ns.LogPath, webLocalLogs{}, &cursor, since, now)
 		if err != nil {
 			errs = append(errs, err)
 			g = append(g, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "collector_error"})

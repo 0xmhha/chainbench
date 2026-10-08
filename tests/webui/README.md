@@ -229,3 +229,10 @@ time-linked lines that exist verbatim in the node's own log, viewer read access
 without process observation, and a `collector_stopped` gap with archived samples
 after a dashboard restart. Both proofs are partial WEB-08 evidence and award no
 Seed criterion.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_ssh_log_collection.py`
+deploys four native nodes over the owned loopback SSH fixture, starts a
+`network.monitor` job through the job form, checks archived remote lines against
+the node's own log, runs a node stop while collection continues, revokes the
+credential and requires no new `sshd` session or archived line for 20 seconds.
+`WEBUI_DASHBOARD_BINARY=<path>` runs the same proof against another build.

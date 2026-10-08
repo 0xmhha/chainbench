@@ -2,6 +2,9 @@ package app
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -25,42 +28,80 @@ type webMonitorLogLine struct {
 	Text            string    `json:"x"`
 }
 
-// archiveLog appends complete new lines of a local node log. A partial last
-// line waits for its newline. A replaced or shrunk file is reported and read
-// from its start; a line longer than one read is reported and skipped.
-func (m *WebMonitor) archiveLog(network, label, path string, cursor *webMonitorCursor, since, now time.Time) ([]webMonitorGap, error) {
+// webLogSource reads a node log file where it lives: the local filesystem or
+// a remote host through the collecting job's own SSH access.
+type webLogSource interface {
+	// Snapshot returns the file identity and size together with at most limit
+	// bytes from offset, observed in one step; os.ErrNotExist when absent.
+	Snapshot(ctx context.Context, path string, offset int64, limit int) (uint64, int64, []byte, error)
+}
+
+type webLocalLogs struct{}
+
+func (webLocalLogs) Snapshot(_ context.Context, path string, offset int64, limit int) (uint64, int64, []byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil {
+		return 0, 0, nil, err
+	}
+	if info.Size() <= offset {
+		return webMonitorFileID(info), info.Size(), nil, nil
+	}
+	chunk := make([]byte, limit)
+	n, err := f.ReadAt(chunk, offset)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return 0, 0, nil, err
+	}
+	return webMonitorFileID(info), info.Size(), chunk[:n], nil
+}
+
+// archiveLog appends complete new lines of a node log. A partial last line
+// waits for its newline. A replaced or shrunk file is reported and read from
+// its start; a line longer than one read is reported and skipped.
+func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string, source webLogSource, cursor *webMonitorCursor, since, now time.Time) ([]webMonitorGap, error) {
 	var gaps []webMonitorGap
 	gap := func(reason string) {
 		gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: reason})
 	}
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
+	offset := cursor.Offsets[label]
+	id, size, chunk, err := source.Snapshot(ctx, path, offset, webMonitorReadLimit)
+	if errors.Is(err, os.ErrNotExist) {
 		gap("log_unavailable")
 		return gaps, nil
 	}
 	if err != nil {
 		return gaps, err
 	}
-	offset := cursor.Offsets[label]
-	if id := webMonitorFileID(info); id != 0 {
+	restart := false
+	if id != 0 {
 		if previous, ok := cursor.Files[label]; ok && previous != id {
 			gap("log_rotated")
-			offset, cursor.Skipping[label], cursor.InSecret[label] = 0, false, false
+			restart, cursor.InSecret[label] = true, false
 		}
 		cursor.Files[label] = id
 	}
-	if info.Size() < offset {
+	if size < offset {
 		gap("log_truncated")
-		offset, cursor.Skipping[label] = 0, false
+		restart = true
 	}
-	f, err := os.Open(path)
-	if err != nil {
-		return gaps, err
+	if restart {
+		cursor.Skipping[label] = false
 	}
-	defer func() { _ = f.Close() }()
-	chunk := make([]byte, webMonitorReadLimit)
-	n, _ := f.ReadAt(chunk, offset)
-	chunk = chunk[:n]
+	if restart && offset != 0 {
+		offset = 0
+		if _, size, chunk, err = source.Snapshot(ctx, path, 0, webMonitorReadLimit); err != nil {
+			return gaps, err
+		}
+	}
+	if size <= offset {
+		cursor.Offsets[label] = offset
+		return gaps, nil
+	}
+	n := len(chunk)
 	if cursor.Skipping[label] {
 		cut := bytes.IndexByte(chunk, '\n')
 		if cut < 0 {

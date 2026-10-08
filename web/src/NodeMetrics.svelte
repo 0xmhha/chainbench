@@ -67,6 +67,7 @@
     {#if logError}<p class="error" role="alert">{logError}</p>{:else if !logs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else}
      <p class="muted">로그 시각 출처: {logs.coverage.timestampSource==='source'?'노드 로그 기록 시각':logs.coverage.timestampSource==='mixed'?'노드 기록 시각과 수집 시각 혼합':'서버 수집 시각'} · {logs.coverage.complete?'누락 없음':'누락 구간 있음'}</p>
      {#each gapSummary(logs.coverage) as gap}<p class="notice">{gap}</p>{/each}
+     {#if gapSummary(logs.coverage).some(g=>g.includes('remote_log_collection_unavailable'))}<p class="muted">SSH 노드의 로그는 운영자가 실행 작업에서 'SSH 노드 로그 수집'을 시작한 동안에만 그 운영자의 SSH 연결로 보관됩니다.</p>{/if}
      {#if logs.entries.length===0}<p class="empty">이 시점 전후로 보관된 로그가 없습니다.</p>{:else}
       <ol>{#each logs.entries as entry, index (index)}<li data-log-time={entry.time}><time>{time(entry.time)}</time><code class="log-text">{entry.text}</code></li>{/each}</ol>
       {#if logs.nextCursor}<p class="muted">이 구간에 로그가 더 있습니다. 더 좁은 시점을 선택하세요.</p>{/if}

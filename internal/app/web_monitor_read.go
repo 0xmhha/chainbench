@@ -288,7 +288,7 @@ func (m *WebMonitor) coverageGaps(network string, from, to time.Time, corrupt in
 	if err != nil {
 		return nil, err
 	}
-	recorded = append(recorded, cursor.Open...)
+	recorded = append(append(recorded, cursor.Open...), cursor.RemoteOpen...)
 	first := cursor.FirstCollected
 	if first.IsZero() || first.After(to) {
 		first = to
