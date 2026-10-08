@@ -1,5 +1,5 @@
 <script>
-  let { webSession = undefined } = $props()
+  let { webSession = undefined, assetRevision = 0 } = $props()
   let username=$state(''), password=$state(''), authorization=$state(''), actor=$state(null)
   let items=$state([]), assets=$state([]), selected=$state(''), imported=$state(null), template=$state('')
   let assetId=$state(''), status=$state(''), busy=$state(false), result=$state(null)
@@ -12,7 +12,7 @@
   }
   async function work(action){busy=true;try{await action()}catch(error){status=error.message}finally{busy=false}}
   async function refresh(){items=(await api('manifests')).items;assets=(await api('manifest-assets')).items}
-  $effect(()=>{if(webSession) work(async()=>{actor={id:webSession.user.id,role:webSession.user.role==='administrator'?'admin':webSession.user.role};await refresh()})})
+  $effect(()=>{void assetRevision;if(webSession) work(async()=>{actor={id:webSession.user.id,role:webSession.user.role==='administrator'?'admin':webSession.user.role};await refresh()})})
   async function login(){await work(async()=>{authorization='Basic '+btoa(username+':'+password);actor=await api('deployment-account');password='';await refresh();status='Manifest library loaded'})}
   async function upload(event,isTemplate){await work(async()=>{const file=event.target.files[0];if(!file)return;const text=await file.text();if(isTemplate)template=text;else {const parsed=JSON.parse(text);if(parsed.manifest&&typeof parsed.template==='string'){imported=parsed.manifest;template=parsed.template}else imported=parsed;}status='Declaration loaded; validate before saving'})}
   async function validate(){await work(async()=>{const response=await api('manifests/validate','POST',{manifest:imported,template});status=response.valid?'Engine manifest validation passed':response.errors.join('; ')})}

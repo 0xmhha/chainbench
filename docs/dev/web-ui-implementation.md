@@ -188,3 +188,36 @@ references, mixed binaries, generated/custom keys, declared accounts, external
 preset execution and attachments remain refused until their pinned contracts are
 connected. This is partial WEB-01/02 evidence, not completion of all preset fields
 or every native option.
+
+## Uploaded assets and native execution
+
+Authenticated operators can register one multipart file with its kind through
+`POST /api/v1/assets`. Viewer list/detail responses expose immutable IDs, exact
+SHA-256 checksums, byte counts and compatibility metadata. The server chooses
+private storage paths and publishes the bytes and receipt together; unfinished
+uploads do not appear in the library. Filename traversal, links, empty or
+oversized files and changed bytes are refused. Binary uploads are limited to
+256 MiB and other files to 16 MiB. Storage failures return safe errors without
+private filesystem paths.
+
+Native binaries pass OS/architecture header inspection before version/help
+probes. Observed program identity, commit, required flags and dialect determine
+their supported built-in chain. Probe output and duration are bounded. This is
+observed executable compatibility, not a source audit or proof of trust. The
+settings library lists uploaded metadata and refreshes manifest selections. Jobs
+resolve provisioned or uploaded IDs without accepting a client filesystem path,
+show the selected ID/checksum and recheck bytes before executing the pinned job.
+
+Configuration/template JSON and YAML, JSON ABI and hexadecimal bytecode can be
+registered with format inspection. Known credential fields, PEM private keys and
+encrypted key stores are refused as shared assets. Personal SSH material still
+uses the encrypted credential store. File format inspection does not establish
+engine compatibility: configuration/template/material execution references,
+uploaded private key trees, TOML and full test asset binding remain open.
+
+The owned fixture uploads all three native binaries through the actual browser,
+restarts the daemon, verifies persisted metadata and runs twelve native database
+initializations plus explicit start/RPC/PID observation/stop jobs. Changing an
+accepted asset rejects execution before database creation. API/storage tests
+cover role/CSRF/origin checks, exact bytes, interrupted staging and links. This is
+partial WEB-02/04/06 evidence; the fourteen full acceptance criteria remain open.

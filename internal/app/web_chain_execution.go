@@ -83,9 +83,9 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		}
 		return result, err
 	}
-	asset, ok := e.assets[p.Arguments.AssetID]
-	if !ok {
-		return result, ErrDeploymentNotFound
+	asset, err := e.binaryAsset(p.Arguments.AssetID)
+	if err != nil {
+		return result, err
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {

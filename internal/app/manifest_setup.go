@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"debug/elf"
 	"debug/macho"
@@ -50,31 +51,12 @@ func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinar
 	if evidence.SHA256 != a.SHA256 {
 		return evidence, errors.New("binary checksum changed; revalidate asset")
 	}
-	switch runtime.GOOS {
-	case "darwin":
-		f, err := macho.Open(a.Path)
-		if err != nil {
-			return evidence, errors.New("binary is not a native Mach-O asset")
-		}
-		defer func() { _ = f.Close() }()
-		if (runtime.GOARCH == "arm64" && f.Cpu != macho.CpuArm64) || (runtime.GOARCH == "amd64" && f.Cpu != macho.CpuAmd64) {
-			return evidence, errors.New("binary architecture mismatch")
-		}
-	case "linux":
-		f, err := elf.Open(a.Path)
-		if err != nil {
-			return evidence, errors.New("binary is not a native ELF asset")
-		}
-		defer func() { _ = f.Close() }()
-		if (runtime.GOARCH == "arm64" && f.Machine != elf.EM_AARCH64) || (runtime.GOARCH == "amd64" && f.Machine != elf.EM_X86_64) {
-			return evidence, errors.New("binary architecture mismatch")
-		}
-	default:
-		return evidence, errors.New("unsupported binary platform")
+	if err := verifyManifestNative(a.Path); err != nil {
+		return evidence, err
 	}
 	probe, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	version, err := exec.CommandContext(probe, a.Path, "version").CombinedOutput()
+	version, err := manifestProbe(probe, a.Path, "version")
 	if err != nil {
 		return evidence, errors.New("binary version probe failed")
 	}
@@ -82,7 +64,7 @@ func (a ManifestBinary) Verify(ctx context.Context, chain string) (ManifestBinar
 		return evidence, errors.New("binary version identity mismatch")
 	}
 	evidence.Version = string(version)
-	help, err := exec.CommandContext(probe, a.Path, "--help").CombinedOutput()
+	help, err := manifestProbe(probe, a.Path, "--help")
 	if err != nil {
 		return evidence, errors.New("binary help probe failed")
 	}
@@ -166,4 +148,49 @@ func (s *ManifestStore) SetupManifest(ctx context.Context, actor DeploymentActor
 	state, err := ChainStatus(ctx, deps, ChainStatusIn{DataDir: dir})
 	out.State = state.State
 	return out, err
+}
+
+func verifyManifestNative(path string) error {
+	switch runtime.GOOS {
+	case "darwin":
+		f, err := macho.Open(path)
+		if err != nil {
+			return errors.New("binary is not a native Mach-O asset")
+		}
+		defer func() { _ = f.Close() }()
+		if (runtime.GOARCH == "arm64" && f.Cpu != macho.CpuArm64) || (runtime.GOARCH == "amd64" && f.Cpu != macho.CpuAmd64) {
+			return errors.New("binary architecture mismatch")
+		}
+	case "linux":
+		f, err := elf.Open(path)
+		if err != nil {
+			return errors.New("binary is not a native ELF asset")
+		}
+		defer func() { _ = f.Close() }()
+		if (runtime.GOARCH == "arm64" && f.Machine != elf.EM_AARCH64) || (runtime.GOARCH == "amd64" && f.Machine != elf.EM_X86_64) {
+			return errors.New("binary architecture mismatch")
+		}
+	default:
+		return errors.New("unsupported binary platform")
+	}
+	return nil
+}
+
+// Bounded output prevents an uploaded program from filling control-plane memory.
+type manifestProbeOutput struct{ buffer bytes.Buffer }
+
+func (b *manifestProbeOutput) Write(p []byte) (int, error) {
+	if b.buffer.Len()+len(p) > 1<<20 {
+		return 0, errors.New("native inspection output limit exceeded")
+	}
+	return b.buffer.Write(p)
+}
+
+func (b *manifestProbeOutput) Bytes() []byte { return b.buffer.Bytes() }
+func manifestProbe(ctx context.Context, path string, args ...string) ([]byte, error) {
+	var output manifestProbeOutput
+	cmd := exec.CommandContext(ctx, path, args...)
+	cmd.Stdout, cmd.Stderr = &output, &output
+	err := cmd.Run()
+	return output.Bytes(), err
 }

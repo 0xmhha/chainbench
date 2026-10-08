@@ -311,9 +311,9 @@ func webTestSessionRef(root, dir string) (string, error) {
 }
 
 func (e *WebChainEngine) uploadWebBinary(ctx context.Context, p webChainPayload, lookup resource.Lookup) error {
-	asset, ok := e.assets[p.Arguments.AssetID]
-	if !ok {
-		return ErrDeploymentNotFound
+	asset, err := e.binaryAsset(p.Arguments.AssetID)
+	if err != nil {
+		return err
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {

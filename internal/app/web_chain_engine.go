@@ -36,6 +36,16 @@ func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests 
 	return &WebChainEngine{root: root, keys: keys, documents: documents, manifests: manifests, assets: byID, authorize: authorize}
 }
 
+func (e *WebChainEngine) binaryAsset(id string) (ManifestBinary, error) {
+	if asset, ok := e.assets[id]; ok {
+		return asset, nil
+	}
+	if e.manifests == nil {
+		return ManifestBinary{}, ErrDeploymentNotFound
+	}
+	return e.manifests.BinaryAsset(id)
+}
+
 type webChainArguments struct {
 	ManifestID     string                  `json:"manifestId"`
 	AssetID        string                  `json:"assetId"`
@@ -169,9 +179,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	asset, ok := e.assets[args.AssetID]
-	if !ok {
-		return out, ErrDeploymentNotFound
+	asset, err := e.binaryAsset(args.AssetID)
+	if err != nil {
+		return out, err
 	}
 	p.Binary, err = asset.Verify(ctx, plugin.Protocol().Name)
 	if err != nil {
@@ -300,6 +310,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
+	out.Changes = append(out.Changes, fmt.Sprintf("Binary asset %s · SHA-256 %s", p.Binary.ID, p.Binary.SHA256))
 	if in.Operation == "node.start" || in.Operation == "node.stop" {
 		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
 	}
@@ -383,9 +394,9 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if err != nil {
 		return WebJobResult{}, err
 	}
-	asset, found := e.assets[p.Arguments.AssetID]
-	if !found {
-		return WebJobResult{}, ErrDeploymentNotFound
+	asset, err := e.binaryAsset(p.Arguments.AssetID)
+	if err != nil {
+		return WebJobResult{}, err
 	}
 	binary, err := asset.Verify(ctx, plugin.Protocol().Name)
 	if err != nil {

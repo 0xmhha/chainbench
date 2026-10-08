@@ -32,8 +32,9 @@ type ManagedManifest struct {
 // ManifestStore keeps immutable, content-addressed external declarations. Embedded
 // plugins retain their registered implementation and cannot be replaced by imports.
 type ManifestStore struct {
-	files *session.ManifestFiles
-	mu    sync.Mutex
+	files  *session.ManifestFiles
+	assets *session.AssetFiles
+	mu     sync.Mutex
 }
 
 func OpenManifestStore(root string) (*ManifestStore, error) {
@@ -41,7 +42,11 @@ func OpenManifestStore(root string) (*ManifestStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ManifestStore{files: files}, nil
+	assets, err := session.OpenAssetFiles(root)
+	if err != nil {
+		return nil, err
+	}
+	return &ManifestStore{files: files, assets: assets}, nil
 }
 
 // ValidateManifest delegates parsing, family/protocol/dialect resolution to the engine.

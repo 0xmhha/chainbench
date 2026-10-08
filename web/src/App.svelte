@@ -3,6 +3,7 @@
   import DSLEditor from './DSLEditor.svelte'
   import LoginPanel from './LoginPanel.svelte'
   import ManifestManager from './ManifestManager.svelte'
+  import AssetManager from './AssetManager.svelte'
   import ChainPresetEditor from './ChainPresetEditor.svelte'
   import DeploymentEditor from './DeploymentEditor.svelte'
   import JobPanel from './JobPanel.svelte'
@@ -18,6 +19,7 @@
   ]
   let route = $state(window.location.pathname)
   let webSession = $state(undefined), ready = $state(false)
+  let assetRevision = $state(0)
   let events = $state([]), runs = $state([]), sessions = $state([])
   let connected = $state(false), error = $state('')
   let drops = $state(null), observedAt = $state(null), now = $state(Date.now())
@@ -87,7 +89,7 @@
           <div hidden={route !== '/chains'}><ChainPresetEditor {webSession} /><DeploymentEditor {webSession} /></div>
           <div hidden={route !== '/tests'}><DSLEditor {webSession} /></div>
           {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} testOnly={route==='/tests'} />{/key}{/if}
-          <div hidden={route !== '/settings'}><ManifestManager {webSession} /></div>
+          <div hidden={route !== '/settings'}><AssetManager {webSession} onuploaded={()=>assetRevision++} /><ManifestManager {webSession} {assetRevision} /></div>
           <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>
         {/key}
         {#if route === '/'}

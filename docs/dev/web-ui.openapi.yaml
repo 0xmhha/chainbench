@@ -566,6 +566,12 @@ paths:
     post:
       operationId: uploadAsset
       summary: Upload and inspect a registered asset
+      description: Register an immutable shared file with an ID and SHA-256 checksum.
+        Binary files are limited to 256 MiB and undergo native OS/architecture,
+        version and help inspection. Other files are limited to 16 MiB and currently
+        support JSON/YAML declarations, JSON ABI and hexadecimal bytecode. Shared
+        assets reject known credential fields and private key material. File format
+        inspection alone does not imply execution compatibility.
       x-minimum-role: operator
       responses:
         '201':
