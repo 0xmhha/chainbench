@@ -72,7 +72,7 @@ const (
 
 // chainsetupDeps adapts this layer's dependency set to the module's.
 func (d Deps) chainsetupDeps() chainsetupmod.Deps {
-	return chainsetupmod.Deps{Clock: d.Clock, Env: d.Env, Command: d.command(), Report: d.Logf, Driver: d.Driver}
+	return chainsetupmod.Deps{Clock: d.Clock, Env: d.Env, ServerLookup: d.ServerLookup, Command: d.command(), Report: d.Logf, Driver: d.Driver}
 }
 
 func ChainAllocate(ctx context.Context, d Deps, in ChainAllocateIn) (chainsetupmod.StepOut, error) {

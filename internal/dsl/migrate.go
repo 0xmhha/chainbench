@@ -31,10 +31,51 @@ func MigrateV1(raw []byte) ([]byte, error) {
 		env["binaries"] = s.Chain.Binaries
 	}
 	if s.Chain.Config != "" {
-		env["config"] = s.Chain.Config
+		return nil, fmt.Errorf("dsl: migrate: v1 chain.config file has no equivalent v2 declaration")
 	}
 	if len(s.Chain.GenesisOverlay) > 0 {
 		env["genesis"] = map[string]any{"overlay": s.Chain.GenesisOverlay}
+	}
+	if len(s.Chain.BinaryChains) > 0 {
+		refs := map[string]BinaryRefV2{}
+		if s.Chain.Binary != "" {
+			refs[BinaryDefault] = BinaryRefV2{Binary: s.Chain.Binary, Chain: s.Chain.BinaryChains[BinaryDefault]}
+		} else {
+			for name, binary := range s.Chain.Binaries {
+				refs[name] = BinaryRefV2{Binary: binary, Chain: s.Chain.BinaryChains[name]}
+			}
+		}
+		env["binaries"] = refs
+	}
+	if s.Chain.ManifestPath != "" {
+		env["manifest"] = s.Chain.ManifestPath
+	}
+	if s.Chain.TemplatePath != "" {
+		env["genesisTemplate"] = s.Chain.TemplatePath
+	}
+	if len(s.Chain.GenesisProvides) > 0 || s.Chain.GenesisHaltsAt != 0 || len(s.Chain.GenesisPerBinary) > 0 || s.Chain.GenesisExisting != "" {
+		genesis, _ := env["genesis"].(map[string]any)
+		if genesis == nil {
+			genesis = map[string]any{}
+		}
+		if len(s.Chain.GenesisProvides) > 0 {
+			genesis["provides"] = s.Chain.GenesisProvides
+		}
+		if s.Chain.GenesisHaltsAt != 0 {
+			genesis["haltsAt"] = s.Chain.GenesisHaltsAt
+		}
+		if len(s.Chain.GenesisPerBinary) > 0 {
+			sides := map[string]any{}
+			for name, overlay := range s.Chain.GenesisPerBinary {
+				sides[name] = map[string]any{"overlay": overlay}
+			}
+			genesis["perBinary"] = sides
+		}
+		if s.Chain.GenesisExisting != "" {
+			genesis["mode"] = "existing"
+			genesis["ref"] = s.Chain.GenesisExisting
+		}
+		env["genesis"] = genesis
 	}
 	if len(s.Topology) > 0 {
 		env["topology"] = s.Topology
@@ -84,6 +125,9 @@ func MigrateV1(raw []byte) ([]byte, error) {
 	}
 	if len(s.Requires) > 0 {
 		out["requires"] = s.Requires
+	}
+	if s.SkipsOn != nil {
+		out["skipsOn"] = s.SkipsOn
 	}
 	if s.DefaultOn != "" {
 		out["on"] = s.DefaultOn

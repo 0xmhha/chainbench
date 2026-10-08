@@ -130,7 +130,7 @@ func openTransferTarget(d Deps, t TransferServer) (resource.WorkspaceConfig, *re
 	if err != nil {
 		return resource.WorkspaceConfig{}, nil, err
 	}
-	opener := resource.Opener{ServerSet: t.ServerSet, Docker: t.Docker, Env: d.Env, Report: d.Logf}
+	opener := resource.Opener{ServerSet: t.ServerSet, Docker: t.Docker, Env: d.Env, Lookup: d.ServerLookup, Report: d.Logf}
 	acc, err := opener.Open(resource.Spec{Server: t.Server, DataRoot: wc.DataRoot})
 	if err != nil {
 		return resource.WorkspaceConfig{}, nil, err

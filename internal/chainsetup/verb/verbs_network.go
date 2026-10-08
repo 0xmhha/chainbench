@@ -59,6 +59,7 @@ func NetworkStatus(ctx context.Context, d chainsetup.Deps, in NetworkStatusIn) (
 		return NetworkStatusOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	ws.SetDriver(d.Driver)
 	return NetworkStatusOut{Nodes: ws.NodeSet(), Alive: ws.LivePIDs(ctx)}, nil
 }
@@ -168,6 +169,8 @@ func NetworkRunner(d chainsetup.Deps, dataDir string) (process.Runner, error) {
 	if err != nil {
 		return nil, err
 	}
+	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	if !ws.State().Target.IsRemote() {
 		return nil, nil
 	}
@@ -417,6 +420,8 @@ func HostRun(ctx context.Context, d chainsetup.Deps, in HostRunIn) (string, erro
 	if err != nil {
 		return "", err
 	}
+	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	acc, err := ws.OpenHost(in.Host)
 	if err != nil {
 		return "", err

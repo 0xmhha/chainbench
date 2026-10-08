@@ -440,3 +440,23 @@ func PerNodeKeys() []string {
 	sort.Strings(out)
 	return out
 }
+
+// OptionSchemas exposes the dialect's complete engine mapping to structured
+// editors. Values remain strings because launch overrides are string-valued;
+// final validation and cross-option prerequisites are owned by Builder.
+func (d Dialect) OptionSchemas(perNodeOnly bool) map[string]any {
+	out := map[string]any{}
+	for key, flag := range d.flags {
+		if !perNodeOnly && IsPerNode(key) {
+			continue
+		}
+		schema := map[string]any{"type": "string", "description": flag.name + "; validated by nodeconfig.Builder", "x-optionKey": string(key), "x-flag": flag.name, "x-dialect": d.ID, "x-perNode": IsPerNode(key)}
+		if flag.boolean {
+			schema["type"] = "boolean"
+			schema["description"] = flag.name + "; only true enables this override; remove the field to inherit"
+			schema["default"] = true
+		}
+		out[string(key)] = schema
+	}
+	return out
+}

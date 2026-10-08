@@ -56,12 +56,31 @@
           "type": "object",
           "description": "name -> binary path. \"default\" applies to every node without its own; a per-node topology entry's \"binary\" names one of these; an upgrade names \"from\"/\"to\"",
           "additionalProperties": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "binary"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "binary": {
+                    "type": "string"
+                  },
+                  "chain": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
           }
         },
         "blueprint": {
           "type": "string",
-          "description": "a network declaration file — the layout and the node keys in one document (the DSL equivalent of --blueprint); with it no topology or key set is needed"
+          "description": "a network declaration file \u2014 the layout and the node keys in one document (the DSL equivalent of --blueprint); with it no topology or key set is needed"
         },
         "keys": {
           "type": "object",
@@ -78,9 +97,10 @@
           "properties": {
             "mode": {
               "enum": [
-                "template"
+                "template",
+                "existing"
               ],
-              "description": "existing | build | inherit are designed but have no runtime seam yet; the parser rejects them by name"
+              "description": "template builds genesis; existing uses ref verbatim and rejects set/overlay."
             },
             "set": {
               "type": "object",
@@ -99,7 +119,7 @@
               "items": {
                 "type": "string"
               },
-              "description": "what this genesis makes the network ABLE to do, for cases that gate on it. Not the env's \"capabilities\", which says what a case REQUIRES — the two read alike and mean opposite things."
+              "description": "what this genesis makes the network ABLE to do, for cases that gate on it. Not the env's \"capabilities\", which says what a case REQUIRES \u2014 the two read alike and mean opposite things."
             },
             "haltsAt": {
               "type": "integer",
@@ -139,7 +159,9 @@
           "type": "object",
           "description": "declared peer graph: groups of node labels (node<N>) that dial each other and no one else. Groups may overlap; the node in two groups bridges them. Every node must be in a group, and producers must reach each other through producers.",
           "additionalProperties": false,
-          "required": ["groups"],
+          "required": [
+            "groups"
+          ],
           "properties": {
             "groups": {
               "type": "array",
@@ -148,7 +170,10 @@
                 "type": "array",
                 "minItems": 2,
                 "uniqueItems": true,
-                "items": { "type": "string", "pattern": "^node[1-9][0-9]*$" }
+                "items": {
+                  "type": "string",
+                  "pattern": "^node[1-9][0-9]*$"
+                }
               }
             }
           }
@@ -230,11 +255,11 @@
             "properties": {
               "fund": {
                 "type": "string",
-                "description": "Balance to send once the chain is sealing, in wei (decimal or 0x-hex). Omit for an account that must start at zero — what a test needs to exercise the paths that fail for want of gas."
+                "description": "Balance to send once the chain is sealing, in wei (decimal or 0x-hex). Omit for an account that must start at zero \u2014 what a test needs to exercise the paths that fail for want of gas."
               },
               "keyFile": {
                 "type": "string",
-                "description": "Path to a file holding this account's private key as raw hex, so the label means an account that already exists and already holds funds. For a network this run did not compose — there is nobody to mint from and nothing to fund with. A keystore JSON is refused for want of a password; chainbench keyring export writes the hex it holds. Exclusive with fund. ${VAR} is expanded, which is how a key path stays out of a committed case."
+                "description": "Path to a file holding this account's private key as raw hex, so the label means an account that already exists and already holds funds. For a network this run did not compose \u2014 there is nobody to mint from and nothing to fund with. A keystore JSON is refused for want of a password; chainbench keyring export writes the hex it holds. Exclusive with fund. ${VAR} is expanded, which is how a key path stays out of a committed case."
               }
             },
             "additionalProperties": false
@@ -366,7 +391,7 @@
               "test"
             ]
           },
-          "description": "per-case timeout budgets. Only case (alias test) is read — the interpreter bounds the whole case with it — so the parser refuses any other name rather than validating a duration that nothing applies."
+          "description": "per-case timeout budgets. Only case (alias test) is read \u2014 the interpreter bounds the whole case with it \u2014 so the parser refuses any other name rather than validating a duration that nothing applies."
         },
         "hooks": {
           "type": "object",

@@ -1,0 +1,31 @@
+// Provision private acceptance accounts without putting passwords in argv or evidence.
+package main
+
+import (
+	"encoding/json"
+	"golang.org/x/crypto/bcrypt"
+	"os"
+)
+
+func main() {
+	var input []struct {
+		ID       string `json:"id"`
+		Username string `json:"username"`
+		Role     string `json:"role"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
+		panic(err)
+	}
+	out := []map[string]string{}
+	for _, a := range input {
+		hash, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
+		if err != nil {
+			panic(err)
+		}
+		out = append(out, map[string]string{"id": a.ID, "username": a.Username, "role": a.Role, "passwordHash": string(hash)})
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
+		panic(err)
+	}
+}

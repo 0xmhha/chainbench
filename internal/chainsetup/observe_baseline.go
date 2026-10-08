@@ -134,6 +134,7 @@ func ChainBaselineCheck(ctx context.Context, d Deps, in ChainBaselineIn) (ChainB
 		return ChainBaselineOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	check, err := ws.CheckBaseline(ctx)
 	return ChainBaselineOut{Check: check}, err
 }
@@ -148,6 +149,7 @@ func ChainBaselineApprove(ctx context.Context, d Deps, in ChainBaselineIn) (Chai
 		return ChainBaselineOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	if ws.state.WorkspaceConfig == "" {
 		return ChainBaselineOut{}, fmt.Errorf("chainsetup: baseline: this workspace was composed without a --workspace-config, so there is no environment to approve a baseline for")
 	}

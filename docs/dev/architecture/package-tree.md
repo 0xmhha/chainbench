@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 61,485 |
-| `cmd/` | 19 | 5,098 |
+| `internal/` | 52 | 68,413 |
+| `cmd/` | 19 | 5,205 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **67,373** |
+| **합계** | **74** | **74,408** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -35,7 +35,7 @@
 
 ---
 
-## 1. `internal/core` — 25패키지 17,810줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 25패키지 18,459줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -55,13 +55,13 @@ internal/core/
 │                            기제가 아니다: 무엇이 이기는지는 상류에서 정해지고 여기는 적을 낱말만 갖는다.
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
 ├── rpc            525  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
-├── remote         552  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
-├── process      1,497  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
+├── remote         628  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
+├── process      1,530  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
 │                            + 기동 정책(Direct: arm·materialize·init·launch / Launcher: 헬스 게이트·진단·재시도·teardown)
 ├── inspector      293  [L1] 요청 시 실사 — 포트 점유(로컬 bind 두 형태, 원격 probe)·경로 존재·호스트 도달.
 │                            사실만 답하고 판단하지 않는다
 ├── filestore      297  [L1] FileSink — 타깃에 파일을 놓는 유일한 통로 (data dir·config·genesis·key)
-├── nodeconfig   1,627  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
+├── nodeconfig   1,647  [L1] 노드 하나의 설정 — config.toml 렌더 · launch argv 조립(Argv) ·
 │                            dot-path 설정값 3단 해석(Values·Merge·Resolve·Flatten·Defaults; 코드 기본값 < 파일 < 플래그/env)
 ├── genesis        876  [L1] genesis.json 빌더 — SourceFor(패밀리가 SourceProvider 를 선언하면 그것, 아니면 프리셋 치환)
 │                            · Compose(소스 + 오버라이드 + 오버레이 + fork 검증)
@@ -77,9 +77,9 @@ internal/core/
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
 │                            reuse / rebuild-nodes N / rebuild-all / compose 를 답한다. 판단만 하고 보지 않는다
-├── session      1,507  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
+├── session      2,007  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
 │                            이름 붙인 네트워크 레지스트리(SaveNetwork·LoadNetwork·ListNetworks·RemoveNetwork)
-├── collector    1,440  [L3] live tail·chainstate·bp 참여·reorg + 이벤트(Bus·Event·Kind·Phase)
+├── collector    1,460  [L3] live tail·chainstate·bp 참여·reorg + 이벤트(Bus·Event·Kind·Phase)
 │                            + 로그 검색·타임라인(Search·Timeline) + RPC 로부터의 체인 종류·능력 감지
 ├── health         425  [L3] "이 네트워크가 블록을 만드나"(요구 9) — NodeSet 전수 RPC 샘플 → chain id·height·peers·sync
 │                            + 1차 노드 height 전진으로 producing 판정
@@ -94,7 +94,7 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 3,810줄
+## 2. 체인·합의 정의 — 11패키지 3,819줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
@@ -105,7 +105,7 @@ internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른�
 internal/chains/                체인 어댑터 [L2b] — 자기 체인만 안다
 ├── all              26  등록 집합 — blank import 로 내장 플러그인과 그 capability 전체를 등록. 유일한 plug-in seam
 ├── common           72  모든 체인이 공유하는 capability 구현("common" 프로젝트)
-├── external         73  프로젝트가 준 매니페스트 파일로 플러그인 로드 — 코드 변경 없이 미내장 체인을 벤치
+├── external         82  프로젝트가 준 매니페스트 파일로 플러그인 로드 — 코드 변경 없이 미내장 체인을 벤치
 │                        (기존 합의 패밀리 위에서)
 ├── stablenet       171  stablenet 특화 capability (거버넌스 시스템 컨트랙트)
 │   └── govbind     162  GovBase 바인딩 — propose→approve→execute calldata 빌더 · MintProof 인코더 ·
@@ -120,20 +120,20 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 39,865줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 46,135줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
                           키(`Key`). 문서는 `presets/chain/`·`presets/keys/` 에 있고, 쓰는 모듈은
                           정의하지 않고 쓰기만 한다(keyring 은 Entry·Network 를, poa 는 거버넌스 어댑터를)
 
-internal/resource  3,155  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
+internal/resource  3,303  [L1] 네트워크가 무엇으로 조립되는가 — 풀(호스트 × 포트 슬롯)·배정(Assign)·
                           포트 밴드 산술(Plan·PlanBands·ValidatePorts)·서버 세트(호스트·밴드·자격·호스트키·docker 치환)·
                           여는 유일 통로(Opener)·세트를 풀로 해석(Pool·PoolFor)·인벤토리·baseline 드리프트 검사·
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
 
 internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인)
-├── (dsl)      2,125  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
+├── (dsl)      2,216  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
 │                     순수 — 실행 인프라(rpc·session·collector)를 import 하지 않는다
 ├── assert       399  타입 인식 비교 프리미티브 — 해석기가 어세션을 검사할 때 쓰는 비교기(Equal·InDelta 등)
 └── interp     1,039  실행 계약(Action·Assertion·Registry·Reader·Deps·ActionCtx·AssertCtx·NodeControl)
@@ -141,23 +141,23 @@ internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인
                       + Unresolved(오프라인 이름 검증) + caseTimeout. 계약이 여기 사는 것이 핵심 —
                       testhelper(L3)가 구현하므로 testengine(L4)으로 올릴 수 없다
 
-internal/testhelper 5,286 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
+internal/testhelper 5,512 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·read·fault·assets·deployContract·
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 5,451 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 5,655 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
 
-internal/chainsetup 12,084 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
+internal/chainsetup 12,101 [L4] 체인 셋업 오케스트레이터 — 선언을 이름 붙인 스텝 열로 바꿔 실행하고
                           워크스페이스에 무엇을 했는지 기록한다. ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·ChainHealth·
                           ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·ChainBaseline{Check,Approve}·
                           ChainVerifyValidators·NodeStart/Stop/Swap·Hardfork{Plan,Execute}·
                           재사용 판단(PlanReuse·ReconcileReuse·GenesisDeclared·WantOf)·실행 중 프로세스 실사
 
-internal/chainsetup/verb 1,468 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
+internal/chainsetup/verb 1,477 [L4] 셋업 동사 — 표면이 부르는 함수(ChainNew·ChainKeys·ChainGenesis·ChainConfig·ChainAllocate·
                           ChainProvision·ChainInit·ChainStart·ChainUp·ChainResume·ChainRestart·ChainStop·ChainRm·ChainStatus·
                           ChainHealth·ChainLogs·ChainEnodes·ChainEndpoints·ChainLaunchOpts·NodeStart/Stop/Swap·
                           Hardfork{Plan,Execute}·ChainCrossFork)과 그것들을 몰고 가는 상태 기계(composition 표·
@@ -168,7 +168,7 @@ internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app       2,804  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app       7,084  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
@@ -178,7 +178,7 @@ internal/feature     509  [L5] 기능 등록의 한 자리 — Descriptor·Regis
 
 internal/mcp       2,806  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
-internal/dashboard   341  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
+internal/dashboard 1,636  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 
 internal/arch      1,407  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
                           제품 코드 0, import 0 — 문서를 읽고 측정과 맞춰 본다
@@ -188,7 +188,7 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,098줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,205줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
@@ -200,7 +200,7 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── exitcode              33  종료 상태를 결정한 명령에서 그것을 적용하는 main 까지 운반
 ├── chaincmd             929  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
 │                             + 읽는 동사(show·status·health·logs·enode)
-├── lifecyclecmd         497  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
+├── lifecyclecmd         498  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
 │                             여전히 하나의 건강한 체인인지 판정(verify·consensus·baseline)
 ├── nodecmd              117  네트워크의 노드 1개 — 개별 start/stop, RPC 대화
 ├── suitecmd             625  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
@@ -217,7 +217,7 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── filecmd              123  서버 데이터 플레인과 파일 주고받기
 └── catalogcmd           145  "이 빌드가 무엇을 아는가" — 구성 가능한 체인, 등록된 capability. 네트워크를 건드리지 않는다
 cmd/chainbench-mcp        56  main. MCP 표면(요구 14)을 stdio 로 — stdin 의 줄 단위 JSON-RPC 를 읽어 mcp 도구로 디스패치
-cmd/chainbench-dashboard  37  main. 대시보드 데몬(요구 19) — obs 이벤트 버스와 run 저장소를 HTTP+SSE 로 호스팅
+cmd/chainbench-dashboard 143  main. 대시보드 데몬(요구 19) — obs 이벤트 버스와 run 저장소를 HTTP+SSE 로 호스팅
 ```
 
 ---

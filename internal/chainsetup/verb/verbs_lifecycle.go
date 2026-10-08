@@ -100,6 +100,7 @@ func ChainLogs(ctx context.Context, d chainsetup.Deps, in ChainLogsIn) (ChainLog
 		return ChainLogsOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	text, err := ws.Logs(ctx, in.Node, in.Lines)
 	return ChainLogsOut{Text: text}, err
 }
@@ -121,6 +122,7 @@ func ChainHealth(ctx context.Context, d chainsetup.Deps, in ChainHealthIn) (Chai
 		return ChainHealthOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	nodes, err := ws.Health(ctx)
 	return ChainHealthOut{Nodes: nodes}, err
 }

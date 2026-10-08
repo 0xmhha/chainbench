@@ -92,6 +92,7 @@ func ChainVerifyValidators(ctx context.Context, d Deps, in ChainVerifyValidators
 		return ChainVerifyValidatorsOut{}, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	ws.SetDriver(d.Driver)
 	check, err := ws.VerifyValidators(ctx)
 	return ChainVerifyValidatorsOut{Check: check}, err
