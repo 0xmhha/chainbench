@@ -209,22 +209,18 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 	if strings.TrimSpace(key) == "" || len(key) > 128 {
 		return WebJob{}, errors.New("idempotency key required (maximum 128 bytes)")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return WebJob{}, err
+	}
 	keyHash, body := jobBody(a.ID+":"+key), jobBody(planID)
-	if old, ok := s.state.Keys[keyHash]; ok {
-		if old.Body != body {
-			return WebJob{}, ErrDeploymentConflict
-		}
-		return detachedWebJob(s.state.Jobs[old.JobID]), nil
+	s.mu.Lock()
+	p, replay, err := s.acceptanceLocked(a, planID, keyHash, body)
+	s.mu.Unlock()
+	if err != nil || replay.ID != "" {
+		return replay, err
 	}
-	p, ok := s.state.Plans[planID]
-	if !ok || p.Public.ActorID != a.ID {
-		return WebJob{}, ErrDeploymentNotFound
-	}
-	if !time.Now().Before(p.Public.ExpiresAt) || s.engine == nil {
-		return WebJob{}, ErrDeploymentConflict
-	}
+	// Target inspection may dial SSH or check large inputs. It must never hold
+	// the durable store lock needed by progress, cancellation or other targets.
 	current, err := s.engine.Prepare(ctx, a, p.Input)
 	if err != nil {
 		return WebJob{}, err
@@ -233,6 +229,23 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 		return WebJob{}, err
 	}
 	if current.Fingerprint != p.Prepared.Fingerprint || !sameClaims(current.Claims, p.Prepared.Claims) {
+		return WebJob{}, ErrDeploymentConflict
+	}
+	if err = s.allowed(a); err != nil {
+		return WebJob{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err = ctx.Err(); err != nil {
+		return WebJob{}, err
+	}
+	// Another request may have accepted this key while inspection was running.
+	// Freshness and exclusions are checked again in the same acceptance lock.
+	latest, replay, err := s.acceptanceLocked(a, planID, keyHash, body)
+	if err != nil || replay.ID != "" {
+		return replay, err
+	}
+	if latest.Prepared.Fingerprint != current.Fingerprint || !sameClaims(latest.Prepared.Claims, current.Claims) {
 		return WebJob{}, ErrDeploymentConflict
 	}
 	if s.resourceConflict(p.Input.WorkspaceID, p.Prepared.Claims) {
@@ -246,6 +259,24 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 	s.cancels[job.ID] = cancel
 	go s.execute(jobCtx, a, job.ID, p.Prepared)
 	return detachedWebJob(job), nil
+}
+
+// acceptanceLocked reads only durable metadata; caller owns s.mu.
+func (s *WebJobs) acceptanceLocked(a DeploymentActor, planID, keyHash, body string) (savedWebPlan, WebJob, error) {
+	if old, ok := s.state.Keys[keyHash]; ok {
+		if old.Body != body {
+			return savedWebPlan{}, WebJob{}, ErrDeploymentConflict
+		}
+		return savedWebPlan{}, detachedWebJob(s.state.Jobs[old.JobID]), nil
+	}
+	p, ok := s.state.Plans[planID]
+	if !ok || p.Public.ActorID != a.ID {
+		return savedWebPlan{}, WebJob{}, ErrDeploymentNotFound
+	}
+	if !time.Now().Before(p.Public.ExpiresAt) || s.engine == nil {
+		return savedWebPlan{}, WebJob{}, ErrDeploymentConflict
+	}
+	return p, WebJob{}, nil
 }
 
 func sameClaims(a, b []WebResourceClaim) bool {

@@ -109,3 +109,11 @@ these owners, disables execution while conflicts exist and allows refresh after
 cleanup. Starting a job checks exclusion atomically again; review is not a lock.
 Live node probing after restart and concurrent independent execution coverage
 remain unfinished, so WEB-11/12 are not complete.
+
+Job acceptance probes targets outside the durable store lock, keeping job reads,
+progress, cancellation and independent target acceptance responsive. It reacquires
+the lock to recheck current plan expiry, concurrent idempotency acceptance and
+physical exclusion before the single durable write. Actor authorization and request
+cancellation are checked again after the probe. Once durably accepted, execution
+continues with its detached lifetime. Controlled probe tests verify this protocol;
+full live multi-host failure and internal test fault scopes remain open.
