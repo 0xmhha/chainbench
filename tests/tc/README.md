@@ -10,7 +10,7 @@
 ```
 tests/tc/
 ├── common/         69건   세 체인 공통. {node,tx,fee,contract,rpc,fault}/
-├── go-stablenet/  111건   regression/ · post-v1.0.0-change/ · testnet/ · hardfork/ · vocabulary/
+├── go-stablenet/  114건   regression/ · post-v1.0.0-change/ · testnet/ · hardfork/ · vocabulary/ · mixed/
 ├── go-wbft/         8건
 ├── go-wemix/        7건
 └── basic/           2건   공통으로 가지 않고 남은 둘
@@ -27,7 +27,7 @@ bin/chainbench test list tests/tc/common
 ## 2. 돌리는 법
 
 [`HOW-TO-USE.md`](HOW-TO-USE.md) 하나만 보면 된다. 무엇을 먼저 갖춰야 하는지, 명령이 왜
-그렇게 생겼는지, 판정을 어떻게 읽는지, 그리고 **케이스 197건의 실행 명령**이 거기 있다.
+그렇게 생겼는지, 판정을 어떻게 읽는지, 그리고 **케이스 200건의 실행 명령**이 거기 있다.
 
 ```sh
 bin/chainbench run <케이스.json> --workspace-dir ~/cbw/one/<이름> --binary "$GSTABLE"
@@ -68,7 +68,7 @@ python3 scripts/gen-case-commands.py --write
 
 | 문서 | 무엇 |
 |---|---|
-| [`HOW-TO-USE.md`](HOW-TO-USE.md) | 돌리는 법 + 케이스별 실행 명령 197건 |
+| [`HOW-TO-USE.md`](HOW-TO-USE.md) | 돌리는 법 + 케이스별 실행 명령 200건 |
 | [`common/README.md`](common/README.md) | 공통 69건이 무엇이고 무엇이 왜 빠졌나 |
 | [`CHAIN-BRINGUP.md`](CHAIN-BRINGUP.md) | 체인을 세우는 네 갈래와 핸드오프 |
 | [`SPECS.md`](SPECS.md) | 케이스가 지키는 규약과, 끝내 옮기지 못한 여덟 건과 그 이유 |

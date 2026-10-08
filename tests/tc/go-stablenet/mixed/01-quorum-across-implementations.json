@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "mixed-quorum-across-implementations",
+  "description": "gstable 과 wbft-stablenet 이 섞인 validator 넷이 한 체인에 합의하고, 정족수가 두 구현의 표를 섞어도 체인이 나아간다. 먼저 web3_clientVersion 으로 node1·node2 가 gstable 이고 node3·node4 가 wbft-stablenet 인지 본다. 이 확인이 없으면 바이너리 이름이 한쪽으로 풀린 망에서도 아래 단언이 모두 참이라 섞임을 아무것도 보지 않는다. 그다음이 구별되는 주장이다. validator 넷의 정족수는 셋이다. gstable 인 node1 을 멈추면 남은 셋(gstable 하나, wbft-stablenet 둘)이 모두 표를 내야 하므로, 체인이 나아가는 것은 wbft-stablenet 의 표를 gstable 이, gstable 의 표를 wbft-stablenet 이 받아들인다는 뜻이다. node3 을 멈춘 반대 경우도 본다. 한 구현의 표만 세는 망에서는 두 정지 가운데 적어도 하나에서 체인이 멈춘다. 끝에 모든 노드의 block hash 가 같은지 본다. 못 보는 것: 어느 구현의 노드가 각 block 을 제안했는지는 DSL 이 실행 중 높이를 기준으로 block 을 고르지 못해 세지 않는다. 정지 동안의 진행이 두 구현의 제안도 받아들였음을 간접으로 보인다(제안 차례가 넷을 돈다). startNode 는 노드의 RPC 가 열리기 전에 돌아오므로, 다시 띄운 노드를 읽기 전에 eth_blockNumber 가 답할 때까지 기다린다.",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp4-en1-mixed",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 5,
+      "timeout": "180s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node2",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node3",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node4",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "stopNode",
+      "on": "node1"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node2",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node3",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "startNode",
+      "on": "node1"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "180s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node4",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "startNode",
+      "on": "node3"
+    },
+    {
+      "do": "waitFor",
+      "on": "node3",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node3",
+      "timeout": "180s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
+  ]
+}

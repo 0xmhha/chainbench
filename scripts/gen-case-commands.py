@@ -65,7 +65,9 @@ def preset_of(spec: dict) -> dict:
 def envs_of(preset: dict) -> list[str]:
     """프리셋이 요구하는 환경변수 중 체인 바이너리가 아닌 것."""
     names = set(re.findall(r"\$\{([A-Z_]+)(?::-[^}]*)?\}", json.dumps(preset)))
-    return sorted(n for n in names if not n.endswith("_BIN") or n.startswith("GSTABLE_"))
+    # A second build that no --binary flag carries stays: the other go-stablenet
+    # builds, and wbft-stablenet for the mixed cases.
+    return sorted(n for n in names if not n.endswith("_BIN") or n.startswith(("GSTABLE_", "WBFT_STABLENET_")))
 
 
 def rows():
