@@ -36,6 +36,7 @@
 | 등록된 완성 genesis 적용 | 저장/import 참조와 해시 고정·잘못된 종류/ID/변경 거절; UI 선택과 실제 DB 초기화 일치 | 부분 검증: `/private/tmp/chainbench-web-genesis-asset-red.log`의 등록 참조 저장 실패 → `chainbench-web-genesis-asset-unit-green.log`. 브라우저 선택/저장·원본/사본 변경 거절·세 체인 12개 DB의 바이트/chain ID 대조는 `chainbench-out/web-ui-development/genesis-asset-jobs/receipt.json`. 생성 템플릿·per-binary genesis·전체 자료·키·전수 옵션은 미완료 |
 | 노드 교체와 초기화 | 실제 설정/바이너리 교체·재실행, 비생산자 초기화, attach/생산자 거절 | 미완료: WEB-07 |
 | DSL 실행 작업 | 모든 현행 DSL 구성·내장 어휘·인자 전수 편집 및 실제 실행, job/session 연결 | 미완료: WEB-05 |
+| DSL 노드 표의 실제 실행 | 엔진이 정렬한 역할/라벨로 자원 요청·계획; 실행 직전 재검사; 실제 DB·포트·PID·RPC·판정 대조 | 부분 검증: `/private/tmp/chainbench-web-test-table-red.log`의 노드 표 거절 → `chainbench-web-test-table-unit-green.log`. 세 체인 15개 노드의 계획/역할/포트/PID/RPC·skip 없는 실제 판정·명시적 정지 후 DB genesis는 `chainbench-out/web-ui-development/table-test-jobs/receipt.json`. 활성 DB를 읽은 최초 fixture 잠금 오류와 브라우저 종료 지연은 제품 RED에서 제외. 종료 장애 주입은 `chainbench-web-browser-close-{red,green}.log`로 별도 검증. 전체 자료/키/혼합 바이너리/attach/어휘 인자 전수는 미완료 |
 | 자원 대조·취소·철회 | 잔존 노드 실제 확인·충돌·재시작·정리·실행 중 SSH 실패/철회 | 미완료: WEB-06/11/12/13 |
 | metric·로그·히스토리 | 실제 수집·차트·시점 연계·archive·호환 비교·보호된 삭제 | 미완료: WEB-08/09 |
 | 전체 인수·회귀·PR | 14개 전체 최신 live 검증·필수 회귀·PR 검토 | 미완료: WEB-03/04/10도 최종 소스에서 재검증 |

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -26,6 +25,7 @@ type webTestRun struct {
 	Content  []json.RawMessage   `json:"content"`
 	InputDir string              `json:"inputDir"`
 	Plan     ComposePlan         `json:"plan"`
+	Requests []resource.Request  `json:"requests"`
 }
 
 func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload) ([]resource.Request, error) {
@@ -86,7 +86,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	// PlanSuite may materialize content-addressed overlays. Keep preparation
 	// inside an owned input directory, away from the network or target servers.
 	in.DataDir = filepath.Join(run.InputDir, "planning")
-	plan, err := testengine.PlanSuite(ctx, in)
+	layout, plan, err := testengine.PlanSuiteLayout(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -98,20 +98,13 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	if plan.Nodes.BP < 1 || total < 1 || total > 128 {
 		return nil, errors.New("test layout must have producers and at most 128 nodes")
 	}
-	run.Plan = plan
-	requests := make([]resource.Request, 0, total)
-	// The composer places count layouts in this order. Explicit node tables are
-	// held for the later asset/table contract rather than approximated by counts.
-	for _, role := range []struct {
-		role  node.Role
-		count int
-	}{{node.RoleBP, plan.Nodes.BP}, {node.RoleEN, plan.Nodes.EN}, {node.RolePN, plan.Nodes.PN}} {
-		for range role.count {
-			requests = append(requests, resource.Request{Role: role.role})
-		}
+	if err = validateWebTableInputs(layout); err != nil {
+		return nil, err
 	}
+	run.Plan = plan
+	run.Requests = webPresetRequests(layout)
 	p.Arguments.Validators = plan.Nodes.BP
-	return requests, nil
+	return run.Requests, nil
 }
 
 func validateWebTestInputs(spec dsl.Spec) error {
@@ -120,9 +113,6 @@ func validateWebTestInputs(spec dsl.Spec) error {
 	}
 	if spec.Chain.ManifestPath != "" || spec.Chain.TemplatePath != "" || spec.Chain.GenesisExisting != "" || spec.Chain.Config != "" || spec.EnvBlueprint != "" || len(spec.Chain.GenesisPerBinary) > 0 || spec.EnvUpgrade != nil {
 		return errors.New("test file references and mixed-binary upgrades require registered immutable assets")
-	}
-	if _, table := spec.Topology["nodes"]; table {
-		return errors.New("node-table execution requires resolved per-node resource and asset claims")
 	}
 	if spec.EnvKeys != nil && (spec.EnvKeys.Source != "" && spec.EnvKeys.Source != "keyPreset" || spec.EnvKeys.Ref != "" && spec.EnvKeys.Ref != "presets/keys") {
 		return errors.New("this test adapter uses the reviewed key preset; other key sources require their own pinned contract")
@@ -252,12 +242,20 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		// Replan inside the private input tree, without mutating retained nodes.
 		planning := in
 		planning.DataDir = filepath.Join(p.TestRun.InputDir, "planning")
-		current, err := testengine.PlanSuite(ctx, planning)
+		layout, current, err := testengine.PlanSuiteLayout(ctx, planning)
 		if err != nil {
 			return err
 		}
 		before, _ := json.Marshal(p.TestRun.Plan)
 		after, _ := json.Marshal(normalizedWebTestPlan(current, p.ControlDir))
+		if string(before) != string(after) {
+			return ErrDeploymentConflict
+		}
+		if err = validateWebTableInputs(layout); err != nil {
+			return err
+		}
+		before, _ = json.Marshal(p.TestRun.Requests)
+		after, _ = json.Marshal(webPresetRequests(layout))
 		if string(before) != string(after) {
 			return ErrDeploymentConflict
 		}

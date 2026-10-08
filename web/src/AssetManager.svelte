@@ -36,7 +36,7 @@
   <label class="filter">종류 필터<select aria-label="등록 자료 종류 필터" bind:value={filter}><option value="all">전체</option>{#each Object.entries(names) as [value,name]}<option {value}>{name}</option>{/each}</select></label>
   {#if visible.length===0}<p class="empty">등록된 자료가 없습니다.</p>{:else}
     <div class="table-wrap"><table><thead><tr><th>파일 · 등록 ID</th><th>종류</th><th>크기 · 체크섬</th><th>검증 결과</th></tr></thead><tbody>{#each visible as item}
-      <tr><td>{item.name}<small>{item.id}</small></td><td>{names[item.kind]}</td><td>{(item.bytes/1024/1024).toFixed(2)} MiB<small title={item.checksum}>SHA-256 · {item.checksum.slice(0,16)}</small></td><td>{#if item.kind==='binary'}{item.compatibility.chain}<small>{item.compatibility.os} / {item.compatibility.architecture} · 버전·도움말 검증</small>{:else}{item.compatibility.format}<small>형식 검증 · 실행 연결 준비 중</small>{/if}</td></tr>
+      <tr><td>{item.name}<small>{item.id}</small></td><td>{names[item.kind]}</td><td>{(item.bytes/1024/1024).toFixed(2)} MiB<small title={item.checksum}>SHA-256 · {item.checksum.slice(0,16)}</small></td><td>{#if item.kind==='binary'}{item.compatibility.chain}<small>{item.compatibility.os} / {item.compatibility.architecture} · 버전·도움말 검증</small>{:else}{item.compatibility.format}<small>형식 확인 · 실행 계획에서 용도 검토</small>{/if}</td></tr>
     {/each}</tbody></table></div>
   {/if}
   <p role="status" aria-label="자료 등록 상태">{message}</p>

@@ -250,3 +250,28 @@ changes to either source or snapshot reject execution before network creation.
 This is partial WEB-01/02/06 evidence. Genesis templates, per-binary genesis,
 configuration/material inputs, uploaded key trees and the full acceptance list
 remain open.
+
+
+## Explicit node tables in test jobs
+
+Saved test cases can use explicit `topology.nodes` tables with registered default
+binaries and the reviewed key preset. `PlanSuiteLayout` returns the same resolved
+composition request used by `RunSuite`; the web adapter takes sorted node labels
+and roles directly from that request. It no longer approximates a table by
+producer-first counts. Counts retain their existing placement order. Each review
+shows the node label, role, P2P port and HTTP RPC port from actual allocation.
+
+The private accepted payload records these ordered requests and checks them
+again before native launch. Unsupported node config files, custom keys and named
+binaries still require their own registered contracts and are refused. Existing
+suite validation checks every selected case and its composition before planning.
+
+The owned browser fixture uses unsorted declarations with an archive endpoint at
+index one followed by four producers. All three native chains produce real
+passing engine sessions without skips; fifteen node databases, roles, ports,
+actual PID observations and endpoint chain RPC match review. Explicit owned stop
+jobs precede native `dumpgenesis` reads, which require exclusive database access.
+The initial fixture tried reading an active database; its lock error is not
+product RED evidence. This is partial WEB-05/11 evidence. Complete DSL argument
+coverage, file assets, custom key contracts, mixed binaries and attachments remain
+open.

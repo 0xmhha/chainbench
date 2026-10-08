@@ -177,12 +177,8 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	if plan.Nodes.AutoSize || plan.Nodes.BP < 1 || total < 1 || total > 128 {
 		return out, errors.New("preset layout must resolve between one and 128 nodes with producers")
 	}
-	if request.Topology != nil {
-		for _, n := range request.Topology.Nodes {
-			if n.Config != "" || n.Key != "" || n.Binary != "" && n.Binary != dsl.BinaryDefault {
-				return out, errors.New("per-node files, keys and named binaries require registered immutable assets")
-			}
-		}
+	if err = validateWebTableInputs(request); err != nil {
+		return out, err
 	}
 	request.DataDir = p.ControlDir
 	plan.Workspace = p.ControlDir
@@ -190,6 +186,17 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 		return out, err
 	}
 	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis}, nil
+}
+
+func validateWebTableInputs(in ChainUpIn) error {
+	if in.Topology != nil {
+		for _, n := range in.Topology.Nodes {
+			if n.Config != "" || n.Key != "" || n.Binary != "" && n.Binary != dsl.BinaryDefault {
+				return errors.New("per-node files, keys and named binaries require registered immutable assets")
+			}
+		}
+	}
+	return nil
 }
 
 func webPresetRequests(in ChainUpIn) []resource.Request {

@@ -118,3 +118,17 @@ endpoint must actually start, serve its chain ID over RPC, pass process observat
 and stop explicitly. Bounded requests use an available local address. Results are
 in `chainbench-out/web-ui-development/preset-jobs/receipt.json` and do not award
 full WEB-01/02 acceptance or every option/asset scenario.
+
+
+The owned browser helper disposes request contexts and disconnects the client,
+terminates its exact Chrome process, and closes its dedicated WebSocket listener.
+After its exact Chrome process exits, the helper also destroys its own stdio
+pipe ends: detached crashpad/updater descendants may inherit stderr and delay
+ChildProcess.close. Existing updater/browser processes are never terminated.
+The listener cleanup uses the testing hook in the pinned Playwright 1.58.2
+implementation; it is confined to test tooling. Run `browser_shutdown.mjs` through
+`browser_process.run_browser(..., timeout=30)` to verify actual SSE/request socket
+teardown and process exit without affecting an existing browser. The
+`--stalled-close` variant kills only its owned Chrome process group and withholds
+the client close acknowledgement, proving that teardown remains bounded. Native fixture
+shutdown or database-lock mistakes are not product RED evidence.

@@ -331,6 +331,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if p.TestRun != nil {
 		out.Changes = append(out.Changes, p.TestRun.Plan.String())
+		for _, n := range placement.Placements() {
+			out.Changes = append(out.Changes, fmt.Sprintf("Test placement %s=%s · P2P %d · RPC %d", n.Label, n.Role, n.Ports.P2P, n.Ports.HTTP))
+		}
 		for _, c := range p.TestRun.Cases {
 			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
 		}

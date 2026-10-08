@@ -7,13 +7,34 @@ export async function launchOwnedBrowser() {
   try {
     const browser = await chromium.connect(server.wsEndpoint())
     return { browser, stop: async () => {
-      // BrowserServer runs request agents in this Node process. Dispose them
-      // before dropping the remote connection so their sockets cannot outlive it.
+      // A dead Chrome can leave its client close acknowledgement pending.
+      // Bound graceful disposal; the exact process and listener still terminate.
+      async function settle(promise) {
+        let timer
+        try {
+          await Promise.race([promise.catch(() => {}), new Promise(resolve => { timer=setTimeout(resolve,2000) })])
+        } finally { clearTimeout(timer) }
+      }
       try {
-        await Promise.all(browser.contexts().map(context => context.request.dispose()))
-        await browser.close()
+        await settle(Promise.all(browser.contexts().map(context => context.request.dispose())))
+        await settle(browser.close())
+        // Only pinned Playwright test tooling uses this listener cleanup hook.
+        await server._disconnectForTest()
       } finally {
-        await server.kill()
+        const child=server.process()
+        const killed=server.kill()
+        let timer, exited
+        try {
+          await new Promise((resolve,reject) => {
+            if(child.exitCode!==null||child.signalCode!==null) return resolve()
+            exited=resolve; child.once('exit',exited)
+            timer=setTimeout(()=>reject(new Error('owned Chrome did not exit')),5000)
+          })
+        } finally { clearTimeout(timer); if(exited) child.removeListener('exit',exited) }
+        // Chrome's detached updater/crashpad can inherit stderr. Only close
+        // this fixture's pipe ends after its exact Chrome process has exited.
+        for(const stream of child.stdio) stream?.destroy?.()
+        await killed
       }
     }, process: server.process() }
   } catch (error) {
