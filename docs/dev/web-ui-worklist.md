@@ -68,6 +68,7 @@
 | WEB-09 인수 runner | `verify.sh --criterion WEB-09`가 히스토리 검색·필터·상세·호환 비교·불가 사유·안전 export·재시작 보관·관리자 전용 삭제·진행 중/공유/노드 보호·부분 삭제 실패·실행 archive를 같은 invocation의 native 증명으로 묶음 | RED: `chainbench-web-web09-runner-red.log`에서 이전 `verify.sh`가 WEB-09를 지원하지 않았다. WEB-08과 WEB-09 runner는 공통 `proof_acceptance.py`를 쓴다. 완료 기준은 고정 소스 capture와 독립 재현 통과이며, 판정은 WEB-14 종합 때 한다. |
 | attach 네트워크의 화면 거절 설명 | attach 구성 Workspace를 고르면 작업 화면이 거절 이유를 보여 주고 계획을 막음; 서버 거절은 그대로 | RED: `chainbench-web-cancel-retention-try4.log`에서 화면은 이유 없는 422만 보였다. 보안 계층이 모든 오류 본문을 일반 문구로 바꾸는 기존 정책 때문이며, 이 정책과 WEB-02의 구체적 필드 오류 요구의 관계는 별도 결정이 필요하다. |
 | WEB-13 인수 runner | 정상 종료·사용자 취소 × 유지/정리(로컬·SSH), 실행자·관리자 취소, 정리 실패 보고와 재시도, 계정·자격증명 철회의 보존과 접근 차단, attach 보호를 같은 invocation의 native 증명으로 묶음 | RED: `chainbench-web-web13-runner-red.log`에서 이전 `verify.sh`가 WEB-13을 지원하지 않았다. 새 증명은 `run_cancel_retention.py`, `run_ssh_cleanup.py`이며 철회는 `run_ssh_transfer_faults.py`(credential-revoke, `WEBUI_REPLACEMENT_BINARY` 필요)를 다시 실행한다. 판정은 WEB-14 종합 때 한다. |
+| WEB-07 인수 runner | 세 체인 기록 노드 제어(시작/정지·설정 교체·재실행·비생산자 초기화·생산자 거절), 로컬·SSH native 바이너리 교체·되돌리기, attach 제어 거절을 같은 invocation의 native 증명으로 묶고 기존 chainsetup/process/nodeconfig 테스트로 CLI 의미 보존을 확인 | RED: `chainbench-web-web07-runner-red.log`에서 이전 `verify.sh`가 WEB-07을 지원하지 않았다. `WEBUI_REPLACEMENT_BINARY`가 필요하다. 판정은 WEB-14 종합 때 한다. |
 | 자원 대조·취소·철회 | 잔존 노드 실제 확인·충돌·재시작·정리·실행 중 SSH 실패/철회 | 미완료: WEB-06/11/12/13 |
 | metric·로그·히스토리 | 실제 수집·차트·시점 연계·archive·호환 비교·보호된 삭제 | 미완료: WEB-08/09 |
 | 전체 인수·회귀·PR | 14개 전체 최신 live 검증·필수 회귀·PR 검토 | 미완료: WEB-03/04/10도 최종 소스에서 재검증 |
