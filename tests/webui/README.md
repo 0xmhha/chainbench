@@ -199,3 +199,12 @@ and verifies explicit stop/cleanup/alias release. Public development evidence is
 `chainbench-out/web-ui-development/residual-composition/receipt.json`; it awards no
 full Seed criterion. Unit tests separately reproduce unsafe cleanup and conflicting
 ledger substitution, including execution recheck without changing record bytes.
+
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_ledger_controls.py`
+checks real WBFT start/stop refusal when its recorded PID and process ledger differ.
+It checks read-only observation, unavailable UI selection and unchanged records,
+restores only the owned fixture ledger, and repeats explicit stop/cleanup. Evidence:
+`chainbench-out/web-ui-development/ledger-controls/receipt.json`. No full acceptance
+criterion is awarded. The unit execution test uses two isolated process groups and
+proves that core cannot substitute an unchecked ledger PID for the verified process.

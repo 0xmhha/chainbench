@@ -1,0 +1,124 @@
+import {launchOwnedBrowser} from './owned-browser.mjs'
+import fs from 'node:fs'
+import assert from 'node:assert/strict'
+import {spawn} from 'node:child_process'
+const [fixturePath,out]=process.argv.slice(2), f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
+const owned=await launchOwnedBrowser(), browser=owned.browser
+const context=await browser.newContext(), jobs=[]
+let session
+async function api(path,method='GET',data,key,expected=200){
+  const r=await context.request.fetch(f.url+'/api/v1/'+path,{method,headers:{'Content-Type':'application/json',...(session?{'X-CSRF-Token':session.csrfToken}:{}),...(key?{'Idempotency-Key':key}:{})},data:data===undefined?undefined:JSON.stringify(data)})
+  const text=await r.text();assert.equal(r.status(),expected,`${method} ${path}: ${text}`)
+  assert.ok(!text.includes(f.password)&&!text.includes(f.setupToken),'bootstrap secret leaked')
+  return text?JSON.parse(text):undefined
+}
+async function waitJob(id){
+  for(let i=0;i<600;i++){
+    const job=await api('jobs/'+id)
+    if(['succeeded','failed','cancelled','interrupted'].includes(job.state)){assert.equal(job.state,'succeeded',JSON.stringify(job));jobs.push(job);return job}
+    await new Promise(r=>setTimeout(r,200))
+  }
+  throw new Error('owned resource job timed out')
+}
+function planInput(w,operation='chain.setup',retention='retain'){
+  return {workspaceId:w.id,operation,retention,documentRefs:w.documents,assetRefs:['wbft'],...(operation.startsWith('node.')?{nodeIds:['node1']}:{}),arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',validators:4}}
+}
+async function start(w,operation,retention){
+ const plan=await api('plans','POST',planInput(w,operation,retention),undefined,201)
+ return waitJob((await api('jobs','POST',{planId:plan.id},plan.id,202)).id)
+}
+try{
+ session=await api('bootstrap','POST',{username:'residual-admin',password:f.password,setupToken:f.setupToken},undefined,201)
+ const set=await api('documents','POST',{kind:'server-set',name:'physical fixture ports',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:39000,step:10},rpc:{base:11600,step:10}}}}},undefined,201)
+ const config=await api('documents','POST',{kind:'workspace-config',name:'owned fixture path',contractVersion:'2',assetRefs:[],content:{version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}},undefined,201)
+ const refs=[{id:set.id,revision:set.revision},{id:config.id,revision:config.revision}]
+ const owner=await api('workspaces','POST',{name:'owned workspace',documents:refs},undefined,201)
+ const alias=await api('workspaces','POST',{name:'different physical alias',documents:refs},undefined,201)
+ const retained=await start(owner,'chain.setup','retain');assert.equal(retained.nodeDisposition,'retained')
+ const before=await api('networks');assert.equal(before.items.length,1);assert.equal(before.items[0].workspaceId,owner.id)
+ const nodePaths=before.items[0].nodes.map(n=>n.dataPath);assert.equal(nodePaths.length,4)
+ for(const dataPath of nodePaths){assert.ok(dataPath.startsWith(f.runtime+'/d/'));assert.ok(fs.existsSync(dataPath),'native setup did not create '+dataPath)}
+ const conflicting=await api('plans','POST',planInput(alias),undefined,201)
+ const conflicts=await api('plans/'+conflicting.id+'/conflicts')
+ assert.equal(conflicts.items.length,1);assert.equal(conflicts.items[0].jobId,retained.id);assert.equal(conflicts.items[0].workspaceId,owner.id);assert.equal(conflicts.items[0].actorId,retained.actorId)
+ const page=await context.newPage();await page.goto(f.url+'/chains')
+ await page.getByLabel('작업 Workspace',{exact:true}).selectOption(alias.id)
+ await page.getByLabel('작업 매니페스트',{exact:true}).selectOption('wbft')
+ await page.getByLabel('작업 바이너리',{exact:true}).selectOption('wbft')
+ await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
+ await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
+ const conflictPanel=page.getByLabel('자원 충돌',{exact:true});await conflictPanel.waitFor({timeout:10000})
+ const conflictText=await conflictPanel.innerText();assert.ok(conflictText.includes(retained.id)&&conflictText.includes(owner.id)&&conflictText.includes(retained.actorId),'UI omitted conflict owner metadata')
+ assert.ok(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).isDisabled(),'UI offered conflicting execution')
+ await page.screenshot({path:out+'/resource-conflict.png',fullPage:true})
+ await api('jobs','POST',{planId:conflicting.id},conflicting.id,409)
+ assert.equal((await api('jobs')).items.length,1,'alias accepted after retained completion')
+ assert.equal((await api('networks')).items[0].workspaceId,owner.id,'conflicting alias changed ownership')
+ await start(owner,'node.start','retain')
+ const observed=await api('networks/'+owner.id+'/observations')
+ const liveNode=observed.nodes.find(n=>n.id==='node1');assert.equal(liveNode.state,'running');assert.ok(liveNode.observedPid>0);assert.ok(liveNode.supportedControls.includes('node.stop'))
+ const observerPage=await context.newPage();await observerPage.goto(f.url+'/chains')
+ await observerPage.getByLabel('작업 Workspace',{exact:true}).selectOption(owner.id)
+ await observerPage.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+ await observerPage.getByLabel('노드 실제 관측',{exact:true}).waitFor()
+ assert.ok((await observerPage.getByLabel('노드 실제 관측',{exact:true}).innerText()).includes('가동 중'))
+ await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/node-observation.png'})
+ const recordPath=f.store+'/networks/'+owner.id+'/chain-record.json', originalRecord=fs.readFileSync(recordPath)
+ const lost=JSON.parse(originalRecord);lost.nodes.find(n=>n.index===1).pid=0
+ const lostBytes=JSON.stringify(lost)
+ try{
+  fs.writeFileSync(recordPath,lostBytes)
+  await api('plans','POST',planInput(owner,'node.start'),undefined,409)
+  await api('plans','POST',planInput(owner,'node.stop'),undefined,409)
+  const residual=await api('networks/'+owner.id+'/observations'),node=residual.nodes.find(n=>n.id==='node1')
+  assert.equal(node.state,'unrecorded_running');assert.equal(node.observedPid,liveNode.observedPid);assert.equal(node.pid,0);assert.equal(node.supportedControls.length,0)
+  await observerPage.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+  await observerPage.getByText('node1 · 기록되지 않은 실행 발견',{exact:true}).waitFor()
+  await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/unrecorded-observation.png'})
+  assert.equal(fs.readFileSync(recordPath,'utf8'),lostBytes,'read-only discovery adopted a process')
+  const cached=(await api('networks')).items.find(n=>n.id===owner.id).nodes.find(n=>n.id==='node1')
+  assert.equal(cached.state,'unknown','cached PID-zero record falsely claims stopped')
+ }finally{fs.writeFileSync(recordPath,originalRecord)}
+ const foreign=spawn('/bin/sleep',['30'],{stdio:'ignore'})
+ const ledgerPath=f.store+'/networks/'+owner.id+'/process.json',originalLedger=fs.readFileSync(ledgerPath)
+ try{
+  const conflictingLedger=JSON.parse(originalLedger);conflictingLedger.procs.find(p=>p.Label==='node1').PID=foreign.pid
+  const ledgerBytes=JSON.stringify(conflictingLedger);fs.writeFileSync(ledgerPath,ledgerBytes)
+  for(const operation of ['node.start','node.stop'])await api('plans','POST',planInput(owner,operation),undefined,409)
+  const guarded=await api('networks/'+owner.id+'/observations'),guardedNode=guarded.nodes.find(n=>n.id==='node1')
+  assert.equal(guardedNode.state,'ownership_mismatch');assert.equal(guardedNode.observationReason,'ledger_mismatch');assert.equal(guardedNode.supportedControls.length,0)
+  await observerPage.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+  await observerPage.getByText('실행 기록과 프로세스 기록의 PID 또는 소유 범위가 다름',{exact:true}).first().waitFor()
+  await observerPage.getByLabel('작업 종류',{exact:true}).selectOption('node.stop')
+  assert.equal(await observerPage.getByLabel('작업 노드',{exact:true}).locator('option[value="node1"]').count(),0,'UI offers control for a conflicting ledger')
+  await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/ledger-observation.png'})
+
+  assert.equal(fs.readFileSync(recordPath).compare(originalRecord),0,'ledger refusal changed record')
+  assert.equal(fs.readFileSync(ledgerPath,'utf8'),ledgerBytes,'ledger refusal silently repaired identities')
+  assert.equal(foreign.exitCode,null,'ledger mismatch stopped foreign process')
+ }finally{fs.writeFileSync(ledgerPath,originalLedger)}
+ try{
+  const changed=JSON.parse(originalRecord);changed.nodes.find(n=>n.index===1).pid=foreign.pid;fs.writeFileSync(recordPath,JSON.stringify(changed))
+  const mismatch=await api('networks/'+owner.id+'/observations')
+  const changedNode=mismatch.nodes.find(n=>n.id==='node1');assert.equal(changedNode.state,'ownership_mismatch');assert.equal(changedNode.supportedControls.length,0)
+  await api('plans','POST',planInput(owner,'node.stop'),undefined,409)
+  assert.equal(foreign.exitCode,null,'unowned process was stopped')
+ }finally{fs.writeFileSync(recordPath,originalRecord);foreign.kill()}
+ await start(owner,'node.stop','retain')
+ const cleaned=await start(owner,'chain.setup','cleanup');assert.equal(cleaned.nodeDisposition,'cleaned')
+ assert.equal((await api('networks')).items.find(n=>n.workspaceId===owner.id).nodes.length,0,'cleanup left owned nodes')
+ const controlDir=f.store+'/networks/'+owner.id
+ const removed=JSON.parse(fs.readFileSync(controlDir+'/chain-record.json','utf8'))
+ assert.equal(removed.statePath,'CHAIN/CHAIN_REMOVED');assert.ok(removed.steps.rm.done);assert.equal((removed.nodes||[]).length,0)
+ for(const dataPath of nodePaths)assert.ok(!fs.existsSync(dataPath),'cleaned node data survives on disk: '+dataPath)
+ // The pre-existing alias plan stays valid because cleanup is not a document edit.
+ assert.equal((await api('plans/'+conflicting.id+'/conflicts')).items.length,0,'cleanup did not clear conflict review')
+ await page.getByRole('button',{name:'충돌 다시 확인',exact:true}).click()
+ await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='검토한 계획 실행'&&!b.disabled))
+ assert.ok(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).isEnabled(),'UI kept stale conflict after cleanup')
+ const acceptedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
+ await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+ const accepted=await acceptedResponse;assert.equal(accepted.status(),202);await waitJob((await accepted.json()).id)
+ const after=await api('networks');assert.equal(after.items.filter(n=>n.nodes.length).length,1);assert.equal(after.items.find(n=>n.nodes.length).workspaceId,alias.id)
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:browser.version(),jobs,retainedAliasRejected:true,ownerControlAllowed:true,actualCleanupReleasedAlias:true,conflictOwnerVisible:true,uiBlockedUntilCleanup:true,recordedProcessObserved:true,unrecordedStartStopRefused:true,ledgerPIDSubstitutionRefused:true,residualProcessObservedWithoutAdoption:true,zeroPIDNotAssumedStopped:true,reusedPidControlRejected:true,seedAcceptanceAwarded:false},null,2))
+}finally{await owned.stop()}

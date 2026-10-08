@@ -325,6 +325,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			if err = webSelectedNode(state, in.NodeIDs); err != nil {
 				return out, err
 			}
+			if err = verifyWebRecordLedger(state, p.ControlDir); err != nil {
+				return out, err
+			}
 			if in.Operation == "node.reset" {
 				if err = verifyWebResetInputs(ctx, state, p, lookup); err != nil {
 					return out, err

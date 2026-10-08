@@ -2305,7 +2305,7 @@ components:
           minimum: 0
         observationReason:
           type: string
-          enum: [probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+          enum: [ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
         state:
           type: string
           enum:

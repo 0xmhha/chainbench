@@ -62,6 +62,9 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if err = webSelectedNode(state, p.Input.NodeIDs); err != nil {
 				return err
 			}
+			if err = verifyWebRecordLedger(state, p.ControlDir); err != nil {
+				return err
+			}
 			index := 0
 			for _, ns := range state.Nodes {
 				if string(ns.NodeLabel()) == p.Input.NodeIDs[0] {

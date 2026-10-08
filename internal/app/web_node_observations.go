@@ -44,6 +44,7 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	for _, ns := range state.Nodes {
 		network.Nodes = append(network.Nodes, WebNode{ID: string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()})
 	}
+	ledgerMatches := verifyWebRecordLedger(state, dir) == nil
 	var declaration DeploymentDocument
 	for _, ref := range workspace.Documents {
 		d, err := e.documents.DocumentRevision(ref.ID, ref.Revision)
@@ -84,6 +85,9 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		observed := observeWebNodeProcess(ctx, observer, binary, ns)
 		if ns.PID == 0 {
 			observed = observeWebNodeVacancy(ctx, observer, binary, ns)
+		}
+		if !ledgerMatches && observed.State != "unrecorded_running" {
+			observed.State, observed.Reason = "ownership_mismatch", "ledger_mismatch"
 		}
 		network.Nodes[i].State = observed.State
 		network.Nodes[i].ObservedPID = observed.PID

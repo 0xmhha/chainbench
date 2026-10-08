@@ -512,3 +512,21 @@ PID from both records while leaving its actual process alive; setup/deploy plans
 both retention policies are refused, records stay unchanged, and restored explicit
 stop/cleanup still releases the alias. Full recovery and mixed-binary reconciliation
 remain open.
+
+
+## Individual control ledger agreement
+
+Preparing and executing start/stop/reset now require agreement between the checked
+composition record and every current ledger entry before core Open can substitute
+its PID. Disagreement never repairs or adopts identities. Live observation still
+reports an exact unrecorded running process; other observations with a conflicting
+ledger become ownership_mismatch with ledger_mismatch and no controls. The execution
+form uses an explicit observation's allowed operations, so background cached refresh
+cannot restore choices denied by that observation. A fresh observation can clear the
+restriction after deliberate external reconciliation. Full reconciliation is pending.
+
+The native ledger fixture keeps the WBFT record intact, replaces only its ledger PID
+with a dedicated other process, verifies refused start/stop plans and unavailable UI
+selection, then restores only the fixture ledger. Unit execution verifies that neither
+process nor record is altered before the native stop verb. These are partial control
+checks and do not award the complete node-control or recovery acceptance criteria.
