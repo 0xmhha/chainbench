@@ -193,7 +193,7 @@ type SwapNodeOpts struct {
 // command are kept as a ledger revision (recordSwap); the node's per-node
 // binary and config provenance are updated so a later restart uses the swapped
 // ones.
-func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
+func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (detail string, err error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
@@ -216,12 +216,19 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if err != nil {
 		return "", err
 	}
-	// Stop the running process but leave the ledger entry, so the relaunch
-	// supersedes it and keeps the pre-swap pid/command as a revision.
+	// Keep the prior ledger entry until a successful replacement supersedes it.
+	// A failed replacement archives that stopped entry instead of leaving a
+	// stale PID for later controls to target.
 	if ns.PID > 0 {
 		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			return "", fmt.Errorf("chainsetup: swap node%d: stop: %w", index, err)
 		}
+		w.state.Nodes[ni].PID = 0
+		defer func() {
+			if err != nil {
+				w.ledger.Retire(string(ns.NodeLabel()))
+			}
+		}()
 	}
 	if binary != "" {
 		w.setNodeBinary(ni, binary)
@@ -246,7 +253,7 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if err := w.recordSwap(ni, h.PID, spec.Binary); err != nil {
 		return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
 	}
-	detail := fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
+	detail = fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
 	w.markStep("swap-node", detail)
 	return detail, nil
 }

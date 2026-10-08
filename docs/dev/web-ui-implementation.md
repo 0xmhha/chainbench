@@ -571,3 +571,22 @@ browser fixture checks actual restart PID replacement on all three chains,
 rejection of modified config/genesis before effects and after review, preserved
 node data and unchanged sibling PIDs. Its receipt is a partial development proof;
 it never awards the whole WEB-07 criterion.
+
+
+### Replacement failure retains stopped state and execution history
+
+Before exposing browser replacement, the existing `SwapNode` engine must preserve
+what happened when a replacement fails. After a successful stop it now clears the
+selected node's current PID. Successful replacement still supersedes the prior
+ledger entry; failed configuration, initialization or launch archives that stopped
+entry and removes it from the current ledger. A failed stop preserves the current
+PID and never launches or retires anything. Explicit retry continues above retained
+historical revisions instead of starting their numbering over.
+
+Tests exercise saved/reopened composition state, configuration and launch failure,
+stop refusal and explicit retry. A real local-driver test also fails against the previous committed swap engine
+using a read-only Go overlay. The corrected engine stops an isolated owned
+process, refuses a missing replacement executable, and verifies sibling liveness,
+unchanged data and retained execution history. The browser replacement adapter and
+its registered file/option bindings remain unfinished. This foundation does not
+award WEB-07 or replace fresh source-bound browser acceptance evidence.
