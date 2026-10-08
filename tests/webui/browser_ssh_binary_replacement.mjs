@@ -70,8 +70,10 @@ try{
  fs.mkdirSync(target.slice(0,target.lastIndexOf('/')),{recursive:true})
  // This is a loopback SSH fixture: direct writes inject target faults, while
  // production checks, copy, stop, launch and observation use the SSH adapter.
- for(const kind of ['linked-file','occupied-bytes']){
-  if(kind==='linked-file')fs.symlinkSync(f.replacementPath,target);else fs.writeFileSync(target,'wrong deployed bytes',{mode:0o755})
+ for(const kind of ['linked-file','occupied-bytes','not-executable']){
+  if(kind==='linked-file')fs.symlinkSync(f.replacementPath,target)
+  else if(kind==='not-executable'){fs.copyFileSync(f.replacementPath,target);fs.chmodSync(target,0o600)}
+  else fs.writeFileSync(target,'wrong deployed bytes',{mode:0o755})
   try{
    const failed=await run(replacement,'failed');assert.ok(failed.unresolvedResources.includes(target))
    assert.ok(failed.partialEffects.some(v=>v.includes('has not been stopped')))
@@ -139,9 +141,15 @@ try{
  assert.equal(read().nodes.find(n=>n.index===1).pid,restoredNode.pid,'revoked review stopped a retained node')
  const renewed=await api('credentials','POST',{label:'Renewed owned SSH binding',kind:'private-key',sshUser:f.ssh.user,privateKey:key},201)
  await api(`workspaces/${w.id}/credential-bindings`,'PUT',{serverRef:'owned-ssh',credentialId:renewed.id})
- for(const id of ['node1','node2'])await run({...base,credentialBindings:{'owned-ssh':renewed.id},operation:'node.stop',nodeIds:[id]})
+ const currentPath=restored.binaries[restoredNode.binary],beforePermissionStop=fs.readFileSync(recordPath)
+ fs.chmodSync(currentPath,0o600)
+ try{
+  await api('plans','POST',{...base,credentialBindings:{'owned-ssh':renewed.id},operation:'node.restart',nodeIds:['node1']},409)
+  assert.deepEqual(fs.readFileSync(recordPath),beforePermissionStop,'relaunch permission refusal changed node state')
+  for(const id of ['node1','node2'])await run({...base,credentialBindings:{'owned-ssh':renewed.id},operation:'node.stop',nodeIds:[id]})
+ }finally{fs.chmodSync(currentPath,0o755)}
  for(const [path,sha] of preserved)assert.equal(digest(path),sha)
  for(const path of [selectedMarker,siblingMarker])assert.equal(fs.readFileSync(path,'utf8'),'retain SSH native data')
- fs.writeFileSync(out+'/browser.json',JSON.stringify({chain:'wbft',workspaceId:w.id,jobId:replaced.id,candidateSHA256:asset.checksum,privateSSHNativeReplacement:true,remoteRegularFileGuard:true,stagingFailurePreservesProcesses:true,reviewedBindingSupportsLaterRestart:true,registeredRollbackPreservesHistory:true,revokedReviewPreservesRetainedNode:true,configGenesisDataAndSiblingPreserved:true,...(faultResult?{actualTransferFault:f.sshFaultMode,faultJobId:faultResult.id,completedCopyRetained:true,oldProcessesAndRecordRetained:true,explicitRetryWithoutAutomaticResume:true}:{}),seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({chain:'wbft',workspaceId:w.id,jobId:replaced.id,candidateSHA256:asset.checksum,privateSSHNativeReplacement:true,remoteRegularFileGuard:true,nonExecutableReplacementRefusedBeforeStop:true,nonExecutableRelaunchRefusedButExplicitStopAllowed:true,stagingFailurePreservesProcesses:true,reviewedBindingSupportsLaterRestart:true,registeredRollbackPreservesHistory:true,revokedReviewPreservesRetainedNode:true,configGenesisDataAndSiblingPreserved:true,...(faultResult?{actualTransferFault:f.sshFaultMode,faultJobId:faultResult.id,completedCopyRetained:true,oldProcessesAndRecordRetained:true,explicitRetryWithoutAutomaticResume:true}:{}),seedAcceptanceAwarded:false},null,2))
  console.log('SSH REGISTERED REPLACEMENT PASS: real private SSH copy, native launch, refused targets, restart and rollback.')
 }finally{await owned.stop()}

@@ -312,7 +312,7 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, state St
 			return err
 		}
 	}
-	if err = access.VerifyRegularFile(ctx, expected); err != nil {
+	if err = access.VerifyExecutable(ctx, expected); err != nil {
 		return ErrDeploymentConflict
 	}
 	checksum, err := access.Files.Checksum(ctx, expected)

@@ -37,6 +37,11 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 				if err = access.VerifyRegularFile(ctx, binding.Path); err != nil {
 					return "", ErrDeploymentConflict
 				}
+				if webControlNeedsExecutable(p.Input.Operation) {
+					if err = access.VerifyExecutable(ctx, binding.Path); err != nil {
+						return "", ErrDeploymentConflict
+					}
+				}
 				checksum, err := access.Files.Checksum(ctx, binding.Path)
 				if err != nil || checksum != "sha256:"+binding.Evidence.SHA256 {
 					return "", ErrDeploymentConflict
@@ -77,5 +82,19 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 	if checksum != "sha256:"+p.Binary.SHA256 {
 		return "", ErrDeploymentConflict
 	}
+	if webControlNeedsExecutable(p.Input.Operation) && p.CurrentNodeBinary == nil {
+		if err = access.VerifyExecutable(ctx, state.Binary); err != nil {
+			return "", ErrDeploymentConflict
+		}
+	}
 	return state.Binary, nil
+}
+
+func webControlNeedsExecutable(operation string) bool {
+	switch operation {
+	case "node.start", "node.restart", "node.swap", "node.reset":
+		return true
+	default:
+		return false
+	}
 }
