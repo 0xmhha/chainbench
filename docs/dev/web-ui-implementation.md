@@ -623,3 +623,23 @@ choices and tampered review inputs, unchanged genesis/keys/data/sibling PIDs,
 retained ledger history and the next explicit restart. It publishes a source-bound
 partial development receipt, never a whole WEB-07 acceptance award. Fresh final
 source verification remains required after any subsequent source edit.
+
+### Per-node executable binding before control
+
+Verifying the network's base executable does not verify a named executable on
+its selected node. The current adapter has no durable reviewed asset binding for
+those names, so start/stop now refuse that selection before effects rather than
+borrowing the base binary checksum. Other nodes with the reviewed base executable
+remain eligible. Cached and actual observations expose no controls for an
+unbound named executable; actual observations explain the missing binding without
+adopting, rewriting or stopping its process.
+
+RED is reproduced by the native network's start plan returning HTTP 201 for an
+unreviewed alias pointing at identical registered bytes, plus a direct boundary
+test. A read-only overlay of the preceding committed guard exercises the stop
+adapter against an isolated owned real process. GREEN must refuse the request,
+preserve PID/data/records and keep normal controls working on all three chains.
+Logs use `chainbench-web-node-binary-binding-{red,live-red,process-red,unit-green,live-green}.log`.
+This closes a prerequisite only. Registered replacement binary staging, persistent
+per-node asset bindings, mixed-binary control and all WEB-07 acceptance remain
+unfinished.

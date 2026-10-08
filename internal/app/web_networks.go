@@ -67,7 +67,7 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 				controls = append(controls, "node.reset")
 			}
 			state := "unknown"
-			if ns.PID == 0 {
+			if ns.PID == 0 || ns.Binary != "" {
 				controls = []string{}
 			}
 			if target.HostIdentity == "" {

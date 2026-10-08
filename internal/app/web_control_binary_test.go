@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -73,5 +74,27 @@ func TestWebControlBinaryAcceptsOnlyRegisteredOwnedExecutables(t *testing.T) {
 	}
 	if _, err = bindWebControlBinary(context.Background(), state, payload, nil); err == nil {
 		t.Fatal("missing execution binary accepted")
+	}
+}
+
+func TestWebControlBinaryRejectsUnboundSelectedNodeExecutables(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "registered")
+	raw := []byte("registered executable fixture")
+	if err := os.WriteFile(path, raw, 0700); err != nil {
+		t.Fatal(err)
+	}
+	p := webChainPayload{Input: WebPlanInput{NodeIDs: []string{"node1"}}, ExecutionBinary: path, Binary: ManifestBinaryEvidence{Chain: "wbft", SHA256: manifestHash(raw)}}
+	state := State{Binary: path, Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, Label: "node1"}, {Index: 2, Label: "node2"}}, Binaries: map[string]string{"unreviewed": path}}
+	for _, name := range []string{"unreviewed", "missing"} {
+		state.Nodes[0].Binary = name
+		if _, err := bindWebControlBinary(context.Background(), state, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+			t.Fatal("unbound selected executable accepted", name, err)
+		}
+	}
+	state.Nodes[0].Binary = ""
+	state.Nodes[1].Binary = "unreviewed"
+	if got, err := bindWebControlBinary(context.Background(), state, p, nil); err != nil || got != path {
+		t.Fatal("unselected binary prevents controlling the base node", got, err)
 	}
 }

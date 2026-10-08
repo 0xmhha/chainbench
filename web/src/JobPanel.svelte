@@ -8,7 +8,7 @@
   let caseIds=$state([]), observedNetwork=$state(null), presetId=$state('')
   let configContract=$state(null), configOverrides=$state({}), configVersion=0
   const observationNames={running:'가동 중',stopped:'정지 확인',unrecorded_running:'기록되지 않은 실행 발견',missing:'기록된 프로세스 없음',ownership_mismatch:'실행 기록 불일치',unknown:'확인 필요'}
-  const observationReasons={ledger_mismatch:'실행 기록과 프로세스 기록의 PID 또는 소유 범위가 다름',probe_unavailable:'관측할 수 없음',discovery_unavailable:'잔류 프로세스를 확인할 수 없음',no_matching_process:'일치하는 프로세스 없음',unrecorded_pid_found:'실제 PID를 발견했지만 기록에는 반영하지 않음',unrecorded_argv_mismatch:'같은 노드 경로를 사용하는 다른 실행 발견',no_recorded_pid:'기록된 PID 없음',argv_mismatch:'실행 인자가 기록과 다름',recorded_pid_absent:'기록된 프로세스가 없음'}
+  const observationReasons={binary_binding_unavailable:'선택 노드의 별도 실행 파일에 검토된 등록 근거가 없음',ledger_mismatch:'실행 기록과 프로세스 기록의 PID 또는 소유 범위가 다름',probe_unavailable:'관측할 수 없음',discovery_unavailable:'잔류 프로세스를 확인할 수 없음',no_matching_process:'일치하는 프로세스 없음',unrecorded_pid_found:'실제 PID를 발견했지만 기록에는 반영하지 않음',unrecorded_argv_mismatch:'같은 노드 경로를 사용하는 다른 실행 발견',no_recorded_pid:'기록된 PID 없음',argv_mismatch:'실행 인자가 기록과 다름',recorded_pid_absent:'기록된 프로세스가 없음'}
   let conflicts=$state([]), conflictsChecked=$state(false), conflictsAt=$state('')
   let plan=$state(null), busy=$state(false), error=$state(''), loaded=$state(false)
   let catalogLoading=$state(false), catalogMessage=$state(''), loadVersion=0
@@ -27,7 +27,7 @@
   const servers=$derived(documents.find(d=>d.kind==='server-set'&&workspace?.documents.some(r=>r.id===d.id&&r.revision===d.revision))?.content.pool.hosts??[])
   const nodes=$derived(networks.find(n=>n.workspaceId===workspaceId)?.nodes??[])
   const observedNodes=$derived(observedNetwork?.workspaceId===workspaceId?observedNetwork.nodes:null)
-  const controlNodes=$derived((observedNodes??nodes).filter(n=>(!configSwap||observedNodes)&&(!observedNodes||n.supportedControls.includes(operation))&&(operation!=='node.reset'||(['en','pn'].includes(n.role)&&(n.pid>0||observedNodes&&n.state==='stopped')))))
+  const controlNodes=$derived((observedNodes??nodes).filter(n=>(!configSwap||observedNodes)&&n.supportedControls.includes(operation)&&(operation!=='node.reset'||(['en','pn'].includes(n.role)&&(n.pid>0||observedNodes&&n.state==='stopped')))))
   const active=j=>['accepted','running','cancelling'].includes(j.state)
   async function api(path,method='GET',data,key) {
     const headers={'Content-Type':'application/json','X-CSRF-Token':webSession?.csrfToken??''}

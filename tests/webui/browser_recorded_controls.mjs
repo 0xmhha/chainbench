@@ -96,6 +96,15 @@ try{
    try{fs.writeFileSync(recordPath,JSON.stringify(changed));await api('plans','POST',controlInput,undefined,status)}finally{fs.writeFileSync(recordPath,recordBytes)}
    const preserved=await api('networks/'+w.id+'/observations');assert.ok(preserved.nodes.every(n=>n.state==='running'),name+' rejection changed a process')
   }
+  const unbound=structuredClone(record);unbound.nodes.find(n=>n.index===1).binary='unreviewed';unbound.binaries={...unbound.binaries,unreviewed:record.binary}
+  try{
+   fs.writeFileSync(recordPath,JSON.stringify(unbound))
+   await api('plans','POST',{...controlInput,operation:'node.start'},undefined,409)
+   const unboundObservation=await api('networks/'+w.id+'/observations'),unboundNode=unboundObservation.nodes.find(n=>n.id==='node1')
+   assert.equal(unboundNode.state,'ownership_mismatch');assert.equal(unboundNode.observationReason,'binary_binding_unavailable');assert.deepEqual(unboundNode.supportedControls,[])
+   const unboundCached=(await api('networks')).items.find(n=>n.id===w.id).nodes.find(n=>n.id==='node1');assert.deepEqual(unboundCached.supportedControls,[])
+  }finally{fs.writeFileSync(recordPath,recordBytes)}
+  assert.deepEqual(fs.readFileSync(recordPath),recordBytes,'unbound binary rejection changed record')
   const pinnedPlan=await api('plans','POST',controlInput,undefined,201)
   for(const n of record.nodes)assert.ok(pinnedPlan.changes.some(v=>v.includes(`Recorded placement node${n.index}=${n.role}`)&&v.includes(`P2P ${n.p2p}`)&&v.includes(`RPC ${n.http}`)),'review lost owned placement')
   const savedPlan=JSON.parse(fs.readFileSync(f.store+'/jobs.json','utf8')).plans[pinnedPlan.id].prepared.payload
@@ -275,6 +284,6 @@ try{
   verified.push({chain,jobId:job.id,runIds:job.runIds,nodes:record.nodes.map(n=>({index:n.index,role:n.role,p2p:n.p2p,http:n.http,syncMode:n.syncMode})),historyId:h[0].id})
   await page.close()
  }
- fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,explicitNodeRestart:true,modifiedRestartInputsRefused:true,restartPreservesDataAndSiblings:true,structuredNativeConfigReplacement:true,configReplacementPreservesDataAndSiblings:true,configChoicesAndTamperedKeysRefused:true,configArgumentsRetainedOnRestart:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,explicitNodeRestart:true,modifiedRestartInputsRefused:true,restartPreservesDataAndSiblings:true,structuredNativeConfigReplacement:true,configReplacementPreservesDataAndSiblings:true,configChoicesAndTamperedKeysRefused:true,configArgumentsRetainedOnRestart:true,unboundSelectedBinaryRefused:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
  console.log('RECORDED CONTROLS PASS: six-node layouts control five recorded producers without a count override.')
 }finally{await owned.stop()}

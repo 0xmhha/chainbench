@@ -93,7 +93,11 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		network.Nodes[i].ObservedPID = observed.PID
 		network.Nodes[i].ObservationReason = observed.Reason
 		network.Nodes[i].ObservedAt = time.Now().UTC()
-		if observed.State == "running" || observed.State == "stopped" {
+		if ns.Binary != "" && (observed.State == "running" || observed.State == "stopped") {
+			network.Nodes[i].State = "ownership_mismatch"
+			network.Nodes[i].ObservationReason = "binary_binding_unavailable"
+		}
+		if ns.Binary == "" && (observed.State == "running" || observed.State == "stopped") {
 			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop"}
 			if ns.Binary == "" {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.restart")

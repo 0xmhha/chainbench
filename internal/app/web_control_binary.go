@@ -10,9 +10,18 @@ import (
 
 // bindWebControlBinary accepts only the reviewed executable or the engine's
 // native-name test copy. Matching bytes at arbitrary paths are not sufficient.
+// A selected named per-node executable has no reviewed asset binding yet and
+// cannot borrow the base binary verification to authorize start or stop.
 func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
+	}
+	for _, ns := range state.Nodes {
+		for _, id := range p.Input.NodeIDs {
+			if string(ns.NodeLabel()) == id && ns.Binary != "" {
+				return "", ErrDeploymentConflict
+			}
+		}
 	}
 	if state.Binary == "" || len(p.Binary.SHA256) != 64 {
 		return "", ErrDeploymentConflict
