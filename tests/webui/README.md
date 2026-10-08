@@ -177,3 +177,15 @@ The recorded-layout fixture also verifies that test account registration leaves
 the complete accepted key tree unchanged across all three jobs, including the
 minimal files created by the current keyring CLI. The source tree is extended
 before planning; no snapshot integrity check is weakened for derived files.
+
+
+## PID-zero residual process guard
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_unrecorded_controls.py`
+starts an actual owned WBFT process and removes only its recorded PID. Start/stop
+plans must be refused, the live browser must show the discovered residual PID,
+cached records must remain unknown and observation must not adopt or stop it.
+The fixture restores its own record before explicit stop and cleanup/alias checks.
+Results bind source/dashboard digests in
+`chainbench-out/web-ui-development/unrecorded-controls/receipt.json`.
+This does not cover full reconciliation, mixed binaries or PID-zero reset.

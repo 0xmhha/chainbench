@@ -60,7 +60,9 @@ try{
   await api(`workspaces/${w.id}/credential-bindings`,'PUT',{serverRef:'owned-ssh',credentialId:credential.id})
   const network=(await api('networks')).items.find(n=>n.workspaceId===w.id)
   assert.equal(network.nodes.length,4)
-  assert.ok(network.nodes.every(n=>n.hostIdentity.startsWith('machine-sha256:')&&n.supportedControls.includes('node.start')))
+  assert.ok(network.nodes.every(n=>n.hostIdentity.startsWith('machine-sha256:')&&n.state==='unknown'&&n.supportedControls.length===0),'cached zero PID claims node vacancy')
+  const vacant=await api('networks/'+w.id+'/observations')
+  assert.ok(vacant.nodes.every(n=>n.state==='stopped'&&n.supportedControls.includes('node.start')),'actual SSH discovery cannot establish vacancy')
   const input={workspaceId:w.id,documentRefs:w.documents,assetRefs:['wbft'],credentialBindings:{'owned-ssh':credential.id},nodeIds:['node1'],retention:'retain',arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'owned-ssh',validators:4}}
   for(const operation of ['node.start','node.stop']){
     const plan=await api('plans','POST',{...input,operation},201)

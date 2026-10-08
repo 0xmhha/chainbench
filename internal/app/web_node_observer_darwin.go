@@ -20,6 +20,9 @@ func webObserverFor(access *resource.Access, target resource.Inspection) webProc
 		return webDarwinObserver{commander}
 	}
 	observer, _ := access.Driver.(webProcessObserver)
+	if commander, ok := access.Driver.(process.Commander); ok && observer != nil {
+		return webDiscoveringObserver{webProcessObserver: observer, commander: commander}
+	}
 	return observer
 }
 

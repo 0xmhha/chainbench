@@ -66,25 +66,30 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	if actual != target {
 		return network, nil
 	}
-	access, err := opener.Open(state.Target)
-	if err != nil {
-		return network, nil
-	}
-	observer := webObserverFor(access, actual)
-	if observer == nil {
-		return network, nil
-	}
 	for i, ns := range state.Nodes {
+		spec := webNodeTarget(state, ns)
+		machine, err := opener.Inspect(ctx, spec)
+		if err != nil || machine != target {
+			continue
+		}
+		access, err := opener.Open(spec)
+		if err != nil {
+			continue
+		}
+		observer := webObserverFor(access, machine)
 		binary := state.Binary
 		if ns.Binary != "" {
 			binary = state.Binaries[ns.Binary]
 		}
 		observed := observeWebNodeProcess(ctx, observer, binary, ns)
+		if ns.PID == 0 {
+			observed = observeWebNodeVacancy(ctx, observer, binary, ns)
+		}
 		network.Nodes[i].State = observed.State
 		network.Nodes[i].ObservedPID = observed.PID
 		network.Nodes[i].ObservationReason = observed.Reason
 		network.Nodes[i].ObservedAt = time.Now().UTC()
-		if observed.State == "running" || ns.PID == 0 {
+		if observed.State == "running" || observed.State == "stopped" {
 			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop"}
 			if observed.State == "running" && (ns.Role == "en" || ns.Role == "pn") {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.reset")

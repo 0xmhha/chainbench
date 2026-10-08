@@ -104,7 +104,7 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		return ErrDeploymentConflict
 	}
 	for _, ns := range state.Nodes {
-		if string(ns.NodeLabel()) != selected[0] || ns.PID == 0 {
+		if string(ns.NodeLabel()) != selected[0] {
 			continue
 		}
 		spec := webNodeTarget(state, ns)
@@ -130,6 +130,12 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		binary := state.Binary
 		if ns.Binary != "" {
 			binary = state.Binaries[ns.Binary]
+		}
+		if ns.PID == 0 {
+			if observeWebNodeVacancy(ctx, observer, binary, ns).State != "stopped" {
+				return ErrDeploymentConflict
+			}
+			continue
 		}
 		if observeWebNodeProcess(ctx, observer, binary, ns).State != "running" {
 			return ErrDeploymentConflict

@@ -471,3 +471,24 @@ composition's own session keyring remains separate. CLI callers retain their
 existing default persistent registration. Unit construction verifies repeatable
 input bytes and usable signing identities; each native case compares the complete
 accepted key tree to the source before and after execution.
+
+
+## PID-zero process discovery
+
+Cached network records no longer label PID-zero nodes as stopped. Live observation
+and start/stop review use the actual per-node machine and a readable process table
+with complete candidate argv. An exact residual launch is `unrecorded_running`
+with the observed PID and no controls; a different launch using the same node paths
+is an ownership mismatch. Unreadable argv, SSH/table errors or a changed candidate
+set leave the node unknown. An empty, stable candidate set permits the existing
+start/stop operation; execution repeats this check immediately before its verb.
+No lookup rewrites the record or adopts discovered processes. UI labels distinguish
+confirmed vacancy, a missing recorded PID and an unrecorded running process.
+
+Discovery considers the reviewed executable's process name and then checks actual
+executable paths and arguments. This is a guard for the currently supported owned
+single-binary layouts, not full mixed-binary/port/resource reconciliation. PID-zero
+reset is still refused and an explicit reconciliation workflow remains open.
+`run_unrecorded_controls.py` starts a real owned WBFT node, removes only its recorded
+PID, observes it through Chrome, verifies rejected controls and unchanged records,
+restores that fixture record, and repeats explicit stop/cleanup/alias release.

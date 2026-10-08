@@ -65,7 +65,7 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			}
 			state := "unknown"
 			if ns.PID == 0 {
-				state = "stopped"
+				controls = []string{}
 			}
 			if target.HostIdentity == "" {
 				controls = []string{}

@@ -122,3 +122,21 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 		t.Fatal("rejected control mutated the record", err)
 	}
 }
+
+func TestWebControlRefusesUnrecordedLiveProcess(t *testing.T) {
+	child := exec.Command("/bin/sleep", "30")
+	if err := child.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = child.Process.Kill(); _ = child.Wait() }()
+	state, _ := webOwnedControlFixture(t)
+	state.Binary = "/bin/sleep"
+	state.Nodes[0].PID = 0
+	state.Nodes[0].Args = []string{"30"}
+	if err := verifyWebNodeProcesses(context.Background(), state, []string{"node1"}, nil); !errors.Is(err, ErrDeploymentConflict) {
+		t.Fatalf("PID-zero record allowed control over a live process: %v", err)
+	}
+	if state.Nodes[0].PID != 0 || !process.Alive(child.Process.Pid) {
+		t.Fatal("read-only discovery adopted or stopped a process")
+	}
+}

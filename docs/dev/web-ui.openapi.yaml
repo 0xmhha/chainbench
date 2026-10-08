@@ -2305,7 +2305,7 @@ components:
           minimum: 0
         observationReason:
           type: string
-          enum: [probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent]
+          enum: [probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
         state:
           type: string
           enum:
@@ -2316,6 +2316,7 @@ components:
           - unknown
           - missing
           - ownership_mismatch
+          - unrecorded_running
         supportedControls:
           type: array
           items: *id001
