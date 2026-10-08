@@ -2,6 +2,7 @@ import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
+import {execFileSync} from 'node:child_process'
 const [fixturePath,out]=process.argv.slice(2),f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const key=fs.readFileSync(f.runtime+'/ssh/client','utf8')
 const owned=await launchOwnedBrowser(),context=await owned.browser.newContext({viewport:{width:1440,height:1100}})
@@ -28,6 +29,22 @@ async function genesisHash(){
  }
  throw new Error('SSH native node did not serve genesis RPC')
 }
+function gatedConnectionAncestors(){
+ const pid=Number(fs.readFileSync(f.runtime+'/ssh/gate-copied','utf8').trim().split(/\s+/)[0])
+ assert.ok(Number.isSafeInteger(pid)&&pid>1)
+ assert.ok(execFileSync('ps',['-p',String(pid),'-o','command='],{encoding:'utf8'}).includes(f.sshGatePath),'gate process is outside this fixture')
+ const ancestors=[];let current=pid
+ for(let i=0;i<16;i++){
+  const text=execFileSync('ps',['-p',String(current),'-o','ppid=','-o','comm='],{encoding:'utf8'}).trim(),match=/^(\d+)\s+(.+)$/.exec(text)
+  assert.ok(match,'owned SSH ancestry unavailable');ancestors.push({pid:current,parent:Number(match[1]),command:match[2]})
+  if(current===f.ssh.pid)break
+  current=Number(match[1]);assert.ok(current>1,'gated command does not descend from the fixture SSH daemon')
+ }
+ assert.equal(ancestors.at(-1).pid,f.ssh.pid)
+ assert.ok(execFileSync('ps',['-p',String(f.ssh.pid),'-o','command='],{encoding:'utf8'}).includes(f.runtime+'/ssh/sshd_config'),'SSH root belongs to another task')
+ return ancestors
+}
+const acceptedSSHConnections=()=>[...fs.readFileSync(f.runtime+'/ssh/sshd.log','utf8').matchAll(/Accepted publickey /g)].length
 try{
  session=await api('bootstrap','POST',{username:'ssh-binary-admin',password:f.password,setupToken:f.setupToken},201)
  const set=await api('documents','POST',{kind:'server-set',name:'SSH replacement pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'owned-ssh',addr:'localhost.'}],slots:4,ports:{p2p:{base:35500,step:10},rpc:{base:10800,step:10}}},ssh:{port:f.ssh.port,known_hosts_file:f.knownHosts}}},201)
@@ -70,7 +87,39 @@ try{
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();const planned=await planResponse;assert.equal(planned.status(),201,await planned.text())
  await page.getByLabel('실행 계획',{exact:true}).waitFor();await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/ssh-binary-plan.png'})
  const jobResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click();const accepted=await jobResponse;assert.equal(accepted.status(),202,await accepted.text());const replaced=await waitJob((await accepted.json()).id)
+ await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click();const accepted=await jobResponse;assert.equal(accepted.status(),202,await accepted.text());const acceptedJob=await accepted.json()
+ let replaced,faultResult
+ if(f.sshFaultMode){
+  for(let i=0;i<250&&!fs.existsSync(f.runtime+'/ssh/gate-copied');i++)await new Promise(r=>setTimeout(r,100))
+  assert.ok(fs.existsSync(f.runtime+'/ssh/gate-copied'),'real SSH copy did not reach its owned response gate')
+  assert.equal(digest(target),asset.checksum,'fault was injected before actual binary copy')
+  assert.deepEqual(fs.readFileSync(recordPath),recordBytes,'paused transfer already changed node state')
+  assert.equal((await api('jobs/'+acceptedJob.id)).state,'running')
+  const connections=acceptedSSHConnections()
+  if(f.sshFaultMode==='disconnect'){
+   const first=gatedConnectionAncestors();await new Promise(r=>setTimeout(r,100));const second=gatedConnectionAncestors();assert.deepEqual(second,first,'owned SSH connection identity changed')
+   const connection=first.slice(1,-1).find(v=>/(^|\/)sshd(?:-session|-auth)?(?:$|:)/.test(v.command))
+   assert.ok(connection,'no owned SSH connection ancestor; refusing to signal anything')
+   process.kill(connection.pid,'SIGKILL')
+  }else await api('credentials/'+credential.id,'DELETE',undefined,204)
+  faultResult=await waitJob(acceptedJob.id,f.sshFaultMode==='disconnect'?'failed':'cancelled')
+  assert.equal(faultResult.nodeDisposition,'retained');assert.ok(faultResult.unresolvedResources.includes(target))
+  assert.deepEqual(fs.readFileSync(recordPath),recordBytes,'failed transfer stopped a node or rewrote its record')
+  assert.equal(digest(target),asset.checksum,'failure erased a completed copy')
+  assert.ok(!fs.existsSync(f.store+'/networks/'+w.id+'/web-node-binaries.json'),'interrupted copy authorized a node binding')
+  if(f.sshFaultMode==='credential-revoke'){
+   assert.equal(faultResult.cancelReason,'credential_revoked');assert.equal(acceptedSSHConnections(),connections,'revoked job opened another SSH connection')
+   const renewed=await api('credentials','POST',{label:'Explicit renewed SSH fault binding',kind:'private-key',sshUser:f.ssh.user,privateKey:key},201)
+   await api(`workspaces/${w.id}/credential-bindings`,'PUT',{serverRef:'owned-ssh',credentialId:renewed.id})
+   base.credentialBindings['owned-ssh']=renewed.id
+  }
+  fs.writeFileSync(f.runtime+'/ssh/gate-release','release only the owned paused command')
+  const live=await api('networks/'+w.id+'/observations');assert.equal(live.nodes.find(n=>n.id==='node1').observedPid,selected.pid);assert.equal(live.nodes.find(n=>n.id==='node2').observedPid,sibling.pid)
+  for(const [path,sha] of preserved)assert.equal(digest(path),sha)
+  for(const path of [selectedMarker,siblingMarker])assert.equal(fs.readFileSync(path,'utf8'),'retain SSH native data')
+  replaced=await run(replacement);assert.notEqual(replaced.id,acceptedJob.id,'failed execution resumed automatically')
+  assert.deepEqual(await api('jobs/'+acceptedJob.id),faultResult,'explicit retry overwrote the interrupted job')
+ }else replaced=await waitJob(acceptedJob.id)
  const changed=read(),newNode=changed.nodes.find(n=>n.index===1)
  assert.notEqual(newNode.pid,selected.pid);assert.equal(changed.binaries[newNode.binary],target);assert.equal(digest(target),asset.checksum)
  assert.equal(changed.nodes.find(n=>n.index===2).pid,sibling.pid);assert.deepEqual(newNode.args,selected.args);assert.equal(await genesisHash(),nativeGenesis)
@@ -86,13 +135,13 @@ try{
  const history=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/process.json','utf8'))
  assert.ok(history.history.some(n=>n.Label==='node1'&&n.PID===newNode.pid));assert.equal(JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/web-node-binaries.json','utf8')).length,2)
  const revokedPlan=await api('plans','POST',replacement,201)
- await api('credentials/'+credential.id,'DELETE',undefined,204);await api('jobs','POST',{planId:revokedPlan.id},403,revokedPlan.id)
+ await api('credentials/'+base.credentialBindings['owned-ssh'],'DELETE',undefined,204);await api('jobs','POST',{planId:revokedPlan.id},403,revokedPlan.id)
  assert.equal(read().nodes.find(n=>n.index===1).pid,restoredNode.pid,'revoked review stopped a retained node')
  const renewed=await api('credentials','POST',{label:'Renewed owned SSH binding',kind:'private-key',sshUser:f.ssh.user,privateKey:key},201)
  await api(`workspaces/${w.id}/credential-bindings`,'PUT',{serverRef:'owned-ssh',credentialId:renewed.id})
  for(const id of ['node1','node2'])await run({...base,credentialBindings:{'owned-ssh':renewed.id},operation:'node.stop',nodeIds:[id]})
  for(const [path,sha] of preserved)assert.equal(digest(path),sha)
  for(const path of [selectedMarker,siblingMarker])assert.equal(fs.readFileSync(path,'utf8'),'retain SSH native data')
- fs.writeFileSync(out+'/browser.json',JSON.stringify({chain:'wbft',workspaceId:w.id,jobId:replaced.id,candidateSHA256:asset.checksum,privateSSHNativeReplacement:true,remoteRegularFileGuard:true,stagingFailurePreservesProcesses:true,reviewedBindingSupportsLaterRestart:true,registeredRollbackPreservesHistory:true,revokedReviewPreservesRetainedNode:true,configGenesisDataAndSiblingPreserved:true,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({chain:'wbft',workspaceId:w.id,jobId:replaced.id,candidateSHA256:asset.checksum,privateSSHNativeReplacement:true,remoteRegularFileGuard:true,stagingFailurePreservesProcesses:true,reviewedBindingSupportsLaterRestart:true,registeredRollbackPreservesHistory:true,revokedReviewPreservesRetainedNode:true,configGenesisDataAndSiblingPreserved:true,...(faultResult?{actualTransferFault:f.sshFaultMode,faultJobId:faultResult.id,completedCopyRetained:true,oldProcessesAndRecordRetained:true,explicitRetryWithoutAutomaticResume:true}:{}),seedAcceptanceAwarded:false},null,2))
  console.log('SSH REGISTERED REPLACEMENT PASS: real private SSH copy, native launch, refused targets, restart and rollback.')
 }finally{await owned.stop()}

@@ -25,7 +25,13 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
     spec.loader.exec_module(module)
     provenance = module.prepare(runtime, output)
     extra = fixture_inputs(runtime, None, output) if fixture_inputs else {}
-    ssh = subprocess.Popen(['bash', 'tests/webui/fixtures/ssh_prepare.sh', identity])
+    ssh_command = ['bash', 'tests/webui/fixtures/ssh_prepare.sh', identity]
+    if extra.get('sshGatePath'):
+        gate = Path(extra['sshGatePath']).resolve(strict=True)
+        if gate != runtime / 'ssh/gate.sh':
+            raise RuntimeError('SSH gate must belong to this exclusively owned fixture')
+        ssh_command.append(str(gate))
+    ssh = subprocess.Popen(ssh_command)
     server = None
     try:
         for _ in range(100):
