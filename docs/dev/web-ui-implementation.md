@@ -549,3 +549,25 @@ and explicitly relaunches. Earlier reset and pinned-input fixtures now create an
 actually uncertain stopped record by removing its launch arguments, verify unknown
 observation and reset refusal, and restore only their fixture bytes. No full WEB-07
 or recovery criterion is awarded.
+
+
+### Explicit owned-node restart
+
+`node.restart` exposes the existing `ChainRestart` adapter through a reviewed,
+actor-bound job. It uses the recorded placement and registered executable, holds
+the network's existing physical claims, and preserves the selected datadir,
+config, genesis and sibling processes. Preparation and the execution phase both
+check the owned record, process ledger, physical target, complete live argv,
+pinned declaration bytes, and config/genesis checksums before stopping anything.
+Stable live discovery is required when the selected node is recorded as stopped.
+A named per-node executable remains unavailable until its own asset binding can
+be reviewed. This implementation does not establish support for binary swapping.
+
+A stop or launch failure is reported as a failed job with unresolved owned
+resources and a possible stopped or incomplete launch. The engine saves the
+stopped PID and ledger state even when relaunch fails; failed stop does not launch
+another process. These cases have explicit engine tests. The recorded-controls
+browser fixture checks actual restart PID replacement on all three chains,
+rejection of modified config/genesis before effects and after review, preserved
+node data and unchanged sibling PIDs. Its receipt is a partial development proof;
+it never awards the whole WEB-07 criterion.

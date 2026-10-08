@@ -83,11 +83,24 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 					return err
 				}
 			}
+			if p.Input.Operation == "node.restart" {
+				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
+					return err
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
 				return err
 			}
 			if p.Input.Operation == "node.start" {
 				_, err := NodeStart(ctx, d, NodeStartIn{DataDir: p.ControlDir, Index: index})
+				return err
+			}
+			if p.Input.Operation == "node.restart" {
+				_, err := ChainRestart(ctx, d, ChainRestartIn{DataDir: p.ControlDir, Node: index})
+				if err != nil {
+					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
+					result.PartialEffects = append(result.PartialEffects, "Node restart attempted; the selected node may be stopped or its launch incomplete")
+				}
 				return err
 			}
 			if p.Input.Operation == "node.reset" {

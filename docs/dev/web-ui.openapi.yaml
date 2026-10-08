@@ -2392,6 +2392,7 @@ components:
           - test.run
           - node.start
           - node.stop
+          - node.restart
           - node.swap
           - node.reset
         documentRefs:

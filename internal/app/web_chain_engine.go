@@ -333,6 +333,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 					return out, err
 				}
 			}
+			if in.Operation == "node.restart" {
+				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
+					return out, err
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
 				return out, err
 			}
@@ -376,6 +381,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if in.Operation == "node.reset" {
 		out.Changes = append(out.Changes, "Replace only the selected non-producer's node data with its recorded genesis; leave it stopped and preserve sibling nodes")
+	}
+	if in.Operation == "node.restart" {
+		out.Changes = append(out.Changes, "Restart only the selected owned node with its recorded executable and arguments; preserve config, genesis, node data and sibling processes")
 	}
 	if p.TestRun != nil {
 		display := p.TestRun.Plan

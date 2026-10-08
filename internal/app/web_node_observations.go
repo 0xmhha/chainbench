@@ -95,6 +95,9 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		network.Nodes[i].ObservedAt = time.Now().UTC()
 		if observed.State == "running" || observed.State == "stopped" {
 			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop"}
+			if ns.Binary == "" {
+				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.restart")
+			}
 			if ns.Binary == "" && (ns.Role == "en" || ns.Role == "pn") {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.reset")
 			}

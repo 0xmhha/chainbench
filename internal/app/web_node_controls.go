@@ -13,7 +13,7 @@ import (
 
 // webNodeControlOperation identifies operations that use an existing owned record.
 func webNodeControlOperation(operation string) bool {
-	return operation == "node.start" || operation == "node.stop" || operation == "node.reset"
+	return operation == "node.start" || operation == "node.stop" || operation == "node.reset" || operation == "node.restart"
 }
 
 // webResetNode checks role, recorded identity and the accepted node directory.
@@ -52,9 +52,27 @@ func webResetNode(state State, p webChainPayload) (node.Record, error) {
 // verifyWebResetInputs verifies the target directory and the inputs reset reads
 // before it can remove data. The accepted shared declarations stay authoritative.
 func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) error {
-	ns, err := webResetNode(state, p)
-	if err != nil {
+	if _, err := webResetNode(state, p); err != nil {
 		return err
+	}
+	return verifyWebNodeInputs(ctx, state, p, lookup)
+}
+
+// verifyWebNodeInputs binds a relaunch to the recorded declarations, directory,
+// config and genesis before stopping its current process. Named per-node
+// executables need their own reviewed asset binding and remain unsupported here.
+func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) error {
+	if err := webSelectedNode(state, p.Input.NodeIDs); err != nil {
+		return err
+	}
+	var ns node.Record
+	for _, n := range state.Nodes {
+		if string(n.NodeLabel()) == p.Input.NodeIDs[0] {
+			ns = n
+		}
+	}
+	if ns.Binary != "" {
+		return ErrDeploymentConflict
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {

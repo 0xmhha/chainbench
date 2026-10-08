@@ -173,6 +173,38 @@ try{
   const restartPlan=await api('plans','POST',{...controlInput,operation:'node.start'},undefined,201)
   const restart=await api('jobs','POST',{planId:restartPlan.id},restartPlan.id,202);await waitJob(restart.id)
   const relaunched=await api('networks/'+w.id+'/observations');assert.equal(relaunched.nodes.find(n=>n.id==='node1').state,'running')
+  // A restart replaces only this live PID while preserving the owned inputs.
+  const beforeRestart=JSON.parse(fs.readFileSync(recordPath,'utf8'))
+  const restartMarker=endpoint.dataDir+'/restart-preserved-data';fs.writeFileSync(restartMarker,'preserve endpoint data')
+  const beforeRestartBytes=fs.readFileSync(recordPath)
+  const restartInput={...controlInput,operation:'node.restart'}
+  const restartReview=await api('plans','POST',restartInput,undefined,201)
+  assert.ok(restartReview.changes.some(v=>v.includes('recorded executable')&&v.includes('preserve')),'restart review omits preserved inputs')
+  for(const path of [endpoint.configPath,record.genesisPath]){
+   const bytes=fs.readFileSync(path)
+   try{
+    fs.writeFileSync(path,Buffer.concat([bytes,Buffer.from('\nchanged after review')]))
+    await api('plans','POST',restartInput,undefined,409)
+    await api('jobs','POST',{planId:restartReview.id},restartReview.id,409)
+    const untouched=await api('networks/'+w.id+'/observations');assert.ok(untouched.nodes.every(n=>n.state==='running'),'modified input rejection stopped a node')
+    assert.deepEqual(fs.readFileSync(recordPath),beforeRestartBytes,'rejected restart changed record')
+   }finally{fs.writeFileSync(path,bytes)}
+  }
+  await page.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+  await page.getByLabel('작업 종류',{exact:true}).selectOption('node.restart')
+  await page.getByLabel('작업 노드',{exact:true}).selectOption('node1')
+  const bounceReview=page.waitForResponse(r=>r.url()===f.url+'/api/v1/plans'&&r.request().method()==='POST')
+  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
+  const bounceReviewed=await bounceReview;assert.equal(bounceReviewed.status(),201,await bounceReviewed.text())
+  await page.getByLabel('실행 계획',{exact:true}).waitFor()
+  const bounceAccepted=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
+  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  const bounceResponse=await bounceAccepted;assert.equal(bounceResponse.status(),202,await bounceResponse.text());await waitJob((await bounceResponse.json()).id)
+  const bounced=JSON.parse(fs.readFileSync(recordPath,'utf8'))
+  assert.notEqual(bounced.nodes.find(n=>n.index===1).pid,beforeRestart.nodes.find(n=>n.index===1).pid,'restart kept old PID')
+  const bouncedObservation=await api('networks/'+w.id+'/observations');assert.ok(bouncedObservation.nodes.every(n=>n.state==='running'),'restart lost a process')
+  for(const n of bounced.nodes.filter(n=>n.index!==1))assert.equal(n.pid,beforeRestart.nodes.find(v=>v.index===n.index).pid,'restart changed sibling PID')
+  assert.equal(fs.readFileSync(restartMarker,'utf8'),'preserve endpoint data');assert.equal(fs.readFileSync(sibling,'utf8'),'preserved producer data')
   await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/'+chain+'-reset.png'})
   // Native genesis reads require the DB lock. Observe live processes first,
   // then stop each owned node explicitly before inspecting its persisted DB.
@@ -186,6 +218,6 @@ try{
   verified.push({chain,jobId:job.id,runIds:job.runIds,nodes:record.nodes.map(n=>({index:n.index,role:n.role,p2p:n.p2p,http:n.http,syncMode:n.syncMode})),historyId:h[0].id})
   await page.close()
  }
- fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({verified,immutableTestKeyInputsPreserved:true,recordedFiveProducerLayout:true,allRecordedPortsClaimed:true,outOfScopeRecordsRefused:true,explicitWrongCountRefused:true,pinnedOlderDocumentsExecuted:true,workspaceRebindInvalidatesReview:true,unselectedNewerTargetsUntouched:true,nativeNonProducerReset:true,nativeHeadAtGenesis:true,producerResetRefused:true,siblingNodesPreserved:true,resetLeftStoppedAndRelaunched:true,verifiedStoppedNodeReset:true,explicitNodeRestart:true,modifiedRestartInputsRefused:true,restartPreservesDataAndSiblings:true,realPassingSessionsWithoutSkips:true,seedAcceptanceAwarded:false},null,2))
  console.log('RECORDED CONTROLS PASS: six-node layouts control five recorded producers without a count override.')
 }finally{await owned.stop()}

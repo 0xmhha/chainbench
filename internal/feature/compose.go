@@ -54,6 +54,10 @@ func init() {
 		Summary: "Launch every stopped node and record its PID",
 	}, app.ChainStart)
 	Register(Registration{
+		Name: "node.restart", Stage: StageCompose,
+		Summary: "Restart one owned node with its recorded inputs while preserving node data",
+	}, app.ChainRestart)
+	Register(Registration{
 		Name: "node.reset", Stage: StageCompose,
 		Summary: "Reset one non-producing node to its genesis and leave it stopped",
 	}, func(ctx context.Context, deps app.Deps, in app.NodeResetIn) (struct{}, error) {
