@@ -189,3 +189,13 @@ The fixture restores its own record before explicit stop and cleanup/alias check
 Results bind source/dashboard digests in
 `chainbench-out/web-ui-development/unrecorded-controls/receipt.json`.
 This does not cover full reconciliation, mixed binaries or PID-zero reset.
+
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_residual_composition.py`
+verifies network-wide guards against an actual WBFT process absent from both the
+composition and process ledger. It refuses setup/deploy with retain and cleanup,
+preserves record bytes and the process, then restores only the owned fixture records
+and verifies explicit stop/cleanup/alias release. Public development evidence is under
+`chainbench-out/web-ui-development/residual-composition/receipt.json`; it awards no
+full Seed criterion. Unit tests separately reproduce unsafe cleanup and conflicting
+ledger substitution, including execution recheck without changing record bytes.

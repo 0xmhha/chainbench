@@ -116,6 +116,9 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		run  func() error
 	}{
 		{"new", func() error {
+			if err := recheckWebNetworkRecord(ctx, p, lookup, true); err != nil {
+				return err
+			}
 			set, err := ExportDeploymentDocument(p.Set.DeploymentDocumentInput, "yaml")
 			if err != nil {
 				return err

@@ -492,3 +492,23 @@ reset is still refused and an explicit reconciliation workflow remains open.
 `run_unrecorded_controls.py` starts a real owned WBFT node, removes only its recorded
 PID, observes it through Chrome, verifies rejected controls and unchanged records,
 restores that fixture record, and repeats explicit stop/cleanup/alias release.
+
+
+## Recomposition and cleanup process guards
+
+Existing composition records require verified vacancy before chain setup or deploy,
+including jobs requesting cleanup. Recheck the accepted record digest and actual
+processes immediately before the first composition write. A zero PID is insufficient;
+unknown or residual launches refuse the replacement. Validate existing roles, paths,
+server scope and physical target even when the new composition requests another count.
+
+Cleanup checks the current owned record, declared physical target and each actual
+launch before calling the existing removal verb. Verified live launches may be stopped;
+PID-zero nodes require vacancy. A conflicting, duplicate or unknown process ledger
+entry is refused before core Open could replace the verified record PID with another
+identity. Refusal reports cleanup_failed and unresolved resources, preserving durable
+ownership. No guard seeds or repairs records. Native verification removes the selected
+PID from both records while leaving its actual process alive; setup/deploy plans with
+both retention policies are refused, records stay unchanged, and restored explicit
+stop/cleanup still releases the alias. Full recovery and mixed-binary reconciliation
+remain open.

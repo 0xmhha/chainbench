@@ -310,10 +310,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 		p.RecordDigest = manifestHash(record)
 		if in.Operation == "chain.setup" || in.Operation == "chain.deploy" {
-			for _, ns := range state.Nodes {
-				if ns.PID > 0 {
-					return out, errors.New("existing nodes must be stopped before composing again")
-				}
+			if err = verifyWebNetworkProcesses(ctx, state, p, lookup, true); err != nil {
+				return out, err
 			}
 		}
 		if webNodeControlOperation(in.Operation) {
@@ -542,6 +540,12 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
 	if err != nil {
 		return WebJobResult{}, err
+	}
+	if p.Input.WorkspaceID == "" || p.ControlDir != filepath.Join(e.root, "networks", p.Input.WorkspaceID) {
+		return WebJobResult{}, ErrDeploymentConflict
+	}
+	if err = recheckWebNetworkRecord(ctx, p, lookup, false); err != nil {
+		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
 	_, err = ChainRm(ctx, Deps{Command: "web owned composition cleanup", ServerLookup: lookup}, ChainRmIn{DataDir: p.ControlDir})
 	if err != nil {
