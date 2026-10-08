@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import subprocess
 import time
@@ -13,8 +14,8 @@ from runtime_contract import runtime_root
 from browser_process import run_browser
 
 
-def main():
-    output = Path('chainbench-out/web-ui-development/ssh-jobs')
+def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_inputs=None, dashboard_binary=None):
+    output = Path("chainbench-out/web-ui-development") / proof_name
     output.mkdir(parents=True, exist_ok=True)
     identity = str(uuid.uuid4())
     runtime = runtime_root() / identity
@@ -23,6 +24,7 @@ def main():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     provenance = module.prepare(runtime, output)
+    extra = fixture_inputs(runtime, None, output) if fixture_inputs else {}
     ssh = subprocess.Popen(['bash', 'tests/webui/fixtures/ssh_prepare.sh', identity])
     server = None
     try:
@@ -44,7 +46,10 @@ def main():
         known_hosts.write_text(f"[localhost.]:{ssh_fixture['port']} {key_parts[0]} {key_parts[1]}\n")
         known_hosts.chmod(0o600)
         with (output / 'build.log').open('w') as log:
-            subprocess.run(['go', 'build', '-o', str(runtime / 'dashboard'), './cmd/chainbench-dashboard'], stdout=log, stderr=log, check=True)
+            if dashboard_binary:
+                shutil.copy2(Path(dashboard_binary).resolve(strict=True), runtime / 'dashboard')
+            else:
+                subprocess.run(['go', 'build', '-o', str(runtime / 'dashboard'), './cmd/chainbench-dashboard'], stdout=log, stderr=log, check=True)
         with socket.socket() as listener:
             listener.bind(('127.0.0.1', 0))
             port = listener.getsockname()[1]
@@ -61,10 +66,11 @@ def main():
                 except OSError:
                     time.sleep(.1)
             fixture = {'url': url, 'setupToken': (store / 'setup.token').read_text().strip(), 'password': secrets.token_urlsafe(24), 'runtime': str(runtime), 'store': str(store), 'ssh': ssh_fixture, 'knownHosts': str(known_hosts)}
+            fixture.update(extra)
             private = runtime / 'browser-fixture.json'
             private.write_text(json.dumps(fixture))
             private.chmod(0o600)
-            result = run_browser(['node', 'tests/webui/browser_ssh_jobs.mjs', str(private), str(output.resolve())], timeout=600)
+            result = run_browser(['node', 'tests/webui/' + browser_script, str(private), str(output.resolve())], timeout=600)
             (output / 'browser.log').write_text(result.stdout + result.stderr)
             if result.returncode:
                 raise RuntimeError('SSH browser deployment failed; see browser.log')
@@ -92,7 +98,7 @@ def main():
             receipt = json.loads((output / 'browser.json').read_text())
             receipt.update({'nativeDatabaseCheck': 'passed', 'separateBinaryUpload': 'passed', 'privateSSHKeyPlaintextScan': 'passed', 'binaries': provenance, 'runtime': str(runtime), 'seedAcceptanceAwarded': False})
             (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
-            print('SSH development proof PASS: real owned SSH deployment, native database, private credential and physical alias checks.')
+            print(proof_name + ' development proof PASS: real owned SSH deployment, native database, private credential and physical alias checks.')
     finally:
         # Only this exclusively owned fixture's recorded node PIDs qualify.
         for record in (runtime / 'store/networks').glob('*/chain-record.json'):
