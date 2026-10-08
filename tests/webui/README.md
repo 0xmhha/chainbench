@@ -1,5 +1,12 @@
 # WEB-01 verification
 
+For saved configuration refresh regressions, run
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_catalog_refresh.py`
+and `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_genesis_test_jobs.py`.
+The first checks chain/server/path/workspace saves and pinned revisions without
+node effects; the second also checks delayed case responses and native sessions.
+These development receipts do not award complete Seed criteria.
+
 Install dependencies with `npm --prefix web ci` and `npm --prefix tests/webui ci`.
 The browser fixture uses installed Chrome with a separate temporary profile.
 Set `WEBUI_BROWSER_CHANNEL=chromium` to use a Playwright-installed Chromium.

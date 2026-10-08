@@ -1,7 +1,7 @@
 <script>
  import Field from './DSLField.svelte'
  import {references,finishedGenesisRef,caseAssetRefs} from './dsl-form.js'
- let { webSession = undefined, assetRevision = 0 } = $props()
+ let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  let username=$state(''),password=$state(''),authorization=$state(''),actor=$state(null)
  let contract=$state(null),vocabulary=$state(null),document=$state(null),original=$state(null),presets=$state({})
  let status=$state(''),valid=$state(false),busy=$state(false),fingerprint=$state('')
@@ -13,7 +13,7 @@
  async function api(path,method='GET',body,expectedRevision){const response=await fetch('/api/v1/'+path,{method,headers:{Authorization:authorization,'Content-Type':'application/json',...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}),...(expectedRevision?{'If-Match':`"${expectedRevision}"`}:{})},body:body===undefined?undefined:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.errors?.map(e=>e.message).join('; ')??`HTTP ${response.status}`);return data}
  async function refreshSaved(){savedCases=(await api('documents?kind=case')).items}
  async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;original=null;genesisBackup=null;change(structuredClone(item.content));if(actor.role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
- async function save(){await work(async()=>{const item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,contractVersion:'2',content:document,assetRefs:caseAssetRefs(document)},revision);savedId=item.id;revision=item.revision;await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
+ async function save(){await work(async()=>{const item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,contractVersion:'2',content:document,assetRefs:caseAssetRefs(document)},revision);savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
  async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message}finally{busy=false}}
  $effect(()=>{if(webSession)work(async()=>{actor={id:webSession.user.id,role:webSession.user.role==='administrator'?'admin':webSession.user.role};vocabulary=await api('vocabulary');contract=await api('contracts/dsl');await refreshSaved();status='DSL contract loaded'})})
  $effect(()=>{assetRevision;if(actor)api('assets').then(v=>{assets=v.items}).catch(e=>{status=e.message})})

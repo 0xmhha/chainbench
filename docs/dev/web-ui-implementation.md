@@ -371,3 +371,23 @@ native bootstrap, including remote targets. This uses the same default policy
 as a generated composition; importing a custom governance policy remains a
 separate unfinished configuration contract. Unit tests hold exact genesis bytes,
 producer membership and ports and refuse missing placement or cancellation.
+
+## Saved configurations in the execution catalog
+
+A successful case, chain, deployment document or workspace save refreshes the
+execution catalog without remounting its editors or reloading the page. Workspace,
+binary, preset and case selections retain their IDs. An unaccepted review is
+cleared and must be prepared again; accepted jobs continue independently. The
+catalog includes current document revisions and any older revisions pinned by
+workspaces. Saving a server or path document does not silently rebind a workspace.
+The loading state prevents preparation against an incomplete refresh. A request
+generation and actor check before publication also discards delayed older
+responses, including delayed pinned-document reads.
+
+`run_catalog_refresh.py` drives actual chain/server/path/workspace saves and
+reviews the resulting pinned revisions without starting nodes. The native
+genesis-test fixture saves multiple case revisions, delays an older HTTP response
+and verifies the latest selection remains intact before three real native tests.
+Both receipts bind the observations to source and dashboard digests. This is a
+partial configuration-flow regression, not full acceptance of all DSL or asset
+contracts.

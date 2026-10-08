@@ -1,6 +1,6 @@
 <script>
   import Field from "./DSLField.svelte"
-  let { webSession = undefined, assetRevision = 0 } = $props()
+  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
   let contract = $state(null)
   let presets = $state([])
@@ -57,7 +57,7 @@
     pending = true; error = ''
     try {
       const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs }, revision)
-      savedId = entry.id; revision = entry.revision; await refreshSaved()
+      savedId = entry.id; revision = entry.revision; onsaved(); await refreshSaved()
     } catch(e) { error = e.message } finally { pending = false }
   }
   function exportFile() {

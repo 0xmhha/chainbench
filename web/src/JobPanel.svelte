@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  let { webSession = undefined, testOnly = false } = $props()
+  let { webSession = undefined, testOnly = false, catalogRevision = 0 } = $props()
   let workspaces=$state([]), manifests=$state([]), assets=$state([]), jobs=$state([]), documents=$state([]), networks=$state([])
   let workspaceId=$state(''), manifestId=$state(''), assetId=$state(''), serverRef=$state('')
   let operation=$state('chain.setup'), validators=$state(4), nodeId=$state('node1'), retention=$state('retain')
@@ -9,6 +9,7 @@
   const observationReasons={probe_unavailable:'관측할 수 없음',no_recorded_pid:'기록된 PID 없음',argv_mismatch:'실행 인자가 기록과 다름',recorded_pid_absent:'기록된 프로세스가 없음'}
   let conflicts=$state([]), conflictsChecked=$state(false), conflictsAt=$state('')
   let plan=$state(null), busy=$state(false), error=$state(''), loaded=$state(false)
+  let catalogLoading=$state(false), catalogMessage=$state(''), loadVersion=0
   $effect(()=>{if(testOnly)operation='test.run'})
   const actor=$derived(webSession?.user)
   const canEdit=$derived(actor && actor.role!=='viewer')
@@ -31,8 +32,25 @@
   }
   async function work(fn){busy=true;error='';try{await fn()}catch(e){error=e.message}finally{busy=false}}
   async function refresh(){const values=await Promise.all([api('jobs'),api('networks')]);[jobs,networks]=values.map(v=>v.items);if(plan)await checkConflicts()}
-  async function load(){const values=await Promise.all([api('workspaces'),api('manifests'),api('manifest-assets'),api('jobs'),api('documents'),api('networks')]);[workspaces,manifests,assets,jobs,documents,networks]=values.map(v=>v.items);loaded=true}
-  $effect(()=>{if(webSession)work(load)})
+  async function load(){
+    const version=++loadVersion,userId=webSession?.user.id
+    catalogLoading=true;changed()
+    try {
+      const values=await Promise.all([api('workspaces'),api('manifests'),api('manifest-assets'),api('jobs'),api('documents'),api('networks')])
+      if(version!==loadVersion||webSession?.user.id!==userId)return
+      const missing=new Map()
+      for(const w of values[0].items)for(const ref of w.documents){
+        if(!values[4].items.some(d=>d.id===ref.id&&d.revision===ref.revision))missing.set(`${ref.id}:${ref.revision}`,ref)
+      }
+      const pinned=await Promise.all([...missing.values()].map(ref=>api(`documents/${encodeURIComponent(ref.id)}?revision=${ref.revision}`)))
+      if(version!==loadVersion||webSession?.user.id!==userId)return
+      values[4].items=[...values[4].items,...pinned];
+      [workspaces,manifests,assets,jobs,documents,networks]=values.map(v=>v.items);loaded=true
+      catalogMessage='저장된 구성과 실행 자료를 불러왔습니다. 새 계획을 확인하세요.'
+    } catch(e){if(version===loadVersion)throw e}
+    finally{if(version===loadVersion)catalogLoading=false}
+  }
+  $effect(()=>{void catalogRevision;if(webSession)work(load)})
   onMount(()=>{const poll=setInterval(()=>{if(actor&&loaded)refresh().catch(e=>{error=e.message})},3000);return()=>clearInterval(poll)})
   async function observeNodes(){const result=await api(`networks/${workspaceId}/observations`);observedNetwork=result;networks=networks.map(n=>n.id===result.id?result:n)}
   function changed(){plan=null;conflicts=[];conflictsChecked=false;conflictsAt=''}
@@ -45,7 +63,7 @@
   <div class="heading"><div><h2>실행 작업</h2><p>계획을 검토하고 서버에 작업을 맡깁니다. 브라우저 연결이 끊겨도 진행 상태는 보관됩니다.</p></div>{#if actor}<button disabled={busy} onclick={()=>work(load)}>새로고침</button>{/if}</div>
   {#if actor}
     {#if canEdit}
-      <fieldset disabled={busy} onchange={changed}><legend>새 작업</legend>
+      <fieldset disabled={busy||catalogLoading} onchange={changed}><legend>새 작업</legend>
         <p>로컬 또는 SSH 서버에 구성합니다. SSH 대상은 서버 설정에서 연결한 내 자격증명을 사용하며, 장비·경로·바이너리를 실행 전에 검증합니다. 테스트는 선택한 케이스의 구성 선언으로 실행하고 실제 세션 판정을 보관합니다.</p>
         <div class="inputs">
           <label>Workspace<select aria-label="작업 Workspace" bind:value={workspaceId}><option value="">선택</option>{#each workspaces as w}<option value={w.id}>{w.name} · r{w.revision}</option>{/each}</select></label>
@@ -62,6 +80,7 @@
       {#if observedNetwork?.workspaceId===workspaceId}<section class="observations" aria-label="노드 실제 관측"><h3>현재 프로세스 관측</h3><p>기록된 PID와 실제 실행 인자를 확인합니다. 이 조회는 노드나 실행 기록을 변경하지 않습니다.</p><ul>{#each observedNetwork.nodes as n}<li><strong>{n.id} · {observationNames[n.state]??n.state}</strong><p>기록 PID {n.pid} · 관측 PID {n.observedPid||'확인 안 됨'} · {new Date(n.observedAt).toLocaleString()}</p>{#if n.observationReason}<p>{observationReasons[n.observationReason]??'관측할 수 없음'}</p>{/if}</li>{/each}</ul></section>{/if}
       {#if plan}<article class="plan" aria-label="실행 계획"><h3>실행 전 검토</h3><ul class="changes">{#each plan.changes as change}<li><pre>{change}</pre></li>{/each}</ul><p>순서: {plan.phases.join(' → ')}</p><ul>{#each plan.resources as resource}<li><code>{resource}</code></li>{/each}</ul><p>유효 기한: {new Date(plan.expiresAt).toLocaleString()}</p><section class="conflicts" aria-label="자원 충돌" aria-live="polite"><h4>자원 사용 확인</h4>{#if !conflictsChecked}<p>현재 충돌 상태를 확인해 주세요.</p>{:else if conflicts.length}<p class="error">다른 작업이 이 자원을 사용하거나 보존하고 있습니다. 정리가 확인될 때까지 실행할 수 없습니다.</p><ul>{#each conflicts as conflict}<li><strong>{conflict.operation} · {conflict.state}</strong><p>작업 <code>{conflict.jobId}</code><br />Workspace {workspaces.find(w=>w.id===conflict.workspaceId)?.name??conflict.workspaceId} · <code>{conflict.workspaceId}</code><br />실행 주체 <code>{conflict.actorId}</code> · 자원 처리 {conflict.nodeDisposition}</p><ul>{#each conflict.resources as resource}<li><code>{resource.hostIdentity} · {resource.dataPath??'경로 없음'}</code>{#if resource.ports?.length}<p>포트: {resource.ports.join(', ')}</p>{/if}</li>{/each}</ul></li>{/each}</ul>{:else}<p>확인된 자원 충돌이 없습니다. 실행 직전에 다시 검사합니다.</p>{/if}{#if conflictsAt}<p>확인 시각: {new Date(conflictsAt).toLocaleString()}</p>{/if}<button disabled={busy} onclick={()=>work(checkConflicts)}>충돌 다시 확인</button></section><button disabled={busy||!conflictsChecked||conflicts.length>0} onclick={()=>work(start)}>검토한 계획 실행</button></article>{/if}
     {/if}
+    <p role="status" aria-label="실행 자료 상태">{catalogLoading?'저장된 구성을 불러오는 중…':catalogMessage}</p>
     <div class="records" aria-live="polite">{#each jobs as job}<article data-job-id={job.id}>
       <div class="heading"><strong>{job.operation}</strong><span class:active={active(job)}>{job.state}</span></div>
       <p><code>{job.id}</code> · {new Date(job.createdAt).toLocaleString()} · 노드 처리: {job.nodeDisposition}</p>

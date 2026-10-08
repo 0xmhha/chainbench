@@ -20,6 +20,7 @@
   let route = $state(window.location.pathname)
   let webSession = $state(undefined), ready = $state(false)
   let assetRevision = $state(0)
+  let catalogRevision = $state(0)
   let events = $state([]), runs = $state([]), sessions = $state([])
   let connected = $state(false), error = $state('')
   let drops = $state(null), observedAt = $state(null), now = $state(Date.now())
@@ -86,9 +87,9 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
         {#key webSession?.user.id}
-          <div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} /><DeploymentEditor {webSession} /></div>
-          <div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} /></div>
-          {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} testOnly={route==='/tests'} />{/key}{/if}
+          <div hidden={route !== '/chains'}><ChainPresetEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /><DeploymentEditor {webSession} onsaved={()=>catalogRevision++} /></div>
+          <div hidden={route !== '/tests'}><DSLEditor {webSession} {assetRevision} onsaved={()=>catalogRevision++} /></div>
+          {#if route==='/chains'||route==='/tests'}{#key route}<JobPanel {webSession} catalogRevision={catalogRevision+assetRevision} testOnly={route==='/tests'} />{/key}{/if}
           <div hidden={route !== '/settings'}><AssetManager {webSession} onuploaded={()=>assetRevision++} /><ManifestManager {webSession} {assetRevision} /></div>
           <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>
         {/key}
