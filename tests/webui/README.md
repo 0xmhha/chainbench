@@ -253,3 +253,11 @@ markings, and reconnects. `bash tests/webui/verify.sh --criterion WEB-08
 --require-live --capture` reruns the monitoring, snapshot, SSH log and
 continuity proofs in one invocation and publishes WEB-08 evidence; without
 `--capture` it reproduces them from a staged source copy.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_history_web09.py`
+runs three native test jobs (two of one case, one of another) with selected
+cleanup, filters history through the UI and API, compares the matching runs and
+requires a stated refusal otherwise, exports from the UI without secrets,
+refuses deleting a running execution and non-administrator deletion, keeps the
+shared case, and checks retention across a restart. `verify.sh --criterion
+WEB-09` reruns it with `run_history_archive.py` in one invocation.
