@@ -2305,7 +2305,7 @@ components:
           minimum: 0
         observationReason:
           type: string
-          enum: [binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+          enum: [binary_launch_unavailable, binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
         binaryAssetId:
           type: string
           description: Verified registered asset identity for a reviewed per-node executable; omitted when unavailable.

@@ -111,6 +111,13 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 				network.Nodes[i].BinaryAssetID = binding.Evidence.ID
 				network.Nodes[i].BinarySHA256 = binding.Evidence.SHA256
 			}
+			if err := access.VerifyExecutable(ctx, binary); err != nil {
+				network.Nodes[i].ObservationReason = "binary_launch_unavailable"
+				if observed.State == "running" {
+					network.Nodes[i].SupportedControls = []string{"node.stop"}
+				}
+				continue
+			}
 			network.Nodes[i].SupportedControls = []string{"node.start", "node.stop", "node.restart"}
 			if ns.Config == "" {
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.swap")
