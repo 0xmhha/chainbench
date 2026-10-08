@@ -21,6 +21,12 @@ const (
 	webMonitorLineLimit = 64 << 10
 )
 
+// webPendingLines are archived log lines waiting for the monitor lock.
+type webPendingLines struct {
+	record string
+	lines  []webMonitorLogLine
+}
+
 type webMonitorLogLine struct {
 	Time            time.Time `json:"t"`
 	CollectedAt     time.Time `json:"c"`
@@ -62,7 +68,9 @@ func (webLocalLogs) Snapshot(_ context.Context, path string, offset int64, limit
 // archiveLog appends complete new lines of a node log. A partial last line
 // waits for its newline. A replaced or shrunk file is reported and read from
 // its start; a line longer than one read is reported and skipped.
-func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string, source webLogSource, cursor *webMonitorCursor, since, now time.Time) ([]webMonitorGap, error) {
+// With pending set, new lines are buffered for the caller to append under the
+// monitor lock; otherwise the caller already holds it and they are appended now.
+func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string, source webLogSource, cursor *webMonitorCursor, since, now time.Time, pending *[]webPendingLines) ([]webMonitorGap, error) {
 	var gaps []webMonitorGap
 	gap := func(reason string) {
 		gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: reason})
@@ -133,7 +141,9 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 		byDay[day] = append(byDay[day], line)
 	}
 	for _, day := range days {
-		if err = appendWebMonitorLines(m.store, network, day, byDay[day]); err != nil {
+		if pending != nil {
+			*pending = append(*pending, webPendingLines{record: day, lines: byDay[day]})
+		} else if err = appendWebMonitorLines(m.store, network, day, byDay[day]); err != nil {
 			return gaps, err
 		}
 	}

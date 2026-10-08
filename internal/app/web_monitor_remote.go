@@ -100,6 +100,8 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 	}
 	var gaps []webMonitorGap
 	var done []string
+	var pending []webPendingLines
+	committed := 0 // pending lines belonging to nodes whose positions are kept
 	var stop error
 	for _, ns := range state.Nodes {
 		if ns.PID <= 0 {
@@ -110,15 +112,21 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 		source, err := open(nodeCtx, state, ns)
 		if err == nil {
 			var g []webMonitorGap
-			g, err = m.archiveLog(nodeCtx, network, label, ns.LogPath, source, &work, since, now)
+			before := len(pending)
+			g, err = m.archiveLog(nodeCtx, network, label, ns.LogPath, source, &work, since, now, &pending)
+			if err != nil {
+				pending = pending[:before] // A failed read archives nothing for this node.
+			}
 			gaps = append(gaps, g...)
 		}
 		cancel()
 		if ctx.Err() != nil || errors.Is(err, ErrDeploymentForbidden) {
 			stop = errors.Join(ctx.Err(), err)
+			pending = pending[:committed]
 			break
 		}
 		done = append(done, label)
+		committed = len(pending)
 		if err != nil {
 			gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "collector_error"})
 		}
@@ -128,6 +136,13 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 	cursor, err := m.readCursor(network)
 	if err != nil {
 		return err
+	}
+	// Lines are appended under the lock so an administrative deletion that
+	// rewrites the same segment cannot lose them.
+	for _, p := range pending {
+		if err = appendWebMonitorLines(m.store, network, p.record, p.lines); err != nil {
+			return err // Positions stay unmoved, so the lines are read again.
+		}
 	}
 	for _, label := range done { // The background collector never moves remote positions.
 		cursor.Offsets[label], cursor.Files[label] = work.Offsets[label], work.Files[label]

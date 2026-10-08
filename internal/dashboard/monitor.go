@@ -46,7 +46,7 @@ func WithWebMonitor(monitor *app.WebMonitor, authenticate DeploymentAuthenticato
 
 func monitorQuery(r *http.Request) (app.WebMonitorQuery, error) {
 	values := r.URL.Query()
-	q := app.WebMonitorQuery{NodeID: values.Get("nodeId"), Metric: values.Get("metric"), Cursor: values.Get("cursor")}
+	q := app.WebMonitorQuery{NodeID: values.Get("nodeId"), Metric: values.Get("metric"), RunID: values.Get("runId"), Cursor: values.Get("cursor")}
 	for name, dst := range map[string]*time.Time{"from": &q.From, "to": &q.To} {
 		if raw := values.Get(name); raw != "" {
 			t, err := time.Parse(time.RFC3339Nano, raw)

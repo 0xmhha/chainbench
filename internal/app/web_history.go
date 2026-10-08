@@ -31,6 +31,7 @@ type WebHistory struct {
 	webArtifactRoot string
 	jobs            *WebJobs
 	redact          func(string) string
+	observations    *WebMonitor
 }
 
 func OpenWebHistory(root, artifactRoot string, jobs *WebJobs, redact func(string) string) (*WebHistory, error) {
@@ -145,7 +146,7 @@ func (s *WebHistory) List(q WebHistoryQuery) (WebRunPage, error) {
 	for _, capture := range s.state.Captures {
 		run := capture.Run
 		if historyMatches(run, q) {
-			rows = append(rows, detachedHistory(capture).Run)
+			rows = append(rows, s.withObservations(detachedHistory(capture).Run))
 		}
 	}
 	sort.Slice(rows, func(i, j int) bool {
@@ -206,7 +207,7 @@ func (s *WebHistory) Get(id string) (WebRun, error) {
 	if !found {
 		return WebRun{}, ErrDeploymentNotFound
 	}
-	return detachedHistory(capture).Run, nil
+	return s.withObservations(detachedHistory(capture).Run), nil
 }
 
 func (s *WebHistory) Export(id string) ([]byte, error) {
@@ -242,6 +243,11 @@ func (s *WebHistory) Delete(a DeploymentActor, id string) error {
 		if err != nil || !terminalWebJob(job.State) {
 			return ErrDeploymentConflict
 		}
+	}
+	if err := s.deleteObservations(id, capture.Run); err != nil {
+		failed := s.clone()
+		failed.Audit = append(failed.Audit, webHistoryAudit{a.ID, id, "history.delete_failed", time.Now().UTC()})
+		return errors.Join(err, s.commit(failed))
 	}
 	next := s.clone()
 	delete(next.Captures, id)

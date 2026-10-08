@@ -4,6 +4,7 @@
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
+  let observed = $state(null)
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
@@ -43,8 +44,12 @@
     comparison = null
   }
   async function open(id) {
-    busy = true; error = ''; pendingDelete = null
+    busy = true; error = ''; pendingDelete = null; observed = null
     try { detail = parseHistoryJSON(await (await api('history/' + encodeURIComponent(id))).text()) } catch (e) { error = e.message } finally { busy = false }
+  }
+  async function loadObserved(run) {
+    busy = true; error = ''
+    try { observed = { id: run.id, metrics: await (await api(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`)).json() } } catch (e) { error = e.message } finally { busy = false }
   }
   async function compare() {
     busy = true; error = ''
@@ -61,11 +66,12 @@
   async function remove() {
     busy = true; error = ''
     try {
-      await api('history/' + encodeURIComponent(pendingDelete.id), 'DELETE')
+      const response = await fetch('/api/v1/history/' + encodeURIComponent(pendingDelete.id), { method: 'DELETE', headers: { 'X-CSRF-Token': webSession?.csrfToken ?? '' } })
+      if (!response.ok) throw new Error(`삭제 실패 (${response.status}): ${(await response.text()).trim()}`)
       selected = selected.filter(id => id !== pendingDelete.id)
       pendingDelete = null; detail = null; comparison = null
       await load()
-    } catch (e) { error = e.message + '. 삭제를 완료하지 못했습니다. 보관 결과를 다시 확인하세요.' } finally { busy = false }
+    } catch (e) { error = e.message + '. 결과 목록을 다시 확인한 뒤 필요하면 삭제를 다시 시도하세요.' } finally { busy = false }
   }
 </script>
 
@@ -101,8 +107,9 @@
     <p class="mono">{detail.id}</p><p>원본 세션: {detail.sessionRefs.join(', ') || '연결된 엔진 세션 없음'}</p>
     <p>큰 정수는 정확한 숫자 문자열로 표시합니다. 다운로드 파일은 원래 JSON 수치 형식을 유지합니다.</p>
     {#if detail.summary.missingDimensions?.length}<p class="notice">자료 없음: {detail.summary.missingDimensions.join(', ')}</p>{/if}
+    {#if detail.summary.observations}<div class="observed" data-testid="run-observations"><p>보관된 노드 지표·로그 구간: {format(detail.summary.observations.from)} – {detail.summary.observations.to ? format(detail.summary.observations.to) : '진행 중'} · 네트워크 {detail.summary.observations.networkId}</p><button disabled={busy} onclick={() => loadObserved(detail)}>이 실행의 지표 확인</button>{#if observed?.id === detail.id}<p data-testid="run-observation-series" data-series={observed.metrics.series.length}>지표 {observed.metrics.series.length}개 · 표본 {observed.metrics.series.reduce((n, s) => n + s.samples.length, 0)}개 · {observed.metrics.coverage.complete ? '누락 없음' : '누락 구간 있음'}</p>{#if observed.metrics.coverage.gaps.length}<ul>{#each observed.metrics.coverage.gaps as gap}<li>{gap.reason} ({format(gap.from)} – {format(gap.to)})</li>{/each}</ul>{/if}{/if}</div>{/if}
     {#if detail.summary.captureGaps?.length}<ul>{#each detail.summary.captureGaps as gap}<li>{gap}</li>{/each}</ul>{/if}
-    {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본을 삭제합니다. 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
+    {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
     <details open><summary>테스트 판정 · 어세션 · 단계 · 사용 자료</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
     <details><summary>환경 fingerprint</summary><pre>{JSON.stringify(detail.fingerprints, null, 2)}</pre></details>
   </section>{/if}

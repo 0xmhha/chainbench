@@ -114,3 +114,50 @@ func (s *ObservationStore) WriteCursor(network string, b []byte) error {
 	}
 	return os.Rename(name, path)
 }
+
+// Replace atomically publishes a rewritten record. It exists for audited
+// administrative deletion of one run's observations; collection only appends.
+func (s *ObservationStore) Replace(network, record string, b []byte) error {
+	path, err := s.path(network, record)
+	if err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(filepath.Dir(path), ".replace-*")
+	if err != nil {
+		return err
+	}
+	name := f.Name()
+	defer func() { _ = os.Remove(name) }()
+	if _, err = f.Write(b); err == nil {
+		err = f.Sync()
+	}
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	return os.Rename(name, path)
+}
+
+// Logs lists the archived log record names of a network, such as
+// "logs/node1-20261009.jsonl", including nodes no longer in the chain record.
+func (s *ObservationStore) Logs(network string) ([]string, error) {
+	if !observationName.MatchString(network) {
+		return nil, ErrObservationName
+	}
+	entries, err := os.ReadDir(filepath.Join(s.root, network, "logs"))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, entry := range entries {
+		if !entry.IsDir() && observationName.MatchString(entry.Name()) && filepath.Ext(entry.Name()) == ".jsonl" {
+			out = append(out, "logs/"+entry.Name())
+		}
+	}
+	return out, nil
+}

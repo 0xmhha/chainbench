@@ -46,6 +46,7 @@ type WebMonitor struct {
 	mu       sync.Mutex
 	resumed  map[string]bool
 	remote   map[string]int
+	runs     func(string) (webObservationWindow, error)
 }
 
 type webMonitorSample struct {
@@ -185,7 +186,7 @@ func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
 			}
 			continue
 		}
-		g, err := m.archiveLog(ctx, network, label, ns.LogPath, webLocalLogs{}, &cursor, since, now)
+		g, err := m.archiveLog(ctx, network, label, ns.LogPath, webLocalLogs{}, &cursor, since, now, nil)
 		if err != nil {
 			errs = append(errs, err)
 			g = append(g, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: "collector_error"})

@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -71,6 +72,10 @@ func WithWebHistory(history *app.WebHistory, authenticate DeploymentAuthenticato
 		})
 		route("DELETE /api/v1/history/{runId}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			if err := history.Delete(a, r.PathValue("runId")); err != nil {
+				if errors.Is(err, app.ErrHistoryObservationsIncomplete) {
+					http.Error(w, app.ErrHistoryObservationsIncomplete.Error(), http.StatusInternalServerError)
+					return
+				}
 				deploymentError(w, err)
 				return
 			}

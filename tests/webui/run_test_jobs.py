@@ -26,7 +26,12 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
     shutil.copytree('presets/keys',source_keys)
     extra = fixture_inputs(runtime, source_keys, output) if fixture_inputs else {}
     with (output/'build.log').open('w') as log:
-        subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
+        # WEBUI_DASHBOARD_BINARY records the same proof against another build,
+        # for example the previous commit, as RED evidence.
+        if os.environ.get('WEBUI_DASHBOARD_BINARY'):
+            shutil.copy2(Path(os.environ['WEBUI_DASHBOARD_BINARY']).resolve(strict=True),runtime/'dashboard')
+        else:
+            subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
     with socket.socket() as listener:
         listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
     store=runtime/'store'

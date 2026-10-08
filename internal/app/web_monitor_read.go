@@ -29,6 +29,7 @@ type WebMonitorQuery struct {
 	From, To time.Time
 	NodeID   string
 	Metric   string
+	RunID    string
 	Cursor   string
 	Limit    int
 }
@@ -126,7 +127,7 @@ func (m *WebMonitor) Metrics(a DeploymentActor, network string, q WebMonitorQuer
 	if err := m.readable(a, network); err != nil {
 		return WebMetrics{}, err
 	}
-	from, to, err := m.window(q)
+	from, to, err := m.queryWindow(network, q)
 	if err != nil {
 		return WebMetrics{}, err
 	}
@@ -207,7 +208,7 @@ func (m *WebMonitor) Logs(a DeploymentActor, nodeID string, q WebMonitorQuery) (
 		if (!q.From.IsZero() && !q.From.Equal(from)) || (!q.To.IsZero() && !q.To.Equal(to)) {
 			return WebLogs{}, ErrWebMonitorQuery
 		}
-	} else if from, to, err = m.window(q); err != nil {
+	} else if from, to, err = m.queryWindow(network, q); err != nil {
 		return WebLogs{}, err
 	}
 	limit := q.Limit
@@ -240,7 +241,7 @@ func (m *WebMonitor) Logs(a DeploymentActor, nodeID string, q WebMonitorQuery) (
 		corrupt += n
 	}
 	gaps, err := m.coverageGaps(network, from, to, corrupt, func(g webMonitorGap) bool {
-		return (g.Source == "logs" && g.Node == label) || g.Source == "collector"
+		return (g.Source == "logs" && g.Node == label) || g.Source == "collector" || g.Source == "archive"
 	})
 	if err != nil {
 		return WebLogs{}, err

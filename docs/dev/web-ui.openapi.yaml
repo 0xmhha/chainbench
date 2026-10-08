@@ -1483,7 +1483,7 @@ paths:
       operationId: metrics
       summary: Read node series with units, source and collection coverage
       x-minimum-role: viewer
-      description: The server collects every owned node recorded as launched each 5 seconds and archives the results without expiry. RPC series are block_height and peer_count; metrics-endpoint series are chain_head_block, p2p_peers, txpool_pending and txpool_queued. A failed or disabled source, an unexposed gauge and an interval without a running collector are coverage gaps such as "node2 rpc rpc_unavailable", "node1 metrics txpool_pending not_exposed" or "collector collector_stopped"; missing values are never reported as zero. The default window is the last two hours and a window may span at most 31 days; a time before the first collection round is a "collector not_collected" gap. A series above 720 samples is averaged into equal time buckets with coverage.downsampled set. Unreadable archive lines are skipped and reported as an "archive corrupt_record" gap.
+      description: runId selects a history run's job window on this network instead of from/to. The server collects every owned node recorded as launched each 5 seconds and archives the results without expiry. RPC series are block_height and peer_count; metrics-endpoint series are chain_head_block, p2p_peers, txpool_pending and txpool_queued. A failed or disabled source, an unexposed gauge and an interval without a running collector are coverage gaps such as "node2 rpc rpc_unavailable", "node1 metrics txpool_pending not_exposed" or "collector collector_stopped"; missing values are never reported as zero. The default window is the last two hours and a window may span at most 31 days; a time before the first collection round is a "collector not_collected" gap. A series above 720 samples is averaged into equal time buckets with coverage.downsampled set. Unreadable archive lines are skipped and reported as an "archive corrupt_record" gap.
       responses:
         '200':
           description: Read node series with units, source and collection coverage
@@ -1684,6 +1684,7 @@ paths:
       description: Keep shared assets, other-run references and audit records. Active
         job history cannot be deleted. Return error and recorded unresolved deletion
         state on partial failure.
+        Also removes archived node samples and log lines inside the run's job window, except instants another listed execution or a running job covers; records of the same execution do not protect each other. Removed intervals become "archive deleted_by_admin <runId>" coverage gaps. If the archive rewrite fails the run is kept, a history.delete_failed audit entry is recorded and the response is 500; retrying is safe. Log lines are owned by their entry time (the node's own timestamp when present, read in the server's zone). A terminal job without a recorded end has no bounded window and deletes no observations. Chain records, node data and audit history are never deleted.
       parameters:
       - name: runId
         in: path

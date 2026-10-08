@@ -236,3 +236,11 @@ deploys four native nodes over the owned loopback SSH fixture, starts a
 the node's own log, runs a node stop while collection continues, revokes the
 credential and requires no new `sshd` session or archived line for 20 seconds.
 `WEBUI_DASHBOARD_BINARY=<path>` runs the same proof against another build.
+
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_history_archive.py`
+runs a native test job and a later node stop, checks the run's archived window
+in history, refuses deletion by operators and viewers, keeps the archive across
+a dashboard restart, forces one archive rewrite to fail (the run stays, 500),
+then deletes through the UI and requires later samples, the chain record, node
+data and RPC to remain. `WEBUI_DASHBOARD_BINARY=<path>` also applies to the
+local test-job runners.
