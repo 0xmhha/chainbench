@@ -83,14 +83,14 @@ func (e *WebChainEngine) recheckTestGenesis(ctx context.Context, p webChainPaylo
 	}
 	before, err := json.Marshal(struct {
 		Content []json.RawMessage
-		Genesis []webPresetGenesis
+		Genesis []webPresetGenesis `json:"genesis,omitempty"`
 	}{p.TestRun.Content, p.TestRun.Genesis})
 	if err != nil {
 		return err
 	}
 	after, err := json.Marshal(struct {
 		Content []json.RawMessage
-		Genesis []webPresetGenesis
+		Genesis []webPresetGenesis `json:"genesis,omitempty"`
 	}{content, genesis})
 	if err != nil {
 		return err

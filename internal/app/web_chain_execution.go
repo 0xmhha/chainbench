@@ -45,7 +45,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		return result, err
 	}
 	d.ServerLookup = lookup
-	if p.Input.Operation == "node.start" || p.Input.Operation == "node.stop" {
+	if webNodeControlOperation(p.Input.Operation) {
 		index, err := strconv.Atoi(strings.TrimPrefix(p.Input.NodeIDs[0], "node"))
 		if err != nil {
 			return result, err
@@ -69,11 +69,24 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if bound != p.ExecutionBinary {
 				return ErrDeploymentConflict
 			}
+			if p.Input.Operation == "node.reset" {
+				if err = verifyWebResetInputs(ctx, state, p, lookup); err != nil {
+					return err
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
 				return err
 			}
 			if p.Input.Operation == "node.start" {
 				_, err := NodeStart(ctx, d, NodeStartIn{DataDir: p.ControlDir, Index: index})
+				return err
+			}
+			if p.Input.Operation == "node.reset" {
+				err := NodeReset(ctx, d, NodeResetIn{DataDir: p.ControlDir, Index: index})
+				if err != nil {
+					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
+					result.PartialEffects = append(result.PartialEffects, "Node reset attempted; the selected node may be stopped or partially initialized")
+				}
 				return err
 			}
 			return NodeStop(ctx, d, NodeStopIn{DataDir: p.ControlDir, Index: index})

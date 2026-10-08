@@ -7,6 +7,12 @@ The first checks chain/server/path/workspace saves and pinned revisions without
 node effects; the second also checks delayed case responses and native sessions.
 These development receipts do not award complete Seed criteria.
 
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_node_reset.py` checks
+the actual non-producer reset UI and native DB head at genesis across three chains,
+producer preservation, stopped state and explicit relaunch. It also refuses
+producer and PID-zero reset plans. File/physical-path and foreign-process refusal
+have application unit coverage. This remains partial WEB-07 verification.
+
 Install dependencies with `npm --prefix web ci` and `npm --prefix tests/webui ci`.
 The browser fixture uses installed Chrome with a separate temporary profile.
 Set `WEBUI_BROWSER_CHANNEL=chromium` to use a Playwright-installed Chromium.

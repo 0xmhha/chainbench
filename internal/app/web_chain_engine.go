@@ -85,7 +85,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err := e.allowed(a); err != nil {
 		return out, err
 	}
-	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && in.Operation != "node.start" && in.Operation != "node.stop" && in.Operation != "test.run" {
+	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" {
 		return out, errors.New("operation requires an execution adapter that is not available")
 	}
 	var args webChainArguments
@@ -287,7 +287,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 				}
 			}
 		}
-		if in.Operation == "node.start" || in.Operation == "node.stop" {
+		if webNodeControlOperation(in.Operation) {
 			p.ExecutionBinary, err = bindWebControlBinary(ctx, state, p, lookup)
 			if err != nil {
 				return out, err
@@ -298,6 +298,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			if err = webSelectedNode(state, in.NodeIDs); err != nil {
 				return out, err
 			}
+			if in.Operation == "node.reset" {
+				if err = verifyWebResetInputs(ctx, state, p, lookup); err != nil {
+					return out, err
+				}
+			}
 			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
 				return out, err
 			}
@@ -307,7 +312,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 	} else if !os.IsNotExist(err) {
 		return out, err
-	} else if in.Operation == "node.start" || in.Operation == "node.stop" {
+	} else if webNodeControlOperation(in.Operation) {
 		return out, ErrDeploymentNotFound
 	}
 	switch in.Operation {
@@ -333,8 +338,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
 	out.Changes = append(out.Changes, fmt.Sprintf("Binary asset %s · SHA-256 %s", p.Binary.ID, p.Binary.SHA256))
-	if in.Operation == "node.start" || in.Operation == "node.stop" {
+	if webNodeControlOperation(in.Operation) {
 		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
+	}
+	if in.Operation == "node.reset" {
+		out.Changes = append(out.Changes, "Replace only the selected non-producer's node data with its recorded genesis; leave it stopped and preserve sibling nodes")
 	}
 	if p.TestRun != nil {
 		display := p.TestRun.Plan
@@ -447,7 +455,7 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if (err == nil && manifestHash(record) != p.RecordDigest) || (os.IsNotExist(err) && p.RecordDigest != "") {
 		return WebJobResult{}, ErrDeploymentConflict
 	}
-	if p.Input.Operation == "node.start" || p.Input.Operation == "node.stop" {
+	if webNodeControlOperation(p.Input.Operation) {
 		var state State
 		if err = json.Unmarshal(record, &state); err != nil {
 			return WebJobResult{}, err

@@ -59,6 +59,7 @@ type (
 	NetworkStopIn    = verb.NetworkStopIn
 	NetworkStopOut   = verb.NetworkStopOut
 	NodeStopIn       = verb.NodeStopIn
+	NodeResetIn      = verb.NodeResetIn
 	NodeStartIn      = verb.NodeStartIn
 	NodeStartOut     = verb.NodeStartOut
 	NetworkRemoveIn  = verb.NetworkRemoveIn
@@ -189,6 +190,11 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (verb.NodeStartOut, 
 // NodeStop stops one node by index.
 func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	return verb.NodeStop(ctx, d.chainsetupDeps(), in)
+}
+
+// NodeReset initializes one non-producing node again and leaves it stopped.
+func NodeReset(ctx context.Context, d Deps, in NodeResetIn) error {
+	return verb.NodeReset(ctx, d.chainsetupDeps(), in)
 }
 
 // ChainResume recovers a workspace whose run died: reconcile pids with the

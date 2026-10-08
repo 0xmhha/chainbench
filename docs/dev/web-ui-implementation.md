@@ -391,3 +391,34 @@ and verifies the latest selection remains intact before three real native tests.
 Both receipts bind the observations to source and dashboard digests. This is a
 partial configuration-flow regression, not full acceptance of all DSL or asset
 contracts.
+
+## Explicit non-producer reset
+
+The public reset adapter is registered as the effectful `node.reset` feature;
+the architecture coverage limit remains unchanged.
+
+`node.reset` reviews one owned endpoint or proxy with a recorded running PID.
+Producer, unknown-role, missing-PID and unresolved named-binary records are refused.
+The UI excludes these selections and explains that reset replaces existing node
+data with the recorded genesis and leaves the node stopped. Planning and execution
+verify the owned record, registered executable, full process arguments, accepted
+workspace/server declarations, exact generated node paths and their physical
+target identity. Config and genesis checksums must match the recorded launch
+inputs before the native reset verb can remove data. Changed inputs or a redirected
+node directory fail without effects. A failed native reset retains resource
+exclusion and reports possible partial initialization for explicit recovery.
+
+The existing native reset performs stop, datadir replacement and genesis init;
+sibling nodes keep their processes and data. Relaunch uses a separate reviewed
+`node.start` job. PID-zero records remain refused for reset until residual-process
+reconciliation provides evidence of vacancy. Binary/config replacement, stopped
+node reconciliation and complete WEB-07 acceptance remain open.
+
+`run_node_reset.py` runs generated-genesis cases across all three native chains,
+drives reset in Chrome, reads native `LastBlock` and `LastHeader` keys against the
+live genesis block hash, checks stopped state and producer preservation, then
+explicitly relaunches and stops the owned nodes. The chain-analysis CLI graphs
+document the native `db get` and `dumpgenesis` commands used for these observations.
+The fixture also exposed an empty-dependency serialization regression: optional
+genesis snapshots now compare absent and empty lists consistently after accepted
+plan persistence, while file-bearing snapshots still compare their exact contents.
