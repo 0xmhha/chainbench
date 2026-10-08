@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "policy": "All fourteen remain open until full acceptance and recorded RED/GREEN evidence. Historical partial passes do not award completion.",
+  "items": [
+    {
+      "id": "WEB-01",
+      "title": "체인 프리셋과 전체 허용 옵션",
+      "status": "in_progress",
+      "completion": [
+        "세 체인의 전체 프리셋·상속·기본값·노드 표·필수/선택 필드를 구조 편집한다.",
+        "체인별 네 분석 자료와 실제 바이너리 help를 연결하고 엔진 매핑과 실제 지원의 교집합만 실행한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-01 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-02",
+      "title": "구성 import·edit·export·셋업",
+      "status": "in_progress",
+      "completion": [
+        "파일과 묶음 import를 미리 보고 immutable revision으로 저장한다.",
+        "구조 편집과 export를 실제 셋업에 적용하며 의미 보존·잘못된 필드·미등록 확장을 구체적으로 검증한다.",
+        "업로드 바이너리·키·설정 자료를 고정하고 계획 이후 변경이 실행에 섞이지 않는다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-02 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-03",
+      "title": "공유 서버/workspace와 개인 SSH",
+      "status": "in_progress",
+      "completion": [
+        "두 운영자의 공유 리비전 편집·충돌과 서로 다른 개인 binding을 실제 SSH로 검증한다.",
+        "포트·경로·배치·접근 권한·재시작 후 암호화 저장·비밀 없는 export를 검증한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-03 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-04",
+      "title": "플러그인 매니페스트",
+      "status": "in_progress",
+      "completion": [
+        "기존 세 체인 계열의 내장·외부 매니페스트로 실제 셋업을 검증한다.",
+        "미지원 계열·dialect·다른 바이너리·stale 근거를 UI/API에서 거절한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-04 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-05",
+      "title": "현행 DSL 전체 작성과 실행",
+      "status": "in_progress",
+      "completion": [
+        "현행 전체 문법·22 동작·32 단언·13 리더와 전체 인자·변수/노드 참조·v1 이관을 구조 편집한다.",
+        "round-trip과 실제 테스트 실행 의미를 전수 검증하며 skip·누락·의미 변경이 없다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-05 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-06",
+      "title": "실제 SSH 배포",
+      "status": "in_progress",
+      "completion": [
+        "실제 호환 바이너리·키·설정을 전송하고 checksum·DB·genesis·RPC·PID를 관측한다.",
+        "중간 SSH 실패와 실행 중 철회 시 부분 변경·미완료 자원·감사를 실제로 검증한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-06 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-07",
+      "title": "소유 노드 제어",
+      "status": "in_progress",
+      "completion": [
+        "시작·정지·설정/바이너리 교체 후 재실행·허용된 비생산자 초기화를 실제 노드에서 검증한다.",
+        "생산자 초기화·attach 제어를 UI/API 모두 거절하고 기존 CLI 의미를 보존한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-07 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-08",
+      "title": "모니터링과 디버깅",
+      "status": "in_progress",
+      "completion": [
+        "실행/노드 상태·metric 차트·해당 시점 로그를 실제 자료로 제공한다.",
+        "연결 종료/로그아웃 중 실행 지속·재접속 snapshot·SSE 누락/drop·stale·수집 실패를 검증한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-08 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-09",
+      "title": "히스토리 관리",
+      "status": "in_progress",
+      "completion": [
+        "검색·필터·상세·호환 실행 비교·불가 사유·민감정보 제거 export를 제공한다.",
+        "metric/log archive를 자동 만료 없이 보존하고 재시작·관리자 삭제·부분 삭제 실패를 검증한다.",
+        "진행 중 실행·공유 자료·실제 노드 DB는 삭제에서 보호한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-09 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-10",
+      "title": "개인/팀 인증과 역할",
+      "status": "in_progress",
+      "completion": [
+        "최초 관리자·로그인·세 역할·CSRF·UI/API 권한을 실제 브라우저로 검증한다.",
+        "개인 자격증명은 암호화하고 타인 접근·API/export/log/저장 파일의 비밀 유출이 없다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-10 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-11",
+      "title": "물리 자원 충돌",
+      "status": "in_progress",
+      "completion": [
+        "호스트 별칭·local/SSH·경로/포트/노드/프로세스 중복은 작업·실행자를 표시하며 차단한다.",
+        "실제 독립 자원은 병행하며 테스트 내부 제어는 작업 소유 범위 안에서 수행한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-11 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-12",
+      "title": "재시작과 잔존 자원 대조",
+      "status": "in_progress",
+      "completion": [
+        "실행 중 서버 재시작을 실제 재현하고 interrupted 및 실제 노드 상태를 대조한다.",
+        "기록과 잔존 자원을 보존하며 자동 배포/초기화를 하지 않고 명시적 재실행을 요구한다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-12 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-13",
+      "title": "취소·보존·정리·철회",
+      "status": "in_progress",
+      "completion": [
+        "정상 종료·취소에서 기본 보존과 선택 정리를 실제 로컬/SSH로 검증한다.",
+        "취소 소유권·부분 실패·attach 제한을 검증한다.",
+        "계정/자격증명 철회는 취소·보존하며 철회 후 새 SSH/후속 정리를 수행하지 않는다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-13 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    },
+    {
+      "id": "WEB-14",
+      "title": "전체 회귀와 최종 인수",
+      "status": "in_progress",
+      "completion": [
+        "실제 Go embed SPA의 모든 경로·새로고침과 개인/팀·로컬/SSH를 검증한다.",
+        "make check·전체 race·e2e vet·프론트 빌드와 기존 CLI/MCP/DSL/session/read API 회귀를 통과한다.",
+        "WEB-01~13 전체의 최신 독립 live 검증을 포함하며 자체 선언·파일 존재·mock만으로 통과하지 않는다."
+      ],
+      "verification": "bash tests/webui/verify.sh --criterion WEB-14 --require-live --output chainbench-out/web-ui-acceptance",
+      "evidence": [],
+      "red": "",
+      "green": ""
+    }
+  ]
+}
