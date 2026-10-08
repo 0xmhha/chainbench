@@ -10,7 +10,7 @@ These development receipts do not award complete Seed criteria.
 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_node_reset.py` checks
 the actual non-producer reset UI and native DB head at genesis across three chains,
 producer preservation, stopped state and explicit relaunch. It also refuses
-producer and PID-zero reset plans. File/physical-path and foreign-process refusal
+producer and unverified stopped-node reset plans. File/physical-path and foreign-process refusal
 have application unit coverage. This remains partial WEB-07 verification.
 
 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_pinned_controls.py`
@@ -188,7 +188,7 @@ cached records must remain unknown and observation must not adopt or stop it.
 The fixture restores its own record before explicit stop and cleanup/alias checks.
 Results bind source/dashboard digests in
 `chainbench-out/web-ui-development/unrecorded-controls/receipt.json`.
-This does not cover full reconciliation, mixed binaries or PID-zero reset.
+This does not cover full reconciliation, mixed binaries or verified stopped-node reset.
 
 
 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_residual_composition.py`
@@ -208,3 +208,11 @@ restores only the owned fixture ledger, and repeats explicit stop/cleanup. Evide
 `chainbench-out/web-ui-development/ledger-controls/receipt.json`. No full acceptance
 criterion is awarded. The unit execution test uses two isolated process groups and
 proves that core cannot substitute an unchecked ledger PID for the verified process.
+
+
+`run_recorded_controls.py` additionally verifies repeated reset of confirmed-stopped
+endpoints through Chrome on all three chains. It checks native LastBlock/LastHeader
+at the observed genesis hash, stopped state, sibling process/data preservation and
+explicit relaunch. Zero-PID records with incomplete launch arguments remain unknown
+and cannot be reset, as checked by `run_node_reset.py` and `run_pinned_controls.py`.
+This remains partial control/recovery evidence and awards no full Seed criterion.

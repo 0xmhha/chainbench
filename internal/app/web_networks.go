@@ -60,7 +60,7 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 		network := WebNetwork{ID: w.ID, WorkspaceID: w.ID, Ownership: "owned", Version: w.Revision, Nodes: []WebNode{}}
 		for _, ns := range st.Nodes {
 			controls := []string{"node.start", "node.stop"}
-			if ns.PID > 0 && (ns.Role == "en" || ns.Role == "pn") {
+			if ns.PID > 0 && ns.Binary == "" && (ns.Role == "en" || ns.Role == "pn") {
 				controls = append(controls, "node.reset")
 			}
 			state := "unknown"

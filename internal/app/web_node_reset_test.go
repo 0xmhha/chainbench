@@ -144,7 +144,7 @@ func webResetFixture(t *testing.T) (State, webChainPayload) {
 }
 
 func TestWebResetSelectionRefusesProducersAndUnownedPaths(t *testing.T) {
-	for _, name := range []string{"endpoint", "proxy", "producer", "unknown role", "no PID", "foreign binary", "outside data", "outside config", "traversal", "missing node", "multiple nodes"} {
+	for _, name := range []string{"endpoint", "proxy", "producer", "unknown role", "stopped record", "negative PID", "foreign binary", "outside data", "outside config", "traversal", "missing node", "multiple nodes"} {
 		t.Run(name, func(t *testing.T) {
 			state, p := webResetFixture(t)
 			switch name {
@@ -154,8 +154,10 @@ func TestWebResetSelectionRefusesProducersAndUnownedPaths(t *testing.T) {
 				state.Nodes[0].Role = "bp"
 			case "unknown role":
 				state.Nodes[0].Role = "unclassified"
-			case "no PID":
+			case "stopped record":
 				state.Nodes[0].PID = 0
+			case "negative PID":
+				state.Nodes[0].PID = -1
 			case "foreign binary":
 				state.Nodes[0].Binary = "unregistered"
 			case "outside data":
@@ -170,7 +172,7 @@ func TestWebResetSelectionRefusesProducersAndUnownedPaths(t *testing.T) {
 				p.Input.NodeIDs = []string{"node1", "node2"}
 			}
 			_, err := webResetNode(state, p)
-			if name == "endpoint" || name == "proxy" {
+			if name == "endpoint" || name == "proxy" || name == "stopped record" {
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -222,5 +224,14 @@ func TestWebResetRechecksFilesAndPhysicalDirectory(t *testing.T) {
 				t.Fatal("input verification changed node data", err)
 			}
 		})
+	}
+}
+
+func TestWebResetSelectionPermitsOwnedStoppedNonProducer(t *testing.T) {
+	state, p := webResetFixture(t)
+	state.Nodes[0].PID = 0
+	selected, err := webResetNode(state, p)
+	if err != nil || selected.PID != 0 {
+		t.Fatalf("valid stopped endpoint selection refused before vacancy checks: %+v %v", selected, err)
 	}
 }

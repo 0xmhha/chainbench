@@ -407,8 +407,9 @@ refuses a review after workspace rebind and leaves the unselected target untouch
 The public reset adapter is registered as the effectful `node.reset` feature;
 the architecture coverage limit remains unchanged.
 
-`node.reset` reviews one owned endpoint or proxy with a recorded running PID.
-Producer, unknown-role, missing-PID and unresolved named-binary records are refused.
+`node.reset` reviews one owned endpoint or proxy with a verified running process
+or confirmed vacancy. Producer, unknown-role, uncertain-process and unresolved
+named-binary records are refused.
 The UI excludes these selections and explains that reset replaces existing node
 data with the recorded genesis and leaves the node stopped. Planning and execution
 verify the owned record, registered executable, full process arguments, accepted
@@ -420,9 +421,9 @@ exclusion and reports possible partial initialization for explicit recovery.
 
 The existing native reset performs stop, datadir replacement and genesis init;
 sibling nodes keep their processes and data. Relaunch uses a separate reviewed
-`node.start` job. PID-zero records remain refused for reset until residual-process
-reconciliation provides evidence of vacancy. Binary/config replacement, stopped
-node reconciliation and complete WEB-07 acceptance remain open.
+`node.start` job. PID-zero reset requires stable, readable process discovery and
+full recorded launch arguments; a zero PID alone is insufficient. Binary/config
+replacement, explicit node reconciliation and complete WEB-07 acceptance remain open.
 
 `run_node_reset.py` runs generated-genesis cases across all three native chains,
 drives reset in Chrome, reads native `LastBlock` and `LastHeader` keys against the
@@ -487,8 +488,8 @@ confirmed vacancy, a missing recorded PID and an unrecorded running process.
 
 Discovery considers the reviewed executable's process name and then checks actual
 executable paths and arguments. This is a guard for the currently supported owned
-single-binary layouts, not full mixed-binary/port/resource reconciliation. PID-zero
-reset is still refused and an explicit reconciliation workflow remains open.
+single-binary layouts, not full mixed-binary/port/resource reconciliation. Verified
+vacancy now permits non-producer reset; explicit reconciliation remains open.
 `run_unrecorded_controls.py` starts a real owned WBFT node, removes only its recorded
 PID, observes it through Chrome, verifies rejected controls and unchanged records,
 restores that fixture record, and repeats explicit stop/cleanup/alias release.
@@ -530,3 +531,21 @@ with a dedicated other process, verifies refused start/stop plans and unavailabl
 selection, then restores only the fixture ledger. Unit execution verifies that neither
 process nor record is altered before the native stop verb. These are partial control
 checks and do not award the complete node-control or recovery acceptance criteria.
+
+
+## Resetting a verified stopped non-producer
+
+Reset selection accepts a zero PID only as a candidate. Planning and execution
+still require unchanged config/genesis/physical paths, an agreed process ledger,
+and stable live discovery with the full recorded launch arguments. Unreadable,
+incomplete or residual launches remain refused. A confirmed stopped endpoint or
+proxy on the supported single binary can be initialized again and stays stopped;
+producers and unresolved named binaries remain unavailable. The UI requires live
+observation before selecting a stopped node for reset and explains the data change.
+
+The recorded-control native fixture resets each chain's endpoint twice through
+Chrome, verifies both native DB heads at genesis, preserves sibling processes/data,
+and explicitly relaunches. Earlier reset and pinned-input fixtures now create an
+actually uncertain stopped record by removing its launch arguments, verify unknown
+observation and reset refusal, and restore only their fixture bytes. No full WEB-07
+or recovery criterion is awarded.

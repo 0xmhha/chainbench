@@ -17,8 +17,8 @@ func webNodeControlOperation(operation string) bool {
 }
 
 // webResetNode checks role, recorded identity and the accepted node directory.
-// A stopped record lacks sufficient process evidence for destructive reset until
-// residual-process reconciliation is available; it does not imply a vacant path.
+// Both running and stopped selections require live process verification before
+// reset; a zero PID by itself never establishes a vacant path.
 func webResetNode(state State, p webChainPayload) (node.Record, error) {
 	if err := webSelectedNode(state, p.Input.NodeIDs); err != nil {
 		return node.Record{}, err
@@ -30,7 +30,7 @@ func webResetNode(state State, p webChainPayload) (node.Record, error) {
 		if node.Is(node.Role(ns.Role), node.RoleBP) {
 			return node.Record{}, errors.New("a block producer cannot be reset")
 		}
-		if ns.PID <= 0 || (!node.Is(node.Role(ns.Role), node.RoleEN) && !node.Is(node.Role(ns.Role), node.RolePN)) || ns.Binary != "" {
+		if ns.PID < 0 || (!node.Is(node.Role(ns.Role), node.RoleEN) && !node.Is(node.Role(ns.Role), node.RolePN)) || ns.Binary != "" {
 			return node.Record{}, ErrDeploymentConflict
 		}
 		wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)

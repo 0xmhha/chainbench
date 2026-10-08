@@ -97,7 +97,14 @@ try{
    assert.equal(head.match(/: (0x[0-9a-f]{64})/i)?.[1].toLowerCase(),genesisHash,'reset database head is not genesis')
   }
   const aliveAfter=await api('networks/'+w.id+'/observations');for(const n of aliveAfter.nodes.filter(n=>n.id!=='node1'))assert.equal(n.state,'running')
-  await api('plans','POST',controlInput,undefined,409)
+  const unknownRecordPath=f.store+'/networks/'+w.id+'/chain-record.json',knownStoppedBytes=fs.readFileSync(unknownRecordPath)
+  try{
+   const unknownRecord=JSON.parse(knownStoppedBytes);unknownRecord.nodes.find(n=>n.index===1).args=[]
+   fs.writeFileSync(unknownRecordPath,JSON.stringify(unknownRecord))
+   const unknownObservation=(await api('networks/'+w.id+'/observations')).nodes.find(n=>n.id==='node1')
+   assert.equal(unknownObservation.state,'unknown');assert.equal(unknownObservation.supportedControls.length,0)
+   await api('plans','POST',controlInput,undefined,409)
+  }finally{fs.writeFileSync(unknownRecordPath,knownStoppedBytes)}
   const restartPlan=await api('plans','POST',{...controlInput,operation:'node.start'},undefined,201)
   const restart=await api('jobs','POST',{planId:restartPlan.id},restartPlan.id,202);await waitJob(restart.id)
   const relaunched=await api('networks/'+w.id+'/observations');assert.equal(relaunched.nodes.find(n=>n.id==='node1').state,'running')
