@@ -1152,6 +1152,32 @@ paths:
         schema: *id002
       - *id003
       - *id004
+  /api/v1/networks/{networkId}/observations:
+    get:
+      operationId: observeOwnedNetworkProcesses
+      summary: Read recorded process identity on the verified target using personal access
+      description: Read-only operator observation; unknown and missing identities cannot authorize process control. No record reconciliation or automatic recovery occurs.
+      x-minimum-role: operator
+      parameters:
+      - name: networkId
+        in: path
+        required: true
+        schema: *id002
+      responses:
+        '200':
+          description: Owned network with current process observations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/plans:
     post:
       operationId: createPlan
@@ -2263,6 +2289,12 @@ components:
           type: object
           additionalProperties: *id005
         pid: *id005
+        observedPid:
+          type: integer
+          minimum: 0
+        observationReason:
+          type: string
+          enum: [probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent]
         state:
           type: string
           enum:
@@ -2271,6 +2303,8 @@ components:
           - stopped
           - failed
           - unknown
+          - missing
+          - ownership_mismatch
         supportedControls:
           type: array
           items: *id001

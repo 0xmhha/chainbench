@@ -1,6 +1,7 @@
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
+import {spawn} from 'node:child_process'
 const [fixturePath,out]=process.argv.slice(2), f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const owned=await launchOwnedBrowser(), browser=owned.browser
 const context=await browser.newContext(), jobs=[]
@@ -20,7 +21,7 @@ async function waitJob(id){
   throw new Error('owned resource job timed out')
 }
 function planInput(w,operation='chain.setup',retention='retain'){
-  return {workspaceId:w.id,operation,retention,documentRefs:w.documents,assetRefs:['wbft'],...(operation==='node.stop'?{nodeIds:['node1']}:{}),arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',validators:4}}
+  return {workspaceId:w.id,operation,retention,documentRefs:w.documents,assetRefs:['wbft'],...(operation.startsWith('node.')?{nodeIds:['node1']}:{}),arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',validators:4}}
 }
 async function start(w,operation,retention){
  const plan=await api('plans','POST',planInput(w,operation,retention),undefined,201)
@@ -53,6 +54,24 @@ try{
  await api('jobs','POST',{planId:conflicting.id},conflicting.id,409)
  assert.equal((await api('jobs')).items.length,1,'alias accepted after retained completion')
  assert.equal((await api('networks')).items[0].workspaceId,owner.id,'conflicting alias changed ownership')
+ await start(owner,'node.start','retain')
+ const observed=await api('networks/'+owner.id+'/observations')
+ const liveNode=observed.nodes.find(n=>n.id==='node1');assert.equal(liveNode.state,'running');assert.ok(liveNode.observedPid>0);assert.ok(liveNode.supportedControls.includes('node.stop'))
+ const observerPage=await context.newPage();await observerPage.goto(f.url+'/chains')
+ await observerPage.getByLabel('작업 Workspace',{exact:true}).selectOption(owner.id)
+ await observerPage.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
+ await observerPage.getByLabel('노드 실제 관측',{exact:true}).waitFor()
+ assert.ok((await observerPage.getByLabel('노드 실제 관측',{exact:true}).innerText()).includes('가동 중'))
+ await observerPage.getByLabel('노드 실제 관측',{exact:true}).screenshot({path:out+'/node-observation.png'})
+ const recordPath=f.store+'/networks/'+owner.id+'/chain-record.json', originalRecord=fs.readFileSync(recordPath)
+ const foreign=spawn('/bin/sleep',['30'],{stdio:'ignore'})
+ try{
+  const changed=JSON.parse(originalRecord);changed.nodes.find(n=>n.index===1).pid=foreign.pid;fs.writeFileSync(recordPath,JSON.stringify(changed))
+  const mismatch=await api('networks/'+owner.id+'/observations')
+  const changedNode=mismatch.nodes.find(n=>n.id==='node1');assert.equal(changedNode.state,'ownership_mismatch');assert.equal(changedNode.supportedControls.length,0)
+  await api('plans','POST',planInput(owner,'node.stop'),undefined,409)
+  assert.equal(foreign.exitCode,null,'unowned process was stopped')
+ }finally{fs.writeFileSync(recordPath,originalRecord);foreign.kill()}
  await start(owner,'node.stop','retain')
  const cleaned=await start(owner,'chain.setup','cleanup');assert.equal(cleaned.nodeDisposition,'cleaned')
  assert.equal((await api('networks')).items.find(n=>n.workspaceId===owner.id).nodes.length,0,'cleanup left owned nodes')
@@ -63,10 +82,11 @@ try{
  // The pre-existing alias plan stays valid because cleanup is not a document edit.
  assert.equal((await api('plans/'+conflicting.id+'/conflicts')).items.length,0,'cleanup did not clear conflict review')
  await page.getByRole('button',{name:'충돌 다시 확인',exact:true}).click()
+ await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='검토한 계획 실행'&&!b.disabled))
  assert.ok(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).isEnabled(),'UI kept stale conflict after cleanup')
  const acceptedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
  const accepted=await acceptedResponse;assert.equal(accepted.status(),202);await waitJob((await accepted.json()).id)
  const after=await api('networks');assert.equal(after.items.filter(n=>n.nodes.length).length,1);assert.equal(after.items.find(n=>n.nodes.length).workspaceId,alias.id)
- fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:browser.version(),jobs,retainedAliasRejected:true,ownerControlAllowed:true,actualCleanupReleasedAlias:true,conflictOwnerVisible:true,uiBlockedUntilCleanup:true,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:browser.version(),jobs,retainedAliasRejected:true,ownerControlAllowed:true,actualCleanupReleasedAlias:true,conflictOwnerVisible:true,uiBlockedUntilCleanup:true,recordedProcessObserved:true,reusedPidControlRejected:true,seedAcceptanceAwarded:false},null,2))
 }finally{await owned.stop()}

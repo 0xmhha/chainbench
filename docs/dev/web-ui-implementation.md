@@ -117,3 +117,21 @@ physical exclusion before the single durable write. Actor authorization and requ
 cancellation are checked again after the probe. Once durably accepted, execution
 continues with its detached lifetime. Controlled probe tests verify this protocol;
 full live multi-host failure and internal test fault scopes remain open.
+
+## Recorded process observation and control checks
+
+Operators can explicitly request `GET /api/v1/networks/{networkId}/observations`
+with their own target access. The service checks the physical target against its
+stored identity, probes the recorded PID and compares the complete launch argv.
+Darwin uses the target process table, including a matching executable column;
+Linux uses the existing process inspector. Missing, unreadable and mismatching
+processes remain distinct from running nodes. The response never includes argv,
+credentials or raw inspection errors. The UI separates recorded and observed PIDs.
+This observation does not rewrite state or adopt a process.
+
+Positive recorded PIDs are checked when planning node controls and again before
+executing them. Missing or mismatching processes are refused instead of stopping
+whatever currently owns that PID. Exact argv comparison on Darwin cannot confirm
+arguments containing spaces after its existing process-table splitting; those
+cases are refused. PID-free residual process discovery, executable identity beyond
+launch metadata, persisted reconciliation and live restart recovery remain open.

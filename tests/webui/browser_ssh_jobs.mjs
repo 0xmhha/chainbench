@@ -26,7 +26,7 @@ async function waitJob(id){
 try{
   session=await api('bootstrap','POST',{username:'ssh-admin',password:f.password,setupToken:f.setupToken},201)
   const set=await api('documents','POST',{kind:'server-set',name:'SSH fixture',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'owned-ssh',addr:'localhost.'}],slots:4,ports:{p2p:{base:35500,step:10},rpc:{base:10800,step:10}}},ssh:{port:f.ssh.port,known_hosts_file:f.knownHosts}}},201)
-  const config=await api('documents','POST',{kind:'workspace-config',name:'SSH paths',contractVersion:'2',assetRefs:[],content:{version:1,dataRoot:f.runtime+'/remote-data',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/artifacts'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}},201)
+  const config=await api('documents','POST',{kind:'workspace-config',name:'SSH paths',contractVersion:'2',assetRefs:[],content:{version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/artifacts'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}},201)
   const w=await api('workspaces','POST',{name:'SSH fixture',documents:[{id:set.id,revision:set.revision},{id:config.id,revision:config.revision}]},201)
   const credential=await api('credentials','POST',{label:'Owned SSH fixture',kind:'private-key',sshUser:f.ssh.user,privateKey:key},201)
   await api(`workspaces/${w.id}/credential-bindings`,'PUT',{serverRef:'owned-ssh',credentialId:credential.id})
@@ -66,6 +66,16 @@ try{
     const plan=await api('plans','POST',{...input,operation},201)
     const accepted=await api('jobs','POST',{planId:plan.id},202,plan.id)
     await waitJob(accepted.id)
+    if(operation==='node.start'){
+      let rpcReady=false
+      for(let i=0;i<100;i++){
+        try{const r=await fetch('http://127.0.0.1:10800/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_chainId',params:[]}),signal:AbortSignal.timeout(1000)});const result=await r.json();if(result.result==='0x205c'){rpcReady=true;break}}catch{}
+        await new Promise(r=>setTimeout(r,100))
+      }
+      assert.ok(rpcReady,'SSH-launched native node never served its actual chain RPC')
+      const observed=await api('networks/'+w.id+'/observations')
+      const live=observed.nodes.find(n=>n.id==='node1');assert.equal(live.state,'running');assert.ok(live.observedPid>0)
+    }
   }
   const revokePlan=await api('plans','POST',{...input,operation:'node.start'},201)
   await api('credentials/'+credential.id,'DELETE',undefined,204)

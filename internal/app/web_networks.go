@@ -17,6 +17,8 @@ type WebNode struct {
 	HostIdentity      string    `json:"hostIdentity"`
 	DataPath          string    `json:"dataPath"`
 	PID               int       `json:"pid"`
+	ObservedPID       int       `json:"observedPid,omitempty"`
+	ObservationReason string    `json:"observationReason,omitempty"`
 	State             string    `json:"state"`
 	SupportedControls []string  `json:"supportedControls"`
 	ObservedAt        time.Time `json:"observedAt"`

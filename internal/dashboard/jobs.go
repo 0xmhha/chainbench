@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,6 +31,12 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 		route("GET /api/v1/networks", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			networks, err := jobs.Networks(r.Context())
 			deploymentResponse(w, map[string]any{"items": networks, "nextCursor": nil}, err, 200)
+		})
+		route("GET /api/v1/networks/{networkId}/observations", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
+			defer cancel()
+			network, err := jobs.ObserveNetwork(ctx, a, r.PathValue("networkId"))
+			deploymentResponse(w, network, err, http.StatusOK)
 		})
 		route("POST /api/v1/plans", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.WebPlanInput

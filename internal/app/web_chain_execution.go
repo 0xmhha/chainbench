@@ -38,6 +38,20 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			return result, err
 		}
 		err = e.phase(ctx, a, p.Input.Operation, report, func() error {
+			raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
+			if err != nil {
+				return err
+			}
+			if manifestHash(raw) != p.RecordDigest {
+				return ErrDeploymentConflict
+			}
+			var state State
+			if err = json.Unmarshal(raw, &state); err != nil {
+				return err
+			}
+			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
+				return err
+			}
 			if p.Input.Operation == "node.start" {
 				_, err := NodeStart(ctx, d, NodeStartIn{DataDir: p.ControlDir, Index: index})
 				return err

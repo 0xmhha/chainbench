@@ -74,7 +74,7 @@ def main():
             state = json.loads(records[0].read_text())
             asset = next(a for a in json.loads((runtime / 'assets.json').read_text()) if a['id'] == 'wbft')
             from evidence_web04 import digest
-            if not str(state['binary']).startswith(str(runtime / 'remote-data/binaries/')) or digest(Path(state['binary'])) != asset['sha256']:
+            if not str(state['binary']).startswith(str(runtime / 'd/binaries/')) or digest(Path(state['binary'])) != asset['sha256']:
                 raise RuntimeError('remote binary was not separately uploaded and verified')
             declared = json.loads(Path(state['genesisPath']).read_text())
             for node in state['nodes']:

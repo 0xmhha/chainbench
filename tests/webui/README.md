@@ -74,3 +74,19 @@ record with an empty node table. Results go to
 `chainbench-out/web-ui-development/resource-holds/receipt.json`.
 This is partial development evidence, not full WEB-11/12 acceptance or a live
 restart/reconciliation proof.
+
+## Recorded process checks
+
+The resource retention fixture also starts a native WBFT node, observes its
+recorded process in the UI and substitutes an exclusively owned sleep process
+into a fixture record. Planning stop must return 409, expose no controls for the
+mismatch, leave the foreign process running, and preserve the original record.
+A separate application regression verifies rejection immediately before the stop
+verb and confirms the process and record remain untouched.
+
+Run the SSH development fixture with short paths:
+`WEBUI_RUNTIME_ROOT=/private/tmp/s python3 tests/webui/run_ssh_jobs.py`.
+Its native node must serve the expected chain RPC and pass live process observation
+before the stop check. This avoids mistaking a recorded PID for a surviving node
+when Unix IPC path limits make startup fail. All resources belong to isolated
+UUID fixtures; these checks do not award full restart/reconciliation acceptance.

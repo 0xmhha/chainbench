@@ -250,6 +250,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			if err = webSelectedNode(state, in.NodeIDs); err != nil {
 				return out, err
 			}
+			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
+				return out, err
+			}
 			if in.Retention == "cleanup" {
 				return out, errors.New("node controls preserve the network; cleanup applies to composition and test jobs")
 			}
