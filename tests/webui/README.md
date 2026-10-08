@@ -13,6 +13,12 @@ producer preservation, stopped state and explicit relaunch. It also refuses
 producer and PID-zero reset plans. File/physical-path and foreign-process refusal
 have application unit coverage. This remains partial WEB-07 verification.
 
+`WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_pinned_controls.py`
+saves newer shared server/path documents while retaining workspace references to
+their older revisions, executes real native controls using those pinned inputs,
+and refuses an old review after an explicit workspace rebind. Unselected newer
+target paths are checked for no effects. This is partial configuration evidence.
+
 Install dependencies with `npm --prefix web ci` and `npm --prefix tests/webui ci`.
 The browser fixture uses installed Chrome with a separate temporary profile.
 Set `WEBUI_BROWSER_CHANNEL=chromium` to use a Playwright-installed Chromium.

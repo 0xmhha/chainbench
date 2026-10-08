@@ -33,6 +33,7 @@
 | 저장 프리셋의 실제 구성 | 리비전 고정·변경 거절; 기존 엔진에서 counts/table·genesis·scoped 옵션 해석; UI 계획과 실제 DB/실행 인자 일치 | 부분 검증: `/private/tmp/chainbench-web-preset-red.log` 계획 422 → `chainbench-web-preset-green.log` 실제 세 체인 구성과 archive 엔드포인트 RPC·관측·정지 통과. archive 설정 결함은 `chainbench-web-preset-archive-{unit-red,red}.log` → `chainbench-web-preset-archive-unit-green.log` 및 최종 live GREEN. 주소 제약 fixture 실패는 기능 RED에서 제외. 단위 snapshot/table/자료 거절은 `chainbench-web-preset-unit-green.log`. 최초 미지원 verbosity fixture는 기능 RED에서 제외. 모든 자료·키·혼합 바이너리·전체 옵션 전수 실행은 미완료 |
 | 전체 구성과 자료 연결 | 프리셋·업로드·매니페스트·노드 배치를 실제 계획/실행에 적용 | 미완료: WEB-01/02/04/06 |
 | 저장 후 실행 자료 갱신 | 페이지 재로드 없이 케이스·체인·서버·경로·workspace 새 리비전 반영; 편집/실행 선택 유지; 오래된 응답 역전 거절; 미접수 계획 재검토; workspace의 이전 고정 문서 유지 | 부분 검증: `chainbench-web-catalog-refresh-red.log`의 저장 케이스 목록 r1 잔류와 `chainbench-web-catalog-pins-red.log`의 서버 r2 저장 후 workspace r1 서버 선택지 소실 → `chainbench-web-catalog-refresh-green.log` 및 `chainbench-web-catalog-pins-green.log`. 검증 명령은 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_catalog_refresh.py` 및 `run_genesis_test_jobs.py`. 각 명령의 최신 receipt로 확인하며 전체 인수 상태를 올리지 않는다. 접힌 폼을 열지 않은 최초 fixture 오류는 제품 RED에서 제외한다. |
+| 워크스페이스의 고정 입력 실행 | 최신 공유 문서가 생겨도 지정한 서버·경로 이전 revision으로 계획·실제 제어 실행; workspace 참조 변경 후 오래된 계획 거절; 새 target에 부작용 없음 | 부분 검증: `chainbench-web-pinned-inputs-red.log`의 계획 HTTP 409 → `chainbench-web-pinned-inputs-green.log` 및 `chainbench-web-pinned-controls-green.log`. 검증 명령은 `WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3 tests/webui/run_catalog_refresh.py`, `run_pinned_controls.py`이며 최신 source-bound receipt의 세 체인 DB/PID/실제 제어·참조 변경 거절로 확인한다. 전체 WEB-03/06/07 인수는 미완료다. |
 | 업로드 바이너리 실행 | 자료 등록 ID/종류/해시·권한·형식·변경 거절·재시작 보존; 실제 업로드 바이너리를 계획에 고정하고 네이티브 실행 | 부분 검증: `/private/tmp/chainbench-web-assets-red.log`의 미구현 API 실패, `chainbench-web-assets-secrets-red.log`의 키스토어 공유 실패, `chainbench-web-assets-probe-red.log`의 출력 한도 우회, `chainbench-web-assets-storage-red.log`의 저장 오류 경로 노출 → `chainbench-web-assets-unit-green.log`. 실제 브라우저 업로드·재시작·세 체인의 DB/RPC/PID/정지·변경 실행 거절은 `chainbench-out/web-ui-development/asset-jobs/receipt.json`. 자료 실행 연결·키 트리·TOML·전수 옵션은 미완료. 테스트 도구 종료 오류는 제품 RED에서 제외 |
 | 등록된 완성 genesis 적용 | 저장/import 참조와 해시 고정·잘못된 종류/ID/변경 거절; UI 선택과 실제 DB 초기화 일치 | 부분 검증: `/private/tmp/chainbench-web-genesis-asset-red.log`의 등록 참조 저장 실패 → `chainbench-web-genesis-asset-unit-green.log`. 브라우저 선택/저장·원본/사본 변경 거절·세 체인 12개 DB의 바이트/chain ID 대조는 `chainbench-out/web-ui-development/genesis-asset-jobs/receipt.json`. 생성 템플릿·per-binary genesis·전체 자료·키·전수 옵션은 미완료 |
 | 노드 교체와 초기화 | 실제 설정/바이너리 교체·재실행, 비생산자 초기화, attach/생산자 거절 | 미완료: WEB-07 |
@@ -48,6 +49,10 @@
 | 전체 인수·회귀·PR | 14개 전체 최신 live 검증·필수 회귀·PR 검토 | 미완료: WEB-03/04/10도 최종 소스에서 재검증 |
 
 ## 기존 증거의 한계
+
+고정 입력 검증 중 WEB-03의 단언 완료 후 브라우저 종료 대기가 멈춰 해당 실행을
+인수 통과로 계산하지 않았다. WEB-03도 검증된 소유 브라우저 종료 헬퍼와 300초
+프로세스 그룹 상한을 사용해 재실행한다. 도구 종료 문제는 제품 기능 RED에서 제외한다.
 
 WEB-03·04·10의 독립 live 검증은 이전 소스에서 통과했다. 새 소스의 완료 증거로
 재사용하지 않는다. `run_native_jobs.py`·`run_ssh_jobs.py`의 실제 바이너리/브라우저

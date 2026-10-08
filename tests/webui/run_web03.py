@@ -16,6 +16,7 @@ import time
 import urllib.request
 import uuid
 from evidence import digest
+from browser_process import run_browser
 from evidence_web03 import REQUIRED, verify
 
 
@@ -136,7 +137,7 @@ def main():
             wait_http(url, process)
             return process
         server = launch('server.log')
-        browser = subprocess.run(['node', 'tests/webui/browser_web03.mjs', url, str(output), str(private_fixture)], capture_output=True, text=True)
+        browser = run_browser(['node', 'tests/webui/browser_web03.mjs', url, str(output), str(private_fixture)], timeout=300)
         (output / 'browser.log').write_text(browser.stdout + browser.stderr)
         if browser.returncode:
             raise RuntimeError('live browser assertions failed; see browser.log')

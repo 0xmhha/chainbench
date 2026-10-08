@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
@@ -7,7 +7,7 @@ const [url, out, fixturePath] = process.argv.slice(2)
 const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'))
 const observations = [], records = []
 const actors = fixture.accounts
-const browser = await chromium.launch({ headless: true, channel: process.env.WEBUI_BROWSER_CHANNEL ?? "chrome" })
+const owned = await launchOwnedBrowser(), browser = owned.browser
 function auth(actor) { return `Basic ${Buffer.from(`${actor.username}:${actor.password}`).toString('base64')}` }
 async function api(actor, endpoint, method='GET', body, revision, expected=200) {
   const headers = { Authorization: auth(actor), 'Content-Type': 'application/json' }
@@ -164,4 +164,4 @@ try {
   observed('secret-free-export',['Shared browser export preserves server declaration and contains no secret material','API responses and persisted deployment snapshot contain no plaintext credentials','Shared document save refuses embedded SSH secrets'], 'shared-export.json')
   fs.writeFileSync(path.join(out,'api-observations.json'),JSON.stringify(records,null,2))
   fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({scenarios:observations,workspaceId:workspace.id,workspaceRevision:workspace.revision,credentialId:aliceBinding.ssh,serverRef:'ssh',browserVersion:browser.version()},null,2))
-} finally { await browser.close() }
+} finally { await owned.stop() }

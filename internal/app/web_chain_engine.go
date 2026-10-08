@@ -124,10 +124,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if err != nil {
 			return out, err
 		}
-		latest, err := e.documents.DocumentRevision(ref.ID, 0)
-		if err != nil || latest.Revision != ref.Revision {
-			return out, ErrDeploymentConflict
-		}
+		// The workspace explicitly pins immutable server/path declarations.
+		// A newer document revision does not change that binding; Prepare and
+		// job acceptance still reject changed workspace references or revisions.
 		switch d.Kind {
 		case "server-set":
 			p.Set = d

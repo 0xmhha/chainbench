@@ -45,6 +45,15 @@ try{
  assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).locator('option[value="local"]').count(),1,'saving a newer server document discarded the workspace pinned revision')
  assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).inputValue(),'local')
  assert.equal((await api('workspaces/'+w.id)).documents[0].revision,1,'document save silently rebound workspace')
+ const pinnedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/plans'&&r.request().method()==='POST')
+ await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
+ const pinnedReview=await pinnedResponse;assert.equal(pinnedReview.status(),201,await pinnedReview.text())
+ await page.getByLabel('실행 계획',{exact:true}).waitFor()
+ const pinnedPlans=JSON.parse(fs.readFileSync(f.store+'/jobs.json','utf8')).plans
+ const pinned=Object.values(pinnedPlans).find(p=>p.prepared.payload.preset?.document.revision===2&&p.prepared.payload.set.revision===1)
+ assert.ok(pinned,'pinned older server revision could not be reviewed')
+ assert.equal(pinned.prepared.payload.config.revision,1)
+
  await page.getByLabel('Saved deployment document',{exact:true}).selectOption(config.id)
  await page.getByLabel('Deployment document name',{exact:true}).fill('Updated paths')
  const changedConfig=await save(page,'Save shared document','documents/'+config.id);assert.equal(changedConfig.revision,2)
@@ -66,6 +75,6 @@ try{
  assert.ok(!fs.existsSync(f.store+'/networks/'+w.id+'/chain-record.json'),'catalog refresh performed native effects')
  assert.deepEqual(errors,[])
  await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/updated-catalog-plan.png'})
- fs.writeFileSync(out+'/browser.json',JSON.stringify({savedChainServerConfigAndWorkspaceWithoutReload:true,pinnedWorkspaceDocumentsPreserved:true,selectionsPreserved:true,obsoleteReviewCleared:true,latestReviewedRevisions:{workspace:2,serverSet:2,config:2,preset:2},nativeEffects:0,seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({savedChainServerConfigAndWorkspaceWithoutReload:true,pinnedWorkspaceDocumentsPreserved:true,pinnedOlderInputsReviewed:true,selectionsPreserved:true,obsoleteReviewCleared:true,latestReviewedRevisions:{workspace:2,serverSet:2,config:2,preset:2},nativeEffects:0,seedAcceptanceAwarded:false},null,2))
  console.log('CATALOG REFRESH PASS: all saved configurations update choices while preserving pinned revisions and selections.')
 }finally{await owned.stop()}

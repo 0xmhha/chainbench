@@ -392,6 +392,16 @@ Both receipts bind the observations to source and dashboard digests. This is a
 partial configuration-flow regression, not full acceptance of all DSL or asset
 contracts.
 
+Workspace server/path document references are immutable execution inputs, not
+aliases for the latest shared document. A newer revision can coexist with a
+workspace pinned to an older revision; planning reads the exact reference and
+acceptance compares the current workspace revision and references with its review.
+An explicit workspace rebind invalidates an earlier review. Case and chain-preset
+selection freshness checks are unchanged. The catalog regression now prepares
+an actual plan with an older pinned server revision, and `run_pinned_controls.py`
+executes controls using older server/path revisions on three native chains,
+refuses a review after workspace rebind and leaves the unselected target untouched.
+
 ## Explicit non-producer reset
 
 The public reset adapter is registered as the effectful `node.reset` feature;
