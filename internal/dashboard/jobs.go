@@ -28,6 +28,10 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 				fn(w, r, a)
 			})
 		}
+		route("GET /api/v1/snapshot", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) { s.handleJobSnapshot(w, r) })
+		route("GET /api/v1/events", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			s.handleJobEvents(w, r, authenticate)
+		})
 		route("GET /api/v1/networks", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			networks, err := jobs.Networks(r.Context())
 			deploymentResponse(w, map[string]any{"items": networks, "nextCursor": nil}, err, 200)

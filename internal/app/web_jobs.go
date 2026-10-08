@@ -36,6 +36,7 @@ type webJobState struct {
 // used for planning only; accepted jobs have their own cancellable lifetime.
 type WebJobs struct {
 	mu        sync.Mutex
+	feed      *webJobFeed
 	files     *session.JobStore
 	state     webJobState
 	engine    WebJobEngine
@@ -49,7 +50,7 @@ func OpenWebJobs(root string, engine WebJobEngine, redact func(string) string, a
 	if err != nil {
 		return nil, err
 	}
-	s := &WebJobs{files: files, engine: engine, redact: redact, authorize: authorize, cancels: map[string]context.CancelFunc{}, state: webJobState{Plans: map[string]savedWebPlan{}, Jobs: map[string]WebJob{}, Keys: map[string]webJobKey{}}}
+	s := &WebJobs{feed: newWebJobFeed(), files: files, engine: engine, redact: redact, authorize: authorize, cancels: map[string]context.CancelFunc{}, state: webJobState{Plans: map[string]savedWebPlan{}, Jobs: map[string]WebJob{}, Keys: map[string]webJobKey{}}}
 	b, err := files.Read()
 	if err == nil {
 		if err = json.Unmarshal(b, &s.state); err != nil {
@@ -125,6 +126,7 @@ func (s *WebJobs) commit(actor, id, operation string, change func(*webJobState))
 		return err
 	}
 	s.state = committed
+	s.recordJobChange(id)
 	return nil
 }
 

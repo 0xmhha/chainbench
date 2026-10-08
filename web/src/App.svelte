@@ -8,6 +8,7 @@
   import DeploymentEditor from './DeploymentEditor.svelte'
   import JobPanel from './JobPanel.svelte'
   import HistoryPanel from './HistoryPanel.svelte'
+  import MonitorPanel from './MonitorPanel.svelte'
 
   const pages = [
     ['/', '대시보드', '전체 실행과 최근 결과를 확인합니다.'],
@@ -105,6 +106,7 @@
             {/if}
           </section>
         {:else if route === '/monitoring'}
+          {#key webSession?.user.id}<MonitorPanel />{/key}
           <section class="panel"><h2>이벤트 타임라인</h2><p class="muted">현재 연결에서 수신한 최근 200건입니다. 연결이 끊긴 동안의 이벤트와 전체 기록을 보장하지 않습니다.</p>
             <p data-testid="observation-health">서버 버스 전체 전달 드롭: {drops ?? '확인 중'} · 마지막 관측: {fmtTime(observedAt)}{stale ? ' · stale' : ''}</p>
             {#if drops > 0}<p class="notice">전체 구독자에서 전달 누락이 발생했습니다. 이 값은 현재 브라우저만의 누락 수가 아닙니다.</p>{/if}
