@@ -34,6 +34,9 @@ func ValidateDeploymentDocument(in DeploymentDocumentInput) error {
 	if err := dec.Decode(&content); err != nil || content == nil {
 		return errors.New("content must be an object")
 	}
+	if err := validateWebDocumentSecrets(in.Kind, content); err != nil {
+		return err
+	}
 	// JSON numbers must remain numbers when transcoded to the engine YAML parser.
 	var plain any
 	if err := json.Unmarshal(in.Content, &plain); err != nil {

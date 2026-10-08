@@ -57,8 +57,8 @@ Chrome을 사용한다. 브라우저에서 개인 binding으로 계획·제출�
 테스트 실패/blocked는 작업을 실패로 기록하며 실제 엔진 세션 참조와 판정을 보관한다.
 기본 처리는 보존이고, 명시한 정리는 소유 네트워크에만 적용한다.
 
-현재 테스트 작업은 기본 내장 체인, 단일 등록 바이너리, count 배치, 준비된 키 자료를
-연결한 범위다. 외부 테스트 매니페스트, 테스트의 이름 참조 프리셋, 파일 자료, node table,
+현재 테스트 작업은 기본 내장 체인, 단일 등록 바이너리, count/명시적 node table 배치, 준비된 키 자료를
+연결한 범위다. 외부 테스트 매니페스트, 테스트의 이름 참조 프리셋, 파일 자료,
 혼합 바이너리/upgrade, generate 키와 선언한 계정, 별도 포트/경로 override,
 attach 실행의 계약은 아직 연결하지 않았다. 이를 무시하거나 다른 구성으로 실행하지
 않고 거절한다. 전체 어휘/인자의 실제 실행 인수는 미완료다. `/tests` 화면에서 저장
@@ -275,3 +275,29 @@ The initial fixture tried reading an active database; its lock error is not
 product RED evidence. This is partial WEB-05/11 evidence. Complete DSL argument
 coverage, file assets, custom key contracts, mixed binaries and attachments remain
 open.
+
+## Private node-key material at the shared document boundary
+
+Shared chain presets and v1/v2 test cases refuse long hexadecimal material in
+`topology.nodes[].key` before grammar validation, storage or export. Recognition
+matches the execution boundary's conservative treatment of possible key material:
+at least 32 hexadecimal digits, with optional `0x`/`0X` and surrounding whitespace.
+The error never echoes the value. File references remain declarations; public
+hashes, bytecode and other hexadecimal values outside this private reference field
+are unaffected. The underlying DSL parser and CLI grammar are unchanged.
+
+An invalid import returns no public declaration and cannot be committed. Its
+original bytes remain actor-bound AES-GCM ciphertext, including across restart.
+Editor import and validation apply the same boundary, including referenced
+preset declarations supplied with a case. Import commit also revalidates previously approved declarations under current
+rules rather than trusting the stored approval flag. The live authentication
+fixture exercises preset and v1/v2 case save, validation and import refusal and
+scans storage for its unique node-key marker. Unit tests cover export refusal,
+file references, public hexadecimal text and encrypted original recovery.
+
+This prevents new shared publication; it does not migrate already published
+legacy documents or award the complete secret-management acceptance criterion.
+Private key upload/selection, execution bindings and any legacy quarantine remain
+open. RED/GREEN logs are recorded in the worklist. The first live run caught a
+case-editor validation route that bypassed shared validation; the focused HTTP
+RED and subsequent browser GREEN record closure of that additional path.

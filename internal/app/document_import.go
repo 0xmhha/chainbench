@@ -173,6 +173,9 @@ func (s *DeploymentStore) CommitImport(a DeploymentActor, in DocumentImportCommi
 	used := map[string]bool{}
 	documents := []DeploymentDocument{}
 	for _, incoming := range entry.Preview.RedactedDocuments {
+		if err := ValidateDeploymentDocument(incoming); err != nil {
+			return nil, errors.New("import declaration no longer satisfies shared document validation")
+		}
 		id, revision := deploymentID(), 0
 		for candidate, expected := range in.BaseRevisions {
 			history := s.state.Documents[candidate]

@@ -5,7 +5,7 @@ const [url,out,fixturePath,phase]=process.argv.slice(2)
 const f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const owned=await launchOwnedBrowser(), browser=owned.browser
 const responses=[],scenarios=[]
-const secrets=[f.setupToken,...f.accounts.map(a=>a.password),f.sshKey,f.marker,...f.sshKey.split('\n').slice(1,-1)].filter(Boolean)
+const secrets=[f.setupToken,...f.accounts.map(a=>a.password),f.sshKey,f.marker,f.nodeKey,...f.sshKey.split('\n').slice(1,-1)].filter(Boolean)
 function scan(text){for(const s of secrets)assert.ok(!text.includes(s),'secret leaked in response')}
 async function request(context,endpoint,method='GET',body,csrf,expected=200,extra={}){
  const r=await context.request.fetch(url+endpoint,{method,headers:{'Content-Type':'application/json',...(csrf?{'X-CSRF-Token':csrf}:{}),...extra},data:body===undefined?undefined:JSON.stringify(body)})
@@ -78,6 +78,22 @@ try{
   await request(operator.context,'/api/v1/documents','POST',doc('no csrf'),undefined,403)
   await request(operator.context,'/api/v1/documents','POST',doc('foreign origin'),operator.session.csrfToken,403,{Origin:'https://foreign.invalid'})
   await request(operator.context,'/api/v1/documents','POST',doc('reject secrets','server-set',{...setContent,ssh:{...setContent.ssh,password:f.marker}}),operator.session.csrfToken,422)
+  const topology={nodes:[{index:1,role:'bp',key:f.nodeKey}]}
+  for(const declaration of [
+   {schemaVersion:'2',kind:'chain-preset',id:'private-preset',chain:'stablenet',topology},
+   {schemaVersion:'2',kind:'case',id:'private-case-v2',chainPreset:{chain:'stablenet',topology},steps:[{expect:'blockNumber',is:0}]},
+   {schemaVersion:'1',id:'private-case-v1',chain:{name:'stablenet',binary:'gstable'},topology,assertions:[{assert:'blockNumber',expected:0}]}
+  ]){
+   const kind=declaration.kind||'case',input=doc(declaration.id,kind,declaration)
+   await request(operator.context,'/api/v1/documents','POST',input,operator.session.csrfToken,422)
+   const validation=await request(operator.context,'/api/v1/documents/validate','POST',input,operator.session.csrfToken)
+   assert.equal(validation.valid,false,'node key material passed shared validation')
+   const preview=await request(operator.context,'/api/v1/documents/import','POST',{filename:declaration.id+'.json',format:'json',kind,source:JSON.stringify(declaration)},operator.session.csrfToken)
+   assert.equal(preview.validation.valid,false);assert.deepEqual(preview.redactedDocuments,[]);assert.equal(preview.sourcePreserved,true)
+   await request(operator.context,'/api/v1/documents/import/commit','POST',{previewId:preview.previewId},operator.session.csrfToken,422)
+   if(kind==='case') await request(operator.context,'/api/v1/test-cases/import','POST',{content:declaration},operator.session.csrfToken,422)
+  }
+  await request(viewer.context,'/api/v1/documents')
   // Deliberately place the known password sentinel into otherwise allowed declaration text.
   const sentinelDoc=await request(operator.context,'/api/v1/documents','POST',doc(f.marker,'server-set',{...setContent,pool:{...setContent.pool,hosts:[{name:f.marker,addr:'localhost.'}]}}),operator.session.csrfToken,201)
   const exported=await request(viewer.context,`/api/v1/documents/${sentinelDoc.id}/export`)
@@ -109,7 +125,7 @@ try{
   observed('role-ui-api-matrix',['administrator contains operator controls','viewer forms absent and writes forbidden','user management administrator only'])
   observed('csrf-ownership',['missing CSRF and foreign Origin forbidden','active account required on every request'])
   observed('foreign-credential-refusal',['foreign keys absent from lists','foreign GET/check/binding rejected including administrator','actual owner SSH access allowed'])
-  observed('secret-free-output',['export and SSE sentinel removed','credential metadata has no material','validation error has no secrets'])
+  observed('secret-free-output',['export and SSE sentinel removed','credential metadata has no material','validation error has no secrets','preset and v1/v2 case node key material refused before shared save or import publication'])
   fs.writeFileSync(out+'/browser.json',JSON.stringify({scenarios,responses,matrix,foreignStatuses:[404,404,404],csrfStatuses:[403,403],sessionStatuses:[401,401],secretScan:{leaks:0,responsesScanned:responses.length},access,credentialId:credential.id,browserVersion:browser.version()},null,2))
  }
 }finally{await owned.stop()}

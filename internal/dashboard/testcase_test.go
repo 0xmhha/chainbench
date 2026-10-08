@@ -61,3 +61,31 @@ func TestTestCaseHTTPContractAndImport(t *testing.T) {
 		t.Fatal("trailing input accepted")
 	}
 }
+
+func TestTestCaseHTTPRefusesNodeKeyMaterialInEveryEditorSurface(t *testing.T) {
+	bus := collector.NewBus()
+	defer bus.Close()
+	auth := func(*http.Request) (app.DeploymentActor, error) {
+		return app.DeploymentActor{ID: "editor", Role: "operator"}, nil
+	}
+	store, err := app.OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(bus, nil, WithChainPresets("../../presets/chain"), WithDeployments(store, auth), WithTestCases(auth))
+	key := "0x" + strings.Repeat("af", 32)
+	content := `{"schemaVersion":"2","kind":"case","id":"http","chainPreset":{"chain":"stablenet","topology":{"nodes":[{"role":"bp","key":"` + key + `"}]}},"steps":[{"expect":"blockNumber","is":0}]}`
+	for _, path := range []string{"/api/v1/documents/validate", "/api/v1/test-cases/import"} {
+		body := `{"kind":"case","name":"http","contractVersion":"2","content":` + content + `}`
+		want := 200
+		if path == "/api/v1/test-cases/import" {
+			body = `{"content":` + content + `}`
+			want = 422
+		}
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, httptest.NewRequest("POST", path, strings.NewReader(body)))
+		if w.Code != want || strings.Contains(w.Body.String(), key) || strings.Contains(w.Body.String(), `"valid":true`) {
+			t.Errorf("editor disclosed or approved private node key through %s: status %d", path, w.Code)
+		}
+	}
+}

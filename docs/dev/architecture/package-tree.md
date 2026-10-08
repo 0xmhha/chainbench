@@ -24,10 +24,10 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 52 | 70,870 |
+| `internal/` | 52 | 70,950 |
 | `cmd/` | 19 | 5,205 |
 | `scripts/inventory/` | 3 | 790 |
-| **합계** | **74** | **76,865** |
+| **합계** | **74** | **76,945** |
 
 이 세 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -120,7 +120,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 48,014줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 48,094줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -168,7 +168,7 @@ internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app       8,825  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app       8,905  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions

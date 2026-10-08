@@ -56,7 +56,7 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
-			out, err := app.PrepareTestCase(in)
+			out, err := app.PrepareWebTestCase(in)
 			if err != nil {
 				deploymentJSON(w, 422, map[string]any{"valid": false, "errors": []map[string]string{{"path": "/content", "code": "invalid", "message": err.Error()}}})
 				return
@@ -93,7 +93,7 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 				issues := []map[string]string{}
 				if in.Kind != "case" || in.ContractVersion != "2" || in.Name == "" {
 					issues = append(issues, map[string]string{"path": "/", "code": "unsupported", "message": "expected named case document with contractVersion 2"})
-				} else if _, err := app.PrepareTestCase(app.TestCaseInput{Content: in.Content}); err != nil {
+				} else if err := app.ValidateDeploymentDocument(app.DeploymentDocumentInput{Kind: in.Kind, Name: in.Name, ContractVersion: in.ContractVersion, Content: in.Content, AssetRefs: in.AssetRefs}); err != nil {
 					issues = append(issues, map[string]string{"path": "/content", "code": "invalid", "message": err.Error()})
 				}
 				deploymentJSON(w, 200, map[string]any{"valid": len(issues) == 0, "contractVersion": "2", "errors": issues, "warnings": []string{}})

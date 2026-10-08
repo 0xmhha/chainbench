@@ -97,7 +97,7 @@ def main():
         known.write_text(f"[localhost.]:{ssh['port']} {public[0]} {public[1]}\n")
         fingerprint = subprocess.check_output(['ssh-keygen', '-lf', str(runtime / 'ssh' / 'host.pub')], text=True).split()[1]
         ssh.update(knownHosts=str(known), hostFingerprint=fingerprint)
-        fixture = {'accounts': accounts, 'ssh': ssh, 'store': str(runtime / 'store'), 'sshKey': (runtime / 'ssh' / 'client').read_text(), 'marker': secrets.token_urlsafe(32)}
+        fixture = {'accounts': accounts, 'ssh': ssh, 'store': str(runtime / 'store'), 'sshKey': (runtime / 'ssh' / 'client').read_text(), 'marker': secrets.token_urlsafe(32), 'nodeKey': '0x' + secrets.token_hex(32)}
         private_fixture = runtime / 'browser-fixture.json'
         private_fixture.write_text(json.dumps(fixture))
         private_fixture.chmod(0o600)
@@ -135,6 +135,8 @@ def main():
             if path.name == 'credential.key':
                 continue
             content = path.read_text()
+            if fixture['nodeKey'] in content:
+                raise RuntimeError('plaintext node key persisted in ' + path.name)
             # The deliberately inserted document name remains engine declaration text;
             # encrypted credential ciphertext itself must not contain any material.
             if path.name == 'deployment.json':
