@@ -1,6 +1,6 @@
 <script>
   import Field from "./DSLField.svelte"
-  let { webSession = undefined } = $props()
+  let { webSession = undefined, assetRevision = 0 } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
   let contract = $state(null)
   let presets = $state([])
@@ -12,6 +12,10 @@
   let pending = $state(false)
   let requestVersion = 0
   let saved = $state([]), savedId = $state(''), revision = $state(0), preview = $state(null)
+  let assets = $state([]), generatedGenesis = $state(null)
+  const genesisAsset = $derived(document?.genesis?.ref?.startsWith('asset:') ? document.genesis.ref.slice(6) : '')
+  const genesisChoices = $derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
+  const assetRefs = $derived(genesisAsset ? [genesisAsset] : [])
 
   async function shared(path, method = 'GET', data, expectedRevision) {
     const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }
@@ -21,11 +25,17 @@
     return response.json()
   }
   async function refreshSaved() { saved = (await shared('documents?kind=chain-preset')).items }
-  $effect(() => { if (webSession) refreshSaved().catch(e => { error = e.message }) })
+  $effect(() => { void assetRevision; if (webSession) { refreshSaved().catch(e => { error = e.message }); shared('assets').then(v=>{assets=v.items}).catch(e=>{error=e.message}) } })
+  function chooseGenesis(id) {
+    if (id) {
+      if (!genesisAsset) generatedGenesis = structuredClone($state.snapshot(document.genesis??{mode:'template'}))
+      replace({...document,genesis:{mode:'existing',ref:'asset:'+id}})
+    } else replace({...document,genesis:generatedGenesis??{mode:'template'}})
+  }
   async function loadSaved(id) {
     try {
       const entry = await shared('documents/' + encodeURIComponent(id))
-      savedId = entry.id; revision = entry.revision; selected = ''; preview = null
+      savedId = entry.id; revision = entry.revision; selected = ''; preview = null; generatedGenesis = null
       replace(structuredClone(entry.content)); inherited = structuredClone(entry.content)
       contract = await shared('contracts/chain-preset?chain=' + encodeURIComponent(entry.content.chain))
     } catch(e) { error = e.message }
@@ -38,7 +48,7 @@
       preview = imported
       if (!imported.validation.valid) throw new Error(imported.validation.errors.map(e => e.message).join('; '))
       const entry = imported.redactedDocuments[0]
-      savedId = ''; revision = 0; selected = ''; replace(structuredClone(entry.content)); inherited = structuredClone(entry.content)
+      savedId = ''; revision = 0; selected = ''; generatedGenesis = null; replace(structuredClone(entry.content)); inherited = structuredClone(entry.content)
       contract = await shared('contracts/chain-preset?chain=' + encodeURIComponent(entry.content.chain))
       result = imported.validation
     } catch(e) { error = e.message } finally { pending = false }
@@ -46,7 +56,7 @@
   async function save() {
     pending = true; error = ''
     try {
-      const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs: [] }, revision)
+      const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs }, revision)
       savedId = entry.id; revision = entry.revision; await refreshSaved()
     } catch(e) { error = e.message } finally { pending = false }
   }
@@ -72,7 +82,7 @@
     error = ''
     pending = false
     contract = null
-    savedId = ''; revision = 0; preview = null
+    savedId = ''; revision = 0; preview = null; generatedGenesis = null
     if (preset) {
       try {
         const response = await fetch(`/api/v1/contracts/chain-preset?chain=${encodeURIComponent(preset.chain)}`)
@@ -113,7 +123,7 @@
     try {
       const response = await fetch('/api/v1/documents/validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}) },
-        body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: '2', content: document })
+        body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs })
       })
       if (!response.ok) throw new Error(`Validation request failed (${response.status}).`)
       const validation = await response.json()
@@ -146,6 +156,10 @@
     </select>
     {#if document}
       <p class="description">{presets.find(p => p.id === selected)?.description}</p>
+      {#if webSession}
+        <label>완성된 genesis 자료<select aria-label="완성된 genesis 자료" disabled={!writable} value={genesisAsset} onchange={e=>chooseGenesis(e.currentTarget.value)}><option value="">프리셋에서 생성</option>{#if genesisAsset&&!genesisChoices.some(a=>a.id===genesisAsset)}<option value={genesisAsset}>사용할 수 없는 자료 · {genesisAsset}</option>{/if}{#each genesisChoices as a}<option value={a.id}>{a.name} · {a.checksum.slice(0,12)}</option>{/each}</select></label>
+        <small>완성 파일을 그대로 사용하며 기존 genesis set/overlay를 대체합니다. 이번 편집에서 선택한 파일을 해제하면 이전 생성 설정으로 돌아갑니다. 저장된 파일 구성에는 기본 생성 설정이 적용됩니다.</small>
+      {/if}
       {#if !document.topology?.nodes}
         <div class="fields">
           {#each [['bp', 'Block producers'], ['en', 'Endpoints'], ['pn', 'Proxies']] as [field, label]}

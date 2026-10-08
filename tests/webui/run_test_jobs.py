@@ -14,7 +14,7 @@ import uuid
 from runtime_contract import runtime_root
 from browser_process import run_browser
 
-def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False):
+def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False, fixture_inputs=None):
     output=Path('chainbench-out/web-ui-development')/proof_name
     output.mkdir(parents=True,exist_ok=True)
     runtime=runtime_root()/str(uuid.uuid4())
@@ -24,6 +24,7 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
     provenance=module.prepare(runtime,output)
     source_keys=runtime/'source-keys'
     shutil.copytree('presets/keys',source_keys)
+    extra = fixture_inputs(runtime, source_keys, output) if fixture_inputs else {}
     with (output/'build.log').open('w') as log:
         subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
     with socket.socket() as listener:
@@ -64,6 +65,7 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
             except OSError:time.sleep(.1)
         else:raise RuntimeError('dashboard did not listen')
         fixture={'url':url,'setupToken':(store/'setup.token').read_text().strip(),'password':secrets.token_urlsafe(24),'runtime':str(runtime),'store':str(store)}
+        fixture.update(extra)
         private=runtime/'browser-fixture.json';private.write_text(json.dumps(fixture));private.chmod(0o600)
         if restart:
             restart_thread=threading.Thread(target=restart_owned_server,daemon=True)

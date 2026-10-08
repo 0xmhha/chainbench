@@ -208,7 +208,7 @@ func (s *DeploymentStore) SaveDocument(a DeploymentActor, id string, revision in
 	}
 	// Detach caller-owned JSON so subsequent edits cannot modify stored revisions.
 	in.Content = append(json.RawMessage(nil), in.Content...)
-	in.AssetRefs = []string{}
+	in.AssetRefs = append([]string{}, in.AssetRefs...)
 	d := DeploymentDocument{in, id, revision + 1, time.Now().UTC(), a.ID}
 	err := s.commit(a, "document.save", id, func(next *deploymentState) { next.Documents[id] = append(next.Documents[id], d) })
 	return d, err
@@ -245,6 +245,7 @@ func (s *DeploymentStore) Documents(kind string) []DeploymentDocument {
 		d := h[len(h)-1]
 		if kind == "" || kind == d.Kind {
 			d.Content = append(json.RawMessage(nil), d.Content...)
+			d.AssetRefs = append([]string{}, d.AssetRefs...)
 			out = append(out, d)
 		}
 	}
@@ -272,6 +273,7 @@ func (s *DeploymentStore) DocumentRevision(id string, revision int) (DeploymentD
 	}
 	d := h[revision-1]
 	d.Content = append(json.RawMessage(nil), d.Content...)
+	d.AssetRefs = append([]string{}, d.AssetRefs...)
 	return d, nil
 }
 

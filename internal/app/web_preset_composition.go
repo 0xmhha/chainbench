@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"path/filepath"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -16,6 +18,13 @@ type webPresetComposition struct {
 	Document DeploymentDocument `json:"document"`
 	Request  ChainUpIn          `json:"request"`
 	Plan     ComposePlan        `json:"plan"`
+	Genesis  *webPresetGenesis  `json:"genesis,omitempty"`
+}
+
+type webPresetGenesis struct {
+	Asset       WebAsset `json:"asset"`
+	Fingerprint string   `json:"fingerprint"`
+	Path        string   `json:"path"`
 }
 
 func (e *WebChainEngine) preparePresetComposition(ctx context.Context, p *webChainPayload) ([]resource.Request, error) {
@@ -64,8 +73,29 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	if env.Chain != p.Binary.Chain {
 		return out, errors.New("selected preset belongs to a different chain")
 	}
-	if p.Manifest.Source == "external" || env.Attach != nil || env.Blueprint != "" || env.Manifest != "" || env.GenesisTemplate != "" || env.Upgrade != nil || len(env.Accounts) > 0 || env.Genesis != nil && (env.Genesis.Ref != "" || len(env.Genesis.PerBinary) > 0) {
+	if p.Manifest.Source == "external" || env.Attach != nil || env.Blueprint != "" || env.Manifest != "" || env.GenesisTemplate != "" || env.Upgrade != nil || len(env.Accounts) > 0 || env.Genesis != nil && len(env.Genesis.PerBinary) > 0 {
 		return out, errors.New("preset file references, attachments, declared accounts and upgrades require their own pinned asset contracts")
+	}
+	if err := validateWebDocumentAssetRefs(doc.DeploymentDocumentInput); err != nil {
+		return out, err
+	}
+	var genesis *WebAsset
+	if env.Genesis != nil && env.Genesis.Ref != "" {
+		id, err := webAssetRefID(env.Genesis.Ref)
+		if err != nil {
+			return out, err
+		}
+		if e.manifests == nil {
+			return out, ErrDeploymentNotFound
+		}
+		asset, err := e.manifests.Asset(id)
+		if err != nil {
+			return out, err
+		}
+		if asset.Kind != "template" || asset.Compatibility["format"] != "json" {
+			return out, errors.New("finished genesis requires a registered JSON template asset")
+		}
+		genesis = &asset
 	}
 	if len(env.Binaries) > 1 {
 		return out, errors.New("preset mixed binaries require a verified asset for every binary")
@@ -92,7 +122,8 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 		Document, Set, Config DeploymentDocument
 		Binary                ManifestBinaryEvidence
 		Keys                  webKeySnapshot
-	}{doc, p.Set, p.Config, p.Binary, p.Keys})
+		Genesis               *WebAsset
+	}{doc, p.Set, p.Config, p.Binary, p.Keys, genesis})
 	if err != nil {
 		return out, err
 	}
@@ -103,8 +134,42 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	if err = writeWebDeploymentInputs(ctx, dir, p.Set, p.Config); err != nil {
 		return out, err
 	}
+	content := doc.Content
+	var pinnedGenesis *webPresetGenesis
+	if genesis != nil {
+		fingerprint := manifestHash(pinned)
+		path, err := e.manifests.assets.MaterializeFile(ctx, genesis.ID, genesis.Checksum, fingerprint)
+		if err != nil {
+			return out, errors.New("registered genesis input changed or is unavailable")
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil || manifestHash(raw) != genesis.Checksum {
+			return out, ErrDeploymentConflict
+		}
+		var header struct {
+			Config map[string]json.RawMessage `json:"config"`
+		}
+		if json.Unmarshal(raw, &header) != nil || header.Config["chainId"] == nil {
+			return out, errors.New("finished genesis requires a JSON object with config.chainId")
+		}
+		var projection map[string]json.RawMessage
+		if err = json.Unmarshal(content, &projection); err != nil {
+			return out, err
+		}
+		var declaration map[string]json.RawMessage
+		if err = json.Unmarshal(projection["genesis"], &declaration); err != nil {
+			return out, err
+		}
+		declaration["ref"], _ = json.Marshal(path)
+		projection["genesis"], _ = json.Marshal(declaration)
+		content, err = json.Marshal(projection)
+		if err != nil {
+			return out, err
+		}
+		pinnedGenesis = &webPresetGenesis{Asset: *genesis, Fingerprint: fingerprint, Path: path}
+	}
 	in := RunSuiteIn{DataDir: filepath.Join(dir, "planning"), Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), Server: resource.ServerRef{SetPath: filepath.Join(dir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(dir, "workspace-config.yaml")}
-	request, plan, err := testengine.PlanChainPreset(ctx, doc.Content, in)
+	request, plan, err := testengine.PlanChainPreset(ctx, content, in)
 	if err != nil {
 		return out, err
 	}
@@ -121,7 +186,10 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	}
 	request.DataDir = p.ControlDir
 	plan.Workspace = p.ControlDir
-	return webPresetComposition{Document: doc, Request: request, Plan: plan}, nil
+	if _, err = chainsetup.GenesisOptsFor(ChainGenesisIn{GenesisExisting: request.GenesisExisting, ChainID: request.ChainID, Set: request.GenesisSet, OverlayPath: request.OverlayPath}); err != nil {
+		return out, err
+	}
+	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis}, nil
 }
 
 func webPresetRequests(in ChainUpIn) []resource.Request {

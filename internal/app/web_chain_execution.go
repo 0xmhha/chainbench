@@ -145,7 +145,14 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			return err
 		}},
 		{"genesis", func() error {
-			_, err := ChainGenesis(ctx, d, ChainGenesisIn{DataDir: p.ControlDir, ChainID: composition.ChainID, Set: composition.GenesisSet, OverlayPath: composition.OverlayPath})
+			if p.Preset != nil && p.Preset.Genesis != nil {
+				g := p.Preset.Genesis
+				path, err := e.manifests.assets.MaterializeFile(ctx, g.Asset.ID, g.Asset.Checksum, g.Fingerprint)
+				if err != nil || path != g.Path {
+					return ErrDeploymentConflict
+				}
+			}
+			_, err := ChainGenesis(ctx, d, ChainGenesisIn{DataDir: p.ControlDir, ChainID: composition.ChainID, Set: composition.GenesisSet, OverlayPath: composition.OverlayPath, GenesisExisting: composition.GenesisExisting})
 			return err
 		}},
 		{"config", func() error {

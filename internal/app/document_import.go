@@ -123,6 +123,9 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 		}
 	}
 	doc := DeploymentDocumentInput{Kind: kind, Name: name, ContractVersion: "2", Content: raw, AssetRefs: []string{}}
+	if refs, refErr := webDocumentAssetRefs(kind, raw); refErr == nil {
+		doc.AssetRefs = refs
+	}
 	if err := ValidateDeploymentDocument(doc); err != nil {
 		preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{"/content", "invalid", "Engine declaration validation failed; resolve unsupported fields and references"})
 	} else {

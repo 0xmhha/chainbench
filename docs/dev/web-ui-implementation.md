@@ -212,7 +212,7 @@ Configuration/template JSON and YAML, JSON ABI and hexadecimal bytecode can be
 registered with format inspection. Known credential fields, PEM private keys and
 encrypted key stores are refused as shared assets. Personal SSH material still
 uses the encrypted credential store. File format inspection does not establish
-engine compatibility: configuration/template/material execution references,
+engine compatibility: configuration/template/material execution references other than finished genesis,
 uploaded private key trees, TOML and full test asset binding remain open.
 
 The owned fixture uploads all three native binaries through the actual browser,
@@ -221,3 +221,32 @@ initializations plus explicit start/RPC/PID observation/stop jobs. Changing an
 accepted asset rejects execution before database creation. API/storage tests
 cover role/CSRF/origin checks, exact bytes, interrupted staging and links. This is
 partial WEB-02/04/06 evidence; the fourteen full acceptance criteria remain open.
+
+
+## Registered finished genesis in saved presets
+
+A saved chain preset can select a registered JSON template using
+`genesis.ref: asset:<id>` and `mode: existing`. Its outer `assetRefs` must exactly
+match this declaration. Shared revisions and imports preserve the registered ID;
+exports retain the reference rather than a private filesystem path. Planning
+refuses unknown IDs, wrong kinds, arbitrary paths and incompatible generation
+overrides. The review includes the selected ID and full SHA-256 checksum.
+
+The engine materializes the exact bytes in a private immutable snapshot and
+projects only its execution copy to the existing CLI genesis path contract. Both
+the source and snapshot are rechecked before execution. Changed snapshots are
+refused rather than silently repaired. Concurrent identical publications preserve
+the bytes; links, changed files and cancelled materialization are refused. Native
+genesis validation and initialization still run through the existing chain verbs;
+format inspection alone does not establish full chain compatibility.
+
+The browser offers registered JSON templates, replaces generation set/overlay
+explicitly, and restores the previous generation declaration when undoing a file
+selection in the current edit. The owned three-chain fixture uploads finished
+genesis files, selects and saves them in the UI, reviews their checksums and
+initializes twelve actual native databases. It compares the deployed file bytes
+and each database's `dumpgenesis` chain ID. Wrong kinds, unknown references and
+changes to either source or snapshot reject execution before network creation.
+This is partial WEB-01/02/06 evidence. Genesis templates, per-binary genesis,
+configuration/material inputs, uploaded key trees and the full acceptance list
+remain open.

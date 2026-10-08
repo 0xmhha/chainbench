@@ -110,8 +110,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	if len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID {
-		return out, errors.New("select exactly the provisioned binary asset")
+	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 2 || args.ChainPresetRef == nil && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
+		return out, errors.New("select the binary asset and every registered preset dependency")
 	}
 	refs, _ := json.Marshal(workspace.Documents)
 	selected, _ := json.Marshal(in.DocumentRefs)
@@ -243,6 +243,21 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
+	expectedAssets := map[string]bool{args.AssetID: true}
+	if p.Preset != nil {
+		for _, id := range p.Preset.Document.AssetRefs {
+			expectedAssets[id] = true
+		}
+	}
+	if len(in.AssetRefs) != len(expectedAssets) {
+		return out, errors.New("selected assets differ from the reviewed declaration")
+	}
+	for _, id := range in.AssetRefs {
+		if !expectedAssets[id] {
+			return out, errors.New("selected assets differ from the reviewed declaration")
+		}
+		delete(expectedAssets, id)
+	}
 	out.Claims = []WebResourceClaim{{HostIdentity: p.Target.HostIdentity, DataPath: p.Target.DataPath, Ports: ports}, {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
@@ -321,6 +336,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 	}
 	if p.Preset != nil {
+		if p.Preset.Genesis != nil {
+			out.Changes = append(out.Changes, fmt.Sprintf("Finished genesis asset %s · SHA-256 %s", p.Preset.Genesis.Asset.ID, p.Preset.Genesis.Asset.Checksum))
+		}
 		out.Changes = append(out.Changes, fmt.Sprintf("Chain preset %s · r%d · %s", p.Preset.Document.ID, p.Preset.Document.Revision, p.Preset.Document.Name), p.Preset.Plan.String())
 	}
 	if p.Keys.SHA256 != "" {

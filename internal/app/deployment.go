@@ -22,8 +22,11 @@ type DeploymentDocumentInput struct {
 
 // ValidateDeploymentDocument delegates grammar, paths and placement to resource.
 func ValidateDeploymentDocument(in DeploymentDocumentInput) error {
-	if strings.TrimSpace(in.Name) == "" || in.ContractVersion != "2" || len(in.AssetRefs) > 0 {
-		return errors.New("named deployment document with contractVersion 2 and no asset references required")
+	if strings.TrimSpace(in.Name) == "" || in.ContractVersion != "2" {
+		return errors.New("named deployment document with contractVersion 2 required")
+	}
+	if err := validateWebDocumentAssetRefs(in); err != nil {
+		return err
 	}
 	var content map[string]any
 	dec := json.NewDecoder(bytes.NewReader(in.Content))

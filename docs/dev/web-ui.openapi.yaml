@@ -2144,6 +2144,11 @@ components:
           additionalProperties: true
         assetRefs: &id014
           type: array
+          description: >-
+            Exact registered dependencies in the declaration. A chain preset
+            can reference a registered JSON template with genesis.ref set to
+            asset:<id>; this list contains that ID. Import derives the same
+            dependency. Job planning verifies the kind and pins its checksum.
           items: *id002
       additionalProperties: false
       required:
