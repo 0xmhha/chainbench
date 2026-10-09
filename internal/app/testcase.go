@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -123,7 +124,10 @@ func DSLContract() (TestCaseContract, map[string]any, error) {
 				legacyActions = append(legacyActions, map[string]any{"type": "object", "title": "do " + entry.Name, "additionalProperties": false, "required": []string{entry.Name}, "properties": map[string]any{entry.Name: arguments}})
 			} else {
 				props["assert"] = map[string]any{"const": entry.Name}
-				props["expected"] = map[string]any{}
+				// v1 writes the runtime spelling, and only where it is read.
+				if _, compares := old["properties"].(map[string]any)["is"]; compares {
+					props["expected"] = map[string]any{}
+				}
 				arguments["required"] = append(required, "assert")
 				legacyAssertions = append(legacyAssertions, arguments)
 			}
@@ -309,18 +313,30 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 	for _, key := range []string{"oneOf", "anyOf"} {
 		if choices, ok := s[key].([]any); ok {
 			matches := 0
-			var details []string
+			var details, addressed []string
 			for _, choice := range choices {
-				if err := checkEditorValue(value, choice.(map[string]any), root, path); err == nil {
+				err := checkEditorValue(value, choice.(map[string]any), root, path)
+				if err == nil {
 					matches++
-				} else {
-					details = append(details, err.Error())
+					continue
 				}
+				details = append(details, err.Error())
+				if editorChoiceNamed(value, choice.(map[string]any), root) {
+					addressed = append(addressed, err.Error())
+				}
+			}
+			if matches == 0 && len(addressed) == 1 {
+				// The statement names its builtin (do, expect, source), so
+				// the other builtins' complaints are noise.
+				return errors.New(addressed[0])
 			}
 			if matches == 0 || (key == "oneOf" && matches != 1) {
 				return fmt.Errorf("%s: no unique supported %s variant (%s)", path, key, strings.Join(details, "; "))
 			}
 		}
+	}
+	if not, ok := s["not"].(map[string]any); ok && checkEditorValue(value, not, root, path) == nil {
+		return fmt.Errorf("%s: fields %s cannot be given together", path, strings.Join(editorStrings(not["required"]), " and "))
 	}
 	if c, exists := s["const"]; exists && !reflect.DeepEqual(value, c) {
 		return fmt.Errorf("%s: expected %v", path, c)
@@ -441,6 +457,44 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 		}
 	}
 	return nil
+}
+
+// editorChoiceNamed reports whether value carries every constant a choice
+// discriminates on (its "do", "expect" or "source"), so the choice is the one
+// the author meant even though it failed.
+func editorChoiceNamed(value any, choice, root map[string]any) bool {
+	if ref, ok := choice["$ref"].(string); ok {
+		def, ok := root["$defs"].(map[string]any)[strings.TrimPrefix(ref, "#/$defs/")].(map[string]any)
+		if !ok {
+			return false
+		}
+		choice = def
+	}
+	m, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	if nested, ok := choice["oneOf"].([]any); ok {
+		for _, c := range nested {
+			if editorChoiceNamed(value, c.(map[string]any), root) {
+				return true
+			}
+		}
+		return false
+	}
+	props, _ := choice["properties"].(map[string]any)
+	named := false
+	for key, prop := range props {
+		c, ok := prop.(map[string]any)["const"]
+		if !ok {
+			continue
+		}
+		if !reflect.DeepEqual(m[key], c) {
+			return false
+		}
+		named = true
+	}
+	return named
 }
 
 func editorSchemaNumber(value any) (float64, bool) {

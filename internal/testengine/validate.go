@@ -107,6 +107,10 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 		r.Result = "UNRESOLVED: " + strings.Join(unresolved, ", ")
 		return r
 	}
+	if ignored := testhelper.IgnoredArguments(s); len(ignored) > 0 {
+		r.Result = "IGNORED ARGUMENT: " + strings.Join(ignored, ", ")
+		return r
+	}
 	if bad := declaredRoles(s); len(bad) > 0 {
 		r.Result = "INVALID ROLE: " + strings.Join(bad, ", ")
 		return r
@@ -164,6 +168,9 @@ func Precheck(specs []dsl.Spec) error {
 	for _, s := range specs {
 		if unresolved := interp.Unresolved(s, reg); len(unresolved) > 0 {
 			return fmt.Errorf("spec %s has unresolved references (nothing composed): %s", s.ID, strings.Join(unresolved, ", "))
+		}
+		if ignored := testhelper.IgnoredArguments(s); len(ignored) > 0 {
+			return fmt.Errorf("spec %s gives arguments their builtin does not read (nothing composed): %s", s.ID, strings.Join(ignored, ", "))
 		}
 		if bad := declaredRoles(s); len(bad) > 0 {
 			return fmt.Errorf("spec %s declares a role that is not one (nothing composed): %s", s.ID, strings.Join(bad, ", "))

@@ -432,6 +432,10 @@ chainbench validate tests/tc/<path>.json
 
 `UNRESOLVED` 가 나오면 없는 어휘를 불렀거나, 정의되지 않은 `$이름` 을 참조했거나, 나중에 저장할 값을 먼저 쓴 것이다. 참조는 실행 순서대로 검사한다 — `hooks.pre`, `steps`(v2 는 적힌 순서대로, v1 은 steps 다음 assertions), `hooks.post` 순이다.
 
+`IGNORED ARGUMENT: chainId.timeout` 처럼 나오면 그 어휘가 읽지 않는 인자를 적은 것이다. 읽지 않는 인자는 아무 효과가 없어서, 받아 주면 케이스가 갖지 않은 제한 시간이나 노드나 저장값을 가진 것처럼 읽힌다. 그래서 `validate` 와 실행 전 검사, Web 편집기가 모두 거절한다. 어휘마다 읽는 인자는 `internal/testhelper/arguments.go` 의 `builtinArguments` 에 적혀 있고, 테스트가 구현 코드에서 같은 목록을 뽑아 대조하므로 코드와 어긋나면 빌드가 깨진다. 이 목록은 해석기가 대신 읽는 것까지 포함한다. `save` 는 값을 돌려주는 동작에만 붙는다. `onEach` 는 동작에는 노드마다 한 번씩 돌리는 뜻으로 붙고, 판정에는 고른 노드를 모두 보는 것에만 붙는다. `blockStalled`·`blockInterval`·`txMined`·`callError`·`rpcError`·`methodPresent`·`gasPriceIsBaseFeePlusTip`·`wsSubscribe` 는 첫 노드만 보므로 `on` 만 받는다.
+
+`is` 와 `expected` 를 한 문장에 함께 쓰면 거절한다. 낮추는 단계가 `is` 를 `expected` 로 옮기면서 하나를 덮어쓰기 때문이다.
+
 `tests/tc` 아래 전체를 한 번에 보려면 다음처럼 한다.
 
 ```

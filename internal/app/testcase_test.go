@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 func editorCase(steps string) []byte {
@@ -127,6 +128,80 @@ func TestV1MigrationPreservesSkipsAndGenesisMetadata(t *testing.T) {
 	genesis := env["genesis"].(map[string]any)
 	if genesis["haltsAt"] != float64(10) || len(genesis["provides"].([]any)) != 1 {
 		t.Fatal("genesis metadata lost")
+	}
+}
+
+// Every case the CLI runs must import into the editor unchanged in meaning.
+func TestTestCaseCorpusImports(t *testing.T) {
+	root := filepath.Join("..", "..")
+	presets := map[string]json.RawMessage{}
+	var cases []string
+	err := filepath.WalkDir(filepath.Join(root, "tests", "tc"), func(p string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || filepath.Ext(p) != ".json" {
+			return err
+		}
+		raw, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		if dsl.IsEnv(raw) {
+			var head struct {
+				ID string `json:"id"`
+			}
+			if json.Unmarshal(raw, &head) == nil {
+				presets[head.ID] = raw
+			}
+			return nil
+		}
+		cases = append(cases, p)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths, _ := filepath.Glob(filepath.Join(root, "presets", "chain", "*.json"))
+	for _, p := range paths {
+		raw, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var head struct {
+			ID string `json:"id"`
+		}
+		if json.Unmarshal(raw, &head) == nil {
+			presets[head.ID] = raw
+		}
+	}
+	if len(cases) < 100 {
+		t.Fatalf("corpus has %d cases; the walk is wrong", len(cases))
+	}
+	for _, p := range cases {
+		raw, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := PrepareTestCase(TestCaseInput{Content: raw, Presets: presets}); err != nil {
+			t.Errorf("%s: %v", p, err)
+		}
+	}
+}
+
+// An argument the builtin never reads is refused by name rather than kept
+// as a setting that does nothing.
+func TestEditorRefusesIgnoredArguments(t *testing.T) {
+	for steps, field := range map[string]string{
+		`[{"expect":"chainId","is":"1","timeout":"5s"}]`:                                      "timeout",
+		`[{"do":"restartNode","on":"node1","expectFail":true},{"expect":"chainId","is":"1"}]`: "expectFail",
+		`[{"expect":"blockStalled","onEach":["node1","node2"]}]`:                              "onEach",
+	} {
+		_, err := PrepareTestCase(TestCaseInput{Content: editorCase(steps)})
+		if err == nil || !strings.Contains(err.Error(), field) {
+			t.Errorf("%s: err = %v, want %s refused", steps, err, field)
+		}
+		// The reason names the field, not every other builtin's requirements.
+		if err != nil && strings.Contains(err.Error(), "variant") {
+			t.Errorf("%s: refusal lists unrelated builtins: %v", steps, err)
+		}
 	}
 }
 

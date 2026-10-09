@@ -514,6 +514,10 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	if err != nil {
 		return Statement{}, err
 	}
+	// "is" is lowered onto "expected", so writing both would drop one of them.
+	if _, written := m["expected"]; written && hasExpected {
+		return Statement{}, fmt.Errorf("statement gives both \"is\" and \"expected\"; write one of them")
+	}
 	args := make(map[string]any, len(m))
 	for k, v := range m {
 		switch k {

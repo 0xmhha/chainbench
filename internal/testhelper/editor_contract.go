@@ -55,32 +55,35 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		}
 	}
 	for i, e := range r.entries {
-		fields, ok := editorFields[e.Name]
+		// read and waitFor name the registration as an action; the reader's
+		// own arguments are merged per source by the app.
+		read, ok := builtinArgumentSet(e.Kind, e.Name)
 		if !ok {
 			return nil, nil, fmt.Errorf("builtin %s has no argument contract", e.Name)
 		}
 		props := map[string]any{}
-		for _, field := range strings.Fields(fields) {
-			props[field] = editorParameter(field)
-		}
-		// These adjuncts are consumed by the interpreter for every statement.
-		for _, field := range strings.Fields("on onEach save timeout pollInterval") {
-			props[field] = editorParameter(field)
+		for field := range read {
+			switch field {
+			case "expected":
+				// The document writes "is"; lowering renames it. waitFor also
+				// takes the runtime spelling, which most cases use.
+				props["is"] = map[string]any{}
+				props["isPerChain"] = map[string]any{"type": "object"}
+				if e.Kind == "action" {
+					props["expected"] = editorParameter(field)
+				}
+			case "expect":
+				props["expect"] = map[string]any{"enum": []string{"receipt", "revert", "reject", "keptOut", "fail"}}
+				props["expectPerChain"] = map[string]any{"type": "object", "additionalProperties": props["expect"]}
+			default:
+				props[field] = editorParameter(field)
+			}
 		}
 		switch e.Kind {
 		case "action":
-			props["is"] = map[string]any{}
-			props["isPerChain"] = map[string]any{"type": "object"}
 			props["do"] = map[string]any{"const": e.Name}
-			props["expect"] = map[string]any{"enum": []string{"receipt", "revert", "reject", "keptOut", "fail"}}
-			props["expectPerChain"] = map[string]any{"type": "object", "additionalProperties": props["expect"]}
 		case "assertion":
 			props["expect"] = map[string]any{"const": e.Name}
-			props["is"] = map[string]any{}
-			props["isPerChain"] = map[string]any{"type": "object"}
-			for _, field := range strings.Fields("compare delta tol") {
-				props[field] = editorParameter(field)
-			}
 		}
 		if e.Name == "read" || e.Name == "waitFor" {
 			props["source"] = map[string]any{"enum": readers}
@@ -110,6 +113,10 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 				property["minLength"] = 1
 			}
 		}
+		if _, both := props["expected"]; both {
+			// Lowering lets "is" overwrite "expected"; one of them would be ignored.
+			parameterSchema["not"] = map[string]any{"required": []string{"is", "expected"}}
+		}
 		switch e.Name {
 		case actionDeployContract:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data")
@@ -132,28 +139,6 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 	return r.entries, schemas, nil
 }
 
-// Fields are the argument spellings read by the registered implementations.
-// read/waitFor are augmented with the selected reader's fields in the app.
-var editorFields = map[string]string{
-	"sendTx":    "key feePayerKey from to data accessList value gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce wait blocks expectRevert expectReject reason",
-	"waitBlock": "target", "read": "source", "waitFor": "source expected compare delta tol",
-	"newAccount": "saveKey", "sendRawTampered": "which senderKey feePayerKey to value reason",
-	"sendSetCode": "key authorityKey delegate", "signAuthorization": "authorityKey delegate",
-	"load":     "from fillPercent gas blocks gasPrice maxFeePerGas maxPriorityFeePerGas nonce",
-	"stopNode": "", "startNode": "expectFail reason", "restartNode": "expectFail reason", "resetNode": "",
-	"swapNode": "binary config genesisOverlay purpose expectFail reason", "partition": "groups method", "healPartition": "groups method", "readNodeLog": "maxBytes", "crossFork": "",
-	"faucet":           "to amount from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce",
-	"deployContract":   "bytecode data key from gas value gasPrice maxFeePerGas maxPriorityFeePerGas nonce",
-	"registerContract": "to data from gas value gasPrice maxFeePerGas maxPriorityFeePerGas nonce",
-	"wsOpen":           "event params address topics",
-	"blockAdvance":     "block", "blockStalled": "block", "blockHalt": "within maxAdvance", "blockInterval": "blocks maxSeconds maxMillis minSeconds minMillis",
-	"sameBlockHash": "block", "metric": "name", "callError": "to data reason", "methodPresent": "method params", "rpcError": "method params reason",
-	"chainId": "", "blockNumber": "", "peerCount": "", "balanceAt": "address", "codeAt": "address", "nonceAt": "address",
-	"call": "to data", "createAddress": "deployer from nonce", "contractChecksum": "bytecode data address", "txStatus": "hash",
-	"receiptLog": "hash address topic0 index topic select", "baseFee": "", "estimateGas": "to data from", "logs": "address fromBlock toBlock topics select index",
-	"gasPrice": "", "rpcCall": "method params select", "derive": "op of format selector index", "validators": "", "txMined": "hash",
-	"wsSubscribe": "event params address topics count", "wsCollected": "sub count", "gasPriceIsBaseFeePlusTip": "",
-}
 var editorRequired = map[string][]string{
 	"waitBlock": {"target"}, "read": {"source"}, "waitFor": {"source"}, "newAccount": {"saveKey"},
 	"sendRawTampered": {"which", "senderKey", "feePayerKey", "to"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
@@ -174,7 +159,8 @@ func editorParameter(field string) map[string]any {
 	case "is", "expected", "delta", "tol":
 		return map[string]any{}
 	case "params", "of", "accessList", "topics":
-		return map[string]any{"type": "array", "items": map[string]any{}}
+		// A list may also come whole from an earlier step's saved value.
+		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": map[string]any{}}, map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`}}}
 	case "groups":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}
 	case "onEach":
