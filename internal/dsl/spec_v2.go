@@ -52,6 +52,11 @@ type Statement struct {
 	// Args are the statement's remaining fields, in the runtime's (v1) arg
 	// vocabulary — lowering already renamed "is" to "expected".
 	Args map[string]any
+	// Outcomes are every outcome a do statement declares across chains (its
+	// expect and each expectPerChain value), when it declares a per-chain one.
+	// Args carries only this chain's; an argument that another chain's outcome
+	// reads is still read. Not part of the executable meaning.
+	Outcomes []string `json:"-"`
 }
 
 // ChainPresetV2 is the v2 environment declaration — the reuse unit.

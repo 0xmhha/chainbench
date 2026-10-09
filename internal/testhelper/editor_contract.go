@@ -75,6 +75,11 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			case "expect":
 				props["expect"] = map[string]any{"enum": []string{"receipt", "revert", "reject", "keptOut", "fail"}}
 				props["expectPerChain"] = map[string]any{"type": "object", "additionalProperties": props["expect"]}
+			case "method":
+				props[field] = editorParameter(field)
+				if e.Name == actionPartition || e.Name == actionHealPartition {
+					props[field] = map[string]any{"enum": []string{partitionByPeers, partitionByFirewall}}
+				}
 			default:
 				props[field] = editorParameter(field)
 			}

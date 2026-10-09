@@ -538,7 +538,16 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 		if hasEx {
 			args["expect"] = exName
 		}
-		return Statement{Do: doName, Args: args}, nil
+		st := Statement{Do: doName, Args: args}
+		if perChain, ok := m[outcomePerChainKey].(map[string]any); ok {
+			st.Outcomes = append(st.Outcomes, m["expect"].(string))
+			for _, v := range perChain {
+				if outcome, ok := v.(string); ok {
+					st.Outcomes = append(st.Outcomes, outcome)
+				}
+			}
+		}
+		return st, nil
 	}
 	delete(args, "expect")
 	if alias, ok := expectAliases[exName]; ok {

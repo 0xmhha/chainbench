@@ -1,6 +1,7 @@
 package testhelper
 
 import (
+	"slices"
 	"sort"
 	"strings"
 
@@ -113,7 +114,7 @@ func builtinArgumentSet(kind, name string) (map[string]bool, bool) {
 // Unknown builtin names are left to interp.Unresolved.
 func IgnoredArguments(s dsl.Spec) []string {
 	seen := map[string]bool{}
-	check := func(kind, name string, args map[string]any, skip ...string) {
+	check := func(kind, name string, args map[string]any, outcomes []string, skip ...string) {
 		allowed, ok := builtinArgumentSet(kind, name)
 		if !ok {
 			return
@@ -134,39 +135,43 @@ func IgnoredArguments(s dsl.Spec) []string {
 				seen[name+"."+field] = true
 			}
 		}
+		source, _ := args["source"].(string)
+		for _, why := range unreadOnThisPath(kind, name, source, args, outcomes) {
+			seen[name+"."+why] = true
+		}
 	}
-	action := func(entry map[string]any) {
+	action := func(entry map[string]any, outcomes []string) {
 		name := dsl.ActionName(entry)
-		check("action", name, dsl.ArgsOf(entry[name]))
+		check("action", name, dsl.ArgsOf(entry[name]), outcomes)
 	}
 	assertion := func(entry map[string]any) {
 		name, _ := entry["assert"].(string)
-		check("assertion", name, entry, "assert")
+		check("assertion", name, entry, nil, "assert")
 	}
 	for _, entry := range s.PreActions {
-		action(entry)
+		action(entry, nil)
 	}
 	if len(s.Sequence) > 0 {
 		for _, st := range s.Sequence {
 			if st.Do != "" {
-				action(dsl.StatementStep(st))
+				action(dsl.StatementStep(st), st.Outcomes)
 			} else {
 				assertion(dsl.StatementAssertion(st))
 			}
 		}
 	} else {
 		for _, entry := range s.Steps {
-			action(entry)
+			action(entry, nil)
 		}
 		for _, entry := range s.Assertions {
 			assertion(entry)
 		}
 	}
 	for _, entry := range s.PostActions {
-		action(entry)
+		action(entry, nil)
 	}
 	for _, entry := range s.OnFailActions {
-		action(entry)
+		action(entry, nil)
 	}
 	out := make([]string, 0, len(seen))
 	for name := range seen {
@@ -174,4 +179,147 @@ func IgnoredArguments(s dsl.Spec) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// firstRead lists arguments of which an implementation reads the first one
+// present and never looks at the rest.
+var firstRead = map[string][]string{
+	"deployContract":   {"bytecode", "data"},
+	"contractChecksum": {"bytecode", "data", "address"},
+	"createAddress":    {"deployer", "from"},
+	"load":             {"gas", "fillPercent"},
+}
+
+// localSigning lists what a step signed with "key" leaves out: the harness
+// builds that transaction itself.
+var localSigning = map[string][]string{
+	"sendTx":         {"from"},
+	"deployContract": {"from", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce"},
+}
+
+// unreadOnThisPath returns the arguments a statement gives that its
+// implementation reads only on a path this statement does not take, each with
+// the reason. A value that is a binding is decided at run time, so a rule that
+// depends on one is not applied.
+func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes []string) []string {
+	var out []string
+	has := func(field string) bool { _, ok := args[field]; return ok }
+	text := func(field string) (string, bool) {
+		v, ok := args[field].(string)
+		return v, ok && !strings.HasPrefix(v, "$")
+	}
+	refuse := func(field, why string) {
+		if has(field) {
+			out = append(out, field+" ("+why+")")
+		}
+	}
+	if has("on") && has("onEach") {
+		refuse("onEach", "on and onEach select the same thing; write one")
+	}
+	builtin := name
+	if name == "read" || name == "waitFor" {
+		builtin = source
+	}
+	if fields, ok := firstRead[builtin]; ok {
+		for i, first := range fields {
+			if has(first) {
+				for _, later := range fields[i+1:] {
+					refuse(later, first+" is read instead")
+				}
+				break
+			}
+		}
+	}
+	if has("key") {
+		for _, field := range localSigning[name] {
+			refuse(field, "a step signed with key builds its own transaction")
+		}
+	}
+	if allowed, _ := builtinArgumentSet(kind, name); allowed["delta"] {
+		op, given := text("compare")
+		if !given {
+			op = defaultCompare(name)
+		}
+		if op != "InDelta" && !strings.HasPrefix(op, "$") {
+			refuse("delta", "read only with compare InDelta")
+			refuse("tol", "read only with compare InDelta")
+		} else if has("delta") {
+			refuse("tol", "delta is read instead")
+		}
+	}
+	switch name {
+	case actionSendTx:
+		if has("expect") && (has("expectRevert") || has("expectReject")) {
+			refuse("expect", "expectRevert and expectReject decide the outcome instead")
+		}
+		reject, keptOut := expects(args, outcomes, "reject"), expects(args, outcomes, "keptOut")
+		if b, ok := args["expectReject"].(bool); ok {
+			reject = b
+		}
+		if !reject && !keptOut {
+			refuse("reason", "read only when the step expects reject or keptOut")
+		}
+		if !keptOut {
+			refuse("blocks", "read only with expect keptOut")
+		}
+	case actionPartition, actionHealPartition:
+		if method, ok := text("method"); ok && method != partitionByPeers && method != partitionByFirewall {
+			refuse("method", "peers or firewall; any other value falls back to peers")
+		}
+	case actionStartNode, actionSwapNode:
+		if has("expect") && has("expectFail") {
+			refuse("expect", "expectFail decides the outcome instead")
+		}
+		fail := expects(args, outcomes, "fail")
+		if b, ok := args["expectFail"].(bool); ok {
+			fail = b
+		}
+		if !fail {
+			refuse("reason", "read only when the node is expected to fail")
+		}
+	}
+	switch builtin {
+	case assertDerive:
+		if op, ok := text("op"); ok {
+			if op != "abiCall" {
+				refuse("selector", "read only with op abiCall")
+			}
+			if op != "word" {
+				refuse("index", "read only with op word")
+			}
+			if op != "sum" && op != "diff" && op != "mul" {
+				refuse("format", "read only with op sum, diff or mul")
+			}
+		}
+	case assertLogs:
+		if selected, ok := text("select"); !has("select") || ok && selected == logSelectCount {
+			refuse("index", "a count reads every matching log")
+		}
+	case assertReceiptLog:
+		if selected, ok := text("select"); ok && selected != "data" {
+			refuse("select", "only data is read; leave it out to read a topic")
+		} else if ok {
+			refuse("topic", "select data reads the data instead")
+		}
+	}
+	return out
+}
+
+// expects reports whether the step expects outcome on this chain or, when it
+// declares per-chain outcomes, on any chain.
+func expects(args map[string]any, outcomes []string, outcome string) bool {
+	if v, _ := args["expect"].(string); v == outcome {
+		return true
+	}
+	return slices.Contains(outcomes, outcome)
+}
+
+// defaultCompare is the comparison a statement uses when it names none.
+func defaultCompare(name string) string {
+	for _, builtin := range builtinAssertions() {
+		if builtin.name == name {
+			return builtin.defaultOp
+		}
+	}
+	return "Equal"
 }
