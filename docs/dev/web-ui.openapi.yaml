@@ -2154,6 +2154,15 @@ components:
             asset:<id>; this list contains that ID. Import derives the same
             dependency. Job planning verifies the kind and pins its checksum.
           items: *id002
+        presetRefs: &presetrefs
+          type: array
+          description: >-
+            Only for a case. The shared chain-preset revision behind each
+            preset id the case names or extends. Saving resolves them and
+            refuses a missing, unused or non-preset reference; a job runs the
+            pinned revisions inlined while the stored case keeps its reference.
+          items:
+            $ref: '#/components/schemas/DocumentRef'
       additionalProperties: false
       required:
       - kind
@@ -2168,6 +2177,7 @@ components:
         contractVersion: *id001
         content: *id013
         assetRefs: *id014
+        presetRefs: *presetrefs
         id: *id002
         revision: *id005
         updatedAt: *id006
@@ -2431,6 +2441,18 @@ components:
             replacementAssetId:
               type: string
               description: Registered native binary identity for node.swap; its verified SHA-256 must differ from the selected node executable.
+            binaryAssets:
+              type: object
+              description: >-
+                Test jobs only. Maps each binary name the selected cases
+                declare besides default (an upgrade's successor, a swap
+                target) to the registered asset that runs under it. Each is
+                verified against the chain the name runs and the target
+                platform, placed under its checksum, claimed, and listed in
+                assetRefs. A missing, wrong-chain or undeclared name is
+                refused; the declared path itself never runs.
+              additionalProperties:
+                type: string
           additionalProperties: true
         retention:
           type: string

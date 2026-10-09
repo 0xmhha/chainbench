@@ -72,10 +72,13 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 			}
 			r.Body = io.NopCloser(bytes.NewReader(raw))
 			var head struct {
-				Kind string `json:"kind"`
+				Kind       string            `json:"kind"`
+				PresetRefs []json.RawMessage `json:"presetRefs"`
 			}
 			_ = json.Unmarshal(raw, &head)
-			if head.Kind != "case" && previous != nil {
+			// A case pinning shared presets is judged against them, which only
+			// the document store can resolve.
+			if (head.Kind != "case" || len(head.PresetRefs) > 0) && previous != nil {
 				previous(w, r)
 				return
 			}
@@ -86,6 +89,8 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 					ContractVersion string          `json:"contractVersion"`
 					Content         json.RawMessage `json:"content"`
 					AssetRefs       []string        `json:"assetRefs"`
+					// Empty here: a case that pins presets is routed to the store.
+					PresetRefs []app.DeploymentDocumentRef `json:"presetRefs"`
 				}
 				if !deploymentDecode(w, r, &in) {
 					return

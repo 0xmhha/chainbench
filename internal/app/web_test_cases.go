@@ -49,10 +49,23 @@ func (e *WebChainEngine) prepareTestCases(ctx context.Context, chain string, ref
 		if total > 16<<20 {
 			return nil, errors.New("selected test cases exceed the execution input limit")
 		}
-		prepared, err := PrepareTestCase(TestCaseInput{Content: document.Content})
+		presets := map[string]json.RawMessage{}
+		if len(document.PresetRefs) > 0 {
+			if presets, err = e.documents.CasePresets(document.DeploymentDocumentInput); err != nil {
+				return nil, err
+			}
+		}
+		prepared, err := PrepareTestCase(TestCaseInput{Content: document.Content, Presets: presets})
 		if err != nil {
 			return nil, err
 		}
+		// The engine runs the pinned preset revision, inlined; the stored
+		// declaration keeps its reference.
+		executable, err := e.documents.ExecutableCaseContent(DeploymentDocumentInput{Kind: "case", Content: prepared.Content, PresetRefs: document.PresetRefs})
+		if err != nil {
+			return nil, err
+		}
+		prepared.Content = executable
 		spec, err := dsl.Parse(prepared.Content)
 		if err != nil {
 			return nil, err

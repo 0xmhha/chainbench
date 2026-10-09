@@ -38,3 +38,31 @@ test('finished genesis dependencies retain only exact registered references in b
  assert.deepEqual(caseAssetRefs({schemaVersion:'2',chainPreset:'named-preset'}),[])
  assert.deepEqual(caseAssetRefs(null),[])
 })
+
+test('preset references are read from id and extends forms only', async () => {
+  const {presetIds, sameDeclaration} = await import('../../web/src/dsl-form.js')
+  assert.deepEqual(presetIds({schemaVersion: '2', chainPreset: 'stablenet-bp4'}), ['stablenet-bp4'])
+  assert.deepEqual(presetIds({schemaVersion: '2', chainPreset: {extends: 'stablenet-bp4-en1', topology: {bp: 3}}}), ['stablenet-bp4-en1'])
+  assert.deepEqual(presetIds({schemaVersion: '2', chainPreset: {chain: 'stablenet'}}), [])
+  assert.deepEqual(presetIds({schemaVersion: '1', chain: {name: 'stablenet'}}), [])
+  assert.ok(sameDeclaration({a: 1, b: {c: [1, {d: 2, e: 3}]}}, {b: {c: [1, {e: 3, d: 2}]}, a: 1}))
+  assert.ok(!sameDeclaration({a: 1}, {a: 2}))
+})
+
+test('a case that extends a pinned preset runs on the preset chain', async () => {
+  const {caseChain} = await import('../../web/src/dsl-form.js')
+  const preset = {id: 'p1', kind: 'chain-preset', content: {id: 'base', chain: 'stablenet'}}
+  assert.equal(caseChain({content: {schemaVersion: '2', chainPreset: {extends: 'base'}}, presetRefs: [{id: 'p1', revision: 1}]}, [preset]), 'stablenet')
+  assert.equal(caseChain({content: {schemaVersion: '2', chainPreset: 'base'}, presetRefs: [{id: 'p1', revision: 1}]}, [preset]), 'stablenet')
+  assert.equal(caseChain({content: {schemaVersion: '2', chainPreset: {chain: 'wbft'}}}, [preset]), 'wbft')
+  assert.equal(caseChain({content: {schemaVersion: '1', chain: {name: 'wemix'}}}), 'wemix')
+  assert.equal(caseChain({content: {schemaVersion: '2', chainPreset: 'base'}}, [preset]), undefined)
+})
+
+test('named binaries come from the case over its pinned preset', async () => {
+  const {declaredBinaries} = await import('../../web/src/dsl-form.js')
+  const preset = {id: 'p1', content: {id: 'wemix-to-wbft', chain: 'wemix', binaries: {default: 'gwemix', next: {binary: 'gwbft', chain: 'wbft'}}}}
+  assert.deepEqual(declaredBinaries({content: {schemaVersion: '2', chainPreset: {extends: 'wemix-to-wbft'}}, presetRefs: [{id: 'p1', revision: 1}]}, [preset]), [{name: 'next', chain: 'wbft'}])
+  assert.deepEqual(declaredBinaries({content: {schemaVersion: '2', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable', upgrade: 'gstable-next'}}}}), [{name: 'upgrade', chain: 'stablenet'}])
+  assert.deepEqual(declaredBinaries({content: {schemaVersion: '2', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable'}}}}), [])
+})

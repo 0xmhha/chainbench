@@ -18,10 +18,28 @@ type DeploymentDocumentInput struct {
 	ContractVersion string          `json:"contractVersion"`
 	Content         json.RawMessage `json:"content"`
 	AssetRefs       []string        `json:"assetRefs"`
+	// PresetRefs pin the shared chain-preset revisions a case names by id or
+	// extends, so the case keeps its reference and still runs one exact
+	// declaration. Only a case carries them.
+	PresetRefs []DeploymentDocumentRef `json:"presetRefs,omitempty"`
 }
 
 // ValidateDeploymentDocument delegates grammar, paths and placement to resource.
 func ValidateDeploymentDocument(in DeploymentDocumentInput) error {
+	return validateDeploymentDocument(in, nil)
+}
+
+// errCasePresetsNeedStore refuses to judge a case against presets nobody
+// supplied: its pinned preset revisions live in the document store.
+var errCasePresetsNeedStore = errors.New("a case with preset references is validated against the shared preset revisions it pins")
+
+func validateDeploymentDocument(in DeploymentDocumentInput, presets map[string]json.RawMessage) error {
+	if len(in.PresetRefs) > 0 && in.Kind != "case" {
+		return errors.New("only a test case pins chain preset references")
+	}
+	if in.Kind == "case" && len(in.PresetRefs) > 0 && presets == nil {
+		return errCasePresetsNeedStore
+	}
 	if strings.TrimSpace(in.Name) == "" || in.ContractVersion != "2" {
 		return errors.New("named deployment document with contractVersion 2 required")
 	}
@@ -50,7 +68,7 @@ func ValidateDeploymentDocument(in DeploymentDocumentInput) error {
 	case "chain-preset":
 		return ValidateChainPreset(in.Content)
 	case "case":
-		_, err := PrepareTestCase(TestCaseInput{Content: in.Content})
+		_, err := PrepareTestCase(TestCaseInput{Content: in.Content, Presets: presets})
 		return err
 	case "server-set":
 		if sshBlock, ok := content["ssh"].(map[string]any); ok {
@@ -136,7 +154,9 @@ func deploymentWorkspace(in DeploymentDocumentInput) (resource.WorkspaceConfig, 
 
 // ExportDeploymentDocument emits the engine declaration, without Web metadata or private overlays.
 func ExportDeploymentDocument(in DeploymentDocumentInput, format string) ([]byte, error) {
-	if err := ValidateDeploymentDocument(in); err != nil {
+	// A stored case with pinned presets was validated against them when saved;
+	// its declaration is exported as written, references included.
+	if err := ValidateDeploymentDocument(in); err != nil && !errors.Is(err, errCasePresetsNeedStore) {
 		return nil, err
 	}
 	if format == "" || format == "json" {

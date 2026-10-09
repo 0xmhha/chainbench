@@ -191,7 +191,7 @@ func (s *DeploymentStore) SaveDocument(a DeploymentActor, id string, revision in
 	if !a.canEdit() {
 		return DeploymentDocument{}, ErrDeploymentForbidden
 	}
-	if err := ValidateDeploymentDocument(in); err != nil {
+	if err := s.ValidateDocument(in); err != nil {
 		return DeploymentDocument{}, err
 	}
 	s.mu.Lock()
@@ -214,6 +214,7 @@ func (s *DeploymentStore) SaveDocument(a DeploymentActor, id string, revision in
 	// Detach caller-owned JSON so subsequent edits cannot modify stored revisions.
 	in.Content = append(json.RawMessage(nil), in.Content...)
 	in.AssetRefs = append([]string{}, in.AssetRefs...)
+	in.PresetRefs = append([]DeploymentDocumentRef(nil), in.PresetRefs...)
 	d := DeploymentDocument{in, id, revision + 1, time.Now().UTC(), a.ID}
 	err := s.commit(a, "document.save", id, func(next *deploymentState) { next.Documents[id] = append(next.Documents[id], d) })
 	return d, err
@@ -251,6 +252,7 @@ func (s *DeploymentStore) Documents(kind string) []DeploymentDocument {
 		if kind == "" || kind == d.Kind {
 			d.Content = append(json.RawMessage(nil), d.Content...)
 			d.AssetRefs = append([]string{}, d.AssetRefs...)
+			d.PresetRefs = append([]DeploymentDocumentRef(nil), d.PresetRefs...)
 			out = append(out, d)
 		}
 	}

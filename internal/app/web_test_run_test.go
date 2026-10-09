@@ -111,7 +111,9 @@ func TestWebTestRunRefusesUnclaimedPathsAndBinaries(t *testing.T) {
 		"port":         func(s *dsl.Spec) { s.EnvLaunch = map[string][]string{"node1": {"http.port=19999"}} },
 		"metrics-port": func(s *dsl.Spec) { s.EnvLaunch = map[string][]string{"all": {"metrics.port=19999"}} },
 		"key-file":     func(s *dsl.Spec) { s.EnvAccounts = map[string]dsl.AccountV2{"account": {KeyFile: "/private"}} },
-		"mixed-binary": func(s *dsl.Spec) { s.Chain.Binaries = map[string]string{"default": "gstable", "upgrade": "/other"} },
+		// A declared second binary is refused unless the job binds it to a
+		// verified asset (TestWebTestRunRefusesMissingWrongChainAndUndeclaredNamedBinaries);
+		// its declared path is never what runs.
 		"step-binary": func(s *dsl.Spec) {
 			s.Sequence = []dsl.Statement{{Do: "swapNode", Args: map[string]any{"binary": "/other"}}}
 		},

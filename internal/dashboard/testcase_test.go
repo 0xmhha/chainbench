@@ -89,3 +89,35 @@ func TestTestCaseHTTPRefusesNodeKeyMaterialInEveryEditorSurface(t *testing.T) {
 		}
 	}
 }
+
+// A case that pins a shared preset revision validates through the store, the
+// same judgment saving it gets.
+func TestTestCaseHTTPValidatesPinnedPresetReferences(t *testing.T) {
+	bus := collector.NewBus()
+	defer bus.Close()
+	actor := app.DeploymentActor{ID: "editor", Role: "operator"}
+	auth := func(*http.Request) (app.DeploymentActor, error) { return actor, nil }
+	store, err := app.OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	preset, err := store.SaveDocument(actor, "", 0, app.DeploymentDocumentInput{Kind: "chain-preset", Name: "base", ContractVersion: "2",
+		Content: json.RawMessage(`{"schemaVersion":"2","kind":"chain-preset","id":"pinned-base","chain":"stablenet","topology":{"bp":4}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(bus, nil, WithDeployments(store, auth), WithTestCases(auth))
+	validate := func(refs string) string {
+		body := `{"kind":"case","name":"pinned","contractVersion":"2","presetRefs":` + refs +
+			`,"content":{"schemaVersion":"2","kind":"case","id":"pinned","chainPreset":{"extends":"pinned-base"},"steps":[{"expect":"blockNumber","is":1}]}}`
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, httptest.NewRequest("POST", "/api/v1/documents/validate", strings.NewReader(body)))
+		return w.Body.String()
+	}
+	if got := validate(`[{"id":"` + preset.ID + `","revision":1}]`); !strings.Contains(got, `"valid":true`) {
+		t.Fatalf("pinned preset reference refused: %s", got)
+	}
+	if got := validate(`[]`); !strings.Contains(got, `"valid":false`) || !strings.Contains(got, "pinned-base") {
+		t.Fatalf("unpinned preset reference accepted: %s", got)
+	}
+}

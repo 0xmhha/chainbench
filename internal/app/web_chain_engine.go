@@ -28,6 +28,19 @@ type WebChainEngine struct {
 	authorize  func(DeploymentActor) error
 	keysMu     sync.Mutex
 	monitor    *WebMonitor
+	// verifyAsset checks a registered binary against a chain's build
+	// contract; nil uses the native probe.
+	verifyAsset func(context.Context, ManifestBinary, string) (ManifestBinaryEvidence, error)
+}
+
+// errIncompatibleBinary refuses a registered binary of another chain.
+var errIncompatibleBinary = errors.New("binary identity is incompatible with selected chain")
+
+func (e *WebChainEngine) verify(ctx context.Context, asset ManifestBinary, chain string) (ManifestBinaryEvidence, error) {
+	if e.verifyAsset != nil {
+		return e.verifyAsset(ctx, asset, chain)
+	}
+	return asset.Verify(ctx, chain)
 }
 
 func NewWebChainEngine(root, keys string, documents *DeploymentStore, manifests *ManifestStore, assets []ManifestBinary, authorize func(DeploymentActor) error) *WebChainEngine {
@@ -56,7 +69,10 @@ type webChainArguments struct {
 	ReplacementAssetID string                  `json:"replacementAssetId,omitempty"`
 	ConfigOverrides    map[string]string       `json:"configOverrides,omitempty"`
 	CaseRefs           []DeploymentDocumentRef `json:"caseRefs,omitempty"`
-	ChainPresetRef     *DeploymentDocumentRef  `json:"chainPresetRef,omitempty"`
+	// BinaryAssets maps each binary name a test declares besides default
+	// to the registered asset that runs under it.
+	BinaryAssets   map[string]string      `json:"binaryAssets,omitempty"`
+	ChainPresetRef *DeploymentDocumentRef `json:"chainPresetRef,omitempty"`
 }
 type webChainPayload struct {
 	Input              WebPlanInput           `json:"input"`
@@ -72,6 +88,7 @@ type webChainPayload struct {
 	ExecutionBinary    string                 `json:"executionBinary"`
 	Keys               webKeySnapshot         `json:"keys"`
 	TestRun            *webTestRun            `json:"testRun,omitempty"`
+	NamedBinaries      []webNamedBinary       `json:"namedBinaries,omitempty"`
 	Preset             *webPresetComposition  `json:"preset,omitempty"`
 	CurrentNodeBinary  *webNodeBinary         `json:"currentNodeBinary,omitempty"`
 	NodeBindingsDigest string                 `json:"nodeBindingsDigest,omitempty"`
@@ -293,6 +310,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			expectedAssets[id] = true
 		}
 	}
+	for _, named := range p.NamedBinaries {
+		expectedAssets[named.AssetID] = true
+	}
 	if p.TestRun != nil {
 		for _, c := range p.TestRun.Cases {
 			for _, id := range c.Document.AssetRefs {
@@ -311,7 +331,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	out.Claims = []WebResourceClaim{{HostIdentity: p.Target.HostIdentity, DataPath: p.Target.DataPath, Ports: ports}, {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
 	if webLaunchesNodes(in.Operation) {
-		out.Claims = append(out.Claims, WebResourceClaim{HostIdentity: p.Target.HostIdentity, Executable: filepath.Base(p.ExecutionBinary)})
+		out.Claims = append(out.Claims, webExecutableClaims(p)...)
 	}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
@@ -420,6 +440,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	out.RequiredAccess = []string{p.Target.Transport + " filesystem and process access"}
 	out.Changes = []string{fmt.Sprintf("%s: %d block producers using verified %s binary", in.Operation, p.Arguments.Validators, plugin.Protocol().Name)}
 	out.Changes = append(out.Changes, fmt.Sprintf("Binary asset %s · SHA-256 %s", p.Binary.ID, p.Binary.SHA256))
+	for _, named := range p.NamedBinaries {
+		out.Changes = append(out.Changes, fmt.Sprintf("Binary %q runs %s asset %s · SHA-256 %s at %s", named.Name, named.Binary.Chain, named.Binary.ID, named.Binary.SHA256, named.ExecutionBinary))
+	}
 	if webNodeControlOperation(in.Operation) {
 		out.Changes = append(out.Changes, fmt.Sprintf("Verified node executable: %s · SHA-256 %s", p.ExecutionBinary, p.Binary.SHA256))
 		for _, n := range placement.Placements() {
@@ -540,15 +563,17 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if len(prepared.Claims) < 2 || control.HostIdentity != prepared.Claims[1].HostIdentity || control.DataPath != prepared.Claims[1].DataPath {
 		return WebJobResult{}, ErrDeploymentConflict
 	}
-	want := 2
+	launches := []WebResourceClaim{}
 	if webLaunchesNodes(p.Input.Operation) {
-		want = 3
+		launches = webExecutableClaims(p)
 	}
-	if len(prepared.Claims) != want {
+	if len(prepared.Claims) != 2+len(launches) {
 		return WebJobResult{}, ErrDeploymentConflict
 	}
-	if launch := prepared.Claims[want-1]; want == 3 && (launch.HostIdentity != p.Target.HostIdentity || launch.Executable != filepath.Base(p.ExecutionBinary) || launch.DataPath != "" || len(launch.Ports) != 0) {
-		return WebJobResult{}, ErrDeploymentConflict
+	for i, launch := range launches {
+		if got := prepared.Claims[2+i]; got.HostIdentity != launch.HostIdentity || got.Executable != launch.Executable || got.DataPath != "" || len(got.Ports) != 0 {
+			return WebJobResult{}, ErrDeploymentConflict
+		}
 	}
 	plugin, err := ValidateManifest(p.Manifest.ManifestInput)
 	if err != nil {
@@ -564,6 +589,15 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	}
 	if binary != p.Binary {
 		return WebJobResult{}, ErrDeploymentConflict
+	}
+	for _, named := range p.NamedBinaries {
+		asset, err := e.binaryAsset(named.AssetID)
+		if err != nil {
+			return WebJobResult{}, err
+		}
+		if now, err := e.verify(ctx, asset, named.Binary.Chain); err != nil || now != named.Binary {
+			return WebJobResult{}, ErrDeploymentConflict
+		}
 	}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err != nil && !os.IsNotExist(err) {

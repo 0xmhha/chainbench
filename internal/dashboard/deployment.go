@@ -79,7 +79,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
-			err := app.ValidateDeploymentDocument(in)
+			err := store.ValidateDocument(in)
 			issues := []map[string]string{}
 			if err != nil {
 				issues = append(issues, map[string]string{"path": "/content", "code": "invalid", "message": err.Error()})

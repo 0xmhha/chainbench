@@ -70,3 +70,45 @@ export function caseAssetRefs(doc) {
   const ref = finishedGenesisRef(doc)
   return /^asset:[0-9a-f]{32}$/.test(ref) ? [ref.slice(6)] : []
 }
+// The chain preset ids a v2 case names by id or extends; the declarations
+// behind them are pinned as shared document revisions when the case is saved.
+export function presetIds(doc) {
+  if (!doc || doc.schemaVersion !== '2') return []
+  const preset = doc.chainPreset
+  if (typeof preset === 'string') return [preset]
+  if (preset && typeof preset.extends === 'string') return [preset.extends]
+  return []
+}
+// Declarations compare by content, not by key order.
+export function sameDeclaration(a, b) {
+  const norm = v => Array.isArray(v) ? v.map(norm) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, norm(v[k])])) : v
+  return JSON.stringify(norm(a)) === JSON.stringify(norm(b))
+}
+// The chain a saved case runs on: written in the case, or in the shared
+// preset revision it pins when it names its preset by id or extends it.
+export function caseChain(doc, documents = []) {
+  const content = doc?.content ?? {}
+  const preset = content.chainPreset
+  const own = (typeof preset === 'object' ? preset?.chain : undefined) ?? content.chain?.name
+  if (own) return own
+  for (const ref of doc?.presetRefs ?? []) {
+    const shared = documents.find(d => d.id === ref.id)
+    if (shared?.content?.chain) return shared.content.chain
+  }
+  return undefined
+}
+// The binary names besides default a saved case declares, with the chain
+// each runs: from the case, over the shared preset revision it pins.
+export function declaredBinaries(doc, documents = []) {
+  const content = doc?.content ?? {}
+  const own = typeof content.chainPreset === 'object' ? content.chainPreset?.binaries ?? {} : {}
+  let inherited = {}
+  for (const ref of doc?.presetRefs ?? []) {
+    const shared = documents.find(d => d.id === ref.id)
+    inherited = {...inherited, ...(shared?.content?.binaries ?? {})}
+  }
+  const chain = caseChain(doc, documents)
+  return Object.entries({...inherited, ...own}).filter(([name]) => name !== 'default')
+    .map(([name, value]) => ({name, chain: (typeof value === 'object' && value?.chain) || chain}))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}

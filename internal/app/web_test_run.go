@@ -55,6 +55,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 		return nil, err
 	}
 	run := &webTestRun{Cases: cases, Content: []json.RawMessage{}}
+	declared := map[string]string{}
 	for _, c := range cases {
 		spec, err := dsl.Parse(c.Content)
 		if err != nil {
@@ -71,7 +72,13 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 		if err = validateWebTestInputs(spec); err != nil {
 			return nil, fmt.Errorf("case %s: %w", c.Document.ID, err)
 		}
+		if err = declareTestBinaries(declared, spec); err != nil {
+			return nil, fmt.Errorf("case %s: %w", c.Document.ID, err)
+		}
 		run.Content = append(run.Content, append(json.RawMessage(nil), c.Content...))
+	}
+	if p.NamedBinaries, err = e.pinNamedBinaries(ctx, *p, wc, declared); err != nil {
+		return nil, err
 	}
 	p.Keys, err = e.pinKeys(ctx)
 	if err != nil {
@@ -113,7 +120,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	if plan.Nodes.BP < 1 || total < 1 || total > 128 {
 		return nil, errors.New("test layout must have producers and at most 128 nodes")
 	}
-	if err = validateWebTestComposition(layout); err != nil {
+	if err = validateWebTestComposition(layout, p.NamedBinaries); err != nil {
 		return nil, err
 	}
 	run.Plan = plan
@@ -122,8 +129,12 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	return run.Requests, nil
 }
 
-func validateWebTestComposition(in ChainUpIn) error {
-	if err := validateWebTableInputs(in); err != nil {
+func validateWebTestComposition(in ChainUpIn, named []webNamedBinary) error {
+	bound := map[string]bool{}
+	for _, n := range named {
+		bound[n.Name] = true
+	}
+	if err := validateWebTableInputs(in, bound); err != nil {
 		return err
 	}
 	if in.GenesisExisting != "" {
@@ -137,24 +148,11 @@ func validateWebTestInputs(spec dsl.Spec) error {
 	if spec.EnvAttach != nil {
 		return errors.New("attached test execution requires the read-only attachment adapter")
 	}
-	if spec.Chain.ManifestPath != "" || spec.Chain.TemplatePath != "" || spec.Chain.GenesisExisting != "" || spec.Chain.Config != "" || spec.EnvBlueprint != "" || len(spec.Chain.GenesisPerBinary) > 0 || spec.EnvUpgrade != nil {
-		return errors.New("test file references and mixed-binary upgrades require registered immutable assets")
+	if spec.Chain.ManifestPath != "" || spec.Chain.TemplatePath != "" || spec.Chain.GenesisExisting != "" || spec.Chain.Config != "" || spec.EnvBlueprint != "" || len(spec.Chain.GenesisPerBinary) > 0 {
+		return errors.New("test file references require registered immutable assets")
 	}
 	if spec.EnvKeys != nil && (spec.EnvKeys.Source != "" && spec.EnvKeys.Source != "keyPreset" || spec.EnvKeys.Ref != "" && spec.EnvKeys.Ref != "presets/keys") {
 		return errors.New("this test adapter uses the reviewed key preset; other key sources require their own pinned contract")
-	}
-	if len(spec.Chain.Binaries) > 1 {
-		return errors.New("select registered assets for each named test binary before execution")
-	}
-	for name := range spec.Chain.Binaries {
-		if name != dsl.BinaryDefault {
-			return errors.New("only the reviewed default test binary is registered")
-		}
-	}
-	for _, chain := range spec.Chain.BinaryChains {
-		if chain != spec.Chain.Name {
-			return errors.New("cross-chain binary assets are not resolved by this adapter")
-		}
 	}
 	if len(spec.EnvAccounts) > 0 {
 		return errors.New("declared test accounts require job-owned extensible key material before execution")
@@ -172,8 +170,10 @@ func validateWebTestInputs(spec dsl.Spec) error {
 	}
 	statements := append(append([]dsl.Statement{}, spec.Sequence...), webHookStatements(spec)...)
 	for _, statement := range statements {
-		if binary, ok := statement.Args["binary"]; ok && binary != "" && binary != dsl.BinaryDefault {
-			return errors.New("test binary changes require a registered named asset")
+		if binary, ok := statement.Args["binary"].(string); ok && binary != "" && binary != dsl.BinaryDefault {
+			if _, declared := spec.Chain.Binaries[binary]; !declared {
+				return fmt.Errorf("a step swaps onto binary %q, which the case does not declare", binary)
+			}
 		}
 		for _, field := range []string{"keyFile", "abiFile", "bytecodeFile"} {
 			if value, exists := statement.Args[field]; exists && value != "" {
@@ -232,7 +232,11 @@ func (e *WebChainEngine) webSuiteInput(p webChainPayload) RunSuiteIn {
 	for i, raw := range p.TestRun.Content {
 		content[i] = raw
 	}
-	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true}
+	overrides := map[string]string{dsl.BinaryDefault: p.ExecutionBinary}
+	for _, named := range p.NamedBinaries {
+		overrides[named.Name] = named.ExecutionBinary
+	}
+	return RunSuiteIn{SpecContent: content, DataDir: p.ControlDir, Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: overrides, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), ReadOnlyKeys: true, Server: resource.ServerRef{SetPath: filepath.Join(p.TestRun.InputDir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"), ArtifactRoot: webOwnedSessions(e.root), KeepUp: true}
 }
 
 func normalizedWebTestPlan(plan ComposePlan, control string) ComposePlan {
@@ -280,7 +284,7 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		if string(before) != string(after) {
 			return ErrDeploymentConflict
 		}
-		if err = validateWebTestComposition(layout); err != nil {
+		if err = validateWebTestComposition(layout, p.NamedBinaries); err != nil {
 			return err
 		}
 		before, _ = json.Marshal(p.TestRun.Requests)
@@ -305,6 +309,9 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		return result, err
 	}
 	result.PartialEffects = append(result.PartialEffects, "Verified test binary provisioned: "+p.ExecutionBinary+" · SHA-256 "+p.Binary.SHA256)
+	for _, named := range p.NamedBinaries {
+		result.PartialEffects = append(result.PartialEffects, fmt.Sprintf("Verified test binary %q provisioned: %s · SHA-256 %s", named.Name, named.ExecutionBinary, named.Binary.SHA256))
+	}
 	var out RunSuiteOut
 	err = e.phase(ctx, a, "test.run", report, func() error {
 		if err := e.recheckTestGenesis(ctx, p); err != nil {
@@ -361,21 +368,39 @@ func (e *WebChainEngine) uploadWebBinary(ctx context.Context, p webChainPayload,
 	if err != nil {
 		return err
 	}
-	bytes, err := os.ReadFile(asset.Path)
+	if err = provisionWebBinary(ctx, access.Files, asset.Path, p.Binary.SHA256, p.ExecutionBinary); err != nil {
+		return err
+	}
+	for _, named := range p.NamedBinaries {
+		asset, err := e.binaryAsset(named.AssetID)
+		if err != nil {
+			return err
+		}
+		if err = provisionWebBinary(ctx, access.Files, asset.Path, named.Binary.SHA256, named.ExecutionBinary); err != nil {
+			return fmt.Errorf("binary %q: %w", named.Name, err)
+		}
+	}
+	return nil
+}
+
+// provisionWebBinary writes an accepted asset's bytes to the target and
+// confirms what landed there is those bytes.
+func provisionWebBinary(ctx context.Context, files filestore.Store, source, sha256, destination string) error {
+	bytes, err := os.ReadFile(source)
 	if err != nil {
 		return err
 	}
-	if manifestHash(bytes) != p.Binary.SHA256 {
+	if manifestHash(bytes) != sha256 {
 		return ErrDeploymentConflict
 	}
-	if err = access.Files.Write(ctx, p.ExecutionBinary, bytes, 0755); err != nil {
+	if err = files.Write(ctx, destination, bytes, 0755); err != nil {
 		return err
 	}
-	checksum, err := access.Files.Checksum(ctx, p.ExecutionBinary)
+	checksum, err := files.Checksum(ctx, destination)
 	if err != nil {
 		return err
 	}
-	if checksum != "sha256:"+p.Binary.SHA256 {
+	if checksum != "sha256:"+sha256 {
 		return errors.New("provisioned test binary differs from the accepted asset")
 	}
 	return nil
