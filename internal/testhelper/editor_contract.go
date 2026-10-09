@@ -122,6 +122,10 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 			// Lowering lets "is" overwrite "expected"; one of them would be ignored.
 			parameterSchema["not"] = map[string]any{"required": []string{"is", "expected"}}
 		}
+		if nodeTargeted[e.Name] {
+			// A node control names its node once (on) or fans out (onEach).
+			parameterSchema["allOf"] = []any{map[string]any{"anyOf": editorAlternatives("on", "onEach")}}
+		}
 		switch e.Name {
 		case actionDeployContract:
 			parameterSchema["anyOf"] = editorAlternatives("bytecode", "data")
@@ -144,11 +148,14 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 	return r.entries, schemas, nil
 }
 
+// nodeTargeted builtins act on a node the statement must select.
+var nodeTargeted = map[string]bool{actionStopNode: true, actionStartNode: true, actionRestartNode: true, actionResetNode: true, actionSwapNode: true, actionReadNodeLog: true}
+
 var editorRequired = map[string][]string{
 	"waitBlock": {"target"}, "read": {"source"}, "waitFor": {"source"}, "newAccount": {"saveKey"},
 	"sendRawTampered": {"which", "senderKey", "feePayerKey", "to"}, "sendSetCode": {"key", "authorityKey", "delegate"}, "signAuthorization": {"authorityKey", "delegate"},
-	"stopNode": {"on"}, "startNode": {"on"}, "restartNode": {"on"}, "resetNode": {"on"}, "swapNode": {"on"}, "readNodeLog": {"on"}, "partition": {"groups"},
-	"faucet": {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
+	"partition": {"groups"},
+	"faucet":    {"to", "amount"}, "registerContract": {"to", "data"}, "metric": {"name"},
 	"balanceAt": {"address"}, "codeAt": {"address"}, "nonceAt": {"address"}, "call": {"to", "data"}, "estimateGas": {"to", "data"},
 	"txStatus": {"hash"}, "receiptLog": {"hash"}, "txMined": {"hash"}, "rpcCall": {"method"}, "rpcError": {"method"}, "methodPresent": {"method"}, "derive": {"op"}, "wsCollected": {"sub"},
 }

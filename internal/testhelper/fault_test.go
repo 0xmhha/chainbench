@@ -264,3 +264,67 @@ func TestHealPartitionAction_ReconnectsEveryPair(t *testing.T) {
 		t.Fatalf("addPeer calls = %d, want 6: %v", len(rec.added), rec.added)
 	}
 }
+
+// lateNodeControl starts nodes that come up, or fail, a moment after launch,
+// the way a real process does.
+type lateNodeControl struct {
+	fakeNodeControl
+	launched time.Time
+	log      func(since time.Duration) string
+}
+
+func (c *lateNodeControl) Start(ctx context.Context, n node.Node) (node.Node, error) {
+	c.launched = time.Now()
+	return c.fakeNodeControl.Start(ctx, n)
+}
+
+func (c *lateNodeControl) Log(_ context.Context, _ node.Node, _ int) (string, error) {
+	return c.log(time.Since(c.launched)), nil
+}
+
+func shortNodeDownProbe(t *testing.T) {
+	t.Helper()
+	timeout, interval := nodeDownProbeTimeout, nodeDownProbeInterval
+	nodeDownProbeTimeout, nodeDownProbeInterval = 1500*time.Millisecond, 50*time.Millisecond
+	t.Cleanup(func() { nodeDownProbeTimeout, nodeDownProbeInterval = timeout, interval })
+}
+
+// A node is not down because it is not listening yet. One that answers a
+// moment after launch came up, and expect fail must say so.
+func TestStartNodeExpectFail_WaitsForASlowNodeToComeUp(t *testing.T) {
+	shortNodeDownProbe(t)
+	ctrl := &lateNodeControl{log: func(time.Duration) string { return "" }}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if time.Since(ctrl.launched) < 300*time.Millisecond {
+			http.Error(w, "not yet", http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = io.WriteString(w, `{"jsonrpc":"2.0","id":1,"result":"0x5"}`)
+	}))
+	defer srv.Close()
+	d := faultDeps(ctrl)
+	env := envWithNodes(t, 4, srv.URL)
+	act, _ := d.Actions.Action(actionStartNode)
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1", "expectFail": true}})
+	if err == nil || !strings.Contains(err.Error(), "answers JSON-RPC") {
+		t.Fatalf("a node that came up passed expect fail: %v", err)
+	}
+}
+
+// The reason a node gives for exiting is written as it exits, after launch.
+// The evidence is read once the node is known to be down, so it contains it.
+func TestStartNodeExpectFail_ReadsTheReasonTheNodeGaveOnExit(t *testing.T) {
+	shortNodeDownProbe(t)
+	ctrl := &lateNodeControl{log: func(since time.Duration) string {
+		if since < 200*time.Millisecond {
+			return "INFO starting"
+		}
+		return "INFO starting\nFatal: Error starting protocol stack: bind: can't assign requested address"
+	}}
+	d := faultDeps(ctrl)
+	env := envWithNodes(t, 4, "http://127.0.0.1:1")
+	act, _ := d.Actions.Action(actionStartNode)
+	if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1", "expectFail": true, "reason": "can't assign requested address"}}); err != nil {
+		t.Fatalf("expect fail missed the exit reason: %v", err)
+	}
+}

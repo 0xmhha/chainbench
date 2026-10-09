@@ -42,13 +42,16 @@ const (
 // come up has to wait long enough to be sure, and a log read has to stop
 // somewhere: a node that has been running for an hour has a log no assertion
 // wants in full.
-const (
+var (
 	// nodeDownProbeTimeout is how long a step that expects a failed launch
 	// keeps probing before it accepts that the node is down. A node that boots
 	// normally answers JSON-RPC well inside this.
 	nodeDownProbeTimeout = 20 * time.Second
 	// nodeDownProbeInterval is the gap between those probes.
 	nodeDownProbeInterval = time.Second
+)
+
+const (
 	// nodeLogDefaultMaxBytes is how much of a log's tail readNodeLog binds when
 	// the step does not say. Enough for a startup failure's message and stack,
 	// small enough to keep an artifact readable.
@@ -93,12 +96,15 @@ func expectsNodeDown(args map[string]any) bool {
 // specific rejection it expects rather than any failure at all.
 func confirmNodeDown(ctx context.Context, ac *interp.ActionCtx, n node.Node,
 	ctrl interp.NodeControl, launchErr error, action string) error {
-	evidence := nodeFailureEvidence(ctx, ctrl, n, launchErr)
-	deadline := time.Now().Add(nodeDownProbeTimeout)
-	for nodeAnswers(ctx, ac, n) {
-		if time.Now().After(deadline) {
-			return fmt.Errorf("dsl: %s node%d expected the node not to come up, but it answers JSON-RPC after %s",
-				action, n.Index, nodeDownProbeTimeout)
+	// Not answering yet is not being down: a node that boots normally opens
+	// its endpoint a few seconds after launch. Only a node that never answers
+	// over the whole window is down, and the reason it gives is written as it
+	// exits, so the evidence is read after the window, not at launch.
+	started := time.Now()
+	for time.Since(started) < nodeDownProbeTimeout {
+		if nodeAnswers(ctx, ac, n) {
+			return fmt.Errorf("dsl: %s node%d expected the node not to come up, but it answers JSON-RPC %s after launch",
+				action, n.Index, time.Since(started).Round(time.Millisecond))
 		}
 		select {
 		case <-ctx.Done():
@@ -106,6 +112,7 @@ func confirmNodeDown(ctx context.Context, ac *interp.ActionCtx, n node.Node,
 		case <-time.After(nodeDownProbeInterval):
 		}
 	}
+	evidence := nodeFailureEvidence(ctx, ctrl, n, launchErr)
 	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
 		if !strings.Contains(strings.ToLower(evidence), strings.ToLower(reason)) {
 			return fmt.Errorf("dsl: %s node%d did not come up, but not for %q. evidence: %s",

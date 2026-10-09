@@ -335,6 +335,13 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 			}
 		}
 	}
+	if all, ok := s["allOf"].([]any); ok {
+		for _, part := range all {
+			if err := checkEditorValue(value, part.(map[string]any), root, path); err != nil {
+				return err
+			}
+		}
+	}
 	if not, ok := s["not"].(map[string]any); ok && checkEditorValue(value, not, root, path) == nil {
 		return fmt.Errorf("%s: fields %s cannot be given together", path, strings.Join(editorStrings(not["required"]), " and "))
 	}

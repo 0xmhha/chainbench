@@ -289,6 +289,10 @@ func (w *Workspace) reinitNodeGenesis(ctx context.Context, t *resource.Access, s
 	return nil
 }
 
+// defaultBinaryName is the name a declaration gives the binary every node
+// runs unless it names another (dsl.BinaryDefault).
+const defaultBinaryName = "default"
+
 // setNodeBinary registers binary under a per-node key and points node ni at it,
 // so binaryFor resolves the swapped binary for this and any later launch.
 //
@@ -304,10 +308,18 @@ func (w *Workspace) setNodeBinary(ni int, binary string) {
 		w.state.Binaries = map[string]string{}
 	}
 	name := binary
+	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
+	if binary == defaultBinaryName && w.state.Binaries[binary] == "" {
+		// "default" is what the rest of the network runs: the node drops its
+		// own entry and launches the network binary again.
+		delete(w.state.Binaries, key)
+		delete(w.state.BinaryChains, key)
+		w.state.Nodes[ni].Binary = ""
+		return
+	}
 	if path := w.state.Binaries[binary]; path != "" {
 		binary = path
 	}
-	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
 	// The chain travels with the name. Without this a swap onto another build
 	// kept its path and lost which chain it is, so the node relaunched with the
