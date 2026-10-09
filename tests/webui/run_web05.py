@@ -1,14 +1,13 @@
-"""Fresh WEB-05 browser + owned local engine fixture with fail-closed coverage."""
-from runtime_contract import runtime_root, base_commit
-from runtime_contract import stage_sources
+"""Fresh WEB-05 proof: browser editing, corpus round trip and a Web test job
+that executes every builtin argument path on native gstable."""
+from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
-import base64
 import datetime
 import glob
-import hashlib
+import importlib.util
 import json
 import os
-import platform
+from pathlib import Path
 import secrets
 import shutil
 import socket
@@ -17,11 +16,19 @@ import sys
 import time
 import urllib.request
 import uuid
-from pathlib import Path
+from browser_process import run_browser
 from evidence_web05 import REQUIRED, digest, verify
+from web05_coverage import executed as executed_paths, coverage_rows, missing
+
+COVERAGE_CASES = sorted(glob.glob('tests/tc/go-stablenet/vocabulary/1[1-6]-arguments-*.json'))
+# The one builtin argument a single-binary network cannot reach: crossFork's
+# timeout, on a network that crosses from gwemix to gwbft.
+FORK_CASE = 'tests/tc/go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json'
+
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
 
 def clean_invocation_output(out):
     """A receipt must never merge session files from an earlier invocation."""
@@ -32,6 +39,52 @@ def clean_invocation_output(out):
         else:
             p.unlink()
 
+
+def free_band(base_low, span):
+    """A port band nothing listens on, for the owned network."""
+    for _ in range(200):
+        base = base_low + secrets.randbelow(span) // 10 * 10
+        probes = []
+        try:
+            for i in range(5):
+                for port in range(base + 10 * i, base + 10 * i + 4):
+                    sock = socket.socket(); probes.append(sock); sock.bind(('127.0.0.1', port))
+            return base
+        except OSError:
+            continue
+        finally:
+            for sock in probes:
+                sock.close()
+    raise RuntimeError('no free port band')
+
+
+def corpus_files(source):
+    files, presets = [], []
+    for p in (sorted(glob.glob(str(source / 'tests/tc/**/*.json'), recursive=True)) + sorted(glob.glob(str(source / 'examples/specs/*.json')))
+              + sorted(glob.glob(str(source / 'presets/chain/*.json')))):
+        kind = json.loads(Path(p).read_text()).get('kind')
+        rel = str(Path(p).relative_to(source))
+        (presets if kind == 'chain-preset' else files).append(rel)
+    return files, presets
+
+
+def scenario(id, messages):
+    return {'id': id, 'mode': 'team', 'transport': 'local', 'ownership': 'owned', 'role': 'admin',
+            'observedAt': now(), 'assertions': [{'message': m, 'passed': True} for m in messages]}
+
+
+def stop_owned_nodes(runtime):
+    # Only processes whose command line names this exclusively owned runtime.
+    listing = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True).stdout
+    for line in listing.splitlines():
+        pid, _, command = line.strip().partition(' ')
+        if str(runtime) in command and any(name in command for name in ('gstable', 'gwemix', 'gwbft', '-node')):
+            try:
+                os.kill(int(pid), 15)
+            except (ProcessLookupError, ValueError):
+                pass
+
+
 def main():
     out = Path(sys.argv[1]) / 'WEB-05'
     if out.is_absolute() or '..' in out.parts:
@@ -39,127 +92,126 @@ def main():
     clean_invocation_output(out)
     invocation = str(uuid.uuid4())
     started = now()
-    commit = base_commit()
+    before = source_digest(Path.cwd())
     runtime = runtime_root() / invocation
     runtime.mkdir(parents=True, mode=0o700)
-    evidence = {'criterion': 'WEB-05', 'invocationId': invocation, 'scenarios': [], 'checks': [], 'artifacts': []}
-    failures = []
+    evidence = {'criterion': 'WEB-05', 'invocationId': invocation, 'scenarios': [], 'checks': [], 'artifacts': [], 'sourceDigest': before}
+    failures, server, handles = [], None, []
     source = stage_sources(Path.cwd(), runtime)
-    server = None
-    handles = []
     try:
-        for command in ('node --test tests/webui/dsl-form.test.mjs', 'go test ./internal/app ./internal/testhelper ./internal/dashboard ./internal/dsl', 'npm --prefix web run build'):
+        for command in ('node --test tests/webui/dsl-form.test.mjs',
+                        'go test ./internal/app ./internal/testhelper ./internal/testengine ./internal/dashboard ./internal/dsl/...',
+                        'npm --prefix web run build'):
             run = subprocess.run(command, shell=True, text=True, capture_output=True, cwd=source)
             logfile = out / ('check-' + str(len(evidence['checks'])) + '.log')
             logfile.write_text(run.stdout + run.stderr)
             evidence['checks'].append({'command': command, 'exitCode': run.returncode, 'path': str(logfile), 'sha256': digest(logfile)})
-            if run.returncode: raise RuntimeError(command + ' failed')
-        subprocess.run(['bash', 'tests/webui/prepare.sh', invocation], check=True, capture_output=True, cwd=source)
-        build = runtime / 'build'; build.mkdir()
-        (build / 'main.go').write_bytes(Path('tests/webui/fixtures/dslrun.go.txt').read_bytes())
-        (build / 'go.mod').write_text('module github.com/0xmhha/chainbench/webui-fixture\n\ngo 1.26.8\n\nrequire github.com/0xmhha/chainbench v0.0.0\nreplace github.com/0xmhha/chainbench => ' + str(source) + '\n')
-        subprocess.run(['go', 'build', '-mod=mod', '-o', str(runtime / 'dslrun'), '.'], cwd=build, check=True, capture_output=True)
-        account = {'id': 'dsl-operator', 'username': 'dsl-operator', 'role': 'operator', 'password': secrets.token_urlsafe(24)}
-        (runtime / 'accounts.go').write_bytes(Path('tests/webui/fixtures/accounts.go.txt').read_bytes())
-        provision = subprocess.run(['go', 'run', str(runtime / 'accounts.go')], input=json.dumps([account]), text=True, capture_output=True, check=True, cwd=source)
-        (runtime / 'accounts.json').write_text(provision.stdout)
-        (runtime / 'accounts.json').chmod(0o600)
-        (runtime / 'browser-fixture.json').write_text(json.dumps({'account': account}))
-        (runtime / 'browser-fixture.json').chmod(0o600)
+            if run.returncode:
+                raise RuntimeError(command + ' failed')
+        subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench-dashboard'), './cmd/chainbench-dashboard'], cwd=source, check=True, capture_output=True)
+        spec = importlib.util.spec_from_file_location('native_fixture', 'tests/webui/fixtures/prepare_web04.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        provenance = module.prepare(runtime, out)
+        keys = runtime / 'source-keys'; shutil.copytree('presets/keys', keys)
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
         url = 'http://127.0.0.1:' + str(port)
+        store = runtime / 'store'
         log = (out / 'server.log').open('w'); handles.append(log)
-        server = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-addr', '127.0.0.1:' + str(port), '-deployment-accounts', str(runtime / 'accounts.json'), '-deployment-root', str(runtime / 'store')], stdout=log, stderr=log)
-        for attempt in range(100):
-            if server.poll() is not None: raise RuntimeError('server exited')
+        server = subprocess.Popen([str(runtime / 'chainbench-dashboard'), '-addr', '127.0.0.1:' + str(port), '-deployment-root', str(store),
+                                   '-manifest-assets', str(runtime / 'assets.json'), '-manifest-keys', str(keys)], stdout=log, stderr=log)
+        for _ in range(200):
+            if server.poll() is not None:
+                raise RuntimeError('dashboard exited; see server.log')
             try:
                 urllib.request.urlopen(url + '/healthz', timeout=1).close(); break
-            except OSError: time.sleep(.1)
-        else: raise RuntimeError('server health timeout')
-        browser = subprocess.run(['node', str(source / 'tests/webui/browser_web05.mjs'), url, str(out.resolve()), str(runtime / 'browser-fixture.json')], text=True, capture_output=True)
+            except OSError:
+                time.sleep(.1)
+        else:
+            raise RuntimeError('dashboard did not listen')
+        corpus, presets = corpus_files(source)
+        fixture = {'url': url, 'setupToken': (store / 'setup.token').read_text().strip(), 'password': secrets.token_urlsafe(24),
+                   'runtime': str(runtime), 'source': str(source), 'corpusFiles': corpus, 'presetFiles': presets,
+                   'coverageFiles': COVERAGE_CASES, 'p2pBase': free_band(40000, 3000), 'rpcBase': free_band(20000, 3000),
+                   'forkCase': FORK_CASE, 'forkPreset': 'presets/chain/wemix-to-wbft.json',
+                   'forkP2PBase': free_band(43000, 3000), 'forkRPCBase': free_band(23000, 3000)}
+        private = runtime / 'browser-fixture.json'; private.write_text(json.dumps(fixture)); private.chmod(0o600)
+        browser = run_browser(['node', str(source / 'tests/webui/browser_web05.mjs'), str(private), str(out.resolve())], timeout=3600)
         (out / 'browser.log').write_text(browser.stdout + browser.stderr)
-        if browser.returncode: raise RuntimeError('browser assertions failed; see browser.log')
+        if browser.returncode:
+            raise RuntimeError('browser assertions failed; see browser.log')
         observed = json.loads((out / 'browser.json').read_text())
-        evidence['scenarios'] = observed['scenarios']
-        evidence['server'] = {'sha256': digest(runtime / 'chainbench-dashboard'), 'baseCommit': commit, 'contractVersion': '2', 'url': url}
+        raw = json.loads((out / 'contract.json').read_text())
+        contract = {'vocabulary': raw['vocabulary'], 'contract': raw['contract']}
+        # The job's own sessions, by the references it reported.
+        refs = [r.removeprefix('web:') for r in observed['job'].get('runIds') or []]
+        if not refs:
+            raise RuntimeError('the Web test job reported no engine session')
+        sessions = [store / 'sessions' / ref for ref in refs]
+        covered, tests = executed_paths(sessions, contract)
+        edited = {tuple(k.split(':', 1)): set(v) for k, v in json.loads((out / 'edited.json').read_text()).items()}
+        rows = coverage_rows(contract, covered, edited)
+        (out / 'coverage.json').write_text(json.dumps(rows, indent=2))
+        (out / 'sessions.json').write_text(json.dumps(tests, indent=2))
+        for ref, path in zip(refs, sessions):
+            shutil.copytree(path, out / 'sessions' / ref, dirs_exist_ok=True)
+        complete = [t for t in tests if t['complete']]
+        expected = len(COVERAGE_CASES) + 1
+        if len(complete) != expected or len(tests) != expected:
+            failures.append(f'{len(complete)} of {expected} coverage cases passed completely in the Web jobs')
+        gaps = missing(rows)
+        unedited = [r['kind'] + ':' + r['name'] for r in rows if not r['edited']]
+        if unedited:
+            failures.append('argument fields not edited in the browser: ' + ', '.join(unedited))
+        if gaps:
+            failures.append('argument paths not executed by a passing Web job: ' + json.dumps(gaps))
+        by_id = {s['id']: s for s in observed['scenarios']}
+        scenarios = [by_id[k] for k in ('grammar', 'references', 'v1-migration', 'invalid-unknown', 'live-execution') if k in by_id]
+        for kind, label in (('action', 'actions'), ('assertion', 'assertions'), ('reader', 'readers')):
+            mine = [r for r in rows if r['kind'] == kind]
+            if all(r['executed'] and r['edited'] for r in mine):
+                scenarios.append(scenario(label, [f'{len(mine)} {label} edited in the browser and executed by the Web job with every argument path']))
+        total = sum(len(r['argumentPaths']) for r in rows)
+        ran = sum(len(r['executedArgumentPaths']) for r in rows)
+        if not gaps and not unedited:
+            scenarios.append(scenario('arguments', [f'{ran} of {total} argument paths edited and executed', *[a['message'] for k in ('arguments-edited', 'round-trip') for a in by_id.get(k, {}).get('assertions', [])]]))
+        evidence['scenarios'] = scenarios
+        evidence['server'] = {'sha256': digest(runtime / 'chainbench-dashboard'), 'baseCommit': base_commit(), 'contractVersion': '2', 'url': url}
         shutil.copytree(source / 'internal/dashboard/spa', out / 'frontend')
         evidence['frontend'] = [{'path': str(p), 'sha256': digest(p)} for p in (out / 'frontend').rglob('*') if p.is_file()]
         evidence['fixture'] = {'runtime': str(runtime), 'transport': 'local', 'ownership': 'owned', 'browserVersion': observed['browserVersion']}
-        sources = glob.glob('/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable')
-        if len(sources) != 1: raise RuntimeError('native stablenet binary unavailable')
-        binary_source = Path(sources[0]); binary = runtime / 'stablenet-node'; shutil.copy2(binary_source, binary)
-        version = subprocess.check_output([str(binary), 'version'], text=True)
-        help_text = subprocess.check_output([str(binary), '--help'], text=True)
-        import re
-        architecture = {'aarch64': 'arm64', 'x86_64': 'amd64'}.get(platform.machine(), platform.machine())
-        operating_system = platform.system().lower()
-        if ('Architecture: ' + architecture) not in version or ('Operating System: ' + operating_system) not in version:
-            raise RuntimeError('native fixture binary platform mismatch')
-        commit = re.search(r'Git Commit: ([0-9a-f]{40})', version).group(1)
-        config = subprocess.check_output(['git', '-C', str(binary_source.parents[2]), 'show', commit + ':params/config.go'], text=True)
-        if 'Anzeon' not in config: raise RuntimeError('selected binary source is not stablenet')
-        (out / 'binary-version.txt').write_text(version); (out / 'binary-help.txt').write_text(help_text)
-        # Independent port bands avoid the engine unit tests' default bands.
-        for attempt in range(100):
-            rpc_base = 20000 + secrets.randbelow(6000)
-            p2p_base = 40000 + secrets.randbelow(6000)
-            reserved = []
-            try:
-                for i in range(4):
-                    for port in [p2p_base + 10 * i] + [rpc_base + 10 * i + j for j in range(4)]:
-                        for kind in (socket.SOCK_STREAM, socket.SOCK_DGRAM):
-                            probe = socket.socket(socket.AF_INET, kind); reserved.append(probe)
-                            probe.bind(('127.0.0.1', port))
-                break
-            except OSError:
-                if attempt == 99: raise RuntimeError('independent fixture port bands unavailable')
-            finally:
-                for probe in reserved: probe.close()
-        server_set = {'version': 2, 'pool': {'hosts': [{'name': 'fixture', 'addr': '127.0.0.1'}], 'slots': 4, 'ports': {'p2p': {'base': p2p_base, 'step': 10}, 'rpc': {'base': rpc_base, 'step': 10}}}}
-        (runtime / 'server-set.json').write_text(json.dumps(server_set))
-        (out / 'fixture-target.json').write_text(json.dumps(server_set, indent=2))
-        live = subprocess.run([str(runtime / 'dslrun'), str(runtime), str(binary), str((out / 'edited.json').resolve()), str((out / 'migrated.json').resolve()), str((out / 'legacy.json').resolve())], text=True, capture_output=True, timeout=420, cwd=source)
-        (out / 'live.log').write_text(live.stderr)
-        (out / 'live.json').write_text(live.stdout)
-        if live.returncode: raise RuntimeError('exported DSL live execution failed; see live.log')
-        result = json.loads(live.stdout)
-        summary = result['Summary']['summary']
-        if summary != {'pass': 3, 'fail': 0, 'blocked': 0, 'skip': 0}: raise RuntimeError('live session did not run all three imports')
-        session = Path(result['SessionRoot'])
-        shutil.copytree(session, out / 'session', dirs_exist_ok=True)
-        target = {'serverSet': server_set, 'endpoints': result['Endpoints'], 'dataPath': str((runtime / 'network').resolve())}
-        evidence['live'] = {'mockTargets': 0, 'skips': 0, 'failures': 0, 'summary': summary, 'sessionId': session.name, 'binary': {'sha256': digest(binary), 'chain': 'stablenet', 'os': operating_system, 'architecture': architecture, 'version': version, 'commit': commit, 'helpDigest': digest(out / 'binary-help.txt')}, 'targetFingerprint': hashlib.sha256(json.dumps(target, sort_keys=True).encode()).hexdigest(), 'endpoints': result['Endpoints'], 'stopped': result['Stopped']}
-        evidence['fixture']['targetManifest'] = {'path': str(out / 'fixture-target.json'), 'sha256': digest(out / 'fixture-target.json')}
-        evidence['partialLiveObservations'] = ['read:blockNumber', 'expect:blockNumber', 'expect:chainId', 'v1-original', 'v1-migrated']
-        # Full WEB-05 requires every registration AND every argument to reach
-        # actual execution. A representative live suite never satisfies that.
-        coverage = json.loads((out / 'coverage.json').read_text())
-        for item in coverage:
-            if (item['kind'], item['name']) in [('action', 'read'), ('reader', 'blockNumber'), ('assertion', 'blockNumber'), ('assertion', 'chainId')]:
-                item['roundTrip'] = item['executed'] = True
-        (out / 'coverage.json').write_text(json.dumps(coverage, indent=2))
-        missing = [item['kind'] + ':' + item['name'] for item in coverage if not item['executed'] or item['argumentPaths'] != item['executedArgumentPaths']]
-        if missing: failures.append('full argument/registration live execution coverage missing: ' + ', '.join(missing))
+        stable = next(p for p in provenance if p['chain'] == 'stablenet')
+        evidence['live'] = {'mockTargets': 0, 'skips': sum(1 for t in tests if t['result'] == 'skip'), 'failures': sum(1 for t in tests if not t['complete']),
+                            'job': observed['job'], 'savedCases': observed['savedCases'], 'binary': {'sha256': stable['sha256'], 'chain': 'stablenet', 'version': stable['version'], 'commit': stable['commit'], 'helpDigest': stable['helpDigest']},
+                            'targetFingerprint': digest(out / 'job.json'), 'executedArgumentPaths': ran, 'argumentPaths': total, 'corpusImported': observed['corpusImported']}
+        if source_digest(Path.cwd()) != before:
+            failures.append('source changed during the proof')
     except Exception as exc:
         failures.append(str(exc))
     finally:
+        stop_owned_nodes(runtime)
         if server is not None:
             server.terminate()
-            try: server.wait(timeout=10)
-            except subprocess.TimeoutExpired: server.kill(); server.wait()
-        for handle in handles: handle.close()
-        for name in ('browser-fixture.json', 'accounts.json'): (runtime / name).unlink(missing_ok=True)
+            try:
+                server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                server.kill(); server.wait()
+        for handle in handles:
+            handle.close()
+        (runtime / 'browser-fixture.json').unlink(missing_ok=True)
     evidence['blockers'] = failures
     evidence['artifacts'] = [{'path': str(p), 'sha256': digest(p)} for p in sorted(out.rglob('*')) if p.is_file()]
     ep = out / 'evidence.json'; ep.write_text(json.dumps(evidence, indent=2) + '\n')
-    executed = [s['id'] for s in evidence['scenarios']]
-    (out / 'result.json').write_text(json.dumps({'criterion': 'WEB-05', 'invocationId': invocation, 'startedAt': started, 'finishedAt': now(), 'outcome': 'incomplete' if failures else 'pass', 'requiredScenarios': REQUIRED, 'executedScenarios': executed, 'skippedScenarios': [s for s in REQUIRED if s not in executed], 'failedAssertions': failures, 'evidenceDigest': digest(ep)}, indent=2) + '\n')
+    executed_ids = [s['id'] for s in evidence['scenarios']]
+    (out / 'result.json').write_text(json.dumps({'criterion': 'WEB-05', 'invocationId': invocation, 'startedAt': started, 'finishedAt': now(),
+                                                 'outcome': 'incomplete' if failures else 'pass', 'requiredScenarios': REQUIRED, 'executedScenarios': executed_ids,
+                                                 'skippedScenarios': [s for s in REQUIRED if s not in executed_ids], 'failedAssertions': failures, 'evidenceDigest': digest(ep)}, indent=2) + '\n')
     if failures:
         for failure in failures:
             print('WEB-05 incomplete: ' + failure, file=sys.stderr)
         raise SystemExit(1)
     verify(out)
+
 
 if __name__ == '__main__':
     main()

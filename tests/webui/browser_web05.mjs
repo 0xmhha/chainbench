@@ -1,109 +1,247 @@
-import {chromium} from 'playwright'
+// WEB-05 browser proof: the structured DSL editor edits every builtin argument,
+// imports and round-trips the current corpus, and saved cases that cover every
+// argument path run through a Web test job on a real network.
+import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import {initial,variants} from '../../web/src/dsl-form.js'
-const [url,out,fixtureFile]=process.argv.slice(2),fixture=JSON.parse(fs.readFileSync(fixtureFile,'utf8'))
-const authorization='Basic '+Buffer.from(fixture.account.username+':'+fixture.account.password).toString('base64')
-const records=[],scenarios=[],coverage=[]
-async function api(endpoint,body,expected=200){const response=await fetch(url+'/api/v1/'+endpoint,{method:body?'POST':'GET',headers:{Authorization:authorization,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const text=await response.text();records.push({endpoint,status:response.status,response:text});assert.equal(response.status,expected,text);return JSON.parse(text)}
-const vocabulary=await api('vocabulary'),contract=await api('contracts/dsl')
-fs.writeFileSync(path.join(out,'contract.json'),JSON.stringify({vocabulary,contract},null,2))
-const browser=await chromium.launch({headless:true,channel:process.env.WEBUI_BROWSER_CHANNEL??'chrome'})
-const observed=(id,messages)=>scenarios.push({id,mode:'personal',transport:'local',ownership:'owned',role:'operator',observedAt:new Date().toISOString(),assertions:messages.map(message=>({message,passed:true}))})
-const base={schemaVersion:'2',kind:'case',id:'browser',chainPreset:{chain:'stablenet',binaries:{default:'gstable'},topology:{bp:4}},steps:[{do:'read',source:'blockNumber',on:'node1',save:'head'},{expect:'blockNumber',onEach:['node1','node2'],compare:'GreaterOrEqual',is:'$head'},{expect:'chainId',is:'8283'}]}
+import {variants, initial} from '../../web/src/dsl-form.js'
+
+const [fixtureFile, out] = process.argv.slice(2)
+const f = JSON.parse(fs.readFileSync(fixtureFile, 'utf8'))
+const owned = await launchOwnedBrowser()
+const context = await owned.browser.newContext({viewport: {width: 1400, height: 1100}, acceptDownloads: true})
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+const records = [], scenarios = [], coverage = []
+let session
+
+async function api(endpoint, method = 'GET', data, expected = 200) {
+  const r = await context.request.fetch(f.url + '/api/v1/' + endpoint, {method, headers: {'Content-Type': 'application/json', ...(session ? {'X-CSRF-Token': session.csrfToken} : {})}, data: data === undefined ? undefined : JSON.stringify(data)})
+  const text = await r.text()
+  records.push({endpoint, method, status: r.status()})
+  assert.equal(r.status(), expected, `${method} ${endpoint}: ${text}`)
+  assert.ok(!text.includes(f.password) && !text.includes(f.setupToken), 'bootstrap secret leaked from ' + endpoint)
+  return text ? JSON.parse(text) : undefined
+}
+const observed = (id, messages) => scenarios.push({id, mode: 'team', transport: 'local', ownership: 'owned', role: 'admin', observedAt: new Date().toISOString(), assertions: messages.map(message => ({message, passed: true}))})
+const readJSON = p => JSON.parse(fs.readFileSync(path.join(f.source, p), 'utf8'))
+
 try {
- const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[]
- page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack)})
- await page.goto(url+'/tests')
- await page.getByLabel('DSL username',{exact:true}).fill(fixture.account.username)
- await page.getByLabel('DSL password',{exact:true}).fill(fixture.account.password)
- await page.getByRole('button',{name:'Open DSL editor',exact:true}).click()
- const status=page.getByLabel('DSL status',{exact:true})
- await status.filter({hasText:'DSL contract loaded'}).waitFor()
- async function upload(doc){const pending=page.waitForResponse(r=>r.url().endsWith('/test-cases/import'));await page.getByLabel('Import test JSON',{exact:true}).setInputFiles({name:'case.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(doc))});const response=await pending;await status.filter({hasText:'Working…'}).waitFor({state:'hidden'});return response}
- async function exportDoc(name){const pending=page.waitForEvent('download');await page.getByRole('button',{name:'Export test scenario',exact:true}).click();const download=await pending;await download.saveAs(path.join(out,name));return JSON.parse(fs.readFileSync(path.join(out,name),'utf8'))}
- assert.equal((await upload(base)).status(),200)
- const before=(await api('test-cases/import',{content:base})).semanticFingerprint
- await page.getByLabel('/content/id',{exact:true}).fill('browser-edited')
- await page.getByLabel('/content/steps/0/on',{exact:true}).fill('bp1')
- assert.equal(await page.getByRole('button',{name:'Export test scenario',exact:true}).isDisabled(),true)
- await page.getByRole('button',{name:'Validate test scenario',exact:true}).click()
- await status.filter({hasText:'Engine validation passed'}).waitFor()
- const exported=await exportDoc('edited.json')
- assert.equal(exported.id,'browser-edited');assert.equal(exported.steps[0].on,'bp1')
- assert.deepEqual(exported.steps.slice(1),base.steps.slice(1))
- const first=await api('test-cases/import',{content:exported}),second=await api('test-cases/import',{content:first.content})
- assert.equal(first.semanticFingerprint,second.semanticFingerprint);assert.notEqual(first.semanticFingerprint,before)
- await page.screenshot({path:path.join(out,'editor.png'),fullPage:true})
- observed('references',['Node selector and preceding variable reference edited in browser','Export re-import preserves executable fingerprint'])
- const legacy={schemaVersion:'1',id:'legacy-browser',chain:{name:'stablenet',binary:'gstable'},topology:{bp:4},steps:[{read:{source:'blockNumber',on:'bp1',save:'head'}}],assertions:[{assert:'blockNumber',compare:'GreaterOrEqual',expected:'$head'}]}
- assert.equal((await upload(legacy)).status(),200)
- await status.filter({hasText:'v1 migrated; executable meaning preserved'}).waitFor()
- const migrated=await exportDoc('migrated.json'),migration=await api('test-cases/import',{content:legacy})
- assert.equal((await api('test-cases/import',{content:migrated})).semanticFingerprint,migration.semanticFingerprint)
- fs.writeFileSync(path.join(out,'legacy.json'),JSON.stringify(legacy,null,2))
- const retained={...legacy,id:'legacy-config-browser',chain:{...legacy.chain,config:'site.toml'}}
- assert.equal((await upload(retained)).status(),200)
- await status.filter({hasText:'Retained v1:'}).waitFor()
- await page.getByLabel('/content/chain/config',{exact:true}).fill('edited-site.toml')
- await page.getByRole('button',{name:'Validate test scenario',exact:true}).click()
- await status.filter({hasText:'Engine validation passed'}).waitFor()
- const retainedExport=await exportDoc('retained-v1.json')
- assert.equal(retainedExport.schemaVersion,'1');assert.equal(retainedExport.chain.config,'edited-site.toml')
- const retainedPrepared=await api('test-cases/import',{content:retainedExport})
- assert.equal(retainedPrepared.migrated,false);assert.ok(retainedPrepared.migrationMessage)
- assert.equal(retainedPrepared.semanticFingerprint,(await api('test-cases/import',{content:retainedPrepared.content})).semanticFingerprint)
- await page.screenshot({path:path.join(out,'legacy-editor.png'),fullPage:true})
- observed('v1-migration',['Browser migrated v1 through engine migration','Original retained; v2 executable fingerprint equals v1 projection','Unrepresentable v1 config declaration structurally edited and round-tripped without losing its fields'])
- for(const invalid of [
-  {...base,extension:true},
-  {...base,steps:[{expect:'unknown',is:1}]},
-  {...base,steps:[{expect:'blockNumber',is:'$unbound'}]},
-  {...base,steps:[{do:'read',source:'unknown'},{expect:'blockNumber',is:1}]},
-  {...legacy,extension:true}
- ]){const result=await api('test-cases/import',{content:invalid},422);assert.ok(result.valid===false||result.code==='Unprocessable Entity');assert.ok(result.errors?.length||result.message)}
- const invalid={...base,extension:true};assert.equal((await upload(invalid)).status(),422)
- assert.equal(await page.getByRole('button',{name:'Export test scenario',exact:true}).isDisabled(),true)
- await page.getByText('Unsupported field: extension.',{exact:false}).waitFor()
- observed('invalid-unknown',['Unknown fields/actions/readers and unbound variables rejected','Invalid browser import kept original field and blocked executable export'])
- // Enumerate the immutable registration denominator. Even statements requiring
- // a specialized network must render all contract fields; execution is measured
- // separately from the live session, never inferred from editor coverage.
- for(const entry of vocabulary.entries){
-  const schemas=variants({$ref:entry.schemaRef},contract)
-  const schema=schemas[0],statement={}
-  for(const [name,field] of Object.entries(schema.properties??{}))statement[name]=initial(field,contract)
-  if(entry.kind==='reader'){statement.do='read';statement.source=entry.name}
-  if(entry.kind==='action'){statement.do=entry.name;delete statement.expectPerChain;delete statement.isPerChain}
-  if(entry.kind==='assertion'){statement.expect=entry.name;delete statement.isPerChain}
-  if(statement.on!==undefined)statement.on='bp1'
-  if(statement.onEach!==undefined)statement.onEach=['bp1']
-  if(statement.save!==undefined)statement.save='sample'
-  if(statement.timeout!==undefined)statement.timeout='30s'
-  if(statement.pollInterval!==undefined)statement.pollInterval='500ms'
-  const doc={...base,id:`coverage-${entry.kind}-${entry.name}`,steps:[statement,{expect:'blockNumber',is:1}]}
-  await upload(doc)
-  const fields=Object.keys(schema.properties??{}).filter(k=>!['do','expect','source','isPerChain','expectPerChain'].includes(k))
-  const edited=[]
-  for(const field of fields){
-   const locator=page.locator(`[data-field-path="/content/steps/0/${field}"]`).first()
-   assert.equal(await locator.count(),1,`${entry.kind} ${entry.name} missing field ${field}`)
-   const control=locator.locator('input,select,button').first()
-   if(await control.count()){
-    const tag=await control.evaluate(e=>[e.tagName,e.type])
-    if(tag[0]==='INPUT'){
-     if(tag[1]==='checkbox'){await control.check();await control.uncheck()}
-     else {const val=await control.inputValue();await control.fill(tag[1]==='number'?'1':(val||'sample'));if((await control.getAttribute('aria-label'))?.endsWith(' entry name'))await locator.getByRole('button',{name:'Add entry',exact:true}).last().click();}
-    } else if(tag[0]==='SELECT'){const val=await control.inputValue();await control.selectOption(val)}
-    else if(tag[0]==='BUTTON'){await control.click()}
-   }
-   edited.push(field)
+  session = await api('bootstrap', 'POST', {username: 'dsl-admin', password: f.password, setupToken: f.setupToken}, 201)
+  const vocabulary = await api('vocabulary'), contract = await api('contracts/dsl')
+  fs.writeFileSync(path.join(out, 'contract.json'), JSON.stringify({vocabulary, contract}, null, 2))
+  const page = await context.newPage(), errors = []
+  page.on('pageerror', e => errors.push(e.message))
+  await page.goto(f.url + '/tests')
+  const status = page.getByLabel('DSL status', {exact: true})
+  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
+  const idle = () => status.filter({hasText: 'Working…'}).waitFor({state: 'hidden'})
+  async function upload(doc, name = 'case.json') {
+    const pending = page.waitForResponse(r => r.url().endsWith('/test-cases/import'))
+    await page.getByLabel('Import test JSON', {exact: true}).setInputFiles({name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc))})
+    const response = await pending
+    await idle()
+    return response
   }
-  coverage.push({kind:entry.kind,name:entry.name,schema:true,edited:true,roundTrip:false,executed:false,argumentPaths:fields.sort(),editedArgumentPaths:edited.sort(),executedArgumentPaths:[]})
- }
- assert.deepEqual(errors,[])
- fs.writeFileSync(path.join(out,'coverage.json'),JSON.stringify(coverage,null,2))
- fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({browserVersion:browser.version(),scenarios,coverage},null,2))
- fs.writeFileSync(path.join(out,'api-observations.json'),JSON.stringify(records,null,2))
-} finally {await browser.close()}
+  async function exportDoc(name) {
+    const pending = page.waitForEvent('download')
+    await page.getByRole('button', {name: 'Export test scenario', exact: true}).click()
+    const download = await pending
+    await download.saveAs(path.join(out, name))
+    return JSON.parse(fs.readFileSync(path.join(out, name), 'utf8'))
+  }
+
+  // Node selectors and variable references, edited in the browser.
+  const base = {schemaVersion: '2', kind: 'case', id: 'browser', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable'}, topology: {bp: 4}}, steps: [{do: 'read', source: 'blockNumber', on: 'node1', save: 'head'}, {expect: 'blockNumber', onEach: ['node1', 'node2'], compare: 'GreaterOrEqual', is: '$head'}, {expect: 'chainId', is: '8283'}]}
+  assert.equal((await upload(base)).status(), 200)
+  const before = (await api('test-cases/import', 'POST', {content: base})).semanticFingerprint
+  await page.getByLabel('/content/id', {exact: true}).fill('browser-edited')
+  await page.getByLabel('/content/steps/0/on', {exact: true}).fill('bp1')
+  assert.equal(await page.getByRole('button', {name: 'Export test scenario', exact: true}).isDisabled(), true)
+  await page.getByRole('button', {name: 'Validate test scenario', exact: true}).click()
+  await status.filter({hasText: 'Engine validation passed'}).waitFor()
+  const exported = await exportDoc('edited.json')
+  assert.equal(exported.id, 'browser-edited'); assert.equal(exported.steps[0].on, 'bp1')
+  assert.deepEqual(exported.steps.slice(1), base.steps.slice(1))
+  const first = await api('test-cases/import', 'POST', {content: exported}), second = await api('test-cases/import', 'POST', {content: first.content})
+  assert.equal(first.semanticFingerprint, second.semanticFingerprint); assert.notEqual(first.semanticFingerprint, before)
+  await page.screenshot({path: path.join(out, 'editor.png'), fullPage: true})
+  observed('references', ['Node selector and preceding variable reference edited in the browser', 'Export re-import preserves the executable fingerprint'])
+
+  // v1 import: migrated when the meaning survives, retained and editable when not.
+  const legacy = {schemaVersion: '1', id: 'legacy-browser', chain: {name: 'stablenet', binary: 'gstable'}, topology: {bp: 4}, steps: [{read: {source: 'blockNumber', on: 'bp1', save: 'head'}}], assertions: [{assert: 'blockNumber', compare: 'GreaterOrEqual', expected: '$head'}]}
+  assert.equal((await upload(legacy)).status(), 200)
+  await status.filter({hasText: 'v1 migrated; executable meaning preserved'}).waitFor()
+  const migrated = await exportDoc('migrated.json'), migration = await api('test-cases/import', 'POST', {content: legacy})
+  assert.equal((await api('test-cases/import', 'POST', {content: migrated})).semanticFingerprint, migration.semanticFingerprint)
+  const retained = {...legacy, id: 'legacy-config-browser', chain: {...legacy.chain, config: 'site.toml'}}
+  assert.equal((await upload(retained)).status(), 200)
+  await status.filter({hasText: 'Retained v1:'}).waitFor()
+  await page.getByLabel('/content/chain/config', {exact: true}).fill('edited-site.toml')
+  await page.getByRole('button', {name: 'Validate test scenario', exact: true}).click()
+  await status.filter({hasText: 'Engine validation passed'}).waitFor()
+  const retainedExport = await exportDoc('retained-v1.json')
+  assert.equal(retainedExport.schemaVersion, '1'); assert.equal(retainedExport.chain.config, 'edited-site.toml')
+  const retainedPrepared = await api('test-cases/import', 'POST', {content: retainedExport})
+  assert.equal(retainedPrepared.migrated, false); assert.ok(retainedPrepared.migrationMessage)
+  observed('v1-migration', ['Browser migrated v1 through the engine migration', 'Migrated v2 fingerprint equals the v1 projection', 'Unrepresentable v1 declaration edited and round-tripped without losing fields'])
+
+  // Unknown fields, builtins, readers, references and ignored arguments are refused by name.
+  const refusals = []
+  for (const [invalid, word] of [
+    [{...base, extension: true}, 'extension'],
+    [{...base, steps: [{expect: 'unknown', is: 1}]}, 'unknown'],
+    [{...base, steps: [{expect: 'blockNumber', is: '$unbound'}]}, 'unbound'],
+    [{...base, steps: [{do: 'read', source: 'unknown'}, {expect: 'blockNumber', is: 1}]}, 'unknown'],
+    [{...base, steps: [{expect: 'chainId', is: '8283', timeout: '5s'}]}, 'timeout'],
+    [{...base, steps: [{do: 'restartNode', on: 'bp1', expectFail: true}, {expect: 'chainId', is: '8283'}]}, 'expectFail'],
+    [{...legacy, extension: true}, 'extension'],
+  ]) {
+    const result = await api('test-cases/import', 'POST', {content: invalid}, 422)
+    const text = JSON.stringify(result)
+    assert.ok(text.includes(word), `refusal does not name ${word}: ${text}`)
+    refusals.push(word)
+  }
+  assert.equal((await upload({...base, extension: true})).status(), 422)
+  assert.equal(await page.getByRole('button', {name: 'Export test scenario', exact: true}).isDisabled(), true)
+  await page.getByText('extension', {exact: false}).first().waitFor()
+  observed('invalid-unknown', ['Unknown fields, builtins, readers and unbound references refused by name', 'Arguments a builtin never reads refused by name', 'An invalid browser import blocks export'])
+
+  // Every case in the corpus imports, and its prepared form re-imports unchanged.
+  const presets = {}
+  for (const file of f.presetFiles) { const p = readJSON(file); presets[p.id] = p }
+  let imported = 0
+  for (const file of f.corpusFiles) {
+    const content = readJSON(file)
+    const prepared = await api('test-cases/import', 'POST', {content, presets})
+    const again = await api('test-cases/import', 'POST', {content: prepared.content, presets})
+    assert.equal(again.semanticFingerprint, prepared.semanticFingerprint, file + ' changed meaning on re-import')
+    imported++
+  }
+  observed('grammar', [`${imported} corpus cases imported and re-imported with unchanged executable meaning`])
+
+  // Every registration's arguments are edited through the form, each read
+  // source separately so its own arguments appear.
+  const edited = {}
+  for (const entry of vocabulary.entries) {
+    const key = entry.kind + ':' + entry.name, seen = new Set()
+    for (const schema of variants({$ref: entry.schemaRef}, contract)) {
+      const statement = {}
+      for (const [name, field] of Object.entries(schema.properties ?? {})) statement[name] = initial(field, contract)
+      if (statement.on !== undefined) statement.on = 'bp1'
+      if (statement.onEach !== undefined) statement.onEach = ['bp1']
+      if (!statement.on && !statement.onEach && ['stopNode', 'startNode', 'restartNode', 'resetNode', 'swapNode', 'readNodeLog'].includes(entry.name)) statement.on = 'bp1'
+      if (statement.save !== undefined) statement.save = 'sample'
+      if (entry.kind === 'reader') { statement.do = 'read'; statement.source = entry.name }
+      const doc = {...base, id: `coverage-${entry.kind}-${entry.name}`, steps: [statement, {expect: 'blockNumber', is: 1}]}
+      await upload(doc)
+      const fields = Object.keys(schema.properties ?? {}).filter(k => !['do', 'source', 'isPerChain', 'expectPerChain'].includes(k) && !(k === 'expect' && schema.properties[k].const !== undefined))
+      for (const field of fields) {
+        const locator = page.locator(`[data-field-path="/content/steps/0/${field}"]`).first()
+        assert.equal(await locator.count(), 1, `${key} missing field ${field}`)
+        const control = locator.locator('input,select,button').first()
+        if (await control.count()) {
+          const [tag, type] = await control.evaluate(e => [e.tagName, e.type])
+          if (tag === 'INPUT' && type === 'checkbox') { await control.check(); await control.uncheck() }
+          else if (tag === 'INPUT') { const val = await control.inputValue(); await control.fill(type === 'number' ? '1' : (val || 'sample')) }
+          else if (tag === 'SELECT') await control.selectOption(await control.inputValue())
+          else if (tag === 'BUTTON') await control.click()
+        }
+        seen.add(field)
+      }
+    }
+    edited[key] = [...seen].sort()
+    coverage.push({kind: entry.kind, name: entry.name, editedArgumentPaths: edited[key]})
+  }
+  assert.deepEqual(errors, [])
+  fs.writeFileSync(path.join(out, 'edited.json'), JSON.stringify(edited, null, 2))
+  observed('arguments-edited', [`${vocabulary.entries.length} registrations rendered and edited field by field`])
+
+  // The coverage cases: imported with their preset, round-tripped, saved with
+  // the preset revision pinned.
+  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles(f.presetFiles.filter(p => p.endsWith('stablenet-bp4-en1.json')).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
+  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  const saved = []
+  for (const file of f.coverageFiles) {
+    const content = readJSON(file)
+    assert.equal((await upload(content, path.basename(file))).status(), 200, file)
+    await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+    const exportedCase = await exportDoc('roundtrip-' + path.basename(file))
+    const a = await api('test-cases/import', 'POST', {content, presets}), b = await api('test-cases/import', 'POST', {content: exportedCase, presets})
+    assert.equal(a.semanticFingerprint, b.semanticFingerprint, file + ' changed meaning through the editor')
+    await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
+    await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
+    await page.getByTestId('dsl-preset-refs').filter({hasText: 'revision'}).waitFor()
+    saved.push(content.id)
+  }
+  // Selected in file order, so the case that stops and swaps nodes runs last.
+  const listed = (await api('documents?kind=case')).items
+  const cases = saved.map(id => listed.find(d => d.content.id === id))
+  assert.ok(cases.every(Boolean) && cases.length === saved.length, 'a saved coverage case is missing')
+  assert.ok(cases.every(d => d.presetRefs?.length === 1), 'a saved case lost its pinned preset')
+  observed('round-trip', [`${saved.length} coverage cases imported, exported and saved with pinned preset revisions and unchanged meaning`])
+
+  // A Web test job runs every saved coverage case on a real network.
+  const set = await api('documents', 'POST', {kind: 'server-set', name: 'web05 pool', contractVersion: '2', assetRefs: [], content: {version: 2, pool: {hosts: [{name: 'local', addr: '127.0.0.1'}], slots: 5, ports: {p2p: {base: f.p2pBase, step: 10}, rpc: {base: f.rpcBase, step: 10}}}}}, 201)
+  const config = await api('documents', 'POST', {kind: 'workspace-config', name: 'web05 paths', contractVersion: '2', assetRefs: [], content: {version: 1, dataRoot: f.runtime + '/d', paths: Object.fromEntries(['binaries', 'configs', 'genesis', 'keystore', 'keyrings', 'nodes', 'runtime', 'logs'].map(k => [k, k])), control: {artifactRoot: f.runtime + '/output'}, inputs: {mode: 'generated'}, execution: {chain: 'fresh'}, limits: {minFreeDisk: '0'}}}, 201)
+  const workspace = await api('workspaces', 'POST', {name: 'web05 coverage', documents: [{id: set.id, revision: set.revision}, {id: config.id, revision: config.revision}]}, 201)
+  await page.reload()
+  await page.getByLabel('작업 Workspace', {exact: true}).selectOption(workspace.id)
+  await page.getByLabel('작업 매니페스트', {exact: true}).selectOption('stablenet')
+  await page.getByLabel('작업 바이너리', {exact: true}).selectOption('stablenet')
+  await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
+  for (const [i, doc] of cases.entries()) {
+    await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
+    await page.getByTestId('case-order-' + doc.id).filter({hasText: String(i + 1)}).waitFor()
+  }
+  await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
+  await page.getByLabel('실행 계획', {exact: true}).waitFor({timeout: 60000})
+  await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, 'test-plan.png')})
+  const started = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
+  await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+  const job = await (await started).json()
+  let done
+  for (let i = 0; i < 18000; i++) { done = await api('jobs/' + job.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(done.state)) break; await sleep(200) }
+  fs.writeFileSync(path.join(out, 'job.json'), JSON.stringify(done, null, 2))
+  assert.equal(done.state, 'succeeded', JSON.stringify(done))
+  await page.screenshot({path: path.join(out, 'test-results.png'), fullPage: true})
+  // The fork case runs a second build under the name "next": the job binds it
+  // to the registered wbft asset, and the network crosses from gwemix to it.
+  await page.goto(f.url + '/tests')
+  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
+  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles([{name: path.basename(f.forkPreset), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, f.forkPreset))}])
+  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  const forkContent = readJSON(f.forkCase)
+  assert.equal((await upload(forkContent, path.basename(f.forkCase))).status(), 200)
+  await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+  await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
+  await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
+  const forkDoc = (await api('documents?kind=case')).items.find(d => d.content.id === forkContent.id)
+  assert.equal(forkDoc.presetRefs?.length, 1, 'fork case lost its pinned preset')
+  const forkSet = await api('documents', 'POST', {kind: 'server-set', name: 'web05 fork pool', contractVersion: '2', assetRefs: [], content: {version: 2, pool: {hosts: [{name: 'local', addr: '127.0.0.1'}], slots: 5, ports: {p2p: {base: f.forkP2PBase, step: 10}, rpc: {base: f.forkRPCBase, step: 10}}}}}, 201)
+  const forkConfig = await api('documents', 'POST', {kind: 'workspace-config', name: 'web05 fork paths', contractVersion: '2', assetRefs: [], content: {version: 1, dataRoot: f.runtime + '/fork', paths: Object.fromEntries(['binaries', 'configs', 'genesis', 'keystore', 'keyrings', 'nodes', 'runtime', 'logs'].map(k => [k, k])), control: {artifactRoot: f.runtime + '/fork-output'}, inputs: {mode: 'generated'}, execution: {chain: 'fresh'}, limits: {minFreeDisk: '0'}}}, 201)
+  const forkWorkspace = await api('workspaces', 'POST', {name: 'web05 fork', documents: [{id: forkSet.id, revision: forkSet.revision}, {id: forkConfig.id, revision: forkConfig.revision}]}, 201)
+  await page.reload()
+  await page.getByLabel('작업 Workspace', {exact: true}).selectOption(forkWorkspace.id)
+  await page.getByLabel('작업 매니페스트', {exact: true}).selectOption('wemix')
+  await page.getByLabel('작업 바이너리', {exact: true}).selectOption('wemix')
+  await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
+  await page.getByLabel('실행 케이스 ' + forkDoc.id, {exact: true}).check()
+  await page.getByLabel('테스트 바이너리 next', {exact: true}).selectOption('wbft')
+  await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
+  const forkPlan = page.getByLabel('실행 계획', {exact: true})
+  await forkPlan.waitFor({timeout: 60000})
+  await forkPlan.getByText('Binary "next" runs wbft', {exact: false}).waitFor()
+  await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, 'fork-plan.png')})
+  const forkStarted = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
+  await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+  const forkJob = await (await forkStarted).json()
+  let forkDone
+  for (let i = 0; i < 9000; i++) { forkDone = await api('jobs/' + forkJob.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(forkDone.state)) break; await sleep(200) }
+  fs.writeFileSync(path.join(out, 'fork-job.json'), JSON.stringify(forkDone, null, 2))
+  assert.equal(forkDone.state, 'succeeded', JSON.stringify(forkDone))
+  assert.ok(forkDone.partialEffects.some(v => v.includes('"next" provisioned')), 'the successor build was not provisioned')
+  observed('live-execution', [`Web test job ${done.id} ran ${cases.length} saved cases on native gstable and succeeded`, `Web test job ${forkDone.id} crossed the croissant fork from gwemix to the registered wbft build and succeeded`])
+  fs.writeFileSync(path.join(out, 'browser.json'), JSON.stringify({browserVersion: owned.browser.version(), scenarios, coverage, savedCases: cases.map(d => ({id: d.id, caseId: d.content.id, revision: d.revision, presetRefs: d.presetRefs})), job: {id: done.id, state: done.state, runIds: [...done.runIds, ...forkDone.runIds]}, forkJob: {id: forkDone.id, state: forkDone.state, runIds: forkDone.runIds}, corpusImported: imported, refusals, seedAcceptanceAwarded: false}, null, 2))
+  fs.writeFileSync(path.join(out, 'api-observations.json'), JSON.stringify(records, null, 2))
+} finally { await owned.stop() }
