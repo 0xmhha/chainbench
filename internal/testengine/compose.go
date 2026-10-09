@@ -240,6 +240,14 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 
 	binary := in.Binary
 	from[FieldBinary] = origin.FromCommand
+	// A binary the run names replaces the declaration's default under that
+	// name as well. Otherwise the name map kept the declared default, which
+	// no node launches, and the launch check went looking for it: a preset
+	// with "default": "gstable" failed with "binaries.default gstable: not on
+	// the target" although --binary pointed at the build every node ran.
+	if binary != "" && resolvedBins[dsl.BinaryDefault] != "" {
+		resolvedBins[dsl.BinaryDefault] = binary
+	}
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)
 		from[FieldBinary] = origin.FromDeclaration

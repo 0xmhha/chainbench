@@ -42,8 +42,8 @@ export GWBFT="$HOME/work/github/chain/go-wbft/build/bin/gwemix"
 export GWEMIX="$HOME/work/github/chain/go-wemix/build/bin/gwemix"
 ```
 
-**셋 다 없어도 좋다.** 201건 중 175건이 stablenet 하나로 돈다. wbft 8건, wemix 7건만 그
-체인의 빌드를 요구하고, `go-stablenet/mixed` 4건은 gstable 과 함께 wbft-stablenet 빌드를 요구한다.
+**셋 다 없어도 좋다.** 202건 중 175건이 stablenet 하나로 돈다. wbft 8건, wemix 7건만 그
+체인의 빌드를 요구하고, `go-stablenet/mixed` 5건은 gstable 과 함께 wbft-stablenet 빌드를 요구한다.
 
 **(원격을 흉내 낼 때만) Docker 함대.** 로컬 바이너리가 없는 기계, 또는 노드가 서로 다른
 기계에 있어야 도는 케이스는 `env/docker` 의 가상 서버 15대 위에서 돌린다. 준비는
@@ -252,7 +252,7 @@ python3 scripts/gen-case-commands.py --write
 
 <!-- BEGIN generated: scripts/gen-case-commands.py -->
 
-케이스 **201건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
+케이스 **202건**이다. 각 케이스에 두 갈래를 적는다 — `bin/chainbench` 로 한 건만 돌리는 것과, `scripts/tcsweep.sh` 로 같은 한 건을 돌리는 것이다. 스크립트 쪽은 망을 세우고 내리고 지우는 것까지 하고 판정 한 줄을 남긴다.
 
 ### `basic` — 2건
 
@@ -843,7 +843,7 @@ GSTABLE_POSTFORK_BIN=<값> bin/chainbench run tests/tc/go-stablenet/hardfork/01-
 scripts/tcsweep.sh ~/cbw/one.log '01-boho-crossed-by-restart'
 ```
 
-### `go-stablenet/mixed` — 4건
+### `go-stablenet/mixed` — 5건
 
 **01-quorum-across-implementations.json** · `mixed-quorum-across-implementations`
 ```sh
@@ -875,6 +875,14 @@ WBFT_STABLENET_BIN=<값> bin/chainbench run tests/tc/go-stablenet/mixed/04-rolli
   --workspace-dir ~/cbw/one/04-rolling-takeover --binary $GSTABLE
 
 scripts/tcsweep.sh ~/cbw/one.log '04-rolling-takeover'
+```
+
+**05-takeover-over-f-halts-and-recovers.json** · `mixed-takeover-over-f-halts-and-recovers`
+```sh
+WBFT_STABLENET_BIN=<값> bin/chainbench run tests/tc/go-stablenet/mixed/05-takeover-over-f-halts-and-recovers.json \
+  --workspace-dir ~/cbw/one/05-takeover-over-f-halts-and-recovers --binary $GSTABLE
+
+scripts/tcsweep.sh ~/cbw/one.log '05-takeover-over-f-halts-and-recovers'
 ```
 
 ### `go-stablenet/post-v1.0.0-change/common-all` — 16건

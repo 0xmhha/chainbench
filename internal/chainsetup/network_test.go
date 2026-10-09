@@ -27,6 +27,7 @@ type stubDriver struct {
 	mu       sync.Mutex
 	stopped  []int
 	launched []int
+	args     [][]string // the command line of each launch, in launch order
 	stopErr  error
 }
 
@@ -34,6 +35,7 @@ func (s *stubDriver) Provision(context.Context, process.NodeSpec) error { return
 
 func (s *stubDriver) Launch(_ context.Context, spec process.NodeSpec) (process.Handle, error) {
 	s.launched = append(s.launched, spec.Index)
+	s.args = append(s.args, spec.Args)
 	return process.Handle{Index: spec.Index, PID: 2000 + spec.Index}, nil
 }
 

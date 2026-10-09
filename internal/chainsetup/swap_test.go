@@ -90,3 +90,39 @@ func TestNodeSwap_RequiresBinary(t *testing.T) {
 		t.Fatal("want an error swapping with no binary")
 	}
 }
+
+// TestNodeSwap_ArgsStayOnTheRecord: args a swap names are appended to the
+// node's command line for that launch and kept on the record, so a second
+// swap (onto the same binary, only to add a flag) launches with both.
+func TestNodeSwap_ArgsStayOnTheRecord(t *testing.T) {
+	dir, stub, deps := launchedNetwork(t)
+	ctx := context.Background()
+	if _, err := verb.NodeSwap(ctx, deps, verb.NodeSwapIn{DataDir: dir, Index: 1, Binary: "/opt/other",
+		Args: []string{"--wbft.mirror"}}); err != nil {
+		t.Fatalf("swap with args: %v", err)
+	}
+	if _, err := verb.NodeSwap(ctx, deps, verb.NodeSwapIn{DataDir: dir, Index: 1,
+		Args: []string{"--takeover.guard=false"}}); err != nil {
+		t.Fatalf("args-only swap: %v", err)
+	}
+	if len(stub.args) != 2 {
+		t.Fatalf("launches = %v, want two", stub.args)
+	}
+	last := func(a []string, n int) []string { return a[len(a)-n:] }
+	if got := last(stub.args[0], 1); got[0] != "--wbft.mirror" {
+		t.Errorf("first launch ends %v, want --wbft.mirror", got)
+	}
+	if got := last(stub.args[1], 2); got[0] != "--wbft.mirror" || got[1] != "--takeover.guard=false" {
+		t.Errorf("second launch ends %v, want both flags", got)
+	}
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ws.State().Nodes[0].Args; len(got) != 4 || got[0] != "--datadir" {
+		t.Errorf("node1 record args = %v, want the original two and both flags", got)
+	}
+	if got := ws.State().Nodes[1].Args; len(got) != 2 {
+		t.Errorf("node2 record args = %v, want unchanged", got)
+	}
+}

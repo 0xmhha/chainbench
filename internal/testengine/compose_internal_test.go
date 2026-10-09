@@ -160,6 +160,33 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_CommandBinaryIsTheDefault: a binary the run names is what
+// the declaration's "default" resolves to, so neither a node nor a swap onto
+// "default" reaches for the declared name, and the launch check does not
+// look for it.
+func TestCompositionOf_CommandBinaryIsTheDefault(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"chain-preset","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable","other":"gstable-other"},
+	  "topology":{"nodes":[{"role":"bp"},{"role":"bp","binary":"other"}]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/built/gstable"})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if got := comp.up.Binaries["default"]; got != "/opt/built/gstable" {
+		t.Errorf("default = %q, want the run's binary", got)
+	}
+	if got := comp.up.Binaries["other"]; got != "gstable-other" {
+		t.Errorf("other = %q, want it unchanged", got)
+	}
+	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if got := comp.up.Binaries["default"]; got != "gstable" {
+		t.Errorf("default without a run binary = %q, want the declared name", got)
+	}
+}
+
 // TestCompositionOf_GenerateDefaultsToWorkspaceDir pins S5's key-reuse edge:
 // a spec that asks to generate keys but names no ref must not default to the
 // shared preset (where GeneratedKeys would reuse the preset's identities and

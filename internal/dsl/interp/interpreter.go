@@ -185,7 +185,12 @@ type NodeChange struct {
 	// genesis and re-applied to this node's datadir. Empty leaves the node's
 	// genesis alone, which is the ordinary swap.
 	GenesisOverlay []byte
-	Purpose        string
+	// Args are flags appended to the node's command line from this swap on,
+	// for the binary it swaps onto: a flag only that build takes, or one that
+	// changes how it starts. They stay on the node's record, so a later
+	// restart keeps them.
+	Args    []string
+	Purpose string
 }
 
 // Action is one atomic pre-action, step, or post-action (no partial success).
