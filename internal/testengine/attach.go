@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/testhelper"
@@ -383,12 +384,12 @@ func chainValidators(chain string) func(context.Context, *rpc.Client) ([]string,
 // read has nothing to say, and the ones beside it may.
 func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCEndpoint) RunSpecFunc {
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
-		if len(spec.EnvAccounts) > 0 && ring != nil {
+		if pending := unprepared(ring, spec.EnvAccounts); len(pending) > 0 {
 			endpoint := ""
 			if len(eps) > 0 {
 				endpoint = eps[0].RPCURL
 			}
-			if err := prepareAccounts(ctx, ring, "", endpoint, spec.EnvAccounts, ""); err != nil {
+			if err := prepareAccounts(ctx, ring, "", endpoint, pending, ""); err != nil {
 				// The reason is set here and not left to the engine: the engine
 				// records a RunSpec error as a bare "fail", because every
 				// failure the interpreter raises has already written its own.
@@ -399,4 +400,22 @@ func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCE
 		}
 		return inner(ctx, spec, env, rec)
 	}
+}
+
+// unprepared is the part of a declaration this wrapper still has to prepare.
+// A composed run created and funded its minted accounts before the first spec,
+// and this engine's ring read them back; preparing them again would fund them
+// from no account at all. A keyFile account is always read again, so a file
+// naming a different key than the ring holds is still refused.
+func unprepared(ring *store.KeySet, declared map[string]dsl.AccountV2) map[string]dsl.AccountV2 {
+	if ring == nil {
+		return nil
+	}
+	out := map[string]dsl.AccountV2{}
+	for label, decl := range declared {
+		if _, ok := ring.Get(keyring.Label(label)); !ok || strings.TrimSpace(decl.KeyFile) != "" {
+			out[label] = decl
+		}
+	}
+	return out
 }
