@@ -533,6 +533,12 @@ func derivedArguments(t *testing.T) (map[string][]string, map[string][]string) {
 		if kind == "action" && set["on"] {
 			set["onEach"] = true
 		}
+		if kind == "assertion" && nonNumeric[strings.TrimPrefix(key, "assertion:")] {
+			// The comparator reads delta and tol, but only for InDelta,
+			// which a value that is never a number cannot satisfy.
+			delete(set, "delta")
+			delete(set, "tol")
+		}
 		list := make([]string, 0, len(set))
 		for k, ok := range set {
 			if ok {

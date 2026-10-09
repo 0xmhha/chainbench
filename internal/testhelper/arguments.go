@@ -54,7 +54,7 @@ var builtinArguments = map[string]string{
 	"assertion:callError":                "data on reason to",
 	"assertion:chainId":                  "compare delta expected on onEach tol",
 	"assertion:codeAt":                   "address compare delta expected on onEach tol",
-	"assertion:contractChecksum":         "address bytecode compare data delta expected on onEach tol",
+	"assertion:contractChecksum":         "address bytecode compare data expected on onEach",
 	"assertion:createAddress":            "compare delta deployer expected from nonce on onEach tol",
 	"assertion:derive":                   "compare delta expected format index of on onEach op selector tol",
 	"assertion:estimateGas":              "compare data delta expected from on onEach to tol",
@@ -71,7 +71,7 @@ var builtinArguments = map[string]string{
 	"assertion:sameBlockHash":            "block on onEach",
 	"assertion:txMined":                  "expected hash on",
 	"assertion:txStatus":                 "compare delta expected hash on onEach tol",
-	"assertion:validators":               "compare delta expected on onEach tol",
+	"assertion:validators":               "compare expected on onEach",
 	"assertion:wsCollected":              "count sub timeout",
 	"assertion:wsSubscribe":              "count event expected on params timeout",
 	"reader:balanceAt":                   "address",
@@ -190,6 +190,10 @@ var firstRead = map[string][]string{
 	"load":             {"gas", "fillPercent"},
 }
 
+// nonNumeric lists readers whose value is never a number, so InDelta (and
+// its delta and tol) can never hold for them.
+var nonNumeric = map[string]bool{assertContractChecksum: true, assertValidators: true}
+
 // localSigning lists what a step signed with "key" leaves out: the harness
 // builds that transaction itself.
 var localSigning = map[string][]string{
@@ -235,6 +239,9 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 			refuse(field, "a step signed with key builds its own transaction")
 		}
 	}
+	if op, ok := text("compare"); ok && op == "InDelta" && nonNumeric[builtin] {
+		refuse("compare", "InDelta needs a number and "+builtin+" is not one")
+	}
 	if allowed, _ := builtinArgumentSet(kind, name); allowed["delta"] {
 		op, given := text("compare")
 		if !given {
@@ -266,6 +273,12 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 		if method, ok := text("method"); ok && method != partitionByPeers && method != partitionByFirewall {
 			refuse("method", "peers or firewall; any other value falls back to peers")
 		}
+	case actionSwapNode:
+		if !has("config") {
+			refuse("purpose", "recorded only with a config change")
+		}
+	}
+	switch name {
 	case actionStartNode, actionSwapNode:
 		if has("expect") && has("expectFail") {
 			refuse("expect", "expectFail decides the outcome instead")
@@ -279,6 +292,13 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 		}
 	}
 	switch builtin {
+	case assertBlockInterval:
+		if has("maxMillis") {
+			refuse("maxSeconds", "maxMillis is read instead")
+		}
+		if has("minMillis") {
+			refuse("minSeconds", "minMillis is read instead")
+		}
 	case assertDerive:
 		if op, ok := text("op"); ok {
 			if op != "abiCall" {

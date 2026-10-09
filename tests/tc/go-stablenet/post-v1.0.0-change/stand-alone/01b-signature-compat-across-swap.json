@@ -96,8 +96,7 @@
     {
       "do": "swapNode",
       "on": "en1",
-      "binary": "upgrade",
-      "purpose": "signature-compat"
+      "binary": "upgrade"
     },
     {
       "do": "waitFor",
