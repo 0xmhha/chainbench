@@ -24,7 +24,10 @@ def verify_coverage(contract, coverage):
         schema = definitions[entry['schemaRef'].removeprefix('#/$defs/')]
         # read/waitFor have a reader-specific contract per choice.
         schemas = schema.get('oneOf', [schema])
-        fields = sorted({name for choice in schemas for name in choice['properties']} - excluded)
+        # A do statement's expect is its outcome argument; only an assertion's
+        # expect (a constant) names the statement itself.
+        fields = sorted({name for choice in schemas for name, prop in choice['properties'].items()
+                         if name not in excluded or (name == 'expect' and 'const' not in prop)})
         observed = by_key[(entry['kind'], entry['name'])]
         assert all(observed[k] is True for k in ('schema', 'edited', 'roundTrip', 'executed'))
         for key in ('argumentPaths', 'editedArgumentPaths', 'executedArgumentPaths'):

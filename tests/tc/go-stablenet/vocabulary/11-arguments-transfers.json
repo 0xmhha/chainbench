@@ -1,0 +1,325 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-transfers",
+  "description": "WEB-05 coverage: newAccount, faucet and sendTx argument paths with their outcomes.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "on": "bp1",
+      "save": "gp"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$gp",
+        "2"
+      ],
+      "save": "cap"
+    },
+    {
+      "do": "newAccount",
+      "save": "alice",
+      "saveKey": "aliceKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "bob",
+      "saveKey": "bobKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "carol",
+      "saveKey": "carolKey"
+    },
+    {
+      "do": "faucet",
+      "on": "bp1",
+      "from": "faucet",
+      "to": "$alice",
+      "amount": "20000000000000000000",
+      "gas": "21000",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "timeout": "120s",
+      "pollInterval": "500ms",
+      "save": "fundAlice"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundAlice",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "faucet",
+      "save": "faucetNonce"
+    },
+    {
+      "do": "faucet",
+      "to": "$bob",
+      "amount": "20000000000000000000",
+      "from": "faucet",
+      "gasPrice": "$gp",
+      "nonce": "$faucetNonce",
+      "save": "fundBob"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$fundBob"
+      ],
+      "select": "nonce",
+      "compare": "InDelta",
+      "is": "$faucetNonce",
+      "delta": "0"
+    },
+    {
+      "do": "faucet",
+      "onEach": [
+        "bp2",
+        "bp3"
+      ],
+      "to": "$carol",
+      "amount": "5000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "source": "balanceAt",
+      "on": "en1",
+      "address": "$carol",
+      "compare": "Equal",
+      "is": "10000000000000000000",
+      "timeout": "60s",
+      "pollInterval": "1s",
+      "save": "carolBalance"
+    },
+    {
+      "do": "waitFor",
+      "source": "balanceAt",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "address": "$bob",
+      "compare": "Equal",
+      "expected": "20000000000000000000",
+      "timeout": "60s"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "node1",
+      "on": "bp1",
+      "save": "n1"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "7",
+      "gas": "21000",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "nonce": "$n1",
+      "timeout": "60s",
+      "pollInterval": "500ms",
+      "expect": "receipt",
+      "save": "t1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$t1"
+      ],
+      "select": "type",
+      "is": "0x2"
+    },
+    {
+      "do": "sendTx",
+      "key": "$aliceKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1",
+      "gasPrice": "$gp",
+      "accessList": [],
+      "save": "t2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$t2"
+      ],
+      "select": "type",
+      "is": "0x1"
+    },
+    {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x6005600c60003960056000f360006000fd",
+      "gas": "100000",
+      "save": "reverter"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$reverter",
+      "data": "0x01",
+      "gas": "100000",
+      "expectRevert": true,
+      "save": "rv1"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$reverter",
+      "data": "0x02",
+      "gas": "100000",
+      "expect": "revert",
+      "save": "rv2"
+    },
+    {
+      "expect": "txStatus",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "hash": "$rv2",
+      "is": "0x0"
+    },
+    {
+      "do": "sendTx",
+      "key": "$bobKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1",
+      "gasPrice": "1",
+      "expectReject": true,
+      "reason": "underpriced"
+    },
+    {
+      "do": "sendTx",
+      "key": "$bobKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1",
+      "gasPrice": "1",
+      "expect": "keptOut",
+      "blocks": 3,
+      "reason": "underpriced"
+    },
+    {
+      "do": "sendTx",
+      "key": "$carolKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "3",
+      "wait": false,
+      "save": "unwaited"
+    },
+    {
+      "do": "waitFor",
+      "source": "txMined",
+      "hash": "$unwaited",
+      "is": "true",
+      "timeout": "60s"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$alice",
+      "save": "aliceBefore"
+    },
+    {
+      "do": "sendTx",
+      "on": "bp2",
+      "key": "$aliceKey",
+      "feePayerKey": "$carolKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1000000000000000000",
+      "save": "delegated"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$delegated"
+      ],
+      "select": "type",
+      "is": "0x16"
+    },
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "$alice",
+      "save": "aliceAfter"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$aliceBefore",
+        "$aliceAfter"
+      ],
+      "is": "1000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "onEach": [
+        "bp3",
+        "en1"
+      ],
+      "key": "$bobKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "11",
+      "save": "fanned"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "0x00000000000000000000000000000000C0FFEE05",
+      "compare": "GreaterOrEqual",
+      "is": "1000000000000000029"
+    }
+  ]
+}

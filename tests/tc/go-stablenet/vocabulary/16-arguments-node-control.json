@@ -1,0 +1,366 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-node-control",
+  "description": "WEB-05 coverage: node control, swaps, partitions, halts and node logs.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "bp1",
+      "maxBytes": 4096,
+      "save": "bp1Log"
+    },
+    {
+      "do": "readNodeLog",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "save": "enLog"
+    },
+    {
+      "do": "restartNode",
+      "on": "en1"
+    },
+    {
+      "do": "restartNode",
+      "onEach": [
+        "en2",
+        "bp3"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "onEach": [
+        "bp3",
+        "en1",
+        "en2"
+      ],
+      "compare": "Greater",
+      "is": "0",
+      "timeout": "60s"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "bp3",
+        "en1",
+        "en2"
+      ],
+      "timeout": "60s"
+    },
+    {
+      "do": "stopNode",
+      "on": "bp3"
+    },
+    {
+      "do": "stopNode",
+      "onEach": [
+        "en2"
+      ]
+    },
+    {
+      "expect": "blockStalled",
+      "on": "bp1",
+      "timeout": "15s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "blockHalt",
+      "on": "bp1",
+      "within": "10s",
+      "maxAdvance": 1
+    },
+    {
+      "expect": "blockHalt",
+      "onEach": [
+        "bp1",
+        "bp2"
+      ],
+      "within": "5s"
+    },
+    {
+      "do": "startNode",
+      "on": "bp3"
+    },
+    {
+      "do": "startNode",
+      "onEach": [
+        "en2"
+      ],
+      "save": "en2Started"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "onEach": [
+        "bp3",
+        "en2"
+      ],
+      "compare": "Greater",
+      "is": "0",
+      "timeout": "60s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "bp1",
+      "timeout": "60s"
+    },
+    {
+      "do": "partition",
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node4"
+        ],
+        [
+          "node5"
+        ]
+      ],
+      "method": "peers"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "bp1",
+      "timeout": "30s"
+    },
+    {
+      "do": "healPartition",
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node4"
+        ],
+        [
+          "node5"
+        ]
+      ],
+      "method": "peers"
+    },
+    {
+      "do": "partition",
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node5"
+        ],
+        [
+          "node4"
+        ]
+      ]
+    },
+    {
+      "do": "healPartition",
+      "groups": [
+        [
+          "node1",
+          "node2",
+          "node3",
+          "node5"
+        ],
+        [
+          "node4"
+        ]
+      ]
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "timeout": "60s"
+    },
+    {
+      "do": "swapNode",
+      "on": "en1",
+      "binary": "default",
+      "save": "sameBinary"
+    },
+    {
+      "do": "swapNode",
+      "onEach": [
+        "en2"
+      ],
+      "config": {
+        "syncMode": "full"
+      },
+      "purpose": "web05-full-sync"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "compare": "Greater",
+      "is": "0",
+      "timeout": "60s"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "timeout": "60s"
+    },
+    {
+      "do": "swapNode",
+      "on": "en2",
+      "genesisOverlay": {
+        "alloc": {
+          "0x00000000000000000000000000000000000000ff": {
+            "balance": "0x1"
+          }
+        }
+      },
+      "expect": "fail",
+      "reason": "incompatible genesis",
+      "save": "mismatch"
+    },
+    {
+      "do": "stopNode",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1"
+      ]
+    },
+    {
+      "do": "swapNode",
+      "on": "en2",
+      "config": {
+        "httpHost": "203.0.113.7"
+      },
+      "purpose": "web05-unbindable",
+      "expectFail": true,
+      "reason": "can't assign requested address"
+    },
+    {
+      "do": "startNode",
+      "on": "en2",
+      "expectFail": true,
+      "reason": "can't assign requested address",
+      "save": "stillDown"
+    },
+    {
+      "do": "startNode",
+      "on": "en2",
+      "expect": "fail",
+      "reason": "can't assign requested address"
+    },
+    {
+      "do": "swapNode",
+      "on": "en2",
+      "config": {
+        "httpHost": "0.0.0.0"
+      },
+      "purpose": "web05-restored"
+    },
+    {
+      "do": "startNode",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "en1",
+        "en2"
+      ],
+      "compare": "Greater",
+      "is": "0",
+      "timeout": "90s"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "bp1",
+        "en2"
+      ],
+      "timeout": "90s"
+    },
+    {
+      "do": "resetNode",
+      "on": "en1"
+    },
+    {
+      "do": "resetNode",
+      "onEach": [
+        "en2"
+      ]
+    },
+    {
+      "do": "startNode",
+      "onEach": [
+        "en1"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "en1",
+      "compare": "Greater",
+      "is": "0",
+      "timeout": "120s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "en1",
+      "timeout": "90s"
+    }
+  ]
+}

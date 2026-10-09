@@ -70,6 +70,22 @@ class EvidenceWEB05Tests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             verify_coverage(contract, coverage + coverage)
 
+    def test_action_outcome_is_an_argument(self):
+        # A do statement's expect is an argument; skipping it would leave
+        # sendTx's revert or reject outcomes outside the denominator.
+        contract = {'vocabulary': {'entries': [
+            {'kind': 'action', 'name': 'sendTx', 'schemaRef': '#/$defs/action-sendTx'},
+            {'kind': 'assertion', 'name': 'chainId', 'schemaRef': '#/$defs/assertion-chainId'}]},
+            'contract': {'$defs': {
+                'action-sendTx': {'properties': {'do': {'const': 'sendTx'}, 'expect': {'enum': ['receipt', 'revert']}, 'to': {}}},
+                'assertion-chainId': {'properties': {'expect': {'const': 'chainId'}, 'is': {}}}}}}
+        def entry(kind, name, paths):
+            return {'kind': kind, 'name': name, 'schema': True, 'edited': True, 'roundTrip': True, 'executed': True,
+                    'argumentPaths': paths, 'editedArgumentPaths': paths, 'executedArgumentPaths': paths}
+        with self.assertRaises(AssertionError):
+            verify_coverage(contract, [entry('action', 'sendTx', ['to']), entry('assertion', 'chainId', ['is'])])
+        verify_coverage(contract, [entry('action', 'sendTx', ['expect', 'to']), entry('assertion', 'chainId', ['is'])])
+
     def test_unexecuted_arguments_rejected(self):
         contract, coverage = self.coverage()
         coverage[0]['executedArgumentPaths'] = []
