@@ -26,6 +26,9 @@ def check(criterion, output):
     protected = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
     root = runtime_root(); root.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, WEBUI_BASE_COMMIT=base_commit(), PYTHONDONTWRITEBYTECODE='1')
+    selection = workspace / '.ouroboros/web-ui-analysis/selected-binaries/manifest.json'
+    if selection.is_file() and 'WEBUI_SELECTED_BINARIES' not in env:
+        env['WEBUI_SELECTED_BINARIES'] = str(selection)
     runtime = Path(tempfile.mkdtemp(prefix='recheck-', dir=root))
     source = stage_sources(workspace, runtime)
     if source_digest(source) != before:

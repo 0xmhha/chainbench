@@ -10,6 +10,7 @@ from runtime_contract import source_digest
 
 RUNNERS = {
     'WEB-01': ('run_web01.py', 'evidence'),
+    'WEB-02': ('run_web02.py', 'evidence_web02'),
     'WEB-03': ('run_web03.py', 'evidence_web03'),
     'WEB-04': ('run_web04.py', 'evidence_web04'),
     'WEB-05': ('run_web05.py', 'evidence_web05'),

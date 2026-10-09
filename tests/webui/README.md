@@ -281,3 +281,9 @@ deployment. `run_ssh_deploy_fault.py` cuts the owned SSH connection after the
 initial binary upload completes. `verify.sh --criterion WEB-06|WEB-11|WEB-12`
 reruns them with the related existing proofs; WEB-06 needs
 `WEBUI_REPLACEMENT_BINARY`.
+
+`run_web02_bundle.py` imports an invalid and a valid configuration bundle through
+the browser, saves it, creates a workspace, edits the server-set through the
+form, re-pins the workspace, exports the workspace bundle, re-imports it and
+deploys four native nodes on the edited ports. `verify.sh --criterion WEB-02`
+reruns it with the preset and asset pinning proofs.

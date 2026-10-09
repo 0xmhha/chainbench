@@ -2,6 +2,7 @@
 import glob
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import re
@@ -14,7 +15,11 @@ def digest(path):
 
 
 def prepare(runtime, output):
-    manifest = json.loads(Path('.ouroboros/web-ui-analysis/selected-binaries/manifest.json').read_text())
+    # The binary selection is external provenance, like the chain checkouts it
+    # names. A staged source copy excludes .ouroboros, so recheck passes the
+    # original selection through WEBUI_SELECTED_BINARIES.
+    selection = os.environ.get('WEBUI_SELECTED_BINARIES', '.ouroboros/web-ui-analysis/selected-binaries/manifest.json')
+    manifest = json.loads(Path(selection).read_text())
     binaries = []
     for selected in manifest['binaries']:
         chain = selected['chain']
