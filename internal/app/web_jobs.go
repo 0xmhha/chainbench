@@ -43,6 +43,7 @@ type WebJobs struct {
 	redact    func(string) string
 	authorize func(DeploymentActor) error
 	cancels   map[string]context.CancelFunc
+	root      string
 }
 
 func OpenWebJobs(root string, engine WebJobEngine, redact func(string) string, authorize func(DeploymentActor) error) (*WebJobs, error) {
@@ -50,7 +51,7 @@ func OpenWebJobs(root string, engine WebJobEngine, redact func(string) string, a
 	if err != nil {
 		return nil, err
 	}
-	s := &WebJobs{feed: newWebJobFeed(), files: files, engine: engine, redact: redact, authorize: authorize, cancels: map[string]context.CancelFunc{}, state: webJobState{Plans: map[string]savedWebPlan{}, Jobs: map[string]WebJob{}, Keys: map[string]webJobKey{}}}
+	s := &WebJobs{feed: newWebJobFeed(), files: files, engine: engine, redact: redact, authorize: authorize, cancels: map[string]context.CancelFunc{}, root: root, state: webJobState{Plans: map[string]savedWebPlan{}, Jobs: map[string]WebJob{}, Keys: map[string]webJobKey{}}}
 	b, err := files.Read()
 	if err == nil {
 		if err = json.Unmarshal(b, &s.state); err != nil {
@@ -148,7 +149,10 @@ func validatePrepared(p WebPreparedJob) error {
 		return errors.New("invalid target fingerprint")
 	}
 	for _, c := range p.Claims {
-		if c.HostIdentity == "" || (c.DataPath == "" && len(c.Ports) == 0) {
+		if c.HostIdentity == "" || (c.DataPath == "" && len(c.Ports) == 0 && c.Executable == "") {
+			return errors.New("unresolved physical resource")
+		}
+		if c.Executable != "" && (c.DataPath != "" || len(c.Ports) != 0 || strings.ContainsAny(c.Executable, "/\x00")) {
 			return errors.New("unresolved physical resource")
 		}
 		if c.DataPath != "" && (!strings.HasPrefix(c.DataPath, "/") || strings.Contains(c.DataPath, "\x00")) {
@@ -189,6 +193,10 @@ func (s *WebJobs) Plan(ctx context.Context, a DeploymentActor, in WebPlanInput) 
 	}
 	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, ChainSurfaces: []any{}, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
 	for _, c := range p.Claims {
+		if c.Executable != "" {
+			plan.Resources = append(plan.Resources, c.HostIdentity+":process:"+c.Executable)
+			continue
+		}
 		plan.Resources = append(plan.Resources, c.HostIdentity+":"+c.DataPath)
 	}
 	s.mu.Lock()

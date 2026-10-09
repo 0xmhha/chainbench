@@ -22,15 +22,21 @@ type WebPlanInput struct {
 
 // WebResourceClaim comes only from an engine's resolved plan, never the browser.
 // HostIdentity must bind aliases to the same physical host (including SSH key).
+// Executable names a node binary the job launches on that host: the engine
+// refuses to compose while the same binary runs there outside its workspace.
 type WebResourceClaim struct {
 	HostIdentity string `json:"hostIdentity"`
 	DataPath     string `json:"dataPath,omitempty"`
 	Ports        []int  `json:"ports,omitempty"`
+	Executable   string `json:"executable,omitempty"`
 }
 
 func claimsOverlap(a, b WebResourceClaim) bool {
 	if a.HostIdentity != b.HostIdentity {
 		return false
+	}
+	if a.Executable != "" && a.Executable == b.Executable {
+		return true
 	}
 	if a.DataPath != "" && b.DataPath != "" {
 		aPath, bPath := path.Clean(a.DataPath), path.Clean(b.DataPath)

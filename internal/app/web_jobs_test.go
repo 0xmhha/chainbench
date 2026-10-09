@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // This controllable executor tests job ownership and persistence; it is not
@@ -278,5 +280,57 @@ func TestWebPhysicalClaimsCompareAncestorsPortsAndHosts(t *testing.T) {
 		if got := claimsOverlap(c.a, c.b); got != c.want {
 			t.Errorf("%+v / %+v: %v", c.a, c.b, got)
 		}
+	}
+}
+
+func TestWebExecutableClaimsFollowRecordedProcesses(t *testing.T) {
+	for _, c := range []struct {
+		a, b WebResourceClaim
+		want bool
+	}{
+		{WebResourceClaim{HostIdentity: "host", Executable: "gwbft"}, WebResourceClaim{HostIdentity: "host", Executable: "gwbft"}, true},
+		{WebResourceClaim{HostIdentity: "host", Executable: "gwbft"}, WebResourceClaim{HostIdentity: "host", Executable: "gstable"}, false},
+		{WebResourceClaim{HostIdentity: "host", Executable: "gwbft"}, WebResourceClaim{HostIdentity: "other", Executable: "gwbft"}, false},
+	} {
+		if got := claimsOverlap(c.a, c.b); got != c.want {
+			t.Errorf("%+v / %+v: %v", c.a, c.b, got)
+		}
+	}
+	root := t.TempDir()
+	jobs, err := OpenWebJobs(root, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := func(pid int) {
+		dir := filepath.Join(root, "networks", "owner")
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		// node2 was swapped to its own binary; only node1's PID varies here.
+		raw, _ := json.Marshal(State{Binary: "/d/binaries/sha/gwbft", Binaries: map[string]string{"swapped": "/d/binaries/other/gstable"}, Nodes: []node.Record{{Index: 1, Label: "node1", PID: pid}, {Index: 2, Label: "node2", PID: 7, Binary: "swapped"}}})
+		if err := os.WriteFile(filepath.Join(dir, "chain-record.json"), raw, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	jobs.state.Plans["owner"] = savedWebPlan{Prepared: WebPreparedJob{Claims: []WebResourceClaim{{HostIdentity: "host", DataPath: "/owner", Ports: []int{30303}}, {HostIdentity: "host", DataPath: "/control/owner"}, {HostIdentity: "host", Executable: "gwbft"}}}}
+	jobs.state.Jobs["owner"] = WebJob{ID: "owner", ActorID: "operator", WorkspaceID: "owner", PlanID: "owner", State: "succeeded", NodeDisposition: "retained"}
+	request := []WebResourceClaim{{HostIdentity: "host", DataPath: "/other", Ports: []int{30403}}, {HostIdentity: "host", Executable: "gwbft"}}
+	record(4242)
+	if got := jobs.resourceConflicts("other", request); len(got) != 1 || got[0].JobID != "owner" || got[0].ActorID != "operator" {
+		t.Fatalf("a retained network running the same executable must block with its owner: %+v", got)
+	}
+	if got := jobs.resourceConflicts("other", []WebResourceClaim{{HostIdentity: "host", DataPath: "/other"}, {HostIdentity: "host", Executable: "gstable"}}); len(got) != 1 {
+		t.Fatalf("a node swapped to another binary holds that binary too: %+v", got)
+	}
+	if got := jobs.resourceConflicts("other", []WebResourceClaim{{HostIdentity: "host", DataPath: "/other"}, {HostIdentity: "host", Executable: "gwemix"}}); len(got) != 0 {
+		t.Fatalf("a binary the network does not run is an independent resource: %+v", got)
+	}
+	record(0)
+	if got := jobs.resourceConflicts("other", request); len(got) != 0 {
+		t.Fatalf("a retained network whose nodes are recorded stopped must not hold the executable: %+v", got)
+	}
+	jobs.state.Jobs["owner"] = WebJob{ID: "owner", ActorID: "operator", WorkspaceID: "owner", PlanID: "owner", State: "running"}
+	if got := jobs.resourceConflicts("other", request); len(got) != 1 {
+		t.Fatalf("a running job holds its executable before any node is recorded: %+v", got)
 	}
 }

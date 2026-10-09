@@ -1,7 +1,10 @@
 package app
 
 import (
+	"encoding/json"
+	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"time"
 )
@@ -51,6 +54,7 @@ func (s *WebJobs) resourceConflicts(workspace string, claims []WebResourceClaim)
 			}
 		}
 	}
+	running := map[string]map[string]bool{} // workspace -> executables recorded as launched
 	for _, job := range s.state.Jobs {
 		terminal := terminalWebJob(job.State)
 		if terminal && (job.WorkspaceID == workspace || verifiedWebCleanup(job)) {
@@ -59,6 +63,22 @@ func (s *WebJobs) resourceConflicts(workspace string, claims []WebResourceClaim)
 		resources := []WebResourceClaim{}
 		for _, held := range s.state.Plans[job.PlanID].Prepared.Claims {
 			if terminal && s.claimCleaned(job, held, accepted) {
+				continue
+			}
+			if terminal && held.Executable != "" {
+				// A finished launch holds whatever its network still records as
+				// running, including per-node and replaced binaries.
+				names, ok := running[job.WorkspaceID]
+				if !ok {
+					names = s.recordedExecutables(job.WorkspaceID)
+					running[job.WorkspaceID] = names
+				}
+				for _, requested := range claims {
+					if requested.HostIdentity == held.HostIdentity && requested.Executable != "" && (names[requested.Executable] || names["*"]) {
+						resources = append(resources, WebResourceClaim{HostIdentity: held.HostIdentity, Executable: requested.Executable})
+						break
+					}
+				}
 				continue
 			}
 			for _, requested := range claims {
@@ -122,4 +142,30 @@ func claimCleanupCovers(held, released WebResourceClaim) bool {
 		}
 	}
 	return len(held.Ports) > 0
+}
+
+// recordedExecutables names the binaries a network's record says are launched.
+// A recorded PID is not proof of liveness, so this only keeps a finished job's
+// executable claim; an unreadable record keeps every binary it could name.
+func (s *WebJobs) recordedExecutables(workspace string) map[string]bool {
+	names := map[string]bool{}
+	raw, err := os.ReadFile(filepath.Join(s.root, "networks", workspace, "chain-record.json"))
+	if os.IsNotExist(err) {
+		return names
+	}
+	var state State
+	if err != nil || json.Unmarshal(raw, &state) != nil {
+		return map[string]bool{"*": true}
+	}
+	for _, ns := range state.Nodes {
+		if ns.PID <= 0 {
+			continue
+		}
+		binary := state.Binary
+		if ns.Binary != "" {
+			binary = state.Binaries[ns.Binary]
+		}
+		names[filepath.Base(binary)] = true
+	}
+	return names
 }

@@ -310,6 +310,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		delete(expectedAssets, id)
 	}
 	out.Claims = []WebResourceClaim{{HostIdentity: p.Target.HostIdentity, DataPath: p.Target.DataPath, Ports: ports}, {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
+	if webLaunchesNodes(in.Operation) {
+		out.Claims = append(out.Claims, WebResourceClaim{HostIdentity: p.Target.HostIdentity, Executable: filepath.Base(p.ExecutionBinary)})
+	}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
 		if controlState != nil && manifestHash(record) != p.RecordDigest {
@@ -534,7 +537,17 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if err != nil {
 		return WebJobResult{}, err
 	}
-	if len(prepared.Claims) != 2 || control.HostIdentity != prepared.Claims[1].HostIdentity || control.DataPath != prepared.Claims[1].DataPath {
+	if len(prepared.Claims) < 2 || control.HostIdentity != prepared.Claims[1].HostIdentity || control.DataPath != prepared.Claims[1].DataPath {
+		return WebJobResult{}, ErrDeploymentConflict
+	}
+	want := 2
+	if webLaunchesNodes(p.Input.Operation) {
+		want = 3
+	}
+	if len(prepared.Claims) != want {
+		return WebJobResult{}, ErrDeploymentConflict
+	}
+	if launch := prepared.Claims[want-1]; want == 3 && (launch.HostIdentity != p.Target.HostIdentity || launch.Executable != filepath.Base(p.ExecutionBinary) || launch.DataPath != "" || len(launch.Ports) != 0) {
 		return WebJobResult{}, ErrDeploymentConflict
 	}
 	plugin, err := ValidateManifest(p.Manifest.ManifestInput)
@@ -632,4 +645,12 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}, PartialEffects: []string{"owned nodes stopped before removal"}}, err
 	}
 	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: []string{"owned nodes stopped", "owned composition cleaned"}}, nil
+}
+
+// webLaunchesNodes reports whether an operation composes and launches a
+// network, which the engine refuses while the same binary runs on the host
+// outside the workspace; its plan claims that executable. Single-node
+// controls are not checked by the engine and claim no executable.
+func webLaunchesNodes(operation string) bool {
+	return operation == "chain.deploy" || operation == "test.run"
 }

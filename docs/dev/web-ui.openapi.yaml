@@ -2367,6 +2367,9 @@ components:
                   type: integer
                   minimum: 1
                   maximum: 65535
+              executable:
+                type: string
+                description: Node binary name a launching job runs on that host. The engine refuses to compose while the same binary runs there outside its workspace, so plans conflict on it; a finished job keeps it only while its network record names a launched node.
     PlanInput:
       type: object
       properties:
