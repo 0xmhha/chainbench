@@ -325,6 +325,11 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 					addressed = append(addressed, err.Error())
 				}
 			}
+			if matches == 0 && len(addressed) == 0 {
+				if why := editorUnknownChoice(value, choices, root, path); why != "" {
+					return errors.New(why)
+				}
+			}
 			if matches == 0 && len(addressed) == 1 {
 				// The statement names its builtin (do, expect, source), so
 				// the other builtins' complaints are noise.
@@ -464,6 +469,51 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 		}
 	}
 	return nil
+}
+
+// editorUnknownChoice names the discriminating field (do, expect, source)
+// whose value no choice declares, so an unregistered builtin is refused as
+// one rather than as every other builtin's missing arguments.
+func editorUnknownChoice(value any, choices []any, root map[string]any, path string) string {
+	m, ok := value.(map[string]any)
+	if !ok {
+		return ""
+	}
+	known := map[string]map[string]bool{}
+	var collect func(choice map[string]any)
+	collect = func(choice map[string]any) {
+		if ref, ok := choice["$ref"].(string); ok {
+			if def, ok := root["$defs"].(map[string]any)[strings.TrimPrefix(ref, "#/$defs/")].(map[string]any); ok {
+				choice = def
+			}
+		}
+		if nested, ok := choice["oneOf"].([]any); ok {
+			for _, c := range nested {
+				collect(c.(map[string]any))
+			}
+			return
+		}
+		props, _ := choice["properties"].(map[string]any)
+		for key, prop := range props {
+			if c, ok := prop.(map[string]any)["const"].(string); ok {
+				if known[key] == nil {
+					known[key] = map[string]bool{}
+				}
+				known[key][c] = true
+			}
+		}
+	}
+	for _, c := range choices {
+		collect(c.(map[string]any))
+	}
+	for _, key := range []string{"do", "expect", "source"} {
+		v, ok := m[key].(string)
+		if !ok || known[key] == nil || known[key][v] {
+			continue
+		}
+		return fmt.Sprintf("%s/%s: %q is not a registered builtin", path, key, v)
+	}
+	return ""
 }
 
 // editorChoiceNamed reports whether value carries every constant a choice

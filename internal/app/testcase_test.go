@@ -263,3 +263,18 @@ func TestEditorPrivateKeyArgumentsRequireBindings(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// An unregistered builtin is refused as one, not as the missing arguments of
+// every registered builtin.
+func TestEditorNamesAnUnregisteredBuiltin(t *testing.T) {
+	for steps, word := range map[string]string{
+		`[{"expect":"nosuch","is":1}]`:                                                 `"nosuch" is not a registered builtin`,
+		`[{"do":"nosuch"},{"expect":"blockNumber","is":1}]`:                            `"nosuch" is not a registered builtin`,
+		`[{"do":"read","source":"nosuch","save":"x"},{"expect":"blockNumber","is":1}]`: `"nosuch" is not a registered builtin`,
+	} {
+		_, err := PrepareTestCase(TestCaseInput{Content: editorCase(steps)})
+		if err == nil || !strings.Contains(err.Error(), word) || strings.Contains(err.Error(), "variant") {
+			t.Errorf("%s: err = %v", steps, err)
+		}
+	}
+}

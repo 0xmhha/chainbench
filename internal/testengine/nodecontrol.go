@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
-	"io"
 	"io/fs"
-	"os"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
@@ -95,39 +93,24 @@ func (w workspaceNodes) CrossFork(ctx context.Context, timeout time.Duration) ([
 // that refuses its genesis prints the reason and exits, and the process manager
 // sees only an exit.
 //
-// The log lives in the workspace this suite composed, under the conventional
-// per-node label. A node that has never been launched has no log file, which is
-// not an error — it reads as an empty log.
-func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (string, error) {
-	path := node.Layout{Root: w.dataDir}.LogPath(node.LabelFor(n.Index))
-	f, err := os.Open(path)
+// The log is the one the node's record names, read through the machine that
+// launched it: a workspace with its own data root keeps logs outside the
+// control directory, and a remote node keeps them on its host. A node that has
+// never been launched has no log file, which is not an error; it reads as an
+// empty log.
+func (w workspaceNodes) Log(ctx context.Context, n node.Node, maxBytes int) (string, error) {
+	out, err := verb.ChainLogs(ctx, w.sd, verb.ChainLogsIn{DataDir: w.dataDir, Node: n.Index})
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
 		}
-		return "", fmt.Errorf("engine: open node%d log %s: %w", n.Index, path, err)
+		return "", fmt.Errorf("engine: node%d log: %w", n.Index, err)
 	}
-	defer func() { _ = f.Close() }()
-	info, err := f.Stat()
-	if err != nil {
-		return "", fmt.Errorf("engine: stat node%d log: %w", n.Index, err)
+	text := out.Text
+	if maxBytes > 0 && len(text) > maxBytes {
+		text = text[len(text)-maxBytes:]
 	}
-	size := info.Size()
-	if maxBytes <= 0 || int64(maxBytes) > size {
-		maxBytes = int(size)
-	}
-	if maxBytes == 0 {
-		return "", nil
-	}
-	if _, err := f.Seek(size-int64(maxBytes), io.SeekStart); err != nil {
-		return "", fmt.Errorf("engine: seek node%d log: %w", n.Index, err)
-	}
-	buf := make([]byte, maxBytes)
-	read, err := io.ReadFull(f, buf)
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return "", fmt.Errorf("engine: read node%d log: %w", n.Index, err)
-	}
-	return string(buf[:read]), nil
+	return text, nil
 }
 
 // verifyAgainstPlan holds the launched network to the plan and refuses to test
