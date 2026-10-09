@@ -1,16 +1,16 @@
-"""Restart a real dashboard during an owned native test, without auto recovery."""
+"""Native dashboard restart during a real deployment, without automatic recovery; full WEB-12 acceptance remains open."""
 import hashlib
 import json
 from pathlib import Path
 from run_test_jobs import main
 from runtime_contract import source_digest
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     before = source_digest(Path.cwd())
-    main(browser_script="browser_interrupted_test.mjs", proof_name="interrupted-test", restart=True)
+    main(browser_script='browser_deploy_restart.mjs', proof_name='deploy-restart', restart=True, browser_timeout=600)
     if source_digest(Path.cwd()) != before:
-        raise RuntimeError('source changed during interrupted test verification')
-    path = Path('chainbench-out/web-ui-development/interrupted-test/receipt.json')
+        raise RuntimeError('source changed during deployment restart verification')
+    path = Path('chainbench-out/web-ui-development/deploy-restart/receipt.json')
     receipt = json.loads(path.read_text())
     receipt['sourceDigest'] = before
     receipt['dashboardSHA256'] = hashlib.sha256((Path(receipt['runtime']) / 'dashboard').read_bytes()).hexdigest()

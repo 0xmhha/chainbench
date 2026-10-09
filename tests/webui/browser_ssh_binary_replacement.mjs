@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import {execFileSync} from 'node:child_process'
+import {ownedGatedConnection} from './owned-ssh-gate.mjs'
 const [fixturePath,out]=process.argv.slice(2),f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
 const key=fs.readFileSync(f.runtime+'/ssh/client','utf8')
 const owned=await launchOwnedBrowser(),context=await owned.browser.newContext({viewport:{width:1440,height:1100}})
@@ -28,21 +29,6 @@ async function genesisHash(){
   await new Promise(r=>setTimeout(r,100))
  }
  throw new Error('SSH native node did not serve genesis RPC')
-}
-function gatedConnectionAncestors(){
- const pid=Number(fs.readFileSync(f.runtime+'/ssh/gate-copied','utf8').trim().split(/\s+/)[0])
- assert.ok(Number.isSafeInteger(pid)&&pid>1)
- assert.ok(execFileSync('ps',['-p',String(pid),'-o','command='],{encoding:'utf8'}).includes(f.sshGatePath),'gate process is outside this fixture')
- const ancestors=[];let current=pid
- for(let i=0;i<16;i++){
-  const text=execFileSync('ps',['-p',String(current),'-o','ppid=','-o','comm='],{encoding:'utf8'}).trim(),match=/^(\d+)\s+(.+)$/.exec(text)
-  assert.ok(match,'owned SSH ancestry unavailable');ancestors.push({pid:current,parent:Number(match[1]),command:match[2]})
-  if(current===f.ssh.pid)break
-  current=Number(match[1]);assert.ok(current>1,'gated command does not descend from the fixture SSH daemon')
- }
- assert.equal(ancestors.at(-1).pid,f.ssh.pid)
- assert.ok(execFileSync('ps',['-p',String(f.ssh.pid),'-o','command='],{encoding:'utf8'}).includes(f.runtime+'/ssh/sshd_config'),'SSH root belongs to another task')
- return ancestors
 }
 const acceptedSSHConnections=()=>[...fs.readFileSync(f.runtime+'/ssh/sshd.log','utf8').matchAll(/Accepted publickey /g)].length
 try{
@@ -99,9 +85,7 @@ try{
   assert.equal((await api('jobs/'+acceptedJob.id)).state,'running')
   const connections=acceptedSSHConnections()
   if(f.sshFaultMode==='disconnect'){
-   const first=gatedConnectionAncestors();await new Promise(r=>setTimeout(r,100));const second=gatedConnectionAncestors();assert.deepEqual(second,first,'owned SSH connection identity changed')
-   const connection=first.slice(1,-1).find(v=>/(^|\/)sshd(?:-session|-auth)?(?:$|:)/.test(v.command))
-   assert.ok(connection,'no owned SSH connection ancestor; refusing to signal anything')
+   const connection=await ownedGatedConnection(f)
    process.kill(connection.pid,'SIGKILL')
   }else await api('credentials/'+credential.id,'DELETE',undefined,204)
   faultResult=await waitJob(acceptedJob.id,f.sshFaultMode==='disconnect'?'failed':'cancelled')

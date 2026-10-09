@@ -271,3 +271,13 @@ keeping nodes, and attach refusal in the API and job form.
 `WEBUI_REPLACEMENT_BINARY=<native WBFT build> bash tests/webui/verify.sh
 --criterion WEB-13 --require-live --capture` reruns both with the SSH
 credential-revocation transfer proof.
+
+`run_resource_parallel.py` keeps a native test running that stops and restarts
+its own node, refuses external control and a workspace alias with the owner
+shown, refuses a second workspace with the same node binary before execution,
+and completes a Stablenet workspace with its own paths, ports and binary in
+parallel. `run_deploy_restart.py` restarts the dashboard during a real
+deployment. `run_ssh_deploy_fault.py` cuts the owned SSH connection after the
+initial binary upload completes. `verify.sh --criterion WEB-06|WEB-11|WEB-12`
+reruns them with the related existing proofs; WEB-06 needs
+`WEBUI_REPLACEMENT_BINARY`.

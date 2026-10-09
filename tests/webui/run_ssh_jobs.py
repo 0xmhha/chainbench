@@ -128,4 +128,14 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
 
 
 if __name__ == '__main__':
+    from runtime_contract import source_digest
+    import hashlib
+    before = source_digest(Path.cwd())
     main()
+    if source_digest(Path.cwd()) != before:
+        raise RuntimeError('source changed during SSH deployment verification')
+    path = Path('chainbench-out/web-ui-development/ssh-jobs/receipt.json')
+    receipt = json.loads(path.read_text())
+    receipt['sourceDigest'] = before
+    receipt['dashboardSHA256'] = hashlib.sha256((Path(receipt['runtime']) / 'dashboard').read_bytes()).hexdigest()
+    path.write_text(json.dumps(receipt, indent=2))
