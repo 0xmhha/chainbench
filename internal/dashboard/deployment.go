@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -153,6 +155,16 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			v, err := store.SaveWorkspace(a, "", 0, in)
 			deploymentResponse(w, v, err, 201)
 		})
+		route("GET /api/v1/workspaces/{id}/export", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			b, err := store.ExportWorkspaceBundle(a, r.PathValue("id"))
+			if err != nil {
+				deploymentError(w, err)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Disposition", `attachment; filename="chainbench-workspace.bundle.json"`)
+			_, _ = w.Write(b)
+		})
 		route("GET /api/v1/workspaces/{id}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			v, err := store.Workspace(r.PathValue("id"))
 			deploymentResponse(w, v, err, 200)
@@ -284,6 +296,8 @@ func deploymentError(w http.ResponseWriter, err error) {
 		status = 403
 	case errors.Is(err, app.ErrDeploymentConflict):
 		status = http.StatusConflict
+	case webInternalError(err):
+		status = http.StatusInternalServerError // Storage and OS failures are not input problems.
 	}
 	http.Error(w, err.Error(), status)
 }
@@ -298,4 +312,13 @@ func deploymentReadDocument(store *app.DeploymentStore, r *http.Request) (app.De
 		}
 	}
 	return store.DocumentRevision(r.PathValue("id"), revision)
+}
+
+// webInternalError recognises filesystem and system-call failures, whose text
+// names server paths; they are reported as server errors with generic text.
+func webInternalError(err error) bool {
+	var pathErr *fs.PathError
+	var linkErr *os.LinkError
+	var sysErr *os.SyscallError
+	return errors.As(err, &pathErr) || errors.As(err, &linkErr) || errors.As(err, &sysErr)
 }

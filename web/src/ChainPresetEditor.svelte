@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   import Field from "./DSLField.svelte"
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
@@ -21,7 +22,7 @@
     const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }
     if (expectedRevision) headers['If-Match'] = `"${expectedRevision}"`
     const response = await fetch('/api/v1/' + path, { method, headers, body: data === undefined ? undefined : JSON.stringify(data) })
-    if (!response.ok) throw new Error(`Shared document request failed (${response.status}).`)
+    if (!response.ok) throw await responseError(response)
     return response.json()
   }
   async function refreshSaved() { saved = (await shared('documents?kind=chain-preset')).items }
@@ -125,7 +126,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}) },
         body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs })
       })
-      if (!response.ok) throw new Error(`Validation request failed (${response.status}).`)
+      if (!response.ok) throw await responseError(response)
       const validation = await response.json()
       if (version === requestVersion) result = validation
     } catch (e) {

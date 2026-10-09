@@ -48,7 +48,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 				return
 			}
 			w.Header().Set("Cache-Control", "no-store")
-			response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: deployments.RedactWeb}
+			response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: deployments.RedactWeb, explain: r.Method != http.MethodGet && r.Method != http.MethodHead}
 			// This endpoint is generated exclusively from parser/dialect metadata.
 			// A schema property named password describes a file-path option,
 			// rather than containing credential material. Preserve its schema.
@@ -218,6 +218,8 @@ type secureResponse struct {
 	status  int
 	redact  func(string) string
 	errored bool
+	// explain lets a state-changing request see why its input was refused.
+	explain bool
 }
 
 func (w *secureResponse) WriteHeader(status int) {
@@ -234,7 +236,7 @@ func (w *secureResponse) Write(b []byte) (int, error) {
 			return len(b), nil
 		}
 		w.errored = true
-		_, err := w.ResponseWriter.Write(webErrorBody(w.status))
+		_, err := w.ResponseWriter.Write(webErrorBody(w.status, b, w.redact, w.explain))
 		return len(b), err
 	}
 	_, err := w.ResponseWriter.Write([]byte(w.redact(string(b))))
@@ -254,7 +256,7 @@ func legacyWebSecurity(s *Server, store *app.DeploymentStore, authenticate Deplo
 			s.mux.ServeHTTP(w, r)
 			return
 		}
-		response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: store.RedactWeb}
+		response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: store.RedactWeb, explain: r.Method != http.MethodGet && r.Method != http.MethodHead}
 		if authenticate == nil {
 			http.Error(response, "login required", http.StatusUnauthorized)
 			return
@@ -284,7 +286,35 @@ func legacyWebSecurity(s *Server, store *app.DeploymentStore, authenticate Deplo
 	}
 }
 
-func webErrorBody(status int) []byte {
-	b, _ := json.Marshal(map[string]string{"code": http.StatusText(status), "message": http.StatusText(status), "requestId": "web-rejected"})
+// webValidationLimit bounds an explained validation message.
+const webValidationLimit = 2048
+
+// webErrorBody keeps the generic status text for every failure except request
+// validation (400, 409, 422), whose reason the user needs to correct the input.
+// That reason is redacted for registered secrets and personal credentials;
+// viewers never reach a write route, so only editors read these reasons.
+func webErrorBody(status int, original []byte, redact func(string) string, explain bool) []byte {
+	body := map[string]any{"code": http.StatusText(status), "message": http.StatusText(status), "requestId": "web-rejected"}
+	if explain && (status == http.StatusBadRequest || status == http.StatusConflict || status == http.StatusUnprocessableEntity) {
+		var structured map[string]any
+		text := strings.TrimSpace(redact(string(original)))
+		if json.Unmarshal([]byte(text), &structured) == nil && len(text) <= 4*webValidationLimit {
+			for key, value := range structured {
+				if key == "message" {
+					if message, ok := value.(string); ok && message != "" {
+						body["message"] = message
+					}
+				} else if key != "code" && key != "requestId" {
+					body[key] = value
+				}
+			}
+		} else if text != "" && structured == nil {
+			if len(text) > webValidationLimit {
+				text = text[:webValidationLimit] + " …"
+			}
+			body["message"] = text
+		}
+	}
+	b, _ := json.Marshal(body)
 	return append(b, '\n')
 }

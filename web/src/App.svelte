@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   import DSLEditor from './DSLEditor.svelte'
   import LoginPanel from './LoginPanel.svelte'
@@ -41,7 +42,7 @@
   })
   async function read(path) {
     const response = await fetch(path)
-    if (!response.ok) throw new Error(`요청 실패 (${response.status})`)
+    if (!response.ok) throw await responseError(response)
     return response.json()
   }
   async function loadRuns() {

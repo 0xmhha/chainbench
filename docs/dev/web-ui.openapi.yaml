@@ -1125,6 +1125,29 @@ paths:
         schema: *id001
         description: Required for cookie-authenticated changes; publisher bearer ingestion
           uses its own authentication.
+  /api/v1/workspaces/{workspaceId}/export:
+    get:
+      operationId: exportWorkspace
+      summary: Download the workspace's pinned shared declarations as an importable bundle
+      description: 'The bundle is {"format":"chainbench-web-bundle","workspace":name,"documents":[{kind,name,contractVersion,assetRefs,content}]}. POST /api/v1/documents/import accepts it (format json), as well as a YAML stream of such documents; each document is validated with its /documents/N position. Shared declarations hold no private values.'
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Workspace bundle
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
   /api/v1/workspaces/{workspaceId}/networks:
     get:
       operationId: workspaceNetworks
@@ -3143,7 +3166,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     Invalid:
-      description: Engine grammar, field, reference or capability validation failed
+      description: Engine grammar, field, reference or capability validation failed. message (and errors when listed) carries the engine's reason with registered secrets and personal credentials removed; 400 and 409 responses do the same, while authentication, permission and server errors carry only their status text.
       content:
         application/json:
           schema:

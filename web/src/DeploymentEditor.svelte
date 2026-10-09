@@ -1,6 +1,8 @@
 <script>
+  import { responseError } from './api-error.mjs'
   let { webSession = undefined, onsaved = () => {} } = $props()
   import DeploymentFields from './DeploymentFields.svelte'
+  import BundleImport from './BundleImport.svelte'
   let username = $state(''), password = $state(''), authorization = $state('')
   let actor = $state(null), contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
   let kind = $state('server-set'), name = $state('Server pool'), content = $state({}), docId = $state(''), revision = $state(0)
@@ -12,7 +14,7 @@
     if (webSession?.csrfToken) headers['X-CSRF-Token']=webSession.csrfToken
     if (rev) headers['If-Match'] = `"${rev}"`
     const response = await fetch(`/api/v1/${path}`, { method, headers, body: data === undefined ? undefined : JSON.stringify(data) })
-    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`)
+    if (!response.ok) throw await responseError(response)
     return response.json()
   }
   async function action(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
@@ -32,6 +34,7 @@
   async function saveDocument() { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); status = `Saved shared document revision ${revision}` }
   async function saveWorkspace() { const documents = [setRef, configRef].map(ref => { const [id, rev] = ref.split(':'); return { id, revision: Number(rev) } }); const w = await api(workspaceId ? `workspaces/${workspaceId}` : 'workspaces', workspaceId ? 'PATCH' : 'POST', { name: workspaceName, documents }, workspaceRevision); onsaved(); await refresh(); await loadWorkspace(w.id); status = `Saved shared workspace revision ${w.revision}` }
   async function exportDocument() { const exported = await api(`documents/${docId}/export`); const url = URL.createObjectURL(new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `${kind}.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported shared declaration' }
+  async function exportWorkspace() { const response = await fetch(`/api/v1/workspaces/${workspaceId}/export`, { headers: { Authorization: authorization } }); if (!response.ok) throw await responseError(response); const url = URL.createObjectURL(await response.blob()); const a = document.createElement('a'); a.href = url; a.download = `${workspaceName}.bundle.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported workspace bundle' }
   function logout() { actor = null; contract = null; docs = []; workspaces = []; authorization = ''; password = ''; privateKey = ''; passphrase = ''; sshPassword = ''; credentials = []; bindings = {}; access = null; status = '' }
   $effect(() => { if(webSession) action(async()=>{ const account={id:webSession.user.id,role:webSession.user.role==='administrator'?'admin':webSession.user.role};contract=await api('contracts/deployment');await refresh();newDocument('server-set');actor=account }) })
   const canEdit = $derived(actor && ['admin','operator'].includes(actor.role))
@@ -63,7 +66,9 @@
         {#if docId}<p>Revision {revision}</p><button disabled={busy} onclick={() => action(exportDocument)}>Export shared document</button>{/if}
       </div>
       <div>
+        {#if canEdit}<BundleImport {webSession} onsaved={() => action(async () => { onsaved(); await refresh() })} />{/if}
         <h3>Shared workspace</h3>
+        {#if workspaceId}<button disabled={busy} onclick={() => action(exportWorkspace)}>Export workspace bundle</button>{/if}
         <label>Saved workspace <select aria-label="Saved deployment workspace" value={workspaceId} onchange={e => action(() => loadWorkspace(e.target.value))}><option value="">New workspace</option>{#each workspaces as w}<option value={w.id}>{w.name} · revision {w.revision}</option>{/each}</select></label>
         {#if canEdit}
           <button onclick={() => { workspaceId = ''; workspaceRevision = 0; bindings = {} }}>New shared workspace</button>

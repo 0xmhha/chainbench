@@ -3,7 +3,9 @@ package dashboard
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -220,5 +222,81 @@ func TestWebSecurityRedactsActualSSE(t *testing.T) {
 	}
 	if event.Message != "[REDACTED]" {
 		t.Fatal(line)
+	}
+}
+
+func TestWebSecurityShowsRedactedValidationReasonsOnly(t *testing.T) {
+	root := t.TempDir()
+	auth, err := app.OpenWebAuth(root, "team")
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := app.OpenDeploymentStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	s := NewServer(bus, nil, WithDeployments(store, WebAuthenticator(auth)), WithWebSecurity(auth, store))
+	setup, _ := os.ReadFile(filepath.Join(root, "setup.token"))
+	session, token, err := auth.Bootstrap("admin", "long-admin-password", string(setup))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const secret = "registered-validation-secret-7731"
+	if _, err = store.SaveCredential(app.DeploymentActor{ID: session.User.ID, Role: "admin"}, app.DeploymentCredentialInput{Label: "private", Kind: "password", SSHUser: "ops", Password: secret}); err != nil {
+		t.Fatal(err)
+	}
+	call := func(method, path, body string, authenticated bool) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(method, path, strings.NewReader(body))
+		if authenticated {
+			r.AddCookie(&http.Cookie{Name: webCookie, Value: token})
+			r.Header.Set("X-CSRF-Token", session.CSRFToken)
+		}
+		w := httptest.NewRecorder()
+		s.ServeHTTP(w, r)
+		return w
+	}
+	type errorBody struct{ Code, Message, RequestID string }
+	read := func(w *httptest.ResponseRecorder) errorBody {
+		var b errorBody
+		if err := json.Unmarshal(w.Body.Bytes(), &b); err != nil {
+			t.Fatalf("error body is not JSON: %q", w.Body.String())
+		}
+		return b
+	}
+	invalid := `{"kind":"server-set","name":"bad","contractVersion":"2","assetRefs":[],"content":{"version":2,"` + secret + `":1,"pool":{"hosts":[{"name":"local","addr":"127.0.0.1"}],"slots":1}}}`
+	w := call("POST", "/api/v1/documents", invalid, true)
+	if w.Code != 422 {
+		t.Fatalf("invalid document status %d: %s", w.Code, w.Body.String())
+	}
+	b := read(w)
+	if b.Message == "Unprocessable Entity" || b.Message == "" {
+		t.Fatalf("validation reason hidden: %+v", b)
+	}
+	if strings.Contains(w.Body.String(), secret) {
+		t.Fatalf("validation message leaked a registered secret: %s", w.Body.String())
+	}
+	if w := call("POST", "/api/v1/documents", invalid, false); w.Code != 401 || read(w).Message != "Unauthorized" {
+		t.Fatalf("authentication failure must stay generic: %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestWebErrorsExplainOnlyRefusedChangesNotServerFailures(t *testing.T) {
+	w := httptest.NewRecorder()
+	deploymentError(w, &fs.PathError{Op: "open", Path: "/private/state/deployment.json", Err: errors.New("no space left on device")})
+	if w.Code != 500 {
+		t.Fatalf("storage failure reported as %d", w.Code)
+	}
+	identity := func(s string) string { return s }
+	body := string(webErrorBody(500, []byte("open /private/state/deployment.json: no space left"), identity, true))
+	if strings.Contains(body, "/private/state") {
+		t.Fatalf("server failure text exposed: %s", body)
+	}
+	if body := string(webErrorBody(422, []byte("pool.slots must be at least 1"), identity, false)); strings.Contains(body, "pool.slots") {
+		t.Fatalf("a read request exposed a validation reason: %s", body)
+	}
+	if body := string(webErrorBody(422, []byte(`{"message":{"nested":true},"errors":[{"message":"bad"}]}`), identity, true)); !strings.Contains(body, `"message":"Unprocessable Entity"`) || !strings.Contains(body, `"bad"`) {
+		t.Fatalf("non-string message or listed errors mishandled: %s", body)
 	}
 }

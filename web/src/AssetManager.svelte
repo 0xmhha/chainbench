@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   let { webSession, onuploaded = () => {} } = $props()
   let items = $state([]), kind = $state('binary'), selected = $state(null), busy = $state(false), message = $state(''), filter = $state('all')
   const writable = $derived(['administrator', 'admin', 'operator'].includes(webSession?.user.role))
@@ -6,7 +7,7 @@
   const names = {binary:'체인 바이너리',configuration:'설정 선언',template:'템플릿',material:'테스트 자료'}
   async function refresh() {
     const response = await fetch('/api/v1/assets')
-    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`)
+    if (!response.ok) throw await responseError(response)
     items = (await response.json()).items
   }
   $effect(() => { if (webSession) refresh().catch(error => { message = error.message }) })
@@ -15,7 +16,7 @@
     try {
       const body = new FormData(); body.append('kind', kind); body.append('file', selected)
       const response = await fetch('/api/v1/assets', {method:'POST',headers:{'X-CSRF-Token':webSession.csrfToken},body})
-      if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`)
+      if (!response.ok) throw await responseError(response)
       const item = await response.json(); await refresh(); onuploaded()
       message = `등록 완료 · ${item.name} · ${item.id}`
     } catch (error) { message = error.message } finally { busy = false }

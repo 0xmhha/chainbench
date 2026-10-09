@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
  import Field from './DSLField.svelte'
  import {references,finishedGenesisRef,caseAssetRefs} from './dsl-form.js'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
@@ -10,7 +11,7 @@
  const genesisAssets=$derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
  const selectedGenesis=$derived(caseAssetRefs(document)[0]??'')
  const suggestions=$derived(references(document))
- async function api(path,method='GET',body,expectedRevision){const response=await fetch('/api/v1/'+path,{method,headers:{Authorization:authorization,'Content-Type':'application/json',...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}),...(expectedRevision?{'If-Match':`"${expectedRevision}"`}:{})},body:body===undefined?undefined:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.errors?.map(e=>e.message).join('; ')??`HTTP ${response.status}`);return data}
+ async function api(path,method='GET',body,expectedRevision){const response=await fetch('/api/v1/'+path,{method,headers:{Authorization:authorization,'Content-Type':'application/json',...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}),...(expectedRevision?{'If-Match':`"${expectedRevision}"`}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(!response.ok)throw await responseError(response);return response.json()}
  async function refreshSaved(){savedCases=(await api('documents?kind=case')).items}
  async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;original=null;genesisBackup=null;change(structuredClone(item.content));if(actor.role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
  async function save(){await work(async()=>{const item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,contractVersion:'2',content:document,assetRefs:caseAssetRefs(document)},revision);savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}

@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   let { session = $bindable(undefined), ready = $bindable(false) } = $props()
   let username=$state(''), password=$state(''), setupToken=$state(''), bootstrap=$state(false), status=$state(''), busy=$state(false)
@@ -7,7 +8,7 @@
     const headers={'Content-Type':'application/json'}
     if(session?.csrfToken) headers['X-CSRF-Token']=session.csrfToken
     const r=await fetch('/api/v1/'+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)})
-    if(!r.ok) throw new Error(`${r.status}: ${await r.text()}`)
+    if(!r.ok) throw await responseError(r)
     return r.status===204?null:r.json()
   }
   async function work(fn){busy=true;status='';try{await fn()}catch(e){status=e.message}finally{busy=false}}

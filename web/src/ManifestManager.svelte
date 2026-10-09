@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   let { webSession = undefined, assetRevision = 0 } = $props()
   let username=$state(''), password=$state(''), authorization=$state(''), actor=$state(null)
   let items=$state([]), assets=$state([]), selected=$state(''), imported=$state(null), template=$state('')
@@ -7,7 +8,7 @@
   const writable=$derived(actor?.role==='admin'||actor?.role==='operator')
   async function api(path,method='GET',body) {
     const response=await fetch('/api/v1/'+path,{method,headers:{Authorization:authorization,'Content-Type':'application/json',...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{})},body:body===undefined?undefined:JSON.stringify(body)})
-    if(!response.ok)throw new Error(`${response.status}: ${await response.text()}`)
+    if(!response.ok)throw await responseError(response)
     return response.json()
   }
   async function work(action){busy=true;try{await action()}catch(error){status=error.message}finally{busy=false}}

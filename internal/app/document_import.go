@@ -6,11 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"strings"
 	"time"
-
-	"go.yaml.in/yaml/v3"
 )
 
 type DocumentImportInput struct {
@@ -60,78 +56,48 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 	if in.Filename == "" || len(in.Source) > 1<<20 {
 		return DocumentImportPreview{}, errors.New("invalid import")
 	}
-	var value map[string]any
-	switch in.Format {
-	case "json":
-		dec := json.NewDecoder(strings.NewReader(in.Source))
-		if err := dec.Decode(&value); err != nil {
-			return DocumentImportPreview{}, errors.New("invalid JSON document")
-		}
-		if err := dec.Decode(new(any)); err != io.EOF {
-			return DocumentImportPreview{}, errors.New("expected one document")
-		}
-	case "yaml":
-		dec := yaml.NewDecoder(strings.NewReader(in.Source))
-		if err := dec.Decode(&value); err != nil {
-			return DocumentImportPreview{}, errors.New("invalid YAML document")
-		}
-		if err := dec.Decode(new(any)); err != io.EOF {
-			return DocumentImportPreview{}, errors.New("expected one document")
-		}
-	default:
-		return DocumentImportPreview{}, errors.New("unsupported import format")
-	}
-	if value == nil {
-		return DocumentImportPreview{}, errors.New("expected object document")
+	values, bundle, err := decodeImportSource(in)
+	if err != nil {
+		return DocumentImportPreview{}, err
 	}
 	preview := DocumentImportPreview{PreviewID: deploymentID(), Validation: DocumentValidation{ContractVersion: "2", Errors: []DocumentValidationIssue{}, Warnings: []string{}}, RedactedDocuments: []DeploymentDocumentInput{}, Changes: []string{}, PrivateBindingsRequired: []string{}, SourcePreserved: true}
-	kind := in.Kind
-	if declared, ok := value["kind"].(string); ok {
-		if kind != "" && kind != declared {
-			return preview, errors.New("import kind mismatch")
-		}
-		kind = declared
-	}
-	if kind == "" {
-		return preview, errors.New("select document kind")
-	}
-	name, _ := value["id"].(string)
-	if name == "" {
-		name = in.Filename
-	}
-	if kind == "server-set" {
-		if ssh, ok := value["ssh"].(map[string]any); ok {
-			for _, key := range []string{"password", "password_file", "key_file", "key_passphrase_file"} {
-				if _, exists := ssh[key]; exists {
-					delete(ssh, key)
-					preview.PrivateBindingsRequired = append(preview.PrivateBindingsRequired, "ssh."+key)
-					preview.Changes = append(preview.Changes, "Moved ssh."+key+" out of shared declaration")
-				}
+	if !bundle {
+		kind := in.Kind
+		if declared, ok := values[0]["kind"].(string); ok {
+			if kind != "" && kind != declared {
+				return preview, errors.New("import kind mismatch")
 			}
+			kind = declared
 		}
-	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return preview, errors.New("invalid declaration values")
-	}
-	if kind == "case" {
-		prepared, prepareErr := PrepareTestCase(TestCaseInput{Content: raw})
-		if prepareErr == nil {
-			raw = prepared.Content
-			if prepared.Migrated {
-				preview.Changes = append(preview.Changes, "Migrated v1 with unchanged executable fingerprint")
-			}
+		if kind == "" {
+			return preview, errors.New("select document kind")
 		}
+		name, _ := values[0]["id"].(string)
+		if name == "" {
+			name = in.Filename
+		}
+		importDocument(&preview, "", kind, name, values[0])
 	}
-	doc := DeploymentDocumentInput{Kind: kind, Name: name, ContractVersion: "2", Content: raw, AssetRefs: []string{}}
-	if refs, refErr := webDocumentAssetRefs(kind, raw); refErr == nil {
-		doc.AssetRefs = refs
+	seen := map[string]bool{}
+	for i, item := range values {
+		if !bundle {
+			break
+		}
+		prefix := fmt.Sprintf("/documents/%d", i)
+		kind, name, content, issue := bundleDocument(item)
+		if issue == "" && seen[kind+"\x00"+name] {
+			issue = fmt.Sprintf("another document in this bundle is also %s %q", kind, name)
+		}
+		seen[kind+"\x00"+name] = true
+		if issue != "" {
+			preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{prefix, "invalid", issue})
+			continue
+		}
+		importDocument(&preview, prefix, kind, name, content)
 	}
-	if err := ValidateDeploymentDocument(doc); err != nil {
-		preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{"/content", "invalid", "Engine declaration validation failed; resolve unsupported fields and references"})
-	} else {
-		preview.Validation.Valid = true
-		preview.RedactedDocuments = append(preview.RedactedDocuments, doc)
+	preview.Validation.Valid = len(preview.Validation.Errors) == 0 && len(preview.RedactedDocuments) > 0
+	if !preview.Validation.Valid {
+		preview.RedactedDocuments = []DeploymentDocumentInput{}
 	}
 	// Encrypt even an invalid source; it is never returned in public responses.
 	nonce := make([]byte, s.aead.NonceSize())
@@ -144,6 +110,11 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 	err = s.commit(a, "document.import.preview", preview.PreviewID, func(next *deploymentState) {
 		if next.Imports == nil {
 			next.Imports = map[string]deploymentImport{}
+		}
+		for id, old := range next.Imports {
+			if time.Now().After(old.ExpiresAt) {
+				delete(next.Imports, id) // Expired previews can no longer be committed.
+			}
 		}
 		next.Imports[preview.PreviewID] = deploymentImport{OwnerID: a.ID, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Preview: preview, Ciphertext: ciphertext}
 	})

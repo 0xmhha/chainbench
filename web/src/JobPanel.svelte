@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   import { onMount } from 'svelte'
   import Field from './DSLField.svelte'
   let { webSession = undefined, testOnly = false, catalogRevision = 0 } = $props()
@@ -39,7 +40,7 @@
     const headers={'Content-Type':'application/json','X-CSRF-Token':webSession?.csrfToken??''}
     if(key)headers['Idempotency-Key']=key
     const r=await fetch('/api/v1/'+path,{method,headers,body:data===undefined?undefined:JSON.stringify(data)})
-    if(!r.ok)throw new Error(`${r.status}: ${await r.text()}`)
+    if(!r.ok)throw await responseError(r)
     return r.json()
   }
 

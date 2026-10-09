@@ -1,4 +1,5 @@
 <script>
+  import { responseError } from './api-error.mjs'
   import { untrack } from 'svelte'
   import { parseHistoryJSON } from './history-json.js'
   let { webSession } = $props()
@@ -12,7 +13,7 @@
   const format = time => time ? new Date(time).toLocaleString() : '자료 없음'
   async function api(path, method = 'GET', body) {
     const response = await fetch('/api/v1/' + path, { method, headers: { 'Content-Type': 'application/json', ...(method !== 'GET' ? { 'X-CSRF-Token': webSession?.csrfToken ?? '' } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) })
-    if (!response.ok) throw new Error(`요청 실패 (${response.status})`)
+    if (!response.ok) throw await responseError(response)
     return response
   }
   function remember(rows) {
@@ -67,7 +68,7 @@
     busy = true; error = ''
     try {
       const response = await fetch('/api/v1/history/' + encodeURIComponent(pendingDelete.id), { method: 'DELETE', headers: { 'X-CSRF-Token': webSession?.csrfToken ?? '' } })
-      if (!response.ok) throw new Error(`삭제 실패 (${response.status}): ${(await response.text()).trim()}`)
+      if (!response.ok) throw await responseError(response)
       selected = selected.filter(id => id !== pendingDelete.id)
       pendingDelete = null; detail = null; comparison = null
       await load()
