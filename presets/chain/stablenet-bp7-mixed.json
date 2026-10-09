@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "chain-preset",
   "id": "stablenet-bp7-mixed",
-  "description": "stablenet: 7 bp on two implementations, the M7 layout of wbft-stablenet's interoperability tests. node1 to node4 run gstable (default); node5 to node7 run wbft-stablenet. Binaries: default = gstable, wbft = ${WBFT_STABLENET_BIN:-wbft-stablenet}; the fallback is a name nothing places by default, so build wbft-stablenet and put it on the target under that name or point WBFT_STABLENET_BIN at it. Keys are generated because the committed preset holds five identities. Used by 1 case.",
+  "description": "stablenet: 7 bp on two implementations, the M7 layout of wbft-stablenet's interoperability tests. node1 to node4 run gstable (default); node5 to node7 run wbft-stablenet. Binaries: default = gstable, wbft = ${WBFT_STABLENET_BIN:-wbft-stablenet}; the fallback is a name nothing places by default, so build wbft-stablenet and put it on the target under that name or point WBFT_STABLENET_BIN at it. Keys are generated because the committed preset holds five identities. Used by 2 cases.",
   "binaries": {
     "default": "gstable",
     "wbft": "${WBFT_STABLENET_BIN:-wbft-stablenet}"

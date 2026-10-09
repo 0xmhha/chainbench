@@ -192,6 +192,8 @@ type NodeSwapIn struct {
 	// genesis and re-applied to this node's datadir, so one node can run a
 	// genesis the rest of the network does not have.
 	GenesisOverlay []byte
+	// Args are flags appended to the node's command line (see SwapNodeOpts).
+	Args []string
 	// Purpose names the config fixture recorded in provenance (config-<purpose>).
 	Purpose string
 }
@@ -207,7 +209,7 @@ func NodeSwap(ctx context.Context, d chainsetup.Deps, in NodeSwapIn) (NodeStartO
 	if _, err := operate(ctx, d, in.DataDir, func(mg *chainsetup.Manager) (string, error) {
 		return mg.Swap(ctx, chainsetup.SwapNodeOpts{
 			Index: in.Index, Binary: in.Binary, Config: in.Config,
-			GenesisOverlay: in.GenesisOverlay, Purpose: in.Purpose,
+			GenesisOverlay: in.GenesisOverlay, Args: in.Args, Purpose: in.Purpose,
 		})
 	}); err != nil {
 		return NodeStartOut{}, err

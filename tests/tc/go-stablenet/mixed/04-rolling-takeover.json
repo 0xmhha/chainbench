@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "mixed-rolling-takeover",
-  "description": "M7(gstable validator 넷, wbft-stablenet 셋)의 gstable validator 넷을 하나씩 같은 datadir 와 key 의 wbft-stablenet 으로 바꿔 W7 로 만든다. 교체마다 체인이 이어지고 바꾼 노드가 다시 서명해야 한다 (wbft-stablenet node-compat 4.4절의 구르는 교체). 처음에 web3_clientVersion 으로 배치를 확인하고, 교체마다 바꾼 노드가 wbft-stablenet 을 담는지 본다. wbft-stablenet 은 서명 기록 없이 넘겨받은 key 로는 교체 직후 높이에 서명하지 않으므로(take-over guard), 교체한 높이에서 다섯 block 을 더 기다린다. 그다음이 구별되는 주장이다. 일곱의 정족수는 다섯이다. node6·node7 을 멈추면 남은 다섯이 모두 표를 내야 하므로, 체인이 나아가는 것은 방금 바꾼 노드가 서명한다는 뜻이다. 바꾼 노드가 따라가기만 하면 이 단계에서 체인이 멈춘다. 멈춘 둘을 다시 띄우고 따라오는지 본 뒤 다음 노드로 간다. 끝에 일곱 모두의 block hash 가 같은지 본다. swapNode·startNode 는 RPC 가 열리기 전에 돌아오므로 eth_blockNumber 가 답할 때까지 먼저 기다린다. 못 보는 것: F 를 넘게 한꺼번에 바꿔 멈춘 체인을 가드 없이 다시 띄우는 경로는 swapNode 가 명령줄을 바꾸지 못해(--takeover.guard=false 를 줄 수 없다) 여기서 보지 않는다.",
+  "description": "M7(gstable validator 넷, wbft-stablenet 셋)의 gstable validator 넷을 하나씩 같은 datadir 와 key 의 wbft-stablenet 으로 바꿔 W7 로 만든다. 교체마다 체인이 이어지고 바꾼 노드가 다시 서명해야 한다 (wbft-stablenet node-compat 4.4절의 구르는 교체). 처음에 web3_clientVersion 으로 배치를 확인하고, 교체마다 바꾼 노드가 wbft-stablenet 을 담는지 본다. wbft-stablenet 은 서명 기록 없이 넘겨받은 key 로는 교체 직후 높이에 서명하지 않으므로(take-over guard), 교체한 높이에서 다섯 block 을 더 기다린다. 그다음이 구별되는 주장이다. 일곱의 정족수는 다섯이다. node6·node7 을 멈추면 남은 다섯이 모두 표를 내야 하므로, 체인이 나아가는 것은 방금 바꾼 노드가 서명한다는 뜻이다. 바꾼 노드가 따라가기만 하면 이 단계에서 체인이 멈춘다. 멈춘 둘을 다시 띄우고 따라오는지 본 뒤 다음 노드로 간다. 끝에 일곱 모두의 block hash 가 같은지 본다. swapNode·startNode 는 RPC 가 열리기 전에 돌아오므로 eth_blockNumber 가 답할 때까지 먼저 기다린다. F 를 넘게 한꺼번에 바꿔 멈춘 체인을 가드 없이 다시 띄우는 경로는 05 가 본다.",
   "requires": [
     "rpc",
     "consensus",

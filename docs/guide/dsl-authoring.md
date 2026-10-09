@@ -359,12 +359,14 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `signAuthorization` | `authorityKey`, `delegate`, `on` | 1 | `internal/testhelper/txprobe.go` |
 | `startNode` | `expect`, `expectFail`, `on`, `reason` | 11 | `internal/testhelper/fault.go` |
 | `stopNode` | `on` | 14 | `internal/testhelper/fault.go` |
-| `swapNode` | `binary`, `config`, `expect`, `expectFail`, `genesisOverlay`, `on`, `purpose`, `reason` | 3 | `internal/testhelper/fault.go` |
+| `swapNode` | `args`, `binary`, `config`, `expect`, `expectFail`, `genesisOverlay`, `on`, `purpose`, `reason` | 3 | `internal/testhelper/fault.go` |
 | `waitBlock` | `on`, `pollInterval`, `target`, `timeout` | 66 | `internal/testhelper/builtins.go` |
 | `waitFor` | `compare`, `delta`, `expected`, `on`, `pollInterval`, `source`, `timeout`, `tol`, 그리고 `source` 의 인자 | 54 | `internal/testhelper/read.go` |
 | `wsOpen` | `address`, `event`, `on`, `params`, `save`, `topics` | 1 | `internal/testhelper/websocket.go` |
 
 `crossFork` 는 `on` 을 받지 않는다. 선언된 hardfork 직전 블록까지 기다렸다가 생산을 fork 뒤의 빌드에 넘기는 것은 노드 하나가 아니라 망의 일이다. fork 전에 할 일이 없는 케이스는 이 문장을 쓰지 않아도 합성이 알아서 넘어간다.
+
+`swapNode` 의 `args` 는 바꿔 끼우는 바이너리에 줄 플래그의 배열이다. 노드의 명령줄은 망 체인의 플래그 dialect 로 만들어지므로, 그 바이너리만 아는 플래그(독립 구현의 자기 플래그나 시작 방식을 바꾸는 플래그)는 dialect 가 모른다. 바꿔 끼우는 case 가 직접 적는다. 더한 플래그는 노드 기록에 남아 뒤의 재시작과 교체에도 붙는다. `binary` 없이 `args` 만 주면 같은 바이너리를 그 플래그를 더해 다시 띄운다.
 
 `resetNode` 는 생산하지 않는 노드 하나를 멈추고 datadir 를 다시 초기화해 genesis 에 둔 채로 남긴다. 뒤이은 `startNode` 가 높이 0 에서 띄우는데, snap sync 는 그 상태에서만 허락된다.
 
