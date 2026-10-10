@@ -24,6 +24,10 @@ COVERAGE_CASES = sorted(glob.glob('tests/tc/go-stablenet/vocabulary/1[1-6]-argum
 # The one builtin argument a single-binary network cannot reach: crossFork's
 # timeout, on a network that crosses from gwemix to gwbft.
 FORK_CASE = 'tests/tc/go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json'
+# The corpus attach cases: a Web attach job runs them against a network the
+# service composed and recorded. A case naming a key file is refused.
+ATTACH_CASES = ['tests/tc/basic/08-attached-chain-produces.json', *sorted(glob.glob('tests/tc/go-stablenet/testnet/0*.json'))]
+ATTACH_CREDENTIAL_CASES = ['testnet-value-transfer']
 
 
 def now():
@@ -134,7 +138,9 @@ def main():
                    'runtime': str(runtime), 'source': str(source), 'corpusFiles': corpus, 'presetFiles': presets,
                    'coverageFiles': COVERAGE_CASES, 'p2pBase': free_band(40000, 3000), 'rpcBase': free_band(20000, 3000),
                    'forkCase': FORK_CASE, 'forkPreset': 'presets/chain/wemix-to-wbft.json',
-                   'forkP2PBase': free_band(43000, 3000), 'forkRPCBase': free_band(23000, 3000)}
+                   'forkP2PBase': free_band(43000, 3000), 'forkRPCBase': free_band(23000, 3000),
+                   'attachFiles': ATTACH_CASES, 'attachCredentialCases': ATTACH_CREDENTIAL_CASES,
+                   'attachP2PBase': free_band(46000, 3000), 'attachRPCBase': free_band(26000, 3000)}
         private = runtime / 'browser-fixture.json'; private.write_text(json.dumps(fixture)); private.chmod(0o600)
         browser = run_browser(['node', str(source / 'tests/webui/browser_web05.mjs'), str(private), str(out.resolve())], timeout=3600)
         (out / 'browser.log').write_text(browser.stdout + browser.stderr)
@@ -159,6 +165,16 @@ def main():
         expected = len(COVERAGE_CASES) + 1
         if len(complete) != expected or len(tests) != expected:
             failures.append(f'{len(complete)} of {expected} coverage cases passed completely in the Web jobs')
+        # The attach job's own sessions: every corpus attach case, each passing
+        # completely against the recorded network.
+        attach_refs = [r.removeprefix('web:') for r in observed.get('attachJob', {}).get('runIds') or []]
+        _, attached = executed_paths([store / 'sessions' / ref for ref in attach_refs], contract)
+        for ref in attach_refs:
+            shutil.copytree(store / 'sessions' / ref, out / 'sessions' / ref, dirs_exist_ok=True)
+        runnable = len(ATTACH_CASES) - len(ATTACH_CREDENTIAL_CASES)
+        if len(attached) != runnable or not all(t['complete'] for t in attached):
+            failures.append(f'{sum(t["complete"] for t in attached)} of {runnable} attach cases passed completely in the Web attach job')
+        (out / 'attach-sessions.json').write_text(json.dumps(attached, indent=2))
         gaps = missing(rows)
         unedited = [r['kind'] + ':' + r['name'] for r in rows if not r['edited']]
         if unedited:
@@ -166,7 +182,7 @@ def main():
         if gaps:
             failures.append('argument paths not executed by a passing Web job: ' + json.dumps(gaps))
         by_id = {s['id']: s for s in observed['scenarios']}
-        scenarios = [by_id[k] for k in ('grammar', 'references', 'v1-migration', 'invalid-unknown', 'live-execution') if k in by_id]
+        scenarios = [by_id[k] for k in ('grammar', 'references', 'v1-migration', 'invalid-unknown', 'live-execution', 'attach-execution') if k in by_id]
         for kind, label in (('action', 'actions'), ('assertion', 'assertions'), ('reader', 'readers')):
             mine = [r for r in rows if r['kind'] == kind]
             if all(r['executed'] and r['edited'] for r in mine):

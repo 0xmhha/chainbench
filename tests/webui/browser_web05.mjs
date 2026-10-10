@@ -190,6 +190,9 @@ try {
   await page.getByLabel('작업 매니페스트', {exact: true}).selectOption('stablenet')
   await page.getByLabel('작업 바이너리', {exact: true}).selectOption('stablenet')
   await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
+  // Cleaned up when it ends: the attach target below runs the same gstable
+  // build, which the engine refuses to run twice on one machine.
+  await page.getByLabel('작업 종료 후 처리', {exact: true}).selectOption('cleanup')
   for (const [i, doc] of cases.entries()) {
     await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
     await page.getByTestId('case-order-' + doc.id).filter({hasText: String(i + 1)}).waitFor()
@@ -204,6 +207,7 @@ try {
   for (let i = 0; i < 18000; i++) { done = await api('jobs/' + job.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(done.state)) break; await sleep(200) }
   fs.writeFileSync(path.join(out, 'job.json'), JSON.stringify(done, null, 2))
   assert.equal(done.state, 'succeeded', JSON.stringify(done))
+  assert.equal(done.nodeDisposition, 'cleaned', 'the coverage network was not cleaned up: ' + done.nodeDisposition)
   await page.screenshot({path: path.join(out, 'test-results.png'), fullPage: true})
   // The fork case runs a second build under the name "next": the job binds it
   // to the registered wbft asset, and the network crosses from gwemix to it.
@@ -242,6 +246,69 @@ try {
   assert.equal(forkDone.state, 'succeeded', JSON.stringify(forkDone))
   assert.ok(forkDone.partialEffects.some(v => v.includes('"next" provisioned')), 'the successor build was not provisioned')
   observed('live-execution', [`Web test job ${done.id} ran ${cases.length} saved cases on native gstable and succeeded`, `Web test job ${forkDone.id} crossed the croissant fork from gwemix to the registered wbft build and succeeded`])
-  fs.writeFileSync(path.join(out, 'browser.json'), JSON.stringify({browserVersion: owned.browser.version(), scenarios, coverage, savedCases: cases.map(d => ({id: d.id, caseId: d.content.id, revision: d.revision, presetRefs: d.presetRefs})), job: {id: done.id, state: done.state, runIds: [...done.runIds, ...forkDone.runIds]}, forkJob: {id: forkDone.id, state: forkDone.state, runIds: forkDone.runIds}, corpusImported: imported, refusals, seedAcceptanceAwarded: false}, null, 2))
+
+  // Attach cases run only against a network this service composed and kept:
+  // a test job brings one up in its own workspace, then an attach job runs the
+  // corpus attach cases against its recorded endpoints and key set.
+  const shared = (await api('documents?kind=chain-preset')).items.find(d => d.content.id === 'stablenet-bp4-en1')
+  assert.ok(shared, 'the shared stablenet-bp4-en1 preset is missing')
+  const target = await api('documents', 'POST', {kind: 'case', name: 'web05 attach target', contractVersion: '2', assetRefs: [], presetRefs: [{id: shared.id, revision: shared.revision}],
+    content: {schemaVersion: '2', kind: 'case', id: 'web05-attach-target', chainPreset: {extends: 'stablenet-bp4-en1', binaries: {default: 'gstable'}}, steps: [{expect: 'blockNumber', compare: 'GreaterOrEqual', is: 0}]}}, 201)
+  await page.goto(f.url + '/tests')
+  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
+  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles(f.presetFiles.filter(p => /stablenet-(attached|testnet)/.test(p)).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
+  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  const attachIds = []
+  for (const file of f.attachFiles) {
+    const content = readJSON(file)
+    assert.equal((await upload(content, path.basename(file))).status(), 200, file)
+    await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+    await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
+    await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
+    attachIds.push(content.id)
+  }
+  const attachDocs = (await api('documents?kind=case')).items.filter(d => attachIds.includes(d.content.id))
+  assert.equal(attachDocs.length, attachIds.length, 'an attach case was not saved')
+  const attachSet = await api('documents', 'POST', {kind: 'server-set', name: 'web05 attach pool', contractVersion: '2', assetRefs: [], content: {version: 2, pool: {hosts: [{name: 'local', addr: '127.0.0.1'}], slots: 5, ports: {p2p: {base: f.attachP2PBase, step: 10}, rpc: {base: f.attachRPCBase, step: 10}}}}}, 201)
+  const attachConfig = await api('documents', 'POST', {kind: 'workspace-config', name: 'web05 attach paths', contractVersion: '2', assetRefs: [], content: {version: 1, dataRoot: f.runtime + '/attach', paths: Object.fromEntries(['binaries', 'configs', 'genesis', 'keystore', 'keyrings', 'nodes', 'runtime', 'logs'].map(k => [k, k])), control: {artifactRoot: f.runtime + '/attach-output'}, inputs: {mode: 'generated'}, execution: {chain: 'fresh'}, limits: {minFreeDisk: '0'}}}, 201)
+  const attachWorkspace = await api('workspaces', 'POST', {name: 'web05 attach', documents: [{id: attachSet.id, revision: attachSet.revision}, {id: attachConfig.id, revision: attachConfig.revision}]}, 201)
+  async function runJob(label, choose, budget) {
+    await page.reload()
+    await page.getByLabel('작업 Workspace', {exact: true}).selectOption(attachWorkspace.id)
+    await page.getByLabel('작업 매니페스트', {exact: true}).selectOption('stablenet')
+    await page.getByLabel('작업 바이너리', {exact: true}).selectOption('stablenet')
+    await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
+    await choose()
+    await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
+    await page.getByLabel('실행 계획', {exact: true}).waitFor({timeout: 60000})
+    await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, label + '-plan.png')})
+    const begun = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
+    await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+    const accepted = await (await begun).json()
+    let result
+    for (let i = 0; i < budget; i++) { result = await api('jobs/' + accepted.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(result.state)) break; await sleep(200) }
+    fs.writeFileSync(path.join(out, label + '-job.json'), JSON.stringify(result, null, 2))
+    assert.equal(result.state, 'succeeded', JSON.stringify(result))
+    return result
+  }
+  const targetDone = await runJob('attach-target', async () => {
+    await page.getByLabel('작업 종류', {exact: true}).selectOption('test.run')
+    await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).check()
+  }, 9000)
+  const runnable = attachDocs.filter(d => !f.attachCredentialCases.includes(d.content.id))
+  const attachDone = await runJob('attach', async () => {
+    await page.getByLabel('작업 종류', {exact: true}).selectOption('test.attach')
+    await page.getByTestId('attach-explanation').waitFor()
+    assert.equal(await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).count(), 0, 'a composing case is offered to an attach job')
+    for (const doc of runnable) await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
+  }, 9000)
+  // A key file named in a case is a path on this server; the Web refuses it.
+  for (const doc of attachDocs.filter(d => f.attachCredentialCases.includes(d.content.id))) {
+    const refused = await api('plans', 'POST', {workspaceId: attachWorkspace.id, operation: 'test.attach', documentRefs: attachWorkspace.documents, assetRefs: ['stablenet'], credentialBindings: {}, nodeIds: [], retention: 'retain',
+      arguments: {manifestId: 'stablenet', assetId: 'stablenet', serverRef: 'local', caseRefs: [{id: doc.id, revision: doc.revision}]}}, 422)
+    assert.ok(JSON.stringify(refused).includes('private account credential'), 'key file refusal does not explain the credential: ' + JSON.stringify(refused))
+  }
+  observed('attach-execution', [`Web test job ${targetDone.id} composed and kept a stablenet network`, `Web attach job ${attachDone.id} ran ${runnable.length} corpus attach cases against its recorded endpoints and key set and succeeded`, 'A case naming a key file on the server is refused before planning'])
+  fs.writeFileSync(path.join(out, 'browser.json'), JSON.stringify({browserVersion: owned.browser.version(), scenarios, coverage, savedCases: cases.map(d => ({id: d.id, caseId: d.content.id, revision: d.revision, presetRefs: d.presetRefs})), job: {id: done.id, state: done.state, runIds: [...done.runIds, ...forkDone.runIds]}, forkJob: {id: forkDone.id, state: forkDone.state, runIds: forkDone.runIds}, attachJob: {id: attachDone.id, state: attachDone.state, runIds: attachDone.runIds, targetRunIds: targetDone.runIds}, corpusImported: imported, refusals, seedAcceptanceAwarded: false}, null, 2))
   fs.writeFileSync(path.join(out, 'api-observations.json'), JSON.stringify(records, null, 2))
 } finally { await owned.stop() }

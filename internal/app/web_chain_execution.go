@@ -16,6 +16,9 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 	if p.Input.Operation == "test.run" {
 		return e.executeTestRun(ctx, a, p, report)
 	}
+	if p.Input.Operation == webTestAttachOperation {
+		return e.executeTestAttach(ctx, a, p, report)
+	}
 	result := WebJobResult{NodeDisposition: "retained", PartialEffects: []string{}}
 	composition := ChainUpIn{BPCount: p.Arguments.Validators}
 	if p.Preset != nil {

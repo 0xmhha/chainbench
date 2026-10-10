@@ -97,6 +97,13 @@ export function caseChain(doc, documents = []) {
   }
   return undefined
 }
+// Whether a saved case attaches to a running network rather than composing
+// one: from the case, or from a shared preset revision it pins.
+export function caseAttaches(doc, documents = []) {
+  const preset = doc?.content?.chainPreset
+  if (typeof preset === 'object' && preset?.attach) return true
+  return (doc?.presetRefs ?? []).some(ref => Boolean(documents.find(d => d.id === ref.id)?.content?.attach))
+}
 // The binary names besides default a saved case declares, with the chain
 // each runs: from the case, over the shared preset revision it pins.
 export function declaredBinaries(doc, documents = []) {

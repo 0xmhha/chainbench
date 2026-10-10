@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import sys
 
-REQUIRED = ['grammar', 'actions', 'assertions', 'readers', 'arguments', 'references', 'v1-migration', 'invalid-unknown', 'live-execution']
+REQUIRED = ['grammar', 'actions', 'assertions', 'readers', 'arguments', 'references', 'v1-migration', 'invalid-unknown', 'live-execution', 'attach-execution']
 
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()

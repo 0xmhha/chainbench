@@ -66,3 +66,13 @@ test('named binaries come from the case over its pinned preset', async () => {
   assert.deepEqual(declaredBinaries({content: {schemaVersion: '2', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable', upgrade: 'gstable-next'}}}}), [{name: 'upgrade', chain: 'stablenet'}])
   assert.deepEqual(declaredBinaries({content: {schemaVersion: '2', chainPreset: {chain: 'stablenet', binaries: {default: 'gstable'}}}}), [])
 })
+
+test('a case attaches when its own or its pinned preset declares attach', async () => {
+  const {caseAttaches} = await import('../../web/src/dsl-form.js')
+  const attached = {id: 'p2', kind: 'chain-preset', content: {chain: 'stablenet', attach: {rpc: ['http://x']}}}
+  const composed = {id: 'p1', kind: 'chain-preset', content: {chain: 'stablenet', topology: {bp: 4}}}
+  assert.equal(caseAttaches({content: {chainPreset: {chain: 'stablenet', attach: {rpc: ['http://x']}}}}), true)
+  assert.equal(caseAttaches({content: {chainPreset: 'stablenet-attached'}, presetRefs: [{id: 'p2', revision: 1}]}, [attached]), true)
+  assert.equal(caseAttaches({content: {chainPreset: {extends: 'base'}}, presetRefs: [{id: 'p1', revision: 1}]}, [composed]), false)
+  assert.equal(caseAttaches({content: {chainPreset: {chain: 'stablenet', topology: {bp: 4}}}}), false)
+})

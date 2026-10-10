@@ -88,6 +88,7 @@ type webChainPayload struct {
 	ExecutionBinary    string                 `json:"executionBinary"`
 	Keys               webKeySnapshot         `json:"keys"`
 	TestRun            *webTestRun            `json:"testRun,omitempty"`
+	Attach             *webTestAttach         `json:"attach,omitempty"`
 	NamedBinaries      []webNamedBinary       `json:"namedBinaries,omitempty"`
 	Preset             *webPresetComposition  `json:"preset,omitempty"`
 	CurrentNodeBinary  *webNodeBinary         `json:"currentNodeBinary,omitempty"`
@@ -109,7 +110,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err := e.allowed(a); err != nil {
 		return out, err
 	}
-	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" && in.Operation != webNetworkMonitorOperation {
+	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" && in.Operation != webTestAttachOperation && in.Operation != webNetworkMonitorOperation {
 		return out, errors.New("operation requires an execution adapter that is not available")
 	}
 	var args webChainArguments
@@ -133,17 +134,17 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
 		return out, errors.New("a saved chain preset applies to composition and supplies its own node layout")
 	}
-	if args.Validators == 0 && in.Operation != "test.run" && !webNodeControlOperation(in.Operation) && args.ChainPresetRef == nil {
+	if args.Validators == 0 && in.Operation != "test.run" && !webRecordedOperation(in.Operation) && args.ChainPresetRef == nil {
 		args.Validators = 4
 	}
-	if in.Operation != "test.run" && !webNodeControlOperation(in.Operation) && args.ChainPresetRef == nil && (args.Validators < 1 || args.Validators > 128) {
+	if in.Operation != "test.run" && !webRecordedOperation(in.Operation) && args.ChainPresetRef == nil && (args.Validators < 1 || args.Validators > 128) {
 		return out, errors.New("validator count must be between 1 and 128")
 	}
 	workspace, err := e.documents.Workspace(in.WorkspaceID)
 	if err != nil {
 		return out, err
 	}
-	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 257 || args.ChainPresetRef == nil && in.Operation != "test.run" && args.ReplacementAssetID == "" && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
+	if len(in.AssetRefs) < 1 || len(in.AssetRefs) > 257 || args.ChainPresetRef == nil && !webCaseOperation(in.Operation) && args.ReplacementAssetID == "" && (len(in.AssetRefs) != 1 || in.AssetRefs[0] != args.AssetID) {
 		return out, errors.New("select the binary asset and every registered declaration dependency")
 	}
 	refs, _ := json.Marshal(workspace.Documents)
@@ -235,9 +236,12 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	requests := []resource.Request{}
 	var controlState *State
-	if webNodeControlOperation(in.Operation) {
-		if len(args.CaseRefs) != 0 {
+	if webRecordedOperation(in.Operation) {
+		if len(args.CaseRefs) != 0 && in.Operation != webTestAttachOperation {
 			return out, errors.New("case references belong to a test job")
+		}
+		if in.Operation == webTestAttachOperation && (len(in.NodeIDs) != 0 || args.Validators != 0 || in.Retention == "cleanup") {
+			return out, errors.New("an attach job reads the whole recorded network and never removes it")
 		}
 		record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 		if os.IsNotExist(err) {
@@ -251,6 +255,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			return out, err
 		}
 		p.RecordDigest = manifestHash(record)
+		if in.Operation == webTestAttachOperation {
+			if err = e.prepareTestAttach(ctx, &p, *controlState); err != nil {
+				return out, err
+			}
+		}
 	} else if in.Operation == "test.run" {
 		if len(in.NodeIDs) != 0 || args.Validators != 0 {
 			return out, errors.New("test jobs use the node layout declared by the selected cases")
@@ -320,6 +329,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			}
 		}
 	}
+	if p.Attach != nil {
+		for _, c := range p.Attach.Cases {
+			for _, id := range c.Document.AssetRefs {
+				expectedAssets[id] = true
+			}
+		}
+	}
 	if len(in.AssetRefs) != len(expectedAssets) {
 		return out, errors.New("selected assets differ from the reviewed declaration")
 	}
@@ -352,6 +368,20 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		p.RecordDigest = manifestHash(record)
 		if in.Operation == "chain.setup" || in.Operation == "chain.deploy" {
 			if err = verifyWebNetworkProcesses(ctx, state, p, lookup, true); err != nil {
+				return out, err
+			}
+		}
+		if in.Operation == webTestAttachOperation {
+			if err = verifyWebNetworkProcesses(ctx, state, p, lookup, false); err != nil {
+				return out, err
+			}
+			if p.ExecutionBinary, err = bindWebControlBinary(ctx, state, p, lookup); err != nil {
+				return out, err
+			}
+			if err = validateWebChainRecord(state, p); err != nil {
+				return out, err
+			}
+			if p.Keys, err = e.bindWebConfigKeys(ctx, state); err != nil {
 				return out, err
 			}
 		}
@@ -414,7 +444,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 	} else if !os.IsNotExist(err) {
 		return out, err
-	} else if webNodeControlOperation(in.Operation) {
+	} else if webRecordedOperation(in.Operation) {
 		return out, ErrDeploymentNotFound
 	}
 	switch in.Operation {
@@ -434,6 +464,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 	case "test.run":
 		out.Phases = []string{"test.inputs", "test.binary", "test.run"}
+	case webTestAttachOperation:
+		out.Phases = []string{webTestAttachOperation}
 	default:
 		out.Phases = []string{in.Operation}
 	}
@@ -484,6 +516,15 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			out.Changes = append(out.Changes, fmt.Sprintf("Test placement %s=%s · P2P %d · RPC %d", n.Label, n.Role, n.Ports.P2P, n.Ports.HTTP))
 		}
 		for _, c := range p.TestRun.Cases {
+			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
+		}
+	}
+	if p.Attach != nil {
+		out.Changes = append(out.Changes, "Read-only run against the recorded network: its endpoints, key set and capabilities replace the ones each case declares; no node is started, stopped or removed")
+		for _, n := range p.Attach.Nodes.Nodes {
+			out.Changes = append(out.Changes, fmt.Sprintf("Attach node%d=%s · RPC %s", n.Index, n.Role, n.RPCURL))
+		}
+		for _, c := range p.Attach.Cases {
 			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
 		}
 	}
