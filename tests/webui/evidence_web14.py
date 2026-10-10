@@ -32,10 +32,36 @@ def acceptance_root(root, acceptance=None):
     return Path(acceptance or os.environ.get('WEBUI_ACCEPTANCE_ROOT') or Path(root).parent)
 
 
+def published_workspace(directory):
+    """The workspace a criterion was published from. Its artifact paths are
+    relative to it: <output>/<criterion>/<file> under that workspace."""
+    directory = Path(directory).resolve()
+    pending = [json.loads((directory / 'evidence.json').read_text())]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            pending.extend(value.values())
+        elif isinstance(value, list):
+            pending.extend(value)
+        elif isinstance(value, str) and not Path(value).is_absolute():
+            parts = Path(value).parts
+            if directory.name in parts[1:-1]:
+                workspace = directory.parents[parts.index(directory.name)]
+                if (workspace / value).is_file():
+                    return workspace
+    return Path.cwd()
+
+
 def verify_criterion(directory):
-    """A criterion's published result, judged by its own verifier."""
-    with contextlib.redirect_stdout(io.StringIO()):
-        errors = importlib.import_module(VERIFIERS[directory.name]).verify(directory)
+    """A criterion's published result, judged by its own verifier from the
+    workspace it was published in; a fresh reproduction runs elsewhere."""
+    cwd = os.getcwd()
+    try:
+        os.chdir(published_workspace(directory))
+        with contextlib.redirect_stdout(io.StringIO()):
+            errors = importlib.import_module(VERIFIERS[directory.name]).verify(directory)
+    finally:
+        os.chdir(cwd)
     if errors:
         raise AssertionError(directory.name + ': ' + '; '.join(errors))
 

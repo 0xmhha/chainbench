@@ -1,10 +1,12 @@
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
-from evidence_web14 import CHECKS, CRITERIA, RACE, REQUIRED, acceptance_root, coverage, digest, go_tests, verify
+from evidence_web14 import CHECKS, CRITERIA, RACE, REQUIRED, VERIFIERS, acceptance_root, coverage, digest, go_tests, verify, verify_criterion
 
 
 class EvidenceWEB14Tests(unittest.TestCase):
@@ -36,6 +38,25 @@ class EvidenceWEB14Tests(unittest.TestCase):
             self.assertEqual(acceptance_root(Path('staged/out/WEB-14')), Path('/published'))
         with mock.patch.dict(os.environ, {}, clear=True):
             self.assertEqual(acceptance_root(Path('out/WEB-14')), Path('out'))
+
+    def test_a_criterion_is_judged_from_the_workspace_that_published_it(self):
+        # A fresh reproduction runs in a staged copy that has no chainbench-out;
+        # the criteria's artifact paths are relative to where they were published.
+        fake = types.ModuleType('fake_verifier')
+        fake.verify = lambda directory: [] if Path('out/accept/WEB-01/a.json').is_file() else ['invalid artifact path']
+        with tempfile.TemporaryDirectory() as published, tempfile.TemporaryDirectory() as staged:
+            directory = Path(published) / 'out/accept/WEB-01'
+            directory.mkdir(parents=True)
+            (directory / 'a.json').write_text('{}')
+            (directory / 'evidence.json').write_text(json.dumps({'scenarios': [{'artifacts': [{'path': 'out/accept/WEB-01/a.json'}]}]}))
+            cwd = os.getcwd()
+            try:
+                os.chdir(staged)
+                with mock.patch.dict(sys.modules, {'fake_verifier': fake}), mock.patch.dict(VERIFIERS, {'WEB-01': 'fake_verifier'}):
+                    verify_criterion(directory)
+                self.assertEqual(os.getcwd(), os.path.realpath(staged))
+            finally:
+                os.chdir(cwd)
 
     def test_incomplete_cannot_be_pass(self):
         with tempfile.TemporaryDirectory() as directory:
