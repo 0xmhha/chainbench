@@ -2,7 +2,9 @@
 
 상태 정본은 [14개 작업 목록](web-ui-worklist.json)이다. 저장소 전체의
 [열린 작업 목록](chainbench-worklist.md)에 연결한다. 승인된 Seed·동작 명세·
-인수 시나리오를 줄이지 않는다. 현재 **전체 완료 0/14**다.
+인수 시나리오를 줄이지 않는다. 현재 **전체 완료 14/14**다. 2026-10-10 커밋 `c5f23d85`에서 고정 소스 주기 하나가
+열네 기준의 capture와 독립 재현을 모두 통과했고, 최종 `ooo evaluate`가 승인했다. 기준별 RED·GREEN 기록과
+요약 receipt는 [인수 증거](web-ui-evidence/WEB-14/green.md)와 같은 폴더 구조에 있다.
 
 각 항목의 `completion`을 모두 만족하고, 테스트의 실제 실패(RED)·통과(GREEN),
 전체 필수 시나리오의 최신 독립 live 증거를 기록한 경우에만 `complete`로 바꾼다.

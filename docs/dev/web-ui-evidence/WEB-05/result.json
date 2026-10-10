@@ -1,0 +1,34 @@
+{
+  "criterion": "WEB-05",
+  "invocationId": "ac18fdfb-94ee-4f78-99bf-847bd461d59b",
+  "startedAt": "2026-10-10T09:12:30.808537+00:00",
+  "finishedAt": "2026-10-10T09:20:50.388873+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "grammar",
+    "actions",
+    "assertions",
+    "readers",
+    "arguments",
+    "references",
+    "v1-migration",
+    "invalid-unknown",
+    "live-execution",
+    "attach-execution"
+  ],
+  "executedScenarios": [
+    "grammar",
+    "references",
+    "v1-migration",
+    "invalid-unknown",
+    "live-execution",
+    "attach-execution",
+    "actions",
+    "assertions",
+    "readers",
+    "arguments"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "a63a9c25b3039aca42428c965c52d2f039226056363d679df114a34a5476011f"
+}

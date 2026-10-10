@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-11",
+  "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+  "startedAt": "2026-10-10T10:41:34.880803+00:00",
+  "finishedAt": "2026-10-10T10:44:05.106855+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "alias-path-port-conflict-with-owner",
+    "local-ssh-alias-same-physical",
+    "process-and-binary-conflict",
+    "independent-resources-parallel",
+    "test-internal-vs-external-control",
+    "cleanup-releases-claims"
+  ],
+  "executedScenarios": [
+    "alias-path-port-conflict-with-owner",
+    "local-ssh-alias-same-physical",
+    "process-and-binary-conflict",
+    "independent-resources-parallel",
+    "test-internal-vs-external-control",
+    "cleanup-releases-claims"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "6c3f9fc2e8639139487936b4fa33f22362ceb907f93106fb7de2ecf4fb3d215e"
+}

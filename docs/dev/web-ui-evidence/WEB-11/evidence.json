@@ -1,0 +1,397 @@
+{
+  "criterion": "WEB-11",
+  "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+  "scenarios": [
+    {
+      "id": "alias-path-port-conflict-with-owner",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "another workspace naming the same data root and ports is refused with the owning job, workspace and executor",
+          "passed": true
+        },
+        {
+          "description": "the form shows the owner and offers no execution",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
+          "sha256": "9f582092df468317fbc9973598a92d3dc241cfb5c25e7d493addee1fd5f70969"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-resource-conflict.png",
+          "sha256": "31f861bfbc84364ff518fb6674df1e8e4dbe545ecd0339c0d8a6d026bb5a47ee"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-physical-conflict.png",
+          "sha256": "8a04d7ee2a25d857977103c7b37f8cd5cd61719427be41a277e4338405ba62cb"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    },
+    {
+      "id": "local-ssh-alias-same-physical",
+      "mode": "team",
+      "transport": "local+SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a local spelling of the SSH server resolves to the same physical host and root and is refused",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-receipt.json",
+          "sha256": "d78f65be00f206382b6ace4747ca064a5785a9f3e7276649b917f5461304a507"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-ssh-plan.png",
+          "sha256": "dbafd4605e7f74aae72017e8b81625c81b627f05c07b1cab48ee44cf6c0c9acc"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    },
+    {
+      "id": "process-and-binary-conflict",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "the same node binary on the machine is refused before execution with its owner",
+          "passed": true
+        },
+        {
+          "description": "a reused PID that is not the recorded process cannot be controlled",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
+          "sha256": "15d431bb47bf4d1e702c9633523496178e74f3b03ded8a9882307b7d0e16ea17"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
+          "sha256": "9f582092df468317fbc9973598a92d3dc241cfb5c25e7d493addee1fd5f70969"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    },
+    {
+      "id": "independent-resources-parallel",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a workspace with its own root, ports and binary completes while the other test keeps running",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
+          "sha256": "15d431bb47bf4d1e702c9633523496178e74f3b03ded8a9882307b7d0e16ea17"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    },
+    {
+      "id": "test-internal-vs-external-control",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "the test stops and restarts its own node inside its scope",
+          "passed": true
+        },
+        {
+          "description": "an external control of that network is refused while the test runs",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
+          "sha256": "15d431bb47bf4d1e702c9633523496178e74f3b03ded8a9882307b7d0e16ea17"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    },
+    {
+      "id": "cleanup-releases-claims",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "verified cleanup releases the claim and the alias then runs",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
+          "sha256": "9f582092df468317fbc9973598a92d3dc241cfb5c25e7d493addee1fd5f70969"
+        }
+      ],
+      "invocationId": "ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0",
+      "observedAt": "2026-10-10T10:44:05.015605+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/app -run \"TestWebPhysical|TestWebExecutableClaims|TestWebJobsDetached|TestWebJobsInterruptedClaims\"",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-11/check-0.log",
+      "sha256": "a5d7632ec2df27e4fc7bc2696e0390701cff8c80dac1ea897e538f5e204f9b30"
+    }
+  ],
+  "proofs": [
+    {
+      "name": "resource-parallel",
+      "startedAt": "2026-10-10T10:41:38.003533+00:00",
+      "runtime": "/private/tmp/cbui/b02d64f7-8c67-4b93-afd4-739bf2ff8d22",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "resource-holds",
+      "startedAt": "2026-10-10T10:42:44.521498+00:00",
+      "runtime": "/private/tmp/cbui/b20e0d52-f436-4fb5-806a-fa839632c6ca",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "ssh-jobs",
+      "startedAt": "2026-10-10T10:43:03.969456+00:00",
+      "runtime": "/private/tmp/cbui/6d1fbca8-ec4d-463e-81f8-d7c770c236df",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": null,
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    }
+  ],
+  "coverage": {
+    "required": [
+      "alias-path-port-conflict-with-owner",
+      "local-ssh-alias-same-physical",
+      "process-and-binary-conflict",
+      "independent-resources-parallel",
+      "test-internal-vs-external-control",
+      "cleanup-releases-claims"
+    ],
+    "executed": [
+      "alias-path-port-conflict-with-owner",
+      "local-ssh-alias-same-physical",
+      "process-and-binary-conflict",
+      "independent-resources-parallel",
+      "test-internal-vs-external-control",
+      "cleanup-releases-claims"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/web_resource_holds.go",
+      "sha256": "c993cff87c9f40b3234ffdcb7d48e01c4f495b828945e21958d89fd1dca69d37"
+    },
+    {
+      "path": "internal/app/web_job_contract.go",
+      "sha256": "905b77fd755958c156664f1f3e2a7c5081fd98797afcab84da4f24384949d7bd"
+    },
+    {
+      "path": "internal/app/web_jobs.go",
+      "sha256": "0f5271e42daffee58c4f7052647f5b6290d55375293622d34103caf436245f63"
+    },
+    {
+      "path": "internal/app/web_chain_engine.go",
+      "sha256": "302aecd171e6c01d3cb24a0a3f067ac5f7aae468020559b18cb88e5b7901962e"
+    },
+    {
+      "path": "web/src/JobPanel.svelte",
+      "sha256": "deec5a6842d4489ecc2676113296c2205e8293735fb4e7b81809bfd597096c5f"
+    },
+    {
+      "path": "tests/webui/evidence_web11.py",
+      "sha256": "e23a2810676518970cb7c40ebc1a87cfbdab124709961f3341a14abe47b5d22d"
+    },
+    {
+      "path": "tests/webui/run_web11.py",
+      "sha256": "dbc68249d9d2df833a9c991d53a990b52342fd5b6aca6a8968fcd1f630511429"
+    },
+    {
+      "path": "tests/webui/test_evidence_web11.py",
+      "sha256": "72aa44777a052bde9adaf252102d6e427383e739a1aa2ec129ea4cf98bc2f644"
+    },
+    {
+      "path": "tests/webui/proof_acceptance.py",
+      "sha256": "65e4261b14481e9cc712e58894b84d14c407ca9f67a88445e47f425a97c69074"
+    },
+    {
+      "path": "tests/webui/browser_resource_parallel.mjs",
+      "sha256": "17349be731e36d9dd0af566e1b6a42ad69f54481d278f7ab0d39e8507d857df6"
+    },
+    {
+      "path": "tests/webui/browser_resource_holds.mjs",
+      "sha256": "3f650fcf97c3c77f26451fb65dbe0e3678d7ee3b07b8dd48b61403114369fc88"
+    },
+    {
+      "path": "tests/webui/browser_ssh_jobs.mjs",
+      "sha256": "eca1288c1a2cc8d108082adc34df0ad9ff0ad74ee70a18fa99e63be81ddc89e5"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/check-0.log",
+      "sha256": "a5d7632ec2df27e4fc7bc2696e0390701cff8c80dac1ea897e538f5e204f9b30"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
+      "sha256": "9f582092df468317fbc9973598a92d3dc241cfb5c25e7d493addee1fd5f70969"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-resource-conflict.png",
+      "sha256": "31f861bfbc84364ff518fb6674df1e8e4dbe545ecd0339c0d8a6d026bb5a47ee"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-run.log",
+      "sha256": "4fbeb597a3c1947c7ccbb7f5b71c0c2f49afe2c4ac66f885dd7fa05979de7138"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-physical-conflict.png",
+      "sha256": "8a04d7ee2a25d857977103c7b37f8cd5cd61719427be41a277e4338405ba62cb"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
+      "sha256": "15d431bb47bf4d1e702c9633523496178e74f3b03ded8a9882307b7d0e16ea17"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-run.log",
+      "sha256": "683511f19760e65dc8a6986191737c30038b3a275e22af22e81ea34e3eabe473"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-receipt.json",
+      "sha256": "d78f65be00f206382b6ace4747ca064a5785a9f3e7276649b917f5461304a507"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-run.log",
+      "sha256": "ee3cf50c0981f5a3a70ce92027e5866a39b5b576e5f598b754aad798d3dae4db"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-ssh-plan.png",
+      "sha256": "dbafd4605e7f74aae72017e8b81625c81b627f05c07b1cab48ee44cf6c0c9acc"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}

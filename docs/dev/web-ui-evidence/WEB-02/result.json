@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-02",
+  "invocationId": "9b314955-4515-4743-aa8b-40481d903c34",
+  "startedAt": "2026-10-10T09:07:15.926824+00:00",
+  "finishedAt": "2026-10-10T09:08:46.982557+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "bundle-import-preview-commit",
+    "concrete-field-and-extension-errors",
+    "structured-edit-revision-conflict",
+    "export-round-trip-semantics",
+    "setup-from-imported-configuration",
+    "pinned-assets-and-revisions"
+  ],
+  "executedScenarios": [
+    "bundle-import-preview-commit",
+    "concrete-field-and-extension-errors",
+    "structured-edit-revision-conflict",
+    "export-round-trip-semantics",
+    "setup-from-imported-configuration",
+    "pinned-assets-and-revisions"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "4faec8a67017ebcc1da78ef4d99da5fa08147b774685ecde819b7aa46d47b51a"
+}

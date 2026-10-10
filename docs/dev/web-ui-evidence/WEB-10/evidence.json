@@ -1,0 +1,858 @@
+{
+  "criterion": "WEB-10",
+  "invocationId": "b943821e-7078-4e96-b898-c676069bedf6",
+  "scenarios": [
+    {
+      "id": "personal-team-login",
+      "observedAt": "2026-10-10T10:40:53.755Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "personal bootstrap login observed",
+          "passed": true
+        },
+        {
+          "description": "team accounts login through real browser",
+          "passed": true
+        },
+        {
+          "description": "logout permits new login",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "role-ui-api-matrix",
+      "observedAt": "2026-10-10T10:40:53.755Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "administrator contains operator controls",
+          "passed": true
+        },
+        {
+          "description": "viewer forms absent and writes forbidden",
+          "passed": true
+        },
+        {
+          "description": "user management administrator only",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "csrf-ownership",
+      "observedAt": "2026-10-10T10:40:53.755Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "missing CSRF and foreign Origin forbidden",
+          "passed": true
+        },
+        {
+          "description": "active account required on every request",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "foreign-credential-refusal",
+      "observedAt": "2026-10-10T10:40:53.755Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "foreign keys absent from lists",
+          "passed": true
+        },
+        {
+          "description": "foreign GET/check/binding rejected including administrator",
+          "passed": true
+        },
+        {
+          "description": "actual owner SSH access allowed",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "secret-free-output",
+      "observedAt": "2026-10-10T10:40:53.755Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "export and SSE sentinel removed",
+          "passed": true
+        },
+        {
+          "description": "credential metadata has no material",
+          "passed": true
+        },
+        {
+          "description": "validation error has no secrets",
+          "passed": true
+        },
+        {
+          "description": "preset and v1/v2 case node key material refused before shared save or import publication",
+          "passed": true
+        },
+        {
+          "description": "legacy preset and v1/v2 case histories absent from public reads and exports after restart; old import approvals refused",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "bootstrap-restrictions",
+      "observedAt": "2026-10-10T10:40:49.877Z",
+      "mode": "personal",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "wrong token forbidden",
+          "passed": true
+        },
+        {
+          "description": "first administrator created in browser",
+          "passed": true
+        },
+        {
+          "description": "repeat bootstrap conflicts",
+          "passed": true
+        },
+        {
+          "description": "private HttpOnly SameSite cookie",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/personal-login.png",
+          "sha256": "2a76d581f664fa0927c79812a9be4442184f72f01161336d9714404d4b5679c3"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    },
+    {
+      "id": "encrypted-storage-session",
+      "observedAt": "2026-10-10T10:40:53.804868+00:00",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "encrypted credential storage and bcrypt account hashes verified",
+          "passed": true
+        },
+        {
+          "description": "logout and deactivation invalidate sessions",
+          "passed": true
+        },
+        {
+          "description": "denied mutations audited without secrets",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/storage.json",
+          "sha256": "c56f47180d965b4b51bfd199737663a0655172b4d1a0ad5ab96b868beee8ee4e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-10/security-audit.jsonl",
+          "sha256": "943f88c9d5f8a37d5cd60bd956f2a1d8cd9e2ebd5928d504de20a3200d3c938d"
+        }
+      ],
+      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm --prefix web run build",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-10/check-0.log",
+      "sha256": "42dad6fab0165f850d2322fa20417c8e9cdc4f7773bf42143e4573e7d638e508"
+    },
+    {
+      "command": "go test -race ./internal/app ./internal/dashboard",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-10/check-1.log",
+      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+    }
+  ],
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "url": "http://127.0.0.1:59810",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    }
+  ],
+  "target": {
+    "host": "localhost.",
+    "port": 59808,
+    "hostFingerprint": "SHA256:5yhSpqc2l17dRqMGxepj6jmoLaFTwFR3IDHaj3JGwg8",
+    "sshdSha256": "dd3926838dd2a1125f8c93e7409b58c09f313c49dddf5ea6f5998ec155dd0add",
+    "os": "Darwin",
+    "architecture": "arm64",
+    "allowedPathObserved": 16877,
+    "authenticated": true
+  },
+  "fixture": {
+    "runtime": "/private/tmp/cbui/b943821e-7078-4e96-b898-c676069bedf6",
+    "transport": [
+      "local",
+      "SSH"
+    ],
+    "ownership": "owned",
+    "accountRoles": [
+      "administrator",
+      "operator",
+      "viewer"
+    ],
+    "browserVersion": "154.0.8037.98",
+    "dedicatedSSH": true
+  },
+  "coverage": {
+    "required": [
+      "personal-team-login",
+      "bootstrap-restrictions",
+      "role-ui-api-matrix",
+      "csrf-ownership",
+      "foreign-credential-refusal",
+      "secret-free-output",
+      "encrypted-storage-session"
+    ],
+    "executed": [
+      "personal-team-login",
+      "role-ui-api-matrix",
+      "csrf-ownership",
+      "foreign-credential-refusal",
+      "secret-free-output",
+      "bootstrap-restrictions",
+      "encrypted-storage-session"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/deployment.go",
+      "sha256": "7f48286d25d4779a006a9963525e647e78e24c56f800b26ea6b6799f6409740c"
+    },
+    {
+      "path": "internal/app/deployment_access.go",
+      "sha256": "9c627290ae83613990b1254032e028de4e2a587a350ffbcd3acf8f39731954be"
+    },
+    {
+      "path": "internal/app/deployment_account_key_test.go",
+      "sha256": "4b86e9a4ae3060f551ce30d76ccbd086b4f4b119d21881a44ca15046ea3fc718"
+    },
+    {
+      "path": "internal/app/deployment_contract.go",
+      "sha256": "39c605921dd5a4b8bca677072c6be4c2a9bdb869694f07f100653f7c7fcebc00"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease.go",
+      "sha256": "4f395af02624a0ad5f36338ecb0d77878fe166480b07686d9ceaac9a9d29ea7a"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease_test.go",
+      "sha256": "df21852a0cc15e7f82d6b5ced658b2d2b452624e76640322518166c0b79f1534"
+    },
+    {
+      "path": "internal/app/deployment_job_credentials.go",
+      "sha256": "11e3dbed4128dccc53706a33aebe44f1bb6b5dde84c056ba69c1d2fb9739dff2"
+    },
+    {
+      "path": "internal/app/deployment_presets.go",
+      "sha256": "6a08f4ed7e9f6a0f0ad5c1722efd03bcb8b67c5e8ceaaf3fe33f5d88d2a64f0c"
+    },
+    {
+      "path": "internal/app/deployment_store.go",
+      "sha256": "a7bce68f91d6fdb2d80d56611504e3827f4a4d9e99597a4224d4ed32ddbfbdd5"
+    },
+    {
+      "path": "internal/app/deployment_test.go",
+      "sha256": "662ab73aa04dc8e9eea4028d7497a1cf80b17dd6f1c4ead3258eb5d7179e7dff"
+    },
+    {
+      "path": "internal/dashboard/deployment.go",
+      "sha256": "07d19a15b400df73c7a4b14c08e34d6bca4c6074a9cadcf4b673d3e57a0e32d7"
+    },
+    {
+      "path": "internal/dashboard/deployment_accounts.go",
+      "sha256": "1239cfd753fe5135c27001e6b07d23c86f10baca902734d2e41f491909e70099"
+    },
+    {
+      "path": "internal/dashboard/deployment_test.go",
+      "sha256": "3ebaf39ede555f22ee04733cc7c5d0f1b7f140bb80595b0a5e61bec12d7237b7"
+    },
+    {
+      "path": "internal/dashboard/server.go",
+      "sha256": "8a920ab4539c4a988e89128ba3012ffce379c8d0868b56d7df17aad404c02158"
+    },
+    {
+      "path": "internal/dashboard/chainpreset.go",
+      "sha256": "8f4203f202d5a77ec10d70429d35230987c0353f04f4125db6d8a7d3fe80bb09"
+    },
+    {
+      "path": "internal/core/session/webstore.go",
+      "sha256": "9debdae68ecec9d52b12b308d2ffc9d4be01ec7a36e35eeced445e45735223a4"
+    },
+    {
+      "path": "internal/core/session/accountstore.go",
+      "sha256": "56062cfac1369ba2471df4cd6feff08eefab6cd9e98f7a36281fe1fada443417"
+    },
+    {
+      "path": "internal/resource/serverset.go",
+      "sha256": "e374f83725b60f2e88bf62e92992b8cef71aa850440c69a40f64c6975977f320"
+    },
+    {
+      "path": "internal/resource/serverset_load.go",
+      "sha256": "687f6ba066e6aa3575913e2c5b6ba5edbabd6089fa63c0dda87434f3deb18a26"
+    },
+    {
+      "path": "internal/resource/ports.go",
+      "sha256": "65ea00874fe3207250218ee4d7075bd878f19ae6b66103493d0d75d2a4cca5cb"
+    },
+    {
+      "path": "internal/resource/workspaceconfig.go",
+      "sha256": "8323b1503fca676561b76c5f29fbfb0257e12da76b64f7a556cdf4fde3ec3180"
+    },
+    {
+      "path": "cmd/chainbench-dashboard/main.go",
+      "sha256": "9a29cd9b6a5fa490ec731015444d7660c0216968bf84c2a4ddd500f75c6cb6d3"
+    },
+    {
+      "path": "web/src/DeploymentEditor.svelte",
+      "sha256": "1ce49b43203376b037e0d37c33307daa79f4825c2fb72b51509eec6079a20f4a"
+    },
+    {
+      "path": "web/src/DeploymentFields.svelte",
+      "sha256": "f22b35c1e2d7030314f1e45dfab378576c60ab1ef104e34502da69ff080d82c2"
+    },
+    {
+      "path": "web/src/App.svelte",
+      "sha256": "0194f1b1d5529fcca7c3a0940dfc8670510ced3d99cef4a4c2fbb64c5b8074f7"
+    },
+    {
+      "path": "tests/webui/browser_web10.mjs",
+      "sha256": "03a214c37736fd4cc70b768fd86a5fbba655500adfb6403c38571bef7eb25876"
+    },
+    {
+      "path": "tests/webui/evidence_web10.py",
+      "sha256": "a96071f0950ec2c40331426da3e611c4098f3ce0e6827db19073d9cda5e3c234"
+    },
+    {
+      "path": "tests/webui/run_web10.py",
+      "sha256": "8d88f3430a2708e463dde6a96fd7babc766ab34f22919bad126f0db8b155bcdd"
+    },
+    {
+      "path": "tests/webui/test_evidence_web10.py",
+      "sha256": "e09e83c2d5436a90287f9f3259970c4ace548a193f54529cc88922aabaa28c77"
+    },
+    {
+      "path": "internal/app/web_assets.go",
+      "sha256": "5d5f69673bdb4e79d5bb738f8df8037c5e80ade97fc1e2fe4f1139b8094dda1a"
+    },
+    {
+      "path": "internal/app/web_assets_test.go",
+      "sha256": "5c67753986432fe391dd930cb6120e90b15b10905f5a6c7bb70f70aea7880317"
+    },
+    {
+      "path": "internal/app/web_auth.go",
+      "sha256": "2b7235be219d0f50747a9cc6e6b95a1998d5002798f4a8021a62234d335febf3"
+    },
+    {
+      "path": "internal/app/web_auth_test.go",
+      "sha256": "94463724a4984008fcf7c681b0575d1a5ee6c6397e601552311985a06aad6054"
+    },
+    {
+      "path": "internal/app/web_binary_observation.go",
+      "sha256": "cb2d7f4b0fe373f5f97d634f0731209bdcde8a05ebe5aa82de2c91fbb111b091"
+    },
+    {
+      "path": "internal/app/web_chain_engine.go",
+      "sha256": "302aecd171e6c01d3cb24a0a3f067ac5f7aae468020559b18cb88e5b7901962e"
+    },
+    {
+      "path": "internal/app/web_chain_execution.go",
+      "sha256": "cfc376cfa421420c6e5d8fe38ee4884ed7ab1f2e09b0effeef9d8f1a68766c5d"
+    },
+    {
+      "path": "internal/app/web_cleanup_process_test.go",
+      "sha256": "7f1f1930576ebbdcbf537d9d67ac08400925d132fb3dc83904803c24ac52341a"
+    },
+    {
+      "path": "internal/app/web_config_change.go",
+      "sha256": "ea915b60044ba63a6bf18d32a2102a71831da5c1b8ae4ae3c798fa6716692c1c"
+    },
+    {
+      "path": "internal/app/web_config_change_test.go",
+      "sha256": "9800c9b40151cb47204b172a54351048cca1f4ce9cba911fe98db4e1b2b2e0b8"
+    },
+    {
+      "path": "internal/app/web_control_binary.go",
+      "sha256": "2aadd3294a647d979a1511e27b89f6fd567203e2236bd30ffe7ca6eef40b75f8"
+    },
+    {
+      "path": "internal/app/web_control_binary_test.go",
+      "sha256": "9a7a4b14af45e5017986a4f43891bd1f69301e6969cf937d15c5031a1ff511b7"
+    },
+    {
+      "path": "internal/app/web_document_assets.go",
+      "sha256": "24078dbd479549628227683247f236dcdadaa47dfcdbe580e6f4b46b6fba59e6"
+    },
+    {
+      "path": "internal/app/web_document_quarantine.go",
+      "sha256": "f8ca8fdaa168f32af79f4a3c8664afb248b975fb69bb3c68661ddf0fb7d12a00"
+    },
+    {
+      "path": "internal/app/web_document_quarantine_test.go",
+      "sha256": "07c5e0336698f6708a659f0ec09f8252a3b56568cfc35262751733ca0129d7ab"
+    },
+    {
+      "path": "internal/app/web_document_secrets.go",
+      "sha256": "36815460b8ab12b35e8b1b6b8b1628256212b6aa7ffee8fa53c2383675187077"
+    },
+    {
+      "path": "internal/app/web_document_secrets_test.go",
+      "sha256": "74de1bb5571b72e926183f032b7d7c3f6ceafc8e7be88f29297700859a5b0195"
+    },
+    {
+      "path": "internal/app/web_genesis_asset_test.go",
+      "sha256": "40ed33d9e50dbc7f58dcce98c4d360acb4dcd3422bf820f16371e8e4fb6f684c"
+    },
+    {
+      "path": "internal/app/web_history.go",
+      "sha256": "00cd0b4612b0ddc5dc5d646903ae0ff4d9f9d0bfdda3a679334afcce656e6dc0"
+    },
+    {
+      "path": "internal/app/web_history_capture.go",
+      "sha256": "c08ba5d2baed9de9438fae9b93c2ccb4e045435701c322ced86e324bc0bbbc04"
+    },
+    {
+      "path": "internal/app/web_history_compare.go",
+      "sha256": "06f6eb1bf9816ecc04143442baceb088ec781d17280dbfc115e317e8bcb69414"
+    },
+    {
+      "path": "internal/app/web_history_contract.go",
+      "sha256": "4f18881f9428c9bcef89f6d3777dcc8eed4a490a71c02b308d58ff065445b98a"
+    },
+    {
+      "path": "internal/app/web_history_observations.go",
+      "sha256": "a1f742c36255fa58417caf187c98c5125a0910119cd2e53cc3808535fc684266"
+    },
+    {
+      "path": "internal/app/web_history_observations_test.go",
+      "sha256": "42c4a076e6422258f2b14db08aab98fd51ba8a74349a6f430c50a69143ebe8c0"
+    },
+    {
+      "path": "internal/app/web_history_test.go",
+      "sha256": "1e3120cf819f7975bb4e0c95da28e65bfe798c21e286a589ee0602b3f73dfaaa"
+    },
+    {
+      "path": "internal/app/web_job_acceptance_test.go",
+      "sha256": "ea5e228c89beba3302090ec3d06d34e591446ed17e7317583d7d17ee0b483fff"
+    },
+    {
+      "path": "internal/app/web_job_contract.go",
+      "sha256": "905b77fd755958c156664f1f3e2a7c5081fd98797afcab84da4f24384949d7bd"
+    },
+    {
+      "path": "internal/app/web_job_execution.go",
+      "sha256": "3e1468075bb1ee07b01764c287d63da62b470d412298a3b46cbbc235bb85e0a8"
+    },
+    {
+      "path": "internal/app/web_job_observation.go",
+      "sha256": "17dceea060b8b22c5c555f3ed7f8ad5944b5df4855e24767761e43f459742971"
+    },
+    {
+      "path": "internal/app/web_job_observation_test.go",
+      "sha256": "628d0b12d87f342311d3f39e1b5090b23f3937ce47b770a1c759793c9b9ab1a5"
+    },
+    {
+      "path": "internal/app/web_jobs.go",
+      "sha256": "0f5271e42daffee58c4f7052647f5b6290d55375293622d34103caf436245f63"
+    },
+    {
+      "path": "internal/app/web_jobs_test.go",
+      "sha256": "4d8beb4d4307794fd19bac6d66c3b78d05271e9366b4cc58c57e0db4ddaf2907"
+    },
+    {
+      "path": "internal/app/web_key_snapshot.go",
+      "sha256": "c524d6b1982b90706ed69641bf1e59904aa75ae78028a05cf889fb376b2b29fd"
+    },
+    {
+      "path": "internal/app/web_key_snapshot_test.go",
+      "sha256": "7c39fcccd8a6931510bc501781621bea75a6fa8103a2206455266783e9cd261f"
+    },
+    {
+      "path": "internal/app/web_monitor.go",
+      "sha256": "a8d719c6fbef9d8b7e2d1d1fb5624a377f9198e932dd4a1d128185ba7933682c"
+    },
+    {
+      "path": "internal/app/web_monitor_archive.go",
+      "sha256": "61ec2297a0cfee954f1495804541e3bb7892958095761f8bbde5c397184952fa"
+    },
+    {
+      "path": "internal/app/web_monitor_log.go",
+      "sha256": "b4b58ca96872cb84f390ba1c6d7e70202d12ef3ead1556a82cb3a9ad51aeda6c"
+    },
+    {
+      "path": "internal/app/web_monitor_read.go",
+      "sha256": "7c8c3c56ea846bcaa3108e939b387da1be0e9cd741828bfb37b8b0722aaa3cca"
+    },
+    {
+      "path": "internal/app/web_monitor_remote.go",
+      "sha256": "12616052a111433d89982bebebb01e553c0714348ec090591b8c7751a88a8978"
+    },
+    {
+      "path": "internal/app/web_monitor_remote_test.go",
+      "sha256": "5dfc6abb8c6fbafdaccfb11f6acfcda59d144520cd227e7e1f88144798d818f2"
+    },
+    {
+      "path": "internal/app/web_monitor_test.go",
+      "sha256": "e36bb83b2f0ae942200095b322b34ef05c54d79171b57c50dcb31198c20df083"
+    },
+    {
+      "path": "internal/app/web_network_guard.go",
+      "sha256": "155c5426dfcb6b8f280adcde0a58822019e0d010ef5c577106380e689b914972"
+    },
+    {
+      "path": "internal/app/web_network_monitor.go",
+      "sha256": "c2324b319fed4c127defe12c27f358d60c2527ecb16e873b197f7ad4863114e7"
+    },
+    {
+      "path": "internal/app/web_networks.go",
+      "sha256": "5cf5624817dc16b413cfb5b3ac103b2ea2a876618721c03f3ba4234b7e682db9"
+    },
+    {
+      "path": "internal/app/web_node_binaries.go",
+      "sha256": "48c9034f9b4187de1fdfa61747ebd2a07f78f05db5238d88097dcfea4c62aeaf"
+    },
+    {
+      "path": "internal/app/web_node_binaries_test.go",
+      "sha256": "8bf3e8898b28428d3c15a737ff0db8f38786c145f8af81d302433fbda1090ab2"
+    },
+    {
+      "path": "internal/app/web_node_controls.go",
+      "sha256": "2aa86279f7d416b0bf13e428c9b35187d77ba993c609af0977621efae35ad0e1"
+    },
+    {
+      "path": "internal/app/web_node_discovery.go",
+      "sha256": "1ea7b087a45856bf45a7cfe68b5259f06b18cba14a8a7c82c743d56d3498685b"
+    },
+    {
+      "path": "internal/app/web_node_discovery_test.go",
+      "sha256": "77ba7a2959f40d6781acdd65c3f1476d6f564548d69cc73f67901c23c4f261ae"
+    },
+    {
+      "path": "internal/app/web_node_ledger_test.go",
+      "sha256": "4c98d92e41634ec8e5d67455b5bf89f275d1a120b6e87596801221c626de9aab"
+    },
+    {
+      "path": "internal/app/web_node_observations.go",
+      "sha256": "17ffdbc0b2beb3a21d0da5888cb39e80c64a965c7439883a23f782e2c324ce6e"
+    },
+    {
+      "path": "internal/app/web_node_observer_darwin.go",
+      "sha256": "80c3a8016fadcbd3cea0f5090487b92d7b33c736873ce0f6d0899b48982dfa5a"
+    },
+    {
+      "path": "internal/app/web_node_observer_darwin_test.go",
+      "sha256": "a1d8c745318c5a2bc54b4b1ddf16ffd59173ddc506c54231b9ab3414bf0e3d10"
+    },
+    {
+      "path": "internal/app/web_node_probe.go",
+      "sha256": "442ce77120ecd3211e6e4a494fe9b6ec9959357af5b4e6a064f3f5c5e87c2625"
+    },
+    {
+      "path": "internal/app/web_node_probe_test.go",
+      "sha256": "be3cdd43cae5572029ccded789cb369004f88f70a8efa8d3869f62e24aa1c56d"
+    },
+    {
+      "path": "internal/app/web_node_reset_test.go",
+      "sha256": "d59919cd5dd568d3a7a9234ce2b6a7dce1d3fab9ad0fc5babdfe01436e9d39b2"
+    },
+    {
+      "path": "internal/app/web_node_restart_test.go",
+      "sha256": "f9822b3285f89f29956f1c6508047a8675f48f6f671aa7cfc70264e4cb5d7100"
+    },
+    {
+      "path": "internal/app/web_observed_controls_test.go",
+      "sha256": "0d51f8cb6857f6c89bfd0bc1ce88e4e27ea8e2e6dab24283dc292179bffeebf0"
+    },
+    {
+      "path": "internal/app/web_preset_composition.go",
+      "sha256": "07eef24f63fcce68290f274682074d67856ef67eb01b009d3f7ccc6be487fc17"
+    },
+    {
+      "path": "internal/app/web_preset_composition_test.go",
+      "sha256": "30ac32e109766bc38662f9cbc660df6da22689bb2a74fb3b780d9bbe48bd73a3"
+    },
+    {
+      "path": "internal/app/web_recorded_controls.go",
+      "sha256": "342c5f3cd3be7a66d5fe953eb3381fe069c616a6b0fe40bba159fbe15b2ac8da"
+    },
+    {
+      "path": "internal/app/web_recorded_controls_test.go",
+      "sha256": "8995a180d95f923ced35fc468b6a46b7958041fc654092bc8f073c06688b17fb"
+    },
+    {
+      "path": "internal/app/web_redaction.go",
+      "sha256": "b51f4f12e222fedf344b966065f167697a7cf412b330f37164c6fc907b76b225"
+    },
+    {
+      "path": "internal/app/web_resource_holds.go",
+      "sha256": "c993cff87c9f40b3234ffdcb7d48e01c4f495b828945e21958d89fd1dca69d37"
+    },
+    {
+      "path": "internal/app/web_resource_holds_test.go",
+      "sha256": "3d4f822cac66a13e73d37057ffe44e86424d1e19c77331584e0c2a59f59b472b"
+    },
+    {
+      "path": "internal/app/web_test_attach.go",
+      "sha256": "e14596e051bdd942d0e51c5249606a87dfcfc34ae2ef6d19b701140686eb1173"
+    },
+    {
+      "path": "internal/app/web_test_attach_test.go",
+      "sha256": "25cde0c42ba5013ad02f1adf88a98e748b658eb48adc13a4be9f881f65e93020"
+    },
+    {
+      "path": "internal/app/web_test_binaries.go",
+      "sha256": "fa088f51908c03b0b212a8cc8699dd7c62b2c475f90a900cdc7e43cd0ff46882"
+    },
+    {
+      "path": "internal/app/web_test_cases.go",
+      "sha256": "a5a71b7af6517c68ff08a4eae70e6bafedce59295bad3e31d3b8a84baca00be3"
+    },
+    {
+      "path": "internal/app/web_test_cases_test.go",
+      "sha256": "de5d58c93f6d10222e5ed06a7707e2ac4da4616d46bfb3c30ccd2435f213c8fa"
+    },
+    {
+      "path": "internal/app/web_test_genesis.go",
+      "sha256": "20ae8c62e1d61ec4840ed3399230cdbafbc5b47e3087f4d5b851ec6a73b98b48"
+    },
+    {
+      "path": "internal/app/web_test_genesis_asset_test.go",
+      "sha256": "733b09c6c3441ff34f47d9afbdbaf2e7ced1fadf945f5f5e2ebcc845293345af"
+    },
+    {
+      "path": "internal/app/web_test_named_binary_test.go",
+      "sha256": "6144a2b0cf24a7013798811cc798cd797a784ac1e5ad929c4355ed051ef151c6"
+    },
+    {
+      "path": "internal/app/web_test_preset_refs_test.go",
+      "sha256": "fd08acaf8caaa60ef0fcf47220e1daad234e5cd23e33fee7eeba0c34b741b998"
+    },
+    {
+      "path": "internal/app/web_test_run.go",
+      "sha256": "ed92f28a229d4db140aa237eae1b933a7216b3232d6cd7dfce3d3c883415210b"
+    },
+    {
+      "path": "internal/app/web_test_run_test.go",
+      "sha256": "8fd2e717a934d848503e05f92a1f7819499ab47109765a8d3ef0366396545c2f"
+    },
+    {
+      "path": "internal/app/web_test_table_test.go",
+      "sha256": "cf57831a622381ac0b43adc7818374b7309670688de03681521a3df5edd30076"
+    },
+    {
+      "path": "internal/app/web_unbound_binary_test.go",
+      "sha256": "98c29d29f0470abc475e9c42c9b6e83dadd72fc05956e70ecc5d16fd91c7a1f6"
+    },
+    {
+      "path": "internal/dashboard/security.go",
+      "sha256": "792c838d01d244288ecc951a1b0cc11aa746d98d8ea6675fd302e084fa147d0f"
+    },
+    {
+      "path": "internal/dashboard/security_test.go",
+      "sha256": "8647a7de5adf8bf039fc15e61c0b2e4fa4e0ac7a85b158ba844502a297dfdc8f"
+    },
+    {
+      "path": "web/src/LoginPanel.svelte",
+      "sha256": "210a66e76a28e53449d56746ca67794397c3fb02f31fd8e581ad3b690a142eaa"
+    },
+    {
+      "path": "web/src/ChainPresetEditor.svelte",
+      "sha256": "bcba1d1fc6110dbe7526c1c82b64bc6360dab0087f9fbe74f027539f4d55f4f8"
+    },
+    {
+      "path": "web/src/ManifestManager.svelte",
+      "sha256": "1e372c1559d13f7db4d1488adb649d59439c513704e960c0a5104ddab9b23cbc"
+    },
+    {
+      "path": "web/src/DSLEditor.svelte",
+      "sha256": "ddb58001ea5d05407e63819dbf3a4b3d7c2349e066451eca0ec431732ec4cfb8"
+    },
+    {
+      "path": "internal/dashboard/testcase.go",
+      "sha256": "935c16dbbb3339b53617b864b3b6a72a246b7a96d225f7aa4e94acc71c4b6366"
+    },
+    {
+      "path": "tests/webui/fixtures/accounts.go.txt",
+      "sha256": "c8d13ea1c9345b0b75430f64892055e79a02400acb3e6ab45149d510216d6cff"
+    },
+    {
+      "path": "tests/webui/fixtures/docker_regression_prepare.sh",
+      "sha256": "2f95a6309581cde0e8a181311ed6681af6ab4596db9775785a2217b9f2505dbc"
+    },
+    {
+      "path": "tests/webui/fixtures/dslrun.go.txt",
+      "sha256": "e5a6648cb20adc398f51a74e5b55547fef213975c938843e3719edf7a12cdb21"
+    },
+    {
+      "path": "tests/webui/fixtures/prepare_web01.py",
+      "sha256": "67ec2600e23e6271f9131fedf38bad2fb8dadad184799b10fef0731eca4f32eb"
+    },
+    {
+      "path": "tests/webui/fixtures/prepare_web04.py",
+      "sha256": "687c632035a2f6bfae7b136dac3fc08564afdf4536740f10db78174441b47528"
+    },
+    {
+      "path": "tests/webui/fixtures/ssh_prepare.sh",
+      "sha256": "9fb7264cf1999de0d25fc7c9074c3a7dd57c6e3442b9e19182192f505f100616"
+    },
+    {
+      "path": "tests/webui/fixtures/ssh_teardown.sh",
+      "sha256": "2a3d30cd24f16bbf22b5030eaad7eaab648641a8dbf2bce1a23cc49e1b49945c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/administrator.png",
+      "sha256": "d39c7a497f1b2e8cbd424c5567a13356b106975c3e8bce12d4c776f04b0e6e69"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
+      "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/check-0.log",
+      "sha256": "42dad6fab0165f850d2322fa20417c8e9cdc4f7773bf42143e4573e7d638e508"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/check-1.log",
+      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/fixture.json",
+      "sha256": "c34058c5dcae738021f289f0b53998e0f54e6deb833e4bd765a95be6c017869b"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/legacy-fixture.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/operator.png",
+      "sha256": "37326166c0c29094431b5b1abef19fffbeb48b4f74f46baf86568c02516e78d9"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/personal-browser.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/personal-login.png",
+      "sha256": "2a76d581f664fa0927c79812a9be4442184f72f01161336d9714404d4b5679c3"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/personal.json",
+      "sha256": "41775ad309268723b0431e5792099f158fab90478fab104e66bd85a6df34930b"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/security-audit.jsonl",
+      "sha256": "943f88c9d5f8a37d5cd60bd956f2a1d8cd9e2ebd5928d504de20a3200d3c938d"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/server-restart.log",
+      "sha256": "751bfac6ad46a9946a3c4005acb80bb2191a95f3327aabb18fd38d5de2111ce6"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/server.log",
+      "sha256": "751bfac6ad46a9946a3c4005acb80bb2191a95f3327aabb18fd38d5de2111ce6"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/sshd.log",
+      "sha256": "86ed0bd827dab2b6a818a2247b4961735f7fc4c47a36122ba33d5143231b9e29"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/storage.json",
+      "sha256": "c56f47180d965b4b51bfd199737663a0655172b4d1a0ad5ab96b868beee8ee4e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/team-browser.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-10/viewer.png",
+      "sha256": "c0b8b0105ae0af1486c33a8763537ee36ad2bf6125687590bd2dc7fd58c700c1"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}

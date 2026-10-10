@@ -1,0 +1,24 @@
+{
+  "criterion": "WEB-03",
+  "invocationId": "02ecab20-8471-456b-acac-913459b4737c",
+  "startedAt": "2026-10-10T09:10:19.893825+00:00",
+  "finishedAt": "2026-10-10T09:10:44.109947+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "two-operator-shared-edit",
+    "personal-ssh-binding",
+    "ports-paths-placement-validation",
+    "ssh-access-permissions",
+    "secret-free-export"
+  ],
+  "executedScenarios": [
+    "two-operator-shared-edit",
+    "personal-ssh-binding",
+    "ssh-access-permissions",
+    "ports-paths-placement-validation",
+    "secret-free-export"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "52da7a6028cc36eb017b870da372f4f169c94b1977ae1b65b305754a83c5ff25"
+}

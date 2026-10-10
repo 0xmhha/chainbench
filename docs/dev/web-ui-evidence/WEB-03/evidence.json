@@ -1,0 +1,486 @@
+{
+  "criterion": "WEB-03",
+  "invocationId": "02ecab20-8471-456b-acac-913459b4737c",
+  "scenarios": [
+    {
+      "id": "two-operator-shared-edit",
+      "observedAt": "2026-10-10T09:10:34.515Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "actors": [
+        {
+          "id": "operator-a",
+          "role": "operator"
+        },
+        {
+          "id": "operator-b",
+          "role": "operator"
+        }
+      ],
+      "assertions": [
+        {
+          "description": "Both operators created/edited shared engine documents and workspace in the browser",
+          "passed": true
+        },
+        {
+          "description": "Other operator observes revision 2",
+          "passed": true
+        },
+        {
+          "description": "Stale shared workspace edit returned 409",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-editor.png",
+          "sha256": "17d26227ca391c7c12e25dc78e84b4574a1fc662c65f8734084fb0f83cfe3e45"
+        }
+      ],
+      "invocationId": "02ecab20-8471-456b-acac-913459b4737c"
+    },
+    {
+      "id": "personal-ssh-binding",
+      "observedAt": "2026-10-10T09:10:38.628Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "actors": [
+        {
+          "id": "operator-a",
+          "role": "operator"
+        },
+        {
+          "id": "operator-b",
+          "role": "operator"
+        }
+      ],
+      "assertions": [
+        {
+          "description": "Each user owns and sees only their credential metadata and binding",
+          "passed": true
+        },
+        {
+          "description": "Binding leaves shared revision unchanged",
+          "passed": true
+        },
+        {
+          "description": "Foreign credential binding rejected",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-allowed.png",
+          "sha256": "c9d9e903a3f08226b171c9272f2dc25d4a546f09a18afcdc23c33bebb88ad1ca"
+        }
+      ],
+      "invocationId": "02ecab20-8471-456b-acac-913459b4737c"
+    },
+    {
+      "id": "ssh-access-permissions",
+      "observedAt": "2026-10-10T09:10:40.123Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "actors": [
+        {
+          "id": "operator-a",
+          "role": "operator"
+        },
+        {
+          "id": "operator-b",
+          "role": "operator"
+        }
+      ],
+      "assertions": [
+        {
+          "description": "Actual dedicated sshd accepted one operator key and rejected the other",
+          "passed": true
+        },
+        {
+          "description": "Authenticated SSH user denied deployment when actual target directory was not writable",
+          "passed": true
+        },
+        {
+          "description": "Verified target host-key fingerprint",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-denied.png",
+          "sha256": "889923a9885b859b474121a0f997e16b4415606185603966758bbfe1bf5aceca"
+        }
+      ],
+      "invocationId": "02ecab20-8471-456b-acac-913459b4737c"
+    },
+    {
+      "id": "ports-paths-placement-validation",
+      "observedAt": "2026-10-10T09:10:42.609Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "actors": [
+        {
+          "id": "operator-a",
+          "role": "operator"
+        },
+        {
+          "id": "operator-b",
+          "role": "operator"
+        }
+      ],
+      "assertions": [
+        {
+          "description": "Engine validates both local and remote placement",
+          "passed": true
+        },
+        {
+          "description": "Port overlap/range/stride, duplicate/mixed hosts and invalid paths rejected by validation and save",
+          "passed": true
+        },
+        {
+          "description": "Invalid document revision cannot form a workspace",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-03/validation.json",
+          "sha256": "d5138e0951dac6b775d64bfa4dfa0b731291ff44078e41cbb3ec71122239736e"
+        }
+      ],
+      "invocationId": "02ecab20-8471-456b-acac-913459b4737c"
+    },
+    {
+      "id": "secret-free-export",
+      "observedAt": "2026-10-10T09:10:43.151Z",
+      "mode": "team",
+      "transport": "SSH",
+      "ownership": "owned",
+      "actors": [
+        {
+          "id": "operator-a",
+          "role": "operator"
+        },
+        {
+          "id": "operator-b",
+          "role": "operator"
+        }
+      ],
+      "assertions": [
+        {
+          "description": "Shared browser export preserves server declaration and contains no secret material",
+          "passed": true
+        },
+        {
+          "description": "API responses and persisted deployment snapshot contain no plaintext credentials",
+          "passed": true
+        },
+        {
+          "description": "Shared document save refuses embedded SSH secrets",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-export.json",
+          "sha256": "dda2edf3a59f29116e40b8ebd19e7cef566e45c0e7fb7aab407c9b24ff5fbb4a"
+        }
+      ],
+      "invocationId": "02ecab20-8471-456b-acac-913459b4737c"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm --prefix web run build",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-03/check-0.log",
+      "sha256": "5faebf1b5ab9b1c1fbe7905de295eb66f396cfee6fb372de43d5470da2cd5d6e"
+    },
+    {
+      "command": "go test ./internal/app ./internal/dashboard ./internal/resource",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-03/check-1.log",
+      "sha256": "604ce565d7370cdec946ede0514af7c5f1b7846b09e0e9a8bc3820bda7b87311"
+    }
+  ],
+  "restart": {
+    "allowedOperations": [
+      "deploy"
+    ],
+    "authenticated": true,
+    "hostIdentity": "localhost.:56421/SHA256:WuJAm7VBBihGuw34uCwhhB2MI4rnkXavuJ2yrk+6wLo",
+    "reachable": true
+  },
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "url": "http://127.0.0.1:56423",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    }
+  ],
+  "target": {
+    "host": "localhost.",
+    "port": 56421,
+    "hostFingerprint": "SHA256:WuJAm7VBBihGuw34uCwhhB2MI4rnkXavuJ2yrk+6wLo",
+    "sshdSha256": "dd3926838dd2a1125f8c93e7409b58c09f313c49dddf5ea6f5998ec155dd0add",
+    "os": "Darwin",
+    "architecture": "arm64",
+    "allowedPathObserved": 16877
+  },
+  "fixture": {
+    "runtime": "/private/tmp/cbui/02ecab20-8471-456b-acac-913459b4737c",
+    "transport": [
+      "local",
+      "SSH"
+    ],
+    "ownership": "owned",
+    "accountIds": [
+      "operator-a",
+      "operator-b"
+    ],
+    "browserVersion": "154.0.8037.98",
+    "dedicatedSSH": true
+  },
+  "coverage": {
+    "required": [
+      "two-operator-shared-edit",
+      "personal-ssh-binding",
+      "ports-paths-placement-validation",
+      "ssh-access-permissions",
+      "secret-free-export"
+    ],
+    "executed": [
+      "two-operator-shared-edit",
+      "personal-ssh-binding",
+      "ssh-access-permissions",
+      "ports-paths-placement-validation",
+      "secret-free-export"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/deployment.go",
+      "sha256": "7f48286d25d4779a006a9963525e647e78e24c56f800b26ea6b6799f6409740c"
+    },
+    {
+      "path": "internal/app/deployment_access.go",
+      "sha256": "9c627290ae83613990b1254032e028de4e2a587a350ffbcd3acf8f39731954be"
+    },
+    {
+      "path": "internal/app/deployment_account_key_test.go",
+      "sha256": "4b86e9a4ae3060f551ce30d76ccbd086b4f4b119d21881a44ca15046ea3fc718"
+    },
+    {
+      "path": "internal/app/deployment_contract.go",
+      "sha256": "39c605921dd5a4b8bca677072c6be4c2a9bdb869694f07f100653f7c7fcebc00"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease.go",
+      "sha256": "4f395af02624a0ad5f36338ecb0d77878fe166480b07686d9ceaac9a9d29ea7a"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease_test.go",
+      "sha256": "df21852a0cc15e7f82d6b5ced658b2d2b452624e76640322518166c0b79f1534"
+    },
+    {
+      "path": "internal/app/deployment_job_credentials.go",
+      "sha256": "11e3dbed4128dccc53706a33aebe44f1bb6b5dde84c056ba69c1d2fb9739dff2"
+    },
+    {
+      "path": "internal/app/deployment_presets.go",
+      "sha256": "6a08f4ed7e9f6a0f0ad5c1722efd03bcb8b67c5e8ceaaf3fe33f5d88d2a64f0c"
+    },
+    {
+      "path": "internal/app/deployment_store.go",
+      "sha256": "a7bce68f91d6fdb2d80d56611504e3827f4a4d9e99597a4224d4ed32ddbfbdd5"
+    },
+    {
+      "path": "internal/app/deployment_test.go",
+      "sha256": "662ab73aa04dc8e9eea4028d7497a1cf80b17dd6f1c4ead3258eb5d7179e7dff"
+    },
+    {
+      "path": "internal/dashboard/deployment.go",
+      "sha256": "07d19a15b400df73c7a4b14c08e34d6bca4c6074a9cadcf4b673d3e57a0e32d7"
+    },
+    {
+      "path": "internal/dashboard/deployment_accounts.go",
+      "sha256": "1239cfd753fe5135c27001e6b07d23c86f10baca902734d2e41f491909e70099"
+    },
+    {
+      "path": "internal/dashboard/deployment_test.go",
+      "sha256": "3ebaf39ede555f22ee04733cc7c5d0f1b7f140bb80595b0a5e61bec12d7237b7"
+    },
+    {
+      "path": "internal/dashboard/server.go",
+      "sha256": "8a920ab4539c4a988e89128ba3012ffce379c8d0868b56d7df17aad404c02158"
+    },
+    {
+      "path": "internal/dashboard/chainpreset.go",
+      "sha256": "8f4203f202d5a77ec10d70429d35230987c0353f04f4125db6d8a7d3fe80bb09"
+    },
+    {
+      "path": "internal/core/session/webstore.go",
+      "sha256": "9debdae68ecec9d52b12b308d2ffc9d4be01ec7a36e35eeced445e45735223a4"
+    },
+    {
+      "path": "internal/resource/serverset.go",
+      "sha256": "e374f83725b60f2e88bf62e92992b8cef71aa850440c69a40f64c6975977f320"
+    },
+    {
+      "path": "internal/resource/serverset_load.go",
+      "sha256": "687f6ba066e6aa3575913e2c5b6ba5edbabd6089fa63c0dda87434f3deb18a26"
+    },
+    {
+      "path": "internal/resource/ports.go",
+      "sha256": "65ea00874fe3207250218ee4d7075bd878f19ae6b66103493d0d75d2a4cca5cb"
+    },
+    {
+      "path": "internal/resource/workspaceconfig.go",
+      "sha256": "8323b1503fca676561b76c5f29fbfb0257e12da76b64f7a556cdf4fde3ec3180"
+    },
+    {
+      "path": "cmd/chainbench-dashboard/main.go",
+      "sha256": "9a29cd9b6a5fa490ec731015444d7660c0216968bf84c2a4ddd500f75c6cb6d3"
+    },
+    {
+      "path": "web/src/DeploymentEditor.svelte",
+      "sha256": "1ce49b43203376b037e0d37c33307daa79f4825c2fb72b51509eec6079a20f4a"
+    },
+    {
+      "path": "web/src/DeploymentFields.svelte",
+      "sha256": "f22b35c1e2d7030314f1e45dfab378576c60ab1ef104e34502da69ff080d82c2"
+    },
+    {
+      "path": "web/src/App.svelte",
+      "sha256": "0194f1b1d5529fcca7c3a0940dfc8670510ced3d99cef4a4c2fbb64c5b8074f7"
+    },
+    {
+      "path": "tests/webui/browser_web03.mjs",
+      "sha256": "cd6bb272a817cedab4c258c34d0b531e8897034a3f5688a8b4dfae9787060fdc"
+    },
+    {
+      "path": "tests/webui/evidence_web03.py",
+      "sha256": "70ca90ad15e6d2923a52b7b3200fd4fea080406585ad75509e555a6e720fb9ca"
+    },
+    {
+      "path": "tests/webui/run_web03.py",
+      "sha256": "3a77647eb92ffb20295e9aa7638743c9c78d6f8fe1ea417005ccc3353e42a4bc"
+    },
+    {
+      "path": "tests/webui/test_evidence_web03.py",
+      "sha256": "f18d30a7efeaa24cd132d62079b5fb8305710b83914d8492f9b9beebfbab2630"
+    },
+    {
+      "path": "tests/webui/fixtures/accounts.go.txt",
+      "sha256": "c8d13ea1c9345b0b75430f64892055e79a02400acb3e6ab45149d510216d6cff"
+    },
+    {
+      "path": "tests/webui/fixtures/docker_regression_prepare.sh",
+      "sha256": "2f95a6309581cde0e8a181311ed6681af6ab4596db9775785a2217b9f2505dbc"
+    },
+    {
+      "path": "tests/webui/fixtures/dslrun.go.txt",
+      "sha256": "e5a6648cb20adc398f51a74e5b55547fef213975c938843e3719edf7a12cdb21"
+    },
+    {
+      "path": "tests/webui/fixtures/prepare_web01.py",
+      "sha256": "67ec2600e23e6271f9131fedf38bad2fb8dadad184799b10fef0731eca4f32eb"
+    },
+    {
+      "path": "tests/webui/fixtures/prepare_web04.py",
+      "sha256": "687c632035a2f6bfae7b136dac3fc08564afdf4536740f10db78174441b47528"
+    },
+    {
+      "path": "tests/webui/fixtures/ssh_prepare.sh",
+      "sha256": "9fb7264cf1999de0d25fc7c9074c3a7dd57c6e3442b9e19182192f505f100616"
+    },
+    {
+      "path": "tests/webui/fixtures/ssh_teardown.sh",
+      "sha256": "2a3d30cd24f16bbf22b5030eaad7eaab648641a8dbf2bce1a23cc49e1b49945c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/api-observations.json",
+      "sha256": "4abb96839f13660895c1ad57f3a72b54fc5822b9f0551cb55d7984a0df713817"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/browser.json",
+      "sha256": "217c557291daeaa129fd13504f8d440061cdd4b8885c362954435496e1989bd4"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/browser.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/check-0.log",
+      "sha256": "5faebf1b5ab9b1c1fbe7905de295eb66f396cfee6fb372de43d5470da2cd5d6e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/check-1.log",
+      "sha256": "604ce565d7370cdec946ede0514af7c5f1b7846b09e0e9a8bc3820bda7b87311"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/fixture.json",
+      "sha256": "3d3ce44005d5b4aec3e4c79f36793cab6fd29aa48c26ced0eee1a01e0618718f"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/server-restart.log",
+      "sha256": "220811829c58d5bf6d316e23157e59ad22cc4888204b860344d58a1e2628a915"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/server.log",
+      "sha256": "220811829c58d5bf6d316e23157e59ad22cc4888204b860344d58a1e2628a915"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-editor.png",
+      "sha256": "17d26227ca391c7c12e25dc78e84b4574a1fc662c65f8734084fb0f83cfe3e45"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-export.json",
+      "sha256": "dda2edf3a59f29116e40b8ebd19e7cef566e45c0e7fb7aab407c9b24ff5fbb4a"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-allowed.png",
+      "sha256": "c9d9e903a3f08226b171c9272f2dc25d4a546f09a18afcdc23c33bebb88ad1ca"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-denied.png",
+      "sha256": "889923a9885b859b474121a0f997e16b4415606185603966758bbfe1bf5aceca"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/sshd.log",
+      "sha256": "b05589386d5e1f745d10814c38cc48c025be3ace220f3c08d58cf8cb584788e2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-03/validation.json",
+      "sha256": "d5138e0951dac6b775d64bfa4dfa0b731291ff44078e41cbb3ec71122239736e"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}

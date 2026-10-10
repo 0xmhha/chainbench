@@ -1,0 +1,486 @@
+{
+  "criterion": "WEB-04",
+  "invocationId": "e80f1b5a-97df-4b07-95fa-2c2ee54290c8",
+  "scenarios": [
+    {
+      "id": "builtin-stablenet",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:40.909Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized builtin stablenet through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "external-stablenet",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:44.041Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized external stablenet through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "builtin-wbft",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:45.634Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized builtin wbft through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "external-wbft",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:49.060Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized external wbft through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "builtin-wemix",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:50.062Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized builtin wemix through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "external-wemix",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:52.379Z",
+      "assertions": [
+        {
+          "message": "Engine validated and initialized external wemix through the browser",
+          "passed": true
+        },
+        {
+          "message": "Selection used a fingerprinted native binary asset",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "unsupported-family",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:52.765Z",
+      "assertions": [
+        {
+          "message": "Validation and persistence both rejected raft",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "unsupported-dialect",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:53.134Z",
+      "assertions": [
+        {
+          "message": "Validation and persistence both rejected unknown",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wrong-binary-identity",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:53.995Z",
+      "assertions": [
+        {
+          "message": "Both gwemix identities rejected for the opposite chain",
+          "passed": true
+        },
+        {
+          "message": "Actual incompatible binary help vocabulary and changed checksum rejected before setup",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "manifest-management",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "operator",
+      "observedAt": "2026-10-10T09:11:54.114Z",
+      "assertions": [
+        {
+          "message": "Browser imported and persisted three external declarations without semantic change",
+          "passed": true
+        },
+        {
+          "message": "Embedded plugins remain present and external records are content addressed",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/api-observations.json",
+      "sha256": "bbcfe3325192f39ed67364f10457abb00cf25c674a1680469f2ee670ce55f30d"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/audit.json",
+      "sha256": "16904a763a88ab695b81bffbdac9ff9ad25bc69eee72611d46269f028337e173"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/browser.json",
+      "sha256": "d11fae784fab63ca42f818ca0f9235e89ca1b93a542c82aa894f280bfcc41a4a"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/browser.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/build.log",
+      "sha256": "ec5fe94390daec24168d79c1790ef79e51b298c9e78c672fceda49b961d2ebbd"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-bundle.json",
+      "sha256": "d33d1a8f0d857606a5ffb82713ac529d47d64e9688ae0ec08241aae98add5319"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-db-0.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-db-1.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-db-2.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-db-3.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-genesis.json",
+      "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-state.json",
+      "sha256": "efb6cd0707270d0e4d5ba60e5d3bdf9fa3ab27a2ffc7d2172090d41403c0baa5"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet.png",
+      "sha256": "0cc24cd659a3d5fe34a0c9f41ecf18457996c9abb78036dcb3928b4ae31213a6"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-bundle.json",
+      "sha256": "74bf0989afa684b2a44f3e346f4b323fbfcd48f466a147e08d886f8efc918309"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-db-0.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-db-1.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-db-2.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-db-3.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-genesis.json",
+      "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-state.json",
+      "sha256": "5ad732f1b859e8693abd5c1eafcd4036be3db5fca2605cd370afaa87000c115a"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft.png",
+      "sha256": "cc612853899a4d72f98d9b63ddcf67d3b82199e1a01ac3234d2a8d1012180f33"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-bundle.json",
+      "sha256": "08da8cbc1040b35268ac57ac896fd483e5f1f68c14e38738ae12249751d30d45"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-db-0.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-db-1.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-db-2.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-db-3.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-genesis.json",
+      "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-state.json",
+      "sha256": "d8c77ed2618959c39222fab6554afe9eaae65d843e2998d5a4b2c708fe8b377c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix.png",
+      "sha256": "f02e7414151d4c0adc21814cd0d2a71031d3d3a160e5ef066af372c7b2323806"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-bundle.json",
+      "sha256": "a9ab8d996b9998d2c7f816021662ea08009e517f089c79c9d9b15af8294bb7ae"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-db-0.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-db-1.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-db-2.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-db-3.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-genesis.json",
+      "sha256": "dba106e0a49a771bbf1548cdb722588330e6723d9bf7af734d1451f9b3bd79fd"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-state.json",
+      "sha256": "6bcc777998563a1fb2a3c3c90cb967a2202db26a98e86a90594548337c30c8fd"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet.png",
+      "sha256": "4b2bc6b944c5a5bb5d057a4cf177b9c816a54b7fe932799f4759187567a8ffe0"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-tests.log",
+      "sha256": "b25ed29d019afa0136485706899d43658f1bf06178736e3831458c2317a34454"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-bundle.json",
+      "sha256": "6303c730472883a054c05d0023ebc36d7d4bc4c3e5235755c04d5a60f1cc9a86"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-db-0.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-db-1.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-db-2.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-db-3.txt",
+      "sha256": "97e174b312672b8fcf4d4d10e49b8aa8b77c565ca0797db70767f0243628e4c2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-genesis.json",
+      "sha256": "dc7faea9181cf7f7e24905fe82d7e24ab05d5f589ebd93028f3eeb21ac412ae8"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-state.json",
+      "sha256": "23c916e6cce2fd50d6e428449f1a095a419a94e85d6bb874f55e745737842a08"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft.png",
+      "sha256": "214c847120f3ef76fa326cc28451d5f41d7925ca43e708e647db83b15e222efc"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-bundle.json",
+      "sha256": "c373bda3383b32d7f3c6bdce11e3670b4a74e9c38d193df56203e69ffc2e472b"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-db-0.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-db-1.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-db-2.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-db-3.txt",
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-genesis.json",
+      "sha256": "bcd9167e2fb42ff1b4c57ab30587b380ca20e529478131b75f9702b2b1ebd269"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-state.json",
+      "sha256": "9a6cc11970d9dd2486edc057d1b2b3a1810d3a7accbbf989aa57deec602ba260"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix.png",
+      "sha256": "28f947958d035192dcaeddf616cba7374bd7ed77fe1704a1ce1f83ab348ac2d7"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/observations.json",
+      "sha256": "33ab078ab82427d0efd6a6d275c45743188c3e64674ad80bcee7c6be7fd7c706"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/server.log",
+      "sha256": "193e49c80def7894a94e0bc7e0f11c8b011e34a5b54a4f06cca2123df7897c4e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/stablenet-help.txt",
+      "sha256": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/stablenet-version.txt",
+      "sha256": "37f4d448547e5ed64f8a56cb256c149ad6b0d8dea22f135092a26adc6031a601"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/tests.log",
+      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/wbft-help.txt",
+      "sha256": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/wbft-version.txt",
+      "sha256": "79547bf131fb1460744a6c70a1f096196384ef8f9fc5cb6995f5b8b97b09800c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/wemix-help.txt",
+      "sha256": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-04/wemix-version.txt",
+      "sha256": "533eae5c54c916688f1ea1d4f65e5ed5f6cb388c6aad722b9652a15ec229ee5b"
+    }
+  ],
+  "binaries": [
+    {
+      "chain": "stablenet",
+      "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+      "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+      "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+    },
+    {
+      "chain": "wbft",
+      "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+      "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+      "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+    },
+    {
+      "chain": "wemix",
+      "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+      "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+      "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+      "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+    }
+  ],
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "contractVersion": "2",
+    "url": "http://127.0.0.1:56677"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    }
+  ],
+  "fixture": {
+    "runtime": "/private/tmp/cbui/e80f1b5a-97df-4b07-95fa-2c2ee54290c8",
+    "transport": "local",
+    "ownership": "owned",
+    "browserVersion": "154.0.8037.98",
+    "mockTargets": 0
+  },
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}
