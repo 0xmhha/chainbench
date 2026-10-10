@@ -104,3 +104,27 @@ func TestSwapNodeAction_UnsupportedControl(t *testing.T) {
 		t.Fatal("want an error when the control cannot swap")
 	}
 }
+
+// TestSwapNodeAction_Args passes the args array through, and refuses an
+// element that is not a string instead of dropping it.
+func TestSwapNodeAction_Args(t *testing.T) {
+	ctrl := &fakeSwapControl{}
+	d := faultDeps(ctrl)
+	env := envWithNodes(t, 4, "http://unused")
+	act, _ := d.Actions.Action(actionSwapNode)
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+		"on": "bp2", "args": []any{"--takeover.guard=false"},
+	}})
+	if err != nil {
+		t.Fatalf("args-only swap: %v", err)
+	}
+	if len(ctrl.change.Args) != 1 || ctrl.change.Args[0] != "--takeover.guard=false" {
+		t.Errorf("args = %v", ctrl.change.Args)
+	}
+	err = act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+		"on": "bp2", "args": []any{"--ok", 3},
+	}})
+	if err == nil {
+		t.Fatal("a non-string arg was accepted")
+	}
+}

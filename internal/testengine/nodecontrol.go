@@ -64,7 +64,7 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 	out, err := verb.NodeSwap(ctx, w.sd, verb.NodeSwapIn{
 		DataDir: w.dataDir, Index: n.Index,
 		Binary: change.Binary, Config: change.Config,
-		GenesisOverlay: change.GenesisOverlay, Purpose: change.Purpose,
+		GenesisOverlay: change.GenesisOverlay, Args: change.Args, Purpose: change.Purpose,
 	})
 	if err != nil {
 		return n, err

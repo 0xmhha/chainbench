@@ -296,8 +296,9 @@ func (resetNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // swapNodeAction swaps one node onto a different binary mid-test, so a network
 // runs mixed binaries (E7). The datadir and genesis are unchanged; the pre-swap
 // pid/command are kept as a ledger revision. Args: on (selector, required),
-// binary (path, required). The node control must own the node processes; plain
-// attach cannot swap.
+// binary (path, required), args (flags appended to the node's command line for
+// the binary it swaps onto). The node control must own the node processes;
+// plain attach cannot swap.
 type swapNodeAction struct{}
 
 func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
@@ -311,8 +312,12 @@ func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return fmt.Errorf("dsl: swapNode node%d: %w", n.Index, err)
 	}
-	if binary == "" && len(config) == 0 && len(overlay) == 0 {
-		return fmt.Errorf("dsl: swapNode requires a \"binary\", \"config\", or \"genesisOverlay\"")
+	args, err := stringList(ac.Args["args"])
+	if err != nil {
+		return fmt.Errorf("dsl: swapNode node%d: args: %w", n.Index, err)
+	}
+	if binary == "" && len(config) == 0 && len(overlay) == 0 && len(args) == 0 {
+		return fmt.Errorf("dsl: swapNode requires a \"binary\", \"config\", \"genesisOverlay\", or \"args\"")
 	}
 	purpose, _ := ac.Args["purpose"].(string)
 	sw, ok := ctrl.(interp.NodeSwapper)
@@ -320,7 +325,7 @@ func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		return fmt.Errorf("dsl: swapNode node%d: this run's node control cannot swap", n.Index)
 	}
 	swapped, err := sw.Swap(ctx, n, interp.NodeChange{
-		Binary: binary, Config: config, GenesisOverlay: overlay, Purpose: purpose})
+		Binary: binary, Config: config, GenesisOverlay: overlay, Args: args, Purpose: purpose})
 	if expectsNodeDown(ac.Args) {
 		return confirmNodeDown(ctx, ac, n, ctrl, err, actionSwapNode)
 	}
@@ -329,6 +334,28 @@ func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 	ac.Env.UpdateNode(swapped)
 	return nil
+}
+
+// stringList reads a JSON array of strings. A missing value is no list; any
+// element that is not a string is an error, since dropping it would launch a
+// command line the case did not write.
+func stringList(v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	list, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("must be an array of strings")
+	}
+	out := make([]string, 0, len(list))
+	for _, e := range list {
+		s, ok := e.(string)
+		if !ok || s == "" {
+			return nil, fmt.Errorf("must be an array of non-empty strings, have %v", e)
+		}
+		out = append(out, s)
+	}
+	return out, nil
 }
 
 // genesisOverlayArg encodes a swapNode "genesisOverlay" argument — a JSON object

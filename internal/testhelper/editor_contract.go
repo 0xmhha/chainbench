@@ -136,7 +136,7 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		case actionLoad:
 			parameterSchema["anyOf"] = editorAlternatives("gas", "fillPercent")
 		case actionSwapNode:
-			parameterSchema["anyOf"] = editorAlternatives("binary", "config", "genesisOverlay")
+			parameterSchema["anyOf"] = editorAlternatives("binary", "config", "genesisOverlay", "args")
 		case assertDerive:
 			parameterSchema["anyOf"] = []any{map[string]any{"required": []string{"selector"}, "properties": map[string]any{"op": map[string]any{"const": "abiCall"}}}, map[string]any{"required": []string{"of"}}}
 		}
@@ -175,7 +175,7 @@ func editorParameter(field string) map[string]any {
 		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": map[string]any{}}, map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`}}}
 	case "groups":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}
-	case "onEach":
+	case "onEach", "args":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 	case "genesisOverlay":
 		return map[string]any{"type": "object"}

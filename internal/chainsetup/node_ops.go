@@ -185,6 +185,13 @@ type SwapNodeOpts struct {
 	// "this genesis must be rejected" case needs, since a bad genesis given to
 	// the whole network fails composition rather than the test.
 	GenesisOverlay []byte
+	// Args are flags appended to the node's recorded command line before the
+	// relaunch. The command line is built in the network chain's flag dialect,
+	// which knows nothing of a flag only the binary swapped onto takes (an
+	// independent implementation's own flags, or one that changes how it
+	// starts); the case that swaps onto that binary names them. They stay on
+	// the record, so a later restart or swap keeps them.
+	Args []string
 	// Purpose names the config fixture recorded in provenance.
 	Purpose string
 }
@@ -199,9 +206,9 @@ type SwapNodeOpts struct {
 func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (detail string, err error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
-	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
+	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 && len(opts.Args) == 0 {
 		return "", lifecycle.Mark(errOpNothingToReplace,
-			fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index))
+			fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, a genesis overlay, or args", index))
 	}
 	if err := w.allowNode("SwapNode", index); err != nil {
 		return "", err
@@ -240,6 +247,9 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (detail str
 		if err := w.swapNodeConfig(ctx, ni, config, purpose); err != nil {
 			return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
 		}
+	}
+	if len(opts.Args) > 0 {
+		w.state.Nodes[ni].Args = append(append([]string{}, w.state.Nodes[ni].Args...), opts.Args...)
 	}
 	ns = w.state.Nodes[ni]
 	spec := process.SpecOf(ns)

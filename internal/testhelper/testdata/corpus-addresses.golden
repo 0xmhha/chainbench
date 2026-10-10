@@ -249,6 +249,14 @@ common/tx/CT-TX-020-test-account-funding.json	.steps[3]	address	$acct
 go-stablenet/hardfork/01-boho-crossed-by-restart.json	.steps[0]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/hardfork/01-boho-crossed-by-restart.json	.steps[3]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/hardfork/01-boho-crossed-by-restart.json	.steps[4]	params[0]	0x0000000000000000000000000000000000001003
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[10]	to	$recipient
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[12]	address	$recipient
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[13]	from	0x8c4a10b9108d49b9d23f764464090831d9c17764
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[13]	to	$nodeRecipient
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[15]	address	$nodeRecipient
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[8]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[8]	to	$sender
+go-stablenet/mixed/02-transfer-across-implementations.json	.steps[9]	address	$sender
 go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[1]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[2]	params[0]	0x0000000000000000000000000000000000001003
 go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json	.steps[3]	params[0]	0x0000000000000000000000000000000000001003

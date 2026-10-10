@@ -39,7 +39,7 @@ var builtinArguments = map[string]string{
 	"action:signAuthorization":           "authorityKey delegate on onEach save",
 	"action:startNode":                   "expect expectFail on onEach reason save",
 	"action:stopNode":                    "on onEach",
-	"action:swapNode":                    "binary config expect expectFail genesisOverlay on onEach purpose reason save",
+	"action:swapNode":                    "args binary config expect expectFail genesisOverlay on onEach purpose reason save",
 	"action:waitBlock":                   "on onEach pollInterval target timeout",
 	"action:waitFor":                     "compare delta expected on onEach pollInterval save source timeout tol",
 	"action:wsOpen":                      "address event on onEach params save topics",

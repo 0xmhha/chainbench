@@ -1,0 +1,305 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "mixed-takeover-over-f-halts-and-recovers",
+  "description": "M7 의 gstable validator 셋(F = 2 를 넘는 수)을 같은 높이에서 같은 datadir 와 key 의 wbft-stablenet 으로 바꾸면 체인이 멈추고, 가드를 끄고 다시 띄우면 나아간다 (wbft-stablenet node-compat 4.4절 '체인이 멈췄을 때'). 가드의 하한은 노드 자신의 head + 1 이다. 그래서 바꿀 셋이 모두 멈춘 head 를 가진 채 멈춰야 한다. 체인이 움직이는 동안 셋을 멈추면 그 가운데 하나가 한 block 뒤처진 채 멈출 수 있고, 그 노드는 하한이 한 칸 낮아 멈춘 head 의 다음 높이에 서명해도 된다(그 높이에 옛 gstable 은 서명한 적이 없다). 그래서 먼저 wbft-stablenet 인 node5·node6·node7 을 멈춰 체인을 멈춘다. 남은 gstable 넷은 멈춘 head 까지 맞춘다(blockStalled 동안). 그다음 node1·node2·node3 을 멈추고 node5·node6·node7 을 다시 띄운다. 떠 있는 넷은 정족수 다섯에 못 미쳐 체인은 멈춰 있다. 멈춘 동안 node1·node2·node3 의 gstable 은 다음 높이의 PREPARE 나 ROUND-CHANGE 에 서명했을 수 있고, 가드가 막는 것이 바로 그 높이다. 세 노드를 가드를 켠 채(기본) wbft-stablenet 으로 띄우면, 셋 모두 서명 기록 없이 넘겨받은 key 라서 멈춘 head 의 다음 높이에 서명하지 않는다. 그래서 일곱이 다 떠 있어도 체인은 그대로 멈춰 있어야 한다. 이것이 구별되는 주장이다. 가드가 듣지 않으면 이 단계에서 체인이 나아가 blockStalled 가 실패한다. 이어 같은 셋을 --takeover.guard=false 로 다시 띄우면(swapNode 의 args) 하한이 지워지고 체인이 나아가야 한다. 멈춘 동안 다른 노드들이 round 를 올려 두어 round timeout 이 길어지므로, 회복은 넉넉히 기다린다. 끝에 모든 노드의 block hash 가 같은지 본다. 못 보는 것: 하한이 지워졌다는 NODE_START 의 sign_floor.status 는 이벤트 흐름을 읽어야 해서 보지 않는다. startNode 는 노드의 RPC 가 열리기 전에 돌아오므로 다시 띄운 노드는 eth_blockNumber 가 답할 때까지 기다린다.",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "skipsOn": [],
+  "chainPreset": "stablenet-bp7-mixed",
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 5,
+      "timeout": "180s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node2",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node3",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node4",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "NotContains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node5",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node6",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "rpc",
+      "on": "node7",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "do": "stopNode",
+      "on": "node5"
+    },
+    {
+      "do": "stopNode",
+      "on": "node6"
+    },
+    {
+      "do": "stopNode",
+      "on": "node7"
+    },
+    {
+      "expect": "blockStalled",
+      "on": "node4",
+      "timeout": "20s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "stopNode",
+      "on": "node1"
+    },
+    {
+      "do": "stopNode",
+      "on": "node2"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "startNode",
+      "on": "node5"
+    },
+    {
+      "do": "waitFor",
+      "on": "node5",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "startNode",
+      "on": "node6"
+    },
+    {
+      "do": "waitFor",
+      "on": "node6",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "startNode",
+      "on": "node7"
+    },
+    {
+      "do": "waitFor",
+      "on": "node7",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockStalled",
+      "on": "node4",
+      "timeout": "20s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "swapNode",
+      "on": "node1",
+      "binary": "wbft"
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "do": "swapNode",
+      "on": "node2",
+      "binary": "wbft"
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node2",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "do": "swapNode",
+      "on": "node3",
+      "binary": "wbft"
+    },
+    {
+      "do": "waitFor",
+      "on": "node3",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node3",
+      "method": "web3_clientVersion",
+      "params": [],
+      "compare": "Contains",
+      "is": "wbft-stablenet"
+    },
+    {
+      "expect": "blockStalled",
+      "on": "node4",
+      "timeout": "40s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "swapNode",
+      "on": "node1",
+      "args": [
+        "--takeover.guard=false"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "swapNode",
+      "on": "node2",
+      "args": [
+        "--takeover.guard=false"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "on": "node2",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "swapNode",
+      "on": "node3",
+      "args": [
+        "--takeover.guard=false"
+      ]
+    },
+    {
+      "do": "waitFor",
+      "on": "node3",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "0",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node4",
+      "timeout": "240s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
+  ]
+}
