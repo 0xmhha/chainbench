@@ -104,6 +104,14 @@ export function caseAttaches(doc, documents = []) {
   if (typeof preset === 'object' && preset?.attach) return true
   return (doc?.presetRefs ?? []).some(ref => Boolean(documents.find(d => d.id === ref.id)?.content?.attach))
 }
+// The account labels a saved case reads from a key file, from the case and
+// the shared preset revisions it pins. Each needs a private account key.
+export function keyFileAccounts(doc, documents = []) {
+  const own = typeof doc?.content?.chainPreset === 'object' ? doc.content.chainPreset?.accounts ?? {} : {}
+  let inherited = {}
+  for (const ref of doc?.presetRefs ?? []) inherited = {...inherited, ...(documents.find(d => d.id === ref.id)?.content?.accounts ?? {})}
+  return Object.entries({...inherited, ...own}).filter(([, a]) => a?.keyFile).map(([label]) => label).sort()
+}
 // The binary names besides default a saved case declares, with the chain
 // each runs: from the case, over the shared preset revision it pins.
 export function declaredBinaries(doc, documents = []) {

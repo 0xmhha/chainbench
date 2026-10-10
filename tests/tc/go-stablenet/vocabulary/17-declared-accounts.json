@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-declared-accounts",
+  "description": "WEB-05 coverage: declared accounts on a composed network. dev1 is minted and funded by transaction after the chain seals, so the genesis never names it; dev2 is minted with no balance. The chain is the witness: dev2 can only hold the one wei dev1 sent, and only dev1's own key could have signed it. The network stays up as the target of the Web attach job.",
+  "requires": ["rpc"],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {"default": "gstable"},
+    "accounts": {
+      "dev1": {"fund": "10000000000000000000"},
+      "dev2": {}
+    }
+  },
+  "steps": [
+    {"expect": "balanceAt", "address": "dev2", "compare": "Equal", "is": "0"},
+    {"do": "sendTx", "from": "dev1", "to": "dev2", "value": "0x1", "save": "sent"},
+    {"expect": "txStatus", "hash": "$sent", "is": "0x1"},
+    {"expect": "balanceAt", "address": "dev1", "compare": "Greater", "is": "0"},
+    {"expect": "balanceAt", "address": "dev2", "compare": "Equal", "is": "1"}
+  ]
+}

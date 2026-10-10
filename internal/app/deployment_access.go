@@ -8,12 +8,39 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"golang.org/x/crypto/ssh"
 )
 
+// accountKeyCredential is a key a test case signs with, not an SSH login.
+const accountKeyCredential = "account-key"
+
+// validCredentialShape accepts exactly the fields each kind uses.
+func validCredentialShape(in DeploymentCredentialInput) bool {
+	if in.Label == "" {
+		return false
+	}
+	switch in.Kind {
+	case "password":
+		return in.SSHUser != "" && in.Password != "" && in.PrivateKey == "" && in.Passphrase == "" && in.AccountKey == ""
+	case "private-key":
+		return in.SSHUser != "" && in.PrivateKey != "" && in.Password == "" && in.AccountKey == ""
+	case accountKeyCredential:
+		return in.AccountKey != "" && in.SSHUser == "" && in.Password == "" && in.PrivateKey == "" && in.Passphrase == ""
+	}
+	return false
+}
+
 func validateDeploymentKey(in DeploymentCredentialInput) error {
+	if in.Kind == accountKeyCredential {
+		// The parser's error names the length only, never the key.
+		if _, err := derive.ParsePrivateKey(in.AccountKey); err != nil {
+			return errors.New("invalid account key: want 32 bytes of hex")
+		}
+		return nil
+	}
 	if in.Kind != "private-key" {
 		return nil
 	}
@@ -56,6 +83,9 @@ func (s *DeploymentStore) resolveAccess(a DeploymentActor, workspace, server, cr
 	c, ok := s.state.Credentials[credential]
 	if !ok || c.Metadata.OwnerID != a.ID || c.Metadata.Revoked {
 		return host, config, secret, ErrDeploymentNotFound
+	}
+	if c.Metadata.Kind == accountKeyCredential {
+		return host, config, secret, errors.New("an account key is not an SSH login")
 	}
 	encrypted := c.Ciphertext
 	if len(encrypted) < s.aead.NonceSize() {

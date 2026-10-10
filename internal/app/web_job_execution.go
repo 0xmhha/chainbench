@@ -196,7 +196,13 @@ func (s *WebJobs) revoke(owner, credential, reason string) error {
 			continue
 		}
 		uses := credential == ""
-		for _, ref := range s.state.Plans[job.PlanID].Input.CredentialBindings {
+		input := s.state.Plans[job.PlanID].Input
+		for _, ref := range input.CredentialBindings {
+			if ref == credential {
+				uses = true
+			}
+		}
+		for _, ref := range input.AccountBindings {
 			if ref == credential {
 				uses = true
 			}

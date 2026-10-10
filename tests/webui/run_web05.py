@@ -25,9 +25,13 @@ COVERAGE_CASES = sorted(glob.glob('tests/tc/go-stablenet/vocabulary/1[1-6]-argum
 # timeout, on a network that crosses from gwemix to gwbft.
 FORK_CASE = 'tests/tc/go-wemix/hardfork/02-state-written-before-the-fork-survives-it.json'
 # The corpus attach cases: a Web attach job runs them against a network the
-# service composed and recorded. A case naming a key file is refused.
+# service composed and recorded. A key file account signs with an account
+# key credential the browser saves: node5's preset key, funded at genesis and
+# an endpoint, so no block reward moves its balance during the transfer.
 ATTACH_CASES = ['tests/tc/basic/08-attached-chain-produces.json', *sorted(glob.glob('tests/tc/go-stablenet/testnet/0*.json'))]
 ATTACH_CREDENTIAL_CASES = ['testnet-value-transfer']
+# Declared accounts on a composed network; this case's network is the attach target.
+DECLARED_ACCOUNTS_CASE = 'tests/tc/go-stablenet/vocabulary/17-declared-accounts.json'
 
 
 def now():
@@ -139,7 +143,7 @@ def main():
                    'coverageFiles': COVERAGE_CASES, 'p2pBase': free_band(40000, 3000), 'rpcBase': free_band(20000, 3000),
                    'forkCase': FORK_CASE, 'forkPreset': 'presets/chain/wemix-to-wbft.json',
                    'forkP2PBase': free_band(43000, 3000), 'forkRPCBase': free_band(23000, 3000),
-                   'attachFiles': ATTACH_CASES, 'attachCredentialCases': ATTACH_CREDENTIAL_CASES,
+                   'attachFiles': ATTACH_CASES, 'attachCredentialCases': ATTACH_CREDENTIAL_CASES, 'payerKeyFile': str(source / 'presets/keys/node5/private'), 'declaredAccountsCase': DECLARED_ACCOUNTS_CASE,
                    'attachP2PBase': free_band(46000, 3000), 'attachRPCBase': free_band(26000, 3000)}
         private = runtime / 'browser-fixture.json'; private.write_text(json.dumps(fixture)); private.chmod(0o600)
         browser = run_browser(['node', str(source / 'tests/webui/browser_web05.mjs'), str(private), str(out.resolve())], timeout=3600)
@@ -171,10 +175,17 @@ def main():
         _, attached = executed_paths([store / 'sessions' / ref for ref in attach_refs], contract)
         for ref in attach_refs:
             shutil.copytree(store / 'sessions' / ref, out / 'sessions' / ref, dirs_exist_ok=True)
-        runnable = len(ATTACH_CASES) - len(ATTACH_CREDENTIAL_CASES)
+        runnable = len(ATTACH_CASES)
         if len(attached) != runnable or not all(t['complete'] for t in attached):
             failures.append(f'{sum(t["complete"] for t in attached)} of {runnable} attach cases passed completely in the Web attach job')
         (out / 'attach-sessions.json').write_text(json.dumps(attached, indent=2))
+        target_refs = [r.removeprefix('web:') for r in observed.get('attachJob', {}).get('targetRunIds') or []]
+        _, declared = executed_paths([store / 'sessions' / ref for ref in target_refs], contract)
+        for ref in target_refs:
+            shutil.copytree(store / 'sessions' / ref, out / 'sessions' / ref, dirs_exist_ok=True)
+        if len(declared) != 1 or not declared[0]['complete']:
+            failures.append('the declared-accounts case did not pass completely in its Web test job')
+        (out / 'declared-accounts-session.json').write_text(json.dumps(declared, indent=2))
         gaps = missing(rows)
         unedited = [r['kind'] + ':' + r['name'] for r in rows if not r['edited']]
         if unedited:

@@ -75,6 +75,9 @@ type DeploymentCredentialInput struct {
 	Password   string `json:"password,omitempty"`
 	PrivateKey string `json:"privateKey,omitempty"`
 	Passphrase string `json:"passphrase,omitempty"`
+	// AccountKey is a hex private key a test case signs with, for kind
+	// account-key. It is never an SSH login.
+	AccountKey string `json:"accountKey,omitempty"`
 }
 type encryptedDeploymentCredential struct {
 	Metadata   DeploymentCredential `json:"metadata"`
@@ -371,7 +374,7 @@ func (s *DeploymentStore) SaveCredential(a DeploymentActor, in DeploymentCredent
 	if !a.canEdit() {
 		return DeploymentCredential{}, ErrDeploymentForbidden
 	}
-	if in.Label == "" || in.SSHUser == "" || (in.Kind != "password" && in.Kind != "private-key") || (in.Kind == "password" && (in.Password == "" || in.PrivateKey != "" || in.Passphrase != "")) || (in.Kind == "private-key" && (in.PrivateKey == "" || in.Password != "")) {
+	if !validCredentialShape(in) {
 		return DeploymentCredential{}, errors.New("invalid private credential")
 	}
 	if err := validateDeploymentKey(in); err != nil {

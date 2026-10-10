@@ -252,8 +252,10 @@ try {
   // corpus attach cases against its recorded endpoints and key set.
   const shared = (await api('documents?kind=chain-preset')).items.find(d => d.content.id === 'stablenet-bp4-en1')
   assert.ok(shared, 'the shared stablenet-bp4-en1 preset is missing')
-  const target = await api('documents', 'POST', {kind: 'case', name: 'web05 attach target', contractVersion: '2', assetRefs: [], presetRefs: [{id: shared.id, revision: shared.revision}],
-    content: {schemaVersion: '2', kind: 'case', id: 'web05-attach-target', chainPreset: {extends: 'stablenet-bp4-en1', binaries: {default: 'gstable'}}, steps: [{expect: 'blockNumber', compare: 'GreaterOrEqual', is: 0}]}}, 201)
+  // The target declares accounts: a composed Web run mints and funds them in
+  // memory over the read-only accepted key set.
+  const declared = readJSON(f.declaredAccountsCase)
+  const target = await api('documents', 'POST', {kind: 'case', name: declared.id, contractVersion: '2', assetRefs: [], presetRefs: [{id: shared.id, revision: shared.revision}], content: declared}, 201)
   await page.goto(f.url + '/tests')
   await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
   await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles(f.presetFiles.filter(p => /stablenet-(attached|testnet)/.test(p)).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
@@ -295,20 +297,31 @@ try {
     await page.getByLabel('작업 종류', {exact: true}).selectOption('test.run')
     await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).check()
   }, 9000)
-  const runnable = attachDocs.filter(d => !f.attachCredentialCases.includes(d.content.id))
-  const attachDone = await runJob('attach', async () => {
-    await page.getByLabel('작업 종류', {exact: true}).selectOption('test.attach')
-    await page.getByTestId('attach-explanation').waitFor()
-    assert.equal(await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).count(), 0, 'a composing case is offered to an attach job')
-    for (const doc of runnable) await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
-  }, 9000)
-  // A key file named in a case is a path on this server; the Web refuses it.
+  // A case naming a key file is refused until the caller binds one of their
+  // own account keys; the key never travels in the case or the plan.
   for (const doc of attachDocs.filter(d => f.attachCredentialCases.includes(d.content.id))) {
     const refused = await api('plans', 'POST', {workspaceId: attachWorkspace.id, operation: 'test.attach', documentRefs: attachWorkspace.documents, assetRefs: ['stablenet'], credentialBindings: {}, nodeIds: [], retention: 'retain',
       arguments: {manifestId: 'stablenet', assetId: 'stablenet', serverRef: 'local', caseRefs: [{id: doc.id, revision: doc.revision}]}}, 422)
     assert.ok(JSON.stringify(refused).includes('private account credential'), 'key file refusal does not explain the credential: ' + JSON.stringify(refused))
   }
-  observed('attach-execution', [`Web test job ${targetDone.id} composed and kept a stablenet network`, `Web attach job ${attachDone.id} ran ${runnable.length} corpus attach cases against its recorded endpoints and key set and succeeded`, 'A case naming a key file on the server is refused before planning'])
+  await page.goto(f.url + '/chains')
+  await page.getByLabel('Credential label', {exact: true}).fill('payer key')
+  await page.getByLabel('Credential kind', {exact: true}).selectOption('account-key')
+  await page.getByLabel('Account private key', {exact: true}).fill(fs.readFileSync(f.payerKeyFile, 'utf8').trim())
+  await page.getByRole('button', {name: 'Save personal credential', exact: true}).click()
+  await page.getByText('Saved encrypted personal credential', {exact: false}).waitFor()
+  const payer = (await api('credentials')).items.find(c => c.kind === 'account-key' && c.label === 'payer key')
+  assert.ok(payer, 'the account key was not saved')
+  const attachDone = await runJob('attach', async () => {
+    await page.getByLabel('작업 종류', {exact: true}).selectOption('test.attach')
+    await page.getByTestId('attach-explanation').waitFor()
+    assert.equal(await page.getByLabel('실행 케이스 ' + target.id, {exact: true}).count(), 0, 'a composing case is offered to an attach job')
+    for (const doc of attachDocs) await page.getByLabel('실행 케이스 ' + doc.id, {exact: true}).check()
+    await page.getByLabel('테스트 계정 키 payer', {exact: true}).selectOption(payer.id)
+  }, 9000)
+  const plan = JSON.stringify(await api('jobs/' + attachDone.id))
+  assert.ok(!plan.includes(fs.readFileSync(f.payerKeyFile, 'utf8').trim().replace(/^0x/, '')), 'the account key appears in the job record')
+  observed('attach-execution', [`Web test job ${targetDone.id} minted and funded declared accounts on a composed stablenet network and kept it`, `Web attach job ${attachDone.id} ran ${attachDocs.length} corpus attach cases against its recorded endpoints and key set and succeeded`, 'A key file account is refused until the caller binds a private account key, which then signs without appearing in the job'])
   fs.writeFileSync(path.join(out, 'browser.json'), JSON.stringify({browserVersion: owned.browser.version(), scenarios, coverage, savedCases: cases.map(d => ({id: d.id, caseId: d.content.id, revision: d.revision, presetRefs: d.presetRefs})), job: {id: done.id, state: done.state, runIds: [...done.runIds, ...forkDone.runIds]}, forkJob: {id: forkDone.id, state: forkDone.state, runIds: forkDone.runIds}, attachJob: {id: attachDone.id, state: attachDone.state, runIds: attachDone.runIds, targetRunIds: targetDone.runIds}, corpusImported: imported, refusals, seedAcceptanceAwarded: false}, null, 2))
   fs.writeFileSync(path.join(out, 'api-observations.json'), JSON.stringify(records, null, 2))
 } finally { await owned.stop() }

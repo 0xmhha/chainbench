@@ -792,10 +792,10 @@ go-stablenet/vocabulary/14-arguments-probes.json	.steps[33]	address	0xc17d493883
 go-stablenet/vocabulary/14-arguments-probes.json	.steps[34]	address	0x00000000000000000000000000000000c0ffee06
 go-stablenet/vocabulary/14-arguments-probes.json	.steps[35]	address	0x00000000000000000000000000000000c0ffee06
 go-stablenet/vocabulary/14-arguments-probes.json	.steps[41]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
-go-stablenet/vocabulary/14-arguments-probes.json	.steps[42]	to	$reverter
-go-stablenet/vocabulary/14-arguments-probes.json	.steps[50]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
-go-stablenet/vocabulary/14-arguments-probes.json	.steps[52]	address	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
-go-stablenet/vocabulary/14-arguments-probes.json	.steps[53]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/vocabulary/14-arguments-probes.json	.steps[43]	to	$reverter
+go-stablenet/vocabulary/14-arguments-probes.json	.steps[51]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/vocabulary/14-arguments-probes.json	.steps[53]	address	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+go-stablenet/vocabulary/14-arguments-probes.json	.steps[54]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[11]	address	$authority
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[14]	address	$authority2
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[15]	address	$authority2
@@ -807,6 +807,11 @@ go-stablenet/vocabulary/15-arguments-delegation.json	.steps[6]	address	$payer
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[7]	to	0x00000000000000000000000000000000c0ffee05
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[8]	to	0x00000000000000000000000000000000c0ffee05
 go-stablenet/vocabulary/15-arguments-delegation.json	.steps[9]	address	$sender
+go-stablenet/vocabulary/17-declared-accounts.json	.steps[0]	address	dev2
+go-stablenet/vocabulary/17-declared-accounts.json	.steps[1]	from	dev1
+go-stablenet/vocabulary/17-declared-accounts.json	.steps[1]	to	dev2
+go-stablenet/vocabulary/17-declared-accounts.json	.steps[3]	address	dev1
+go-stablenet/vocabulary/17-declared-accounts.json	.steps[4]	address	dev2
 go-wbft/accounts/01-secp256r1-precompile-valid.json	.steps[0]	to	0x0000000000000000000000000000000000000100
 go-wbft/accounts/02-secp256r1-precompile-invalid.json	.steps[0]	to	0x0000000000000000000000000000000000000100
 go-wbft/accounts/03-secp256r1-precompile-short-input.json	.steps[0]	to	0x0000000000000000000000000000000000000100

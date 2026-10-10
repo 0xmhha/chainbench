@@ -35,7 +35,7 @@ func (s *DeploymentStore) jobCredentialLookup(ctx context.Context, a DeploymentA
 			authorize := s.authorize
 			c, found := s.state.Credentials[id]
 			s.mu.Unlock()
-			if !a.canEdit() || !found || c.Metadata.OwnerID != a.ID || c.Metadata.Revoked {
+			if !a.canEdit() || !found || c.Metadata.OwnerID != a.ID || c.Metadata.Revoked || c.Metadata.Kind == accountKeyCredential {
 				return ErrDeploymentForbidden
 			}
 			if authorize != nil && authorize(a) != nil {
@@ -67,4 +67,45 @@ func (s *DeploymentStore) jobCredentialLookup(ctx context.Context, a DeploymentA
 		}
 		return remote.Credentials{User: secret.SSHUser, Host: host.Host, Port: host.SSH.Port, Password: secret.Password, PrivateKey: []byte(secret.PrivateKey), Passphrase: secret.Passphrase, HostKey: remote.HostKeyPolicy{KnownHostsFile: host.SSH.KnownHostsFile, InsecureHostKey: host.SSH.InsecureHostKey}, Sudo: host.SSH.Sudo, BeforeDial: guard}, nil
 	}, nil
+}
+
+// accountCredential is the caller's own unrevoked account key, as metadata.
+func (s *DeploymentStore) accountCredential(a DeploymentActor, id string) (DeploymentCredential, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c, found := s.state.Credentials[id]
+	if !a.canEdit() || !found || c.Metadata.OwnerID != a.ID || c.Metadata.Revoked || c.Metadata.Kind != accountKeyCredential {
+		return DeploymentCredential{}, ErrDeploymentForbidden
+	}
+	return c.Metadata, nil
+}
+
+// accountKey decrypts the caller's account key for one run, checking the
+// owner, revocation and authorization again at the moment it is read.
+func (s *DeploymentStore) accountKey(ctx context.Context, a DeploymentActor, id string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	if _, err := s.accountCredential(a, id); err != nil {
+		return "", err
+	}
+	s.mu.Lock()
+	authorize := s.authorize
+	c := s.state.Credentials[id]
+	s.mu.Unlock()
+	if authorize != nil && authorize(a) != nil {
+		return "", ErrDeploymentForbidden
+	}
+	if len(c.Ciphertext) < s.aead.NonceSize() {
+		return "", errors.New("invalid encrypted credential")
+	}
+	b, err := s.aead.Open(nil, c.Ciphertext[:s.aead.NonceSize()], c.Ciphertext[s.aead.NonceSize():], []byte(c.Metadata.ID+":"+c.Metadata.OwnerID))
+	if err != nil {
+		return "", errors.New("cannot decrypt account credential")
+	}
+	var secret DeploymentCredentialInput
+	if err = json.Unmarshal(b, &secret); err != nil || secret.AccountKey == "" {
+		return "", errors.New("cannot decrypt account credential")
+	}
+	return secret.AccountKey, nil
 }

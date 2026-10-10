@@ -76,3 +76,11 @@ test('a case attaches when its own or its pinned preset declares attach', async 
   assert.equal(caseAttaches({content: {chainPreset: {extends: 'base'}}, presetRefs: [{id: 'p1', revision: 1}]}, [composed]), false)
   assert.equal(caseAttaches({content: {chainPreset: {chain: 'stablenet', topology: {bp: 4}}}}), false)
 })
+
+test('key file accounts come from the case and the preset it pins', async () => {
+  const {keyFileAccounts} = await import('../../web/src/dsl-form.js')
+  const funded = {id: 'p3', kind: 'chain-preset', content: {chain: 'stablenet', attach: {rpc: ['x']}, accounts: {payer: {keyFile: '${KEY}'}, minted: {}}}}
+  assert.deepEqual(keyFileAccounts({content: {chainPreset: 'stablenet-testnet-funded'}, presetRefs: [{id: 'p3', revision: 1}]}, [funded]), ['payer'])
+  assert.deepEqual(keyFileAccounts({content: {chainPreset: {chain: 'stablenet', attach: {rpc: ['x']}, accounts: {b: {keyFile: 'k'}, a: {keyFile: 'k'}}}}}), ['a', 'b'])
+  assert.deepEqual(keyFileAccounts({content: {chainPreset: {chain: 'stablenet'}}}), [])
+})

@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -26,13 +28,17 @@ const webTestAttachOperation = "test.attach"
 type webTestAttach struct {
 	Cases []webExecutableCase `json:"cases"`
 	Nodes node.NodeSet        `json:"nodes"`
+	// Accounts are the key file labels, each bound in the plan input to the
+	// caller's own account key credential.
+	Accounts []string `json:"accounts,omitempty"`
 }
 
-func (e *WebChainEngine) prepareTestAttach(ctx context.Context, p *webChainPayload, state State) error {
+func (e *WebChainEngine) prepareTestAttach(ctx context.Context, a DeploymentActor, p *webChainPayload, state State) error {
 	cases, err := e.prepareTestCases(ctx, p.Binary.Chain, p.Arguments.CaseRefs)
 	if err != nil {
 		return err
 	}
+	keyed := map[string]bool{}
 	for _, c := range cases {
 		spec, err := dsl.Parse(c.Content)
 		if err != nil {
@@ -41,9 +47,74 @@ func (e *WebChainEngine) prepareTestAttach(ctx context.Context, p *webChainPaylo
 		if err = validateWebAttachInputs(spec); err != nil {
 			return fmt.Errorf("case %s: %w", c.Document.ID, err)
 		}
+		for label, account := range spec.EnvAccounts {
+			if strings.TrimSpace(account.KeyFile) == "" {
+				continue
+			}
+			keyed[label] = true
+			if p.Input.AccountBindings[label] == "" {
+				return fmt.Errorf("case %s: account %s reads a key file on this server; bind a private account credential instead", c.Document.ID, label)
+			}
+		}
 	}
-	p.Attach = &webTestAttach{Cases: cases, Nodes: webRecordedNodeSet(state)}
+	for label, id := range p.Input.AccountBindings {
+		if !keyed[label] {
+			return fmt.Errorf("account %s is not a key file account of the selected cases", label)
+		}
+		if _, err := e.documents.accountCredential(a, id); err != nil {
+			return fmt.Errorf("account %s: select your own unrevoked account key credential", label)
+		}
+	}
+	accounts := make([]string, 0, len(keyed))
+	for label := range keyed {
+		accounts = append(accounts, label)
+	}
+	slices.Sort(accounts)
+	p.Attach = &webTestAttach{Cases: cases, Nodes: webRecordedNodeSet(state), Accounts: accounts}
 	return nil
+}
+
+// writeAccountKeys writes each bound account key to a private file under dir
+// and points every case's key file account there. The keys are read again
+// here, so a credential revoked after acceptance ends the run.
+func (e *WebChainEngine) writeAccountKeys(ctx context.Context, a DeploymentActor, p webChainPayload, dir string) ([][]byte, error) {
+	paths := map[string]string{}
+	for _, label := range p.Attach.Accounts {
+		key, err := e.documents.accountKey(ctx, a, p.Input.AccountBindings[label])
+		if err != nil {
+			return nil, err
+		}
+		path := filepath.Join(dir, label)
+		if err = (filestore.Local{}).Write(ctx, path, []byte(key+"\n"), 0600); err != nil {
+			return nil, err
+		}
+		paths[label] = path
+	}
+	out := make([][]byte, 0, len(p.Attach.Cases))
+	for _, c := range p.Attach.Cases {
+		if len(paths) == 0 {
+			out = append(out, c.Content)
+			continue
+		}
+		var doc map[string]any
+		if err := json.Unmarshal(c.Content, &doc); err != nil {
+			return nil, err
+		}
+		preset, _ := doc["chainPreset"].(map[string]any)
+		accounts, _ := preset["accounts"].(map[string]any)
+		for label, raw := range accounts {
+			account, _ := raw.(map[string]any)
+			if path, ok := paths[label]; ok && account != nil && account["keyFile"] != nil {
+				account["keyFile"] = path
+			}
+		}
+		b, err := json.Marshal(doc)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, b)
+	}
+	return out, nil
 }
 
 func validateWebAttachInputs(spec dsl.Spec) error {
@@ -52,11 +123,6 @@ func validateWebAttachInputs(spec dsl.Spec) error {
 	}
 	if spec.Chain.ManifestPath != "" || spec.Chain.TemplatePath != "" || spec.Chain.GenesisExisting != "" || spec.Chain.Config != "" || spec.EnvBlueprint != "" {
 		return errors.New("test file references require registered immutable assets")
-	}
-	for label, account := range spec.EnvAccounts {
-		if strings.TrimSpace(account.KeyFile) != "" {
-			return fmt.Errorf("account %s reads a key file on this server; bind a private account credential instead", label)
-		}
 	}
 	return nil
 }
@@ -127,14 +193,26 @@ func (e *WebChainEngine) executeTestAttach(ctx context.Context, a DeploymentActo
 		if err != nil || keys != p.Keys {
 			return ErrDeploymentConflict
 		}
-		urls, specs := []string{}, make([][]byte, 0, len(p.Attach.Cases))
+		urls := []string{}
 		for _, n := range p.Attach.Nodes.Nodes {
 			if n.RPCURL != "" {
 				urls = append(urls, n.RPCURL)
 			}
 		}
-		for _, c := range p.Attach.Cases {
-			specs = append(specs, c.Content)
+		// A private directory for this run's account keys, removed when the
+		// run ends however it ends.
+		keyRoot := filepath.Join(e.root, "account-keys")
+		if err = os.Mkdir(keyRoot, 0700); err != nil && !os.IsExist(err) {
+			return err
+		}
+		dir, err := os.MkdirTemp(keyRoot, "run-")
+		if err != nil {
+			return err
+		}
+		defer func() { _ = os.RemoveAll(dir) }()
+		specs, err := e.writeAccountKeys(ctx, a, p, dir)
+		if err != nil {
+			return err
 		}
 		declared := &AttachDecl{Chain: state.Chain, RPCURLs: urls, KeysDir: state.KeysDir, Provides: p.Attach.Nodes.Capabilities}
 		var runErr error

@@ -509,7 +509,7 @@ func (preparingRun) Contract() statemachine.Contract {
 // Enter crosses the declared fork, waits for the height and funds the accounts.
 func (s *preparingRun) Enter(ctx context.Context, m *statemachine.Machine) error {
 	r := s.r
-	if err := prepareChain(ctx, r.sd, r.in, r.comp, r.specs, r.net, &r.out); err != nil {
+	if err := prepareChain(ctx, r.sd, r.in, r.comp, r.specs, &r.net, &r.out); err != nil {
 		r.fail(m, s, err)
 		return nil
 	}

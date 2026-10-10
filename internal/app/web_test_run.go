@@ -154,8 +154,13 @@ func validateWebTestInputs(spec dsl.Spec) error {
 	if spec.EnvKeys != nil && (spec.EnvKeys.Source != "" && spec.EnvKeys.Source != "keyPreset" || spec.EnvKeys.Ref != "" && spec.EnvKeys.Ref != "presets/keys") {
 		return errors.New("this test adapter uses the reviewed key preset; other key sources require their own pinned contract")
 	}
-	if len(spec.EnvAccounts) > 0 {
-		return errors.New("declared test accounts require job-owned extensible key material before execution")
+	// Minted accounts live in memory over the read-only accepted key set; a
+	// key file is a path on this server, which only an attach job replaces
+	// with the caller's private account key.
+	for label, account := range spec.EnvAccounts {
+		if strings.TrimSpace(account.KeyFile) != "" {
+			return fmt.Errorf("account %s reads a key file; run it as an attach job with a private account credential", label)
+		}
 	}
 
 	// An override may not move a process outside the reviewed paths or ports.

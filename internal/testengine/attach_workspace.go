@@ -76,7 +76,7 @@ func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine
 		Chain: w.Chain, RPCURLs: net.endpoints,
 		ArtifactRoot: w.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), w.Caps...), Clock: sd.Clock,
 		Session: w.Session, ReadOnlyKeys: w.ReadOnlyKeys,
-		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
+		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir, Ring: net.ring,
 		Artifacts: composedArtifacts(net),
 		Bus:       collector.NewBus(),
 		LogReader: remoteLogReader(sd, w.DataDir),

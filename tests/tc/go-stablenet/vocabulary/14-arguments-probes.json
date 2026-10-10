@@ -333,6 +333,20 @@
       "save": "reverter"
     },
     {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "$reverter",
+        "latest"
+      ],
+      "on": "en1",
+      "compare": "NotEqual",
+      "expected": "0x",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
       "expect": "callError",
       "to": "$reverter",
       "data": "0x",

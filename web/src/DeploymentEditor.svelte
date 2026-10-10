@@ -7,7 +7,7 @@
   let actor = $state(null), contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
   let kind = $state('server-set'), name = $state('Server pool'), content = $state({}), docId = $state(''), revision = $state(0)
   let workspaceId = $state(''), workspaceName = $state('Team deployment'), workspaceRevision = $state(0), setRef = $state(''), configRef = $state('')
-  let credentialLabel = $state('SSH login'), credentialKind = $state('private-key'), sshUser = $state(''), privateKey = $state(''), sshPassword = $state(''), passphrase = $state('')
+  let credentialLabel = $state('SSH login'), credentialKind = $state('private-key'), sshUser = $state(''), privateKey = $state(''), sshPassword = $state(''), passphrase = $state(''), accountKey = $state('')
   let selectedCredential = $state(''), serverRef = $state(''), bindings = $state({}), status = $state(''), access = $state(null), busy = $state(false)
   async function api(path, method = 'GET', data, rev) {
     const headers = { Authorization: authorization, 'Content-Type': 'application/json' }
@@ -35,7 +35,7 @@
   async function saveWorkspace() { const documents = [setRef, configRef].map(ref => { const [id, rev] = ref.split(':'); return { id, revision: Number(rev) } }); const w = await api(workspaceId ? `workspaces/${workspaceId}` : 'workspaces', workspaceId ? 'PATCH' : 'POST', { name: workspaceName, documents }, workspaceRevision); onsaved(); await refresh(); await loadWorkspace(w.id); status = `Saved shared workspace revision ${w.revision}` }
   async function exportDocument() { const exported = await api(`documents/${docId}/export`); const url = URL.createObjectURL(new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `${kind}.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported shared declaration' }
   async function exportWorkspace() { const response = await fetch(`/api/v1/workspaces/${workspaceId}/export`, { headers: { Authorization: authorization } }); if (!response.ok) throw await responseError(response); const url = URL.createObjectURL(await response.blob()); const a = document.createElement('a'); a.href = url; a.download = `${workspaceName}.bundle.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported workspace bundle' }
-  function logout() { actor = null; contract = null; docs = []; workspaces = []; authorization = ''; password = ''; privateKey = ''; passphrase = ''; sshPassword = ''; credentials = []; bindings = {}; access = null; status = '' }
+  function logout() { actor = null; contract = null; docs = []; workspaces = []; authorization = ''; password = ''; privateKey = ''; passphrase = ''; sshPassword = ''; accountKey = ''; credentials = []; bindings = {}; access = null; status = '' }
   $effect(() => { if(webSession) action(async()=>{ const account={id:webSession.user.id,role:webSession.user.role==='administrator'?'admin':webSession.user.role};contract=await api('contracts/deployment');await refresh();newDocument('server-set');actor=account }) })
   const canEdit = $derived(actor && ['admin','operator'].includes(actor.role))
   const hosts = $derived.by(() => { const id = setRef.split(':')[0]; const rev = Number(setRef.split(':')[1]); return docs.find(d => d.id === id && d.revision === rev)?.content.pool.hosts ?? [] })
@@ -79,16 +79,19 @@
           <h3>My SSH credentials</h3>
           <p>Only metadata is returned. Keys and passwords stay private.</p>
           <label>Label <input aria-label="Credential label" bind:value={credentialLabel} /></label>
-          <label>Kind <select aria-label="Credential kind" bind:value={credentialKind}><option value="private-key">Private key</option><option value="password">Password</option></select></label>
-          <label>SSH user <input aria-label="SSH user" bind:value={sshUser} /></label>
-          {#if credentialKind === 'private-key'}
+          <label>Kind <select aria-label="Credential kind" bind:value={credentialKind}><option value="private-key">Private key</option><option value="password">Password</option><option value="account-key">Test account key</option></select></label>
+          {#if credentialKind !== 'account-key'}<label>SSH user <input aria-label="SSH user" bind:value={sshUser} /></label>{/if}
+          {#if credentialKind === 'account-key'}
+            <label>Account private key <input aria-label="Account private key" type="password" bind:value={accountKey} /></label>
+            <p>A test case signs with this key when it names a key file account. It is stored encrypted, never shown again and never used as an SSH login.</p>
+          {:else if credentialKind === 'private-key'}
             <label>Private key <textarea aria-label="Private SSH key" bind:value={privateKey} spellcheck="false"></textarea></label>
             <label>Passphrase <input aria-label="SSH passphrase" type="password" bind:value={passphrase} /></label>
           {:else}<label>Password <input aria-label="SSH password" type="password" bind:value={sshPassword} /></label>{/if}
-          <button disabled={busy} onclick={() => action(async () => { const input = { label: credentialLabel, kind: credentialKind, sshUser }; if (credentialKind === 'private-key') { input.privateKey = privateKey; if (passphrase) input.passphrase = passphrase } else input.password = sshPassword; const c = await api('credentials', 'POST', input); privateKey = ''; passphrase = ''; sshPassword = ''; await refresh(); selectedCredential = c.id; status = 'Saved encrypted personal credential' })}>Save personal credential</button>
+          <button disabled={busy} onclick={() => action(async () => { const input = credentialKind === 'account-key' ? { label: credentialLabel, kind: credentialKind, accountKey } : { label: credentialLabel, kind: credentialKind, sshUser }; if (credentialKind === 'private-key') { input.privateKey = privateKey; if (passphrase) input.passphrase = passphrase } else if (credentialKind === 'password') input.password = sshPassword; const c = await api('credentials', 'POST', input); privateKey = ''; passphrase = ''; sshPassword = ''; await refresh(); selectedCredential = c.id; status = 'Saved encrypted personal credential' })}>Save personal credential</button>
           {#if workspaceId}
             <label>Target server <select aria-label="Binding server" bind:value={serverRef}><option value="">Select server</option>{#each hosts as h}<option value={typeof h === 'string' ? h : h.name || h.addr}>{typeof h === 'string' ? h : h.name || h.addr}</option>{/each}</select></label>
-            <label>My credential <select aria-label="Binding credential" bind:value={selectedCredential}><option value="">Select my credential</option>{#each credentials as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
+            <label>My credential <select aria-label="Binding credential" bind:value={selectedCredential}><option value="">Select my credential</option>{#each credentials.filter(c => c.kind !== 'account-key') as c}<option value={c.id}>{c.label}</option>{/each}</select></label>
             <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { bindings = await api(`workspaces/${workspaceId}/credential-bindings`, 'PUT', { serverRef, credentialId: selectedCredential }); status = 'Saved personal SSH binding' })}>Bind my credential</button>
             <button disabled={busy || !serverRef || !selectedCredential} onclick={() => action(async () => { access = await api(`credentials/${selectedCredential}/check`, 'POST', { workspaceId, serverRef }); status = access.allowedOperations.includes('deploy') ? 'SSH deployment access verified' : access.reason ?? 'Access denied' })}>Check SSH access</button>
             <p data-testid="personal-bindings">My bindings: {Object.keys(bindings).join(', ') || 'none'}</p>

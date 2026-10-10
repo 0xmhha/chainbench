@@ -2044,6 +2044,7 @@ components:
           enum:
           - password
           - private-key
+          - account-key
         revoked: *id011
         createdAt: *id006
       additionalProperties: false
@@ -2062,32 +2063,56 @@ components:
           enum:
           - password
           - private-key
+          - account-key
         sshUser: *id001
         password: *id010
         privateKey: *id010
         passphrase: *id010
+        accountKey:
+          type: string
+          description: A 32-byte hex private key a test case signs with. It is stored encrypted, never returned, and cannot be bound as an SSH login.
       additionalProperties: false
       required:
       - label
       - kind
-      - sshUser
       oneOf:
       - properties:
           kind:
             const: password
         required:
+        - sshUser
         - password
         not:
-          required:
-          - privateKey
+          anyOf:
+          - required:
+            - privateKey
+          - required:
+            - accountKey
       - properties:
           kind:
             const: private-key
         required:
+        - sshUser
         - privateKey
         not:
-          required:
-          - password
+          anyOf:
+          - required:
+            - password
+          - required:
+            - accountKey
+      - properties:
+          kind:
+            const: account-key
+        required:
+        - accountKey
+        not:
+          anyOf:
+          - required:
+            - sshUser
+          - required:
+            - password
+          - required:
+            - privateKey
     CredentialCheck:
       type: object
       properties:
@@ -2433,9 +2458,13 @@ components:
         credentialBindings:
           type: object
           additionalProperties: *id002
+        accountBindings:
+          type: object
+          description: For a test.attach job only. Maps each key file account label of the selected cases to the caller's own unrevoked account-key credential. The key is written to a private file for the run and removed after it; revoking the credential cancels the job.
+          additionalProperties: *id002
         arguments:
           type: object
-          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract and/or replacementAssetId for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected. A network.monitor job takes only serverRef, no assets or nodes, retention retain and the caller's own binding for that SSH server; it reads recorded node logs until cancelled, changes nothing, claims only its own control path and is cancelled with no further SSH use when the account or credential is revoked. Local networks are collected without a job. A test.attach job takes caseRefs whose cases all declare attach, no nodeIds or validators, and retention retain. It targets only the network this workspace recorded; the recorded node endpoints, accepted key set and capabilities replace the case's declared rpc, keysDir and provides. The selected asset must be the recorded binary. It claims the recorded placement exclusively, starts, stops and removes nothing, and refuses an account keyFile path.
+          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract and/or replacementAssetId for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected. A network.monitor job takes only serverRef, no assets or nodes, retention retain and the caller's own binding for that SSH server; it reads recorded node logs until cancelled, changes nothing, claims only its own control path and is cancelled with no further SSH use when the account or credential is revoked. Local networks are collected without a job. A test.attach job takes caseRefs whose cases all declare attach, no nodeIds or validators, and retention retain. It targets only the network this workspace recorded; the recorded node endpoints, accepted key set and capabilities replace the case's declared rpc, keysDir and provides. The selected asset must be the recorded binary. It claims the recorded placement exclusively, starts, stops and removes nothing, and replaces each account keyFile with the caller's account-key credential bound in accountBindings.
           properties:
             chainPresetRef:
               $ref: '#/components/schemas/DocumentRef'

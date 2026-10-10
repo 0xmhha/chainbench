@@ -94,6 +94,9 @@ type AttachConfig struct {
 	KeysDir string
 	// ReadOnlyKeys prevents test account registration from changing its inputs.
 	ReadOnlyKeys bool
+	// Ring, when set, is the ring a composed run already prepared its declared
+	// accounts in; it replaces the one KeysDir would build.
+	Ring *store.KeySet
 	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
@@ -188,6 +191,9 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	keys, err := ringForOutput(cfg.KeysDir, keyOutput)
 	if err != nil {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
+	if cfg.Ring != nil {
+		keys = cfg.Ring
 	}
 	run := NewRunSpec(interp.Deps{
 		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },

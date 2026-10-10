@@ -125,6 +125,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if in.Operation == webNetworkMonitorOperation {
 		return e.prepareMonitor(ctx, a, in, args)
 	}
+	if len(in.AccountBindings) != 0 && in.Operation != webTestAttachOperation {
+		return out, errors.New("account credentials apply to an attach job's key file accounts")
+	}
 	if args.ReplacementAssetID != "" && in.Operation != "node.swap" {
 		return out, errors.New("a replacement executable requires a node replacement job")
 	}
@@ -256,7 +259,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 		p.RecordDigest = manifestHash(record)
 		if in.Operation == webTestAttachOperation {
-			if err = e.prepareTestAttach(ctx, &p, *controlState); err != nil {
+			if err = e.prepareTestAttach(ctx, a, &p, *controlState); err != nil {
 				return out, err
 			}
 		}
@@ -526,6 +529,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 		for _, c := range p.Attach.Cases {
 			out.Changes = append(out.Changes, fmt.Sprintf("Test case %s · r%d · %s", c.Document.ID, c.Document.Revision, c.Document.Name))
+		}
+		for _, label := range p.Attach.Accounts {
+			out.Changes = append(out.Changes, fmt.Sprintf("Account %s signs with your private account credential %s, written to a private file for this run only", label, p.Input.AccountBindings[label]))
 		}
 	}
 	if p.Preset != nil {

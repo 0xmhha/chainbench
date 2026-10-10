@@ -16,8 +16,11 @@ type WebPlanInput struct {
 	NodeIDs            []string                `json:"nodeIds,omitempty"`
 	AssetRefs          []string                `json:"assetRefs,omitempty"`
 	CredentialBindings map[string]string       `json:"credentialBindings,omitempty"`
-	Arguments          json.RawMessage         `json:"arguments,omitempty"`
-	Retention          string                  `json:"retention,omitempty"`
+	// AccountBindings maps a case account label to the caller's own account
+	// key credential, for an attach job whose case names a key file.
+	AccountBindings map[string]string `json:"accountBindings,omitempty"`
+	Arguments       json.RawMessage   `json:"arguments,omitempty"`
+	Retention       string            `json:"retention,omitempty"`
 }
 
 // WebResourceClaim comes only from an engine's resolved plan, never the browser.
