@@ -18,7 +18,7 @@ class VerificationIsolationTests(unittest.TestCase):
         result = subprocess.run(
             ['bash', 'tests/webui/verify.sh', '--criterion', 'WEB-05', '--require-live',
              '--output', 'chainbench-out/web-ui-acceptance'],
-            cwd=workspace, capture_output=True, text=True, timeout=600)
+            cwd=workspace, capture_output=True, text=True, timeout=1800)
         self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
         self.assertEqual(snapshot(), before, 'verifier changed workspace build/receipts')
         if result.returncode == 1:

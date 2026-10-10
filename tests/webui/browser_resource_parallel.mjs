@@ -46,7 +46,7 @@ try{
  let first=null,restarted=null
  for(let i=0;i<1200&&!restarted;i++){
   const r=readRecord(a.w.id)
-  if(r&&r.nodes.length===4&&r.nodes.every(n=>n.pid>0&&live(n.pid))){
+  if(r&&r.nodes?.length===4&&r.nodes.every(n=>n.pid>0&&live(n.pid))){
    if(!first)first=r.nodes.map(n=>n.pid)
    else if(r.nodes[3].pid!==first[3]&&r.nodes.slice(0,3).every((n,j)=>n.pid===first[j]))restarted=r.nodes.map(n=>n.pid)
   }
