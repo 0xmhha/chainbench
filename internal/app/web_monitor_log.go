@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"io"
 	"os"
@@ -19,6 +20,8 @@ import (
 const (
 	webMonitorReadLimit = 1 << 20
 	webMonitorLineLimit = 64 << 10
+	// webMonitorHeadBytes of a log's start identify it together with its inode.
+	webMonitorHeadBytes = 256
 )
 
 // webPendingLines are archived log lines waiting for the monitor lock.
@@ -37,32 +40,59 @@ type webMonitorLogLine struct {
 // webLogSource reads a node log file where it lives: the local filesystem or
 // a remote host through the collecting job's own SSH access.
 type webLogSource interface {
-	// Snapshot returns the file identity and size together with at most limit
-	// bytes from offset, observed in one step; os.ErrNotExist when absent.
-	Snapshot(ctx context.Context, path string, offset int64, limit int) (uint64, int64, []byte, error)
+	// Snapshot returns the file identity, size and first bytes together with
+	// at most limit bytes from offset, observed in one step; os.ErrNotExist
+	// when absent.
+	Snapshot(ctx context.Context, path string, offset int64, limit int) (webLogSnapshot, error)
+}
+
+// webLogSnapshot is one observation of a node log.
+type webLogSnapshot struct {
+	ID   uint64
+	Size int64
+	// Head is the file's first webMonitorHeadBytes, fewer while it is shorter.
+	// A filesystem hands a deleted file's inode number to the next file, so
+	// the head is what tells a replacement from the file being read.
+	Head []byte
+	Data []byte
 }
 
 type webLocalLogs struct{}
 
-func (webLocalLogs) Snapshot(_ context.Context, path string, offset int64, limit int) (uint64, int64, []byte, error) {
+func (webLocalLogs) Snapshot(_ context.Context, path string, offset int64, limit int) (webLogSnapshot, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
 	defer func() { _ = f.Close() }()
 	info, err := f.Stat()
 	if err != nil {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
+	s := webLogSnapshot{ID: webMonitorFileID(info), Size: info.Size()}
+	head := make([]byte, min(info.Size(), webMonitorHeadBytes))
+	n, err := f.ReadAt(head, 0)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return webLogSnapshot{}, err
+	}
+	s.Head = head[:n]
 	if info.Size() <= offset {
-		return webMonitorFileID(info), info.Size(), nil, nil
+		return s, nil
 	}
 	chunk := make([]byte, limit)
-	n, err := f.ReadAt(chunk, offset)
+	n, err = f.ReadAt(chunk, offset)
 	if err != nil && !errors.Is(err, io.EOF) {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
-	return webMonitorFileID(info), info.Size(), chunk[:n], nil
+	s.Data = chunk[:n]
+	return s, nil
+}
+
+// sameWebLogHead reports whether two heads of one growing file agree; the
+// shorter was taken while the file was shorter.
+func sameWebLogHead(a, b string) bool {
+	n := min(len(a), len(b))
+	return a[:n] == b[:n]
 }
 
 // archiveLog appends complete new lines of a node log. A partial last line
@@ -76,7 +106,8 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 		gaps = append(gaps, webMonitorGap{From: since, To: now, Node: label, Source: "logs", Reason: reason})
 	}
 	offset := cursor.Offsets[label]
-	id, size, chunk, err := source.Snapshot(ctx, path, offset, webMonitorReadLimit)
+	snap, err := source.Snapshot(ctx, path, offset, webMonitorReadLimit)
+	id, size, chunk := snap.ID, snap.Size, snap.Data
 	if errors.Is(err, os.ErrNotExist) {
 		gap("log_unavailable")
 		return gaps, nil
@@ -92,6 +123,12 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 		}
 		cursor.Files[label] = id
 	}
+	head := hex.EncodeToString(snap.Head)
+	if previous := cursor.Heads[label]; !restart && size >= offset && previous != "" && !sameWebLogHead(previous, head) {
+		gap("log_rotated")
+		restart, cursor.InSecret[label] = true, false
+	}
+	cursor.Heads[label] = head
 	if size < offset {
 		gap("log_truncated")
 		restart = true
@@ -101,9 +138,10 @@ func (m *WebMonitor) archiveLog(ctx context.Context, network, label, path string
 	}
 	if restart && offset != 0 {
 		offset = 0
-		if _, size, chunk, err = source.Snapshot(ctx, path, 0, webMonitorReadLimit); err != nil {
+		if snap, err = source.Snapshot(ctx, path, 0, webMonitorReadLimit); err != nil {
 			return gaps, err
 		}
+		size, chunk, cursor.Heads[label] = snap.Size, snap.Data, hex.EncodeToString(snap.Head)
 	}
 	if size <= offset {
 		cursor.Offsets[label] = offset

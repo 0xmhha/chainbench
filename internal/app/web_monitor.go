@@ -74,6 +74,7 @@ type webMonitorCursor struct {
 	LastCollected  time.Time         `json:"lastCollected"`
 	Offsets        map[string]int64  `json:"offsets"`
 	Files          map[string]uint64 `json:"files,omitempty"`
+	Heads          map[string]string `json:"heads,omitempty"`
 	Skipping       map[string]bool   `json:"skipping,omitempty"`
 	InSecret       map[string]bool   `json:"inSecret,omitempty"`
 	Open           []webMonitorGap   `json:"open,omitempty"`
@@ -299,6 +300,9 @@ func (m *WebMonitor) readCursor(network string) (webMonitorCursor, error) {
 	}
 	if cursor.Files == nil {
 		cursor.Files = map[string]uint64{}
+	}
+	if cursor.Heads == nil {
+		cursor.Heads = map[string]string{}
 	}
 	if cursor.Skipping == nil {
 		cursor.Skipping = map[string]bool{}

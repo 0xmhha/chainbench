@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,33 +25,41 @@ const webRemoteNodeTimeout = 30 * time.Second
 // connection, so the runner's credential guard rechecks revocation every time.
 type webRemoteLogs struct{ run process.Runner }
 
-// Snapshot reports identity, size and bytes from offset in one command, so a
-// rotation between separate stat and read commands cannot mix two files.
-func (r webRemoteLogs) Snapshot(ctx context.Context, path string, offset int64, limit int) (uint64, int64, []byte, error) {
+// Snapshot reports identity, size, first bytes and bytes from offset in one
+// command, so a rotation between separate stat and read commands cannot mix
+// two files. The first bytes travel as hex, "-" when the file is empty.
+func (r webRemoteLogs) Snapshot(ctx context.Context, path string, offset int64, limit int) (webLogSnapshot, error) {
 	q := remote.ShellQuote(path)
-	cmd := "test -f " + q + " || exit 3; set -- $(ls -diL " + q + "); s=$(wc -c < " + q + "); echo \"$1 $s\"; tail -c +" +
+	cmd := "test -f " + q + " || exit 3; set -- $(ls -diL " + q + "); s=$(wc -c < " + q + "); h=$(head -c " +
+		strconv.Itoa(webMonitorHeadBytes) + " " + q + " | od -An -v -tx1 | tr -d ' \\n'); echo \"$1 $s ${h:--}\"; tail -c +" +
 		strconv.FormatInt(offset+1, 10) + " " + q + " | head -c " + strconv.Itoa(limit)
 	res, err := r.run(ctx, cmd)
 	if err != nil {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
 	if res.ExitCode == 3 {
-		return 0, 0, nil, os.ErrNotExist
+		return webLogSnapshot{}, os.ErrNotExist
 	}
 	header, data, found := strings.Cut(res.Stdout, "\n")
 	fields := strings.Fields(header)
-	if res.ExitCode != 0 || !found || len(fields) != 2 {
-		return 0, 0, nil, fmt.Errorf("remote log read %s: exit %d", path, res.ExitCode)
+	if res.ExitCode != 0 || !found || len(fields) != 3 {
+		return webLogSnapshot{}, fmt.Errorf("remote log read %s: exit %d", path, res.ExitCode)
 	}
 	id, err := strconv.ParseUint(fields[0], 10, 64)
 	if err != nil {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
 	size, err := strconv.ParseInt(fields[1], 10, 64)
 	if err != nil {
-		return 0, 0, nil, err
+		return webLogSnapshot{}, err
 	}
-	return id, size, []byte(data), nil
+	var head []byte
+	if fields[2] != "-" {
+		if head, err = hex.DecodeString(fields[2]); err != nil {
+			return webLogSnapshot{}, fmt.Errorf("remote log read %s: head: %w", path, err)
+		}
+	}
+	return webLogSnapshot{ID: id, Size: size, Head: head, Data: []byte(data)}, nil
 }
 
 // attachRemote marks a network as having an operator-started remote log
@@ -145,7 +154,7 @@ func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open
 		}
 	}
 	for _, label := range done { // The background collector never moves remote positions.
-		cursor.Offsets[label], cursor.Files[label] = work.Offsets[label], work.Files[label]
+		cursor.Offsets[label], cursor.Files[label], cursor.Heads[label] = work.Offsets[label], work.Files[label], work.Heads[label]
 		cursor.Skipping[label], cursor.InSecret[label] = work.Skipping[label], work.InSecret[label]
 	}
 	if stop == nil {
