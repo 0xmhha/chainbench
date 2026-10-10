@@ -22,6 +22,7 @@ RUNNERS = {
     'WEB-11': ('run_web11.py', 'evidence_web11'),
     'WEB-12': ('run_web12.py', 'evidence_web12'),
     'WEB-13': ('run_web13.py', 'evidence_web13'),
+    'WEB-14': ('run_web14.py', 'evidence_web14'),
 }
 
 

@@ -25,7 +25,9 @@ def check(criterion, output):
     verify_published(verifier, directory)
     protected = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
     root = runtime_root(); root.mkdir(parents=True, exist_ok=True)
-    env = dict(os.environ, WEBUI_BASE_COMMIT=base_commit(), PYTHONDONTWRITEBYTECODE='1')
+    # WEB-14 synthesizes the published criteria, which the staged copy has none of.
+    env = dict(os.environ, WEBUI_BASE_COMMIT=base_commit(), PYTHONDONTWRITEBYTECODE='1',
+               WEBUI_ACCEPTANCE_ROOT=str(workspace / output))
     selection = workspace / '.ouroboros/web-ui-analysis/selected-binaries/manifest.json'
     if selection.is_file() and 'WEBUI_SELECTED_BINARIES' not in env:
         env['WEBUI_SELECTED_BINARIES'] = str(selection)
