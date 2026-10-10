@@ -28,6 +28,7 @@ import (
 // builds, so a rename on either side shows up as an unpaired object rather than
 // as silence.
 var nestedObjects = map[string]reflect.Type{
+	"envSpec.binaries[additionalProperties].oneOf1": reflect.TypeOf(BinaryRefV2{}),
 	"envSpec.keys":                           reflect.TypeOf(KeysV2{}),
 	"envSpec.genesis":                        reflect.TypeOf(GenesisV2{}),
 	"envSpec.upgrade":                        reflect.TypeOf(UpgradeV2{}),

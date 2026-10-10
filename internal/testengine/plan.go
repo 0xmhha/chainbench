@@ -389,12 +389,19 @@ func writeScopes(row func(string, string), label string, m map[string][]string) 
 // into the workspace. The name is the hash of the content, so planning twice
 // writes the same bytes to the same path and a later run reuses it.
 func PlanSuite(ctx context.Context, in RunSuiteIn) (ComposePlan, error) {
+	_, plan, err := PlanSuiteLayout(ctx, in)
+	return plan, err
+}
+
+// PlanSuiteLayout exposes the same resolved composition input as RunSuite so
+// callers can claim an explicit node table without approximating it by counts.
+func PlanSuiteLayout(ctx context.Context, in RunSuiteIn) (chainsetup.ChainUpIn, ComposePlan, error) {
 	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
-		return ComposePlan{}, fmt.Errorf("engine: plan suite: no specs given")
+		return chainsetup.ChainUpIn{}, ComposePlan{}, fmt.Errorf("engine: plan suite: no specs given")
 	}
 	_, parsed, comp, err := resolveComposition(ctx, in)
 	if err != nil {
-		return ComposePlan{}, err
+		return chainsetup.ChainUpIn{}, ComposePlan{}, err
 	}
-	return planOf(comp, parsed[0].Chain.Name), nil
+	return *comp.up, planOf(comp, parsed[0].Chain.Name), nil
 }

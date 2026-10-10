@@ -267,8 +267,10 @@ func ParseWorkspaceConfig(b []byte) (WorkspaceConfig, error) {
 	return c, nil
 }
 
-// supportedVersion is the only workspace-config format version accepted.
-const supportedVersion = 1
+// SupportedWorkspaceVersion is the workspace-config format version accepted by the engine.
+const SupportedWorkspaceVersion = 1
+
+const supportedVersion = SupportedWorkspaceVersion
 
 // validate checks the config is internally consistent before anything consumes
 // it: a supported version, an absolute target dataRoot, every purpose directory

@@ -3,6 +3,7 @@ package lifecyclecmd
 import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"os"
 	"text/tabwriter"
 	"time"
 
@@ -28,7 +29,7 @@ func NewVerify() *cobra.Command {
 		Short: "Verify a network is producing blocks (from --rpc or a --workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			url, _ := cmd.Flags().GetString("dashboard")
-			bus, closeBus := dashboard.Stream(url)
+			bus, closeBus := dashboard.StreamAuthenticated(url, os.Getenv("CHAINBENCH_PUBLISHER_TOKEN"))
 			defer closeBus()
 			res, err := app.VerifyNetwork(cmd.Context(), surface.Deps(cmd), app.VerifyNetworkIn{
 				DataDir: dataDir, Chain: chain, RPCURLs: rpcURLs,

@@ -84,6 +84,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/surface-unification-design.md`](dev/surface-unification-design.md) | **표면 통일 리팩토링** — 기능을 한 번 등록하면 CLI/MCP/DSL 이 렌더링. **[일부 대체됨 2026-09-05]** — 해법의 형태가 "세 표면이 모두 app 을 지나고 게이트는 기능별 동등성 테스트" 로 바뀌었다. 규칙의 정본은 `architecture-v2` §2. |
 | [`dev/dsl-v2-proposal.md`](dev/dsl-v2-proposal.md) | **DSL v2 문법** + x-bar 정렬 갭 분석(G1~G7). T7.8 에서 구현됨. 쓰는 법은 [`guide/dsl-authoring.md`](guide/dsl-authoring.md). |
 | [`dev/dashboard-metrics-design.md`](dev/dashboard-metrics-design.md) | **대시보드 metric 시각화** — Prometheus·Grafana 서버 없이 자체 동작한다는 결정과 근거 · 목표 구조(스크레이프→링버퍼→SSE→차트) · 참조 오픈소스 5종(라이선스 포함). |
+| [`dev/web-ui-spec.md`](dev/web-ui-spec.md) | **Web UI 동작 명세** — 개인·팀 체인 구성·배포·노드 제어·DSL 작성·실행·모니터링·히스토리 9개 요구, 체인 명령·옵션, 권한·작업 복구. [화면 디자인](dev/web-ui-design.md) · [OpenAPI](dev/web-ui.openapi.yaml) · [인수 기준](dev/web-ui-acceptance.md) · [실행 Seed](dev/architecture/chainbench-web-ui.seed.yaml) · [보강 기록](dev/architecture/chainbench-web-ui.seed-revision.md). |
 
 ### 절차와 이관
 

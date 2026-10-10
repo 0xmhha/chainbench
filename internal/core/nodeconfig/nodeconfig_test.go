@@ -1,11 +1,36 @@
 package nodeconfig
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
+
+func TestArchiveEndpointUsesFullSyncWithoutPruning(t *testing.T) {
+	for _, dialect := range []string{"geth114", "geth110-wemix"} {
+		t.Run(dialect, func(t *testing.T) {
+			spec := Spec{Chain: Chain{Dialect: dialect}, Role: node.RoleEN, SyncMode: "archive", DataDir: "/owned/node", ConfigPath: "/owned/node.toml", Ports: node.Endpoints{P2P: 30300, HTTP: 8040, WS: 8041}}
+			config := string(TOML(spec))
+			if !strings.Contains(config, `SyncMode = "full"`) || !strings.Contains(config, "NoPruning = true") {
+				t.Error("archive is a retention mode; the node must use full sync with pruning disabled")
+			}
+			for _, configPath := range []string{spec.ConfigPath, ""} {
+				spec.ConfigPath = configPath
+				args, err := Argv(spec)
+				if err != nil {
+					t.Fatal(err)
+				}
+				gc := slices.Index(args, "--gcmode")
+				sync := slices.Index(args, "--syncmode")
+				if gc < 0 || gc+1 >= len(args) || args[gc+1] != "archive" || sync < 0 || sync+1 >= len(args) || args[sync+1] != "full" {
+					t.Errorf("archive mode lost with config %q: %v", configPath, args)
+				}
+			}
+		})
+	}
+}
 
 func TestGenerate_Validator(t *testing.T) {
 	toml := string(TOML(Spec{

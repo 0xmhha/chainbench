@@ -1,0 +1,433 @@
+{
+  "criterion": "WEB-13",
+  "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+  "scenarios": [
+    {
+      "id": "normal-end-retain-and-cleanup",
+      "mode": "team",
+      "transport": "local+SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a normal end with default retention keeps four live nodes",
+          "passed": true
+        },
+        {
+          "description": "a normal end with selected cleanup removes the local composition",
+          "passed": true
+        },
+        {
+          "description": "an SSH test run with selected cleanup stops and removes the remote nodes",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-receipt.json",
+          "sha256": "04f70b7999fd04d7869afe12fd67104fad1cf88b3e874415e8227bc7831ebcd6"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    },
+    {
+      "id": "user-cancel-retain-and-cleanup",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "cancel with default retention keeps the record and live nodes",
+          "passed": true
+        },
+        {
+          "description": "cancel with selected cleanup stops and removes the nodes",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    },
+    {
+      "id": "executor-and-admin-cancel",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "another operator cannot cancel the job",
+          "passed": true
+        },
+        {
+          "description": "an administrator can cancel another user's job",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    },
+    {
+      "id": "cleanup-failure-reported",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a failed cleanup is reported with unresolved resources",
+          "passed": true
+        },
+        {
+          "description": "a later explicit cleanup removes what remained",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    },
+    {
+      "id": "revocation-retains-and-blocks-access",
+      "mode": "team",
+      "transport": "local+SSH",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "account deactivation cancels with retention and blocks the account",
+          "passed": true
+        },
+        {
+          "description": "credential revocation during a real SSH copy keeps processes, record and the completed copy",
+          "passed": true
+        },
+        {
+          "description": "no automatic resume; only an explicit new job retries",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-receipt.json",
+          "sha256": "d3e65f649e4a2de7fa5a16309c8b5c067c8ff05707e18f8de35b273fe691ec17"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-ssh-binary-plan.png",
+          "sha256": "18acb8e47a4037dc6012c14b0cf09191d43b0af296c6cdd1ef5ab486fb619cfc"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    },
+    {
+      "id": "attach-protection",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "attached",
+      "assertions": [
+        {
+          "description": "composition, control and test plans on an attached network are refused by the API",
+          "passed": true
+        },
+        {
+          "description": "the job form explains the refusal and disables planning",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-refused.png",
+          "sha256": "0b5d663bc22ae423c8b58885b084efc59c1e79d8384b09718de24d56eb31aa8c"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-notice.txt",
+          "sha256": "49e91ff514811ec2b3b144f7760f51f232571274597dd4074c9dd63c105ed61b"
+        }
+      ],
+      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/app ./internal/dashboard -run \"TestWebJobs|TestWebJobCancel|TestCredentialLease|TestWebRemoteLogs\"",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-13/check-0.log",
+      "sha256": "114612f0fe2111161a6518c9367b3ceefae22dffd28eeb89e0a3684e638deb07"
+    }
+  ],
+  "proofs": [
+    {
+      "name": "cancel-retention",
+      "startedAt": "2026-10-10T10:48:54.491543+00:00",
+      "runtime": "/private/tmp/cbui/5332b21a-65b4-45f7-897a-1e7d500b0504",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "ssh-cleanup",
+      "startedAt": "2026-10-10T10:52:49.743631+00:00",
+      "runtime": "/private/tmp/cbui/54abc2ff-55d2-4d02-9974-3380795f4816",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "ssh-transfer-credential-revoke",
+      "startedAt": "2026-10-10T10:53:53.752457+00:00",
+      "runtime": "/private/tmp/cbui/6ae9542a-9528-4a7b-ab2f-f48e635d42de",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": null,
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    }
+  ],
+  "coverage": {
+    "required": [
+      "normal-end-retain-and-cleanup",
+      "user-cancel-retain-and-cleanup",
+      "executor-and-admin-cancel",
+      "cleanup-failure-reported",
+      "revocation-retains-and-blocks-access",
+      "attach-protection"
+    ],
+    "executed": [
+      "normal-end-retain-and-cleanup",
+      "user-cancel-retain-and-cleanup",
+      "executor-and-admin-cancel",
+      "cleanup-failure-reported",
+      "revocation-retains-and-blocks-access",
+      "attach-protection"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/web_jobs.go",
+      "sha256": "0f5271e42daffee58c4f7052647f5b6290d55375293622d34103caf436245f63"
+    },
+    {
+      "path": "internal/app/web_job_execution.go",
+      "sha256": "3e1468075bb1ee07b01764c287d63da62b470d412298a3b46cbbc235bb85e0a8"
+    },
+    {
+      "path": "internal/app/web_chain_engine.go",
+      "sha256": "302aecd171e6c01d3cb24a0a3f067ac5f7aae468020559b18cb88e5b7901962e"
+    },
+    {
+      "path": "internal/app/deployment_job_credentials.go",
+      "sha256": "11e3dbed4128dccc53706a33aebe44f1bb6b5dde84c056ba69c1d2fb9739dff2"
+    },
+    {
+      "path": "internal/dashboard/jobs.go",
+      "sha256": "02c2656440aed6a5ccaa865c6a090b21e4c2a8792c54bcebd6b8bcb0a9098232"
+    },
+    {
+      "path": "internal/dashboard/security.go",
+      "sha256": "792c838d01d244288ecc951a1b0cc11aa746d98d8ea6675fd302e084fa147d0f"
+    },
+    {
+      "path": "web/src/JobPanel.svelte",
+      "sha256": "deec5a6842d4489ecc2676113296c2205e8293735fb4e7b81809bfd597096c5f"
+    },
+    {
+      "path": "tests/webui/evidence_web13.py",
+      "sha256": "40ad9e9fc48006e0162b770c12cf8363ed57fadd490d5b737be596cb5cb05b6f"
+    },
+    {
+      "path": "tests/webui/run_web13.py",
+      "sha256": "7fd9609a36ce77da7fde03d0ecdd00fcfd941ac850a7e231c0ab14f95dbad14c"
+    },
+    {
+      "path": "tests/webui/test_evidence_web13.py",
+      "sha256": "7d6623d0519a640e2acebf5321b5c41a59096d37c678183e910af16250dc60f0"
+    },
+    {
+      "path": "tests/webui/proof_acceptance.py",
+      "sha256": "65e4261b14481e9cc712e58894b84d14c407ca9f67a88445e47f425a97c69074"
+    },
+    {
+      "path": "tests/webui/browser_cancel_retention.mjs",
+      "sha256": "407551fb86ac88e231e036835c0d3a57dd5c2f268c4d52f30a92bf06e9731b92"
+    },
+    {
+      "path": "tests/webui/browser_ssh_cleanup.mjs",
+      "sha256": "54c6cd937d619c2e9832ea335e0d6bc536f54275799de9838cfd3811f56e758c"
+    },
+    {
+      "path": "tests/webui/browser_ssh_binary_replacement.mjs",
+      "sha256": "0714c0260273cab1965f0147ccc5e4d6ee54917600f1a67af4c90ae352bcc45c"
+    },
+    {
+      "path": "tests/webui/run_ssh_transfer_faults.py",
+      "sha256": "371843f2f9fddc80cee3c23697247ce9d62e0e7c621962bd677bc43639dc84e7"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-notice.txt",
+      "sha256": "49e91ff514811ec2b3b144f7760f51f232571274597dd4074c9dd63c105ed61b"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-refused.png",
+      "sha256": "0b5d663bc22ae423c8b58885b084efc59c1e79d8384b09718de24d56eb31aa8c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
+      "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-run.log",
+      "sha256": "12db486d69298551cfa40e417f666e8e247112ad27e7f7471295eb7453c7d687"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/check-0.log",
+      "sha256": "114612f0fe2111161a6518c9367b3ceefae22dffd28eeb89e0a3684e638deb07"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-receipt.json",
+      "sha256": "04f70b7999fd04d7869afe12fd67104fad1cf88b3e874415e8227bc7831ebcd6"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-run.log",
+      "sha256": "d7308ab9f9f1a2ca4407497c8ad36f6c691ca6a383422f0edcc3152cce7a8511"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-receipt.json",
+      "sha256": "d3e65f649e4a2de7fa5a16309c8b5c067c8ff05707e18f8de35b273fe691ec17"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-run.log",
+      "sha256": "c30fb5016e2b515b3a3419d5880df1ea8e3f83b343dce9d0e88fa739eb356ca4"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-ssh-binary-plan.png",
+      "sha256": "18acb8e47a4037dc6012c14b0cf09191d43b0af296c6cdd1ef5ab486fb619cfc"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}

@@ -83,8 +83,7 @@
     {
       "do": "swapNode",
       "on": "node1",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -191,8 +190,7 @@
     {
       "do": "swapNode",
       "on": "node2",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -299,8 +297,7 @@
     {
       "do": "swapNode",
       "on": "node3",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -407,8 +404,7 @@
     {
       "do": "swapNode",
       "on": "node4",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",

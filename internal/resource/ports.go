@@ -15,6 +15,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
+// MaxListenPort is the largest TCP/UDP listening port.
+const MaxListenPort = 65535
+
 // Band is one port band: where it starts and how far apart consecutive nodes
 // sit within it.
 type Band struct {
@@ -67,6 +70,14 @@ func PlanBands(index int, b Bands, res node.Reservation) (node.Endpoints, error)
 	if !derived && b.RPC.Step < 1 {
 		return node.Endpoints{}, fmt.Errorf("portplan: rpc_step must be >= 1, got %d", b.RPC.Step)
 	}
+	for name, band := range map[string]*Band{"p2p": &b.P2P, "rpc": &b.RPC, "ws": b.WS, "auth": b.Auth, "metrics": b.Metrics} {
+		if band == nil {
+			continue
+		}
+		if band.Base < 1 || band.Base > MaxListenPort || band.Step < 0 || (band.Step > 0 && index-1 > (MaxListenPort-band.Base)/band.Step) {
+			return node.Endpoints{}, fmt.Errorf("portplan: %s band at node %d must stay within 1..%d", name, index, MaxListenPort)
+		}
+	}
 	at := func(band Band) int { return band.Base + (index-1)*band.Step }
 
 	p2p := at(b.P2P)
@@ -103,6 +114,11 @@ func PlanBands(index int, b Bands, res node.Reservation) (node.Endpoints, error)
 	case b.RPC.Step >= 4:
 		p.Metrics = http + 3
 	}
+	for _, port := range []int{p.P2P, p.Etcd, p.EtcdClient, p.HTTP, p.WS, p.Auth, p.Metrics} {
+		if port < 0 || port > MaxListenPort {
+			return node.Endpoints{}, fmt.Errorf("portplan: derived port %d must stay within 1..%d", port, MaxListenPort)
+		}
+	}
 	return p, nil
 }
 
@@ -119,6 +135,9 @@ func ValidatePorts(ports []node.Endpoints) error {
 func validatePortsOn(_ string, ports []node.Endpoints) error {
 	seen := map[int]string{}
 	claim := func(p int, who string) error {
+		if p < 1 || p > MaxListenPort {
+			return fmt.Errorf("portplan: %s port %d must stay within 1..%d", who, p, MaxListenPort)
+		}
 		if prev, ok := seen[p]; ok {
 			return fmt.Errorf("portplan: port %d used by both %s and %s", p, prev, who)
 		}
@@ -132,6 +151,7 @@ func validatePortsOn(_ string, ports []node.Endpoints) error {
 		}{
 			{n.P2P, fmt.Sprintf("node%d.p2p", i+1)},
 			{n.Etcd, fmt.Sprintf("node%d.etcd", i+1)},
+			{n.EtcdClient, fmt.Sprintf("node%d.etcdClient", i+1)},
 			{n.HTTP, fmt.Sprintf("node%d.http", i+1)},
 			{n.WS, fmt.Sprintf("node%d.ws", i+1)},
 			{n.Auth, fmt.Sprintf("node%d.auth", i+1)},

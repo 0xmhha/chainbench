@@ -255,8 +255,8 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 			if !node.ValidScope(scope) {
 				return fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
-			for k, v := range kvs {
-				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
+			for _, k := range slices.Sorted(maps.Keys(kvs)) {
+				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, kvs[k]))
 			}
 		}
 	}
@@ -266,8 +266,8 @@ func lowerEnvDeclarations(c CaseV2, env ChainPresetV2, spec *Spec) error {
 			if !node.ValidScope(scope) {
 				return fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
-			for k, v := range kvs {
-				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
+			for _, k := range slices.Sorted(maps.Keys(kvs)) {
+				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, kvs[k]))
 			}
 		}
 	}
@@ -514,6 +514,10 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 	if err != nil {
 		return Statement{}, err
 	}
+	// "is" is lowered onto "expected", so writing both would drop one of them.
+	if _, written := m["expected"]; written && hasExpected {
+		return Statement{}, fmt.Errorf("statement gives both \"is\" and \"expected\"; write one of them")
+	}
 	args := make(map[string]any, len(m))
 	for k, v := range m {
 		switch k {
@@ -534,7 +538,16 @@ func lowerStatement(m map[string]any, chain string) (Statement, error) {
 		if hasEx {
 			args["expect"] = exName
 		}
-		return Statement{Do: doName, Args: args}, nil
+		st := Statement{Do: doName, Args: args}
+		if perChain, ok := m[outcomePerChainKey].(map[string]any); ok {
+			st.Outcomes = append(st.Outcomes, m["expect"].(string))
+			for _, v := range perChain {
+				if outcome, ok := v.(string); ok {
+					st.Outcomes = append(st.Outcomes, outcome)
+				}
+			}
+		}
+		return st, nil
 	}
 	delete(args, "expect")
 	if alias, ok := expectAliases[exName]; ok {

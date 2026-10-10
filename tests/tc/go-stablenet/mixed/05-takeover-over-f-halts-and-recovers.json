@@ -156,8 +156,7 @@
     {
       "do": "swapNode",
       "on": "node1",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -181,8 +180,7 @@
     {
       "do": "swapNode",
       "on": "node2",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -206,8 +204,7 @@
     {
       "do": "swapNode",
       "on": "node3",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",
@@ -239,8 +236,7 @@
       "on": "node1",
       "args": [
         "--takeover.guard=false"
-      ],
-      "purpose": "takeover-without-guard"
+      ]
     },
     {
       "do": "waitFor",
@@ -258,8 +254,7 @@
       "on": "node2",
       "args": [
         "--takeover.guard=false"
-      ],
-      "purpose": "takeover-without-guard"
+      ]
     },
     {
       "do": "waitFor",
@@ -277,8 +272,7 @@
       "on": "node3",
       "args": [
         "--takeover.guard=false"
-      ],
-      "purpose": "takeover-without-guard"
+      ]
     },
     {
       "do": "waitFor",

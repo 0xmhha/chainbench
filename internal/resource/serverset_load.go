@@ -192,6 +192,9 @@ func (c *Set) validate() error {
 // bad combination must fail when the file is read (Load's fail-loud policy),
 // not when the server is first dialed mid-run.
 func (s SSH) validateFields() error {
+	if s.Port < 0 || s.Port > MaxListenPort {
+		return fmt.Errorf("ssh port must be 0 (default) or 1..%d", MaxListenPort)
+	}
 	if s.Password != "" && s.PasswordFile != "" {
 		return fmt.Errorf("ssh sets both password and password_file — keep exactly one")
 	}

@@ -1,0 +1,80 @@
+import {launchOwnedBrowser} from './owned-browser.mjs'
+import fs from 'node:fs'
+import assert from 'node:assert/strict'
+const [fixturePath,out]=process.argv.slice(2),f=JSON.parse(fs.readFileSync(fixturePath,'utf8'))
+const owned=await launchOwnedBrowser(),context=await owned.browser.newContext({viewport:{width:1440,height:1100}})
+let session
+async function api(path,method='GET',data,expected=200){
+ const r=await context.request.fetch(f.url+'/api/v1/'+path,{method,headers:{'Content-Type':'application/json',...(session?{'X-CSRF-Token':session.csrfToken}:{})},data:data===undefined?undefined:JSON.stringify(data)})
+ const raw=await r.text();assert.equal(r.status(),expected,`${method} ${path}: ${raw}`)
+ return JSON.parse(raw)
+}
+async function waitCatalog(page){await page.getByLabel('실행 자료 상태',{exact:true}).filter({hasText:'불러왔습니다'}).waitFor()}
+async function save(page,button,url){
+ const pending=page.waitForResponse(r=>r.url()===f.url+'/api/v1/'+url&&r.request().method()==='PATCH')
+ await page.getByRole('button',{name:button,exact:true}).click();const r=await pending
+ assert.equal(r.status(),200,await r.text());return r.json()
+}
+try{
+ session=await api('bootstrap','POST',{username:'catalog-admin',password:f.password,setupToken:f.setupToken},201)
+ const set=await api('documents','POST',{kind:'server-set',name:'Original pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:45500,step:10},rpc:{base:18200,step:10}}}}},201)
+ const config=await api('documents','POST',{kind:'workspace-config',name:'Original paths',contractVersion:'2',assetRefs:[],content:{version:1,dataRoot:f.runtime+'/data',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}},201)
+ const w=await api('workspaces','POST',{name:'Original workspace',documents:[{id:set.id,revision:1},{id:config.id,revision:1}]},201)
+ const preset=await api('documents','POST',{kind:'chain-preset',name:'Original preset',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'chain-preset',id:'catalog-preset',chain:'stablenet',topology:{bp:4}}},201)
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message))
+ await page.goto(f.url+'/chains');await waitCatalog(page)
+ await page.getByLabel('작업 Workspace',{exact:true}).selectOption(w.id)
+ await page.getByLabel('작업 매니페스트',{exact:true}).selectOption('stablenet')
+ await page.getByLabel('작업 바이너리',{exact:true}).selectOption('stablenet')
+ await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
+ await page.getByLabel('작업 체인 구성',{exact:true}).selectOption(preset.id)
+ await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();await page.getByLabel('실행 계획',{exact:true}).waitFor()
+ await page.locator('#saved-chain-document').selectOption(preset.id)
+ const chainSection=page.locator('section[aria-labelledby="chain-heading"]')
+ await chainSection.getByText('All configuration fields',{exact:true}).click()
+ await chainSection.getByLabel('/content/id',{exact:true}).fill('catalog-preset-updated')
+ const changedPreset=await save(page,'공유 체인 구성 저장','documents/'+preset.id)
+ assert.equal(changedPreset.revision,2)
+ await page.waitForFunction(id=>document.querySelector(`select[aria-label="작업 체인 구성"] option[value="${id}"]`)?.textContent.includes('r2'),preset.id)
+ assert.equal(await page.getByLabel('작업 체인 구성',{exact:true}).inputValue(),preset.id)
+ assert.equal(await page.getByLabel('실행 계획',{exact:true}).count(),0)
+ await page.getByLabel('Saved deployment document',{exact:true}).selectOption(set.id)
+ await page.getByLabel('Deployment document name',{exact:true}).fill('Updated pool')
+ const changedSet=await save(page,'Save shared document','documents/'+set.id);assert.equal(changedSet.revision,2)
+ await waitCatalog(page)
+ assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).locator('option[value="local"]').count(),1,'saving a newer server document discarded the workspace pinned revision')
+ assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).inputValue(),'local')
+ assert.equal((await api('workspaces/'+w.id)).documents[0].revision,1,'document save silently rebound workspace')
+ const pinnedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/plans'&&r.request().method()==='POST')
+ await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
+ const pinnedReview=await pinnedResponse;assert.equal(pinnedReview.status(),201,await pinnedReview.text())
+ await page.getByLabel('실행 계획',{exact:true}).waitFor()
+ const pinnedPlans=JSON.parse(fs.readFileSync(f.store+'/jobs.json','utf8')).plans
+ const pinned=Object.values(pinnedPlans).find(p=>p.prepared.payload.preset?.document.revision===2&&p.prepared.payload.set.revision===1)
+ assert.ok(pinned,'pinned older server revision could not be reviewed')
+ assert.equal(pinned.prepared.payload.config.revision,1)
+
+ await page.getByLabel('Saved deployment document',{exact:true}).selectOption(config.id)
+ await page.getByLabel('Deployment document name',{exact:true}).fill('Updated paths')
+ const changedConfig=await save(page,'Save shared document','documents/'+config.id);assert.equal(changedConfig.revision,2)
+ await waitCatalog(page)
+ assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).inputValue(),'local')
+ await page.getByLabel('Saved deployment workspace',{exact:true}).selectOption(w.id)
+ await page.getByLabel('Workspace server-set revision',{exact:true}).selectOption(set.id+':2')
+ await page.getByLabel('Workspace config revision',{exact:true}).selectOption(config.id+':2')
+ await page.getByLabel('Deployment workspace name',{exact:true}).fill('Updated workspace')
+ const changedWorkspace=await save(page,'Save shared workspace','workspaces/'+w.id);assert.equal(changedWorkspace.revision,2)
+ await page.waitForFunction(id=>document.querySelector(`select[aria-label="작업 Workspace"] option[value="${id}"]`)?.textContent.includes('r2'),w.id)
+ assert.equal(await page.getByLabel('작업 Workspace',{exact:true}).inputValue(),w.id)
+ assert.equal(await page.getByLabel('작업 바이너리',{exact:true}).inputValue(),'stablenet')
+ assert.equal(await page.getByLabel('작업 서버 이름',{exact:true}).inputValue(),'local')
+ await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();await page.getByLabel('실행 계획',{exact:true}).waitFor()
+ const plans=JSON.parse(fs.readFileSync(f.store+'/jobs.json','utf8')).plans
+ const reviewed=Object.values(plans).find(p=>p.prepared.payload.workspaceRevision===2)
+ assert.ok(reviewed);assert.equal(reviewed.prepared.payload.set.revision,2);assert.equal(reviewed.prepared.payload.config.revision,2);assert.equal(reviewed.prepared.payload.preset.document.revision,2)
+ assert.ok(!fs.existsSync(f.store+'/networks/'+w.id+'/chain-record.json'),'catalog refresh performed native effects')
+ assert.deepEqual(errors,[])
+ await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/updated-catalog-plan.png'})
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({savedChainServerConfigAndWorkspaceWithoutReload:true,pinnedWorkspaceDocumentsPreserved:true,pinnedOlderInputsReviewed:true,selectionsPreserved:true,obsoleteReviewCleared:true,latestReviewedRevisions:{workspace:2,serverSet:2,config:2,preset:2},nativeEffects:0,seedAcceptanceAwarded:false},null,2))
+ console.log('CATALOG REFRESH PASS: all saved configurations update choices while preserving pinned revisions and selections.')
+}finally{await owned.stop()}

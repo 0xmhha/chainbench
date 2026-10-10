@@ -59,7 +59,9 @@ type (
 	NetworkStopIn    = verb.NetworkStopIn
 	NetworkStopOut   = verb.NetworkStopOut
 	NodeStopIn       = verb.NodeStopIn
+	NodeResetIn      = verb.NodeResetIn
 	NodeStartIn      = verb.NodeStartIn
+	NodeSwapIn       = verb.NodeSwapIn
 	NodeStartOut     = verb.NodeStartOut
 	NetworkRemoveIn  = verb.NetworkRemoveIn
 	NetworkRemoveOut = verb.NetworkRemoveOut
@@ -72,7 +74,7 @@ const (
 
 // chainsetupDeps adapts this layer's dependency set to the module's.
 func (d Deps) chainsetupDeps() chainsetupmod.Deps {
-	return chainsetupmod.Deps{Clock: d.Clock, Env: d.Env, Command: d.command(), Report: d.Logf, Driver: d.Driver}
+	return chainsetupmod.Deps{Clock: d.Clock, Env: d.Env, ServerLookup: d.ServerLookup, Command: d.command(), Report: d.Logf, Driver: d.Driver}
 }
 
 func ChainAllocate(ctx context.Context, d Deps, in ChainAllocateIn) (chainsetupmod.StepOut, error) {
@@ -189,6 +191,16 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (verb.NodeStartOut, 
 // NodeStop stops one node by index.
 func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	return verb.NodeStop(ctx, d.chainsetupDeps(), in)
+}
+
+// NodeSwap replaces one node's selected binary or generated configuration.
+func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (verb.NodeStartOut, error) {
+	return verb.NodeSwap(ctx, d.chainsetupDeps(), in)
+}
+
+// NodeReset initializes one non-producing node again and leaves it stopped.
+func NodeReset(ctx context.Context, d Deps, in NodeResetIn) error {
+	return verb.NodeReset(ctx, d.chainsetupDeps(), in)
 }
 
 // ChainResume recovers a workspace whose run died: reconcile pids with the

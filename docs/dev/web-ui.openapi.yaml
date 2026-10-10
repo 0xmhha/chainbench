@@ -1,0 +1,3254 @@
+openapi: 3.1.0
+info:
+  title: chainbench Web UI API
+  version: 1.0.0
+  description: Implementation contract for docs/dev/web-ui-spec.md. Endpoint definitions
+    are specified, not a claim of implementation. Engine grammar and vocabulary schemas
+    are runtime-owned.
+servers:
+- url: /
+  description: Same-origin dashboard service
+security:
+- sessionCookie: []
+x-baseline-commit: 9923df85a8d11f2c20e47d2e215d4209500af28a
+x-specification: web-ui-spec.md
+paths:
+  /api/v1/bootstrap:
+    post:
+      operationId: bootstrap
+      summary: Initialize the first administrator once
+      x-minimum-role: public
+      responses:
+        '201':
+          description: Initialize the first administrator once
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bootstrap'
+      security: []
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      summary: Create a login session
+      x-minimum-role: public
+      responses:
+        '200':
+          description: Create a login session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      security: []
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      summary: Invalidate browser session without cancelling jobs
+      x-minimum-role: viewer
+      responses:
+        '204':
+          description: Invalidate browser session without cancelling jobs
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: &id001
+          type: string
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/auth/me:
+    get:
+      operationId: currentUser
+      summary: Read current session
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read current session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      summary: List managed users
+      x-minimum-role: administrator
+      responses:
+        '200':
+          description: List managed users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - &id003
+        name: cursor
+        in: query
+        required: false
+        schema: *id001
+      - &id004
+        name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+    post:
+      operationId: createUser
+      summary: Register a team user
+      x-minimum-role: administrator
+      responses:
+        '201':
+          description: Register a team user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/users/{userId}:
+    patch:
+      operationId: updateUser
+      summary: Update role or active state; deactivation cancels related jobs
+      x-minimum-role: administrator
+      responses:
+        '200':
+          description: Update role or active state; deactivation cancels related jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: &id002
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.-]+$
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/vocabulary:
+    get:
+      operationId: vocabulary
+      summary: Read actual engine vocabulary and contract references
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read actual engine vocabulary and contract references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vocabulary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/contracts/{contractId}:
+    get:
+      operationId: contract
+      summary: Read engine-owned grammar or parameter schema
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read engine-owned grammar or parameter schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonSchema'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/chains/{chainId}/surface:
+    get:
+      operationId: chainSurface
+      summary: Read command/option catalog with engine support and binary provenance
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read command/option catalog with engine support and binary
+            provenance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChainSurface'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      description: Without assetId returns documented baseline for draft editing.
+        With assetId checks the selected binary and merges versioned evidence. Binary
+        acceptance alone does not make a command/option executable. Hidden registration
+        and command-local scope require explicit evidence. Plans require verified
+        fingerprints for each binary; stale or incompatible evidence cannot authorize
+        execution. Schema references expose engine-owned types, defaults, allowed
+        values and prerequisites, never inferred allowlists.
+      parameters:
+      - name: chainId
+        in: path
+        required: true
+        schema: *id002
+      - name: assetId
+        in: query
+        required: false
+        schema: *id002
+  /api/v1/credentials:
+    get:
+      operationId: listCredentials
+      summary: List only own credential metadata
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: List only own credential metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+    post:
+      operationId: createCredential
+      summary: Store an encrypted private credential
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Store an encrypted private credential
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialCreate'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/credentials/{credentialId}:
+    get:
+      operationId: getCredential
+      summary: Read own metadata, never secret material
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Read own metadata, never secret material
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: credentialId
+        in: path
+        required: true
+        schema: *id002
+    delete:
+      operationId: revokeCredential
+      summary: Revoke own credential and cancel related jobs while retaining nodes
+      x-minimum-role: operator
+      responses:
+        '204':
+          description: Revoke own credential and cancel related jobs while retaining
+            nodes
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: credentialId
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/credentials/{credentialId}/check:
+    post:
+      operationId: checkCredential
+      summary: Check own credential against a registered target
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Check own credential against a registered target
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialCheck'
+      parameters:
+      - name: credentialId
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/assets:
+    get:
+      operationId: listAssets
+      summary: List registered shared files and binaries
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List registered shared files and binaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+    post:
+      operationId: uploadAsset
+      summary: Upload and inspect a registered asset
+      description: Register an immutable shared file with an ID and SHA-256 checksum.
+        Binary files are limited to 256 MiB and undergo native OS/architecture,
+        version and help inspection. Other files are limited to 16 MiB and currently
+        support JSON/YAML declarations, JSON ABI and hexadecimal bytecode. Shared
+        assets reject known credential fields and private key material. File format
+        inspection alone does not imply execution compatibility.
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Upload and inspect a registered asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - binary
+                  - configuration
+                  - template
+                  - material
+                file:
+                  type: string
+                  format: binary
+              additionalProperties: false
+              required:
+              - kind
+              - file
+  /api/v1/assets/{assetId}:
+    get:
+      operationId: getAsset
+      summary: Read asset metadata and compatibility
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read asset metadata and compatibility
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: assetId
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/documents:
+    get:
+      operationId: listDocuments
+      summary: List shared declaration revisions
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List shared declaration revisions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+      - name: kind
+        in: query
+        required: false
+        schema: &id012
+          type: string
+          enum:
+          - chain-preset
+          - server-set
+          - workspace-config
+          - manifest
+          - case
+          - run-definition
+      - name: search
+        in: query
+        required: false
+        schema: *id001
+    post:
+      operationId: createDocument
+      summary: Validate and save a shared declaration
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Validate and save a shared declaration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/validate:
+    post:
+      operationId: validateDocument
+      summary: Validate without saving or executing
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Validate without saving or executing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Validation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/import:
+    post:
+      operationId: previewImport
+      summary: Parse import, preserve source and isolate sensitive bindings privately
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Parse import, preserve source and isolate sensitive bindings
+            privately
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentImport'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/import/commit:
+    post:
+      operationId: commitImport
+      summary: Save confirmed valid redacted import revisions
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Save confirmed valid redacted import revisions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportCommit'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/{documentId}:
+    get:
+      operationId: getDocument
+      summary: Read a declaration revision
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read a declaration revision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema: *id002
+      - name: revision
+        in: query
+        required: false
+        schema: &id005
+          type: integer
+          minimum: 0
+    patch:
+      operationId: updateDocument
+      summary: Create a new revision without lost updates
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Create a new revision without lost updates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema: *id002
+      - name: If-Match
+        in: header
+        required: true
+        schema: *id001
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/{documentId}/export:
+    get:
+      operationId: exportDocument
+      summary: Export selected declaration revision without secrets
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Export selected declaration revision without secrets
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema: *id002
+      - name: revision
+        in: query
+        required: false
+        schema: *id005
+      - name: format
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+  /api/v1/workspaces:
+    get:
+      operationId: listWorkspaces
+      summary: List team-shared workspaces
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List team-shared workspaces
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspacePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+    post:
+      operationId: createWorkspace
+      summary: Create a workspace from validated revisions
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Create a workspace from validated revisions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceInput'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/workspaces/{workspaceId}:
+    get:
+      operationId: getWorkspace
+      summary: Read a workspace
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read a workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema: *id002
+    patch:
+      operationId: updateWorkspace
+      summary: Update workspace document references using a revision guard
+      x-minimum-role: operator
+      responses:
+        '200':
+          description: Update workspace document references using a revision guard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceInput'
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema: *id002
+      - name: If-Match
+        in: header
+        required: true
+        schema: *id001
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/documents/{documentId}/bundle:
+    get:
+      operationId: exportDocumentBundle
+      summary: Download one shared document as an importable bundle, with the chain preset revisions a case pins
+      description: 'The bundle is {"format":"chainbench-web-bundle","documents":[...]} with each pinned chain preset revision before the case. Importing it saves the presets and the case together, and the case is pinned to the preset revisions that arrived with it. A case whose preset is not in its bundle is refused by the preset id.'
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Document bundle
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/workspaces/{workspaceId}/export:
+    get:
+      operationId: exportWorkspace
+      summary: Download the workspace's pinned shared declarations as an importable bundle
+      description: 'The bundle is {"format":"chainbench-web-bundle","workspace":name,"documents":[{kind,name,contractVersion,assetRefs,content}]}. POST /api/v1/documents/import accepts it (format json), as well as a YAML stream of such documents; each document is validated with its /documents/N position. Shared declarations hold no private values.'
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Workspace bundle
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/workspaces/{workspaceId}/networks:
+    get:
+      operationId: workspaceNetworks
+      summary: Read actual owned and attached network state
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read actual owned and attached network state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema: *id002
+      - *id003
+      - *id004
+  /api/v1/networks/{networkId}/observations:
+    get:
+      operationId: observeOwnedNetworkProcesses
+      summary: Read recorded process identity on the verified target using personal access
+      description: Read-only operator observation; unknown and missing identities cannot authorize process control. No record reconciliation or automatic recovery occurs.
+      x-minimum-role: operator
+      parameters:
+      - name: networkId
+        in: path
+        required: true
+        schema: *id002
+      responses:
+        '200':
+          description: Owned network with current process observations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/plans:
+    post:
+      operationId: createPlan
+      summary: Validate engine plan, access, revisions and physical resource footprint
+      x-minimum-role: operator
+      responses:
+        '201':
+          description: Validate engine plan, access, revisions and physical resource
+            footprint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanInput'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/plans/{planId}/conflicts:
+    get:
+      operationId: getPlanResourceConflicts
+      summary: Review overlapping active or retained jobs for the actor-owned plan
+      description: Ownership metadata only. This snapshot does not reserve resources; starting a job checks conflicts atomically again.
+      x-minimum-role: operator
+      parameters:
+      - name: planId
+        in: path
+        required: true
+        schema: *id002
+      responses:
+        '200':
+          description: Current conflicting jobs; empty items permits review but does not guarantee acceptance
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, observedAt]
+                properties:
+                  observedAt:
+                    type: string
+                    format: date-time
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResourceConflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/jobs:
+    get:
+      operationId: listJobs
+      summary: List durable server-side jobs
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List durable server-side jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+      - name: workspaceId
+        in: query
+        required: false
+        schema: *id002
+      - name: state
+        in: query
+        required: false
+        schema: *id001
+      - name: actorId
+        in: query
+        required: false
+        schema: *id002
+    post:
+      operationId: createJob
+      summary: Acquire resource locks and accept an immutable actor-bound plan
+      x-minimum-role: operator
+      responses:
+        '202':
+          description: Acquire resource locks and accept an immutable actor-bound
+            plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      description: Same actor/key/body returns the existing job; same key/different
+        body or stale plan returns 409. Conflicting physical resources are rejected
+        even across workspace aliases. No automatic wait queue.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobInput'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *id001
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/jobs/{jobId}:
+    get:
+      operationId: getJob
+      summary: Read authoritative job state and partial effects
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read authoritative job state and partial effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/jobs/{jobId}/cancel:
+    post:
+      operationId: cancelJob
+      summary: Initiator or administrator requests ordinary cancellation
+      x-minimum-role: operator
+      responses:
+        '202':
+          description: Initiator or administrator requests ordinary cancellation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      description: Check actor ownership in addition to role. Ordinary cancellation
+        follows the selected retain/cleanup policy; account/credential revocation
+        uses separate retain-priority semantics.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelInput'
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/snapshot:
+    get:
+      operationId: snapshot
+      summary: Read consistent state version and corresponding stream cursor
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read consistent state version and corresponding stream cursor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: workspaceId
+        in: query
+        required: false
+        schema: *id002
+      - name: jobId
+        in: query
+        required: false
+        schema: *id002
+  /api/v1/events:
+    get:
+      operationId: events
+      summary: Stream versioned updates with replay or resync_required
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: |
+            Committed job revisions and a process-instance cursor. The Last-Event-ID
+            header takes precedence over the cursor query. Replays the last 128
+            committed revisions; initial, invalid, expired or restarted cursors emit
+            resync_required and require a fresh snapshot. Scoped observers receive
+            version_changed for unrelated jobs, preserving the global sequence without
+            disclosing their content. Job payloads exclude private plans and inputs.
+            observation heartbeats carry the current version and global job delivery
+            drop count without an SSE id; they never acknowledge undelivered changes.
+            The stream rechecks authentication on each update and heartbeat, closes
+            on revocation or disconnect, and limits concurrent subscribers to 64.
+            Job snapshots contain cached owned network metadata, not live PID proof;
+            metrics and historical log coverage have separate contracts below.
+  /api/v1/networks/{networkId}/metrics:
+    get:
+      operationId: metrics
+      summary: Read node series with units, source and collection coverage
+      x-minimum-role: viewer
+      description: runId selects a history run's job window on this network instead of from/to. The server collects every owned node recorded as launched each 5 seconds and archives the results without expiry. RPC series are block_height and peer_count; metrics-endpoint series are chain_head_block, p2p_peers, txpool_pending and txpool_queued. A failed or disabled source, an unexposed gauge and an interval without a running collector are coverage gaps such as "node2 rpc rpc_unavailable", "node1 metrics txpool_pending not_exposed" or "collector collector_stopped"; missing values are never reported as zero. The default window is the last two hours and a window may span at most 31 days; a time before the first collection round is a "collector not_collected" gap. A series above 720 samples is averaged into equal time buckets with coverage.downsampled set. Unreadable archive lines are skipped and reported as an "archive corrupt_record" gap.
+      responses:
+        '200':
+          description: Read node series with units, source and collection coverage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: networkId
+        in: path
+        required: true
+        schema: *id002
+      - &id007
+        name: from
+        in: query
+        required: false
+        schema: &id006
+          type: string
+          format: date-time
+      - &id008
+        name: to
+        in: query
+        required: false
+        schema: *id006
+      - &id009
+        name: runId
+        in: query
+        required: false
+        schema: *id002
+      - name: nodeId
+        in: query
+        required: false
+        schema: *id002
+      - name: metric
+        in: query
+        required: false
+        schema: *id001
+  /api/v1/nodes/{nodeId}/logs:
+    get:
+      operationId: logs
+      summary: Read redacted time-linked captured node logs
+      x-minimum-role: viewer
+      description: nodeId is "<networkId>.<node label>". Entries are archived complete lines of a local node log, redacted before storage. A geth-family timestamp is used as the entry time (local zone, collection year); otherwise the collection time is used, and coverage.timestampSource reports source, collection or mixed. The default window is the last two hours (at most 31 days), in node log order, paged by limit (at most 100); nextCursor keeps its window. Lines are cut at 64 KiB, a line longer than 1 MiB is skipped as a log_line_oversized gap, a replaced or shrunk file is read from its start with a log_rotated or log_truncated gap, and every line of a PEM block is redacted. Remote SSH node logs are archived only while an operator's network.monitor job runs with that operator's own binding; other intervals are remote_log_collection_unavailable gaps.
+      responses:
+        '200':
+          description: Read redacted time-linked captured node logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logs'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: nodeId
+        in: path
+        required: true
+        schema: *id002
+      - *id003
+      - *id004
+      - *id007
+      - *id008
+      - *id009
+  /api/v1/history:
+    get:
+      operationId: listHistory
+      summary: Search and filter persistent run history
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Search and filter persistent run history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+      - *id007
+      - *id008
+      - name: search
+        in: query
+        required: false
+        schema: *id001
+      - name: chain
+        in: query
+        required: false
+        schema: *id001
+      - name: workspaceId
+        in: query
+        required: false
+        schema: *id002
+      - name: actorId
+        in: query
+        required: false
+        schema: *id002
+      - name: state
+        in: query
+        required: false
+        schema: *id001
+      - name: caseId
+        in: query
+        required: false
+        schema: *id001
+  /api/v1/history/{runId}:
+    get:
+      operationId: getHistory
+      summary: Read run results and engine-session references
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Read run results and engine-session references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: runId
+        in: path
+        required: true
+        schema: *id002
+    delete:
+      operationId: deleteHistory
+      summary: Delete a terminal run and exclusively owned captured artifacts, not
+        live node data
+      x-minimum-role: administrator
+      responses:
+        '204':
+          description: Delete a terminal run and exclusively owned captured artifacts,
+            not live node data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      description: Keep shared assets, other-run references and audit records. Active
+        job history cannot be deleted. Return error and recorded unresolved deletion
+        state on partial failure.
+        Also removes archived node samples and log lines inside the run's job window, except instants another listed execution or a running job covers; records of the same execution do not protect each other. Removed intervals become "archive deleted_by_admin <runId>" coverage gaps. If the archive rewrite fails the run is kept, a history.delete_failed audit entry is recorded and the response is 500; retrying is safe. Log lines are owned by their entry time (the node's own timestamp when present, read in the server's zone). A terminal job without a recorded end has no bounded window and deletes no observations. Chain records, node data and audit history are never deleted.
+      parameters:
+      - name: runId
+        in: path
+        required: true
+        schema: *id002
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/history/compare:
+    post:
+      operationId: compareHistory
+      summary: Compare compatible runs and explain missing or incompatible dimensions
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Compare compatible runs and explain missing or incompatible
+            dimensions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comparison'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompareInput'
+      parameters:
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        schema: *id001
+        description: Required for cookie-authenticated changes; publisher bearer ingestion
+          uses its own authentication.
+  /api/v1/history/{runId}/export:
+    get:
+      operationId: exportHistory
+      summary: Download redacted result and captured-data bundle
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Download redacted result and captured-data bundle
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: runId
+        in: path
+        required: true
+        schema: *id002
+  /api/v1/audit:
+    get:
+      operationId: audit
+      summary: Read redacted audit trail
+      x-minimum-role: administrator
+      responses:
+        '200':
+          description: Read redacted audit trail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditRecordPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - *id003
+      - *id004
+      - *id007
+      - *id008
+  /api/events:
+    post:
+      operationId: legacyEventIngestion
+      summary: Ingest CLI/MCP observation events with a publisher-only token
+      x-minimum-role: publisher
+      responses:
+        '202':
+          description: Ingest CLI/MCP observation events with a publisher-only token
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters: []
+      security:
+      - publisherToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Existing collector.Event wire contract; do not redefine
+                its fields here.
+      description: Existing route/body retained. Team/control mode requires publisher
+        token. Unauthenticated legacy producer support is restricted to a separate
+        loopback observation-only mode with no control endpoints. Token cannot submit
+        jobs or control nodes.
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: chainbench_session
+    publisherToken:
+      type: http
+      scheme: bearer
+      description: Publisher-only observation ingestion credential; not SSH material
+        or user login.
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: *id001
+        message: *id001
+        requestId: *id001
+        fieldErrors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: *id001
+              code: *id001
+              message: *id001
+            additionalProperties: false
+            required:
+            - path
+            - code
+            - message
+        details:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - code
+      - message
+      - requestId
+    User:
+      type: object
+      properties:
+        id: *id002
+        username: *id001
+        role:
+          type: string
+          enum:
+          - administrator
+          - operator
+          - viewer
+        active: &id011
+          type: boolean
+      additionalProperties: false
+      required:
+      - id
+      - username
+      - role
+      - active
+    Login:
+      type: object
+      properties:
+        username: *id001
+        password: &id010
+          type: string
+          writeOnly: true
+      additionalProperties: false
+      required:
+      - username
+      - password
+    Bootstrap:
+      type: object
+      properties:
+        username: *id001
+        password: *id010
+        setupToken: *id010
+      additionalProperties: false
+      required:
+      - username
+      - password
+      - setupToken
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        csrfToken: *id001
+        expiresAt: *id006
+        mode:
+          type: string
+          enum:
+          - personal
+          - team
+      additionalProperties: false
+      required:
+      - user
+      - csrfToken
+      - expiresAt
+      - mode
+    UserCreate:
+      type: object
+      properties:
+        username: *id001
+        password: *id010
+        role:
+          type: string
+          enum:
+          - administrator
+          - operator
+          - viewer
+      additionalProperties: false
+      required:
+      - username
+      - password
+      - role
+    UserUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum:
+          - administrator
+          - operator
+          - viewer
+        active: *id011
+        password: *id010
+      additionalProperties: false
+    JsonSchema:
+      type: object
+      additionalProperties: true
+      description: Engine-owned JSON Schema. Field definitions are not duplicated
+        in this HTTP specification.
+    VocabularyEntry:
+      type: object
+      properties:
+        name: *id001
+        kind:
+          type: string
+          enum:
+          - action
+          - assertion
+          - reader
+          - capability
+          - chain
+          - family
+          - preset
+          - role
+        summary: *id001
+        contractId: *id002
+        schemaRef: *id001
+        chains:
+          type: array
+          items: *id001
+        prerequisites:
+          type: array
+          items: *id001
+      additionalProperties: false
+      required:
+      - name
+      - kind
+    Vocabulary:
+      type: object
+      properties:
+        contractVersion: *id001
+        grammarContractId: *id002
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/VocabularyEntry'
+      additionalProperties: false
+      required:
+      - contractVersion
+      - grammarContractId
+      - entries
+    Credential:
+      type: object
+      properties:
+        id: *id002
+        ownerId: *id002
+        label: *id001
+        kind:
+          type: string
+          enum:
+          - password
+          - private-key
+          - account-key
+        revoked: *id011
+        createdAt: *id006
+      additionalProperties: false
+      required:
+      - id
+      - ownerId
+      - label
+      - kind
+      - revoked
+    CredentialCreate:
+      type: object
+      properties:
+        label: *id001
+        kind:
+          type: string
+          enum:
+          - password
+          - private-key
+          - account-key
+        sshUser: *id001
+        password: *id010
+        privateKey: *id010
+        passphrase: *id010
+        accountKey:
+          type: string
+          description: A 32-byte hex private key a test case signs with. It is stored encrypted, never returned, and cannot be bound as an SSH login.
+      additionalProperties: false
+      required:
+      - label
+      - kind
+      oneOf:
+      - properties:
+          kind:
+            const: password
+        required:
+        - sshUser
+        - password
+        not:
+          anyOf:
+          - required:
+            - privateKey
+          - required:
+            - accountKey
+      - properties:
+          kind:
+            const: private-key
+        required:
+        - sshUser
+        - privateKey
+        not:
+          anyOf:
+          - required:
+            - password
+          - required:
+            - accountKey
+      - properties:
+          kind:
+            const: account-key
+        required:
+        - accountKey
+        not:
+          anyOf:
+          - required:
+            - sshUser
+          - required:
+            - password
+          - required:
+            - privateKey
+    CredentialCheck:
+      type: object
+      properties:
+        workspaceId: *id002
+        serverRef: *id001
+      additionalProperties: false
+      required:
+      - workspaceId
+      - serverRef
+    AccessResult:
+      type: object
+      properties:
+        reachable: *id011
+        authenticated: *id011
+        hostIdentity: *id001
+        allowedOperations:
+          type: array
+          items: *id001
+        reason: *id001
+      additionalProperties: false
+      required:
+      - reachable
+      - authenticated
+      - allowedOperations
+    Asset:
+      type: object
+      properties:
+        id: *id002
+        kind:
+          type: string
+          enum:
+          - binary
+          - configuration
+          - template
+          - material
+        name: *id001
+        checksum: *id001
+        bytes: *id005
+        compatibility:
+          type: object
+          additionalProperties: true
+        uploaderId: *id002
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - name
+      - checksum
+      - bytes
+    DocumentInput:
+      type: object
+      properties:
+        kind: *id012
+        name: *id001
+        contractVersion: *id001
+        content: &id013
+          type: object
+          additionalProperties: true
+        assetRefs: &id014
+          type: array
+          description: >-
+            Exact registered dependencies in the declaration. A chain preset
+            can reference a registered JSON template with genesis.ref set to
+            asset:<id>; this list contains that ID. Import derives the same
+            dependency. Job planning verifies the kind and pins its checksum.
+          items: *id002
+        presetRefs: &presetrefs
+          type: array
+          description: >-
+            Only for a case. The shared chain-preset revision behind each
+            preset id the case names or extends. Saving resolves them and
+            refuses a missing, unused or non-preset reference; a job runs the
+            pinned revisions inlined while the stored case keeps its reference.
+          items:
+            $ref: '#/components/schemas/DocumentRef'
+      additionalProperties: false
+      required:
+      - kind
+      - name
+      - contractVersion
+      - content
+    Document:
+      type: object
+      properties:
+        kind: *id012
+        name: *id001
+        contractVersion: *id001
+        content: *id013
+        assetRefs: *id014
+        presetRefs: *presetrefs
+        id: *id002
+        revision: *id005
+        updatedAt: *id006
+        updatedBy: *id002
+      additionalProperties: false
+      required:
+      - id
+      - revision
+      - kind
+      - name
+      - contractVersion
+      - content
+    DocumentImport:
+      type: object
+      properties:
+        filename: *id001
+        format:
+          type: string
+          enum:
+          - json
+          - yaml
+        source: *id001
+        kind: *id012
+      additionalProperties: false
+      required:
+      - filename
+      - format
+      - source
+    Validation:
+      type: object
+      properties:
+        valid: *id011
+        contractVersion: *id001
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: *id001
+              code: *id001
+              message: *id001
+            additionalProperties: false
+            required:
+            - path
+            - code
+            - message
+        warnings:
+          type: array
+          items: *id001
+      additionalProperties: false
+      required:
+      - valid
+      - contractVersion
+      - errors
+      - warnings
+    ImportPreview:
+      type: object
+      properties:
+        previewId: *id002
+        validation:
+          $ref: '#/components/schemas/Validation'
+        redactedDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+        changes:
+          type: array
+          items: *id001
+        privateBindingsRequired:
+          type: array
+          items: *id001
+        sourcePreserved: *id011
+      additionalProperties: false
+      required:
+      - previewId
+      - validation
+      - redactedDocuments
+      - changes
+      - privateBindingsRequired
+      - sourcePreserved
+    ImportCommit:
+      type: object
+      properties:
+        previewId: *id002
+        baseRevisions:
+          type: object
+          additionalProperties: *id005
+      additionalProperties: false
+      required:
+      - previewId
+    DocumentRef:
+      type: object
+      properties:
+        id: *id002
+        revision: *id005
+      additionalProperties: false
+      required:
+      - id
+      - revision
+    WorkspaceInput:
+      type: object
+      properties:
+        name: *id001
+        documents: &id015
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentRef'
+      additionalProperties: false
+      required:
+      - name
+      - documents
+    Workspace:
+      type: object
+      properties:
+        name: *id001
+        documents: *id015
+        id: *id002
+        revision: *id005
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - revision
+      - documents
+    Node:
+      type: object
+      properties:
+        id: *id002
+        networkId: *id002
+        role: *id001
+        hostIdentity: *id001
+        dataPath: *id001
+        ports:
+          type: object
+          additionalProperties: *id005
+        pid: *id005
+        observedPid:
+          type: integer
+          minimum: 0
+        observationReason:
+          type: string
+          enum: [binary_launch_unavailable, binary_binding_unavailable, ledger_mismatch, probe_unavailable, no_recorded_pid, argv_mismatch, recorded_pid_absent, discovery_unavailable, no_matching_process, unrecorded_pid_found, unrecorded_argv_mismatch]
+        binaryAssetId:
+          type: string
+          description: Verified registered asset identity for a reviewed per-node executable; omitted when unavailable.
+        binarySHA256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        state:
+          type: string
+          enum:
+          - starting
+          - running
+          - stopped
+          - failed
+          - unknown
+          - missing
+          - ownership_mismatch
+          - unrecorded_running
+        supportedControls:
+          type: array
+          items: *id001
+        observedAt: *id006
+      additionalProperties: false
+      required:
+      - id
+      - networkId
+      - role
+      - state
+      - supportedControls
+      - observedAt
+    Network:
+      type: object
+      properties:
+        id: *id002
+        workspaceId: *id002
+        ownership:
+          type: string
+          enum:
+          - owned
+          - attached
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        version: *id005
+      additionalProperties: false
+      required:
+      - id
+      - workspaceId
+      - ownership
+      - nodes
+      - version
+    ResourceConflict:
+      type: object
+      required: [jobId, workspaceId, actorId, operation, state, nodeDisposition, resources]
+      properties:
+        jobId: *id002
+        workspaceId: *id002
+        actorId: *id002
+        operation:
+          type: string
+        state:
+          type: string
+        nodeDisposition:
+          type: string
+        resources:
+          type: array
+          items:
+            type: object
+            required: [hostIdentity]
+            properties:
+              hostIdentity:
+                type: string
+              dataPath:
+                type: string
+              ports:
+                type: array
+                items:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+              executable:
+                type: string
+                description: Node binary name a launching job runs on that host. The engine refuses to compose while the same binary runs there outside its workspace, so plans conflict on it; a finished job keeps it only while its network record names a launched node.
+    PlanInput:
+      type: object
+      properties:
+        workspaceId: *id002
+        operation: &id016
+          type: string
+          enum:
+          - chain.setup
+          - chain.deploy
+          - test.run
+          - test.attach
+          - node.start
+          - node.stop
+          - node.restart
+          - node.swap
+          - node.reset
+          - network.monitor
+        documentRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentRef'
+        nodeIds:
+          type: array
+          items: *id002
+        assetRefs:
+          type: array
+          items: *id002
+        credentialBindings:
+          type: object
+          additionalProperties: *id002
+        accountBindings:
+          type: object
+          description: For a test.attach job only. Maps each key file account label of the selected cases to the caller's own unrevoked account-key credential. The key is written to a private file for the run and removed after it; revoking the credential cancels the job.
+          additionalProperties: *id002
+        arguments:
+          type: object
+          description: The current composition adapter accepts manifestId, assetId and serverRef. A chain.setup or chain.deploy may select chainPresetRef with an explicit saved document revision instead of validators. The preset supplies the node layout and options; its revision must still be current at acceptance and its content is pinned after acceptance. Test jobs use caseRefs. A node.swap accepts configOverrides from the chain-preset contract and/or replacementAssetId for one owned node with generated config. The replacement must be a verified registered binary for the same protocol and target platform, with a different SHA-256 and every recorded launch option. assetRefs includes both the base asset and replacement, deduplicated. Source bytes, deployed bytes, physical target paths and the private per-node binding are verified again at acceptance and execution. Binding history is retained across failures and rollback. Empty replacements, unknown config choices, pinned config files, unbound named executables and conflicting explicit launch options are rejected. Arbitrary file paths remain unavailable. Node controls use nodeIds and derive the producer count and full ports from the owned record; an optional legacy validators value must match that record. Unsupported fields and unresolved file inputs are rejected. A network.monitor job takes only serverRef, no assets or nodes, retention retain and the caller's own binding for that SSH server; it reads recorded node logs until cancelled, changes nothing, claims only its own control path and is cancelled with no further SSH use when the account or credential is revoked. Local networks are collected without a job. A test.attach job takes caseRefs whose cases all declare attach, no nodeIds or validators, and retention retain. It targets only the network this workspace recorded; the recorded node endpoints, accepted key set and capabilities replace the case's declared rpc, keysDir and provides. The selected asset must be the recorded binary. It claims the recorded placement exclusively, starts, stops and removes nothing, and replaces each account keyFile with the caller's account-key credential bound in accountBindings.
+          properties:
+            chainPresetRef:
+              $ref: '#/components/schemas/DocumentRef'
+            replacementAssetId:
+              type: string
+              description: Registered native binary identity for node.swap; its verified SHA-256 must differ from the selected node executable.
+            binaryAssets:
+              type: object
+              description: >-
+                Test jobs only. Maps each binary name the selected cases
+                declare besides default (an upgrade's successor, a swap
+                target) to the registered asset that runs under it. Each is
+                verified against the chain the name runs and the target
+                platform, placed under its checksum, claimed, and listed in
+                assetRefs. A missing, wrong-chain or undeclared name is
+                refused; the declared path itself never runs.
+              additionalProperties:
+                type: string
+          additionalProperties: true
+        retention:
+          type: string
+          enum:
+          - retain
+          - cleanup
+          default: retain
+      additionalProperties: false
+      required:
+      - workspaceId
+      - operation
+      - documentRefs
+    Plan:
+      type: object
+      properties:
+        id: *id002
+        actorId: *id002
+        workspaceId: *id002
+        operation: *id016
+        documentRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentRef'
+        targetFingerprint: *id001
+        expiresAt: *id006
+        phases:
+          type: array
+          items: *id001
+        changes:
+          type: array
+          items: *id001
+        resources:
+          type: array
+          items: *id001
+        validation:
+          $ref: '#/components/schemas/Validation'
+        requiredAccess:
+          type: array
+          items: *id001
+        chainSurfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainSurfaceRef'
+      additionalProperties: false
+      required:
+      - id
+      - actorId
+      - workspaceId
+      - operation
+      - documentRefs
+      - targetFingerprint
+      - expiresAt
+      - validation
+      - chainSurfaces
+    JobInput:
+      type: object
+      properties:
+        planId: *id002
+      additionalProperties: false
+      required:
+      - planId
+    Phase:
+      type: object
+      properties:
+        name: *id001
+        state: *id001
+        startedAt: *id006
+        finishedAt: *id006
+        message: *id001
+      additionalProperties: false
+      required:
+      - name
+      - state
+    Job:
+      type: object
+      properties:
+        id: *id002
+        actorId: *id002
+        workspaceId: *id002
+        planId: *id002
+        operation: *id016
+        state:
+          type: string
+          enum:
+          - accepted
+          - running
+          - cancelling
+          - succeeded
+          - failed
+          - cancelled
+          - interrupted
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/Phase'
+        createdAt: *id006
+        retention:
+          type: string
+          enum:
+          - retain
+          - cleanup
+        nodeDisposition:
+          type: string
+          enum:
+          - retained
+          - cleaned
+          - cleanup_failed
+          - unknown
+        cancelReason:
+          type: string
+          enum:
+          - user
+          - account_revoked
+          - credential_revoked
+        runIds:
+          type: array
+          items: *id002
+        partialEffects:
+          type: array
+          items: *id001
+        unresolvedResources:
+          type: array
+          items: *id001
+        error:
+          $ref: '#/components/schemas/Error'
+      additionalProperties: false
+      required:
+      - id
+      - actorId
+      - workspaceId
+      - planId
+      - operation
+      - state
+      - createdAt
+      - retention
+      - nodeDisposition
+    CancelInput:
+      type: object
+      properties:
+        message: *id001
+      additionalProperties: false
+    Snapshot:
+      type: object
+      properties:
+        version: *id005
+        cursor: *id001
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        networks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Network'
+        busDeliveryDropsTotal: *id005
+        jobDeliveryDropsTotal: *id005
+        observedAt: *id006
+      additionalProperties: false
+      required:
+      - version
+      - cursor
+      - jobs
+      - networks
+      - busDeliveryDropsTotal
+      - jobDeliveryDropsTotal
+      - observedAt
+    Coverage:
+      type: object
+      properties:
+        from: *id006
+        to: *id006
+        sampleIntervalSeconds:
+          type: number
+          minimum: 0
+        complete: *id011
+        gaps:
+          type: array
+          items:
+            type: object
+            properties:
+              from: *id006
+              to: *id006
+              reason: *id001
+            additionalProperties: false
+            required:
+            - from
+            - to
+            - reason
+        downsampled: *id011
+        timestampSource:
+          type: string
+          enum:
+          - source
+          - collection
+          - mixed
+      additionalProperties: false
+      required:
+      - complete
+      - gaps
+      - downsampled
+    Metrics:
+      type: object
+      properties:
+        networkId: *id002
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId: *id002
+              name: *id001
+              unit: *id001
+              source: *id001
+              labels:
+                type: object
+                additionalProperties: *id001
+              samples:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time: *id006
+                    value:
+                      type:
+                      - number
+                      - 'null'
+                  additionalProperties: false
+                  required:
+                  - time
+                  - value
+            additionalProperties: false
+            required:
+            - nodeId
+            - name
+            - source
+            - samples
+        coverage:
+          $ref: '#/components/schemas/Coverage'
+      additionalProperties: false
+      required:
+      - networkId
+      - series
+      - coverage
+    Logs:
+      type: object
+      properties:
+        nodeId: *id002
+        runId: *id002
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              time: *id006
+              text: *id001
+            additionalProperties: false
+            required:
+            - time
+            - text
+        coverage:
+          $ref: '#/components/schemas/Coverage'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - nodeId
+      - entries
+      - coverage
+      - nextCursor
+    Run:
+      type: object
+      properties:
+        id: *id002
+        jobId: *id002
+        workspaceId: *id002
+        chain: *id001
+        actorId: *id002
+        state: *id001
+        startedAt: *id006
+        finishedAt: *id006
+        sessionRefs:
+          type: array
+          items: *id001
+        fingerprints:
+          type: object
+          additionalProperties: *id001
+        summary:
+          type: object
+          additionalProperties: true
+        artifactRefs:
+          type: array
+          items: *id001
+        coverage:
+          $ref: '#/components/schemas/Coverage'
+      additionalProperties: false
+      required:
+      - id
+      - workspaceId
+      - chain
+      - state
+      - sessionRefs
+      - summary
+    CompareInput:
+      type: object
+      properties:
+        runIds:
+          type: array
+          minItems: 2
+          maxItems: 4
+          items: *id002
+      additionalProperties: false
+      required:
+      - runIds
+    Comparison:
+      type: object
+      properties:
+        runIds:
+          type: array
+          items: *id002
+        comparable: *id011
+        limitations:
+          type: array
+          items: *id001
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: false
+      required:
+      - runIds
+      - comparable
+      - limitations
+      - results
+    AuditRecord:
+      type: object
+      properties:
+        id: *id002
+        actorId: *id002
+        operation: *id001
+        target: *id001
+        requestId: *id001
+        jobId: *id002
+        result: *id001
+        time: *id006
+      additionalProperties: false
+      required:
+      - id
+      - actorId
+      - operation
+      - target
+      - result
+      - time
+    UserPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    CredentialPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Credential'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    AssetPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    DocumentPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    WorkspacePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workspace'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    NetworkPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Network'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    JobPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    RunPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Run'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    AuditRecordPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecord'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - items
+      - nextCursor
+    SurfaceSource:
+      type: object
+      properties:
+        path: *id001
+        digest: *id001
+        kind:
+          type: string
+          enum:
+          - help
+          - flag-index
+          - ast-wiring
+          - rpc-metrics
+          - engine
+          - binary-probe
+        chainCommit: *id001
+        capturedAt: *id006
+      additionalProperties: false
+      required:
+      - path
+      - digest
+      - kind
+    BinaryFingerprint:
+      type: object
+      properties:
+        assetId: *id002
+        checksum: *id001
+        chainId: *id002
+        version: *id001
+        chainCommit: *id001
+        os: *id001
+        architecture: *id001
+        verifiedAt: *id006
+      additionalProperties: false
+      required:
+      - assetId
+      - checksum
+      - chainId
+      - version
+      - os
+      - architecture
+    SurfaceSupport:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - supported
+          - engine-unmapped
+          - binary-absent
+          - unverified
+        selectable: *id011
+        reason: *id001
+        evidenceRefs:
+          type: array
+          items: *id001
+      additionalProperties: false
+      required:
+      - status
+      - selectable
+      - reason
+      - evidenceRefs
+      if:
+        properties:
+          status:
+            not:
+              const: supported
+      then:
+        properties:
+          selectable:
+            const: false
+    ChainCommand:
+      type: object
+      properties:
+        id: *id002
+        commandPath:
+          type: array
+          items: *id001
+        summary: *id001
+        argumentContractId: *id002
+        engineUsecases:
+          type: array
+          items: *id001
+        support:
+          $ref: '#/components/schemas/SurfaceSupport'
+      additionalProperties: false
+      required:
+      - id
+      - commandPath
+      - summary
+      - engineUsecases
+      - support
+    ChainOption:
+      type: object
+      properties:
+        id: *id002
+        optionKey: *id001
+        spelling: *id001
+        aliases:
+          type: array
+          items: *id001
+        commandPath:
+          type: array
+          items: *id001
+        scope:
+          type: string
+          enum:
+          - global
+          - command-local
+        boolean: *id011
+        hidden: *id011
+        schemaRef: *id001
+        contractId: *id002
+        emission:
+          type: string
+          enum:
+          - user-input
+          - derived
+          - private-binding
+          - unmapped
+        support:
+          $ref: '#/components/schemas/SurfaceSupport'
+      additionalProperties: false
+      required:
+      - id
+      - spelling
+      - aliases
+      - commandPath
+      - scope
+      - boolean
+      - hidden
+      - emission
+      - support
+      if:
+        properties:
+          support:
+            properties:
+              selectable:
+                const: true
+      then:
+        required:
+        - optionKey
+        - schemaRef
+        - contractId
+        properties:
+          emission:
+            const: user-input
+    ChainSurface:
+      type: object
+      properties:
+        chainId: *id002
+        dialect: *id001
+        contractVersion: *id001
+        fingerprint: *id001
+        verification:
+          type: string
+          enum:
+          - documented
+          - verified
+          - stale
+          - incompatible
+          - unverified
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurfaceSource'
+        binary:
+          $ref: '#/components/schemas/BinaryFingerprint'
+        commands:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainCommand'
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainOption'
+        limitations:
+          type: array
+          items: *id001
+      additionalProperties: false
+      required:
+      - chainId
+      - dialect
+      - contractVersion
+      - fingerprint
+      - verification
+      - sources
+      - commands
+      - options
+      - limitations
+      if:
+        properties:
+          verification:
+            const: verified
+      then:
+        required:
+        - binary
+        properties:
+          binary:
+            required:
+            - verifiedAt
+    ChainSurfaceRef:
+      type: object
+      properties:
+        chainId: *id002
+        assetId: *id002
+        fingerprint: *id001
+        contractVersion: *id001
+      additionalProperties: false
+      required:
+      - chainId
+      - assetId
+      - fingerprint
+      - contractVersion
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: No valid session/token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Role, ownership or host access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Revision, plan, idempotency or physical-resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Invalid:
+      description: Engine grammar, field, reference or capability validation failed. message (and errors when listed) carries the engine's reason with registered secrets and personal credentials removed; 400 and 409 responses do the same, while authentication, permission and server errors carry only their status text.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Server failure; details remain redacted
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

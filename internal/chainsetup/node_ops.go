@@ -46,7 +46,8 @@ func (w *Workspace) nodeAt(index int) (int, error) {
 	return -1, lifecycle.Mark(errOpNoSuchNode, fmt.Errorf("chainsetup: no node %d in the table", index))
 }
 
-// StopNode stops one node by index and clears its pid; the node keeps its
+// StopNode stops one node by index and archives its execution before clearing
+// its pid; the node keeps its
 // resource and its datadir, so a later StartNode brings the same node back.
 // A node that is not running is left as it is.
 func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
@@ -65,7 +66,8 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 		return "", fmt.Errorf("chainsetup: stop node%d: %w", ns.Index, err)
 	}
-	w.clearPID(ni)
+	w.ledger.Retire(string(ns.NodeLabel()))
+	w.state.Nodes[ni].PID = 0
 	detail := fmt.Sprintf("node%d stopped", index)
 	w.markStep("stop-node", detail)
 	return detail, nil
@@ -195,12 +197,13 @@ type SwapNodeOpts struct {
 }
 
 // SwapNode stops node index and relaunches it with a different binary and/or
-// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// config, keeping the same datadir and genesis. Generated config changes also
+// update the corresponding launch arguments — a per-node swap mid-test
 // (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
 // command are kept as a ledger revision (recordSwap); the node's per-node
 // binary and config provenance are updated so a later restart uses the swapped
 // ones.
-func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
+func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (detail string, err error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
 	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 && len(opts.Args) == 0 {
@@ -223,12 +226,19 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if err != nil {
 		return "", err
 	}
-	// Stop the running process but leave the ledger entry, so the relaunch
-	// supersedes it and keeps the pre-swap pid/command as a revision.
+	// Keep the prior ledger entry until a successful replacement supersedes it.
+	// A failed replacement archives that stopped entry instead of leaving a
+	// stale PID for later controls to target.
 	if ns.PID > 0 {
 		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			return "", fmt.Errorf("chainsetup: swap node%d: stop: %w", index, err)
 		}
+		w.state.Nodes[ni].PID = 0
+		defer func() {
+			if err != nil {
+				w.ledger.Retire(string(ns.NodeLabel()))
+			}
+		}()
 	}
 	if binary != "" {
 		w.setNodeBinary(ni, binary)
@@ -256,7 +266,7 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, er
 	if err := w.recordSwap(ni, h.PID, spec.Binary); err != nil {
 		return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
 	}
-	detail := fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
+	detail = fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
 	w.markStep("swap-node", detail)
 	return detail, nil
 }
@@ -289,6 +299,10 @@ func (w *Workspace) reinitNodeGenesis(ctx context.Context, t *resource.Access, s
 	return nil
 }
 
+// defaultBinaryName is the name a declaration gives the binary every node
+// runs unless it names another (dsl.BinaryDefault).
+const defaultBinaryName = "default"
+
 // setNodeBinary registers binary under a per-node key and points node ni at it,
 // so binaryFor resolves the swapped binary for this and any later launch.
 //
@@ -304,10 +318,18 @@ func (w *Workspace) setNodeBinary(ni int, binary string) {
 		w.state.Binaries = map[string]string{}
 	}
 	name := binary
+	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
+	if binary == defaultBinaryName && w.state.Binaries[binary] == "" {
+		// "default" is what the rest of the network runs: the node drops its
+		// own entry and launches the network binary again.
+		delete(w.state.Binaries, key)
+		delete(w.state.BinaryChains, key)
+		w.state.Nodes[ni].Binary = ""
+		return
+	}
 	if path := w.state.Binaries[binary]; path != "" {
 		binary = path
 	}
-	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
 	// The chain travels with the name. Without this a swap onto another build
 	// kept its path and lost which chain it is, so the node relaunched with the
@@ -347,6 +369,24 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 	if err != nil {
 		return err
 	}
+	net, err := w.network()
+	if err != nil {
+		return err
+	}
+	ns := w.state.Nodes[ni]
+	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+	if err != nil {
+		return err
+	}
+	overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
+	if err != nil {
+		return err
+	}
+	args, err := w.nodeLaunchArgs(ns, process.NodeConfig(np, net, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides)
+	if err != nil {
+		return err
+	}
+	w.state.Nodes[ni].Args = args
 	w.addConfigProvenance(prov)
 	return nil
 }

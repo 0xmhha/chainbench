@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-08",
+  "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
+  "startedAt": "2026-10-10T10:25:57.756869+00:00",
+  "finishedAt": "2026-10-10T10:30:43.399963+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "native-state-metric-charts",
+    "time-linked-logs",
+    "browser-close-logout-continuity",
+    "reconnect-snapshot-restore",
+    "sse-gap-drop-stale",
+    "collection-failure-reporting"
+  ],
+  "executedScenarios": [
+    "native-state-metric-charts",
+    "time-linked-logs",
+    "browser-close-logout-continuity",
+    "reconnect-snapshot-restore",
+    "sse-gap-drop-stale",
+    "collection-failure-reporting"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "7fb800aeaa8e63714d4e7c2c0e89dd5678559bd081d640c878c9e7ad9d42b32f"
+}

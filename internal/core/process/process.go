@@ -24,10 +24,10 @@ type Proc struct {
 	// Host is the remote host the process runs on; empty for a local process
 	// managed via OS signals.
 	Host string
-	// Revision counts how many times this label has been superseded in place —
-	// 0 for a fresh launch, +1 on each binary swap (a hardfork). The prior
-	// entry is archived in the ledger's history, so a swap preserves the pid
-	// and command that ran before it rather than overwriting them.
+	// Revision identifies successive retained executions for this label —
+	// 0 for its first launch, then above its archived predecessors. A failed
+	// replacement also archives the stopped process, so an explicit retry
+	// continues that history without targeting the prior PID.
 	Revision int `json:"Revision,omitempty"`
 }
 

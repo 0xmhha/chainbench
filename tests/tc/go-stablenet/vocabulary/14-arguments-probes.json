@@ -1,0 +1,465 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-probes",
+  "description": "WEB-05 coverage: chain probes, comparators, metrics, RPC errors, block cadence and load.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "on": "bp1",
+      "save": "gp"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$gp",
+        "2"
+      ],
+      "save": "cap"
+    },
+    {
+      "do": "waitBlock",
+      "on": "bp1",
+      "target": 3,
+      "timeout": "120s",
+      "pollInterval": "500ms"
+    },
+    {
+      "do": "waitBlock",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "target": 3
+    },
+    {
+      "expect": "chainId",
+      "is": "8283"
+    },
+    {
+      "expect": "chainId",
+      "on": "bp2",
+      "compare": "InDelta",
+      "is": "8283",
+      "delta": "0"
+    },
+    {
+      "expect": "chainId",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "8284",
+      "tol": "1"
+    },
+    {
+      "do": "read",
+      "source": "chainId",
+      "save": "cid"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "on": "bp1",
+      "save": "head"
+    },
+    {
+      "expect": "blockNumber",
+      "compare": "GreaterOrEqual",
+      "is": "$head"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "en1",
+      "compare": "InDelta",
+      "is": "$head",
+      "delta": "100"
+    },
+    {
+      "expect": "blockNumber",
+      "onEach": [
+        "bp1",
+        "bp2"
+      ],
+      "compare": "InDelta",
+      "is": "$head",
+      "tol": "100"
+    },
+    {
+      "do": "read",
+      "source": "peerCount",
+      "on": "bp1",
+      "save": "peers"
+    },
+    {
+      "expect": "peerCount",
+      "on": "bp1",
+      "compare": "GreaterOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "peerCount",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "4",
+      "delta": "4"
+    },
+    {
+      "expect": "peerCount",
+      "compare": "InDelta",
+      "is": "4",
+      "tol": "4"
+    },
+    {
+      "do": "read",
+      "source": "baseFee",
+      "save": "base"
+    },
+    {
+      "expect": "baseFee",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "baseFee",
+      "on": "bp1",
+      "compare": "InDelta",
+      "is": "$base",
+      "delta": "$base"
+    },
+    {
+      "expect": "baseFee",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "$base",
+      "tol": "$base"
+    },
+    {
+      "expect": "gasPrice",
+      "compare": "GreaterOrEqual",
+      "is": "$base"
+    },
+    {
+      "expect": "gasPrice",
+      "on": "bp1",
+      "compare": "InDelta",
+      "is": "$gp",
+      "delta": "$gp"
+    },
+    {
+      "expect": "gasPrice",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "$gp",
+      "tol": "$gp"
+    },
+    {
+      "expect": "gasPriceIsBaseFeePlusTip",
+      "on": "bp3"
+    },
+    {
+      "do": "read",
+      "source": "validators",
+      "save": "validatorSet"
+    },
+    {
+      "expect": "validators",
+      "is": 3
+    },
+    {
+      "expect": "validators",
+      "on": "bp1",
+      "compare": "Len",
+      "is": 3
+    },
+    {
+      "expect": "validators",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "Len",
+      "is": 3
+    },
+    {
+      "expect": "nonceAt",
+      "address": "0x00000000000000000000000000000000C0FFEE06",
+      "is": "0"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "faucet",
+      "on": "bp1",
+      "compare": "InDelta",
+      "is": "0",
+      "delta": "1000000"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "faucet",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "0",
+      "tol": "1000000"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "faucet",
+      "save": "fn"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "faucet",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "0x00000000000000000000000000000000C0FFEE06",
+      "on": "bp1",
+      "compare": "InDelta",
+      "is": "0",
+      "delta": "0"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "0x00000000000000000000000000000000C0FFEE06",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "0",
+      "tol": "0"
+    },
+    {
+      "expect": "metric",
+      "name": "chain_head_block",
+      "compare": "GreaterOrEqual",
+      "is": 1
+    },
+    {
+      "expect": "metric",
+      "name": "chain_head_block",
+      "on": "bp1",
+      "compare": "Greater",
+      "is": 0
+    },
+    {
+      "expect": "metric",
+      "name": "p2p_peers",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "compare": "GreaterOrEqual",
+      "is": 1
+    },
+    {
+      "expect": "methodPresent",
+      "method": "eth_blockNumber",
+      "params": [],
+      "on": "bp1"
+    },
+    {
+      "expect": "rpcError",
+      "method": "eth_getBalance",
+      "params": [
+        "not-an-address",
+        "latest"
+      ],
+      "reason": "hex",
+      "on": "bp2"
+    },
+    {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x6005600c60003960056000f360006000fd",
+      "gas": "100000",
+      "save": "reverter"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "$reverter",
+        "latest"
+      ],
+      "on": "en1",
+      "compare": "NotEqual",
+      "expected": "0x",
+      "timeout": "60s",
+      "pollInterval": "1s"
+    },
+    {
+      "expect": "callError",
+      "to": "$reverter",
+      "data": "0x",
+      "reason": "revert",
+      "on": "en1"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "0x1",
+      "onEach": [
+        "bp1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "sameBlockHash",
+      "on": "bp1",
+      "block": "latest"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "bp1",
+      "timeout": "30s",
+      "pollInterval": "500ms"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "en1",
+        "en2"
+      ]
+    },
+    {
+      "expect": "blockInterval",
+      "on": "bp1",
+      "blocks": 5,
+      "maxSeconds": 3,
+      "minSeconds": 0
+    },
+    {
+      "expect": "blockInterval",
+      "blocks": 5,
+      "maxMillis": 3000,
+      "minMillis": 1
+    },
+    {
+      "do": "load",
+      "on": "node1",
+      "from": "node1",
+      "fillPercent": 10,
+      "blocks": 2,
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "timeout": "60s",
+      "pollInterval": "500ms",
+      "save": "burn1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$burn1",
+      "is": "0x1"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "node1",
+      "on": "bp1",
+      "save": "loadNonce"
+    },
+    {
+      "do": "load",
+      "from": "node1",
+      "gas": "100000",
+      "blocks": 1,
+      "gasPrice": "$gp",
+      "nonce": "$loadNonce",
+      "save": "burn2"
+    },
+    {
+      "do": "load",
+      "onEach": [
+        "bp2",
+        "bp3"
+      ],
+      "fillPercent": 5,
+      "blocks": 1,
+      "save": "burn3"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "@latest",
+        false
+      ],
+      "select": "number",
+      "compare": "InDelta",
+      "expected": "$head",
+      "delta": "1000000",
+      "timeout": "30s"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "compare": "InDelta",
+      "is": "$head",
+      "tol": "1000000",
+      "timeout": "30s"
+    }
+  ]
+}

@@ -93,5 +93,6 @@ func ChainEndpoints(_ context.Context, d chainsetup.Deps, in ChainEndpointsIn) (
 		return nil, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	return ws.Endpoints()
 }

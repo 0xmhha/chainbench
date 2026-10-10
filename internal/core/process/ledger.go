@@ -28,8 +28,9 @@ type Ledger struct {
 	history []Proc
 }
 
-// ledgerFile is the persisted shape. History holds entries a swap superseded,
-// in supersede order, so the record of what ran before a hardfork survives.
+// ledgerFile is the persisted shape. History holds entries a swap superseded
+// or stopped before a failed replacement, in execution order, so prior commands
+// and PIDs survive.
 type ledgerFile struct {
 	Procs   []Proc `json:"procs"`
 	History []Proc `json:"history,omitempty"`
@@ -96,6 +97,7 @@ func (l *Ledger) Record(p Proc) error {
 		return fmt.Errorf("process: %s already recorded as pid %d on %q — stop it (or clear the entry) before launching pid %d",
 			p.Label, prev.PID, prev.Host, p.PID)
 	}
+	p.Revision = max(p.Revision, l.nextArchivedRevision(p.Label))
 	l.procs[p.Label] = p
 	return nil
 }
@@ -104,9 +106,9 @@ func (l *Ledger) Record(p Proc) error {
 // binary swap), archiving the prior entry in history so the pid and command
 // that ran before the swap are not lost. Unlike Record it does not refuse an
 // existing label — a swap is a legitimate re-launch, not a double launch — and
-// it sets p.Revision to one past the prior entry's. It returns the superseded
-// entry (zero Proc and false when the label had none, i.e. this is a first
-// launch, which Supersede still records).
+// it keeps p.Revision above all archived entries. It returns the superseded
+// entry (zero Proc and false when the label has no current entry). An archived
+// entry still supplies the next revision when a prior replacement failed.
 func (l *Ledger) Supersede(p Proc) (Proc, bool, error) {
 	if p.Label == "" {
 		return Proc{}, false, fmt.Errorf("process: supersede needs a label")
@@ -119,13 +121,39 @@ func (l *Ledger) Supersede(p Proc) (Proc, bool, error) {
 	prev, ok := l.procs[p.Label]
 	if ok {
 		l.history = append(l.history, prev)
-		p.Revision = prev.Revision + 1
 	}
+	p.Revision = max(p.Revision, l.nextArchivedRevision(p.Label))
 	l.procs[p.Label] = p
 	return prev, ok, nil
 }
 
-// History returns the entries superseded for label, oldest first — the record
+// nextArchivedRevision runs under the ledger mutex. A failed replacement can
+// leave only history, so a later explicit relaunch must not reset its revision.
+func (l *Ledger) nextArchivedRevision(label string) int {
+	next := 0
+	for _, p := range l.history {
+		if p.Label == label {
+			next = max(next, p.Revision+1)
+		}
+	}
+	return next
+}
+
+// Retire archives and removes a process the caller has already stopped, keeping
+// its prior command and revision even when its replacement fails. It never
+// signals a process. Retiring an absent label leaves history unchanged.
+func (l *Ledger) Retire(label string) (Proc, bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	p, ok := l.procs[label]
+	if ok {
+		l.history = append(l.history, p)
+		delete(l.procs, label)
+	}
+	return p, ok
+}
+
+// History returns superseded or retired entries for label, oldest first — the record
 // of what ran under this label before the swaps that replaced it.
 func (l *Ledger) History(label string) []Proc {
 	l.mu.Lock()

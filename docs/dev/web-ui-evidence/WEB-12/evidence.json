@@ -1,0 +1,346 @@
+{
+  "criterion": "WEB-12",
+  "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+  "scenarios": [
+    {
+      "id": "restart-marks-running-work-interrupted",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a real test job running at restart is interrupted with unknown disposition and unresolved resources",
+          "passed": true
+        },
+        {
+          "description": "a real deployment running at restart is interrupted and keeps unresolved resources",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+          "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+          "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+        }
+      ],
+      "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+      "observedAt": "2026-10-10T10:47:20.631657+00:00"
+    },
+    {
+      "id": "actual-state-rechecked",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "nodes left running by the interrupted test are observed running by PID and argv",
+          "passed": true
+        },
+        {
+          "description": "nodes of the interrupted deployment are observed, not assumed",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+          "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-restart-observation.png",
+          "sha256": "852bcf3ef4eb587ae8f7b4546e42361366128568576825226136459caf667a54"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+          "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+        }
+      ],
+      "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+      "observedAt": "2026-10-10T10:47:20.631657+00:00"
+    },
+    {
+      "id": "records-and-claims-preserved",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "launch record and node data are unchanged by the restart",
+          "passed": true
+        },
+        {
+          "description": "interrupted work keeps its physical claims against aliases",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+          "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+          "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+        }
+      ],
+      "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+      "observedAt": "2026-10-10T10:47:20.631657+00:00"
+    },
+    {
+      "id": "no-automatic-redeploy-or-reset",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "idempotent replay returns the interrupted job instead of resuming",
+          "passed": true
+        },
+        {
+          "description": "no reset or other job ran on its own",
+          "passed": true
+        },
+        {
+          "description": "the interrupted deployment did not continue after restart",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+          "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+          "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-deploy-interrupted.png",
+          "sha256": "febbdc5fda06f855dccd195082d0503293ac6e47ee3def4cf75c9e1146a1643c"
+        }
+      ],
+      "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+      "observedAt": "2026-10-10T10:47:20.631657+00:00"
+    },
+    {
+      "id": "explicit-rerun-new-plan",
+      "mode": "personal",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "explicit control and test rerun use new plans and jobs",
+          "passed": true
+        },
+        {
+          "description": "an explicit new deployment plan completes",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+          "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+          "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+        }
+      ],
+      "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
+      "observedAt": "2026-10-10T10:47:20.631657+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/app -run \"TestWebJobsInterrupted|TestWebJobCancelledAcceptance|TestJobObservationReplays\"",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-12/check-0.log",
+      "sha256": "c490d533ed4ef9dba4738e0a1db1763281b1be1987cb868cf0eabe3b3eacd15c"
+    }
+  ],
+  "proofs": [
+    {
+      "name": "interrupted-test",
+      "startedAt": "2026-10-10T10:46:13.989722+00:00",
+      "runtime": "/private/tmp/cbui/a55cf0a3-510c-444e-82ad-b34c321dbf29",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "deploy-restart",
+      "startedAt": "2026-10-10T10:46:52.153197+00:00",
+      "runtime": "/private/tmp/cbui/a1163b1f-208f-4691-baec-4ab66382da8f",
+      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
+      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
+      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+    }
+  ],
+  "coverage": {
+    "required": [
+      "restart-marks-running-work-interrupted",
+      "actual-state-rechecked",
+      "records-and-claims-preserved",
+      "no-automatic-redeploy-or-reset",
+      "explicit-rerun-new-plan"
+    ],
+    "executed": [
+      "restart-marks-running-work-interrupted",
+      "actual-state-rechecked",
+      "records-and-claims-preserved",
+      "no-automatic-redeploy-or-reset",
+      "explicit-rerun-new-plan"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/web_jobs.go",
+      "sha256": "0f5271e42daffee58c4f7052647f5b6290d55375293622d34103caf436245f63"
+    },
+    {
+      "path": "internal/app/web_job_execution.go",
+      "sha256": "3e1468075bb1ee07b01764c287d63da62b470d412298a3b46cbbc235bb85e0a8"
+    },
+    {
+      "path": "internal/app/web_resource_holds.go",
+      "sha256": "c993cff87c9f40b3234ffdcb7d48e01c4f495b828945e21958d89fd1dca69d37"
+    },
+    {
+      "path": "internal/app/web_node_observations.go",
+      "sha256": "17ffdbc0b2beb3a21d0da5888cb39e80c64a965c7439883a23f782e2c324ce6e"
+    },
+    {
+      "path": "tests/webui/evidence_web12.py",
+      "sha256": "a09dedeb2673a3cf9c776096f0f377322300920e168766a823f88d094cfecc0a"
+    },
+    {
+      "path": "tests/webui/run_web12.py",
+      "sha256": "f6bb56b4e7c12003f6ea898b7a798cf73363810c487cf31fbe14a647bdd39336"
+    },
+    {
+      "path": "tests/webui/test_evidence_web12.py",
+      "sha256": "1a65dd4bb56a972ae76606a23ba7e3ce128c4d3b02a39103f88c987d5dffbb74"
+    },
+    {
+      "path": "tests/webui/proof_acceptance.py",
+      "sha256": "65e4261b14481e9cc712e58894b84d14c407ca9f67a88445e47f425a97c69074"
+    },
+    {
+      "path": "tests/webui/browser_interrupted_test.mjs",
+      "sha256": "7af19ef575e9a286a80de3a512a98e01be87c290ef10ac577a48a1cdf4c761b2"
+    },
+    {
+      "path": "tests/webui/browser_deploy_restart.mjs",
+      "sha256": "2505369bfd3bdf0a7ceeeaac264cf8252f921f39fa3c0d91dfd38d811af03d3a"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/check-0.log",
+      "sha256": "c490d533ed4ef9dba4738e0a1db1763281b1be1987cb868cf0eabe3b3eacd15c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-deploy-interrupted.png",
+      "sha256": "febbdc5fda06f855dccd195082d0503293ac6e47ee3def4cf75c9e1146a1643c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
+      "sha256": "50243c6f580944806d3fca8ed80ddf4e0a2bec84dc4f6becb072d54b0d49d6d0"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-run.log",
+      "sha256": "9d28dbbcbd75b5dda05febf518e13ecfa49c88f6a7f18026bc409522a8af0fe3"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
+      "sha256": "32fc28b768d55b6668cfb9e37d6bb03c0a7051b1bfae7a19aebfde378392338e"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-restart-observation.png",
+      "sha256": "852bcf3ef4eb587ae8f7b4546e42361366128568576825226136459caf667a54"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-run.log",
+      "sha256": "89cf2d0704d5386eb57608d7b23eaf2273c7be4f65ab17dc49fc42f09122b02e"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+}

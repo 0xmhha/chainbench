@@ -27,8 +27,7 @@
     {
       "do": "swapNode",
       "on": "node2",
-      "binary": "wbft",
-      "purpose": "takeover"
+      "binary": "wbft"
     },
     {
       "do": "waitFor",

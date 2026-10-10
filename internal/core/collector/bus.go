@@ -30,15 +30,35 @@ func NewBus() *Bus {
 // call. The channel is closed when the bus is closed. Drain it promptly;
 // events beyond the buffer are dropped, not blocked.
 func (b *Bus) Subscribe() <-chan Event {
+	ch, _ := b.SubscribeWithCancel()
+	return ch
+}
+
+// SubscribeWithCancel releases a disconnected observer's buffer. Cancellation
+// and publication share the bus lock to avoid sending to a closed channel.
+func (b *Bus) SubscribeWithCancel() (<-chan Event, func()) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	ch := make(chan Event, subBuffer)
 	if b.closed {
 		close(ch)
-		return ch
+		return ch, func() {}
 	}
 	b.subs = append(b.subs, ch)
-	return ch
+	var once sync.Once
+	return ch, func() {
+		once.Do(func() {
+			b.mu.Lock()
+			defer b.mu.Unlock()
+			for i, existing := range b.subs {
+				if existing == ch {
+					b.subs = append(b.subs[:i], b.subs[i+1:]...)
+					close(ch)
+					break
+				}
+			}
+		})
+	}
 }
 
 // Publish delivers e to all current subscribers. A zero e.Time is stamped with

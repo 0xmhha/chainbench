@@ -441,9 +441,11 @@ func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m r
 		return nil, err
 	}
 	run := process.SSHRunner(creds, hostKey)
+	files := process.NewRemoteFileStore(run)
+	files.Writer = process.SSHFileProvisioner{Credentials: creds, HostKey: hostKey}
 	acc := &Access{
 		Spec: s, DataRoot: s.DataRoot,
-		Files: process.NewRemoteFileStore(run), Driver: process.NewRemoteDriver(run),
+		Files: files, Driver: process.NewRemoteDriver(run),
 		Runner: run,
 	}
 	// Elevation is offered only where the server set permits it. The sudo runner

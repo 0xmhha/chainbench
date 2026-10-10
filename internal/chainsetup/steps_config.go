@@ -214,7 +214,7 @@ func (w *Workspace) LaunchOpts() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := w.nodeLaunchArgs(ns, process.NodeConfig(p, net, keys, process.SpecOf(ns), w.keysBase(), staticNodes), overrides)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -272,4 +272,15 @@ func SortedScopes(m map[string][]string) []string {
 		return scopes[i] < scopes[j]
 	})
 	return scopes
+}
+
+// nodeLaunchArgs applies the same generated config values that TOML receives,
+// then the explicit launch overrides. Pinned config files retain their own input.
+func (w *Workspace) nodeLaunchArgs(ns node.Record, spec nodeconfig.Spec, overrides []nodeconfig.Override) ([]string, error) {
+	if ns.Config == "" {
+		if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
+			return nil, err
+		}
+	}
+	return nodeconfig.Argv(spec, overrides...)
 }

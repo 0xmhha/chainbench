@@ -1,0 +1,28 @@
+{
+  "criterion": "WEB-10",
+  "invocationId": "b943821e-7078-4e96-b898-c676069bedf6",
+  "startedAt": "2026-10-10T10:40:42.882275+00:00",
+  "finishedAt": "2026-10-10T10:40:53.878683+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "personal-team-login",
+    "bootstrap-restrictions",
+    "role-ui-api-matrix",
+    "csrf-ownership",
+    "foreign-credential-refusal",
+    "secret-free-output",
+    "encrypted-storage-session"
+  ],
+  "executedScenarios": [
+    "personal-team-login",
+    "role-ui-api-matrix",
+    "csrf-ownership",
+    "foreign-credential-refusal",
+    "secret-free-output",
+    "bootstrap-restrictions",
+    "encrypted-storage-session"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "7ca8bc450d3cae52153867a598070e500c457b9df1435350bb7a2af09ff1a473"
+}

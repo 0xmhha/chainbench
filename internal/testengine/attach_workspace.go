@@ -61,7 +61,8 @@ type attachWiring struct {
 	// compose path opens one before it composes so a setup failure has a test
 	// folder to be recorded in; the attach path has nothing to record before
 	// the engine runs and leaves this nil.
-	Session session.Session
+	Session      session.Session
+	ReadOnlyKeys bool
 }
 
 // wiredAttachEngine builds an attach engine over a composed network with the
@@ -74,8 +75,8 @@ func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine
 	return NewAttachEngine(AttachConfig{
 		Chain: w.Chain, RPCURLs: net.endpoints,
 		ArtifactRoot: w.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), w.Caps...), Clock: sd.Clock,
-		Session: w.Session,
-		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
+		Session: w.Session, ReadOnlyKeys: w.ReadOnlyKeys,
+		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir, Ring: net.ring,
 		Artifacts: composedArtifacts(net),
 		Bus:       collector.NewBus(),
 		LogReader: remoteLogReader(sd, w.DataDir),

@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-07",
+  "invocationId": "9230a0f6-9d91-4f6d-a5de-3de3c788f686",
+  "startedAt": "2026-10-10T09:56:33.696496+00:00",
+  "finishedAt": "2026-10-10T10:10:37.882927+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "owned-start-stop",
+    "config-replacement-restart",
+    "binary-replacement-restart",
+    "non-producer-reset-stopped",
+    "producer-and-attach-refused",
+    "cli-semantics-preserved"
+  ],
+  "executedScenarios": [
+    "owned-start-stop",
+    "config-replacement-restart",
+    "binary-replacement-restart",
+    "non-producer-reset-stopped",
+    "producer-and-attach-refused",
+    "cli-semantics-preserved"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "3b3d90208d5608c7ea2cc49e883420e2577f4fb3f39b87c2ec2f9c80fa344b49"
+}

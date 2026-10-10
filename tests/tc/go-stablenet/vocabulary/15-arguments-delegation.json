@@ -1,0 +1,210 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-delegation",
+  "description": "WEB-05 coverage: tampered fee-delegated sends, set-code transactions and signed authorizations.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "payer",
+      "saveKey": "payerKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority",
+      "saveKey": "authorityKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority2",
+      "saveKey": "authority2Key"
+    },
+    {
+      "do": "faucet",
+      "from": "faucet",
+      "to": "$sender",
+      "amount": "100000000000000000000"
+    },
+    {
+      "do": "faucet",
+      "from": "faucet",
+      "to": "$payer",
+      "amount": "100000000000000000000"
+    },
+    {
+      "do": "waitFor",
+      "source": "balanceAt",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "address": "$payer",
+      "is": "100000000000000000000",
+      "timeout": "60s"
+    },
+    {
+      "do": "sendRawTampered",
+      "on": "bp2",
+      "which": "sender",
+      "senderKey": "$senderKey",
+      "feePayerKey": "$payerKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1",
+      "reason": "invalid",
+      "save": "senderRefusal"
+    },
+    {
+      "do": "sendRawTampered",
+      "onEach": [
+        "bp3",
+        "en1"
+      ],
+      "which": "feepayer",
+      "senderKey": "$senderKey",
+      "feePayerKey": "$payerKey",
+      "to": "0x00000000000000000000000000000000C0FFEE05",
+      "value": "1",
+      "reason": "fee delegation: invalid feePayer"
+    },
+    {
+      "expect": "nonceAt",
+      "address": "$sender",
+      "is": "0"
+    },
+    {
+      "do": "sendSetCode",
+      "on": "en1",
+      "key": "$payerKey",
+      "authorityKey": "$authorityKey",
+      "delegate": "0x1111111111111111111111111111111111111111",
+      "save": "setCode"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$authority",
+      "is": "0xef01001111111111111111111111111111111111111111",
+      "timeout": "90s"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$setCode"
+      ],
+      "select": "type",
+      "is": "0x4"
+    },
+    {
+      "do": "sendSetCode",
+      "onEach": [
+        "bp1"
+      ],
+      "key": "$senderKey",
+      "authorityKey": "$authority2Key",
+      "delegate": "0x2222222222222222222222222222222222222222"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "address": "$authority2",
+      "is": "0xef01002222222222222222222222222222222222222222",
+      "timeout": "90s"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$authority2",
+      "is": "0xef01002222222222222222222222222222222222222222"
+    },
+    {
+      "do": "signAuthorization",
+      "on": "bp1",
+      "authorityKey": "$authorityKey",
+      "delegate": "$payer",
+      "save": "auth1"
+    },
+    {
+      "do": "signAuthorization",
+      "onEach": [
+        "bp2",
+        "en1"
+      ],
+      "authorityKey": "$authority2Key",
+      "delegate": "$payer",
+      "save": "auth2"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "$payer",
+          "to": "$payer"
+        }
+      ],
+      "save": "plain"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "authorizationList": [
+            "$auth1",
+            "$auth2"
+          ],
+          "from": "$payer",
+          "to": "$payer"
+        }
+      ],
+      "save": "withAuths"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "$withAuths",
+        "$plain"
+      ],
+      "compare": "Greater",
+      "is": "0"
+    }
+  ]
+}

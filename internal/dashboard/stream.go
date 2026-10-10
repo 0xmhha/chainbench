@@ -13,11 +13,23 @@ import "github.com/0xmhha/chainbench/internal/core/collector"
 // With no URL there is nothing to carry, so there is no bus. Emission is not
 // free, and a run that streams nowhere should not pay for it.
 func Stream(url string) (*collector.Bus, func()) {
+	return stream(url, "")
+}
+
+// StreamAuthenticated uses the same drain lifecycle for protected publishers.
+func StreamAuthenticated(url, token string) (*collector.Bus, func()) {
+	if token == "" {
+		return Stream(url)
+	}
+	return stream(url, token)
+}
+
+func stream(url, token string) (*collector.Bus, func()) {
 	if url == "" {
 		return nil, func() {}
 	}
 	bus := collector.NewBus()
-	done := Forward(bus, url, nil)
+	done := ForwardAuthenticated(bus, url, token, nil)
 	return bus, func() {
 		bus.Close()
 		<-done

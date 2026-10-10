@@ -1,0 +1,28 @@
+{
+  "criterion": "WEB-01",
+  "invocationId": "27347674-7711-46a4-93f2-efbc6dde5300",
+  "startedAt": "2026-10-10T09:05:39.617302+00:00",
+  "finishedAt": "2026-10-10T09:06:24.482402+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "stablenet:preset-fields",
+    "wbft:preset-fields",
+    "wemix:preset-fields",
+    "inheritance-defaults-effective",
+    "unsupported-ui-api",
+    "preset-option-field-coverage",
+    "binary-surface-provenance"
+  ],
+  "executedScenarios": [
+    "stablenet:preset-fields",
+    "wbft:preset-fields",
+    "wemix:preset-fields",
+    "inheritance-defaults-effective",
+    "unsupported-ui-api",
+    "preset-option-field-coverage",
+    "binary-surface-provenance"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "1d9f056b483e620ad8570c8d6ea0b5a414e210a10dff7ef616eaca040a385fd4"
+}

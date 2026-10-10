@@ -216,7 +216,7 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 	if err != nil {
 		return err
 	}
-	bus, flush := dashboard.Stream(dashboardURL)
+	bus, flush := dashboard.StreamAuthenticated(dashboardURL, os.Getenv("CHAINBENCH_PUBLISHER_TOKEN"))
 	defer flush()
 	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
 		At: start.At, Declared: start.Declared,
