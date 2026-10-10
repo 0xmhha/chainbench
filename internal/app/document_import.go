@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -76,9 +78,13 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 		if name == "" {
 			name = in.Filename
 		}
-		importDocument(&preview, "", kind, name, values[0])
+		importDocument(&preview, "", kind, name, values[0], nil)
 	}
 	seen := map[string]bool{}
+	var presets map[string]bundlePreset
+	if bundle {
+		presets = bundlePresets(values)
+	}
 	for i, item := range values {
 		if !bundle {
 			break
@@ -93,7 +99,7 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 			preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{prefix, "invalid", issue})
 			continue
 		}
-		importDocument(&preview, prefix, kind, name, content)
+		importDocument(&preview, prefix, kind, name, content, presets)
 	}
 	preview.Validation.Valid = len(preview.Validation.Errors) == 0 && len(preview.RedactedDocuments) > 0
 	if !preview.Validation.Valid {
@@ -145,7 +151,7 @@ func (s *DeploymentStore) CommitImport(a DeploymentActor, in DocumentImportCommi
 	used := map[string]bool{}
 	documents := []DeploymentDocument{}
 	for _, incoming := range entry.Preview.RedactedDocuments {
-		if err := ValidateDeploymentDocument(incoming); err != nil {
+		if err := ValidateDeploymentDocument(incoming); err != nil && !errors.Is(err, errCasePresetsNeedStore) {
 			return nil, errors.New("import declaration no longer satisfies shared document validation")
 		}
 		id, revision := deploymentID(), 0
@@ -168,6 +174,13 @@ func (s *DeploymentStore) CommitImport(a DeploymentActor, in DocumentImportCommi
 	if len(used) != len(in.BaseRevisions) {
 		return nil, fmt.Errorf("replacement references do not match preview")
 	}
+	// A case pinned to a preset of the same bundle now names that preset's
+	// saved revision, and is validated against exactly those declarations.
+	for i := range documents {
+		if err := resolveBundlePresetRefs(documents, i); err != nil {
+			return nil, err
+		}
+	}
 	err := s.commit(a, "document.import.commit", in.PreviewID, func(next *deploymentState) {
 		for _, d := range documents {
 			next.Documents[d.ID] = append(next.Documents[d.ID], d)
@@ -180,4 +193,33 @@ func (s *DeploymentStore) CommitImport(a DeploymentActor, in DocumentImportCommi
 	b, _ := json.Marshal(documents)
 	_ = json.NewDecoder(bytes.NewReader(b)).Decode(&documents)
 	return documents, err
+}
+
+func resolveBundlePresetRefs(documents []DeploymentDocument, i int) error {
+	d := &documents[i]
+	if len(d.PresetRefs) == 0 {
+		return nil
+	}
+	refs := make([]DeploymentDocumentRef, 0, len(d.PresetRefs))
+	presets := map[string]json.RawMessage{}
+	for _, ref := range d.PresetRefs {
+		index, err := strconv.Atoi(strings.TrimPrefix(ref.ID, bundlePresetRef))
+		if !strings.HasPrefix(ref.ID, bundlePresetRef) || err != nil || index < 0 || index >= len(documents) || documents[index].Kind != "chain-preset" {
+			return errors.New("import declaration no longer satisfies shared document validation")
+		}
+		p := documents[index]
+		var head struct {
+			ID string `json:"id"`
+		}
+		if err = json.Unmarshal(p.Content, &head); err != nil || head.ID == "" {
+			return errors.New("import declaration no longer satisfies shared document validation")
+		}
+		presets[head.ID] = p.Content
+		refs = append(refs, DeploymentDocumentRef{ID: p.ID, Revision: p.Revision})
+	}
+	d.PresetRefs = refs
+	if err := validateDeploymentDocument(d.DeploymentDocumentInput, presets); err != nil {
+		return errors.New("import declaration no longer satisfies shared document validation")
+	}
+	return nil
 }

@@ -144,6 +144,16 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			w.Header().Set("Content-Type", "application/octet-stream")
 			_, _ = w.Write(b)
 		})
+		route("GET /api/v1/documents/{id}/bundle", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			b, err := store.ExportDocumentBundle(a, r.PathValue("id"))
+			if err != nil {
+				deploymentError(w, err)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Disposition", `attachment; filename="chainbench-document.bundle.json"`)
+			_, _ = w.Write(b)
+		})
 		route("GET /api/v1/workspaces", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			deploymentJSON(w, 200, map[string]any{"items": store.Workspaces(), "nextCursor": nil})
 		})

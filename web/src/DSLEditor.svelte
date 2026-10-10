@@ -77,6 +77,7 @@
    <Field schema={document.schemaVersion==='2'?contract.$defs.caseSpec:contract.$defs.v1Spec} root={contract} value={document} onchange={change} {suggestions} />
    <button disabled={busy} onclick={validate}>Validate test scenario</button>
    <button disabled={!valid||busy} onclick={()=>download(document,'test-case.json')}>Export test scenario</button>
+   {#if savedId}<button disabled={busy} onclick={()=>work(async()=>download(await api('documents/'+encodeURIComponent(savedId)+'/bundle'),'test-case.bundle.json'))}>Export saved case bundle</button>{/if}
    <button disabled={!valid||busy} onclick={save}>공유 테스트 저장</button>
    {#if original}<button onclick={()=>download(original,'original-test.json')}>Export original import</button>{/if}
    {#if presetRefs.length}<p data-testid="dsl-preset-refs">Pinned presets: {presetRefs.map(r=>r.id+' · revision '+r.revision).join(', ')}</p>{/if}

@@ -120,4 +120,15 @@ func TestTestCaseHTTPValidatesPinnedPresetReferences(t *testing.T) {
 	if got := validate(`[]`); !strings.Contains(got, `"valid":false`) || !strings.Contains(got, "pinned-base") {
 		t.Fatalf("unpinned preset reference accepted: %s", got)
 	}
+	saved, err := store.SaveDocument(actor, "", 0, app.DeploymentDocumentInput{Kind: "case", Name: "pinned", ContractVersion: "2",
+		PresetRefs: []app.DeploymentDocumentRef{{ID: preset.ID, Revision: 1}},
+		Content:    json.RawMessage(`{"schemaVersion":"2","kind":"case","id":"pinned","chainPreset":{"extends":"pinned-base"},"steps":[{"expect":"blockNumber","is":1}]}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/documents/"+saved.ID+"/bundle", nil))
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"pinned-base"`) || !strings.Contains(w.Body.String(), `"kind":"case"`) {
+		t.Fatalf("case bundle export: %d %s", w.Code, w.Body.String())
+	}
 }

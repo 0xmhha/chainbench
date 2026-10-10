@@ -78,6 +78,37 @@ try{
  assert.ok(reimport.validation.valid&&reimport.redactedDocuments.length===2,'exported bundle does not import back')
  for(const d of exported.documents){const back=reimport.redactedDocuments.find(r=>r.kind===d.kind);assert.ok(same(back.content,d.content),'re-import changed '+d.kind)}
  observed.roundTrip={exportedDocuments:exported.documents.length,semanticallyEqual:true}
+ // A saved case exports with the preset revision it pins; the bundle imports
+ // back as a case pinned to the preset that arrived with it, running the same declaration.
+ const presetContent=JSON.parse(fs.readFileSync('presets/chain/stablenet-bp4-en1.json','utf8'))
+ const sharedPreset=await api('documents','POST',{kind:'chain-preset',name:'bundle preset',contractVersion:'2',assetRefs:[],content:presetContent},201)
+ const caseContent={schemaVersion:'2',kind:'case',id:'bundle-case',chainPreset:{extends:'stablenet-bp4-en1',binaries:{default:'gstable'}},steps:[{expect:'blockNumber',compare:'GreaterOrEqual',is:0}]}
+ const savedCase=await api('documents','POST',{kind:'case',name:'bundle case',contractVersion:'2',assetRefs:[],presetRefs:[{id:sharedPreset.id,revision:sharedPreset.revision}],content:caseContent},201)
+ await page.goto(f.url+'/tests')
+ const caseSelect=page.getByLabel('공유 테스트',{exact:true})
+ await caseSelect.locator(`option[value="${savedCase.id}"]`).waitFor({state:'attached',timeout:20000})
+ await caseSelect.selectOption(savedCase.id)
+ const caseDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'Export saved case bundle',exact:true}).click()
+ await (await caseDownload).saveAs(out+'/case.bundle.json')
+ const caseBundle=JSON.parse(fs.readFileSync(out+'/case.bundle.json','utf8'))
+ assert.deepEqual(caseBundle.documents.map(d=>d.kind),['chain-preset','case'],'case bundle does not carry its pinned preset')
+ await page.goto(f.url+'/chains')
+ const caseInput=page.getByLabel('Configuration import file',{exact:true});await caseInput.waitFor({timeout:20000})
+ await caseInput.setInputFiles({name:'case.bundle.json',mimeType:'application/json',buffer:fs.readFileSync(out+'/case.bundle.json')})
+ await page.locator('[data-testid="import-preview"][data-valid="true"]').waitFor({timeout:15000})
+ await page.getByRole('button',{name:'Save imported documents',exact:true}).click()
+ await page.getByTestId('import-status').filter({hasText:'Saved 2 shared document revision(s)'}).waitFor({timeout:15000})
+ const listed=(await api('documents')).items
+ const importedCase=listed.find(d=>d.kind==='case'&&d.name==='bundle case'&&d.id!==savedCase.id)
+ const importedPreset=listed.find(d=>d.kind==='chain-preset'&&d.name==='bundle preset'&&d.id!==sharedPreset.id)
+ assert.ok(importedCase&&importedPreset,'the case bundle was not saved as new documents')
+ assert.deepEqual(importedCase.presetRefs,[{id:importedPreset.id,revision:importedPreset.revision}],'the imported case is not pinned to the preset that arrived with it')
+ const fingerprint=async(doc,preset)=>(await api('test-cases/import','POST',{content:doc.content,presets:{[preset.content.id]:preset.content}})).semanticFingerprint
+ assert.equal(await fingerprint(importedCase,importedPreset),await fingerprint(savedCase,sharedPreset),'the imported case runs another declaration')
+ const lonely=await api('documents/import','POST',{filename:'lonely.bundle.json',format:'json',source:JSON.stringify({documents:[caseBundle.documents[1]]})})
+ assert.ok(!lonely.validation.valid&&JSON.stringify(lonely.validation.errors).includes('stablenet-bp4-en1'),'a case bundle without its preset is not refused by name')
+ observed.caseBundle={documents:caseBundle.documents.length,presetPinned:true,semanticallyEqual:true,missingPresetNamed:true}
 
  // A real deployment from the imported and edited workspace uses the edited ports.
  await page.getByLabel('작업 Workspace',{exact:true}).selectOption(workspace.id)

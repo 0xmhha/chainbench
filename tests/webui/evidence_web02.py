@@ -4,7 +4,7 @@ from proof_acceptance import verify_proofs
 
 REQUIRED = ['bundle-import-preview-commit', 'concrete-field-and-extension-errors', 'structured-edit-revision-conflict', 'export-round-trip-semantics', 'setup-from-imported-configuration', 'pinned-assets-and-revisions']
 PROOFS = {
-    'web02-bundle': ('run_web02_bundle.py', ['workspace.bundle.json', 'web02-bundle.png']),
+    'web02-bundle': ('run_web02_bundle.py', ['workspace.bundle.json', 'case.bundle.json', 'web02-bundle.png']),
     'preset-jobs': ('run_preset_jobs.py', ['preset-plan.png']),
     'asset-jobs': ('run_asset_jobs.py', ['asset-library.png']),
 }

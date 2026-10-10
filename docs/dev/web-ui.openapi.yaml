@@ -1125,6 +1125,29 @@ paths:
         schema: *id001
         description: Required for cookie-authenticated changes; publisher bearer ingestion
           uses its own authentication.
+  /api/v1/documents/{documentId}/bundle:
+    get:
+      operationId: exportDocumentBundle
+      summary: Download one shared document as an importable bundle, with the chain preset revisions a case pins
+      description: 'The bundle is {"format":"chainbench-web-bundle","documents":[...]} with each pinned chain preset revision before the case. Importing it saves the presets and the case together, and the case is pinned to the preset revisions that arrived with it. A case whose preset is not in its bundle is refused by the preset id.'
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: Document bundle
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      parameters:
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
   /api/v1/workspaces/{workspaceId}/export:
     get:
       operationId: exportWorkspace

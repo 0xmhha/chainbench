@@ -5,7 +5,7 @@ import sys
 from evidence_web02 import PROOFS, REQUIRED, verify
 from proof_acceptance import assertion, run
 
-CHECKS = ['go test -race -count=1 ./internal/app ./internal/dashboard -run "TestDocumentBundle|Import|TestWebSecurityShowsRedacted|TestDeployment"',
+CHECKS = ['go test -race -count=1 ./internal/app ./internal/dashboard -run "TestDocumentBundle|TestCaseBundle|Import|TestWebSecurityShowsRedacted|TestDeployment"',
           'node --test tests/webui/api-error.test.mjs']
 SOURCES = ('internal/app/document_*.go', 'internal/app/deployment*.go', 'internal/dashboard/deployment.go', 'internal/dashboard/security.go', 'web/src/BundleImport.svelte', 'web/src/DeploymentEditor.svelte', 'web/src/api-error.mjs', 'tests/webui/*web02*', 'tests/webui/proof_acceptance.py', 'tests/webui/browser_preset_jobs.mjs', 'tests/webui/browser_asset_jobs.mjs')
 
@@ -27,8 +27,11 @@ def scenarios(receipts, output):
                         assertion('a stale preset revision is refused after review', p['stalePresetRejected'])],
          'artifacts': ['web02-bundle-receipt.json', 'preset-jobs-receipt.json']},
         {'id': 'export-round-trip-semantics', 'mode': 'team', 'transport': 'local', 'ownership': 'owned',
-         'assertions': [assertion('the exported workspace bundle imports back with the same declarations', b['roundTrip']['semanticallyEqual'] and b['roundTrip']['exportedDocuments'] == 2)],
-         'artifacts': ['web02-bundle-workspace.bundle.json']},
+         'assertions': [assertion('the exported workspace bundle imports back with the same declarations', b['roundTrip']['semanticallyEqual'] and b['roundTrip']['exportedDocuments'] == 2),
+                        assertion('a saved case exports with its pinned preset and imports back pinned to that preset with the same executable meaning',
+                                  b['caseBundle']['documents'] == 2 and b['caseBundle']['presetPinned'] and b['caseBundle']['semanticallyEqual']),
+                        assertion('a case bundle without the preset it extends is refused by the preset id', b['caseBundle']['missingPresetNamed'])],
+         'artifacts': ['web02-bundle-workspace.bundle.json', 'web02-bundle-case.bundle.json']},
         {'id': 'setup-from-imported-configuration', 'mode': 'team', 'transport': 'local', 'ownership': 'owned',
          'assertions': [assertion('a native deployment from the imported and edited workspace applies the edited ports', b['setup']['p2p'] == [39200, 39210, 39220, 39230] and b['setup']['chainId'] == '0x205c'),
                         assertion('saved presets set up native chains whose databases are verified', p['nativeDatabasesVerified'])],
