@@ -221,6 +221,13 @@
     },
     {
       "do": "swapNode",
+      "on": "en1",
+      "args": [
+        "--cache.noprefetch"
+      ]
+    },
+    {
+      "do": "swapNode",
       "onEach": [
         "en2"
       ],
