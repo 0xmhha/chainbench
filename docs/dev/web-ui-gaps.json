@@ -103,9 +103,10 @@
         "internal/app/web_chain_engine.go:67,180 (대상이 ServerRef 하나)"
       ],
       "completion": "노드별 서버를 고르는 배치가 계획·잠금·실제 배포에 반영되고, 실제 두 대상에 나뉜 체인이 블록을 만든다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_multihost.py (Docker: chainbench-server1, a second server container and a control container running the Linux dashboard on the same network; linux gstable 0937ac5c; receipt chainbench-out/web-ui-development/multihost/receipt.json)",
+      "commit": "3152e8ba, 808d243e, b21334c6",
+      "evidence": "RED: before 3152e8ba a plan targeted one ServerRef only. GREEN (multihost receipt, invocation 78f58e1d1cc6): the browser planned chain.deploy over the whole server set; the plan review listed both SSH bindings (server1, server2 → docker login); the job succeeded; node1 and node3 ran on one machine and node2 and node4 on another (two distinct machine identities), all observed running; every node reached block 34 in the collected block_height metrics. The servers are containers on one Mac, not separate hosts."
     },
     {
       "id": "G-A06",
@@ -125,9 +126,10 @@
         "internal/app/web_network_monitor.go"
       ],
       "completion": "두 서버에 나뉜 네트워크에서 각 서버의 노드를 시작·정지하고 관측과 로그가 그 노드의 서버에서 읽힌다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_multihost.py (Docker: chainbench-server1, a second server container and a control container running the Linux dashboard on the same network; linux gstable 0937ac5c; receipt chainbench-out/web-ui-development/multihost/receipt.json)",
+      "commit": "808d243e, d9288207, b21334c6",
+      "evidence": "RED (live, before d9288207): planning node.stop for node2 on server2 was refused with 409 \"the node is not on a machine this plan reviewed\": the node-control plan and its execution rechecks did not pass the reviewed machines to the process check, so any node off the first server was refused. GREEN (multihost receipt): node2 on server2 was observed running from its node page, stopped through the plan review (others kept running), started again; log collection over the whole set archived 100 lines from node2; an attach test against the spread network succeeded (run web:20261011-133712-1)."
     },
     {
       "id": "G-B01",
