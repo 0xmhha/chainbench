@@ -778,9 +778,10 @@
         "internal/app/deployment_store.go:271-288"
       ],
       "completion": "돌려받은 PresetRefs를 바꿔도 저장된 리비전이 바뀌지 않는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestReadRevisionDoesNotShareItsPresetReferences",
+      "commit": "fd66aa48",
+      "evidence": "RED (/private/tmp/chainbench-web-d01-red.log): changing a read revision's PresetRefs changed the stored revision to 99. GREEN: the read returns its own copy."
     },
     {
       "id": "G-D02",
@@ -797,9 +798,10 @@
         "internal/dashboard/security.go:105-109"
       ],
       "completion": "운영자의 DELETE /api/v1/history/{runId}가 미들웨어에서 403이다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestHistoryDeletionAndRoleChangesAreGuardedBeforeHandlers",
+      "commit": "fd66aa48",
+      "evidence": "RED (/private/tmp/chainbench-web-d02d03-red.log): an operator's DELETE /api/v1/history/{runId} reached routing (405 with no history route) because the middleware guarded the nonexistent /api/v1/runs. GREEN: the middleware refuses it with 403 before any handler."
     },
     {
       "id": "G-D03",
@@ -816,9 +818,10 @@
         "internal/dashboard/security.go:204-208"
       ],
       "completion": "철회 실패를 주입하면 응답이 실패이고 사용자 기록이 바뀌지 않거나, 바뀐 상태와 미완료 철회가 함께 기록되어 재시도된다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestHistoryDeletionAndRoleChangesAreGuardedBeforeHandlers",
+      "commit": "fd66aa48",
+      "evidence": "RED: with the job store unable to record revocation, PATCH role viewer still saved the role. GREEN: the change is previewed, jobs are revoked first, and a failed revocation leaves the account unchanged; a retry revokes the running job and saves."
     },
     {
       "id": "G-D04",
@@ -878,9 +881,10 @@
         "internal/app/web_chain_execution.go:135-170"
       ],
       "completion": "구현 상태 문서가 코드와 같은 한계만 적는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/arch -run TestDocs; read docs/dev/web-ui-implementation.md header and the two corrected paragraphs",
+      "commit": "fd66aa48",
+      "evidence": "RED: the implementation document said registered replacement binary staging remained unfinished after e6b3d3c1 and bdd175e6 implemented it. GREEN: the document marks itself a dated log, names those commits and points current open work to the gap list."
     },
     {
       "id": "G-D07",
