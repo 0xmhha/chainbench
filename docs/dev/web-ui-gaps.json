@@ -463,9 +463,10 @@
         "web/src/*.svelte contractVersion '2'"
       ],
       "completion": "계약 버전이 엔진 계약 내용에서 나오고, 버전이 다른 초안 저장은 재검증을 요구한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestContractsCarryADigestThatSavedDraftsMustMatch; node --test tests/webui/contract-draft.test.mjs",
+      "commit": "5a775b26",
+      "evidence": "RED (/private/tmp/chainbench-web-contract-digest-red.log): contracts carried no digest or version and every editor hardcoded contractVersion 2, so a contract change went unnoticed. GREEN: each contract carries x-contractDigest and x-contractVersion; a save with a stale digest is 409, a current or absent digest saves, the digest is not stored; editors take the version from the contract and on that 409 reload the contract, validate the draft and name the changed definitions."
     },
     {
       "id": "G-B18",
