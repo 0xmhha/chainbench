@@ -242,9 +242,10 @@
         "internal/app/web_job_execution.go:50-66,107-112"
       ],
       "completion": "실행 전 철회된 작업은 running을 거치지 않고 failed이며, 취소 정리 실패는 failed와 cleanup_failed이고, 철회 중 정리 실패는 cleanup_failed로 남는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobThatFailsItsPreRunCheckNeverRuns|TestCancelWhoseCleanupFailsEndsFailed|TestRevocationKeepsTheDispositionTheEngineReported\"",
+      "commit": "aa6d9283",
+      "evidence": "RED (/private/tmp/chainbench-web-lifecycle-red.log): a job whose pre-run check failed ran and never ended, a cancel whose cleanup failed ended cancelled, and revocation replaced an unknown disposition with retained. GREEN: the check runs before running (WebChainEngine.Revalidate rechecks targets, binaries, record and surfaces) and ends accepted jobs failed; cleanup failure ends failed; revocation keeps the reported disposition. browser_cancel_retention.mjs now asserts the failed state."
     },
     {
       "id": "G-B07",
@@ -260,9 +261,10 @@
         "internal/app/web_jobs.go:258-263 (revision changed 문구의 ErrDeploymentConflict)"
       ],
       "completion": "자원 충돌 409 본문의 details에 작업·실행자·자원이 있고 문구가 자원 충돌을 말한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestBusyRefusalNamesTheJobHoldingTheResources; go test ./internal/dashboard -run TestBusyStartNamesTheHolderOverHTTP",
+      "commit": "aa6d9283",
+      "evidence": "RED: a busy start returned ErrDeploymentConflict whose message reads \"revision changed; reload before editing\". GREEN: WebBusyError names each holder; HTTP 409 carries details.holders with job id, actor and resources."
     },
     {
       "id": "G-B08",
@@ -498,9 +500,10 @@
         "internal/app/web_job_execution.go:129"
       ],
       "completion": "작업 상세가 자격증명 ID(material 없음)와 취소 메시지를 보인다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobRecordsItsCredentialsAndRequest|TestCancelWhoseCleanupFailsEndsFailed\"",
+      "commit": "aa6d9283",
+      "evidence": "RED: jobs had no credential references or request id and the cancel message was decoded and dropped. GREEN: jobs list credential ids (no material), keep the cancel message with secrets removed, and their error carries the accepting request id."
     },
     {
       "id": "G-C01",
