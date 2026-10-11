@@ -46,7 +46,7 @@ func WithWebHistory(history *app.WebHistory, authenticate DeploymentAuthenticato
 			deploymentJSON(w, 200, page)
 		})
 		route("GET /api/v1/history/{runId}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			run, err := history.Get(r.PathValue("runId"))
+			run, err := history.Detail(a, r.PathValue("runId"))
 			deploymentResponse(w, run, err, 200)
 		})
 		route("POST /api/v1/history/compare", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
@@ -56,7 +56,7 @@ func WithWebHistory(history *app.WebHistory, authenticate DeploymentAuthenticato
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
-			comparison, err := history.Compare(in.RunIDs)
+			comparison, err := history.Compare(a, in.RunIDs)
 			deploymentResponse(w, comparison, err, 200)
 		})
 		route("GET /api/v1/history/{runId}/export", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {

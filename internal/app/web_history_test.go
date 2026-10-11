@@ -86,7 +86,7 @@ func TestWebHistoryCaptureCompareDeleteAndRestart(t *testing.T) {
 		t.Fatal("cursor from a different filtered result accepted")
 	}
 	id1, id2 := historySessionID(ref1), historySessionID(ref2)
-	comparison, err := history.Compare([]string{id1, id2})
+	comparison, err := history.Compare(DeploymentActor{ID: "viewer", Role: "viewer"}, []string{id1, id2})
 	if err != nil || !comparison.Comparable || len(comparison.Results) != 1 {
 		t.Fatal(comparison, err)
 	}
@@ -155,10 +155,10 @@ func TestWebHistoryCaptureCompareDeleteAndRestart(t *testing.T) {
 	if _, err = reopened.Get(id1); !errors.Is(err, ErrDeploymentNotFound) {
 		t.Fatal("tombstone lost after restart")
 	}
-	if _, err = reopened.Compare([]string{id2, "job-one"}); err != nil {
+	if _, err = reopened.Compare(DeploymentActor{ID: "viewer", Role: "viewer"}, []string{id2, "job-one"}); err != nil {
 		t.Fatal(err)
 	}
-	comparison, _ = reopened.Compare([]string{id2, "job-one"})
+	comparison, _ = reopened.Compare(DeploymentActor{ID: "viewer", Role: "viewer"}, []string{id2, "job-one"})
 	if comparison.Comparable || len(comparison.Limitations) < 2 {
 		t.Fatal("job without test results claimed comparable", comparison)
 	}
@@ -246,5 +246,49 @@ func TestWebHistoryCapturesOwnedTestSessionsWithoutLegacyRoot(t *testing.T) {
 	restored, err := reopened.Get(id)
 	if err != nil || restored.JobID != "test-job" || restored.State != "failed" {
 		t.Fatal("owned session copy lost after source deletion/restart", err)
+	}
+}
+
+func TestHistoryDeletionRemovesTheWebOwnedSessionAndAcceptsTestlessCLISessions(t *testing.T) {
+	root, cli := t.TempDir(), t.TempDir()
+	ref, original := historyFixture(t, filepath.Join(root, "sessions"), 7, session.StatusPass)
+	empty, err := session.New(cli, "verify only", time.Date(2026, 10, 8, 2, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = empty.Save(); err != nil {
+		t.Fatal(err)
+	}
+	cliRef, cliDir := session.IDFor(cli, empty.Root()), empty.Root()
+	jobs, err := OpenWebJobs(root, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload, _ := json.Marshal(webChainPayload{Binary: ManifestBinaryEvidence{Chain: "stablenet", SHA256: strings.Repeat("b", 64)}})
+	jobs.state.Plans["p"] = savedWebPlan{Prepared: WebPreparedJob{Payload: payload, Fingerprint: strings.Repeat("c", 64)}}
+	jobs.state.Jobs["j"] = WebJob{ID: "j", ActorID: "operator", WorkspaceID: "w", PlanID: "p", Operation: "test.run", State: "succeeded", RunIDs: []string{"web:" + ref}}
+	history, err := OpenWebHistory(root, cli, jobs, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = history.Sync(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	admin := DeploymentActor{ID: "admin", Role: "admin"}
+	if err = history.Delete(admin, historySessionID("web:"+ref)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = os.Stat(original); !os.IsNotExist(err) {
+		t.Fatalf("the Web-owned session directory survived its run's deletion: %v", err)
+	}
+	cliID := historySessionID(cliRef)
+	if run, err := history.Get(cliID); err != nil || run.State != "unknown" {
+		t.Fatalf("testless CLI session: %+v %v", run, err)
+	}
+	if err = history.Delete(admin, cliID); err != nil {
+		t.Fatalf("a finished CLI session without tests could not be deleted: %v", err)
+	}
+	if _, err = os.Stat(cliDir); err != nil {
+		t.Fatalf("deleting the capture removed the CLI's own artifacts: %v", err)
 	}
 }

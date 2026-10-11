@@ -6,7 +6,7 @@
   let { webSession } = $props()
   let items = $state([]), next = $state(null), detail = $state(null), comparison = $state(null)
   let selected = $state([]), pendingDelete = $state(null), busy = $state(false), error = $state('')
-  let observed = $state(null)
+  let observed = $state(null), runLogs = $state(null)
   let search = $state(new URLSearchParams(window.location.search).get('search')??''), chain = $state(''), workspaceId = $state(''), actorId = $state(''), state = $state(''), caseId = $state('')
   let from = $state(''), to = $state(''), workspaces = $state([]), knownChains = $state([]), knownActors = $state([]), knownCases = $state([])
   const administrator = $derived(webSession?.user.role === 'administrator')
@@ -53,6 +53,13 @@
     busy = true; error = ''
     try { observed = { id: run.id, metrics: await (await api(`networks/${encodeURIComponent(run.summary.observations.networkId)}/metrics?runId=${encodeURIComponent(run.id)}`)).json() } } catch (e) { error = e.message } finally { busy = false }
   }
+  // loadRunLogs reads one node's archived log lines for the run's own window.
+  async function loadRunLogs(run, node) {
+    busy = true; error = ''
+    try { runLogs = { id: run.id, node, logs: await (await api(`nodes/${encodeURIComponent(run.summary.observations.networkId + '.' + node)}/logs?runId=${encodeURIComponent(run.id)}&limit=100`)).json() } } catch (e) { error = e.message } finally { busy = false }
+  }
+  const seconds = value => value == null ? '자료 없음' : `${Math.round(value * 10) / 10}초`
+  const metricValue = value => value ? `${value.samples}개 · 최소 ${value.min ?? '—'} · 최대 ${value.max ?? '—'} · 마지막 ${value.last ?? '—'}` : '표본 없음'
   async function compare() {
     busy = true; error = ''
     try { comparison = await (await api('history/compare', 'POST', { runIds: selected })).json() } catch (e) { error = e.message } finally { busy = false }
@@ -103,13 +110,21 @@
   {#if next}<button disabled={busy} onclick={() => load(next)}>다음 기록 더 보기</button>{/if}
   {#if comparison}<section class="detail" aria-label="실행 비교 결과"><h3>{comparison.comparable ? '테스트 판정 비교' : '동등한 환경으로 비교할 수 없습니다'}</h3>
     <p>아래 판정은 기록에 있는 값입니다. 자료가 없는 항목을 0으로 계산하지 않습니다.</p><ul>{#each comparison.limitations as limitation}<li>{limitation}</li>{/each}</ul>
-    <div class="table-wrap"><table><thead><tr><th>케이스</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.results as row}<tr><td>{row.caseId}</td>{#each comparison.runIds as id}<td>{row.statuses[id] || '자료 없음'}</td>{/each}</tr>{/each}</tbody></table></div>
+    <div class="table-wrap"><table data-testid="comparison-cases"><thead><tr><th>케이스 · 단언</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>
+      <tr><td>소요 시간</td>{#each comparison.runIds as id}<td>{seconds(comparison.durations?.[id])}</td>{/each}</tr>
+      {#each comparison.results as row}<tr><td>{row.caseId}</td>{#each comparison.runIds as id}<td>{row.statuses[id] || '자료 없음'}</td>{/each}</tr>
+        {#each Object.entries(row.assertions ?? {}) as [assertion, results]}<tr class="assertion"><td>└ {assertion}</td>{#each comparison.runIds as id}<td>{id in results ? (results[id] ? '통과' : '실패') : '자료 없음'}</td>{/each}</tr>{/each}
+      {/each}</tbody></table></div>
+    {#if comparison.metrics?.length}<div class="table-wrap"><table data-testid="comparison-metrics"><thead><tr><th>노드 지표 (출처 · 단위)</th>{#each comparison.runIds as id}<th>{id}</th>{/each}</tr></thead><tbody>{#each comparison.metrics as metric}<tr><td>{metric.name}<small>{metric.source}{metric.unit ? ' · ' + metric.unit : ''}</small></td>{#each comparison.runIds as id}<td>{metricValue(metric.values[id])}</td>{/each}</tr>{/each}</tbody></table></div>{/if}
   </section>{/if}
   {#if detail}<section class="detail" aria-label="실행 상세 결과"><header><h3>상세 결과</h3><div class="actions"><button disabled={busy} onclick={() => download(detail.id)}>결과 내보내기</button>{#if administrator}<button class="danger" disabled={busy || !terminal(detail)} onclick={() => { pendingDelete = detail }}>보관 결과 삭제</button>{/if}</div></header>
     <p class="mono">{detail.id}</p><p>원본 세션: {detail.sessionRefs.join(', ') || '연결된 엔진 세션 없음'}</p>
     <p>큰 정수는 정확한 숫자 문자열로 표시합니다. 다운로드 파일은 원래 JSON 수치 형식을 유지합니다.</p>
+    <p>종료 시각: {detail.finishedAt ? format(detail.finishedAt) : '기록 없음'}{#if detail.coverage} · 수집 주기 {detail.coverage.sampleIntervalSeconds}초 · {detail.coverage.complete ? '누락 없음' : `누락 구간 ${detail.coverage.gaps.length}개`}{detail.coverage.downsampled ? ' · 다운샘플됨' : ''}{/if}</p>
     {#if detail.summary.missingDimensions?.length}<p class="notice">자료 없음: {detail.summary.missingDimensions.join(', ')}</p>{/if}
-    {#if detail.summary.observations}<div class="observed" data-testid="run-observations"><p>보관된 노드 지표·로그 구간: {format(detail.summary.observations.from)} – {detail.summary.observations.to ? format(detail.summary.observations.to) : '진행 중'} · 네트워크 {detail.summary.observations.networkId}</p><button disabled={busy} onclick={() => loadObserved(detail)}>이 실행의 지표 확인</button>{#if observed?.id === detail.id}<p data-testid="run-observation-series" data-series={observed.metrics.series.length}>지표 {observed.metrics.series.length}개 · 표본 {observed.metrics.series.reduce((n, s) => n + s.samples.length, 0)}개 · {observed.metrics.coverage.complete ? '누락 없음' : '누락 구간 있음'}</p>{#if observed.metrics.coverage.gaps.length}<ul>{#each observed.metrics.coverage.gaps as gap}<li>{gap.reason} ({format(gap.from)} – {format(gap.to)})</li>{/each}</ul>{/if}{/if}</div>{/if}
+    {#if detail.summary.observations}<div class="observed" data-testid="run-observations"><p>보관된 노드 지표·로그 구간: {format(detail.summary.observations.from)} – {detail.summary.observations.to ? format(detail.summary.observations.to) : '진행 중'} · 네트워크 {detail.summary.observations.networkId}</p><button disabled={busy} onclick={() => loadObserved(detail)}>이 실행의 지표 확인</button>{#if observed?.id === detail.id}<p data-testid="run-observation-series" data-series={observed.metrics.series.length}>지표 {observed.metrics.series.length}개 · 표본 {observed.metrics.series.reduce((n, s) => n + s.samples.length, 0)}개 · {observed.metrics.coverage.complete ? '누락 없음' : '누락 구간 있음'}</p>{#if observed.metrics.coverage.gaps.length}<ul>{#each observed.metrics.coverage.gaps as gap}<li>{gap.reason} ({format(gap.from)} – {format(gap.to)})</li>{/each}</ul>{/if}
+      <div class="actions">{#each [...new Set(observed.metrics.series.map(s => s.nodeId))] as node}<button disabled={busy} onclick={() => loadRunLogs(detail, node)}>{node} 로그 보기</button>{/each}</div>
+      {#if runLogs?.id === detail.id}<section data-testid="run-logs" data-node={runLogs.node}><p>{runLogs.node} · 이 실행 구간의 보관 로그 {runLogs.logs.entries.length}줄{runLogs.logs.coverage?.timestampSource ? ` · 시각 출처 ${runLogs.logs.coverage.timestampSource}` : ''}</p><pre>{runLogs.logs.entries.map(e => `${e.time} ${e.text}`).join('\n') || '이 구간에 보관된 로그가 없습니다.'}</pre></section>{/if}{/if}</div>{/if}
     {#if detail.summary.captureGaps?.length}<ul>{#each detail.summary.captureGaps as gap}<li>{gap}</li>{/each}</ul>{/if}
     {#if pendingDelete}<div class="confirm" role="group" aria-label="보관 결과 삭제 확인"><p>이 결과 사본과 이 실행 구간에만 속한 노드 지표·로그를 삭제합니다. 다른 실행이나 진행 중인 작업이 함께 쓰는 구간, 원본 CLI 세션, 공유 자료와 노드 데이터는 유지됩니다. 삭제 기록은 감사 이력에 남습니다.</p><button class="danger" disabled={busy} onclick={remove}>결과 사본 삭제 확정</button><button disabled={busy} onclick={() => { pendingDelete = null }}>돌아가기</button></div>{/if}
     <details open><summary>테스트 판정 · 어세션 · 단계 · 사용 자료</summary><pre>{JSON.stringify(detail.summary, null, 2)}</pre></details>
@@ -123,6 +138,6 @@
   form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; align-items: end; } label { display: grid; gap: 6px; color: #a8b5c8; } .search { grid-column: span 2; } input, select { width: 100%; min-width: 0; color: #f1f5f9; background: #0b1018; border: 1px solid #475569; border-radius: 6px; padding: 8px; }
   button { color: #dbeafe; background: #192536; border: 1px solid #475569; border-radius: 6px; padding: 8px 12px; } button:disabled { opacity: .55; } .danger { color: #fecaca; border-color: #9f4b52; } .error, .notice { color: #fca5a5; } .confirm { padding: 16px; border: 1px solid #9f4b52; border-radius: 8px; } .confirm button { margin-right: 8px; }
   .table-wrap { overflow: auto; margin: 16px 0; } table { border-collapse: collapse; width: 100%; font-size: 12px; } th, td { padding: 12px; text-align: left; border-bottom: 1px solid #253247; } th { color: #a8b5c8; font-weight: 500; } small { display: block; color: #a8b5c8; margin-top: 4px; } td input { width: 20px; min-height: 24px; } .record { text-align: left; max-width: 320px; overflow-wrap: anywhere; } .record small { font-family: ui-monospace, monospace; font-size: 10px; } .state { border: 1px solid #475569; border-radius: 20px; padding: 4px 8px; } .success { color: #6ee7b7; border-color: #295344; }
-  .detail { margin-top: 24px; border-top: 1px solid #334155; padding-top: 24px; min-width: 0; } .mono, pre { font-family: ui-monospace, monospace; } pre { font-size: 12px; overflow: auto; padding: 16px; background: #0b1018; border-radius: 8px; max-height: 560px; } summary { cursor: pointer; padding: 12px 0; color: #dbeafe; } .empty { padding: 32px; text-align: center; }
+  .detail { margin-top: 24px; border-top: 1px solid #334155; padding-top: 24px; min-width: 0; } .mono, pre { font-family: ui-monospace, monospace; } pre { font-size: 12px; overflow: auto; padding: 16px; background: #0b1018; border-radius: 8px; max-height: 560px; } summary { cursor: pointer; padding: 12px 0; color: #dbeafe; } .empty { padding: 32px; text-align: center; } .assertion td { color: #a8b5c8; }
   @media (max-width: 760px) { .history-panel { padding: 16px; } form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
 </style>

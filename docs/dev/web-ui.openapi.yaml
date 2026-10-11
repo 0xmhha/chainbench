@@ -2871,9 +2871,40 @@ components:
           items: *id001
         results:
           type: array
+          description: One row per case with statuses by run and assertions as {assertionId:{runId:pass}}. A case whose declaration digest differs between runs makes the comparison not comparable.
           items:
             type: object
             additionalProperties: true
+        durations:
+          type: object
+          description: Seconds from job start to its last finished phase, by run; null when no end was recorded
+          additionalProperties:
+            type:
+            - number
+            - 'null'
+        metrics:
+          type: array
+          description: Node metrics archived in each run's window, one entry per metric and source; a run without samples is absent from values, never zero. A metric recorded in different units is listed under limitations instead.
+          items:
+            type: object
+            properties:
+              name: *id001
+              unit: *id001
+              source: *id001
+              values:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    samples:
+                      type: integer
+                    min:
+                      type: number
+                    max:
+                      type: number
+                    last:
+                      type: number
+            additionalProperties: false
       additionalProperties: false
       required:
       - runIds

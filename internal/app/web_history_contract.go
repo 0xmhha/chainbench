@@ -9,13 +9,16 @@ import (
 // WebRun indexes a captured engine result or a durable job. Empty metadata is
 // explicitly explained in Summary; it is never inferred from a directory name.
 type WebRun struct {
-	ID           string            `json:"id"`
-	JobID        string            `json:"jobId,omitempty"`
-	WorkspaceID  string            `json:"workspaceId"`
-	Chain        string            `json:"chain"`
-	ActorID      string            `json:"actorId,omitempty"`
-	State        string            `json:"state"`
-	StartedAt    string            `json:"startedAt,omitempty"`
+	ID          string `json:"id"`
+	JobID       string `json:"jobId,omitempty"`
+	WorkspaceID string `json:"workspaceId"`
+	Chain       string `json:"chain"`
+	ActorID     string `json:"actorId,omitempty"`
+	State       string `json:"state"`
+	StartedAt   string `json:"startedAt,omitempty"`
+	FinishedAt  string `json:"finishedAt,omitempty"`
+	// Coverage is the archive coverage of the run's window, in detail reads.
+	Coverage     *WebCoverage      `json:"coverage,omitempty"`
 	SessionRefs  []string          `json:"sessionRefs"`
 	Fingerprints map[string]string `json:"fingerprints"`
 	Summary      map[string]any    `json:"summary"`
@@ -38,6 +41,27 @@ type WebComparison struct {
 	Comparable  bool             `json:"comparable"`
 	Limitations []string         `json:"limitations"`
 	Results     []map[string]any `json:"results"`
+	// Durations is each run's recorded length in seconds; null when the run
+	// has no recorded end.
+	Durations map[string]*float64 `json:"durations"`
+	// Metrics compares the node metrics archived in each run's window.
+	Metrics []WebMetricComparison `json:"metrics"`
+}
+
+// WebMetricComparison lines up one metric across runs. A run without samples
+// has none listed rather than zeros.
+type WebMetricComparison struct {
+	Name   string                      `json:"name"`
+	Unit   string                      `json:"unit,omitempty"`
+	Source string                      `json:"source"`
+	Values map[string]WebMetricSummary `json:"values"`
+}
+
+type WebMetricSummary struct {
+	Samples int      `json:"samples"`
+	Min     *float64 `json:"min,omitempty"`
+	Max     *float64 `json:"max,omitempty"`
+	Last    *float64 `json:"last,omitempty"`
 }
 
 type webHistoryCapture struct {

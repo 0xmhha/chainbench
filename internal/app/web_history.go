@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -210,6 +211,27 @@ func (s *WebHistory) Get(id string) (WebRun, error) {
 	return s.withObservations(detachedHistory(capture).Run), nil
 }
 
+// Detail reads a run with its recorded end and the coverage of the metrics
+// and logs archived for its window.
+func (s *WebHistory) Detail(a DeploymentActor, id string) (WebRun, error) {
+	run, err := s.Get(id)
+	if err != nil {
+		return run, err
+	}
+	w, ok := s.windowOf(run)
+	if !ok || w.To.IsZero() {
+		return run, nil
+	}
+	run.FinishedAt = w.To.Format(time.RFC3339Nano)
+	if s.observations != nil {
+		if metrics, err := s.observations.Metrics(a, w.Network, WebMonitorQuery{From: w.From, To: w.To}); err == nil {
+			coverage := metrics.Coverage
+			run.Coverage = &coverage
+		}
+	}
+	return run, nil
+}
+
 func (s *WebHistory) Export(id string) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -235,7 +257,10 @@ func (s *WebHistory) Delete(a DeploymentActor, id string) error {
 	if !found {
 		return ErrDeploymentNotFound
 	}
-	if !terminalWebJob(capture.Run.State) {
+	// A CLI session with no Web job and no tests is reported unknown; it is a
+	// finished copy the server owns, not running work, so it may be deleted.
+	unownedCLI := capture.Run.JobID == "" && capture.Run.State == "unknown" && !webOwnedRef(capture.Run)
+	if !terminalWebJob(capture.Run.State) && !unownedCLI {
 		return ErrDeploymentConflict
 	}
 	if s.jobs != nil && capture.Run.JobID != "" {
@@ -244,7 +269,11 @@ func (s *WebHistory) Delete(a DeploymentActor, id string) error {
 			return ErrDeploymentConflict
 		}
 	}
-	if err := s.deleteObservations(id, capture.Run); err != nil {
+	err := s.deleteObservations(id, capture.Run)
+	if err == nil {
+		err = s.deleteOwnedSession(capture.Run)
+	}
+	if err != nil {
 		failed := s.clone()
 		failed.Audit = append(failed.Audit, webHistoryAudit{a.ID, id, "history.delete_failed", time.Now().UTC()})
 		return errors.Join(err, s.commit(failed))
@@ -256,4 +285,23 @@ func (s *WebHistory) Delete(a DeploymentActor, id string) error {
 	// One atomic replacement removes the owned evidence and stores the tombstone
 	// and audit together. Failure leaves every prior artifact and index intact.
 	return s.commit(next)
+}
+
+func webOwnedRef(run WebRun) bool {
+	return len(run.SessionRefs) == 1 && strings.HasPrefix(run.SessionRefs[0], "web:")
+}
+
+// deleteOwnedSession removes the engine session directory a Web test run
+// wrote under the server's own session root. A CLI session lives where the
+// CLI put it and is never removed; only the server's captured copy goes.
+func (s *WebHistory) deleteOwnedSession(run WebRun) error {
+	if !webOwnedRef(run) || s.webArtifactRoot == "" {
+		return nil
+	}
+	dir := session.SessionDir(s.webArtifactRoot, strings.TrimPrefix(run.SessionRefs[0], "web:"))
+	relative, err := filepath.Rel(s.webArtifactRoot, dir)
+	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return errors.New("session reference leaves the server's session root")
+	}
+	return filestore.Local{}.Remove(context.Background(), dir)
 }

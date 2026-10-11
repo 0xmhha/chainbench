@@ -203,3 +203,67 @@ func TestWebHistoryObservationDeletionFailureKeepsRunAndRetries(t *testing.T) {
 		t.Fatalf("retry result = %v", got)
 	}
 }
+
+func comparedSession(id, jobID, network string, pass bool, spec string) webHistoryCapture {
+	asserts := `[{"ID":"head","Assert":"height","Pass":` + map[bool]string{true: "true", false: "false"}[pass] + `}]`
+	status := map[bool]string{true: "pass", false: "fail"}[pass]
+	return webHistoryCapture{
+		Run: WebRun{ID: id, JobID: jobID, WorkspaceID: network, Chain: "stablenet", State: "succeeded", SessionRefs: []string{"web:" + id},
+			Fingerprints: map[string]string{"binary": "b", "environments/e/env.json": "e"},
+			Summary:      map[string]any{"kind": "engine-session", "tests": []any{map[string]any{"seq": 1, "id": "shared-case", "status": status}}}},
+		Files: map[string]string{"tests/001_shared-case/assert.json": asserts, "tests/001_shared-case/spec.json": spec},
+	}
+}
+
+func TestHistoryComparisonCoversAssertionsDurationsMetricsAndDeclarations(t *testing.T) {
+	f, _, history, _, _ := historyObservationFixture(t)
+	viewer := DeploymentActor{ID: "viewer", Role: "viewer"}
+	history.state.Captures["s-early"] = comparedSession("s-early", "early", f.network, true, `{"id":"shared-case","steps":[1]}`)
+	history.state.Captures["s-overlap"] = comparedSession("s-overlap", "overlap", f.network, false, `{"id":"shared-case","steps":[1]}`)
+	c, err := history.Compare(viewer, []string{"s-early", "s-overlap"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.Comparable || strings.Contains(strings.Join(c.Limitations, " "), "unavailable") {
+		t.Fatalf("comparable runs: %+v", c)
+	}
+	result := c.Results[0]
+	assertions, _ := result["assertions"].(map[string]map[string]bool)
+	if assertions["head"]["s-early"] != true || assertions["head"]["s-overlap"] != false {
+		t.Errorf("assertion comparison %v", result["assertions"])
+	}
+	if c.Durations["s-early"] == nil || *c.Durations["s-early"] != 7 || *c.Durations["s-overlap"] != 3 {
+		t.Errorf("durations %v", c.Durations)
+	}
+	found := false
+	for _, m := range c.Metrics {
+		if m.Name == "block_height" && m.Values["s-early"].Samples > 0 && m.Values["s-overlap"].Samples > 0 {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("collected node metrics are not compared: %+v", c.Metrics)
+	}
+	history.state.Captures["s-overlap"] = comparedSession("s-overlap", "overlap", f.network, false, `{"id":"shared-case","steps":[2]}`)
+	c, _ = history.Compare(viewer, []string{"s-early", "s-overlap"})
+	if c.Comparable || !strings.Contains(strings.Join(c.Limitations, " "), "declaration differs") {
+		t.Errorf("runs of different declarations compared: %+v", c.Limitations)
+	}
+}
+
+func TestHistoryDetailCarriesItsEndAndArchiveCoverage(t *testing.T) {
+	_, _, history, _, start := historyObservationFixture(t)
+	run, err := history.Detail(DeploymentActor{ID: "viewer", Role: "viewer"}, "job-early")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.FinishedAt != start.Add(6*time.Second).Format(time.RFC3339Nano) {
+		t.Errorf("finishedAt %q", run.FinishedAt)
+	}
+	if run.Coverage == nil || run.Coverage.SampleIntervalSeconds == 0 {
+		t.Errorf("coverage %+v", run.Coverage)
+	}
+	if live, _ := history.Detail(DeploymentActor{ID: "viewer", Role: "viewer"}, "job-live"); live.FinishedAt != "" {
+		t.Errorf("a running job reports an end: %q", live.FinishedAt)
+	}
+}
