@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -49,8 +50,11 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 	}
 	// A fork promotes endpoints to producers, so the record may hold more
 	// producers than the genesis validators BPCount keeps; never fewer.
-	if state.BPCount < 1 || state.BPCount > 128 || producers < state.BPCount || p.Arguments.Validators != 0 && p.Arguments.Validators != state.BPCount {
-		return webConflict("the selected validator count differs from the owned network")
+	if state.BPCount < 1 || state.BPCount > 128 || producers < state.BPCount {
+		return webConflict("the network record holds fewer producers than its validators")
+	}
+	if p.Arguments.Validators != 0 && p.Arguments.Validators != state.BPCount {
+		return errors.New("selected validator count differs from the owned network")
 	}
 	return nil
 }

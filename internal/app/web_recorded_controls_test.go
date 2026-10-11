@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"slices"
 	"testing"
@@ -142,5 +143,16 @@ func TestWebControlRecordAcceptsForkPromotedProducers(t *testing.T) {
 	state.Nodes[0].Role = "bp"
 	if err := validateWebChainRecord(state, p); err != nil {
 		t.Fatal("fork-promoted producers refused:", err)
+	}
+}
+
+// A wrong validator argument is the request's mistake, not a changed network:
+// it must reach the editor as an input error rather than a conflict.
+func TestWebControlRecordReportsWrongValidatorsAsInput(t *testing.T) {
+	state, p := webOwnedControlFixture(t)
+	p.Arguments.Validators = 4
+	err := validateWebChainRecord(state, p)
+	if err == nil || errors.Is(err, ErrDeploymentConflict) {
+		t.Fatal("wrong validator argument not reported as an input error:", err)
 	}
 }
