@@ -365,9 +365,10 @@
         "web/src/HistoryPanel.svelte:60-62"
       ],
       "completion": "같은 케이스 두 실행의 비교가 단언별 결과·시간·지표 차이를 보이고, 단위가 다르면 제한을 표시한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestHistoryComparisonCoversAssertionsDurationsMetricsAndDeclarations|TestHistoryDetailCarriesItsEndAndArchiveCoverage\"",
+      "commit": "5f502db4",
+      "evidence": "RED (/private/tmp/chainbench-web-b12-red.log): on the previous code the comparison always said \"Metric and log comparisons are unavailable\" and had no assertion results. GREEN: results carry assertions by run, a differing case declaration makes runs incomparable, durations come from the job window, archived node metrics are summarised per run with differing units named as limitations, and run detail has finishedAt, coverage and per-node run logs in the UI."
     },
     {
       "id": "G-B13",
@@ -385,9 +386,10 @@
         "internal/app/web_history.go:244"
       ],
       "completion": "삭제 뒤 그 실행의 Web 세션 디렉터리가 없고, 다른 실행이 참조하는 자료와 노드 데이터는 남는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestHistoryDeletionRemovesTheWebOwnedSessionAndAcceptsTestlessCLISessions",
+      "commit": "5f502db4",
+      "evidence": "RED (/private/tmp/chainbench-web-b13-red.log): deleting a Web test run left its engine session directory on disk. GREEN: the session under the server's own root is removed with the run (path checked to stay inside it); a CLI session without tests is deleted as a capture copy while the CLI directory stays."
     },
     {
       "id": "G-B14",
