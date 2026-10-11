@@ -345,9 +345,10 @@
         "internal/app/deployment.go:66-127 (네 종류만 받는다)"
       ],
       "completion": "케이스 순서를 담은 실행 목록을 저장·export·import하고 그 순서로 실제 테스트를 실행한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestRunDefinitionsPinTheirCasesInOrder|TestRunDefinitionBundlesCarryTheirCases|TestTestJobsRunARunDefinitionsCasesInOrder\"; a live test.run with runDefinitionRef is part of the acceptance rerun",
+      "commit": "17b5eea2",
+      "evidence": "RED (/private/tmp/chainbench-web-b11-red.log): the store refused kind run-definition and DeploymentDocument had no case references. GREEN: a run definition lists case ids in order and pins one shared case revision per id (order and identity checked); its bundle carries the cases and their presets and imports back linked to the imported cases; a test.run naming runDefinitionRef runs exactly those revisions in that order; the test form saves and selects run definitions."
     },
     {
       "id": "G-B12",
