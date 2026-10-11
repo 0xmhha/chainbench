@@ -865,9 +865,10 @@
         "tests/webui/run_web04.py:70"
       ],
       "completion": "Web 제어 API가 자체 계정 세션 없이 열리지 않고, WEB-03과 WEB-04가 세션 로그인으로 통과한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "scratchpad basic_mode_probe.py and basic_mode_probe_web.py against a dashboard built after 0285ba2a; python3 tests/webui/run_web03.py and run_web04.py (development runs of the acceptance proofs, outcome pass); node --test tests/webui/design_tokens.test.mjs",
+      "commit": "0285ba2a, c6ee8edc",
+      "evidence": "RED (/private/tmp/chainbench-web-d04-red.log): the old dashboard with -deployment-accounts accepted a Basic-auth document write without a session or CSRF token (201). GREEN (/private/tmp/chainbench-web-d04-green.log): the flag is refused and the default Web mode answers the same Basic write with 401; the Basic login forms are gone from the SPA and a guard test refuses their return. The WEB-03 proof (two operators, dedicated sshd) and the WEB-04 proof (six manifest setups, restart) now bootstrap an administrator with the setup token, create their operators through /api/v1/users and sign in with sessions; both passed on c6ee8edc. These were development runs before the frozen acceptance rerun."
     },
     {
       "id": "G-D05",
