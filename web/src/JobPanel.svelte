@@ -88,13 +88,35 @@
       [workspaces,manifests,assets,jobs,documents,networks]=values.map(v=>v.items);loaded=true
       catalogMessage='저장된 구성과 실행 자료를 불러왔습니다. 새 계획을 확인하세요.'
       if(canEdit)credentialLabels=Object.fromEntries((await allItems(api,'credentials')).map(c=>[c.id,c.label+(c.revoked?' (폐기됨)':'')]))
-      applyControl(takeControl())
+      const control=takeControl()
+      if(control)applyControl(control);else restoreDraft()
     } catch(e){if(version===loadVersion)throw e}
     finally{if(version===loadVersion)catalogLoading=false}
   }
   $effect(()=>{void catalogRevision;if(webSession)work(load)})
   onMount(()=>{const poll=setInterval(()=>{if(actor&&loaded)refresh().catch(e=>{error=e.message})},3000);return()=>clearInterval(poll)})
   async function observeNodes(){const result=await api(`networks/${workspaceId}/observations`);observedNetwork=result;networks=networks.map(n=>n.id===result.id?result:n)}
+  // The form keeps its choices per screen for this browser tab, so coming back
+  // from a job page continues where the user was. Unavailable storage only
+  // means the form starts empty.
+  const draftKey=$derived('chainbench.jobform.'+(testOnly?'tests':'chains'))
+  function restoreDraft(){
+    let d=null
+    try{d=JSON.parse(sessionStorage.getItem(draftKey)??'null')}catch{d=null}
+    if(!d)return
+    if(workspaces.some(w=>w.id===d.workspaceId))workspaceId=d.workspaceId
+    if(manifests.some(m=>m.id===d.manifestId))manifestId=d.manifestId
+    if(assets.some(a=>a.id===d.assetId))assetId=d.assetId
+    for(const [k,set] of [['operation',v=>operation=v],['serverRef',v=>serverRef=v],['nodeId',v=>nodeId=v],['retention',v=>retention=v],['presetId',v=>presetId=v],['validators',v=>validators=v],['runDefinitionId',v=>runDefinitionId=v]])if(d[k]!==undefined)set(d[k])
+    if(Array.isArray(d.caseIds))caseIds=d.caseIds
+  }
+  // Saved on the user's own edits only: while the form is being taken down
+  // its fields read empty, and that must not overwrite what the user chose.
+  function saveDraft(){
+    if(!loaded)return
+    const d={workspaceId,manifestId,assetId,operation,serverRef,nodeId,retention,presetId,validators,runDefinitionId,caseIds:[...caseIds]}
+    try{sessionStorage.setItem(draftKey,JSON.stringify(d))}catch{}
+  }
   // A control chosen on a node page fills the form; the binary is the one the
   // node runs when observation tied it to a registered file.
   function applyControl(c){
@@ -121,7 +143,7 @@
   <div class="heading"><div><h2>실행 작업</h2><p>계획을 검토하고 서버에 작업을 맡깁니다. 브라우저 연결이 끊겨도 진행 상태는 보관됩니다.</p></div>{#if actor}<button disabled={busy} onclick={()=>work(load)}>새로고침</button>{/if}</div>
   {#if actor}
     {#if canEdit}
-      <fieldset disabled={busy||catalogLoading} onchange={changed}><legend>새 작업</legend>
+      <fieldset disabled={busy||catalogLoading} onchange={()=>{changed();saveDraft()}} oninput={saveDraft}><legend>새 작업</legend>
         <p>로컬 또는 SSH 서버에 구성합니다. SSH 대상은 서버 설정에서 연결한 내 자격증명을 사용하며, 장비·경로·바이너리를 실행 전에 검증합니다. 테스트는 선택한 케이스의 구성 선언으로 실행하고 실제 세션 판정을 보관합니다.</p>
         <div class="inputs">
           <label>Workspace<select aria-label="작업 Workspace" bind:value={workspaceId} onchange={()=>selectWorkspace(workspaceId)}><option value="">선택</option>{#each workspaces as w}<option value={w.id}>{w.name} · r{w.revision}</option>{/each}</select></label>

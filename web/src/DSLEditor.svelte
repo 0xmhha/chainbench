@@ -26,7 +26,7 @@
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
  async function refreshSaved(){savedCases=await allItems(api,'documents?kind=case')}
- async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;change(structuredClone(item.content));if(role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
+ async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;editorKey++;change(structuredClone(item.content));if(role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
  async function save(){await work(async()=>{presetRefs=await pinPresets();let item;try{item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,...draftMeta(contract),content:document,assetRefs:caseAssetRefs(document),presetRefs},revision)}catch(e){if(!contractChanged(e.message))throw e;const before=contract;contract=await api('contracts/dsl');await api('test-cases/import','POST',{content:document,presets});throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: '+(changedDefinitions(before,contract).join(', ')||'세부 항목')+'. 새 계약으로 다시 검증했으니 확인한 뒤 다시 저장하세요.')}savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
  // A case names presets by id; saving pins the shared revision of each, and
  // registers a loaded preset file that no shared revision matches.
@@ -50,8 +50,11 @@
  async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message;errorList=(e.errors??[]).filter(x=>x.path?.startsWith('/content'))}finally{busy=false}}
  $effect(()=>{if(webSession)work(async()=>{vocabulary=await api('vocabulary');contract=await api('contracts/dsl');await refreshSaved();status='DSL 계약을 읽었습니다'})})
  $effect(()=>{assetRevision;if(webSession)allItems(api,'assets').then(v=>{assets=v}).catch(e=>{status=e.message})})
- async function upload(event){await work(async()=>{const file=event.target.files[0];if(!file)return;const parsed=JSON.parse(await file.text());await fillSharedPresets(parsed);savedId='';revision=0;presetRefs=[];genesisBackup=null;original=structuredClone(parsed);document=structuredClone(parsed);valid=false;fingerprint='';const prepared=await api('test-cases/import','POST',{content:parsed,presets});document=prepared.content;valid=true;fingerprint=prepared.semanticFingerprint;importDiff=prepared.migrated?declarationDiff(parsed,prepared.content):[];errorList=[];status=prepared.migrationMessage??(prepared.migrated?'v1을 옮겼습니다. 실행 의미는 그대로입니다':'가져왔습니다. 엔진 검증 통과')})}
+ async function upload(event){await work(async()=>{const file=event.target.files[0];if(!file)return;const parsed=JSON.parse(await file.text());await fillSharedPresets(parsed);savedId='';revision=0;presetRefs=[];genesisBackup=null;editorKey++;original=structuredClone(parsed);document=structuredClone(parsed);valid=false;fingerprint='';const prepared=await api('test-cases/import','POST',{content:parsed,presets});document=prepared.content;valid=true;fingerprint=prepared.semanticFingerprint;importDiff=prepared.migrated?declarationDiff(parsed,prepared.content):[];errorList=[];status=prepared.migrationMessage??(prepared.migrated?'v1을 옮겼습니다. 실행 의미는 그대로입니다':'가져왔습니다. 엔진 검증 통과')})}
  async function uploadPreset(event){await work(async()=>{for(const file of event.target.files){const preset=JSON.parse(await file.text());if(!preset.id)throw new Error('프리셋에 id가 필요합니다');presets={...presets,[preset.id]:preset}};status='참조 프리셋을 불러왔습니다'})}
+ // A different document (loaded, imported, new or duplicated) starts the
+ // statement editor again at the case settings.
+ let editorKey=$state(0)
  function change(next){document=next;valid=false;fingerprint='';status='고쳤습니다. 내보내기 전에 검증하세요'}
  function selectGenesis(id){
   const next=structuredClone($state.snapshot(document)),legacy=next.schemaVersion==='1'
@@ -66,7 +69,7 @@
  }
  async function validate(){await work(async()=>{errorList=[];const result=await api('test-cases/import','POST',{content:document,presets});document=result.content;valid=true;fingerprint=result.semanticFingerprint;status='엔진 검증 통과'})}
  // A duplicate is a new, unsaved case; saving it creates another shared document.
- function duplicate(){const copy=duplicateCase($state.snapshot(document),savedCases.map(c=>c.name));original=null;savedId='';revision=0;presetRefs=[];importDiff=[];change(copy);status=`${copy.id}(으)로 복제했습니다. 검증하고 저장하면 새 공유 테스트가 됩니다`}
+ function duplicate(){editorKey++;const copy=duplicateCase($state.snapshot(document),savedCases.map(c=>c.name));original=null;savedId='';revision=0;presetRefs=[];importDiff=[];change(copy);status=`${copy.id}(으)로 복제했습니다. 검증하고 저장하면 새 공유 테스트가 됩니다`}
  function download(content,name){const url=URL.createObjectURL(new Blob([JSON.stringify(content,null,2)],{type:'application/json'}));const a=globalThis.document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 </script>
 <section aria-label="구조 DSL 편집기" class="dsl">
@@ -75,7 +78,7 @@
   <p>{role} · 등록된 동작, 단언, 읽기 {vocabulary?.entries.length??0}개</p>
   <label>공유 테스트 <select aria-label="공유 테스트" value={savedId} onchange={e=>loadSaved(e.target.value)}><option value="">새 테스트</option>{#each savedCases as item}<option value={item.id}>{item.name} · revision {item.revision}</option>{/each}</select></label>
   {#if role!=='viewer'}
-  <button onclick={()=>{original=null;savedId='';revision=0;genesisBackup=null;change({schemaVersion:"2",kind:"case",id:"new-test",chainPreset:{chain:"stablenet",binaries:{default:"gstable"},topology:{bp:4}},steps:[{expect:"blockNumber",is:1}]})}}>새 테스트 시나리오</button>
+  <button onclick={()=>{editorKey++;original=null;savedId='';revision=0;genesisBackup=null;change({schemaVersion:"2",kind:"case",id:"new-test",chainPreset:{chain:"stablenet",binaries:{default:"gstable"},topology:{bp:4}},steps:[{expect:"blockNumber",is:1}]})}}>새 테스트 시나리오</button>
   <label>참조 프리셋 파일 <input aria-label="참조 프리셋 파일" type="file" multiple accept=".json,application/json" onchange={uploadPreset} /></label>
   <label>테스트 JSON 가져오기 <input aria-label="테스트 JSON 가져오기" type="file" accept=".json,application/json" onchange={upload} /></label>
   {#if document&&contract}
@@ -84,7 +87,7 @@
     <p>선택한 파일을 그대로 사용합니다. 선택을 해제하면 이전 생성 설정을 복원합니다.</p>
     {#if finishedGenesisRef(document)&&!selectedGenesis}<p>기존 선언 참조: {finishedGenesisRef(document)} · 실행하려면 등록된 자료를 선택하세요.</p>{/if}
    {/if}
-   <StatementEditor {document} {contract} errors={errorList} {suggestions} onchange={change} />
+   {#key editorKey}<StatementEditor {document} {contract} errors={errorList} {suggestions} onchange={change} />{/key}
    {#if importDiff.length}<details open data-testid="import-diff"><summary>v1 가져오기에서 바뀐 곳 {importDiff.length}개</summary><ul>{#each importDiff as d}<li><code>{d.path}</code> · {({added:'추가됨',removed:'없어짐',changed:'바뀜'})[d.kind]}</li>{/each}</ul></details>{/if}
    <button disabled={busy} onclick={validate}>테스트 시나리오 검증</button>
    <button disabled={!valid||busy} onclick={()=>download(document,'test-case.json')}>테스트 시나리오 내보내기</button>
