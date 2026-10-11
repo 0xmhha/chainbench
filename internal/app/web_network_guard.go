@@ -38,7 +38,7 @@ func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPaylo
 		if vacant && ns.PID != 0 {
 			return ErrDeploymentConflict
 		}
-		if err = verifyWebNodeProcesses(ctx, state, []string{string(ns.NodeLabel())}, lookup); err != nil {
+		if err = verifyWebNodeProcesses(ctx, state, []string{string(ns.NodeLabel())}, lookup, p.Targets...); err != nil {
 			return err
 		}
 	}

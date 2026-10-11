@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -117,7 +118,10 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	return nil
 }
 
-func verifyWebNodeProcesses(ctx context.Context, state State, selected []string, lookup resource.Lookup) error {
+// verifyWebNodeProcesses observes one recorded node on its own machine. The
+// machine must be the network's recorded target or, for a spread network,
+// one of the other machines its plan pinned in also.
+func verifyWebNodeProcesses(ctx context.Context, state State, selected []string, lookup resource.Lookup, also ...resource.Inspection) error {
 	if len(selected) != 1 {
 		return ErrDeploymentConflict
 	}
@@ -138,7 +142,7 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		if err != nil {
 			return err
 		}
-		if target != owned {
+		if target != owned && !slices.Contains(also, target) {
 			return ErrDeploymentConflict
 		}
 		observer := webObserverFor(access, target)

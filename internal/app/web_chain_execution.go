@@ -204,6 +204,14 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		return result, err
 	}
 	setPath, configPath := filepath.Join(p.ControlDir, "server-set.yaml"), filepath.Join(p.ControlDir, "workspace-config.yaml")
+	setDeclaration, err := deploymentSet(p.Set.DeploymentDocumentInput)
+	if err != nil {
+		return result, err
+	}
+	servers, err := webPlanServers(setDeclaration, p.Arguments, p.Input.Operation)
+	if err != nil {
+		return result, err
+	}
 	steps := []struct {
 		name string
 		run  func() error
@@ -227,15 +235,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if err = files.Write(ctx, configPath, config, 0600); err != nil {
 				return err
 			}
-			setDeclaration, err := deploymentSet(p.Set.DeploymentDocumentInput)
-			if err != nil {
-				return err
-			}
-			server, err := setDeclaration.ByName(p.Arguments.ServerRef)
-			if err != nil {
-				return err
-			}
-			in := ChainNewIn{DataDir: p.ControlDir, Chain: p.Manifest.ID, Binary: p.ExecutionBinary, KeysDir: keysDir, Target: resource.TargetOf(server, wc.DataRoot), ServerSet: setPath, WorkspaceConfigPath: configPath}
+			in := ChainNewIn{DataDir: p.ControlDir, Chain: p.Manifest.ID, Binary: p.ExecutionBinary, KeysDir: keysDir, Target: resource.TargetOf(servers[0], wc.DataRoot), ServerSet: setPath, WorkspaceConfigPath: configPath}
 			if p.Manifest.Source == "external" {
 				in.ManifestPath, in.TemplatePath, err = e.manifests.files.Pin(p.ControlDir, p.Manifest.Manifest, []byte(p.Manifest.Template))
 				if err != nil {
@@ -249,10 +249,22 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			if err != nil {
 				return err
 			}
-			return files.Write(ctx, filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600)
+			if err = files.Write(ctx, filepath.Join(p.ControlDir, "web-target.json"), metadata, 0600); err != nil {
+				return err
+			}
+			if len(p.Targets) == 0 {
+				return nil
+			}
+			// A spread network records every machine; readers that know only
+			// one target refuse its controls rather than guess.
+			all, err := json.Marshal(p.Targets)
+			if err != nil {
+				return err
+			}
+			return files.Write(ctx, filepath.Join(p.ControlDir, "web-targets.json"), all, 0600)
 		}},
 		{"place", func() error {
-			_, err := ChainAllocate(ctx, d, ChainAllocateIn{DataDir: p.ControlDir, BPCount: composition.BPCount, ENCount: composition.ENCount, PNCount: composition.PNCount, EndpointSyncMode: composition.EndpointSyncMode, Topology: composition.Topology, Binaries: composition.Binaries, BinaryChains: composition.BinaryChains, Peering: composition.Peering, Server: resource.ServerRef{SetPath: setPath, Name: p.Arguments.ServerRef}})
+			_, err := ChainAllocate(ctx, d, ChainAllocateIn{DataDir: p.ControlDir, BPCount: composition.BPCount, ENCount: composition.ENCount, PNCount: composition.PNCount, EndpointSyncMode: composition.EndpointSyncMode, Topology: composition.Topology, Binaries: composition.Binaries, BinaryChains: composition.BinaryChains, Peering: composition.Peering, Server: resource.ServerRef{SetPath: setPath, Name: p.Arguments.ServerRef, All: p.Arguments.AllServers}})
 			return err
 		}},
 		{"keys", func() error {
@@ -280,18 +292,6 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 		}},
 		{"deploy", func() error {
 			if p.Target.Transport == "ssh" {
-				set, err := deploymentSet(p.Set.DeploymentDocumentInput)
-				if err != nil {
-					return err
-				}
-				server, err := set.ByName(p.Arguments.ServerRef)
-				if err != nil {
-					return err
-				}
-				access, err := (resource.Opener{Lookup: lookup}).Open(resource.TargetOf(server, wc.DataRoot))
-				if err != nil {
-					return err
-				}
 				b, err := os.ReadFile(asset.Path)
 				if err != nil {
 					return err
@@ -299,15 +299,22 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				if manifestHash(b) != p.Binary.SHA256 {
 					return ErrDeploymentConflict
 				}
-				if err = access.Files.Write(ctx, p.ExecutionBinary, b, 0755); err != nil {
-					return err
-				}
-				checksum, err := access.Files.Checksum(ctx, p.ExecutionBinary)
-				if err != nil {
-					return err
-				}
-				if checksum != "sha256:"+p.Binary.SHA256 {
-					return errors.New("remote binary checksum differs from accepted asset")
+				// Every machine of a spread network runs the same verified bytes.
+				for _, server := range servers {
+					access, err := (resource.Opener{Lookup: lookup}).Open(resource.TargetOf(server, wc.DataRoot))
+					if err != nil {
+						return err
+					}
+					if err = access.Files.Write(ctx, p.ExecutionBinary, b, 0755); err != nil {
+						return err
+					}
+					checksum, err := access.Files.Checksum(ctx, p.ExecutionBinary)
+					if err != nil {
+						return err
+					}
+					if checksum != "sha256:"+p.Binary.SHA256 {
+						return errors.New("remote binary checksum differs from accepted asset on " + server.Name)
+					}
 				}
 			}
 			_, err := ChainProvision(ctx, d, ChainProvisionIn{DataDir: p.ControlDir})

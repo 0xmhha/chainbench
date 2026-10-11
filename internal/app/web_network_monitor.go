@@ -107,6 +107,11 @@ func recordedMonitorTarget(p webChainPayload) error {
 	if recorded != p.Target {
 		return ErrDeploymentConflict // The owned network lives elsewhere.
 	}
+	// A spread network keeps nodes on other machines whose logs this job's
+	// one SSH binding cannot read.
+	if _, err = os.Stat(filepath.Join(p.ControlDir, "web-targets.json")); err == nil {
+		return errSpreadControls
+	}
 	return nil
 }
 

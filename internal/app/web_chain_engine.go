@@ -64,9 +64,12 @@ func (e *WebChainEngine) binaryAsset(id string) (ManifestBinary, error) {
 }
 
 type webChainArguments struct {
-	ManifestID         string                  `json:"manifestId"`
-	AssetID            string                  `json:"assetId"`
-	ServerRef          string                  `json:"serverRef"`
+	ManifestID string `json:"manifestId"`
+	AssetID    string `json:"assetId"`
+	ServerRef  string `json:"serverRef"`
+	// AllServers spreads a composed network over every server of the pinned
+	// set, as the engine's whole-set allocation does, instead of one server.
+	AllServers         bool                    `json:"allServers,omitempty"`
 	Validators         int                     `json:"validators"`
 	ReplacementAssetID string                  `json:"replacementAssetId,omitempty"`
 	ConfigOverrides    map[string]string       `json:"configOverrides,omitempty"`
@@ -77,26 +80,29 @@ type webChainArguments struct {
 	ChainPresetRef *DeploymentDocumentRef `json:"chainPresetRef,omitempty"`
 }
 type webChainPayload struct {
-	Input              WebPlanInput           `json:"input"`
-	Arguments          webChainArguments      `json:"arguments"`
-	WorkspaceRevision  int                    `json:"workspaceRevision"`
-	Set                DeploymentDocument     `json:"set"`
-	Config             DeploymentDocument     `json:"config"`
-	Manifest           ManagedManifest        `json:"manifest"`
-	Binary             ManifestBinaryEvidence `json:"binary"`
-	ControlDir         string                 `json:"controlDir"`
-	RecordDigest       string                 `json:"recordDigest"`
-	Target             resource.Inspection    `json:"target"`
-	ExecutionBinary    string                 `json:"executionBinary"`
-	Keys               webKeySnapshot         `json:"keys"`
-	TestRun            *webTestRun            `json:"testRun,omitempty"`
-	Attach             *webTestAttach         `json:"attach,omitempty"`
-	NamedBinaries      []webNamedBinary       `json:"namedBinaries,omitempty"`
-	Preset             *webPresetComposition  `json:"preset,omitempty"`
-	CurrentNodeBinary  *webNodeBinary         `json:"currentNodeBinary,omitempty"`
-	NodeBindingsDigest string                 `json:"nodeBindingsDigest,omitempty"`
-	Replacement        *webBinaryReplacement  `json:"replacement,omitempty"`
-	ChainSurfaces      []WebChainSurfaceRef   `json:"chainSurfaces,omitempty"`
+	Input             WebPlanInput           `json:"input"`
+	Arguments         webChainArguments      `json:"arguments"`
+	WorkspaceRevision int                    `json:"workspaceRevision"`
+	Set               DeploymentDocument     `json:"set"`
+	Config            DeploymentDocument     `json:"config"`
+	Manifest          ManagedManifest        `json:"manifest"`
+	Binary            ManifestBinaryEvidence `json:"binary"`
+	ControlDir        string                 `json:"controlDir"`
+	RecordDigest      string                 `json:"recordDigest"`
+	Target            resource.Inspection    `json:"target"`
+	// Targets lists every machine of a spread network in server order; the
+	// first is Target. It is empty for a network on one server.
+	Targets            []resource.Inspection `json:"targets,omitempty"`
+	ExecutionBinary    string                `json:"executionBinary"`
+	Keys               webKeySnapshot        `json:"keys"`
+	TestRun            *webTestRun           `json:"testRun,omitempty"`
+	Attach             *webTestAttach        `json:"attach,omitempty"`
+	NamedBinaries      []webNamedBinary      `json:"namedBinaries,omitempty"`
+	Preset             *webPresetComposition `json:"preset,omitempty"`
+	CurrentNodeBinary  *webNodeBinary        `json:"currentNodeBinary,omitempty"`
+	NodeBindingsDigest string                `json:"nodeBindingsDigest,omitempty"`
+	Replacement        *webBinaryReplacement `json:"replacement,omitempty"`
+	ChainSurfaces      []WebChainSurfaceRef  `json:"chainSurfaces,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -180,19 +186,24 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	server, err := set.Select(args.ServerRef, 0)
+	servers, err := webPlanServers(set, args, in.Operation)
 	if err != nil {
 		return out, err
 	}
+	server := servers[0]
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
 		return out, err
 	}
-	if len(in.CredentialBindings) > 1 {
-		return out, errors.New("select only the target server's personal SSH binding")
+	if len(in.CredentialBindings) > len(servers) {
+		return out, errors.New("select only the target servers' personal SSH bindings")
 	}
 	for name, id := range in.CredentialBindings {
-		if name != args.ServerRef || id == "" || e.documents.Bindings(a, in.WorkspaceID)[name] != id {
+		selected := false
+		for _, s := range servers {
+			selected = selected || s.Name == name
+		}
+		if !selected || id == "" || e.documents.Bindings(a, in.WorkspaceID)[name] != id {
 			return out, ErrDeploymentConflict
 		}
 	}
@@ -200,9 +211,18 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	p.Target, err = (resource.Opener{Lookup: lookup}).Inspect(ctx, resource.TargetOf(server, wc.DataRoot))
+	targets, err := webInspectServers(ctx, lookup, servers, wc.DataRoot)
 	if err != nil {
 		return out, err
+	}
+	p.Target = targets[0]
+	if len(targets) > 1 {
+		p.Targets = targets
+		for _, t := range targets[1:] {
+			if t.Transport != p.Target.Transport {
+				return out, errors.New("a spread network needs servers of one kind")
+			}
+		}
 	}
 	if p.Target.Transport == "local" && len(in.CredentialBindings) != 0 {
 		return out, errors.New("local operations do not accept SSH credential bindings")
@@ -226,8 +246,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	if p.Binary.OS != p.Target.OS || p.Binary.Architecture != p.Target.Architecture {
-		return out, errors.New("selected native binary does not match the verified target platform")
+	for _, t := range webPayloadTargets(p) {
+		if p.Binary.OS != t.OS || p.Binary.Architecture != t.Architecture {
+			return out, errors.New("selected native binary does not match the verified target platform")
+		}
 	}
 	p.ExecutionBinary = asset.Path
 	if p.Target.Transport == "ssh" {
@@ -290,6 +312,11 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 	}
 	pool := set.PoolFor(server, p.Arguments.Validators, server.Slots)
+	if args.AllServers {
+		if pool, err = set.Pool(p.Arguments.Validators, 0); err != nil {
+			return out, err
+		}
+	}
 	pool.Reservation = plugin.Family().PortReservation()
 	var placement *node.Map
 	if controlState != nil {
@@ -302,16 +329,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err != nil {
 		return out, err
 	}
-	ports := []int{}
-	for _, entry := range placement.Placements() {
-		for _, port := range []int{entry.Ports.P2P, entry.Ports.Etcd, entry.Ports.EtcdClient, entry.Ports.HTTP, entry.Ports.WS, entry.Ports.Auth, entry.Ports.Metrics} {
-			if port > 0 {
-				ports = append(ports, port)
-			}
-		}
-	}
-	slices.Sort(ports)
-	ports = slices.Compact(ports)
+	targetClaims := webTargetClaims(servers, webPayloadTargets(p), placement)
 	controlTarget, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
 		return out, err
@@ -351,10 +369,13 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		}
 		delete(expectedAssets, id)
 	}
-	out.Claims = []WebResourceClaim{{HostIdentity: p.Target.HostIdentity, DataPath: p.Target.DataPath, Ports: ports}, {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
+	out.Claims = []WebResourceClaim{targetClaims[0], {HostIdentity: controlTarget.HostIdentity, DataPath: controlTarget.DataPath}}
 	if webLaunchesNodes(in.Operation) {
 		out.Claims = append(out.Claims, webExecutableClaims(p)...)
 	}
+	// Further machines of a spread network follow, so the first two claims
+	// keep meaning the first machine and the control directory.
+	out.Claims = append(out.Claims, targetClaims[1:]...)
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
 		if controlState != nil && manifestHash(record) != p.RecordDigest {
@@ -363,6 +384,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		var state State
 		if err = json.Unmarshal(record, &state); err != nil {
 			return out, err
+		}
+		if webRecordSpansServers(state) && in.Operation != "chain.setup" && in.Operation != "chain.deploy" {
+			return out, errSpreadControls
 		}
 		ownedTarget, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
 		if err != nil {
@@ -591,7 +615,7 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if err != nil {
 		return WebJobResult{}, err
 	}
-	server, err := set.ByName(p.Arguments.ServerRef)
+	servers, err := webPlanServers(set, p.Arguments, p.Input.Operation)
 	if err != nil {
 		return WebJobResult{}, err
 	}
@@ -603,11 +627,11 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if err != nil {
 		return WebJobResult{}, err
 	}
-	target, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, resource.TargetOf(server, wc.DataRoot))
+	targets, err := webInspectServers(ctx, lookup, servers, wc.DataRoot)
 	if err != nil {
 		return WebJobResult{}, err
 	}
-	if target != p.Target {
+	if !slices.Equal(targets, webPayloadTargets(p)) {
 		return WebJobResult{}, ErrDeploymentConflict
 	}
 	control, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
@@ -621,8 +645,17 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 	if webLaunchesNodes(p.Input.Operation) {
 		launches = webExecutableClaims(p)
 	}
-	if len(prepared.Claims) != 2+len(launches) {
+	if len(prepared.Claims) != 2+len(launches)+len(targets)-1 {
 		return WebJobResult{}, ErrDeploymentConflict
+	}
+	for i, t := range targets {
+		claim := prepared.Claims[0]
+		if i > 0 {
+			claim = prepared.Claims[1+len(launches)+i]
+		}
+		if claim.HostIdentity != t.HostIdentity || claim.DataPath != t.DataPath {
+			return WebJobResult{}, ErrDeploymentConflict
+		}
 	}
 	for i, launch := range launches {
 		if got := prepared.Claims[2+i]; got.HostIdentity != launch.HostIdentity || got.Executable != launch.Executable || got.DataPath != "" || len(got.Ports) != 0 {

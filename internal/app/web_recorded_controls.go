@@ -10,8 +10,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// validateWebControlLayout limits the adapter to the selected single server and
-// the owned composition's paths. The core may resolve each node by server name,
+// validateWebControlLayout limits the adapter to the selected server, or the
+// whole set for a spread composition, and the owned composition's paths. The core may resolve each node by server name,
 // so checking only the composition target would not establish its effect scope.
 func validateWebControlLayout(state State, p webChainPayload, wc resource.WorkspaceConfig) error {
 	if state.FormatVersion != 3 || !regexp.MustCompile(`^[0-9a-f]{12}$`).MatchString(state.CompositionID) || len(state.Nodes) == 0 {
@@ -21,7 +21,7 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 	if err != nil {
 		return err
 	}
-	server, err := set.ByName(p.Arguments.ServerRef)
+	servers, err := webPlanServers(set, p.Arguments, p.Input.Operation)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,11 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 		if node.Is(role, node.RoleBP) {
 			producers++
 		}
-		if ns.Server != "" && ns.Server != p.Arguments.ServerRef || ns.Host != server.Host || ns.DataDir != layout.DataDir(label) || ns.ConfigPath != layout.ConfigPath(label) || ns.LogPath != layout.LogPath(label) || !filepath.IsAbs(ns.DataDir) {
+		placed := false
+		for _, server := range servers {
+			placed = placed || (ns.Server == "" || ns.Server == server.Name) && ns.Host == server.Host
+		}
+		if !placed || ns.DataDir != layout.DataDir(label) || ns.ConfigPath != layout.ConfigPath(label) || ns.LogPath != layout.LogPath(label) || !filepath.IsAbs(ns.DataDir) {
 			return ErrDeploymentConflict
 		}
 	}

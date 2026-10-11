@@ -44,6 +44,14 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	for _, ns := range state.Nodes {
 		network.Nodes = append(network.Nodes, WebNode{ID: string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()})
 	}
+	if webRecordSpansServers(state) {
+		// Observation knows one machine per network; nodes on the others
+		// would be probed on the wrong host, so none is probed.
+		for i := range network.Nodes {
+			network.Nodes[i].HostIdentity, network.Nodes[i].ObservationReason = "", "spread_network"
+		}
+		return network, nil
+	}
 	ledgerMatches := verifyWebRecordLedger(state, dir) == nil
 	var declaration DeploymentDocument
 	p := webChainPayload{ControlDir: dir, Target: target}
