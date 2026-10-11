@@ -710,9 +710,10 @@
         "web/src/dsl-form.js:46"
       ],
       "completion": "web/src에 이 선택지 문자열 목록이 없고 화면은 계약 응답으로 선택지를 만든다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run 'TestJobsContractListsTheOperationsTheEngineAccepts|TestChainPresetContractTitlesCountsAndSync|TestAccessContractListsWhatTheServerAccepts'; go test ./internal/dashboard -run 'TestJobsContractListsOperationsToSignedInUsers|TestWebSecuritySessionsRolesAndRedaction'; node --test tests/webui/chain_contract.test.mjs tests/webui/dsl-form.test.mjs; grep for fixed syncMode, role, operation and credential kind option lists in web/src finds none. The screens were not opened in a browser in this step; the acceptance rerun covers that.",
+      "commit": "a37327c4",
+      "evidence": "RED (observed in the session, not saved to a log): webKnownOperation, AccessContract and the chain-contract module did not exist, the /api/v1/contracts/jobs test failed, and references() invented bp/en/pn without a contract. GREEN: /api/v1/contracts/jobs and /api/v1/contracts/access list what the engine accepts, built from the same lists Prepare, validWebRole and validCredentialShape check; the chain preset contract titles bp, en, pn and syncMode; JobPanel, ChainPresetEditor, CredentialManager, UserManager and DSL node suggestions read these responses. The access contract came with 0285ba2a."
     },
     {
       "id": "G-C11",
