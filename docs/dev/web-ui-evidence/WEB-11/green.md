@@ -1,8 +1,8 @@
 # WEB-11 GREEN
 
-The final frozen-source cycle on commit `c5f23d85` (source digest `a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f`, unchanged from start to end) passed this criterion twice.
+The final frozen-source cycle on commit `91dc9336` (source digest `37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8`, unchanged from start to end) passed this criterion twice.
 
-- Published capture: invocation `ee689e43-cd7f-4a0c-acbf-8d0d5d6f19e0`, outcome `pass`, evidence digest `6c3f9fc2e8639139487936b4fa33f22362ceb907f93106fb7de2ecf4fb3d215e`.
+- Published capture: invocation `95114dbc-df73-49d7-8765-d27e2090cce8`, outcome `pass`, evidence digest `c2d87720a718ecf3f8557c3457290ac1cffe8b2183080a57866b39bf24d4475d`.
 - An independent reproduction from a staged source copy without `.git` or `chainbench-out` printed `WEB-11 PASS (fresh reproduction; protected source/evidence unchanged)`.
 - Required scenarios executed: 6 of 6; skipped: none; failed assertions: none.
 

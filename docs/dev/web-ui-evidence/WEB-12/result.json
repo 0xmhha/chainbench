@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-12",
-  "invocationId": "8a968c73-7167-4c5a-8ff7-8a245bd8551b",
-  "startedAt": "2026-10-10T10:46:10.957750+00:00",
-  "finishedAt": "2026-10-10T10:47:20.725151+00:00",
+  "invocationId": "a45695df-a746-4e0d-9c80-3a2edea6eb4a",
+  "startedAt": "2026-10-10T14:43:55.866332+00:00",
+  "finishedAt": "2026-10-10T14:45:09.227371+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "restart-marks-running-work-interrupted",
@@ -20,5 +20,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "c7971f8d77250eca448b3fa23f5b2bcb5561c0e42a118fcd3f6a48ed65f7bef5"
+  "evidenceDigest": "eca6ad13381f97bdc79bba717046d241719eab2c5aac0a4b09b84f434268e7b3"
 }

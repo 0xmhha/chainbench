@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-08",
-  "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
+  "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
   "scenarios": [
     {
       "id": "native-state-metric-charts",
@@ -24,19 +24,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-          "sha256": "2654a905b98d3cff0f99191957a78e4a22497c227423b2e6f20fcfbc0b9ac0c9"
+          "sha256": "071dade367a36efb314087892088bb0706ab3bab2b74b2ee1ba19a92e20d7f13"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-          "sha256": "b8c80cd3500ea6b2676af93fcd65573e9615ae67c906b6102ef37e39c96431b8"
+          "sha256": "59418a3a9225f35cf0efd2b707d5a02082c930338b1867cc904b29426a27df2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-desktop.png",
-          "sha256": "8ef03c09207fb770bd803c1673066d126c39f53cff72f3cdfa6e1889237bb2ae"
+          "sha256": "65cf619a89346d087fc4b81cd114d7778a4b2104d795b171748152524587d85a"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     },
     {
       "id": "time-linked-logs",
@@ -56,19 +56,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-          "sha256": "2654a905b98d3cff0f99191957a78e4a22497c227423b2e6f20fcfbc0b9ac0c9"
+          "sha256": "071dade367a36efb314087892088bb0706ab3bab2b74b2ee1ba19a92e20d7f13"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-          "sha256": "2f90eaec844e185e9215d0bb9a15e80280f0470ff13a6ab0b1534ef590da322a"
+          "sha256": "793bc4401c3046ba3ee0ac9ac41fe6051090219636225fce41e0805debcad4d6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-ssh-log-collection.png",
-          "sha256": "59b1a6db8dda51cb40851c19cc026f0e9860c525a79adce12818ab86eebb2dbe"
+          "sha256": "79fe0682c940398b41cb05ba775d066ae9a06499d81a086d71ac6157fd97511d"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     },
     {
       "id": "browser-close-logout-continuity",
@@ -92,15 +92,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-          "sha256": "6664704ab6bef030d62556af6bf16b9ea5c60f60259e36149a3d02bb40bc9ffa"
+          "sha256": "261210d95167e51723e20add9354b72f457ea09cee245ef11668c484a654c150"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-          "sha256": "ed33085aee477d6171a22c4d24e82e082da222bf98f03d77dc836f1685f9f92e"
+          "sha256": "b83bc7618ab56d02f50aa9221f5cc5411eb4ab1af5b974ccdded3d29ce823445"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     },
     {
       "id": "reconnect-snapshot-restore",
@@ -124,15 +124,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-          "sha256": "ed33085aee477d6171a22c4d24e82e082da222bf98f03d77dc836f1685f9f92e"
+          "sha256": "b83bc7618ab56d02f50aa9221f5cc5411eb4ab1af5b974ccdded3d29ce823445"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-after-restart.json",
-          "sha256": "70ecef68233f0e255a14d4da057d9a9aa34e16db56e1b79ff0ec87e8c47fe0fe"
+          "sha256": "9523d9c2d894758d63813defd9f4b7ace468673eee3cbfe675defd72b0bf95e2"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     },
     {
       "id": "sse-gap-drop-stale",
@@ -160,19 +160,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-          "sha256": "6664704ab6bef030d62556af6bf16b9ea5c60f60259e36149a3d02bb40bc9ffa"
+          "sha256": "261210d95167e51723e20add9354b72f457ea09cee245ef11668c484a654c150"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-stream-disconnected.png",
-          "sha256": "e05fbccb9332c66722e422917bbef5f7ea4416e90bb33f165681fb743dbda367"
+          "sha256": "94cb92da9c97e7584ff86c65d1b0a8107d1ced28b48d8d8134ee9000e0333dbf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-          "sha256": "67db491365bb074e9e39ba92167c4eae81e4d41c3a0330befb29e6e41e09dfd6"
+          "sha256": "8fcf5dae4b421dd9d08c03393824f92cc910b01714383d1bd9c472e93ad69f32"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     },
     {
       "id": "collection-failure-reporting",
@@ -196,19 +196,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-          "sha256": "b8c80cd3500ea6b2676af93fcd65573e9615ae67c906b6102ef37e39c96431b8"
+          "sha256": "59418a3a9225f35cf0efd2b707d5a02082c930338b1867cc904b29426a27df2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-logs-after-revocation.json",
-          "sha256": "db590f7c00f0fc97fc5f21c9b52af7b3a0996a816a3900affdaf2ba4a47ebf38"
+          "sha256": "ba531775fbbbbdf5c1d3bd0bc598aa7f8ade775823c5d92373a09d296dd51d3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-          "sha256": "2f90eaec844e185e9215d0bb9a15e80280f0470ff13a6ab0b1534ef590da322a"
+          "sha256": "793bc4401c3046ba3ee0ac9ac41fe6051090219636225fce41e0805debcad4d6"
         }
       ],
-      "invocationId": "b3bf34ea-588c-430b-a860-3a431144b453",
-      "observedAt": "2026-10-10T10:30:43.285011+00:00"
+      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "observedAt": "2026-10-10T14:24:42.505917+00:00"
     }
   ],
   "checks": [
@@ -216,21 +216,21 @@
       "command": "go test -race -count=1 ./internal/app ./internal/dashboard ./internal/core/session -run \"TestJobObservation|TestJobSnapshot|TestWebMonitor|TestWebRemoteLogs|TestMonitorRoutes|TestObservationStore|TestWebHistory\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-      "sha256": "67db491365bb074e9e39ba92167c4eae81e4d41c3a0330befb29e6e41e09dfd6"
+      "sha256": "8fcf5dae4b421dd9d08c03393824f92cc910b01714383d1bd9c472e93ad69f32"
     },
     {
       "command": "node --test tests/webui/job-observation.test.mjs tests/webui/metric-chart.test.mjs",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-08/check-1.log",
-      "sha256": "a7891243a64fceb75680829e46424566ddf07876e998892833c32b53644cd5a3"
+      "sha256": "8814d84c1b7df8dc87f263328b922fda791cc4234610c8befb2c167627414593"
     }
   ],
   "proofs": [
     {
       "name": "monitoring",
-      "startedAt": "2026-10-10T10:26:07.615940+00:00",
-      "runtime": "/private/tmp/cbui/4d4bea5e-e283-4d4b-bf0d-9769118b5a74",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:20:07.393563+00:00",
+      "runtime": "/private/tmp/cbui/52dc8782-415a-4be8-bdcc-8e8fafa5d3b5",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -261,9 +261,9 @@
     },
     {
       "name": "snapshot-restore",
-      "startedAt": "2026-10-10T10:27:02.980300+00:00",
-      "runtime": "/private/tmp/cbui/167ded63-82b5-4749-b183-c56d9f2b0a2a",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:21:03.757148+00:00",
+      "runtime": "/private/tmp/cbui/118bdbd9-5552-4226-b2d0-bdaa980c2a96",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -294,9 +294,9 @@
     },
     {
       "name": "ssh-log-collection",
-      "startedAt": "2026-10-10T10:27:59.093676+00:00",
-      "runtime": "/private/tmp/cbui/233ba5f9-2761-47f1-a1c5-0bb4711bafae",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:21:59.520772+00:00",
+      "runtime": "/private/tmp/cbui/74a09fcd-7f50-4bb7-8a21-2088e2582337",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -327,9 +327,9 @@
     },
     {
       "name": "logout-continuity",
-      "startedAt": "2026-10-10T10:29:40.679756+00:00",
-      "runtime": "/private/tmp/cbui/39651596-5eb5-4dab-a830-910a8a3b6469",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:23:42.018912+00:00",
+      "runtime": "/private/tmp/cbui/042517fc-5e86-46ea-9ef0-705a17c6b189",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -360,8 +360,8 @@
     }
   ],
   "server": {
-    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
-    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -402,7 +402,7 @@
   "source": [
     {
       "path": "internal/app/web_monitor.go",
-      "sha256": "a8d719c6fbef9d8b7e2d1d1fb5624a377f9198e932dd4a1d128185ba7933682c"
+      "sha256": "8a030c3af3f5671b932c6d320943a6c8de45d75aa9841ac6200e991b84b0081d"
     },
     {
       "path": "internal/app/web_monitor_archive.go",
@@ -410,7 +410,7 @@
     },
     {
       "path": "internal/app/web_monitor_log.go",
-      "sha256": "b4b58ca96872cb84f390ba1c6d7e70202d12ef3ead1556a82cb3a9ad51aeda6c"
+      "sha256": "0ed37c6365b92ff777c868379f48338847255e50f6171eea05959a00c1744856"
     },
     {
       "path": "internal/app/web_monitor_read.go",
@@ -418,11 +418,15 @@
     },
     {
       "path": "internal/app/web_monitor_remote.go",
-      "sha256": "12616052a111433d89982bebebb01e553c0714348ec090591b8c7751a88a8978"
+      "sha256": "aa70d0723d67f66857f32d633e8c9283b8f4c4c5f7eccf7dad9e6338d32ed27d"
     },
     {
       "path": "internal/app/web_monitor_remote_test.go",
       "sha256": "5dfc6abb8c6fbafdaccfb11f6acfcda59d144520cd227e7e1f88144798d818f2"
+    },
+    {
+      "path": "internal/app/web_monitor_rotation_test.go",
+      "sha256": "3bc85c8ac1552678e33926d68d74ff2ec4047adcc722aa1e129250637b73bca8"
     },
     {
       "path": "internal/app/web_monitor_test.go",
@@ -504,19 +508,19 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-      "sha256": "67db491365bb074e9e39ba92167c4eae81e4d41c3a0330befb29e6e41e09dfd6"
+      "sha256": "8fcf5dae4b421dd9d08c03393824f92cc910b01714383d1bd9c472e93ad69f32"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/check-1.log",
-      "sha256": "a7891243a64fceb75680829e46424566ddf07876e998892833c32b53644cd5a3"
+      "sha256": "8814d84c1b7df8dc87f263328b922fda791cc4234610c8befb2c167627414593"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-continuity-mobile.png",
-      "sha256": "bf6b7ea353bfc93f53df2cb2efc8a65999e15196c975472c22b3e5b5cbb4f586"
+      "sha256": "1aecb97e82dc3ff4bdcd34f9d3449d042f8e255ac9bb25151f4616b1122cf422"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-      "sha256": "6664704ab6bef030d62556af6bf16b9ea5c60f60259e36149a3d02bb40bc9ffa"
+      "sha256": "261210d95167e51723e20add9354b72f457ea09cee245ef11668c484a654c150"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-run.log",
@@ -524,27 +528,27 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-stream-disconnected.png",
-      "sha256": "e05fbccb9332c66722e422917bbef5f7ea4416e90bb33f165681fb743dbda367"
+      "sha256": "94cb92da9c97e7584ff86c65d1b0a8107d1ced28b48d8d8134ee9000e0333dbf"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-after-restart.json",
-      "sha256": "875315bfc8753012ca74620704a7847799d9c8ac417b67fc695cbbd03b765e2f"
+      "sha256": "667d8b9c0c99b2323980854d36d8e418adebbbdfc38d17c524ae96e9a99ee566"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-      "sha256": "b8c80cd3500ea6b2676af93fcd65573e9615ae67c906b6102ef37e39c96431b8"
+      "sha256": "59418a3a9225f35cf0efd2b707d5a02082c930338b1867cc904b29426a27df2d"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-desktop.png",
-      "sha256": "8ef03c09207fb770bd803c1673066d126c39f53cff72f3cdfa6e1889237bb2ae"
+      "sha256": "65cf619a89346d087fc4b81cd114d7778a4b2104d795b171748152524587d85a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-mobile.png",
-      "sha256": "89fa1615e05939a177a0e784870e4bc2858e97e457d3d13334111ae671354043"
+      "sha256": "90c0ca17431ab178b915894a2950a123e04a06a25f535b0c13c246bdda2ef938"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-      "sha256": "2654a905b98d3cff0f99191957a78e4a22497c227423b2e6f20fcfbc0b9ac0c9"
+      "sha256": "071dade367a36efb314087892088bb0706ab3bab2b74b2ee1ba19a92e20d7f13"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-run.log",
@@ -552,15 +556,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-after-restart.json",
-      "sha256": "70ecef68233f0e255a14d4da057d9a9aa34e16db56e1b79ff0ec87e8c47fe0fe"
+      "sha256": "9523d9c2d894758d63813defd9f4b7ace468673eee3cbfe675defd72b0bf95e2"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-before-restart.json",
-      "sha256": "46403a15cb66f545502a251763376d37f274af2f8230692cefdcc1cc7544ae0a"
+      "sha256": "fbe098b53470ea0415e53dfc31a0ac4cde0f051f433706900bf780c6d85873e7"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-      "sha256": "ed33085aee477d6171a22c4d24e82e082da222bf98f03d77dc836f1685f9f92e"
+      "sha256": "b83bc7618ab56d02f50aa9221f5cc5411eb4ab1af5b974ccdded3d29ce823445"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-run.log",
@@ -568,15 +572,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-snapshot-desktop.png",
-      "sha256": "5718f6234c5aee50d2607d3f84cb8762a73432f3eb36a5b10ab6dd86f1a54436"
+      "sha256": "17619f4bf09c4f0c05e40fc949db02f1f3fb72204c146fc250e08c86febb4af2"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-logs-after-revocation.json",
-      "sha256": "db590f7c00f0fc97fc5f21c9b52af7b3a0996a816a3900affdaf2ba4a47ebf38"
+      "sha256": "ba531775fbbbbdf5c1d3bd0bc598aa7f8ade775823c5d92373a09d296dd51d3e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-      "sha256": "2f90eaec844e185e9215d0bb9a15e80280f0470ff13a6ab0b1534ef590da322a"
+      "sha256": "793bc4401c3046ba3ee0ac9ac41fe6051090219636225fce41e0805debcad4d6"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-run.log",
@@ -584,9 +588,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-ssh-log-collection.png",
-      "sha256": "59b1a6db8dda51cb40851c19cc026f0e9860c525a79adce12818ab86eebb2dbe"
+      "sha256": "79fe0682c940398b41cb05ba775d066ae9a06499d81a086d71ac6157fd97511d"
     }
   ],
   "blockers": [],
-  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
 }

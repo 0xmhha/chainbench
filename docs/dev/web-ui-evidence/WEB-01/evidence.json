@@ -1,10 +1,10 @@
 {
   "criterion": "WEB-01",
-  "invocationId": "27347674-7711-46a4-93f2-efbc6dde5300",
+  "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
   "scenarios": [
     {
       "id": "stablenet:preset-fields",
-      "observedAt": "2026-10-10T09:06:04.221Z",
+      "observedAt": "2026-10-10T12:57:13.229Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -30,31 +30,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -62,23 +62,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -86,11 +86,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -106,11 +106,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -126,11 +126,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -144,7 +144,7 @@
     },
     {
       "id": "wbft:preset-fields",
-      "observedAt": "2026-10-10T09:06:08.918Z",
+      "observedAt": "2026-10-10T12:57:17.896Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -170,31 +170,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -202,23 +202,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -226,11 +226,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -246,11 +246,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -266,11 +266,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -284,7 +284,7 @@
     },
     {
       "id": "wemix:preset-fields",
-      "observedAt": "2026-10-10T09:06:13.950Z",
+      "observedAt": "2026-10-10T12:57:22.994Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -310,31 +310,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -342,23 +342,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -366,11 +366,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -386,11 +386,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -406,11 +406,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -424,7 +424,7 @@
     },
     {
       "id": "inheritance-defaults-effective",
-      "observedAt": "2026-10-10T09:06:14.133Z",
+      "observedAt": "2026-10-10T12:57:23.314Z",
       "assertions": [
         {
           "message": "Browser distinguishes inherited, overridden and absent engine-default values",
@@ -450,31 +450,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -482,23 +482,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -506,11 +506,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -526,11 +526,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -546,11 +546,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -564,7 +564,7 @@
     },
     {
       "id": "unsupported-ui-api",
-      "observedAt": "2026-10-10T09:06:14.424Z",
+      "observedAt": "2026-10-10T12:57:23.748Z",
       "assertions": [
         {
           "message": "Unsupported chains, raw commands, unmapped flags, wrong dialect, boolean/value confusion, invalid counts and disabled metrics rejected by live API",
@@ -590,31 +590,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -622,23 +622,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -646,11 +646,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -666,11 +666,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -686,11 +686,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -704,7 +704,7 @@
     },
     {
       "id": "preset-option-field-coverage",
-      "observedAt": "2026-10-10T09:06:14.424Z",
+      "observedAt": "2026-10-10T12:57:23.748Z",
       "assertions": [
         {
           "message": "Every valid catalog preset selected in browser and validated",
@@ -730,31 +730,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -762,23 +762,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -786,11 +786,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -806,11 +806,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -826,11 +826,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -844,7 +844,7 @@
     },
     {
       "id": "binary-surface-provenance",
-      "observedAt": "2026-10-10T09:06:24.463348+00:00",
+      "observedAt": "2026-10-10T12:57:33.357588+00:00",
       "assertions": [
         {
           "message": "Fresh version/help captures verify checksum, source chain, OS/architecture and every engine dialect mapping",
@@ -870,31 +870,31 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -902,23 +902,23 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -926,11 +926,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -946,11 +946,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -966,11 +966,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -988,20 +988,20 @@
       "command": "npm --prefix web run build",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-      "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+      "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
     },
     {
       "command": "go test ./internal/app ./internal/dashboard ./internal/testengine ./internal/core/nodeconfig",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-      "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+      "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
     }
   ],
   "server": {
-    "path": "/private/tmp/cbui/27347674-7711-46a4-93f2-efbc6dde5300/chainbench-dashboard",
-    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
-    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
-    "url": "http://127.0.0.1:55707"
+    "path": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/chainbench-dashboard",
+    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
+    "url": "http://127.0.0.1:64763"
   },
   "frontend": [
     {
@@ -1018,10 +1018,10 @@
     }
   ],
   "fixture": {
-    "runtime": "/private/tmp/cbui/27347674-7711-46a4-93f2-efbc6dde5300",
+    "runtime": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
     "transport": "local",
     "scope": "preset-composition",
-    "invocationId": "27347674-7711-46a4-93f2-efbc6dde5300"
+    "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6"
   },
   "coverage": {
     "presets": [
@@ -1092,6 +1092,12 @@
         "rendered": true
       },
       {
+        "id": "stablenet-bp4-en1-mixed",
+        "chain": "stablenet",
+        "validated": true,
+        "rendered": true
+      },
+      {
         "id": "stablenet-bp4-en1-snap",
         "chain": "stablenet",
         "validated": true,
@@ -1111,6 +1117,12 @@
       },
       {
         "id": "stablenet-bp7-en7-pn1",
+        "chain": "stablenet",
+        "validated": true,
+        "rendered": true
+      },
+      {
+        "id": "stablenet-bp7-mixed",
         "chain": "stablenet",
         "validated": true,
         "rendered": true
@@ -3330,7 +3342,7 @@
     {
       "chain": "stablenet",
       "dialect": "geth114",
-      "binaryPath": "/private/tmp/cbui/27347674-7711-46a4-93f2-efbc6dde5300/stablenet-node",
+      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/stablenet-node",
       "binarySha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
       "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
       "sourceCommit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
@@ -4854,12 +4866,12 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T09:06:18.161997+00:00"
+      "capturedAt": "2026-10-10T12:57:27.250673+00:00"
     },
     {
       "chain": "wbft",
       "dialect": "geth114",
-      "binaryPath": "/private/tmp/cbui/27347674-7711-46a4-93f2-efbc6dde5300/wbft-node",
+      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/wbft-node",
       "binarySha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
       "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
       "sourceCommit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
@@ -6373,12 +6385,12 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T09:06:21.546564+00:00"
+      "capturedAt": "2026-10-10T12:57:30.515466+00:00"
     },
     {
       "chain": "wemix",
       "dialect": "geth110-wemix",
-      "binaryPath": "/private/tmp/cbui/27347674-7711-46a4-93f2-efbc6dde5300/wemix-node",
+      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/wemix-node",
       "binarySha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
       "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
       "sourceCommit": "1350376a680489298b3203a44d9ebddb7747f9cc",
@@ -8083,7 +8095,7 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T09:06:24.461632+00:00"
+      "capturedAt": "2026-10-10T12:57:33.356499+00:00"
     }
   ],
   "artifacts": [
@@ -8101,31 +8113,31 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-      "sha256": "a76815880af20fec4a3474ab3009cc1026388fb73aefa8e5c79b5742757c92f8"
+      "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-      "sha256": "35c3effc998bec4ecbfe71da54c431a46a484ba444ca56d609b244f46e409c4d"
+      "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-      "sha256": "b0ef87eeb1ad5fee6f60b5e9801015c2dfd2169b270067ffb5ccea161e8d03af"
+      "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-      "sha256": "9b0c319b23abc631fdbc09e48f48056348c5b08444f35a7fa1c24ae7ee0eaf94"
+      "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-      "sha256": "5ec6c0aababcf28c075f26048aa6e9c4b08730f77ae52de313472a66b1c946a5"
+      "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-      "sha256": "ed0d62e0a9d9377696c0bb165de1e712e4af54e2a9bcefeac9333b7127041edb"
+      "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-      "sha256": "55e2716274db58ea881de353d7064aa4f10962f6e07bca93aaba78390b58ee63"
+      "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
@@ -8133,23 +8145,23 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-      "sha256": "4ffcca6e532c2607a2873db114e3f4b7adde3d0a164e34f23acc4f73018cc900"
+      "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-      "sha256": "3e8104cd033829c0a2dce557eeb8a87c63f5c5db95abdf33cf2580bd6416ad32"
+      "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-      "sha256": "b726a3050894d239f77e55f4919b7b2a1292029736406c1161d822ae269ae939"
+      "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-      "sha256": "3843467fc19403aa71751a4ffee9545f5caa1b63bed45eb850ac67c11a09e3f5"
+      "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-      "sha256": "02565cedb681566b7c5e972da5025531a5969aae1a7efe1c322c33a1de64b569"
+      "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -8157,11 +8169,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-      "sha256": "9424eaf9d9fbbde966326aafc87c153f2844a68238ecb143b536182db8a0ed52"
+      "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-      "sha256": "6626a7694aebadeb9a713a3a4a33439b6ac179e74a4f84221ced791da69ecc18"
+      "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -8177,11 +8189,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-      "sha256": "c2bab790705665763c73177ef1d6f4ff878acce11f293405021eeb42dedda7fc"
+      "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-      "sha256": "a5c8cb667e81596693bea5f467c01646cc4177e68eec4013d4a534f4d2adb140"
+      "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -8197,11 +8209,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-      "sha256": "3b069fde77fdf54a1af7c07589ac23bc1c609a41437f32065a54b06e68c158ed"
+      "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-      "sha256": "8c2383fc8178a547aa42f74a0ebaac79a7ee703447300ecb775f37357ff44642"
+      "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -8213,5 +8225,5 @@
     }
   ],
   "blockers": [],
-  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
 }

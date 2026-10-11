@@ -10,10 +10,11 @@
 - RED: config change had no enum choices, overwrote argv, and returned live 422. Fixed in `e5566fa8`. RED: an unregistered per-node binary name was planned with 201, and a real stop occurred on a baseline overlay (`chainbench-web-node-binary-binding{,-live,-process}-red.log`). Fixed in `4287b409`. Source: WL rows "구조화된 생성 설정 변경·재실행", "개별 실행 파일의 등록 근거 대조".
 - RED: a registered native replacement plan returned 422, a linked binding was accepted, restart history was lost, and a different protocol mapping was accepted (`chainbench-web-binary-replacement-{plan,history-live,history-unit,mapping}-red.log`, `chainbench-web-binary-history-symlink-red.log`). Fixed in `e6b3d3c1`. The SSH replacement returned 422 before `3430c1e3`. Source: WL, PR.
 - RED: replacement of a nonexecutable file succeeded over SSH, and four launch actions were allowed (`chainbench-web-nonexecutable-control-unit-red.log`). Fixed in `bdd175e6`. RED: launch actions were still offered after the permission was removed (`chainbench-web-observed-permission-unit-red.log`). Fixed in `7c8de876`. Runner RED: WEB-07 was unsupported in `verify.sh` before `be04ad9a`. Harness (not product): the initial key shortage, CLI option fixture errors, 409/422 expectation errors, an initial unit fixture contract error, and the copied macOS system-binary fixture exiting. Source: WL.
+- Defect (CM): the process observer was in a `_darwin.go` file, so `internal/app` did not compile on Linux CI although the observer judges the target's OS at runtime. Fixed in `8b6f67f4` (fix(web): build the process observer on every OS so Linux CI compiles internal/app). Source: CM, CI.
 
 ---
 
-Sources: `docs/dev/web-ui-worklist.md` stage table (WL, row named in Korean in quotes; the commit that added each row was confirmed with `git log -p -- docs/dev/web-ui-worklist.md`), `docs/dev/web-ui-claude-handoff.md` (HO, line numbers), PR #443 body (PR), and `git log main..HEAD` commit messages (CM). RED log files are under `/private/tmp/` as the sources name them; they were not re-opened here.
+Sources: `docs/dev/web-ui-worklist.md` stage table (WL, row named in Korean in quotes; the commit that added each row was confirmed with `git log -p -- docs/dev/web-ui-worklist.md`), `docs/dev/web-ui-claude-handoff.md` (HO, line numbers), PR #443 body (PR), `git log main..HEAD` commit messages (CM), and GitHub Actions runs on PR #443 (CI). RED log files are under `/private/tmp/` as the sources name them; they were not re-opened here.
 
 Labels:
 - **RED**: product failure observed before the fix.

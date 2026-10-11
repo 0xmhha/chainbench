@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-13",
-  "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
+  "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
   "scenarios": [
     {
       "id": "normal-end-retain-and-cleanup",
@@ -24,15 +24,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-receipt.json",
-          "sha256": "04f70b7999fd04d7869afe12fd67104fad1cf88b3e874415e8227bc7831ebcd6"
+          "sha256": "ecbf1c7a44fa5d2147864f1f5912da5536f3c2071e82e665343a2655b3136e1b"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     },
     {
       "id": "user-cancel-retain-and-cleanup",
@@ -52,11 +52,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     },
     {
       "id": "executor-and-admin-cancel",
@@ -76,11 +76,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     },
     {
       "id": "cleanup-failure-reported",
@@ -100,11 +100,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     },
     {
       "id": "revocation-retains-and-blocks-access",
@@ -128,19 +128,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-receipt.json",
-          "sha256": "d3e65f649e4a2de7fa5a16309c8b5c067c8ff05707e18f8de35b273fe691ec17"
+          "sha256": "52f01f8822d56977f9a1dc1a5b7d6314f5cdd67883044e14f89e4bf25700a2b6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-ssh-binary-plan.png",
-          "sha256": "18acb8e47a4037dc6012c14b0cf09191d43b0af296c6cdd1ef5ab486fb619cfc"
+          "sha256": "5ad1f91d9e7eb16691c3b2f98cbbb9efbedb8bcaadbcfa96c98ccf052fa60fb9"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     },
     {
       "id": "attach-protection",
@@ -160,19 +160,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-          "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+          "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-refused.png",
-          "sha256": "0b5d663bc22ae423c8b58885b084efc59c1e79d8384b09718de24d56eb31aa8c"
+          "sha256": "a01cca9bd51fa49e9921c50b916cdcff5b97c9893a4465e3ab1bfe6d48aad8f8"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-notice.txt",
           "sha256": "49e91ff514811ec2b3b144f7760f51f232571274597dd4074c9dd63c105ed61b"
         }
       ],
-      "invocationId": "29011704-b343-446e-ad93-0f0b31358d4e",
-      "observedAt": "2026-10-10T10:59:01.068589+00:00"
+      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "observedAt": "2026-10-10T14:57:05.073098+00:00"
     }
   ],
   "checks": [
@@ -180,15 +180,15 @@
       "command": "go test -race -count=1 ./internal/app ./internal/dashboard -run \"TestWebJobs|TestWebJobCancel|TestCredentialLease|TestWebRemoteLogs\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-13/check-0.log",
-      "sha256": "114612f0fe2111161a6518c9367b3ceefae22dffd28eeb89e0a3684e638deb07"
+      "sha256": "6d5fde47b99ccbf2801d9112a10eb236e3dfaf6924cc775373afc1cbcf109587"
     }
   ],
   "proofs": [
     {
       "name": "cancel-retention",
-      "startedAt": "2026-10-10T10:48:54.491543+00:00",
-      "runtime": "/private/tmp/cbui/5332b21a-65b4-45f7-897a-1e7d500b0504",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:46:56.742335+00:00",
+      "runtime": "/private/tmp/cbui/19e7bd38-6928-4c01-9bac-10ea4c09b9ae",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -219,9 +219,9 @@
     },
     {
       "name": "ssh-cleanup",
-      "startedAt": "2026-10-10T10:52:49.743631+00:00",
-      "runtime": "/private/tmp/cbui/54abc2ff-55d2-4d02-9974-3380795f4816",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:50:51.507838+00:00",
+      "runtime": "/private/tmp/cbui/953850e2-c14d-4dfe-9bb2-276220d123cc",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -252,9 +252,9 @@
     },
     {
       "name": "ssh-transfer-credential-revoke",
-      "startedAt": "2026-10-10T10:53:53.752457+00:00",
-      "runtime": "/private/tmp/cbui/6ae9542a-9528-4a7b-ab2f-f48e635d42de",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T14:51:54.436367+00:00",
+      "runtime": "/private/tmp/cbui/b27442e5-454c-49bb-bbc8-c36b69ef3e23",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": null,
       "binaries": [
         {
@@ -285,8 +285,8 @@
     }
   ],
   "server": {
-    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
-    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -393,11 +393,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-attach-refused.png",
-      "sha256": "0b5d663bc22ae423c8b58885b084efc59c1e79d8384b09718de24d56eb31aa8c"
+      "sha256": "a01cca9bd51fa49e9921c50b916cdcff5b97c9893a4465e3ab1bfe6d48aad8f8"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-receipt.json",
-      "sha256": "477f6382f7f7151416b0cea577ea56c756ea7a5453c947b58ddb64935bafb111"
+      "sha256": "4ac978061cb0b14e712d3b3b0469923f6bdf14760cb158010ea7946b16760f87"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/cancel-retention-run.log",
@@ -405,11 +405,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/check-0.log",
-      "sha256": "114612f0fe2111161a6518c9367b3ceefae22dffd28eeb89e0a3684e638deb07"
+      "sha256": "6d5fde47b99ccbf2801d9112a10eb236e3dfaf6924cc775373afc1cbcf109587"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-receipt.json",
-      "sha256": "04f70b7999fd04d7869afe12fd67104fad1cf88b3e874415e8227bc7831ebcd6"
+      "sha256": "ecbf1c7a44fa5d2147864f1f5912da5536f3c2071e82e665343a2655b3136e1b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-cleanup-run.log",
@@ -417,7 +417,7 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-receipt.json",
-      "sha256": "d3e65f649e4a2de7fa5a16309c8b5c067c8ff05707e18f8de35b273fe691ec17"
+      "sha256": "52f01f8822d56977f9a1dc1a5b7d6314f5cdd67883044e14f89e4bf25700a2b6"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-run.log",
@@ -425,9 +425,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-13/ssh-transfer-credential-revoke-ssh-binary-plan.png",
-      "sha256": "18acb8e47a4037dc6012c14b0cf09191d43b0af296c6cdd1ef5ab486fb619cfc"
+      "sha256": "5ad1f91d9e7eb16691c3b2f98cbbb9efbedb8bcaadbcfa96c98ccf052fa60fb9"
     }
   ],
   "blockers": [],
-  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
 }

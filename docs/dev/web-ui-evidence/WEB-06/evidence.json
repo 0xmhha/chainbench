@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-06",
-  "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
+  "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
   "scenarios": [
     {
       "id": "ssh-native-deployment",
@@ -20,19 +20,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-          "sha256": "e09b1c2a109a147fb77ecbfd88385f93b0c1a566913a041c618781aa8df9d33b"
+          "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-plan.png",
-          "sha256": "863aa7c2d2f889b131ebd90a4ce3aa280c07e330e2c6dfb9d115e4fe28a1cd73"
+          "sha256": "2523d89b06f5006ec720402c3cea752df047c729caf77f244aabf67f84e831cb"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-jobs.png",
-          "sha256": "3385195ff5ef24fc0c8134b1a30d5887a672d3b343e6d96203088f979183fd25"
+          "sha256": "06ce577f8531a73c18fcb520460a8dbe008335240c41aac9778bcc8dacd2fea3"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     },
     {
       "id": "checksum-database-rpc-pid",
@@ -56,15 +56,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-          "sha256": "e09b1c2a109a147fb77ecbfd88385f93b0c1a566913a041c618781aa8df9d33b"
+          "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "b1b2a09af3afbfc64c6abefd98760d1f2b3124637a9d5fd8e7a4d0169ab19b8b"
+          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     },
     {
       "id": "mid-deployment-ssh-failure",
@@ -88,15 +88,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "b1b2a09af3afbfc64c6abefd98760d1f2b3124637a9d5fd8e7a4d0169ab19b8b"
+          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-ssh-deploy-fault.png",
-          "sha256": "5a2a25e91d765006a694a8830b26c55a81db24ec73c9c382191a170f59b98593"
+          "sha256": "1dccabed9117266545c834cdeaf0c77303bb955ab9e0f0b9506b557972ac6c46"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     },
     {
       "id": "mid-transfer-disconnect",
@@ -112,15 +112,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-          "sha256": "5d6a33c1e37aadde3d30e166b1791c5d123e3a39978c9d5d80db36bfddf9c164"
+          "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-ssh-binary-plan.png",
-          "sha256": "28970649987d52b7a8fe2d579526d2f61ed8cd15a63b2098cb4b28278b781b1c"
+          "sha256": "15e298cba9af12fc29f6e55fd8f111a2da462deb93fd954e0f3bbc5611e99208"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     },
     {
       "id": "revocation-during-ssh",
@@ -136,11 +136,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-receipt.json",
-          "sha256": "06e6568c06fe2f7e2bc3ac91e71cdb4b84cddf9773b1f760dc1656a5dab2ccca"
+          "sha256": "6398900588286eabdde9eb5aeedfa1680b3ce050f5b3f5c71a18a8c2a33fff3c"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     },
     {
       "id": "no-automatic-retry",
@@ -160,15 +160,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "b1b2a09af3afbfc64c6abefd98760d1f2b3124637a9d5fd8e7a4d0169ab19b8b"
+          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-          "sha256": "5d6a33c1e37aadde3d30e166b1791c5d123e3a39978c9d5d80db36bfddf9c164"
+          "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
         }
       ],
-      "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-      "observedAt": "2026-10-10T09:43:13.649293+00:00"
+      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "observedAt": "2026-10-10T13:36:04.421611+00:00"
     }
   ],
   "checks": [
@@ -176,15 +176,15 @@
       "command": "go test -race -count=1 ./internal/core/remote ./internal/app -run \"SSH|Remote|CredentialLease|Transfer\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-06/check-0.log",
-      "sha256": "236c74af1f96b5dfbe82d89b32338e536447f7b56a50b51a58c896f9cc88cb21"
+      "sha256": "60bfc6cd4114f88ee77bb448b9b45e470063a1a314ac74a021ec64815fe39714"
     }
   ],
   "proofs": [
     {
       "name": "ssh-jobs",
-      "startedAt": "2026-10-10T09:30:07.084791+00:00",
-      "runtime": "/private/tmp/cbui/0aa2fe7b-d1f6-456c-a3c2-f98b8520291b",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T13:22:35.559014+00:00",
+      "runtime": "/private/tmp/cbui/61768d19-e4c5-42a5-8fdf-55baf0a151ee",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": null,
       "binaries": [
         {
@@ -215,9 +215,9 @@
     },
     {
       "name": "ssh-deploy-fault",
-      "startedAt": "2026-10-10T09:31:13.043976+00:00",
-      "runtime": "/private/tmp/cbui/0d34043c-df9b-4d06-a416-aa18af1e3016",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T13:23:41.643386+00:00",
+      "runtime": "/private/tmp/cbui/402597f5-6c4c-4cca-b02e-a8894dd6ff4c",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -248,9 +248,9 @@
     },
     {
       "name": "ssh-transfer-disconnect",
-      "startedAt": "2026-10-10T09:32:57.389980+00:00",
-      "runtime": "/private/tmp/cbui/4023be3a-ce50-469b-9c8b-66bf7c003e8a",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T13:25:30.729066+00:00",
+      "runtime": "/private/tmp/cbui/b4cc4177-5c30-47fb-9f26-c6d85e877098",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": null,
       "binaries": [
         {
@@ -281,9 +281,9 @@
     },
     {
       "name": "ssh-transfer-credential-revoke",
-      "startedAt": "2026-10-10T09:38:06.858675+00:00",
-      "runtime": "/private/tmp/cbui/54befb8e-ed78-48ca-b82a-a589c793abd3",
-      "dashboardSHA256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
+      "startedAt": "2026-10-10T13:30:50.950522+00:00",
+      "runtime": "/private/tmp/cbui/10c24d38-c637-4ede-b2b0-4b15accd130c",
+      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
       "browserVersion": null,
       "binaries": [
         {
@@ -314,8 +314,8 @@
     }
   ],
   "server": {
-    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
-    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
+    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -462,11 +462,11 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/check-0.log",
-      "sha256": "236c74af1f96b5dfbe82d89b32338e536447f7b56a50b51a58c896f9cc88cb21"
+      "sha256": "60bfc6cd4114f88ee77bb448b9b45e470063a1a314ac74a021ec64815fe39714"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-      "sha256": "b1b2a09af3afbfc64c6abefd98760d1f2b3124637a9d5fd8e7a4d0169ab19b8b"
+      "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-run.log",
@@ -474,11 +474,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-ssh-deploy-fault.png",
-      "sha256": "5a2a25e91d765006a694a8830b26c55a81db24ec73c9c382191a170f59b98593"
+      "sha256": "1dccabed9117266545c834cdeaf0c77303bb955ab9e0f0b9506b557972ac6c46"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-      "sha256": "e09b1c2a109a147fb77ecbfd88385f93b0c1a566913a041c618781aa8df9d33b"
+      "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-run.log",
@@ -486,15 +486,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-jobs.png",
-      "sha256": "3385195ff5ef24fc0c8134b1a30d5887a672d3b343e6d96203088f979183fd25"
+      "sha256": "06ce577f8531a73c18fcb520460a8dbe008335240c41aac9778bcc8dacd2fea3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-plan.png",
-      "sha256": "863aa7c2d2f889b131ebd90a4ce3aa280c07e330e2c6dfb9d115e4fe28a1cd73"
+      "sha256": "2523d89b06f5006ec720402c3cea752df047c729caf77f244aabf67f84e831cb"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-receipt.json",
-      "sha256": "06e6568c06fe2f7e2bc3ac91e71cdb4b84cddf9773b1f760dc1656a5dab2ccca"
+      "sha256": "6398900588286eabdde9eb5aeedfa1680b3ce050f5b3f5c71a18a8c2a33fff3c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-run.log",
@@ -502,11 +502,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-ssh-binary-plan.png",
-      "sha256": "42a4ba0778f9ca938b4f13a977aed8467873d144f92ba8a08c5781fbf5dbe50b"
+      "sha256": "1d75bc458739b7ed0876ca337e7673d482d75a699591857f48517d69ed3da408"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-      "sha256": "5d6a33c1e37aadde3d30e166b1791c5d123e3a39978c9d5d80db36bfddf9c164"
+      "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-run.log",
@@ -514,9 +514,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-ssh-binary-plan.png",
-      "sha256": "28970649987d52b7a8fe2d579526d2f61ed8cd15a63b2098cb4b28278b781b1c"
+      "sha256": "15e298cba9af12fc29f6e55fd8f111a2da462deb93fd954e0f3bbc5611e99208"
     }
   ],
   "blockers": [],
-  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
 }

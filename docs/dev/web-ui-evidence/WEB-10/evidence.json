@@ -1,10 +1,10 @@
 {
   "criterion": "WEB-10",
-  "invocationId": "b943821e-7078-4e96-b898-c676069bedf6",
+  "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8",
   "scenarios": [
     {
       "id": "personal-team-login",
-      "observedAt": "2026-10-10T10:40:53.755Z",
+      "observedAt": "2026-10-10T14:37:41.094Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -25,14 +25,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+          "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "role-ui-api-matrix",
-      "observedAt": "2026-10-10T10:40:53.755Z",
+      "observedAt": "2026-10-10T14:37:41.094Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -53,14 +53,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+          "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "csrf-ownership",
-      "observedAt": "2026-10-10T10:40:53.755Z",
+      "observedAt": "2026-10-10T14:37:41.094Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -77,14 +77,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+          "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "foreign-credential-refusal",
-      "observedAt": "2026-10-10T10:40:53.755Z",
+      "observedAt": "2026-10-10T14:37:41.094Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -105,14 +105,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+          "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "secret-free-output",
-      "observedAt": "2026-10-10T10:40:53.755Z",
+      "observedAt": "2026-10-10T14:37:41.094Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -141,14 +141,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-          "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+          "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "bootstrap-restrictions",
-      "observedAt": "2026-10-10T10:40:49.877Z",
+      "observedAt": "2026-10-10T14:37:36.476Z",
       "mode": "personal",
       "transport": "SSH",
       "ownership": "owned",
@@ -176,11 +176,11 @@
           "sha256": "2a76d581f664fa0927c79812a9be4442184f72f01161336d9714404d4b5679c3"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     },
     {
       "id": "encrypted-storage-session",
-      "observedAt": "2026-10-10T10:40:53.804868+00:00",
+      "observedAt": "2026-10-10T14:37:41.189098+00:00",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
@@ -201,14 +201,14 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/storage.json",
-          "sha256": "c56f47180d965b4b51bfd199737663a0655172b4d1a0ad5ab96b868beee8ee4e"
+          "sha256": "fb8b88544142b621bce0f1a093c15b22f33c0bba6b271583a6e540aa5ca056a0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-10/security-audit.jsonl",
-          "sha256": "943f88c9d5f8a37d5cd60bd956f2a1d8cd9e2ebd5928d504de20a3200d3c938d"
+          "sha256": "e42f2d066c9668d9e2501c5b1b39aa8979fa7a222b47cb33b19cd32397218c1f"
         }
       ],
-      "invocationId": "b943821e-7078-4e96-b898-c676069bedf6"
+      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8"
     }
   ],
   "checks": [
@@ -216,19 +216,19 @@
       "command": "npm --prefix web run build",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-10/check-0.log",
-      "sha256": "42dad6fab0165f850d2322fa20417c8e9cdc4f7773bf42143e4573e7d638e508"
+      "sha256": "3a36baad234a1bc037e217f6261f072076e1e6fe51dea607059d73b5e36fb7eb"
     },
     {
       "command": "go test -race ./internal/app ./internal/dashboard",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-10/check-1.log",
-      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+      "sha256": "a16e3ad9f5f7ab2abdd296d31d63c25ca3d6ee9eb9fe493f65d8c1f73b447ab8"
     }
   ],
   "server": {
-    "sha256": "f358fa0fd6ce947b62ca7a29bf46018b692ec236002e5c27524a466e44e07855",
-    "baseCommit": "c5f23d851c1aee2f9308cabedb25b79cb451c3f2",
-    "url": "http://127.0.0.1:59810",
+    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
+    "url": "http://127.0.0.1:55011",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -248,8 +248,8 @@
   ],
   "target": {
     "host": "localhost.",
-    "port": 59808,
-    "hostFingerprint": "SHA256:5yhSpqc2l17dRqMGxepj6jmoLaFTwFR3IDHaj3JGwg8",
+    "port": 55009,
+    "hostFingerprint": "SHA256:/XC1hjdpRAylI5ubamdQTUoM/XAre1tTWSHsyW62yI4",
     "sshdSha256": "dd3926838dd2a1125f8c93e7409b58c09f313c49dddf5ea6f5998ec155dd0add",
     "os": "Darwin",
     "architecture": "arm64",
@@ -257,7 +257,7 @@
     "authenticated": true
   },
   "fixture": {
-    "runtime": "/private/tmp/cbui/b943821e-7078-4e96-b898-c676069bedf6",
+    "runtime": "/private/tmp/cbui/27c5bc1e-7d64-4063-81f1-e5233894e6d8",
     "transport": [
       "local",
       "SSH"
@@ -548,7 +548,7 @@
     },
     {
       "path": "internal/app/web_monitor.go",
-      "sha256": "a8d719c6fbef9d8b7e2d1d1fb5624a377f9198e932dd4a1d128185ba7933682c"
+      "sha256": "8a030c3af3f5671b932c6d320943a6c8de45d75aa9841ac6200e991b84b0081d"
     },
     {
       "path": "internal/app/web_monitor_archive.go",
@@ -556,7 +556,7 @@
     },
     {
       "path": "internal/app/web_monitor_log.go",
-      "sha256": "b4b58ca96872cb84f390ba1c6d7e70202d12ef3ead1556a82cb3a9ad51aeda6c"
+      "sha256": "0ed37c6365b92ff777c868379f48338847255e50f6171eea05959a00c1744856"
     },
     {
       "path": "internal/app/web_monitor_read.go",
@@ -564,11 +564,15 @@
     },
     {
       "path": "internal/app/web_monitor_remote.go",
-      "sha256": "12616052a111433d89982bebebb01e553c0714348ec090591b8c7751a88a8978"
+      "sha256": "aa70d0723d67f66857f32d633e8c9283b8f4c4c5f7eccf7dad9e6338d32ed27d"
     },
     {
       "path": "internal/app/web_monitor_remote_test.go",
       "sha256": "5dfc6abb8c6fbafdaccfb11f6acfcda59d144520cd227e7e1f88144798d818f2"
+    },
+    {
+      "path": "internal/app/web_monitor_rotation_test.go",
+      "sha256": "3bc85c8ac1552678e33926d68d74ff2ec4047adcc722aa1e129250637b73bca8"
     },
     {
       "path": "internal/app/web_monitor_test.go",
@@ -615,11 +619,11 @@
       "sha256": "17ffdbc0b2beb3a21d0da5888cb39e80c64a965c7439883a23f782e2c324ce6e"
     },
     {
-      "path": "internal/app/web_node_observer_darwin.go",
+      "path": "internal/app/web_node_observer.go",
       "sha256": "80c3a8016fadcbd3cea0f5090487b92d7b33c736873ce0f6d0899b48982dfa5a"
     },
     {
-      "path": "internal/app/web_node_observer_darwin_test.go",
+      "path": "internal/app/web_node_observer_test.go",
       "sha256": "a1d8c745318c5a2bc54b4b1ddf16ffd59173ddc506c54231b9ab3414bf0e3d10"
     },
     {
@@ -782,11 +786,11 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/administrator.png",
-      "sha256": "d39c7a497f1b2e8cbd424c5567a13356b106975c3e8bce12d4c776f04b0e6e69"
+      "sha256": "e001e0aec3f5e62487d75ebf54304a27cf69e2a9224369b82d3b7c74417488d3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/browser.json",
-      "sha256": "7a137584c622b4b82d7375cbe0812ab2d5d1d838abfe7231e9c1aad2dd5bb2be"
+      "sha256": "32941a1bda6018c42996d9572d7493eafeeafd2ca3b9e796565db93a3155a254"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/build.log",
@@ -794,15 +798,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/check-0.log",
-      "sha256": "42dad6fab0165f850d2322fa20417c8e9cdc4f7773bf42143e4573e7d638e508"
+      "sha256": "3a36baad234a1bc037e217f6261f072076e1e6fe51dea607059d73b5e36fb7eb"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/check-1.log",
-      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+      "sha256": "a16e3ad9f5f7ab2abdd296d31d63c25ca3d6ee9eb9fe493f65d8c1f73b447ab8"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/fixture.json",
-      "sha256": "c34058c5dcae738021f289f0b53998e0f54e6deb833e4bd765a95be6c017869b"
+      "sha256": "9481521cf09f8a58f3765bdfd7176dec0a1b1e088c397fcc4dbacb063ce0205e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/legacy-fixture.log",
@@ -810,7 +814,7 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/operator.png",
-      "sha256": "37326166c0c29094431b5b1abef19fffbeb48b4f74f46baf86568c02516e78d9"
+      "sha256": "a590fcb821974e9088f0e4f1756dcd992b5cc438e7c20798a23c948840cc82f1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/personal-browser.log",
@@ -822,27 +826,27 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/personal.json",
-      "sha256": "41775ad309268723b0431e5792099f158fab90478fab104e66bd85a6df34930b"
+      "sha256": "7638928be40441ff77e4480bd3a864f70cb63da5583c01133c8e78e597b3323f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/security-audit.jsonl",
-      "sha256": "943f88c9d5f8a37d5cd60bd956f2a1d8cd9e2ebd5928d504de20a3200d3c938d"
+      "sha256": "e42f2d066c9668d9e2501c5b1b39aa8979fa7a222b47cb33b19cd32397218c1f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/server-restart.log",
-      "sha256": "751bfac6ad46a9946a3c4005acb80bb2191a95f3327aabb18fd38d5de2111ce6"
+      "sha256": "2408a00075fad771039622b35317ed696c197fe93928c17817a4e781791526b3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/server.log",
-      "sha256": "751bfac6ad46a9946a3c4005acb80bb2191a95f3327aabb18fd38d5de2111ce6"
+      "sha256": "2408a00075fad771039622b35317ed696c197fe93928c17817a4e781791526b3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/sshd.log",
-      "sha256": "86ed0bd827dab2b6a818a2247b4961735f7fc4c47a36122ba33d5143231b9e29"
+      "sha256": "b33048191d0a9fada4f7b7a799b7bfbc9151a136d715ab516f98917c8df0a14d"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/storage.json",
-      "sha256": "c56f47180d965b4b51bfd199737663a0655172b4d1a0ad5ab96b868beee8ee4e"
+      "sha256": "fb8b88544142b621bce0f1a093c15b22f33c0bba6b271583a6e540aa5ca056a0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-10/team-browser.log",
@@ -854,5 +858,5 @@
     }
   ],
   "blockers": [],
-  "sourceDigest": "a0fcd339ca22ba0f098e85df1414f704d6a721c07a066d963c4372dd1363407f"
+  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
 }

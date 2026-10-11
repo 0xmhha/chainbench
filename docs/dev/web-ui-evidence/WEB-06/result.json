@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-06",
-  "invocationId": "7d5d7d66-cc07-4943-8033-3847d0f990d5",
-  "startedAt": "2026-10-10T09:30:02.968587+00:00",
-  "finishedAt": "2026-10-10T09:43:13.750789+00:00",
+  "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+  "startedAt": "2026-10-10T13:22:31.364871+00:00",
+  "finishedAt": "2026-10-10T13:36:04.531917+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "ssh-native-deployment",
@@ -22,5 +22,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "77baab859467680e85614afeb6ee07207d30af686940e88ad6309f9c1afa308c"
+  "evidenceDigest": "1733012ed9f356596f5ee448a552b0865fe75f7f3d2923fe854cb5db9da0f35b"
 }
