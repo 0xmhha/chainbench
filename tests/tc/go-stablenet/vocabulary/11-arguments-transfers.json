@@ -223,6 +223,14 @@
       "save": "rv2"
     },
     {
+      "do": "waitFor",
+      "source": "txMined",
+      "on": "en1",
+      "hash": "$rv2",
+      "is": "true",
+      "timeout": "60s"
+    },
+    {
       "expect": "txStatus",
       "onEach": [
         "bp1",
