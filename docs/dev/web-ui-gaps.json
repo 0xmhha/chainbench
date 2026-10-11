@@ -552,9 +552,10 @@
         "GET /api/v1/jobs/{jobId}를 부르는 곳이 없다"
       ],
       "completion": "작업 상세가 단계, 실패 대상, 부분 효과, 처분, 취소, 브라우저를 닫아도 계속된다는 안내를 보인다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN (/private/tmp/chainbench-web-nav-green.log): starting a reviewed plan from the test screen opened /jobs/<id>, which states that the job continues on the server, shows phases, the failed phase (none), recorded changes, resources to check (none) and node disposition, follows the job live, cancelled it with cleanup (disposition cleaned, every owned process gone) and restored the same state after a reload."
     },
     {
       "id": "G-C03",
@@ -631,9 +632,10 @@
         "web/src/App.svelte:85"
       ],
       "completion": "체인 화면에서 고른 workspace가 모니터링 화면의 선택으로 이어진다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN: the top bar asked for a chain until one was chosen, showed the workspace picked in the chain screen's deployment editor, and the monitoring and job forms opened on that same workspace. The selection is kept per browser tab."
     },
     {
       "id": "G-C07",
@@ -649,9 +651,10 @@
         "web/src/App.svelte:100-106"
       ],
       "completion": "실행 중인 작업이 대시보드에 보이고 누르면 작업 상세가 열린다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN: while the job ran the dashboard counted it, listed it under running jobs with its phase progress, and its row opened the job page. Node states, recent results and the observation drop summary are on the same screen."
     },
     {
       "id": "G-C08",
@@ -933,6 +936,45 @@
       "verification": "GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries (run with GWEMIX_BIN set)",
       "commit": "4b524de7",
       "evidence": "RED: on 249fd11c, Verify refused the go-wbft binary with \"binary program identity does not match chain build contract\" while GWEMIX_BIN was set. GREEN: probes run with a minimal environment and all three binaries verify."
+    },
+    {
+      "id": "G-D09",
+      "group": "defect",
+      "title": "바이너리 help 검사가 매번 새 임시 HOME에서 돌고 help가 그 경로를 출력해서, 같은 바이너리의 surface 지문이 호출마다 달라지고 검토한 계획을 시작하면 409로 거절된다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go manifestProbe"
+      ],
+      "completion": "같은 바이너리를 두 번 판정하면 지문이 같고, 화면에서 검토한 계획이 그대로 시작된다.",
+      "status": "closed",
+      "verification": "GWBFT_BIN=… go test ./internal/app -run TestChainSurfaceFingerprintIsStableAcrossJudgements; python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json)",
+      "commit": "f248fef8",
+      "evidence": "RED: in the navigation proof, '검토한 계획 실행' returned '409: revision changed; reload before editing'; the new test failed with 'native wbft fingerprint changed between identical judgements' because the --help probe digest differed. The fault came with the isolated probe in 4b524de7. GREEN: the temporary HOME is written back as $HOME, the test passes and the proof starts the reviewed plan."
+    },
+    {
+      "id": "G-D10",
+      "group": "defect",
+      "title": "취소 후 정리가 성공해 노드 처리가 cleaned인데도 작업이 실행 중 남긴 자원을 계속 '확인이 필요한 자원'으로 보인다.",
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 취소·보존·정리 (정리 결과를 숨기지 않는다)"
+      ],
+      "code": [
+        "internal/app/web_job_execution.go execute"
+      ],
+      "completion": "정리가 성공한 작업은 정리가 보고한 미해결 자원만 남긴다. 정리가 실패하면 둘 다 남긴다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestCleanedJobDoesNotKeepResourcesItsCleanupRemoved; python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json)",
+      "commit": "2df3278e",
+      "evidence": "RED: the navigation proof's job page showed a cleaned job listing its network record and data root as resources to check; the new test failed with 'cleaned job still lists [/fixture/nodes /fixture/record] (cleaned)'. GREEN: a successful cleanup replaces the run's unresolved list with its own; the proof asserts none remain."
     }
   ]
 }
