@@ -619,9 +619,10 @@
         "web/src/DeploymentEditor.svelte:79-99"
       ],
       "completion": "브라우저에서 자격증명을 폐기하면 관련 작업이 철회 정책을 따르고, 관리자는 감사 기록을 보며 운영자에게는 관리 화면이 없다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_settings.py (native stablenet network, real dashboard and browser; receipt chainbench-out/web-ui-development/settings/receipt.json); go test ./internal/app -run TestCredentialUsageNamesOwnBindingsAndActiveJobs; go test ./internal/dashboard -run TestDeploymentSharedDocumentsHTTP",
+      "commit": "0285ba2a, 23ab4f25",
+      "evidence": "RED: before 0285ba2a there was no settings screen for credentials, users or audit (user management sat in the login panel, credential creation in the deployment editor, no audit view), and the credential list carried no usage; the usage tests failed before their code. GREEN (/private/tmp/chainbench-web-settings-green.log): an administrator created an operator on Settings and read the audit trail there, polled until the user creation entry appeared; the operator saw no user management or audit region and GET /api/v1/audit answered 403; the operator registered an account key on Settings; an attach job bound to that key showed as 1 active job on its row; revoking it warned that the job would be cancelled and nodes kept, then the job ended cancelled with credential_revoked and nodes retained while every node process stayed alive. The proof uses stablenet because the engine refuses attach to the registered wbft binary, which reports itself as gwemix."
     },
     {
       "id": "G-C06",
