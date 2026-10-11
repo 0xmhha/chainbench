@@ -69,11 +69,13 @@ type webChainArguments struct {
 	ServerRef  string `json:"serverRef"`
 	// AllServers spreads a composed network over every server of the pinned
 	// set, as the engine's whole-set allocation does, instead of one server.
-	AllServers         bool                    `json:"allServers,omitempty"`
-	Validators         int                     `json:"validators"`
-	ReplacementAssetID string                  `json:"replacementAssetId,omitempty"`
-	ConfigOverrides    map[string]string       `json:"configOverrides,omitempty"`
-	CaseRefs           []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	AllServers         bool              `json:"allServers,omitempty"`
+	Validators         int               `json:"validators"`
+	ReplacementAssetID string            `json:"replacementAssetId,omitempty"`
+	ConfigOverrides    map[string]string `json:"configOverrides,omitempty"`
+	// ConfigAssetID names a registered configuration file a node.swap applies.
+	ConfigAssetID string                  `json:"configAssetId,omitempty"`
+	CaseRefs      []DeploymentDocumentRef `json:"caseRefs,omitempty"`
 	// BinaryAssets maps each binary name a test declares besides default
 	// to the registered asset that runs under it.
 	BinaryAssets   map[string]string      `json:"binaryAssets,omitempty"`
@@ -104,6 +106,7 @@ type webChainPayload struct {
 	NodeBindingsDigest string                `json:"nodeBindingsDigest,omitempty"`
 	Replacement        *webBinaryReplacement `json:"replacement,omitempty"`
 	ChainSurfaces      []WebChainSurfaceRef  `json:"chainSurfaces,omitempty"`
+	ConfigAsset        *webConfigAsset       `json:"configAsset,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -141,7 +144,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if args.ReplacementAssetID != "" && in.Operation != "node.swap" {
 		return out, errors.New("a replacement executable requires a node replacement job")
 	}
-	if in.Operation != "node.swap" && args.ConfigOverrides != nil {
+	if in.Operation != "node.swap" && (args.ConfigOverrides != nil || args.ConfigAssetID != "") {
 		return out, errors.New("configuration changes require a node replacement job")
 	}
 	if args.ChainPresetRef != nil && (in.Operation != "chain.setup" && in.Operation != "chain.deploy" || args.Validators != 0) {
@@ -342,6 +345,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if args.ReplacementAssetID != "" {
 		expectedAssets[args.ReplacementAssetID] = true
 	}
+	if args.ConfigAssetID != "" {
+		expectedAssets[args.ConfigAssetID] = true
+	}
 	if p.Preset != nil {
 		for _, id := range p.Preset.Document.AssetRefs {
 			expectedAssets[id] = true
@@ -451,13 +457,16 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 				}
 			}
 			if in.Operation == "node.swap" {
+				if err = e.prepareConfigAsset(ctx, &p); err != nil {
+					return out, err
+				}
 				if _, err = webConfigChanges(state, p); err != nil {
 					return out, err
 				}
 				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
 					return out, err
 				}
-				if len(p.Arguments.ConfigOverrides) > 0 {
+				if len(p.Arguments.ConfigOverrides) > 0 || p.ConfigAsset != nil {
 					p.Keys, err = e.bindWebConfigKeys(ctx, state)
 					if err != nil {
 						return out, err
@@ -706,6 +715,12 @@ func (e *WebChainEngine) revalidate(ctx context.Context, a DeploymentActor, prep
 			return p, err
 		}
 		if now, err := e.verify(ctx, asset, named.Binary.Chain); err != nil || now != named.Binary {
+			return p, ErrDeploymentConflict
+		}
+	}
+	if p.ConfigAsset != nil {
+		current, err := e.manifests.Asset(p.ConfigAsset.Asset.ID)
+		if err != nil || current.Checksum != p.ConfigAsset.Asset.Checksum {
 			return p, ErrDeploymentConflict
 		}
 	}

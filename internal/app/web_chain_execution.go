@@ -107,7 +107,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
 					return err
 				}
-				if len(p.Arguments.ConfigOverrides) > 0 {
+				if len(p.Arguments.ConfigOverrides) > 0 || p.ConfigAsset != nil {
 					keys, err := e.bindWebConfigKeys(ctx, state)
 					if err != nil || keys != p.Keys {
 						return ErrDeploymentConflict
@@ -153,7 +153,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 					if err = verifyWebNodeInputs(ctx, state, p, lookup); err != nil {
 						return err
 					}
-					if len(p.Arguments.ConfigOverrides) > 0 {
+					if len(p.Arguments.ConfigOverrides) > 0 || p.ConfigAsset != nil {
 						keys, err := e.bindWebConfigKeys(ctx, state)
 						if err != nil || keys != p.Keys {
 							return ErrDeploymentConflict

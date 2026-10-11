@@ -29,6 +29,13 @@ func webConfigChanges(state State, p webChainPayload) ([]string, error) {
 	}
 	schema := nodeconfig.ConfigOptionSchemas()
 	patch := p.Arguments.ConfigOverrides
+	fromFile := p.ConfigAsset != nil
+	if fromFile {
+		if len(patch) > 0 {
+			return nil, errors.New("a registered configuration file replaces a node's config alone, without typed choices")
+		}
+		patch = p.ConfigAsset.Overrides
+	}
 	if len(patch) == 0 && p.Replacement != nil {
 		return nil, nil
 	}
@@ -46,7 +53,9 @@ func webConfigChanges(state State, p webChainPayload) ([]string, error) {
 			return nil, errors.New("unsupported configuration field")
 		}
 		field := raw.(map[string]any)
-		if !slices.Contains(field["enum"].([]string), value) {
+		// A registered file was validated when it was pinned and may name any
+		// address; typed choices stay within the browser's offered values.
+		if !fromFile && !slices.Contains(field["enum"].([]string), value) {
 			return nil, errors.New("unsupported configuration choice")
 		}
 		for _, entry := range launch {
