@@ -53,8 +53,8 @@ func TestTestCaseHTTPContractAndImport(t *testing.T) {
 		t.Fatal(w.Body.String())
 	}
 	w = request("POST", "/api/v1/test-cases/import", `{"content":`+strings.Replace(content, `"blockNumber"`, `"unknown"`, 1)+`}`, true)
-	if w.Code != 422 {
-		t.Fatal(w.Body.String())
+	if w.Code != 422 || !strings.Contains(w.Body.String(), `"path":"/content/steps/0`) {
+		t.Fatal("a statement error is not linked to its statement:", w.Body.String())
 	}
 	w = request("POST", "/api/v1/test-cases/import", `{"content":`+content+`} {}`, true)
 	if w.Code != 400 {
