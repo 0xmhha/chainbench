@@ -697,9 +697,10 @@
         "tests/webui에 keyboard.press가 없다"
       ],
       "completion": "잘못된 필드가 aria-invalid이고 요약 항목에서 그 필드로 포커스가 옮겨지며, 키보드만으로 저장·취소하는 검증이 통과한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_forms.py and python3 tests/webui/run_dsl_editor.py (real dashboard and browser); node --test tests/webui/schema_problems.test.mjs tests/webui/dsl_tree.test.mjs; go test ./internal/app -run TestContentErrorPathTakesTheLeadingPointer",
+      "commit": "0e7e3eb8, ddc70fe7, d85eb753",
+      "evidence": "RED (/private/tmp/chainbench-web-forms-red.log): against a dashboard built from e2b98f30 the forms proof timed out waiting for the deployment error summary. GREEN (/private/tmp/chainbench-web-forms-green.log): an empty host address and a P2P base port of 70000 were marked aria-invalid with aria-describedby; the summary entry focused the port field; both were corrected and the document saved with the keyboard alone; a chain preset with no producer was refused at /content/topology and its summary entry opened the full form and focused that field, marked invalid. The DSL editor part is in the dsl-editor proof (G-C08): error summary to the invalid field, and keyboard-only save, duplicate and job cancel. Deployment checks before the server cover required fields, enum and port ranges from the contract; other server refusals of deployment documents name no field and are listed without a link."
     },
     {
       "id": "G-C10",
@@ -741,9 +742,10 @@
         "web/src/JobPanel.svelte:125"
       ],
       "completion": "web/src에 토큰 밖의 색과 Basic 로그인 폼이 없고, 상태 표시가 아이콘과 라벨을 함께 쓴다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "node --test tests/webui/design_tokens.test.mjs tests/webui/status_icon.test.mjs; python3 tests/webui/run_forms.py",
+      "commit": "0285ba2a, d85eb753",
+      "evidence": "RED: before d85eb753 web/src held raw colors in nine files and English text in the preset, bundle import and deployment form screens (design_tokens.test.mjs would fail on MonitorPanel, ChainPresetEditor and others). GREEN: every color outside the App :root token block is a var(--token) (the theme-color meta tag keeps its literal because browser chrome cannot read CSS variables); the guard test also refuses Basic credentials and the deployment-account route anywhere in web/src; states use StatusBadge (icon and words) on the dashboard, job, node, monitoring, history and surface views; the forms proof read the surface verdict as '○ documented'. Domain terms such as workspace, revision, genesis and statement stay as written in the specification."
     },
     {
       "id": "G-C12",
