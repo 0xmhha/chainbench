@@ -34,7 +34,6 @@ type Server struct {
 	mux              *http.ServeMux
 	validateDocument http.HandlerFunc
 	security         http.HandlerFunc
-	legacySecurity   http.HandlerFunc
 	authorizeStream  func(*http.Request) bool
 	publisherToken   string
 	publisherAudit   func(string, string, int) error
@@ -98,10 +97,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.security != nil {
 		s.security(w, r)
-		return
-	}
-	if s.legacySecurity != nil {
-		s.legacySecurity(w, r)
 		return
 	}
 	s.mux.ServeHTTP(w, r)

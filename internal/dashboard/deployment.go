@@ -16,10 +16,17 @@ import (
 // DeploymentAuthenticator resolves a trusted account identity; request bodies cannot select users.
 type DeploymentAuthenticator func(*http.Request) (app.DeploymentActor, error)
 
+// credentialUsage is one personal credential with the workspace servers it is
+// bound to and the caller's unfinished jobs that a revocation would cancel.
+type credentialUsage struct {
+	app.DeploymentCredential
+	Bindings   []app.DeploymentCredentialBinding `json:"bindings"`
+	ActiveJobs []string                          `json:"activeJobs"`
+}
+
 // WithDeployments enables shared configuration and private SSH overlays using the account provider.
 func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenticator) Option {
 	return func(s *Server) {
-		s.legacySecurity = legacyWebSecurity(s, store, authenticate)
 		route := func(pattern string, fn func(http.ResponseWriter, *http.Request, app.DeploymentActor)) {
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Cache-Control", "no-store")
@@ -29,12 +36,11 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 				}
 				actor, err := authenticate(r)
 				if err != nil || actor.ID == "" {
-					w.Header().Set("WWW-Authenticate", `Basic realm="chainbench", charset="UTF-8"`)
 					http.Error(w, "login required", http.StatusUnauthorized)
 					return
 				}
-				// Basic credentials are explicitly sent by the UI, never ambient cookies.
-				// Reject cross-origin mutation even if a browser cached Basic credentials.
+				// The security layer already requires CSRF on writes; a cross-origin
+				// write is refused here as well, independent of that layer.
 				if r.Method != "GET" {
 					origin := r.Header.Get("Origin")
 					scheme := "http"
@@ -88,7 +94,6 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			}
 			deploymentJSON(w, 200, map[string]any{"valid": err == nil, "errors": issues, "contractVersion": "2", "warnings": []string{"SSH access requires a personal credential and actual target permission check."}})
 		})
-		route("GET /api/v1/deployment-account", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) { deploymentJSON(w, 200, a) })
 		route("GET /api/v1/documents", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			writePage(w, r, store.Documents(r.URL.Query().Get("kind")), func(d app.DeploymentDocument) string { return d.ID })
 		})
@@ -204,7 +209,15 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			deploymentResponse(w, v, err, 200)
 		})
 		route("GET /api/v1/credentials", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			writePage(w, r, store.Credentials(a), func(c app.DeploymentCredential) string { return c.ID })
+			bindings, active := store.CredentialBindings(a), map[string][]string{}
+			if s.jobs != nil {
+				active = s.jobs.ActiveCredentialJobs(a.ID)
+			}
+			items := []credentialUsage{}
+			for _, c := range store.Credentials(a) {
+				items = append(items, credentialUsage{c, append([]app.DeploymentCredentialBinding{}, bindings[c.ID]...), append([]string{}, active[c.ID]...)})
+			}
+			writePage(w, r, items, func(c credentialUsage) string { return c.ID })
 		})
 		route("POST /api/v1/credentials", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.DeploymentCredentialInput

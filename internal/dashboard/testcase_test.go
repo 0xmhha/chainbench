@@ -128,7 +128,12 @@ func TestTestCaseHTTPValidatesPinnedPresetReferences(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/documents/"+saved.ID+"/bundle", nil))
-	if w.Code != 200 || !strings.Contains(w.Body.String(), `"pinned-base"`) || !strings.Contains(w.Body.String(), `"kind":"case"`) {
+	var bundle struct {
+		Documents []struct {
+			Kind string `json:"kind"`
+		} `json:"documents"`
+	}
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"pinned-base"`) || json.Unmarshal(w.Body.Bytes(), &bundle) != nil || len(bundle.Documents) != 2 || bundle.Documents[1].Kind != "case" {
 		t.Fatalf("case bundle export: %d %s", w.Code, w.Body.String())
 	}
 }

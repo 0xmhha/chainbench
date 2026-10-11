@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 )
@@ -279,4 +280,24 @@ func (s *WebJobs) revoke(owner, credential, reason string) error {
 		}
 	}
 	return nil
+}
+
+// ActiveCredentialJobs lists the owner's unfinished jobs by the credential ids
+// they hold, so a revocation shows what it will cancel.
+func (s *WebJobs) ActiveCredentialJobs(owner string) map[string][]string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := map[string][]string{}
+	for id, job := range s.state.Jobs {
+		if job.ActorID != owner || terminalWebJob(job.State) {
+			continue
+		}
+		for _, ref := range job.CredentialRefs {
+			out[ref] = append(out[ref], id)
+		}
+	}
+	for _, ids := range out {
+		sort.Strings(ids)
+	}
+	return out
 }

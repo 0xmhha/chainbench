@@ -8,8 +8,9 @@ chain IDs cannot be replaced. Imports borrow an existing accounts protocol and i
 family, dialect, bootstrap, RPC and genesis engine mapping; unknown JSON fields and
 unsupported mappings are rejected.
 
-Enable it with the existing private `-deployment-accounts` provider and
-`-manifest-assets assets.json`. The data directory remains `-deployment-root`
+Enable it with `-manifest-assets assets.json`. Every call goes through the
+dashboard's own account sessions: sign in, then send the session cookie and its
+CSRF token on writes. There is no separate Basic account mode. The data directory remains `-deployment-root`
 (default `chainbench-out/web-ui`). `-manifest-keys` defaults to `presets/keys`.
 An asset entry contains `id`, `chain`, `path`, `sha256` and the independently
 verified source `commit`. Asset paths are administrator provisioning inputs and

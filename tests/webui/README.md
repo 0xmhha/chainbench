@@ -59,11 +59,11 @@ permissions, restarts the dashboard, and verifies encrypted overlays still work.
 It fails when a browser, SSH target, required scenario, or assertion is absent.
 `WEBUI_BROWSER_CHANNEL` selects the installed Playwright browser (default `chrome`).
 
-The dashboard's `-deployment-accounts` adapter accepts a private (0600) JSON array
-of `{id, username, role, passwordHash}` records, with bcrypt password hashes. The
-`DeploymentAuthenticator` boundary supplies trusted identities to these APIs; the
-fixture provisions its own accounts. This adapter is scoped to the deployment
-editor. `-deployment-root` defaults to `chainbench-out/web-ui` and contains the
+The dashboard's own account sessions supply trusted identities to these APIs
+through the `DeploymentAuthenticator` boundary. The fixture bootstraps the first
+administrator with the setup token from its private data directory and creates
+its other accounts through `/api/v1/users`; writes carry the session cookie and
+its CSRF token. `-deployment-root` defaults to `chainbench-out/web-ui` and contains the
 atomic shared revision snapshot, encrypted credentials, private bindings, audit
 metadata, and a private encryption key.
 

@@ -185,6 +185,10 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 			deploymentJSON(w, http.StatusOK, map[string]any{"bootstrapRequired": auth.BootstrapRequired()})
 		})
 		authenticate := WebAuthenticator(auth)
+		s.contracts = append(s.contracts, "access")
+		s.mux.HandleFunc("GET /api/v1/contracts/access", func(w http.ResponseWriter, r *http.Request) {
+			deploymentJSON(w, http.StatusOK, app.AccessContract())
+		})
 		s.mux.HandleFunc("GET /api/v1/users", func(w http.ResponseWriter, r *http.Request) {
 			writePage(w, r, auth.Users(), func(u app.WebUser) string { return u.ID })
 		})
@@ -266,41 +270,6 @@ func (w *secureResponse) Write(b []byte) (int, error) {
 func (w *secureResponse) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
-	}
-}
-
-// Explicit provisioned Basic accounts retain compatibility while protecting all
-// legacy observation routes and read-only validation from anonymous or viewer writes.
-func legacyWebSecurity(s *Server, store *app.DeploymentStore, authenticate DeploymentAuthenticator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if (!strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events") || r.URL.Path == "/api/v1/auth/config" {
-			s.mux.ServeHTTP(w, r)
-			return
-		}
-		response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: store.RedactWeb, explain: r.Method != http.MethodGet && r.Method != http.MethodHead}
-		if authenticate == nil {
-			http.Error(response, "login required", http.StatusUnauthorized)
-			return
-		}
-		actor, err := authenticate(r)
-		if err != nil || actor.ID == "" {
-			http.Error(response, "login required", http.StatusUnauthorized)
-			return
-		}
-		if strings.HasPrefix(r.URL.Path, "/api/v1/credentials") && actor.Role == "viewer" {
-			http.Error(response, "operator required", http.StatusForbidden)
-			return
-		}
-		if r.Method != "GET" && r.Method != "HEAD" {
-			scheme := s.requestScheme(r)
-			origin := r.Header.Get("Origin")
-			readComparison := r.Method == "POST" && r.URL.Path == "/api/v1/history/compare"
-			if (actor.Role == "viewer" && !readComparison) || (origin != "" && origin != scheme+"://"+r.Host) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
-				http.Error(response, "forbidden", http.StatusForbidden)
-				return
-			}
-		}
-		s.mux.ServeHTTP(response, r)
 	}
 }
 

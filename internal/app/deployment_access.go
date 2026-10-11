@@ -19,7 +19,7 @@ const accountKeyCredential = "account-key"
 
 // validCredentialShape accepts exactly the fields each kind uses.
 func validCredentialShape(in DeploymentCredentialInput) bool {
-	if in.Label == "" {
+	if in.Label == "" || !knownCredentialKind(in.Kind) {
 		return false
 	}
 	switch in.Kind {

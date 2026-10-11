@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"os"
 	"regexp"
+	"slices"
 	"sync"
 	"time"
 
@@ -57,7 +58,9 @@ func webToken() string {
 	return hex.EncodeToString(b)
 }
 func tokenDigest(s string) string { b := sha256.Sum256([]byte(s)); return hex.EncodeToString(b[:]) }
-func validWebRole(s string) bool  { return s == "administrator" || s == "operator" || s == "viewer" }
+func validWebRole(s string) bool {
+	return slices.ContainsFunc(webRoles, func(c WebChoice) bool { return c.ID == s })
+}
 func OpenWebAuth(root, mode string) (*WebAuth, error) {
 	if mode != "personal" && mode != "team" {
 		return nil, errors.New("invalid web mode")

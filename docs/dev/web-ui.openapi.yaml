@@ -291,7 +291,7 @@ paths:
     get:
       operationId: contract
       summary: Read engine-owned grammar or parameter schema
-      description: Each contract object carries x-contractDigest (SHA-256 of the contract) and x-contractVersion. A document create or update may send that digest as contractDigest; a digest that is no longer current is refused with 409 so the editor validates the draft against the new contract first. contractId is deployment, manifest, dsl or chain-preset, each served only when its editor is enabled; chain-preset takes ?chain=<chainId> for the launch vocabulary of that chain. Any other id is 404 and the message names the contracts this server serves.
+      description: Each contract object carries x-contractDigest (SHA-256 of the contract) and x-contractVersion. A document create or update may send that digest as contractDigest; a digest that is no longer current is refused with 409 so the editor validates the draft against the new contract first. contractId is deployment, manifest, dsl or chain-preset, each served only when its editor is enabled, or access, which lists the account roles and personal credential kinds the server accepts with the labels screens show (WebAccessContract with roles and credentialKinds, each an array of id, label and description); access is not a document grammar and carries no digest; chain-preset takes ?chain=<chainId> for the launch vocabulary of that chain. Any other id is 404 and the message names the contracts this server serves.
       x-minimum-role: viewer
       responses:
         '200':
@@ -365,11 +365,11 @@ paths:
   /api/v1/credentials:
     get:
       operationId: listCredentials
-      summary: List only own credential metadata
+      summary: List only own credential metadata and where it is used
       x-minimum-role: operator
       responses:
         '200':
-          description: List only own credential metadata
+          description: List only own credential metadata and where it is used
           content:
             application/json:
               schema:
@@ -2132,6 +2132,45 @@ components:
       - label
       - kind
       - revoked
+    CredentialUsage:
+      description: Own credential metadata with the workspace servers it is bound to and the caller's unfinished jobs that revoking it would cancel.
+      type: object
+      properties:
+        id: *id002
+        ownerId: *id002
+        label: *id001
+        kind:
+          type: string
+          enum:
+          - password
+          - private-key
+          - account-key
+        revoked: *id011
+        createdAt: *id006
+        bindings:
+          type: array
+          items:
+            type: object
+            properties:
+              workspaceId: *id002
+              serverRef:
+                type: string
+            additionalProperties: false
+            required:
+            - workspaceId
+            - serverRef
+        activeJobs:
+          type: array
+          items: *id002
+      additionalProperties: false
+      required:
+      - id
+      - ownerId
+      - label
+      - kind
+      - revoked
+      - bindings
+      - activeJobs
     CredentialCreate:
       type: object
       properties:
@@ -2994,7 +3033,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Credential'
+            $ref: '#/components/schemas/CredentialUsage'
         nextCursor:
           type:
           - string

@@ -83,4 +83,29 @@ func TestDeploymentSharedDocumentsHTTP(t *testing.T) {
 	if w := call("alice", "GET", "/api/v1/credentials", "", ""); strings.Contains(w.Body.String(), "private-marker") {
 		t.Fatal("secret returned")
 	}
+	config := call("alice", "POST", "/api/v1/documents", `{"kind":"workspace-config","name":"Paths","contractVersion":"2","content":{"version":1,"dataRoot":"/data/chainbench","paths":{"binaries":"binaries","configs":"configs","genesis":"genesis","keystore":"keystore","keyrings":"keyrings","nodes":"nodes","runtime":"runtime","logs":"logs"},"control":{"artifactRoot":"chainbench-out"},"inputs":{"mode":"generated"},"execution":{"chain":"fresh"}}}`, "")
+	var cd app.DeploymentDocument
+	_ = json.Unmarshal(config.Body.Bytes(), &cd)
+	ws := call("alice", "POST", "/api/v1/workspaces", fmt.Sprintf(`{"name":"Team","documents":[{"id":%q,"revision":2},{"id":%q,"revision":1}]}`, d.ID, cd.ID), "")
+	var w app.DeploymentWorkspace
+	if err = json.Unmarshal(ws.Body.Bytes(), &w); err != nil || w.ID == "" {
+		t.Fatal(ws.Body.String())
+	}
+	if b := call("alice", "PUT", "/api/v1/workspaces/"+w.ID+"/credential-bindings", fmt.Sprintf(`{"serverRef":"127.0.0.1","credentialId":%q}`, credential.ID), ""); b.Code != 200 {
+		t.Fatal(b.Body.String())
+	}
+	var listed struct {
+		Items []struct {
+			ID         string                            `json:"id"`
+			Bindings   []app.DeploymentCredentialBinding `json:"bindings"`
+			ActiveJobs []string                          `json:"activeJobs"`
+		} `json:"items"`
+	}
+	l := call("alice", "GET", "/api/v1/credentials", "", "")
+	if err = json.Unmarshal(l.Body.Bytes(), &listed); err != nil || len(listed.Items) != 1 {
+		t.Fatal(l.Body.String())
+	}
+	if got := listed.Items[0]; len(got.Bindings) != 1 || got.Bindings[0].WorkspaceID != w.ID || got.Bindings[0].ServerRef != "127.0.0.1" || got.ActiveJobs == nil {
+		t.Fatalf("credential usage = %s", l.Body.String())
+	}
 }

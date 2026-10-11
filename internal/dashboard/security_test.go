@@ -65,6 +65,13 @@ func TestWebSecuritySessionsRolesAndRedaction(t *testing.T) {
 	if w := call("POST", "/api/v1/bootstrap", string(body), "", "", ""); w.Code != 409 {
 		t.Fatal(w.Code)
 	}
+	if w := call("GET", "/api/v1/contracts/access", "", "", "", ""); w.Code != 401 {
+		t.Fatal("access contract served without a session", w.Code)
+	}
+	var access app.WebAccessContract
+	if w := call("GET", "/api/v1/contracts/access", "", token, "", ""); w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &access) != nil || len(access.Roles) != 3 || len(access.CredentialKinds) != 3 {
+		t.Fatal("access contract", w.Code, w.Body.String())
+	}
 	for _, role := range []string{"administrator", "operator", "viewer"} {
 		a := app.DeploymentActor{ID: session.User.ID, Role: "admin"}
 		u, err := auth.CreateUser(a, "user-"+role, "long-user-password", role)

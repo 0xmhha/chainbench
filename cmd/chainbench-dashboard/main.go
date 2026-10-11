@@ -26,7 +26,6 @@ func main() {
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
 	presetRoot := flag.String("chain-presets", "presets/chain", "chain preset directory")
 	analysisRoot := flag.String("chain-analysis", "docs/chain-analysis", "captured chain binary documentation directory")
-	deploymentAccounts := flag.String("deployment-accounts", "", "private provisioned account file enabling shared deployment editor")
 	deploymentRoot := flag.String("deployment-root", "chainbench-out/web-ui", "persistent deployment data directory")
 	manifestAssets := flag.String("manifest-assets", "", "server-provisioned binary asset JSON enabling manifest management")
 	manifestKeys := flag.String("manifest-keys", "presets/keys", "key preset for isolated manifest setup")
@@ -56,7 +55,7 @@ func main() {
 		}
 		proxies = append(proxies, prefix)
 	}
-	if !*legacy && *deploymentAccounts == "" {
+	if !*legacy {
 		if err := dashboard.ValidateServiceMode(*webMode, *addr, *tlsCert != "", proxies); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -89,16 +88,12 @@ func main() {
 			}
 			opts = append(opts, dashboard.WithPublisherToken(token))
 		}
+		// Every Web control API runs behind the account sessions, CSRF and role
+		// checks of the security layer; there is no other account source.
+		auth, err := app.OpenWebAuth(*deploymentRoot, *webMode)
 		var authenticate dashboard.DeploymentAuthenticator
-		var auth *app.WebAuth
-		var err error
-		if *deploymentAccounts != "" {
-			authenticate, err = dashboard.DeploymentAccounts(*deploymentAccounts)
-		} else {
-			auth, err = app.OpenWebAuth(*deploymentRoot, *webMode)
-			if err == nil {
-				authenticate = dashboard.WebAuthenticator(auth)
-			}
+		if err == nil {
+			authenticate = dashboard.WebAuthenticator(auth)
 		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "deployment accounts:", err)
@@ -111,14 +106,9 @@ func main() {
 		}
 		opts = append(opts, dashboard.WithDeployments(deployments, authenticate), dashboard.WithTestCases(authenticate))
 		assets := []app.ManifestBinary{}
-		var authorize func(app.DeploymentActor) error
-		if auth != nil {
-			authorize = auth.AuthorizeJobActor
-		}
-		if auth != nil {
-			opts = append(opts, dashboard.WithWebSecurity(auth, deployments))
-			fmt.Fprintln(os.Stderr, "First administrator setup uses the private setup.token file in the web data directory.")
-		}
+		authorize := auth.AuthorizeJobActor
+		opts = append(opts, dashboard.WithWebSecurity(auth, deployments))
+		fmt.Fprintln(os.Stderr, "First administrator setup uses the private setup.token file in the web data directory.")
 		if *manifestAssets != "" {
 			raw, err := os.ReadFile(*manifestAssets)
 			if err != nil {
@@ -157,9 +147,7 @@ func main() {
 			os.Exit(1)
 		}
 		opts = append(opts, dashboard.WithWebHistory(history, authenticate))
-		if auth != nil {
-			opts = append(opts, dashboard.WithWebAudit(auth, deployments, jobs, history, manifests))
-		}
+		opts = append(opts, dashboard.WithWebAudit(auth, deployments, jobs, history, manifests))
 		monitor, err := app.OpenWebMonitor(*deploymentRoot, deployments.RedactWeb)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "observation store:", err)

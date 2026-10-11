@@ -9,6 +9,7 @@ import (
 	"errors"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"os"
+	"sort"
 	"sync"
 	"time"
 )
@@ -455,6 +456,34 @@ func (s *DeploymentStore) Bindings(a DeploymentActor, workspace string) map[stri
 	out := map[string]string{}
 	for server, credential := range s.state.Bindings[a.ID][workspace] {
 		out[server] = credential
+	}
+	return out
+}
+
+// DeploymentCredentialBinding names one workspace server a credential logs in to.
+type DeploymentCredentialBinding struct {
+	WorkspaceID string `json:"workspaceId"`
+	ServerRef   string `json:"serverRef"`
+}
+
+// CredentialBindings lists where each of the caller's own credentials is bound,
+// keyed by credential id. Other users' overlays are never read.
+func (s *DeploymentStore) CredentialBindings(a DeploymentActor) map[string][]DeploymentCredentialBinding {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := map[string][]DeploymentCredentialBinding{}
+	for workspace, servers := range s.state.Bindings[a.ID] {
+		for server, credential := range servers {
+			out[credential] = append(out[credential], DeploymentCredentialBinding{workspace, server})
+		}
+	}
+	for _, list := range out {
+		sort.Slice(list, func(i, j int) bool {
+			if list[i].WorkspaceID != list[j].WorkspaceID {
+				return list[i].WorkspaceID < list[j].WorkspaceID
+			}
+			return list[i].ServerRef < list[j].ServerRef
+		})
 	}
 	return out
 }
