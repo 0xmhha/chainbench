@@ -32,11 +32,16 @@ func TestSpreadPlanResolvesEveryServerOfTheSet(t *testing.T) {
 		op   string
 	}{
 		{webChainArguments{AllServers: true, ServerRef: "a"}, "chain.deploy"},
-		{webChainArguments{AllServers: true}, "node.stop"},
 		{webChainArguments{AllServers: true}, "test.run"},
 	} {
 		if _, err := webPlanServers(set, c.args, c.op); err == nil {
 			t.Errorf("accepted %+v for %s", c.args, c.op)
+		}
+	}
+	// A recorded spread network is controlled and collected over the whole set.
+	for _, op := range []string{"node.stop", "node.swap", "test.attach", "network.monitor"} {
+		if all, err := webPlanServers(set, webChainArguments{AllServers: true}, op); err != nil || len(all) != 2 {
+			t.Errorf("%s over the whole set: %v", op, err)
 		}
 	}
 	if _, err := webPlanServers(spreadSet(t, `{"name":"a","addr":"10.0.0.1"}`), webChainArguments{AllServers: true}, "chain.deploy"); err == nil {
@@ -110,5 +115,50 @@ func TestSpreadPayloadTargetsListEveryMachine(t *testing.T) {
 	spread := webChainPayload{Target: resource.Inspection{HostIdentity: "a"}, Targets: []resource.Inspection{{HostIdentity: "a"}, {HostIdentity: "b"}}}
 	if got := webPayloadTargets(spread); len(got) != 2 || got[1].HostIdentity != "b" {
 		t.Fatalf("%+v", got)
+	}
+}
+
+func TestSpreadNodesResolveToTheirOwnServerMachine(t *testing.T) {
+	p := webChainPayload{Target: resource.Inspection{HostIdentity: "a"}, Targets: []resource.Inspection{{HostIdentity: "a"}, {HostIdentity: "b"}}, TargetServers: []string{"one", "two"}}
+	if m, ok := webNodeMachine(p, node.Record{Server: "two"}); !ok || m.HostIdentity != "b" {
+		t.Fatalf("%+v %v", m, ok)
+	}
+	if _, ok := webNodeMachine(p, node.Record{Server: "three"}); ok {
+		t.Fatal("a node on an unpinned server resolved")
+	}
+	single := webChainPayload{Target: resource.Inspection{HostIdentity: "only"}}
+	if m, ok := webNodeMachine(single, node.Record{}); !ok || m.HostIdentity != "only" {
+		t.Fatalf("%+v %v", m, ok)
+	}
+	if got := webRecordedMachines(p); len(got) != 2 || got[1].Server != "two" || got[1].Target.HostIdentity != "b" {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestSpreadRecordedPlacementAcceptsEachServerOfTheSet(t *testing.T) {
+	set := spreadSet(t, `{"name":"a","addr":"10.0.0.1"},{"name":"b","addr":"10.0.0.2"}`)
+	pool, err := set.Pool(0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ports, err := resource.PlanBands(1, pool.Ports, pool.Reservation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State{Nodes: []node.Record{{Index: 1, Server: "a", Host: "10.0.0.1"}, {Index: 2, Server: "b", Host: "10.0.0.2"}}}
+	for i := range state.Nodes {
+		state.Nodes[i].Endpoints = ports
+	}
+	hosts := map[string]bool{}
+	for _, h := range pool.Hosts {
+		hosts[h.Addr] = true
+	}
+	for _, ns := range state.Nodes {
+		if !hosts[ns.Host] {
+			t.Fatalf("%s is not a host of the whole-set pool", ns.Host)
+		}
+	}
+	if !webRecordSpansServers(state) {
+		t.Fatal("the record is spread")
 	}
 }

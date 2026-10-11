@@ -71,7 +71,15 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 	if !allowed {
 		return "", ErrDeploymentConflict
 	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(state.Target)
+	// The executable is checked on the selected node's own machine, which for
+	// a spread network need not be the network's first target.
+	spec := state.Target
+	for _, ns := range state.Nodes {
+		if len(p.Input.NodeIDs) == 1 && string(ns.NodeLabel()) == p.Input.NodeIDs[0] {
+			spec = webNodeTarget(state, ns)
+		}
+	}
+	access, err := (resource.Opener{Lookup: lookup}).Open(spec)
 	if err != nil {
 		return "", err
 	}

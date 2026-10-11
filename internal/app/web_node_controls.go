@@ -98,8 +98,9 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	if err != nil {
 		return err
 	}
-	expected := filepath.Join(p.Target.DataPath, wc.Paths.Nodes, state.CompositionID, string(ns.NodeLabel()))
-	if actual.HostIdentity != p.Target.HostIdentity || actual.DataPath != expected {
+	machine, ok := webNodeMachine(p, ns)
+	expected := filepath.Join(machine.DataPath, wc.Paths.Nodes, state.CompositionID, string(ns.NodeLabel()))
+	if !ok || actual.HostIdentity != machine.HostIdentity || actual.DataPath != expected {
 		return ErrDeploymentConflict
 	}
 	access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))

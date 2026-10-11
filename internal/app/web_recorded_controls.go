@@ -68,8 +68,12 @@ func webRecordedControlPlacement(state State, p *webChainPayload, pool resource.
 	if err = pool.Validate(); err != nil {
 		return nil, err
 	}
-	if len(pool.Hosts) != 1 || len(state.Nodes) > pool.Slots {
+	if len(state.Nodes) > pool.Cap() || !p.Arguments.AllServers && len(pool.Hosts) != 1 {
 		return nil, ErrDeploymentConflict
+	}
+	hosts := map[string]bool{}
+	for _, h := range pool.Hosts {
+		hosts[h.Addr] = true
 	}
 	permitted := map[node.Endpoints]bool{}
 	for slot := 1; slot <= pool.Slots; slot++ {
@@ -86,7 +90,7 @@ func webRecordedControlPlacement(state State, p *webChainPayload, pool resource.
 	slices.SortFunc(nodes, func(a, b node.Record) int { return a.Index - b.Index })
 	placements := make([]node.Placement, 0, len(nodes))
 	for _, ns := range nodes {
-		if ns.Host != pool.Hosts[0].Addr || !permitted[ns.Endpoints] {
+		if !hosts[ns.Host] || !permitted[ns.Endpoints] {
 			return nil, ErrDeploymentConflict
 		}
 		placements = append(placements, node.Placement{Index: ns.Index, Label: ns.NodeLabel(), Role: node.Role(ns.Role), Host: ns.Host, Ports: ns.Endpoints, DataDir: ns.DataDir})

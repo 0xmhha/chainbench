@@ -93,6 +93,7 @@ type webChainPayload struct {
 	// Targets lists every machine of a spread network in server order; the
 	// first is Target. It is empty for a network on one server.
 	Targets            []resource.Inspection `json:"targets,omitempty"`
+	TargetServers      []string              `json:"targetServers,omitempty"`
 	ExecutionBinary    string                `json:"executionBinary"`
 	Keys               webKeySnapshot        `json:"keys"`
 	TestRun            *webTestRun           `json:"testRun,omitempty"`
@@ -218,6 +219,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	p.Target = targets[0]
 	if len(targets) > 1 {
 		p.Targets = targets
+		for _, s := range servers {
+			p.TargetServers = append(p.TargetServers, s.Name)
+		}
 		for _, t := range targets[1:] {
 			if t.Transport != p.Target.Transport {
 				return out, errors.New("a spread network needs servers of one kind")
@@ -385,8 +389,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if err = json.Unmarshal(record, &state); err != nil {
 			return out, err
 		}
-		if webRecordSpansServers(state) && in.Operation != "chain.setup" && in.Operation != "chain.deploy" {
-			return out, errSpreadControls
+		if webRecordedOperation(in.Operation) && webRecordSpansServers(state) != args.AllServers {
+			return out, errSpreadSelection
 		}
 		ownedTarget, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
 		if err != nil {
@@ -460,7 +464,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 					}
 				}
 				if p.Replacement != nil {
-					if err = inspectWebBinaryParent(ctx, p, p.Replacement.Path, lookup); err != nil {
+					if err = inspectWebBinaryParent(ctx, state, p, p.Replacement.Path, lookup); err != nil {
 						return out, err
 					}
 				}

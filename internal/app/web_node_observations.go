@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"os"
 	"path/filepath"
 	"time"
@@ -44,13 +45,28 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	for _, ns := range state.Nodes {
 		network.Nodes = append(network.Nodes, WebNode{ID: string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()})
 	}
-	if webRecordSpansServers(state) {
-		// Observation knows one machine per network; nodes on the others
-		// would be probed on the wrong host, so none is probed.
-		for i := range network.Nodes {
-			network.Nodes[i].HostIdentity, network.Nodes[i].ObservationReason = "", "spread_network"
+	// A spread network records each server's machine; a node is observed
+	// only on the machine recorded for its own server.
+	machines := map[string]resource.Inspection{}
+	if raw, err := os.ReadFile(filepath.Join(dir, "web-targets.json")); err == nil {
+		var recorded []webRecordedMachine
+		if err = json.Unmarshal(raw, &recorded); err != nil {
+			return WebNetwork{}, err
 		}
+		for _, m := range recorded {
+			machines[m.Server] = m.Target
+		}
+	} else if webRecordSpansServers(state) {
 		return network, nil
+	}
+	expectedOf := func(ns node.Record) resource.Inspection {
+		if m, ok := machines[ns.Server]; ok {
+			return m
+		}
+		return target
+	}
+	for i, ns := range state.Nodes {
+		network.Nodes[i].HostIdentity = expectedOf(ns).HostIdentity
 	}
 	ledgerMatches := verifyWebRecordLedger(state, dir) == nil
 	var declaration DeploymentDocument
@@ -83,7 +99,7 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	for i, ns := range state.Nodes {
 		spec := webNodeTarget(state, ns)
 		machine, err := opener.Inspect(ctx, spec)
-		if err != nil || machine != target {
+		if err != nil || machine != expectedOf(ns) {
 			continue
 		}
 		access, err := opener.Open(spec)

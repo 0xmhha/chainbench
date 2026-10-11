@@ -9,9 +9,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// errSpreadControls refuses an operation the Web performs on one server only
-// against a network whose nodes sit on several.
-var errSpreadControls = errors.New("node controls, tests and attach on a network spread over several servers are not available yet")
+// errSpreadSelection refuses a recorded operation whose server selection does
+// not match how the owned network was placed.
+var errSpreadSelection = errors.New("select the whole server set for a network spread over it, and one server otherwise")
 
 // webPlanServers resolves the servers a plan places nodes on: the one it
 // names, or every server of the pinned set when it spreads the network the
@@ -27,8 +27,8 @@ func webPlanServers(set *resource.Set, args webChainArguments, operation string)
 	if args.ServerRef != "" {
 		return nil, errors.New("spreading over the server set names no single server")
 	}
-	if operation != "chain.setup" && operation != "chain.deploy" {
-		return nil, errors.New("spreading over the server set applies to composition jobs")
+	if operation == "test.run" {
+		return nil, errors.New("a test job composes its own network on one server")
 	}
 	if len(set.Servers) < 2 {
 		return nil, errors.New("the server set has one server; select it by name")
@@ -62,6 +62,48 @@ func webInspectServers(ctx context.Context, lookup resource.Lookup, servers []re
 		out = append(out, t)
 	}
 	return out, nil
+}
+
+// webNodeServer is the server one recorded node runs on.
+func webNodeServer(set *resource.Set, p webChainPayload, ns node.Record) (resource.Server, error) {
+	if ns.Server != "" {
+		return set.ByName(ns.Server)
+	}
+	servers, err := webPlanServers(set, p.Arguments, p.Input.Operation)
+	if err != nil {
+		return resource.Server{}, err
+	}
+	return servers[0], nil
+}
+
+// webNodeMachine is the pinned inspection of the machine one recorded node
+// runs on: the plan's target, or for a spread network the machine of the
+// node's server.
+func webNodeMachine(p webChainPayload, ns node.Record) (resource.Inspection, bool) {
+	if len(p.Targets) == 0 {
+		return p.Target, true
+	}
+	for i, name := range p.TargetServers {
+		if name == ns.Server && i < len(p.Targets) {
+			return p.Targets[i], true
+		}
+	}
+	return resource.Inspection{}, false
+}
+
+// webRecordedMachine is one machine of a spread network as web-targets.json
+// records it, next to the server it was inspected for.
+type webRecordedMachine struct {
+	Server string              `json:"server"`
+	Target resource.Inspection `json:"target"`
+}
+
+func webRecordedMachines(p webChainPayload) []webRecordedMachine {
+	out := make([]webRecordedMachine, 0, len(p.Targets))
+	for i, t := range p.Targets {
+		out = append(out, webRecordedMachine{Server: p.TargetServers[i], Target: t})
+	}
+	return out
 }
 
 // webPayloadTargets lists every machine a plan touches.

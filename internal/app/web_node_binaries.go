@@ -153,7 +153,7 @@ func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, 
 			if err != nil || path != binding.Path {
 				return nil, "", ErrDeploymentConflict
 			}
-			if err = inspectWebBinaryParent(ctx, p, path, lookup); err != nil {
+			if err = inspectWebBinaryParent(ctx, state, p, path, lookup); err != nil {
 				return nil, "", err
 			}
 			asset, err := e.binaryAsset(binding.Evidence.ID)
@@ -242,7 +242,7 @@ func verifyWebReplacementArguments(args []string, help string) error {
 	return nil
 }
 
-func inspectWebBinaryParent(ctx context.Context, p webChainPayload, path string, lookup resource.Lookup) error {
+func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload, path string, lookup resource.Lookup) error {
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
 		return err
@@ -251,9 +251,19 @@ func inspectWebBinaryParent(ctx context.Context, p webChainPayload, path string,
 	if err != nil {
 		return err
 	}
-	server, err := set.ByName(p.Arguments.ServerRef)
+	var selected node.Record
+	for _, ns := range state.Nodes {
+		if len(p.Input.NodeIDs) == 1 && string(ns.NodeLabel()) == p.Input.NodeIDs[0] {
+			selected = ns
+		}
+	}
+	server, err := webNodeServer(set, p, selected)
 	if err != nil {
 		return err
+	}
+	machine, ok := webNodeMachine(p, selected)
+	if !ok {
+		return ErrDeploymentConflict
 	}
 	relative, err := filepath.Rel(wc.DataRoot, filepath.Dir(path))
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
@@ -264,7 +274,7 @@ func inspectWebBinaryParent(ctx context.Context, p webChainPayload, path string,
 	if err != nil {
 		return err
 	}
-	if actual.HostIdentity != p.Target.HostIdentity || actual.DataPath != filepath.Join(p.Target.DataPath, relative) {
+	if actual.HostIdentity != machine.HostIdentity || actual.DataPath != filepath.Join(machine.DataPath, relative) {
 		return ErrDeploymentConflict
 	}
 	return nil
@@ -292,7 +302,7 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, state St
 	if err != nil || expected != p.Replacement.Path {
 		return ErrDeploymentConflict
 	}
-	if err = inspectWebBinaryParent(ctx, p, expected, lookup); err != nil {
+	if err = inspectWebBinaryParent(ctx, state, p, expected, lookup); err != nil {
 		return err
 	}
 	access, err := (resource.Opener{Lookup: lookup}).Open(state.Target)
@@ -319,7 +329,7 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, state St
 	if err != nil || checksum != "sha256:"+observed.SHA256 {
 		return ErrDeploymentConflict
 	}
-	if err = inspectWebBinaryParent(ctx, p, expected, lookup); err != nil {
+	if err = inspectWebBinaryParent(ctx, state, p, expected, lookup); err != nil {
 		return err
 	}
 	if err = ctx.Err(); err != nil {

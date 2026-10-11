@@ -257,7 +257,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			}
 			// A spread network records every machine; readers that know only
 			// one target refuse its controls rather than guess.
-			all, err := json.Marshal(p.Targets)
+			all, err := json.Marshal(webRecordedMachines(p))
 			if err != nil {
 				return err
 			}

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -27,8 +28,8 @@ func (e *WebChainEngine) prepareMonitor(ctx context.Context, a DeploymentActor, 
 	if e.monitor == nil {
 		return out, errors.New("node log collection is not available on this server")
 	}
-	if args.ServerRef == "" || args.ManifestID != "" || args.AssetID != "" || args.Validators != 0 || args.ReplacementAssetID != "" || args.ConfigOverrides != nil || args.CaseRefs != nil || args.ChainPresetRef != nil {
-		return out, errors.New("log collection takes only the target server")
+	if (args.ServerRef == "") != args.AllServers || args.ManifestID != "" || args.AssetID != "" || args.Validators != 0 || args.ReplacementAssetID != "" || args.ConfigOverrides != nil || args.CaseRefs != nil || args.ChainPresetRef != nil {
+		return out, errors.New("log collection takes only the target server, or the whole set for a spread network")
 	}
 	if len(in.AssetRefs) != 0 || len(in.NodeIDs) != 0 || in.Retention != "retain" {
 		return out, errors.New("log collection reads every recorded node and changes nothing")
@@ -57,17 +58,36 @@ func (e *WebChainEngine) prepareMonitor(ctx context.Context, a DeploymentActor, 
 			return out, errors.New("log collection requires server-set and workspace-config documents only")
 		}
 	}
-	if len(in.CredentialBindings) != 1 {
-		return out, errors.New("remote log collection uses your own SSH binding for the target server")
+	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
+	if err != nil {
+		return out, err
+	}
+	servers, err := webPlanServers(set, args, in.Operation)
+	if err != nil {
+		return out, err
+	}
+	if len(in.CredentialBindings) != len(servers) {
+		return out, errors.New("remote log collection uses your own SSH binding for each target server")
 	}
 	for name, id := range in.CredentialBindings {
-		if name != args.ServerRef || id == "" || e.documents.Bindings(a, in.WorkspaceID)[name] != id {
+		selected := false
+		for _, s := range servers {
+			selected = selected || s.Name == name
+		}
+		if !selected || id == "" || e.documents.Bindings(a, in.WorkspaceID)[name] != id {
 			return out, ErrDeploymentConflict
 		}
 	}
-	p.Target, err = e.monitorTarget(ctx, a, p)
+	targets, err := e.monitorTargets(ctx, a, p)
 	if err != nil {
 		return out, err
+	}
+	p.Target = targets[0]
+	if len(targets) > 1 {
+		p.Targets = targets
+		for _, s := range servers {
+			p.TargetServers = append(p.TargetServers, s.Name)
+		}
 	}
 	if p.ControlDir, err = filepath.Abs(filepath.Join(e.root, "networks", workspace.ID)); err != nil {
 		return out, err
@@ -107,40 +127,55 @@ func recordedMonitorTarget(p webChainPayload) error {
 	if recorded != p.Target {
 		return ErrDeploymentConflict // The owned network lives elsewhere.
 	}
-	// A spread network keeps nodes on other machines whose logs this job's
-	// one SSH binding cannot read.
-	if _, err = os.Stat(filepath.Join(p.ControlDir, "web-targets.json")); err == nil {
-		return errSpreadControls
+	// A spread network must be collected over the whole set it was placed on.
+	raw, err = os.ReadFile(filepath.Join(p.ControlDir, "web-targets.json"))
+	if os.IsNotExist(err) {
+		if len(p.Targets) > 0 {
+			return errSpreadSelection
+		}
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var machines []webRecordedMachine
+	if err = json.Unmarshal(raw, &machines); err != nil {
+		return err
+	}
+	if !slices.Equal(machines, webRecordedMachines(p)) {
+		return errSpreadSelection
 	}
 	return nil
 }
 
-// monitorTarget inspects the pinned server with the job's own binding.
-func (e *WebChainEngine) monitorTarget(ctx context.Context, a DeploymentActor, p webChainPayload) (resource.Inspection, error) {
+// monitorTargets inspects the pinned servers with the job's own bindings.
+func (e *WebChainEngine) monitorTargets(ctx context.Context, a DeploymentActor, p webChainPayload) ([]resource.Inspection, error) {
 	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
 	if err != nil {
-		return resource.Inspection{}, err
+		return nil, err
 	}
-	server, err := set.ByName(p.Arguments.ServerRef)
+	servers, err := webPlanServers(set, p.Arguments, p.Input.Operation)
 	if err != nil {
-		return resource.Inspection{}, err
+		return nil, err
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
-		return resource.Inspection{}, err
+		return nil, err
 	}
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
 	if err != nil {
-		return resource.Inspection{}, err
+		return nil, err
 	}
-	target, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, resource.TargetOf(server, wc.DataRoot))
+	targets, err := webInspectServers(ctx, lookup, servers, wc.DataRoot)
 	if err != nil {
-		return resource.Inspection{}, err
+		return nil, err
 	}
-	if target.Transport == "local" {
-		return resource.Inspection{}, errors.New("local node logs are collected without a job")
+	for _, t := range targets {
+		if t.Transport == "local" {
+			return nil, errors.New("local node logs are collected without a job")
+		}
 	}
-	return target, nil
+	return targets, nil
 }
 
 // executeMonitor archives remote logs every collection period until the job
@@ -148,11 +183,11 @@ func (e *WebChainEngine) monitorTarget(ctx context.Context, a DeploymentActor, p
 // guard, so revocation stops further access even before cancellation lands.
 func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, p webChainPayload, report func(WebJobPhase) error) (WebJobResult, error) {
 	result := WebJobResult{NodeDisposition: "retained"}
-	target, err := e.monitorTarget(ctx, a, p)
+	targets, err := e.monitorTargets(ctx, a, p)
 	if err != nil {
 		return result, err
 	}
-	if target != p.Target {
+	if !slices.Equal(targets, webPayloadTargets(p)) {
 		return result, ErrDeploymentConflict
 	}
 	if err = recordedMonitorTarget(p); err != nil {
@@ -166,7 +201,11 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 	open := func(ctx context.Context, state State, ns node.Record) (webLogSource, error) {
 		// The lookup guard reports revocation as ErrDeploymentForbidden, which
 		// ends collection; a refused SSH dial alone carries no such cause.
-		if _, err := lookup(p.Arguments.ServerRef); err != nil {
+		server := ns.Server
+		if server == "" {
+			server = p.Arguments.ServerRef
+		}
+		if _, err := lookup(server); err != nil {
 			return nil, err
 		}
 		spec := webNodeTarget(state, ns)
@@ -174,7 +213,7 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 		if err != nil {
 			return nil, err
 		}
-		if machine != p.Target {
+		if pinned, ok := webNodeMachine(p, ns); !ok || machine != pinned {
 			return nil, ErrDeploymentConflict
 		}
 		access, err := opener.Open(spec)

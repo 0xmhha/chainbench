@@ -109,7 +109,7 @@
     {
       "id": "G-A06",
       "group": "seed",
-      "title": "여러 서버에 나뉜 네트워크에서도 노드 제어, 테스트 실행, 원격 로그 수집, 노드 관측을 노드마다 그 노드의 서버로 수행한다.",
+      "title": "여러 서버에 나뉜 네트워크에서도 노드 제어, attach 테스트, 원격 로그 수집, 노드 관측을 노드마다 그 노드의 서버에서 수행한다.",
       "criteria": [
         "WEB-07",
         "WEB-08"
@@ -119,8 +119,9 @@
         "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
       ],
       "code": [
-        "internal/app/web_chain_servers.go errSpreadControls (G-A05에서 거절로 둠)",
-        "internal/app/web_node_observations.go spread_network"
+        "internal/app/web_chain_servers.go webNodeMachine, webNodeServer",
+        "internal/app/web_node_observations.go",
+        "internal/app/web_network_monitor.go"
       ],
       "completion": "두 서버에 나뉜 네트워크에서 각 서버의 노드를 시작·정지하고 관측과 로그가 그 노드의 서버에서 읽힌다.",
       "status": "open",
