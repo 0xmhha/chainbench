@@ -121,6 +121,11 @@ func (e *WebChainEngine) allowed(a DeploymentActor) error {
 	}
 	return nil
 }
+
+// webConflict is ErrDeploymentConflict naming the check that refused, so a
+// 409 says what no longer matches rather than only that something changed.
+func webConflict(reason string) error { return fmt.Errorf("%w: %s", ErrDeploymentConflict, reason) }
+
 func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebPlanInput) (WebPreparedJob, error) {
 	var out WebPreparedJob
 	if err := e.allowed(a); err != nil {
@@ -172,7 +177,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	refs, _ := json.Marshal(workspace.Documents)
 	selected, _ := json.Marshal(in.DocumentRefs)
 	if string(refs) != string(selected) {
-		return out, ErrDeploymentConflict
+		return out, webConflict("the plan names other document revisions than the workspace pins")
 	}
 	p := webChainPayload{Input: in, Arguments: args, WorkspaceRevision: workspace.Revision}
 	for _, ref := range in.DocumentRefs {
@@ -214,7 +219,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			selected = selected || s.Name == name
 		}
 		if !selected || id == "" || e.documents.Bindings(a, in.WorkspaceID)[name] != id {
-			return out, ErrDeploymentConflict
+			return out, webConflict("the credential binding for " + name + " is not my current binding")
 		}
 	}
 	if missing := webMissingAccess(servers, in.CredentialBindings); len(missing) > 0 {
@@ -398,7 +403,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err == nil {
 		if controlState != nil && manifestHash(record) != p.RecordDigest {
-			return out, ErrDeploymentConflict
+			return out, webConflict("the network record changed while the plan was prepared")
 		}
 		var state State
 		if err = json.Unmarshal(record, &state); err != nil {
@@ -412,7 +417,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			return out, err
 		}
 		if ownedTarget != p.Target {
-			return out, ErrDeploymentConflict
+			return out, webConflict("the network was recorded on another target than the first selected server")
 		}
 		p.RecordDigest = manifestHash(record)
 		if in.Operation == "chain.setup" || in.Operation == "chain.deploy" {
@@ -487,7 +492,8 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 					}
 				}
 			}
-			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup); err != nil {
+			// A node of a spread network runs on one of the other reviewed machines.
+			if err = verifyWebNodeProcesses(ctx, state, in.NodeIDs, lookup, p.Targets...); err != nil {
 				return out, err
 			}
 			if in.Retention == "cleanup" {

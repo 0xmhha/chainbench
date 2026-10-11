@@ -40,7 +40,7 @@ func webNodeBinaryDeclarationsMatch(state State, ns node.Record) bool {
 
 func webNodeBinaryTarget(p webChainPayload, evidence ManifestBinaryEvidence) (string, error) {
 	if evidence.ID == "" || evidence.Chain != p.Binary.Chain || evidence.OS != p.Target.OS || evidence.Architecture != p.Target.Architecture || !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(evidence.SHA256) {
-		return "", ErrDeploymentConflict
+		return "", webConflict("the node binary evidence does not fit the reviewed binary")
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
@@ -63,7 +63,7 @@ func readWebNodeBinaries(controlDir string) ([]webNodeBinary, string, error) {
 		return nil, "", err
 	}
 	if !info.Mode().IsRegular() {
-		return nil, "", ErrDeploymentConflict
+		return nil, "", webConflict("the node binary history is not a regular file")
 	}
 	file, err := os.Open(path)
 	if err != nil {
@@ -72,23 +72,23 @@ func readWebNodeBinaries(controlDir string) ([]webNodeBinary, string, error) {
 	defer func() { _ = file.Close() }()
 	opened, err := file.Stat()
 	if err != nil || !os.SameFile(info, opened) || !opened.Mode().IsRegular() {
-		return nil, "", ErrDeploymentConflict
+		return nil, "", webConflict("the node binary history changed while it was read")
 	}
 	raw, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
 	if err != nil || len(raw) > 1<<20 {
-		return nil, "", ErrDeploymentConflict
+		return nil, "", webConflict("the node binary history is too large")
 	}
 	var bindings []webNodeBinary
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err = dec.Decode(&bindings); err != nil || dec.Decode(new(any)) != io.EOF {
-		return nil, "", ErrDeploymentConflict
+		return nil, "", webConflict("the node binary history is malformed")
 	}
 	seen := map[string]bool{}
 	for _, binding := range bindings {
 		key := binding.NodeID + "\x00" + binding.Path
 		if binding.NodeID == "" || binding.Path == "" || seen[key] {
-			return nil, "", ErrDeploymentConflict
+			return nil, "", webConflict("the node binary history repeats an entry")
 		}
 		seen[key] = true
 	}
@@ -104,12 +104,12 @@ func saveWebNodeBinary(ctx context.Context, controlDir, expectedDigest string, b
 		return err
 	}
 	if digest != expectedDigest {
-		return ErrDeploymentConflict
+		return webConflict("the node binary history changed since review")
 	}
 	for _, prior := range bindings {
 		if prior.NodeID == binding.NodeID && prior.Path == binding.Path {
 			if !reflect.DeepEqual(prior, binding) {
-				return ErrDeploymentConflict
+				return webConflict("the node binary history already holds other evidence for this node")
 			}
 			return nil
 		}
@@ -143,7 +143,7 @@ func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, 
 			return nil, digest, nil
 		}
 		if !webNodeBinaryDeclarationsMatch(state, ns) {
-			return nil, "", ErrDeploymentConflict
+			return nil, "", webConflict("the node binary declarations differ from the network")
 		}
 		for _, binding := range bindings {
 			if binding.NodeID != string(ns.NodeLabel()) || binding.Path != state.Binaries[ns.Binary] {
@@ -151,34 +151,34 @@ func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, 
 			}
 			path, err := webNodeBinaryTarget(p, binding.Evidence)
 			if err != nil || path != binding.Path {
-				return nil, "", ErrDeploymentConflict
+				return nil, "", webConflict("the node binary is not at its registered path")
 			}
 			if err = inspectWebBinaryParent(ctx, state, p, path, lookup); err != nil {
 				return nil, "", err
 			}
 			asset, err := e.binaryAsset(binding.Evidence.ID)
 			if err != nil {
-				return nil, "", ErrDeploymentConflict
+				return nil, "", webConflict("the node binary asset is no longer registered")
 			}
 			observed, err := asset.Verify(ctx, p.Binary.Chain)
 			if err != nil || !reflect.DeepEqual(observed, binding.Evidence) {
-				return nil, "", ErrDeploymentConflict
+				return nil, "", webConflict("the node binary asset no longer matches its evidence")
 			}
 			access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
 			if err != nil {
 				return nil, "", err
 			}
 			if err = access.VerifyRegularFile(ctx, path); err != nil {
-				return nil, "", ErrDeploymentConflict
+				return nil, "", webConflict("the node binary file is missing on its machine")
 			}
 			checksum, err := access.Files.Checksum(ctx, path)
 			if err != nil || checksum != "sha256:"+binding.Evidence.SHA256 {
-				return nil, "", ErrDeploymentConflict
+				return nil, "", webConflict("the node binary checksum differs on its machine")
 			}
 			copy := binding
 			return &copy, digest, nil
 		}
-		return nil, "", ErrDeploymentConflict
+		return nil, "", webConflict("the node runs its own binary without a reviewed record")
 	}
 	return nil, "", ErrDeploymentNotFound
 }
@@ -263,11 +263,11 @@ func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload,
 	}
 	machine, ok := webNodeMachine(p, selected)
 	if !ok {
-		return ErrDeploymentConflict
+		return webConflict("the node machine is not one this plan reviewed")
 	}
 	relative, err := filepath.Rel(wc.DataRoot, filepath.Dir(path))
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return ErrDeploymentConflict
+		return webConflict("the replacement path leaves the data root")
 	}
 	spec := resource.TargetOf(server, filepath.Dir(path))
 	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
@@ -275,7 +275,7 @@ func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload,
 		return err
 	}
 	if actual.HostIdentity != machine.HostIdentity || actual.DataPath != filepath.Join(machine.DataPath, relative) {
-		return ErrDeploymentConflict
+		return webConflict("the replacement directory is not on the node machine")
 	}
 	return nil
 }
@@ -296,11 +296,11 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, state St
 	}
 	observed, err := asset.Verify(ctx, p.Binary.Chain)
 	if err != nil || !reflect.DeepEqual(observed, p.Replacement.Evidence) {
-		return ErrDeploymentConflict
+		return webConflict("the replacement asset no longer matches its evidence")
 	}
 	expected, err := webNodeBinaryTarget(p, observed)
 	if err != nil || expected != p.Replacement.Path {
-		return ErrDeploymentConflict
+		return webConflict("the replacement is not at its registered path")
 	}
 	if err = inspectWebBinaryParent(ctx, state, p, expected, lookup); err != nil {
 		return err
@@ -316,18 +316,18 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, state St
 	if !exists {
 		raw, err := os.ReadFile(asset.Path)
 		if err != nil || manifestHash(raw) != observed.SHA256 {
-			return ErrDeploymentConflict
+			return webConflict("the replacement asset bytes changed")
 		}
 		if err = access.Files.Write(ctx, expected, raw, 0755); err != nil {
 			return err
 		}
 	}
 	if err = access.VerifyExecutable(ctx, expected); err != nil {
-		return ErrDeploymentConflict
+		return webConflict("the replacement is not executable on the node machine")
 	}
 	checksum, err := access.Files.Checksum(ctx, expected)
 	if err != nil || checksum != "sha256:"+observed.SHA256 {
-		return ErrDeploymentConflict
+		return webConflict("the replacement checksum differs on the node machine")
 	}
 	if err = inspectWebBinaryParent(ctx, state, p, expected, lookup); err != nil {
 		return err

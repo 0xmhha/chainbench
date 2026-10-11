@@ -18,7 +18,7 @@ func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPaylo
 	}
 	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
 	if err != nil || actual != p.Target {
-		return ErrDeploymentConflict
+		return webConflict("the recorded network target is not the reviewed target")
 	}
 	if len(state.Nodes) == 0 {
 		return nil
@@ -36,7 +36,7 @@ func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPaylo
 	}
 	for _, ns := range state.Nodes {
 		if vacant && ns.PID != 0 {
-			return ErrDeploymentConflict
+			return webConflict("a recorded node still runs where the network must be vacant")
 		}
 		if err = verifyWebNodeProcesses(ctx, state, []string{string(ns.NodeLabel())}, lookup, p.Targets...); err != nil {
 			return err
@@ -53,14 +53,14 @@ func recheckWebNetworkRecord(ctx context.Context, p webChainPayload, lookup reso
 		return nil
 	}
 	if err != nil {
-		return ErrDeploymentConflict
+		return webConflict("the network record cannot be read")
 	}
 	if vacant && manifestHash(raw) != p.RecordDigest {
-		return ErrDeploymentConflict
+		return webConflict("the network record changed since review")
 	}
 	var state State
 	if err = json.Unmarshal(raw, &state); err != nil {
-		return ErrDeploymentConflict
+		return webConflict("the network record is malformed")
 	}
 	return verifyWebNetworkProcesses(ctx, state, p, lookup, vacant)
 }
@@ -73,18 +73,18 @@ func verifyWebRecordLedger(state State, dir string) error {
 		return nil
 	}
 	if err != nil {
-		return ErrDeploymentConflict
+		return webConflict("the node process ledger cannot be read")
 	}
 	var ledger struct {
 		Procs []process.Proc `json:"procs"`
 	}
 	if err = json.Unmarshal(raw, &ledger); err != nil {
-		return ErrDeploymentConflict
+		return webConflict("the node process ledger is malformed")
 	}
 	seen := map[string]bool{}
 	for _, proc := range ledger.Procs {
 		if proc.PID <= 0 || seen[proc.Label] {
-			return ErrDeploymentConflict
+			return webConflict("the node process ledger repeats a node or lacks its PID")
 		}
 		seen[proc.Label] = true
 		found := false
@@ -95,7 +95,7 @@ func verifyWebRecordLedger(state State, dir string) error {
 			}
 		}
 		if !found {
-			return ErrDeploymentConflict
+			return webConflict("a ledger entry differs from the recorded node")
 		}
 	}
 	return nil

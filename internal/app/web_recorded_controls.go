@@ -15,7 +15,7 @@ import (
 // so checking only the composition target would not establish its effect scope.
 func validateWebControlLayout(state State, p webChainPayload, wc resource.WorkspaceConfig) error {
 	if state.FormatVersion != 3 || !regexp.MustCompile(`^[0-9a-f]{12}$`).MatchString(state.CompositionID) || len(state.Nodes) == 0 {
-		return ErrDeploymentConflict
+		return webConflict("the network record has an unsupported format or no nodes")
 	}
 	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
 	if err != nil {
@@ -26,7 +26,7 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 		return err
 	}
 	if state.Target.DataRoot != wc.DataRoot {
-		return ErrDeploymentConflict
+		return webConflict("the network was recorded under another data root")
 	}
 	layout := node.Layout{Root: wc.DataRoot, CompositionID: state.CompositionID, NodesDir: wc.Paths.Nodes, RuntimeDir: wc.Paths.Runtime, LogsDir: wc.Paths.Logs}
 	indexes, labels, producers := map[int]bool{}, map[node.Label]bool{}, 0
@@ -34,7 +34,7 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 		label := ns.NodeLabel()
 		role, err := node.NormalizeRole(ns.Role)
 		if err != nil || ns.Index < 1 || ns.Index > len(state.Nodes) || indexes[ns.Index] || labels[label] || ns.PID < 0 || !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$`).MatchString(string(label)) {
-			return ErrDeploymentConflict
+			return webConflict("a recorded node has an invalid index, label, role or PID")
 		}
 		indexes[ns.Index], labels[label] = true, true
 		if node.Is(role, node.RoleBP) {
@@ -45,7 +45,7 @@ func validateWebControlLayout(state State, p webChainPayload, wc resource.Worksp
 			placed = placed || (ns.Server == "" || ns.Server == server.Name) && ns.Host == server.Host
 		}
 		if !placed || ns.DataDir != layout.DataDir(label) || ns.ConfigPath != layout.ConfigPath(label) || ns.LogPath != layout.LogPath(label) || !filepath.IsAbs(ns.DataDir) {
-			return ErrDeploymentConflict
+			return webConflict("a recorded node is outside the selected servers or its paths moved")
 		}
 	}
 	if producers < 1 || producers > 128 || producers != state.BPCount || p.Arguments.Validators != 0 && p.Arguments.Validators != producers {
@@ -69,7 +69,7 @@ func webRecordedControlPlacement(state State, p *webChainPayload, pool resource.
 		return nil, err
 	}
 	if len(state.Nodes) > pool.Cap() || !p.Arguments.AllServers && len(pool.Hosts) != 1 {
-		return nil, ErrDeploymentConflict
+		return nil, webConflict("the recorded nodes do not fit the selected servers")
 	}
 	hosts := map[string]bool{}
 	for _, h := range pool.Hosts {
@@ -91,7 +91,7 @@ func webRecordedControlPlacement(state State, p *webChainPayload, pool resource.
 	placements := make([]node.Placement, 0, len(nodes))
 	for _, ns := range nodes {
 		if !hosts[ns.Host] || !permitted[ns.Endpoints] {
-			return nil, ErrDeploymentConflict
+			return nil, webConflict("a recorded node uses an address or ports the server pool does not allow")
 		}
 		placements = append(placements, node.Placement{Index: ns.Index, Label: ns.NodeLabel(), Role: node.Role(ns.Role), Host: ns.Host, Ports: ns.Endpoints, DataDir: ns.DataDir})
 	}

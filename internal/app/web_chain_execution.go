@@ -122,7 +122,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				}
 
 			}
-			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
+			if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup, p.Targets...); err != nil {
 				return err
 			}
 			if p.Input.Operation == "node.start" {
@@ -159,7 +159,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 							return ErrDeploymentConflict
 						}
 					}
-					if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup); err != nil {
+					if err = verifyWebNodeProcesses(ctx, state, p.Input.NodeIDs, lookup, p.Targets...); err != nil {
 						return err
 					}
 					binary = p.Replacement.Path

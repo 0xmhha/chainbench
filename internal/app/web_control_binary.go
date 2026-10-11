@@ -20,43 +20,43 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 		for _, id := range p.Input.NodeIDs {
 			if string(ns.NodeLabel()) == id && ns.Binary != "" {
 				if !webNodeBinaryDeclarationsMatch(state, ns) {
-					return "", ErrDeploymentConflict
+					return "", webConflict("recorded node binary declarations differ")
 				}
 				binding := p.CurrentNodeBinary
 				if binding == nil || binding.NodeID != id || binding.Path != state.Binaries[ns.Binary] {
-					return "", ErrDeploymentConflict
+					return "", webConflict("recorded node binary binding differs")
 				}
 				expected, err := webNodeBinaryTarget(p, binding.Evidence)
 				if err != nil || expected != binding.Path {
-					return "", ErrDeploymentConflict
+					return "", webConflict("node binary is not at its registered path")
 				}
 				access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
 				if err != nil {
 					return "", err
 				}
 				if err = access.VerifyRegularFile(ctx, binding.Path); err != nil {
-					return "", ErrDeploymentConflict
+					return "", webConflict("node binary file is missing on its machine")
 				}
 				if webControlNeedsExecutable(p.Input.Operation) {
 					if err = access.VerifyExecutable(ctx, binding.Path); err != nil {
-						return "", ErrDeploymentConflict
+						return "", webConflict("node binary is not executable on its machine")
 					}
 				}
 				checksum, err := access.Files.Checksum(ctx, binding.Path)
 				if err != nil || checksum != "sha256:"+binding.Evidence.SHA256 {
-					return "", ErrDeploymentConflict
+					return "", webConflict("node binary checksum differs on its machine")
 				}
 			}
 		}
 	}
 	if state.Binary == "" || len(p.Binary.SHA256) != 64 {
-		return "", ErrDeploymentConflict
+		return "", webConflict("the recorded network binary or its reviewed checksum is missing")
 	}
 	allowed := state.Binary == p.ExecutionBinary && p.ExecutionBinary != ""
 	if !allowed {
 		plugin, err := registry.Get(p.Binary.Chain)
 		if err != nil {
-			return "", ErrDeploymentConflict
+			return "", webConflict("the recorded chain has no registered plugin")
 		}
 		wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 		if err != nil {
@@ -69,7 +69,7 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 		allowed = filepath.Clean(state.Binary) == filepath.Clean(native)
 	}
 	if !allowed {
-		return "", ErrDeploymentConflict
+		return "", webConflict("the recorded network binary is not the reviewed binary")
 	}
 	// The executable is checked on the selected node's own machine, which for
 	// a spread network need not be the network's first target.
@@ -88,11 +88,11 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 		return "", err
 	}
 	if checksum != "sha256:"+p.Binary.SHA256 {
-		return "", ErrDeploymentConflict
+		return "", webConflict("network binary checksum differs on the node machine")
 	}
 	if webControlNeedsExecutable(p.Input.Operation) && p.CurrentNodeBinary == nil {
 		if err = access.VerifyExecutable(ctx, state.Binary); err != nil {
-			return "", ErrDeploymentConflict
+			return "", webConflict("network binary is not executable on the node machine")
 		}
 	}
 	return state.Binary, nil

@@ -21,7 +21,7 @@ func (e *WebChainEngine) observedWebBinary(ctx context.Context, state State, p w
 		p.Binary.Chain = plugin.Protocol().Name
 	} else {
 		if state.ManifestPath != filepath.Join(p.ControlDir, "selected-manifest.json") || state.TemplatePath != filepath.Join(p.ControlDir, "selected-template.json") || e.manifests == nil {
-			return nil, ErrDeploymentConflict
+			return nil, webConflict("the recorded manifest is not the selected one")
 		}
 		manifest, err := os.ReadFile(state.ManifestPath)
 		if err != nil {
@@ -46,7 +46,7 @@ func (e *WebChainEngine) observedWebBinary(ctx context.Context, state State, p w
 			}
 		}
 		if p.Binary.Chain == "" {
-			return nil, ErrDeploymentConflict
+			return nil, webConflict("the recorded chain matches no registered manifest")
 		}
 	}
 	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
@@ -61,7 +61,7 @@ func (e *WebChainEngine) observedWebBinary(ctx context.Context, state State, p w
 		}
 	}
 	if p.Arguments.ServerRef == "" {
-		return nil, ErrDeploymentConflict
+		return nil, webConflict("no server of the set holds the recorded target")
 	}
 	binding, _, err := e.currentWebNodeBinary(ctx, state, p, lookup)
 	return binding, err

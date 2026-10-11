@@ -32,18 +32,18 @@ func webResetNode(state State, p webChainPayload) (node.Record, error) {
 			return node.Record{}, errors.New("a block producer cannot be reset")
 		}
 		if ns.PID < 0 || (!node.Is(node.Role(ns.Role), node.RoleEN) && !node.Is(node.Role(ns.Role), node.RolePN)) || ns.Binary != "" && p.CurrentNodeBinary == nil {
-			return node.Record{}, ErrDeploymentConflict
+			return node.Record{}, webConflict("only a recorded endpoint or proxy with a reviewed binary can be reset")
 		}
 		wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 		if err != nil {
-			return node.Record{}, ErrDeploymentConflict
+			return node.Record{}, webConflict("the workspace paths cannot be read")
 		}
 		if !regexp.MustCompile(`^[0-9a-f]{12}$`).MatchString(state.CompositionID) {
-			return node.Record{}, ErrDeploymentConflict
+			return node.Record{}, webConflict("the network record has an invalid composition id")
 		}
 		layout := node.Layout{Root: wc.DataRoot, CompositionID: state.CompositionID, NodesDir: wc.Paths.Nodes, RuntimeDir: wc.Paths.Runtime, LogsDir: wc.Paths.Logs}
 		if ns.DataDir != layout.DataDir(ns.NodeLabel()) || ns.ConfigPath != layout.ConfigPath(ns.NodeLabel()) || !filepath.IsAbs(ns.DataDir) {
-			return node.Record{}, ErrDeploymentConflict
+			return node.Record{}, webConflict("the node directories moved since they were recorded")
 		}
 		return ns, nil
 	}
@@ -73,7 +73,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 		}
 	}
 	if ns.Binary != "" && p.CurrentNodeBinary == nil {
-		return ErrDeploymentConflict
+		return webConflict("the node runs its own binary without a reviewed record")
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
@@ -89,7 +89,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 		}
 		actual, err := os.ReadFile(entry.path)
 		if err != nil || manifestHash(actual) != manifestHash(expected) {
-			return ErrDeploymentConflict
+			return webConflict("the recorded declarations differ from the reviewed documents")
 		}
 	}
 	spec := webNodeTarget(state, ns)
@@ -101,7 +101,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	machine, ok := webNodeMachine(p, ns)
 	expected := filepath.Join(machine.DataPath, wc.Paths.Nodes, state.CompositionID, string(ns.NodeLabel()))
 	if !ok || actual.HostIdentity != machine.HostIdentity || actual.DataPath != expected {
-		return ErrDeploymentConflict
+		return webConflict("the node directory is not on its recorded machine")
 	}
 	access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
 	if err != nil {
@@ -109,11 +109,11 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	}
 	for _, path := range []string{ns.ConfigPath, state.GenesisPath} {
 		if state.LaunchInputs[path] == "" {
-			return ErrDeploymentConflict
+			return webConflict("a recorded launch input is missing")
 		}
 		checksum, err := access.Files.Checksum(ctx, path)
 		if err != nil || checksum != state.LaunchInputs[path] {
-			return ErrDeploymentConflict
+			return webConflict("a recorded launch input changed on the node machine")
 		}
 	}
 	return nil
@@ -124,7 +124,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 // one of the other machines its plan pinned in also.
 func verifyWebNodeProcesses(ctx context.Context, state State, selected []string, lookup resource.Lookup, also ...resource.Inspection) error {
 	if len(selected) != 1 {
-		return ErrDeploymentConflict
+		return webConflict("select exactly one node")
 	}
 	for _, ns := range state.Nodes {
 		if string(ns.NodeLabel()) != selected[0] {
@@ -144,11 +144,11 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 			return err
 		}
 		if target != owned && !slices.Contains(also, target) {
-			return ErrDeploymentConflict
+			return webConflict("the node is not on a machine this plan reviewed")
 		}
 		observer := webObserverFor(access, target)
 		if observer == nil {
-			return ErrDeploymentConflict
+			return webConflict("the node machine cannot be observed")
 		}
 		binary := state.Binary
 		if ns.Binary != "" {
@@ -156,12 +156,12 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		}
 		if ns.PID == 0 {
 			if observeWebNodeVacancy(ctx, observer, binary, ns).State != "stopped" {
-				return ErrDeploymentConflict
+				return webConflict("the stopped node still has a process")
 			}
 			continue
 		}
 		if observeWebNodeProcess(ctx, observer, binary, ns).State != "running" {
-			return ErrDeploymentConflict
+			return webConflict("the recorded node process is not running")
 		}
 	}
 	return nil
