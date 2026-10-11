@@ -224,9 +224,10 @@
         "internal/dashboard/security.go:66-76,127"
       ],
       "completion": "개인 모드의 비 loopback 주소는 시작을 거절하고, 팀 모드는 TLS나 신뢰 프록시 설정 없이는 시작을 거절하며, 신뢰 프록시 뒤의 https origin 쓰기 요청이 통과한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run \"TestServiceModesRefuseUnsafeListeners|TestTrustedProxyLetsHTTPSOriginsWriteAndMarksCookiesSecure\"; scratchpad readme_modes.sh against the built dashboard",
+      "commit": "a5c3b127",
+      "evidence": "RED (/private/tmp/chainbench-web-modes-red.log): personal mode accepted 0.0.0.0, team mode accepted a reachable address without TLS, and a trusted TLS terminator's https origin was refused 403. GREEN: personal is loopback only, team on a reachable address needs TLS or -trusted-proxy, a trusted peer's X-Forwarded-Proto https passes the origin check and sets Secure cookies, an untrusted peer's header is ignored. Loopback team mode stays allowed because traffic never leaves the machine."
     },
     {
       "id": "G-B06",
@@ -856,9 +857,10 @@
         "web/README.md:20-23"
       ],
       "completion": "README의 두 모드 예시를 그대로 실행하면 이벤트가 각각 받아진다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "bash readme_modes.sh: run each README command against the built dashboard and POST one event in the CLI wire format",
+      "commit": "a5c3b127",
+      "evidence": "RED: the old README example (default daemon, no token) answered the event 401. GREEN: README documents personal, team with TLS, team behind a terminator, publisher token and legacy observer; the publisher and legacy commands each accept the event (202) and the unsafe listeners are refused at start."
     },
     {
       "id": "G-D06",
