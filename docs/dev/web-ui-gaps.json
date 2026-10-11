@@ -323,9 +323,10 @@
         "internal/dashboard/manifests.go:94"
       ],
       "completion": "limit보다 많으면 nextCursor가 나오고 그 cursor로 다음 쪽을 받는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestListsHonourCursorAndLimit; node --test tests/webui/pages.test.mjs",
+      "commit": "698cedac",
+      "evidence": "RED (/private/tmp/chainbench-web-paging-red.log): 30 documents came back in one response with nextCursor null and limit and cursor were ignored. GREEN: lists are ordered by id, default to 25, accept limit 1 to 100, return nextCursor until the end and refuse a bad limit or cursor with 400; the SPA and the WEB-05 and genesis proofs read every page."
     },
     {
       "id": "G-B11",
