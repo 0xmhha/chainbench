@@ -134,3 +134,13 @@ func webOwnedControlFixture(t *testing.T) (State, webChainPayload) {
 	state.Nodes = append(state.Nodes, second)
 	return state, p
 }
+
+// A fork promotes endpoints to producers in the record while BPCount keeps the
+// genesis validators; controls and cleanup on that network must still pass.
+func TestWebControlRecordAcceptsForkPromotedProducers(t *testing.T) {
+	state, p := webOwnedControlFixture(t)
+	state.Nodes[0].Role = "bp"
+	if err := validateWebChainRecord(state, p); err != nil {
+		t.Fatal("fork-promoted producers refused:", err)
+	}
+}
