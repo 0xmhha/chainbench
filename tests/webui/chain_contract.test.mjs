@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { topologyChoices, caseChain } from '../../web/src/chain-contract.mjs'
+import { topologyChoices, draftChain } from '../../web/src/chain-contract.mjs'
 
 const contract = { $defs: { envSpec: { properties: { topology: { oneOf: [
  { title: 'Node counts', properties: { bp: { type: 'integer', default: 4, minimum: 1, title: '블록 생산자' }, en: { type: 'integer', default: 0, minimum: 0, title: '엔드포인트' }, syncMode: { type: 'string', enum: ['full', 'snap'], default: 'full', title: '동기화 방식' } } },
@@ -16,9 +16,10 @@ test('topology choices come from the chain contract', () => {
  assert.deepEqual(topologyChoices(null), { roles: [], defaults: {}, counts: [], sync: null })
 })
 
-test('a case names its chain in either grammar', () => {
- assert.equal(caseChain({ schemaVersion: '1', chain: { name: 'wbft' } }), 'wbft')
- assert.equal(caseChain({ schemaVersion: '2', chainPreset: { chain: 'stablenet' } }), 'stablenet')
- assert.equal(caseChain({ schemaVersion: '2', chainPreset: 'p' }, { p: { chain: 'wemix' } }), 'wemix')
- assert.equal(caseChain({ schemaVersion: '2', chainPreset: 'missing' }, {}), '')
+test('a draft names its chain in either grammar, directly or through its preset', () => {
+ assert.equal(draftChain({ schemaVersion: '1', chain: { name: 'wbft' } }), 'wbft')
+ assert.equal(draftChain({ schemaVersion: '2', chainPreset: { chain: 'stablenet' } }), 'stablenet')
+ assert.equal(draftChain({ schemaVersion: '2', chainPreset: 'p' }, { p: { chain: 'wemix' } }), 'wemix')
+ assert.equal(draftChain({ schemaVersion: '2', chainPreset: 'missing' }, {}), '')
+ assert.equal(draftChain({ schemaVersion: '2', chainPreset: { extends: 'p' } }, { p: { chain: 'wemix' } }), 'wemix')
 })

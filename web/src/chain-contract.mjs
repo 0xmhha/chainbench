@@ -13,11 +13,14 @@ export function topologyChoices(contract) {
  return { roles, defaults, counts: counts.map(({ default: _, ...f }) => f), sync }
 }
 
-// caseChain names the chain a test case runs on: a legacy case's chain name,
-// an inline preset's chain, or the chain of the named preset it loaded.
-export function caseChain(doc, presets = {}) {
+// draftChain names the chain of the declaration open in an editor: a legacy
+// case's chain name, an inline preset's chain, or the chain of the preset it
+// names or extends among the preset files loaded with it. A saved case with
+// pinned preset revisions is read by caseChain in dsl-form.js instead.
+export function draftChain(doc, presets = {}) {
  if (doc?.schemaVersion === '1') return doc.chain?.name ?? ''
  const preset = doc?.chainPreset
- if (typeof preset === 'object' && preset) return preset.chain ?? ''
- return typeof preset === 'string' ? presets[preset]?.chain ?? '' : ''
+ const named = typeof preset === 'string' ? preset : preset?.extends
+ if (typeof preset === 'object' && preset?.chain) return preset.chain
+ return named ? presets[named]?.chain ?? '' : ''
 }

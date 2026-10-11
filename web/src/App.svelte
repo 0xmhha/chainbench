@@ -9,6 +9,12 @@
   import JobPanel from './JobPanel.svelte'
   import HistoryPanel from './HistoryPanel.svelte'
   import MonitorPanel from './MonitorPanel.svelte'
+  import Dashboard from './Dashboard.svelte'
+  import JobDetail from './JobDetail.svelte'
+  import { parseRoute } from './routes.mjs'
+  import { follow } from './nav.mjs'
+  import { selection } from './selection.svelte.js'
+  import { webApi } from './web-api.mjs'
 
   const pages = [
     ['/', '대시보드', '전체 실행과 최근 결과를 확인합니다.'],
@@ -18,7 +24,11 @@
     ['/history', '히스토리', '보관된 결과를 검색·비교하고 내보냅니다.'],
     ['/settings', '설정', '개인 자격증명, 사용자와 감사 기록, 등록 자료, 체인 매니페스트를 관리합니다.']
   ]
-  let route = $state(window.location.pathname)
+  let path = $state(window.location.pathname)
+  const parsed = $derived(parseRoute(path))
+  const route = $derived(parsed.page)
+  let workspaceNames = $state({})
+  const workspaceName = $derived(selection.workspaceId ? workspaceNames[selection.workspaceId] ?? selection.workspaceId : '')
   let webSession = $state(undefined), ready = $state(false)
   let assetRevision = $state(0)
   let catalogRevision = $state(0)
@@ -26,15 +36,11 @@
   let connected = $state(false), error = $state('')
   let drops = $state(null), observedAt = $state(null), now = $state(Date.now())
   const stale = $derived(observedAt !== null && now - Date.parse(observedAt) > 5000)
-  const current = $derived(pages.find(p => p[0] === route) ?? pages[0])
-
-  function navigate(event, path) {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-    event.preventDefault()
-    history.pushState({}, '', path); route = path; error = ''
-  }
+  const current = $derived(route === '/jobs' ? ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'] : pages.find(p => p[0] === route) ?? pages[0])
+  // The top bar names the selected workspace; names are read once per session.
+  $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
   onMount(() => {
-    const change = () => { route = window.location.pathname }
+    const change = () => { path = window.location.pathname; error = '' }
     window.addEventListener('popstate', change)
     const clock = setInterval(() => { now = Date.now() }, 1000)
     return () => { window.removeEventListener('popstate', change); clearInterval(clock) }
@@ -76,12 +82,18 @@
 <a class="skip" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
-    <a class="brand" href="/" onclick={e => navigate(e, '/')}><span class="brand-symbol">cb</span><span>chainbench<small>CHAIN OPERATIONS</small></span></a>
-    <nav>{#each pages as [path, label], i}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => navigate(e, path)}><span class="nav-number" aria-hidden="true">0{i + 1}</span>{label}</a>{/each}</nav>
+    <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol">cb</span><span>chainbench<small>CHAIN OPERATIONS</small></span></a>
+    <nav>{#each pages as [path, label], i}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}><span class="nav-number" aria-hidden="true">0{i + 1}</span>{label}</a>{/each}</nav>
     <div class="nav-footer"><span class="signal" class:on={connected}></span>{connected ? '이벤트 서버 연결됨' : '이벤트 서버 미연결'}<small>연결 표시는 노드 상태와 별개입니다.</small></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span class="breadcrumb">운영 콘솔 <span>/</span> {current[1]}</span><span class="account">{webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
+    <header class="topbar"><span class="breadcrumb">운영 콘솔 <span>/</span> {current[1]}</span>
+      <span class="context" data-testid="topbar-context">
+        <span>Workspace {workspaceName || '선택 안 함'}</span>
+        {#if selection.chain}<span>체인 {selection.chain}</span>{:else}<a href="/chains" onclick={e => follow(e, '/chains')}>체인을 선택하세요</a>{/if}
+        <span class="signal-label"><span class="signal" class:on={connected} aria-hidden="true"></span>{connected ? '서버 연결됨' : '서버 미연결'}</span>
+      </span>
+      <span class="account">{webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
     <main id="content">
       <div class="page-heading"><div><p class="eyebrow">CHAINBENCH WORKSPACE</p><h1>{current[1]}</h1><p>{current[2]}</p></div><span class="connection" class:on={connected}>{connected ? '연결됨' : '미연결'}</span></div>
       <LoginPanel bind:session={webSession} bind:ready />
@@ -95,18 +107,11 @@
           <div hidden={route !== '/history'}><HistoryPanel {webSession} /></div>
         {/key}
         {#if route === '/'}
-          <div class="overview">
-            <article><span>관측된 실행</span><strong>{runs.length}</strong><small>현재 서버의 실행 인덱스</small></article>
-            <article><span>보관된 세션</span><strong>{sessions.length}</strong><small>설정된 artifact root</small></article>
-            <article><span>최근 이벤트</span><strong>{events.length}</strong><small>이 브라우저에서 최근 200건까지</small></article>
-          </div>
-          <section class="panel"><div class="panel-heading"><h2>최근 실행</h2><button onclick={loadRuns}>새로고침</button></div>
-            {#if runs.length === 0}<div class="empty"><h3>관측된 실행이 없습니다</h3><p>체인 구성과 테스트 정의를 준비하세요.</p><a href="/chains" onclick={e => navigate(e, '/chains')}>체인 구성 열기 →</a></div>{:else}
-              <div class="table-wrap"><table><thead><tr><th>실행 ID</th><th>단계</th><th>체인</th><th>네트워크</th><th>판정</th></tr></thead><tbody>{#each runs as r (r.id)}<tr><td class="mono">{r.id}</td><td>{r.phase}</td><td>{r.chain}</td><td>{r.network}</td><td class:ok={runOk(r.status)}>{r.status}</td></tr>{/each}</tbody></table></div>
-            {/if}
-          </section>
+          <Dashboard {runs} busDrops={drops} {connected} onrefresh={loadRuns} />
+        {:else if route === '/jobs'}
+          {#key parsed.jobId}<JobDetail jobId={parsed.jobId} {webSession} />{/key}
         {:else if route === '/monitoring'}
-          {#key webSession?.user.id}<MonitorPanel />{/key}
+          {#key webSession?.user.id}<MonitorPanel {webSession} />{/key}
           <section class="panel"><h2>이벤트 타임라인</h2><p class="muted">현재 연결에서 수신한 최근 200건입니다. 연결이 끊긴 동안의 이벤트와 전체 기록을 보장하지 않습니다.</p>
             <p data-testid="observation-health">서버 버스 전체 전달 드롭: {drops ?? '확인 중'} · 마지막 관측: {fmtTime(observedAt)}{stale ? ' · stale' : ''}</p>
             {#if drops > 0}<p class="notice">전체 구독자에서 전달 누락이 발생했습니다. 이 값은 현재 브라우저만의 누락 수가 아닙니다.</p>{/if}
@@ -140,16 +145,15 @@
   nav { display: grid; gap: 6px; margin-top: 40px; } nav a { padding: 12px; color: var(--text-muted); border-radius: 8px; } nav a[aria-current] { background: var(--surface-raised); color: var(--accent-strong); } .nav-number { margin-right: 12px; font-size: 11px; opacity: .65; }
   .nav-footer { margin-top: auto; padding: 16px 8px; color: var(--text-muted); font-size: 12px; } .nav-footer small { display: block; margin-top: 8px; }
   .signal { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); margin-right: 8px; } .signal.on { background: var(--ok); }
-  .topbar { height: 64px; border-bottom: 1px solid var(--border-subtle); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--text-muted); } .breadcrumb span { padding: 0 12px; color: var(--border-strong); } .account { font-size: 12px; }
+  .topbar { height: 64px; border-bottom: 1px solid var(--border-subtle); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--text-muted); } .breadcrumb span { padding: 0 12px; color: var(--border-strong); }
+  .context { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px; } .context a { color: var(--warn); } .account { font-size: 12px; }
   main { max-width: 1440px; margin: auto; padding: 32px 24px; }
-  .page-heading, .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-  .page-heading { margin-bottom: 24px; } .page-heading p { margin: 8px 0 0; color: var(--text-muted); } .page-heading .eyebrow { color: var(--accent); font-size: 10px; letter-spacing: .14em; } h1 { margin: 8px 0 0; font-size: 26px; letter-spacing: -.03em; } h2 { font-size: 18px; margin: 0 0 12px; } h3 { font-size: 16px; }
+  .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .page-heading { margin-bottom: 24px; } .page-heading p { margin: 8px 0 0; color: var(--text-muted); } .page-heading .eyebrow { color: var(--accent); font-size: 10px; letter-spacing: .14em; } h1 { margin: 8px 0 0; font-size: 26px; letter-spacing: -.03em; } h2 { font-size: 18px; margin: 0 0 12px; }
   .connection { border: 1px solid var(--danger-border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--danger); } .connection.on { color: var(--ok); border-color: var(--ok-border); }
-  .overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; } .overview article, .panel { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 24px; }
-  .overview article { display: grid; gap: 8px; color: var(--text-muted); } .overview strong { color: var(--text); font-size: 32px; font-weight: 550; } .overview small { font-size: 12px; }
-  .panel { margin-top: 24px; } .panel-heading h2 { margin: 0; } button { color: var(--accent-strong); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px 12px; }
-  .empty { padding: 32px 8px; color: var(--text-muted); text-align: center; } .table-wrap { overflow: auto; margin-top: 16px; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; font-size: 12px; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } .ok { color: var(--ok); }
+  .panel { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 24px; margin-top: 24px; }
+  .empty { padding: 32px 8px; color: var(--text-muted); text-align: center; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .events { list-style: none; padding: 0; margin: 0; } .events li { display: grid; grid-template-columns: 160px 100px 100px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); align-items: start; } time, .kind { color: var(--text-muted); font-size: 12px; } .msg { overflow-wrap: anywhere; } .muted { color: var(--text-muted); } .notice, .error { padding: 12px 16px; background: var(--warn-bg); border-left: 3px solid var(--warn); color: var(--warn); } .error { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
   .skip { position: absolute; left: 12px; top: -80px; z-index: 10; padding: 12px; background: var(--surface-raised); } .skip:focus { top: 12px; }
-  @media(max-width: 800px) { .shell { grid-template-columns: minmax(0, 1fr); } aside { height: auto; position: static; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--border-subtle); } nav { margin-top: 16px; display: flex; overflow-x: auto; } nav a { white-space: nowrap; padding: 8px 12px; } .nav-number, .nav-footer { display: none; } .topbar { padding: 0 16px; } main { padding: 24px 16px; } .overview { grid-template-columns: 1fr; gap: 8px; } .events li { grid-template-columns: 1fr; gap: 4px; } .account { max-width: 50%; overflow-wrap: anywhere; } }
+  @media(max-width: 800px) { .shell { grid-template-columns: minmax(0, 1fr); } aside { height: auto; position: static; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--border-subtle); } nav { margin-top: 16px; display: flex; overflow-x: auto; } nav a { white-space: nowrap; padding: 8px 12px; } .nav-number, .nav-footer { display: none; } .topbar { padding: 0 16px; } main { padding: 24px 16px; } .events li { grid-template-columns: 1fr; gap: 4px; } .account { max-width: 50%; overflow-wrap: anywhere; } }
 </style>

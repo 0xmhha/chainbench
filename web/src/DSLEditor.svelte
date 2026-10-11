@@ -4,7 +4,7 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
  import Field from './DSLField.svelte'
  import {references,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
- import {topologyChoices,caseChain} from './chain-contract.mjs'
+ import {topologyChoices,draftChain} from './chain-contract.mjs'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  const role=$derived(webSession?.user.role)
  let contract=$state(null),vocabulary=$state(null),document=$state(null),original=$state(null),presets=$state({})
@@ -14,7 +14,7 @@
  const genesisAssets=$derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
  const selectedGenesis=$derived(caseAssetRefs(document)[0]??'')
  let chainContract=$state(null)
- const chain=$derived(caseChain(document,presets))
+ const chain=$derived(draftChain(document,presets))
  const topology=$derived(topologyChoices(chainContract))
  const suggestions=$derived(references(document,topology.roles,topology.defaults))
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})

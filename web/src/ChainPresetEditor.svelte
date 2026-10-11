@@ -4,6 +4,7 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
   import { topologyChoices } from './chain-contract.mjs'
+  import { selectChain } from './selection.svelte.js'
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
   let contract = $state(null)
@@ -21,6 +22,8 @@
   const genesisChoices = $derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
   const assetRefs = $derived(genesisAsset ? [genesisAsset] : [])
   const topology = $derived(topologyChoices(contract))
+  // The chain being configured becomes every screen's selected chain.
+  $effect(() => { if (document?.chain) selectChain(document.chain) })
 
   async function shared(path, method = 'GET', data, expectedRevision) {
     const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }

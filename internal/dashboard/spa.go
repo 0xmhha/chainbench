@@ -4,6 +4,8 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -16,6 +18,12 @@ import (
 //go:embed all:spa
 var spaFiles embed.FS
 
+// spaPages are the fixed screens; spaJob is one job's detail screen.
+var (
+	spaPages = []string{"/", "/chains", "/tests", "/monitoring", "/history", "/settings"}
+	spaJob   = regexp.MustCompile(`^/jobs/[0-9a-f]{32}$`)
+)
+
 // spaHandler serves the built SPA (its index at / and hashed assets at /assets/).
 // The spa/ directory is embedded at compile time, so a Sub failure is a
 // build/packaging error, not a runtime condition.
@@ -27,8 +35,8 @@ func spaHandler() http.Handler {
 	files := http.FileServer(http.FS(sub))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only known UI routes receive the shell. Missing API/assets must stay 404.
-		switch r.URL.Path {
-		case "/", "/chains", "/tests", "/monitoring", "/history", "/settings":
+		switch path := r.URL.Path; {
+		case slices.Contains(spaPages, path), spaJob.MatchString(path):
 			index, err := fs.ReadFile(sub, "index.html")
 			if err != nil {
 				http.Error(w, "SPA unavailable", http.StatusInternalServerError)
