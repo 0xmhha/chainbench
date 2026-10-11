@@ -205,9 +205,10 @@
         "OpenAPI에 없는 경로 25개"
       ],
       "completion": "경로·메서드 목록이 서버와 OpenAPI에서 같고, 어긋나면 테스트가 실패한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/arch -run TestWebOpenAPIListsEveryServedRoute",
+      "commit": "107e3129",
+      "evidence": "RED: the new test listed 18 served routes missing from the OpenAPI document (legacy /api/runs and /api/sessions reads, auth/config, chain-presets, manifest routes, networks, test-cases/import, credential-bindings). GREEN: all are documented; the test compares method and path both ways, a {name} segment matching any one segment, so /api/v1/contracts/jobs is covered by /api/v1/contracts/{contractId}. Routes are read from the literal patterns in internal/dashboard; a route registered with a computed pattern would escape it, and none exists today."
     },
     {
       "id": "G-B05",
