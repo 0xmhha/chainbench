@@ -37,7 +37,7 @@
  {#if error}<p class="error" role="alert">{error}</p>{/if}
  {#if metrics}
   <div data-testid="metric-coverage" class:incomplete={!metrics.coverage.complete}>
-   <p>수집 범위 {time(metrics.coverage.from)} – {time(metrics.coverage.to)} · {metrics.coverage.sampleIntervalSeconds}초 간격{metrics.coverage.downsampled?' · 구간 평균으로 축약됨':''} · {metrics.coverage.complete?'누락 없음':'누락 구간 있음'}</p>
+   <p>수집 범위 {time(metrics.coverage.from)} – {time(metrics.coverage.to)} · {metrics.coverage.sampleIntervalSeconds}초 간격{metrics.coverage.downsampled?` · ${Math.round(metrics.coverage.bucketSeconds)}초 구간 평균으로 축약됨`:''} · {metrics.coverage.complete?'누락 없음':'누락 구간 있음'}</p>
    {#if gaps.length}<ul>{#each gaps as gap}<li>{gap}</li>{/each}</ul>{/if}
    <p class="muted">수집하지 못했거나 노드가 노출하지 않는 지표는 0으로 그리지 않고 누락으로 표시합니다.</p>
   </div>

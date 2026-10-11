@@ -404,3 +404,38 @@ func TestWebMonitorKeepsRecordingWhenOneNodeFails(t *testing.T) {
 		t.Fatalf("failing node not reported: %+v %v", other.Coverage, err)
 	}
 }
+
+func TestStalledCollectorShowsAsAGapAndDownsamplingNamesItsBucket(t *testing.T) {
+	f := newMonitorFixture(t)
+	m := f.monitor()
+	start := f.clock.UTC()
+	for i := 0; i < 800; i++ {
+		if err := m.CollectOnce(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		f.clock = f.clock.Add(5 * time.Second)
+	}
+	viewer := DeploymentActor{ID: "viewer", Role: "viewer"}
+	got, err := m.Metrics(viewer, f.network, WebMonitorQuery{From: start, To: f.clock})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Coverage.Downsampled || got.Coverage.BucketSeconds <= 5 {
+		t.Fatalf("downsampled coverage does not say how wide its buckets are: %+v", got.Coverage)
+	}
+	last := f.clock
+	f.clock = f.clock.Add(time.Minute) // the collector stops running
+	stalled, err := m.Metrics(viewer, f.network, WebMonitorQuery{From: last.Add(-time.Minute), To: f.clock})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, g := range stalled.Coverage.Gaps {
+		if strings.Contains(g.Reason, "collector_stale") && !g.From.After(last) {
+			found = true
+		}
+	}
+	if !found || stalled.Coverage.Complete {
+		t.Fatalf("a stalled collector reads as complete coverage: %+v", stalled.Coverage)
+	}
+}

@@ -1521,7 +1521,9 @@ paths:
             Committed job revisions and a process-instance cursor. The Last-Event-ID
             header takes precedence over the cursor query. Replays the last 128
             committed revisions; initial, invalid, expired or restarted cursors emit
-            resync_required and require a fresh snapshot. Scoped observers receive
+            resync_required and require a fresh snapshot; an expired cursor's
+            resync_required also names missingFrom and missingTo, the versions the
+            replay can no longer deliver. Scoped observers receive
             version_changed for unrelated jobs, preserving the global sequence without
             disclosing their content. Job payloads exclude private plans and inputs.
             observation heartbeats carry the current version and global job delivery
@@ -2733,6 +2735,9 @@ components:
             - to
             - reason
         downsampled: *id011
+        bucketSeconds:
+          type: number
+          description: Width of each downsampled point's averaging bucket across the window; absent when points are original samples
         timestampSource:
           type: string
           enum:

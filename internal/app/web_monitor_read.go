@@ -47,7 +47,10 @@ type WebCoverage struct {
 	Complete              bool             `json:"complete"`
 	Gaps                  []WebCoverageGap `json:"gaps"`
 	Downsampled           bool             `json:"downsampled"`
-	TimestampSource       string           `json:"timestampSource,omitempty"`
+	// BucketSeconds is the width each downsampled point averages over the
+	// whole window; zero when the points are the original samples.
+	BucketSeconds   float64 `json:"bucketSeconds,omitempty"`
+	TimestampSource string  `json:"timestampSource,omitempty"`
 }
 
 type WebMetricSample struct {
@@ -159,11 +162,13 @@ func (m *WebMonitor) Metrics(a DeploymentActor, network string, q WebMonitorQuer
 	sort.Strings(keys)
 	out := WebMetrics{NetworkID: network, Series: []WebMetricSeries{}}
 	downsampled := false
+	bucket := 0.0
 	for _, key := range keys {
 		series := *bySeries[key]
 		if len(series.Samples) > webMonitorMaxPoints {
 			series.Samples = downsampleWebMetric(series.Samples, from, to)
 			downsampled = true
+			bucket = (to.Sub(from) / webMonitorMaxPoints).Seconds()
 		}
 		out.Series = append(out.Series, series)
 	}
@@ -173,7 +178,7 @@ func (m *WebMonitor) Metrics(a DeploymentActor, network string, q WebMonitorQuer
 	if err != nil {
 		return WebMetrics{}, err
 	}
-	out.Coverage = WebCoverage{From: from, To: to, SampleIntervalSeconds: m.interval.Seconds(), Complete: len(gaps) == 0, Gaps: gaps, Downsampled: downsampled, TimestampSource: "collection"}
+	out.Coverage = WebCoverage{From: from, To: to, SampleIntervalSeconds: m.interval.Seconds(), Complete: len(gaps) == 0, Gaps: gaps, Downsampled: downsampled, BucketSeconds: bucket, TimestampSource: "collection"}
 	return out, nil
 }
 
@@ -290,6 +295,12 @@ func (m *WebMonitor) coverageGaps(network string, from, to time.Time, corrupt in
 		return nil, err
 	}
 	recorded = append(append(recorded, cursor.Open...), cursor.RemoteOpen...)
+	// A collector that has not completed a round for three periods is stale:
+	// the time since its last round is unobserved even though no restart
+	// recorded it, so it is shown rather than read as quiet coverage.
+	if now := m.now().UTC(); !cursor.LastCollected.IsZero() && now.Sub(cursor.LastCollected) > 3*m.interval {
+		recorded = append(recorded, webMonitorGap{From: cursor.LastCollected, To: now, Source: "collector", Reason: "collector_stale"})
+	}
 	first := cursor.FirstCollected
 	if first.IsZero() || first.After(to) {
 		first = to

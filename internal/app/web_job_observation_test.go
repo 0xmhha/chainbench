@@ -141,6 +141,10 @@ func TestJobObservationBoundsBacklogAndRefusesExpiredCursors(t *testing.T) {
 		if event.Type != "resync_required" || event.Reason != "cursor_expired" {
 			t.Fatal("expired replay pretends complete", event)
 		}
+		requested := snapshot.Version
+		if event.MissingFrom != requested+1 || event.MissingTo != event.Version || event.MissingTo <= event.MissingFrom {
+			t.Fatalf("the refusal does not name the missed range: from %d to %d (requested %d, now %d)", event.MissingFrom, event.MissingTo, requested, event.Version)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("expired resync absent")
 	}

@@ -20,12 +20,16 @@ type WebJobSnapshot struct {
 }
 
 type WebJobChange struct {
-	Type       string    `json:"type"`
-	Version    uint64    `json:"version"`
-	Cursor     string    `json:"cursor"`
-	Job        *WebJob   `json:"job,omitempty"`
-	Reason     string    `json:"reason,omitempty"`
-	ObservedAt time.Time `json:"observedAt"`
+	Type    string  `json:"type"`
+	Version uint64  `json:"version"`
+	Cursor  string  `json:"cursor"`
+	Job     *WebJob `json:"job,omitempty"`
+	Reason  string  `json:"reason,omitempty"`
+	// MissingFrom and MissingTo name the versions a resync_required skipped,
+	// when they are known: an expired cursor on this server instance.
+	MissingFrom uint64    `json:"missingFrom,omitempty"`
+	MissingTo   uint64    `json:"missingTo,omitempty"`
+	ObservedAt  time.Time `json:"observedAt"`
 }
 
 type webJobFeed struct {
@@ -160,7 +164,13 @@ func (s *WebJobs) SubscribeChanges(cursor string) (<-chan WebJobChange, func(), 
 		reason = "cursor_expired"
 	}
 	if reason != "" {
-		channel <- WebJobChange{Type: "resync_required", Version: version, Cursor: s.streamCursor(version), Reason: reason, ObservedAt: time.Now().UTC()}
+		change := WebJobChange{Type: "resync_required", Version: version, Cursor: s.streamCursor(version), Reason: reason, ObservedAt: time.Now().UTC()}
+		if reason == "cursor_expired" {
+			// The client saw every version through requested; the rest of the
+			// range up to now is what the replay can no longer deliver.
+			change.MissingFrom, change.MissingTo = requested+1, version
+		}
+		channel <- change
 	} else {
 		for _, event := range s.feed.journal {
 			if event.Version > requested {

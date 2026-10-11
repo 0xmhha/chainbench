@@ -33,7 +33,7 @@
      if(!active||current!==epoch)return
      try{
       const event=JSON.parse(message.data),result=applyJobChange(snapshot,{...event,type})
-      if(result.resync){restore('변경 이력 누락 또는 서버 재시작을 확인했습니다. 최신 스냅샷으로 복원합니다.');return}
+      if(result.resync){restore(event.missingTo?`변경 ${event.missingTo-event.missingFrom+1}건(버전 ${event.missingFrom}–${event.missingTo})을 다시 받을 수 없습니다. 최신 스냅샷으로 복원합니다.`:'변경 이력 누락 또는 서버 재시작을 확인했습니다. 최신 스냅샷으로 복원합니다.');return}
       snapshot=result.state;lastObserved=event.observedAt??lastObserved
       if(event.jobDeliveryDropsTotal!==undefined)drops=event.jobDeliveryDropsTotal
      }catch{restore('수신한 변경 내용을 해석할 수 없어 최신 스냅샷을 다시 확인합니다.')}
