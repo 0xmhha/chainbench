@@ -42,9 +42,10 @@
         "internal/app/web_job_contract.go:84"
       ],
       "completion": "계획 응답이 체인별 surface 참조를 담고, 문서·계약·바이너리 지문이 바뀌면 작업 접수를 409로 거절한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "7db313cd",
+      "evidence": "Unit: TestPlanPinsTheSurfaceOfEachBinaryItRuns and TestExecutionRefusesAChangedSurface (a changed documentation, contract or binary refuses the job). Live: in the node-detail proof the plan response for node.stop carried chainSurfaces for wbft (asset wbft, contract and fingerprint), and in the navigation proof the reviewed plan started, which re-judges the pinned surfaces; that start failed with 409 until G-D09 made binary judgement repeatable. A live run that changes a surface between plan and start was not performed."
     },
     {
       "id": "G-A03",
@@ -531,9 +532,10 @@
         "web/src/JobPanel.svelte:42,98-106 (드롭다운 제어, producer는 목록에서 조용히 빠짐)"
       ],
       "completion": "브라우저에서 노드를 고르면 상세가 열리고, producer 초기화와 attach 제어 버튼이 이유와 함께 비활성이다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "78f1a91d, 7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): a running producer's page showed role, observed state and PID, server, data path and revisions; reset was disabled beside the server's reason (블록 생산자는 초기화할 수 없습니다 …) while stop stayed enabled; choosing stop on the endpoint's page opened the chain screen's plan form with that node and operation, and the reviewed job stopped it (observation: stopped). An attached workspace's controls stay refused by the existing attach notice and plan refusal; an attached network has no recorded nodes to open."
     },
     {
       "id": "G-C02",
@@ -574,9 +576,10 @@
         "web/src에 requiredAccess를 그리는 곳이 없다"
       ],
       "completion": "자격증명이 없는 사용자가 계획을 보면 부족한 접근이 표시되고 실행 버튼이 막힌다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "78f1a91d, 7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): the plan review listed required access (local filesystem and process access), bindings (none needed for a local target), the pinned server-set and workspace-config revisions and the pinned wbft surface; for a workspace whose only server is reached over SSH without the user's binding, planning was refused with 422 details.missingAccess, the review named ssh:remote and no run button appeared."
     },
     {
       "id": "G-C04",
@@ -773,9 +776,10 @@
         "web/src/ChainPresetEditor.svelte (surface를 읽지 않는다)"
       ],
       "completion": "바이너리를 고르면 상세 영역에 verification, 문서 커밋, 지원·제외 옵션과 이유가 보인다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): on the chain screen, choosing the registered wbft binary judged the surface as verified, showed the binary's version, commit and platform, the documentation sources and the option table with each option's support status and reason."
     },
     {
       "id": "G-D01",
