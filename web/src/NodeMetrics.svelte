@@ -7,7 +7,8 @@
  const charts=$derived(metricNames(metrics).filter(m=>!monitorRange.metric||m.name===monitorRange.metric))
  const shownNodes=$derived(allNodes.filter(n=>!monitorRange.node||n===monitorRange.node))
  let rangeLogs=$state(null),rangeLogError=$state('')
- const colors=['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#f87171','#22d3ee','#a3e635']
+ // Series colors are design tokens (--series-1 … --series-8 in App).
+ const colors=[1,2,3,4,5,6,7,8].map(i=>`var(--series-${i})`)
  const W=640,H=160
  let selection=0,polls=0,applied=0
  let metrics=$state(null),error=$state(''),selected=$state(null),logs=$state(null),logError=$state('')
@@ -69,9 +70,9 @@
      {#if model.nodes.length===0}<p class="muted">이 범위에 수집된 값이 없습니다.</p>{:else}
       <svg data-testid={'metric-chart-'+m.name} data-segments={model.nodes.reduce((n,x)=>n+x.segments.length,0)} viewBox={`-6 -6 ${W+12} ${H+12}`} role="img" aria-label={label}>
        {#each model.nodes as series (series.node)}
-        <path d={series.path} data-node={series.node} fill="none" stroke={nodeColor(series.node,allNodes)} stroke-width="2"/>
+        <path d={series.path} data-node={series.node} fill="none" style:stroke={nodeColor(series.node,allNodes)} stroke-width="2"/>
         {#each series.points as point (point.time)}
-         <circle cx={point.x} cy={point.y} r="4" fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="0" aria-label={`${series.node} ${time(point.time)} ${point.value} ${model.unit} 시점 로그 보기`} onclick={()=>select(series.node,point,model)} onkeydown={event=>{if(event.key==='Enter'||event.key===' ')select(series.node,point,model)}}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source}</title></circle>
+         <circle cx={point.x} cy={point.y} r="4" style:fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="0" aria-label={`${series.node} ${time(point.time)} ${point.value} ${model.unit} 시점 로그 보기`} onclick={()=>select(series.node,point,model)} onkeydown={event=>{if(event.key==='Enter'||event.key===' ')select(series.node,point,model)}}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source}</title></circle>
         {/each}
        {/each}
       </svg>
@@ -108,11 +109,11 @@
 </div>
 <style>
  .metrics{margin-top:12px;min-width:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
- figure{margin:0;padding:12px;border:1px solid #253247;border-radius:6px;min-width:0}figcaption{color:#dbeafe;font-size:13px;margin-bottom:8px}svg{width:100%;height:auto;display:block}circle{cursor:pointer}circle:focus{outline:2px solid #fcd34d}
- .legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}.legend span{display:flex;align-items:center;gap:6px;color:#a8b5c8;font-size:13px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
- [data-testid="metric-coverage"] p,ul{color:#a8b5c8;font-size:13px;margin:4px 0}.incomplete ul{color:#fcd34d}li{overflow-wrap:anywhere}
- .logs{margin-top:12px;padding:12px;border:1px solid #334155;border-radius:6px}h4{margin:0 0 8px;font-size:14px}label{display:block;color:#a8b5c8;font-size:13px;margin-bottom:8px}select{margin-left:8px;color:#dbeafe;background:#192536;border:1px solid #475569;border-radius:6px;padding:4px 8px}
- ol{list-style:none;padding:0;margin:0;max-height:320px;overflow:auto}ol li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:4px 0;border-bottom:1px solid #253247}time{color:#a8b5c8;font-size:12px;white-space:nowrap}code{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
- .muted,.empty{color:#a8b5c8;font-size:13px}.notice,.error{padding:8px;border-left:3px solid #fcd34d;background:#30251a;color:#fcd34d}.error{border-color:#fca5a5;color:#fca5a5;background:#301d25}
+ figure{margin:0;padding:12px;border:1px solid var(--border-subtle);border-radius:6px;min-width:0}figcaption{color:var(--accent-strong);font-size:13px;margin-bottom:8px}svg{width:100%;height:auto;display:block}circle{cursor:pointer}circle:focus{outline:2px solid var(--warn)}
+ .legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}.legend span{display:flex;align-items:center;gap:6px;color:var(--text-muted);font-size:13px}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+ [data-testid="metric-coverage"] p,ul{color:var(--text-muted);font-size:13px;margin:4px 0}.incomplete ul{color:var(--warn)}li{overflow-wrap:anywhere}
+ .logs{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:6px}h4{margin:0 0 8px;font-size:14px}label{display:block;color:var(--text-muted);font-size:13px;margin-bottom:8px}select{margin-left:8px;color:var(--accent-strong);background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:4px 8px}
+ ol{list-style:none;padding:0;margin:0;max-height:320px;overflow:auto}ol li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:4px 0;border-bottom:1px solid var(--border-subtle)}time{color:var(--text-muted);font-size:12px;white-space:nowrap}code{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+ .muted,.empty{color:var(--text-muted);font-size:13px}.notice,.error{padding:8px;border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn)}.error{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
  @media(max-width:800px){ol li{grid-template-columns:1fr;gap:2px}}
 </style>

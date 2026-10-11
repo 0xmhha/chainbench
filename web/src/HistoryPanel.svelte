@@ -1,4 +1,5 @@
 <script>
+  import StatusBadge from './StatusBadge.svelte'
   import { responseError } from './api-error.mjs'
   import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
@@ -103,7 +104,7 @@
     <div class="table-wrap"><table><thead><tr><th>비교</th><th>실행</th><th>체인 / Workspace</th><th>시작 시각</th><th>상태</th><th>결과</th></tr></thead><tbody>{#each items as run (run.id)}<tr>
       <td><input type="checkbox" aria-label={`비교 선택 ${run.id}`} checked={selected.includes(run.id)} disabled={!selected.includes(run.id) && selected.length === 4} onchange={e => select(run.id, e.currentTarget.checked)} /></td>
       <td><button class="record" onclick={() => open(run.id)}>{run.summary.operation ?? run.summary.command ?? run.id}<small>{run.id}</small></button></td>
-      <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><span class="state" class:success={run.state === 'succeeded'}>{run.state}</span></td>
+      <td>{run.chain || '자료 없음'}<small>{run.workspaceId || '자료 없음'}</small></td><td>{format(run.startedAt)}</td><td><StatusBadge state={run.state} /></td>
       <td>{#if run.summary.counts}<span>통과 {run.summary.counts.pass} · 실패 {run.summary.counts.fail} · 차단 {run.summary.counts.blocked} · 제외 {run.summary.counts.skip}</span>{:else}<span>작업 단계 기록</span>{/if}</td>
     </tr>{/each}</tbody></table></div>
   {/if}
@@ -133,11 +134,11 @@
 </section>
 
 <style>
-  .history-panel { background: #121b28; border: 1px solid #334155; border-radius: 10px; padding: 24px; margin-top: 24px; min-width: 0; }
-  header, .toolbar, .actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; } h2, h3 { margin: 0 0 8px; } p, li, .toolbar { color: #a8b5c8; } header p { margin: 0; max-width: 700px; }
-  form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; align-items: end; } label { display: grid; gap: 6px; color: #a8b5c8; } .search { grid-column: span 2; } input, select { width: 100%; min-width: 0; color: #f1f5f9; background: #0b1018; border: 1px solid #475569; border-radius: 6px; padding: 8px; }
-  button { color: #dbeafe; background: #192536; border: 1px solid #475569; border-radius: 6px; padding: 8px 12px; } button:disabled { opacity: .55; } .danger { color: #fecaca; border-color: #9f4b52; } .error, .notice { color: #fca5a5; } .confirm { padding: 16px; border: 1px solid #9f4b52; border-radius: 8px; } .confirm button { margin-right: 8px; }
-  .table-wrap { overflow: auto; margin: 16px 0; } table { border-collapse: collapse; width: 100%; font-size: 12px; } th, td { padding: 12px; text-align: left; border-bottom: 1px solid #253247; } th { color: #a8b5c8; font-weight: 500; } small { display: block; color: #a8b5c8; margin-top: 4px; } td input { width: 20px; min-height: 24px; } .record { text-align: left; max-width: 320px; overflow-wrap: anywhere; } .record small { font-family: ui-monospace, monospace; font-size: 10px; } .state { border: 1px solid #475569; border-radius: 20px; padding: 4px 8px; } .success { color: #6ee7b7; border-color: #295344; }
-  .detail { margin-top: 24px; border-top: 1px solid #334155; padding-top: 24px; min-width: 0; } .mono, pre { font-family: ui-monospace, monospace; } pre { font-size: 12px; overflow: auto; padding: 16px; background: #0b1018; border-radius: 8px; max-height: 560px; } summary { cursor: pointer; padding: 12px 0; color: #dbeafe; } .empty { padding: 32px; text-align: center; } .assertion td { color: #a8b5c8; }
+  .history-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-top: 24px; min-width: 0; }
+  header, .toolbar, .actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; } h2, h3 { margin: 0 0 8px; } p, li, .toolbar { color: var(--text-muted); } header p { margin: 0; max-width: 700px; }
+  form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; align-items: end; } label { display: grid; gap: 6px; color: var(--text-muted); } .search { grid-column: span 2; } input, select { width: 100%; min-width: 0; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px; }
+  button { color: var(--accent-strong); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px 12px; } button:disabled { opacity: .55; } .danger { color: var(--danger); border-color: var(--danger-border); } .error, .notice { color: var(--danger); } .confirm { padding: 16px; border: 1px solid var(--danger-border); border-radius: 8px; } .confirm button { margin-right: 8px; }
+  .table-wrap { overflow: auto; margin: 16px 0; } table { border-collapse: collapse; width: 100%; font-size: 12px; } th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; } small { display: block; color: var(--text-muted); margin-top: 4px; } td input { width: 20px; min-height: 24px; } .record { text-align: left; max-width: 320px; overflow-wrap: anywhere; } .record small { font-family: ui-monospace, monospace; font-size: 10px; }
+  .detail { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px; min-width: 0; } .mono, pre { font-family: ui-monospace, monospace; } pre { font-size: 12px; overflow: auto; padding: 16px; background: var(--bg); border-radius: 8px; max-height: 560px; } summary { cursor: pointer; padding: 12px 0; color: var(--accent-strong); } .empty { padding: 32px; text-align: center; } .assertion td { color: var(--text-muted); }
   @media (max-width: 760px) { .history-panel { padding: 16px; } form { grid-template-columns: minmax(0, 1fr); } .search { grid-column: auto; } }
 </style>

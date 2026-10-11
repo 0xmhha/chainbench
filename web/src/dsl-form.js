@@ -140,12 +140,12 @@ export function declaredBinaries(doc, documents = []) {
 export function valueProblem(schema, value) {
   if (typeof value !== 'string' || value === '' || !schema?.pattern) return ''
   if (!new RegExp(schema.pattern).test(value)) {
-    return schema['x-minimum'] !== undefined ? 'Enter an integer.' : 'This value does not have the accepted format.'
+    return schema['x-minimum'] !== undefined ? '정수를 입력하세요.' : '허용된 형식이 아닙니다.'
   }
   const min = schema['x-minimum'], max = schema['x-maximum']
   if (min === undefined && max === undefined) return ''
   const n = Number(value)
-  if (max !== undefined && (n < min || n > max)) return `Enter an integer from ${min} to ${max}.`
-  if (min !== undefined && n < min) return `Enter an integer of at least ${min}.`
+  if (max !== undefined && (n < min || n > max)) return `${min}부터 ${max}까지의 정수를 입력하세요.`
+  if (min !== undefined && n < min) return `${min} 이상의 정수를 입력하세요.`
   return ''
 }

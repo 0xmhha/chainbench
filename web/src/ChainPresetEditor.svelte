@@ -3,6 +3,7 @@
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
+  import { tick } from 'svelte'
   import { topologyChoices } from './chain-contract.mjs'
   import ChainSurfacePanel from './ChainSurfacePanel.svelte'
   import { selectChain } from './selection.svelte.js'
@@ -13,7 +14,18 @@
   let selected = $state('')
   let document = $state(null)
   let inherited = $state(null)
-  let result = $state(null)
+  let result = $state(null), fieldsOpen = $state(false)
+  // An engine error is shown on its field in the full form, and its summary
+  // entry opens that form and focuses the field (or the closest one shown).
+  const errorMap = $derived(Object.fromEntries((result?.errors ?? []).filter(e => e.path?.startsWith('/content')).map(e => [e.path, e.message])))
+  async function showIssue(path) {
+    fieldsOpen = true
+    await tick()
+    for (let at = path; at.startsWith('/content'); at = at.slice(0, at.lastIndexOf('/'))) {
+      const control = globalThis.document.querySelector(`.structured [data-field-path="${at}"]`)?.querySelector('input, select, textarea')
+      if (control) { control.focus(); return }
+    }
+  }
   let error = $state('')
   let pending = $state(false)
   let requestVersion = 0
@@ -88,7 +100,7 @@
     fetch('/api/v1/chain-presets').then(async response => {
       if (!response.ok) return
       presets = await response.json()
-    }).catch(() => { error = 'Could not load chain presets.' })
+    }).catch(() => { error = '체인 프리셋을 불러오지 못했습니다.' })
   })
 
   async function choose(event) {
@@ -105,7 +117,7 @@
     if (preset) {
       try {
         const response = await fetch(`/api/v1/contracts/chain-preset?chain=${encodeURIComponent(preset.chain)}`)
-        if (!response.ok) throw new Error('Could not load chain contract.')
+        if (!response.ok) throw new Error('체인 계약을 불러오지 못했습니다.')
         const schema = await response.json()
         if (selected === preset.id) contract = schema
       } catch (e) { if (selected === preset.id) error = e.message }
@@ -157,18 +169,18 @@
 
 {#if presets.length || webSession}
   <section class="editor" aria-labelledby="chain-heading">
-    <p class="eyebrow">NETWORK CONFIGURATION</p>
-    <h2 id="chain-heading">Start with a chain preset</h2>
-    <p class="intro">Select an engine-supported declaration, then adjust its network layout.</p>
+    <p class="eyebrow">네트워크 구성</p>
+    <h2 id="chain-heading">체인 프리셋에서 시작</h2>
+    <p class="intro">엔진이 지원하는 선언을 고른 뒤 네트워크 배치를 조정합니다.</p>
     {#if webSession}
       <label for="saved-chain-document">공유 체인 구성</label>
       <select id="saved-chain-document" value={savedId} onchange={e => { if(e.target.value) loadSaved(e.target.value) }}><option value="">새 구성</option>{#each saved as entry}<option value={entry.id}>{entry.name} · revision {entry.revision}</option>{/each}</select>
       {#if writable}<label>구성 import <input aria-label="체인 구성 import" type="file" accept=".json,.yaml,.yml" onchange={importFile} /></label>{/if}
       {#if preview}<p>Import 원문은 서버에 암호화되어 보존됩니다. {preview.changes.join('; ')}</p>{/if}
     {/if}
-    <label for="chain-preset">Chain preset</label>
+    <label for="chain-preset">체인 프리셋</label>
     <select id="chain-preset" bind:value={selected} onchange={choose}>
-      <option value="">Choose a preset</option>
+      <option value="">프리셋 선택</option>
       {#each presets as preset (preset.id)}
         <option value={preset.id}>{preset.chain} · {preset.id}</option>
       {/each}
@@ -205,18 +217,18 @@
         <p>이 프리셋은 노드를 하나씩 선언합니다. 노드 표는 그대로 유지됩니다.</p>
       {/if}
       {#if contract && writable}
-        <details class="structured"><summary>All configuration fields</summary>
-          <Field schema={contract.$defs.envSpec} root={contract} value={document} label="Chain configuration" onchange={replace} />
+        <details class="structured" bind:open={fieldsOpen}><summary>모든 구성 필드</summary>
+          <Field schema={contract.$defs.envSpec} root={contract} value={document} label="체인 구성" errors={errorMap} onchange={replace} />
         </details>
       {/if}
-      {#if writable}<button onclick={validate} disabled={pending}>{pending ? 'Validating…' : 'Validate configuration'}</button>{/if}
+      {#if writable}<button onclick={validate} disabled={pending}>{pending ? '검증 중…' : '체인 구성 검증'}</button>{/if}
       {#if webSession && writable}<button onclick={save} disabled={pending}>공유 체인 구성 저장</button>{/if}
       {#if result?.valid}<button onclick={exportFile} disabled={pending}>체인 구성 내보내기</button>{/if}
       {#if savedId}<p role="status">공유 문서 revision {revision}</p>{/if}
       {#if result}
         <div role="status" class:valid={result.valid}>
-          <strong>{result.valid ? 'Engine validation passed' : 'Configuration needs attention'}</strong>
-          {#each result.errors as issue}<p>{issue.path}: {issue.message}</p>{/each}
+          <strong><span aria-hidden="true">{result.valid ? '✓' : '✕'}</span> {result.valid ? '엔진 검증 통과' : '고쳐야 할 곳이 있습니다'}</strong>
+          {#each result.errors as issue}<p><button class="link" onclick={() => showIssue(issue.path)}>{issue.path}</button> {issue.message}</p>{/each}
           {#each result.warnings as warning}<p>{warning}</p>{/each}
         </div>
       {/if}
@@ -228,19 +240,20 @@
 {/if}
 
 <style>
-  .editor { padding: 1.5rem; margin-top: 1.5rem; border: 1px solid #354455; border-radius: 12px; background: #151e29; }
-  .eyebrow { color: #89baf5; font-size: 11px; letter-spacing: .12em; margin: 0; }
-  h2 { font-size: 22px; margin: .5rem 0; color: #edf3fa; }
-  .intro, .description { color: #aab6c6; }
+  .editor { padding: 24px; margin-top: 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .12em; margin: 0; }
+  h2 { font-size: 22px; margin: 8px 0; color: var(--text); }
+  .intro, .description { color: var(--text-muted); }
   label { display: block; margin: .8rem 0 .3rem; }
-  input, select { box-sizing: border-box; width: 100%; padding: .7rem; color: #e5edf7; background: #0e1620; border: 1px solid #495b70; border-radius: 6px; font: inherit; }
+  input, select { box-sizing: border-box; width: 100%; padding: 10px; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; font: inherit; }
   .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-  small { display: block; color: #9eb0c5; padding-top: .4rem; }
-  details { margin: 1rem 0; } summary { cursor: pointer; color: #bacce2; }
-  button { padding: .7rem 1rem; border: 0; border-radius: 6px; background: #8fc2ff; color: #11263e; font: inherit; font-weight: 600; cursor: pointer; }
+  small { display: block; color: var(--text-muted); padding-top: 6px; }
+  details { margin: 16px 0; } summary { cursor: pointer; color: var(--accent-strong); }
+  button { padding: 10px 16px; border: 0; border-radius: 6px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
+  button.link { background: none; color: var(--danger); padding: 0; text-decoration: underline; font-weight: 400; font-family: ui-monospace, monospace; }
   button:disabled { opacity: .5; }
-  [role=status] { border-left: 3px solid #f8ae72; padding: .8rem 1rem; margin-top: 1rem; }
-  [role=status].valid { border-color: #72d6a7; } [role=alert] { color: #ffaaaa; }
+  [role=status] { border-left: 3px solid var(--warn); padding: 12px 16px; margin-top: 16px; }
+  [role=status].valid { border-color: var(--ok); } [role=alert] { color: var(--danger); }
   pre { overflow: auto; max-height: 360px; }
   @media(max-width: 600px) { .fields { grid-template-columns: 1fr; } }
 </style>

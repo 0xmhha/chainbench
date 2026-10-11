@@ -1,4 +1,5 @@
 <script>
+  import StatusBadge from './StatusBadge.svelte'
   import { onMount } from 'svelte'
   import { webApi } from './web-api.mjs'
   import { jobStream } from './job-stream.svelte.js'
@@ -27,7 +28,7 @@
   {#if job}
     <dl class="summary">
       <dt>작업</dt><dd>{job.operation} · <code>{job.id}</code></dd>
-      <dt>상태</dt><dd data-testid="job-state"><span aria-hidden="true">{summary.active ? '●' : job.state === 'succeeded' ? '✓' : job.state === 'failed' ? '✕' : '○'}</span> {job.state}</dd>
+      <dt>상태</dt><dd data-testid="job-state"><StatusBadge state={job.state} /></dd>
       <dt>실패한 단계</dt><dd data-testid="job-failed-phase">{summary.failedPhase ? `${summary.failedPhase.name}${summary.failedPhase.message ? ' · ' + summary.failedPhase.message : ''}` : '없음'}</dd>
       {#if summary.failure}<dt>{job.state === 'cancelled' ? '중단 메시지' : '실패 이유'}</dt><dd class:error={job.state !== 'cancelled'}>{summary.failure}</dd>{/if}
       <dt>이미 반영된 변경</dt><dd data-testid="job-effects">{summary.effects.length ? `${summary.effects.length}건 기록됨 · 아래 '수행된 변경'에서 봅니다` : '기록 없음'}</dd>

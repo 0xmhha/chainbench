@@ -1,4 +1,5 @@
 <script>
+  import StatusBadge from './StatusBadge.svelte'
   import { webApi } from './web-api.mjs'
   import { jobSummary } from './job-view.mjs'
   import { follow } from './nav.mjs'
@@ -13,9 +14,9 @@
 </script>
 
 <article data-job-id={job.id}>
-  <div class="heading"><strong>{job.operation}</strong><span class="state" class:active={summary.active} class:failed={job.state === 'failed'}><span aria-hidden="true">{summary.active ? '●' : job.state === 'succeeded' ? '✓' : job.state === 'failed' ? '✕' : '○'}</span> {job.state}</span></div>
+  <div class="heading"><strong>{job.operation}</strong><StatusBadge state={job.state} /></div>
   <p>{#if link}<a href={'/jobs/' + job.id} onclick={e => follow(e, '/jobs/' + job.id)}><code>{job.id}</code></a>{:else}<code>{job.id}</code>{/if} · {new Date(job.createdAt).toLocaleString()} · 노드 처리: {job.nodeDisposition}</p>
-  <ol>{#each job.phases as phase}<li>{phase.name} · {phase.state}{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>
+  <ol>{#each job.phases as phase}<li>{phase.name} · <StatusBadge state={phase.state} />{#if phase.message}<pre>{phase.message}</pre>{/if}</li>{/each}</ol>
   {#if job.runIds?.length}<p>실제 엔진 세션: {job.runIds.join(', ')}</p><a href={'/history?search=' + encodeURIComponent(job.id)}>세션 결과 보기</a>{/if}
   {#if job.error}<p class:error={job.state !== 'cancelled'}>{job.error.message}</p>{/if}
   {#if summary.effects.length}<details><summary>수행된 변경</summary><ul>{#each summary.effects as effect}<li>{effect}</li>{/each}</ul></details>{/if}
@@ -29,7 +30,7 @@
 <style>
   article { margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; }
   .heading { display: flex; justify-content: space-between; gap: 16px; }
-  .state.active { color: var(--accent); } .state.failed, .error { color: var(--danger); }
+  .error { color: var(--danger); }
   a { color: var(--accent); }
   button { font: inherit; color: var(--text); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; min-height: 40px; padding: 8px 12px; cursor: pointer; margin-top: 16px; }
   button:disabled { opacity: .45; cursor: default; }

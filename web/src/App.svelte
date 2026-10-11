@@ -88,7 +88,7 @@
 <a class="skip" href="#content">본문으로 이동</a>
 <div class="shell">
   <aside aria-label="주 메뉴">
-    <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol">cb</span><span>chainbench<small>CHAIN OPERATIONS</small></span></a>
+    <a class="brand" href="/" onclick={e => follow(e, '/')}><span class="brand-symbol">cb</span><span>chainbench<small>체인 운영</small></span></a>
     <nav>{#each pages as [path, label], i}<a href={path} aria-current={route === path ? 'page' : undefined} onclick={e => follow(e, path)}><span class="nav-number" aria-hidden="true">0{i + 1}</span>{label}</a>{/each}</nav>
     <div class="nav-footer"><span class="signal" class:on={connected}></span>{connected ? '이벤트 서버 연결됨' : '이벤트 서버 미연결'}<small>연결 표시는 노드 상태와 별개입니다.</small></div>
   </aside>
@@ -101,7 +101,7 @@
       </span>
       <span class="account">{webSession ? `${webSession.mode} · ${webSession.user.username} · ${webSession.user.role}` : '로그인 필요'}</span></header>
     <main id="content">
-      <div class="page-heading"><div><p class="eyebrow">CHAINBENCH WORKSPACE</p><h1>{current[1]}</h1><p>{current[2]}</p></div><span class="connection" class:on={connected}>{connected ? '연결됨' : '미연결'}</span></div>
+      <div class="page-heading"><div><p class="eyebrow">운영 콘솔</p><h1>{current[1]}</h1><p>{current[2]}</p></div><span class="connection" class:on={connected}>{connected ? '연결됨' : '미연결'}</span></div>
       <LoginPanel bind:session={webSession} bind:ready />
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       {#if ready && webSession !== null}
@@ -134,7 +134,7 @@
 </div>
 
 <style>
-  :global(:root) { --bg: #0b1018; --sidebar: #0e1520; --surface: #121b28; --surface-raised: #192536; --border: #334155; --border-subtle: #253247; --border-strong: #475569; --text: #f1f5f9; --text-muted: #a8b5c8; --text-faint: #475569; --accent: #93c5fd; --accent-strong: #dbeafe; --ok: #6ee7b7; --ok-border: #295344; --warn: #fcd34d; --warn-bg: #30251a; --danger: #fca5a5; --danger-bg: #301d25; --danger-border: #5a343a; --accent-border: #47668b; }
+  :global(:root) { --bg: #0b1018; --sidebar: #0e1520; --surface: #121b28; --surface-raised: #192536; --border: #334155; --border-subtle: #253247; --border-strong: #475569; --text: #f1f5f9; --text-muted: #a8b5c8; --text-faint: #475569; --accent: #93c5fd; --accent-strong: #dbeafe; --ok: #6ee7b7; --ok-border: #295344; --warn: #fcd34d; --warn-bg: #30251a; --danger: #fca5a5; --danger-bg: #301d25; --danger-border: #5a343a; --accent-border: #47668b; --series-1: #60a5fa; --series-2: #f472b6; --series-3: #34d399; --series-4: #fbbf24; --series-5: #a78bfa; --series-6: #f87171; --series-7: #22d3ee; --series-8: #a3e635; }
   :global(*) { box-sizing: border-box; }
   :global(body) { margin: 0; font: 14px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
   :global(button), :global(input), :global(select), :global(textarea) { min-height: 40px; font: inherit; }

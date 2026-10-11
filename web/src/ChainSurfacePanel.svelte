@@ -1,4 +1,5 @@
 <script>
+  import StatusBadge from './StatusBadge.svelte'
   import { webApi } from './web-api.mjs'
   // chain is the chain being configured; the panel judges its documentation
   // alone, or against a registered binary the user picks.
@@ -26,7 +27,7 @@
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if busy}<p class="muted">확인하는 중…</p>{/if}
   {#if surface}
-    <p data-testid="surface-verification" class="verdict" class:bad={surface.verification === 'incompatible'} class:warn={surface.verification === 'stale'}><span aria-hidden="true">{icon(surface.verification)}</span> {surface.verification} · {surface.chainId} · dialect {surface.dialect} · 계약 {surface.contractVersion} · 지문 <code>{surface.fingerprint.slice(0, 12)}</code></p>
+    <p data-testid="surface-verification" class="verdict" class:bad={surface.verification === 'incompatible'} class:warn={surface.verification === 'stale'}><StatusBadge state={surface.verification} /> · {surface.chainId} · dialect {surface.dialect} · 계약 {surface.contractVersion} · 지문 <code>{surface.fingerprint.slice(0, 12)}</code></p>
     {#if surface.binary}<p data-testid="surface-binary">바이너리 {surface.binary.assetId} · {surface.binary.version} · 커밋 <code>{surface.binary.chainCommit}</code> · {surface.binary.os}/{surface.binary.architecture}</p>{/if}
     {#each surface.limitations as l}<p class="warn">{l}</p>{/each}
     <details><summary>문서 출처 {surface.sources.length}개</summary><ul>{#each surface.sources as src}<li><code>{src.path}</code> · {src.kind}{src.chainCommit ? ` · 커밋 ${src.chainCommit}` : ''}{src.capturedAt ? ` · 수집 ${time(src.capturedAt)}` : ''}</li>{/each}</ul></details>
@@ -35,7 +36,7 @@
       <label>옵션 찾기 <input aria-label="옵션 찾기" bind:value={search} placeholder="--http" /></label>
     </div>
     <div class="table-wrap"><table><thead><tr><th>옵션</th><th>범위</th><th>지원</th><th>이유</th></tr></thead><tbody>
-      {#each shown.slice(0, 200) as o (o.id)}<tr data-testid="surface-option"><td><code>{o.spelling}</code>{o.hidden ? ' (숨김)' : ''}</td><td>{o.scope}{o.commandPath.length ? ' · ' + o.commandPath.join(' ') : ''}</td><td class:ok={o.support.status === 'supported'}>{o.support.status}{o.support.selectable ? ' · 선택 가능' : ''}</td><td>{o.support.reason}</td></tr>{/each}
+      {#each shown.slice(0, 200) as o (o.id)}<tr data-testid="surface-option"><td><code>{o.spelling}</code>{o.hidden ? ' (숨김)' : ''}</td><td>{o.scope}{o.commandPath.length ? ' · ' + o.commandPath.join(' ') : ''}</td><td><StatusBadge state={o.support.status} />{o.support.selectable ? ' · 선택 가능' : ''}</td><td>{o.support.reason}</td></tr>{/each}
     </tbody></table></div>
     {#if shown.length > 200}<p class="muted">{shown.length}개 중 200개를 보입니다. 상태나 이름으로 좁히세요.</p>{/if}
   {/if}
@@ -43,7 +44,7 @@
 
 <style>
   .surface { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
-  .muted { color: var(--text-muted); } .error { color: var(--danger); } .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .muted { color: var(--text-muted); } .error { color: var(--danger); } .warn { color: var(--warn); }
   .verdict { color: var(--ok); } .verdict.warn { color: var(--warn); } .verdict.bad { color: var(--danger); }
   label { display: grid; gap: 4px; margin: 8px 0; } .filters { display: flex; flex-wrap: wrap; gap: 16px; }
   select, input { font: inherit; color: var(--text); background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px; padding: 8px; min-height: 40px; }

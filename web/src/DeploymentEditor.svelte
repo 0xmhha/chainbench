@@ -5,6 +5,8 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import { selection, selectWorkspace } from './selection.svelte.js'
   import DeploymentFields from './DeploymentFields.svelte'
+  import { schemaProblems } from './schema-problems.mjs'
+  import { tick } from 'svelte'
   import BundleImport from './BundleImport.svelte'
   let { webSession = undefined, onsaved = () => {} } = $props()
   let contract = $state(null), docs = $state([]), workspaces = $state([]), credentials = $state([])
@@ -13,6 +15,17 @@
   let selectedCredential = $state(''), serverRef = $state(''), bindings = $state({}), status = $state(''), access = $state(null), busy = $state(false)
   const role = $derived(webSession?.user.role)
   const canEdit = $derived(role === 'administrator' || role === 'operator')
+  // problems are what the form or the server found wrong in the open document.
+  let problems = $state([])
+  const problemMap = $derived(Object.fromEntries(problems.filter(p => p.path).map(p => [p.path, p.message])))
+  async function focusProblem(path) { await tick(); globalThis.document.querySelector(`[data-field-path="${path}"] input, [data-field-path="${path}"] select`)?.focus() }
+  // The contract's own rules are checked first; the engine then judges the rest.
+  async function check() {
+    problems = schemaProblems(contract[kind], content)
+    if (problems.length) throw new Error(`입력 ${problems.length}곳을 고쳐야 합니다.`)
+    const result = await api('documents/validate', 'POST', documentInput())
+    if (!result.valid) { problems = result.errors.map(e => ({ path: '', message: e.message })); throw new Error('엔진 검증 실패') }
+  }
   const kindNames = { 'server-set': '서버 풀', 'workspace-config': '대상 경로' }
   const api = $derived(webApi(webSession))
   async function action(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
@@ -66,9 +79,10 @@
       {#if canEdit}
         <button onclick={() => newDocument('server-set')}>새 서버 풀</button><button onclick={() => newDocument('workspace-config')}>새 대상 경로</button>
         <label>이름 <input aria-label="배포 문서 이름" bind:value={name} /></label>
-        {#if contract}<DeploymentFields schema={contract[kind]} value={content} change={v => content = v} />{/if}
-        <button disabled={busy} onclick={() => action(async () => { const result = await api('documents/validate', 'POST', documentInput()); status = result.valid ? '엔진 검증 통과' : result.errors.map(e => e.message).join('; ') })}>배포 문서 검증</button>
-        <button disabled={busy} onclick={() => action(saveDocument)}>공유 문서 저장</button>
+        {#if problems.length}<section class="problems" aria-label="배포 문서 오류" data-testid="deployment-problems"><h4>고칠 곳 {problems.length}개</h4><ul>{#each problems as p}<li>{#if p.path}<button onclick={() => focusProblem(p.path)}>{p.path}</button> · {/if}{p.message}</li>{/each}</ul></section>{/if}
+        {#if contract}<DeploymentFields schema={contract[kind]} value={content} problems={problemMap} change={v => { content = v; problems = [] }} />{/if}
+        <button disabled={busy} onclick={() => action(async () => { await check(); status = '엔진 검증 통과' })}>배포 문서 검증</button>
+        <button disabled={busy} onclick={() => action(async () => { await check(); await saveDocument() })}>공유 문서 저장</button>
       {/if}
       {#if docId}<p>revision {revision}</p><button disabled={busy} onclick={() => action(exportDocument)}>공유 문서 내보내기</button>{/if}
     </div>
@@ -109,6 +123,7 @@
   button { cursor: pointer; margin: 4px; }
   button:disabled { opacity: .45; cursor: default; }
   a { color: var(--accent); }
+  .problems { padding: 12px; border: 1px solid var(--danger); border-radius: 8px; background: var(--danger-bg); color: var(--danger); } .problems button { color: var(--danger); background: none; border: 0; text-decoration: underline; min-height: 0; padding: 0; margin: 0; font-family: ui-monospace, monospace; } h4 { margin: 0 0 8px; }
   [role=status] { color: var(--text-muted); overflow-wrap: anywhere; }
   @media (max-width: 700px) { .columns { grid-template-columns: 1fr; } }
 </style>

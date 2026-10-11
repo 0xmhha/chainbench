@@ -89,13 +89,13 @@ test('a string launch value is checked against the engine rule the schema carrie
   const { valueProblem } = await import('../../web/src/dsl-form.js')
   const port = { type: 'string', pattern: '^-?[0-9]+$', 'x-minimum': 0, 'x-maximum': 65535 }
   assert.equal(valueProblem(port, '8545'), '')
-  assert.match(valueProblem(port, 'abc'), /integer/)
+  assert.match(valueProblem(port, 'abc'), /정수/)
   assert.match(valueProblem(port, '70000'), /65535/)
   assert.equal(valueProblem(port, ''), '')
   const peers = { type: 'string', pattern: '^-?[0-9]+$', 'x-minimum': 0 }
-  assert.match(valueProblem(peers, '-1'), /at least 0/)
+  assert.match(valueProblem(peers, '-1'), /0 이상/)
   assert.equal(valueProblem({ type: 'string' }, 'anything'), '')
-  assert.match(valueProblem({ type: 'string', pattern: '^(any|none)$' }, 'other'), /format/)
+  assert.match(valueProblem({ type: 'string', pattern: '^(any|none)$' }, 'other'), /형식/)
 })
 test('node role suggestions come from the roles the chain contract lists',()=>{
  const doc={chainPreset:{topology:{bp:1,en:1,xx:1}},steps:[]}

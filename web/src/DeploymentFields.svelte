@@ -1,6 +1,10 @@
 <script>
   import DeploymentFields from "./DeploymentFields.svelte"
-  let { schema, value, path = 'content', change } = $props()
+  // problems maps a field path to what is wrong with it; that field is marked
+  // invalid and described by the message.
+  let { schema, value, path = 'content', change, problems = {} } = $props()
+  const problem = $derived(problems[path] ?? '')
+  const invalid = $derived(problem ? { 'aria-invalid': 'true', 'aria-describedby': `${path}-problem` } : {})
   let propertyName = $state('')
   function defaultValue(s) {
     if (s.enum) return s.enum[0]
@@ -21,48 +25,50 @@
       {@const required = schema.required?.includes(key)}
       {#if required || value?.[key] !== undefined}
         <div class="field">
-          <DeploymentFields schema={spec} value={value?.[key]} path={`${path}.${key}`} change={v => field(key, v)} />
-          {#if !required}<button type="button" onclick={() => omit(key)}>Omit {key}</button>{/if}
+          <DeploymentFields schema={spec} value={value?.[key]} path={`${path}.${key}`} {problems} change={v => field(key, v)} />
+          {#if !required}<button type="button" onclick={() => omit(key)}>{key} 빼기</button>{/if}
         </div>
       {:else}
-        <button type="button" onclick={() => field(key, defaultValue(spec))}>Add {key}</button>
+        <button type="button" onclick={() => field(key, defaultValue(spec))}>{key} 추가</button>
       {/if}
     {/each}
     {#if schema.additionalProperties}
       {#each Object.entries(value ?? {}) as [key, entry] (key)}
-        <DeploymentFields schema={schema.additionalProperties} value={entry} path={`${path}.${key}`} change={v => field(key, v)} />
-        <button type="button" onclick={() => omit(key)}>Remove {key}</button>
+        <DeploymentFields schema={schema.additionalProperties} value={entry} path={`${path}.${key}`} {problems} change={v => field(key, v)} />
+        <button type="button" onclick={() => omit(key)}>{key} 삭제</button>
       {/each}
-      <label>Entry name <input aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
-      <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, defaultValue(schema.additionalProperties)); propertyName = '' }}>Add entry</button>
+      <label>항목 이름 <input aria-label={`${path}.entry-name`} bind:value={propertyName} /></label>
+      <button type="button" disabled={!propertyName || Object.hasOwn(value ?? {}, propertyName)} onclick={() => { field(propertyName, defaultValue(schema.additionalProperties)); propertyName = '' }}>항목 추가</button>
     {/if}
   </fieldset>
 {:else if schema.type === 'array'}
   <fieldset>
     <legend>{path}</legend>
     {#each value ?? [] as entry, i (i)}
-      <DeploymentFields schema={schema.items} value={entry} path={`${path}[${i}]`} change={v => change(value.map((old, j) => j === i ? v : old))} />
-      <button type="button" onclick={() => change(value.filter((_, j) => j !== i))}>Remove item {i + 1}</button>
+      <DeploymentFields schema={schema.items} value={entry} path={`${path}[${i}]`} {problems} change={v => change(value.map((old, j) => j === i ? v : old))} />
+      <button type="button" onclick={() => change(value.filter((_, j) => j !== i))}>{i + 1}번 항목 삭제</button>
     {/each}
-    <button type="button" onclick={() => change([...(value ?? []), defaultValue(schema.items)])}>Add host</button>
+    <button type="button" onclick={() => change([...(value ?? []), defaultValue(schema.items)])}>항목 추가</button>
   </fieldset>
 {:else if schema.enum}
-  <label>{path}<select aria-label={path} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>
+  <label data-field-path={path}>{path}<select aria-label={path} {...invalid} value={value} onchange={e => change(schema.type === 'integer' ? Number(e.target.value) : e.target.value)}>
     {#each schema.enum as option}<option value={option}>{option}</option>{/each}
   </select></label>
 {:else if schema.type === 'boolean'}
-  <label><input type="checkbox" aria-label={path} checked={value ?? false} onchange={e => change(e.target.checked)} /> {path}</label>
+  <label data-field-path={path}><input type="checkbox" aria-label={path} {...invalid} checked={value ?? false} onchange={e => change(e.target.checked)} /> {path}</label>
 {:else if schema.type === 'integer'}
-  <label>{path}<input aria-label={path} type="number" step="1" min={schema.minimum} max={schema.maximum} value={value ?? 0} oninput={e => change(e.target.valueAsNumber)} /></label>
+  <label data-field-path={path}>{path}<input aria-label={path} {...invalid} type="number" step="1" min={schema.minimum} max={schema.maximum} value={value ?? 0} oninput={e => change(e.target.valueAsNumber)} /></label>
 {:else}
-  <label>{path}<input aria-label={path} value={value ?? ''} oninput={e => change(e.target.value)} /></label>
+  <label data-field-path={path}>{path}<input aria-label={path} {...invalid} value={value ?? ''} oninput={e => change(e.target.value)} /></label>
 {/if}
+{#if problem}<p id={`${path}-problem`} class="problem">{problem}</p>{/if}
 
 <style>
-  fieldset { border: 1px solid #36465b; border-radius: 8px; padding: 12px; margin: 10px 0; min-width: 0; }
-  legend { color: #a4b9d7; font-size: 12px; }
+  fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 10px 0; min-width: 0; }
+  legend { color: var(--text-muted); font-size: 12px; }
   label { display: grid; gap: 5px; margin: 8px 0; overflow-wrap: anywhere; }
-  input, select, button { font: inherit; color: inherit; background: #182332; border: 1px solid #4e6380; border-radius: 5px; padding: 7px; }
+  input, select, button { font: inherit; color: inherit; background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 5px; padding: 7px; }
+  [aria-invalid=true] { border-color: var(--danger); outline: 1px solid var(--danger); } .problem { color: var(--danger); margin: 0 0 8px; }
   button { margin: 4px; cursor: pointer; }
   .field { margin: 5px 0; }
 </style>

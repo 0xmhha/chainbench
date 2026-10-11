@@ -1,4 +1,5 @@
 <script>
+ import StatusBadge from './StatusBadge.svelte'
  import {onMount} from 'svelte'
  import {jobStream} from './job-stream.svelte.js'
  import {selection,selectWorkspace,selectNetwork,monitorRange} from './selection.svelte.js'
@@ -52,21 +53,21 @@
  {#if snapshot}
   {#if jobs.length===0}<p class="empty">저장된 실행 작업이 없습니다.</p>{:else}
    <div class="table"><table><thead><tr><th>작업 · Workspace</th><th>동작 · 상태</th><th>진행 단계</th><th>노드 처리 · 결과</th></tr></thead><tbody>{#each jobs as job (job.id)}
-    <tr data-job-id={job.id}><td><a href={'/jobs/'+job.id} onclick={e=>follow(e,'/jobs/'+job.id)}><code>{job.id}</code></a><small>{names[job.workspaceId]??job.workspaceId}</small>{#if mayCancel(job)}<button disabled={cancelling===job.id||job.state==='cancelling'} onclick={()=>cancel(job)}>작업 취소</button>{/if}</td><td>{job.operation}<strong>{job.state}</strong></td><td>{#each job.phases??[] as phase}<small>{phase.name}: {phase.state}</small>{/each}</td><td>{job.nodeDisposition??'확인되지 않음'}{#each job.runIds??[] as id}<small>세션 {id}</small>{/each}{#if job.unresolvedResources?.length}<small>미해결 자원 {job.unresolvedResources.length}건</small>{/if}</td></tr>
+    <tr data-job-id={job.id}><td><a href={'/jobs/'+job.id} onclick={e=>follow(e,'/jobs/'+job.id)}><code>{job.id}</code></a><small>{names[job.workspaceId]??job.workspaceId}</small>{#if mayCancel(job)}<button disabled={cancelling===job.id||job.state==='cancelling'} onclick={()=>cancel(job)}>작업 취소</button>{/if}</td><td>{job.operation}<strong><StatusBadge state={job.state} /></strong></td><td>{#each job.phases??[] as phase}<small>{phase.name}: {phase.state}</small>{/each}</td><td>{job.nodeDisposition??'확인되지 않음'}{#each job.runIds??[] as id}<small>세션 {id}</small>{/each}{#if job.unresolvedResources?.length}<small>미해결 자원 {job.unresolvedResources.length}건</small>{/if}</td></tr>
    {/each}</tbody></table></div>
   {/if}
   <h3>보관된 네트워크 기록</h3><p class="muted">스냅샷 시점: {time(snapshot.observedAt)}. 기록된 PID는 실제 가동 증거가 아닙니다. 체인 화면에서 노드 상태를 확인할 수 있습니다.</p>
-  {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><span>{network.ownership} · {network.nodes.length}개 노드</span>{#each network.nodes as node (node.id)}<small><a href={`/nodes/${network.id}/${node.id}`} onclick={e=>follow(e,`/nodes/${network.id}/${node.id}`)}>{node.id}</a> · {node.role} · {node.state} · 기록 PID {node.pid||'없음'}</small>{/each}</div>{/each}
+  {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><span>{network.ownership} · {network.nodes.length}개 노드</span>{#each network.nodes as node (node.id)}<small><a href={`/nodes/${network.id}/${node.id}`} onclick={e=>follow(e,`/nodes/${network.id}/${node.id}`)}>{node.id}</a> · {node.role} · <StatusBadge state={node.state} /> · 기록 PID {node.pid||'없음'}</small>{/each}</div>{/each}
   <h3>노드 지표</h3><p class="muted">서버가 5초마다 각 노드의 RPC와 metrics endpoint에서 수집해 만료 없이 보관한 값입니다. 점을 선택하면 그 시점 전후의 노드 로그를 보여 줍니다.</p>
   {#each shown as network (network.id)}<div class="network"><strong>{network.id}</strong><NodeMetrics networkId={network.id}/></div>{:else}<p class="empty">지표를 수집할 네트워크가 없습니다.</p>{/each}
  {/if}
 </section>
 <style>
- .panel{margin-top:24px;border:1px solid #334155;border-radius:10px;background:#121b28;padding:24px;min-width:0}
- .heading{display:flex;justify-content:space-between;align-items:center;gap:16px}h2{margin:0;font-size:18px}h3{font-size:16px;margin-top:24px}p,.network span{color:#a8b5c8}
- button{color:#dbeafe;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px 12px}
- .filters{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}label{display:grid;gap:4px}input{font:inherit;color:inherit;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px;min-height:40px}select{font:inherit;color:inherit;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px;min-height:40px}a{color:#93c5fd}
- .notice,.error{padding:12px;border-left:3px solid #fcd34d;background:#30251a;color:#fcd34d}.error{border-color:#fca5a5;color:#fca5a5;background:#301d25}
- .table{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid #253247;vertical-align:top}th{color:#a8b5c8;font-size:12px}td{overflow-wrap:anywhere}small,strong{display:block}small{color:#a8b5c8}code{font-size:11px}.network{padding:12px;border:1px solid #334155;border-radius:6px;margin-top:8px;overflow-wrap:anywhere}
- @media(max-width:800px){.panel{padding:16px}.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:8px 0;border:0}tr{padding:12px 0;border-bottom:1px solid #334155}}
+ .panel{margin-top:24px;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:24px;min-width:0}
+ .heading{display:flex;justify-content:space-between;align-items:center;gap:16px}h2{margin:0;font-size:18px}h3{font-size:16px;margin-top:24px}p,.network span{color:var(--text-muted)}
+ button{color:var(--accent-strong);background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px 12px}
+ .filters{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}label{display:grid;gap:4px}input{font:inherit;color:inherit;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px;min-height:40px}select{font:inherit;color:inherit;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:6px;padding:8px;min-height:40px}a{color:var(--accent)}
+ .notice,.error{padding:12px;border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--warn)}.error{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
+ .table{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border-subtle);vertical-align:top}th{color:var(--text-muted);font-size:12px}td{overflow-wrap:anywhere}small,strong{display:block}small{color:var(--text-muted)}code{font-size:11px}.network{padding:12px;border:1px solid var(--border);border-radius:6px;margin-top:8px;overflow-wrap:anywhere}
+ @media(max-width:800px){.panel{padding:16px}.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:8px 0;border:0}tr{padding:12px 0;border-bottom:1px solid var(--border)}}
 </style>
