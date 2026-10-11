@@ -61,8 +61,16 @@ try{
  session=undefined
  await api('jobs/'+accepted.id,'GET',undefined,undefined,401)
  session=await api('auth/login','POST',{username:'restart-admin',password:f.password})
- const interrupted=await api('jobs/'+accepted.id)
- assert.equal(interrupted.state,'interrupted');assert.equal(interrupted.nodeDisposition,'unknown');assert.ok(interrupted.unresolvedResources.length>0)
+ let interrupted=await api('jobs/'+accepted.id)
+ assert.equal(interrupted.state,'interrupted')
+ // The restarted server checks the local machine by itself, read-only. Until
+ // then the job is unknown with its resources unresolved; afterwards the
+ // still-running nodes keep it as a retained network.
+ assert.ok(interrupted.reconciliation||interrupted.nodeDisposition==='unknown'&&interrupted.unresolvedResources.length>0,'interrupted job claims a resolved state before any check: '+JSON.stringify(interrupted))
+ for(let i=0;i<300&&!interrupted.reconciliation;i++){await pause();interrupted=await api('jobs/'+accepted.id)}
+ assert.equal(interrupted.reconciliation?.outcome,'present','restart did not record the actual local state: '+JSON.stringify(interrupted))
+ assert.ok(interrupted.reconciliation.nodes.length===dirStats.length&&interrupted.reconciliation.nodes.every(n=>n.process==='running'&&n.data==='present'),JSON.stringify(interrupted.reconciliation))
+ assert.equal(interrupted.nodeDisposition,'retained');assert.equal(interrupted.state,'interrupted')
  assert.equal((await api('jobs','POST',{planId:plan.id},plan.id,202)).id,accepted.id,'idempotent replay created an execution')
  assert.equal((await api('jobs')).items.length,1,'restart automatically executed another job')
  assert.equal(hash(fs.readFileSync(recordPath)),hash(recordBefore),'restart changed the owned launch record')

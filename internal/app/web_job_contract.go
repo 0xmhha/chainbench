@@ -108,12 +108,15 @@ type WebJob struct {
 	CancelMessage   string        `json:"cancelMessage,omitempty"`
 	// CredentialRefs are the private credential ids the job uses, never their
 	// material.
-	CredentialRefs      []string          `json:"credentialRefs"`
-	RequestID           string            `json:"requestId,omitempty"`
-	RunIDs              []string          `json:"runIds"`
-	PartialEffects      []string          `json:"partialEffects"`
-	UnresolvedResources []string          `json:"unresolvedResources"`
-	Error               map[string]string `json:"error,omitempty"`
+	CredentialRefs []string `json:"credentialRefs"`
+	RequestID      string   `json:"requestId,omitempty"`
+	// Reconciliation is the latest read-only check of an interrupted job's
+	// machines.
+	Reconciliation      *WebReconciliation `json:"reconciliation,omitempty"`
+	RunIDs              []string           `json:"runIds"`
+	PartialEffects      []string           `json:"partialEffects"`
+	UnresolvedResources []string           `json:"unresolvedResources"`
+	Error               map[string]string  `json:"error,omitempty"`
 }
 
 type WebJobResult struct {

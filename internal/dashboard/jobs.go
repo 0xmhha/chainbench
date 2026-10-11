@@ -121,6 +121,12 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			job, err := jobs.Get(r.PathValue("jobId"))
 			deploymentResponse(w, job, err, 200)
 		})
+		route("POST /api/v1/jobs/{jobId}/reconcile", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
+			defer cancel()
+			job, err := jobs.Reconcile(ctx, a, r.PathValue("jobId"))
+			deploymentResponse(w, job, err, http.StatusOK)
+		})
 		route("POST /api/v1/jobs/{jobId}/cancel", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in struct {
 				Message string `json:"message"`

@@ -38,8 +38,14 @@ try{
  const restart=JSON.parse(fs.readFileSync(f.runtime+'/restart.response','utf8'));assert.ok(!restart.error&&restart.oldPid!==restart.newPid,JSON.stringify(restart))
  session=undefined
  session=await api('auth/login','POST',{username:'deploy-restart-admin',password:f.password})
- const interrupted=await api('jobs/'+accepted.id)
- assert.equal(interrupted.state,'interrupted',JSON.stringify(interrupted));assert.equal(interrupted.nodeDisposition,'unknown');assert.ok(interrupted.unresolvedResources.length>0,'interrupted deployment hides its resources')
+ let interrupted=await api('jobs/'+accepted.id)
+ const unresolvedAtRestart=interrupted.reconciliation?null:interrupted.unresolvedResources.length
+ assert.equal(interrupted.state,'interrupted',JSON.stringify(interrupted))
+ assert.ok(interrupted.reconciliation||interrupted.nodeDisposition==='unknown'&&interrupted.unresolvedResources.length>0,'interrupted deployment hides its resources')
+ // The restarted server checks the local machine by itself and records it.
+ for(let i=0;i<300&&!interrupted.reconciliation;i++){await sleep(100);interrupted=await api('jobs/'+accepted.id)}
+ assert.ok(['present','absent','unverified'].includes(interrupted.reconciliation?.outcome),'restart did not record the actual local state: '+JSON.stringify(interrupted))
+ assert.equal(interrupted.nodeDisposition,{present:'retained',absent:'cleaned',unverified:'unknown'}[interrupted.reconciliation.outcome])
  const recordAfter=fs.existsSync(recordPath)?fs.readFileSync(recordPath):null
  // Nothing resumes on its own: no new job, no phase change, no record change.
  await sleep(15000)
@@ -66,5 +72,5 @@ try{
  assert.notEqual(rerun.id,accepted.id)
  let finished
  for(let i=0;i<1500;i++){finished=await api('jobs/'+rerun.id);if(terminal.includes(finished.state))break;await sleep(200)}
- fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:owned.browser.version(),interruptedPhase:runningPhase,interruptedJob:{id:accepted.id,state:interrupted.state,unresolved:interrupted.unresolvedResources.length},noAutomaticResume:true,claimsKept:true,observedNodes:observed?observed.nodes.map(n=>n.state):[],explicitRerun:{id:rerun.id,state:finished.state,error:finished.error?.message??null},seedAcceptanceAwarded:false},null,2))
+ fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:owned.browser.version(),interruptedPhase:runningPhase,interruptedJob:{id:accepted.id,state:interrupted.state,unresolvedAtRestart,unresolved:interrupted.unresolvedResources.length,reconciliation:interrupted.reconciliation?.outcome??null,disposition:interrupted.nodeDisposition},noAutomaticResume:true,claimsKept:true,observedNodes:observed?observed.nodes.map(n=>n.state):[],explicitRerun:{id:rerun.id,state:finished.state,error:finished.error?.message??null},seedAcceptanceAwarded:false},null,2))
 }finally{await owned.stop()}

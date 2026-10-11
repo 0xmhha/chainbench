@@ -116,6 +116,8 @@
       {#if job.error}<p class="error">{job.error.message}</p>{/if}
       {#if job.partialEffects?.length}<details><summary>수행된 변경</summary><ul>{#each job.partialEffects as effect}<li>{effect}</li>{/each}</ul></details>{/if}
       {#if job.unresolvedResources?.length}<p class="error">확인이 필요한 자원: {job.unresolvedResources.join(', ')}</p>{/if}
+      {#if job.reconciliation}<div data-testid={'reconciliation-'+job.id}><p>실제 상태 확인 {new Date(job.reconciliation.checkedAt).toLocaleString()} · {({absent:'남은 노드 없음, 자원 해제',present:'노드가 남아 있어 보존 네트워크로 유지',unverified:'일부를 확인하지 못해 계속 잠금'})[job.reconciliation.outcome]??job.reconciliation.outcome}{job.reconciliation.message?' · '+job.reconciliation.message:''}</p>{#if job.reconciliation.nodes?.length}<ul>{#each job.reconciliation.nodes as n}<li>{n.nodeId}: 프로세스 {n.process} · 데이터 {n.data}</li>{/each}</ul>{/if}</div>{/if}
+      {#if (job.state==='interrupted'||(['succeeded','failed','cancelled'].includes(job.state)&&job.nodeDisposition==='unknown'))&&(job.actorId===webSession?.user.id||webSession?.user.role==='administrator')}<button disabled={busy} onclick={()=>work(async()=>{await api('jobs/'+job.id+'/reconcile','POST',{});await refresh()})}>실제 상태 확인</button>{/if}
       {#if active(job)&&canEdit&&(actor.id===job.actorId||actor.role==='administrator')}<button disabled={busy||job.state==='cancelling'} onclick={()=>work(async()=>{await api(`jobs/${job.id}/cancel`,'POST',{});await refresh()})}>작업 취소</button>{/if}
     </article>{:else}<p>보관된 작업이 없습니다.</p>{/each}</div>
   {/if}

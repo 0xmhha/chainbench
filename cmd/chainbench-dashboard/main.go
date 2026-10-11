@@ -166,6 +166,9 @@ func main() {
 			os.Exit(1)
 		}
 		go monitor.Run(context.Background())
+		// Local machines of jobs the restart interrupted are checked once,
+		// read-only, so their records show what actually remains.
+		go jobs.ReconcileInterrupted(context.Background())
 		engine.UseMonitor(monitor)
 		history.UseObservations(monitor)
 		opts = append(opts, dashboard.WithWebMonitor(monitor, authenticate))

@@ -1429,6 +1429,34 @@ paths:
         in: path
         required: true
         schema: *id002
+  /api/v1/jobs/{jobId}/reconcile:
+    post:
+      operationId: reconcileJob
+      summary: Initiator or administrator checks the actual state behind an interrupted job
+      x-minimum-role: operator
+      description: Read-only. Each recorded node is observed on its own machine with the caller's bindings (process by recorded identity, data directory). Confirmed absence sets nodeDisposition cleaned and releases the job's claims; existing nodes set retained; any unchecked node keeps unknown and its resources locked. The result is stored as Job.reconciliation. After a restart the server checks interrupted jobs on local machines by itself; SSH machines wait for this request.
+      responses:
+        '200':
+          description: The job with its new reconciliation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: *id002
   /api/v1/jobs/{jobId}/cancel:
     post:
       operationId: cancelJob
@@ -2660,6 +2688,10 @@ components:
         requestId:
           type: string
           description: The request that accepted the job; its error carries the same id
+        reconciliation:
+          type: object
+          description: Latest read-only check of an interrupted job's machines; outcome absent, present or unverified
+          additionalProperties: true
         runIds:
           type: array
           items: *id002
