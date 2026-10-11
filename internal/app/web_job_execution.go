@@ -94,7 +94,13 @@ func (s *WebJobs) execute(ctx context.Context, actor DeploymentActor, id string,
 	if clean && s.allowed(actor) == nil {
 		cleaned, cleanErr := s.engine.Cleanup(cleanupCtx, actor, prepared)
 		result.PartialEffects = append(result.PartialEffects, cleaned.PartialEffects...)
-		result.UnresolvedResources = append(result.UnresolvedResources, cleaned.UnresolvedResources...)
+		// Cleanup covers the whole owned composition, so after it succeeds only
+		// what it reports is still unresolved; a failed cleanup keeps both.
+		if cleanErr == nil {
+			result.UnresolvedResources = cleaned.UnresolvedResources
+		} else {
+			result.UnresolvedResources = append(result.UnresolvedResources, cleaned.UnresolvedResources...)
+		}
 		result.NodeDisposition = cleaned.NodeDisposition
 		if cleanErr != nil {
 			result.NodeDisposition = "cleanup_failed"
