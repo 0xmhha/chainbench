@@ -18,3 +18,6 @@ test('plain text bodies are kept and trimmed', () => {
 test('a structured message is not printed as an object', () => {
  assert.equal(errorMessage(422, '{"code":"Unprocessable Entity","message":{"nested":true}}'), '422: Unprocessable Entity')
 })
+test('field errors name the part of the request that failed', () => {
+  assert.equal(errorMessage(422, '{"code":"invalid","message":"serverset: no pool hosts","requestId":"a1","fieldErrors":[{"path":"/content","code":"invalid","message":"serverset: no pool hosts"}]}'), '422: /content: serverset: no pool hosts')
+})

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -220,7 +221,7 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 		return WebJob{}, err
 	}
 	if strings.TrimSpace(key) == "" || len(key) > 128 {
-		return WebJob{}, errors.New("idempotency key required (maximum 128 bytes)")
+		return WebJob{}, fmt.Errorf("%w: Idempotency-Key header required (maximum 128 bytes)", ErrWebMalformedRequest)
 	}
 	if err := ctx.Err(); err != nil {
 		return WebJob{}, err

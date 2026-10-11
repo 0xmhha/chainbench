@@ -913,6 +913,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
         '422':
           $ref: '#/components/responses/Invalid'
         '500':
@@ -1101,6 +1103,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
         '422':
           $ref: '#/components/responses/Invalid'
         '500':
@@ -1898,8 +1902,22 @@ components:
   schemas:
     Error:
       type: object
+      description: code is a stable name for programs; message is the status text, or for a refused change (400, 409, 422) the engine's reason with secrets removed. requestId is new for every request and also appears in the X-Request-ID header and the audit trail. errors is the validators' own list, kept for clients that read it.
       properties:
-        code: *id001
+        code:
+          type: string
+          enum:
+          - bad_request
+          - unauthorized
+          - forbidden
+          - not_found
+          - conflict
+          - precondition_required
+          - invalid
+          - too_large
+          - rate_limited
+          - internal
+          - error
         message: *id001
         requestId: *id001
         fieldErrors:
@@ -1915,6 +1933,11 @@ components:
             - path
             - code
             - message
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
         details:
           type: object
           additionalProperties: true
@@ -3248,6 +3271,12 @@ components:
             $ref: '#/components/schemas/Error'
     Invalid:
       description: Engine grammar, field, reference or capability validation failed. message (and errors when listed) carries the engine's reason with registered secrets and personal credentials removed; 400 and 409 responses do the same, while authentication, permission and server errors carry only their status text.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PreconditionRequired:
+      description: The If-Match header naming the base revision is missing
       content:
         application/json:
           schema:

@@ -17,6 +17,9 @@ var (
 	ErrDeploymentNotFound  = errors.New("deployment object not found")
 	ErrDeploymentConflict  = errors.New("revision changed; reload before editing")
 	ErrDeploymentForbidden = errors.New("deployment operation forbidden")
+	// ErrWebMalformedRequest marks a request missing something the protocol
+	// requires, such as a header, as opposed to content the engine refused.
+	ErrWebMalformedRequest = errors.New("malformed request")
 )
 
 // DeploymentActor is supplied by the authenticated account layer, never by request JSON.

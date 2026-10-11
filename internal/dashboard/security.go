@@ -298,6 +298,34 @@ func legacyWebSecurity(s *Server, store *app.DeploymentStore, authenticate Deplo
 	}
 }
 
+// webErrorCode is the stable name a program matches on; message is for people.
+func webErrorCode(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return "bad_request"
+	case http.StatusUnauthorized:
+		return "unauthorized"
+	case http.StatusForbidden:
+		return "forbidden"
+	case http.StatusNotFound:
+		return "not_found"
+	case http.StatusConflict:
+		return "conflict"
+	case http.StatusPreconditionRequired:
+		return "precondition_required"
+	case http.StatusUnprocessableEntity:
+		return "invalid"
+	case http.StatusRequestEntityTooLarge:
+		return "too_large"
+	case http.StatusTooManyRequests:
+		return "rate_limited"
+	}
+	if status >= 500 {
+		return "internal"
+	}
+	return "error"
+}
+
 // webValidationLimit bounds an explained validation message.
 const webValidationLimit = 2048
 
@@ -309,7 +337,7 @@ func webErrorBody(status int, original []byte, redact func(string) string, expla
 	if requestID == "" {
 		requestID = newRequestID()
 	}
-	body := map[string]any{"code": http.StatusText(status), "message": http.StatusText(status), "requestId": requestID}
+	body := map[string]any{"code": webErrorCode(status), "message": http.StatusText(status), "requestId": requestID}
 	if explain && (status == http.StatusBadRequest || status == http.StatusConflict || status == http.StatusUnprocessableEntity) {
 		var structured map[string]any
 		text := strings.TrimSpace(redact(string(original)))
@@ -319,8 +347,17 @@ func webErrorBody(status int, original []byte, redact func(string) string, expla
 					if message, ok := value.(string); ok && message != "" {
 						body["message"] = message
 					}
-				} else if key != "code" && key != "requestId" {
+				} else if key == "fieldErrors" || key == "errors" || key == "details" {
 					body[key] = value
+				} else if key != "code" && key != "requestId" {
+					// Anything else an engine reported travels under details, so
+					// the top level keeps the documented error shape.
+					details, _ := body["details"].(map[string]any)
+					if details == nil {
+						details = map[string]any{}
+						body["details"] = details
+					}
+					details[key] = value
 				}
 			}
 		} else if text != "" && structured == nil {

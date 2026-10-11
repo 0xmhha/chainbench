@@ -300,7 +300,16 @@ func deploymentResponse(w http.ResponseWriter, v any, err error, status int) {
 }
 func deploymentError(w http.ResponseWriter, err error) {
 	status := http.StatusUnprocessableEntity
+	var field *app.WebFieldError
+	if errors.As(err, &field) {
+		// The reason stays in message; fieldErrors points the editor at it.
+		body, _ := json.Marshal(map[string]any{"message": err.Error(), "fieldErrors": []map[string]string{{"path": field.Path, "code": "invalid", "message": err.Error()}}})
+		http.Error(w, string(body), status)
+		return
+	}
 	switch {
+	case errors.Is(err, app.ErrWebMalformedRequest):
+		status = http.StatusBadRequest
 	case errors.Is(err, app.ErrDeploymentNotFound):
 		status = 404
 	case errors.Is(err, app.ErrDeploymentForbidden):

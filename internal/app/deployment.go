@@ -33,19 +33,46 @@ func ValidateDeploymentDocument(in DeploymentDocumentInput) error {
 // supplied: its pinned preset revisions live in the document store.
 var errCasePresetsNeedStore = errors.New("a case with preset references is validated against the shared preset revisions it pins")
 
-func validateDeploymentDocument(in DeploymentDocumentInput, presets map[string]json.RawMessage) error {
-	if len(in.PresetRefs) > 0 && in.Kind != "case" {
-		return errors.New("only a test case pins chain preset references")
-	}
-	if in.Kind == "case" && len(in.PresetRefs) > 0 && presets == nil {
-		return errCasePresetsNeedStore
-	}
-	if strings.TrimSpace(in.Name) == "" || in.ContractVersion != "2" {
-		return errors.New("named deployment document with contractVersion 2 required")
-	}
-	if err := validateWebDocumentAssetRefs(in); err != nil {
+// WebFieldError names the part of a request that failed validation, so a
+// refusal can point the editor at it. Path is a JSON pointer into the
+// request. The engine validators report a reason but not a position inside
+// the content, so a content failure points at /content as a whole.
+type WebFieldError struct {
+	Path string
+	Err  error
+}
+
+func (e *WebFieldError) Error() string { return e.Err.Error() }
+func (e *WebFieldError) Unwrap() error { return e.Err }
+
+func webFieldError(path string, err error) error {
+	var field *WebFieldError
+	if err == nil || errors.As(err, &field) {
 		return err
 	}
+	return &WebFieldError{Path: path, Err: err}
+}
+
+func validateDeploymentDocument(in DeploymentDocumentInput, presets map[string]json.RawMessage) error {
+	if len(in.PresetRefs) > 0 && in.Kind != "case" {
+		return webFieldError("/presetRefs", errors.New("only a test case pins chain preset references"))
+	}
+	if in.Kind == "case" && len(in.PresetRefs) > 0 && presets == nil {
+		return webFieldError("/presetRefs", errCasePresetsNeedStore)
+	}
+	if strings.TrimSpace(in.Name) == "" {
+		return webFieldError("/name", errors.New("named deployment document with contractVersion 2 required"))
+	}
+	if in.ContractVersion != "2" {
+		return webFieldError("/contractVersion", errors.New("named deployment document with contractVersion 2 required"))
+	}
+	if err := validateWebDocumentAssetRefs(in); err != nil {
+		return webFieldError("/assetRefs", err)
+	}
+	return webFieldError("/content", validateDeploymentContent(in, presets))
+}
+
+func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]json.RawMessage) error {
 	var content map[string]any
 	dec := json.NewDecoder(bytes.NewReader(in.Content))
 	dec.UseNumber()
