@@ -65,7 +65,9 @@ try{
    const failed=await run(replacement,'failed');assert.ok(failed.unresolvedResources.includes(target))
    assert.ok(failed.partialEffects.some(v=>v.includes('has not been stopped')))
    assert.deepEqual(fs.readFileSync(recordPath),recordBytes)
-   const observed=await api('networks/'+w.id+'/observations');assert.equal(observed.nodes.find(n=>n.id==='node1').observedPid,selected.pid);assert.equal(observed.nodes.find(n=>n.id==='node2').observedPid,sibling.pid)
+   const observeStart=Date.now(),observed=await api('networks/'+w.id+'/observations');fs.writeFileSync(out+'/observations-after-fault.json',JSON.stringify({elapsedMs:Date.now()-observeStart,...observed},null,2))
+   // Every node of the owned SSH network is answered within one observation.
+   assert.deepEqual(observed.nodes.filter(n=>n.state==='unknown').map(n=>n.id+': '+n.observationReason),[],'an SSH node went unobserved');assert.equal(observed.nodes.find(n=>n.id==='node1').observedPid,selected.pid,JSON.stringify(observed.nodes));assert.equal(observed.nodes.find(n=>n.id==='node2').observedPid,sibling.pid,JSON.stringify(observed.nodes))
   }finally{fs.unlinkSync(target)}
  }
  const page=await context.newPage();await page.goto(f.url+'/chains')

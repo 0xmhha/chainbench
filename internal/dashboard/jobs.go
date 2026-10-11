@@ -51,7 +51,9 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			deploymentResponse(w, map[string]any{"items": networks, "nextCursor": nil}, err, 200)
 		})
 		route("GET /api/v1/networks/{networkId}/observations", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
+			// Each SSH check dials its own connection, so a few remote nodes
+			// already need more than eight seconds to be observed.
+			ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 			defer cancel()
 			network, err := jobs.ObserveNetwork(ctx, a, r.PathValue("networkId"))
 			deploymentResponse(w, network, err, http.StatusOK)
