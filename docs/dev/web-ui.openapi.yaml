@@ -3073,6 +3073,10 @@ components:
         commandPath:
           type: array
           items: *id001
+        positional:
+          type: array
+          description: Positional argument placeholders from the command's usage line
+          items: *id001
         summary: *id001
         argumentContractId: *id002
         engineUsecases:
@@ -3084,6 +3088,7 @@ components:
       required:
       - id
       - commandPath
+      - positional
       - summary
       - engineUsecases
       - support

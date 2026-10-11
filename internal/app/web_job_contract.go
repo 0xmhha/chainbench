@@ -60,12 +60,13 @@ func claimsOverlap(a, b WebResourceClaim) bool {
 // WebPreparedJob contains the engine's fully resolved immutable execution input.
 // Fingerprint covers target identity, revisions, assets, bindings and arguments.
 type WebPreparedJob struct {
-	Fingerprint    string             `json:"fingerprint"`
-	Claims         []WebResourceClaim `json:"claims"`
-	Phases         []string           `json:"phases"`
-	Changes        []string           `json:"changes"`
-	RequiredAccess []string           `json:"requiredAccess"`
-	Payload        json.RawMessage    `json:"payload"`
+	Fingerprint    string               `json:"fingerprint"`
+	Claims         []WebResourceClaim   `json:"claims"`
+	Phases         []string             `json:"phases"`
+	Changes        []string             `json:"changes"`
+	RequiredAccess []string             `json:"requiredAccess"`
+	ChainSurfaces  []WebChainSurfaceRef `json:"chainSurfaces,omitempty"`
+	Payload        json.RawMessage      `json:"payload"`
 }
 
 type WebPlan struct {
@@ -81,7 +82,7 @@ type WebPlan struct {
 	Resources         []string                `json:"resources"`
 	RequiredAccess    []string                `json:"requiredAccess"`
 	Validation        map[string]any          `json:"validation"`
-	ChainSurfaces     []any                   `json:"chainSurfaces"`
+	ChainSurfaces     []WebChainSurfaceRef    `json:"chainSurfaces"`
 }
 
 type WebJobPhase struct {

@@ -23,6 +23,7 @@ func main() {
 	addr := flag.String("addr", "127.0.0.1:8787", "listen address")
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
 	presetRoot := flag.String("chain-presets", "presets/chain", "chain preset directory")
+	analysisRoot := flag.String("chain-analysis", "docs/chain-analysis", "captured chain binary documentation directory")
 	deploymentAccounts := flag.String("deployment-accounts", "", "private provisioned account file enabling shared deployment editor")
 	deploymentRoot := flag.String("deployment-root", "chainbench-out/web-ui", "persistent deployment data directory")
 	manifestAssets := flag.String("manifest-assets", "", "server-provisioned binary asset JSON enabling manifest management")
@@ -111,6 +112,14 @@ func main() {
 		}
 		opts = append(opts, dashboard.WithManifests(manifests, authenticate, assets, *manifestKeys))
 		engine := app.NewWebChainEngine(*deploymentRoot, *manifestKeys, deployments, manifests, assets, authorize)
+		// Plans pin the documented surface of every binary they run, so the
+		// documentation has to be readable before the service starts.
+		if err = app.CheckChainSurfaces(*analysisRoot); err != nil {
+			fmt.Fprintln(os.Stderr, "chain analysis:", err)
+			os.Exit(1)
+		}
+		engine.UseChainSurfaces(*analysisRoot)
+		opts = append(opts, dashboard.WithChainSurfaces(engine, authenticate))
 		jobs, err := app.OpenWebJobs(*deploymentRoot, engine, deployments.RedactWeb, authorize)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "job store:", err)

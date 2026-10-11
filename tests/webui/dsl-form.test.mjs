@@ -84,3 +84,16 @@ test('key file accounts come from the case and the preset it pins', async () => 
   assert.deepEqual(keyFileAccounts({content: {chainPreset: {chain: 'stablenet', attach: {rpc: ['x']}, accounts: {b: {keyFile: 'k'}, a: {keyFile: 'k'}}}}}), ['a', 'b'])
   assert.deepEqual(keyFileAccounts({content: {chainPreset: {chain: 'stablenet'}}}), [])
 })
+
+test('a string launch value is checked against the engine rule the schema carries', async () => {
+  const { valueProblem } = await import('../../web/src/dsl-form.js')
+  const port = { type: 'string', pattern: '^-?[0-9]+$', 'x-minimum': 0, 'x-maximum': 65535 }
+  assert.equal(valueProblem(port, '8545'), '')
+  assert.match(valueProblem(port, 'abc'), /integer/)
+  assert.match(valueProblem(port, '70000'), /65535/)
+  assert.equal(valueProblem(port, ''), '')
+  const peers = { type: 'string', pattern: '^-?[0-9]+$', 'x-minimum': 0 }
+  assert.match(valueProblem(peers, '-1'), /at least 0/)
+  assert.equal(valueProblem({ type: 'string' }, 'anything'), '')
+  assert.match(valueProblem({ type: 'string', pattern: '^(any|none)$' }, 'other'), /format/)
+})

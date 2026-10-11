@@ -127,3 +127,20 @@ export function declaredBinaries(doc, documents = []) {
     .map(([name, value]) => ({name, chain: (typeof value === 'object' && value?.chain) || chain}))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
+
+// valueProblem checks a string value against the rule an engine schema
+// carries: a pattern and, for integers kept as strings, x-minimum and
+// x-maximum. The server applies the same rule; this only tells the editor
+// before it asks. An empty value is left to the required check.
+export function valueProblem(schema, value) {
+  if (typeof value !== 'string' || value === '' || !schema?.pattern) return ''
+  if (!new RegExp(schema.pattern).test(value)) {
+    return schema['x-minimum'] !== undefined ? 'Enter an integer.' : 'This value does not have the accepted format.'
+  }
+  const min = schema['x-minimum'], max = schema['x-maximum']
+  if (min === undefined && max === undefined) return ''
+  const n = Number(value)
+  if (max !== undefined && (n < min || n > max)) return `Enter an integer from ${min} to ${max}.`
+  if (min !== undefined && n < min) return `Enter an integer of at least ${min}.`
+  return ''
+}

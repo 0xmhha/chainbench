@@ -31,6 +31,8 @@ type WebChainEngine struct {
 	// verifyAsset checks a registered binary against a chain's build
 	// contract; nil uses the native probe.
 	verifyAsset func(context.Context, ManifestBinary, string) (ManifestBinaryEvidence, error)
+	// surfaces is the captured chain documentation root; see UseChainSurfaces.
+	surfaces string
 }
 
 // errIncompatibleBinary refuses a registered binary of another chain.
@@ -94,6 +96,7 @@ type webChainPayload struct {
 	CurrentNodeBinary  *webNodeBinary         `json:"currentNodeBinary,omitempty"`
 	NodeBindingsDigest string                 `json:"nodeBindingsDigest,omitempty"`
 	Replacement        *webBinaryReplacement  `json:"replacement,omitempty"`
+	ChainSurfaces      []WebChainSurfaceRef   `json:"chainSurfaces,omitempty"`
 }
 
 func (e *WebChainEngine) allowed(a DeploymentActor) error {
@@ -543,6 +546,10 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if p.Keys.SHA256 != "" {
 		out.Changes = append(out.Changes, "Key material pinned to SHA-256 "+p.Keys.SHA256)
 	}
+	if err = e.pinPlanSurfaces(ctx, &p); err != nil {
+		return out, err
+	}
+	out.ChainSurfaces = p.ChainSurfaces
 	out.Payload, err = json.Marshal(p)
 	if err != nil {
 		return out, err
@@ -645,6 +652,9 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 		if now, err := e.verify(ctx, asset, named.Binary.Chain); err != nil || now != named.Binary {
 			return WebJobResult{}, ErrDeploymentConflict
 		}
+	}
+	if err = e.recheckPlanSurfaces(ctx, p); err != nil {
+		return WebJobResult{}, err
 	}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err != nil && !os.IsNotExist(err) {

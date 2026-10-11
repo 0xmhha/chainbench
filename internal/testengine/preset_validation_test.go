@@ -60,3 +60,20 @@ func TestValidateChainPresetLargeCountDoesNotAllocateNodes(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestValidateChainPresetRefusesValuesOutsideTheBinaryRange(t *testing.T) {
+	for chain, launch := range map[string]string{
+		"stablenet": `{"all":{"cache.gc":150}}`,
+		"wbft":      `{"all":{"gcmode":"partial"}}`,
+		"wemix":     `{"all":{"chain.consensusmethod":"9"}}`,
+	} {
+		raw := `{"schemaVersion":"2","kind":"chain-preset","id":"test","chain":"` + chain + `","launch":` + launch + `}`
+		if err := testengine.ValidateChainPreset([]byte(raw)); err == nil {
+			t.Errorf("%s accepted %s", chain, launch)
+		}
+	}
+	ok := `{"schemaVersion":"2","kind":"chain-preset","id":"test","chain":"wemix","launch":{"all":{"chain.consensusmethod":"2","cache.gc":25}}}`
+	if err := testengine.ValidateChainPreset([]byte(ok)); err != nil {
+		t.Errorf("in-range values refused: %v", err)
+	}
+}

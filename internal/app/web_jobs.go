@@ -191,7 +191,10 @@ func (s *WebJobs) Plan(ctx context.Context, a DeploymentActor, in WebPlanInput) 
 	if err = validatePrepared(p); err != nil {
 		return WebPlan{}, err
 	}
-	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, ChainSurfaces: []any{}, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
+	if p.ChainSurfaces == nil {
+		p.ChainSurfaces = []WebChainSurfaceRef{}
+	}
+	plan := WebPlan{ID: deploymentID(), ActorID: a.ID, WorkspaceID: in.WorkspaceID, Operation: in.Operation, DocumentRefs: in.DocumentRefs, TargetFingerprint: p.Fingerprint, ExpiresAt: time.Now().UTC().Add(15 * time.Minute), Phases: p.Phases, Changes: p.Changes, RequiredAccess: p.RequiredAccess, Resources: []string{}, ChainSurfaces: p.ChainSurfaces, Validation: map[string]any{"valid": true, "errors": []any{}, "warnings": []any{}}}
 	for _, c := range p.Claims {
 		if c.Executable != "" {
 			plan.Resources = append(plan.Resources, c.HostIdentity+":process:"+c.Executable)

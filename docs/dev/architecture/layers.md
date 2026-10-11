@@ -90,7 +90,7 @@ flowchart TD
 > 두 목록의 순서는 일부러 다르다 — `core` 안에 L0·L1·L3 이 함께 있고 L3 인 `dsl/*`·`testhelper` 는
 > `core` 밖이라, 경로만 보고는 층을 알 수 없다.
 
-## 3. 모듈 배치 (52개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22 / core/statemachine 신설; 2026-09-22)
+## 3. 모듈 배치 (53개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22 / core/statemachine 신설; 2026-09-22)
 
 ### L0 커널 — 공용 어휘
 
@@ -113,6 +113,7 @@ flowchart TD
 | `core/process` | **실행** — 프로세스 기동/정지/provision(`Initializer`·`LogReader`, 옛 `core/driver`)·PID 추적·검증된 종료(run ledger)와 **기동 정책**(`Direct`: arm·materialize·init·launch / `Launcher`: 헬스 게이트·진단·재시도·teardown, 옛 `core/launcher` L3). 실행 메커니즘과 정책이 한 모듈 — 층 경계는 파일 경계로 내려간다(R3, 2026-09-01) |
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
+| `core/chainsurface` | **체인 바이너리의 캡처된 표면** — `docs/chain-analysis` 의 네 산출물에서 명령 경로·위치 인자·전역/명령 플래그·숨김·거절 플래그와 캡처 커밋·시각·digest 를 읽는다. 엔진 매핑과의 결합과 실제 바이너리 판정은 `app` 이 한다(Web UI G-A01, 2026-10-11). 내부 import 0 |
 | `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/blueprint` | **네트워크 선언** — 하나의 문서가 네트워크의 전부를 말한다(`Blueprint` 파싱·왕복·문서 내부 검증). 구성 정보가 네 조각(topology·serverset·preset·패밀리 config)으로 흩어져 어느 것도 전체를 말하지 못하던 것을 한 선언으로 모은다([[network-blueprint-design]] §1.1). **해석하지 않는다** — 빠진 값을 인벤토리·키셋·플러그인·패밀리에서 채우는 일은 한 층 위의 `Resolve` 몫이고(§3.4), 둘을 갈라 두어야 부분 선언이 왕복한다. 미지 필드는 거부한다: 선언에서는 오타가 증상을 남기지 않고 다른 값으로 조용히 대체되기 때문이다 |

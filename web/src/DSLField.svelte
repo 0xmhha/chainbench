@@ -1,6 +1,6 @@
 <script>
  import Field from './DSLField.svelte'
- import {variants, selectedVariant, variantLabel, initial} from './dsl-form.js'
+ import {variants, selectedVariant, variantLabel, initial, valueProblem} from './dsl-form.js'
  let {schema,root,value,path='/content',label='Document',onchange,suggestions={nodes:[],before:new Map()}}=$props()
  let key=$state('')
  const choices=$derived(variants(schema,root))
@@ -63,7 +63,9 @@
  {:else if type==='null'}
   <span>{label}: null</span>
  {:else}
-  <label>{label} <input aria-label={path} value={value??''} list={`${path}-suggestions`} oninput={e=>onchange(e.target.value)} /></label>
+  {@const problem=valueProblem(current,value)}
+  <label>{label} <input aria-label={path} value={value??''} list={`${path}-suggestions`} pattern={current.pattern} aria-invalid={problem?'true':undefined} aria-describedby={problem?`${path}-problem`:undefined} oninput={e=>onchange(e.target.value)} /></label>
+  {#if problem}<p id={`${path}-problem`} role="alert">{problem}</p>{/if}
   <datalist id={`${path}-suggestions`}>{#each label==='on'?suggestions.nodes:path.includes('/onEach/')?['all',...suggestions.nodes]:refs as option}<option value={option}></option>{/each}</datalist>
  {/if}
  {#if !current.type&&!current.properties&&!current.enum&&current.const===undefined&&choices.length===1}

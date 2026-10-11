@@ -187,10 +187,23 @@ func (b *manifestProbeOutput) Write(p []byte) (int, error) {
 }
 
 func (b *manifestProbeOutput) Bytes() []byte { return b.buffer.Bytes() }
+
+// manifestProbe runs one inspection of a native binary in an empty working
+// and home directory with a minimal environment. The server's own environment
+// must not reach the binary: go-wbft prints a warning before its program name
+// for every unknown GWEMIX_* variable, which made the identity line depend on
+// how the server was started, and an inherited HOME would let a binary that
+// ignored --help write into the operator's default data directory.
 func manifestProbe(ctx context.Context, path string, args ...string) ([]byte, error) {
+	home, err := os.MkdirTemp("", "chainbench-probe-")
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = os.RemoveAll(home) }()
 	var output manifestProbeOutput
 	cmd := exec.CommandContext(ctx, path, args...)
+	cmd.Dir, cmd.Env = home, []string{"HOME=" + home, "PATH=/usr/bin:/bin"}
 	cmd.Stdout, cmd.Stderr = &output, &output
-	err := cmd.Run()
+	err = cmd.Run()
 	return output.Bytes(), err
 }
