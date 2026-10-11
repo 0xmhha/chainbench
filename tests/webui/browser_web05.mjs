@@ -1,6 +1,7 @@
 // WEB-05 browser proof: the structured DSL editor edits every builtin argument,
 // imports and round-trips the current corpus, and saved cases that cover every
 // argument path run through a Web test job on a real network.
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -44,19 +45,19 @@ try {
   const page = await context.newPage(), errors = []
   page.on('pageerror', e => errors.push(e.message))
   await page.goto(f.url + '/tests')
-  const status = page.getByLabel('DSL status', {exact: true})
-  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
-  const idle = () => status.filter({hasText: 'Working…'}).waitFor({state: 'hidden'})
+  const status = page.getByLabel('DSL 상태', {exact: true})
+  await status.filter({hasText: 'DSL 계약을 읽었습니다'}).waitFor({timeout: 30000})
+  const idle = () => status.filter({hasText: '처리 중…'}).waitFor({state: 'hidden'})
   async function upload(doc, name = 'case.json') {
     const pending = page.waitForResponse(r => r.url().endsWith('/test-cases/import'))
-    await page.getByLabel('Import test JSON', {exact: true}).setInputFiles({name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc))})
+    await page.getByLabel('테스트 JSON 가져오기', {exact: true}).setInputFiles({name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc))})
     const response = await pending
     await idle()
     return response
   }
   async function exportDoc(name) {
     const pending = page.waitForEvent('download')
-    await page.getByRole('button', {name: 'Export test scenario', exact: true}).click()
+    await page.getByRole('button', {name: '테스트 시나리오 내보내기', exact: true}).click()
     const download = await pending
     await download.saveAs(path.join(out, name))
     return JSON.parse(fs.readFileSync(path.join(out, name), 'utf8'))
@@ -67,10 +68,12 @@ try {
   assert.equal((await upload(base)).status(), 200)
   const before = (await api('test-cases/import', 'POST', {content: base})).semanticFingerprint
   await page.getByLabel('/content/id', {exact: true}).fill('browser-edited')
+  // A statement is edited after choosing it in the statement tree.
+  await page.locator('[data-tree-path="/content/steps/0"]').click()
   await page.getByLabel('/content/steps/0/on', {exact: true}).fill('bp1')
-  assert.equal(await page.getByRole('button', {name: 'Export test scenario', exact: true}).isDisabled(), true)
-  await page.getByRole('button', {name: 'Validate test scenario', exact: true}).click()
-  await status.filter({hasText: 'Engine validation passed'}).waitFor()
+  assert.equal(await page.getByRole('button', {name: '테스트 시나리오 내보내기', exact: true}).isDisabled(), true)
+  await page.getByRole('button', {name: '테스트 시나리오 검증', exact: true}).click()
+  await status.filter({hasText: '엔진 검증 통과'}).waitFor()
   const exported = await exportDoc('edited.json')
   assert.equal(exported.id, 'browser-edited'); assert.equal(exported.steps[0].on, 'bp1')
   assert.deepEqual(exported.steps.slice(1), base.steps.slice(1))
@@ -82,15 +85,15 @@ try {
   // v1 import: migrated when the meaning survives, retained and editable when not.
   const legacy = {schemaVersion: '1', id: 'legacy-browser', chain: {name: 'stablenet', binary: 'gstable'}, topology: {bp: 4}, steps: [{read: {source: 'blockNumber', on: 'bp1', save: 'head'}}], assertions: [{assert: 'blockNumber', compare: 'GreaterOrEqual', expected: '$head'}]}
   assert.equal((await upload(legacy)).status(), 200)
-  await status.filter({hasText: 'v1 migrated; executable meaning preserved'}).waitFor()
+  await status.filter({hasText: 'v1을 옮겼습니다'}).waitFor()
   const migrated = await exportDoc('migrated.json'), migration = await api('test-cases/import', 'POST', {content: legacy})
   assert.equal((await api('test-cases/import', 'POST', {content: migrated})).semanticFingerprint, migration.semanticFingerprint)
   const retained = {...legacy, id: 'legacy-config-browser', chain: {...legacy.chain, config: 'site.toml'}}
   assert.equal((await upload(retained)).status(), 200)
   await status.filter({hasText: 'Retained v1:'}).waitFor()
   await page.getByLabel('/content/chain/config', {exact: true}).fill('edited-site.toml')
-  await page.getByRole('button', {name: 'Validate test scenario', exact: true}).click()
-  await status.filter({hasText: 'Engine validation passed'}).waitFor()
+  await page.getByRole('button', {name: '테스트 시나리오 검증', exact: true}).click()
+  await status.filter({hasText: '엔진 검증 통과'}).waitFor()
   const retainedExport = await exportDoc('retained-v1.json')
   assert.equal(retainedExport.schemaVersion, '1'); assert.equal(retainedExport.chain.config, 'edited-site.toml')
   const retainedPrepared = await api('test-cases/import', 'POST', {content: retainedExport})
@@ -114,7 +117,7 @@ try {
     refusals.push(word)
   }
   assert.equal((await upload({...base, extension: true})).status(), 422)
-  assert.equal(await page.getByRole('button', {name: 'Export test scenario', exact: true}).isDisabled(), true)
+  assert.equal(await page.getByRole('button', {name: '테스트 시나리오 내보내기', exact: true}).isDisabled(), true)
   await page.getByText('extension', {exact: false}).first().waitFor()
   observed('invalid-unknown', ['Unknown fields, builtins, readers and unbound references refused by name', 'Arguments a builtin never reads refused by name', 'An invalid browser import blocks export'])
 
@@ -146,6 +149,7 @@ try {
       if (entry.kind === 'reader') { statement.do = 'read'; statement.source = entry.name }
       const doc = {...base, id: `coverage-${entry.kind}-${entry.name}`, steps: [statement, {expect: 'blockNumber', is: 1}]}
       await upload(doc)
+      await page.locator('[data-tree-path="/content/steps/0"]').click()
       const fields = Object.keys(schema.properties ?? {}).filter(k => !['do', 'source', 'isPerChain', 'expectPerChain'].includes(k) && !(k === 'expect' && schema.properties[k].const !== undefined))
       for (const field of fields) {
         const locator = page.locator(`[data-field-path="/content/steps/0/${field}"]`).first()
@@ -170,13 +174,13 @@ try {
 
   // The coverage cases: imported with their preset, round-tripped, saved with
   // the preset revision pinned.
-  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles(f.presetFiles.filter(p => p.endsWith('stablenet-bp4-en1.json')).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
-  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  await page.getByLabel('참조 프리셋 파일', {exact: true}).setInputFiles(f.presetFiles.filter(p => p.endsWith('stablenet-bp4-en1.json')).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
+  await status.filter({hasText: '참조 프리셋을 불러왔습니다'}).waitFor()
   const saved = []
   for (const file of f.coverageFiles) {
     const content = readJSON(file)
     assert.equal((await upload(content, path.basename(file))).status(), 200, file)
-    await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+    await status.filter({hasText: '가져왔습니다. 엔진 검증 통과'}).waitFor()
     const exportedCase = await exportDoc('roundtrip-' + path.basename(file))
     const a = await api('test-cases/import', 'POST', {content, presets}), b = await api('test-cases/import', 'POST', {content: exportedCase, presets})
     assert.equal(a.semanticFingerprint, b.semanticFingerprint, file + ' changed meaning through the editor')
@@ -212,7 +216,7 @@ try {
   await page.getByLabel('실행 계획', {exact: true}).waitFor({timeout: 60000})
   await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, 'test-plan.png')})
   const started = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
-  await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+  await clickRun(page)
   const job = await (await started).json()
   let done
   for (let i = 0; i < 18000; i++) { done = await api('jobs/' + job.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(done.state)) break; await sleep(200) }
@@ -223,12 +227,12 @@ try {
   // The fork case runs a second build under the name "next": the job binds it
   // to the registered wbft asset, and the network crosses from gwemix to it.
   await page.goto(f.url + '/tests')
-  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
-  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles([{name: path.basename(f.forkPreset), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, f.forkPreset))}])
-  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  await status.filter({hasText: 'DSL 계약을 읽었습니다'}).waitFor({timeout: 30000})
+  await page.getByLabel('참조 프리셋 파일', {exact: true}).setInputFiles([{name: path.basename(f.forkPreset), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, f.forkPreset))}])
+  await status.filter({hasText: '참조 프리셋을 불러왔습니다'}).waitFor()
   const forkContent = readJSON(f.forkCase)
   assert.equal((await upload(forkContent, path.basename(f.forkCase))).status(), 200)
-  await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+  await status.filter({hasText: '가져왔습니다. 엔진 검증 통과'}).waitFor()
   await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
   await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
   const forkDoc = (await allPages('documents?kind=case')).find(d => d.content.id === forkContent.id)
@@ -249,7 +253,7 @@ try {
   await forkPlan.getByText('Binary "next" runs wbft', {exact: false}).waitFor()
   await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, 'fork-plan.png')})
   const forkStarted = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
-  await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+  await clickRun(page)
   const forkJob = await (await forkStarted).json()
   let forkDone
   for (let i = 0; i < 9000; i++) { forkDone = await api('jobs/' + forkJob.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(forkDone.state)) break; await sleep(200) }
@@ -268,14 +272,14 @@ try {
   const declared = readJSON(f.declaredAccountsCase)
   const target = await api('documents', 'POST', {kind: 'case', name: declared.id, contractVersion: '2', assetRefs: [], presetRefs: [{id: shared.id, revision: shared.revision}], content: declared}, 201)
   await page.goto(f.url + '/tests')
-  await status.filter({hasText: 'DSL contract loaded'}).waitFor({timeout: 30000})
-  await page.getByLabel('Referenced preset files', {exact: true}).setInputFiles(f.presetFiles.filter(p => /stablenet-(attached|testnet)/.test(p)).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
-  await status.filter({hasText: 'Preset references loaded'}).waitFor()
+  await status.filter({hasText: 'DSL 계약을 읽었습니다'}).waitFor({timeout: 30000})
+  await page.getByLabel('참조 프리셋 파일', {exact: true}).setInputFiles(f.presetFiles.filter(p => /stablenet-(attached|testnet)/.test(p)).map(p => ({name: path.basename(p), mimeType: 'application/json', buffer: fs.readFileSync(path.join(f.source, p))})))
+  await status.filter({hasText: '참조 프리셋을 불러왔습니다'}).waitFor()
   const attachIds = []
   for (const file of f.attachFiles) {
     const content = readJSON(file)
     assert.equal((await upload(content, path.basename(file))).status(), 200, file)
-    await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
+    await status.filter({hasText: '가져왔습니다. 엔진 검증 통과'}).waitFor()
     await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
     await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
     attachIds.push(content.id)
@@ -296,7 +300,7 @@ try {
     await page.getByLabel('실행 계획', {exact: true}).waitFor({timeout: 60000})
     await page.getByLabel('서버 실행 작업', {exact: true}).screenshot({path: path.join(out, label + '-plan.png')})
     const begun = page.waitForResponse(r => r.url() === f.url + '/api/v1/jobs' && r.request().method() === 'POST')
-    await page.getByRole('button', {name: '검토한 계획 실행', exact: true}).click()
+    await clickRun(page)
     const accepted = await (await begun).json()
     let result
     for (let i = 0; i < budget; i++) { result = await api('jobs/' + accepted.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(result.state)) break; await sleep(200) }
@@ -315,14 +319,16 @@ try {
       arguments: {manifestId: 'stablenet', assetId: 'stablenet', serverRef: 'local', caseRefs: [{id: doc.id, revision: doc.revision}]}}, 422)
     assert.ok(JSON.stringify(refused).includes('private account credential'), 'key file refusal does not explain the credential: ' + JSON.stringify(refused))
   }
-  await page.goto(f.url + '/chains')
-  await page.getByLabel('Credential label', {exact: true}).fill('payer key')
-  await page.getByLabel('Credential kind', {exact: true}).selectOption('account-key')
-  await page.getByLabel('Account private key', {exact: true}).fill(fs.readFileSync(f.payerKeyFile, 'utf8').trim())
-  await page.getByRole('button', {name: 'Save personal credential', exact: true}).click()
-  await page.getByText('Saved encrypted personal credential', {exact: false}).waitFor()
+  // Personal credentials are registered on the settings screen.
+  await page.goto(f.url + '/settings')
+  await page.getByLabel('자격증명 이름', {exact: true}).fill('payer key')
+  await page.getByLabel('자격증명 종류', {exact: true}).selectOption('account-key')
+  await page.getByLabel('테스트 계정 개인키', {exact: true}).fill(fs.readFileSync(f.payerKeyFile, 'utf8').trim())
+  await page.getByRole('button', {name: '개인 자격증명 저장', exact: true}).click()
+  await page.getByText('암호화한 개인 자격증명을 저장했습니다', {exact: false}).waitFor()
   const payer = (await api('credentials')).items.find(c => c.kind === 'account-key' && c.label === 'payer key')
   assert.ok(payer, 'the account key was not saved')
+  await page.goto(f.url + '/chains')
   const attachDone = await runJob('attach', async () => {
     await page.getByLabel('작업 종류', {exact: true}).selectOption('test.attach')
     await page.getByTestId('attach-explanation').waitFor()

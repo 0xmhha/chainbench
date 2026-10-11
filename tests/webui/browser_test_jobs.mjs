@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -60,7 +61,7 @@ try{
       await page.getByLabel('실행 계획',{exact:true}).waitFor()
       await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/test-plan.png'})
       const response=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-      await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+      await clickRun(page)
       const started=await response;assert.equal(started.status(),202)
       await waitJob((await started.json()).id,'succeeded')
       await page.getByText('세션 결과 보기',{exact:true}).first().waitFor()

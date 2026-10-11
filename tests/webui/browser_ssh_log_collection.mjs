@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -45,7 +46,7 @@ try{
  const plannedResponse=await planned;assert.equal(plannedResponse.status(),201,await plannedResponse.text())
  await page.getByLabel('실행 계획',{exact:true}).waitFor()
  const start=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+ await clickRun(page)
  const startResponse=await start;assert.equal(startResponse.status(),202,await startResponse.text())
  const monitor=await startResponse.json()
  let collected

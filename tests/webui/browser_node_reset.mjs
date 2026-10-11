@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -47,7 +48,7 @@ try{
   assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes('Test placement node1=en'),'UI hides endpoint-first placement')
   await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/'+chain+'-table-plan.png'})
   const started=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  await clickRun(page)
   const response=await started;assert.equal(response.status(),202,await response.text());const job=await waitJob((await response.json()).id)
   assert.equal(job.runIds.length,1,'native session missing')
   const record=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/chain-record.json','utf8'))
@@ -78,12 +79,12 @@ try{
   await page.getByLabel('작업 바이너리',{exact:true}).selectOption(chain)
   await page.getByLabel('작업 서버 이름',{exact:true}).selectOption('local')
   await page.getByLabel('작업 종류',{exact:true}).selectOption('node.reset')
-  assert.equal(await page.getByLabel('작업 노드',{exact:true}).locator('option[value="node2"]').count(),0,'UI offers producer reset')
+  {const producer=page.getByLabel('작업 노드',{exact:true}).locator('option[value="node2"]');assert.ok(await producer.count()===0||(await producer.evaluate(o=>o.disabled)&&/불가:/.test(await producer.textContent())),'UI offers producer reset')}
   await page.getByLabel('작업 노드',{exact:true}).selectOption('node1')
   await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();await page.getByLabel('실행 계획',{exact:true}).waitFor()
   assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes('genesis'),'reset plan omitted data replacement')
   const resetResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  await clickRun(page)
   const resetStart=await resetResponse;assert.equal(resetStart.status(),202,await resetStart.text())
   const reset=await waitJob((await resetStart.json()).id)
   const resetRecord=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/chain-record.json','utf8'))

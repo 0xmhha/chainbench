@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -29,7 +30,7 @@ try{
   await page.getByLabel('실행 계획',{exact:true}).waitFor()
   await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/plan-desktop.png'})
   const accepted=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  await clickRun(page)
   const response=await accepted;assert.equal(response.status(),202);const first=await response.json()
   await context.close() // Accepted work must survive the browser disconnect.
   context=await browser.newContext({viewport:{width:390,height:844}})

@@ -50,9 +50,9 @@ try{
  // Account sessions are intentionally process-local. Reauthenticate through
  // the actual login UI before reading the restarted service's durable jobs.
  const expired=await context.request.get(f.url+'/api/v1/auth/me');assert.equal(expired.status(),401)
- await page.getByLabel('Account username',{exact:true}).fill('snapshot-admin')
- await page.getByLabel('Account password',{exact:true}).fill(f.password)
- await page.getByRole('button',{name:'Sign in',exact:true}).click()
+ await page.getByLabel('계정 사용자 이름',{exact:true}).fill('snapshot-admin')
+ await page.getByLabel('계정 비밀번호',{exact:true}).fill(f.password)
+ await page.getByRole('button',{name:'로그인',exact:true}).click()
  await page.waitForFunction(old=>{const cursor=document.querySelector('[data-testid="job-observation-health"]')?.getAttribute('data-cursor');return !!cursor&&cursor.split(':')[0]!==old},before.cursor.split(':')[0],{timeout:20000})
  await page.getByTestId('job-observation-health').filter({hasText:'연결됨'}).waitFor()
  session=await api('auth/me')

@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -117,7 +118,7 @@ try{
  await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='검토한 계획 실행'&&!b.disabled))
  assert.ok(await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).isEnabled(),'UI kept stale conflict after cleanup')
  const acceptedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+ await clickRun(page)
  const accepted=await acceptedResponse;assert.equal(accepted.status(),202);await waitJob((await accepted.json()).id)
  const after=await api('networks');assert.equal(after.items.filter(n=>n.nodes.length).length,1);assert.equal(after.items.find(n=>n.nodes.length).workspaceId,alias.id)
  fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:browser.version(),jobs,retainedAliasRejected:true,ownerControlAllowed:true,actualCleanupReleasedAlias:true,conflictOwnerVisible:true,uiBlockedUntilCleanup:true,recordedProcessObserved:true,unrecordedStartStopRefused:true,ledgerPIDSubstitutionRefused:true,residualProcessObservedWithoutAdoption:true,zeroPIDNotAssumedStopped:true,reusedPidControlRejected:true,seedAcceptanceAwarded:false},null,2))

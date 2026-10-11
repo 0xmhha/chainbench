@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -46,7 +47,7 @@ try{
    const review=await page.getByLabel('실행 계획',{exact:true}).innerText();assert.ok(review.includes(first.id)&&review.includes('r2')&&review.includes('maxpeers=40'),'review omitted actual preset snapshot')
    await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/preset-plan.png'})
    const response=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-   await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+   await clickRun(page)
    const started=await response;assert.equal(started.status(),202);accepted=await started.json()
   }else{
    const plan=await api('plans','POST',base,undefined,201)

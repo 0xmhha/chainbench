@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -75,7 +76,7 @@ try{
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click();const planned=await planResponse;assert.equal(planned.status(),201,await planned.text())
  await page.getByLabel('실행 계획',{exact:true}).waitFor();await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/ssh-binary-plan.png'})
  const jobResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click();const accepted=await jobResponse;assert.equal(accepted.status(),202,await accepted.text());const acceptedJob=await accepted.json()
+ await clickRun(page);const accepted=await jobResponse;assert.equal(accepted.status(),202,await accepted.text());const acceptedJob=await accepted.json()
  let replaced,faultResult
  if(f.sshFaultMode){
   for(let i=0;i<250&&!fs.existsSync(f.runtime+'/ssh/gate-copied');i++)await new Promise(r=>setTimeout(r,100))
@@ -134,7 +135,8 @@ try{
   await page.getByRole('button',{name:'노드 상태 확인',exact:true}).click()
   await page.getByText('선택 노드의 실행 파일을 실행할 수 있는지 확인되지 않음; 재실행 전에 권한과 파일을 확인해야 함',{exact:true}).first().waitFor()
   await page.getByLabel('작업 종류',{exact:true}).selectOption('node.restart')
-  assert.ok(!(await page.getByLabel('작업 노드',{exact:true}).locator('option').evaluateAll(items=>items.map(item=>item.value))).includes('node1'),'UI offers relaunch without executable permission')
+  assert.ok(!(await page.getByLabel('작업 노드',{exact:true}).locator('option').evaluateAll(items=>items.filter(item=>!item.disabled).map(item=>item.value))).includes('node1'),'UI offers relaunch without executable permission')
+  assert.match(await page.getByLabel('작업 노드',{exact:true}).locator('option[value="node1"]').textContent(),/불가:/,'the refused node does not say why')
   await page.getByLabel('작업 종류',{exact:true}).selectOption('node.stop');await page.getByLabel('작업 노드',{exact:true}).selectOption('node1')
   await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/ssh-binary-permission.png'})
   fs.chmodSync(currentPath,0o755)

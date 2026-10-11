@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import crypto from 'node:crypto'
@@ -36,11 +37,11 @@ try{
   // Returning to generation preserves the deliberately replaced declaration.
   await picker.selectOption('')
   const section=page.locator('section[aria-labelledby="chain-heading"]')
-  const declaration=()=>section.locator('details').filter({has:page.getByText('Generated declaration',{exact:true})}).locator('pre').textContent()
+  const declaration=()=>section.locator('details').filter({has:page.getByText('생성된 선언',{exact:true})}).locator('pre').textContent()
   assert.equal(JSON.parse(await declaration()).genesis.overlay.config.chainId,9999,'file selection silently lost generation settings')
   await picker.selectOption(asset.id)
-  await section.getByRole('button',{name:'Validate configuration',exact:true}).click()
-  await section.getByText('Engine validation passed',{exact:true}).waitFor()
+  await section.getByRole('button',{name:'체인 구성 검증',exact:true}).click()
+  await section.getByText('엔진 검증 통과',{exact:false}).waitFor()
   const savedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/documents/'+initial.id&&r.request().method()==='PATCH')
   await page.getByRole('button',{name:'공유 체인 구성 저장',exact:true}).click()
   const sr=await savedResponse;assert.equal(sr.status(),200,await sr.text());const saved=await sr.json()
@@ -73,7 +74,7 @@ try{
   assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.id),'UI plan omitted selected file dependency')
   await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/'+chain+'-genesis-plan.png'})
   const acceptedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click();const ar=await acceptedResponse;assert.equal(ar.status(),202,await ar.text());await waitJob((await ar.json()).id)
+  await clickRun(page);const ar=await acceptedResponse;assert.equal(ar.status(),202,await ar.text());await waitJob((await ar.json()).id)
   const record=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/chain-record.json','utf8'))
   assert.ok(fs.readFileSync(record.genesisPath).equals(bytes),'finished genesis was not used verbatim')
   for(const node of record.nodes){

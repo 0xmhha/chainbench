@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -45,22 +46,22 @@ try{
   await page.getByLabel('실행 케이스 '+original.id,{exact:true}).check()
   await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
   await page.getByLabel('실행 계획',{exact:true}).waitFor()
-  const section=page.getByLabel('Structured DSL editor',{exact:true})
+  const section=page.getByLabel('구조 DSL 편집기',{exact:true})
   await page.getByLabel('공유 테스트',{exact:true}).selectOption(original.id)
-  await page.getByLabel('DSL status',{exact:true}).filter({hasText:'공유 테스트 revision 1'}).waitFor()
+  await page.getByLabel('DSL 상태',{exact:true}).filter({hasText:'공유 테스트 revision 1'}).waitFor()
   const picker=page.getByLabel('테스트 완성 genesis 자료',{exact:true});await picker.waitFor()
   assert.ok((await picker.locator('option[value="'+asset.id+'"]').innerText()).includes(asset.name),'file chooser hides registered filename')
   await picker.selectOption(asset.id);await picker.selectOption('')
-  const declaration=()=>section.locator('details').filter({has:page.getByText('Import and current declaration',{exact:true})}).locator('pre').last().textContent()
+  const declaration=()=>section.locator('details').filter({has:page.getByText('가져온 선언과 현재 선언',{exact:true})}).locator('pre').last().textContent()
   assert.equal(JSON.parse(await declaration()).chainPreset.genesis.overlay.config.chainId,9999,'clearing file selection lost generation settings')
   await picker.selectOption(asset.id)
   assert.equal(JSON.parse(await declaration()).chainPreset.genesis.ref,'asset:'+asset.id,'picker did not change current declaration: '+pageErrors.join('; '))
   const validationResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/test-cases/import'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'Validate test scenario',exact:true}).click()
+  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
   const vr=await validationResponse
   fs.writeFileSync(out+'/'+chain+'-validated.json',await vr.text())
   assert.equal((await vr.json()).content.chainPreset.genesis.ref,'asset:'+asset.id,'validation changed registered reference')
-  await page.getByLabel('DSL status',{exact:true}).filter({hasText:'Engine validation passed'}).waitFor()
+  await page.getByLabel('DSL 상태',{exact:true}).filter({hasText:'엔진 검증 통과'}).waitFor()
   const savedResponse=page.waitForResponse(r=>r.url()===f.url+'/api/v1/documents/'+original.id&&r.request().method()==='PATCH')
   let capturedResolve,deliveredResolve
   const captured=new Promise(resolve=>capturedResolve=resolve),delivered=new Promise(resolve=>deliveredResolve=resolve)
@@ -131,7 +132,7 @@ try{
   assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.id),'UI omitted selected test file')
   await page.getByLabel('실행 계획',{exact:true}).screenshot({path:out+'/'+chain+'-test-genesis-plan.png'})
   const accepted=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
-  await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+  await clickRun(page)
   const ar=await accepted;assert.equal(ar.status(),202,await ar.text());const job=await waitJob((await ar.json()).id)
   assert.equal(job.runIds.length,1)
   const record=JSON.parse(fs.readFileSync(f.store+'/networks/'+w.id+'/chain-record.json','utf8'))

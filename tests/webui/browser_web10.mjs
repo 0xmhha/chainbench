@@ -17,23 +17,23 @@ async function request(context,endpoint,method='GET',body,csrf,expected=200,extr
  return data
 }
 function observed(id,descriptions,artifact='browser.json'){scenarios.push({id,observedAt:new Date().toISOString(),mode:phase,transport:'SSH',ownership:'owned',assertions:descriptions.map(description=>({description,passed:true})),artifacts:[artifact]})}
-async function login(account){const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();await page.goto(url);await page.getByLabel('Account username',{exact:true}).fill(account.username);await page.getByLabel('Account password',{exact:true}).fill(account.password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByTestId('account-session').waitFor();const session=await request(context,'/api/v1/auth/me');return {context,page,session}}
+async function login(account){const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();await page.goto(url);await page.getByLabel('계정 사용자 이름',{exact:true}).fill(account.username);await page.getByLabel('계정 비밀번호',{exact:true}).fill(account.password);await page.getByRole('button',{name:'로그인',exact:true}).click();await page.getByTestId('account-session').waitFor();const session=await request(context,'/api/v1/auth/me');return {context,page,session}}
 try{
  if(phase==='personal'){
   const context=await browser.newContext(), page=await context.newPage();await page.goto(url)
   await request(context,'/api/runs','GET',undefined,undefined,401)
   await request(context,'/api/v1/bootstrap','POST',{username:'admin',password:f.accounts[0].password,setupToken:'incorrect'},undefined,403)
-  await page.getByLabel('Account username',{exact:true}).fill(f.accounts[0].username)
-  await page.getByLabel('Account password',{exact:true}).fill(f.accounts[0].password)
-  await page.getByLabel('Setup token',{exact:true}).fill(f.setupToken)
-  await page.getByRole('button',{name:'Create administrator',exact:true}).click()
+  await page.getByLabel('계정 사용자 이름',{exact:true}).fill(f.accounts[0].username)
+  await page.getByLabel('계정 비밀번호',{exact:true}).fill(f.accounts[0].password)
+  await page.getByLabel('설정 토큰',{exact:true}).fill(f.setupToken)
+  await page.getByRole('button',{name:'관리자 만들기',exact:true}).click()
   await page.getByTestId('account-session').waitFor()
   let session=await request(context,'/api/v1/auth/me');assert.equal(session.mode,'personal')
   await request(context,'/api/v1/bootstrap','POST',{username:'other',password:f.accounts[0].password,setupToken:f.setupToken},undefined,409)
   for(const account of f.accounts.slice(1))await request(context,'/api/v1/users','POST',{username:account.username,password:account.password,role:account.role},session.csrfToken,201)
   const cookie=(await context.cookies()).find(c=>c.name==='chainbench_session');assert.ok(cookie.httpOnly);assert.equal(cookie.sameSite,'Strict')
   await page.screenshot({path:out+'/personal-login.png'})
-  await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByRole('button',{name:'Sign in',exact:true}).waitFor();await request(context,'/api/v1/auth/me','GET',undefined,undefined,401)
+  await page.getByRole('button',{name:'로그아웃',exact:true}).click();await page.getByRole('button',{name:'로그인',exact:true}).waitFor();await request(context,'/api/v1/auth/me','GET',undefined,undefined,401)
   observed('bootstrap-restrictions',['wrong token forbidden','first administrator created in browser','repeat bootstrap conflicts','private HttpOnly SameSite cookie'], 'personal-login.png')
   fs.writeFileSync(out+'/personal.json',JSON.stringify({scenarios,responses,browserVersion:browser.version()},null,2))
  }else{
@@ -47,11 +47,16 @@ try{
    await page.locator('#chain-preset').waitFor()
    const preset=await page.locator('#chain-preset option').nth(1).getAttribute('value')
    await page.locator('#chain-preset').selectOption(preset)
-   assert.equal(await page.getByRole('button',{name:'Validate configuration',exact:true}).count()>0,role!=='viewer')
+   assert.equal(await page.getByRole('button',{name:'체인 구성 검증',exact:true}).count()>0,role!=='viewer')
    if(role==='viewer') assert.equal(await page.locator('#count-bp').isDisabled(),true)
-   else {await page.getByRole('button',{name:'Validate configuration',exact:true}).click();await page.getByText('Engine validation passed',{exact:true}).waitFor()}
-   const writable=await page.getByRole('button',{name:'Save shared document',exact:true}).count()>0
-   assert.equal(writable,role!=='viewer');assert.equal(await page.getByText('User management',{exact:true}).count()>0,role==='administrator')
+   else {await page.getByRole('button',{name:'체인 구성 검증',exact:true}).click();await page.getByText('엔진 검증 통과',{exact:false}).waitFor()}
+   const writable=await page.getByRole('button',{name:'공유 문서 저장',exact:true}).count()>0
+   assert.equal(writable,role!=='viewer')
+   // User management and the audit trail are on Settings, for administrators only.
+   await page.locator('nav a[href="/settings"]').click();await page.getByRole('region',{name:'등록 자료'}).waitFor()
+   if(role==='administrator')await page.getByRole('region',{name:'사용자 관리'}).waitFor()
+   else if(role==='operator')await page.getByRole('region',{name:'개인 자격증명'}).waitFor()
+   assert.equal(await page.getByRole('region',{name:'사용자 관리'}).count()>0,role==='administrator');assert.equal(await page.getByRole('region',{name:'감사 기록'}).count()>0,role==='administrator')
    const writeStatus=role==='viewer'?403:201, usersStatus=role==='administrator'?200:403
    await request(context,'/api/v1/documents','POST',doc(role),session.csrfToken,writeStatus)
    await request(context,'/api/v1/users','GET',undefined,undefined,usersStatus)

@@ -37,6 +37,8 @@ try{
  let record, before
  for(let i=0;i<600;i++){
   before=await api('jobs/'+accepted.id)
+  // A started job is revalidated before it runs, so accepted comes first.
+  if(before.state==='accepted'){await new Promise(r=>setTimeout(r,100));continue}
   assert.equal(before.state,'running','test finished before restart fixture')
   if(fs.existsSync(recordPath)){
    record=JSON.parse(fs.readFileSync(recordPath))

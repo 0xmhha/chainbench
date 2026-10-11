@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -92,7 +93,7 @@ try{
  await page.getByLabel('실행 계획',{exact:true}).waitFor();assert.ok((await page.getByLabel('실행 계획',{exact:true}).innerText()).includes(asset.checksum))
  await page.getByLabel('서버 실행 작업',{exact:true}).screenshot({path:out+'/binary-plan.png'})
  const acceptedPromise=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+ await clickRun(page)
  const accepted=await acceptedPromise;assert.equal(accepted.status(),202,await accepted.text());const replaced=await waitJob((await accepted.json()).id)
  const changed=read(),newNode=changed.nodes.find(n=>n.index===1)
  assert.notEqual(newNode.pid,selected.pid);assert.equal(changed.binaries[newNode.binary],target);assert.equal(sha(target),asset.checksum)

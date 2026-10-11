@@ -11,9 +11,9 @@ async function request(ctx,token,path,method='GET',data,key,expected=200){
  return raw?JSON.parse(raw):undefined
 }
 async function signIn(page,username){
- await page.getByLabel('Account username',{exact:true}).fill(username)
- await page.getByLabel('Account password',{exact:true}).fill(f.password)
- await page.getByRole('button',{name:'Sign in',exact:true}).click()
+ await page.getByLabel('계정 사용자 이름',{exact:true}).fill(username)
+ await page.getByLabel('계정 비밀번호',{exact:true}).fill(f.password)
+ await page.getByRole('button',{name:'로그인',exact:true}).click()
 }
 const observations={}
 try{
@@ -33,8 +33,8 @@ try{
  // Sign out through the UI while the job is still in progress, then close the browser context.
  const running=await api('jobs/'+job.id);assert.ok(['accepted','running'].includes(running.state),'job ended before sign-out: '+running.state)
  const signedOutAt=new Date().toISOString()
- await page.getByRole('button',{name:'Sign out',exact:true}).click()
- await page.getByRole('button',{name:'Sign in',exact:true}).waitFor()
+ await page.getByRole('button',{name:'로그아웃',exact:true}).click()
+ await page.getByRole('button',{name:'로그인',exact:true}).waitFor()
  await request(first,undefined,'auth/me','GET',undefined,undefined,401)
  await first.close()
  observations.signedOutAt=signedOutAt;observations.stateAtSignOut=running.state

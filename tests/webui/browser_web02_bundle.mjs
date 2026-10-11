@@ -1,3 +1,4 @@
+import {clickRun} from './webui-steps.mjs'
 import {launchOwnedBrowser} from './owned-browser.mjs'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
@@ -21,36 +22,36 @@ try{
  const config={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const bundle=docs=>Buffer.from(JSON.stringify({documents:docs}))
  const page=await context.newPage();await page.goto(f.url+'/chains')
- const input=page.getByLabel('Configuration import file',{exact:true});await input.waitFor({timeout:20000})
+ const input=page.getByLabel('가져올 구성 파일',{exact:true});await input.waitFor({timeout:20000})
 
  // An unregistered extension is refused with the document position and field.
  await input.setInputFiles({name:'broken.bundle.json',mimeType:'application/json',buffer:bundle([{kind:'server-set',name:'bundle pool',content:set},{kind:'workspace-config',name:'bundle paths',content:{...config,extension:{plugin:'unregistered'}}}])})
  const error=page.locator('[data-import-error="/documents/1/content"]');await error.waitFor({timeout:15000})
  const errorText=await error.innerText();assert.ok(/extension/.test(errorText),'unknown extension error does not name the field: '+errorText)
- assert.ok(await page.getByRole('button',{name:'Save imported documents',exact:true}).isDisabled(),'an invalid bundle can be saved')
+ assert.ok(await page.getByRole('button',{name:'가져온 문서 저장',exact:true}).isDisabled(),'an invalid bundle can be saved')
  observed.invalidBundle=errorText
 
  // A valid bundle is previewed, private SSH values are removed, and it is saved atomically.
  await input.setInputFiles({name:'team.bundle.json',mimeType:'application/json',buffer:bundle([{kind:'server-set',name:'bundle pool',content:set},{kind:'workspace-config',name:'bundle paths',content:config}])})
  const preview=page.locator('[data-testid="import-preview"][data-valid="true"]');await preview.waitFor({timeout:15000})
  assert.equal(await preview.locator('[data-import-kind]').count(),2)
- await page.getByText('Bind your own SSH credential for: /documents/0/ssh.password').waitFor()
- await page.getByRole('button',{name:'Save imported documents',exact:true}).click()
- await page.getByTestId('import-status').filter({hasText:'Saved 2 shared document revision(s)'}).waitFor({timeout:15000})
- await page.getByLabel('Imported workspace name',{exact:true}).fill('bundle workspace')
- await page.getByRole('button',{name:'Create workspace from import',exact:true}).click()
- await page.getByTestId('import-status').filter({hasText:'Created shared workspace bundle workspace'}).waitFor({timeout:15000})
+ await page.getByText('다음 서버에 내 SSH 자격증명을 연결해야 합니다: /documents/0/ssh.password').waitFor()
+ await page.getByRole('button',{name:'가져온 문서 저장',exact:true}).click()
+ await page.getByTestId('import-status').filter({hasText:'공유 문서 revision 2개를 저장했습니다'}).waitFor({timeout:15000})
+ await page.getByLabel('가져온 workspace 이름',{exact:true}).fill('bundle workspace')
+ await page.getByRole('button',{name:'가져온 문서로 workspace 만들기',exact:true}).click()
+ await page.getByTestId('import-status').filter({hasText:'공유 workspace bundle workspace'}).waitFor({timeout:15000})
  let workspace=(await api('workspaces')).items.find(w=>w.name==='bundle workspace')
  const savedSet=(await api('documents')).items.find(d=>d.kind==='server-set'&&d.name==='bundle pool')
  assert.ok(!JSON.stringify(savedSet.content).includes('password'),'shared server-set kept the SSH password field')
  observed.imported={workspace:workspace.id,documents:workspace.documents.length}
 
  // Structured edit through the form: a new server-set revision with another P2P base.
- await page.reload();await page.getByLabel('Saved deployment document',{exact:true}).selectOption(savedSet.id)
+ await page.reload();await page.getByLabel('저장된 배포 문서',{exact:true}).selectOption(savedSet.id)
  const p2p=page.getByLabel('content.pool.ports.p2p.base',{exact:true});await p2p.waitFor({timeout:15000})
  await p2p.fill('39200')
- await page.getByRole('button',{name:'Save shared document',exact:true}).click()
- await page.getByText('Saved shared document revision 2').waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
+ await page.getByText('공유 문서 revision 2 저장됨').waitFor({timeout:15000})
  const edited=await api('documents/'+savedSet.id)
  assert.equal(edited.revision,2);assert.equal(edited.content.pool.ports.p2p.base,39200)
  // A stale revision is refused with a reason rather than overwriting the edit.
@@ -58,17 +59,17 @@ try{
  assert.equal(stale.status(),409);const staleBody=await stale.json();assert.ok(staleBody.message&&staleBody.message!=='Conflict','revision conflict reason hidden')
  observed.staleRevision=staleBody.message
  // Re-pin the workspace to the edited revision through the form.
- await page.getByLabel('Saved deployment workspace',{exact:true}).selectOption(workspace.id)
- await page.getByLabel('Workspace server-set revision',{exact:true}).selectOption(savedSet.id+':2')
+ await page.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)
+ await page.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(savedSet.id+':2')
  const configRef=workspace.documents.find(r=>r.id!==savedSet.id)
- await page.getByLabel('Workspace config revision',{exact:true}).selectOption(configRef.id+':'+configRef.revision)
- await page.getByRole('button',{name:'Save shared workspace',exact:true}).click()
+ await page.getByLabel('workspace 대상 경로 revision',{exact:true}).selectOption(configRef.id+':'+configRef.revision)
+ await page.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
  for(let i=0;i<50;i++){workspace=await api('workspaces/'+workspace.id);if(workspace.documents.some(r=>r.id===savedSet.id&&r.revision===2))break;await sleep(200)}
  assert.ok(workspace.documents.some(r=>r.id===savedSet.id&&r.revision===2),'workspace not re-pinned to the edited revision')
 
  // Export the workspace bundle from the UI; it imports back with the same meaning.
  const download=page.waitForEvent('download')
- await page.getByRole('button',{name:'Export workspace bundle',exact:true}).click()
+ await page.getByRole('button',{name:'workspace 묶음 내보내기',exact:true}).click()
  const file=await download;await file.saveAs(out+'/workspace.bundle.json')
  const exported=JSON.parse(fs.readFileSync(out+'/workspace.bundle.json','utf8'))
  assert.ok(!JSON.stringify(exported).includes(sshSecret)&&!JSON.stringify(exported).includes('password'),'exported bundle carries private SSH data')
@@ -89,16 +90,16 @@ try{
  await caseSelect.locator(`option[value="${savedCase.id}"]`).waitFor({state:'attached',timeout:20000})
  await caseSelect.selectOption(savedCase.id)
  const caseDownload=page.waitForEvent('download')
- await page.getByRole('button',{name:'Export saved case bundle',exact:true}).click()
+ await page.getByRole('button',{name:'저장한 테스트 묶음 내보내기',exact:true}).click()
  await (await caseDownload).saveAs(out+'/case.bundle.json')
  const caseBundle=JSON.parse(fs.readFileSync(out+'/case.bundle.json','utf8'))
  assert.deepEqual(caseBundle.documents.map(d=>d.kind),['chain-preset','case'],'case bundle does not carry its pinned preset')
  await page.goto(f.url+'/chains')
- const caseInput=page.getByLabel('Configuration import file',{exact:true});await caseInput.waitFor({timeout:20000})
+ const caseInput=page.getByLabel('가져올 구성 파일',{exact:true});await caseInput.waitFor({timeout:20000})
  await caseInput.setInputFiles({name:'case.bundle.json',mimeType:'application/json',buffer:fs.readFileSync(out+'/case.bundle.json')})
  await page.locator('[data-testid="import-preview"][data-valid="true"]').waitFor({timeout:15000})
- await page.getByRole('button',{name:'Save imported documents',exact:true}).click()
- await page.getByTestId('import-status').filter({hasText:'Saved 2 shared document revision(s)'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'가져온 문서 저장',exact:true}).click()
+ await page.getByTestId('import-status').filter({hasText:'공유 문서 revision 2개를 저장했습니다'}).waitFor({timeout:15000})
  const listed=(await api('documents')).items
  const importedCase=listed.find(d=>d.kind==='case'&&d.name==='bundle case'&&d.id!==savedCase.id)
  const importedPreset=listed.find(d=>d.kind==='chain-preset'&&d.name==='bundle preset'&&d.id!==sharedPreset.id)
@@ -119,7 +120,7 @@ try{
  await page.getByRole('button',{name:'실행 계획 확인',exact:true}).click()
  await page.getByLabel('실행 계획',{exact:true}).waitFor({timeout:20000})
  const started=page.waitForResponse(r=>r.url()===f.url+'/api/v1/jobs'&&r.request().method()==='POST')
- await page.getByRole('button',{name:'검토한 계획 실행',exact:true}).click()
+ await clickRun(page)
  const job=await (await started).json()
  let done
  for(let i=0;i<1500;i++){done=await api('jobs/'+job.id);if(['succeeded','failed','cancelled','interrupted'].includes(done.state))break;await sleep(200)}
