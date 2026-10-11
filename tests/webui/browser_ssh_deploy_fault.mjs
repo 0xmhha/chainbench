@@ -42,6 +42,8 @@ try{
  fs.writeFileSync(f.runtime+'/ssh/gate-release','release only the owned paused command')
  assert.equal(failed.state,'failed',JSON.stringify(failed))
  assert.ok(failed.partialEffects.length>0,'completed steps before the failure were not recorded')
+ assert.equal(failed.nodeDisposition,'unknown','a failure after target changes cannot claim the nodes were kept intact')
+ assert.ok(failed.partialEffects.some(e=>/^node\d+: /.test(e)),'per-node state after the failure was not recorded: '+JSON.stringify(failed.partialEffects))
  assert.ok(failed.unresolvedResources.length>0,'unfinished remote resources were not reported')
  assert.ok(failed.error?.message,'failure reason missing')
  assert.equal(digest(uploaded[0]),f.baseSHA256,'completed upload was rolled back or altered')

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -330,7 +331,19 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 	}
 	for _, step := range steps {
 		if err = e.phase(ctx, a, step.name, report, step.run); err != nil {
-			result.UnresolvedResources = []string{p.ControlDir, wc.DataRoot}
+			// Known effects are named per node; anything present or uncheckable
+			// stays unresolved, and the disposition says whether targets changed.
+			result.NodeDisposition = webFailureDisposition(step.name)
+			result.UnresolvedResources = []string{p.ControlDir}
+			if webTargetPhases[step.name] {
+				// A target that just failed may not answer; each check is bounded
+				// and an unanswered node stays unresolved.
+				checkCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 20*time.Second)
+				effects, unresolved := e.nodeEffects(checkCtx, p, lookup)
+				cancel()
+				result.PartialEffects = append(result.PartialEffects, effects...)
+				result.UnresolvedResources = append(result.UnresolvedResources, unresolved...)
+			}
 			return result, err
 		}
 		result.PartialEffects = append(result.PartialEffects, step.name+" completed")
