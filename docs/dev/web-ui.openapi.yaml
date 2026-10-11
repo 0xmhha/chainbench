@@ -1920,6 +1920,584 @@ paths:
         token. Unauthenticated legacy producer support is restricted to a separate
         loopback observation-only mode with no control endpoints. Token cannot submit
         jobs or control nodes.
+  /api/runs:
+    get:
+      operationId: legacyRuns
+      summary: List runs the event bus has observed
+      description: Observation index kept for the original event page; each item names the run id, phase, chain, network and status.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List runs the event bus has observed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/sessions:
+    get:
+      operationId: legacySessions
+      summary: List archived session ids under the artifact root
+      description: Session ids written by the CLI engine under the configured artifact root.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List archived session ids under the artifact root
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/sessions/{id}:
+    get:
+      operationId: legacySession
+      summary: Read one archived session written by an earlier build
+      description: A session stored directly under the artifact root.
+      x-minimum-role: viewer
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read one archived session written by an earlier build
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/sessions/{id}/chainstate:
+    get:
+      operationId: legacySessionChainstate
+      summary: Read the chain state recorded with one older session
+      description: Chain state of a session stored directly under the artifact root.
+      x-minimum-role: viewer
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read the chain state recorded with one older session
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/sessions/{proc}/{id}:
+    get:
+      operationId: sessionByProcess
+      summary: Read one archived session
+      description: A run lives under the directory of the process that produced it, so its id is two segments.
+      x-minimum-role: viewer
+      parameters:
+      - name: proc
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read one archived session
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/sessions/{proc}/{id}/chainstate:
+    get:
+      operationId: sessionChainstateByProcess
+      summary: Read the chain state recorded with one session
+      description: Chain state of a session stored under its process directory.
+      x-minimum-role: viewer
+      parameters:
+      - name: proc
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read the chain state recorded with one session
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/auth/config:
+    get:
+      operationId: authConfig
+      summary: Report whether the first administrator still has to be created
+      description: Readable without a session so the login screen can offer first-administrator setup; it carries bootstrapRequired only.
+      x-minimum-role: public
+      responses:
+        '200':
+          description: Report whether the first administrator still has to be created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/chain-presets:
+    get:
+      operationId: chainPresets
+      summary: List the embedded chain presets
+      description: Read-only engine presets that a chain configuration starts from.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List the embedded chain presets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/manifest-assets:
+    get:
+      operationId: manifestAssets
+      summary: List registered binary assets a manifest setup may use
+      description: Administrator-provisioned binaries (id, chain, sha256, commit) and uploaded binary assets. Paths are never returned.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List registered binary assets a manifest setup may use
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/manifests:
+    get:
+      operationId: manifests
+      summary: List embedded plugins and imported chain manifests
+      description: Each item holds the manifest, its genesis template and its source.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List embedded plugins and imported chain manifests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      operationId: saveManifest
+      summary: Save an imported chain manifest
+      description: Saves an immutable, content-addressed manifest with its unmodified genesis template after engine validation.
+      x-minimum-role: operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Save an imported chain manifest
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/manifests/validate:
+    post:
+      operationId: validateManifest
+      summary: Validate an imported chain manifest without saving it
+      description: Returns valid and the engine errors.
+      x-minimum-role: operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Validate an imported chain manifest without saving it
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/manifests/{id}:
+    get:
+      operationId: manifest
+      summary: Read one chain manifest
+      description: Embedded or imported manifest with its template.
+      x-minimum-role: viewer
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read one chain manifest
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/manifests/{id}/setup:
+    post:
+      operationId: manifestSetup
+      summary: Initialize an isolated local composition from a manifest
+      description: Takes assetId of a registered binary for the manifest chain; prepares four local nodes, initializes their databases and leaves them stopped.
+      x-minimum-role: operator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Initialize an isolated local composition from a manifest
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/networks:
+    get:
+      operationId: networks
+      summary: List networks the Web service deployed and recorded
+      description: Recorded nodes with their last recorded state; a recorded PID is not proof of liveness. controlLimits names why each control a node does not offer is refused.
+      x-minimum-role: viewer
+      responses:
+        '200':
+          description: List networks the Web service deployed and recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required:
+                - items
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/test-cases/import:
+    post:
+      operationId: importTestCase
+      summary: Validate and normalize a test case through the engine
+      description: Migrates a legacy case to the current grammar and returns the content and its semantic fingerprint. A refusal is 422 with errors whose path is the JSON pointer the engine error names, for example /content/steps/1/do.
+      x-minimum-role: operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Validate and normalize a test case through the engine
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/workspaces/{id}/credential-bindings:
+    get:
+      operationId: credentialBindings
+      summary: Read my own server bindings for a workspace
+      description: Maps a server name to one of the caller own credential ids. Other users bindings are never returned.
+      x-minimum-role: operator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Read my own server bindings for a workspace
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      operationId: bindCredential
+      summary: Bind one of my credentials to a workspace server
+      description: Body serverRef and credentialId; an account key cannot be bound as an SSH login.
+      x-minimum-role: operator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Bind one of my credentials to a workspace server
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   securitySchemes:
     sessionCookie:
