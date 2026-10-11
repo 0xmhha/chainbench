@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -67,7 +68,7 @@ func decodeImportSource(in DocumentImportInput) ([]map[string]any, bool, error) 
 		return values, false, nil
 	}
 	for key := range values[0] {
-		if key != "documents" && key != "format" && key != "workspace" {
+		if key != "documents" && key != "format" && key != "workspace" && key != "privateBindingsRequired" {
 			return nil, false, fmt.Errorf("unsupported bundle field %q", key)
 		}
 	}
@@ -220,6 +221,27 @@ func importDocument(preview *DocumentImportPreview, prefix, kind, name string, v
 	preview.RedactedDocuments = append(preview.RedactedDocuments, doc)
 }
 
+// webRequiredBindings names each remote server of a server set; whoever runs
+// the workspace binds their own SSH credential to it ("ssh:<server>").
+func webRequiredBindings(in DeploymentDocumentInput) ([]string, error) {
+	set, err := deploymentSet(in)
+	if err != nil {
+		return nil, err
+	}
+	out := []string{}
+	for _, raw := range set.Servers {
+		server, err := set.ByName(raw.Name)
+		if err != nil {
+			return nil, err
+		}
+		if server.IsRemote() {
+			out = append(out, "ssh:"+server.Name)
+		}
+	}
+	sort.Strings(out)
+	return out, nil
+}
+
 // ExportWorkspaceBundle writes the workspace's pinned shared declarations as a
 // bundle that imports back unchanged. Shared documents hold no private values.
 func (s *DeploymentStore) ExportWorkspaceBundle(a DeploymentActor, id string) ([]byte, error) {
@@ -231,10 +253,16 @@ func (s *DeploymentStore) ExportWorkspaceBundle(a DeploymentActor, id string) ([
 		return nil, err
 	}
 	documents := []map[string]any{}
+	bindings := []string{}
 	for _, ref := range workspace.Documents {
 		d, err := s.DocumentRevision(ref.ID, ref.Revision)
 		if err != nil {
 			return nil, err
+		}
+		if d.Kind == "server-set" {
+			if bindings, err = webRequiredBindings(d.DeploymentDocumentInput); err != nil {
+				return nil, err
+			}
 		}
 		var content any
 		if err = json.Unmarshal(d.Content, &content); err != nil {
@@ -242,7 +270,7 @@ func (s *DeploymentStore) ExportWorkspaceBundle(a DeploymentActor, id string) ([
 		}
 		documents = append(documents, map[string]any{"kind": d.Kind, "name": d.Name, "contractVersion": d.ContractVersion, "assetRefs": d.AssetRefs, "content": content})
 	}
-	return json.MarshalIndent(map[string]any{"format": webBundleFormat, "workspace": workspace.Name, "documents": documents}, "", "  ")
+	return json.MarshalIndent(map[string]any{"format": webBundleFormat, "workspace": workspace.Name, "documents": documents, "privateBindingsRequired": bindings}, "", "  ")
 }
 
 // ExportDocumentBundle writes one shared document as a bundle; a case brings

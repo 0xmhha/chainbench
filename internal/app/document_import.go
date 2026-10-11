@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -100,6 +101,20 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 			continue
 		}
 		importDocument(&preview, prefix, kind, name, content, presets)
+	}
+	// Each remote server of an imported server set needs the importer's own
+	// SSH binding, whether or not the source listed it.
+	for _, doc := range preview.RedactedDocuments {
+		if doc.Kind != "server-set" {
+			continue
+		}
+		if required, err := webRequiredBindings(doc); err == nil {
+			for _, binding := range required {
+				if !slices.Contains(preview.PrivateBindingsRequired, binding) {
+					preview.PrivateBindingsRequired = append(preview.PrivateBindingsRequired, binding)
+				}
+			}
+		}
 	}
 	preview.Validation.Valid = len(preview.Validation.Errors) == 0 && len(preview.RedactedDocuments) > 0
 	if !preview.Validation.Valid {

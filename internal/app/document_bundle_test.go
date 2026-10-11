@@ -39,7 +39,7 @@ func TestDocumentBundleImportPreviewsCommitsAndExportsRoundTrip(t *testing.T) {
 	if !preview.Validation.Valid || len(preview.RedactedDocuments) != 2 {
 		t.Fatalf("bundle preview = %+v", preview)
 	}
-	if strings.Contains(string(preview.RedactedDocuments[0].Content), "bundle-ssh-secret") || len(preview.PrivateBindingsRequired) != 1 || preview.PrivateBindingsRequired[0] != "/documents/0/ssh.password" {
+	if strings.Contains(string(preview.RedactedDocuments[0].Content), "bundle-ssh-secret") || len(preview.PrivateBindingsRequired) != 2 || preview.PrivateBindingsRequired[0] != "/documents/0/ssh.password" || preview.PrivateBindingsRequired[1] != "ssh:ssh" {
 		t.Fatalf("bundle kept a private SSH value in the shared declaration: %+v", preview)
 	}
 	saved, err := store.CommitImport(a, DocumentImportCommit{PreviewID: preview.PreviewID})
@@ -124,5 +124,39 @@ func TestDocumentBundleRejectsOversizedAndDuplicateBundles(t *testing.T) {
 	}
 	if preview.Validation.Valid || len(preview.Validation.Errors) != 1 || preview.Validation.Errors[0].Path != "/documents/1" {
 		t.Fatalf("duplicate kind and name not reported: %+v", preview.Validation)
+	}
+}
+
+func TestWorkspaceExportNamesTheBindingsAnImporterMustSupply(t *testing.T) {
+	store, err := OpenDeploymentStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := DeploymentActor{ID: "operator", Role: "operator"}
+	set, err := store.SaveDocument(a, "", 0, DeploymentDocumentInput{Kind: "server-set", Name: "remote", ContractVersion: "2", AssetRefs: []string{}, Content: json.RawMessage(`{"version":2,"pool":{"hosts":[{"name":"far","addr":"10.0.0.9"},{"name":"near","addr":"10.0.0.10"}],"slots":2,"ports":{"p2p":{"base":31000,"step":10},"rpc":{"base":8600,"step":10}}},"ssh":{"user":"dev","port":22}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := store.SaveDocument(a, "", 0, deploymentTestConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace, err := store.SaveWorkspace(a, "", 0, DeploymentWorkspaceInput{Name: "remote", Documents: []DeploymentDocumentRef{{set.ID, set.Revision}, {config.ID, config.Revision}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	exported, err := store.ExportWorkspaceBundle(a, workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var bundle struct {
+		PrivateBindingsRequired []string `json:"privateBindingsRequired"`
+	}
+	if err = json.Unmarshal(exported, &bundle); err != nil || strings.Join(bundle.PrivateBindingsRequired, ",") != "ssh:far,ssh:near" {
+		t.Fatalf("export lists %v (%v)", bundle.PrivateBindingsRequired, err)
+	}
+	again, err := store.PreviewImport(a, DocumentImportInput{Filename: "exported.json", Format: "json", Source: string(exported)})
+	if err != nil || !again.Validation.Valid || strings.Join(again.PrivateBindingsRequired, ",") != "ssh:far,ssh:near" {
+		t.Fatalf("import of the export: %+v %v", again, err)
 	}
 }

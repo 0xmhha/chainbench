@@ -1158,7 +1158,7 @@ paths:
     get:
       operationId: exportWorkspace
       summary: Download the workspace's pinned shared declarations as an importable bundle
-      description: 'The bundle is {"format":"chainbench-web-bundle","workspace":name,"documents":[{kind,name,contractVersion,assetRefs,content}]}. POST /api/v1/documents/import accepts it (format json), as well as a YAML stream of such documents; each document is validated with its /documents/N position. Shared declarations hold no private values.'
+      description: 'The bundle is {"format":"chainbench-web-bundle","workspace":name,"documents":[{kind,name,contractVersion,assetRefs,content}],"privateBindingsRequired":["ssh:<server>"]}. privateBindingsRequired names each remote server whose SSH credential the importer binds from their own private credentials; it carries no secret. POST /api/v1/documents/import accepts the bundle (format json), as well as a YAML stream of such documents; each document is validated with its /documents/N position, and the preview lists the same bindings for every imported remote server. Shared declarations hold no private values.'
       x-minimum-role: viewer
       responses:
         '200':

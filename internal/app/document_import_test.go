@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -31,8 +32,10 @@ ssh:
 	if err != nil || !preview.Validation.Valid || !preview.SourcePreserved {
 		t.Fatalf("%+v %v", preview, err)
 	}
-	if len(preview.PrivateBindingsRequired) != 1 {
-		t.Fatal("missing private SSH binding requirement")
+	// The moved password, and the remote server that needs the importer's
+	// own SSH binding.
+	if len(preview.PrivateBindingsRequired) != 2 || !strings.HasPrefix(preview.PrivateBindingsRequired[1], "ssh:") {
+		t.Fatalf("missing private SSH binding requirement: %v", preview.PrivateBindingsRequired)
 	}
 	public, _ := json.Marshal(preview)
 	if bytes.Contains(public, []byte("imported-secret-sentinel")) {
