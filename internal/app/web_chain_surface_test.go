@@ -348,3 +348,53 @@ func TestChainSurfaceJudgesTheSelectedNativeBinaries(t *testing.T) {
 		t.Skip("set GSTABLE_BIN, GWBFT_BIN or GWEMIX_BIN to a selected native binary")
 	}
 }
+
+// A plan's fingerprint includes each pinned surface, and starting the plan
+// prepares it again, so judging the same binary twice must give one answer.
+func TestChainSurfaceFingerprintIsStableAcrossJudgements(t *testing.T) {
+	for _, chain := range []string{"stablenet", "wbft", "wemix"} {
+		c := webSurfaceCatalog(t, chain)
+		first, err := JoinChainSurface(chain, c, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := 0; i < 20; i++ {
+			again, err := JoinChainSurface(chain, c, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if again.Fingerprint != first.Fingerprint {
+				t.Fatalf("%s: fingerprint changed between identical judgements", chain)
+			}
+		}
+	}
+	path := os.Getenv("GWBFT_BIN")
+	if path == "" {
+		t.Skip("GWBFT_BIN is not set; the native judgement was not repeated")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	version, err := manifestProbe(context.Background(), path, "version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit := regexp.MustCompile(`Git Commit: ([0-9a-f]{40})`).FindSubmatch(version)
+	asset := ManifestBinary{ID: "native-wbft", Chain: "wbft", Path: path, SHA256: manifestHash(raw), Commit: string(commit[1])}
+	e := &WebChainEngine{root: t.TempDir(), surfaces: webSurfaceAnalysis, assets: map[string]ManifestBinary{asset.ID: asset}}
+	a := DeploymentActor{ID: "operator", Role: "operator"}
+	first, err := e.ChainSurface(context.Background(), a, "wbft", asset.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		again, err := e.ChainSurface(context.Background(), a, "wbft", asset.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if again.Fingerprint != first.Fingerprint {
+			t.Fatal("native wbft fingerprint changed between identical judgements")
+		}
+	}
+}

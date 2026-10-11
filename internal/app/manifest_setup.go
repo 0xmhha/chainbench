@@ -193,7 +193,10 @@ func (b *manifestProbeOutput) Bytes() []byte { return b.buffer.Bytes() }
 // must not reach the binary: go-wbft prints a warning before its program name
 // for every unknown GWEMIX_* variable, which made the identity line depend on
 // how the server was started, and an inherited HOME would let a binary that
-// ignored --help write into the operator's default data directory.
+// ignored --help write into the operator's default data directory. Help
+// prints defaults under HOME, so the fresh directory is written back as $HOME:
+// the same binary must give the same output, or a plan that pins it could
+// never start.
 func manifestProbe(ctx context.Context, path string, args ...string) ([]byte, error) {
 	home, err := os.MkdirTemp("", "chainbench-probe-")
 	if err != nil {
@@ -205,5 +208,15 @@ func manifestProbe(ctx context.Context, path string, args ...string) ([]byte, er
 	cmd.Dir, cmd.Env = home, []string{"HOME=" + home, "PATH=/usr/bin:/bin"}
 	cmd.Stdout, cmd.Stderr = &output, &output
 	err = cmd.Run()
-	return output.Bytes(), err
+	out := output.Bytes()
+	// The resolved path (/private/var/... on macOS) contains the short one, so
+	// it is replaced first.
+	names := []string{home}
+	if real, rerr := filepath.EvalSymlinks(home); rerr == nil && real != home {
+		names = []string{real, home}
+	}
+	for _, name := range names {
+		out = bytes.ReplaceAll(out, []byte(name), []byte("$HOME"))
+	}
+	return out, err
 }
