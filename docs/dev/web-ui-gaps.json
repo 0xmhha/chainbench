@@ -597,9 +597,10 @@
         "web/src/NodeMetrics.svelte:5,20,63"
       ],
       "completion": "gap이 있는 계열이 여러 선분으로 나뉘고, 범위를 바꾸면 차트·이벤트·로그가 같은 범위로 다시 조회된다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_monitoring_range.py (native wbft network of 4 producers, real dashboard and browser; receipt chainbench-out/web-ui-development/monitoring-range/receipt.json); node --test tests/webui/metric-chart.test.mjs",
+      "commit": "a65e6432",
+      "evidence": "RED (/private/tmp/chainbench-web-range-red.log): against a dashboard built from 60fa8f04 the proof selected the workspace and network and cancelled the job, then timed out at the node filter, which did not exist. GREEN (/private/tmp/chainbench-web-range-green.log): node2 was stopped for 20 seconds and started again; with node2 chosen its block_height line drew 2 segments while node1, never stopped, drew 1 (8 samples); choosing one metric left one chart; clicking a point showed metric, node, time, value and source (rpc); range logs for node2 loaded 100 lines; switching to 60 minutes re-requested metrics and range logs with a 60-minute window, and the event timeline counts events in the same range. During the proof a range-log request with limit=200 was refused with 400 (the server allows at most 100); it now asks for 100 and the proof asserts the logs load."
     },
     {
       "id": "G-C05",
@@ -758,9 +759,10 @@
         "web/src/MonitorPanel.svelte"
       ],
       "completion": "모니터링 화면에서 고른 network의 노드 표와 차트가 바뀌고 실행 중 작업을 취소할 수 있다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_monitoring_range.py (native wbft network of 4 producers, real dashboard and browser; receipt chainbench-out/web-ui-development/monitoring-range/receipt.json); node --test tests/webui/metric-chart.test.mjs",
+      "commit": "a65e6432",
+      "evidence": "RED (/private/tmp/chainbench-web-range-red.log): against a dashboard built from 60fa8f04 the proof selected the workspace and network and cancelled the job, then timed out at the node filter, which did not exist. GREEN: the monitoring screen narrowed to the proof's workspace and network, listed the running test job there and cancelled it from its row (cancelled, nodes retained); the node table and charts follow the chosen network."
     },
     {
       "id": "G-C13",
