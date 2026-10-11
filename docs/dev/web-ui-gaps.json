@@ -6,21 +6,41 @@
       "id": "G-A01",
       "group": "seed",
       "title": "세 체인 분석 자료 네 종을 버전이 있는 ChainSurface 카탈로그로 만들고 GET /api/v1/chains/{chainId}/surface로 제공한다.",
-      "criteria": ["WEB-01", "WEB-04"],
-      "spec": ["docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: docs/chain-analysis 세 체인 × 네 산출물", "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약", "docs/dev/web-ui.openapi.yaml chainSurface, ChainSurface"],
-      "code": ["internal/app/web_jobs.go:194 ChainSurfaces: []any{}", "tests/webui/fixtures/prepare_web01.py:42-66 (제품이 아니라 인수 준비 스크립트가 대조한다)"],
+      "criteria": [
+        "WEB-01",
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: docs/chain-analysis 세 체인 × 네 산출물",
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약",
+        "docs/dev/web-ui.openapi.yaml chainSurface, ChainSurface"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194 ChainSurfaces: []any{}",
+        "tests/webui/fixtures/prepare_web01.py:42-66 (제품이 아니라 인수 준비 스크립트가 대조한다)"
+      ],
       "completion": "명령 경로·위치 인자·global/local 범위·숨김·OptionKey·schemaRef·출처(문서 경로, digest, 체인 커밋, 캡처 시각)·지원 여부와 제외 이유를 응답하고 assetId가 있으면 그 바이너리 검증을 결합한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/core/chainsurface ./internal/dashboard -run TestChainSurfaceRoute; go test ./internal/app -run TestChainSurface; GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries",
+      "commit": "4b524de7",
+      "evidence": "RED: 249fd11c dashboard answered GET /api/v1/chains/stablenet/surface with 404. GREEN: 4b524de7 answers 200 with 1135 options and 56 commands; the three native binaries are verified."
     },
     {
       "id": "G-A02",
       "group": "seed",
       "title": "계획에 사용할 ChainSurface 참조와 지문을 고정하고 실행 전에 다시 확인한다.",
-      "criteria": ["WEB-01", "WEB-06"],
-      "spec": ["docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: 계획의 chainSurfaces fingerprint 변경은 실행 전 재검증", "docs/dev/web-ui.openapi.yaml Plan.chainSurfaces"],
-      "code": ["internal/app/web_jobs.go:194", "internal/app/web_job_contract.go:84"],
+      "criteria": [
+        "WEB-01",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: 계획의 chainSurfaces fingerprint 변경은 실행 전 재검증",
+        "docs/dev/web-ui.openapi.yaml Plan.chainSurfaces"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194",
+        "internal/app/web_job_contract.go:84"
+      ],
       "completion": "계획 응답이 체인별 surface 참조를 담고, 문서·계약·바이너리 지문이 바뀌면 작업 접수를 409로 거절한다.",
       "status": "open",
       "verification": "",
@@ -30,33 +50,57 @@
       "id": "G-A03",
       "group": "seed",
       "title": "문서 캡처 커밋과 선택한 바이너리 커밋을 비교해 stale을 판정하고, stale이면 그 바이너리 help로 계획이 쓰는 매핑을 모두 확인하기 전에는 실행하지 않는다.",
-      "criteria": ["WEB-01", "WEB-04"],
-      "spec": ["docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (문서와 바이너리 커밋이 다르면 stale)"],
-      "code": ["internal/app/manifest_setup.go:52,82-92 (checksum 변경만 stale로 보고 help는 두 철자만 확인)"],
+      "criteria": [
+        "WEB-01",
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (문서와 바이너리 커밋이 다르면 stale)"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go:52,82-92 (checksum 변경만 stale로 보고 help는 두 철자만 확인)"
+      ],
       "completion": "커밋이 다른 바이너리는 stale로 표시되고, 계획이 넘길 모든 OptionKey의 플래그가 그 바이너리 help에 없으면 계획이 거절된다. 숨김·command-local 확인은 따로 기록한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestChainSurfaceJudgesTheSelectedBinary|TestPlanRefusesABinaryWithoutAnOptionItSets\"; GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries",
+      "commit": "4b524de7",
+      "evidence": "RED: no surface existed, so a binary from another commit or without a mapped flag was not judged. GREEN: a different commit is stale, a missing mapped flag is incompatible and refuses the plan."
     },
     {
       "id": "G-A04",
       "group": "seed",
       "title": "실행 옵션 schema에 엔진이 아는 허용값·범위·기본값을 담고 폼과 서버가 같은 제약을 쓴다.",
-      "criteria": ["WEB-01"],
-      "spec": ["docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: required/default/enum/range를 공통 계약으로 노출", "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료"],
-      "code": ["internal/core/nodeconfig/launchopt.go:447-462 (bool이 아닌 옵션은 모두 type string)"],
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: required/default/enum/range를 공통 계약으로 노출",
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료"
+      ],
+      "code": [
+        "internal/core/nodeconfig/launchopt.go:447-462 (bool이 아닌 옵션은 모두 type string)"
+      ],
       "completion": "포트·consensusmethod 같은 옵션에 범위나 허용값이 있고, 범위를 벗어난 값을 서버가 422로 거절한다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/core/nodeconfig ./internal/testengine -run \"TestOptionValues|TestBuilderRefuses|TestOptionSchemasCarry|TestValidateChainPresetRefusesValuesOutside\"; node --test tests/webui/dsl-form.test.mjs",
+      "commit": "4b524de7",
+      "evidence": "RED: with the value check removed, presets with cache.gc 150, gcmode partial and consensusmethod 9 validated. GREEN: all three are refused and the schemas carry the ranges."
     },
     {
       "id": "G-A05",
       "group": "seed",
       "title": "한 workspace의 노드를 서버 풀의 여러 서버에 나누어 배치하고 배포한다.",
-      "criteria": ["WEB-03", "WEB-06"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (노드 배치, 서버 풀)", "docs/dev/web-ui-implementation.md 단일 대상 한계"],
-      "code": ["internal/app/web_chain_engine.go:67,180 (대상이 ServerRef 하나)"],
+      "criteria": [
+        "WEB-03",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (노드 배치, 서버 풀)",
+        "docs/dev/web-ui-implementation.md 단일 대상 한계"
+      ],
+      "code": [
+        "internal/app/web_chain_engine.go:67,180 (대상이 ServerRef 하나)"
+      ],
       "completion": "노드별 서버를 고르는 배치가 계획·잠금·실제 배포에 반영되고, 실제 두 대상에 나뉜 체인이 블록을 만든다.",
       "status": "open",
       "verification": "",
@@ -66,9 +110,16 @@
       "id": "G-B01",
       "group": "spec",
       "title": "GET /api/v1/contracts/{contractId}로 계약을 ID로 조회한다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui.openapi.yaml contract", "docs/dev/web-ui-spec.md HTTP API 동작"],
-      "code": ["internal/dashboard/{deployment,manifests,testcase,chainpreset}.go 고정 경로 네 개만 있다"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml contract",
+        "docs/dev/web-ui-spec.md HTTP API 동작"
+      ],
+      "code": [
+        "internal/dashboard/{deployment,manifests,testcase,chainpreset}.go 고정 경로 네 개만 있다"
+      ],
       "completion": "등록된 계약 ID는 같은 본문을 돌려주고 모르는 ID는 404다.",
       "status": "open",
       "verification": "",
@@ -78,9 +129,15 @@
       "id": "G-B02",
       "group": "spec",
       "title": "GET /api/v1/workspaces/{workspaceId}/networks를 제공한다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui.openapi.yaml workspaceNetworks"],
-      "code": ["internal/dashboard/jobs.go:35 (문서에 없는 /api/v1/networks만 있다)"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml workspaceNetworks"
+      ],
+      "code": [
+        "internal/dashboard/jobs.go:35 (문서에 없는 /api/v1/networks만 있다)"
+      ],
       "completion": "workspace의 network 목록을 계약 형식으로 돌려준다.",
       "status": "open",
       "verification": "",
@@ -90,9 +147,18 @@
       "id": "G-B03",
       "group": "spec",
       "title": "감사 기록을 하나의 AuditRecord 형식(id, actor, operation, target, requestId, jobId, result, time)으로 남기고 관리자가 GET /api/v1/audit로 조회한다.",
-      "criteria": ["WEB-10"],
-      "spec": ["docs/dev/web-ui.openapi.yaml audit, AuditRecord", "docs/dev/architecture/chainbench-web-ui.seed.yaml ontology AuditRecord"],
-      "code": ["internal/app/web_auth.go:273-282", "internal/app/deployment_store.go:86-91", "internal/app/web_jobs.go:117 (기록이 네 곳에 흩어져 있고 조회 경로가 없다)"],
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml audit, AuditRecord",
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml ontology AuditRecord"
+      ],
+      "code": [
+        "internal/app/web_auth.go:273-282",
+        "internal/app/deployment_store.go:86-91",
+        "internal/app/web_jobs.go:117 (기록이 네 곳에 흩어져 있고 조회 경로가 없다)"
+      ],
       "completion": "역할 변경·거절·취소·삭제가 대상과 결과를 포함해 조회되고, 관리자가 아니면 403이며, 히스토리 삭제 뒤에도 남는다.",
       "status": "open",
       "verification": "",
@@ -102,9 +168,16 @@
       "id": "G-B04",
       "group": "spec",
       "title": "서버에 등록된 /api 경로를 OpenAPI에 모두 적고 두 목록이 어긋나면 실패하는 테스트를 둔다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui-spec.md HTTP API 동작 (자세한 schema는 OpenAPI를 따른다)"],
-      "code": ["internal/arch/web_openapi_test.go (네 경로만 확인)", "OpenAPI에 없는 경로 25개"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (자세한 schema는 OpenAPI를 따른다)"
+      ],
+      "code": [
+        "internal/arch/web_openapi_test.go (네 경로만 확인)",
+        "OpenAPI에 없는 경로 25개"
+      ],
       "completion": "경로·메서드 목록이 서버와 OpenAPI에서 같고, 어긋나면 테스트가 실패한다.",
       "status": "open",
       "verification": "",
@@ -114,9 +187,17 @@
       "id": "G-B05",
       "group": "spec",
       "title": "개인 모드는 loopback에만 바인딩하고, 팀 모드는 TLS 또는 신뢰하는 TLS 종단 뒤에서 쿠키 보안과 origin 검사를 맞게 적용한다.",
-      "criteria": ["WEB-10"],
-      "spec": ["docs/dev/web-ui-spec.md 실행 모드와 권한", "docs/dev/web-ui-spec.md 인증과 호환성"],
-      "code": ["cmd/chainbench-dashboard/main.go:30 (모드는 표시만 바꾼다)", "internal/dashboard/security.go:66-76,127"],
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한",
+        "docs/dev/web-ui-spec.md 인증과 호환성"
+      ],
+      "code": [
+        "cmd/chainbench-dashboard/main.go:30 (모드는 표시만 바꾼다)",
+        "internal/dashboard/security.go:66-76,127"
+      ],
       "completion": "개인 모드의 비 loopback 주소는 시작을 거절하고, 팀 모드는 TLS나 신뢰 프록시 설정 없이는 시작을 거절하며, 신뢰 프록시 뒤의 https origin 쓰기 요청이 통과한다.",
       "status": "open",
       "verification": "",
@@ -126,9 +207,15 @@
       "id": "G-B06",
       "group": "spec",
       "title": "작업 상태 전이를 명세대로 한다: running 전에 자격증명과 계획을 다시 확인해 accepted에서 failed로 끝낼 수 있고, 취소 뒤 정리 실패는 failed이며, 철회가 실제 처분 결과를 덮지 않는다.",
-      "criteria": ["WEB-13"],
-      "spec": ["docs/dev/web-ui-spec.md 작업 생명주기와 복구 상태도"],
-      "code": ["internal/app/web_job_execution.go:50-66,107-112"],
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 상태도"
+      ],
+      "code": [
+        "internal/app/web_job_execution.go:50-66,107-112"
+      ],
       "completion": "실행 전 철회된 작업은 running을 거치지 않고 failed이며, 취소 정리 실패는 failed와 cleanup_failed이고, 철회 중 정리 실패는 cleanup_failed로 남는다.",
       "status": "open",
       "verification": "",
@@ -138,9 +225,15 @@
       "id": "G-B07",
       "group": "spec",
       "title": "작업 접수의 busy 409 응답에 읽을 수 있는 현재 작업 ID·실행자·충돌 자원을 담는다.",
-      "criteria": ["WEB-11"],
-      "spec": ["docs/dev/web-ui-spec.md HTTP API 동작 (busy 응답)"],
-      "code": ["internal/app/web_jobs.go:258-263 (revision changed 문구의 ErrDeploymentConflict)"],
+      "criteria": [
+        "WEB-11"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (busy 응답)"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:258-263 (revision changed 문구의 ErrDeploymentConflict)"
+      ],
       "completion": "자원 충돌 409 본문의 details에 작업·실행자·자원이 있고 문구가 자원 충돌을 말한다.",
       "status": "open",
       "verification": "",
@@ -150,9 +243,15 @@
       "id": "G-B08",
       "group": "spec",
       "title": "서버 재시작 뒤 interrupted 작업의 실제 PID·배포 파일 상태를 확인해 기록하고, 확인 결과로 잠금 해제 여부를 판단하는 명시적 복구를 제공한다.",
-      "criteria": ["WEB-12"],
-      "spec": ["docs/dev/web-ui-spec.md 작업 생명주기와 복구 (실제 상태 확인, unresolved 자원은 명시적 복구 전까지 잠금)"],
-      "code": ["internal/app/web_jobs.go:91-96 (상태만 바꾼다)"],
+      "criteria": [
+        "WEB-12"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 (실제 상태 확인, unresolved 자원은 명시적 복구 전까지 잠금)"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:91-96 (상태만 바꾼다)"
+      ],
       "completion": "재시작 직후 작업 기록에 노드별 관측 결과가 남고, 노드가 모두 없음으로 확인된 자원은 명시적 복구로 풀리며, 살아 있는 노드는 계속 잠긴다.",
       "status": "open",
       "verification": "",
@@ -162,9 +261,18 @@
       "id": "G-B09",
       "group": "spec",
       "title": "오류 본문을 명세 형식으로 맞춘다: 요청마다 다른 requestId, 프로그램이 구분할 code, 필드 오류는 fieldErrors, Idempotency-Key 누락과 If-Match 누락의 상태 코드를 계약에 맞춘다.",
-      "criteria": ["WEB-02", "WEB-10"],
-      "spec": ["docs/dev/web-ui-spec.md HTTP API 동작 (오류 형식)", "docs/dev/web-ui.openapi.yaml Error"],
-      "code": ["internal/dashboard/security.go:296-322 (requestId 상수 web-rejected)", "internal/dashboard/deployment.go http.Error 평문"],
+      "criteria": [
+        "WEB-02",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (오류 형식)",
+        "docs/dev/web-ui.openapi.yaml Error"
+      ],
+      "code": [
+        "internal/dashboard/security.go:296-322 (requestId 상수 web-rejected)",
+        "internal/dashboard/deployment.go http.Error 평문"
+      ],
       "completion": "두 오류의 requestId가 다르고, 422 응답의 fieldErrors가 잘못된 필드 경로를 가리키며, 누락된 헤더의 상태 코드가 OpenAPI에 있다.",
       "status": "open",
       "verification": "",
@@ -174,9 +282,17 @@
       "id": "G-B10",
       "group": "spec",
       "title": "users, credentials, assets, documents, workspaces 목록이 cursor와 limit을 지킨다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui.openapi.yaml cursor, limit 매개변수"],
-      "code": ["internal/dashboard/security.go:181", "internal/dashboard/deployment.go:91,158,195", "internal/dashboard/manifests.go:94"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml cursor, limit 매개변수"
+      ],
+      "code": [
+        "internal/dashboard/security.go:181",
+        "internal/dashboard/deployment.go:91,158,195",
+        "internal/dashboard/manifests.go:94"
+      ],
       "completion": "limit보다 많으면 nextCursor가 나오고 그 cursor로 다음 쪽을 받는다.",
       "status": "open",
       "verification": "",
@@ -186,9 +302,17 @@
       "id": "G-B11",
       "group": "spec",
       "title": "실행 목록 문서(run-definition)를 Document 종류로 저장하고 실행한다.",
-      "criteria": ["WEB-02", "WEB-05"],
-      "spec": ["docs/dev/web-ui-spec.md 데이터 모델 (Document 종류에 실행 목록)", "docs/dev/web-ui.openapi.yaml Document.kind"],
-      "code": ["internal/app/deployment.go:66-127 (네 종류만 받는다)"],
+      "criteria": [
+        "WEB-02",
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (Document 종류에 실행 목록)",
+        "docs/dev/web-ui.openapi.yaml Document.kind"
+      ],
+      "code": [
+        "internal/app/deployment.go:66-127 (네 종류만 받는다)"
+      ],
       "completion": "케이스 순서를 담은 실행 목록을 저장·export·import하고 그 순서로 실제 테스트를 실행한다.",
       "status": "open",
       "verification": "",
@@ -198,9 +322,18 @@
       "id": "G-B12",
       "group": "spec",
       "title": "히스토리 비교가 DSL 지문·단언 결과·소요 시간·수집 지표를 다루고, Run에 finishedAt과 coverage가 있으며, 상세에서 실행에 연결된 로그를 조회한다.",
-      "criteria": ["WEB-09"],
-      "spec": ["docs/dev/web-ui-spec.md 모니터링과 결과 보관 (비교 기준)", "docs/dev/web-ui.openapi.yaml Run"],
-      "code": ["internal/app/web_history_compare.go:20,120", "internal/app/web_history_contract.go:11-23", "web/src/HistoryPanel.svelte:60-62"],
+      "criteria": [
+        "WEB-09"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관 (비교 기준)",
+        "docs/dev/web-ui.openapi.yaml Run"
+      ],
+      "code": [
+        "internal/app/web_history_compare.go:20,120",
+        "internal/app/web_history_contract.go:11-23",
+        "web/src/HistoryPanel.svelte:60-62"
+      ],
       "completion": "같은 케이스 두 실행의 비교가 단언별 결과·시간·지표 차이를 보이고, 단위가 다르면 제한을 표시한다.",
       "status": "open",
       "verification": "",
@@ -210,9 +343,17 @@
       "id": "G-B13",
       "group": "spec",
       "title": "관리자 삭제가 Web이 소유한 세션 디렉터리까지 지우고, 테스트가 없는 CLI 세션도 최종 상태로 판정해 지울 수 있다.",
-      "criteria": ["WEB-09"],
-      "spec": ["docs/dev/web-ui-spec.md 모니터링과 결과 보관 (실행 소유 결과 삭제)"],
-      "code": ["internal/app/web_test_run.go:419", "internal/app/web_history_capture.go:50-52", "internal/app/web_history.go:244"],
+      "criteria": [
+        "WEB-09"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관 (실행 소유 결과 삭제)"
+      ],
+      "code": [
+        "internal/app/web_test_run.go:419",
+        "internal/app/web_history_capture.go:50-52",
+        "internal/app/web_history.go:244"
+      ],
       "completion": "삭제 뒤 그 실행의 Web 세션 디렉터리가 없고, 다른 실행이 참조하는 자료와 노드 데이터는 남는다.",
       "status": "open",
       "verification": "",
@@ -222,9 +363,17 @@
       "id": "G-B14",
       "group": "spec",
       "title": "관측 누락을 범위와 함께 알린다: resync_required에 누락 범위, 다운샘플 버킷 폭과 구간, 수집기가 멈추면 열린 gap을 기록한다.",
-      "criteria": ["WEB-08"],
-      "spec": ["docs/dev/web-ui-spec.md 모니터링과 결과 보관"],
-      "code": ["internal/app/web_job_observation.go:22-29", "internal/app/web_monitor_read.go:162-168", "internal/app/web_monitor.go:162-166"],
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
+      ],
+      "code": [
+        "internal/app/web_job_observation.go:22-29",
+        "internal/app/web_monitor_read.go:162-168",
+        "internal/app/web_monitor.go:162-166"
+      ],
       "completion": "replay 범위를 벗어난 재연결이 누락 cursor 범위를 받고, 다운샘플 응답이 버킷 폭을 담으며, 멈춘 수집기 구간이 stale gap으로 보인다.",
       "status": "open",
       "verification": "",
@@ -234,9 +383,15 @@
       "id": "G-B15",
       "group": "spec",
       "title": "설정 교체에 등록된 설정 파일을 쓸 수 있다.",
-      "criteria": ["WEB-07"],
-      "spec": ["docs/dev/web-ui-spec.md 노드 제어 (설정·바이너리 교체는 선택한 등록 파일을 사용)"],
-      "code": ["internal/app/web_config_change.go:27-58 (syncMode, httpHost, metricsHost 선택지만)"],
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 노드 제어 (설정·바이너리 교체는 선택한 등록 파일을 사용)"
+      ],
+      "code": [
+        "internal/app/web_config_change.go:27-58 (syncMode, httpHost, metricsHost 선택지만)"
+      ],
       "completion": "등록한 설정 자료로 교체한 노드가 그 설정으로 다시 시작하고, 엔진이 모르는 키는 거절된다.",
       "status": "open",
       "verification": "",
@@ -246,9 +401,15 @@
       "id": "G-B16",
       "group": "spec",
       "title": "배포의 부분 효과를 노드와 파일 단위로 기록하고, 실패한 배포의 노드 처분을 실제 결과대로 남긴다.",
-      "criteria": ["WEB-06"],
-      "spec": ["docs/dev/web-ui-spec.md 작업 생명주기와 복구 (알려진 상태와 미확인 상태를 분리)"],
-      "code": ["internal/app/web_chain_execution.go:22,323-330"],
+      "criteria": [
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 (알려진 상태와 미확인 상태를 분리)"
+      ],
+      "code": [
+        "internal/app/web_chain_execution.go:22,323-330"
+      ],
       "completion": "중간 실패 작업이 완료한 노드·파일과 미확인 대상을 나누어 보이고, 처분이 retained로 고정되지 않는다.",
       "status": "open",
       "verification": "",
@@ -258,9 +419,19 @@
       "id": "G-B17",
       "group": "spec",
       "title": "계약 버전을 하드코딩하지 않고, 서버 계약이 바뀌면 편집 중인 선언을 다시 검증해 변경점을 보인다.",
-      "criteria": ["WEB-01", "WEB-05"],
-      "spec": ["docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (contractVersion)"],
-      "code": ["internal/dashboard/chainpreset.go:66", "internal/dashboard/manifests.go:59,140", "internal/dashboard/testcase.go:104", "web/src/*.svelte contractVersion '2'"],
+      "criteria": [
+        "WEB-01",
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (contractVersion)"
+      ],
+      "code": [
+        "internal/dashboard/chainpreset.go:66",
+        "internal/dashboard/manifests.go:59,140",
+        "internal/dashboard/testcase.go:104",
+        "web/src/*.svelte contractVersion '2'"
+      ],
       "completion": "계약 버전이 엔진 계약 내용에서 나오고, 버전이 다른 초안 저장은 재검증을 요구한다.",
       "status": "open",
       "verification": "",
@@ -270,9 +441,16 @@
       "id": "G-B18",
       "group": "spec",
       "title": "export가 가져가는 사람이 채워야 할 사용자별 binding 목록을 담는다.",
-      "criteria": ["WEB-02", "WEB-03"],
-      "spec": ["docs/dev/web-ui-spec.md 데이터 모델 (export는 필요한 사용자별 binding을 표시)"],
-      "code": ["internal/app/document_bundle.go:225-275"],
+      "criteria": [
+        "WEB-02",
+        "WEB-03"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (export는 필요한 사용자별 binding을 표시)"
+      ],
+      "code": [
+        "internal/app/document_bundle.go:225-275"
+      ],
       "completion": "workspace export에 binding 이름 목록이 있고 비밀 값은 없다.",
       "status": "open",
       "verification": "",
@@ -282,9 +460,17 @@
       "id": "G-B19",
       "group": "spec",
       "title": "Job이 사용한 자격증명 참조와 취소 사유 메시지를 기록하고 Job.error에 requestId를 둔다.",
-      "criteria": ["WEB-13"],
-      "spec": ["docs/dev/web-ui-spec.md 데이터 모델 Job", "docs/dev/web-ui.openapi.yaml Job"],
-      "code": ["internal/dashboard/jobs.go:115-121", "internal/app/web_job_execution.go:129"],
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 Job",
+        "docs/dev/web-ui.openapi.yaml Job"
+      ],
+      "code": [
+        "internal/dashboard/jobs.go:115-121",
+        "internal/app/web_job_execution.go:129"
+      ],
       "completion": "작업 상세가 자격증명 ID(material 없음)와 취소 메시지를 보인다.",
       "status": "open",
       "verification": "",
@@ -294,9 +480,16 @@
       "id": "G-C01",
       "group": "design",
       "title": "노드 상세 화면을 만든다: 역할, 소유 여부, PID와 RPC 상태, 바이너리·설정 revision, 로그, 제어 버튼과 비활성 이유.",
-      "criteria": ["WEB-07"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름 노드 상세", "docs/dev/web-ui-design.md 상태·차트·히스토리"],
-      "code": ["web/src/JobPanel.svelte:42,98-106 (드롭다운 제어, producer는 목록에서 조용히 빠짐)"],
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 노드 상세",
+        "docs/dev/web-ui-design.md 상태·차트·히스토리"
+      ],
+      "code": [
+        "web/src/JobPanel.svelte:42,98-106 (드롭다운 제어, producer는 목록에서 조용히 빠짐)"
+      ],
       "completion": "브라우저에서 노드를 고르면 상세가 열리고, producer 초기화와 attach 제어 버튼이 이유와 함께 비활성이다.",
       "status": "open",
       "verification": "",
@@ -306,9 +499,18 @@
       "id": "G-C02",
       "group": "design",
       "title": "작업 상세 화면을 만들고 작업 상태를 누르거나 실행을 시작하면 그 화면으로 간다.",
-      "criteria": ["WEB-06", "WEB-08"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름", "docs/dev/web-ui-design.md 구성과 배포"],
-      "code": ["web/src/JobPanel.svelte:85,111", "GET /api/v1/jobs/{jobId}를 부르는 곳이 없다"],
+      "criteria": [
+        "WEB-06",
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름",
+        "docs/dev/web-ui-design.md 구성과 배포"
+      ],
+      "code": [
+        "web/src/JobPanel.svelte:85,111",
+        "GET /api/v1/jobs/{jobId}를 부르는 곳이 없다"
+      ],
       "completion": "작업 상세가 단계, 실패 대상, 부분 효과, 처분, 취소, 브라우저를 닫아도 계속된다는 안내를 보인다.",
       "status": "open",
       "verification": "",
@@ -318,9 +520,18 @@
       "id": "G-C03",
       "group": "design",
       "title": "계획 검토에 필요한 접근 권한, credential binding, 대상 경로, 문서 revision, 기존 구성과의 차이를 표시한다.",
-      "criteria": ["WEB-03", "WEB-06"],
-      "spec": ["docs/dev/web-ui-spec.md 체인 구성과 실행 4단계", "docs/dev/web-ui-design.md 구성과 배포"],
-      "code": ["internal/app/web_jobs.go:194 RequiredAccess", "web/src에 requiredAccess를 그리는 곳이 없다"],
+      "criteria": [
+        "WEB-03",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 구성과 실행 4단계",
+        "docs/dev/web-ui-design.md 구성과 배포"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194 RequiredAccess",
+        "web/src에 requiredAccess를 그리는 곳이 없다"
+      ],
       "completion": "자격증명이 없는 사용자가 계획을 보면 부족한 접근이 표시되고 실행 버튼이 막힌다.",
       "status": "open",
       "verification": "",
@@ -330,9 +541,17 @@
       "id": "G-C04",
       "group": "design",
       "title": "차트가 관측이 빈 구간을 끊어 그리고, 시간 범위·노드·metric을 고르며, 같은 시간 선택을 이벤트와 로그에 적용하고, 점의 시각과 출처를 보인다.",
-      "criteria": ["WEB-08"],
-      "spec": ["docs/dev/web-ui-design.md 상태·차트·히스토리", "docs/dev/web-ui-spec.md 모니터링과 결과 보관"],
-      "code": ["web/src/metric-chart.mjs:12-13", "web/src/NodeMetrics.svelte:5,20,63"],
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 상태·차트·히스토리",
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
+      ],
+      "code": [
+        "web/src/metric-chart.mjs:12-13",
+        "web/src/NodeMetrics.svelte:5,20,63"
+      ],
       "completion": "gap이 있는 계열이 여러 선분으로 나뉘고, 범위를 바꾸면 차트·이벤트·로그가 같은 범위로 다시 조회된다.",
       "status": "open",
       "verification": "",
@@ -342,9 +561,17 @@
       "id": "G-C05",
       "group": "design",
       "title": "Settings에 본인 자격증명 목록(사용 상태, 접근 확인, 폐기), 사용자 관리, 감사 기록 화면을 둔다.",
-      "criteria": ["WEB-10"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름 개인 자격증명, 관리", "docs/dev/web-ui-design.md 화면별 구성 Settings"],
-      "code": ["web/src/LoginPanel.svelte:36-51", "web/src/DeploymentEditor.svelte:79-99"],
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 개인 자격증명, 관리",
+        "docs/dev/web-ui-design.md 화면별 구성 Settings"
+      ],
+      "code": [
+        "web/src/LoginPanel.svelte:36-51",
+        "web/src/DeploymentEditor.svelte:79-99"
+      ],
       "completion": "브라우저에서 자격증명을 폐기하면 관련 작업이 철회 정책을 따르고, 관리자는 감사 기록을 보며 운영자에게는 관리 화면이 없다.",
       "status": "open",
       "verification": "",
@@ -354,9 +581,15 @@
       "id": "G-C06",
       "group": "design",
       "title": "상단 바에 현재 workspace·체인·서버 연결 상태를 두고, 체인 미선택 안내와 화면 사이에 공유되는 workspace·network 선택을 만든다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui-design.md 공통 화면"],
-      "code": ["web/src/App.svelte:85"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 공통 화면"
+      ],
+      "code": [
+        "web/src/App.svelte:85"
+      ],
       "completion": "체인 화면에서 고른 workspace가 모니터링 화면의 선택으로 이어진다.",
       "status": "open",
       "verification": "",
@@ -366,9 +599,15 @@
       "id": "G-C07",
       "group": "design",
       "title": "대시보드에 실행 중 작업, 노드 상태, 최근 결과, 관측 누락 요약을 보이고 행을 누르면 상세로 간다.",
-      "criteria": ["WEB-08"],
-      "spec": ["docs/dev/web-ui-design.md 화면별 구성 Dashboard"],
-      "code": ["web/src/App.svelte:100-106"],
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 화면별 구성 Dashboard"
+      ],
+      "code": [
+        "web/src/App.svelte:100-106"
+      ],
       "completion": "실행 중인 작업이 대시보드에 보이고 누르면 작업 상세가 열린다.",
       "status": "open",
       "verification": "",
@@ -378,9 +617,17 @@
       "id": "G-C08",
       "group": "design",
       "title": "DSL 편집기를 statement 트리와 선택 statement 폼으로 나누고, 오류를 statement 경로에 연결해 이동하며, workspace의 실제 노드를 참조로 제시하고, 케이스 복제와 v1 import 차이 보기를 둔다.",
-      "criteria": ["WEB-05"],
-      "spec": ["docs/dev/web-ui-design.md DSL 편집", "docs/dev/web-ui-spec.md DSL 테스트 작성"],
-      "code": ["web/src/DSLEditor.svelte:37,77,85", "web/src/dsl-form.js:46-51"],
+      "criteria": [
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md DSL 편집",
+        "docs/dev/web-ui-spec.md DSL 테스트 작성"
+      ],
+      "code": [
+        "web/src/DSLEditor.svelte:37,77,85",
+        "web/src/dsl-form.js:46-51"
+      ],
       "completion": "검증 오류를 누르면 해당 statement가 선택되고, 복제한 케이스가 새 문서로 저장된다.",
       "status": "open",
       "verification": "",
@@ -390,9 +637,17 @@
       "id": "G-C09",
       "group": "design",
       "title": "입력 오류를 해당 필드(aria-invalid, aria-describedby)와 요약에 함께 연결하고 키보드 이동을 브라우저 검증한다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름", "docs/dev/web-ui-design.md 브라우저 검증"],
-      "code": ["web/src 전체에 aria-invalid가 없다", "tests/webui에 keyboard.press가 없다"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름",
+        "docs/dev/web-ui-design.md 브라우저 검증"
+      ],
+      "code": [
+        "web/src 전체에 aria-invalid가 없다",
+        "tests/webui에 keyboard.press가 없다"
+      ],
       "completion": "잘못된 필드가 aria-invalid이고 요약 항목에서 그 필드로 포커스가 옮겨지며, 키보드만으로 저장·취소하는 검증이 통과한다.",
       "status": "open",
       "verification": "",
@@ -402,9 +657,18 @@
       "id": "G-C10",
       "group": "design",
       "title": "프론트에 적은 선택지(syncMode, 역할, 작업 종류, 자격증명 종류)를 엔진 계약에서 받는다.",
-      "criteria": ["WEB-01"],
-      "spec": ["docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (프론트에 별도 어휘 표를 만들지 않는다)"],
-      "code": ["web/src/ChainPresetEditor.svelte:179-182", "web/src/DeploymentEditor.svelte:82", "web/src/JobPanel.svelte:98", "web/src/dsl-form.js:46"],
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (프론트에 별도 어휘 표를 만들지 않는다)"
+      ],
+      "code": [
+        "web/src/ChainPresetEditor.svelte:179-182",
+        "web/src/DeploymentEditor.svelte:82",
+        "web/src/JobPanel.svelte:98",
+        "web/src/dsl-form.js:46"
+      ],
       "completion": "web/src에 이 선택지 문자열 목록이 없고 화면은 계약 응답으로 선택지를 만든다.",
       "status": "open",
       "verification": "",
@@ -414,9 +678,19 @@
       "id": "G-C11",
       "group": "design",
       "title": "화면 문구를 한국어로 통일하고, 세션 로그인이 있는 화면의 예전 Basic 로그인 폼을 없애며, 색은 디자인 토큰만 쓰고 상태에 아이콘을 붙인다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (한국어 기본)", "docs/dev/web-ui-design.md 시각 기준"],
-      "code": ["web/src/DSLEditor.svelte:60-63", "web/src/ManifestManager.svelte:28-31", "web/src/DeploymentEditor.svelte:47-52", "web/src/JobPanel.svelte:125"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (한국어 기본)",
+        "docs/dev/web-ui-design.md 시각 기준"
+      ],
+      "code": [
+        "web/src/DSLEditor.svelte:60-63",
+        "web/src/ManifestManager.svelte:28-31",
+        "web/src/DeploymentEditor.svelte:47-52",
+        "web/src/JobPanel.svelte:125"
+      ],
       "completion": "web/src에 토큰 밖의 색과 Basic 로그인 폼이 없고, 상태 표시가 아이콘과 라벨을 함께 쓴다.",
       "status": "open",
       "verification": "",
@@ -426,10 +700,35 @@
       "id": "G-C12",
       "group": "design",
       "title": "모니터링 화면에서 실행·network를 고르고 작업을 취소한다.",
-      "criteria": ["WEB-08"],
-      "spec": ["docs/dev/web-ui-spec.md UI 구성과 사용 흐름 모니터링", "docs/dev/web-ui-design.md 화면별 구성 Monitoring"],
-      "code": ["web/src/MonitorPanel.svelte"],
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 모니터링",
+        "docs/dev/web-ui-design.md 화면별 구성 Monitoring"
+      ],
+      "code": [
+        "web/src/MonitorPanel.svelte"
+      ],
       "completion": "모니터링 화면에서 고른 network의 노드 표와 차트가 바뀌고 실행 중 작업을 취소할 수 있다.",
+      "status": "open",
+      "verification": "",
+      "commit": ""
+    },
+    {
+      "id": "G-C13",
+      "group": "design",
+      "title": "체인 구성 상세에 선택 바이너리의 ChainSurface(문서 출처, stale 여부, 옵션별 지원과 제외 이유)를 표시한다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 화면별 구성 Chains & Workspaces (선택 바이너리의 출처와 지원 범위)"
+      ],
+      "code": [
+        "web/src/ChainPresetEditor.svelte (surface를 읽지 않는다)"
+      ],
+      "completion": "바이너리를 고르면 상세 영역에 verification, 문서 커밋, 지원·제외 옵션과 이유가 보인다.",
       "status": "open",
       "verification": "",
       "commit": ""
@@ -438,9 +737,15 @@
       "id": "G-D01",
       "group": "defect",
       "title": "DocumentRevision이 PresetRefs를 복사하지 않아 돌려준 값이 저장된 리비전과 메모리를 공유한다.",
-      "criteria": ["WEB-02"],
-      "spec": ["docs/dev/web-ui-spec.md 데이터 모델 (저장 revision 불변)"],
-      "code": ["internal/app/deployment_store.go:271-288"],
+      "criteria": [
+        "WEB-02"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (저장 revision 불변)"
+      ],
+      "code": [
+        "internal/app/deployment_store.go:271-288"
+      ],
       "completion": "돌려받은 PresetRefs를 바꿔도 저장된 리비전이 바뀌지 않는다.",
       "status": "open",
       "verification": "",
@@ -450,9 +755,16 @@
       "id": "G-D02",
       "group": "defect",
       "title": "없는 경로 DELETE /api/v1/runs의 권한 규칙을 없애고 히스토리 삭제를 미들웨어에서도 관리자로 막는다.",
-      "criteria": ["WEB-09", "WEB-10"],
-      "spec": ["docs/dev/web-ui-spec.md 실행 모드와 권한 (역할은 서버가 판정)"],
-      "code": ["internal/dashboard/security.go:105-109"],
+      "criteria": [
+        "WEB-09",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한 (역할은 서버가 판정)"
+      ],
+      "code": [
+        "internal/dashboard/security.go:105-109"
+      ],
       "completion": "운영자의 DELETE /api/v1/history/{runId}가 미들웨어에서 403이다.",
       "status": "open",
       "verification": "",
@@ -462,9 +774,16 @@
       "id": "G-D03",
       "group": "defect",
       "title": "역할 변경·비활성화가 철회에 실패하면 변경이 적용된 채 오류만 돌려준다.",
-      "criteria": ["WEB-10", "WEB-13"],
-      "spec": ["docs/dev/web-ui-spec.md 실행 모드와 권한 (역할 변경과 비활성화는 즉시 반영)"],
-      "code": ["internal/dashboard/security.go:204-208"],
+      "criteria": [
+        "WEB-10",
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한 (역할 변경과 비활성화는 즉시 반영)"
+      ],
+      "code": [
+        "internal/dashboard/security.go:204-208"
+      ],
       "completion": "철회 실패를 주입하면 응답이 실패이고 사용자 기록이 바뀌지 않거나, 바뀐 상태와 미완료 철회가 함께 기록되어 재시도된다.",
       "status": "open",
       "verification": "",
@@ -474,9 +793,20 @@
       "id": "G-D04",
       "group": "defect",
       "title": "-deployment-accounts 모드가 Web 보안 계층(세션, CSRF, 역할, 감사)을 건너뛰고, WEB-03과 WEB-04 인수 검증이 이 모드로 서버를 띄운다.",
-      "criteria": ["WEB-03", "WEB-04", "WEB-10"],
-      "spec": ["docs/dev/web-ui-spec.md 인증과 호환성 (서버 세션과 HttpOnly 쿠키)"],
-      "code": ["cmd/chainbench-dashboard/main.go:69-93", "internal/dashboard/security.go:254-286", "tests/webui/run_web03.py:132", "tests/webui/run_web04.py:70"],
+      "criteria": [
+        "WEB-03",
+        "WEB-04",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 인증과 호환성 (서버 세션과 HttpOnly 쿠키)"
+      ],
+      "code": [
+        "cmd/chainbench-dashboard/main.go:69-93",
+        "internal/dashboard/security.go:254-286",
+        "tests/webui/run_web03.py:132",
+        "tests/webui/run_web04.py:70"
+      ],
       "completion": "Web 제어 API가 자체 계정 세션 없이 열리지 않고, WEB-03과 WEB-04가 세션 로그인으로 통과한다.",
       "status": "open",
       "verification": "",
@@ -486,9 +816,16 @@
       "id": "G-D05",
       "group": "defect",
       "title": "README의 --dashboard 예시가 지금 서버 기본값에서 401을 받고, 두 인증 모드의 실행 예시가 없다.",
-      "criteria": ["WEB-14"],
-      "spec": ["docs/dev/web-ui-spec.md 인증과 호환성 (두 모드의 인증 차이·실행 예시는 README에 명시)"],
-      "code": ["README.md:293-294", "web/README.md:20-23"],
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 인증과 호환성 (두 모드의 인증 차이·실행 예시는 README에 명시)"
+      ],
+      "code": [
+        "README.md:293-294",
+        "web/README.md:20-23"
+      ],
       "completion": "README의 두 모드 예시를 그대로 실행하면 이벤트가 각각 받아진다.",
       "status": "open",
       "verification": "",
@@ -498,13 +835,58 @@
       "id": "G-D06",
       "group": "defect",
       "title": "web-ui-implementation.md가 이미 구현된 바이너리 교체를 미완료로 적고 있다.",
-      "criteria": ["WEB-07"],
-      "spec": ["docs/dev/web-ui-worklist.md (진척의 정본은 최신 상태여야 한다)"],
-      "code": ["docs/dev/web-ui-implementation.md 마지막 절", "internal/app/web_chain_execution.go:135-170"],
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-worklist.md (진척의 정본은 최신 상태여야 한다)"
+      ],
+      "code": [
+        "docs/dev/web-ui-implementation.md 마지막 절",
+        "internal/app/web_chain_execution.go:135-170"
+      ],
       "completion": "구현 상태 문서가 코드와 같은 한계만 적는다.",
       "status": "open",
       "verification": "",
       "commit": ""
+    },
+    {
+      "id": "G-D07",
+      "group": "defect",
+      "title": "verify-docs.sh가 숨김 플래그를 '<flag> --help'로 물어, 값을 받는 플래그면 기본 데이터 디렉터리로 노드를 띄운다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (검증은 노드·DB를 변경하는 명령을 시험 실행하지 않는 격리된 검사다)"
+      ],
+      "code": [
+        "scripts/chain-analysis/verify-docs.sh"
+      ],
+      "completion": "세 실제 바이너리로 스크립트를 돌린 뒤 사용자 기본 데이터 디렉터리에 아무것도 생기지 않고 숨김·거절 판정은 같다.",
+      "status": "closed",
+      "verification": "bash scripts/chain-analysis/verify-docs.sh <binary> docs/chain-analysis/<chain> for the three selected binaries, then list ~/Library/Ethereum",
+      "commit": "4b524de7",
+      "evidence": "RED: asking hidden flags as \"<flag> --help\" created ~/Library/Ethereum/gstable and gwemix (moved to /private/tmp/chainbench-probe-leftovers-20261011). GREEN: same hidden/absent counts (2/3/0, 0 absent) and nothing created."
+    },
+    {
+      "id": "G-D08",
+      "group": "defect",
+      "title": "바이너리 신원 검사가 서버 환경 변수를 물려줘서, go-wbft가 모르는 GWEMIX_* 변수를 경고하면 version 첫 줄이 바뀌어 정상 바이너리를 거절한다.",
+      "criteria": [
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (basename이 아니라 checksum·version·커밋으로 판정)"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go manifestProbe"
+      ],
+      "completion": "GWEMIX_* 변수가 있는 환경에서도 세 실제 바이너리의 신원 검사가 통과한다.",
+      "status": "closed",
+      "verification": "GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries (run with GWEMIX_BIN set)",
+      "commit": "4b524de7",
+      "evidence": "RED: on 249fd11c, Verify refused the go-wbft binary with \"binary program identity does not match chain build contract\" while GWEMIX_BIN was set. GREEN: probes run with a minimal environment and all three binaries verify."
     }
   ]
 }
