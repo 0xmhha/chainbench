@@ -14,6 +14,12 @@ import uuid
 from runtime_contract import runtime_root
 from browser_process import run_browser
 
+def publish_restart_response(runtime, payload):
+    """The browser reads restart.response as soon as it exists, so it appears only once complete."""
+    partial=runtime/'restart.response.partial'
+    partial.write_text(json.dumps(payload))
+    os.replace(partial,runtime/'restart.response')
+
 def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart=False, fixture_inputs=None, browser_timeout=300):
     output=Path('chainbench-out/web-ui-development')/proof_name
     output.mkdir(parents=True,exist_ok=True)
@@ -56,10 +62,10 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
                         urllib.request.urlopen(url+'/healthz',timeout=1).close();break
                     except OSError:time.sleep(.1)
                 else:raise RuntimeError('restarted dashboard did not listen')
-                (runtime/'restart.response').write_text(json.dumps({'oldPid':old_pid,'newPid':server.pid}))
+                publish_restart_response(runtime,{'oldPid':old_pid,'newPid':server.pid})
             except Exception as error:
                 restart_errors.append(error)
-                (runtime/'restart.response').write_text(json.dumps({'error':str(error)}))
+                publish_restart_response(runtime,{'error':str(error)})
             return # One explicitly requested restart of this fixture only.
     try:
         url='http://127.0.0.1:'+str(port)
