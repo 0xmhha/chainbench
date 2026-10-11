@@ -427,9 +427,10 @@
         "internal/app/web_config_change.go:27-58 (syncMode, httpHost, metricsHost 선택지만)"
       ],
       "completion": "등록한 설정 자료로 교체한 노드가 그 설정으로 다시 시작하고, 엔진이 모르는 키는 거절된다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestRegisteredConfigFilesBecomeReviewedConfigChanges|TestConfigChangesComeFromThePinnedRegisteredFile\"; the WEB-07 config replacement proof is to select a registered file in the acceptance rerun",
+      "commit": "58c44254",
+      "evidence": "RED (/private/tmp/chainbench-web-b15-red.log): there was no way to name a registered configuration file; node.swap took only typed enum choices. GREEN: configAssetId selects a registered configuration asset; its JSON or YAML values are limited to the knobs the engine renders (syncMode choices, IP addresses for hosts), pinned with its checksum in the plan, rechecked before execution and applied through the existing replacement path; it cannot be combined with typed choices. The engine renders only these three knobs, so a file naming anything else is refused."
     },
     {
       "id": "G-B16",
