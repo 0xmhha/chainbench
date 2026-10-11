@@ -247,6 +247,10 @@ try {
   await page.getByLabel('작업 서버 이름', {exact: true}).selectOption('local')
   await page.getByLabel('실행 케이스 ' + forkDoc.id, {exact: true}).check()
   await page.getByLabel('테스트 바이너리 next', {exact: true}).selectOption('wbft')
+  // Removing nodes is never carried over from the previous job's draft; the
+  // fork network is cleaned only because it is chosen here.
+  assert.equal(await page.getByLabel('작업 종료 후 처리', {exact: true}).inputValue(), 'retain', 'the draft carried node cleanup into a new job')
+  await page.getByLabel('작업 종료 후 처리', {exact: true}).selectOption('cleanup')
   await page.getByRole('button', {name: '실행 계획 확인', exact: true}).click()
   const forkPlan = page.getByLabel('실행 계획', {exact: true})
   await forkPlan.waitFor({timeout: 60000})
@@ -259,6 +263,7 @@ try {
   for (let i = 0; i < 9000; i++) { forkDone = await api('jobs/' + forkJob.id); if (['succeeded', 'failed', 'cancelled', 'interrupted'].includes(forkDone.state)) break; await sleep(200) }
   fs.writeFileSync(path.join(out, 'fork-job.json'), JSON.stringify(forkDone, null, 2))
   assert.equal(forkDone.state, 'succeeded', JSON.stringify(forkDone))
+  assert.equal(forkDone.nodeDisposition, 'cleaned', 'the forked network was not cleaned up: ' + forkDone.nodeDisposition)
   assert.ok(forkDone.partialEffects.some(v => v.includes('"next" provisioned')), 'the successor build was not provisioned')
   observed('live-execution', [`Web test job ${done.id} ran ${cases.length} saved cases on native gstable and succeeded`, `Web test job ${forkDone.id} crossed the croissant fork from gwemix to the registered wbft build and succeeded`])
 

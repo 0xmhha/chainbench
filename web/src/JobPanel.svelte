@@ -107,14 +107,15 @@
     if(workspaces.some(w=>w.id===d.workspaceId))workspaceId=d.workspaceId
     if(manifests.some(m=>m.id===d.manifestId))manifestId=d.manifestId
     if(assets.some(a=>a.id===d.assetId))assetId=d.assetId
-    for(const [k,set] of [['operation',v=>operation=v],['serverRef',v=>serverRef=v],['nodeId',v=>nodeId=v],['retention',v=>retention=v],['presetId',v=>presetId=v],['validators',v=>validators=v],['runDefinitionId',v=>runDefinitionId=v]])if(d[k]!==undefined)set(d[k])
+    for(const [k,set] of [['operation',v=>operation=v],['serverRef',v=>serverRef=v],['nodeId',v=>nodeId=v],['presetId',v=>presetId=v],['validators',v=>validators=v],['runDefinitionId',v=>runDefinitionId=v]])if(d[k]!==undefined)set(d[k])
     if(Array.isArray(d.caseIds))caseIds=d.caseIds
   }
   // Saved on the user's own edits only: while the form is being taken down
   // its fields read empty, and that must not overwrite what the user chose.
+  // Retention is left out: removing nodes is chosen again for every job.
   function saveDraft(){
     if(!loaded)return
-    const d={workspaceId,manifestId,assetId,operation,serverRef,nodeId,retention,presetId,validators,runDefinitionId,caseIds:[...caseIds]}
+    const d={workspaceId,manifestId,assetId,operation,serverRef,nodeId,presetId,validators,runDefinitionId,caseIds:[...caseIds]}
     try{sessionStorage.setItem(draftKey,JSON.stringify(d))}catch{}
   }
   // A control chosen on a node page fills the form; the binary is the one the
