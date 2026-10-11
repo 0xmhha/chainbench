@@ -28,6 +28,10 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 				fn(w, r, a)
 			})
 		}
+		s.contracts = append(s.contracts, "jobs")
+		route("GET /api/v1/contracts/jobs", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			deploymentJSON(w, http.StatusOK, app.JobsContract())
+		})
 		route("GET /api/v1/snapshot", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) { s.handleJobSnapshot(w, r) })
 		route("GET /api/v1/events", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			s.handleJobEvents(w, r, authenticate)

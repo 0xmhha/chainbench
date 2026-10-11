@@ -126,7 +126,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if err := e.allowed(a); err != nil {
 		return out, err
 	}
-	if in.Operation != "chain.setup" && in.Operation != "chain.deploy" && !webNodeControlOperation(in.Operation) && in.Operation != "test.run" && in.Operation != webTestAttachOperation && in.Operation != webNetworkMonitorOperation {
+	if !webKnownOperation(in.Operation) {
 		return out, errors.New("operation requires an execution adapter that is not available")
 	}
 	var args webChainArguments

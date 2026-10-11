@@ -42,13 +42,18 @@ export function initial(schema, root) {
   if (schema.type === 'integer' || schema.type === 'number') return 0
   return ''
 }
-export function references(doc) {
-  const nodes = ['bp','en','pn']
+// references lists the node names and prior variable bindings a statement may
+// use. roles are the node roles the chain contract lists, in its order, and
+// defaults their counts when the case declares no topology. An attached
+// network's RPC endpoints are addressed by position only, as node1..nodeN.
+export function references(doc, roles = [], defaults = {}) {
+  const nodes = [...roles]
   const legacy=doc?.schemaVersion==='1'
   const preset = legacy?{topology:doc.topology,accounts:{}}:typeof doc?.chainPreset === 'object' ? doc.chainPreset : {}
-  const topology = preset?.topology ?? (preset?.attach?{en:preset.attach.rpc?.length??0}:{bp:4})
+  const attached = preset?.attach ? {nodes:(preset.attach.rpc??[]).map(()=>({}))} : null
+  const topology = preset?.topology ?? attached ?? defaults
   if (topology.nodes) topology.nodes.forEach((n,i) => nodes.push(`node${n.index ?? i+1}`))
-  else { let count=0; for (const role of ['bp','en','pn']) for(let i=1;i<=(topology[role]??0);i++){nodes.push(`${role}${i}`);nodes.push(`node${++count}`)} }
+  else { let count=0; for (const role of roles) for(let i=1;i<=(topology[role]??0);i++){nodes.push(`${role}${i}`);nodes.push(`node${++count}`)} }
   const bindings = []
   const before = new Map()
   const lists=legacy?[['/content/preActions',doc?.preActions],['/content/steps',doc?.steps],['/content/assertions',doc?.assertions],['/content/postActions',doc?.postActions]]:[['/content/hooks/pre',doc?.hooks?.pre],['/content/steps',doc?.steps],['/content/hooks/post',doc?.hooks?.post],['/content/hooks/onFail',doc?.hooks?.onFail]]

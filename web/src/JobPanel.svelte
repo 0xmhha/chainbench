@@ -15,7 +15,9 @@
   let conflicts=$state([]), conflictsChecked=$state(false), conflictsAt=$state('')
   let plan=$state(null), busy=$state(false), error=$state(''), loaded=$state(false)
   let catalogLoading=$state(false), catalogMessage=$state(''), loadVersion=0
-  $effect(()=>{if(testOnly&&operation!=='test.run'&&operation!=='test.attach')operation='test.run'})
+  let operations=$state([])
+  const offered=$derived(operations.filter(o=>!testOnly||o.scope==='test'))
+  $effect(()=>{if(offered.length&&!offered.some(o=>o.id===operation))operation=offered[0].id})
   const actor=$derived(webSession?.user)
   const canEdit=$derived(actor && actor.role!=='viewer')
   const workspace=$derived(workspaces.find(w=>w.id===workspaceId))
@@ -69,8 +71,9 @@
     const version=++loadVersion,userId=webSession?.user.id
     catalogLoading=true;changed()
     try {
-      const values=await Promise.all([allItems(api,'workspaces').then(items=>({items})),api('manifests'),api('manifest-assets'),api('jobs'),allItems(api,'documents').then(items=>({items})),api('networks')])
+      const values=await Promise.all([allItems(api,'workspaces').then(items=>({items})),api('manifests'),api('manifest-assets'),api('jobs'),allItems(api,'documents').then(items=>({items})),api('networks'),api('contracts/jobs')])
       if(version!==loadVersion||webSession?.user.id!==userId)return
+      operations=values[6].operations
       const missing=new Map()
       for(const w of values[0].items)for(const ref of w.documents){
         if(!values[4].items.some(d=>d.id===ref.id&&d.revision===ref.revision))missing.set(`${ref.id}:${ref.revision}`,ref)
@@ -102,7 +105,7 @@
           <label>Workspace<select aria-label="작업 Workspace" bind:value={workspaceId}><option value="">선택</option>{#each workspaces as w}<option value={w.id}>{w.name} · r{w.revision}</option>{/each}</select></label>
           {#if !logCollection}<label>매니페스트<select aria-label="작업 매니페스트" bind:value={manifestId} onchange={()=>{assetId='';caseIds=[];presetId='';changed()}}><option value="">선택</option>{#each manifests as m}<option value={m.id}>{m.manifest.id}</option>{/each}</select></label>
           <label>바이너리<select aria-label="작업 바이너리" bind:value={assetId}><option value="">등록 파일 선택 · 계획에서 검증</option>{#each assets.filter(a=>a.chain===(manifest?.manifest.protocol||manifest?.manifest.id)) as a}<option value={a.id}>{a.id} · {a.sha256.slice(0,12)}</option>{/each}</select></label>{/if}
-          <label>작업<select aria-label="작업 종류" bind:value={operation}>{#if !testOnly}<option value="chain.setup">설정 생성 · 노드 초기화</option><option value="chain.deploy">노드 구축 · 실행</option><option value="node.start">노드 시작</option><option value="node.stop">노드 정지</option><option value="node.restart">노드 재실행 · 자료 보존</option><option value="node.swap">설정·바이너리 교체 · 재실행</option><option value="node.reset">비생산자 초기화 · 정지 상태로 유지</option><option value="network.monitor">SSH 노드 로그 수집 · 취소할 때까지</option>{/if}<option value="test.run">저장한 DSL 케이스 실행</option><option value="test.attach">기록된 네트워크에 연결해 케이스 실행</option></select></label>
+          <label>작업<select aria-label="작업 종류" bind:value={operation}>{#each offered as o}<option value={o.id} title={o.description}>{o.label}</option>{/each}</select></label>
           <label>서버<select aria-label="작업 서버 이름" bind:value={serverRef}><option value="">서버 선택</option>{#each servers as host}<option value={typeof host==='string'?host:host.name||host.addr}>{typeof host==='string'?host:host.name||host.addr}</option>{/each}{#if operation!=='test.run'&&servers.length>1}<option value="*all*">서버 세트 전체</option>{/if}</select></label>{#if serverRef==='*all*'}<p data-testid="spread-explanation">구성 작업은 노드를 서버 세트의 모든 서버에 순서대로 나누어 배치합니다. 이미 여러 서버에 나뉜 네트워크의 노드 제어·attach 테스트·로그 수집도 이 선택으로 하며, 각 노드는 자기 서버에서 확인하고 제어합니다. 원격 서버마다 내 SSH 자격증명이 필요합니다.</p>{/if}
           {#if !testRun&&!nodeControl&&!logCollection}<label>저장한 체인 구성<select aria-label="작업 체인 구성" bind:value={presetId}><option value="">기본 구성 · 생산자 수 지정</option>{#each presets as p}<option value={p.id}>{p.name} · r{p.revision}</option>{/each}</select></label>{/if}
           {#if !testRun&&!nodeControl&&!preset&&!logCollection}<label>생산자 수<input aria-label="작업 생산자 수" type="number" min="1" max="128" bind:value={validators} /></label>{/if}

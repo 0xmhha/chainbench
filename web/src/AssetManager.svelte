@@ -3,7 +3,7 @@
   import { allItems } from './pages.mjs'
   let { webSession, onuploaded = () => {} } = $props()
   let items = $state([]), kind = $state('binary'), selected = $state(null), busy = $state(false), message = $state(''), filter = $state('all')
-  const writable = $derived(['administrator', 'admin', 'operator'].includes(webSession?.user.role))
+  const writable = $derived(['administrator', 'operator'].includes(webSession?.user.role))
   const visible = $derived(items.filter(item => filter === 'all' || item.kind === filter))
   const names = {binary:'체인 바이너리',configuration:'설정 선언',template:'템플릿',material:'테스트 자료'}
   async function refresh() {

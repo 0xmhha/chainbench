@@ -3,6 +3,7 @@
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
+  import { topologyChoices } from './chain-contract.mjs'
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
   let contract = $state(null)
@@ -19,6 +20,7 @@
   const genesisAsset = $derived(document?.genesis?.ref?.startsWith('asset:') ? document.genesis.ref.slice(6) : '')
   const genesisChoices = $derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
   const assetRefs = $derived(genesisAsset ? [genesisAsset] : [])
+  const topology = $derived(topologyChoices(contract))
 
   async function shared(path, method = 'GET', data, expectedRevision) {
     const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': webSession?.csrfToken ?? '' }
@@ -125,8 +127,8 @@
 
   function origin(field) {
     const value = document.topology?.[field]
-    if (value === undefined) return 'Engine default'
-    return value === inherited.topology?.[field] ? 'Inherited from preset' : 'Your override'
+    if (value === undefined) return '엔진 기본값'
+    return value === inherited.topology?.[field] ? '프리셋에서 물려받음' : '직접 바꿈'
   }
 
   async function validate() {
@@ -175,28 +177,28 @@
       {/if}
       {#if !document.topology?.nodes}
         <div class="fields">
-          {#each [['bp', 'Block producers'], ['en', 'Endpoints'], ['pn', 'Proxies']] as [field, label]}
+          {#each topology.counts as f}
             <div>
-              <label for={`count-${field}`}>{label}</label>
-              <input id={`count-${field}`} disabled={!writable} type="number" min={field === 'bp' ? 1 : 0} step="1"
-                value={document.topology?.[field] ?? ''} oninput={event => update(field, event.target.value)} />
-              <small>{origin(field)} · {document.topology?.[field] ?? (field === 'bp' ? 4 : 0)} applied</small>
+              <label for={`count-${f.id}`}>{f.title}</label>
+              <input id={`count-${f.id}`} disabled={!writable} type="number" min={f.minimum} step="1"
+                value={document.topology?.[f.id] ?? ''} oninput={event => update(f.id, event.target.value)} />
+              <small>{origin(f.id)} · {document.topology?.[f.id] ?? topology.defaults[f.id]}개 적용</small>
             </div>
           {/each}
         </div>
         <details>
-          <summary>Optional settings</summary>
-          <label for="sync-mode">Sync mode</label>
-          <select disabled={!writable} id="sync-mode" value={document.topology?.syncMode ?? ''} onchange={event => update('syncMode', event.target.value)}>
-            <option value="">Engine default (full)</option>
-            <option value="full">Full</option>
-            <option value="snap">Snap</option>
-            <option value="archive">Archive</option>
-          </select>
-          <small>{origin('syncMode')}</small>
+          <summary>선택 설정</summary>
+          {#if topology.sync}
+            <label for="sync-mode">{topology.sync.title}</label>
+            <select disabled={!writable} id="sync-mode" value={document.topology?.syncMode ?? ''} onchange={event => update('syncMode', event.target.value)}>
+              <option value="">엔진 기본값 ({topology.sync.default})</option>
+              {#each topology.sync.options as option}<option value={option}>{option}</option>{/each}
+            </select>
+            <small>{origin('syncMode')}</small>
+          {/if}
         </details>
       {:else}
-        <p>This preset declares each node individually. Its node table is preserved.</p>
+        <p>이 프리셋은 노드를 하나씩 선언합니다. 노드 표는 그대로 유지됩니다.</p>
       {/if}
       {#if contract && writable}
         <details class="structured"><summary>All configuration fields</summary>

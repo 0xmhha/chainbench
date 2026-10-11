@@ -82,10 +82,10 @@ func ChainPresetContract(chain string) (map[string]any, error) {
 	props["chain"] = map[string]any{"const": chain}
 	props["topology"] = map[string]any{"oneOf": []any{
 		map[string]any{"type": "object", "title": "Node counts", "additionalProperties": false, "properties": map[string]any{
-			"bp":       map[string]any{"type": "integer", "minimum": 1, "default": 4},
-			"en":       map[string]any{"type": "integer", "minimum": 0, "default": 0},
-			"pn":       map[string]any{"type": "integer", "minimum": 0, "default": 0},
-			"syncMode": map[string]any{"type": "string", "enum": []string{"full", "snap", "archive"}, "default": "full"},
+			"bp":       map[string]any{"type": "integer", "minimum": 1, "default": 4, "title": "블록 생산자"},
+			"en":       map[string]any{"type": "integer", "minimum": 0, "default": 0, "title": "엔드포인트"},
+			"pn":       map[string]any{"type": "integer", "minimum": 0, "default": 0, "title": "프록시"},
+			"syncMode": map[string]any{"type": "string", "enum": []string{"full", "snap", "archive"}, "default": "full", "title": "동기화 방식"},
 		}},
 		map[string]any{"type": "object", "title": "Node table", "additionalProperties": false, "required": []string{"nodes"}, "properties": map[string]any{
 			"nodes": map[string]any{"type": "array", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"role"}, "properties": map[string]any{

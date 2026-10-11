@@ -63,3 +63,31 @@ func TestWorkspaceNetworksListOnlyThatWorkspace(t *testing.T) {
 		t.Fatalf("%d %s", w.Code, w.Body)
 	}
 }
+
+func TestJobsContractListsOperationsToSignedInUsers(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), networkFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	srv := NewServer(bus, nil, WithWebJobs(jobs, func(r *http.Request) (app.DeploymentActor, error) {
+		if r.Header.Get("fixture-actor") == "" {
+			return app.DeploymentActor{}, errors.New("unauthenticated")
+		}
+		return app.DeploymentActor{ID: "reader", Role: "viewer"}, nil
+	}))
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/contracts/jobs", nil))
+	if w.Code != 401 {
+		t.Fatalf("anonymous read: %d", w.Code)
+	}
+	r := httptest.NewRequest("GET", "/api/v1/contracts/jobs", nil)
+	r.Header.Set("fixture-actor", "reader")
+	w = httptest.NewRecorder()
+	srv.ServeHTTP(w, r)
+	var c app.WebJobsContract
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &c) != nil || len(c.Operations) != len(app.JobsContract().Operations) {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}

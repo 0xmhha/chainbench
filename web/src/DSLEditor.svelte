@@ -4,6 +4,7 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
  import Field from './DSLField.svelte'
  import {references,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
+ import {topologyChoices,caseChain} from './chain-contract.mjs'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
  const role=$derived(webSession?.user.role)
  let contract=$state(null),vocabulary=$state(null),document=$state(null),original=$state(null),presets=$state({})
@@ -12,7 +13,11 @@
  let assets=$state([]),genesisBackup=$state(null)
  const genesisAssets=$derived(assets.filter(a=>a.kind==='template'&&a.compatibility?.format==='json'))
  const selectedGenesis=$derived(caseAssetRefs(document)[0]??'')
- const suggestions=$derived(references(document))
+ let chainContract=$state(null)
+ const chain=$derived(caseChain(document,presets))
+ const topology=$derived(topologyChoices(chainContract))
+ const suggestions=$derived(references(document,topology.roles,topology.defaults))
+ $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
  async function refreshSaved(){savedCases=await allItems(api,'documents?kind=case')}
  async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;change(structuredClone(item.content));if(role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
