@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 53 | 78,808 |
-| `cmd/` | 19 | 5,227 |
+| `internal/` | 53 | 78,872 |
+| `cmd/` | 19 | 5,252 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **76** | **84,960** |
+| **합계** | **76** | **85,049** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 16패키지 55,252줄
+## 3. 자원 · 테스트 · 표면 — 16패키지 55,316줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -181,7 +181,7 @@ internal/feature     527  [L5] 기능 등록의 한 자리 — Descriptor·Regis
 
 internal/mcp       2,806  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
-internal/dashboard 2,239  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
+internal/dashboard 2,303  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 
 internal/arch      1,407  (층 없음) layers.md · chainbench-system-direction.md 의 규칙을 강제하는 테스트.
                           제품 코드 0, import 0 — 문서를 읽고 측정과 맞춰 본다
@@ -191,7 +191,7 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,227줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,252줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
@@ -220,7 +220,7 @@ cmd/chainbench           269  main. 사용자용 CLI(요구 15) 루트 조립
 ├── filecmd              123  서버 데이터 플레인과 파일 주고받기
 └── catalogcmd           145  "이 빌드가 무엇을 아는가" — 구성 가능한 체인, 등록된 capability. 네트워크를 건드리지 않는다
 cmd/chainbench-mcp        56  main. MCP 표면(요구 14)을 stdio 로 — stdin 의 줄 단위 JSON-RPC 를 읽어 mcp 도구로 디스패치
-cmd/chainbench-dashboard 165  main. 대시보드 데몬(요구 19) — obs 이벤트 버스와 run 저장소를 HTTP+SSE 로 호스팅
+cmd/chainbench-dashboard 190  main. 대시보드 데몬(요구 19) — obs 이벤트 버스와 run 저장소를 HTTP+SSE 로 호스팅
 ```
 
 ---

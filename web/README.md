@@ -19,8 +19,11 @@ changes.
 
 The normal daemon requires an account session in personal and team modes. The
 first administrator uses the private `setup.token` in the Web data directory.
-CLI event producers use `CHAINBENCH_PUBLISHER_TOKEN`, which authorizes event
-ingestion only. `-legacy-observation` explicitly selects a loopback observer.
+Personal mode listens only on loopback; team mode on a reachable address needs
+`-tls-cert`/`-tls-key` or `-trusted-proxy`. CLI event producers use
+`CHAINBENCH_PUBLISHER_TOKEN`, which authorizes event ingestion only.
+`-legacy-observation` explicitly selects a loopback observer without control
+APIs for producers without a token. The repository README shows each command.
 
 Provision native binaries with `-manifest-assets` to enable local and SSH durable jobs.
 The browser reviews a short-lived plan before submitting it. Jobs survive browser

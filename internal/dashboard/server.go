@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"slices"
 	"strings"
 	"time"
@@ -41,6 +42,8 @@ type Server struct {
 	// contracts names the engine contracts the enabled options serve under
 	// /api/v1/contracts/{contractId}.
 	contracts []string
+	// trustedProxies are TLS terminators whose forwarded scheme is believed.
+	trustedProxies []netip.Prefix
 }
 
 // Option configures a Server.

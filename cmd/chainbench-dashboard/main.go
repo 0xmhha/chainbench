@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/app"
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
@@ -32,10 +34,33 @@ func main() {
 	legacy := flag.Bool("legacy-observation", false, "loopback-only legacy event observer without control APIs")
 	tlsCert := flag.String("tls-cert", "", "TLS certificate for the web service")
 	tlsKey := flag.String("tls-key", "", "TLS private key for the web service")
+	trusted := flag.String("trusted-proxy", "", "comma-separated addresses or CIDRs of TLS terminators whose X-Forwarded-Proto is trusted")
 	flag.Parse()
 	if (*tlsCert == "") != (*tlsKey == "") {
 		fmt.Fprintln(os.Stderr, "TLS certificate and key must be configured together")
 		os.Exit(1)
+	}
+	var proxies []netip.Prefix
+	for _, raw := range strings.Split(*trusted, ",") {
+		if raw = strings.TrimSpace(raw); raw == "" {
+			continue
+		}
+		prefix, err := netip.ParsePrefix(raw)
+		if err != nil {
+			ip, ipErr := netip.ParseAddr(raw)
+			if ipErr != nil {
+				fmt.Fprintln(os.Stderr, "trusted proxy:", err)
+				os.Exit(1)
+			}
+			prefix = netip.PrefixFrom(ip, ip.BitLen())
+		}
+		proxies = append(proxies, prefix)
+	}
+	if !*legacy && *deploymentAccounts == "" {
+		if err := dashboard.ValidateServiceMode(*webMode, *addr, *tlsCert != "", proxies); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 	if *legacy {
 		host, _, err := net.SplitHostPort(*addr)
@@ -49,7 +74,7 @@ func main() {
 	defer bus.Close()
 	store := collector.NewMemStore()
 
-	var opts []dashboard.Option
+	opts := []dashboard.Option{dashboard.WithTrustedProxies(proxies)}
 	if !*legacy && *presetRoot != "" {
 		opts = append(opts, dashboard.WithChainPresets(*presetRoot))
 	}

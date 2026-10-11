@@ -70,10 +70,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 				}
 			}()
 			public := path == "/api/v1/bootstrap" || path == "/api/v1/auth/login" || path == "/api/v1/auth/config"
-			scheme := "http"
-			if r.TLS != nil {
-				scheme = "https"
-			}
+			scheme := s.requestScheme(r)
 			if r.Method != "GET" && r.Method != "HEAD" {
 				origin := r.Header.Get("Origin")
 				if (origin != "" && origin != scheme+"://"+r.Host) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
@@ -135,7 +132,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 			}
 		}
 		setSession := func(w http.ResponseWriter, r *http.Request, session app.WebSession, token string, status int) {
-			http.SetCookie(w, &http.Cookie{Name: webCookie, Value: token, Path: "/", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, Expires: session.ExpiresAt})
+			http.SetCookie(w, &http.Cookie{Name: webCookie, Value: token, Path: "/", HttpOnly: true, Secure: s.requestScheme(r) == "https", SameSite: http.SameSiteStrictMode, Expires: session.ExpiresAt})
 			deploymentJSON(w, status, session)
 		}
 		s.mux.HandleFunc("POST /api/v1/bootstrap", func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +178,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 		s.mux.HandleFunc("POST /api/v1/auth/logout", func(w http.ResponseWriter, r *http.Request) {
 			c, _ := r.Cookie(webCookie)
 			auth.Logout(c.Value)
-			http.SetCookie(w, &http.Cookie{Name: webCookie, Path: "/", HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteStrictMode, MaxAge: -1})
+			http.SetCookie(w, &http.Cookie{Name: webCookie, Path: "/", HttpOnly: true, Secure: s.requestScheme(r) == "https", SameSite: http.SameSiteStrictMode, MaxAge: -1})
 			w.WriteHeader(204)
 		})
 		s.mux.HandleFunc("GET /api/v1/auth/config", func(w http.ResponseWriter, r *http.Request) {
@@ -284,10 +281,7 @@ func legacyWebSecurity(s *Server, store *app.DeploymentStore, authenticate Deplo
 			return
 		}
 		if r.Method != "GET" && r.Method != "HEAD" {
-			scheme := "http"
-			if r.TLS != nil {
-				scheme = "https"
-			}
+			scheme := s.requestScheme(r)
 			origin := r.Header.Get("Origin")
 			readComparison := r.Method == "POST" && r.URL.Path == "/api/v1/history/compare"
 			if (actor.Role == "viewer" && !readComparison) || (origin != "" && origin != scheme+"://"+r.Host) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {

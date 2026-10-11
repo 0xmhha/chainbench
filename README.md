@@ -286,11 +286,40 @@ catalog. Either way the chain package must be blank-imported from
 
 ## Dashboard
 
-`chainbench-dashboard` serves a Server-Sent Events stream at `/events`, run
-state at `/api/runs`, and a built Svelte SPA under `/app/`.
+`chainbench-dashboard` serves the Web UI, a Server-Sent Events stream at
+`/events` and run state at `/api/runs`. Every route needs a signed-in account
+except event ingestion, which takes a publisher token.
+
+Personal mode (the default) listens only on loopback. The first administrator
+signs up with the one-time `setup.token` in the data directory
+(`chainbench-out/web-ui` unless `-deployment-root` says otherwise):
 
 ```bash
-chainbench-dashboard --addr 127.0.0.1:8787 &
+chainbench-dashboard -addr 127.0.0.1:8787
+```
+
+Team mode on an address other machines reach must terminate TLS itself or name
+the TLS terminator in front of it; the server refuses to start otherwise:
+
+```bash
+chainbench-dashboard -web-mode team -addr 0.0.0.0:8443 -tls-cert cert.pem -tls-key key.pem
+chainbench-dashboard -web-mode team -addr 10.0.0.2:8787 -trusted-proxy 10.0.0.5
+```
+
+CLI runs send their events in one of two ways. With a publisher token, the
+service keeps every control API and the token authorizes event ingestion only:
+
+```bash
+export CHAINBENCH_PUBLISHER_TOKEN=$(openssl rand -hex 32)
+chainbench-dashboard -addr 127.0.0.1:8787 &
+chainbench verify --workspace-dir /tmp/cb --dashboard http://127.0.0.1:8787
+```
+
+A producer without a token is accepted only by the loopback legacy observer,
+which has no control APIs and no accounts:
+
+```bash
+chainbench-dashboard -legacy-observation -addr 127.0.0.1:8787 &
 chainbench verify --workspace-dir /tmp/cb --dashboard http://127.0.0.1:8787
 ```
 
