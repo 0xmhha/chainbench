@@ -83,6 +83,7 @@ try{
  await page.reload() // The page shares the context cookie from the login above.
  await page.getByTestId('metric-coverage').filter({hasText:'collector_stopped'}).waitFor({timeout:20000})
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:out+'/monitoring-mobile.png',fullPage:true})
- assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'monitoring mobile overflow')
+ const wide=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth?[]:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(-5).map(e=>e.tagName+'.'+e.className+' '+Math.round(e.getBoundingClientRect().right)+' '+(e.textContent||'').slice(0,60)))
+ assert.deepEqual(wide,[],'monitoring mobile overflow')
  fs.writeFileSync(out+'/browser.json',JSON.stringify({browserVersion:owned.browser.version(),job:{id:job.id,state:job.state,runIds:job.runIds},nodes:labels,rpcAndMetricsSources:true,timeLinkedNativeLogs:true,viewerReadOnly:true,restartGapReported:true,archivedAcrossRestart:true,seedAcceptanceAwarded:false},null,2))
 }finally{await owned.stop()}
