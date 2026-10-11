@@ -71,6 +71,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 				s.mux.HandleFunc(pattern, handler)
 			}
 		}
+		s.contracts = append(s.contracts, "deployment")
 		route("GET /api/v1/contracts/deployment", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			deploymentJSON(w, 200, app.DeploymentContract())
 		})

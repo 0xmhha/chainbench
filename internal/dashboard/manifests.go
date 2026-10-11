@@ -55,6 +55,7 @@ func WithManifests(store *app.ManifestStore, authenticate DeploymentAuthenticato
 				fn(w, r, a)
 			})
 		}
+		s.contracts = append(s.contracts, "manifest")
 		route("GET /api/v1/contracts/manifest", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			deploymentJSON(w, 200, map[string]any{"contractVersion": "2", "families": registry.FamilyNames(), "dialects": nodeconfig.DialectNames(), "protocols": registry.Names()})
 		})

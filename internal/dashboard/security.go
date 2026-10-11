@@ -48,7 +48,9 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 				return
 			}
 			w.Header().Set("Cache-Control", "no-store")
-			response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: deployments.RedactWeb, explain: r.Method != http.MethodGet && r.Method != http.MethodHead}
+			requestID := newRequestID()
+			w.Header().Set("X-Request-ID", requestID)
+			response := &secureResponse{ResponseWriter: w, status: http.StatusOK, redact: deployments.RedactWeb, explain: r.Method != http.MethodGet && r.Method != http.MethodHead, requestID: requestID}
 			// This endpoint is generated exclusively from parser/dialect metadata.
 			// A schema property named password describes a file-path option,
 			// rather than containing credential material. Preserve its schema.
@@ -57,10 +59,14 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 			}
 			actor := "unauthenticated"
 			// Record server-selected route patterns only: attacker-controlled URLs may contain secrets.
-			operation := "web.request"
+			// A request refused before routing is recorded under the route it would have reached.
+			_, operation := s.mux.Handler(r)
+			if operation == "" || operation == "GET /" {
+				operation = "web.request"
+			}
 			defer func() {
 				if r.Method != "GET" || response.status >= 400 {
-					_ = auth.AuditWeb(actor, operation, response.status)
+					_ = auth.AuditWebRequest(actor, operation, auditTarget(r, operation, deployments.RedactWeb), requestID, response.status)
 				}
 			}()
 			public := path == "/api/v1/bootstrap" || path == "/api/v1/auth/login" || path == "/api/v1/auth/config"
@@ -106,13 +112,17 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 					http.Error(response, "administrator required", http.StatusForbidden)
 					return
 				}
+				if path == "/api/v1/audit" && session.User.Role != "administrator" {
+					http.Error(response, "administrator required", http.StatusForbidden)
+					return
+				}
 				if r.Method == "DELETE" && strings.HasPrefix(path, "/api/v1/runs") && session.User.Role != "administrator" {
 					http.Error(response, "administrator required", http.StatusForbidden)
 					return
 				}
 			}
 			if r.Method != "GET" && r.Method != "HEAD" {
-				if err := auth.AuditWeb(actor, "web.accepted", 0); err != nil {
+				if err := auth.AuditWebRequest(actor, "web.accepted", "", requestID, 0); err != nil {
 					http.Error(response, "audit unavailable", http.StatusInternalServerError)
 					return
 				}
@@ -220,6 +230,8 @@ type secureResponse struct {
 	errored bool
 	// explain lets a state-changing request see why its input was refused.
 	explain bool
+	// requestID is the id the response header and error body carry.
+	requestID string
 }
 
 func (w *secureResponse) WriteHeader(status int) {
@@ -236,7 +248,7 @@ func (w *secureResponse) Write(b []byte) (int, error) {
 			return len(b), nil
 		}
 		w.errored = true
-		_, err := w.ResponseWriter.Write(webErrorBody(w.status, b, w.redact, w.explain))
+		_, err := w.ResponseWriter.Write(webErrorBody(w.status, b, w.redact, w.explain, w.requestID))
 		return len(b), err
 	}
 	_, err := w.ResponseWriter.Write([]byte(w.redact(string(b))))
@@ -293,8 +305,11 @@ const webValidationLimit = 2048
 // validation (400, 409, 422), whose reason the user needs to correct the input.
 // That reason is redacted for registered secrets and personal credentials;
 // viewers never reach a write route, so only editors read these reasons.
-func webErrorBody(status int, original []byte, redact func(string) string, explain bool) []byte {
-	body := map[string]any{"code": http.StatusText(status), "message": http.StatusText(status), "requestId": "web-rejected"}
+func webErrorBody(status int, original []byte, redact func(string) string, explain bool, requestID string) []byte {
+	if requestID == "" {
+		requestID = newRequestID()
+	}
+	body := map[string]any{"code": http.StatusText(status), "message": http.StatusText(status), "requestId": requestID}
 	if explain && (status == http.StatusBadRequest || status == http.StatusConflict || status == http.StatusUnprocessableEntity) {
 		var structured map[string]any
 		text := strings.TrimSpace(redact(string(original)))

@@ -132,6 +132,9 @@ func main() {
 			os.Exit(1)
 		}
 		opts = append(opts, dashboard.WithWebHistory(history, authenticate))
+		if auth != nil {
+			opts = append(opts, dashboard.WithWebAudit(auth, deployments, jobs, history, manifests))
+		}
 		monitor, err := app.OpenWebMonitor(*deploymentRoot, deployments.RedactWeb)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "observation store:", err)

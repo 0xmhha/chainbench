@@ -71,6 +71,15 @@ func (s *ManifestFiles) Pin(dir string, manifest, template []byte) (string, stri
 	}
 	return mp, tp, nil
 }
+
+// ReadAudit returns the manifest audit trail; a store with none yet is empty.
+func (s *ManifestFiles) ReadAudit() ([]byte, error) {
+	b, err := os.ReadFile(filepath.Join(s.root, "manifest-audit.jsonl"))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	return b, err
+}
 func (s *ManifestFiles) Audit(actor, operation, target string, status int) error {
 	f, err := os.OpenFile(filepath.Join(s.root, "manifest-audit.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {

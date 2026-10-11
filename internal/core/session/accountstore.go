@@ -75,6 +75,15 @@ func (s *AccountStore) SetupToken(candidate string) (string, error) {
 func (s *AccountStore) RemoveSetupToken() error {
 	return os.Remove(filepath.Join(s.root, "setup.token"))
 }
+
+// ReadAudit returns the request audit trail; a store with none yet is empty.
+func (s *AccountStore) ReadAudit() ([]byte, error) {
+	b, err := os.ReadFile(filepath.Join(s.root, "security-audit.jsonl"))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	return b, err
+}
 func (s *AccountStore) AppendAudit(b []byte) error {
 	f, err := os.OpenFile(filepath.Join(s.root, "security-audit.jsonl"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {

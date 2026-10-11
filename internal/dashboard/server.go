@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
@@ -36,6 +38,9 @@ type Server struct {
 	publisherToken   string
 	publisherAudit   func(string, string, int) error
 	publisherRedact  func(string) string
+	// contracts names the engine contracts the enabled options serve under
+	// /api/v1/contracts/{contractId}.
+	contracts []string
 }
 
 // Option configures a Server.
@@ -57,6 +62,12 @@ func NewServer(bus *collector.Bus, store collector.Store, opts ...Option) *Serve
 	if s.validateDocument != nil {
 		s.mux.HandleFunc("POST /api/v1/documents/validate", s.validateDocument)
 	}
+	// Each served contract has its own route; any other id is not a contract
+	// this server has, and the refusal names the ones it does.
+	known := slices.Sorted(slices.Values(s.contracts))
+	s.mux.HandleFunc("GET /api/v1/contracts/{contractId}", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unknown contract; this server serves: "+strings.Join(known, ", "), http.StatusNotFound)
+	})
 	// The built Svelte SPA (decision D5) is served at the root; the more specific
 	// API/stream routes below take precedence over this catch-all. The interim
 	// build-free page remains available at /legacy as a no-JS fallback.

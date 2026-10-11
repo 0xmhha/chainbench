@@ -32,6 +32,16 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 		route("GET /api/v1/events", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			s.handleJobEvents(w, r, authenticate)
 		})
+		route("GET /api/v1/workspaces/{workspaceId}/networks", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
+			networks, err := jobs.Networks(r.Context())
+			items := []app.WebNetwork{}
+			for _, n := range networks {
+				if n.WorkspaceID == r.PathValue("workspaceId") {
+					items = append(items, n)
+				}
+			}
+			deploymentResponse(w, map[string]any{"items": items, "nextCursor": nil}, err, 200)
+		})
 		route("GET /api/v1/networks", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			networks, err := jobs.Networks(r.Context())
 			deploymentResponse(w, map[string]any{"items": networks, "nextCursor": nil}, err, 200)

@@ -271,9 +271,15 @@ func (a *WebAuth) UpdateUser(actor DeploymentActor, id, role, password string, a
 
 // AuditWeb records bounded server-selected operations, never request bodies or secrets.
 func (a *WebAuth) AuditWeb(actor, operation string, status int) error {
+	return a.AuditWebRequest(actor, operation, "", "", status)
+}
+
+// AuditWebRequest also records the request's target, as the route's own
+// identifiers, and the request id its response carried.
+func (a *WebAuth) AuditWebRequest(actor, operation, target, requestID string, status int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	b, err := json.Marshal(map[string]any{"actorId": actor, "operation": operation, "status": status, "time": time.Now().UTC()})
+	b, err := json.Marshal(map[string]any{"actorId": actor, "operation": operation, "target": target, "requestId": requestID, "status": status, "time": time.Now().UTC()})
 	if err != nil {
 		return err
 	}

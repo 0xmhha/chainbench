@@ -47,6 +47,7 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 			v, _, err := app.DSLContract()
 			deploymentResponse(w, v, err, 200)
 		}))
+		s.contracts = append(s.contracts, "dsl")
 		s.mux.HandleFunc("GET /api/v1/contracts/dsl", secure(func(w http.ResponseWriter, r *http.Request) {
 			_, schema, err := app.DSLContract()
 			deploymentResponse(w, schema, err, 200)

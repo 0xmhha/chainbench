@@ -22,6 +22,7 @@ func WithChainPresets(root string) Option {
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(presets)
 		})
+		s.contracts = append(s.contracts, "chain-preset")
 		s.mux.HandleFunc("GET /api/v1/contracts/chain-preset", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			if r.URL.Query().Get("chain") == "" {

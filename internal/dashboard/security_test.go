@@ -289,14 +289,14 @@ func TestWebErrorsExplainOnlyRefusedChangesNotServerFailures(t *testing.T) {
 		t.Fatalf("storage failure reported as %d", w.Code)
 	}
 	identity := func(s string) string { return s }
-	body := string(webErrorBody(500, []byte("open /private/state/deployment.json: no space left"), identity, true))
+	body := string(webErrorBody(500, []byte("open /private/state/deployment.json: no space left"), identity, true, ""))
 	if strings.Contains(body, "/private/state") {
 		t.Fatalf("server failure text exposed: %s", body)
 	}
-	if body := string(webErrorBody(422, []byte("pool.slots must be at least 1"), identity, false)); strings.Contains(body, "pool.slots") {
+	if body := string(webErrorBody(422, []byte("pool.slots must be at least 1"), identity, false, "")); strings.Contains(body, "pool.slots") {
 		t.Fatalf("a read request exposed a validation reason: %s", body)
 	}
-	if body := string(webErrorBody(422, []byte(`{"message":{"nested":true},"errors":[{"message":"bad"}]}`), identity, true)); !strings.Contains(body, `"message":"Unprocessable Entity"`) || !strings.Contains(body, `"bad"`) {
+	if body := string(webErrorBody(422, []byte(`{"message":{"nested":true},"errors":[{"message":"bad"}]}`), identity, true, "")); !strings.Contains(body, `"message":"Unprocessable Entity"`) || !strings.Contains(body, `"bad"`) {
 		t.Fatalf("non-string message or listed errors mishandled: %s", body)
 	}
 }

@@ -290,6 +290,7 @@ paths:
     get:
       operationId: contract
       summary: Read engine-owned grammar or parameter schema
+      description: contractId is deployment, manifest, dsl or chain-preset, each served only when its editor is enabled; chain-preset takes ?chain=<chainId> for the launch vocabulary of that chain. Any other id is 404 and the message names the contracts this server serves.
       x-minimum-role: viewer
       responses:
         '200':
