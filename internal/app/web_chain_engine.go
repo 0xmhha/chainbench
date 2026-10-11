@@ -217,6 +217,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 			return out, ErrDeploymentConflict
 		}
 	}
+	if missing := webMissingAccess(servers, in.CredentialBindings); len(missing) > 0 {
+		return out, &WebAccessError{Missing: missing}
+	}
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, in.CredentialBindings)
 	if err != nil {
 		return out, err

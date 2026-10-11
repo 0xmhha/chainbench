@@ -331,6 +331,13 @@ func deploymentError(w http.ResponseWriter, err error) {
 		http.Error(w, string(body), http.StatusConflict)
 		return
 	}
+	var access *app.WebAccessError
+	if errors.As(err, &access) {
+		// The caller's own missing bindings; no other user's access is named.
+		body, _ := json.Marshal(map[string]any{"message": err.Error(), "details": map[string]any{"missingAccess": access.Missing}})
+		http.Error(w, string(body), http.StatusUnprocessableEntity)
+		return
+	}
 	var field *app.WebFieldError
 	if errors.As(err, &field) {
 		// The reason stays in message; fieldErrors points the editor at it.

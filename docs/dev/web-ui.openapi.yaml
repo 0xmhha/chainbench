@@ -1240,6 +1240,7 @@ paths:
     post:
       operationId: createPlan
       summary: Validate engine plan, access, revisions and physical resource footprint
+      description: A target server reached over SSH needs the caller's own credential binding in credentialBindings. Without one the plan is refused with 422 and details.missingAccess lists each such server as ssh:<server>, the form a bundle export lists as privateBindingsRequired.
       x-minimum-role: operator
       responses:
         '201':
@@ -2491,6 +2492,11 @@ components:
         supportedControls:
           type: array
           items: *id001
+        controlLimits:
+          description: For each node control (node.start, node.stop, node.restart, node.swap, node.reset) not in supportedControls, the reason it is refused, for display beside a disabled control.
+          type: object
+          additionalProperties:
+            type: string
         observedAt: *id006
       additionalProperties: false
       required:
@@ -2499,6 +2505,7 @@ components:
       - role
       - state
       - supportedControls
+      - controlLimits
       - observedAt
     Network:
       type: object

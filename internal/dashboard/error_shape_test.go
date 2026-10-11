@@ -104,3 +104,32 @@ func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
 		t.Fatalf("%d %s", w.Code, w.Body)
 	}
 }
+
+type missingAccessEngine struct{ conflictFixtureEngine }
+
+func (missingAccessEngine) Prepare(context.Context, app.DeploymentActor, app.WebPlanInput) (app.WebPreparedJob, error) {
+	return app.WebPreparedJob{}, &app.WebAccessError{Missing: []string{"ssh:server2"}}
+}
+
+func TestPlanWithoutSSHAccessNamesTheMissingServers(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), missingAccessEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	srv := NewServer(bus, nil, WithWebJobs(jobs, func(r *http.Request) (app.DeploymentActor, error) {
+		return app.DeploymentActor{ID: "bob", Role: "operator"}, nil
+	}))
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, httptest.NewRequest("POST", "/api/v1/plans", strings.NewReader(`{"workspaceId":"w","operation":"chain.setup"}`)))
+	var body struct {
+		Details struct {
+			MissingAccess []string `json:"missingAccess"`
+		} `json:"details"`
+	}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if w.Code != 422 || len(body.Details.MissingAccess) != 1 || body.Details.MissingAccess[0] != "ssh:server2" {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}

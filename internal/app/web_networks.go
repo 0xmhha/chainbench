@@ -11,19 +11,21 @@ import (
 )
 
 type WebNode struct {
-	ID                string    `json:"id"`
-	NetworkID         string    `json:"networkId"`
-	Role              string    `json:"role"`
-	HostIdentity      string    `json:"hostIdentity"`
-	DataPath          string    `json:"dataPath"`
-	PID               int       `json:"pid"`
-	ObservedPID       int       `json:"observedPid,omitempty"`
-	ObservationReason string    `json:"observationReason,omitempty"`
-	BinaryAssetID     string    `json:"binaryAssetId,omitempty"`
-	BinarySHA256      string    `json:"binarySHA256,omitempty"`
-	State             string    `json:"state"`
-	SupportedControls []string  `json:"supportedControls"`
-	ObservedAt        time.Time `json:"observedAt"`
+	ID                string   `json:"id"`
+	NetworkID         string   `json:"networkId"`
+	Role              string   `json:"role"`
+	HostIdentity      string   `json:"hostIdentity"`
+	DataPath          string   `json:"dataPath"`
+	PID               int      `json:"pid"`
+	ObservedPID       int      `json:"observedPid,omitempty"`
+	ObservationReason string   `json:"observationReason,omitempty"`
+	BinaryAssetID     string   `json:"binaryAssetId,omitempty"`
+	BinarySHA256      string   `json:"binarySHA256,omitempty"`
+	State             string   `json:"state"`
+	SupportedControls []string `json:"supportedControls"`
+	// ControlLimits gives, for each node control not offered, why it is refused.
+	ControlLimits map[string]string `json:"controlLimits"`
+	ObservedAt    time.Time         `json:"observedAt"`
 }
 type WebNetwork struct {
 	ID          string    `json:"id"`
@@ -75,7 +77,9 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			if target.HostIdentity == "" {
 				controls = []string{}
 			}
-			network.Nodes = append(network.Nodes, WebNode{ID: string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()})
+			n := WebNode{ID: string(ns.NodeLabel()), NetworkID: w.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: state, SupportedControls: controls, ObservedAt: time.Now().UTC()}
+			n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
+			network.Nodes = append(network.Nodes, n)
 		}
 		networks = append(networks, network)
 	}

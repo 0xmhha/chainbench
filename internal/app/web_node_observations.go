@@ -43,7 +43,9 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	}
 	network := WebNetwork{ID: workspace.ID, WorkspaceID: workspace.ID, Ownership: "owned", Version: workspace.Revision, Nodes: []WebNode{}}
 	for _, ns := range state.Nodes {
-		network.Nodes = append(network.Nodes, WebNode{ID: string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()})
+		n := WebNode{ID: string(ns.NodeLabel()), NetworkID: workspace.ID, Role: ns.Role, HostIdentity: target.HostIdentity, DataPath: ns.DataDir, PID: ns.PID, State: "unknown", ObservationReason: "probe_unavailable", SupportedControls: []string{}, ObservedAt: time.Now().UTC()}
+		n.ControlLimits = webControlLimits(n, network.Ownership, ns.Config != "")
+		network.Nodes = append(network.Nodes, n)
 	}
 	// A spread network records each server's machine; a node is observed
 	// only on the machine recorded for its own server.
@@ -150,6 +152,10 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 				network.Nodes[i].SupportedControls = append(network.Nodes[i].SupportedControls, "node.reset")
 			}
 		}
+	}
+	// What observation established decides each control and its reason.
+	for i, ns := range state.Nodes {
+		network.Nodes[i].ControlLimits = webControlLimits(network.Nodes[i], network.Ownership, ns.Config != "")
 	}
 	return network, nil
 }

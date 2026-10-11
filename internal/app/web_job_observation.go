@@ -121,6 +121,7 @@ func (s *WebJobs) Snapshot(ctx context.Context) (WebJobSnapshot, error) {
 			networks[i].Nodes = append([]WebNode{}, networks[i].Nodes...)
 			for n := range networks[i].Nodes {
 				networks[i].Nodes[n].SupportedControls = []string{}
+				networks[i].Nodes[n].ControlLimits = map[string]string{}
 			}
 		}
 		if networks == nil {
