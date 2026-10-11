@@ -128,7 +128,7 @@ func WithWebJobs(jobs *app.WebJobs, authenticate DeploymentAuthenticator) Option
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
-			job, err := jobs.Cancel(a, r.PathValue("jobId"))
+			job, err := jobs.CancelWithMessage(a, r.PathValue("jobId"), in.Message)
 			deploymentResponse(w, job, err, http.StatusAccepted)
 		})
 	}

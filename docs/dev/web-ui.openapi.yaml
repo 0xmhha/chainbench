@@ -2644,6 +2644,16 @@ components:
           - user
           - account_revoked
           - credential_revoked
+        cancelMessage:
+          type: string
+          description: The canceller's own words, secrets removed, at most 500 bytes
+        credentialRefs:
+          type: array
+          description: Private credential ids the job uses; never their material
+          items: *id002
+        requestId:
+          type: string
+          description: The request that accepted the job; its error carries the same id
         runIds:
           type: array
           items: *id002

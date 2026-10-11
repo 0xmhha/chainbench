@@ -94,17 +94,22 @@ type WebJobPhase struct {
 }
 
 type WebJob struct {
-	ID                  string            `json:"id"`
-	ActorID             string            `json:"actorId"`
-	WorkspaceID         string            `json:"workspaceId"`
-	PlanID              string            `json:"planId"`
-	Operation           string            `json:"operation"`
-	State               string            `json:"state"`
-	Phases              []WebJobPhase     `json:"phases"`
-	CreatedAt           time.Time         `json:"createdAt"`
-	Retention           string            `json:"retention"`
-	NodeDisposition     string            `json:"nodeDisposition"`
-	CancelReason        string            `json:"cancelReason,omitempty"`
+	ID              string        `json:"id"`
+	ActorID         string        `json:"actorId"`
+	WorkspaceID     string        `json:"workspaceId"`
+	PlanID          string        `json:"planId"`
+	Operation       string        `json:"operation"`
+	State           string        `json:"state"`
+	Phases          []WebJobPhase `json:"phases"`
+	CreatedAt       time.Time     `json:"createdAt"`
+	Retention       string        `json:"retention"`
+	NodeDisposition string        `json:"nodeDisposition"`
+	CancelReason    string        `json:"cancelReason,omitempty"`
+	CancelMessage   string        `json:"cancelMessage,omitempty"`
+	// CredentialRefs are the private credential ids the job uses, never their
+	// material.
+	CredentialRefs      []string          `json:"credentialRefs"`
+	RequestID           string            `json:"requestId,omitempty"`
 	RunIDs              []string          `json:"runIds"`
 	PartialEffects      []string          `json:"partialEffects"`
 	UnresolvedResources []string          `json:"unresolvedResources"`

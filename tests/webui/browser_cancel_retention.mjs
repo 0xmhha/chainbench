@@ -78,7 +78,7 @@ try{
  fs.chmodSync(nodesDir,0o500)
  let failedCleanup
  try{await op.api('jobs/'+id+'/cancel','POST',{},undefined,202);failedCleanup=await settle(op.api,id)}finally{fs.chmodSync(nodesDir,0o700)}
- assert.equal(failedCleanup.nodeDisposition,'cleanup_failed',JSON.stringify(failedCleanup))
+ assert.equal(failedCleanup.state,'failed',JSON.stringify(failedCleanup));assert.equal(failedCleanup.nodeDisposition,'cleanup_failed',JSON.stringify(failedCleanup))
  assert.ok(failedCleanup.unresolvedResources.length>0&&failedCleanup.error?.message,'cleanup failure hidden')
  observed.cleanupFailure={id,unresolved:failedCleanup.unresolvedResources.length}
  // Explicit cleanup afterwards removes what the failed cleanup left.

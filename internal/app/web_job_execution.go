@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,19 @@ func (s *WebJobs) progress(id string, phase WebJobPhase) error {
 }
 
 func (s *WebJobs) execute(ctx context.Context, actor DeploymentActor, id string, prepared WebPreparedJob) {
+	// The credentials and the plan are checked again before running: a job
+	// whose actor lost access, or whose targets or binaries changed after
+	// acceptance, ends failed without ever entering running.
+	if ctx.Err() == nil {
+		check := s.allowed(actor)
+		if r, ok := s.engine.(webJobRevalidator); ok && check == nil {
+			check = r.Revalidate(ctx, actor, prepared)
+		}
+		if check != nil && ctx.Err() == nil {
+			s.refuseBeforeRunning(actor, id, check)
+			return
+		}
+	}
 	s.mu.Lock()
 	job := s.state.Jobs[id]
 	err := s.commit(actor.ID, id, "job.running", func(next *webJobState) {
@@ -106,8 +120,14 @@ func (s *WebJobs) execute(ctx context.Context, actor DeploymentActor, id string,
 	}
 	if job.CancelReason != "" {
 		terminal = "cancelled"
+		// A cancellation whose cleanup failed did not reach its result.
+		if result.NodeDisposition == "cleanup_failed" {
+			terminal = "failed"
+		}
 	}
-	if job.CancelReason == "credential_revoked" || job.CancelReason == "account_revoked" {
+	// Revocation skips cleanup, so nodes are kept unless the engine reported
+	// something else; an unknown or failed outcome stays as reported.
+	if (job.CancelReason == "credential_revoked" || job.CancelReason == "account_revoked") && result.NodeDisposition == "" {
 		result.NodeDisposition = "retained"
 	}
 	if result.NodeDisposition == "" {
@@ -126,7 +146,7 @@ func (s *WebJobs) execute(ctx context.Context, actor DeploymentActor, id string,
 		v.PartialEffects = append(v.PartialEffects, result.PartialEffects...)
 		v.UnresolvedResources = append(v.UnresolvedResources, result.UnresolvedResources...)
 		if message != "" {
-			v.Error = map[string]string{"code": "engine_error", "message": message}
+			v.Error = map[string]string{"code": "engine_error", "message": message, "requestId": v.RequestID}
 		}
 		next.Jobs[id] = v
 	}); err == nil {
@@ -139,6 +159,16 @@ func (s *WebJobs) execute(ctx context.Context, actor DeploymentActor, id string,
 
 // Cancel is limited to the initiator or administrator. Logout does not call it.
 func (s *WebJobs) Cancel(a DeploymentActor, id string) (WebJob, error) {
+	return s.CancelWithMessage(a, id, "")
+}
+
+// CancelWithMessage cancels like Cancel and keeps the caller's reason, with
+// registered secrets removed and its length bounded.
+func (s *WebJobs) CancelWithMessage(a DeploymentActor, id, message string) (WebJob, error) {
+	message = s.sanitized(strings.TrimSpace(message))
+	if len(message) > 500 {
+		message = message[:500]
+	}
 	if err := s.allowed(a); err != nil {
 		return WebJob{}, err
 	}
@@ -157,7 +187,42 @@ func (s *WebJobs) Cancel(a DeploymentActor, id string) (WebJob, error) {
 	if err := s.cancelLocked(a.ID, id, "user"); err != nil {
 		return WebJob{}, err
 	}
+	if message != "" {
+		if err := s.commit(a.ID, id, "job.cancel_message", func(next *webJobState) {
+			v := next.Jobs[id]
+			v.CancelMessage = message
+			next.Jobs[id] = v
+		}); err != nil {
+			return WebJob{}, err
+		}
+	}
 	return detachedWebJob(s.state.Jobs[id]), nil
+}
+
+// refuseBeforeRunning ends an accepted job as failed. Nothing ran, so its
+// nodes are as they were and its claims are released like any failure.
+func (s *WebJobs) refuseBeforeRunning(actor DeploymentActor, id string, cause error) {
+	message := s.sanitized(cause.Error())
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.commit(actor.ID, id, "job.failed", func(next *webJobState) {
+		v := next.Jobs[id]
+		if v.State != "accepted" {
+			return
+		}
+		code := "plan_invalid"
+		if errors.Is(cause, ErrDeploymentForbidden) {
+			code = "access_revoked"
+		}
+		v.State, v.NodeDisposition = "failed", "retained"
+		v.Error = map[string]string{"code": code, "message": message, "requestId": v.RequestID}
+		next.Jobs[id] = v
+	}); err == nil {
+		if cancel := s.cancels[id]; cancel != nil {
+			cancel()
+		}
+		delete(s.cancels, id)
+	}
 }
 
 func (s *WebJobs) cancelLocked(actor, id, reason string) error {

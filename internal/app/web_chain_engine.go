@@ -599,58 +599,77 @@ func webSelectedNode(state State, ids []string) error {
 }
 
 func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepared WebPreparedJob, report func(WebJobPhase) error) (WebJobResult, error) {
-	var p webChainPayload
-	if err := json.Unmarshal(prepared.Payload, &p); err != nil {
+	p, err := e.revalidate(ctx, a, prepared)
+	if err != nil {
 		return WebJobResult{}, err
-	}
-	if err := e.allowed(a); err != nil {
-		return WebJobResult{}, err
-	}
-	if manifestHash(prepared.Payload) != prepared.Fingerprint {
-		return WebJobResult{}, ErrDeploymentConflict
 	}
 	if p.Input.Operation == webNetworkMonitorOperation {
 		return e.executeMonitor(ctx, a, p, report)
+	}
+	return e.execute(ctx, a, p, report)
+}
+
+// Revalidate rechecks an accepted plan's actor, targets, binaries, record and
+// surfaces without running any phase, so a job that no longer holds ends
+// failed before it enters running.
+func (e *WebChainEngine) Revalidate(ctx context.Context, a DeploymentActor, prepared WebPreparedJob) error {
+	_, err := e.revalidate(ctx, a, prepared)
+	return err
+}
+
+func (e *WebChainEngine) revalidate(ctx context.Context, a DeploymentActor, prepared WebPreparedJob) (webChainPayload, error) {
+	var p webChainPayload
+	if err := json.Unmarshal(prepared.Payload, &p); err != nil {
+		return p, err
+	}
+	if err := e.allowed(a); err != nil {
+		return p, err
+	}
+	if manifestHash(prepared.Payload) != prepared.Fingerprint {
+		return p, ErrDeploymentConflict
+	}
+	if p.Input.Operation == webNetworkMonitorOperation {
+		return p, nil
 	}
 	// Start already checked the latest document revisions before accepting.
 	// Here recheck live targets and assets using that accepted snapshot, so
 	// later edits cannot redirect it or invalidate its pinned shared inputs.
 	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	servers, err := webPlanServers(set, p.Arguments, p.Input.Operation)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	targets, err := webInspectServers(ctx, lookup, servers, wc.DataRoot)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	if !slices.Equal(targets, webPayloadTargets(p)) {
-		return WebJobResult{}, ErrDeploymentConflict
+		return p, ErrDeploymentConflict
 	}
 	control, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	if len(prepared.Claims) < 2 || control.HostIdentity != prepared.Claims[1].HostIdentity || control.DataPath != prepared.Claims[1].DataPath {
-		return WebJobResult{}, ErrDeploymentConflict
+		return p, ErrDeploymentConflict
 	}
 	launches := []WebResourceClaim{}
 	if webLaunchesNodes(p.Input.Operation) {
 		launches = webExecutableClaims(p)
 	}
 	if len(prepared.Claims) != 2+len(launches)+len(targets)-1 {
-		return WebJobResult{}, ErrDeploymentConflict
+		return p, ErrDeploymentConflict
 	}
 	for i, t := range targets {
 		claim := prepared.Claims[0]
@@ -658,62 +677,62 @@ func (e *WebChainEngine) Execute(ctx context.Context, a DeploymentActor, prepare
 			claim = prepared.Claims[1+len(launches)+i]
 		}
 		if claim.HostIdentity != t.HostIdentity || claim.DataPath != t.DataPath {
-			return WebJobResult{}, ErrDeploymentConflict
+			return p, ErrDeploymentConflict
 		}
 	}
 	for i, launch := range launches {
 		if got := prepared.Claims[2+i]; got.HostIdentity != launch.HostIdentity || got.Executable != launch.Executable || got.DataPath != "" || len(got.Ports) != 0 {
-			return WebJobResult{}, ErrDeploymentConflict
+			return p, ErrDeploymentConflict
 		}
 	}
 	plugin, err := ValidateManifest(p.Manifest.ManifestInput)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	asset, err := e.binaryAsset(p.Arguments.AssetID)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	binary, err := asset.Verify(ctx, plugin.Protocol().Name)
 	if err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	if binary != p.Binary {
-		return WebJobResult{}, ErrDeploymentConflict
+		return p, ErrDeploymentConflict
 	}
 	for _, named := range p.NamedBinaries {
 		asset, err := e.binaryAsset(named.AssetID)
 		if err != nil {
-			return WebJobResult{}, err
+			return p, err
 		}
 		if now, err := e.verify(ctx, asset, named.Binary.Chain); err != nil || now != named.Binary {
-			return WebJobResult{}, ErrDeploymentConflict
+			return p, ErrDeploymentConflict
 		}
 	}
 	if err = e.recheckPlanSurfaces(ctx, p); err != nil {
-		return WebJobResult{}, err
+		return p, err
 	}
 	record, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err != nil && !os.IsNotExist(err) {
-		return WebJobResult{}, err
+		return p, err
 	}
 	if (err == nil && manifestHash(record) != p.RecordDigest) || (os.IsNotExist(err) && p.RecordDigest != "") {
-		return WebJobResult{}, ErrDeploymentConflict
+		return p, ErrDeploymentConflict
 	}
 	if webNodeControlOperation(p.Input.Operation) {
 		var state State
 		if err = json.Unmarshal(record, &state); err != nil {
-			return WebJobResult{}, err
+			return p, err
 		}
 		bound, err := bindWebControlBinary(ctx, state, p, lookup)
 		if err != nil {
-			return WebJobResult{}, err
+			return p, err
 		}
 		if bound != p.ExecutionBinary {
-			return WebJobResult{}, ErrDeploymentConflict
+			return p, ErrDeploymentConflict
 		}
 	}
-	return e.execute(ctx, a, p, report)
+	return p, nil
 }
 
 func (e *WebChainEngine) phase(ctx context.Context, a DeploymentActor, name string, report func(WebJobPhase) error, run func() error) error {

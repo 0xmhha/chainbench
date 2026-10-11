@@ -300,6 +300,13 @@ func deploymentResponse(w http.ResponseWriter, v any, err error, status int) {
 }
 func deploymentError(w http.ResponseWriter, err error) {
 	status := http.StatusUnprocessableEntity
+	var busy *app.WebBusyError
+	if errors.As(err, &busy) {
+		// Every signed-in role reads jobs, so the holders are not hidden.
+		body, _ := json.Marshal(map[string]any{"message": err.Error(), "details": map[string]any{"holders": busy.Holders}})
+		http.Error(w, string(body), http.StatusConflict)
+		return
+	}
 	var field *app.WebFieldError
 	if errors.As(err, &field) {
 		// The reason stays in message; fieldErrors points the editor at it.

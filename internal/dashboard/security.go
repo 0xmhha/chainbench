@@ -127,6 +127,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 					return
 				}
 			}
+			r = r.WithContext(app.ContextWithRequestID(r.Context(), requestID))
 			s.mux.ServeHTTP(response, r)
 			operation = r.Pattern
 			if operation == "" {

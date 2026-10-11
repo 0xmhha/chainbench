@@ -67,3 +67,40 @@ func TestErrorsCarryMachineCodesAndFieldPaths(t *testing.T) {
 		t.Errorf("job without an idempotency key: %d %v", code, body)
 	}
 }
+
+func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), conflictFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alice, bob := app.DeploymentActor{ID: "alice", Role: "operator"}, app.DeploymentActor{ID: "bob", Role: "operator"}
+	owner, err := jobs.Plan(context.Background(), alice, app.WebPlanInput{WorkspaceID: "owner", Operation: "chain.setup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	held, err := jobs.Start(context.Background(), alice, owner.ID, "one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias, err := jobs.Plan(context.Background(), bob, app.WebPlanInput{WorkspaceID: "alias", Operation: "chain.setup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	srv := NewServer(bus, nil, WithWebJobs(jobs, func(r *http.Request) (app.DeploymentActor, error) { return bob, nil }))
+	r := httptest.NewRequest("POST", "/api/v1/jobs", strings.NewReader(`{"planId":"`+alias.ID+`"}`))
+	r.Header.Set("Idempotency-Key", "two")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, r)
+	var body struct {
+		Message string `json:"message"`
+		Details struct {
+			Holders []app.WebResourceConflict `json:"holders"`
+		} `json:"details"`
+	}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if w.Code != 409 || len(body.Details.Holders) != 1 || body.Details.Holders[0].JobID != held.ID || body.Details.Holders[0].ActorID != "alice" {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}

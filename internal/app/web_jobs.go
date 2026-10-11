@@ -262,10 +262,10 @@ func (s *WebJobs) Start(ctx context.Context, a DeploymentActor, planID, key stri
 	if latest.Prepared.Fingerprint != current.Fingerprint || !sameClaims(latest.Prepared.Claims, current.Claims) {
 		return WebJob{}, ErrDeploymentConflict
 	}
-	if s.resourceConflict(p.Input.WorkspaceID, p.Prepared.Claims) {
-		return WebJob{}, ErrDeploymentConflict
+	if holders := s.resourceConflicts(p.Input.WorkspaceID, p.Prepared.Claims); len(holders) > 0 {
+		return WebJob{}, &WebBusyError{Holders: holders}
 	}
-	job := WebJob{ID: deploymentID(), ActorID: a.ID, WorkspaceID: p.Input.WorkspaceID, PlanID: planID, Operation: p.Input.Operation, State: "accepted", Retention: p.Input.Retention, NodeDisposition: "unknown", CreatedAt: time.Now().UTC(), Phases: []WebJobPhase{}, RunIDs: []string{}, PartialEffects: []string{}, UnresolvedResources: []string{}}
+	job := WebJob{ID: deploymentID(), ActorID: a.ID, WorkspaceID: p.Input.WorkspaceID, PlanID: planID, Operation: p.Input.Operation, State: "accepted", Retention: p.Input.Retention, NodeDisposition: "unknown", CreatedAt: time.Now().UTC(), Phases: []WebJobPhase{}, RunIDs: []string{}, PartialEffects: []string{}, UnresolvedResources: []string{}, CredentialRefs: webJobCredentialRefs(p.Input), RequestID: requestIDFrom(ctx)}
 	if err = s.commit(a.ID, job.ID, "job.accepted", func(next *webJobState) { next.Jobs[job.ID] = job; next.Keys[keyHash] = webJobKey{body, job.ID} }); err != nil {
 		return WebJob{}, err
 	}
