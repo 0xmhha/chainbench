@@ -79,12 +79,13 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 		if name == "" {
 			name = in.Filename
 		}
-		importDocument(&preview, "", kind, name, values[0], nil)
+		importDocument(&preview, "", kind, name, values[0], nil, nil)
 	}
 	seen := map[string]bool{}
 	var presets map[string]bundlePreset
+	var cases map[string]int
 	if bundle {
-		presets = bundlePresets(values)
+		presets, cases = bundlePresets(values), bundleCases(values)
 	}
 	for i, item := range values {
 		if !bundle {
@@ -100,7 +101,7 @@ func (s *DeploymentStore) PreviewImport(a DeploymentActor, in DocumentImportInpu
 			preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{prefix, "invalid", issue})
 			continue
 		}
-		importDocument(&preview, prefix, kind, name, content, presets)
+		importDocument(&preview, prefix, kind, name, content, presets, cases)
 	}
 	// Each remote server of an imported server set needs the importer's own
 	// SSH binding, whether or not the source listed it.
@@ -193,6 +194,9 @@ func (s *DeploymentStore) CommitImport(a DeploymentActor, in DocumentImportCommi
 	// saved revision, and is validated against exactly those declarations.
 	for i := range documents {
 		if err := resolveBundlePresetRefs(documents, i); err != nil {
+			return nil, err
+		}
+		if err := resolveBundleCaseRefs(documents, i); err != nil {
 			return nil, err
 		}
 	}

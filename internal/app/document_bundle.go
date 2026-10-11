@@ -171,7 +171,7 @@ func linkBundlePresets(raw []byte, presets map[string]bundlePreset) ([]Deploymen
 
 // importDocument separates private SSH values, prepares cases and validates
 // one declaration against the engine contract, recording the concrete reason.
-func importDocument(preview *DocumentImportPreview, prefix, kind, name string, value map[string]any, presets map[string]bundlePreset) {
+func importDocument(preview *DocumentImportPreview, prefix, kind, name string, value map[string]any, presets map[string]bundlePreset, cases map[string]int) {
 	if kind == "server-set" {
 		if ssh, ok := value["ssh"].(map[string]any); ok {
 			for _, key := range []string{"password", "password_file", "key_file", "key_passphrase_file"} {
@@ -211,7 +211,18 @@ func importDocument(preview *DocumentImportPreview, prefix, kind, name string, v
 			}
 		}
 	}
-	doc := DeploymentDocumentInput{Kind: kind, Name: name, ContractVersion: "2", Content: raw, AssetRefs: []string{}, PresetRefs: refs}
+	var caseRefs []DeploymentDocumentRef
+	if kind == "run-definition" {
+		if cases == nil {
+			preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{prefix + "/content", "invalid", "import a run definition in a bundle with the cases it lists"})
+			return
+		}
+		if caseRefs, err = linkBundleCases(raw, cases); err != nil {
+			preview.Validation.Errors = append(preview.Validation.Errors, DocumentValidationIssue{prefix + "/content", "invalid", err.Error()})
+			return
+		}
+	}
+	doc := DeploymentDocumentInput{Kind: kind, Name: name, ContractVersion: "2", Content: raw, AssetRefs: []string{}, PresetRefs: refs, CaseRefs: caseRefs}
 	if assets, refErr := webDocumentAssetRefs(kind, raw); refErr == nil {
 		doc.AssetRefs = assets
 	}
@@ -286,12 +297,36 @@ func (s *DeploymentStore) ExportDocumentBundle(a DeploymentActor, id string) ([]
 		return nil, err
 	}
 	docs := []DeploymentDocument{}
-	for _, ref := range d.PresetRefs {
-		p, err := s.DocumentRevision(ref.ID, ref.Revision)
+	seen := map[string]bool{}
+	add := func(ref DeploymentDocumentRef) (DeploymentDocument, error) {
+		doc, err := s.DocumentRevision(ref.ID, ref.Revision)
+		if err == nil && !seen[ref.ID] {
+			seen[ref.ID] = true
+			docs = append(docs, doc)
+		}
+		return doc, err
+	}
+	// A run definition brings its cases, and every case brings the chain
+	// presets it pins, so the bundle imports back runnable.
+	cases := []DeploymentDocument{}
+	for _, ref := range d.CaseRefs {
+		c, err := s.DocumentRevision(ref.ID, ref.Revision)
 		if err != nil {
 			return nil, err
 		}
-		docs = append(docs, p)
+		cases = append(cases, c)
+	}
+	for _, c := range append(cases, d) {
+		for _, ref := range c.PresetRefs {
+			if _, err := add(ref); err != nil {
+				return nil, err
+			}
+		}
+	}
+	for _, ref := range d.CaseRefs {
+		if _, err := add(ref); err != nil {
+			return nil, err
+		}
 	}
 	documents := []map[string]any{}
 	for _, doc := range append(docs, d) {

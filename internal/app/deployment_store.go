@@ -221,6 +221,7 @@ func (s *DeploymentStore) SaveDocument(a DeploymentActor, id string, revision in
 	in.Content = append(json.RawMessage(nil), in.Content...)
 	in.AssetRefs = append([]string{}, in.AssetRefs...)
 	in.PresetRefs = append([]DeploymentDocumentRef(nil), in.PresetRefs...)
+	in.CaseRefs = append([]DeploymentDocumentRef(nil), in.CaseRefs...)
 	d := DeploymentDocument{in, id, revision + 1, time.Now().UTC(), a.ID}
 	err := s.commit(a, "document.save", id, func(next *deploymentState) { next.Documents[id] = append(next.Documents[id], d) })
 	return d, err
@@ -259,6 +260,7 @@ func (s *DeploymentStore) Documents(kind string) []DeploymentDocument {
 			d.Content = append(json.RawMessage(nil), d.Content...)
 			d.AssetRefs = append([]string{}, d.AssetRefs...)
 			d.PresetRefs = append([]DeploymentDocumentRef(nil), d.PresetRefs...)
+			d.CaseRefs = append([]DeploymentDocumentRef(nil), d.CaseRefs...)
 			out = append(out, d)
 		}
 	}
@@ -288,6 +290,7 @@ func (s *DeploymentStore) DocumentRevision(id string, revision int) (DeploymentD
 	d.Content = append(json.RawMessage(nil), d.Content...)
 	d.AssetRefs = append([]string{}, d.AssetRefs...)
 	d.PresetRefs = append([]DeploymentDocumentRef(nil), d.PresetRefs...)
+	d.CaseRefs = append([]DeploymentDocumentRef(nil), d.CaseRefs...)
 	return d, nil
 }
 

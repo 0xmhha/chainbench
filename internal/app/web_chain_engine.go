@@ -76,6 +76,9 @@ type webChainArguments struct {
 	// ConfigAssetID names a registered configuration file a node.swap applies.
 	ConfigAssetID string                  `json:"configAssetId,omitempty"`
 	CaseRefs      []DeploymentDocumentRef `json:"caseRefs,omitempty"`
+	// RunDefinitionRef names a saved run definition whose cases a test job
+	// runs in order, instead of CaseRefs.
+	RunDefinitionRef *DeploymentDocumentRef `json:"runDefinitionRef,omitempty"`
 	// BinaryAssets maps each binary name a test declares besides default
 	// to the registered asset that runs under it.
 	BinaryAssets   map[string]string      `json:"binaryAssets,omitempty"`
@@ -137,6 +140,9 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	}
 	if in.Operation == webNetworkMonitorOperation {
 		return e.prepareMonitor(ctx, a, in, args)
+	}
+	if err := e.resolveRunDefinition(&args, in.Operation); err != nil {
+		return out, err
 	}
 	if len(in.AccountBindings) != 0 && in.Operation != webTestAttachOperation {
 		return out, errors.New("account credentials apply to an attach job's key file accounts")

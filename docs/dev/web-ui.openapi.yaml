@@ -2257,6 +2257,12 @@ components:
             asset:<id>; this list contains that ID. Import derives the same
             dependency. Job planning verifies the kind and pins its checksum.
           items: *id002
+        caseRefs:
+          type: array
+          description: >-
+            Only for a run-definition, whose content is {"cases":[case ids in order],"description"?}. The shared case revision for each listed id, in the same order. Saving checks each is a case with that id; exporting brings the cases and their presets; a test.run job may name runDefinitionRef instead of caseRefs to run them in this order.
+          items:
+            $ref: '#/components/schemas/DocumentRef'
         presetRefs: &presetrefs
           type: array
           description: >-

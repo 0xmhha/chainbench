@@ -22,6 +22,9 @@ type DeploymentDocumentInput struct {
 	// extends, so the case keeps its reference and still runs one exact
 	// declaration. Only a case carries them.
 	PresetRefs []DeploymentDocumentRef `json:"presetRefs,omitempty"`
+	// CaseRefs pin the shared case revisions a run definition lists, in its
+	// order. Only a run definition carries them.
+	CaseRefs []DeploymentDocumentRef `json:"caseRefs,omitempty"`
 	// ContractDigest names the engine contract the draft was edited against.
 	// It is checked on save and never stored.
 	ContractDigest string `json:"contractDigest,omitempty"`
@@ -62,6 +65,9 @@ func validateDeploymentDocument(in DeploymentDocumentInput, presets map[string]j
 	}
 	if in.Kind == "case" && len(in.PresetRefs) > 0 && presets == nil {
 		return webFieldError("/presetRefs", errCasePresetsNeedStore)
+	}
+	if len(in.CaseRefs) > 0 && in.Kind != "run-definition" {
+		return webFieldError("/caseRefs", errors.New("only a run definition pins case references"))
 	}
 	if strings.TrimSpace(in.Name) == "" {
 		return webFieldError("/name", errors.New("named deployment document with contractVersion 2 required"))
@@ -152,6 +158,9 @@ func validateDeploymentContent(in DeploymentDocumentInput, presets map[string]js
 		return p.Validate()
 	case "workspace-config":
 		_, err := resource.ParseWorkspaceConfig(b)
+		return err
+	case "run-definition":
+		_, err := runDefinitionCaseIDs(in.Content)
 		return err
 	default:
 		return errors.New("unsupported deployment document kind")

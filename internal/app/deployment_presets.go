@@ -11,6 +11,13 @@ import (
 // ValidateDocument validates a document as SaveDocument would, resolving the
 // chain preset revisions a case pins.
 func (s *DeploymentStore) ValidateDocument(in DeploymentDocumentInput) error {
+	if in.Kind == "run-definition" {
+		if err := validateDeploymentDocument(in, nil); err != nil {
+			return err
+		}
+		_, err := s.RunDefinitionCases(in)
+		return err
+	}
 	if in.Kind != "case" || len(in.PresetRefs) == 0 {
 		return validateDeploymentDocument(in, nil)
 	}
