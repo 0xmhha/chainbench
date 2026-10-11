@@ -171,6 +171,7 @@ paths:
         name: limit
         in: query
         required: false
+        description: Page size. A list is ordered by id and cursor is the id of the last item already read; nextCursor is null on the last page.
         schema:
           type: integer
           minimum: 1

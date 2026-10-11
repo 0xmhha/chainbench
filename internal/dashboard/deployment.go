@@ -89,7 +89,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 		})
 		route("GET /api/v1/deployment-account", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) { deploymentJSON(w, 200, a) })
 		route("GET /api/v1/documents", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			deploymentJSON(w, 200, map[string]any{"items": store.Documents(r.URL.Query().Get("kind")), "nextCursor": nil})
+			writePage(w, r, store.Documents(r.URL.Query().Get("kind")), func(d app.DeploymentDocument) string { return d.ID })
 		})
 		route("POST /api/v1/documents/import", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.DocumentImportInput
@@ -156,7 +156,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			_, _ = w.Write(b)
 		})
 		route("GET /api/v1/workspaces", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			deploymentJSON(w, 200, map[string]any{"items": store.Workspaces(), "nextCursor": nil})
+			writePage(w, r, store.Workspaces(), func(v app.DeploymentWorkspace) string { return v.ID })
 		})
 		route("POST /api/v1/workspaces", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.DeploymentWorkspaceInput
@@ -193,7 +193,7 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			deploymentResponse(w, v, err, 200)
 		})
 		route("GET /api/v1/credentials", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			deploymentJSON(w, 200, map[string]any{"items": store.Credentials(a), "nextCursor": nil})
+			writePage(w, r, store.Credentials(a), func(c app.DeploymentCredential) string { return c.ID })
 		})
 		route("POST /api/v1/credentials", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.DeploymentCredentialInput

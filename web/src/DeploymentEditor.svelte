@@ -1,5 +1,6 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   let { webSession = undefined, onsaved = () => {} } = $props()
   import DeploymentFields from './DeploymentFields.svelte'
   import BundleImport from './BundleImport.svelte'
@@ -19,9 +20,9 @@
   }
   async function action(fn) { busy = true; status = ''; try { await fn() } catch (error) { status = error.message } finally { busy = false } }
   async function refresh(role = webSession?.user.role ?? actor?.role) {
-    docs = (await api('documents')).items.filter(d => d.kind === 'server-set' || d.kind === 'workspace-config')
-    workspaces = (await api('workspaces')).items
-    credentials = role==='viewer' ? [] : (await api('credentials')).items
+    docs = (await allItems(api, 'documents')).filter(d => d.kind === 'server-set' || d.kind === 'workspace-config')
+    workspaces = await allItems(api, 'workspaces')
+    credentials = role==='viewer' ? [] : await allItems(api, 'credentials')
     for (const workspace of workspaces) { for (const ref of workspace.documents) { if (!docs.some(d => d.id === ref.id && d.revision === ref.revision)) { docs = [...docs, await api(`documents/${ref.id}?revision=${ref.revision}`)] } } }
   }
   function newDocument(nextKind) {

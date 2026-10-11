@@ -1,5 +1,6 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   import Field from "./DSLField.svelte"
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
@@ -25,8 +26,8 @@
     if (!response.ok) throw await responseError(response)
     return response.json()
   }
-  async function refreshSaved() { saved = (await shared('documents?kind=chain-preset')).items }
-  $effect(() => { void assetRevision; if (webSession) { refreshSaved().catch(e => { error = e.message }); shared('assets').then(v=>{assets=v.items}).catch(e=>{error=e.message}) } })
+  async function refreshSaved() { saved = await allItems(shared, 'documents?kind=chain-preset') }
+  $effect(() => { void assetRevision; if (webSession) { refreshSaved().catch(e => { error = e.message }); allItems(shared, 'assets').then(v=>{assets=v}).catch(e=>{error=e.message}) } })
   function chooseGenesis(id) {
     if (id) {
       if (!genesisAsset) generatedGenesis = structuredClone($state.snapshot(document.genesis??{mode:'template'}))

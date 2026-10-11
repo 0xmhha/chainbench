@@ -15,6 +15,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 const records = [], scenarios = [], coverage = []
 let session
 
+// allPages reads a paged list to its end.
+async function allPages(endpoint) {
+  const items = []
+  let cursor = null
+  do {
+    const page = await api(`${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=100${cursor ? '&cursor=' + encodeURIComponent(cursor) : ''}`)
+    items.push(...page.items)
+    cursor = page.nextCursor
+  } while (cursor)
+  return items
+}
 async function api(endpoint, method = 'GET', data, expected = 200) {
   const r = await context.request.fetch(f.url + '/api/v1/' + endpoint, {method, headers: {'Content-Type': 'application/json', ...(session ? {'X-CSRF-Token': session.csrfToken} : {})}, data: data === undefined ? undefined : JSON.stringify(data)})
   const text = await r.text()
@@ -175,7 +186,7 @@ try {
     saved.push(content.id)
   }
   // Selected in file order, so the case that stops and swaps nodes runs last.
-  const listed = (await api('documents?kind=case')).items
+  const listed = (await allPages('documents?kind=case'))
   const cases = saved.map(id => listed.find(d => d.content.id === id))
   assert.ok(cases.every(Boolean) && cases.length === saved.length, 'a saved coverage case is missing')
   assert.ok(cases.every(d => d.presetRefs?.length === 1), 'a saved case lost its pinned preset')
@@ -220,7 +231,7 @@ try {
   await status.filter({hasText: 'Imported; engine validation passed'}).waitFor()
   await page.getByRole('button', {name: '공유 테스트 저장', exact: true}).click()
   await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
-  const forkDoc = (await api('documents?kind=case')).items.find(d => d.content.id === forkContent.id)
+  const forkDoc = (await allPages('documents?kind=case')).find(d => d.content.id === forkContent.id)
   assert.equal(forkDoc.presetRefs?.length, 1, 'fork case lost its pinned preset')
   const forkSet = await api('documents', 'POST', {kind: 'server-set', name: 'web05 fork pool', contractVersion: '2', assetRefs: [], content: {version: 2, pool: {hosts: [{name: 'local', addr: '127.0.0.1'}], slots: 5, ports: {p2p: {base: f.forkP2PBase, step: 10}, rpc: {base: f.forkRPCBase, step: 10}}}}}, 201)
   const forkConfig = await api('documents', 'POST', {kind: 'workspace-config', name: 'web05 fork paths', contractVersion: '2', assetRefs: [], content: {version: 1, dataRoot: f.runtime + '/fork', paths: Object.fromEntries(['binaries', 'configs', 'genesis', 'keystore', 'keyrings', 'nodes', 'runtime', 'logs'].map(k => [k, k])), control: {artifactRoot: f.runtime + '/fork-output'}, inputs: {mode: 'generated'}, execution: {chain: 'fresh'}, limits: {minFreeDisk: '0'}}}, 201)
@@ -269,7 +280,7 @@ try {
     await status.filter({hasText: '저장됨'}).waitFor({timeout: 20000})
     attachIds.push(content.id)
   }
-  const attachDocs = (await api('documents?kind=case')).items.filter(d => attachIds.includes(d.content.id))
+  const attachDocs = (await allPages('documents?kind=case')).filter(d => attachIds.includes(d.content.id))
   assert.equal(attachDocs.length, attachIds.length, 'an attach case was not saved')
   const attachSet = await api('documents', 'POST', {kind: 'server-set', name: 'web05 attach pool', contractVersion: '2', assetRefs: [], content: {version: 2, pool: {hosts: [{name: 'local', addr: '127.0.0.1'}], slots: 5, ports: {p2p: {base: f.attachP2PBase, step: 10}, rpc: {base: f.attachRPCBase, step: 10}}}}}, 201)
   const attachConfig = await api('documents', 'POST', {kind: 'workspace-config', name: 'web05 attach paths', contractVersion: '2', assetRefs: [], content: {version: 1, dataRoot: f.runtime + '/attach', paths: Object.fromEntries(['binaries', 'configs', 'genesis', 'keystore', 'keyrings', 'nodes', 'runtime', 'logs'].map(k => [k, k])), control: {artifactRoot: f.runtime + '/attach-output'}, inputs: {mode: 'generated'}, execution: {chain: 'fresh'}, limits: {minFreeDisk: '0'}}}, 201)

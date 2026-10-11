@@ -92,7 +92,11 @@ func WithManifests(store *app.ManifestStore, authenticate DeploymentAuthenticato
 		})
 		route("GET /api/v1/assets", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			items, err := store.Assets()
-			deploymentResponse(w, map[string]any{"items": items, "nextCursor": nil}, err, 200)
+			if err != nil {
+				deploymentError(w, err)
+				return
+			}
+			writePage(w, r, items, func(v app.WebAsset) string { return v.ID })
 		})
 		route("GET /api/v1/assets/{id}", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			item, err := store.Asset(r.PathValue("id"))

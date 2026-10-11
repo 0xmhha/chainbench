@@ -1,5 +1,6 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   import { onMount } from 'svelte'
   let { session = $bindable(undefined), ready = $bindable(false) } = $props()
   let username=$state(''), password=$state(''), setupToken=$state(''), bootstrap=$state(false), status=$state(''), busy=$state(false)
@@ -17,7 +18,7 @@
   })
   $effect(()=>{ if(!session)return;const timer=setInterval(async()=>{try{const r=await fetch('/api/v1/auth/me');if(r.status===401){session=null;users=[]}}catch{}},2000);return()=>clearInterval(timer) })
   async function login(){await work(async()=>{session=await api(bootstrap?'bootstrap':'auth/login','POST',{username,password,...(bootstrap?{setupToken}:{})});password='';setupToken='';bootstrap=false;users=[]})}
-  async function refreshUsers(){users=(await api('users')).items}
+  async function refreshUsers(){users=await allItems(api,'users')}
 </script>
 <section aria-label="Account access">
   {#if ready && session===null}

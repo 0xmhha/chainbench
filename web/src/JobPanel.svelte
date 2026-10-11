@@ -1,5 +1,6 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   import { onMount } from 'svelte'
   import Field from './DSLField.svelte'
   import { caseAttaches, caseChain, declaredBinaries, keyFileAccounts } from './dsl-form.js'
@@ -31,7 +32,7 @@
   let binaryAssets=$state({}), accountBindings=$state({}), accountKeys=$state([])
   const cases=$derived(documents.filter(d=>d.kind==='case'&&caseChain(d,documents)===(manifest?.manifest.protocol||manifest?.manifest.id)&&caseAttaches(d,documents)===testAttach))
   const keyedAccounts=$derived(testAttach?[...new Set(cases.filter(c=>caseIds.includes(c.id)).flatMap(c=>keyFileAccounts(c,documents)))].sort():[])
-  $effect(()=>{if(testAttach&&webSession)api('credentials').then(r=>{accountKeys=r.items.filter(c=>c.kind==='account-key'&&!c.revoked)}).catch(()=>{})})
+  $effect(()=>{if(testAttach&&webSession)allItems(api,'credentials').then(items=>{accountKeys=items.filter(c=>c.kind==='account-key'&&!c.revoked)}).catch(()=>{})})
   const namedBinaries=$derived(testRun?[...new Map(cases.filter(c=>caseIds.includes(c.id)).flatMap(c=>declaredBinaries(c,documents)).map(b=>[b.name,b])).values()]:[])
   // Attached networks belong to someone else: the server refuses composition,
   // control and cleanup, and the form says so before any plan is requested.
@@ -62,7 +63,7 @@
     const version=++loadVersion,userId=webSession?.user.id
     catalogLoading=true;changed()
     try {
-      const values=await Promise.all([api('workspaces'),api('manifests'),api('manifest-assets'),api('jobs'),api('documents'),api('networks')])
+      const values=await Promise.all([allItems(api,'workspaces').then(items=>({items})),api('manifests'),api('manifest-assets'),api('jobs'),allItems(api,'documents').then(items=>({items})),api('networks')])
       if(version!==loadVersion||webSession?.user.id!==userId)return
       const missing=new Map()
       for(const w of values[0].items)for(const ref of w.documents){

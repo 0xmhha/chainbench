@@ -1,5 +1,6 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   import { untrack } from 'svelte'
   import { parseHistoryJSON } from './history-json.js'
   let { webSession } = $props()
@@ -37,7 +38,7 @@
     if (!webSession) return
     untrack(() => {
       load()
-      api('workspaces').then(r => r.json()).then(page => { workspaces = page.items }).catch(e => { error = e.message })
+      allItems(p => api(p).then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() }), 'workspaces').then(items => { workspaces = items }).catch(e => { error = e.message })
     })
   })
   function select(id, checked) {

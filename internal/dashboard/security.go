@@ -186,7 +186,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 		})
 		authenticate := WebAuthenticator(auth)
 		s.mux.HandleFunc("GET /api/v1/users", func(w http.ResponseWriter, r *http.Request) {
-			deploymentJSON(w, http.StatusOK, map[string]any{"items": auth.Users(), "nextCursor": nil})
+			writePage(w, r, auth.Users(), func(u app.WebUser) string { return u.ID })
 		})
 		s.mux.HandleFunc("POST /api/v1/users", func(w http.ResponseWriter, r *http.Request) {
 			var in struct {

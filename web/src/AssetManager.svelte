@@ -1,14 +1,13 @@
 <script>
   import { responseError } from './api-error.mjs'
+  import { allItems } from './pages.mjs'
   let { webSession, onuploaded = () => {} } = $props()
   let items = $state([]), kind = $state('binary'), selected = $state(null), busy = $state(false), message = $state(''), filter = $state('all')
   const writable = $derived(['administrator', 'admin', 'operator'].includes(webSession?.user.role))
   const visible = $derived(items.filter(item => filter === 'all' || item.kind === filter))
   const names = {binary:'체인 바이너리',configuration:'설정 선언',template:'템플릿',material:'테스트 자료'}
   async function refresh() {
-    const response = await fetch('/api/v1/assets')
-    if (!response.ok) throw await responseError(response)
-    items = (await response.json()).items
+    items = await allItems(async path => { const response = await fetch('/api/v1/' + path); if (!response.ok) throw await responseError(response); return response.json() }, 'assets')
   }
   $effect(() => { if (webSession) refresh().catch(error => { message = error.message }) })
   async function upload() {
