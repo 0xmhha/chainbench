@@ -407,9 +407,10 @@
         "internal/app/web_monitor.go:162-166"
       ],
       "completion": "replay 범위를 벗어난 재연결이 누락 cursor 범위를 받고, 다운샘플 응답이 버킷 폭을 담으며, 멈춘 수집기 구간이 stale gap으로 보인다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobObservationBoundsBacklogAndRefusesExpiredCursors|TestStalledCollectorShowsAsAGapAndDownsamplingNamesItsBucket\"",
+      "commit": "da96deb4",
+      "evidence": "RED (/private/tmp/chainbench-web-b14-red.log): an expired cursor's resync_required named no range, a downsampled window reported bucketSeconds 0, and a collector that stopped without a restart left no gap. GREEN: the refusal carries missingFrom and missingTo, coverage carries the bucket width, and three missed periods show as a collector_stale gap; the monitoring view shows the range and bucket."
     },
     {
       "id": "G-B15",
