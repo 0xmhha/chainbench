@@ -676,9 +676,10 @@
         "web/src/dsl-form.js:46-51"
       ],
       "completion": "검증 오류를 누르면 해당 statement가 선택되고, 복제한 케이스가 새 문서로 저장된다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "python3 tests/webui/run_dsl_editor.py (real dashboard and browser, native wbft job for the cancel step; receipt chainbench-out/web-ui-development/dsl-editor/receipt.json); node --test tests/webui/dsl_tree.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run TestCaseErrorPathTakesTheLeadingPointer; go test ./internal/dashboard -run TestTestCaseHTTPContractAndImport",
+      "commit": "1304fe56, 0e7e3eb8",
+      "evidence": "RED (/private/tmp/chainbench-web-dsl-red.log): against a dashboard built from 41af34bd the proof timed out waiting for the error summary; the server also reported every case error at /content (dashboard test failed before 1304fe56). GREEN (/private/tmp/chainbench-web-dsl-green.log): importing a case whose second step names do:nope listed /content/steps/1/do; choosing it selected that statement in the tree and focused its form selector marked aria-invalid; arrow keys walked the tree and Alt+ArrowUp moved the statement; the case was validated, saved, duplicated and the copy saved with the keyboard alone, giving two shared documents dsl-proof and dsl-proof-copy; a v1 import listed 12 migration differences. Node suggestions add the selected workspace's recorded nodes; the proof did not check that list."
     },
     {
       "id": "G-C09",
