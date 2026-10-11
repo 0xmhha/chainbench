@@ -2,7 +2,9 @@
   import { webApi } from './web-api.mjs'
   import { allItems } from './pages.mjs'
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
- import Field from './DSLField.svelte'
+ import StatementEditor from './DSLStatementEditor.svelte'
+ import {declarationDiff,duplicateCase} from './dsl-tree.mjs'
+ import {selection} from './selection.svelte.js'
  import {references,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
  import {topologyChoices,draftChain} from './chain-contract.mjs'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
@@ -16,7 +18,11 @@
  let chainContract=$state(null)
  const chain=$derived(draftChain(document,presets))
  const topology=$derived(topologyChoices(chainContract))
- const suggestions=$derived(references(document,topology.roles,topology.defaults))
+ // Node names come from the chain contract's roles and, when the selected
+ // workspace has a recorded network, from its actual nodes as well.
+ let workspaceNodes=$state([]),errorList=$state([]),importDiff=$state([])
+ const suggestions=$derived.by(()=>{const r=references(document,topology.roles,topology.defaults);return {...r,nodes:[...new Set([...r.nodes,...workspaceNodes])]}})
+ $effect(()=>{const id=selection.workspaceId;workspaceNodes=[];if(webSession&&id)api('networks').then(v=>{if(selection.workspaceId===id)workspaceNodes=v.items.filter(n=>n.workspaceId===id).flatMap(n=>n.nodes.map(x=>x.id))}).catch(()=>{})})
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
  async function refreshSaved(){savedCases=await allItems(api,'documents?kind=case')}
@@ -41,10 +47,10 @@
   const shared=await allItems(api,'documents?kind=chain-preset')
   for(const id of missing){const doc=shared.filter(d=>d.content?.id===id).at(-1);if(doc)presets={...presets,[id]:doc.content}}
  }
- async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message}finally{busy=false}}
+ async function work(fn){busy=true;try{await fn()}catch(e){valid=false;status=e.message;errorList=(e.errors??[]).filter(x=>x.path?.startsWith('/content'))}finally{busy=false}}
  $effect(()=>{if(webSession)work(async()=>{vocabulary=await api('vocabulary');contract=await api('contracts/dsl');await refreshSaved();status='DSL 계약을 읽었습니다'})})
  $effect(()=>{assetRevision;if(webSession)allItems(api,'assets').then(v=>{assets=v}).catch(e=>{status=e.message})})
- async function upload(event){await work(async()=>{const file=event.target.files[0];if(!file)return;const parsed=JSON.parse(await file.text());await fillSharedPresets(parsed);savedId='';revision=0;presetRefs=[];genesisBackup=null;original=structuredClone(parsed);document=structuredClone(parsed);valid=false;fingerprint='';const prepared=await api('test-cases/import','POST',{content:parsed,presets});document=prepared.content;valid=true;fingerprint=prepared.semanticFingerprint;status=prepared.migrationMessage??(prepared.migrated?'v1을 옮겼습니다. 실행 의미는 그대로입니다':'가져왔습니다. 엔진 검증 통과')})}
+ async function upload(event){await work(async()=>{const file=event.target.files[0];if(!file)return;const parsed=JSON.parse(await file.text());await fillSharedPresets(parsed);savedId='';revision=0;presetRefs=[];genesisBackup=null;original=structuredClone(parsed);document=structuredClone(parsed);valid=false;fingerprint='';const prepared=await api('test-cases/import','POST',{content:parsed,presets});document=prepared.content;valid=true;fingerprint=prepared.semanticFingerprint;importDiff=prepared.migrated?declarationDiff(parsed,prepared.content):[];errorList=[];status=prepared.migrationMessage??(prepared.migrated?'v1을 옮겼습니다. 실행 의미는 그대로입니다':'가져왔습니다. 엔진 검증 통과')})}
  async function uploadPreset(event){await work(async()=>{for(const file of event.target.files){const preset=JSON.parse(await file.text());if(!preset.id)throw new Error('프리셋에 id가 필요합니다');presets={...presets,[preset.id]:preset}};status='참조 프리셋을 불러왔습니다'})}
  function change(next){document=next;valid=false;fingerprint='';status='고쳤습니다. 내보내기 전에 검증하세요'}
  function selectGenesis(id){
@@ -58,7 +64,9 @@
   if(!id)genesisBackup=null
   change(next)
  }
- async function validate(){await work(async()=>{const result=await api('test-cases/import','POST',{content:document,presets});document=result.content;valid=true;fingerprint=result.semanticFingerprint;status='엔진 검증 통과'})}
+ async function validate(){await work(async()=>{errorList=[];const result=await api('test-cases/import','POST',{content:document,presets});document=result.content;valid=true;fingerprint=result.semanticFingerprint;status='엔진 검증 통과'})}
+ // A duplicate is a new, unsaved case; saving it creates another shared document.
+ function duplicate(){const copy=duplicateCase($state.snapshot(document),savedCases.map(c=>c.name));original=null;savedId='';revision=0;presetRefs=[];importDiff=[];change(copy);status=`${copy.id}(으)로 복제했습니다. 검증하고 저장하면 새 공유 테스트가 됩니다`}
  function download(content,name){const url=URL.createObjectURL(new Blob([JSON.stringify(content,null,2)],{type:'application/json'}));const a=globalThis.document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 </script>
 <section aria-label="구조 DSL 편집기" class="dsl">
@@ -76,11 +84,13 @@
     <p>선택한 파일을 그대로 사용합니다. 선택을 해제하면 이전 생성 설정을 복원합니다.</p>
     {#if finishedGenesisRef(document)&&!selectedGenesis}<p>기존 선언 참조: {finishedGenesisRef(document)} · 실행하려면 등록된 자료를 선택하세요.</p>{/if}
    {/if}
-   <Field schema={document.schemaVersion==='2'?contract.$defs.caseSpec:contract.$defs.v1Spec} root={contract} value={document} onchange={change} {suggestions} />
+   <StatementEditor {document} {contract} errors={errorList} {suggestions} onchange={change} />
+   {#if importDiff.length}<details open data-testid="import-diff"><summary>v1 가져오기에서 바뀐 곳 {importDiff.length}개</summary><ul>{#each importDiff as d}<li><code>{d.path}</code> · {({added:'추가됨',removed:'없어짐',changed:'바뀜'})[d.kind]}</li>{/each}</ul></details>{/if}
    <button disabled={busy} onclick={validate}>테스트 시나리오 검증</button>
    <button disabled={!valid||busy} onclick={()=>download(document,'test-case.json')}>테스트 시나리오 내보내기</button>
    {#if savedId}<button disabled={busy} onclick={()=>work(async()=>download(await api('documents/'+encodeURIComponent(savedId)+'/bundle'),'test-case.bundle.json'))}>저장한 테스트 묶음 내보내기</button>{/if}
    <button disabled={!valid||busy} onclick={save}>공유 테스트 저장</button>
+   <button disabled={busy} onclick={duplicate}>케이스 복제</button>
    {#if original}<button onclick={()=>download(original,'original-test.json')}>가져온 원본 내보내기</button>{/if}
    {#if presetRefs.length}<p data-testid="dsl-preset-refs">고정한 프리셋: {presetRefs.map(r=>r.id+' · revision '+r.revision).join(', ')}</p>{/if}
    {#if fingerprint}<p data-testid="dsl-fingerprint">실행 지문: {fingerprint}</p>{/if}

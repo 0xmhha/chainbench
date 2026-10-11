@@ -30,3 +30,10 @@ test('a refused response keeps its status and structured details for the screen'
  assert.equal(plain.status, 502)
  assert.deepEqual(plain.details, {})
 })
+test('a refused response keeps the error list with each path', async () => {
+ const { responseError } = await import('../../web/src/api-error.mjs')
+ const error = await responseError(new Response('{"valid":false,"errors":[{"path":"/content/steps/1/do","code":"invalid","message":"nope"}]}', { status: 422 }))
+ assert.deepEqual(error.errors, [{ path: '/content/steps/1/do', code: 'invalid', message: 'nope' }])
+ const fields = await responseError(new Response('{"fieldErrors":[{"path":"/name","code":"invalid","message":"x"}]}', { status: 422 }))
+ assert.deepEqual(fields.errors, [{ path: '/name', code: 'invalid', message: 'x' }])
+})
