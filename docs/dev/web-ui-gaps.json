@@ -281,9 +281,10 @@
         "internal/app/web_jobs.go:91-96 (상태만 바꾼다)"
       ],
       "completion": "재시작 직후 작업 기록에 노드별 관측 결과가 남고, 노드가 모두 없음으로 확인된 자원은 명시적 복구로 풀리며, 살아 있는 노드는 계속 잠긴다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestReconcilingAnInterruptedJobRecordsWhatIsActuallyThere|TestReconcilingKeepsLiveOrUncheckedNodesLocked|TestRestartChecksLocalInterruptedJobsOnItsOwn\"; the WEB-12 proofs now assert the recorded reconciliation in the acceptance rerun",
+      "commit": "d8f1ae2a",
+      "evidence": "RED (/private/tmp/chainbench-web-b08-red.log): WebJobs had no reconciliation; an interrupted job stayed unknown with its resources unresolved until a cleanup job ran. GREEN: POST /api/v1/jobs/{jobId}/reconcile (initiator or administrator) records each node's observed process and data directory; confirmed absence cleans and releases claims, existing nodes retain them, unchecked nodes keep them locked; the restarted server checks local interrupted jobs on its own."
     },
     {
       "id": "G-B09",
