@@ -485,8 +485,8 @@
       "completion": "workspace export에 binding 이름 목록이 있고 비밀 값은 없다.",
       "status": "closed",
       "verification": "go test ./internal/app -run \"TestWorkspaceExportNamesTheBindingsAnImporterMustSupply|TestDocumentBundle|TestImportPreserves\"",
-      "commit": "6dae14ef",
-      "evidence": "RED (/private/tmp/chainbench-web-b18-red.log): a workspace export of a two-server SSH set listed no bindings. GREEN: the export carries privateBindingsRequired [\"ssh:far\",\"ssh:near\"] with no secret; importing it is valid and the preview lists the same bindings, derived from the imported server set rather than trusted from the file."
+      "commit": "6dae14ef, bb172e5e",
+      "evidence": "RED (/private/tmp/chainbench-web-b18-red.log): a workspace export of a two-server SSH set listed no bindings. GREEN: the export carries privateBindingsRequired [\"ssh:far\",\"ssh:near\"] with no secret; importing it is valid and the preview lists the same bindings, derived from the imported server set rather than trusted from the file. The first commit failed make check (TestMachineConsumersDoNotBranchOnKind, IsRemote in internal/app) because the check ran in a sequence that still committed; bb172e5e reads the resolved target instead and make check passes."
     },
     {
       "id": "G-B19",
