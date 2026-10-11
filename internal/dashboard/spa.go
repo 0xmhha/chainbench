@@ -18,10 +18,11 @@ import (
 //go:embed all:spa
 var spaFiles embed.FS
 
-// spaPages are the fixed screens; spaJob is one job's detail screen.
+// spaPages are the fixed screens; spaDetail matches one job's or one node's
+// detail screen.
 var (
-	spaPages = []string{"/", "/chains", "/tests", "/monitoring", "/history", "/settings"}
-	spaJob   = regexp.MustCompile(`^/jobs/[0-9a-f]{32}$`)
+	spaPages  = []string{"/", "/chains", "/tests", "/monitoring", "/history", "/settings"}
+	spaDetail = regexp.MustCompile(`^/(jobs/[0-9a-f]{32}|nodes/[0-9a-f]{32}/[A-Za-z0-9_.-]{1,64})$`)
 )
 
 // spaHandler serves the built SPA (its index at / and hashed assets at /assets/).
@@ -36,7 +37,7 @@ func spaHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only known UI routes receive the shell. Missing API/assets must stay 404.
 		switch path := r.URL.Path; {
-		case slices.Contains(spaPages, path), spaJob.MatchString(path):
+		case slices.Contains(spaPages, path), spaDetail.MatchString(path):
 			index, err := fs.ReadFile(sub, "index.html")
 			if err != nil {
 				http.Error(w, "SPA unavailable", http.StatusInternalServerError)

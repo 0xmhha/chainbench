@@ -11,6 +11,7 @@
   import MonitorPanel from './MonitorPanel.svelte'
   import Dashboard from './Dashboard.svelte'
   import JobDetail from './JobDetail.svelte'
+  import NodeDetail from './NodeDetail.svelte'
   import { parseRoute } from './routes.mjs'
   import { follow } from './nav.mjs'
   import { selection } from './selection.svelte.js'
@@ -36,7 +37,8 @@
   let connected = $state(false), error = $state('')
   let drops = $state(null), observedAt = $state(null), now = $state(Date.now())
   const stale = $derived(observedAt !== null && now - Date.parse(observedAt) > 5000)
-  const current = $derived(route === '/jobs' ? ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'] : pages.find(p => p[0] === route) ?? pages[0])
+  const details = { '/jobs': ['/jobs', '작업 상세', '서버가 실행하는 작업 하나의 단계와 결과를 확인합니다.'], '/nodes': ['/nodes', '노드 상세', '노드 하나의 상태, 구성, 로그와 쓸 수 있는 제어를 확인합니다.'] }
+  const current = $derived(details[route] ?? pages.find(p => p[0] === route) ?? pages[0])
   // The top bar names the selected workspace; names are read once per session.
   $effect(() => { if (ready && webSession) webApi(webSession)('workspaces?limit=100').then(page => { workspaceNames = Object.fromEntries(page.items.map(w => [w.id, w.name])) }).catch(() => {}) })
   onMount(() => {
@@ -110,6 +112,8 @@
           <Dashboard {runs} busDrops={drops} {connected} onrefresh={loadRuns} />
         {:else if route === '/jobs'}
           {#key parsed.jobId}<JobDetail jobId={parsed.jobId} {webSession} />{/key}
+        {:else if route === '/nodes'}
+          {#key parsed.networkId + parsed.nodeId}<NodeDetail networkId={parsed.networkId} nodeId={parsed.nodeId} {webSession} />{/key}
         {:else if route === '/monitoring'}
           {#key webSession?.user.id}<MonitorPanel {webSession} />{/key}
           <section class="panel"><h2>이벤트 타임라인</h2><p class="muted">현재 연결에서 수신한 최근 200건입니다. 연결이 끊긴 동안의 이벤트와 전체 기록을 보장하지 않습니다.</p>

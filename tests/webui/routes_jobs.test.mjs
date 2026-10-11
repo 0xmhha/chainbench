@@ -8,6 +8,8 @@ test('routes name the fixed screens and one job detail', () => {
  assert.deepEqual(parseRoute('/monitoring'), { page: '/monitoring' })
  assert.deepEqual(parseRoute('/jobs/0123456789abcdef0123456789abcdef'), { page: '/jobs', jobId: '0123456789abcdef0123456789abcdef' })
  assert.deepEqual(parseRoute('/jobs/nope'), { page: '/' })
+ assert.deepEqual(parseRoute('/nodes/0123456789abcdef0123456789abcdef/node2'), { page: '/nodes', networkId: '0123456789abcdef0123456789abcdef', nodeId: 'node2' })
+ assert.deepEqual(parseRoute('/nodes/0123456789abcdef0123456789abcdef'), { page: '/' })
  assert.deepEqual(parseRoute('/elsewhere'), { page: '/' })
 })
 

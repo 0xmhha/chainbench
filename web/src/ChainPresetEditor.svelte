@@ -4,6 +4,7 @@
   import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
   import { topologyChoices } from './chain-contract.mjs'
+  import ChainSurfacePanel from './ChainSurfacePanel.svelte'
   import { selectChain } from './selection.svelte.js'
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
@@ -219,7 +220,8 @@
           {#each result.warnings as warning}<p>{warning}</p>{/each}
         </div>
       {/if}
-      <details><summary>Generated declaration</summary><pre>{JSON.stringify(document, null, 2)}</pre></details>
+      <details><summary>생성된 선언</summary><pre>{JSON.stringify(document, null, 2)}</pre></details>
+      {#if webSession && document.chain}<ChainSurfacePanel {webSession} chain={document.chain} />{/if}
     {/if}
     {#if error}<p role="alert">{error}</p>{/if}
   </section>

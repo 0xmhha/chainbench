@@ -21,3 +21,12 @@ test('a structured message is not printed as an object', () => {
 test('field errors name the part of the request that failed', () => {
   assert.equal(errorMessage(422, '{"code":"invalid","message":"serverset: no pool hosts","requestId":"a1","fieldErrors":[{"path":"/content","code":"invalid","message":"serverset: no pool hosts"}]}'), '422: /content: serverset: no pool hosts')
 })
+test('a refused response keeps its status and structured details for the screen', async () => {
+ const { responseError } = await import('../../web/src/api-error.mjs')
+ const error = await responseError(new Response('{"message":"bind your SSH credential","details":{"missingAccess":["ssh:server2"]}}', { status: 403 }))
+ assert.equal(error.status, 403)
+ assert.deepEqual(error.details, { missingAccess: ['ssh:server2'] })
+ const plain = await responseError(new Response('down', { status: 502 }))
+ assert.equal(plain.status, 502)
+ assert.deepEqual(plain.details, {})
+})

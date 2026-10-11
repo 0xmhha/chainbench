@@ -11,3 +11,9 @@ function save() { try { sessionStorage.setItem(key, JSON.stringify(selection)) }
 export function selectWorkspace(id) { selection.workspaceId = id ?? ''; save() }
 export function selectNetwork(id) { selection.networkId = id ?? ''; save() }
 export function selectChain(id) { selection.chain = id ?? ''; save() }
+
+// pendingControl is a node control chosen on a node page and not yet planned.
+// The job form takes it once, so a later visit starts from a clean form.
+export const pendingControl = $state({ value: null })
+export function requestControl(workspaceId, nodeId, operation) { selectWorkspace(workspaceId); pendingControl.value = { workspaceId, nodeId, operation } }
+export function takeControl() { const v = pendingControl.value; pendingControl.value = null; return v }

@@ -32,7 +32,7 @@
 
 <section class="panel" aria-label="노드 상태"><h2>노드 상태</h2>
   <p class="muted">작업이 마지막으로 기록한 상태입니다. 기록된 PID는 실제 가동 증거가 아니며, 실제 프로세스는 체인 화면의 노드 상태 확인으로 봅니다.</p>
-  {#each networks as n (n.id)}<p><strong>{n.id}</strong> · {n.ownership} · 실행 {count(n.nodes, 'running')} · 정지 {count(n.nodes, 'stopped')} · 기타 {n.nodes.length - count(n.nodes, 'running') - count(n.nodes, 'stopped')}</p>{:else}<p class="muted">기록된 네트워크가 없습니다.</p>{/each}
+  {#each networks as n (n.id)}<p><strong>{n.id}</strong> · {n.ownership} · 실행 {count(n.nodes, 'running')} · 정지 {count(n.nodes, 'stopped')} · 기타 {n.nodes.length - count(n.nodes, 'running') - count(n.nodes, 'stopped')}</p><p class="nodes">{#each n.nodes as node (node.id)}<a href={`/nodes/${n.id}/${node.id}`} onclick={e => follow(e, `/nodes/${n.id}/${node.id}`)}>{node.id} · {node.role} · {node.state}</a>{/each}</p>{:else}<p class="muted">기록된 네트워크가 없습니다.</p>{/each}
 </section>
 
 <section class="panel" aria-label="최근 결과"><div class="panel-heading"><h2>최근 결과</h2><button onclick={onrefresh}>새로고침</button></div>
@@ -54,6 +54,6 @@
   a { color: var(--accent); } button { color: var(--accent-strong); background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 8px 12px; min-height: 40px; cursor: pointer; }
   .table-wrap { overflow: auto; margin-top: 16px; } table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-subtle); } th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
   .row { cursor: pointer; } .row:hover { background: var(--surface-raised); } small { display: block; color: var(--text-muted); }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } .ok { color: var(--ok); } .bad { color: var(--danger); }
+  .nodes { display: flex; flex-wrap: wrap; gap: 12px; } .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } .ok { color: var(--ok); } .bad { color: var(--danger); }
   @media (max-width: 800px) { .overview { grid-template-columns: 1fr; gap: 8px; } }
 </style>

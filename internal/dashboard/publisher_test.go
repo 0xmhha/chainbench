@@ -45,14 +45,14 @@ func TestPublisherCannotUseControlOrDiscloseItsToken(t *testing.T) {
 
 func TestUIRefreshDoesNotHideMissingAPIOrAssets(t *testing.T) {
 	srv := NewServer(collector.NewBus(), nil)
-	for _, path := range []string{"/", "/chains", "/tests", "/monitoring", "/history", "/settings", "/jobs/0123456789abcdef0123456789abcdef"} {
+	for _, path := range []string{"/", "/chains", "/tests", "/monitoring", "/history", "/settings", "/jobs/0123456789abcdef0123456789abcdef", "/nodes/0123456789abcdef0123456789abcdef/node1"} {
 		w := httptest.NewRecorder()
 		srv.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
 		if w.Code != 200 || !strings.Contains(w.Body.String(), "/assets/") {
 			t.Fatalf("%s missing current shell", path)
 		}
 	}
-	for _, path := range []string{"/api/v1/missing", "/assets/missing.js", "/unknown-route", "/jobs/", "/jobs/not-a-job", "/jobs/0123456789abcdef0123456789abcdef/extra"} {
+	for _, path := range []string{"/api/v1/missing", "/assets/missing.js", "/unknown-route", "/jobs/", "/jobs/not-a-job", "/jobs/0123456789abcdef0123456789abcdef/extra", "/nodes/0123456789abcdef0123456789abcdef", "/nodes/x/node1", "/nodes/0123456789abcdef0123456789abcdef/node1/logs"} {
 		w := httptest.NewRecorder()
 		srv.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
 		if w.Code != 404 || strings.Contains(w.Body.String(), "/assets/") {

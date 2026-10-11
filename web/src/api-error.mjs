@@ -12,6 +12,14 @@ export function errorMessage(status, text) {
  return `${status}: ${message}`
 }
 
+// responseError also keeps the status and the body's details (busy holders,
+// missing access), so a screen can act on them beyond showing the message.
 export async function responseError(response) {
- return new Error(errorMessage(response.status, await response.text()))
+ const text = await response.text()
+ const error = new Error(errorMessage(response.status, text))
+ let details = {}
+ try { const body = JSON.parse(text); if (body?.details && typeof body.details === 'object') details = body.details } catch { details = {} }
+ error.status = response.status
+ error.details = details
+ return error
 }
