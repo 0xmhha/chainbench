@@ -72,7 +72,7 @@ func WithChainPresets(root string) Option {
 				errors = append(errors, map[string]string{"path": "/", "code": "unsupported", "message": "expected named chain-preset with contractVersion 2"})
 			default:
 				if err := app.ValidateDeploymentDocument(app.DeploymentDocumentInput{Kind: in.Kind, Name: in.Name, ContractVersion: in.ContractVersion, Content: in.Content, AssetRefs: in.AssetRefs}); err != nil {
-					errors = append(errors, map[string]string{"path": "/content", "code": "invalid", "message": err.Error()})
+					errors = append(errors, map[string]string{"path": app.ContentErrorPath(err), "code": "invalid", "message": err.Error()})
 				}
 			}
 			w.Header().Set("Content-Type", "application/json")

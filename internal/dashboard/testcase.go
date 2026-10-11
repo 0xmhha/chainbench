@@ -64,7 +64,7 @@ func WithTestCases(authenticate DeploymentAuthenticator) Option {
 			}
 			out, err := app.PrepareWebTestCase(in)
 			if err != nil {
-				deploymentJSON(w, 422, map[string]any{"valid": false, "errors": []map[string]string{{"path": app.TestCaseErrorPath(err), "code": "invalid", "message": err.Error()}}})
+				deploymentJSON(w, 422, map[string]any{"valid": false, "errors": []map[string]string{{"path": app.ContentErrorPath(err), "code": "invalid", "message": err.Error()}}})
 				return
 			}
 			deploymentJSON(w, 200, out)
