@@ -1,7 +1,11 @@
 # Web UI 구현 상태
 
-2026-10-08 기준. 승인된 요구사항과 14개 인수 조건은 변경하지 않는다.
+2026-10-08 기준으로 쓴 진행 기록이다. 승인된 요구사항과 14개 인수 조건은 변경하지 않는다.
 이 문서는 구현과 검증의 진행 상태이며 전체 완료 판정이 아니다.
+
+2026-10-11 덧붙임: 아래 절들은 그때그때의 기록이라 뒤에 해결된 한계를 아직 미완료로 적은 곳이 있다.
+등록 바이너리 교체(`e6b3d3c1`, `bdd175e6`, SSH는 `3430c1e3`)는 구현됐다. 지금 남은 일의 정본은
+[누락 목록](web-ui-gaps.json)과 [누락 검토](web-ui-gap-review.md)다.
 
 현재 브라우저는 대시보드, 체인·workspace, 테스트, 모니터링, 히스토리,
 설정으로 이동한다. 로그인과 역할별 권한, 공유 문서 리비전, 암호화한 개인
@@ -588,7 +592,9 @@ stop refusal and explicit retry. A real local-driver test also fails against the
 using a read-only Go overlay. The corrected engine stops an isolated owned
 process, refuses a missing replacement executable, and verifies sibling liveness,
 unchanged data and retained execution history. The browser replacement adapter and
-its registered file/option bindings remain unfinished. This foundation does not
+its registered file/option bindings remained unfinished at this point; registered
+executable replacement followed in `e6b3d3c1` and `bdd175e6`, and registered config
+file replacement is tracked as G-B15. This foundation does not
 award WEB-07 or replace fresh source-bound browser acceptance evidence.
 
 ### Generated configuration replacement with reviewed choices
@@ -640,6 +646,6 @@ test. A read-only overlay of the preceding committed guard exercises the stop
 adapter against an isolated owned real process. GREEN must refuse the request,
 preserve PID/data/records and keep normal controls working on all three chains.
 Logs use `chainbench-web-node-binary-binding-{red,live-red,process-red,unit-green,live-green}.log`.
-This closes a prerequisite only. Registered replacement binary staging, persistent
-per-node asset bindings, mixed-binary control and all WEB-07 acceptance remain
-unfinished.
+This closes a prerequisite only. Registered replacement binary staging and
+persistent per-node asset bindings followed in `e6b3d3c1` and `bdd175e6`; mixed-binary
+control and WEB-07 acceptance stayed open then.

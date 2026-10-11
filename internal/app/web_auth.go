@@ -218,19 +218,46 @@ func (a *WebAuth) CreateUser(actor DeploymentActor, username, password, role str
 	n[u.ID] = u
 	return u.WebUser, a.save(n)
 }
+
+// PreviewUserUpdate validates a change and returns the account it would
+// produce, without saving it, so its consequences can be applied first.
+func (a *WebAuth) PreviewUserUpdate(actor DeploymentActor, id, role, password string, active *bool) (WebUser, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	u, _, err := a.updatedUser(actor, id, role, password, active)
+	return u.WebUser, err
+}
+
 func (a *WebAuth) UpdateUser(actor DeploymentActor, id, role, password string, active *bool) (WebUser, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	u, n, err := a.updatedUser(actor, id, role, password, active)
+	if err != nil {
+		return WebUser{}, err
+	}
+	if err := a.save(n); err != nil {
+		return WebUser{}, err
+	}
+	for token, s := range a.sessions {
+		if s.UserID == id {
+			delete(a.sessions, token)
+		}
+	}
+	return u.WebUser, nil
+}
+
+// updatedUser applies a change to a copy of the accounts; the caller holds a.mu.
+func (a *WebAuth) updatedUser(actor DeploymentActor, id, role, password string, active *bool) (webAccount, map[string]webAccount, error) {
 	if actor.Role != "admin" {
-		return WebUser{}, ErrDeploymentForbidden
+		return webAccount{}, nil, ErrDeploymentForbidden
 	}
 	u, ok := a.users[id]
 	if !ok {
-		return WebUser{}, ErrDeploymentNotFound
+		return webAccount{}, nil, ErrDeploymentNotFound
 	}
 	if role != "" {
 		if !validWebRole(role) {
-			return WebUser{}, errors.New("invalid role")
+			return webAccount{}, nil, errors.New("invalid role")
 		}
 		u.Role = role
 	}
@@ -239,11 +266,11 @@ func (a *WebAuth) UpdateUser(actor DeploymentActor, id, role, password string, a
 	}
 	if password != "" {
 		if len(password) < 12 || len(password) > 72 {
-			return WebUser{}, errors.New("invalid password length")
+			return webAccount{}, nil, errors.New("invalid password length")
 		}
 		h, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			return WebUser{}, err
+			return webAccount{}, nil, err
 		}
 		u.Hash = string(h)
 	}
@@ -256,17 +283,9 @@ func (a *WebAuth) UpdateUser(actor DeploymentActor, id, role, password string, a
 		}
 	}
 	if admins == 0 {
-		return WebUser{}, ErrDeploymentConflict
+		return webAccount{}, nil, ErrDeploymentConflict
 	}
-	if err := a.save(n); err != nil {
-		return WebUser{}, err
-	}
-	for token, s := range a.sessions {
-		if s.UserID == id {
-			delete(a.sessions, token)
-		}
-	}
-	return u.WebUser, nil
+	return u, n, nil
 }
 
 // AuditWeb records bounded server-selected operations, never request bodies or secrets.

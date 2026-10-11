@@ -113,7 +113,7 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 					http.Error(response, "administrator required", http.StatusForbidden)
 					return
 				}
-				if r.Method == "DELETE" && strings.HasPrefix(path, "/api/v1/runs") && session.User.Role != "administrator" {
+				if r.Method == "DELETE" && strings.HasPrefix(path, "/api/v1/history/") && session.User.Role != "administrator" {
 					http.Error(response, "administrator required", http.StatusForbidden)
 					return
 				}
@@ -211,8 +211,19 @@ func WithWebSecurity(auth *app.WebAuth, deployments *app.DeploymentStore) Option
 				return
 			}
 			a, _ := authenticate(r)
-			u, err := auth.UpdateUser(a, r.PathValue("userId"), in.Role, in.Password, in.Active)
-			if err == nil && s.jobs != nil && (!u.Active || u.Role == "viewer") {
+			// A change that takes job rights away revokes the user's jobs first;
+			// if that cannot be recorded, the account is left unchanged. The
+			// second revocation catches a job started in between.
+			next, err := auth.PreviewUserUpdate(a, r.PathValue("userId"), in.Role, in.Password, in.Active)
+			revoke := err == nil && s.jobs != nil && (!next.Active || next.Role == "viewer")
+			if revoke {
+				err = s.jobs.RevokeActor(next.ID)
+			}
+			var u app.WebUser
+			if err == nil {
+				u, err = auth.UpdateUser(a, r.PathValue("userId"), in.Role, in.Password, in.Active)
+			}
+			if err == nil && revoke {
 				err = s.jobs.RevokeActor(u.ID)
 			}
 			deploymentResponse(w, u, err, http.StatusOK)

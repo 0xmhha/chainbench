@@ -287,6 +287,7 @@ func (s *DeploymentStore) DocumentRevision(id string, revision int) (DeploymentD
 	d := h[revision-1]
 	d.Content = append(json.RawMessage(nil), d.Content...)
 	d.AssetRefs = append([]string{}, d.AssetRefs...)
+	d.PresetRefs = append([]DeploymentDocumentRef(nil), d.PresetRefs...)
 	return d, nil
 }
 
