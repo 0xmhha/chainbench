@@ -444,9 +444,10 @@
         "internal/app/web_chain_execution.go:22,323-330"
       ],
       "completion": "중간 실패 작업이 완료한 노드·파일과 미확인 대상을 나누어 보이고, 처분이 retained로 고정되지 않는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestFailedDeploymentNamesEachNodesKnownState|TestFailureDispositionFollowsTheFailedPhase\"; the SSH deploy fault proof (browser_ssh_deploy_fault.mjs) now asserts per-node effects and the unknown disposition in the acceptance rerun",
+      "commit": "da7dfc67",
+      "evidence": "RED (/private/tmp/chainbench-web-b16-red.log): the helpers did not exist; a failed deployment recorded only \"<step> completed\" lines, the control and data roots as unresolved and the fixed disposition retained. GREEN: after a failed deploy, init or start phase each recorded node is listed with its data directory and recorded launch on its own machine (bounded checks; unanswered nodes stay unresolved), and the disposition is unknown once a target phase ran, retained before."
     },
     {
       "id": "G-B17",
