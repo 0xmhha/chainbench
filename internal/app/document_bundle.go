@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"io"
 	"sort"
 	"strings"
@@ -234,8 +235,9 @@ func webRequiredBindings(in DeploymentDocumentInput) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		if server.IsRemote() {
-			out = append(out, "ssh:"+server.Name)
+		// The resolved target names a server only when it is reached over SSH.
+		if target := resource.TargetOf(server, ""); target.Server != "" {
+			out = append(out, "ssh:"+target.Server)
 		}
 	}
 	sort.Strings(out)
