@@ -25,16 +25,28 @@ func WithChainPresets(root string) Option {
 		s.contracts = append(s.contracts, "chain-preset")
 		s.mux.HandleFunc("GET /api/v1/contracts/chain-preset", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
+			var contract any
 			if r.URL.Query().Get("chain") == "" {
-				_, _ = w.Write(dsl.SchemaV2)
-				return
+				var schema map[string]any
+				if err := json.Unmarshal(dsl.SchemaV2, &schema); err != nil {
+					http.Error(w, "grammar unavailable", http.StatusInternalServerError)
+					return
+				}
+				contract = schema
+			} else {
+				schema, err := app.ChainPresetContract(r.URL.Query().Get("chain"))
+				if err != nil {
+					http.Error(w, "unsupported chain", http.StatusBadRequest)
+					return
+				}
+				contract = schema
 			}
-			schema, err := app.ChainPresetContract(r.URL.Query().Get("chain"))
+			out, err := app.ContractWithDigest(contract)
 			if err != nil {
-				http.Error(w, "unsupported chain", http.StatusBadRequest)
+				http.Error(w, "contract unavailable", http.StatusInternalServerError)
 				return
 			}
-			_ = json.NewEncoder(w).Encode(schema)
+			_ = json.NewEncoder(w).Encode(out)
 		})
 		s.validateDocument = func(w http.ResponseWriter, r *http.Request) {
 			var in struct {

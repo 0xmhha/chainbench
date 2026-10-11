@@ -1,6 +1,7 @@
 <script>
   import { responseError } from './api-error.mjs'
   import { allItems } from './pages.mjs'
+  import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
  import Field from './DSLField.svelte'
  import {references,finishedGenesisRef,caseAssetRefs,presetIds,sameDeclaration} from './dsl-form.js'
  let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
@@ -15,7 +16,7 @@
  async function api(path,method='GET',body,expectedRevision){const response=await fetch('/api/v1/'+path,{method,headers:{Authorization:authorization,'Content-Type':'application/json',...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}),...(expectedRevision?{'If-Match':`"${expectedRevision}"`}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(!response.ok)throw await responseError(response);return response.json()}
  async function refreshSaved(){savedCases=await allItems(api,'documents?kind=case')}
  async function loadSaved(id){if(!id)return;await work(async()=>{const item=await api('documents/'+encodeURIComponent(id));savedId=item.id;revision=item.revision;presetRefs=item.presetRefs??[];for(const ref of presetRefs){const preset=await api('documents/'+encodeURIComponent(ref.id)+'?revision='+ref.revision);presets={...presets,[preset.content.id]:preset.content}};original=null;genesisBackup=null;change(structuredClone(item.content));if(actor.role!=='viewer'){const prepared=await api('test-cases/import','POST',{content:document,presets});fingerprint=prepared.semanticFingerprint}valid=true;status=`공유 테스트 revision ${revision}`})}
- async function save(){await work(async()=>{presetRefs=await pinPresets();const item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,contractVersion:'2',content:document,assetRefs:caseAssetRefs(document),presetRefs},revision);savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
+ async function save(){await work(async()=>{presetRefs=await pinPresets();let item;try{item=await api(savedId?'documents/'+savedId:'documents',savedId?'PATCH':'POST',{kind:'case',name:document.id,...draftMeta(contract),content:document,assetRefs:caseAssetRefs(document),presetRefs},revision)}catch(e){if(!contractChanged(e.message))throw e;const before=contract;contract=await api('contracts/dsl');await api('test-cases/import','POST',{content:document,presets});throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: '+(changedDefinitions(before,contract).join(', ')||'세부 항목')+'. 새 계약으로 다시 검증했으니 확인한 뒤 다시 저장하세요.')}savedId=item.id;revision=item.revision;onsaved();await refreshSaved();status=`공유 테스트 revision ${revision} 저장됨`})}
  // A case names presets by id; saving pins the shared revision of each, and
  // registers a loaded preset file that no shared revision matches.
  async function pinPresets(){
@@ -24,7 +25,7 @@
   for(const id of ids){
    const wanted=presets[id]
    let doc=shared.find(d=>d.content?.id===id&&(!wanted||sameDeclaration(d.content,wanted)))
-   if(!doc){if(!wanted)throw new Error(`Preset ${id} is not shared; load its file under Referenced preset files`);doc=await api('documents','POST',{kind:'chain-preset',name:id,contractVersion:'2',content:wanted,assetRefs:[]})}
+   if(!doc){if(!wanted)throw new Error(`Preset ${id} is not shared; load its file under Referenced preset files`);doc=await api('documents','POST',{kind:'chain-preset',name:id,contractVersion:draftMeta(contract).contractVersion,content:wanted,assetRefs:[]})}
    refs.push({id:doc.id,revision:doc.revision})
   }
   return refs

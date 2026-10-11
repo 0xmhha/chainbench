@@ -1,6 +1,7 @@
 <script>
   import { responseError } from './api-error.mjs'
   import { allItems } from './pages.mjs'
+  import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   let { webSession = undefined, onsaved = () => {} } = $props()
   import DeploymentFields from './DeploymentFields.svelte'
   import BundleImport from './BundleImport.svelte'
@@ -31,8 +32,16 @@
   }
   function loadDocument(id) { const d = docs.find(d => d.id === id); if (!d) return; kind = d.kind; name = d.name; content = structuredClone($state.snapshot(d.content)); docId = d.id; revision = d.revision }
   async function loadWorkspace(id) { workspaceId = id; const w = workspaces.find(w => w.id === id); if (!w) return; workspaceName = w.name; workspaceRevision = w.revision; for (const ref of w.documents) { if (!docs.some(d => d.id === ref.id && d.revision === ref.revision)) { const pinned = await api(`documents/${ref.id}?revision=${ref.revision}`); docs = [...docs, pinned] } } setRef = ''; configRef = ''; for (const r of w.documents) { const d = docs.find(d => d.id === r.id && d.revision === r.revision); if (d?.kind === 'server-set') setRef = `${r.id}:${r.revision}`; if (d?.kind === 'workspace-config') configRef = `${r.id}:${r.revision}` } bindings = await api(`workspaces/${id}/credential-bindings`); access = null }
-  function documentInput() { return { kind, name, content, contractVersion: '2', assetRefs: [] } }
-  async function saveDocument() { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); status = `Saved shared document revision ${revision}` }
+  function documentInput() { return { kind, name, content, ...draftMeta(contract), assetRefs: [] } }
+  async function saveDocument() {
+    try { const d = await api(docId ? `documents/${docId}` : 'documents', docId ? 'PATCH' : 'POST', documentInput(), revision); docId = d.id; revision = d.revision; onsaved(); await refresh(); status = `Saved shared document revision ${revision}` }
+    catch (e) {
+      if (!contractChanged(e.message)) throw e
+      const before = contract; contract = await api('contracts/deployment')
+      const result = await api('documents/validate', 'POST', documentInput())
+      throw new Error('엔진 계약이 바뀌었습니다. 바뀐 부분: ' + (changedDefinitions(before, contract).join(', ') || '세부 항목') + '. 새 계약 검증 ' + (result.valid ? '통과' : '실패: ' + result.errors.map(x => x.message).join('; ')) + '. 확인한 뒤 다시 저장하세요.')
+    }
+  }
   async function saveWorkspace() { const documents = [setRef, configRef].map(ref => { const [id, rev] = ref.split(':'); return { id, revision: Number(rev) } }); const w = await api(workspaceId ? `workspaces/${workspaceId}` : 'workspaces', workspaceId ? 'PATCH' : 'POST', { name: workspaceName, documents }, workspaceRevision); onsaved(); await refresh(); await loadWorkspace(w.id); status = `Saved shared workspace revision ${w.revision}` }
   async function exportDocument() { const exported = await api(`documents/${docId}/export`); const url = URL.createObjectURL(new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `${kind}.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported shared declaration' }
   async function exportWorkspace() { const response = await fetch(`/api/v1/workspaces/${workspaceId}/export`, { headers: { Authorization: authorization } }); if (!response.ok) throw await responseError(response); const url = URL.createObjectURL(await response.blob()); const a = document.createElement('a'); a.href = url; a.download = `${workspaceName}.bundle.json`; a.click(); URL.revokeObjectURL(url); status = 'Exported workspace bundle' }

@@ -1,6 +1,7 @@
 <script>
   import { responseError } from './api-error.mjs'
   import { allItems } from './pages.mjs'
+  import { draftMeta, contractChanged, changedDefinitions } from './contract-draft.mjs'
   import Field from "./DSLField.svelte"
   let { webSession = undefined, assetRevision = 0, onsaved = () => {} } = $props()
   const writable=$derived(!webSession || webSession.user.role!=='viewer')
@@ -58,9 +59,19 @@
   async function save() {
     pending = true; error = ''
     try {
-      const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs }, revision)
+      const entry = await shared(savedId ? 'documents/' + savedId : 'documents', savedId ? 'PATCH' : 'POST', { kind: 'chain-preset', name: document.id, ...draftMeta(contract), content: document, assetRefs }, revision)
       savedId = entry.id; revision = entry.revision; onsaved(); await refreshSaved()
-    } catch(e) { error = e.message } finally { pending = false }
+    } catch(e) {
+      error = e.message
+      if (contractChanged(e.message)) {
+        // The engine contract changed under the draft: load the new one,
+        // validate the draft against it and say which parts differ.
+        const before = contract
+        contract = await shared('contracts/chain-preset?chain=' + encodeURIComponent(document.chain))
+        await validate()
+        error = '엔진 계약이 바뀌었습니다. 바뀐 부분: ' + (changedDefinitions(before, contract).join(', ') || '세부 항목') + '. 새 계약으로 다시 검증했으니 결과를 확인한 뒤 다시 저장하세요.'
+      }
+    } finally { pending = false }
   }
   function exportFile() {
     const url = URL.createObjectURL(new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' }))
@@ -125,7 +136,7 @@
     try {
       const response = await fetch('/api/v1/documents/validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...(webSession?{'X-CSRF-Token':webSession.csrfToken}:{}) },
-        body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: '2', content: document, assetRefs })
+        body: JSON.stringify({ kind: 'chain-preset', name: document.id, contractVersion: draftMeta(contract).contractVersion, content: document, assetRefs })
       })
       if (!response.ok) throw await responseError(response)
       const validation = await response.json()

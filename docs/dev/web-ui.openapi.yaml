@@ -291,7 +291,7 @@ paths:
     get:
       operationId: contract
       summary: Read engine-owned grammar or parameter schema
-      description: contractId is deployment, manifest, dsl or chain-preset, each served only when its editor is enabled; chain-preset takes ?chain=<chainId> for the launch vocabulary of that chain. Any other id is 404 and the message names the contracts this server serves.
+      description: Each contract object carries x-contractDigest (SHA-256 of the contract) and x-contractVersion. A document create or update may send that digest as contractDigest; a digest that is no longer current is refused with 409 so the editor validates the draft against the new contract first. contractId is deployment, manifest, dsl or chain-preset, each served only when its editor is enabled; chain-preset takes ?chain=<chainId> for the launch vocabulary of that chain. Any other id is 404 and the message names the contracts this server serves.
       x-minimum-role: viewer
       responses:
         '200':
@@ -2236,6 +2236,9 @@ components:
             pinned revisions inlined while the stored case keeps its reference.
           items:
             $ref: '#/components/schemas/DocumentRef'
+        contractDigest:
+          type: string
+          description: x-contractDigest of the contract the draft was edited against. Checked on save and never stored; a stale digest is refused with 409.
       additionalProperties: false
       required:
       - kind

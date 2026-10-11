@@ -22,6 +22,9 @@ type DeploymentDocumentInput struct {
 	// extends, so the case keeps its reference and still runs one exact
 	// declaration. Only a case carries them.
 	PresetRefs []DeploymentDocumentRef `json:"presetRefs,omitempty"`
+	// ContractDigest names the engine contract the draft was edited against.
+	// It is checked on save and never stored.
+	ContractDigest string `json:"contractDigest,omitempty"`
 }
 
 // ValidateDeploymentDocument delegates grammar, paths and placement to resource.

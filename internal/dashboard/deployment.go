@@ -73,7 +73,8 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 		}
 		s.contracts = append(s.contracts, "deployment")
 		route("GET /api/v1/contracts/deployment", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
-			deploymentJSON(w, 200, app.DeploymentContract())
+			contract, err := app.ContractWithDigest(app.DeploymentContract())
+			deploymentResponse(w, contract, err, 200)
 		})
 		route("POST /api/v1/documents/validate", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor) {
 			var in app.DeploymentDocumentInput
@@ -112,6 +113,11 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
+			if err := app.CheckContractDigest(in); err != nil {
+				deploymentError(w, err)
+				return
+			}
+			in.ContractDigest = ""
 			d, err := store.SaveDocument(a, "", 0, in)
 			deploymentResponse(w, d, err, 201)
 		})
@@ -128,6 +134,11 @@ func WithDeployments(store *app.DeploymentStore, authenticate DeploymentAuthenti
 			if !deploymentDecode(w, r, &in) {
 				return
 			}
+			if err := app.CheckContractDigest(in); err != nil {
+				deploymentError(w, err)
+				return
+			}
+			in.ContractDigest = ""
 			d, err := store.SaveDocument(a, r.PathValue("id"), rev, in)
 			deploymentResponse(w, d, err, 200)
 		})
