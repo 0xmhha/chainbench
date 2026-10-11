@@ -299,9 +299,10 @@
         "internal/dashboard/deployment.go http.Error 평문"
       ],
       "completion": "두 오류의 requestId가 다르고, 422 응답의 fieldErrors가 잘못된 필드 경로를 가리키며, 누락된 헤더의 상태 코드가 OpenAPI에 있다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestDocumentValidationNamesTheFieldThatFailed; go test ./internal/dashboard -run \"TestErrorsCarryMachineCodesAndFieldPaths|TestAuditTrail\"; node --test tests/webui/api-error.test.mjs",
+      "commit": "6fd0f53f",
+      "evidence": "RED: every error carried requestId \"web-rejected\", code was the status text, an invalid document had no fieldErrors and a job without Idempotency-Key was 422. GREEN: request ids differ per request and match X-Request-ID; codes are stable names; document refusals carry fieldErrors with /name, /contractVersion, /presetRefs, /assetRefs or /content; a missing key is 400; 428 is documented. Limit: engine validators give a reason but no position inside content, so content errors point at /content."
     },
     {
       "id": "G-B10",
