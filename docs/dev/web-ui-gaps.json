@@ -143,9 +143,10 @@
         "internal/dashboard/{deployment,manifests,testcase,chainpreset}.go 고정 경로 네 개만 있다"
       ],
       "completion": "등록된 계약 ID는 같은 본문을 돌려주고 모르는 ID는 404다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestContractRouteNamesTheContractsThisServerServes",
+      "commit": "652f0fa9",
+      "evidence": "RED: an unknown contract id answered the mux text \"404 page not found\" and named nothing. GREEN: served ids answer from their routes and any other id is 404 naming chain-preset, deployment, dsl and manifest as enabled."
     },
     {
       "id": "G-B02",
@@ -161,9 +162,10 @@
         "internal/dashboard/jobs.go:35 (문서에 없는 /api/v1/networks만 있다)"
       ],
       "completion": "workspace의 network 목록을 계약 형식으로 돌려준다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestWorkspaceNetworksListOnlyThatWorkspace",
+      "commit": "652f0fa9",
+      "evidence": "RED: GET /api/v1/workspaces/w2/networks was 404. GREEN: it lists only that workspace's networks in a page."
     },
     {
       "id": "G-B03",
@@ -182,9 +184,10 @@
         "internal/app/web_jobs.go:117 (기록이 네 곳에 흩어져 있고 조회 경로가 없다)"
       ],
       "completion": "역할 변경·거절·취소·삭제가 대상과 결과를 포함해 조회되고, 관리자가 아니면 403이며, 히스토리 삭제 뒤에도 남는다.",
-      "status": "open",
-      "verification": "",
-      "commit": ""
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestAuditTrailRecordsTargetsRequestsAndIsAdministratorOnly",
+      "commit": "652f0fa9",
+      "evidence": "RED: app.WebAuditRecord and GET /api/v1/audit did not exist; the security trail recorded no target or request id. GREEN: an administrator reads one trail merged from the security, document, job, history and manifest stores; a refused role change and an accepted one appear with target users/<id>, result and the request id the response carried; an operator is refused."
     },
     {
       "id": "G-B04",
