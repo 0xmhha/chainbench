@@ -43,3 +43,29 @@ test('coverage gaps are listed with their reasons rather than hidden', () => {
  assert.deepEqual(gapSummary(metrics.coverage), ['node2 rpc rpc_unavailable (2026-10-09T00:00:10Z – 2026-10-09T00:00:15Z)'])
  assert.deepEqual(gapSummary({complete: true, gaps: []}), [])
 })
+
+test('a series breaks at a missing value and at a gap longer than the sampling interval', async () => {
+ const {chartModel} = await import('../../web/src/metric-chart.mjs')
+ const m = {series: [{nodeId: 'node1', name: 'h', unit: '', source: 'rpc', samples: [
+  {time: '2026-10-09T00:00:00Z', value: 1}, {time: '2026-10-09T00:00:05Z', value: 2},
+  {time: '2026-10-09T00:00:10Z', value: null}, {time: '2026-10-09T00:00:15Z', value: 3},
+  {time: '2026-10-09T00:00:20Z', value: 4}, {time: '2026-10-09T00:01:20Z', value: 5}]}],
+  coverage: {sampleIntervalSeconds: 5}}
+ const [series] = chartModel(m, 'h', {width: 100, height: 50}).nodes
+ assert.equal(series.segments.length, 3, 'one line per stretch without gaps')
+ assert.deepEqual(series.segments.map(s => s.length), [2, 2, 1])
+ assert.equal((series.path.match(/M/g) ?? []).length, 3)
+})
+
+test('the metrics to chart are the ones the server collected, with their unit and source', async () => {
+ const {metricNames} = await import('../../web/src/metric-chart.mjs')
+ assert.deepEqual(metricNames(metrics), [{name: 'block_height', unit: 'blocks', source: 'rpc'}, {name: 'p2p_peers', unit: 'peers', source: 'metrics'}])
+})
+
+test('a preset range ends now and a custom range is used as given', async () => {
+ const {timeRange} = await import('../../web/src/metric-chart.mjs')
+ const now = Date.parse('2026-10-09T01:00:00Z')
+ assert.deepEqual(timeRange({preset: 15}, now), {from: '2026-10-09T00:45:00.000Z', to: '2026-10-09T01:00:00.000Z'})
+ assert.deepEqual(timeRange({preset: 0, from: '2026-10-09T00:00:00Z', to: '2026-10-09T00:30:00Z'}, now), {from: '2026-10-09T00:00:00.000Z', to: '2026-10-09T00:30:00.000Z'})
+ assert.equal(timeRange({preset: 0, from: '2026-10-09T00:30:00Z', to: '2026-10-09T00:00:00Z'}, now), null, 'a reversed range is refused')
+})

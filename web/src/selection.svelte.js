@@ -17,3 +17,8 @@ export function selectChain(id) { selection.chain = id ?? ''; save() }
 export const pendingControl = $state({ value: null })
 export function requestControl(workspaceId, nodeId, operation) { selectWorkspace(workspaceId); pendingControl.value = { workspaceId, nodeId, operation } }
 export function takeControl() { const v = pendingControl.value; pendingControl.value = null; return v }
+
+// monitorRange is the time range every monitoring view reads: preset minutes
+// ending now, or a custom from/to when preset is 0. Node and metric narrow the
+// charts; empty means all.
+export const monitorRange = $state({ preset: 15, from: '', to: '', node: '', metric: '' })

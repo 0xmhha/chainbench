@@ -1,8 +1,12 @@
 <script>
  import {onMount} from 'svelte'
- import {chartModel,logWindow,gapSummary} from './metric-chart.mjs'
+ import {chartModel,logWindow,gapSummary,metricNames,timeRange} from './metric-chart.mjs'
+ import {monitorRange} from './selection.svelte.js'
  let {networkId}=$props()
- const charts=[['block_height','블록 높이 (RPC)'],['peer_count','피어 수 (RPC)'],['chain_head_block','헤드 블록 (metrics)'],['txpool_pending','대기 트랜잭션 (metrics)']]
+ // Every metric the server collected in the range is charted unless one is chosen.
+ const charts=$derived(metricNames(metrics).filter(m=>!monitorRange.metric||m.name===monitorRange.metric))
+ const shownNodes=$derived(allNodes.filter(n=>!monitorRange.node||n===monitorRange.node))
+ let rangeLogs=$state(null),rangeLogError=$state('')
  const colors=['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#f87171','#22d3ee','#a3e635']
  const W=640,H=160
  let selection=0,polls=0,applied=0
@@ -14,15 +18,17 @@
  async function load(){
   const order=++polls // An older, slower reply must not replace a newer one.
   try{
-   const response=await fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics`,{cache:'no-store'})
+   const range=timeRange(monitorRange)
+   if(!range)throw new Error('시작 시각이 끝 시각보다 앞서야 합니다.')
+   const response=await fetch(`/api/v1/networks/${encodeURIComponent(networkId)}/metrics?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,{cache:'no-store'})
    if(!response.ok)throw new Error(`지표 조회 실패 (${response.status})`)
    const value=await response.json()
    if(order>applied){applied=order;metrics=value;error=''}
   }catch(failure){if(order>applied)error=failure.message}
  }
- async function select(node,point){
+ async function select(node,point,model){
   const choice=++selection // Plain counter: $state wraps objects in proxies.
-  selected={node,time:point.time,value:point.value};logs=null;logError=''
+  selected={node,time:point.time,value:point.value,unit:model?.unit??selected?.unit??'',source:model?.source??selected?.source??'',name:model?.name??selected?.name??''};logs=null;logError=''
   const {from,to}=logWindow(point.time,30)
   try{
    const response=await fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+node)}/logs?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=100`,{cache:'no-store'})
@@ -31,7 +37,17 @@
    if(selection===choice)logs=value // A later selection supersedes this reply.
   }catch(failure){if(selection===choice)logError=failure.message}
  }
- onMount(()=>{load();const timer=setInterval(load,5000);return()=>clearInterval(timer)})
+ onMount(()=>{const timer=setInterval(()=>{if(monitorRange.preset>0)load()},5000);return()=>clearInterval(timer)})
+ // A changed range reloads the charts and the range logs of the chosen node.
+ $effect(()=>{void monitorRange.preset;void monitorRange.from;void monitorRange.to;load();selected=null;logs=null})
+ $effect(()=>{
+  const node=monitorRange.node,range=timeRange({preset:monitorRange.preset,from:monitorRange.from,to:monitorRange.to})
+  rangeLogs=null;rangeLogError=''
+  if(!node||!range||!allNodes.includes(node))return
+  fetch(`/api/v1/nodes/${encodeURIComponent(networkId+'.'+node)}/logs?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}&limit=100`,{cache:'no-store'})
+   .then(async r=>{if(!r.ok)throw new Error(`로그 조회 실패 (${r.status})`);const v=await r.json();if(monitorRange.node===node)rangeLogs=v})
+   .catch(e=>{rangeLogError=e.message})
+ })
 </script>
 <div class="metrics">
  {#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -41,18 +57,21 @@
    {#if gaps.length}<ul>{#each gaps as gap}<li>{gap}</li>{/each}</ul>{/if}
    <p class="muted">수집하지 못했거나 노드가 노출하지 않는 지표는 0으로 그리지 않고 누락으로 표시합니다.</p>
   </div>
-  <div class="legend">{#each allNodes as node}<span><i style:background={nodeColor(node,allNodes)}></i>{node}</span>{/each}</div>
+  <label>지표 <select aria-label={'지표 선택 '+networkId} bind:value={monitorRange.metric}><option value="">수집된 모든 지표</option>{#each metricNames(metrics) as m}<option value={m.name}>{m.name} · {m.source}{m.unit?' · '+m.unit:''}</option>{/each}</select></label>
+  <div class="legend">{#each shownNodes as node}<span><i style:background={nodeColor(node,allNodes)}></i>{node}</span>{/each}</div>
   <div class="grid">
-   {#each charts as [name,label] (name)}
-    {@const model=chartModel(metrics,name,{width:W,height:H})}
+   {#each charts as m (m.name)}
+    {@const full=chartModel(metrics,m.name,{width:W,height:H})}
+    {@const model={...full,nodes:full.nodes.filter(n=>shownNodes.includes(n.node))}}
+    {@const label=`${m.name} · ${m.source}`}
     <figure>
      <figcaption>{label}{#if model.nodes.length} · {model.yMin}–{model.yMax} {model.unit}{/if}</figcaption>
      {#if model.nodes.length===0}<p class="muted">이 범위에 수집된 값이 없습니다.</p>{:else}
-      <svg data-testid={'metric-chart-'+name} viewBox={`-6 -6 ${W+12} ${H+12}`} role="img" aria-label={label}>
+      <svg data-testid={'metric-chart-'+m.name} data-segments={model.nodes.reduce((n,x)=>n+x.segments.length,0)} viewBox={`-6 -6 ${W+12} ${H+12}`} role="img" aria-label={label}>
        {#each model.nodes as series (series.node)}
         <path d={series.path} data-node={series.node} fill="none" stroke={nodeColor(series.node,allNodes)} stroke-width="2"/>
         {#each series.points as point (point.time)}
-         <circle cx={point.x} cy={point.y} r="4" fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="0" aria-label={`${series.node} ${time(point.time)} ${point.value} ${model.unit} 시점 로그 보기`} onclick={()=>select(series.node,point)} onkeydown={event=>{if(event.key==='Enter'||event.key===' ')select(series.node,point)}}/>
+         <circle cx={point.x} cy={point.y} r="4" fill={nodeColor(series.node,allNodes)} data-node={series.node} data-time={point.time} role="button" tabindex="0" aria-label={`${series.node} ${time(point.time)} ${point.value} ${model.unit} 시점 로그 보기`} onclick={()=>select(series.node,point,model)} onkeydown={event=>{if(event.key==='Enter'||event.key===' ')select(series.node,point,model)}}><title>{series.node} · {time(point.time)} · {point.value} {model.unit} · {model.source}</title></circle>
         {/each}
        {/each}
       </svg>
@@ -62,6 +81,7 @@
   </div>
   {#if selected}
    <section class="logs" data-testid="time-linked-logs" data-selected-time={selected.time} data-log-node={logs?selected.node:undefined}>
+    <p data-testid="selected-point">{selected.name} · {selected.node} · {time(selected.time)}{selected.value!==null?` · ${selected.value} ${selected.unit}`:''} · 출처 {selected.source}</p>
     <h4>{time(selected.time)} 전후 30초 로그</h4>
     <label>로그 노드 <select aria-label="로그 노드" value={selected.node} onchange={event=>select(event.currentTarget.value,{time:selected.time,value:null})}>{#each allNodes as node}<option value={node}>{node}</option>{/each}</select></label>
     {#if logError}<p class="error" role="alert">{logError}</p>{:else if !logs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else}
@@ -72,6 +92,15 @@
       <ol>{#each logs.entries as entry, index (index)}<li data-log-time={entry.time}><time>{time(entry.time)}</time><code class="log-text">{entry.text}</code></li>{/each}</ol>
       {#if logs.nextCursor}<p class="muted">이 구간에 로그가 더 있습니다. 더 좁은 시점을 선택하세요.</p>{/if}
      {/if}
+    {/if}
+   </section>
+  {/if}
+  {#if monitorRange.node}
+   <section class="logs" data-testid="range-logs" data-log-node={monitorRange.node}>
+    <h4>{monitorRange.node} 범위 로그</h4>
+    {#if rangeLogError}<p class="error" role="alert">{rangeLogError}</p>{:else if !rangeLogs}<p class="muted">보관된 로그를 확인하는 중입니다.</p>{:else if rangeLogs.entries.length===0}<p class="empty">이 범위에 보관된 로그가 없습니다.</p>{:else}
+     <ol>{#each rangeLogs.entries as entry, index (index)}<li data-log-time={entry.time}><time>{time(entry.time)}</time><code class="log-text">{entry.text}</code></li>{/each}</ol>
+     {#if rangeLogs.nextCursor}<p class="muted">이 범위에 로그가 더 있습니다. 범위를 좁히세요.</p>{/if}
     {/if}
    </section>
   {/if}

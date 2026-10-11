@@ -14,7 +14,8 @@
   import NodeDetail from './NodeDetail.svelte'
   import { parseRoute } from './routes.mjs'
   import { follow } from './nav.mjs'
-  import { selection } from './selection.svelte.js'
+  import { selection, monitorRange } from './selection.svelte.js'
+  import { timeRange } from './metric-chart.mjs'
   import { webApi } from './web-api.mjs'
 
   const pages = [
@@ -76,6 +77,9 @@
     }
     return () => { es.close(); connected = false }
   })
+  // The monitoring range also narrows the event timeline.
+  const range = $derived(timeRange(monitorRange, now))
+  const rangedEvents = $derived(range ? events.filter(e => { const t = Date.parse(e.time); return !Number.isFinite(t) || (t >= Date.parse(range.from) && t <= Date.parse(range.to)) }) : events)
   const fmtTime = t => t ? new Date(t).toLocaleString() : '—'
   const runOk = s => s === 'success' || s === 'pass'
 </script>
@@ -120,7 +124,8 @@
             <p data-testid="observation-health">서버 버스 전체 전달 드롭: {drops ?? '확인 중'} · 마지막 관측: {fmtTime(observedAt)}{stale ? ' · stale' : ''}</p>
             {#if drops > 0}<p class="notice">전체 구독자에서 전달 누락이 발생했습니다. 이 값은 현재 브라우저만의 누락 수가 아닙니다.</p>{/if}
             {#if !connected}<p class="notice">이벤트 연결이 끊겼습니다. 마지막 관측 내용을 표시합니다.</p>{/if}
-            {#if events.length === 0}<p class="empty">아직 수신한 이벤트가 없습니다.</p>{:else}<ul class="events">{#each events as e, i (i)}<li><time>{fmtTime(e.time)}</time><span class="kind">{e.phase} · {e.kind}</span><span class="mono">{e.network ?? ''} {e.node ? `node${e.node}` : ''}</span><span class="msg">{e.message}</span></li>{/each}</ul>{/if}
+            <p class="muted" data-testid="ranged-events">선택한 시간 범위의 이벤트 {rangedEvents.length}건 (이 연결에서 받은 최근 {events.length}건 중)</p>
+            {#if rangedEvents.length === 0}<p class="empty">이 범위에 수신한 이벤트가 없습니다.</p>{:else}<ul class="events">{#each rangedEvents as e, i (i)}<li><time>{fmtTime(e.time)}</time><span class="kind">{e.phase} · {e.kind}</span><span class="mono">{e.network ?? ''} {e.node ? `node${e.node}` : ''}</span><span class="msg">{e.message}</span></li>{/each}</ul>{/if}
           </section>
         {/if}
       {/if}

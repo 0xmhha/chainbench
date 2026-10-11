@@ -1,7 +1,8 @@
 <script>
  import {onMount} from 'svelte'
  import {jobStream} from './job-stream.svelte.js'
- import {selection,selectWorkspace,selectNetwork} from './selection.svelte.js'
+ import {selection,selectWorkspace,selectNetwork,monitorRange} from './selection.svelte.js'
+ import {timeRange} from './metric-chart.mjs'
  import {follow} from './nav.mjs'
  import {webApi} from './web-api.mjs'
  import {allItems} from './pages.mjs'
@@ -36,8 +37,12 @@
  <div class="heading"><div><h2>실행 상태</h2><p>브라우저 연결과 독립적으로 수행되는 서버 작업의 마지막 확정 상태입니다.</p></div><button onclick={()=>feed.refresh()}>실행 상태 새로고침</button></div>
  <div class="filters">
   <label>Workspace<select aria-label="모니터링 Workspace" value={selection.workspaceId} onchange={e=>{selectWorkspace(e.target.value);selectNetwork('')}}><option value="">전체 Workspace</option>{#each workspaceIds as id}<option value={id}>{names[id]??id}</option>{/each}</select></label>
-  <label>네트워크<select aria-label="모니터링 네트워크" value={selection.networkId} onchange={e=>selectNetwork(e.target.value)}><option value="">전체 네트워크</option>{#each networks as n}<option value={n.id}>{n.id} · 노드 {n.nodes.length}개</option>{/each}</select></label>
+  <label>네트워크<select aria-label="모니터링 네트워크" value={selection.networkId} onchange={e=>{selectNetwork(e.target.value);monitorRange.node=''}}><option value="">전체 네트워크</option>{#each networks as n}<option value={n.id}>{n.id} · 노드 {n.nodes.length}개</option>{/each}</select></label>
+  <label>시간 범위<select aria-label="모니터링 시간 범위" bind:value={monitorRange.preset}><option value={15}>최근 15분</option><option value={60}>최근 1시간</option><option value={360}>최근 6시간</option><option value={1440}>최근 24시간</option><option value={0}>직접 지정</option></select></label>
+  {#if monitorRange.preset===0}<label>시작<input aria-label="모니터링 시작 시각" type="datetime-local" bind:value={monitorRange.from} /></label><label>끝<input aria-label="모니터링 끝 시각" type="datetime-local" bind:value={monitorRange.to} /></label>{/if}
+  <label>노드<select aria-label="모니터링 노드" bind:value={monitorRange.node}><option value="">모든 노드</option>{#each [...new Set(shown.flatMap(n=>n.nodes.map(x=>x.id)))].sort() as id}<option value={id}>{id}</option>{/each}</select></label>
  </div>
+ {#if monitorRange.preset===0&&!timeRange(monitorRange)}<p class="error" role="alert">시작 시각이 끝 시각보다 앞서야 합니다.</p>{/if}
  <p data-testid="job-observation-health" data-cursor={snapshot?.cursor}>작업 스트림: {live.connection} · 확정 버전: {snapshot?.version??'확인 중'} · 마지막 관측: {time(live.lastObserved)}{stale?' · stale':''}</p>
  {#if live.gap}<p class="notice" role="status">{live.gap}</p>{/if}
  {#if live.connection==='연결 끊김'}<p class="notice">마지막 수신 상태를 표시합니다. 연결 복원 전에는 최신 상태로 판단하지 마세요.</p>{/if}
@@ -60,7 +65,7 @@
  .panel{margin-top:24px;border:1px solid #334155;border-radius:10px;background:#121b28;padding:24px;min-width:0}
  .heading{display:flex;justify-content:space-between;align-items:center;gap:16px}h2{margin:0;font-size:18px}h3{font-size:16px;margin-top:24px}p,.network span{color:#a8b5c8}
  button{color:#dbeafe;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px 12px}
- .filters{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}label{display:grid;gap:4px}select{font:inherit;color:inherit;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px;min-height:40px}a{color:#93c5fd}
+ .filters{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}label{display:grid;gap:4px}input{font:inherit;color:inherit;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px;min-height:40px}select{font:inherit;color:inherit;background:#192536;border:1px solid #475569;border-radius:6px;padding:8px;min-height:40px}a{color:#93c5fd}
  .notice,.error{padding:12px;border-left:3px solid #fcd34d;background:#30251a;color:#fcd34d}.error{border-color:#fca5a5;color:#fca5a5;background:#301d25}
  .table{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid #253247;vertical-align:top}th{color:#a8b5c8;font-size:12px}td{overflow-wrap:anywhere}small,strong{display:block}small{color:#a8b5c8}code{font-size:11px}.network{padding:12px;border:1px solid #334155;border-radius:6px;margin-top:8px;overflow-wrap:anywhere}
  @media(max-width:800px){.panel{padding:16px}.heading{align-items:start;flex-direction:column}table,tbody,tr,td{display:block}thead{display:none}td{padding:8px 0;border:0}tr{padding:12px 0;border-bottom:1px solid #334155}}
