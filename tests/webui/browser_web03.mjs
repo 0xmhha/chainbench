@@ -8,76 +8,82 @@ const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'))
 const observations = [], records = []
 const actors = fixture.accounts
 const owned = await launchOwnedBrowser(), browser = owned.browser
-function auth(actor) { return `Basic ${Buffer.from(`${actor.username}:${actor.password}`).toString('base64')}` }
+// Each operator works through their own browser context: its session cookie
+// and CSRF token carry every API call, as they do for the screens.
 async function api(actor, endpoint, method='GET', body, revision, expected=200) {
-  const headers = { Authorization: auth(actor), 'Content-Type': 'application/json' }
+  const headers = { 'Content-Type': 'application/json', 'X-CSRF-Token': actor.csrf }
   if (revision) headers['If-Match'] = `"${revision}"`
-  const response = await fetch(url+'/api/v1/'+endpoint, {method, headers, body: body===undefined ? undefined : JSON.stringify(body)})
+  const response = await actor.context.request.fetch(url+'/api/v1/'+endpoint, {method, headers, data: body===undefined ? undefined : JSON.stringify(body)})
   const text = await response.text()
-  assert.equal(response.status, expected, `${method} ${endpoint}: ${text}`)
+  assert.equal(response.status(), expected, `${method} ${endpoint}: ${text}`)
   let value; try { value = JSON.parse(text) } catch { value = text }
   // Requests carrying secrets are never copied to evidence.
-  records.push({actor:actor.id,method,endpoint,status:response.status,response:value,observedAt:new Date().toISOString()})
+  records.push({actor:actor.id,method,endpoint,status:response.status(),response:value,observedAt:new Date().toISOString()})
   return value
 }
 async function status(page, text) { try { await page.waitForFunction(t => document.querySelector('[data-testid=deployment-status]')?.textContent.includes(t), text) } catch { throw new Error(`Expected status ${text}, observed: ${await page.getByTestId('deployment-status').textContent()}`) } }
 async function login(actor) {
   const context = await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true})
+  const reply = await context.request.post(url+'/api/v1/auth/login',{data:{username:actor.username,password:actor.password}})
+  assert.equal(reply.status(),200,await reply.text())
+  const session = await reply.json()
+  Object.assign(actor,{context,csrf:session.csrfToken,id:session.user.id})
   const page = await context.newPage()
   const errors=[];page.on('pageerror',e=>errors.push(e.message))
   await page.goto(url+'/chains')
-  await page.getByLabel('Deployment account',{exact:true}).fill(actor.username)
-  await page.getByLabel('Deployment password',{exact:true}).fill(actor.password)
-  await page.getByRole('button',{name:'Sign in to deployment',exact:true}).click()
-  await page.waitForFunction(() => document.querySelector('[data-testid=deployment-actor]'))
+  await page.getByTestId('deployment-actor').filter({hasText:actor.username}).waitFor()
   await page.getByLabel('content.pool.hosts[0].addr',{exact:true}).waitFor()
   return {context,page,errors}
 }
-function observed(id, assertions, artifact) { observations.push({id,observedAt:new Date().toISOString(),mode:'team',transport:'SSH',ownership:'owned',actors:actors.map(a=>({id:a.id,role:a.role})),assertions:assertions.map(description=>({description,passed:true})),artifacts:[artifact]}) }
+function observed(id, assertions, artifact) { observations.push({id,observedAt:new Date().toISOString(),mode:'team',transport:'SSH',ownership:'owned',actors:actors.map(a=>({id:a.id,username:a.username,role:a.role})),assertions:assertions.map(description=>({description,passed:true})),artifacts:[artifact]}) }
 
 try {
+  // The first administrator is created with the private setup token; it then
+  // creates the two operator accounts the proof signs in with.
+  const adminContext = await browser.newContext()
+  const admin = await (await adminContext.request.post(url+'/api/v1/bootstrap',{data:{username:'deployment-admin',password:actors[0].password,setupToken:fixture.setupToken}})).json()
+  for (const actor of actors) { const r = await adminContext.request.post(url+'/api/v1/users',{headers:{'X-CSRF-Token':admin.csrfToken},data:{username:actor.username,password:actor.password,role:actor.role}}); assert.equal(r.status(),201,await r.text()) }
+  await adminContext.close()
   const first = await login(actors[0]), second = await login(actors[1])
   const a=first.page,b=second.page
   await a.getByLabel('content.pool.hosts[0].name',{exact:true}).fill('ssh')
   await a.getByLabel('content.pool.hosts[0].addr',{exact:true}).fill('localhost.')
-  await a.getByRole('button',{name:'Add ssh',exact:true}).click()
-  await a.getByRole('button',{name:'Add port',exact:true}).click()
+  await a.getByRole('button',{name:'ssh 추가',exact:true}).click()
+  await a.getByRole('button',{name:'port 추가',exact:true}).click()
   await a.getByLabel('content.ssh.port',{exact:true}).fill(String(fixture.ssh.port))
-  await a.getByRole('button',{name:'Add known_hosts_file',exact:true}).click()
+  await a.getByRole('button',{name:'known_hosts_file 추가',exact:true}).click()
   await a.getByLabel('content.ssh.known_hosts_file',{exact:true}).fill(fixture.ssh.knownHosts)
-  await a.getByRole('button',{name:'Validate deployment document',exact:true}).click()
-  await status(a,'Engine validation passed')
-  await a.getByRole('button',{name:'Save shared document',exact:true}).click()
-  await status(a,'Saved shared document revision 1')
+  await a.getByRole('button',{name:'배포 문서 검증',exact:true}).click()
+  await status(a,'엔진 검증 통과')
+  await a.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
+  await status(a,'공유 문서 revision 1 저장됨')
   let docs=(await api(actors[0],'documents')).items
   let set=docs.find(d=>d.kind==='server-set')
   assert.ok(set)
-  await a.getByRole('button',{name:'New workspace-config',exact:true}).click()
+  await a.getByRole('button',{name:'새 대상 경로',exact:true}).click()
   await a.getByLabel('content.dataRoot',{exact:true}).fill(fixture.ssh.runtime+'/allowed')
-  await a.getByRole('button',{name:'Save shared document',exact:true}).click()
-  await status(a,'Saved shared document revision 1')
+  await a.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
+  await status(a,'공유 문서 revision 1 저장됨')
   docs=(await api(actors[0],'documents')).items
   let config=docs.find(d=>d.kind==='workspace-config')
-  await a.getByLabel('Workspace server-set revision',{exact:true}).selectOption(`${set.id}:1`)
-  await a.getByLabel('Workspace config revision',{exact:true}).selectOption(`${config.id}:1`)
-  await a.getByRole('button',{name:'Save shared workspace',exact:true}).click()
-  await status(a,'Saved shared workspace revision 1')
+  await a.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(`${set.id}:1`)
+  await a.getByLabel('workspace 대상 경로 revision',{exact:true}).selectOption(`${config.id}:1`)
+  await a.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
+  await status(a,'공유 workspace revision 1 저장됨')
   let workspace=(await api(actors[0],'workspaces')).items[0]
-  // Refresh the second operator's account view to observe current shared state.
-  await b.getByRole('button',{name:'Sign out of deployment',exact:true}).click()
-  await b.getByLabel('Deployment password',{exact:true}).fill(actors[1].password)
-  await b.getByRole('button',{name:'Sign in to deployment',exact:true}).click()
-  await b.getByLabel('Saved deployment document',{exact:true}).selectOption(set.id)
+  // Reload the second operator's view to observe current shared state.
+  await b.reload();await b.getByLabel('저장된 배포 문서',{exact:true}).locator(`option[value="${set.id}"]`).waitFor({state:'attached'})
+  await b.getByLabel('저장된 배포 문서',{exact:true}).selectOption(set.id)
   await b.getByLabel('content.pool.slots',{exact:true}).fill('2')
-  await b.getByRole('button',{name:'Save shared document',exact:true}).click()
-  await status(b,'Saved shared document revision 2')
-  await b.getByLabel('Saved deployment workspace',{exact:true}).selectOption(workspace.id)
-  await b.waitForFunction(() => document.querySelector('[aria-label="Deployment workspace name"]').value==='Team deployment')
-  await b.getByLabel('Workspace server-set revision',{exact:true}).selectOption(`${set.id}:2`)
-  await b.getByLabel('Deployment workspace name',{exact:true}).fill('Two operator deployment')
-  await b.getByRole('button',{name:'Save shared workspace',exact:true}).click()
-  await status(b,'Saved shared workspace revision 2')
-  await a.getByRole('button',{name:'Save shared workspace',exact:true}).click()
+  await b.getByRole('button',{name:'공유 문서 저장',exact:true}).click()
+  await status(b,'공유 문서 revision 2 저장됨')
+  await b.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)
+  await b.waitForFunction(() => document.querySelector('[aria-label="배포 workspace 이름"]').value==='팀 workspace')
+  await b.getByLabel('workspace 서버 풀 revision',{exact:true}).selectOption(`${set.id}:2`)
+  await b.getByLabel('배포 workspace 이름',{exact:true}).fill('Two operator deployment')
+  await b.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
+  await status(b,'공유 workspace revision 2 저장됨')
+  await a.getByRole('button',{name:'공유 workspace 저장',exact:true}).click()
   await status(a,'409:')
   workspace=await api(actors[0],`workspaces/${workspace.id}`)
   set=await api(actors[0],`documents/${set.id}`)
@@ -87,18 +93,25 @@ try {
   observed('two-operator-shared-edit',['Both operators created/edited shared engine documents and workspace in the browser','Other operator observes revision 2','Stale shared workspace edit returned 409'], 'shared-editor.png')
 
   // Each operator supplies their own key; the second key is intentionally not authorized at sshd.
+  // Credentials are registered on the settings screen, then bound to the
+  // workspace server on the chain screen.
   for (const [i,page] of [[0,a],[1,b]]) {
-    if (i===0) {await page.getByRole('button',{name:'Sign out of deployment',exact:true}).click();await page.getByLabel('Deployment password',{exact:true}).fill(actors[0].password);await page.getByRole('button',{name:'Sign in to deployment',exact:true}).click();await page.getByLabel('Saved deployment workspace',{exact:true}).selectOption(workspace.id)}
-    await page.getByLabel('SSH user',{exact:true}).fill(fixture.ssh.user)
-    await page.getByLabel('Private SSH key',{exact:true}).fill(fs.readFileSync(fixture.ssh.runtime+(i===0?'/client':'/unauthorized'),'utf8'))
-    await page.getByRole('button',{name:'Save personal credential',exact:true}).click()
-    await status(page,'Saved encrypted personal credential')
-    assert.equal(await page.getByLabel('Private SSH key',{exact:true}).inputValue(),'')
-    await page.getByLabel('Binding server',{exact:true}).selectOption('ssh')
-    await page.getByRole('button',{name:'Bind my credential',exact:true}).click()
-    await status(page,'Saved personal SSH binding')
-    await page.getByRole('button',{name:'Check SSH access',exact:true}).click()
-    await status(page,i===0?'SSH deployment access verified':'SSH authentication or host access denied')
+    await page.goto(url+'/settings')
+    await page.getByLabel('SSH 사용자',{exact:true}).fill(fixture.ssh.user)
+    await page.getByLabel('SSH 개인키',{exact:true}).fill(fs.readFileSync(fixture.ssh.runtime+(i===0?'/client':'/unauthorized'),'utf8'))
+    await page.getByRole('button',{name:'개인 자격증명 저장',exact:true}).click()
+    await page.getByTestId('credential-status').filter({hasText:'암호화한 개인 자격증명을 저장했습니다'}).waitFor()
+    assert.equal(await page.getByLabel('SSH 개인키',{exact:true}).inputValue(),'')
+    const credentialId=(await api(actors[i],'credentials')).items[0].id
+    await page.goto(url+'/chains')
+    await page.getByLabel('저장된 배포 workspace',{exact:true}).locator(`option[value="${workspace.id}"]`).waitFor({state:'attached'})
+    await page.getByLabel('저장된 배포 workspace',{exact:true}).selectOption(workspace.id)
+    await page.getByLabel('연결 서버',{exact:true}).selectOption('ssh')
+    await page.getByLabel('연결 자격증명',{exact:true}).selectOption(credentialId)
+    await page.getByRole('button',{name:'내 자격증명 연결',exact:true}).click()
+    await status(page,'내 SSH 연결 저장됨')
+    await page.getByRole('button',{name:'SSH 접근 확인',exact:true}).click()
+    await status(page,i===0?'SSH 배포 접근 확인됨':'SSH authentication or host access denied')
   }
   const aliceCredentials=(await api(actors[0],'credentials')).items,bobCredentials=(await api(actors[1],'credentials')).items
   assert.equal(aliceCredentials.length,1);assert.equal(bobCredentials.length,1)
@@ -150,9 +163,9 @@ try {
   await api(actors[1],`credentials/${aliceBinding.ssh}`, 'GET',undefined,undefined,404)
   const secretSet=structuredClone(set);secretSet.content.ssh.password='leak-probe-secret'
   await api(actors[0],'documents','POST',input(secretSet),undefined,422)
-  await a.getByLabel('Saved deployment document',{exact:true}).selectOption(set.id)
+  await a.getByLabel('저장된 배포 문서',{exact:true}).selectOption(set.id)
   const downloadPromise=a.waitForEvent('download')
-  await a.getByRole('button',{name:'Export shared document',exact:true}).click()
+  await a.getByRole('button',{name:'공유 문서 내보내기',exact:true}).click()
   const download=await downloadPromise;await download.saveAs(path.join(out,'shared-export.json'))
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out,'shared-export.json'),'utf8')),set.content)
   const sensitive=[actors[0].password,actors[1].password,'leak-probe-secret',fs.readFileSync(fixture.ssh.runtime+'/client','utf8'),fs.readFileSync(fixture.ssh.runtime+'/unauthorized','utf8')]
@@ -163,5 +176,5 @@ try {
   assert.equal(first.errors.length+second.errors.length,0,JSON.stringify([...first.errors,...second.errors]))
   observed('secret-free-export',['Shared browser export preserves server declaration and contains no secret material','API responses and persisted deployment snapshot contain no plaintext credentials','Shared document save refuses embedded SSH secrets'], 'shared-export.json')
   fs.writeFileSync(path.join(out,'api-observations.json'),JSON.stringify(records,null,2))
-  fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({scenarios:observations,workspaceId:workspace.id,workspaceRevision:workspace.revision,credentialId:aliceBinding.ssh,serverRef:'ssh',browserVersion:browser.version()},null,2))
+  fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify({scenarios:observations,accountIds:actors.map(a=>a.id),workspaceId:workspace.id,workspaceRevision:workspace.revision,credentialId:aliceBinding.ssh,serverRef:'ssh',browserVersion:browser.version()},null,2))
 } finally { await owned.stop() }

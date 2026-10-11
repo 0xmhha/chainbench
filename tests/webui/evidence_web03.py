@@ -32,7 +32,8 @@ def verify(directory):
             errors.append('missing observations')
         if not all(a.get('passed') is True for a in scenario['assertions']):
             errors.append('assertion failed')
-        if scenario.get('actors') != [{'id': 'operator-a', 'role': 'operator'}, {'id': 'operator-b', 'role': 'operator'}]:
+        # The two operators are dashboard accounts; their ids are generated.
+        if [(a.get('username'), a.get('role')) for a in scenario.get('actors', [])] != [('operator-a', 'operator'), ('operator-b', 'operator')] or not all(a.get('id') for a in scenario['actors']):
             errors.append('two operator identities missing')
     for artifact in evidence.get('artifacts', []):
         path = Path(artifact['path'])
@@ -85,7 +86,8 @@ def verify(directory):
             errors.append('shared revision rejection missing')
         if not any(r['status'] == 404 and '/credential-bindings' in r['endpoint'] for r in records):
             errors.append('foreign binding rejection missing')
-        if not all(r.get('actor') in ('operator-a', 'operator-b') for r in records):
+        operators = set(evidence.get('fixture', {}).get('accountIds', []))
+        if len(operators) != 2 or not all(r.get('actor') in operators for r in records):
             errors.append('untrusted observation actor')
     else:
         errors.append('API observations missing')

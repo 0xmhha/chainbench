@@ -1,7 +1,6 @@
 """Fresh WEB-03 browser + dedicated SSH acceptance, with no mock or skipped target."""
 from runtime_contract import runtime_root, base_commit
 
-import base64
 import datetime
 import json
 import os
@@ -92,15 +91,9 @@ def main():
         (output / 'build.log').write_text(build.stdout + build.stderr)
         if build.returncode:
             raise RuntimeError('dashboard build failed')
-        accounts = [{'id': 'operator-' + suffix, 'username': 'operator-' + suffix, 'role': 'operator', 'password': secrets.token_urlsafe(24)} for suffix in ('a', 'b')]
-        account_source = runtime / 'accounts.go'
-        account_source.write_bytes(Path('tests/webui/fixtures/accounts.go.txt').read_bytes())
-        provision = subprocess.run(['go', 'run', str(account_source)], input=json.dumps(accounts), capture_output=True, text=True)
-        if provision.returncode:
-            raise RuntimeError('private account provisioning failed')
-        accountfile = runtime / 'accounts.json'
-        accountfile.write_text(provision.stdout)
-        accountfile.chmod(0o600)
+        # Both operators are dashboard accounts: the browser bootstraps an
+        # administrator with the private setup token and creates them.
+        accounts = [{'username': 'operator-' + suffix, 'role': 'operator', 'password': secrets.token_urlsafe(24)} for suffix in ('a', 'b')]
         sshd = subprocess.Popen(['bash', 'tests/webui/fixtures/ssh_prepare.sh', invocation])
         manifest = runtime / 'ssh' / 'manifest.json'
         for _ in range(100):
@@ -121,15 +114,12 @@ def main():
         known.write_text(f"[localhost.]:{ssh['port']} {public[0]} {public[1]}\n")
         fingerprint = subprocess.check_output(['ssh-keygen', '-lf', str(runtime / 'ssh' / 'host.pub')], text=True).split()[1]
         ssh.update(knownHosts=str(known), hostFingerprint=fingerprint)
-        fixture = {'accounts': accounts, 'ssh': ssh, 'store': str(runtime / 'store')}
         private_fixture = runtime / 'browser-fixture.json'
-        private_fixture.write_text(json.dumps(fixture))
-        private_fixture.chmod(0o600)
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
         url = f'http://127.0.0.1:{port}'
-        command = [str(runtime / 'chainbench-dashboard'), '-addr', f'127.0.0.1:{port}', '-deployment-accounts', str(accountfile), '-deployment-root', str(runtime / 'store')]
+        command = [str(runtime / 'chainbench-dashboard'), '-addr', f'127.0.0.1:{port}', '-deployment-root', str(runtime / 'store')]
         def launch(logname):
             logfile = (output / logname).open('w')
             handles.append(logfile)
@@ -137,6 +127,9 @@ def main():
             wait_http(url, process)
             return process
         server = launch('server.log')
+        fixture = {'accounts': accounts, 'ssh': ssh, 'store': str(runtime / 'store'), 'setupToken': (runtime / 'store' / 'setup.token').read_text().strip()}
+        private_fixture.write_text(json.dumps(fixture))
+        private_fixture.chmod(0o600)
         browser = run_browser(['node', 'tests/webui/browser_web03.mjs', url, str(output), str(private_fixture)], timeout=300)
         (output / 'browser.log').write_text(browser.stdout + browser.stderr)
         if browser.returncode:
@@ -144,10 +137,13 @@ def main():
         observed = json.loads((output / 'browser.json').read_text())
         stop(server)
         server = launch('server-restart.log')
-        credentials = base64.b64encode((accounts[0]['username'] + ':' + accounts[0]['password']).encode()).decode()
+        login = urllib.request.Request(url + '/api/v1/auth/login', data=json.dumps({'username': accounts[0]['username'], 'password': accounts[0]['password']}).encode(), headers={'Content-Type': 'application/json'}, method='POST')
+        with urllib.request.urlopen(login, timeout=30) as reply:
+            cookie = '; '.join(h.split(';', 1)[0] for h in reply.headers.get_all('Set-Cookie') or [])
+            csrf = json.load(reply)['csrfToken']
         def request(path, body=None):
             req = urllib.request.Request(url + '/api/v1/' + path, data=json.dumps(body).encode() if body else None,
-                                         headers={'Authorization': 'Basic ' + credentials, 'Content-Type': 'application/json'})
+                                         headers={'Cookie': cookie, 'X-CSRF-Token': csrf, 'Content-Type': 'application/json'})
             with urllib.request.urlopen(req, timeout=30) as response:
                 return json.load(response)
         restored = request('workspaces/' + observed['workspaceId'])
@@ -163,7 +159,7 @@ def main():
         evidence['server'] = {'sha256': digest(runtime / 'chainbench-dashboard'), 'baseCommit': base_commit(), 'url': url, 'contractVersion': '2', 'goVersion': subprocess.check_output(['go', 'version'], text=True).strip()}
         evidence['frontend'] = [{'path': str(p), 'sha256': digest(p)} for p in sorted(Path('internal/dashboard/spa').rglob('*')) if p.is_file()]
         evidence['target'] = {'host': 'localhost.', 'port': ssh['port'], 'hostFingerprint': fingerprint, 'sshdSha256': digest('/usr/sbin/sshd'), 'os': platform.system(), 'architecture': platform.machine(), 'allowedPathObserved': os.stat(runtime / 'ssh' / 'allowed').st_mode}
-        evidence['fixture'] = {'runtime': str(runtime), 'transport': ['local', 'SSH'], 'ownership': 'owned', 'accountIds': [a['id'] for a in accounts], 'browserVersion': observed['browserVersion'], 'dedicatedSSH': True}
+        evidence['fixture'] = {'runtime': str(runtime), 'transport': ['local', 'SSH'], 'ownership': 'owned', 'accountIds': observed['accountIds'], 'browserVersion': observed['browserVersion'], 'dedicatedSSH': True}
         evidence['coverage'] = {'required': REQUIRED, 'executed': [s['id'] for s in observed['scenarios']], 'missing': [], 'mockTargets': 0}
         evidence['scenarios'] = observed['scenarios']
         for scenario in evidence['scenarios']:
@@ -176,7 +172,7 @@ def main():
                     if secret in content:
                         raise RuntimeError('secret found in acceptance artifact ' + p.name)
         (output / 'sshd.log').write_text((runtime / 'ssh' / 'sshd.log').read_text())
-        public_manifest = {**ssh, 'accountIds': [a['id'] for a in accounts], 'sshdSha256': evidence['target']['sshdSha256'], 'invocationId': invocation}
+        public_manifest = {**ssh, 'accountIds': observed['accountIds'], 'sshdSha256': evidence['target']['sshdSha256'], 'invocationId': invocation}
         (output / 'fixture.json').write_text(json.dumps(public_manifest, indent=2))
         evidence['source'] = [{'path': str(p), 'sha256': digest(p)} for pattern in ('internal/app/deployment*.go', 'internal/dashboard/deployment*.go', 'internal/dashboard/server.go', 'internal/dashboard/chainpreset.go', 'internal/core/session/webstore.go', 'internal/resource/serverset.go', 'internal/resource/serverset_load.go', 'internal/resource/ports.go', 'internal/resource/workspaceconfig.go', 'cmd/chainbench-dashboard/main.go', 'web/src/Deployment*.svelte', 'web/src/App.svelte', 'tests/webui/*web03*', 'tests/webui/fixtures/*') for p in sorted(Path('.').glob(pattern)) if p.is_file()]
         evidence['artifacts'] = [{'path': str(p), 'sha256': digest(p)} for p in sorted(output.iterdir()) if p.is_file() and p.name not in ('result.json', 'evidence.json')]
@@ -189,7 +185,7 @@ def main():
         for handle in handles:
             handle.close()
         # Preserve encrypted snapshot and public fixture provenance, remove disposable secrets.
-        for p in [runtime / 'browser-fixture.json', runtime / 'accounts.json', runtime / 'ssh' / 'client', runtime / 'ssh' / 'unauthorized', runtime / 'ssh' / 'host']:
+        for p in [runtime / 'browser-fixture.json', runtime / 'ssh' / 'client', runtime / 'ssh' / 'unauthorized', runtime / 'ssh' / 'host']:
             p.unlink(missing_ok=True)
     evidence['blockers'] = failures
     ep = output / 'evidence.json'

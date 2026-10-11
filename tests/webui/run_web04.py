@@ -57,17 +57,15 @@ def main():
         spec=importlib.util.spec_from_file_location('fixture','tests/webui/fixtures/prepare_web04.py')
         fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)
         evidence['binaries']=fixture.prepare(runtime,out)
-        account={'id':'manifest-operator','username':'manifest-operator','role':'operator','password':secrets.token_urlsafe(24)}
-        (runtime/'accounts.go').write_bytes(Path('tests/webui/fixtures/accounts.go.txt').read_bytes())
-        provision=subprocess.run(['go','run',str(runtime/'accounts.go')],input=json.dumps([account]),text=True,capture_output=True,check=True)
-        (runtime/'accounts.json').write_text(provision.stdout);(runtime/'accounts.json').chmod(0o600)
+        # The operator account is created through the dashboard's own sessions:
+        # the browser bootstraps an administrator with the private setup token.
+        account={'username':'manifest-operator','role':'operator','password':secrets.token_urlsafe(24)}
         store=runtime/'store'
-        (runtime/'browser-fixture.json').write_text(json.dumps({'account':account,'store':str(store)}));(runtime/'browser-fixture.json').chmod(0o600)
         with socket.socket() as sock:
             sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
         url='http://127.0.0.1:'+str(port)
         logfile=(out/'server.log').open('w');handles.append(logfile)
-        command=[str(runtime/'chainbench-dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-accounts',str(runtime/'accounts.json'),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json')]
+        command=[str(runtime/'chainbench-dashboard'),'-addr','127.0.0.1:'+str(port),'-deployment-root',str(store),'-manifest-assets',str(runtime/'assets.json')]
         def launch():
             process=subprocess.Popen(command,stdout=logfile,stderr=logfile)
             for attempt in range(100):
@@ -77,6 +75,7 @@ def main():
                 except OSError: time.sleep(.1)
             raise RuntimeError('dashboard health timeout')
         server=launch()
+        (runtime/'browser-fixture.json').write_text(json.dumps({'account':account,'store':str(store),'setupToken':(store/'setup.token').read_text().strip()}));(runtime/'browser-fixture.json').chmod(0o600)
         browser=run_browser(['node','tests/webui/browser_web04.mjs',url,str(out),str(runtime/'browser-fixture.json')],timeout=300)
         (out/'browser.log').write_text(browser.stdout+browser.stderr)
         if browser.returncode: raise RuntimeError('live browser assertions failed; see browser.log')
@@ -102,8 +101,10 @@ def main():
             setup['targetFingerprint']=__import__('hashlib').sha256(str(directory.resolve()).encode()).hexdigest()
         # Independent restart observation proves records were loaded from persistence.
         server.terminate();server.wait(timeout=10);server=launch()
-        authorization=__import__('base64').b64encode((account['username']+':'+account['password']).encode()).decode()
-        req=urllib.request.Request(url+'/api/v1/manifests',headers={'Authorization':'Basic '+authorization})
+        login=urllib.request.Request(url+'/api/v1/auth/login',data=json.dumps({'username':account['username'],'password':account['password']}).encode(),headers={'Content-Type':'application/json'},method='POST')
+        with urllib.request.urlopen(login,timeout=10) as reply:
+            cookie='; '.join(h.split(';',1)[0] for h in reply.headers.get_all('Set-Cookie') or [])
+        req=urllib.request.Request(url+'/api/v1/manifests',headers={'Cookie':cookie})
         restored=json.load(urllib.request.urlopen(req,timeout=10))['items']
         if len(restored)!=6: raise RuntimeError('external manifests not restored after restart')
         audit=json.loads('[]')
