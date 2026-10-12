@@ -258,6 +258,12 @@ func (a *Access) WriteMaybeElevated(ctx context.Context, path string, content []
 // mistake to surface, not to silently overwrite (the --force-upload path is the
 // deliberate override). The file's bytes never pass through a log or error.
 func (a *Access) Upload(ctx context.Context, localPath, remotePath string, force bool) error {
+	return a.UploadMode(ctx, localPath, remotePath, force, 0)
+}
+
+// UploadMode is Upload with the written file's mode chosen by the caller; zero
+// keeps the local file's mode.
+func (a *Access) UploadMode(ctx context.Context, localPath, remotePath string, force bool, mode os.FileMode) error {
 	content, err := os.ReadFile(localPath)
 	if err != nil {
 		return fmt.Errorf("upload: read local %s: %w", localPath, err)
@@ -275,7 +281,10 @@ func (a *Access) Upload(ctx context.Context, localPath, remotePath string, force
 			return fmt.Errorf("upload: %s already exists on the target — pass --force-upload to overwrite", remotePath)
 		}
 	}
-	if err := a.WriteMaybeElevated(ctx, remotePath, content, info.Mode().Perm()); err != nil {
+	if mode == 0 {
+		mode = info.Mode().Perm()
+	}
+	if err := a.WriteMaybeElevated(ctx, remotePath, content, mode); err != nil {
 		return fmt.Errorf("upload %s: %w", remotePath, err)
 	}
 	return nil
