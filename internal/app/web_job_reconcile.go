@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -121,9 +122,9 @@ func (e *WebChainEngine) Reconcile(ctx context.Context, a DeploymentActor, prepa
 		access, err := opener.Open(spec)
 		machine, inspectErr := opener.Inspect(ctx, spec)
 		if err == nil && inspectErr == nil {
-			if exists, err := access.Files.Exists(ctx, ns.DataDir); err == nil {
-				check.Data = map[bool]string{true: "present", false: "absent"}[exists]
-			}
+			// The node's data directory or the configuration a deploy stage
+			// already wrote: either one is this job's, left on the target.
+			check.Data = webNodeFiles(ctx, access.Files, ns)
 			if observer := webObserverFor(access, machine); observer != nil {
 				binary := state.Binary
 				if ns.Binary != "" {
@@ -196,4 +197,26 @@ func (s *WebJobs) ReconcileInterrupted(ctx context.Context) {
 		// The initiator's current account decides; a revoked one is skipped.
 		_, _ = s.Reconcile(ctx, DeploymentActor{ID: c.actor, Role: "operator"}, c.id)
 	}
+}
+
+// webNodeFiles reports whether anything a job placed for this node is on its
+// machine: present when either its data directory or its configuration file
+// exists, absent when neither does, unknown when either cannot be checked.
+func webNodeFiles(ctx context.Context, files interface {
+	Exists(context.Context, string) (bool, error)
+}, ns node.Record) string {
+	data := "absent"
+	for _, path := range []string{ns.DataDir, ns.ConfigPath} {
+		if path == "" {
+			continue
+		}
+		exists, err := files.Exists(ctx, path)
+		if err != nil {
+			return "unknown"
+		}
+		if exists {
+			data = "present"
+		}
+	}
+	return data
 }
