@@ -69,6 +69,7 @@ type (
 
 const (
 	UpDeploy = chainsetupmod.UpDeploy
+	UpInit   = chainsetupmod.UpInit
 	UpStart  = chainsetupmod.UpStart
 )
 
