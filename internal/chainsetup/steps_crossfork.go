@@ -361,7 +361,7 @@ func (w *Workspace) handOver(ctx context.Context, f GenesisFork, successors []in
 			return terr
 		}
 		if ns.PID > 0 {
-			if serr := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); serr != nil {
+			if _, serr := w.stopOwned(ctx, t, ns, ns.PID); serr != nil {
 				return fmt.Errorf("chainsetup: cross-fork: stop %s: %w", ns.NodeLabel(), serr)
 			}
 			w.clearPID(i)

@@ -63,10 +63,15 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+	stopped, err := w.stopOwned(ctx, t, ns, ns.PID)
+	if err != nil {
 		return "", fmt.Errorf("chainsetup: stop node%d: %w", ns.Index, err)
 	}
 	w.ledger.Retire(string(ns.NodeLabel()))
+	if !stopped {
+		w.state.Nodes[ni].PID = 0
+		return fmt.Sprintf("node%d was not running", index), nil
+	}
 	w.state.Nodes[ni].PID = 0
 	detail := fmt.Sprintf("node%d stopped", index)
 	w.markStep("stop-node", detail)
@@ -230,7 +235,7 @@ func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (detail str
 	// A failed replacement archives that stopped entry instead of leaving a
 	// stale PID for later controls to target.
 	if ns.PID > 0 {
-		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+		if _, err := w.stopOwned(ctx, t, ns, ns.PID); err != nil {
 			return "", fmt.Errorf("chainsetup: swap node%d: stop: %w", index, err)
 		}
 		w.state.Nodes[ni].PID = 0

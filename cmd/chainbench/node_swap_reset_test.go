@@ -14,10 +14,11 @@ import (
 )
 
 // sleeper starts a long-lived process that stands in for a launched node, and
-// kills it when the test ends unless something else already did.
+// kills it when the test ends unless something else already did. Its launch is
+// /bin/sleep 30, which is what a record of it must say for the CLI to own it.
 func sleeper(t *testing.T) *exec.Cmd {
 	t.Helper()
-	p := exec.Command("sleep", "30")
+	p := exec.Command("/bin/sleep", "30")
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -80,10 +81,11 @@ func TestNodeSwapCmd_RelaunchesOneNodeOnANewBinary(t *testing.T) {
 	dir := t.TempDir()
 	one, two := sleeper(t), sleeper(t)
 	n1 := wsNode(dir, 1, "bp", 8501, one.Process.Pid)
-	n1.Args = []string{"--datadir", n1.DataDir}
+	n1.Args = []string{"30"}
 	n2 := wsNode(dir, 2, "bp", 8502, two.Process.Pid)
-	n2.Args = []string{"--datadir", n2.DataDir}
+	n2.Args = []string{"30"}
 	writeWorkspace(t, dir, "stablenet", n1, n2)
+	useInputs(t, dir, "/bin/sleep", "")
 	bin := fakeNodeBinary(t, dir, "gstable-next")
 
 	out, err := run(t, "node", "swap", "--workspace-dir", dir, "--index", "1", "--binary", bin)
@@ -122,14 +124,21 @@ func TestNodeResetCmd_RefusesAProducer(t *testing.T) {
 	}
 }
 
-// TestNodeResetCmd_LeavesAnEndpointStopped: an endpoint is stopped, its chain
-// data is removed and it stays down for a later start.
+// TestNodeResetCmd_LeavesAnEndpointStopped: an endpoint is reset to genesis:
+// its chain data is removed and it stays down for a later start. Its recorded
+// process has already exited, so the reset stops nothing and initialises it.
 func TestNodeResetCmd_LeavesAnEndpointStopped(t *testing.T) {
 	dir := t.TempDir()
-	bp, en := sleeper(t), sleeper(t)
-	n2 := wsNode(dir, 2, "en", 8502, en.Process.Pid)
+	gone := exec.Command("/bin/sleep", "0")
+	if err := gone.Run(); err != nil {
+		t.Fatal(err)
+	}
+	n2 := wsNode(dir, 2, "en", 8502, gone.Process.Pid)
 	n2.Args = []string{"--datadir", n2.DataDir}
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "bp", 8501, bp.Process.Pid), n2)
+	bp := sleeper(t)
+	n1 := wsNode(dir, 1, "bp", 8501, bp.Process.Pid)
+	n1.Args = []string{"30"}
+	writeWorkspace(t, dir, "stablenet", n1, n2)
 	genesis := filepath.Join(dir, "genesis.json")
 	if err := os.WriteFile(genesis, []byte(`{"config":{}}`), 0o600); err != nil {
 		t.Fatal(err)
@@ -150,9 +159,6 @@ func TestNodeResetCmd_LeavesAnEndpointStopped(t *testing.T) {
 	if !strings.Contains(out, "node2 reset") {
 		t.Errorf("no reset confirmation:\n%s", out)
 	}
-	if err := en.Wait(); err == nil {
-		t.Error("the endpoint's process was not stopped")
-	}
 	if got := recorded(t, dir, 2).PID; got != 0 {
 		t.Errorf("endpoint pid after reset = %d, want 0", got)
 	}
@@ -161,5 +167,23 @@ func TestNodeResetCmd_LeavesAnEndpointStopped(t *testing.T) {
 	}
 	if !alive(bp.Process.Pid) {
 		t.Error("the producer lost its process during the endpoint's reset")
+	}
+}
+
+// TestNodeResetCmd_RefusesAPIDThatIsNotTheNode: a reset stops the node first,
+// and a recorded pid now running something else is refused, not signalled.
+func TestNodeResetCmd_RefusesAPIDThatIsNotTheNode(t *testing.T) {
+	dir := t.TempDir()
+	stranger := sleeper(t)
+	n := wsNode(dir, 1, "en", 8501, stranger.Process.Pid)
+	n.Args = []string{"--datadir", n.DataDir}
+	writeWorkspace(t, dir, "stablenet", n)
+	useInputs(t, dir, fakeNodeBinary(t, dir, "gstable"), filepath.Join(dir, "genesis.json"))
+
+	if _, err := run(t, "node", "reset", "--workspace-dir", dir, "--index", "1"); err == nil || !strings.Contains(err.Error(), "refus") {
+		t.Fatalf("reset of a pid that runs something else gave %v, want a refusal", err)
+	}
+	if !alive(stranger.Process.Pid) {
+		t.Fatal("the unrelated process was signalled")
 	}
 }

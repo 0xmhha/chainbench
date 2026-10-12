@@ -47,14 +47,19 @@ func TestChainsCmd(t *testing.T) {
 
 func TestStopCmd_KillsNodes(t *testing.T) {
 	// Spawn a real long-lived process to act as a launched node.
-	proc := exec.Command("sleep", "30")
+	proc := exec.Command("/bin/sleep", "30")
 	if err := proc.Start(); err != nil {
 		t.Fatalf("start: %v", err)
 	}
 	pid := proc.Process.Pid
 
 	dir := t.TempDir()
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, pid))
+	// The record names the launch exactly, as one a start leaves behind: stop
+	// signals only a process that is the recorded launch.
+	n := wsNode(dir, 1, "validator", 8501, pid)
+	n.Args = []string{"30"}
+	writeWorkspace(t, dir, "stablenet", n)
+	useInputs(t, dir, "/bin/sleep", "")
 
 	out, err := run(t, "stop", "--workspace-dir", dir)
 	if err != nil {
@@ -224,16 +229,19 @@ func TestHardforkCmd_ExecuteNeedsBinary(t *testing.T) {
 func TestHardforkCmd_Execute(t *testing.T) {
 	dir := t.TempDir()
 	// A running from-node to be swapped.
-	old := exec.Command("sleep", "30")
+	old := exec.Command("/bin/sleep", "30")
 	if err := old.Start(); err != nil {
 		t.Fatal(err)
 	}
 	oldPID := old.Process.Pid
 	// hardfork reuses the node's recorded argv (identity args) and swaps only
-	// the binary, so the record must carry the arming a start leaves behind.
+	// the binary, so the record must carry the arming a start leaves behind;
+	// it is also what proves the running pid is that node's before it is
+	// stopped.
 	n1 := wsNode(dir, 1, "validator", 8501, oldPID)
-	n1.Args = []string{"--datadir", dir}
+	n1.Args = []string{"30"}
 	writeWorkspace(t, dir, "wemix", n1)
+	useInputs(t, dir, "/bin/sleep", "")
 	bin := filepath.Join(dir, "faketo")
 	if err := os.WriteFile(bin, []byte("#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 30\n"), 0o755); err != nil {
 		t.Fatal(err)
