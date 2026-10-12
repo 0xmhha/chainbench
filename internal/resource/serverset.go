@@ -119,6 +119,9 @@ type Server struct {
 	Slots int    `yaml:"slots,omitempty"`
 	Ports Ports  `yaml:"ports,omitempty"`
 	SSH   SSH    `yaml:"ssh,omitempty"`
+	// ownSSH marks a server whose pool host carries its own ssh block; it then
+	// inherits nothing from the set's block.
+	ownSSH bool
 }
 
 // BandSpec is one port band: where it starts and how far apart consecutive
@@ -158,6 +161,10 @@ type BandsSpec struct {
 type HostSpec struct {
 	Name string `yaml:"name,omitempty"`
 	Addr string `yaml:"addr"`
+	// SSH, when set, is how this host alone is reached. It replaces the set's
+	// ssh block whole rather than merging with it, so one host's password
+	// never combines with another's password file.
+	SSH *SSH `yaml:"ssh,omitempty"`
 }
 
 // UnmarshalYAML accepts the scalar shorthand as well as the mapping.
@@ -264,6 +271,14 @@ func parseSet(b []byte, path string) (*Set, error) {
 	c.path = path
 	if err := c.SSH.resolveSecretPaths(filepath.Dir(path)); err != nil {
 		return nil, fmt.Errorf("serverset: %s: %w", path, err)
+	}
+	for _, h := range c.PoolSpec.Hosts {
+		if h.SSH == nil {
+			continue
+		}
+		if err := h.SSH.resolveSecretPaths(filepath.Dir(path)); err != nil {
+			return nil, fmt.Errorf("serverset: %s: host %s: %w", path, h.Name, err)
+		}
 	}
 	c.expand()
 	if err := c.validate(); err != nil {

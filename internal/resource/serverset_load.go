@@ -87,9 +87,13 @@ func (c *Set) expand() {
 		if name == "" {
 			name = h.Addr
 		}
+		ssh := c.SSH
+		if h.SSH != nil {
+			ssh = *h.SSH
+		}
 		c.Servers = append(c.Servers, Server{
 			Index: i + 1, Name: name, Kind: kind, Host: h.Addr,
-			Slots: slots, Ports: ports, SSH: c.SSH,
+			Slots: slots, Ports: ports, SSH: ssh, ownSSH: h.SSH != nil,
 		})
 	}
 }
@@ -184,6 +188,14 @@ func (c *Set) validate() error {
 	}
 	if err := c.SSH.validateFields(); err != nil {
 		return fmt.Errorf("serverset: %s: %w", c.path, err)
+	}
+	for _, h := range c.PoolSpec.Hosts {
+		if h.SSH == nil {
+			continue
+		}
+		if err := h.SSH.validateFields(); err != nil {
+			return fmt.Errorf("serverset: %s: host %s: %w", c.path, h.Name, err)
+		}
 	}
 	return nil
 }
