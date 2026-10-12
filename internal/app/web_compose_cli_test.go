@@ -115,3 +115,26 @@ func TestComposeThroughCLINamesTheStepThatFailed(t *testing.T) {
 		}
 	}
 }
+
+// TestRunControlRunsOneCommandWithTheJobsLogins: a node control is one
+// chainbench command on the recorded network, with logins that do not outlive it.
+func TestRunControlRunsOneCommandWithTheJobsLogins(t *testing.T) {
+	e, p := webRunPlanFixture(t, `{"bp":4}`)
+	cli := &uploadsCLI{}
+	e.UseCLI(cli)
+	if err := e.runControl(context.Background(), DeploymentActor{ID: "operator", Role: "operator"}, p, nodeSwapArgs(2, "/bin/next", []string{"syncmode=full"})...); err != nil {
+		t.Fatal(err)
+	}
+	args := cli.calls[0]
+	want := []string{"node", "swap", "--index", "2", "--purpose", "web-reviewed-config", "--binary", "/bin/next", "--config", "syncmode=full", "--workspace-dir", p.ControlDir}
+	if !slices.Equal(args[:len(want)], want) {
+		t.Fatalf("args = %v, want %v then logins", args, want)
+	}
+	logins := flagValue(args, "--server-logins")
+	if logins == "" {
+		t.Fatal("no logins were named")
+	}
+	if _, err := os.Stat(logins); !os.IsNotExist(err) {
+		t.Fatalf("the job's logins outlived the command: %v", err)
+	}
+}

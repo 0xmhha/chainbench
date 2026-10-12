@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -121,8 +122,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				return err
 			}
 			if p.Input.Operation == "node.start" {
-				_, err := NodeStart(ctx, d, NodeStartIn{DataDir: p.ControlDir, Index: index})
-				return err
+				return e.runControl(ctx, a, p, "node", "start", "--index", strconv.Itoa(index))
 			}
 			if p.Input.Operation == "node.swap" {
 				changes, err := webConfigChanges(state, p)
@@ -159,7 +159,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 					}
 					binary = p.Replacement.Path
 				}
-				_, err = NodeSwap(ctx, d, NodeSwapIn{DataDir: p.ControlDir, Index: index, Binary: binary, Config: changes, Purpose: "web-reviewed-config"})
+				err = e.runControl(ctx, a, p, nodeSwapArgs(index, binary, changes)...)
 				if err != nil {
 					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
 					result.PartialEffects = append(result.PartialEffects, "Node replacement attempted; the selected node may be stopped or its executable, config and launch incomplete")
@@ -169,7 +169,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				return err
 			}
 			if p.Input.Operation == "node.restart" {
-				_, err := ChainRestart(ctx, d, ChainRestartIn{DataDir: p.ControlDir, Node: index})
+				err := e.runControl(ctx, a, p, "chain", "restart", "--node", strconv.Itoa(index))
 				if err != nil {
 					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
 					result.PartialEffects = append(result.PartialEffects, "Node restart attempted; the selected node may be stopped or its launch incomplete")
@@ -177,14 +177,14 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				return err
 			}
 			if p.Input.Operation == "node.reset" {
-				err := NodeReset(ctx, d, NodeResetIn{DataDir: p.ControlDir, Index: index})
+				err := e.runControl(ctx, a, p, "node", "reset", "--index", strconv.Itoa(index))
 				if err != nil {
 					result.UnresolvedResources = []string{p.ControlDir, p.Target.DataPath}
 					result.PartialEffects = append(result.PartialEffects, "Node reset attempted; the selected node may be stopped or partially initialized")
 				}
 				return err
 			}
-			return NodeStop(ctx, d, NodeStopIn{DataDir: p.ControlDir, Index: index})
+			return e.runControl(ctx, a, p, "node", "stop", "--index", strconv.Itoa(index))
 		})
 		if err == nil {
 			result.PartialEffects = append(result.PartialEffects, p.Input.Operation+" completed")

@@ -295,3 +295,30 @@ func writeWebTargetNotes(ctx context.Context, p webChainPayload) error {
 	}
 	return files.Write(ctx, filepath.Join(p.ControlDir, "web-targets.json"), all, 0o600)
 }
+
+// runControl runs one chainbench command against the network recorded at
+// p.ControlDir, with the job's own logins in a private directory removed when
+// the command ends.
+func (e *WebChainEngine) runControl(ctx context.Context, a DeploymentActor, p webChainPayload, args ...string) error {
+	if e.cli == nil {
+		return errNoChainCLI
+	}
+	logins, cleanup, err := e.jobLogins(ctx, a, p)
+	if err != nil {
+		return err
+	}
+	_, err = e.cli.Run(ctx, append(args, "--workspace-dir", p.ControlDir, "--server-logins", logins)...)
+	return errors.Join(err, cleanup())
+}
+
+// nodeSwapArgs is the `node swap` a reviewed replacement runs.
+func nodeSwapArgs(index int, binary string, changes []string) []string {
+	args := []string{"node", "swap", "--index", strconv.Itoa(index), "--purpose", "web-reviewed-config"}
+	if binary != "" {
+		args = append(args, "--binary", binary)
+	}
+	for _, change := range changes {
+		args = append(args, "--config", change)
+	}
+	return args
+}
