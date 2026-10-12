@@ -125,6 +125,12 @@ Web이 `ChainUp`, `app.Upload`, `ChainStatus` 같은 공용 유스케이스를 �
   WEB-05, WEB-09, WEB-12, WEB-13과 두 Docker 서버 attach 증명이 통과했다. 테스트 계획(`PlanSuiteLayout`)과 테스트 바이너리 업로드는
   아직 Web 안에 있어서 P3에서 옮긴다.
 - **P3 체인 구성.** `chain.setup`, `chain.deploy`, 매니페스트 setup을 `chain up`으로 옮긴다.
+- **P3 세부 순서 (2026-10-12 조사 결과).** 각 단계를 Web이 따로 부르는 대신 `chain up` 하나를 부른다. 단계 순서와 잠금이 CLI 한 곳에
+  남기 때문이다. `chain up`에 없는 것은 두 가지다. `--stage deploy`가 init 전에 멈추므로 init 뒤에 멈추는 `--stage init`을 더하고,
+  ConfigSet과 역할·노드별 launch 값을 넣을 방법이 없으므로 테스트 실행기가 이미 쓰는 체인 프리셋 투영(`PlanChainPreset`)을
+  `chain up --chain-preset <file>`로 연다. 순서는 (1) `--stage init`, (2) `--chain-preset`, (3) Web `chain.setup`/`chain.deploy` 전환
+  (자격증명은 작업 서버 집합, 바이너리는 CLI의 `control.binaries` 배송과 sha256 확인, 단계 진행은 `chain-record.json` 읽기),
+  (4) 매니페스트 setup 전환, (5) 테스트 계획과 테스트 바이너리 업로드 전환이다.
 - **P4 노드 제어.** start, stop, restart, reset, swap을 P0 명령으로 옮긴다.
 - **P5 정리와 인수.** 쓰이지 않게 된 Web 전용 조율 코드를 지우고, 14개 기준을 고정 소스로 다시 통과시킨다.
 
