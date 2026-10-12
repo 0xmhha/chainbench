@@ -2,6 +2,7 @@ package app
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -184,7 +185,7 @@ func (m *WebMonitor) Metrics(a DeploymentActor, network string, q WebMonitorQuer
 
 // Logs returns archived node lines in the window, in node log order. nodeID is
 // "<network>.<label>". A cursor carries the window it was issued for.
-func (m *WebMonitor) Logs(a DeploymentActor, nodeID string, q WebMonitorQuery) (WebLogs, error) {
+func (m *WebMonitor) Logs(ctx context.Context, a DeploymentActor, nodeID string, q WebMonitorQuery) (WebLogs, error) {
 	cut := strings.LastIndexByte(nodeID, '.')
 	if cut <= 0 || cut == len(nodeID)-1 {
 		return WebLogs{}, ErrDeploymentNotFound
@@ -193,7 +194,7 @@ func (m *WebMonitor) Logs(a DeploymentActor, nodeID string, q WebMonitorQuery) (
 	if err := m.readable(a, network); err != nil {
 		return WebLogs{}, err
 	}
-	state, _, err := m.loadNetwork(network)
+	state, _, err := m.loadNetwork(ctx, network)
 	if err != nil {
 		return WebLogs{}, err
 	}

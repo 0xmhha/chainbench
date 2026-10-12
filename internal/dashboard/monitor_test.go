@@ -16,6 +16,14 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
+// fixtureStatusCLI answers `chain status` with one fixed state, standing in for
+// the CLI the dashboard runs so these tests exercise the routes.
+type fixtureStatusCLI struct{ state app.State }
+
+func (c fixtureStatusCLI) ChainStatus(context.Context, string) (app.State, error) {
+	return c.state, nil
+}
+
 func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	root := t.TempDir()
 	network := "monitored"
@@ -27,8 +35,9 @@ func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	if err := os.WriteFile(logPath, []byte("imported without a source timestamp\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	state := app.State{Chain: "wbft", Nodes: []node.Record{{Index: 1, Label: "node1", Host: "127.0.0.1", PID: 7, LogPath: logPath}}}
 	for name, v := range map[string]any{
-		"chain-record.json": app.State{Chain: "wbft", Nodes: []node.Record{{Index: 1, Label: "node1", Host: "127.0.0.1", PID: 7, LogPath: logPath}}},
+		"chain-record.json": state,
 		"web-target.json":   resource.Inspection{HostIdentity: "fixture", Transport: "local"},
 	} {
 		raw, _ := json.Marshal(v)
@@ -40,6 +49,7 @@ func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	monitor.UseCLI(fixtureStatusCLI{state})
 	if err := monitor.CollectOnce(context.Background()); err != nil {
 		t.Fatal(err)
 	}

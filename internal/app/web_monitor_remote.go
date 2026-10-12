@@ -93,7 +93,7 @@ func (m *WebMonitor) attachRemote(network string) func() {
 // nothing else is recorded.
 func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
 	m.mu.Lock()
-	state, _, err := m.loadNetwork(network)
+	state, _, err := m.loadNetwork(ctx, network)
 	var work webMonitorCursor
 	if err == nil {
 		work, err = m.readCursor(network)

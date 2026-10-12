@@ -99,7 +99,7 @@ func TestWebHistoryLinksAndDeletesOnlyRunOwnedObservations(t *testing.T) {
 	if _, err = m.Metrics(viewer, f.network, WebMonitorQuery{RunID: "job-early", From: start}); !errors.Is(err, ErrWebMonitorQuery) {
 		t.Fatalf("run and explicit window together accepted: %v", err)
 	}
-	if _, err = m.Logs(viewer, "other.node1", WebMonitorQuery{RunID: "job-early"}); !errors.Is(err, ErrDeploymentNotFound) {
+	if _, err = m.Logs(context.Background(), viewer, "other.node1", WebMonitorQuery{RunID: "job-early"}); !errors.Is(err, ErrDeploymentNotFound) {
 		t.Fatalf("run window applied to another network: %v", err)
 	}
 
@@ -114,7 +114,7 @@ func TestWebHistoryLinksAndDeletesOnlyRunOwnedObservations(t *testing.T) {
 	if !strings.Contains(strings.Join(gapReasons(metrics.Coverage), ","), "archive deleted_by_admin job-early") {
 		t.Fatalf("deleted interval not distinguishable from missing collection: %v", gapReasons(metrics.Coverage))
 	}
-	logs, _ := m.Logs(viewer, f.network+".node1", WebMonitorQuery{From: start.Add(-time.Minute), To: start.Add(time.Minute)})
+	logs, _ := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{From: start.Add(-time.Minute), To: start.Add(time.Minute)})
 	if len(logs.Entries) != 1 || logs.Entries[0].Text != "third round line" {
 		t.Fatalf("log deletion = %+v", logs.Entries)
 	}

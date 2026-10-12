@@ -38,7 +38,7 @@ func WithWebMonitor(monitor *app.WebMonitor, authenticate DeploymentAuthenticato
 			monitorResponse(w, metrics, err)
 		})
 		route("GET /api/v1/nodes/{nodeId}/logs", func(w http.ResponseWriter, r *http.Request, a app.DeploymentActor, q app.WebMonitorQuery) {
-			logs, err := monitor.Logs(a, r.PathValue("nodeId"), q)
+			logs, err := monitor.Logs(r.Context(), a, r.PathValue("nodeId"), q)
 			monitorResponse(w, logs, err)
 		})
 	}

@@ -164,6 +164,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "observation store:", err)
 			os.Exit(1)
 		}
+		monitor.UseCLI(webcli.Runner{Binary: cliPath})
 		go monitor.Run(context.Background())
 		// Local machines of jobs the restart interrupted are checked once,
 		// read-only, so their records show what actually remains.

@@ -50,7 +50,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 		t.Fatal(err)
 	}
 	monitorCollect(t, f, m, 1) // The background round no longer reports node1 as unavailable.
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,14 +61,14 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	if reasons := strings.Join(gapReasons(logs.Coverage), ","); strings.Count(reasons, "node1 logs remote_log_collection_unavailable") != 1 {
 		t.Fatalf("gap while no job ran must stay, once: %s", reasons)
 	}
-	other, _ := m.Logs(viewer, f.network+".node2", WebMonitorQuery{})
+	other, _ := m.Logs(context.Background(), viewer, f.network+".node2", WebMonitorQuery{})
 	if !strings.Contains(strings.Join(gapReasons(other.Coverage), ","), "node2 logs log_unavailable") {
 		t.Fatalf("missing remote file not reported: %v", gapReasons(other.Coverage))
 	}
 	detach()
 	f.clock = f.clock.Add(5e9)
 	monitorCollect(t, f, m, 1)
-	logs, _ = m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, _ = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if strings.Count(strings.Join(gapReasons(logs.Coverage), ","), "remote_log_collection_unavailable") != 2 {
 		t.Fatalf("detached collection must be reported again: %v", gapReasons(logs.Coverage))
 	}
@@ -81,7 +81,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	if err = m.CollectRemoteLogs(ctx, f.network, open); err == nil {
 		t.Fatal("cancelled collection reported success")
 	}
-	logs, _ = m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, _ = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if len(logs.Entries) != 2 {
 		t.Fatalf("cancelled collector archived lines: %+v", logs.Entries)
 	}
@@ -153,14 +153,14 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 	if !errors.Is(refused, ErrDeploymentForbidden) {
 		t.Fatalf("refused access must end collection: %v", refused)
 	}
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(logs.Entries) != 2 || logs.Entries[1].Text != "INFO [10-09|00:46:59.000] second" {
 		t.Fatalf("positions lost or lines duplicated: %+v", logs.Entries)
 	}
-	other, _ := m.Logs(viewer, f.network+".node2", WebMonitorQuery{})
+	other, _ := m.Logs(context.Background(), viewer, f.network+".node2", WebMonitorQuery{})
 	for _, g := range other.Coverage.Gaps {
 		if strings.Contains(g.Reason, "collector_error") {
 			t.Fatalf("refusal recorded as an ordinary failure: %v", g)
