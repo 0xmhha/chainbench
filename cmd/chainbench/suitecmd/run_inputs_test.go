@@ -58,3 +58,31 @@ func TestRun_JSONCarriesTheSetupSteps(t *testing.T) {
 		t.Fatalf("the document lists no setup steps although the run got as far as %q", doc.Error)
 	}
 }
+
+// TestRun_SuiteRunsSeveralDefinitionsAsOneRun: with --suite, several
+// definitions are one run on one network with one session, so the document has
+// the single-run shape; without it they are a sequence of runs.
+func TestRun_SuiteRunsSeveralDefinitionsAsOneRun(t *testing.T) {
+	specs := []string{tcPath("07-basic-wbft-consensus.json"), tcPath("07-basic-wbft-consensus.json")}
+	for _, tc := range []struct {
+		suite bool
+		want  string
+	}{{true, "error"}, {false, "runs"}} {
+		args := []string{"run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json",
+			"--keys", repoKeys(t), "--binary", "/nonexistent/chainbench-test-binary"}
+		if tc.suite {
+			args = append(args, "--suite")
+		}
+		stdout, _, err := runSplit(t, append(args, specs...)...)
+		if err == nil {
+			t.Fatal("a run on a missing binary succeeded")
+		}
+		var doc map[string]any
+		if jerr := json.Unmarshal([]byte(stdout), &doc); jerr != nil {
+			t.Fatalf("suite=%v: stdout is not a document: %v\n%s", tc.suite, jerr, stdout)
+		}
+		if _, ok := doc[tc.want]; !ok {
+			t.Fatalf("suite=%v: document %s has no %q", tc.suite, stdout, tc.want)
+		}
+	}
+}

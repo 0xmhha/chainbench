@@ -66,6 +66,7 @@ func NewRun() *cobra.Command {
 		launchOpts         []string
 		binaryFor          []string
 		readOnlyKeys       bool
+		suite              bool
 		dashboardURL       string
 		jsonOut            bool
 		noSkips            bool
@@ -156,7 +157,7 @@ func NewRun() *cobra.Command {
 			// The plan goes to stderr, not stdout: --json promises a document
 			// and a run that printed prose above it would break every reader.
 			in.OnPlan = planPrinter(cmd.ErrOrStderr())
-			if len(args) > 1 {
+			if len(args) > 1 && !suite {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
 				// preflight decides whether to reuse it.
@@ -180,6 +181,7 @@ func NewRun() *cobra.Command {
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringArrayVar(&binaryFor, "binary-for", nil, "compose: name=path binds a binary name the specs declare to this executable (repeatable)")
+	cmd.Flags().BoolVar(&suite, "suite", false, "compose: run several definitions as one suite on one network with one session, instead of one run each")
 	cmd.Flags().BoolVar(&readOnlyKeys, "read-only-keys", false, "compose: read --keys without registering accounts into it, for a key set that must not change")
 	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
