@@ -35,7 +35,7 @@ func newStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop a single node by index (--workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if err := app.NodeStop(cmd.Context(), app.Deps{}, app.NodeStopIn{DataDir: dataDir, Index: index}); err != nil {
+			if err := app.NodeStop(cmd.Context(), surface.Deps(cmd), app.NodeStopIn{DataDir: dataDir, Index: index}); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "stopped node%d\n", index)
@@ -44,6 +44,7 @@ func newStopCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	cmd.Flags().IntVar(&index, "index", 0, "1-based node index to stop")
+	surface.BindLogins(cmd)
 	return cmd
 }
 
@@ -58,7 +59,7 @@ func newStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Relaunch a single stopped node by index (--workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			res, err := app.NodeStart(cmd.Context(), app.Deps{}, app.NodeStartIn{DataDir: dataDir, Index: index})
+			res, err := app.NodeStart(cmd.Context(), surface.Deps(cmd), app.NodeStartIn{DataDir: dataDir, Index: index})
 			if err != nil {
 				return err
 			}
@@ -68,6 +69,7 @@ func newStartCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	cmd.Flags().IntVar(&index, "index", 0, "1-based node index to relaunch")
+	surface.BindLogins(cmd)
 	return cmd
 }
 
@@ -104,6 +106,7 @@ func newSwapCmd() *cobra.Command {
 	cmd.Flags().StringVar(&overlay, "genesis-overlay", "", "genesis JSON fragment file merged into this node's genesis")
 	cmd.Flags().StringArrayVar(&in.Args, "arg", nil, "flag appended to the node's command line (repeatable)")
 	cmd.Flags().StringVar(&in.Purpose, "purpose", "", "name recorded for the config fixture (config-<purpose>)")
+	surface.BindLogins(cmd)
 	return cmd
 }
 
@@ -124,6 +127,7 @@ func newResetCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&in.DataDir, "workspace-dir", "", "workspace directory")
 	cmd.Flags().IntVar(&in.Index, "index", 0, "1-based node index to reset")
+	surface.BindLogins(cmd)
 	return cmd
 }
 

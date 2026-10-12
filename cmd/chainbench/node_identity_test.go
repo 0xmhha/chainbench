@@ -75,3 +75,19 @@ func TestHardforkCmd_RefusesAPIDThatIsNotTheNode(t *testing.T) {
 		t.Fatal("the unrelated process was signalled")
 	}
 }
+
+// TestControlCommandsTakeServerLogins: every command the Web runs against a
+// recorded network takes the job's own logins apart from the recorded set.
+func TestControlCommandsTakeServerLogins(t *testing.T) {
+	logins := t.TempDir() + "/logins.yaml"
+	for _, args := range [][]string{
+		{"node", "start", "--index", "1"}, {"node", "stop", "--index", "1"}, {"node", "reset", "--index", "1"},
+		{"node", "swap", "--index", "1", "--binary", "/bin/true"},
+		{"chain", "restart", "--node", "1"}, {"chain", "stop"}, {"chain", "rm"},
+	} {
+		_, err := run(t, append(args, "--workspace-dir", t.TempDir(), "--server-logins", logins)...)
+		if err != nil && strings.Contains(err.Error(), "unknown flag") {
+			t.Errorf("%v: %v", args, err)
+		}
+	}
+}

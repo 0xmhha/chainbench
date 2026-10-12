@@ -25,13 +25,28 @@ import (
 // Command is provenance the lock should always have.
 func Deps(cmd *cobra.Command) app.Deps {
 	errOut := cmd.ErrOrStderr()
-	return app.Deps{
+	d := app.Deps{
 		Env:     os.Getenv,
 		Command: commandLine(cmd),
 		Logf: func(format string, args ...any) {
 			fmt.Fprintf(errOut, format+"\n", args...)
 		},
 	}
+	// A command that takes --server-logins dials with those logins rather than
+	// the ones the recorded server set names.
+	if f := cmd.Flags().Lookup(LoginsFlag); f != nil {
+		d = d.WithLogins(f.Value.String())
+	}
+	return d
+}
+
+// LoginsFlag names a server-set file whose ssh blocks supply one run's logins,
+// apart from the server set a network records.
+const LoginsFlag = "server-logins"
+
+// BindLogins registers --server-logins on cmd; Deps reads it.
+func BindLogins(cmd *cobra.Command) {
+	cmd.Flags().String(LoginsFlag, "", "server-set file whose ssh blocks supply this command's logins, apart from the server set the network records")
 }
 
 // commandLine renders this invocation the way the operator typed it: the command

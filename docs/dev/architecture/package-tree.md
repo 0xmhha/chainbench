@@ -25,10 +25,10 @@
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
 | `internal/` | 54 | 81,269 |
-| `cmd/` | 19 | 5,441 |
+| `cmd/` | 19 | 5,461 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **87,635** |
+| **합계** | **77** | **87,655** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -193,21 +193,21 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,441줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,461줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
 
 ```
 cmd/chainbench           303  main. 사용자용 CLI(요구 15) 루트 조립
-├── surface               81  모든 명령군이 자기에 대해 말해야 하는 것 — 명령 트리의 두 번째 렌더링이
+├── surface               96  모든 명령군이 자기에 대해 말해야 하는 것 — 명령 트리의 두 번째 렌더링이
 │                             손으로 유지하는 목록이 아니라 선언 하나를 읽게 한다
 ├── exitcode              33  종료 상태를 결정한 명령에서 그것을 적용하는 main 까지 운반
-├── chaincmd             963  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
+├── chaincmd             964  체인을 COMPOSE 하고 구성된 것을 읽기 — new·build·config·up·resume·blueprint
 │                             + 읽는 동사(show·status·health·logs·enode)
 ├── lifecyclecmd         498  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
 │                             여전히 하나의 건강한 체인인지 판정(verify·consensus·baseline)
-├── nodecmd              174  네트워크의 노드 1개 — 개별 start/stop, RPC 대화
+├── nodecmd              178  네트워크의 노드 1개 — 개별 start/stop, RPC 대화
 ├── suitecmd             663  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
 │                             validate(실행 없이 검사)·migrate-spec(v1 → v2)
 ├── testcmd               65  디렉토리의 DSL 테스트 케이스 목록 — run 전에 무엇이 있는지 발견
