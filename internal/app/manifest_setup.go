@@ -125,30 +125,38 @@ func (s *ManifestStore) SetupManifest(ctx context.Context, actor DeploymentActor
 		return out, err
 	}
 	out.ID = filepath.Base(dir)
-	deps := Deps{Command: "web manifest setup by " + actor.ID}
 	// Detached work survives client disconnection. No raw argv enters this path.
 	ctx = context.WithoutCancel(ctx)
-	if _, err = s.ApplyManifest(ctx, deps, actor, id, dir, keys, asset.Path); err != nil {
-		return out, err
-	}
-	steps := []func() error{
-		func() error { _, e := ChainAllocate(ctx, deps, ChainAllocateIn{DataDir: dir, BPCount: 4}); return e },
-		func() error { _, e := ChainKeys(ctx, deps, ChainKeysIn{DataDir: dir, Nodes: 4}); return e },
-		func() error { _, e := ChainGenesis(ctx, deps, ChainGenesisIn{DataDir: dir}); return e },
-		func() error { _, e := ChainConfig(ctx, deps, ChainConfigIn{DataDir: dir}); return e },
-		func() error { _, e := ChainLaunchOpts(ctx, deps, ChainLaunchOptsIn{DataDir: dir}); return e },
-		func() error { _, e := ChainProvision(ctx, deps, ChainProvisionIn{DataDir: dir}); return e },
-		func() error { _, e := ChainInit(ctx, deps, ChainInitIn{DataDir: dir}); return e },
-	}
-	for i, step := range steps {
-		if err = step(); err != nil {
-			return out, fmt.Errorf("manifest setup %s phase %d: %w", out.ID, i, err)
+	manifest, template := "", ""
+	if item.Source == "external" {
+		// These files belong to this composition, never a client-supplied path.
+		if manifest, template, err = s.files.Pin(dir, item.Manifest, []byte(item.Template)); err != nil {
+			return out, err
 		}
 	}
-	state, err := ChainStatus(ctx, deps, ChainStatusIn{DataDir: dir})
-	out.State = state.State
+	if s.cli == nil {
+		return out, errNoChainCLI
+	}
+	if _, err = s.cli.Run(ctx, manifestSetupArgs(dir, keys, asset.Path, plugin.Manifest().ID, manifest, template)...); err != nil {
+		return out, fmt.Errorf("manifest setup %s: %w", out.ID, err)
+	}
+	out.State, err = s.cli.ChainStatus(ctx, dir)
 	return out, err
 }
+
+// manifestSetupArgs is the `chain up` a manifest setup runs: four producers of
+// the selected chain from the verified asset and the reviewed key preset,
+// initialised and left stopped.
+func manifestSetupArgs(dir, keys, binary, chain, manifest, template string) []string {
+	args := []string{"chain", "up", "--workspace-dir", dir, "--stage", "init", "--bp", "4", "--keys", keys, "--binary", binary}
+	if manifest != "" {
+		return append(args, "--manifest", manifest, "--genesis-template", template)
+	}
+	return append(args, "--chain", chain)
+}
+
+// UseCLI gives the store the chainbench command its setups run.
+func (s *ManifestStore) UseCLI(c ChainCLI) { s.cli = c }
 
 func verifyManifestNative(path string) error {
 	switch runtime.GOOS {

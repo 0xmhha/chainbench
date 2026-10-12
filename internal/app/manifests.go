@@ -35,6 +35,8 @@ type ManifestStore struct {
 	files  *session.ManifestFiles
 	assets *session.AssetFiles
 	mu     sync.Mutex
+	// cli is the chainbench command a setup composes through; see UseCLI.
+	cli ChainCLI
 }
 
 func OpenManifestStore(root string) (*ManifestStore, error) {
