@@ -52,6 +52,10 @@ type RunSuiteIn struct {
 	KeysDir string
 	// ReadOnlyKeys keeps account registration from rewriting accepted key inputs.
 	ReadOnlyKeys bool
+	// NoNodeControl gives the steps no control over the node processes, for a
+	// read-only attach: a fault step fails instead of acting on a node the run
+	// does not own.
+	NoNodeControl bool
 	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string

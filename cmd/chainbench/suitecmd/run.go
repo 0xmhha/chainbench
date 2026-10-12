@@ -67,6 +67,7 @@ func NewRun() *cobra.Command {
 		binaryFor          []string
 		readOnlyKeys       bool
 		suite              bool
+		noNodeControl      bool
 		dashboardURL       string
 		jsonOut            bool
 		noSkips            bool
@@ -117,7 +118,8 @@ func NewRun() *cobra.Command {
 					keysDir = ""
 				}
 				return runAttached(cmd, args, start, workspaceDir, chain, rpcURLs,
-					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips, allowChainMismatch)
+					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips, allowChainMismatch,
+					attachReading{readOnlyKeys: readOnlyKeys, noNodeControl: noNodeControl, serverSet: sf.Ref().SetPath})
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
@@ -181,6 +183,7 @@ func NewRun() *cobra.Command {
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringArrayVar(&binaryFor, "binary-for", nil, "compose: name=path binds a binary name the specs declare to this executable (repeatable)")
+	cmd.Flags().BoolVar(&noNodeControl, "no-node-control", false, "attach: run for reading only, giving no step control over the node processes")
 	cmd.Flags().BoolVar(&suite, "suite", false, "compose: run several definitions as one suite on one network with one session, instead of one run each")
 	cmd.Flags().BoolVar(&readOnlyKeys, "read-only-keys", false, "compose: read --keys without registering accounts into it, for a key set that must not change")
 	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "compose: key set directory, overriding what the specs declare")
@@ -223,6 +226,14 @@ func defaultArtifactRoot() string {
 	return d
 }
 
+// attachReading is how far an attached run may reach into the network it did
+// not compose: whether it may register into the key set, whether its steps
+// may act on a node, and which server set supplies the logins for its hosts.
+type attachReading struct {
+	readOnlyKeys, noNodeControl bool
+	serverSet                   string
+}
+
 // runAttached runs the specs against a network that is already up.
 //
 // One function for all three ways in, because they only ever differed in where
@@ -232,7 +243,7 @@ func defaultArtifactRoot() string {
 // to expand ${VAR} and the other two did not.
 func runAttached(cmd *cobra.Command, args []string, start app.Start,
 	workspaceDir, chain string, rpcURLs []string,
-	artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips, allowChainMismatch bool) error {
+	artifactRoot, keysDir, dashboardURL string, jsonOut, noSkips, allowChainMismatch bool, reading attachReading) error {
 	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
@@ -244,6 +255,7 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 		Chain: chain, RPCURLs: rpcURLs, DataDir: workspaceDir,
 		ArtifactRoot: artifactRoot, KeysDir: keysDir, Specs: specs, Bus: bus,
 		AllowChainMismatch: allowChainMismatch,
+		ReadOnlyKeys:       reading.readOnlyKeys, NoNodeControl: reading.noNodeControl,
 	})
 	if err != nil {
 		return err

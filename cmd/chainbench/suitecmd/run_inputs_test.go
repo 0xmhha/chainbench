@@ -86,3 +86,16 @@ func TestRun_SuiteRunsSeveralDefinitionsAsOneRun(t *testing.T) {
 		}
 	}
 }
+
+// TestRun_NoNodeControlIsAnAttachFlag: --no-node-control reaches the attach
+// run, which then reports the workspace it was pointed at rather than the flag.
+func TestRun_NoNodeControlIsAnAttachFlag(t *testing.T) {
+	_, _, err := runSplit(t, "run", "--attach", "--workspace-dir", t.TempDir(), "--no-node-control", "--read-only-keys",
+		"--artifact-root", t.TempDir(), tcPath("08-attached-chain-produces.json"))
+	if err == nil {
+		t.Fatal("attaching to a workspace with no network succeeded")
+	}
+	if strings.Contains(err.Error(), "unknown flag") {
+		t.Fatalf("the attach flags were not accepted: %v", err)
+	}
+}
