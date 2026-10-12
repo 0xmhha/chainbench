@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-07",
-  "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
+  "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
   "scenarios": [
     {
       "id": "owned-start-stop",
@@ -20,15 +20,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-          "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+          "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-receipt.json",
-          "sha256": "d247ec608437f4548bad6c89c7853bd98fc6b22093eb269ba515e24c66f371c9"
+          "sha256": "805625973f84f4ab0c4b62e16ffc640c9a67c829d2b5c73e9eac91a8d0829b5a"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     },
     {
       "id": "config-replacement-restart",
@@ -52,15 +52,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-          "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+          "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wbft-table-plan.png",
-          "sha256": "59f008d4419cd4ec1b079f19b21c2e7b5b596b4210f7f7f6da62090f13682654"
+          "sha256": "1d49141d5655c0ad67db2f47422ff46ad927395ef99524dd8744df498a843961"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     },
     {
       "id": "binary-replacement-restart",
@@ -84,23 +84,23 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/binary-replacement-receipt.json",
-          "sha256": "37afc176b00a532011cadcf0bd8961ef60926ab6094c6fd02f9a7b11ac6a5883"
+          "sha256": "d63ea469212c89580687989f33e7425f919ecf48f6b10c9509f2a57f3a0d7bd1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/binary-replacement-binary-plan.png",
-          "sha256": "fdec46ae3a648cffe7b7a94c97cbb830ba513884e69a7d933bc7c0ea82a09538"
+          "sha256": "0e219738507279fa56a5137ac4b4da2343badf54643a00cf62970e7818fd6d21"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-receipt.json",
-          "sha256": "d247ec608437f4548bad6c89c7853bd98fc6b22093eb269ba515e24c66f371c9"
+          "sha256": "805625973f84f4ab0c4b62e16ffc640c9a67c829d2b5c73e9eac91a8d0829b5a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-ssh-binary-plan.png",
-          "sha256": "6a211162a9726f568949a05bb291debe4af64679d3bec5e9e4c9f2d54f171554"
+          "sha256": "42af9b5191599bbae259e38091e711b6f7c4a77867af547bfbc650297e0da46c"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     },
     {
       "id": "non-producer-reset-stopped",
@@ -120,23 +120,23 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-          "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+          "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wbft-reset.png",
-          "sha256": "8e909bc06749594e9f77ea49c83069e27fe051c079456008a69415afe7deb0ba"
+          "sha256": "457866c1ddd8bb7cc02526c5f1af4e5d71a4552dfe9fa942d4a10f31dc8ef0b4"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-stablenet-reset.png",
-          "sha256": "5319a6a35374513e6e865a7bc89f9a98227ae61a111c9d2f0469676d2467aa88"
+          "sha256": "643a9dbd61dc384e151935de0352584c2d40a7984dd3e33d4d0dbe7d7ca00f0b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wemix-reset.png",
-          "sha256": "4bc8d687a10675fcbea7f775678d01ace70295bd1df14b68a052e88a893ec3c8"
+          "sha256": "fd8767843d04f4f73ba5008a482667bd75bbf780ff8943b86ae999509d50850f"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     },
     {
       "id": "producer-and-attach-refused",
@@ -160,23 +160,23 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-          "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+          "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-receipt.json",
-          "sha256": "c850e6c9c36b963a8fd467fa7644752241446e452edb08214391adb927d2b8e9"
+          "sha256": "21e470b14628bb80201d6c0384c415f743487d66e5cf128eb7ada5f894f95049"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-attach-refused.png",
-          "sha256": "6eece88e67eb3906c4e516834e31d6c9b95888dcd2b9a7b9a003a15f52054dde"
+          "sha256": "d639a8e1b895e8a4821b038a09ed1b439ceafa338b59b1b276f7e1ffbf3b8796"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-attach-notice.txt",
           "sha256": "49e91ff514811ec2b3b144f7760f51f232571274597dd4074c9dd63c105ed61b"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     },
     {
       "id": "cli-semantics-preserved",
@@ -196,15 +196,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-          "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+          "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-07/check-1.log",
-          "sha256": "e69dde7da2653e1326e982b8a8f6c12f80f66ade99ecb098ae97588ad15ce4dc"
+          "sha256": "6fa14f7f82d14a2677783da545e6c7a9145b5b5e158fc71268929d625989b9a8"
         }
       ],
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
-      "observedAt": "2026-10-10T14:03:53.045139+00:00"
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "observedAt": "2026-10-11T21:58:48.764963+00:00"
     }
   ],
   "checks": [
@@ -212,27 +212,27 @@
       "command": "go test -race -count=1 ./internal/app -run \"Control|WebNode|ObservedControls|Reset|Restart|Swap|Binary\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-07/check-0.log",
-      "sha256": "ce097d3da62b8a6a5f980cbdd8bee3dfba9adab1f886d6e801656867846f2a79"
+      "sha256": "89ac4c64515c8f8dc060a7c662dd43ae086b9dd32e162bd1b80492a6bc6e4b13"
     },
     {
       "command": "go test -count=1 ./internal/chainsetup/... ./internal/core/process ./internal/core/nodeconfig",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-07/check-1.log",
-      "sha256": "e69dde7da2653e1326e982b8a8f6c12f80f66ade99ecb098ae97588ad15ce4dc"
+      "sha256": "6fa14f7f82d14a2677783da545e6c7a9145b5b5e158fc71268929d625989b9a8"
     }
   ],
   "proofs": [
     {
       "name": "recorded-controls",
-      "startedAt": "2026-10-10T13:50:02.448752+00:00",
-      "runtime": "/private/tmp/cbui/ba569495-4a81-4251-a9d0-3bc848af55fe",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:44:28.733939+00:00",
+      "runtime": "/private/tmp/cbui/f5875a29-cf56-4795-ab90-273b971372c6",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -240,7 +240,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -248,7 +248,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -257,15 +257,15 @@
     },
     {
       "name": "binary-replacement",
-      "startedAt": "2026-10-10T13:54:39.833477+00:00",
-      "runtime": "/private/tmp/cbui/9549cd78-c017-4f8b-8d73-da6c46d3631e",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:48:56.060103+00:00",
+      "runtime": "/private/tmp/cbui/94453026-f5b9-47d1-9e1d-a98489e031e6",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -273,7 +273,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -281,7 +281,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -290,15 +290,15 @@
     },
     {
       "name": "ssh-binary-replacement",
-      "startedAt": "2026-10-10T13:55:46.234893+00:00",
-      "runtime": "/private/tmp/cbui/254c5a94-74c4-4325-a69a-a682546c5340",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:50:16.773048+00:00",
+      "runtime": "/private/tmp/cbui/a301ad1d-6be1-415f-89eb-8c98c161b2b0",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -306,7 +306,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -314,7 +314,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -323,15 +323,15 @@
     },
     {
       "name": "cancel-retention",
-      "startedAt": "2026-10-10T14:00:34.139405+00:00",
-      "runtime": "/private/tmp/cbui/73916cec-ef8d-4a9b-ada1-978c19573902",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:55:25.824395+00:00",
+      "runtime": "/private/tmp/cbui/e227b53a-509d-48d5-a794-9edebdbe971f",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -339,7 +339,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -347,7 +347,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -356,23 +356,23 @@
     }
   ],
   "server": {
-    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
   "frontend": [
     {
-      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
-      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
     },
     {
-      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
-      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
     },
     {
       "path": "internal/dashboard/spa/index.html",
-      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
     }
   ],
   "coverage": {
@@ -398,15 +398,23 @@
   "source": [
     {
       "path": "internal/app/web_control_binary.go",
-      "sha256": "2aadd3294a647d979a1511e27b89f6fd567203e2236bd30ffe7ca6eef40b75f8"
+      "sha256": "4b9bcb65aa3974e27c75af933cfd2c1a152a2e21e959c6625d6f59de259b20a1"
     },
     {
       "path": "internal/app/web_control_binary_test.go",
       "sha256": "9a7a4b14af45e5017986a4f43891bd1f69301e6969cf937d15c5031a1ff511b7"
     },
     {
+      "path": "internal/app/web_control_limits.go",
+      "sha256": "f8571c2a25b713883489ea48627f97358ada1b78cf260d6098fbbccad7cf5c17"
+    },
+    {
+      "path": "internal/app/web_control_limits_test.go",
+      "sha256": "f08a13f72ddd23ef63ed6141cc1e21f3c915f30f0be246363eb51a8097016be3"
+    },
+    {
       "path": "internal/app/web_node_controls.go",
-      "sha256": "2aa86279f7d416b0bf13e428c9b35187d77ba993c609af0977621efae35ad0e1"
+      "sha256": "a072896dd751931724fbb1a1ff0b7a93dbd6948d26737d045cfd4c4edc5966b8"
     },
     {
       "path": "internal/app/web_observed_controls_test.go",
@@ -414,15 +422,15 @@
     },
     {
       "path": "internal/app/web_recorded_controls.go",
-      "sha256": "342c5f3cd3be7a66d5fe953eb3381fe069c616a6b0fe40bba159fbe15b2ac8da"
+      "sha256": "7198ab73baf2ff8e11481503bb2ab7a0e8e3e5ed58319cfdbdf35dc3b87a6ce6"
     },
     {
       "path": "internal/app/web_recorded_controls_test.go",
-      "sha256": "8995a180d95f923ced35fc468b6a46b7958041fc654092bc8f073c06688b17fb"
+      "sha256": "0fdfa837305a46a150b220041a46e07596a0d215db278466223a3dc1a4246c53"
     },
     {
       "path": "internal/app/web_node_binaries.go",
-      "sha256": "48c9034f9b4187de1fdfa61747ebd2a07f78f05db5238d88097dcfea4c62aeaf"
+      "sha256": "ecd0d6eaf901b13d896bda1d9196c8f63f3c5f6f7fece8b9a2a009fc824544ae"
     },
     {
       "path": "internal/app/web_node_binaries_test.go",
@@ -430,7 +438,7 @@
     },
     {
       "path": "internal/app/web_node_controls.go",
-      "sha256": "2aa86279f7d416b0bf13e428c9b35187d77ba993c609af0977621efae35ad0e1"
+      "sha256": "a072896dd751931724fbb1a1ff0b7a93dbd6948d26737d045cfd4c4edc5966b8"
     },
     {
       "path": "internal/app/web_node_discovery.go",
@@ -446,7 +454,7 @@
     },
     {
       "path": "internal/app/web_node_observations.go",
-      "sha256": "17ffdbc0b2beb3a21d0da5888cb39e80c64a965c7439883a23f782e2c324ce6e"
+      "sha256": "c097e389cfda3634e8a658a41a0d801c9d2add141c5de234ab934d5707d825fa"
     },
     {
       "path": "internal/app/web_node_observer.go",
@@ -474,23 +482,39 @@
     },
     {
       "path": "internal/app/web_chain_engine.go",
-      "sha256": "302aecd171e6c01d3cb24a0a3f067ac5f7aae468020559b18cb88e5b7901962e"
+      "sha256": "e338bd40be7aa0f6eabf108aaa93509cd378b3d126d0894937e034ad4de5cfeb"
     },
     {
       "path": "internal/app/web_chain_execution.go",
-      "sha256": "cfc376cfa421420c6e5d8fe38ee4884ed7ab1f2e09b0effeef9d8f1a68766c5d"
+      "sha256": "ac565b487fd38873e38f76ff0a65b227ff70069ebe83d9e2d1d17f9509734963"
+    },
+    {
+      "path": "internal/app/web_chain_servers.go",
+      "sha256": "337bb156476fc8bf4125e82632fe509c03c6dcaf4d78e0debb74ba0b56470d20"
+    },
+    {
+      "path": "internal/app/web_chain_servers_test.go",
+      "sha256": "3772484f339c8bb5a517aa1edb9a2ddc089f616aaa1105dd186ce01f5b00f197"
+    },
+    {
+      "path": "internal/app/web_chain_surface.go",
+      "sha256": "56c58f4a2aaadffe1e37af2756e5070bfa04e17955664a607b1cfd9123494123"
+    },
+    {
+      "path": "internal/app/web_chain_surface_test.go",
+      "sha256": "9330da0bffc142de61aa7b3c5fa97634e8d9d022a96ea64df2d89c478f218e9d"
     },
     {
       "path": "internal/app/web_config_change.go",
-      "sha256": "ea915b60044ba63a6bf18d32a2102a71831da5c1b8ae4ae3c798fa6716692c1c"
+      "sha256": "135a10a13a421fccb16feb2f2bfae46a7f8c376c0bc391afd8f5dc0ea6c3d41d"
     },
     {
       "path": "internal/app/web_network_guard.go",
-      "sha256": "155c5426dfcb6b8f280adcde0a58822019e0d010ef5c577106380e689b914972"
+      "sha256": "2172dacd491939e7b64c0eef558054e2631d96426ca686fd2a57792a77820f10"
     },
     {
       "path": "web/src/JobPanel.svelte",
-      "sha256": "deec5a6842d4489ecc2676113296c2205e8293735fb4e7b81809bfd597096c5f"
+      "sha256": "9ec2081887f14ec11ae87d6d29c538e8e6565c0d43ca3bd386f28c1658b63e3c"
     },
     {
       "path": "tests/webui/evidence_web07.py",
@@ -510,29 +534,29 @@
     },
     {
       "path": "tests/webui/browser_recorded_controls.mjs",
-      "sha256": "91ebd4975395c27e9bac10b49c034f702d42fd70718b169ac47e3f25d32221df"
+      "sha256": "23d2b931db45c8a06de9acf72519dbf2049d4ae3ceba3092b78e2862a389dd7d"
     },
     {
       "path": "tests/webui/browser_binary_replacement.mjs",
-      "sha256": "704f4dfcda922c98e979a415e203ff9f8a2e63e24bbdc3cc48cef90279d6154e"
+      "sha256": "f26e32c71edb065395c07788a33b6a3e6b5034e3fcc30307a30c0f488d9b58fc"
     },
     {
       "path": "tests/webui/browser_ssh_binary_replacement.mjs",
-      "sha256": "0714c0260273cab1965f0147ccc5e4d6ee54917600f1a67af4c90ae352bcc45c"
+      "sha256": "9481f27cf901a5c35c0e365d2d225faeba31e85cbd312b28dd25e3ddc328cab7"
     },
     {
       "path": "tests/webui/browser_cancel_retention.mjs",
-      "sha256": "407551fb86ac88e231e036835c0d3a57dd5c2f268c4d52f30a92bf06e9731b92"
+      "sha256": "9ca0d30e470e115d07280aefc2fc348109b896daca2d8c394b0919dd8551d593"
     }
   ],
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/binary-replacement-binary-plan.png",
-      "sha256": "fdec46ae3a648cffe7b7a94c97cbb830ba513884e69a7d933bc7c0ea82a09538"
+      "sha256": "0e219738507279fa56a5137ac4b4da2343badf54643a00cf62970e7818fd6d21"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/binary-replacement-receipt.json",
-      "sha256": "37afc176b00a532011cadcf0bd8961ef60926ab6094c6fd02f9a7b11ac6a5883"
+      "sha256": "d63ea469212c89580687989f33e7425f919ecf48f6b10c9509f2a57f3a0d7bd1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/binary-replacement-run.log",
@@ -544,11 +568,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-attach-refused.png",
-      "sha256": "6eece88e67eb3906c4e516834e31d6c9b95888dcd2b9a7b9a003a15f52054dde"
+      "sha256": "d639a8e1b895e8a4821b038a09ed1b439ceafa338b59b1b276f7e1ffbf3b8796"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-receipt.json",
-      "sha256": "c850e6c9c36b963a8fd467fa7644752241446e452edb08214391adb927d2b8e9"
+      "sha256": "21e470b14628bb80201d6c0384c415f743487d66e5cf128eb7ada5f894f95049"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/cancel-retention-run.log",
@@ -556,15 +580,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/check-0.log",
-      "sha256": "ce097d3da62b8a6a5f980cbdd8bee3dfba9adab1f886d6e801656867846f2a79"
+      "sha256": "89ac4c64515c8f8dc060a7c662dd43ae086b9dd32e162bd1b80492a6bc6e4b13"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/check-1.log",
-      "sha256": "e69dde7da2653e1326e982b8a8f6c12f80f66ade99ecb098ae97588ad15ce4dc"
+      "sha256": "6fa14f7f82d14a2677783da545e6c7a9145b5b5e158fc71268929d625989b9a8"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-receipt.json",
-      "sha256": "6bc8484a78677f86c8d992ea3b772bfd28b62433f28ee75bed53901a5ab5ccb4"
+      "sha256": "4804fb4e32920a9d5203c990d0081ca38139508f068c4ad26040afc37b446e2d"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-run.log",
@@ -572,23 +596,23 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-stablenet-reset.png",
-      "sha256": "5319a6a35374513e6e865a7bc89f9a98227ae61a111c9d2f0469676d2467aa88"
+      "sha256": "643a9dbd61dc384e151935de0352584c2d40a7984dd3e33d4d0dbe7d7ca00f0b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wbft-reset.png",
-      "sha256": "8e909bc06749594e9f77ea49c83069e27fe051c079456008a69415afe7deb0ba"
+      "sha256": "457866c1ddd8bb7cc02526c5f1af4e5d71a4552dfe9fa942d4a10f31dc8ef0b4"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wbft-table-plan.png",
-      "sha256": "59f008d4419cd4ec1b079f19b21c2e7b5b596b4210f7f7f6da62090f13682654"
+      "sha256": "1d49141d5655c0ad67db2f47422ff46ad927395ef99524dd8744df498a843961"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/recorded-controls-wemix-reset.png",
-      "sha256": "4bc8d687a10675fcbea7f775678d01ace70295bd1df14b68a052e88a893ec3c8"
+      "sha256": "fd8767843d04f4f73ba5008a482667bd75bbf780ff8943b86ae999509d50850f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-receipt.json",
-      "sha256": "d247ec608437f4548bad6c89c7853bd98fc6b22093eb269ba515e24c66f371c9"
+      "sha256": "805625973f84f4ab0c4b62e16ffc640c9a67c829d2b5c73e9eac91a8d0829b5a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-run.log",
@@ -596,13 +620,13 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-ssh-binary-permission.png",
-      "sha256": "d5e161961be354312b0acf12a742073f5b4ede57e1ebe75ffd0fa80734f98df0"
+      "sha256": "3c063abf3c04965d599e556b02b60898dae02134e35bbaed3fd29c3504e27e1e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-07/ssh-binary-replacement-ssh-binary-plan.png",
-      "sha256": "6a211162a9726f568949a05bb291debe4af64679d3bec5e9e4c9f2d54f171554"
+      "sha256": "42af9b5191599bbae259e38091e711b6f7c4a77867af547bfbc650297e0da46c"
     }
   ],
   "blockers": [],
-  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
 }

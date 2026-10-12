@@ -10,6 +10,7 @@
 - Harness (not product): the first native snapshot-restore failure was the gwbft nodes' own low-disk shutdown at 428 MiB free, and the assertion was kept. Source: HO l.433-434, WL, PR.
 - Harness (not product): a fixture wrongly assumed the session survives a restart, a physical port claim conflicted, a sandbox listener was refused, the JS module was missing, and the metadata executor was a unit-level stand-in. Source: HO l.207-213, WL.
 - RED: `TestWebMonitorLogRotationIsSeenWhenTheInodeIsReused` failed before the fix: Linux CI reuses a deleted log's inode, so a replacement larger than the old offset was read from its middle. Fixed in `5f9bb2c4` (fix(web): detect a replaced node log even when the filesystem reuses its inode). Source: CM, CI.
+- RED: at 390 px the monitoring network select widened past the screen (snapshot proof, 393 px). The first fix in `f24b7dfc` capped the select but the label's grid column still grew to the longest option; an independent reproduction then overflowed to 439 px. A layout reproduction failed at 439 px and fit at 341 px after the fix. Fixed in `107bf225`.
 
 ---
 

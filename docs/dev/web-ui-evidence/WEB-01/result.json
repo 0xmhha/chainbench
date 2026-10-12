@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-01",
-  "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
-  "startedAt": "2026-10-10T12:56:36.643261+00:00",
-  "finishedAt": "2026-10-10T12:57:33.381336+00:00",
+  "invocationId": "52224256-fa63-45a6-aa5c-c862841fd4ba",
+  "startedAt": "2026-10-11T21:16:15.604044+00:00",
+  "finishedAt": "2026-10-11T21:17:18.260707+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "stablenet:preset-fields",
@@ -24,5 +24,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "54a04b6c0cc07e160e4f13cf5d5bd475b2893f290ac177ca3b6ab19655d14a82"
+  "evidenceDigest": "0e3998e199f71d964356d81177d7d13d5aaf4b097cbfe3fb8205a298fde32097"
 }

@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-06",
-  "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+  "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
   "scenarios": [
     {
       "id": "ssh-native-deployment",
@@ -20,19 +20,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-          "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
+          "sha256": "ae4816ff7e8d57be288f3bf6b03db37e95340ba09eb66cfc7773316d41c410ef"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-plan.png",
-          "sha256": "2523d89b06f5006ec720402c3cea752df047c729caf77f244aabf67f84e831cb"
+          "sha256": "8bf3cb847a4a460621ba4473e1b18a3a4ea955cef40adc7882faa1a34fde06ff"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-jobs.png",
-          "sha256": "06ce577f8531a73c18fcb520460a8dbe008335240c41aac9778bcc8dacd2fea3"
+          "sha256": "cd60584358af68d547b6e5d522f82840353b469fb5b2aee3214183930c83c699"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     },
     {
       "id": "checksum-database-rpc-pid",
@@ -56,15 +56,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-          "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
+          "sha256": "ae4816ff7e8d57be288f3bf6b03db37e95340ba09eb66cfc7773316d41c410ef"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
+          "sha256": "a045c4875007f085b3c775aac55b57f971323c4e30a09c630dd5ecf6981579b7"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     },
     {
       "id": "mid-deployment-ssh-failure",
@@ -88,15 +88,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
+          "sha256": "a045c4875007f085b3c775aac55b57f971323c4e30a09c630dd5ecf6981579b7"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-ssh-deploy-fault.png",
-          "sha256": "1dccabed9117266545c834cdeaf0c77303bb955ab9e0f0b9506b557972ac6c46"
+          "sha256": "0a977b358c4eac9efa4bc2882f95d3cd4823f199a6372d2b61170868a7cc1a3a"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     },
     {
       "id": "mid-transfer-disconnect",
@@ -112,15 +112,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-          "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
+          "sha256": "615a9ad2e78c8d53c69b2318359abfeb350dc776ab366c9119f5bbfb37ecb391"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-ssh-binary-plan.png",
-          "sha256": "15e298cba9af12fc29f6e55fd8f111a2da462deb93fd954e0f3bbc5611e99208"
+          "sha256": "f4df7066fc701c5fe4ec49bd09b1901d86076656d283d6e1a786994c0a3991f9"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     },
     {
       "id": "revocation-during-ssh",
@@ -136,11 +136,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-receipt.json",
-          "sha256": "6398900588286eabdde9eb5aeedfa1680b3ce050f5b3f5c71a18a8c2a33fff3c"
+          "sha256": "04255468c791b21aeecb64612aaaf8147b22e0f8ca9da5d333e844af080eaa8c"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     },
     {
       "id": "no-automatic-retry",
@@ -160,15 +160,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-          "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
+          "sha256": "a045c4875007f085b3c775aac55b57f971323c4e30a09c630dd5ecf6981579b7"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-          "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
+          "sha256": "615a9ad2e78c8d53c69b2318359abfeb350dc776ab366c9119f5bbfb37ecb391"
         }
       ],
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
-      "observedAt": "2026-10-10T13:36:04.421611+00:00"
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "observedAt": "2026-10-11T21:43:59.807166+00:00"
     }
   ],
   "checks": [
@@ -176,21 +176,21 @@
       "command": "go test -race -count=1 ./internal/core/remote ./internal/app -run \"SSH|Remote|CredentialLease|Transfer\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-06/check-0.log",
-      "sha256": "60bfc6cd4114f88ee77bb448b9b45e470063a1a314ac74a021ec64815fe39714"
+      "sha256": "c1da0ba05fed585009c5f9892a9e5f2945110554e9b8ff56544ada6a13b3a4c0"
     }
   ],
   "proofs": [
     {
       "name": "ssh-jobs",
-      "startedAt": "2026-10-10T13:22:35.559014+00:00",
-      "runtime": "/private/tmp/cbui/61768d19-e4c5-42a5-8fdf-55baf0a151ee",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:29:21.042295+00:00",
+      "runtime": "/private/tmp/cbui/9bae4419-fc7a-456d-be96-9711d695f3a9",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -198,7 +198,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -206,7 +206,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -215,15 +215,15 @@
     },
     {
       "name": "ssh-deploy-fault",
-      "startedAt": "2026-10-10T13:23:41.643386+00:00",
-      "runtime": "/private/tmp/cbui/402597f5-6c4c-4cca-b02e-a8894dd6ff4c",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:30:29.748465+00:00",
+      "runtime": "/private/tmp/cbui/612d5fa9-b7ac-4514-bd5a-668e04089880",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -231,7 +231,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -239,7 +239,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -248,15 +248,15 @@
     },
     {
       "name": "ssh-transfer-disconnect",
-      "startedAt": "2026-10-10T13:25:30.729066+00:00",
-      "runtime": "/private/tmp/cbui/b4cc4177-5c30-47fb-9f26-c6d85e877098",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:32:23.687657+00:00",
+      "runtime": "/private/tmp/cbui/1b9e4348-44be-4ba1-98d1-176b9df7412a",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -264,7 +264,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -272,7 +272,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -281,15 +281,15 @@
     },
     {
       "name": "ssh-transfer-credential-revoke",
-      "startedAt": "2026-10-10T13:30:50.950522+00:00",
-      "runtime": "/private/tmp/cbui/10c24d38-c637-4ede-b2b0-4b15accd130c",
-      "dashboardSHA256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
+      "startedAt": "2026-10-11T21:38:08.969850+00:00",
+      "runtime": "/private/tmp/cbui/71270109-e55f-4dcc-b1a5-54093976c5dd",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
       "browserVersion": null,
       "binaries": [
         {
           "chain": "stablenet",
           "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
           "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
           "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
@@ -297,7 +297,7 @@
         {
           "chain": "wbft",
           "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
           "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
           "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
@@ -305,7 +305,7 @@
         {
           "chain": "wemix",
           "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
           "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
           "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
           "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
@@ -314,23 +314,23 @@
     }
   ],
   "server": {
-    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
   "frontend": [
     {
-      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
-      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
     },
     {
-      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
-      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
     },
     {
       "path": "internal/dashboard/spa/index.html",
-      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
     }
   ],
   "coverage": {
@@ -404,11 +404,27 @@
     },
     {
       "path": "internal/app/web_chain_engine.go",
-      "sha256": "302aecd171e6c01d3cb24a0a3f067ac5f7aae468020559b18cb88e5b7901962e"
+      "sha256": "e338bd40be7aa0f6eabf108aaa93509cd378b3d126d0894937e034ad4de5cfeb"
     },
     {
       "path": "internal/app/web_chain_execution.go",
-      "sha256": "cfc376cfa421420c6e5d8fe38ee4884ed7ab1f2e09b0effeef9d8f1a68766c5d"
+      "sha256": "ac565b487fd38873e38f76ff0a65b227ff70069ebe83d9e2d1d17f9509734963"
+    },
+    {
+      "path": "internal/app/web_chain_servers.go",
+      "sha256": "337bb156476fc8bf4125e82632fe509c03c6dcaf4d78e0debb74ba0b56470d20"
+    },
+    {
+      "path": "internal/app/web_chain_servers_test.go",
+      "sha256": "3772484f339c8bb5a517aa1edb9a2ddc089f616aaa1105dd186ce01f5b00f197"
+    },
+    {
+      "path": "internal/app/web_chain_surface.go",
+      "sha256": "56c58f4a2aaadffe1e37af2756e5070bfa04e17955664a607b1cfd9123494123"
+    },
+    {
+      "path": "internal/app/web_chain_surface_test.go",
+      "sha256": "9330da0bffc142de61aa7b3c5fa97634e8d9d022a96ea64df2d89c478f218e9d"
     },
     {
       "path": "internal/app/deployment_job_credentials.go",
@@ -440,15 +456,15 @@
     },
     {
       "path": "tests/webui/browser_ssh_jobs.mjs",
-      "sha256": "eca1288c1a2cc8d108082adc34df0ad9ff0ad74ee70a18fa99e63be81ddc89e5"
+      "sha256": "64ba76732e810c9ed1b185cc54e2555d91b1e7937456eb6f8de86e8d90a6eefb"
     },
     {
       "path": "tests/webui/browser_ssh_deploy_fault.mjs",
-      "sha256": "4c9d57dfc3d57863ab71704075c086f34d8875cceeb490e7831988d5d1978b03"
+      "sha256": "abc7615f1a91a21213a5560250c7fedd1af51750ff952cfcdf290f1809aefb2d"
     },
     {
       "path": "tests/webui/browser_ssh_binary_replacement.mjs",
-      "sha256": "0714c0260273cab1965f0147ccc5e4d6ee54917600f1a67af4c90ae352bcc45c"
+      "sha256": "9481f27cf901a5c35c0e365d2d225faeba31e85cbd312b28dd25e3ddc328cab7"
     },
     {
       "path": "tests/webui/run_ssh_jobs.py",
@@ -462,11 +478,11 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/check-0.log",
-      "sha256": "60bfc6cd4114f88ee77bb448b9b45e470063a1a314ac74a021ec64815fe39714"
+      "sha256": "c1da0ba05fed585009c5f9892a9e5f2945110554e9b8ff56544ada6a13b3a4c0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-receipt.json",
-      "sha256": "151f5c05cdcddd79147f71c8f2aa97f49b18df16ad5d48dfe8bbf3c4b521de50"
+      "sha256": "a045c4875007f085b3c775aac55b57f971323c4e30a09c630dd5ecf6981579b7"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-run.log",
@@ -474,11 +490,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-deploy-fault-ssh-deploy-fault.png",
-      "sha256": "1dccabed9117266545c834cdeaf0c77303bb955ab9e0f0b9506b557972ac6c46"
+      "sha256": "0a977b358c4eac9efa4bc2882f95d3cd4823f199a6372d2b61170868a7cc1a3a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-receipt.json",
-      "sha256": "501e5795435867298f0f7648c7c5a2db6c65633ef766f874b0f5b5ccc7af9dda"
+      "sha256": "ae4816ff7e8d57be288f3bf6b03db37e95340ba09eb66cfc7773316d41c410ef"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-run.log",
@@ -486,15 +502,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-jobs.png",
-      "sha256": "06ce577f8531a73c18fcb520460a8dbe008335240c41aac9778bcc8dacd2fea3"
+      "sha256": "cd60584358af68d547b6e5d522f82840353b469fb5b2aee3214183930c83c699"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-jobs-ssh-plan.png",
-      "sha256": "2523d89b06f5006ec720402c3cea752df047c729caf77f244aabf67f84e831cb"
+      "sha256": "8bf3cb847a4a460621ba4473e1b18a3a4ea955cef40adc7882faa1a34fde06ff"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-receipt.json",
-      "sha256": "6398900588286eabdde9eb5aeedfa1680b3ce050f5b3f5c71a18a8c2a33fff3c"
+      "sha256": "04255468c791b21aeecb64612aaaf8147b22e0f8ca9da5d333e844af080eaa8c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-run.log",
@@ -502,11 +518,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-credential-revoke-ssh-binary-plan.png",
-      "sha256": "1d75bc458739b7ed0876ca337e7673d482d75a699591857f48517d69ed3da408"
+      "sha256": "d587c9b5fbdab4d431451e998bbbdcaec31b3210e1cb5680e0288578e98f3c40"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-receipt.json",
-      "sha256": "fe545c50c582779ae4d23fc99ee2e91a1d4e46a2566718bbc9cdd0c6efff6efa"
+      "sha256": "615a9ad2e78c8d53c69b2318359abfeb350dc776ab366c9119f5bbfb37ecb391"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-run.log",
@@ -514,9 +530,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-06/ssh-transfer-disconnect-ssh-binary-plan.png",
-      "sha256": "15e298cba9af12fc29f6e55fd8f111a2da462deb93fd954e0f3bbc5611e99208"
+      "sha256": "f4df7066fc701c5fe4ec49bd09b1901d86076656d283d6e1a786994c0a3991f9"
     }
   ],
   "blockers": [],
-  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
 }

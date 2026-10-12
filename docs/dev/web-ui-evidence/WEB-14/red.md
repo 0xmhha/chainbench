@@ -8,6 +8,7 @@
 - RED: the OpenAPI YAML did not parse after `cb74142e` (`chainbench-web-openapi-parse-red.log`). Fixed in `558014af`, which added `TestWebOpenAPIParses`. Source: WL, HO l.444.
 - Harness (not product): the WEB-14 independent reproduction judged artifacts from the staged copy without `chainbench-out`, so WEB-01 artifacts were reported invalid. A failing unit test was written first and the fix landed in `c5f23d85`. Source: HO l.513-516, PR ("test-harness defects, not product defects").
 - Harness (not product): in cycle full4, WEB-14 stalled while re-judging WEB-11 because of the WEB-11 harness race. Fixed in `aa3f2e1e`. Source: HO l.509.
+- Runner RED (not product): one frozen run omitted `GWBFT_BIN`, so `TestChainSurfaceFingerprintIsStableAcrossJudgements` skipped and WEB-14 correctly refused the race run. The runner now sets it. A later independent reproduction failed because the disk fell to 229 MiB and genesis preflight refused; the 2 GiB check was kept and unreferenced fixture runtimes were removed under the approved rule.
 
 ---
 

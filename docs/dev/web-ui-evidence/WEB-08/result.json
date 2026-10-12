@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-08",
-  "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
-  "startedAt": "2026-10-10T14:19:55.428715+00:00",
-  "finishedAt": "2026-10-10T14:24:42.612953+00:00",
+  "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
+  "startedAt": "2026-10-11T21:58:49.606408+00:00",
+  "finishedAt": "2026-10-11T22:03:00.020785+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "native-state-metric-charts",
@@ -22,5 +22,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "bce925749455faf1af16c8c2b2fc2bd1405b0cd72b34c6a9330c541f390e2ace"
+  "evidenceDigest": "19d0797faf02b0aac0134715d3063fa35bd90d81a93aa90b9527469652c55d28"
 }

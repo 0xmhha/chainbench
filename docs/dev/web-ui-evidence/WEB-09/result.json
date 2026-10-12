@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-09",
-  "invocationId": "bc41449b-d5c5-409a-bcff-327240e88a6a",
-  "startedAt": "2026-10-10T14:29:02.082446+00:00",
-  "finishedAt": "2026-10-10T14:33:01.706291+00:00",
+  "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+  "startedAt": "2026-10-11T22:03:00.704509+00:00",
+  "finishedAt": "2026-10-11T22:07:06.617221+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "search-filter-detail",
@@ -26,5 +26,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "286c17214607597bcc015fd305932d8bbe474d904f5097f688395368cd213ff6"
+  "evidenceDigest": "1ba68d166536ea04f3d1783afe67ec97d80c6aaf5a006ad50573c8a1451639a2"
 }

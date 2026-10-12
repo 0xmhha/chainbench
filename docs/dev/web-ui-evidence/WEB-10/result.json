@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-10",
-  "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8",
-  "startedAt": "2026-10-10T14:37:08.386966+00:00",
-  "finishedAt": "2026-10-10T14:37:41.369093+00:00",
+  "invocationId": "89200345-c5b4-4376-9a9c-1afcb5e6196d",
+  "startedAt": "2026-10-11T22:07:07.205365+00:00",
+  "finishedAt": "2026-10-11T22:07:20.069906+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "personal-team-login",
@@ -24,5 +24,5 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "7cc4cc7b580449a5e0decf3d4965c64805dea90d3cb9096d7138916131a8eae7"
+  "evidenceDigest": "bb09f62a38546a9af7a638fb27a7658612eb1a0db8b7d44b33e66d3210e22c99"
 }

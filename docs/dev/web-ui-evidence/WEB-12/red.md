@@ -8,6 +8,7 @@
 - Runner RED: WEB-12 was unsupported in `verify.sh` (`chainbench-web-web12-runner-red.log`). Fixed in `15e26d2e`, with no separate product RED for restart during deployment. Source: WL.
 - Harness (not product): the interrupted-test fixture had initial DSL, readiness-wait and omitempty errors. Source: WL.
 - Harness (not product): the first native restore failed on a fixture session assumption and then on the low-disk node shutdown. Source: HO l.211-216/433-434.
+- Harness (not product): the deploy restart proof parsed an empty `restart.response` because the fixture created the file before writing it. `test_restart_response` failed first. Fixed in `34c951a8`.
 
 ---
 

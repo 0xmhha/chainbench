@@ -1,20 +1,22 @@
 {
   "criterion": "WEB-03",
-  "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76",
+  "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc",
   "scenarios": [
     {
       "id": "two-operator-shared-edit",
-      "observedAt": "2026-10-10T13:01:59.623Z",
+      "observedAt": "2026-10-11T21:19:05.202Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
       "actors": [
         {
-          "id": "operator-a",
+          "id": "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+          "username": "operator-a",
           "role": "operator"
         },
         {
-          "id": "operator-b",
+          "id": "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973",
+          "username": "operator-b",
           "role": "operator"
         }
       ],
@@ -35,24 +37,26 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-editor.png",
-          "sha256": "0ffcfadbb3d5f16981d637182bb64a5cd4c417921522f8e8b6a739a7fc6b5e4f"
+          "sha256": "3d2882382c2cc3876e3d984dd74a08c057add400a7464f0506be2bf96e0393e5"
         }
       ],
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76"
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc"
     },
     {
       "id": "personal-ssh-binding",
-      "observedAt": "2026-10-10T13:02:03.797Z",
+      "observedAt": "2026-10-11T21:19:06.741Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
       "actors": [
         {
-          "id": "operator-a",
+          "id": "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+          "username": "operator-a",
           "role": "operator"
         },
         {
-          "id": "operator-b",
+          "id": "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973",
+          "username": "operator-b",
           "role": "operator"
         }
       ],
@@ -73,24 +77,26 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-allowed.png",
-          "sha256": "e3adf124fce99f2b4e20ef44b037572c874b58be18860d61b659ec2ed4d535b6"
+          "sha256": "e096e2be8081def94d8ea4871264731c56d8f2219dd3fed2c108b10a749c2b8f"
         }
       ],
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76"
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc"
     },
     {
       "id": "ssh-access-permissions",
-      "observedAt": "2026-10-10T13:02:05.407Z",
+      "observedAt": "2026-10-11T21:19:07.615Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
       "actors": [
         {
-          "id": "operator-a",
+          "id": "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+          "username": "operator-a",
           "role": "operator"
         },
         {
-          "id": "operator-b",
+          "id": "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973",
+          "username": "operator-b",
           "role": "operator"
         }
       ],
@@ -111,24 +117,26 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-denied.png",
-          "sha256": "357458446e9c2478ed79bf9e42fa4c33c4e07eea133f0f985377011f381cacac"
+          "sha256": "a2bd0742285ac53d8faa5be5886b9ef10731f97cddc34e9b65929432b7a42f81"
         }
       ],
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76"
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc"
     },
     {
       "id": "ports-paths-placement-validation",
-      "observedAt": "2026-10-10T13:02:08.010Z",
+      "observedAt": "2026-10-11T21:19:07.749Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
       "actors": [
         {
-          "id": "operator-a",
+          "id": "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+          "username": "operator-a",
           "role": "operator"
         },
         {
-          "id": "operator-b",
+          "id": "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973",
+          "username": "operator-b",
           "role": "operator"
         }
       ],
@@ -152,21 +160,23 @@
           "sha256": "d5138e0951dac6b775d64bfa4dfa0b731291ff44078e41cbb3ec71122239736e"
         }
       ],
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76"
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc"
     },
     {
       "id": "secret-free-export",
-      "observedAt": "2026-10-10T13:02:08.650Z",
+      "observedAt": "2026-10-11T21:19:07.923Z",
       "mode": "team",
       "transport": "SSH",
       "ownership": "owned",
       "actors": [
         {
-          "id": "operator-a",
+          "id": "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+          "username": "operator-a",
           "role": "operator"
         },
         {
-          "id": "operator-b",
+          "id": "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973",
+          "username": "operator-b",
           "role": "operator"
         }
       ],
@@ -187,10 +197,10 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-export.json",
-          "sha256": "a26da6348bc665b5889932531fa250f703cad1517bf65e2115eeb1552ff09817"
+          "sha256": "5e53aa6232a96988c6ca6049bc6fdfbea37dbb9d2439c91c0ca9e1af172158db"
         }
       ],
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76"
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc"
     }
   ],
   "checks": [
@@ -198,13 +208,13 @@
       "command": "npm --prefix web run build",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-03/check-0.log",
-      "sha256": "5b3a6c67bcf34b2cebe37f3676667d2bce57dd535457b794133f215c33c25358"
+      "sha256": "f65b0d30b5b7647e8e27d417777d0e387576dfb3d5c91c4be3e0ecc708588ef6"
     },
     {
       "command": "go test ./internal/app ./internal/dashboard ./internal/resource",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-03/check-1.log",
-      "sha256": "f5699a4bc3687ce4e63015d15358b3031e312c84f57f470417b8567f36d5376a"
+      "sha256": "95dbe37db7eea8d609a495e639d432070ebdbe362215b538f7d2d47ce034313d"
     }
   ],
   "restart": {
@@ -212,49 +222,49 @@
       "deploy"
     ],
     "authenticated": true,
-    "hostIdentity": "localhost.:49322/SHA256:4yoV1z8a/Jy1HxZ73mWbh8Ekhj/MHdVnh+JOs7kPk6s",
+    "hostIdentity": "localhost.:61952/SHA256:EGVdnr12/EDqJFwwutKUd1PtEPC4zp2kqsEFJJiOkpw",
     "reachable": true
   },
   "server": {
-    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
-    "url": "http://127.0.0.1:49324",
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "url": "http://127.0.0.1:61954",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
   "frontend": [
     {
-      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
-      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
     },
     {
-      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
-      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
     },
     {
       "path": "internal/dashboard/spa/index.html",
-      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
     }
   ],
   "target": {
     "host": "localhost.",
-    "port": 49322,
-    "hostFingerprint": "SHA256:4yoV1z8a/Jy1HxZ73mWbh8Ekhj/MHdVnh+JOs7kPk6s",
+    "port": 61952,
+    "hostFingerprint": "SHA256:EGVdnr12/EDqJFwwutKUd1PtEPC4zp2kqsEFJJiOkpw",
     "sshdSha256": "dd3926838dd2a1125f8c93e7409b58c09f313c49dddf5ea6f5998ec155dd0add",
     "os": "Darwin",
     "architecture": "arm64",
     "allowedPathObserved": 16877
   },
   "fixture": {
-    "runtime": "/private/tmp/cbui/65285c98-3eb6-470c-987c-a1b5ed449c76",
+    "runtime": "/private/tmp/cbui/14f42b1d-d119-4920-9926-5ec5e23b7dcc",
     "transport": [
       "local",
       "SSH"
     ],
     "ownership": "owned",
     "accountIds": [
-      "operator-a",
-      "operator-b"
+      "c77b1e5525f37005649fe5fbb0ea564046e77e62b3bac23984c8dbc7225125cf",
+      "56326e3bbb304ae4508babd4a0c931e97583e2cc97ea1c5226dc2c9dc60f7973"
     ],
     "browserVersion": "154.0.8037.98",
     "dedicatedSSH": true
@@ -280,11 +290,11 @@
   "source": [
     {
       "path": "internal/app/deployment.go",
-      "sha256": "7f48286d25d4779a006a9963525e647e78e24c56f800b26ea6b6799f6409740c"
+      "sha256": "0900d78c0cbf85c72f388fffaad36176f39590b94e229f3b2b5043866f194be6"
     },
     {
       "path": "internal/app/deployment_access.go",
-      "sha256": "9c627290ae83613990b1254032e028de4e2a587a350ffbcd3acf8f39731954be"
+      "sha256": "1eb671e6412274213b4ccf102fa789fcd95500cee911edde9906cfcc146549b6"
     },
     {
       "path": "internal/app/deployment_account_key_test.go",
@@ -303,16 +313,20 @@
       "sha256": "df21852a0cc15e7f82d6b5ced658b2d2b452624e76640322518166c0b79f1534"
     },
     {
+      "path": "internal/app/deployment_credential_usage_test.go",
+      "sha256": "c24e79501b985a5848142b4103456937d3be43d19fe8dcccddf3d5bfd4bde355"
+    },
+    {
       "path": "internal/app/deployment_job_credentials.go",
       "sha256": "11e3dbed4128dccc53706a33aebe44f1bb6b5dde84c056ba69c1d2fb9739dff2"
     },
     {
       "path": "internal/app/deployment_presets.go",
-      "sha256": "6a08f4ed7e9f6a0f0ad5c1722efd03bcb8b67c5e8ceaaf3fe33f5d88d2a64f0c"
+      "sha256": "6f7da064a5f5045193672300dc96ddc7d7a231afa7dbb0f8c520b097f9a84e2a"
     },
     {
       "path": "internal/app/deployment_store.go",
-      "sha256": "a7bce68f91d6fdb2d80d56611504e3827f4a4d9e99597a4224d4ed32ddbfbdd5"
+      "sha256": "653ba984fed1a2ea178628fdef7520f432240309ea8e7117756a9762f92754d7"
     },
     {
       "path": "internal/app/deployment_test.go",
@@ -320,23 +334,19 @@
     },
     {
       "path": "internal/dashboard/deployment.go",
-      "sha256": "07d19a15b400df73c7a4b14c08e34d6bca4c6074a9cadcf4b673d3e57a0e32d7"
-    },
-    {
-      "path": "internal/dashboard/deployment_accounts.go",
-      "sha256": "1239cfd753fe5135c27001e6b07d23c86f10baca902734d2e41f491909e70099"
+      "sha256": "784e711e8b8d2e8d13fb02007cfd023bc8732c64fef3e4b87c5201f22c9311f3"
     },
     {
       "path": "internal/dashboard/deployment_test.go",
-      "sha256": "3ebaf39ede555f22ee04733cc7c5d0f1b7f140bb80595b0a5e61bec12d7237b7"
+      "sha256": "a4c5421e3eada237d33afd6386dd532584a50090da5489e077aa1dcc40d68b1e"
     },
     {
       "path": "internal/dashboard/server.go",
-      "sha256": "8a920ab4539c4a988e89128ba3012ffce379c8d0868b56d7df17aad404c02158"
+      "sha256": "901fb538e6f2ab3517dd4c4b3beea678b0db32556f386a0a1f9fd9ec82e3d855"
     },
     {
       "path": "internal/dashboard/chainpreset.go",
-      "sha256": "8f4203f202d5a77ec10d70429d35230987c0353f04f4125db6d8a7d3fe80bb09"
+      "sha256": "8814b9eaaedfdb3ed75ae89d77b1b2ceab60b5dd4ca65afbe798870032130e97"
     },
     {
       "path": "internal/core/session/webstore.go",
@@ -360,39 +370,35 @@
     },
     {
       "path": "cmd/chainbench-dashboard/main.go",
-      "sha256": "9a29cd9b6a5fa490ec731015444d7660c0216968bf84c2a4ddd500f75c6cb6d3"
+      "sha256": "14bb3f4928f086134a4fd24af2ce561998d650261cfbb5f68a7696397d3e24b2"
     },
     {
       "path": "web/src/DeploymentEditor.svelte",
-      "sha256": "1ce49b43203376b037e0d37c33307daa79f4825c2fb72b51509eec6079a20f4a"
+      "sha256": "7ed23c876d355581931869b141f7f940a5622c96881019942ffe3d5ac801cb3f"
     },
     {
       "path": "web/src/DeploymentFields.svelte",
-      "sha256": "f22b35c1e2d7030314f1e45dfab378576c60ab1ef104e34502da69ff080d82c2"
+      "sha256": "d7f5fb652195b0c62c45c2e8eab8971a46332d935c3eebde015ba75cf0734515"
     },
     {
       "path": "web/src/App.svelte",
-      "sha256": "0194f1b1d5529fcca7c3a0940dfc8670510ced3d99cef4a4c2fbb64c5b8074f7"
+      "sha256": "9fc5fc3b1656bf7bb66807129fb6b707989e8e4d0b7c05e168e4be64f3f426a5"
     },
     {
       "path": "tests/webui/browser_web03.mjs",
-      "sha256": "cd6bb272a817cedab4c258c34d0b531e8897034a3f5688a8b4dfae9787060fdc"
+      "sha256": "d02db422a1d2723a1de51c0d63ddb704f19679e91a4d50e2476179f064f8759e"
     },
     {
       "path": "tests/webui/evidence_web03.py",
-      "sha256": "70ca90ad15e6d2923a52b7b3200fd4fea080406585ad75509e555a6e720fb9ca"
+      "sha256": "b2ef2685d6730bf92e252143127bbe3e9471c39facc517aca9bb88eb01913046"
     },
     {
       "path": "tests/webui/run_web03.py",
-      "sha256": "3a77647eb92ffb20295e9aa7638743c9c78d6f8fe1ea417005ccc3353e42a4bc"
+      "sha256": "f224fe0316605fefae20c1156a55fe14b1b905fdfd88a0e0609c1482d7cea16c"
     },
     {
       "path": "tests/webui/test_evidence_web03.py",
       "sha256": "f18d30a7efeaa24cd132d62079b5fb8305710b83914d8492f9b9beebfbab2630"
-    },
-    {
-      "path": "tests/webui/fixtures/accounts.go.txt",
-      "sha256": "c8d13ea1c9345b0b75430f64892055e79a02400acb3e6ab45149d510216d6cff"
     },
     {
       "path": "tests/webui/fixtures/docker_regression_prepare.sh",
@@ -422,11 +428,11 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/api-observations.json",
-      "sha256": "55b057942301bb32afe8a583ea104e3f781d6ecfa88e00abf76394559d5848a2"
+      "sha256": "2da43e4b1d8facfa8f0cf412e4cc432c721f250d9e1cc0d10a47de1919acafd3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/browser.json",
-      "sha256": "823e526970c581f9681f39cfab40433e899ecc36b2eebf598afc9bd68a062179"
+      "sha256": "cef388de1883d2989378b137c118110b64207f7df3679eb456777cb21f4b4e2f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/browser.log",
@@ -438,43 +444,43 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/check-0.log",
-      "sha256": "5b3a6c67bcf34b2cebe37f3676667d2bce57dd535457b794133f215c33c25358"
+      "sha256": "f65b0d30b5b7647e8e27d417777d0e387576dfb3d5c91c4be3e0ecc708588ef6"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/check-1.log",
-      "sha256": "f5699a4bc3687ce4e63015d15358b3031e312c84f57f470417b8567f36d5376a"
+      "sha256": "95dbe37db7eea8d609a495e639d432070ebdbe362215b538f7d2d47ce034313d"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/fixture.json",
-      "sha256": "43cd5a1702b9623e1df47881d604912ff4dc3fd4205bab228d938dbba60b5de7"
+      "sha256": "f1297a4105254e8595905a73672e471537b44834d20e6498dd882fd0cf63ec54"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/server-restart.log",
-      "sha256": "3a3bebd067819e9c4985aef5a85ed445c522700de2d57ceef2cbced23a65b24e"
+      "sha256": "20bfcd010e12c055c32bc85e7b47c74ed446d9607c6500799073f16e9a39e64b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/server.log",
-      "sha256": "3a3bebd067819e9c4985aef5a85ed445c522700de2d57ceef2cbced23a65b24e"
+      "sha256": "20bfcd010e12c055c32bc85e7b47c74ed446d9607c6500799073f16e9a39e64b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-editor.png",
-      "sha256": "0ffcfadbb3d5f16981d637182bb64a5cd4c417921522f8e8b6a739a7fc6b5e4f"
+      "sha256": "3d2882382c2cc3876e3d984dd74a08c057add400a7464f0506be2bf96e0393e5"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/shared-export.json",
-      "sha256": "a26da6348bc665b5889932531fa250f703cad1517bf65e2115eeb1552ff09817"
+      "sha256": "5e53aa6232a96988c6ca6049bc6fdfbea37dbb9d2439c91c0ca9e1af172158db"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-allowed.png",
-      "sha256": "e3adf124fce99f2b4e20ef44b037572c874b58be18860d61b659ec2ed4d535b6"
+      "sha256": "e096e2be8081def94d8ea4871264731c56d8f2219dd3fed2c108b10a749c2b8f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/ssh-denied.png",
-      "sha256": "357458446e9c2478ed79bf9e42fa4c33c4e07eea133f0f985377011f381cacac"
+      "sha256": "a2bd0742285ac53d8faa5be5886b9ef10731f97cddc34e9b65929432b7a42f81"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/sshd.log",
-      "sha256": "14e97cc4c0caecfd6d5150ace9eb36b2e1b66f1efe87fc4bb402abb989074886"
+      "sha256": "d1a2fea24c04140e46b47a7ae0439d4d2d13d3f0724c2bd9e0aba046739910ec"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-03/validation.json",
@@ -482,5 +488,5 @@
     }
   ],
   "blockers": [],
-  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
 }

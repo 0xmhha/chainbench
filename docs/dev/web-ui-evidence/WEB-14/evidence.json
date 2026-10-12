@@ -1,7 +1,7 @@
 {
   "criterion": "WEB-14",
-  "invocationId": "ff0150f9-97c2-47ca-8099-6ed951979b5c",
-  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8",
+  "invocationId": "da63a50c-ef13-4df6-a603-92fce2cea48c",
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753",
   "scenarios": [
     {
       "id": "criteria",
@@ -9,7 +9,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:07:08.784588+00:00",
+      "observedAt": "2026-10-11T22:22:18.269189+00:00",
       "assertions": [
         {
           "message": "WEB-01 pass: 7 scenarios",
@@ -71,7 +71,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:07:08.784651+00:00",
+      "observedAt": "2026-10-11T22:22:18.269256+00:00",
       "assertions": [
         {
           "message": "modes observed: personal, team",
@@ -89,7 +89,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:21:33.792169+00:00",
+      "observedAt": "2026-10-11T22:32:51.458941+00:00",
       "assertions": [
         {
           "message": "make check exit 0",
@@ -119,10 +119,10 @@
       "transport": "local+SSH",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:21:33.823329+00:00",
+      "observedAt": "2026-10-11T22:32:51.485636+00:00",
       "assertions": [
         {
-          "message": "2865 Go tests passed under -race, none skipped and none failed",
+          "message": "2937 Go tests passed under -race, none skipped and none failed",
           "passed": true
         },
         {
@@ -137,7 +137,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:21:37.042663+00:00",
+      "observedAt": "2026-10-11T22:32:54.926566+00:00",
       "assertions": [
         {
           "message": "3 SPA files rebuilt byte-identically",
@@ -155,7 +155,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "admin",
-      "observedAt": "2026-10-10T15:21:42.082107+00:00",
+      "observedAt": "2026-10-11T22:32:58.786204+00:00",
       "assertions": [
         {
           "message": "/: navigated, refreshed and opened directly",
@@ -190,14 +190,14 @@
       "exitCode": 0,
       "cwd": "checkout",
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-0.log",
-      "sha256": "fe7e0796e4a9850b5be1f5333f56144bd343e8631bdd1470c3d9089b671feb56"
+      "sha256": "b3b8b8d87d619ff87c33d32d770acafea4e76383f0920d289af0ad2b58d2b9a1"
     },
     {
       "command": "go test -race -json -p 1 ./...",
       "exitCode": 0,
       "cwd": "checkout",
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-1.log",
-      "sha256": "056eb8d640a385103681a9cdc9d060269cd6ddac9cf8550046dd0a8ae76891e8"
+      "sha256": "2106d803d2992603afe76246f8f6ffaf58f6fdae4e2e6fe3838bbb87802a6bf0"
     },
     {
       "command": "go vet -tags e2e ./...",
@@ -211,14 +211,14 @@
       "exitCode": 0,
       "cwd": "staged",
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-3.log",
-      "sha256": "0558cdde2a7d18430c53c8bcf113d063847274e9fc4b7d9897730bd6b7d18fe2"
+      "sha256": "b9783fd461063910a2423dd6734c2626e036c9d0337ded56aea24cc48f99a2df"
     },
     {
       "command": "node --test tests/webui/*.test.mjs",
       "exitCode": 0,
       "cwd": "checkout",
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-4.log",
-      "sha256": "338f93792972396ce6fd79e8320155697478af5cf6b0a3f82eb3c3bd36dbdceb"
+      "sha256": "9d7f82c399a393b8a0bf1942371b34d014f2a56624695adca5b849c88b108549"
     }
   ],
   "artifacts": [
@@ -232,11 +232,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-0.log",
-      "sha256": "fe7e0796e4a9850b5be1f5333f56144bd343e8631bdd1470c3d9089b671feb56"
+      "sha256": "b3b8b8d87d619ff87c33d32d770acafea4e76383f0920d289af0ad2b58d2b9a1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-1.log",
-      "sha256": "056eb8d640a385103681a9cdc9d060269cd6ddac9cf8550046dd0a8ae76891e8"
+      "sha256": "2106d803d2992603afe76246f8f6ffaf58f6fdae4e2e6fe3838bbb87802a6bf0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-2.log",
@@ -244,11 +244,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-3.log",
-      "sha256": "0558cdde2a7d18430c53c8bcf113d063847274e9fc4b7d9897730bd6b7d18fe2"
+      "sha256": "b9783fd461063910a2423dd6734c2626e036c9d0337ded56aea24cc48f99a2df"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/check-4.log",
-      "sha256": "338f93792972396ce6fd79e8320155697478af5cf6b0a3f82eb3c3bd36dbdceb"
+      "sha256": "9d7f82c399a393b8a0bf1942371b34d014f2a56624695adca5b849c88b108549"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/docker-prepare.log",
@@ -256,41 +256,41 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/report.json",
-      "sha256": "9d48f754269d2bc763e53064272c4e6ca031244ce3e6ddeaade5ef053c7511ed"
+      "sha256": "e24438f8171fca50fd0dc56cb250cb4223d1f20e602d5e3352cb6b6836f7f016"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-chains.png",
-      "sha256": "eb8241874c9a2e40a333000d6e6fcd7cd4d5b69fafe3d033557a38e0772ce75e"
+      "sha256": "22d68fff9ab6d6d656e48eef300d8faf3908d26ef15e938f5284e90f22a3946c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-history.png",
-      "sha256": "e99a8a1bc2c5e11137f2d7edec91b3888019f725fc7f7ae2c7598bde42d0dd08"
+      "sha256": "d2620ee7ed1b2ac5c15ec1aa497a1c114f8ba06cfb4eea19156cfa5dd72ead63"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-monitoring.png",
-      "sha256": "fded1cb58e4642bb84421a0ac39070043238ee18adb20ac8fa38ad142d17deca"
+      "sha256": "79fd1ed53fcab72271591adc87045548101933434485be73f7c0df074a00fd45"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-root.png",
-      "sha256": "f9037ac4310b99b321656638bc7d8da00c6bb0e2ba7324bc25fc13ed0b9d2cfe"
+      "sha256": "c01029c851d4335afcfa5b9008e4c5b6b4e1fe29904c65a2a8394455335e648c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-settings.png",
-      "sha256": "d8cee5e30833f96fed46eb3ebca6e07587bd504912f390f20ab92cd1994e50bc"
+      "sha256": "ba642c71d43fa593f5df67083013f7f063387b9b4993dd6df149c34f86d9b0f9"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/route-tests.png",
-      "sha256": "cc2cf706a873c0657c00b480e990ec1cf3c9819bcc63dac39fd3683c0b6f90ff"
+      "sha256": "25e44e1d20691a836dcc152d2ed2947463f74410420dd90fd4968e72812ff641"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-14/server.log",
-      "sha256": "e60505c95ab3acb7f2ba2f03da64506f6ed11370d71a925eed0b922d0c8e192f"
+      "sha256": "2130462e5ac5ed834beca33a667070fb17b2f9bef7ce70d0a3fc2d533e5607f3"
     }
   ],
   "criteria": [
     {
       "criterion": "WEB-01",
-      "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
+      "invocationId": "52224256-fa63-45a6-aa5c-c862841fd4ba",
       "outcome": "pass",
       "scenarios": [
         "stablenet:preset-fields",
@@ -301,11 +301,11 @@
         "preset-option-field-coverage",
         "binary-surface-provenance"
       ],
-      "evidenceDigest": "54a04b6c0cc07e160e4f13cf5d5bd475b2893f290ac177ca3b6ab19655d14a82"
+      "evidenceDigest": "0e3998e199f71d964356d81177d7d13d5aaf4b097cbfe3fb8205a298fde32097"
     },
     {
       "criterion": "WEB-02",
-      "invocationId": "bf8a43b0-7dcc-45b1-8226-03e0cc9191ab",
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
       "outcome": "pass",
       "scenarios": [
         "bundle-import-preview-commit",
@@ -315,11 +315,11 @@
         "setup-from-imported-configuration",
         "pinned-assets-and-revisions"
       ],
-      "evidenceDigest": "de98832dfeb55fb02376ad86d5afec8a56b9aa4c8556730283693fc884a987bb"
+      "evidenceDigest": "a6b61ec87b695b4fbd1ea058e2f840a6e1d8fb908771e7667c2232bbd7df6860"
     },
     {
       "criterion": "WEB-03",
-      "invocationId": "65285c98-3eb6-470c-987c-a1b5ed449c76",
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc",
       "outcome": "pass",
       "scenarios": [
         "two-operator-shared-edit",
@@ -328,11 +328,11 @@
         "ports-paths-placement-validation",
         "secret-free-export"
       ],
-      "evidenceDigest": "ef94e094fd7f373d2a0e5c483fcef25dfc06ec0370c685a3e67db41385574918"
+      "evidenceDigest": "5d57b1e3acee665f5708186e1ebba951227e16d2236ee36878e1e5406f07ad04"
     },
     {
       "criterion": "WEB-04",
-      "invocationId": "90e1ffeb-279f-4f1b-8f0d-74047d302a29",
+      "invocationId": "532f3650-42c1-4e44-b099-e8e9ab634771",
       "outcome": "pass",
       "scenarios": [
         "builtin-stablenet",
@@ -346,11 +346,11 @@
         "wrong-binary-identity",
         "manifest-management"
       ],
-      "evidenceDigest": "14812a20946b4af3c537826bc08099573bc53047dbbf810660a5c049505f4953"
+      "evidenceDigest": "68ac1101971e2f189b4e0d892594eb06ea5f62bee94bb334f90a26c39caf3f7a"
     },
     {
       "criterion": "WEB-05",
-      "invocationId": "eb41f01d-91c4-4527-95c7-bd69bfd2ed88",
+      "invocationId": "341e8ab6-4162-49ab-8e17-03e1dedb7b09",
       "outcome": "pass",
       "scenarios": [
         "grammar",
@@ -364,11 +364,11 @@
         "readers",
         "arguments"
       ],
-      "evidenceDigest": "2132ed01eababab957caecb5cb581fbe2afab59826819e55435b6202aa0f2baf"
+      "evidenceDigest": "136eab04486442416b9513f3f9dfd2bca98f0c49b8d465372c553cbe8aa23779"
     },
     {
       "criterion": "WEB-06",
-      "invocationId": "d3697c7d-5be8-4c7d-9b6a-a5707c456d2d",
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
       "outcome": "pass",
       "scenarios": [
         "ssh-native-deployment",
@@ -378,11 +378,11 @@
         "revocation-during-ssh",
         "no-automatic-retry"
       ],
-      "evidenceDigest": "1733012ed9f356596f5ee448a552b0865fe75f7f3d2923fe854cb5db9da0f35b"
+      "evidenceDigest": "ba8f62095b6cfcb63d8b38f7ade6666673ec10cb15d32229b987308ba4a387db"
     },
     {
       "criterion": "WEB-07",
-      "invocationId": "6f177127-cbc2-4dff-bd50-862cc05c374f",
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
       "outcome": "pass",
       "scenarios": [
         "owned-start-stop",
@@ -392,11 +392,11 @@
         "producer-and-attach-refused",
         "cli-semantics-preserved"
       ],
-      "evidenceDigest": "f6e8eeaa6af8fa34248d2a015f3fa2b8b64d15af51db86d0c9e59ea3b809ab0d"
+      "evidenceDigest": "4c981e0714f4942fc2e400bb7dc9f651882a2dafeb8d94c733fc1057d4720334"
     },
     {
       "criterion": "WEB-08",
-      "invocationId": "015168b9-0f46-45bc-8826-a42cc33b0efa",
+      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
       "outcome": "pass",
       "scenarios": [
         "native-state-metric-charts",
@@ -406,11 +406,11 @@
         "sse-gap-drop-stale",
         "collection-failure-reporting"
       ],
-      "evidenceDigest": "bce925749455faf1af16c8c2b2fc2bd1405b0cd72b34c6a9330c541f390e2ace"
+      "evidenceDigest": "19d0797faf02b0aac0134715d3063fa35bd90d81a93aa90b9527469652c55d28"
     },
     {
       "criterion": "WEB-09",
-      "invocationId": "bc41449b-d5c5-409a-bcff-327240e88a6a",
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
       "outcome": "pass",
       "scenarios": [
         "search-filter-detail",
@@ -422,11 +422,11 @@
         "partial-deletion-failure",
         "run-metric-log-archive"
       ],
-      "evidenceDigest": "286c17214607597bcc015fd305932d8bbe474d904f5097f688395368cd213ff6"
+      "evidenceDigest": "1ba68d166536ea04f3d1783afe67ec97d80c6aaf5a006ad50573c8a1451639a2"
     },
     {
       "criterion": "WEB-10",
-      "invocationId": "27c5bc1e-7d64-4063-81f1-e5233894e6d8",
+      "invocationId": "89200345-c5b4-4376-9a9c-1afcb5e6196d",
       "outcome": "pass",
       "scenarios": [
         "personal-team-login",
@@ -437,11 +437,11 @@
         "bootstrap-restrictions",
         "encrypted-storage-session"
       ],
-      "evidenceDigest": "7cc4cc7b580449a5e0decf3d4965c64805dea90d3cb9096d7138916131a8eae7"
+      "evidenceDigest": "bb09f62a38546a9af7a638fb27a7658612eb1a0db8b7d44b33e66d3210e22c99"
     },
     {
       "criterion": "WEB-11",
-      "invocationId": "95114dbc-df73-49d7-8765-d27e2090cce8",
+      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
       "outcome": "pass",
       "scenarios": [
         "alias-path-port-conflict-with-owner",
@@ -451,11 +451,11 @@
         "test-internal-vs-external-control",
         "cleanup-releases-claims"
       ],
-      "evidenceDigest": "c2d87720a718ecf3f8557c3457290ac1cffe8b2183080a57866b39bf24d4475d"
+      "evidenceDigest": "405e15ed1a3aac2c535fbec20604cb20e0c2887632e0c8e1c3e7e0bdb76c0746"
     },
     {
       "criterion": "WEB-12",
-      "invocationId": "a45695df-a746-4e0d-9c80-3a2edea6eb4a",
+      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
       "outcome": "pass",
       "scenarios": [
         "restart-marks-running-work-interrupted",
@@ -464,11 +464,11 @@
         "no-automatic-redeploy-or-reset",
         "explicit-rerun-new-plan"
       ],
-      "evidenceDigest": "eca6ad13381f97bdc79bba717046d241719eab2c5aac0a4b09b84f434268e7b3"
+      "evidenceDigest": "9a3ca3cf27f8558c3dc11089eb8158e5e5809c1e7ded573e53f98dc042e41f93"
     },
     {
       "criterion": "WEB-13",
-      "invocationId": "fabec228-31b6-41ea-a9e6-a71ede87d92d",
+      "invocationId": "c74f2c8a-0a60-4196-a359-dca116a2d512",
       "outcome": "pass",
       "scenarios": [
         "normal-end-retain-and-cleanup",
@@ -478,16 +478,16 @@
         "revocation-retains-and-blocks-access",
         "attach-protection"
       ],
-      "evidenceDigest": "99e05f94efeae45e0bad279b2448928c223022c255480f690b9830e8da77b7c2"
+      "evidenceDigest": "3d58f5126ad2ff9f6db69e518f7d9f5ef33337ae29adf64b363d73cc2873caad"
     }
   ],
   "checkout": {
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
-    "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
   },
   "goTests": {
     "counts": {
-      "pass": 2865,
+      "pass": 2937,
       "fail": 0,
       "skip": 0
     },
@@ -500,21 +500,21 @@
   },
   "spa": {
     "files": {
-      "assets/index-BdlyB833.js": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953",
-      "assets/index-Cz6XOAYC.css": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd",
-      "index.html": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+      "assets/index--HlbxhPr.css": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf",
+      "assets/index-CE7LAY-s.js": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a",
+      "index.html": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
     },
     "reproducible": true,
     "servedMatchesEmbedded": true
   },
   "server": {
-    "sha256": "8049d88e737f1417b13683c2b71e8e5eeae07c00daf5fa1a8bd65b273eafac9b",
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
+    "sha256": "1f851cb43a3486222a34ba87cafeeae410b8d6efb0810140cd5005b3db8a77e3",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
     "contractVersion": "2",
-    "url": "http://127.0.0.1:63692"
+    "url": "http://127.0.0.1:50933"
   },
   "fixture": {
-    "runtime": "/private/tmp/cbui/ff0150f9-97c2-47ca-8099-6ed951979b5c",
+    "runtime": "/private/tmp/cbui/da63a50c-ef13-4df6-a603-92fce2cea48c",
     "transport": "local",
     "ownership": "owned",
     "browserVersion": "154.0.8037.98"

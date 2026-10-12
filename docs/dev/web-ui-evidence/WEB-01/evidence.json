@@ -1,10 +1,10 @@
 {
   "criterion": "WEB-01",
-  "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
+  "invocationId": "52224256-fa63-45a6-aa5c-c862841fd4ba",
   "scenarios": [
     {
       "id": "stablenet:preset-fields",
-      "observedAt": "2026-10-10T12:57:13.229Z",
+      "observedAt": "2026-10-11T21:16:29.469Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -18,7 +18,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -26,59 +26,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -86,11 +86,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -106,11 +106,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -126,11 +126,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -144,7 +144,7 @@
     },
     {
       "id": "wbft:preset-fields",
-      "observedAt": "2026-10-10T12:57:17.896Z",
+      "observedAt": "2026-10-11T21:16:35.171Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -158,7 +158,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -166,59 +166,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -226,11 +226,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -246,11 +246,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -266,11 +266,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -284,7 +284,7 @@
     },
     {
       "id": "wemix:preset-fields",
-      "observedAt": "2026-10-10T12:57:22.994Z",
+      "observedAt": "2026-10-11T21:16:41.710Z",
       "assertions": [
         {
           "message": "Preset selected in real browser; required and optional counts/sync override accepted by engine",
@@ -298,7 +298,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -306,59 +306,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -366,11 +366,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -386,11 +386,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -406,11 +406,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -424,7 +424,7 @@
     },
     {
       "id": "inheritance-defaults-effective",
-      "observedAt": "2026-10-10T12:57:23.314Z",
+      "observedAt": "2026-10-11T21:16:42.009Z",
       "assertions": [
         {
           "message": "Browser distinguishes inherited, overridden and absent engine-default values",
@@ -438,7 +438,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -446,59 +446,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -506,11 +506,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -526,11 +526,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -546,11 +546,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -564,7 +564,7 @@
     },
     {
       "id": "unsupported-ui-api",
-      "observedAt": "2026-10-10T12:57:23.748Z",
+      "observedAt": "2026-10-11T21:16:42.347Z",
       "assertions": [
         {
           "message": "Unsupported chains, raw commands, unmapped flags, wrong dialect, boolean/value confusion, invalid counts and disabled metrics rejected by live API",
@@ -578,7 +578,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -586,59 +586,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -646,11 +646,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -666,11 +666,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -686,11 +686,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -704,7 +704,7 @@
     },
     {
       "id": "preset-option-field-coverage",
-      "observedAt": "2026-10-10T12:57:23.748Z",
+      "observedAt": "2026-10-11T21:16:42.347Z",
       "assertions": [
         {
           "message": "Every valid catalog preset selected in browser and validated",
@@ -718,7 +718,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -726,59 +726,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -786,11 +786,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -806,11 +806,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -826,11 +826,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -844,7 +844,7 @@
     },
     {
       "id": "binary-surface-provenance",
-      "observedAt": "2026-10-10T12:57:33.357588+00:00",
+      "observedAt": "2026-10-11T21:17:18.211131+00:00",
       "assertions": [
         {
           "message": "Fresh version/help captures verify checksum, source chain, OS/architecture and every engine dialect mapping",
@@ -858,7 +858,7 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-          "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+          "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -866,59 +866,59 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-          "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+          "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-          "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+          "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-          "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+          "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-          "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+          "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-          "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+          "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-          "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+          "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-          "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+          "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-          "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+          "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-          "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+          "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-          "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+          "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-          "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+          "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-          "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+          "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-          "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+          "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-          "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+          "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -926,11 +926,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-          "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+          "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-          "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+          "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -946,11 +946,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-          "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+          "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-          "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+          "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -966,11 +966,11 @@
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-          "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+          "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-          "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+          "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -988,40 +988,40 @@
       "command": "npm --prefix web run build",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-      "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+      "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
     },
     {
       "command": "go test ./internal/app ./internal/dashboard ./internal/testengine ./internal/core/nodeconfig",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-      "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+      "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
     }
   ],
   "server": {
-    "path": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/chainbench-dashboard",
-    "sha256": "5e3f91c478ef8f9008c3192ea0fcb21e0497e06a69667f2a6eaa45158d01cc01",
-    "baseCommit": "91dc93362a5c7dbb230de93ca4c99ae7e306fef8",
-    "url": "http://127.0.0.1:64763"
+    "path": "/private/tmp/cbui/52224256-fa63-45a6-aa5c-c862841fd4ba/chainbench-dashboard",
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "url": "http://127.0.0.1:61691"
   },
   "frontend": [
     {
       "path": "internal/dashboard/spa/index.html",
-      "sha256": "5c914ceecea546fb01f642af6643a82f4a82c43aa522568849e608ee3fd3e8d9"
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
     },
     {
-      "path": "internal/dashboard/spa/assets/index-Cz6XOAYC.css",
-      "sha256": "2f17bf50422d6673fff2695c6c2117b4ab921aaa39a29b40265fb7cefb2aa3cd"
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
     },
     {
-      "path": "internal/dashboard/spa/assets/index-BdlyB833.js",
-      "sha256": "593fc8c158b791886d963c1914366260a594f3180fe4fe4d1abc22d068bde953"
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
     }
   ],
   "fixture": {
-    "runtime": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6",
+    "runtime": "/private/tmp/cbui/52224256-fa63-45a6-aa5c-c862841fd4ba",
     "transport": "local",
     "scope": "preset-composition",
-    "invocationId": "a06860aa-3f8c-4cd9-b476-6aeb1fc776d6"
+    "invocationId": "52224256-fa63-45a6-aa5c-c862841fd4ba"
   },
   "coverage": {
     "presets": [
@@ -3342,9 +3342,9 @@
     {
       "chain": "stablenet",
       "dialect": "geth114",
-      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/stablenet-node",
+      "binaryPath": "/private/tmp/cbui/52224256-fa63-45a6-aa5c-c862841fd4ba/stablenet-node",
       "binarySha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
-      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
       "sourceCommit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
       "sourceConfigSha256": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028",
       "host": {
@@ -3402,11 +3402,15 @@
           "flag": "--authrpc.port",
           "schema": {
             "description": "--authrpc.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--authrpc.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "authrpc.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3428,11 +3432,14 @@
           "flag": "--cache",
           "schema": {
             "description": "--cache; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache",
+            "x-minimum": 0,
             "x-optionKey": "cache",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3441,11 +3448,14 @@
           "flag": "--cache.blocklogs",
           "schema": {
             "description": "--cache.blocklogs; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.blocklogs",
+            "x-minimum": 0,
             "x-optionKey": "cache.blocklogs",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3454,11 +3464,15 @@
           "flag": "--cache.database",
           "schema": {
             "description": "--cache.database; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.database",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.database",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3467,11 +3481,15 @@
           "flag": "--cache.gc",
           "schema": {
             "description": "--cache.gc; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.gc",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.gc",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3508,11 +3526,15 @@
           "flag": "--cache.snapshot",
           "schema": {
             "description": "--cache.snapshot; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.snapshot",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.snapshot",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3521,11 +3543,15 @@
           "flag": "--cache.trie",
           "schema": {
             "description": "--cache.trie; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.trie",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.trie",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3587,11 +3613,14 @@
           "flag": "--dev.gaslimit",
           "schema": {
             "description": "--dev.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--dev.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "dev.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3600,11 +3629,14 @@
           "flag": "--dev.period",
           "schema": {
             "description": "--dev.period; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--dev.period",
+            "x-minimum": 0,
             "x-optionKey": "dev.period",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3626,11 +3658,15 @@
           "flag": "--discovery.port",
           "schema": {
             "description": "--discovery.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--discovery.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "discovery.port",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3639,11 +3675,16 @@
           "flag": "--gcmode",
           "schema": {
             "description": "--gcmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "archive"
+            ],
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gcmode",
             "x-optionKey": "gcmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -3652,11 +3693,14 @@
           "flag": "--gpo.blocks",
           "schema": {
             "description": "--gpo.blocks; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.blocks",
+            "x-minimum": 1,
             "x-optionKey": "gpo.blocks",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3665,11 +3709,14 @@
           "flag": "--gpo.ignoreprice",
           "schema": {
             "description": "--gpo.ignoreprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.ignoreprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.ignoreprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3678,11 +3725,14 @@
           "flag": "--gpo.maxprice",
           "schema": {
             "description": "--gpo.maxprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.maxprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.maxprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3691,11 +3741,15 @@
           "flag": "--gpo.percentile",
           "schema": {
             "description": "--gpo.percentile; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.percentile",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "gpo.percentile",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3704,11 +3758,14 @@
           "flag": "--history.state",
           "schema": {
             "description": "--history.state; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--history.state",
+            "x-minimum": 0,
             "x-optionKey": "history.state",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3717,11 +3774,14 @@
           "flag": "--history.transactions",
           "schema": {
             "description": "--history.transactions; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--history.transactions",
+            "x-minimum": 0,
             "x-optionKey": "history.transactions",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3783,11 +3843,15 @@
           "flag": "--http.port",
           "schema": {
             "description": "--http.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--http.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "http.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3849,11 +3913,14 @@
           "flag": "--maxpeers",
           "schema": {
             "description": "--maxpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--maxpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3862,11 +3929,14 @@
           "flag": "--maxpendpeers",
           "schema": {
             "description": "--maxpendpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--maxpendpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpendpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3902,11 +3972,15 @@
           "flag": "--metrics.port",
           "schema": {
             "description": "--metrics.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--metrics.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "metrics.port",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3955,11 +4029,14 @@
           "flag": "--miner.gaslimit",
           "schema": {
             "description": "--miner.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--miner.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "miner.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3968,11 +4045,14 @@
           "flag": "--miner.gasprice",
           "schema": {
             "description": "--miner.gasprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--miner.gasprice",
+            "x-minimum": 0,
             "x-optionKey": "miner.gasprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -3985,7 +4065,8 @@
             "x-dialect": "geth114",
             "x-flag": "--miner.recommit",
             "x-optionKey": "miner.recommit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -3994,11 +4075,13 @@
           "flag": "--nat",
           "schema": {
             "description": "--nat; validated by nodeconfig.Builder",
+            "pattern": "^(any|none|upnp|pmp|(extip|pmp):.+)$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--nat",
             "x-optionKey": "nat",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "nat"
           },
           "selectable": true
         },
@@ -4020,11 +4103,14 @@
           "flag": "--networkid",
           "schema": {
             "description": "--networkid; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--networkid",
+            "x-minimum": 1,
             "x-optionKey": "networkid",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4073,11 +4159,15 @@
           "flag": "--port",
           "schema": {
             "description": "--port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4114,11 +4204,14 @@
           "flag": "--rpc.gascap",
           "schema": {
             "description": "--rpc.gascap; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--rpc.gascap",
+            "x-minimum": 0,
             "x-optionKey": "rpc.gascap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4127,11 +4220,13 @@
           "flag": "--rpc.txfeecap",
           "schema": {
             "description": "--rpc.txfeecap; validated by nodeconfig.Builder",
+            "pattern": "^[0-9]+(\\.[0-9]+)?$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--rpc.txfeecap",
             "x-optionKey": "rpc.txfeecap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "decimal"
           },
           "selectable": true
         },
@@ -4154,11 +4249,16 @@
           "flag": "--syncmode",
           "schema": {
             "description": "--syncmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "snap"
+            ],
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--syncmode",
             "x-optionKey": "syncmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -4167,11 +4267,14 @@
           "flag": "--txlookuplimit",
           "schema": {
             "description": "--txlookuplimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txlookuplimit",
+            "x-minimum": 0,
             "x-optionKey": "txlookuplimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4180,11 +4283,14 @@
           "flag": "--txpool.accountqueue",
           "schema": {
             "description": "--txpool.accountqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.accountqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4193,11 +4299,14 @@
           "flag": "--txpool.accountslots",
           "schema": {
             "description": "--txpool.accountslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.accountslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4206,11 +4315,14 @@
           "flag": "--txpool.globalqueue",
           "schema": {
             "description": "--txpool.globalqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.globalqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4219,11 +4331,14 @@
           "flag": "--txpool.globalslots",
           "schema": {
             "description": "--txpool.globalslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.globalslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4249,7 +4364,8 @@
             "x-dialect": "geth114",
             "x-flag": "--txpool.lifetime",
             "x-optionKey": "txpool.lifetime",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -4285,11 +4401,14 @@
           "flag": "--txpool.pricebump",
           "schema": {
             "description": "--txpool.pricebump; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.pricebump",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricebump",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4298,11 +4417,14 @@
           "flag": "--txpool.pricelimit",
           "schema": {
             "description": "--txpool.pricelimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.pricelimit",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricelimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4315,7 +4437,8 @@
             "x-dialect": "geth114",
             "x-flag": "--txpool.rejournal",
             "x-optionKey": "txpool.rejournal",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -4390,11 +4513,15 @@
           "flag": "--ws.port",
           "schema": {
             "description": "--ws.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--ws.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "ws.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         }
@@ -4866,14 +4993,14 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T12:57:27.250673+00:00"
+      "capturedAt": "2026-10-11T21:17:12.291374+00:00"
     },
     {
       "chain": "wbft",
       "dialect": "geth114",
-      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/wbft-node",
+      "binaryPath": "/private/tmp/cbui/52224256-fa63-45a6-aa5c-c862841fd4ba/wbft-node",
       "binarySha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
-      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
       "sourceCommit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
       "sourceConfigSha256": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4",
       "host": {
@@ -4931,11 +5058,15 @@
           "flag": "--authrpc.port",
           "schema": {
             "description": "--authrpc.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--authrpc.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "authrpc.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4957,11 +5088,14 @@
           "flag": "--cache",
           "schema": {
             "description": "--cache; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache",
+            "x-minimum": 0,
             "x-optionKey": "cache",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4970,11 +5104,14 @@
           "flag": "--cache.blocklogs",
           "schema": {
             "description": "--cache.blocklogs; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.blocklogs",
+            "x-minimum": 0,
             "x-optionKey": "cache.blocklogs",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4983,11 +5120,15 @@
           "flag": "--cache.database",
           "schema": {
             "description": "--cache.database; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.database",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.database",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -4996,11 +5137,15 @@
           "flag": "--cache.gc",
           "schema": {
             "description": "--cache.gc; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.gc",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.gc",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5037,11 +5182,15 @@
           "flag": "--cache.snapshot",
           "schema": {
             "description": "--cache.snapshot; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.snapshot",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.snapshot",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5050,11 +5199,15 @@
           "flag": "--cache.trie",
           "schema": {
             "description": "--cache.trie; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--cache.trie",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.trie",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5116,11 +5269,14 @@
           "flag": "--dev.gaslimit",
           "schema": {
             "description": "--dev.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--dev.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "dev.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5129,11 +5285,14 @@
           "flag": "--dev.period",
           "schema": {
             "description": "--dev.period; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--dev.period",
+            "x-minimum": 0,
             "x-optionKey": "dev.period",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5155,11 +5314,15 @@
           "flag": "--discovery.port",
           "schema": {
             "description": "--discovery.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--discovery.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "discovery.port",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5168,11 +5331,16 @@
           "flag": "--gcmode",
           "schema": {
             "description": "--gcmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "archive"
+            ],
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gcmode",
             "x-optionKey": "gcmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -5181,11 +5349,14 @@
           "flag": "--gpo.blocks",
           "schema": {
             "description": "--gpo.blocks; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.blocks",
+            "x-minimum": 1,
             "x-optionKey": "gpo.blocks",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5194,11 +5365,14 @@
           "flag": "--gpo.ignoreprice",
           "schema": {
             "description": "--gpo.ignoreprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.ignoreprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.ignoreprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5207,11 +5381,14 @@
           "flag": "--gpo.maxprice",
           "schema": {
             "description": "--gpo.maxprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.maxprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.maxprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5220,11 +5397,15 @@
           "flag": "--gpo.percentile",
           "schema": {
             "description": "--gpo.percentile; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--gpo.percentile",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "gpo.percentile",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5233,11 +5414,14 @@
           "flag": "--history.state",
           "schema": {
             "description": "--history.state; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--history.state",
+            "x-minimum": 0,
             "x-optionKey": "history.state",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5246,11 +5430,14 @@
           "flag": "--history.transactions",
           "schema": {
             "description": "--history.transactions; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--history.transactions",
+            "x-minimum": 0,
             "x-optionKey": "history.transactions",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5312,11 +5499,15 @@
           "flag": "--http.port",
           "schema": {
             "description": "--http.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--http.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "http.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5378,11 +5569,14 @@
           "flag": "--maxpeers",
           "schema": {
             "description": "--maxpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--maxpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5391,11 +5585,14 @@
           "flag": "--maxpendpeers",
           "schema": {
             "description": "--maxpendpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--maxpendpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpendpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5431,11 +5628,15 @@
           "flag": "--metrics.port",
           "schema": {
             "description": "--metrics.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--metrics.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "metrics.port",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5484,11 +5685,14 @@
           "flag": "--miner.gaslimit",
           "schema": {
             "description": "--miner.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--miner.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "miner.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5497,11 +5701,14 @@
           "flag": "--miner.gasprice",
           "schema": {
             "description": "--miner.gasprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--miner.gasprice",
+            "x-minimum": 0,
             "x-optionKey": "miner.gasprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5514,7 +5721,8 @@
             "x-dialect": "geth114",
             "x-flag": "--miner.recommit",
             "x-optionKey": "miner.recommit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -5523,11 +5731,13 @@
           "flag": "--nat",
           "schema": {
             "description": "--nat; validated by nodeconfig.Builder",
+            "pattern": "^(any|none|upnp|pmp|(extip|pmp):.+)$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--nat",
             "x-optionKey": "nat",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "nat"
           },
           "selectable": true
         },
@@ -5549,11 +5759,14 @@
           "flag": "--networkid",
           "schema": {
             "description": "--networkid; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--networkid",
+            "x-minimum": 1,
             "x-optionKey": "networkid",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5602,11 +5815,15 @@
           "flag": "--port",
           "schema": {
             "description": "--port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5643,11 +5860,14 @@
           "flag": "--rpc.gascap",
           "schema": {
             "description": "--rpc.gascap; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--rpc.gascap",
+            "x-minimum": 0,
             "x-optionKey": "rpc.gascap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5656,11 +5876,13 @@
           "flag": "--rpc.txfeecap",
           "schema": {
             "description": "--rpc.txfeecap; validated by nodeconfig.Builder",
+            "pattern": "^[0-9]+(\\.[0-9]+)?$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--rpc.txfeecap",
             "x-optionKey": "rpc.txfeecap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "decimal"
           },
           "selectable": true
         },
@@ -5683,11 +5905,16 @@
           "flag": "--syncmode",
           "schema": {
             "description": "--syncmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "snap"
+            ],
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--syncmode",
             "x-optionKey": "syncmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -5696,11 +5923,14 @@
           "flag": "--txlookuplimit",
           "schema": {
             "description": "--txlookuplimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txlookuplimit",
+            "x-minimum": 0,
             "x-optionKey": "txlookuplimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5709,11 +5939,14 @@
           "flag": "--txpool.accountqueue",
           "schema": {
             "description": "--txpool.accountqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.accountqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5722,11 +5955,14 @@
           "flag": "--txpool.accountslots",
           "schema": {
             "description": "--txpool.accountslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.accountslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5735,11 +5971,14 @@
           "flag": "--txpool.globalqueue",
           "schema": {
             "description": "--txpool.globalqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.globalqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5748,11 +5987,14 @@
           "flag": "--txpool.globalslots",
           "schema": {
             "description": "--txpool.globalslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.globalslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5778,7 +6020,8 @@
             "x-dialect": "geth114",
             "x-flag": "--txpool.lifetime",
             "x-optionKey": "txpool.lifetime",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -5814,11 +6057,14 @@
           "flag": "--txpool.pricebump",
           "schema": {
             "description": "--txpool.pricebump; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.pricebump",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricebump",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5827,11 +6073,14 @@
           "flag": "--txpool.pricelimit",
           "schema": {
             "description": "--txpool.pricelimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--txpool.pricelimit",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricelimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -5844,7 +6093,8 @@
             "x-dialect": "geth114",
             "x-flag": "--txpool.rejournal",
             "x-optionKey": "txpool.rejournal",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -5919,11 +6169,15 @@
           "flag": "--ws.port",
           "schema": {
             "description": "--ws.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth114",
             "x-flag": "--ws.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "ws.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         }
@@ -6385,14 +6639,14 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T12:57:30.515466+00:00"
+      "capturedAt": "2026-10-11T21:17:15.578593+00:00"
     },
     {
       "chain": "wemix",
       "dialect": "geth110-wemix",
-      "binaryPath": "/private/tmp/cbui/a06860aa-3f8c-4cd9-b476-6aeb1fc776d6/wemix-node",
+      "binaryPath": "/private/tmp/cbui/52224256-fa63-45a6-aa5c-c862841fd4ba/wemix-node",
       "binarySha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
-      "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2\n",
+      "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
       "sourceCommit": "1350376a680489298b3203a44d9ebddb7747f9cc",
       "sourceConfigSha256": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09",
       "host": {
@@ -6450,11 +6704,15 @@
           "flag": "--authrpc.port",
           "schema": {
             "description": "--authrpc.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--authrpc.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "authrpc.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6476,11 +6734,14 @@
           "flag": "--cache",
           "schema": {
             "description": "--cache; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--cache",
+            "x-minimum": 0,
             "x-optionKey": "cache",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6489,11 +6750,15 @@
           "flag": "--cache.database",
           "schema": {
             "description": "--cache.database; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--cache.database",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.database",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6502,11 +6767,15 @@
           "flag": "--cache.gc",
           "schema": {
             "description": "--cache.gc; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--cache.gc",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.gc",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6543,11 +6812,15 @@
           "flag": "--cache.snapshot",
           "schema": {
             "description": "--cache.snapshot; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--cache.snapshot",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.snapshot",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6556,11 +6829,15 @@
           "flag": "--cache.trie",
           "schema": {
             "description": "--cache.trie; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--cache.trie",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "cache.trie",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6569,11 +6846,14 @@
           "flag": "--wemix.block.interval",
           "schema": {
             "description": "--wemix.block.interval; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.block.interval",
+            "x-minimum": 1,
             "x-optionKey": "chain.block.interval",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6582,11 +6862,14 @@
           "flag": "--wemix.block.minbuildtime",
           "schema": {
             "description": "--wemix.block.minbuildtime; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.block.minbuildtime",
+            "x-minimum": 0,
             "x-optionKey": "chain.block.minbuildtime",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6595,11 +6878,14 @@
           "flag": "--wemix.block.minbuildtxs",
           "schema": {
             "description": "--wemix.block.minbuildtxs; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.block.minbuildtxs",
+            "x-minimum": 0,
             "x-optionKey": "chain.block.minbuildtxs",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6608,11 +6894,14 @@
           "flag": "--wemix.block.timeadjblocks",
           "schema": {
             "description": "--wemix.block.timeadjblocks; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.block.timeadjblocks",
+            "x-minimum": 0,
             "x-optionKey": "chain.block.timeadj",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6621,11 +6910,14 @@
           "flag": "--wemix.block.trailtime",
           "schema": {
             "description": "--wemix.block.trailtime; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.block.trailtime",
+            "x-minimum": 0,
             "x-optionKey": "chain.block.trailtime",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6634,11 +6926,14 @@
           "flag": "--blocksperturn",
           "schema": {
             "description": "--blocksperturn; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--blocksperturn",
+            "x-minimum": 1,
             "x-optionKey": "chain.blocksperturn",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6647,11 +6942,14 @@
           "flag": "--wemix.bootnodecount",
           "schema": {
             "description": "--wemix.bootnodecount; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--wemix.bootnodecount",
+            "x-minimum": 0,
             "x-optionKey": "chain.bootnodecount",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6660,11 +6958,15 @@
           "flag": "--consensusmethod",
           "schema": {
             "description": "--consensusmethod; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--consensusmethod",
+            "x-maximum": 4,
+            "x-minimum": 1,
             "x-optionKey": "chain.consensusmethod",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6673,11 +6975,14 @@
           "flag": "--fixeddifficulty",
           "schema": {
             "description": "--fixeddifficulty; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--fixeddifficulty",
+            "x-minimum": 0,
             "x-optionKey": "chain.fixeddifficulty",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6686,11 +6991,14 @@
           "flag": "--fixedgaslimit",
           "schema": {
             "description": "--fixedgaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--fixedgaslimit",
+            "x-minimum": 0,
             "x-optionKey": "chain.fixedgaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6699,11 +7007,14 @@
           "flag": "--maxidleblockinterval",
           "schema": {
             "description": "--maxidleblockinterval; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--maxidleblockinterval",
+            "x-minimum": 0,
             "x-optionKey": "chain.maxidleblock",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6712,11 +7023,14 @@
           "flag": "--maxtxsperblock",
           "schema": {
             "description": "--maxtxsperblock; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--maxtxsperblock",
+            "x-minimum": 0,
             "x-optionKey": "chain.maxtxsperblock",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6725,11 +7039,14 @@
           "flag": "--noncelimit",
           "schema": {
             "description": "--noncelimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--noncelimit",
+            "x-minimum": 0,
             "x-optionKey": "chain.noncelimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6791,11 +7108,14 @@
           "flag": "--dev.gaslimit",
           "schema": {
             "description": "--dev.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--dev.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "dev.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6804,11 +7124,14 @@
           "flag": "--dev.period",
           "schema": {
             "description": "--dev.period; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--dev.period",
+            "x-minimum": 0,
             "x-optionKey": "dev.period",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6830,11 +7153,16 @@
           "flag": "--gcmode",
           "schema": {
             "description": "--gcmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "archive"
+            ],
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--gcmode",
             "x-optionKey": "gcmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -6843,11 +7171,14 @@
           "flag": "--gpo.blocks",
           "schema": {
             "description": "--gpo.blocks; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--gpo.blocks",
+            "x-minimum": 1,
             "x-optionKey": "gpo.blocks",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6856,11 +7187,14 @@
           "flag": "--gpo.ignoreprice",
           "schema": {
             "description": "--gpo.ignoreprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--gpo.ignoreprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.ignoreprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6869,11 +7203,14 @@
           "flag": "--gpo.maxprice",
           "schema": {
             "description": "--gpo.maxprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--gpo.maxprice",
+            "x-minimum": 0,
             "x-optionKey": "gpo.maxprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6882,11 +7219,15 @@
           "flag": "--gpo.percentile",
           "schema": {
             "description": "--gpo.percentile; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--gpo.percentile",
+            "x-maximum": 100,
+            "x-minimum": 0,
             "x-optionKey": "gpo.percentile",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -6948,11 +7289,15 @@
           "flag": "--http.port",
           "schema": {
             "description": "--http.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--http.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "http.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7014,11 +7359,14 @@
           "flag": "--maxpeers",
           "schema": {
             "description": "--maxpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--maxpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7027,11 +7375,14 @@
           "flag": "--maxpendpeers",
           "schema": {
             "description": "--maxpendpeers; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--maxpendpeers",
+            "x-minimum": 0,
             "x-optionKey": "maxpendpeers",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7067,11 +7418,15 @@
           "flag": "--metrics.port",
           "schema": {
             "description": "--metrics.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--metrics.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "metrics.port",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7120,11 +7475,14 @@
           "flag": "--miner.gaslimit",
           "schema": {
             "description": "--miner.gaslimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--miner.gaslimit",
+            "x-minimum": 0,
             "x-optionKey": "miner.gaslimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7133,11 +7491,14 @@
           "flag": "--miner.gasprice",
           "schema": {
             "description": "--miner.gasprice; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--miner.gasprice",
+            "x-minimum": 0,
             "x-optionKey": "miner.gasprice",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7146,11 +7507,14 @@
           "flag": "--miner.gastarget",
           "schema": {
             "description": "--miner.gastarget; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--miner.gastarget",
+            "x-minimum": 0,
             "x-optionKey": "miner.gastarget",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7163,7 +7527,8 @@
             "x-dialect": "geth110-wemix",
             "x-flag": "--miner.recommit",
             "x-optionKey": "miner.recommit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -7172,11 +7537,13 @@
           "flag": "--nat",
           "schema": {
             "description": "--nat; validated by nodeconfig.Builder",
+            "pattern": "^(any|none|upnp|pmp|(extip|pmp):.+)$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--nat",
             "x-optionKey": "nat",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "nat"
           },
           "selectable": true
         },
@@ -7198,11 +7565,14 @@
           "flag": "--networkid",
           "schema": {
             "description": "--networkid; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--networkid",
+            "x-minimum": 1,
             "x-optionKey": "networkid",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7251,11 +7621,15 @@
           "flag": "--port",
           "schema": {
             "description": "--port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7278,11 +7652,14 @@
           "flag": "--rpc.gascap",
           "schema": {
             "description": "--rpc.gascap; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--rpc.gascap",
+            "x-minimum": 0,
             "x-optionKey": "rpc.gascap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7291,11 +7668,13 @@
           "flag": "--rpc.txfeecap",
           "schema": {
             "description": "--rpc.txfeecap; validated by nodeconfig.Builder",
+            "pattern": "^[0-9]+(\\.[0-9]+)?$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--rpc.txfeecap",
             "x-optionKey": "rpc.txfeecap",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "decimal"
           },
           "selectable": true
         },
@@ -7318,11 +7697,17 @@
           "flag": "--syncmode",
           "schema": {
             "description": "--syncmode; validated by nodeconfig.Builder",
+            "enum": [
+              "full",
+              "snap",
+              "light"
+            ],
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--syncmode",
             "x-optionKey": "syncmode",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "enum"
           },
           "selectable": true
         },
@@ -7331,11 +7716,14 @@
           "flag": "--txlookuplimit",
           "schema": {
             "description": "--txlookuplimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txlookuplimit",
+            "x-minimum": 0,
             "x-optionKey": "txlookuplimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7344,11 +7732,14 @@
           "flag": "--txpool.accountqueue",
           "schema": {
             "description": "--txpool.accountqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.accountqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7357,11 +7748,14 @@
           "flag": "--txpool.accountslots",
           "schema": {
             "description": "--txpool.accountslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.accountslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.accountslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7370,11 +7764,14 @@
           "flag": "--txpool.globalqueue",
           "schema": {
             "description": "--txpool.globalqueue; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.globalqueue",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalqueue",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7383,11 +7780,14 @@
           "flag": "--txpool.globalslots",
           "schema": {
             "description": "--txpool.globalslots; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.globalslots",
+            "x-minimum": 0,
             "x-optionKey": "txpool.globalslots",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7413,7 +7813,8 @@
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.lifetime",
             "x-optionKey": "txpool.lifetime",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -7449,11 +7850,14 @@
           "flag": "--txpool.pricebump",
           "schema": {
             "description": "--txpool.pricebump; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.pricebump",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricebump",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7462,11 +7866,14 @@
           "flag": "--txpool.pricelimit",
           "schema": {
             "description": "--txpool.pricelimit; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.pricelimit",
+            "x-minimum": 0,
             "x-optionKey": "txpool.pricelimit",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "integer"
           },
           "selectable": true
         },
@@ -7479,7 +7886,8 @@
             "x-dialect": "geth110-wemix",
             "x-flag": "--txpool.rejournal",
             "x-optionKey": "txpool.rejournal",
-            "x-perNode": false
+            "x-perNode": false,
+            "x-valueKind": "duration"
           },
           "selectable": true
         },
@@ -7554,11 +7962,15 @@
           "flag": "--ws.port",
           "schema": {
             "description": "--ws.port; validated by nodeconfig.Builder",
+            "pattern": "^-?[0-9]+$",
             "type": "string",
             "x-dialect": "geth110-wemix",
             "x-flag": "--ws.port",
+            "x-maximum": 65535,
+            "x-minimum": 0,
             "x-optionKey": "ws.port",
-            "x-perNode": true
+            "x-perNode": true,
+            "x-valueKind": "integer"
           },
           "selectable": true
         }
@@ -8095,13 +8507,13 @@
           "reason": "No current engine OptionKey mapping"
         }
       ],
-      "capturedAt": "2026-10-10T12:57:33.356499+00:00"
+      "capturedAt": "2026-10-11T21:17:18.209997+00:00"
     }
   ],
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-contract.json",
-      "sha256": "5645865e5f280944f3e6774cec548f367d668524c3e7d4a95789eee8b02e0b88"
+      "sha256": "44850214ea4c0aadd4356fe61c6a30cbecfb3aafbeed59c4fcbe3ada1895cefc"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.log",
@@ -8109,59 +8521,59 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-contract.json",
-      "sha256": "7e2ae4534a31c87dda591ac86ababa6577e08a11b01b1b28744e52b29c23d0b8"
+      "sha256": "67e0c78afc535a216ed5f308226c62f29c4667e89c432ebc2fc213f4db32d020"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-form.png",
-      "sha256": "0929e4df1f0dbc88236611174b96078c8d05b5778d873fb19ec24ff082263aaf"
+      "sha256": "455d7deab351e832e571ad153e6b9a72d3af88bce9ebc286fc91984994389c37"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-form.png",
-      "sha256": "78d89b0cebf8ec8c86488fd39e399895a05fb9b0292238848642a3abacb986fa"
+      "sha256": "43cc07d0cbb763f4a6c42e2d885fe9a1abb487abfff4746b2c4b44204b7ebda1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/unsupported.png",
-      "sha256": "0c0962d453d4660efd27c3ada74a1724bcd557510ddaf8eca3ba54c31be91ca6"
+      "sha256": "74d74e85be8ac4a33a61cd7da9ea53a06bf88af8b237526f370125f234df1d36"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-table.png",
-      "sha256": "44d54917a5c1405fac100e35475628b62ee47b135b452b26407859034efbc0a5"
+      "sha256": "4d2745a2ae1a989c1a10d959a8a5ac5fc1f872ede5ebfcd08a284ed322c04488"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-form.png",
-      "sha256": "a1cce8dda0a79eef1ea114fa3fbb2d4d8df21afe766ac23a47578872d5164c57"
+      "sha256": "710148a460d03dcef3722e61f779b44df8075bb278b8bfc51c43baf3eca8c7aa"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/defaults.png",
-      "sha256": "32a76486627ae662c1bb30082062a68ba89f44014604625869ae2beab2972641"
+      "sha256": "025dc6fb22bf877a5f04bf4389069e2fd677237fae7ce62a8fd6b258408d4f6e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-table.png",
-      "sha256": "2933be7db274d5ed6f6d67c13f45f7a56467639ce2dbd1368caff0bb38c32309"
+      "sha256": "ee5ca3baf7f556831d7bb62c5b897acd36ff569f2638be211986e26fb8bf2a35"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-contract.json",
-      "sha256": "0768f33fa2baa0f9967dab351186141debf61f032e7e9ae5b5054f106903ce69"
+      "sha256": "d7b3863e117afb731ce09b4701b5b1bfbcaa58b2efe1ec6f63b359998c9642d2"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/server.log",
-      "sha256": "254b655d09d19f5d9d4edfdd23d8c0a96766dba41df68b70bac7f632ca872220"
+      "sha256": "edd637ba80c789b1cb533a0abf0ec12693fa02167db92e2968b0f029afee4473"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/check-1.log",
-      "sha256": "6a8183bbc743d9422c815896aac87898eb8a294f3b29dfc3a147d5b1a1bf7a99"
+      "sha256": "a895da08c6fdbe062bf636f283b7c982735f7e2f9b4188c02139e4f395a28892"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/browser.json",
-      "sha256": "65347acce3ea70835c11708f8a705a27fe86237f2f0b8586fb6564b8130f1268"
+      "sha256": "26275ecebe88315cb1179f3299dd720c89258f1ff5f6252e111f23af9d4225d5"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/check-0.log",
-      "sha256": "4090547cee2e9d7eac76a1f54b73c361cfbc643472d7262cc03678d4ec9ad5db"
+      "sha256": "5914ae121021aa3d25f0afb880a38e9510e5255b32d3312801f013025897406b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-table.png",
-      "sha256": "2c7fb92053ab42fb3c64c57e4d7b23c9da32daa6d798fdb0ef43adb62eea2395"
+      "sha256": "d08d06da86195d0fe25dadc3fd2313e2bd8b25913a700245f34bc010cfacb836"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/verify.log",
@@ -8169,11 +8581,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-surface.txt",
-      "sha256": "850920800f92d643c9b613f788ae2db655b66708e7aebde3a7379ae80e0641ea"
+      "sha256": "6e65d55cd2991e1c2c465f65d11ce00e446764edcaf94d6a2769ccff95a515ea"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/mapping.json",
-      "sha256": "62a7d917ebeb3e8b49b6f113477bb66526bf2738447acf3b4de3c02425eda1d2"
+      "sha256": "83c51e2fbebbd2fc8280d604b8ed8ae55b3731e0ad306dee4bea27ba6592111e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wbft-surface/cli-flags.txt",
@@ -8189,11 +8601,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-surface.txt",
-      "sha256": "2c02e3c5a7cc9f9e83bed490bd23e859f6d1a6425e3427180608fca24f663b7e"
+      "sha256": "3e75e85261d705f9fa0b8138a9b66bc0bd4620f6d3992489ddc9ec906b9f151a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/mapping.json",
-      "sha256": "59e28bd7132658d0579a59c75ebdcffd261ca20de0ac6e016f7d117c68df9268"
+      "sha256": "931b078ee577235216dff7522a166ad9f69e68e0282d159839c3303ac3f48bdf"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/wemix-surface/cli-flags.txt",
@@ -8209,11 +8621,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-surface.txt",
-      "sha256": "879818f4f954fa56f785b4c289c2f6d82c8aa476367fa0cb6dc887116bdaad3e"
+      "sha256": "2cf40d45ed98bffe5e3f6e6f66edabf3ce3e35ca3f5300724efefb6d4acec604"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/mapping.json",
-      "sha256": "0aa557ead3b50fd12bb919b78a9a62e4648fe3f3193251e01b45473a942152f0"
+      "sha256": "2d8d26a9c07eaa2e5d4432c43f75102f589df9bcfca2dbb46c7b3eb47d65e630"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-01/stablenet-surface/cli-flags.txt",
@@ -8225,5 +8637,5 @@
     }
   ],
   "blockers": [],
-  "sourceDigest": "37b8892fd66af14cfca05a3c51782ee77f23a69935d87dd56c3f54def282a5b8"
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
 }
