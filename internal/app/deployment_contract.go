@@ -1,6 +1,7 @@
 package app
 
 import (
+	"maps"
 	"reflect"
 	"strings"
 
@@ -29,6 +30,19 @@ func DeploymentContract() map[string]DeploymentField {
 		delete(ssh.Properties, name)
 	}
 	set.Properties["ssh"] = ssh
+	// A server's login is a personal credential binding, never a field of the
+	// shared document, so the per-host ssh block the engine reads is not
+	// offered here; validation refuses it too.
+	pool := set.Properties["pool"]
+	hosts := pool.Properties["hosts"]
+	if hosts.Items != nil {
+		item := *hosts.Items
+		item.Properties = maps.Clone(item.Properties)
+		delete(item.Properties, "ssh")
+		hosts.Items = &item
+	}
+	pool.Properties["hosts"] = hosts
+	set.Properties["pool"] = pool
 	version := set.Properties["version"]
 	version.Enum = []any{resource.SupportedVersion}
 	set.Properties["version"] = version
