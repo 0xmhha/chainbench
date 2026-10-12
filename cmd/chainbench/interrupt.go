@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 // interruptExitCode is the conventional status for a process killed by SIGINT
@@ -46,9 +47,42 @@ func interruptible(w io.Writer) (context.Context, func()) {
 		fmt.Fprintln(w, "forced — nodes this run started are still running and may not be recorded; `chain stop --data-dir <dir>` clears what was, and the rest need finding by hand")
 		os.Exit(interruptExitCode)
 	}()
+	if os.Getenv(stopWithParentEnv) == "1" {
+		go stopWithParent(ctx, w, cancel)
+	}
 	return ctx, func() {
 		signal.Stop(ch)
 		cancel()
+	}
+}
+
+// stopWithParentEnv asks the command to stop when the process that started it
+// dies. The Web dashboard sets it, so a dashboard that is killed does not leave
+// a command running and changing a network behind the job it now reports as
+// interrupted. Kept in step with webcli.StopWithParentEnv.
+const stopWithParentEnv = "CHAINBENCH_STOP_WITH_PARENT"
+
+// parentPoll is how often the parent is checked. A dead parent's child is
+// handed to another process, so a changed parent pid is the death.
+const parentPoll = 500 * time.Millisecond
+
+// stopWithParent cancels ctx, as the first interrupt does, once the parent
+// that started this process is gone.
+func stopWithParent(ctx context.Context, w io.Writer, cancel context.CancelFunc) {
+	parent := os.Getppid()
+	tick := time.NewTicker(parentPoll)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+			if os.Getppid() != parent {
+				fmt.Fprintln(w, "\nthe process that started this command is gone — finishing the step and recording what it started")
+				cancel()
+				return
+			}
+		}
 	}
 }
 

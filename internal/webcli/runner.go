@@ -28,6 +28,12 @@ import (
 // interrupt, the way an operator's first Ctrl-C lets it record what it started.
 const unwindGrace = 30 * time.Second
 
+// StopWithParentEnv asks a chainbench command to stop, as a first interrupt
+// would, when the process that started it dies. The runner sets it on every
+// command, so a killed dashboard does not leave a command running behind the
+// jobs it marks interrupted.
+const StopWithParentEnv = "CHAINBENCH_STOP_WITH_PARENT"
+
 // Runner runs one chainbench binary.
 type Runner struct {
 	// Binary is the chainbench executable.
@@ -41,7 +47,7 @@ type Runner struct {
 // ctx interrupts the command and waits for it to unwind.
 func (r Runner) Run(ctx context.Context, args ...string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.Binary, args...)
-	cmd.Env = append(os.Environ(), r.Env...)
+	cmd.Env = append(append(os.Environ(), r.Env...), StopWithParentEnv+"=1")
 	cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGINT) }
 	cmd.WaitDelay = unwindGrace
 	var stdout, stderr bytes.Buffer

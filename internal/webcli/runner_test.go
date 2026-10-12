@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -147,5 +148,40 @@ func TestFindBinaryFindsTheCLI(t *testing.T) {
 	}
 	if _, err := webcli.FindBinary(filepath.Join(beside, "absent"), ""); err == nil {
 		t.Fatal("an explicit path that does not exist was accepted")
+	}
+}
+
+// TestCommandStopsWhenTheDashboardDies: a command the dashboard started must
+// not outlive it. A killed dashboard leaves its jobs marked interrupted, and
+// a command still running would keep changing the network behind that record.
+// The parent here is a shell that starts the command the way the runner does,
+// then exits.
+func TestCommandStopsWhenTheDashboardDies(t *testing.T) {
+	release := make(chan struct{})
+	stall := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	t.Cleanup(stall.Close)
+	t.Cleanup(func() { close(release) })
+	parent := exec.Command("sh", "-c", `"$0" node rpc --rpc "$1" --method eth_blockNumber >/dev/null 2>&1 & echo $!; sleep 1`, cli, stall.URL)
+	parent.Env = append(os.Environ(), webcli.StopWithParentEnv+"=1")
+	out, err := parent.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var child int
+	if _, err = fmt.Sscan(string(out), &child); err != nil || child <= 0 {
+		t.Fatalf("no child pid in %q", out)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for syscall.Kill(child, 0) == nil {
+		if time.Now().After(deadline) {
+			_ = syscall.Kill(child, syscall.SIGKILL)
+			t.Fatal("the command kept running after the process that started it died")
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
