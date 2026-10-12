@@ -1,7 +1,6 @@
 package app_test
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -53,17 +52,6 @@ func TestManagedManifestRoundTripAndEngineApplication(t *testing.T) {
 			}
 			if string(got.Manifest) != string(in.Manifest) || string(got.Template) != string(in.Template) {
 				t.Fatal("declaration changed")
-			}
-			dir := filepath.Join(root, "compose-"+chain)
-			if _, err = s.ApplyManifest(context.Background(), app.Deps{}, actor, saved.ID, dir, "../../../presets/keys", ""); err != nil {
-				t.Fatal(err)
-			}
-			state, err := app.ChainStatus(context.Background(), app.Deps{}, app.ChainStatusIn{DataDir: dir})
-			if err != nil {
-				t.Fatal(err)
-			}
-			if state.State.Chain != "external-"+chain || state.State.ManifestPath == "" {
-				t.Fatal("engine selection was not applied")
 			}
 		})
 	}

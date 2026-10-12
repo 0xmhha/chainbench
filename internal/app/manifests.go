@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -156,29 +155,4 @@ func (s *ManifestStore) List() ([]ManagedManifest, error) {
 		items = append(items, item)
 	}
 	return items, nil
-}
-
-// ApplyManifest records a validated selection through the shared ChainNew use case.
-// Later composition steps read the pinned immutable manifest and template paths.
-func (s *ManifestStore) ApplyManifest(ctx context.Context, d Deps, actor DeploymentActor, id, dir, keys, binary string) (ChainNewOut, error) {
-	if actor.ID == "" || (actor.Role != "operator" && actor.Role != "admin") {
-		return ChainNewOut{}, ErrDeploymentForbidden
-	}
-	item, err := s.Get(id)
-	if err != nil {
-		return ChainNewOut{}, err
-	}
-	p, err := ValidateManifest(item.ManifestInput)
-	if err != nil {
-		return ChainNewOut{}, err
-	}
-	in := ChainNewIn{DataDir: dir, Chain: p.Manifest().ID, KeysDir: keys, Binary: binary}
-	if item.Source == "external" {
-		// These files belong to this composition, never a client-supplied path.
-		in.ManifestPath, in.TemplatePath, err = s.files.Pin(dir, item.Manifest, []byte(item.Template))
-		if err != nil {
-			return ChainNewOut{}, err
-		}
-	}
-	return ChainNew(ctx, d, in)
 }
