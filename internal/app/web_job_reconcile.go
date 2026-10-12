@@ -111,11 +111,11 @@ func (e *WebChainEngine) Reconcile(ctx context.Context, a DeploymentActor, prepa
 	if err = json.Unmarshal(raw, &state); err != nil {
 		return out, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return out, err
 	}
-	opener := resource.Opener{Lookup: lookup}
+	opener := lookup
 	present, unknown := false, false
 	for _, ns := range state.Nodes {
 		check := WebNodeCheck{NodeID: string(ns.NodeLabel()), Process: "unknown", Data: "unknown"}
@@ -126,16 +126,13 @@ func (e *WebChainEngine) Reconcile(ctx context.Context, a DeploymentActor, prepa
 			// The node's data directory or the configuration a deploy stage
 			// already wrote: either one is this job's, left on the target.
 			check.Data = webNodeFiles(ctx, access.Files, ns)
-			if table := process.ProcessTableOf(ctx, access.Driver); table != nil {
+			{
 				binary := state.Binary
 				if ns.Binary != "" {
 					binary = state.Binaries[ns.Binary]
 				}
-				observed := process.ObserveVacancy(ctx, table, binary, ns.Args, ns.DataDir, ns.ConfigPath)
-				if ns.PID > 0 {
-					observed = process.ObserveLaunch(ctx, table, ns.PID, binary, ns.Args)
-				}
-				if observed.State == process.OwnedRunning || observed.State == process.OwnedStopped {
+				observed, observeErr := access.Observe(ctx, resource.ProcessRead{PID: ns.PID, Binary: binary, Args: ns.Args, DataDir: ns.DataDir, ConfigPath: ns.ConfigPath})
+				if observeErr == nil && (observed.State == process.OwnedRunning || observed.State == process.OwnedStopped) {
 					check.Process = string(observed.State)
 				}
 			}

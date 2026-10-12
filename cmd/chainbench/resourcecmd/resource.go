@@ -23,6 +23,6 @@ func New() *cobra.Command {
 			"the placement a network shape would get, with nothing written anywhere.\n" +
 			"Nothing in this group changes anything — composing is `net`'s job.",
 	}
-	cmd.AddCommand(newPoolCmd(), newPlanCmd())
+	cmd.AddCommand(newPoolCmd(), newPlanCmd(), newInspectCmd(), newAccessCmd())
 	return cmd
 }

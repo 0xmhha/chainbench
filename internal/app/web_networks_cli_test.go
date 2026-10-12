@@ -90,6 +90,9 @@ func (observeCLI) ChainStatus(ctx context.Context, dir string) (State, error) {
 }
 
 func (observeCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
+	if len(args) >= 2 && args[0] == "resource" && args[1] == "inspect" {
+		return (planningCLI{}).Run(ctx, args...)
+	}
 	if len(args) < 2 || args[0] != "chain" || args[1] != "observe" {
 		return nil, errors.New("observeCLI answers chain observe only")
 	}

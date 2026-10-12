@@ -171,7 +171,7 @@ func (e *WebChainEngine) executeTestAttach(ctx context.Context, a DeploymentActo
 	if p.Attach == nil || len(p.Attach.Cases) == 0 {
 		return result, errors.New("no reviewed test cases")
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return result, err
 	}

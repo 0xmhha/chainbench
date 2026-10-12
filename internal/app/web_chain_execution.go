@@ -38,12 +38,10 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 			return result, err
 		}
 	}
-	d := Deps{Command: "web " + p.Input.Operation + " by " + a.ID}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return result, err
 	}
-	d.ServerLookup = lookup
 	if webNodeControlOperation(p.Input.Operation) {
 		err = e.phase(ctx, a, p.Input.Operation, report, func() error {
 			raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))

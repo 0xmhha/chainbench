@@ -12,7 +12,7 @@ import (
 // native-name test copy. Matching bytes at arbitrary paths are not sufficient.
 // Named per-node executables require their own reviewed asset binding; they
 // cannot borrow the base binary verification to authorize start or stop.
-func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) (string, error) {
+func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
@@ -30,7 +30,7 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 				if err != nil || expected != binding.Path {
 					return "", webConflict("node binary is not at its registered path")
 				}
-				access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
+				access, err := lookup.Open(webNodeTarget(state, ns))
 				if err != nil {
 					return "", err
 				}
@@ -79,7 +79,7 @@ func bindWebControlBinary(ctx context.Context, state State, p webChainPayload, l
 			spec = webNodeTarget(state, ns)
 		}
 	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(spec)
+	access, err := lookup.Open(spec)
 	if err != nil {
 		return "", err
 	}

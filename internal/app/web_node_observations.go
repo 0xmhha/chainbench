@@ -74,7 +74,6 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		network.Nodes[i].HostIdentity = expectedOf(ns).HostIdentity
 	}
 	ledgerMatches := verifyWebRecordLedger(state, dir) == nil
-	var declaration DeploymentDocument
 	p := webChainPayload{ControlDir: dir, Target: target}
 	for _, ref := range workspace.Documents {
 		d, err := e.documents.DocumentRevision(ref.ID, ref.Revision)
@@ -82,7 +81,6 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 			return WebNetwork{}, err
 		}
 		if d.Kind == "server-set" {
-			declaration = d
 			p.Set = d
 		}
 		if d.Kind == "workspace-config" {
@@ -90,11 +88,13 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 		}
 	}
 	bindings := e.documents.Bindings(a, workspace.ID)
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, declaration.DeploymentDocumentInput, bindings)
+	p.Input.CredentialBindings = bindings
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return network, nil
 	}
-	opener := resource.Opener{Lookup: lookup}
+	lookup = lookup.observationSnapshot()
+	opener := lookup
 	actual, err := opener.Inspect(ctx, state.Target)
 	if err != nil {
 		return network, nil

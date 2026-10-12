@@ -81,16 +81,26 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 		}
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
-	engine.UseCLI(observeCLI{})
+	inspectionCalls := 0
+	engine.UseCLI(targetTestCLI{run: func(ctx context.Context, args []string) ([]byte, error) {
+		if len(args) > 1 && args[0] == "resource" && args[1] == "inspect" {
+			inspectionCalls++
+		}
+		return (observeCLI{}).Run(ctx, args...)
+	}})
 	recordBefore, err := os.ReadFile(filepath.Join(control, "chain-record.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	check := func(launchable bool) {
 		t.Helper()
+		inspectionCalls = 0
 		network, err := engine.ObserveNetwork(ctx, actor, workspace.ID)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if inspectionCalls != 1 {
+			t.Fatalf("one observation queried the same machine %d times, want once", inspectionCalls)
 		}
 		n := network.Nodes[0]
 		if n.State != "running" || n.ObservedPID != child.Process.Pid {

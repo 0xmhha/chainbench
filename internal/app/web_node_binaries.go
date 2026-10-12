@@ -127,7 +127,7 @@ func saveWebNodeBinary(ctx context.Context, controlDir, expectedDigest string, b
 
 // currentWebNodeBinary validates durable provenance separately from the base
 // executable. Native source evidence and deployed bytes must both still match.
-func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) (*webNodeBinary, string, error) {
+func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) (*webNodeBinary, string, error) {
 	bindings, digest, err := readWebNodeBinaries(p.ControlDir)
 	if err != nil {
 		return nil, "", err
@@ -164,7 +164,7 @@ func (e *WebChainEngine) currentWebNodeBinary(ctx context.Context, state State, 
 			if err != nil || !reflect.DeepEqual(observed, binding.Evidence) {
 				return nil, "", webConflict("the node binary asset no longer matches its evidence")
 			}
-			access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
+			access, err := lookup.Open(webNodeTarget(state, ns))
 			if err != nil {
 				return nil, "", err
 			}
@@ -242,7 +242,7 @@ func verifyWebReplacementArguments(args []string, help string) error {
 	return nil
 }
 
-func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload, path string, lookup resource.Lookup) error {
+func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload, path string, lookup *webTargetReader) error {
 	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
 	if err != nil {
 		return err
@@ -270,7 +270,7 @@ func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload,
 		return webConflict("the replacement path leaves the data root")
 	}
 	spec := resource.TargetOf(server, filepath.Dir(path))
-	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
+	actual, err := lookup.Inspect(ctx, spec)
 	if err != nil {
 		return err
 	}
@@ -283,7 +283,7 @@ func inspectWebBinaryParent(ctx context.Context, state State, p webChainPayload,
 // stageWebBinaryReplacement never replaces a different file already occupying a
 // content-addressed destination. The retained binding precedes stopping so both
 // successful and failed replacement records can resolve their reviewed bytes.
-func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, a DeploymentActor, state State, p webChainPayload, lookup resource.Lookup) error {
+func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, a DeploymentActor, state State, p webChainPayload, lookup *webTargetReader) error {
 	if p.Replacement == nil {
 		return nil
 	}
@@ -305,7 +305,7 @@ func (e *WebChainEngine) stageWebBinaryReplacement(ctx context.Context, a Deploy
 	if err = inspectWebBinaryParent(ctx, state, p, expected, lookup); err != nil {
 		return err
 	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(state.Target)
+	access, err := lookup.Open(state.Target)
 	if err != nil {
 		return err
 	}

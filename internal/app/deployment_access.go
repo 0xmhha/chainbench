@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net"
-	"strconv"
-	"strings"
+	"os"
+	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"golang.org/x/crypto/ssh"
 )
@@ -102,64 +100,60 @@ func (s *DeploymentStore) resolveAccess(a DeploymentActor, workspace, server, cr
 }
 
 // DeploymentAccessResult separates successful authentication from permission to write.
-type DeploymentAccessResult struct {
-	Reachable         bool     `json:"reachable"`
-	Authenticated     bool     `json:"authenticated"`
-	HostIdentity      string   `json:"hostIdentity"`
-	AllowedOperations []string `json:"allowedOperations"`
-	Reason            string   `json:"reason,omitempty"`
-}
+type DeploymentAccessResult = resource.AccessCheck
 
 // CheckCredential performs a real SSH handshake and a read-only data-root permission probe.
 // Neither credentials nor remote command output are included in the response or audit.
-func (s *DeploymentStore) CheckCredential(ctx context.Context, a DeploymentActor, workspace, server, credential string) (DeploymentAccessResult, error) {
-	out := DeploymentAccessResult{AllowedOperations: []string{}}
+func (s *DeploymentStore) CheckCredential(ctx context.Context, a DeploymentActor, workspace, server, credential string) (out DeploymentAccessResult, err error) {
+	out = DeploymentAccessResult{AllowedOperations: []string{}}
 	if !a.canEdit() {
 		return out, ErrDeploymentForbidden
 	}
-	host, config, creds, err := s.credentialLease(ctx, a, workspace, server, credential)
+	_, config, creds, err := s.credentialLease(ctx, a, workspace, server, credential)
 	if err != nil {
 		return out, err
 	}
-	policy := remote.HostKeyPolicy{KnownHostsFile: host.SSH.KnownHostsFile, InsecureHostKey: host.SSH.InsecureHostKey}
-	cb, err := policy.Callback()
+	s.mu.Lock()
+	cli := s.cli
+	w := s.state.Workspaces[workspace]
+	setdoc, _, err := s.workspaceDocuments(w.DeploymentWorkspaceInput)
+	s.mu.Unlock()
 	if err != nil {
-		out.Reason = "host-key verification unavailable"
-		return out, nil
+		return out, err
 	}
-	port := host.SSH.Port
-	if port == 0 {
-		port = remote.DefaultSSHPort
+	if cli == nil {
+		return out, errNoChainCLI
 	}
-	verify := func(hostname string, addr net.Addr, key ssh.PublicKey) error {
-		if err := cb(hostname, addr, key); err != nil {
+	dir, err := os.MkdirTemp("", "chainbench-access-")
+	if err != nil {
+		return out, err
+	}
+	defer func() { err = errors.Join(err, os.RemoveAll(dir)) }()
+	logins, err := s.writeJobServerSet(ctx, a, setdoc.DeploymentDocumentInput, map[string]string{server: credential}, filepath.Join(dir, "secrets"))
+	if err != nil {
+		return out, err
+	}
+	guard := func() error {
+		if err := ctx.Err(); err != nil {
 			return err
 		}
-		out.HostIdentity = net.JoinHostPort(host.Host, strconv.Itoa(port)) + "/" + ssh.FingerprintSHA256(key)
+		if creds.BeforeDial != nil {
+			return creds.BeforeDial()
+		}
 		return nil
 	}
-	_, closer, err := remote.DialTunnelClient(creds, verify)
+	raw, err := runCLIWithAccessGuard(ctx, cli, guard, []string{"resource", "access", "--json", "--server-set", logins, "--server-logins", logins, "--server", server, "--data-root", config.DataRoot})
 	if err != nil {
-		out.Reachable = out.HostIdentity != ""
-		out.Reason = "SSH authentication or host access denied"
-		return out, nil
+		return out, err
 	}
-	_ = closer.Close()
-	out.Reachable = true
-	out.Authenticated = true
-	// Find the closest existing ancestor without creating or modifying node data.
-	quote := "'" + strings.ReplaceAll(config.DataRoot, "'", "'\"'\"'") + "'"
-	cmd := "p=" + quote + `; while [ ! -e "$p" ]; do p=${p%/*}; [ -n "$p" ] || p=/; done; test -d "$p" && test -w "$p" && test -x "$p"`
-	res, err := remote.Exec(ctx, creds, verify, cmd)
-	if err != nil || res.ExitCode != 0 {
-		out.Reason = "data root or nearest existing ancestor is not writable/searchable"
-	} else {
-		out.AllowedOperations = []string{"deploy"}
+	if err = json.Unmarshal(raw, &out); err != nil {
+		return out, errors.New("chainbench access check: invalid output")
+	}
+	if !out.Authenticated {
+		return out, nil
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := s.commit(a, "credential.check", workspace+":"+server, func(*deploymentState) {}); err != nil {
-		return out, err
-	}
-	return out, nil
+	err = s.commit(a, "credential.check", workspace+":"+server, func(*deploymentState) {})
+	return out, err
 }

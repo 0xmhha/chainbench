@@ -31,6 +31,7 @@ func TestWebCleanupRefusesUnrecordedLiveProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	engine.UseCLI(planningCLI{})
 	p.Input.WorkspaceID = "owned"
 	p.ControlDir = filepath.Join(root, "networks", "owned")
 	if err = os.MkdirAll(p.ControlDir, 0700); err != nil {

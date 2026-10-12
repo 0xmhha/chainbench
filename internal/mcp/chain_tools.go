@@ -99,9 +99,9 @@ func chainObserveTool() Tool {
 		Name:        "chainbench_chain_observe",
 		ReadOnly:    true,
 		Description: "Observe each recorded node of a composed network on its machine, changing nothing: whether its recorded launch is running, its pid runs something else, it has no process, or the record lost it; and whether its binary can launch. Args: workspaceDir.",
-		InputSchema: workspaceDirSchema(map[string]any{}),
+		InputSchema: workspaceDirSchema(map[string]any{"serverLogins": map[string]any{"type": "string"}}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.ChainObserve(ctx, app.Deps{}, app.ChainObserveIn{DataDir: argString(args, "workspaceDir", "")})
+			res, err := app.ChainObserve(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), app.ChainObserveIn{DataDir: argString(args, "workspaceDir", "")})
 			if err != nil {
 				return "", err
 			}

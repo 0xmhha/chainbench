@@ -138,6 +138,7 @@ func main() {
 			os.Exit(1)
 		}
 		engine.UseCLI(webcli.Runner{Binary: cliPath})
+		deployments.UseCLI(webcli.Runner{Binary: cliPath})
 		manifests.UseCLI(webcli.Runner{Binary: cliPath})
 		// Plans pin the documented surface of every binary they run, so the
 		// documentation has to be readable before the service starts.

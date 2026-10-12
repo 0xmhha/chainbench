@@ -25,6 +25,7 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	engine.UseCLI(planningCLI{})
 	control := filepath.Join(root, "network")
 	if err = os.Mkdir(control, 0o700); err != nil {
 		t.Fatal(err)
@@ -71,7 +72,7 @@ func TestWebControlRefusesUnrecordedLiveProcess(t *testing.T) {
 	state.Binary = "/bin/sleep"
 	state.Nodes[0].PID = 0
 	state.Nodes[0].Args = []string{"30"}
-	if err := verifyWebNodeProcesses(context.Background(), state, []string{"node1"}, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if err := verifyWebNodeProcesses(context.Background(), state, []string{"node1"}, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatalf("PID-zero record allowed control over a live process: %v", err)
 	}
 	if state.Nodes[0].PID != 0 || !process.Alive(child.Process.Pid) {

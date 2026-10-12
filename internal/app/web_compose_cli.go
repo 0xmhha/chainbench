@@ -106,7 +106,7 @@ func stepAt(steps []string, i int) string {
 // a registered genesis and the binary must still be the accepted bytes, and the
 // Web's own target notes are written. The composition itself, its order and
 // its lock, belong to the CLI. It returns the step that failed.
-func (e *WebChainEngine) composeChain(ctx context.Context, a DeploymentActor, p webChainPayload, asset ManifestBinary, keysDir string, servers []resource.Server, setPath, configPath string, steps []string, lookup resource.Lookup, report func(WebJobPhase) error) (string, error) {
+func (e *WebChainEngine) composeChain(ctx context.Context, a DeploymentActor, p webChainPayload, asset ManifestBinary, keysDir string, servers []resource.Server, setPath, configPath string, steps []string, lookup *webTargetReader, report func(WebJobPhase) error) (string, error) {
 	if err := e.allowed(a); err != nil {
 		return steps[0], err
 	}

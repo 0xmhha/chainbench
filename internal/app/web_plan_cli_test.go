@@ -16,6 +16,21 @@ type planningCLI struct{}
 
 func (planningCLI) ChainStatus(context.Context, string) (State, error) { return State{}, nil }
 func (planningCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
+	if len(args) >= 2 && args[0] == "resource" && args[1] == "inspect" {
+		raw, err := os.ReadFile(flagValue(args, "--request"))
+		if err != nil {
+			return nil, err
+		}
+		var in ResourceReadIn
+		if err = json.Unmarshal(raw, &in); err != nil {
+			return nil, err
+		}
+		out, err := ResourceRead(ctx, Deps{}.WithLogins(flagValue(args, "--server-logins")), in)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(out)
+	}
 	if !slices.Contains(args, "--plan") {
 		return nil, fmt.Errorf("unexpected planning fixture command: %v", args)
 	}

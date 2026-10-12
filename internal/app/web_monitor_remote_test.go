@@ -4,31 +4,14 @@ import (
 	"context"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
-
-// shellRunner executes the remote log commands with a local POSIX shell, so
-// the exact command text is exercised without an SSH server.
-func shellRunner(ctx context.Context, cmd string) (remote.ExecResult, error) {
-	c := exec.CommandContext(ctx, "sh", "-c", cmd)
-	var out, errOut strings.Builder
-	c.Stdout, c.Stderr = &out, &errOut
-	err := c.Run()
-	res := remote.ExecResult{Stdout: out.String(), Stderr: errOut.String()}
-	if exit, ok := err.(*exec.ExitError); ok {
-		res.ExitCode = exit.ExitCode()
-		err = nil
-	}
-	return res, err
-}
 
 func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	f := newMonitorFixture(t)
@@ -41,7 +24,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	opened := 0
 	open := func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
 		opened++
-		return webRemoteLogs{run: shellRunner}, nil
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 	}
 	// Without a collection job only the absence is recorded.
 	monitorCollect(t, f, m, 1)
@@ -108,7 +91,7 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 				close(blocked)
 				<-release
 			}
-			return webRemoteLogs{run: shellRunner}, nil
+			return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 		})
 	}()
 	<-blocked
@@ -138,7 +121,7 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 		if ns.Label == "node2" {
 			cancel()
 		}
-		return webRemoteLogs{run: shellRunner}, nil
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 	})
 	if err == nil {
 		t.Fatal("cancelled round reported success")
@@ -146,7 +129,7 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 	f.clock = f.clock.Add(5 * time.Second)
 	refused := m.CollectRemoteLogs(context.Background(), f.network, func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
 		if ns.Label == "node1" {
-			return webRemoteLogs{run: shellRunner}, nil
+			return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 		}
 		return nil, ErrDeploymentForbidden
 	})
