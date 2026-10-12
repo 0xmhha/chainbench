@@ -3,11 +3,14 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/core/node"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -86,7 +89,8 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 			p.Config = d
 		}
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, declaration.DeploymentDocumentInput, e.documents.Bindings(a, workspace.ID))
+	bindings := e.documents.Bindings(a, workspace.ID)
+	lookup, err := e.documents.jobCredentialLookup(ctx, a, declaration.DeploymentDocumentInput, bindings)
 	if err != nil {
 		return network, nil
 	}
@@ -98,33 +102,31 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 	if actual != target {
 		return network, nil
 	}
+	// What each node's machine shows comes from `chainbench chain observe`,
+	// read with the caller's own logins; the Web adds what only it knows: the
+	// machine it recorded, the ledger it compares and the bindings it pinned.
+	p.Input.CredentialBindings = bindings
+	observed, err := e.observeThroughCLI(ctx, a, p)
+	if err != nil {
+		return network, nil
+	}
 	for i, ns := range state.Nodes {
-		spec := webNodeTarget(state, ns)
-		machine, err := opener.Inspect(ctx, spec)
+		machine, err := opener.Inspect(ctx, webNodeTarget(state, ns))
 		if err != nil || machine != expectedOf(ns) {
 			continue
 		}
-		access, err := opener.Open(spec)
-		if err != nil {
+		seen, ok := observed[ns.Index]
+		if !ok {
 			continue
 		}
-		observer := webObserverFor(access, machine)
-		binary := state.Binary
-		if ns.Binary != "" {
-			binary = state.Binaries[ns.Binary]
+		if !ledgerMatches && seen.State != "unrecorded_running" {
+			seen.State, seen.Reason = "ownership_mismatch", "ledger_mismatch"
 		}
-		observed := observeWebNodeProcess(ctx, observer, binary, ns)
-		if ns.PID == 0 {
-			observed = observeWebNodeVacancy(ctx, observer, binary, ns)
-		}
-		if !ledgerMatches && observed.State != "unrecorded_running" {
-			observed.State, observed.Reason = "ownership_mismatch", "ledger_mismatch"
-		}
-		network.Nodes[i].State = observed.State
-		network.Nodes[i].ObservedPID = observed.PID
-		network.Nodes[i].ObservationReason = observed.Reason
+		network.Nodes[i].State = string(seen.State)
+		network.Nodes[i].ObservedPID = seen.PID
+		network.Nodes[i].ObservationReason = seen.Reason
 		network.Nodes[i].ObservedAt = time.Now().UTC()
-		if observed.State == "running" || observed.State == "stopped" {
+		if seen.State == "running" || seen.State == "stopped" {
 			if ns.Binary != "" {
 				selected := p
 				selected.Input.NodeIDs = []string{string(ns.NodeLabel())}
@@ -137,9 +139,9 @@ func (e *WebChainEngine) ObserveNetwork(ctx context.Context, a DeploymentActor, 
 				network.Nodes[i].BinaryAssetID = binding.Evidence.ID
 				network.Nodes[i].BinarySHA256 = binding.Evidence.SHA256
 			}
-			if err := access.VerifyExecutable(ctx, binary); err != nil {
+			if seen.Executable != "ready" {
 				network.Nodes[i].ObservationReason = "binary_launch_unavailable"
-				if observed.State == "running" {
+				if seen.State == "running" {
 					network.Nodes[i].SupportedControls = []string{"node.stop"}
 				}
 				continue
@@ -171,4 +173,30 @@ func (s *WebJobs) ObserveNetwork(ctx context.Context, a DeploymentActor, id stri
 		return WebNetwork{}, ErrDeploymentNotFound
 	}
 	return observer.ObserveNetwork(ctx, a, id)
+}
+
+// observeThroughCLI runs `chainbench chain observe` on the network at
+// p.ControlDir with the caller's logins and returns each node's observation by
+// index.
+func (e *WebChainEngine) observeThroughCLI(ctx context.Context, a DeploymentActor, p webChainPayload) (map[int]chainsetup.NodeObservation, error) {
+	if e.cli == nil {
+		return nil, errNoChainCLI
+	}
+	logins, cleanup, err := e.jobLogins(ctx, a, p)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := e.cli.Run(ctx, "chain", "observe", "--json", "--workspace-dir", p.ControlDir, "--server-logins", logins)
+	if err = errors.Join(err, cleanup()); err != nil {
+		return nil, err
+	}
+	var out ChainObserveOut
+	if err = json.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("chainbench chain observe: unreadable output: %w", err)
+	}
+	byIndex := make(map[int]chainsetup.NodeObservation, len(out.Nodes))
+	for _, n := range out.Nodes {
+		byIndex[n.Index] = n
+	}
+	return byIndex, nil
 }

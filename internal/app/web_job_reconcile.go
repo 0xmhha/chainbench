@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -120,22 +121,22 @@ func (e *WebChainEngine) Reconcile(ctx context.Context, a DeploymentActor, prepa
 		check := WebNodeCheck{NodeID: string(ns.NodeLabel()), Process: "unknown", Data: "unknown"}
 		spec := webNodeTarget(state, ns)
 		access, err := opener.Open(spec)
-		machine, inspectErr := opener.Inspect(ctx, spec)
+		_, inspectErr := opener.Inspect(ctx, spec)
 		if err == nil && inspectErr == nil {
 			// The node's data directory or the configuration a deploy stage
 			// already wrote: either one is this job's, left on the target.
 			check.Data = webNodeFiles(ctx, access.Files, ns)
-			if observer := webObserverFor(access, machine); observer != nil {
+			if table := process.ProcessTableOf(ctx, access.Driver); table != nil {
 				binary := state.Binary
 				if ns.Binary != "" {
 					binary = state.Binaries[ns.Binary]
 				}
-				observed := observeWebNodeVacancy(ctx, observer, binary, ns)
+				observed := process.ObserveVacancy(ctx, table, binary, ns.Args, ns.DataDir, ns.ConfigPath)
 				if ns.PID > 0 {
-					observed = observeWebNodeProcess(ctx, observer, binary, ns)
+					observed = process.ObserveLaunch(ctx, table, ns.PID, binary, ns.Args)
 				}
-				if observed.State == "running" || observed.State == "stopped" {
-					check.Process = observed.State
+				if observed.State == process.OwnedRunning || observed.State == process.OwnedStopped {
+					check.Process = string(observed.State)
 				}
 			}
 		}

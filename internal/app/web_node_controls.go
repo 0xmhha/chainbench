@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -135,8 +136,8 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 		if target != owned && !slices.Contains(also, target) {
 			return webConflict("the node is not on a machine this plan reviewed")
 		}
-		observer := webObserverFor(access, target)
-		if observer == nil {
+		table := process.ProcessTableOf(ctx, access.Driver)
+		if table == nil {
 			return webConflict("the node machine cannot be observed")
 		}
 		binary := state.Binary
@@ -144,12 +145,12 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 			binary = state.Binaries[ns.Binary]
 		}
 		if ns.PID == 0 {
-			if observeWebNodeVacancy(ctx, observer, binary, ns).State != "stopped" {
+			if process.ObserveVacancy(ctx, table, binary, ns.Args, ns.DataDir, ns.ConfigPath).State != process.OwnedStopped {
 				return webConflict("the stopped node still has a process")
 			}
 			continue
 		}
-		if observeWebNodeProcess(ctx, observer, binary, ns).State != "running" {
+		if process.ObserveLaunch(ctx, table, ns.PID, binary, ns.Args).State != process.OwnedRunning {
 			return webConflict("the recorded node process is not running")
 		}
 	}

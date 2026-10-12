@@ -78,3 +78,32 @@ func TestWebNetworksRefuseWithoutTheCLI(t *testing.T) {
 func (statusCLI) Run(context.Context, ...string) ([]byte, error) {
 	return nil, errors.New("statusCLI answers chain status only")
 }
+
+// observeCLI answers `chain observe` by running the same use case the CLI
+// runs, in this process, with the logins file the command names. Every other
+// command is refused, so a test using it exercises observation only.
+type observeCLI struct{}
+
+func (observeCLI) ChainStatus(ctx context.Context, dir string) (State, error) {
+	out, err := ChainStatus(ctx, Deps{}, ChainStatusIn{DataDir: dir})
+	return out.State, err
+}
+
+func (observeCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
+	if len(args) < 2 || args[0] != "chain" || args[1] != "observe" {
+		return nil, errors.New("observeCLI answers chain observe only")
+	}
+	flag := func(name string) string {
+		for i, a := range args {
+			if a == name && i+1 < len(args) {
+				return args[i+1]
+			}
+		}
+		return ""
+	}
+	out, err := ChainObserve(ctx, Deps{}.WithLogins(flag("--server-logins")), ChainObserveIn{DataDir: flag("--workspace-dir")})
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(out)
+}
