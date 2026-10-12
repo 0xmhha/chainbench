@@ -1,0 +1,60 @@
+package suitecmd_test
+
+import (
+	"encoding/json"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// repoKeys is the repository's key preset, named absolutely so a run in this
+// package's directory reaches the step under test instead of a missing key set.
+func repoKeys(t *testing.T) string {
+	t.Helper()
+	abs, err := filepath.Abs(filepath.Join("..", "..", "..", "presets", "keys"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return abs
+}
+
+// TestRun_BinaryForReachesTheEngine: --binary-for binds a declared binary name
+// to an executable the caller chose, and the engine judges it. A name the case
+// does not declare is refused by the engine, which proves the flag got there.
+func TestRun_BinaryForReachesTheEngine(t *testing.T) {
+	stdout, _, err := runSplit(t, "run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json",
+		"--keys", repoKeys(t), "--binary-for", "undeclared=/bin/true", tcPath("07-basic-wbft-consensus.json"))
+	if err == nil {
+		t.Fatal("a run with an undeclared binary name succeeded")
+	}
+	var doc struct {
+		Error string `json:"error"`
+	}
+	if jerr := json.Unmarshal([]byte(stdout), &doc); jerr != nil {
+		t.Fatalf("stdout is not a document: %v\n%s", jerr, stdout)
+	}
+	if !strings.Contains(doc.Error, `binary override "undeclared" is not declared by the test`) {
+		t.Fatalf("error = %q, want the engine's refusal of the undeclared name", doc.Error)
+	}
+}
+
+// TestRun_JSONCarriesTheSetupSteps: under --json the setup narration goes to
+// stderr, so a caller reading only the document needs the steps in it to say
+// what the run changed before it failed.
+func TestRun_JSONCarriesTheSetupSteps(t *testing.T) {
+	stdout, _, err := runSplit(t, "run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json",
+		"--keys", repoKeys(t), "--binary", "/nonexistent/chainbench-test-binary", tcPath("07-basic-wbft-consensus.json"))
+	if err == nil {
+		t.Fatal("a run on a missing binary succeeded")
+	}
+	var doc struct {
+		Error      string   `json:"error"`
+		SetupSteps []string `json:"setupSteps"`
+	}
+	if jerr := json.Unmarshal([]byte(stdout), &doc); jerr != nil {
+		t.Fatalf("stdout is not a document: %v\n%s", jerr, stdout)
+	}
+	if len(doc.SetupSteps) == 0 {
+		t.Fatalf("the document lists no setup steps although the run got as far as %q", doc.Error)
+	}
+}

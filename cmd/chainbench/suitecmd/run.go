@@ -40,6 +40,10 @@ type runReport struct {
 	// declaration that is wrong from a network that would not stand up without
 	// matching on the message.
 	FailedAt string `json:"failedAt,omitempty"`
+	// SetupSteps is what composing the network did, in order. Under --json the
+	// same lines go to stderr as progress, so a caller reading only the
+	// document still learns what the run changed before it ended.
+	SetupSteps []string `json:"setupSteps,omitempty"`
 	app.RunSummary
 }
 
@@ -60,6 +64,8 @@ func NewRun() *cobra.Command {
 		chainID            int64
 		networkID          int64
 		launchOpts         []string
+		binaryFor          []string
+		readOnlyKeys       bool
 		dashboardURL       string
 		jsonOut            bool
 		noSkips            bool
@@ -133,6 +139,17 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("workspace-config") {
 				in.WorkspaceConfigPath = workspaceConfig
 			}
+			if len(binaryFor) > 0 {
+				in.BinaryOverrides = map[string]string{}
+				for _, pair := range binaryFor {
+					name, path, ok := strings.Cut(pair, "=")
+					if !ok || name == "" {
+						return fmt.Errorf("--binary-for %q: want name=path", pair)
+					}
+					in.BinaryOverrides[name] = path
+				}
+			}
+			in.ReadOnlyKeys = readOnlyKeys
 			if planOnly {
 				return showPlan(cmd, in, jsonOut)
 			}
@@ -162,6 +179,8 @@ func NewRun() *cobra.Command {
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
+	cmd.Flags().StringArrayVar(&binaryFor, "binary-for", nil, "compose: name=path binds a binary name the specs declare to this executable (repeatable)")
+	cmd.Flags().BoolVar(&readOnlyKeys, "read-only-keys", false, "compose: read --keys without registering accounts into it, for a key set that must not change")
 	cmd.Flags().StringVar(&keysDir, "keys", preset.KeysDir, "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "keyPreset",
 		"compose: where node identities come from — keyPreset (use --keys as-is) | generate (create a fresh set in --keys)")
@@ -227,7 +246,7 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 	if err != nil {
 		return err
 	}
-	return printSession(cmd.OutOrStdout(), root, jsonOut, noSkips)
+	return printSession(cmd.OutOrStdout(), runReport{Session: root}, jsonOut, noSkips)
 }
 
 // expandEach resolves ${VAR} and ${VAR:-default} in each endpoint, the same
@@ -264,9 +283,9 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 		fmt.Fprintln(notes, step)
 	}
 	if err != nil {
-		return setupFailure(cmd.OutOrStdout(), err, failedAtOf(res), jsonOut)
+		return setupFailure(cmd.OutOrStdout(), runReport{Error: err.Error(), FailedAt: failedAtOf(res), SetupSteps: res.SetupSteps}, err, jsonOut)
 	}
-	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut, noSkips)
+	return printSession(cmd.OutOrStdout(), runReport{Session: res.SessionRoot, SetupSteps: res.SetupSteps}, jsonOut, noSkips)
 }
 
 // setupFailure reports a run that never got as far as a session.
@@ -280,14 +299,15 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) e
 // The code is 2 either way, --json or not, matching what sequenceExit already
 // returns for a definition that could not run: "the chain would not come up" is not the
 // same news as "a test ran and failed", and CI gates on the difference.
-func setupFailure(out io.Writer, cause error, at string, jsonOut bool) error {
+func setupFailure(out io.Writer, report runReport, cause error, jsonOut bool) error {
+	at := report.FailedAt
 	if jsonOut {
 		// The document goes out even though the run failed, because under
 		// --json stdout is the whole answer: a consumer that gets nothing
 		// cannot tell a compose failure from a crash.
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(runReport{Error: cause.Error(), FailedAt: at}); err != nil {
+		if err := enc.Encode(report); err != nil {
 			return err
 		}
 	}
@@ -360,7 +380,7 @@ func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips
 		if r.Err == "" {
 			// A failed definition is reported in the tally below, so its own
 			// verdict must not stop the remaining ones from printing.
-			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false, false)
+			_ = printSession(cmd.OutOrStdout(), runReport{Session: r.Out.SessionRoot}, false, false)
 		}
 	}
 
@@ -422,7 +442,8 @@ func sequenceExit(res app.RunSuitesOut, noSkips bool) error {
 
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
-func printSession(out io.Writer, root string, jsonOut, noSkips bool) error {
+func printSession(out io.Writer, report runReport, jsonOut, noSkips bool) error {
+	root := report.Session
 	doc, err := app.SessionSummary(root)
 	if err != nil {
 		return err
@@ -431,7 +452,8 @@ func printSession(out io.Writer, root string, jsonOut, noSkips bool) error {
 	if jsonOut {
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(runReport{Session: root, RunSummary: doc}); err != nil {
+		report.RunSummary = doc
+		if err := enc.Encode(report); err != nil {
 			return err
 		}
 	} else {
