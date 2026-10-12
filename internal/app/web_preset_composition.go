@@ -19,6 +19,9 @@ type webPresetComposition struct {
 	Request  ChainUpIn          `json:"request"`
 	Plan     ComposePlan        `json:"plan"`
 	Genesis  *webPresetGenesis  `json:"genesis,omitempty"`
+	// Content is the preset as `chain up --chain-preset` reads it, with a
+	// registered genesis named by the path it was materialised at.
+	Content json.RawMessage `json:"content,omitempty"`
 }
 
 type webPresetGenesis struct {
@@ -185,7 +188,7 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	if _, err = chainsetup.GenesisOptsFor(ChainGenesisIn{GenesisExisting: request.GenesisExisting, ChainID: request.ChainID, Set: request.GenesisSet, OverlayPath: request.OverlayPath}); err != nil {
 		return out, err
 	}
-	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis}, nil
+	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis, Content: content}, nil
 }
 
 // validateWebTableInputs refuses per-node files and keys, and per-node binary

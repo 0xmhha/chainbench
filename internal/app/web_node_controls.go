@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -79,18 +78,8 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	if err != nil {
 		return err
 	}
-	for _, entry := range []struct {
-		path string
-		doc  DeploymentDocument
-	}{{state.WorkspaceConfig, p.Config}, {state.ServerSet, p.Set}} {
-		expected, err := ExportDeploymentDocument(entry.doc.DeploymentDocumentInput, "yaml")
-		if err != nil {
-			return err
-		}
-		actual, err := os.ReadFile(entry.path)
-		if err != nil || manifestHash(actual) != manifestHash(expected) {
-			return webConflict("the recorded declarations differ from the reviewed documents")
-		}
+	if err = recordedDeclarationsMatch(state, p); err != nil {
+		return err
 	}
 	spec := webNodeTarget(state, ns)
 	spec.DataRoot = ns.DataDir
