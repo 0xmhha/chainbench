@@ -131,7 +131,7 @@ func (e *WebChainEngine) execute(ctx context.Context, a DeploymentActor, p webCh
 				}
 				binary := ""
 				if p.Replacement != nil {
-					if err = e.stageWebBinaryReplacement(ctx, state, p, lookup); err != nil {
+					if err = e.stageWebBinaryReplacement(ctx, a, state, p, lookup); err != nil {
 						result.UnresolvedResources = []string{p.ControlDir, p.Replacement.Path}
 						result.PartialEffects = append(result.PartialEffects, "Replacement binary staging attempted; the selected node has not been stopped by this phase")
 						return err
