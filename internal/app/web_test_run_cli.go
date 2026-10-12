@@ -34,13 +34,9 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, s
 	if cli == nil {
 		return RunSuiteOut{}, errNoChainCLI
 	}
-	args := []string{"run"}
-	for i, raw := range in.SpecContent {
-		name := filepath.Join(dir, "cases", fmt.Sprintf("%03d.json", i+1))
-		if err := (filestore.Local{}).Write(ctx, name, raw, 0o600); err != nil {
-			return RunSuiteOut{}, err
-		}
-		args = append(args, name)
+	args, err := writeCLICases(ctx, in.SpecContent, dir)
+	if err != nil {
+		return RunSuiteOut{}, err
 	}
 	if serverSet == "" {
 		serverSet = in.Server.SetPath
@@ -72,6 +68,47 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, s
 	if in.KeepUp {
 		args = append(args, "--keep-up")
 	}
+	return runCLIDocument(ctx, cli, args)
+}
+
+// attachThroughCLI runs the reviewed cases against the network recorded at
+// control with `chainbench run --attach`, for reading only: no step may act on
+// a node and the accepted key set is not written to. serverSet supplies the
+// job's own logins for the recorded hosts.
+func attachThroughCLI(ctx context.Context, cli ChainCLI, cases [][]byte, control, artifactRoot, dir, serverSet string) (RunSuiteOut, error) {
+	if cli == nil {
+		return RunSuiteOut{}, errNoChainCLI
+	}
+	args, err := writeCLICases(ctx, cases, dir)
+	if err != nil {
+		return RunSuiteOut{}, err
+	}
+	args = append(args, "--json", "--attach", "--workspace-dir", control, "--no-node-control", "--read-only-keys", "--artifact-root", artifactRoot)
+	if serverSet != "" {
+		args = append(args, "--server-set", serverSet)
+	}
+	return runCLIDocument(ctx, cli, args)
+}
+
+// writeCLICases writes each case into dir as the file the CLI reads, and
+// returns `run` followed by their paths.
+func writeCLICases(ctx context.Context, cases [][]byte, dir string) ([]string, error) {
+	args := []string{"run"}
+	for i, raw := range cases {
+		name := filepath.Join(dir, "cases", fmt.Sprintf("%03d.json", i+1))
+		if err := (filestore.Local{}).Write(ctx, name, raw, 0o600); err != nil {
+			return nil, err
+		}
+		args = append(args, name)
+	}
+	return args, nil
+}
+
+// runCLIDocument runs `chainbench run --json` and reads its document. A run
+// whose tests failed exits non-zero with a complete document: that is a
+// verdict, returned without an error. A run that never produced a session
+// returns the reason the CLI gave.
+func runCLIDocument(ctx context.Context, cli ChainCLI, args []string) (RunSuiteOut, error) {
 	stdout, runErr := cli.Run(ctx, args...)
 	var report cliRunReport
 	if err := json.Unmarshal(stdout, &report); err != nil {

@@ -158,3 +158,28 @@ func TestWebJobServerSetCarriesEachBoundCredentialPrivately(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestWebAttachThroughCLIReadsTheRecordedNetworkOnly: an attach job runs the
+// reviewed cases against the network the Web recorded, for reading only, with
+// the accepted keys unchanged and the job's own logins.
+func TestWebAttachThroughCLIReadsTheRecordedNetworkOnly(t *testing.T) {
+	cli := &runCLI{out: `{"session":"/sessions/a/UTC-1","tests":[],"summary":{"pass":1,"fail":0,"blocked":0,"skip":0}}`}
+	out, err := attachThroughCLI(context.Background(), cli, [][]byte{[]byte(`{"attach":1}`)}, "/control", "/sessions", t.TempDir(), "/job/server-set.yaml")
+	if err != nil || out.SessionRoot != "/sessions/a/UTC-1" {
+		t.Fatalf("attach = %+v %v", out, err)
+	}
+	args := cli.args
+	for _, flag := range []string{"--attach", "--no-node-control", "--read-only-keys", "--json"} {
+		if !slices.Contains(args, flag) {
+			t.Errorf("%s missing from %v", flag, args)
+		}
+	}
+	for flag, want := range map[string]string{"--workspace-dir": "/control", "--artifact-root": "/sessions", "--server-set": "/job/server-set.yaml"} {
+		if got := flagValue(args, flag); got != want {
+			t.Errorf("%s = %q, want %q", flag, got, want)
+		}
+	}
+	if slices.Contains(args, "--suite") || slices.Contains(args, "--keep-up") {
+		t.Errorf("compose-only flags reached an attach: %v", args)
+	}
+}

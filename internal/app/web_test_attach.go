@@ -12,7 +12,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
@@ -177,7 +176,7 @@ func (e *WebChainEngine) executeTestAttach(ctx context.Context, a DeploymentActo
 		return result, err
 	}
 	root := ""
-	err = e.phase(ctx, a, webTestAttachOperation, report, func() error {
+	err = e.phase(ctx, a, webTestAttachOperation, report, func() (phaseErr error) {
 		raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 		if err != nil || manifestHash(raw) != p.RecordDigest {
 			return ErrDeploymentConflict
@@ -193,14 +192,8 @@ func (e *WebChainEngine) executeTestAttach(ctx context.Context, a DeploymentActo
 		if err != nil || keys != p.Keys {
 			return ErrDeploymentConflict
 		}
-		urls := []string{}
-		for _, n := range p.Attach.Nodes.Nodes {
-			if n.RPCURL != "" {
-				urls = append(urls, n.RPCURL)
-			}
-		}
-		// A private directory for this run's account keys, removed when the
-		// run ends however it ends.
+		// A private directory for this run's account keys, cases and logins,
+		// removed when the run ends however it ends.
 		keyRoot := filepath.Join(e.root, "account-keys")
 		if err = os.Mkdir(keyRoot, 0700); err != nil && !os.IsExist(err) {
 			return err
@@ -209,17 +202,19 @@ func (e *WebChainEngine) executeTestAttach(ctx context.Context, a DeploymentActo
 		if err != nil {
 			return err
 		}
-		defer func() { _ = os.RemoveAll(dir) }()
+		defer func() { phaseErr = errors.Join(phaseErr, os.RemoveAll(dir)) }()
 		specs, err := e.writeAccountKeys(ctx, a, p, dir)
 		if err != nil {
 			return err
 		}
-		declared := &AttachDecl{Chain: state.Chain, RPCURLs: urls, KeysDir: state.KeysDir, Provides: p.Attach.Nodes.Capabilities}
-		var runErr error
-		root, runErr = AttachRun(ctx, Deps{Command: "web test.attach by " + a.ID, ServerLookup: lookup}, AttachRunIn{
-			At: lifecycle.AdoptChainByDeclaration, Declared: declared, ArtifactRoot: webOwnedSessions(e.root),
-			Specs: specs, Nodes: p.Attach.Nodes, ReadOnlyKeys: true,
-		})
+		serverSet, err := e.documents.writeJobServerSet(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings, filepath.Join(dir, "secrets"))
+		if err != nil {
+			return err
+		}
+		// The run happens in the chainbench CLI, attached to the network this
+		// job's record names, for reading only.
+		out, runErr := attachThroughCLI(ctx, e.cli, specs, p.ControlDir, webOwnedSessions(e.root), dir, serverSet)
+		root = out.SessionRoot
 		if runErr != nil {
 			return runErr
 		}
