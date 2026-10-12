@@ -104,6 +104,11 @@ Web이 `ChainUp`, `app.Upload`, `ChainStatus` 같은 공용 유스케이스를 �
   3. stdout NDJSON 진행 이벤트(`--events ndjson`)와 이벤트의 작업 id.
   4. 원자적 잠금(O_EXCL 또는 flock)과 포트 점유 계산의 작업공간 범위 지정.
   5. `run`의 `--binary-override`, 선언형 attach 노드 입력. `ReadOnlyKeys`는 필요한지 다시 따진다.
+- **P0 결과와 순서 조정 (2026-10-12).** `node swap`, `node reset` 명령과 MCP 도구(`3cd2dd05`), 두 프로세스가
+  같은 잠금을 함께 잡던 경쟁의 수정(`7ab443f7`)을 마쳤다. 나머지 P0 항목은 처음 필요해지는 단계로 옮긴다.
+  그래야 각 추가가 그 단계의 실제 사용으로 RED와 GREEN을 얻는다. 진행 상황은 CLI가 이미 쓰는 `chain-record.json`의
+  단계 기록과 테스트별 `status.json`을 읽어서 보이고, 이것으로 부족하다는 것이 P1 테스트에서 드러날 때만 NDJSON 이벤트를
+  더한다. JSON 출력과 `run` 입력 보강은 P2와 P3에서, 자원 점유 기록은 P3에서, 프로세스 신원 확인은 P4에서 CLI 코어로 옮긴다.
 - **P1 Web 실행기.** 작업 디렉터리, 자격증명 파일 수명, 하위 프로세스 실행, 취소, NDJSON 수신을 맡는 Web 쪽
   실행기 하나. 먼저 읽기 전용 관찰을 `chain status --json`, `chain health --json`으로 옮긴다.
 - **P2 테스트 작업.** `test.run`, `test.attach`를 `chainbench run --json`으로 옮긴다.
