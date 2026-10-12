@@ -481,3 +481,7 @@ func TestWebMonitorSamplesTheNodesTheCLIReportsRunning(t *testing.T) {
 		t.Fatalf("node1 block height = %v, want the one sample of the node the CLI reports running", values)
 	}
 }
+
+func (recordCLI) Run(context.Context, ...string) ([]byte, error) {
+	return nil, errors.New("recordCLI answers chain status only")
+}

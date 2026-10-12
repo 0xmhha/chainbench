@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,4 +73,8 @@ func TestWebNetworksRefuseWithoutTheCLI(t *testing.T) {
 	if _, err := engine.Networks(context.Background()); err == nil || !strings.Contains(err.Error(), "chainbench CLI") {
 		t.Fatalf("networks without the CLI gave %v, want a refusal naming the chainbench CLI", err)
 	}
+}
+
+func (statusCLI) Run(context.Context, ...string) ([]byte, error) {
+	return nil, errors.New("statusCLI answers chain status only")
 }

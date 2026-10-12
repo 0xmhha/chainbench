@@ -318,12 +318,25 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		result.PartialEffects = append(result.PartialEffects, fmt.Sprintf("Verified test binary %q provisioned: %s · SHA-256 %s", named.Name, named.ExecutionBinary, named.Binary.SHA256))
 	}
 	var out RunSuiteOut
-	err = e.phase(ctx, a, "test.run", report, func() error {
+	err = e.phase(ctx, a, "test.run", report, func() (phaseErr error) {
 		if err := e.recheckTestGenesis(ctx, p); err != nil {
 			return err
 		}
+		// The run happens in the chainbench CLI. Its private directory holds
+		// the cases and, for SSH targets, each bound login as private files;
+		// it is removed when the command ends, whatever the outcome.
+		work, err := os.MkdirTemp(p.TestRun.InputDir, "run-")
+		if err != nil {
+			return err
+		}
+		// Secrets left behind are a failure of the job, not a detail.
+		defer func() { phaseErr = errors.Join(phaseErr, os.RemoveAll(work)) }()
+		serverSet, err := e.documents.writeJobServerSet(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings, filepath.Join(work, "secrets"))
+		if err != nil {
+			return err
+		}
 		var runErr error
-		out, runErr = RunSuite(ctx, Deps{Command: "web test.run by " + a.ID, ServerLookup: lookup}, in)
+		out, runErr = runSuiteThroughCLI(ctx, e.cli, in, work, serverSet)
 		if runErr == nil && out.Summary.Failed() {
 			runErr = errors.New("one or more selected test cases failed or were blocked")
 		}

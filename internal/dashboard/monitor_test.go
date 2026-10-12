@@ -24,6 +24,10 @@ func (c fixtureStatusCLI) ChainStatus(context.Context, string) (app.State, error
 	return c.state, nil
 }
 
+func (fixtureStatusCLI) Run(context.Context, ...string) ([]byte, error) {
+	return nil, errors.New("fixtureStatusCLI answers chain status only")
+}
+
 func TestMonitorRoutesServeViewersAndRejectBadQueries(t *testing.T) {
 	root := t.TempDir()
 	network := "monitored"

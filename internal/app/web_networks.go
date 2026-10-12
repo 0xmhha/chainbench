@@ -18,6 +18,10 @@ import (
 type ChainCLI interface {
 	// ChainStatus is `chainbench chain status --json` for one workspace.
 	ChainStatus(ctx context.Context, dir string) (State, error)
+	// Run runs one chainbench command and returns what it printed on stdout.
+	// A command that exits non-zero returns its stdout too, since `--json`
+	// documents are printed on failure as well.
+	Run(ctx context.Context, args ...string) ([]byte, error)
 }
 
 // errNoChainCLI refuses network work on a dashboard started without the CLI.
