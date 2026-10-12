@@ -2,6 +2,7 @@ package chaincmd
 
 import (
 	"fmt"
+	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ func newNetUpCmd() *cobra.Command {
 		overlayPath                                          string
 		peering                                              string
 		docker                                               bool
+		presetPath                                           string
 		tf                                                   targetFlags
 		sf                                                   resourcecmd.ServerFlags
 	)
@@ -53,7 +55,7 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd), app.ChainUpIn{
+			in := app.ChainUpIn{
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
@@ -67,7 +69,13 @@ func newNetUpCmd() *cobra.Command {
 				GenesisExisting:     genesisExisting,
 				ChainID:             chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
-			})
+			}
+			if presetPath != "" {
+				if in, err = upFromPreset(cmd, presetPath, in); err != nil {
+					return err
+				}
+			}
+			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd), in)
 			// The steps that did run are worth printing even when a later one
 			// failed: they say how far the composition got.
 			printUpSteps(cmd, out)
@@ -104,9 +112,33 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
+	cmd.Flags().StringVar(&presetPath, "chain-preset", "", "chain-preset document to compose: its layout, genesis, config and launch options, as a test run would compose it; layout and genesis flags are refused beside it")
 	tf.bind(cmd)
 	sf.Bind(cmd)
 	return cmd
+}
+
+// presetDecides are the flags a chain preset answers itself. Given beside one,
+// they would be a second answer to the same question, so they are refused
+// rather than one silently winning.
+var presetDecides = []string{"bp", "en", "pn", "endpoint-syncmode", "topology", "binaries", "blueprint", "peering",
+	"chain-id", "set", "overlay", "genesis-existing", "launch-opt"}
+
+// upFromPreset reads the preset at path and composes the request from it.
+func upFromPreset(cmd *cobra.Command, path string, base app.ChainUpIn) (app.ChainUpIn, error) {
+	for _, name := range presetDecides {
+		if cmd.Flags().Changed(name) {
+			return app.ChainUpIn{}, fmt.Errorf("--%s is decided by --chain-preset; change the preset instead", name)
+		}
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return app.ChainUpIn{}, fmt.Errorf("read --chain-preset: %w", err)
+	}
+	if !cmd.Flags().Changed("keys") {
+		base.KeysDir = ""
+	}
+	return app.ChainUpFromPreset(cmd.Context(), raw, base)
 }
 
 // printUpSteps lists what each step recorded, in order.
