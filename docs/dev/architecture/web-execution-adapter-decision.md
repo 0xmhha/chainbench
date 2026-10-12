@@ -111,6 +111,10 @@ Web이 `ChainUp`, `app.Upload`, `ChainStatus` 같은 공용 유스케이스를 �
   더한다. JSON 출력과 `run` 입력 보강은 P2와 P3에서, 자원 점유 기록은 P3에서, 프로세스 신원 확인은 P4에서 CLI 코어로 옮긴다.
 - **P1 Web 실행기.** 작업 디렉터리, 자격증명 파일 수명, 하위 프로세스 실행, 취소, NDJSON 수신을 맡는 Web 쪽
   실행기 하나. 먼저 읽기 전용 관찰을 `chain status --json`, `chain health --json`으로 옮긴다.
+- **P1 결과 (2026-10-12).** L6 패키지 `internal/webcli`가 CLI를 실행한다. 취소하면 인터럽트를 보내고, CLI가 낸 오류 문장을
+  그대로 돌려준다. 대시보드는 CLI를 찾지 못하면 시작하지 않는다. 네트워크 목록(`b72204c7`)과 모니터링 수집·로그 조회(`06dc3271`)가
+  `chain status --json`으로 상태를 읽는다. 각각 기록 파일과 CLI 원장이 다를 때의 RED를 확인했고 WEB-07, WEB-08 실제 증명이 통과했다.
+  노드 관찰(`ObserveNetwork`)은 프로세스 신원 확인에 묶여 있어서 P4에서 옮긴다.
 - **P2 테스트 작업.** `test.run`, `test.attach`를 `chainbench run --json`으로 옮긴다.
 - **P3 체인 구성.** `chain.setup`, `chain.deploy`, 매니페스트 setup을 `chain up`으로 옮긴다.
 - **P4 노드 제어.** start, stop, restart, reset, swap을 P0 명령으로 옮긴다.
