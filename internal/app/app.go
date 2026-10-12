@@ -74,3 +74,14 @@ func (d Deps) now() time.Time {
 	}
 	return d.Clock()
 }
+
+// WithLogins takes the SSH logins for every server from the server-set file at
+// path, apart from the server set a network records. A network can then record
+// a set that holds no secret while one run supplies its own logins. An empty
+// path changes nothing.
+func (d Deps) WithLogins(path string) Deps {
+	if path != "" {
+		d.ServerLookup = resource.SetLookup(path)
+	}
+	return d
+}

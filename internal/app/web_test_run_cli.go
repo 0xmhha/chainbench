@@ -24,13 +24,13 @@ type cliRunReport struct {
 
 // runSuiteThroughCLI runs the reviewed suite with `chainbench run` instead of
 // the engine in this process. The cases are written into dir as files, since
-// that is what the command reads; serverSet, when set, is the job's own server
-// set carrying the bound credentials and replaces in.Server.SetPath.
+// that is what the command reads; logins, when set, is the job's own file of
+// bound credentials, named apart from the server set the network records.
 //
 // A run whose tests failed exits non-zero with a complete document: that is a
 // verdict, returned without an error. A run that never produced a session
 // returns the reason the CLI gave.
-func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, serverSet string) (RunSuiteOut, error) {
+func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, logins string) (RunSuiteOut, error) {
 	if cli == nil {
 		return RunSuiteOut{}, errNoChainCLI
 	}
@@ -38,15 +38,13 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, s
 	if err != nil {
 		return RunSuiteOut{}, err
 	}
-	if serverSet == "" {
-		serverSet = in.Server.SetPath
-	}
 	// --suite: the reviewed cases share one network and one session, as the
 	// plan the operator approved composed them.
 	args = append(args, "--json", "--suite", "--workspace-dir", in.DataDir)
 	for _, f := range []struct{ flag, value string }{
 		{"--chain", in.Chain}, {"--binary", in.Binary}, {"--keys", in.KeysDir}, {"--artifact-root", in.ArtifactRoot},
-		{"--workspace-config", in.WorkspaceConfigPath}, {"--server-set", serverSet}, {"--server", in.Server.Name},
+		{"--workspace-config", in.WorkspaceConfigPath}, {"--server-set", in.Server.SetPath}, {"--server", in.Server.Name},
+		{"--server-logins", logins},
 	} {
 		if f.value != "" {
 			args = append(args, f.flag, f.value)
@@ -73,9 +71,9 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, s
 
 // attachThroughCLI runs the reviewed cases against the network recorded at
 // control with `chainbench run --attach`, for reading only: no step may act on
-// a node and the accepted key set is not written to. serverSet supplies the
-// job's own logins for the recorded hosts.
-func attachThroughCLI(ctx context.Context, cli ChainCLI, cases [][]byte, control, artifactRoot, dir, serverSet string) (RunSuiteOut, error) {
+// a node and the accepted key set is not written to. logins supplies the job's
+// own logins for the recorded hosts.
+func attachThroughCLI(ctx context.Context, cli ChainCLI, cases [][]byte, control, artifactRoot, dir, logins string) (RunSuiteOut, error) {
 	if cli == nil {
 		return RunSuiteOut{}, errNoChainCLI
 	}
@@ -84,8 +82,8 @@ func attachThroughCLI(ctx context.Context, cli ChainCLI, cases [][]byte, control
 		return RunSuiteOut{}, err
 	}
 	args = append(args, "--json", "--attach", "--workspace-dir", control, "--no-node-control", "--read-only-keys", "--artifact-root", artifactRoot)
-	if serverSet != "" {
-		args = append(args, "--server-set", serverSet)
+	if logins != "" {
+		args = append(args, "--server-logins", logins)
 	}
 	return runCLIDocument(ctx, cli, args)
 }

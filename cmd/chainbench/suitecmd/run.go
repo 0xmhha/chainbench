@@ -68,6 +68,7 @@ func NewRun() *cobra.Command {
 		readOnlyKeys       bool
 		suite              bool
 		noNodeControl      bool
+		serverLogins       string
 		dashboardURL       string
 		jsonOut            bool
 		noSkips            bool
@@ -119,7 +120,7 @@ func NewRun() *cobra.Command {
 				}
 				return runAttached(cmd, args, start, workspaceDir, chain, rpcURLs,
 					artifactRoot, keysDir, dashboardURL, jsonOut, noSkips, allowChainMismatch,
-					attachReading{readOnlyKeys: readOnlyKeys, noNodeControl: noNodeControl, serverSet: sf.Ref().SetPath})
+					attachReading{readOnlyKeys: readOnlyKeys, noNodeControl: noNodeControl, logins: serverLogins})
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: presetRef,
@@ -163,9 +164,9 @@ func NewRun() *cobra.Command {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
 				// preflight decides whether to reuse it.
-				return runComposedSequence(cmd, in, jsonOut, noSkips)
+				return runComposedSequence(cmd, in, serverLogins, jsonOut, noSkips)
 			}
-			return runComposed(cmd, in, jsonOut, noSkips)
+			return runComposed(cmd, in, serverLogins, jsonOut, noSkips)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
@@ -183,6 +184,7 @@ func NewRun() *cobra.Command {
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringArrayVar(&binaryFor, "binary-for", nil, "compose: name=path binds a binary name the specs declare to this executable (repeatable)")
+	cmd.Flags().StringVar(&serverLogins, "server-logins", "", "server-set file whose ssh blocks supply this run's logins, apart from the server set the network records")
 	cmd.Flags().BoolVar(&noNodeControl, "no-node-control", false, "attach: run for reading only, giving no step control over the node processes")
 	cmd.Flags().BoolVar(&suite, "suite", false, "compose: run several definitions as one suite on one network with one session, instead of one run each")
 	cmd.Flags().BoolVar(&readOnlyKeys, "read-only-keys", false, "compose: read --keys without registering accounts into it, for a key set that must not change")
@@ -228,10 +230,10 @@ func defaultArtifactRoot() string {
 
 // attachReading is how far an attached run may reach into the network it did
 // not compose: whether it may register into the key set, whether its steps
-// may act on a node, and which server set supplies the logins for its hosts.
+// may act on a node, and which file supplies the logins for its hosts.
 type attachReading struct {
 	readOnlyKeys, noNodeControl bool
-	serverSet                   string
+	logins                      string
 }
 
 // runAttached runs the specs against a network that is already up.
@@ -250,7 +252,7 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 	}
 	bus, flush := dashboard.StreamAuthenticated(dashboardURL, os.Getenv("CHAINBENCH_PUBLISHER_TOKEN"))
 	defer flush()
-	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
+	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd).WithLogins(reading.logins), app.AttachRunIn{
 		At: start.At, Declared: start.Declared,
 		Chain: chain, RPCURLs: rpcURLs, DataDir: workspaceDir,
 		ArtifactRoot: artifactRoot, KeysDir: keysDir, Specs: specs, Bus: bus,
@@ -288,11 +290,11 @@ func envOrDefault(spec string) string {
 
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
-func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
+func runComposed(cmd *cobra.Command, in app.RunSuiteIn, logins string, jsonOut, noSkips bool) error {
 	// Under --json the whole of stdout is the document; the setup narration is
 	// progress, so it goes to stderr. Without it, both share stdout as before.
 	notes := progressWriter(cmd, jsonOut)
-	res, err := app.RunSuite(cmd.Context(), surface.Deps(cmd), in)
+	res, err := app.RunSuite(cmd.Context(), surface.Deps(cmd).WithLogins(logins), in)
 	for _, step := range res.SetupSteps {
 		fmt.Fprintln(notes, step)
 	}
@@ -369,9 +371,9 @@ func progressWriter(cmd *cobra.Command, jsonOut bool) io.Writer {
 // same path a single one takes, and prints each definition's setup, preflight
 // and session under its own heading. It ends with one line per definition so a
 // long run's outcome is readable without scrolling back.
-func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, noSkips bool) error {
+func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, logins string, jsonOut, noSkips bool) error {
 	notes := progressWriter(cmd, jsonOut)
-	res, err := app.RunSuites(cmd.Context(), surface.Deps(cmd), in)
+	res, err := app.RunSuites(cmd.Context(), surface.Deps(cmd).WithLogins(logins), in)
 	if err != nil {
 		return err
 	}

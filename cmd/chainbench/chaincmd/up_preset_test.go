@@ -57,3 +57,13 @@ func TestChainUp_PresetAndLayoutFlagsDoNotMix(t *testing.T) {
 		t.Fatalf("a preset with --bp gave %v, want a refusal naming --bp", err)
 	}
 }
+
+// TestChainUp_ServerLoginsIsAccepted: chain up takes a run's own logins apart
+// from the server set it records.
+func TestChainUp_ServerLoginsIsAccepted(t *testing.T) {
+	_, err := run(t, "chain", "up", "--workspace-dir", t.TempDir(), "--stage", "deploy", "--bp", "1",
+		"--server-logins", filepath.Join(t.TempDir(), "logins.yaml"), "--keys", filepath.Join("..", "..", "..", "presets", "keys"))
+	if err != nil && strings.Contains(err.Error(), "unknown flag") {
+		t.Fatalf("--server-logins was not accepted: %v", err)
+	}
+}

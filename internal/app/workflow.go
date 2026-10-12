@@ -12,7 +12,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -57,9 +56,6 @@ type AttachRunIn struct {
 	ReadOnlyKeys bool
 	// NoNodeControl attaches for reading only: no step may act on a node.
 	NoNodeControl bool
-	// ServerSet, when set, supplies the logins for the network's hosts in
-	// place of the set the network was composed with.
-	ServerSet string
 	// AllowChainMismatch runs even when the endpoint does not answer as the
 	// declared chain. It exists for a network whose operator chose a chain id
 	// other than the built-in default, which the probe reads as another chain;
@@ -149,9 +145,6 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 		if len(in.Caps) == 0 {
 			in.Caps = in.Declared.Provides
 		}
-	}
-	if in.ServerSet != "" {
-		d.ServerLookup = resource.SetLookup(in.ServerSet)
 	}
 	if in.At == lifecycle.AdoptChainByWorkspace {
 		if in.DataDir == "" {

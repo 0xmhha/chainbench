@@ -30,6 +30,7 @@ func newNetUpCmd() *cobra.Command {
 		peering                                              string
 		docker                                               bool
 		presetPath                                           string
+		serverLogins                                         string
 		tf                                                   targetFlags
 		sf                                                   resourcecmd.ServerFlags
 	)
@@ -75,7 +76,7 @@ func newNetUpCmd() *cobra.Command {
 					return err
 				}
 			}
-			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd), in)
+			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd).WithLogins(serverLogins), in)
 			// The steps that did run are worth printing even when a later one
 			// failed: they say how far the composition got.
 			printUpSteps(cmd, out)
@@ -112,6 +113,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
+	cmd.Flags().StringVar(&serverLogins, "server-logins", "", "server-set file whose ssh blocks supply this run's logins, apart from the server set the workspace records")
 	cmd.Flags().StringVar(&presetPath, "chain-preset", "", "chain-preset document to compose: its layout, genesis, config and launch options, as a test run would compose it; layout and genesis flags are refused beside it")
 	tf.bind(cmd)
 	sf.Bind(cmd)

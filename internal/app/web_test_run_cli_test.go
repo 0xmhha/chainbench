@@ -68,7 +68,10 @@ func TestWebRunSuiteThroughCLIPassesTheReviewedInputs(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 	for flag, want := range map[string]string{"--workspace-dir": "/control", "--chain": "stablenet", "--binary": "/bin/gstable", "--keys": "/keys",
-		"--artifact-root": "/sessions", "--workspace-config": "/inputs/workspace-config.yaml", "--server-set": "/job/server-set.yaml", "--server": "ssh"} {
+		"--artifact-root": "/sessions", "--workspace-config": "/inputs/workspace-config.yaml", "--server": "ssh",
+		// The network records the set without secrets; the job's logins are
+		// named apart so the record never points at a file removed after the run.
+		"--server-set": "/inputs/server-set.yaml", "--server-logins": "/job/server-set.yaml"} {
 		if got := flagValue(args, flag); got != want {
 			t.Errorf("%s = %q, want %q", flag, got, want)
 		}
@@ -174,12 +177,12 @@ func TestWebAttachThroughCLIReadsTheRecordedNetworkOnly(t *testing.T) {
 			t.Errorf("%s missing from %v", flag, args)
 		}
 	}
-	for flag, want := range map[string]string{"--workspace-dir": "/control", "--artifact-root": "/sessions", "--server-set": "/job/server-set.yaml"} {
+	for flag, want := range map[string]string{"--workspace-dir": "/control", "--artifact-root": "/sessions", "--server-logins": "/job/server-set.yaml"} {
 		if got := flagValue(args, flag); got != want {
 			t.Errorf("%s = %q, want %q", flag, got, want)
 		}
 	}
-	if slices.Contains(args, "--suite") || slices.Contains(args, "--keep-up") {
+	if slices.Contains(args, "--suite") || slices.Contains(args, "--keep-up") || slices.Contains(args, "--server-set") {
 		t.Errorf("compose-only flags reached an attach: %v", args)
 	}
 }

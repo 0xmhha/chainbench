@@ -99,3 +99,13 @@ func TestRun_NoNodeControlIsAnAttachFlag(t *testing.T) {
 		t.Fatalf("the attach flags were not accepted: %v", err)
 	}
 }
+
+// TestRun_ServerLoginsIsAccepted: --server-logins names a run's own logins,
+// apart from the server set the network records.
+func TestRun_ServerLoginsIsAccepted(t *testing.T) {
+	_, _, err := runSplit(t, "run", "--attach", "--workspace-dir", t.TempDir(), "--server-logins", filepath.Join(t.TempDir(), "logins.yaml"),
+		"--artifact-root", t.TempDir(), tcPath("08-attached-chain-produces.json"))
+	if err == nil || strings.Contains(err.Error(), "unknown flag") {
+		t.Fatalf("--server-logins was not accepted: %v", err)
+	}
+}
