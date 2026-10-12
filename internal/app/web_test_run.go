@@ -261,10 +261,6 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return result, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
-	if err != nil {
-		return result, err
-	}
 	in := e.webSuiteInput(p)
 	in.KeysDir, err = filepath.Abs(keys)
 	if err != nil {
@@ -309,7 +305,14 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return result, err
 	}
-	err = e.phase(ctx, a, "test.binary", report, func() error { return e.uploadWebBinary(ctx, p, lookup) })
+	err = e.phase(ctx, a, "test.binary", report, func() (phaseErr error) {
+		logins, cleanup, err := e.jobLogins(ctx, a, p)
+		if err != nil {
+			return err
+		}
+		defer func() { phaseErr = errors.Join(phaseErr, cleanup()) }()
+		return e.uploadTestBinaries(ctx, p, logins)
+	})
 	if err != nil {
 		return result, err
 	}
@@ -365,61 +368,33 @@ func webTestSessionRef(root, dir string) (string, error) {
 	return "web:" + ref, nil
 }
 
-func (e *WebChainEngine) uploadWebBinary(ctx context.Context, p webChainPayload, lookup resource.Lookup) error {
-	asset, err := e.binaryAsset(p.Arguments.AssetID)
-	if err != nil {
-		return err
+// uploadTestBinaries places every accepted test binary on the target through
+// `chainbench file upload`, which refuses bytes that are not the accepted
+// sha256 before writing and checks the written file again. logins supplies the
+// job's own SSH logins.
+func (e *WebChainEngine) uploadTestBinaries(ctx context.Context, p webChainPayload, logins string) error {
+	if e.cli == nil {
+		return errNoChainCLI
 	}
-	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
-	if err != nil {
-		return err
-	}
-	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
-	if err != nil {
-		return err
-	}
-	server, err := set.ByName(p.Arguments.ServerRef)
-	if err != nil {
-		return err
-	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(resource.TargetOf(server, wc.DataRoot))
-	if err != nil {
-		return err
-	}
-	if err = provisionWebBinary(ctx, access.Files, asset.Path, p.Binary.SHA256, p.ExecutionBinary); err != nil {
-		return err
-	}
-	for _, named := range p.NamedBinaries {
-		asset, err := e.binaryAsset(named.AssetID)
+	upload := func(assetID, sha256, destination string) error {
+		asset, err := e.binaryAsset(assetID)
 		if err != nil {
 			return err
 		}
-		if err = provisionWebBinary(ctx, access.Files, asset.Path, named.Binary.SHA256, named.ExecutionBinary); err != nil {
+		_, err = e.cli.Run(ctx, "file", "upload", asset.Path, "--remote", destination, "--force-upload",
+			"--sha256", sha256, "--mode", "0755", "--server", p.Arguments.ServerRef,
+			"--server-set", filepath.Join(p.TestRun.InputDir, "server-set.yaml"),
+			"--workspace-config", filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"),
+			"--server-logins", logins)
+		return err
+	}
+	if err := upload(p.Arguments.AssetID, p.Binary.SHA256, p.ExecutionBinary); err != nil {
+		return err
+	}
+	for _, named := range p.NamedBinaries {
+		if err := upload(named.AssetID, named.Binary.SHA256, named.ExecutionBinary); err != nil {
 			return fmt.Errorf("binary %q: %w", named.Name, err)
 		}
-	}
-	return nil
-}
-
-// provisionWebBinary writes an accepted asset's bytes to the target and
-// confirms what landed there is those bytes.
-func provisionWebBinary(ctx context.Context, files filestore.Store, source, sha256, destination string) error {
-	bytes, err := os.ReadFile(source)
-	if err != nil {
-		return err
-	}
-	if manifestHash(bytes) != sha256 {
-		return ErrDeploymentConflict
-	}
-	if err = files.Write(ctx, destination, bytes, 0755); err != nil {
-		return err
-	}
-	checksum, err := files.Checksum(ctx, destination)
-	if err != nil {
-		return err
-	}
-	if checksum != "sha256:"+sha256 {
-		return errors.New("provisioned test binary differs from the accepted asset")
 	}
 	return nil
 }
