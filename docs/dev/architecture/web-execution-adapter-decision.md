@@ -131,6 +131,11 @@ Web이 `ChainUp`, `app.Upload`, `ChainStatus` 같은 공용 유스케이스를 �
   `chain up --chain-preset <file>`로 연다. 순서는 (1) `--stage init`, (2) `--chain-preset`, (3) Web `chain.setup`/`chain.deploy` 전환
   (자격증명은 작업 서버 집합, 바이너리는 CLI의 `control.binaries` 배송과 sha256 확인, 단계 진행은 `chain-record.json` 읽기),
   (4) 매니페스트 setup 전환, (5) 테스트 계획과 테스트 바이너리 업로드 전환이다.
+- **P3 진행 (2026-10-12).** `chain up --stage init`(`df917b15`), `chain up --chain-preset`(`16f1b7ee`), 실행 기록과 분리된 로그인 파일
+  `--server-logins`(`a65d3971`)를 더했다. Web의 `chain.setup`/`chain.deploy`가 `chain up` 하나를 부르고 CLI가 기록하는 단계를 읽어
+  진행을 보인다(`c029caf5`). SSH 바이너리는 `control.binaries` 링크로 CLI가 보내고 sha256을 확인한다. 매니페스트 setup도
+  `chain up --stage init` 하나로 바뀌었다(`90c7bd87`). 그 과정에서 서버 집합 편집 계약이 호스트별 ssh를 내놓던 회귀를 고쳤다
+  (`ed2b2fd9`). WEB-01/02/03/04/06/07/11/12가 실제로 통과했다. 남은 P3 항목은 테스트 계획(`PlanSuiteLayout`)과 테스트 바이너리 업로드다.
 - **P4 노드 제어.** start, stop, restart, reset, swap을 P0 명령으로 옮긴다.
 - **P5 정리와 인수.** 쓰이지 않게 된 Web 전용 조율 코드를 지우고, 14개 기준을 고정 소스로 다시 통과시킨다.
 
