@@ -116,6 +116,14 @@ Web이 `ChainUp`, `app.Upload`, `ChainStatus` 같은 공용 유스케이스를 �
   `chain status --json`으로 상태를 읽는다. 각각 기록 파일과 CLI 원장이 다를 때의 RED를 확인했고 WEB-07, WEB-08 실제 증명이 통과했다.
   노드 관찰(`ObserveNetwork`)은 프로세스 신원 확인에 묶여 있어서 P4에서 옮긴다.
 - **P2 테스트 작업.** `test.run`, `test.attach`를 `chainbench run --json`으로 옮긴다.
+- **P2 결과 (2026-10-12).** 테스트 작업과 attach 작업의 실행 단계가 `chainbench run`을 부른다(`07d36ee7`, `6b410863`).
+  CLI에 `--binary-for`, `--read-only-keys`, JSON의 `setupSteps`(`8292ce78`), 여러 정의를 한 세션으로 돌리는 `--suite`(`c4896ee0`),
+  읽기 전용 attach인 `--no-node-control`과 attach용 `--server-set`(`91c082c1`), 서버 집합의 호스트별 `ssh` 블록(`53aec996`)을 더했다.
+  Web은 작업마다 0700 디렉터리에 케이스, 계정 키, 바인딩된 로그인(0600 파일)을 쓰고 실행이 끝나면 지운다.
+  실제 증명에서 두 결함이 나와 고쳤다. 대시보드가 죽어도 CLI가 계속 돌던 문제는 `CHAINBENCH_STOP_WITH_PARENT`로(`673c0735`),
+  deploy 직후 재시작에서 점유가 풀리던 기존 경합은 노드 설정 파일도 남은 데이터로 보도록(`9259f64c`) 고쳤다.
+  WEB-05, WEB-09, WEB-12, WEB-13과 두 Docker 서버 attach 증명이 통과했다. 테스트 계획(`PlanSuiteLayout`)과 테스트 바이너리 업로드는
+  아직 Web 안에 있어서 P3에서 옮긴다.
 - **P3 체인 구성.** `chain.setup`, `chain.deploy`, 매니페스트 setup을 `chain up`으로 옮긴다.
 - **P4 노드 제어.** start, stop, restart, reset, swap을 P0 명령으로 옮긴다.
 - **P5 정리와 인수.** 쓰이지 않게 된 Web 전용 조율 코드를 지우고, 14개 기준을 고정 소스로 다시 통과시킨다.
