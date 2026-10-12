@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-13",
+  "invocationId": "c74f2c8a-0a60-4196-a359-dca116a2d512",
+  "startedAt": "2026-10-11T22:11:04.913810+00:00",
+  "finishedAt": "2026-10-11T22:22:11.854932+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "normal-end-retain-and-cleanup",
+    "user-cancel-retain-and-cleanup",
+    "executor-and-admin-cancel",
+    "cleanup-failure-reported",
+    "revocation-retains-and-blocks-access",
+    "attach-protection"
+  ],
+  "executedScenarios": [
+    "normal-end-retain-and-cleanup",
+    "user-cancel-retain-and-cleanup",
+    "executor-and-admin-cancel",
+    "cleanup-failure-reported",
+    "revocation-retains-and-blocks-access",
+    "attach-protection"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "3d58f5126ad2ff9f6db69e518f7d9f5ef33337ae29adf64b363d73cc2873caad"
+}

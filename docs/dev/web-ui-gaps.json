@@ -1,0 +1,994 @@
+{
+  "version": 1,
+  "policy": "A criterion stays open while any gap that names it is open. A gap closes only with a failing test that now passes, the verifying command and the commit.",
+  "gaps": [
+    {
+      "id": "G-A01",
+      "group": "seed",
+      "title": "세 체인 분석 자료 네 종을 버전이 있는 ChainSurface 카탈로그로 만들고 GET /api/v1/chains/{chainId}/surface로 제공한다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: docs/chain-analysis 세 체인 × 네 산출물",
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약",
+        "docs/dev/web-ui.openapi.yaml chainSurface, ChainSurface"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194 ChainSurfaces: []any{}",
+        "tests/webui/fixtures/prepare_web01.py:42-66 (제품이 아니라 인수 준비 스크립트가 대조한다)"
+      ],
+      "completion": "명령 경로·위치 인자·global/local 범위·숨김·OptionKey·schemaRef·출처(문서 경로, digest, 체인 커밋, 캡처 시각)·지원 여부와 제외 이유를 응답하고 assetId가 있으면 그 바이너리 검증을 결합한다.",
+      "status": "closed",
+      "verification": "go test ./internal/core/chainsurface ./internal/dashboard -run TestChainSurfaceRoute; go test ./internal/app -run TestChainSurface; GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries",
+      "commit": "4b524de7",
+      "evidence": "RED: 249fd11c dashboard answered GET /api/v1/chains/stablenet/surface with 404. GREEN: 4b524de7 answers 200 with 1135 options and 56 commands; the three native binaries are verified."
+    },
+    {
+      "id": "G-A02",
+      "group": "seed",
+      "title": "계획에 사용할 ChainSurface 참조와 지문을 고정하고 실행 전에 다시 확인한다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: 계획의 chainSurfaces fingerprint 변경은 실행 전 재검증",
+        "docs/dev/web-ui.openapi.yaml Plan.chainSurfaces"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194",
+        "internal/app/web_job_contract.go:84"
+      ],
+      "completion": "계획 응답이 체인별 surface 참조를 담고, 문서·계약·바이너리 지문이 바뀌면 작업 접수를 409로 거절한다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "7db313cd",
+      "evidence": "Unit: TestPlanPinsTheSurfaceOfEachBinaryItRuns and TestExecutionRefusesAChangedSurface (a changed documentation, contract or binary refuses the job). Live: in the node-detail proof the plan response for node.stop carried chainSurfaces for wbft (asset wbft, contract and fingerprint), and in the navigation proof the reviewed plan started, which re-judges the pinned surfaces; that start failed with 409 until G-D09 made binary judgement repeatable. A live run that changes a surface between plan and start was not performed."
+    },
+    {
+      "id": "G-A03",
+      "group": "seed",
+      "title": "문서 캡처 커밋과 선택한 바이너리 커밋을 비교해 stale을 판정하고, stale이면 그 바이너리 help로 계획이 쓰는 매핑을 모두 확인하기 전에는 실행하지 않는다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (문서와 바이너리 커밋이 다르면 stale)"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go:52,82-92 (checksum 변경만 stale로 보고 help는 두 철자만 확인)"
+      ],
+      "completion": "커밋이 다른 바이너리는 stale로 표시되고, 계획이 넘길 모든 OptionKey의 플래그가 그 바이너리 help에 없으면 계획이 거절된다. 숨김·command-local 확인은 따로 기록한다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestChainSurfaceJudgesTheSelectedBinary|TestPlanRefusesABinaryWithoutAnOptionItSets\"; GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries",
+      "commit": "4b524de7",
+      "evidence": "RED: no surface existed, so a binary from another commit or without a mapped flag was not judged. GREEN: a different commit is stale, a missing mapped flag is incompatible and refuses the plan."
+    },
+    {
+      "id": "G-A04",
+      "group": "seed",
+      "title": "실행 옵션 schema에 엔진이 아는 허용값·범위·기본값을 담고 폼과 서버가 같은 제약을 쓴다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml constraints: required/default/enum/range를 공통 계약으로 노출",
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료"
+      ],
+      "code": [
+        "internal/core/nodeconfig/launchopt.go:447-462 (bool이 아닌 옵션은 모두 type string)"
+      ],
+      "completion": "포트·consensusmethod 같은 옵션에 범위나 허용값이 있고, 범위를 벗어난 값을 서버가 422로 거절한다.",
+      "status": "closed",
+      "verification": "go test ./internal/core/nodeconfig ./internal/testengine -run \"TestOptionValues|TestBuilderRefuses|TestOptionSchemasCarry|TestValidateChainPresetRefusesValuesOutside\"; node --test tests/webui/dsl-form.test.mjs",
+      "commit": "4b524de7",
+      "evidence": "RED: with the value check removed, presets with cache.gc 150, gcmode partial and consensusmethod 9 validated. GREEN: all three are refused and the schemas carry the ranges."
+    },
+    {
+      "id": "G-A05",
+      "group": "seed",
+      "title": "한 workspace의 노드를 서버 풀의 여러 서버에 나누어 배치하고 배포한다.",
+      "criteria": [
+        "WEB-03",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (노드 배치, 서버 풀)",
+        "docs/dev/web-ui-implementation.md 단일 대상 한계"
+      ],
+      "code": [
+        "internal/app/web_chain_engine.go:67,180 (대상이 ServerRef 하나)"
+      ],
+      "completion": "노드별 서버를 고르는 배치가 계획·잠금·실제 배포에 반영되고, 실제 두 대상에 나뉜 체인이 블록을 만든다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_multihost.py (Docker: chainbench-server1, a second server container and a control container running the Linux dashboard on the same network; linux gstable 0937ac5c; receipt chainbench-out/web-ui-development/multihost/receipt.json)",
+      "commit": "3152e8ba, 808d243e, b21334c6",
+      "evidence": "RED: before 3152e8ba a plan targeted one ServerRef only. GREEN (multihost receipt, invocation 78f58e1d1cc6): the browser planned chain.deploy over the whole server set; the plan review listed both SSH bindings (server1, server2 → docker login); the job succeeded; node1 and node3 ran on one machine and node2 and node4 on another (two distinct machine identities), all observed running; every node reached block 34 in the collected block_height metrics. The servers are containers on one Mac, not separate hosts."
+    },
+    {
+      "id": "G-A06",
+      "group": "seed",
+      "title": "여러 서버에 나뉜 네트워크에서도 노드 제어, attach 테스트, 원격 로그 수집, 노드 관측을 노드마다 그 노드의 서버에서 수행한다.",
+      "criteria": [
+        "WEB-07",
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 노드 제어",
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
+      ],
+      "code": [
+        "internal/app/web_chain_servers.go webNodeMachine, webNodeServer",
+        "internal/app/web_node_observations.go",
+        "internal/app/web_network_monitor.go"
+      ],
+      "completion": "두 서버에 나뉜 네트워크에서 각 서버의 노드를 시작·정지하고 관측과 로그가 그 노드의 서버에서 읽힌다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_multihost.py (Docker: chainbench-server1, a second server container and a control container running the Linux dashboard on the same network; linux gstable 0937ac5c; receipt chainbench-out/web-ui-development/multihost/receipt.json)",
+      "commit": "808d243e, d9288207, b21334c6",
+      "evidence": "RED (live, before d9288207): planning node.stop for node2 on server2 was refused with 409 \"the node is not on a machine this plan reviewed\": the node-control plan and its execution rechecks did not pass the reviewed machines to the process check, so any node off the first server was refused. GREEN (multihost receipt): node2 on server2 was observed running from its node page, stopped through the plan review (others kept running), started again; log collection over the whole set archived 100 lines from node2; an attach test against the spread network succeeded (run web:20261011-133712-1)."
+    },
+    {
+      "id": "G-B01",
+      "group": "spec",
+      "title": "GET /api/v1/contracts/{contractId}로 계약을 ID로 조회한다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml contract",
+        "docs/dev/web-ui-spec.md HTTP API 동작"
+      ],
+      "code": [
+        "internal/dashboard/{deployment,manifests,testcase,chainpreset}.go 고정 경로 네 개만 있다"
+      ],
+      "completion": "등록된 계약 ID는 같은 본문을 돌려주고 모르는 ID는 404다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestContractRouteNamesTheContractsThisServerServes",
+      "commit": "652f0fa9",
+      "evidence": "RED: an unknown contract id answered the mux text \"404 page not found\" and named nothing. GREEN: served ids answer from their routes and any other id is 404 naming chain-preset, deployment, dsl and manifest as enabled."
+    },
+    {
+      "id": "G-B02",
+      "group": "spec",
+      "title": "GET /api/v1/workspaces/{workspaceId}/networks를 제공한다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml workspaceNetworks"
+      ],
+      "code": [
+        "internal/dashboard/jobs.go:35 (문서에 없는 /api/v1/networks만 있다)"
+      ],
+      "completion": "workspace의 network 목록을 계약 형식으로 돌려준다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestWorkspaceNetworksListOnlyThatWorkspace",
+      "commit": "652f0fa9",
+      "evidence": "RED: GET /api/v1/workspaces/w2/networks was 404. GREEN: it lists only that workspace's networks in a page."
+    },
+    {
+      "id": "G-B03",
+      "group": "spec",
+      "title": "감사 기록을 하나의 AuditRecord 형식(id, actor, operation, target, requestId, jobId, result, time)으로 남기고 관리자가 GET /api/v1/audit로 조회한다.",
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml audit, AuditRecord",
+        "docs/dev/architecture/chainbench-web-ui.seed.yaml ontology AuditRecord"
+      ],
+      "code": [
+        "internal/app/web_auth.go:273-282",
+        "internal/app/deployment_store.go:86-91",
+        "internal/app/web_jobs.go:117 (기록이 네 곳에 흩어져 있고 조회 경로가 없다)"
+      ],
+      "completion": "역할 변경·거절·취소·삭제가 대상과 결과를 포함해 조회되고, 관리자가 아니면 403이며, 히스토리 삭제 뒤에도 남는다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestAuditTrailRecordsTargetsRequestsAndIsAdministratorOnly",
+      "commit": "652f0fa9",
+      "evidence": "RED: app.WebAuditRecord and GET /api/v1/audit did not exist; the security trail recorded no target or request id. GREEN: an administrator reads one trail merged from the security, document, job, history and manifest stores; a refused role change and an accepted one appear with target users/<id>, result and the request id the response carried; an operator is refused."
+    },
+    {
+      "id": "G-B04",
+      "group": "spec",
+      "title": "서버에 등록된 /api 경로를 OpenAPI에 모두 적고 두 목록이 어긋나면 실패하는 테스트를 둔다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (자세한 schema는 OpenAPI를 따른다)"
+      ],
+      "code": [
+        "internal/arch/web_openapi_test.go (네 경로만 확인)",
+        "OpenAPI에 없는 경로 25개"
+      ],
+      "completion": "경로·메서드 목록이 서버와 OpenAPI에서 같고, 어긋나면 테스트가 실패한다.",
+      "status": "closed",
+      "verification": "go test ./internal/arch -run TestWebOpenAPIListsEveryServedRoute",
+      "commit": "107e3129",
+      "evidence": "RED: the new test listed 18 served routes missing from the OpenAPI document (legacy /api/runs and /api/sessions reads, auth/config, chain-presets, manifest routes, networks, test-cases/import, credential-bindings). GREEN: all are documented; the test compares method and path both ways, a {name} segment matching any one segment, so /api/v1/contracts/jobs is covered by /api/v1/contracts/{contractId}. Routes are read from the literal patterns in internal/dashboard; a route registered with a computed pattern would escape it, and none exists today."
+    },
+    {
+      "id": "G-B05",
+      "group": "spec",
+      "title": "개인 모드는 loopback에만 바인딩하고, 팀 모드는 TLS 또는 신뢰하는 TLS 종단 뒤에서 쿠키 보안과 origin 검사를 맞게 적용한다.",
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한",
+        "docs/dev/web-ui-spec.md 인증과 호환성"
+      ],
+      "code": [
+        "cmd/chainbench-dashboard/main.go:30 (모드는 표시만 바꾼다)",
+        "internal/dashboard/security.go:66-76,127"
+      ],
+      "completion": "개인 모드의 비 loopback 주소는 시작을 거절하고, 팀 모드는 TLS나 신뢰 프록시 설정 없이는 시작을 거절하며, 신뢰 프록시 뒤의 https origin 쓰기 요청이 통과한다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run \"TestServiceModesRefuseUnsafeListeners|TestTrustedProxyLetsHTTPSOriginsWriteAndMarksCookiesSecure\"; scratchpad readme_modes.sh against the built dashboard",
+      "commit": "a5c3b127",
+      "evidence": "RED (/private/tmp/chainbench-web-modes-red.log): personal mode accepted 0.0.0.0, team mode accepted a reachable address without TLS, and a trusted TLS terminator's https origin was refused 403. GREEN: personal is loopback only, team on a reachable address needs TLS or -trusted-proxy, a trusted peer's X-Forwarded-Proto https passes the origin check and sets Secure cookies, an untrusted peer's header is ignored. Loopback team mode stays allowed because traffic never leaves the machine."
+    },
+    {
+      "id": "G-B06",
+      "group": "spec",
+      "title": "작업 상태 전이를 명세대로 한다: running 전에 자격증명과 계획을 다시 확인해 accepted에서 failed로 끝낼 수 있고, 취소 뒤 정리 실패는 failed이며, 철회가 실제 처분 결과를 덮지 않는다.",
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 상태도"
+      ],
+      "code": [
+        "internal/app/web_job_execution.go:50-66,107-112"
+      ],
+      "completion": "실행 전 철회된 작업은 running을 거치지 않고 failed이며, 취소 정리 실패는 failed와 cleanup_failed이고, 철회 중 정리 실패는 cleanup_failed로 남는다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobThatFailsItsPreRunCheckNeverRuns|TestCancelWhoseCleanupFailsEndsFailed|TestRevocationKeepsTheDispositionTheEngineReported\"",
+      "commit": "aa6d9283",
+      "evidence": "RED (/private/tmp/chainbench-web-lifecycle-red.log): a job whose pre-run check failed ran and never ended, a cancel whose cleanup failed ended cancelled, and revocation replaced an unknown disposition with retained. GREEN: the check runs before running (WebChainEngine.Revalidate rechecks targets, binaries, record and surfaces) and ends accepted jobs failed; cleanup failure ends failed; revocation keeps the reported disposition. browser_cancel_retention.mjs now asserts the failed state."
+    },
+    {
+      "id": "G-B07",
+      "group": "spec",
+      "title": "작업 접수의 busy 409 응답에 읽을 수 있는 현재 작업 ID·실행자·충돌 자원을 담는다.",
+      "criteria": [
+        "WEB-11"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (busy 응답)"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:258-263 (revision changed 문구의 ErrDeploymentConflict)"
+      ],
+      "completion": "자원 충돌 409 본문의 details에 작업·실행자·자원이 있고 문구가 자원 충돌을 말한다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestBusyRefusalNamesTheJobHoldingTheResources; go test ./internal/dashboard -run TestBusyStartNamesTheHolderOverHTTP",
+      "commit": "aa6d9283",
+      "evidence": "RED: a busy start returned ErrDeploymentConflict whose message reads \"revision changed; reload before editing\". GREEN: WebBusyError names each holder; HTTP 409 carries details.holders with job id, actor and resources."
+    },
+    {
+      "id": "G-B08",
+      "group": "spec",
+      "title": "서버 재시작 뒤 interrupted 작업의 실제 PID·배포 파일 상태를 확인해 기록하고, 확인 결과로 잠금 해제 여부를 판단하는 명시적 복구를 제공한다.",
+      "criteria": [
+        "WEB-12"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 (실제 상태 확인, unresolved 자원은 명시적 복구 전까지 잠금)"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:91-96 (상태만 바꾼다)"
+      ],
+      "completion": "재시작 직후 작업 기록에 노드별 관측 결과가 남고, 노드가 모두 없음으로 확인된 자원은 명시적 복구로 풀리며, 살아 있는 노드는 계속 잠긴다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestReconcilingAnInterruptedJobRecordsWhatIsActuallyThere|TestReconcilingKeepsLiveOrUncheckedNodesLocked|TestRestartChecksLocalInterruptedJobsOnItsOwn\"; the WEB-12 proofs now assert the recorded reconciliation in the acceptance rerun",
+      "commit": "d8f1ae2a",
+      "evidence": "RED (/private/tmp/chainbench-web-b08-red.log): WebJobs had no reconciliation; an interrupted job stayed unknown with its resources unresolved until a cleanup job ran. GREEN: POST /api/v1/jobs/{jobId}/reconcile (initiator or administrator) records each node's observed process and data directory; confirmed absence cleans and releases claims, existing nodes retain them, unchecked nodes keep them locked; the restarted server checks local interrupted jobs on its own."
+    },
+    {
+      "id": "G-B09",
+      "group": "spec",
+      "title": "오류 본문을 명세 형식으로 맞춘다: 요청마다 다른 requestId, 프로그램이 구분할 code, 필드 오류는 fieldErrors, Idempotency-Key 누락과 If-Match 누락의 상태 코드를 계약에 맞춘다.",
+      "criteria": [
+        "WEB-02",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md HTTP API 동작 (오류 형식)",
+        "docs/dev/web-ui.openapi.yaml Error"
+      ],
+      "code": [
+        "internal/dashboard/security.go:296-322 (requestId 상수 web-rejected)",
+        "internal/dashboard/deployment.go http.Error 평문"
+      ],
+      "completion": "두 오류의 requestId가 다르고, 422 응답의 fieldErrors가 잘못된 필드 경로를 가리키며, 누락된 헤더의 상태 코드가 OpenAPI에 있다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestDocumentValidationNamesTheFieldThatFailed; go test ./internal/dashboard -run \"TestErrorsCarryMachineCodesAndFieldPaths|TestAuditTrail\"; node --test tests/webui/api-error.test.mjs",
+      "commit": "6fd0f53f",
+      "evidence": "RED: every error carried requestId \"web-rejected\", code was the status text, an invalid document had no fieldErrors and a job without Idempotency-Key was 422. GREEN: request ids differ per request and match X-Request-ID; codes are stable names; document refusals carry fieldErrors with /name, /contractVersion, /presetRefs, /assetRefs or /content; a missing key is 400; 428 is documented. Limit: engine validators give a reason but no position inside content, so content errors point at /content."
+    },
+    {
+      "id": "G-B10",
+      "group": "spec",
+      "title": "users, credentials, assets, documents, workspaces 목록이 cursor와 limit을 지킨다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui.openapi.yaml cursor, limit 매개변수"
+      ],
+      "code": [
+        "internal/dashboard/security.go:181",
+        "internal/dashboard/deployment.go:91,158,195",
+        "internal/dashboard/manifests.go:94"
+      ],
+      "completion": "limit보다 많으면 nextCursor가 나오고 그 cursor로 다음 쪽을 받는다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestListsHonourCursorAndLimit; node --test tests/webui/pages.test.mjs",
+      "commit": "698cedac",
+      "evidence": "RED (/private/tmp/chainbench-web-paging-red.log): 30 documents came back in one response with nextCursor null and limit and cursor were ignored. GREEN: lists are ordered by id, default to 25, accept limit 1 to 100, return nextCursor until the end and refuse a bad limit or cursor with 400; the SPA and the WEB-05 and genesis proofs read every page."
+    },
+    {
+      "id": "G-B11",
+      "group": "spec",
+      "title": "실행 목록 문서(run-definition)를 Document 종류로 저장하고 실행한다.",
+      "criteria": [
+        "WEB-02",
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (Document 종류에 실행 목록)",
+        "docs/dev/web-ui.openapi.yaml Document.kind"
+      ],
+      "code": [
+        "internal/app/deployment.go:66-127 (네 종류만 받는다)"
+      ],
+      "completion": "케이스 순서를 담은 실행 목록을 저장·export·import하고 그 순서로 실제 테스트를 실행한다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestRunDefinitionsPinTheirCasesInOrder|TestRunDefinitionBundlesCarryTheirCases|TestTestJobsRunARunDefinitionsCasesInOrder\"; a live test.run with runDefinitionRef is part of the acceptance rerun",
+      "commit": "17b5eea2",
+      "evidence": "RED (/private/tmp/chainbench-web-b11-red.log): the store refused kind run-definition and DeploymentDocument had no case references. GREEN: a run definition lists case ids in order and pins one shared case revision per id (order and identity checked); its bundle carries the cases and their presets and imports back linked to the imported cases; a test.run naming runDefinitionRef runs exactly those revisions in that order; the test form saves and selects run definitions."
+    },
+    {
+      "id": "G-B12",
+      "group": "spec",
+      "title": "히스토리 비교가 DSL 지문·단언 결과·소요 시간·수집 지표를 다루고, Run에 finishedAt과 coverage가 있으며, 상세에서 실행에 연결된 로그를 조회한다.",
+      "criteria": [
+        "WEB-09"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관 (비교 기준)",
+        "docs/dev/web-ui.openapi.yaml Run"
+      ],
+      "code": [
+        "internal/app/web_history_compare.go:20,120",
+        "internal/app/web_history_contract.go:11-23",
+        "web/src/HistoryPanel.svelte:60-62"
+      ],
+      "completion": "같은 케이스 두 실행의 비교가 단언별 결과·시간·지표 차이를 보이고, 단위가 다르면 제한을 표시한다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestHistoryComparisonCoversAssertionsDurationsMetricsAndDeclarations|TestHistoryDetailCarriesItsEndAndArchiveCoverage\"",
+      "commit": "5f502db4",
+      "evidence": "RED (/private/tmp/chainbench-web-b12-red.log): on the previous code the comparison always said \"Metric and log comparisons are unavailable\" and had no assertion results. GREEN: results carry assertions by run, a differing case declaration makes runs incomparable, durations come from the job window, archived node metrics are summarised per run with differing units named as limitations, and run detail has finishedAt, coverage and per-node run logs in the UI."
+    },
+    {
+      "id": "G-B13",
+      "group": "spec",
+      "title": "관리자 삭제가 Web이 소유한 세션 디렉터리까지 지우고, 테스트가 없는 CLI 세션도 최종 상태로 판정해 지울 수 있다.",
+      "criteria": [
+        "WEB-09"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관 (실행 소유 결과 삭제)"
+      ],
+      "code": [
+        "internal/app/web_test_run.go:419",
+        "internal/app/web_history_capture.go:50-52",
+        "internal/app/web_history.go:244"
+      ],
+      "completion": "삭제 뒤 그 실행의 Web 세션 디렉터리가 없고, 다른 실행이 참조하는 자료와 노드 데이터는 남는다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestHistoryDeletionRemovesTheWebOwnedSessionAndAcceptsTestlessCLISessions",
+      "commit": "5f502db4",
+      "evidence": "RED (/private/tmp/chainbench-web-b13-red.log): deleting a Web test run left its engine session directory on disk. GREEN: the session under the server's own root is removed with the run (path checked to stay inside it); a CLI session without tests is deleted as a capture copy while the CLI directory stays."
+    },
+    {
+      "id": "G-B14",
+      "group": "spec",
+      "title": "관측 누락을 범위와 함께 알린다: resync_required에 누락 범위, 다운샘플 버킷 폭과 구간, 수집기가 멈추면 열린 gap을 기록한다.",
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
+      ],
+      "code": [
+        "internal/app/web_job_observation.go:22-29",
+        "internal/app/web_monitor_read.go:162-168",
+        "internal/app/web_monitor.go:162-166"
+      ],
+      "completion": "replay 범위를 벗어난 재연결이 누락 cursor 범위를 받고, 다운샘플 응답이 버킷 폭을 담으며, 멈춘 수집기 구간이 stale gap으로 보인다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobObservationBoundsBacklogAndRefusesExpiredCursors|TestStalledCollectorShowsAsAGapAndDownsamplingNamesItsBucket\"",
+      "commit": "da96deb4",
+      "evidence": "RED (/private/tmp/chainbench-web-b14-red.log): an expired cursor's resync_required named no range, a downsampled window reported bucketSeconds 0, and a collector that stopped without a restart left no gap. GREEN: the refusal carries missingFrom and missingTo, coverage carries the bucket width, and three missed periods show as a collector_stale gap; the monitoring view shows the range and bucket."
+    },
+    {
+      "id": "G-B15",
+      "group": "spec",
+      "title": "설정 교체에 등록된 설정 파일을 쓸 수 있다.",
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 노드 제어 (설정·바이너리 교체는 선택한 등록 파일을 사용)"
+      ],
+      "code": [
+        "internal/app/web_config_change.go:27-58 (syncMode, httpHost, metricsHost 선택지만)"
+      ],
+      "completion": "등록한 설정 자료로 교체한 노드가 그 설정으로 다시 시작하고, 엔진이 모르는 키는 거절된다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestRegisteredConfigFilesBecomeReviewedConfigChanges|TestConfigChangesComeFromThePinnedRegisteredFile\"; the WEB-07 config replacement proof is to select a registered file in the acceptance rerun",
+      "commit": "58c44254",
+      "evidence": "RED (/private/tmp/chainbench-web-b15-red.log): there was no way to name a registered configuration file; node.swap took only typed enum choices. GREEN: configAssetId selects a registered configuration asset; its JSON or YAML values are limited to the knobs the engine renders (syncMode choices, IP addresses for hosts), pinned with its checksum in the plan, rechecked before execution and applied through the existing replacement path; it cannot be combined with typed choices. The engine renders only these three knobs, so a file naming anything else is refused."
+    },
+    {
+      "id": "G-B16",
+      "group": "spec",
+      "title": "배포의 부분 효과를 노드와 파일 단위로 기록하고, 실패한 배포의 노드 처분을 실제 결과대로 남긴다.",
+      "criteria": [
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 작업 생명주기와 복구 (알려진 상태와 미확인 상태를 분리)"
+      ],
+      "code": [
+        "internal/app/web_chain_execution.go:22,323-330"
+      ],
+      "completion": "중간 실패 작업이 완료한 노드·파일과 미확인 대상을 나누어 보이고, 처분이 retained로 고정되지 않는다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestFailedDeploymentNamesEachNodesKnownState|TestFailureDispositionFollowsTheFailedPhase\"; the SSH deploy fault proof (browser_ssh_deploy_fault.mjs) now asserts per-node effects and the unknown disposition in the acceptance rerun",
+      "commit": "da7dfc67",
+      "evidence": "RED (/private/tmp/chainbench-web-b16-red.log): the helpers did not exist; a failed deployment recorded only \"<step> completed\" lines, the control and data roots as unresolved and the fixed disposition retained. GREEN: after a failed deploy, init or start phase each recorded node is listed with its data directory and recorded launch on its own machine (bounded checks; unanswered nodes stay unresolved), and the disposition is unknown once a target phase ran, retained before."
+    },
+    {
+      "id": "G-B17",
+      "group": "spec",
+      "title": "계약 버전을 하드코딩하지 않고, 서버 계약이 바뀌면 편집 중인 선언을 다시 검증해 변경점을 보인다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (contractVersion)"
+      ],
+      "code": [
+        "internal/dashboard/chainpreset.go:66",
+        "internal/dashboard/manifests.go:59,140",
+        "internal/dashboard/testcase.go:104",
+        "web/src/*.svelte contractVersion '2'"
+      ],
+      "completion": "계약 버전이 엔진 계약 내용에서 나오고, 버전이 다른 초안 저장은 재검증을 요구한다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestContractsCarryADigestThatSavedDraftsMustMatch; node --test tests/webui/contract-draft.test.mjs",
+      "commit": "5a775b26",
+      "evidence": "RED (/private/tmp/chainbench-web-contract-digest-red.log): contracts carried no digest or version and every editor hardcoded contractVersion 2, so a contract change went unnoticed. GREEN: each contract carries x-contractDigest and x-contractVersion; a save with a stale digest is 409, a current or absent digest saves, the digest is not stored; editors take the version from the contract and on that 409 reload the contract, validate the draft and name the changed definitions."
+    },
+    {
+      "id": "G-B18",
+      "group": "spec",
+      "title": "export가 가져가는 사람이 채워야 할 사용자별 binding 목록을 담는다.",
+      "criteria": [
+        "WEB-02",
+        "WEB-03"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (export는 필요한 사용자별 binding을 표시)"
+      ],
+      "code": [
+        "internal/app/document_bundle.go:225-275"
+      ],
+      "completion": "workspace export에 binding 이름 목록이 있고 비밀 값은 없다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestWorkspaceExportNamesTheBindingsAnImporterMustSupply|TestDocumentBundle|TestImportPreserves\"",
+      "commit": "6dae14ef, bb172e5e",
+      "evidence": "RED (/private/tmp/chainbench-web-b18-red.log): a workspace export of a two-server SSH set listed no bindings. GREEN: the export carries privateBindingsRequired [\"ssh:far\",\"ssh:near\"] with no secret; importing it is valid and the preview lists the same bindings, derived from the imported server set rather than trusted from the file. The first commit failed make check (TestMachineConsumersDoNotBranchOnKind, IsRemote in internal/app) because the check ran in a sequence that still committed; bb172e5e reads the resolved target instead and make check passes."
+    },
+    {
+      "id": "G-B19",
+      "group": "spec",
+      "title": "Job이 사용한 자격증명 참조와 취소 사유 메시지를 기록하고 Job.error에 requestId를 둔다.",
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 Job",
+        "docs/dev/web-ui.openapi.yaml Job"
+      ],
+      "code": [
+        "internal/dashboard/jobs.go:115-121",
+        "internal/app/web_job_execution.go:129"
+      ],
+      "completion": "작업 상세가 자격증명 ID(material 없음)와 취소 메시지를 보인다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run \"TestJobRecordsItsCredentialsAndRequest|TestCancelWhoseCleanupFailsEndsFailed\"",
+      "commit": "aa6d9283",
+      "evidence": "RED: jobs had no credential references or request id and the cancel message was decoded and dropped. GREEN: jobs list credential ids (no material), keep the cancel message with secrets removed, and their error carries the accepting request id."
+    },
+    {
+      "id": "G-C01",
+      "group": "design",
+      "title": "노드 상세 화면을 만든다: 역할, 소유 여부, PID와 RPC 상태, 바이너리·설정 revision, 로그, 제어 버튼과 비활성 이유.",
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 노드 상세",
+        "docs/dev/web-ui-design.md 상태·차트·히스토리"
+      ],
+      "code": [
+        "web/src/JobPanel.svelte:42,98-106 (드롭다운 제어, producer는 목록에서 조용히 빠짐)"
+      ],
+      "completion": "브라우저에서 노드를 고르면 상세가 열리고, producer 초기화와 attach 제어 버튼이 이유와 함께 비활성이다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "78f1a91d, 7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): a running producer's page showed role, observed state and PID, server, data path and revisions; reset was disabled beside the server's reason (블록 생산자는 초기화할 수 없습니다 …) while stop stayed enabled; choosing stop on the endpoint's page opened the chain screen's plan form with that node and operation, and the reviewed job stopped it (observation: stopped). An attached workspace's controls stay refused by the existing attach notice and plan refusal; an attached network has no recorded nodes to open."
+    },
+    {
+      "id": "G-C02",
+      "group": "design",
+      "title": "작업 상세 화면을 만들고 작업 상태를 누르거나 실행을 시작하면 그 화면으로 간다.",
+      "criteria": [
+        "WEB-06",
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름",
+        "docs/dev/web-ui-design.md 구성과 배포"
+      ],
+      "code": [
+        "web/src/JobPanel.svelte:85,111",
+        "GET /api/v1/jobs/{jobId}를 부르는 곳이 없다"
+      ],
+      "completion": "작업 상세가 단계, 실패 대상, 부분 효과, 처분, 취소, 브라우저를 닫아도 계속된다는 안내를 보인다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN (/private/tmp/chainbench-web-nav-green.log): starting a reviewed plan from the test screen opened /jobs/<id>, which states that the job continues on the server, shows phases, the failed phase (none), recorded changes, resources to check (none) and node disposition, follows the job live, cancelled it with cleanup (disposition cleaned, every owned process gone) and restored the same state after a reload."
+    },
+    {
+      "id": "G-C03",
+      "group": "design",
+      "title": "계획 검토에 필요한 접근 권한, credential binding, 대상 경로, 문서 revision, 기존 구성과의 차이를 표시한다.",
+      "criteria": [
+        "WEB-03",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 구성과 실행 4단계",
+        "docs/dev/web-ui-design.md 구성과 배포"
+      ],
+      "code": [
+        "internal/app/web_jobs.go:194 RequiredAccess",
+        "web/src에 requiredAccess를 그리는 곳이 없다"
+      ],
+      "completion": "자격증명이 없는 사용자가 계획을 보면 부족한 접근이 표시되고 실행 버튼이 막힌다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "78f1a91d, 7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): the plan review listed required access (local filesystem and process access), bindings (none needed for a local target), the pinned server-set and workspace-config revisions and the pinned wbft surface; for a workspace whose only server is reached over SSH without the user's binding, planning was refused with 422 details.missingAccess, the review named ssh:remote and no run button appeared."
+    },
+    {
+      "id": "G-C04",
+      "group": "design",
+      "title": "차트가 관측이 빈 구간을 끊어 그리고, 시간 범위·노드·metric을 고르며, 같은 시간 선택을 이벤트와 로그에 적용하고, 점의 시각과 출처를 보인다.",
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 상태·차트·히스토리",
+        "docs/dev/web-ui-spec.md 모니터링과 결과 보관"
+      ],
+      "code": [
+        "web/src/metric-chart.mjs:12-13",
+        "web/src/NodeMetrics.svelte:5,20,63"
+      ],
+      "completion": "gap이 있는 계열이 여러 선분으로 나뉘고, 범위를 바꾸면 차트·이벤트·로그가 같은 범위로 다시 조회된다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_monitoring_range.py (native wbft network of 4 producers, real dashboard and browser; receipt chainbench-out/web-ui-development/monitoring-range/receipt.json); node --test tests/webui/metric-chart.test.mjs",
+      "commit": "a65e6432",
+      "evidence": "RED (/private/tmp/chainbench-web-range-red.log): against a dashboard built from 60fa8f04 the proof selected the workspace and network and cancelled the job, then timed out at the node filter, which did not exist. GREEN (/private/tmp/chainbench-web-range-green.log): node2 was stopped for 20 seconds and started again; with node2 chosen its block_height line drew 2 segments while node1, never stopped, drew 1 (8 samples); choosing one metric left one chart; clicking a point showed metric, node, time, value and source (rpc); range logs for node2 loaded 100 lines; switching to 60 minutes re-requested metrics and range logs with a 60-minute window, and the event timeline counts events in the same range. During the proof a range-log request with limit=200 was refused with 400 (the server allows at most 100); it now asks for 100 and the proof asserts the logs load."
+    },
+    {
+      "id": "G-C05",
+      "group": "design",
+      "title": "Settings에 본인 자격증명 목록(사용 상태, 접근 확인, 폐기), 사용자 관리, 감사 기록 화면을 둔다.",
+      "criteria": [
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 개인 자격증명, 관리",
+        "docs/dev/web-ui-design.md 화면별 구성 Settings"
+      ],
+      "code": [
+        "web/src/LoginPanel.svelte:36-51",
+        "web/src/DeploymentEditor.svelte:79-99"
+      ],
+      "completion": "브라우저에서 자격증명을 폐기하면 관련 작업이 철회 정책을 따르고, 관리자는 감사 기록을 보며 운영자에게는 관리 화면이 없다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_settings.py (native stablenet network, real dashboard and browser; receipt chainbench-out/web-ui-development/settings/receipt.json); go test ./internal/app -run TestCredentialUsageNamesOwnBindingsAndActiveJobs; go test ./internal/dashboard -run TestDeploymentSharedDocumentsHTTP",
+      "commit": "0285ba2a, 23ab4f25",
+      "evidence": "RED: before 0285ba2a there was no settings screen for credentials, users or audit (user management sat in the login panel, credential creation in the deployment editor, no audit view), and the credential list carried no usage; the usage tests failed before their code. GREEN (/private/tmp/chainbench-web-settings-green.log): an administrator created an operator on Settings and read the audit trail there, polled until the user creation entry appeared; the operator saw no user management or audit region and GET /api/v1/audit answered 403; the operator registered an account key on Settings; an attach job bound to that key showed as 1 active job on its row; revoking it warned that the job would be cancelled and nodes kept, then the job ended cancelled with credential_revoked and nodes retained while every node process stayed alive. The proof uses stablenet because the engine refuses attach to the registered wbft binary, which reports itself as gwemix."
+    },
+    {
+      "id": "G-C06",
+      "group": "design",
+      "title": "상단 바에 현재 workspace·체인·서버 연결 상태를 두고, 체인 미선택 안내와 화면 사이에 공유되는 workspace·network 선택을 만든다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 공통 화면"
+      ],
+      "code": [
+        "web/src/App.svelte:85"
+      ],
+      "completion": "체인 화면에서 고른 workspace가 모니터링 화면의 선택으로 이어진다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN: the top bar asked for a chain until one was chosen, showed the workspace picked in the chain screen's deployment editor, and the monitoring and job forms opened on that same workspace. The selection is kept per browser tab."
+    },
+    {
+      "id": "G-C07",
+      "group": "design",
+      "title": "대시보드에 실행 중 작업, 노드 상태, 최근 결과, 관측 누락 요약을 보이고 행을 누르면 상세로 간다.",
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 화면별 구성 Dashboard"
+      ],
+      "code": [
+        "web/src/App.svelte:100-106"
+      ],
+      "completion": "실행 중인 작업이 대시보드에 보이고 누르면 작업 상세가 열린다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json); node --test tests/webui/routes_jobs.test.mjs; go test ./internal/dashboard -run TestUIRefreshDoesNotHideMissingAPIOrAssets",
+      "commit": "45b2a68e",
+      "evidence": "RED (/private/tmp/chainbench-web-nav-red.log): the same proof against a dashboard built from 0315fa7f timed out at its first step because the top bar had no workspace, chain or connection context. GREEN: while the job ran the dashboard counted it, listed it under running jobs with its phase progress, and its row opened the job page. Node states, recent results and the observation drop summary are on the same screen."
+    },
+    {
+      "id": "G-C08",
+      "group": "design",
+      "title": "DSL 편집기를 statement 트리와 선택 statement 폼으로 나누고, 오류를 statement 경로에 연결해 이동하며, workspace의 실제 노드를 참조로 제시하고, 케이스 복제와 v1 import 차이 보기를 둔다.",
+      "criteria": [
+        "WEB-05"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md DSL 편집",
+        "docs/dev/web-ui-spec.md DSL 테스트 작성"
+      ],
+      "code": [
+        "web/src/DSLEditor.svelte:37,77,85",
+        "web/src/dsl-form.js:46-51"
+      ],
+      "completion": "검증 오류를 누르면 해당 statement가 선택되고, 복제한 케이스가 새 문서로 저장된다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_dsl_editor.py (real dashboard and browser, native wbft job for the cancel step; receipt chainbench-out/web-ui-development/dsl-editor/receipt.json); node --test tests/webui/dsl_tree.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run TestCaseErrorPathTakesTheLeadingPointer; go test ./internal/dashboard -run TestTestCaseHTTPContractAndImport",
+      "commit": "1304fe56, 0e7e3eb8",
+      "evidence": "RED (/private/tmp/chainbench-web-dsl-red.log): against a dashboard built from 41af34bd the proof timed out waiting for the error summary; the server also reported every case error at /content (dashboard test failed before 1304fe56). GREEN (/private/tmp/chainbench-web-dsl-green.log): importing a case whose second step names do:nope listed /content/steps/1/do; choosing it selected that statement in the tree and focused its form selector marked aria-invalid; arrow keys walked the tree and Alt+ArrowUp moved the statement; the case was validated, saved, duplicated and the copy saved with the keyboard alone, giving two shared documents dsl-proof and dsl-proof-copy; a v1 import listed 12 migration differences. Node suggestions add the selected workspace's recorded nodes; the proof did not check that list."
+    },
+    {
+      "id": "G-C09",
+      "group": "design",
+      "title": "입력 오류를 해당 필드(aria-invalid, aria-describedby)와 요약에 함께 연결하고 키보드 이동을 브라우저 검증한다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름",
+        "docs/dev/web-ui-design.md 브라우저 검증"
+      ],
+      "code": [
+        "web/src 전체에 aria-invalid가 없다",
+        "tests/webui에 keyboard.press가 없다"
+      ],
+      "completion": "잘못된 필드가 aria-invalid이고 요약 항목에서 그 필드로 포커스가 옮겨지며, 키보드만으로 저장·취소하는 검증이 통과한다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_forms.py and python3 tests/webui/run_dsl_editor.py (real dashboard and browser); node --test tests/webui/schema_problems.test.mjs tests/webui/dsl_tree.test.mjs; go test ./internal/app -run TestContentErrorPathTakesTheLeadingPointer",
+      "commit": "0e7e3eb8, ddc70fe7, d85eb753",
+      "evidence": "RED (/private/tmp/chainbench-web-forms-red.log): against a dashboard built from e2b98f30 the forms proof timed out waiting for the deployment error summary. GREEN (/private/tmp/chainbench-web-forms-green.log): an empty host address and a P2P base port of 70000 were marked aria-invalid with aria-describedby; the summary entry focused the port field; both were corrected and the document saved with the keyboard alone; a chain preset with no producer was refused at /content/topology and its summary entry opened the full form and focused that field, marked invalid. The DSL editor part is in the dsl-editor proof (G-C08): error summary to the invalid field, and keyboard-only save, duplicate and job cancel. Deployment checks before the server cover required fields, enum and port ranges from the contract; other server refusals of deployment documents name no field and are listed without a link."
+    },
+    {
+      "id": "G-C10",
+      "group": "design",
+      "title": "프론트에 적은 선택지(syncMode, 역할, 작업 종류, 자격증명 종류)를 엔진 계약에서 받는다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 엔진 계약과 공유 자료 (프론트에 별도 어휘 표를 만들지 않는다)"
+      ],
+      "code": [
+        "web/src/ChainPresetEditor.svelte:179-182",
+        "web/src/DeploymentEditor.svelte:82",
+        "web/src/JobPanel.svelte:98",
+        "web/src/dsl-form.js:46"
+      ],
+      "completion": "web/src에 이 선택지 문자열 목록이 없고 화면은 계약 응답으로 선택지를 만든다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run 'TestJobsContractListsTheOperationsTheEngineAccepts|TestChainPresetContractTitlesCountsAndSync|TestAccessContractListsWhatTheServerAccepts'; go test ./internal/dashboard -run 'TestJobsContractListsOperationsToSignedInUsers|TestWebSecuritySessionsRolesAndRedaction'; node --test tests/webui/chain_contract.test.mjs tests/webui/dsl-form.test.mjs; grep for fixed syncMode, role, operation and credential kind option lists in web/src finds none. The screens were not opened in a browser in this step; the acceptance rerun covers that.",
+      "commit": "a37327c4",
+      "evidence": "RED (observed in the session, not saved to a log): webKnownOperation, AccessContract and the chain-contract module did not exist, the /api/v1/contracts/jobs test failed, and references() invented bp/en/pn without a contract. GREEN: /api/v1/contracts/jobs and /api/v1/contracts/access list what the engine accepts, built from the same lists Prepare, validWebRole and validCredentialShape check; the chain preset contract titles bp, en, pn and syncMode; JobPanel, ChainPresetEditor, CredentialManager, UserManager and DSL node suggestions read these responses. The access contract came with 0285ba2a."
+    },
+    {
+      "id": "G-C11",
+      "group": "design",
+      "title": "화면 문구를 한국어로 통일하고, 세션 로그인이 있는 화면의 예전 Basic 로그인 폼을 없애며, 색은 디자인 토큰만 쓰고 상태에 아이콘을 붙인다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 (한국어 기본)",
+        "docs/dev/web-ui-design.md 시각 기준"
+      ],
+      "code": [
+        "web/src/DSLEditor.svelte:60-63",
+        "web/src/ManifestManager.svelte:28-31",
+        "web/src/DeploymentEditor.svelte:47-52",
+        "web/src/JobPanel.svelte:125"
+      ],
+      "completion": "web/src에 토큰 밖의 색과 Basic 로그인 폼이 없고, 상태 표시가 아이콘과 라벨을 함께 쓴다.",
+      "status": "closed",
+      "verification": "node --test tests/webui/design_tokens.test.mjs tests/webui/status_icon.test.mjs; python3 tests/webui/run_forms.py",
+      "commit": "0285ba2a, d85eb753",
+      "evidence": "RED: before d85eb753 web/src held raw colors in nine files and English text in the preset, bundle import and deployment form screens (design_tokens.test.mjs would fail on MonitorPanel, ChainPresetEditor and others). GREEN: every color outside the App :root token block is a var(--token) (the theme-color meta tag keeps its literal because browser chrome cannot read CSS variables); the guard test also refuses Basic credentials and the deployment-account route anywhere in web/src; states use StatusBadge (icon and words) on the dashboard, job, node, monitoring, history and surface views; the forms proof read the surface verdict as '○ documented'. Domain terms such as workspace, revision, genesis and statement stay as written in the specification."
+    },
+    {
+      "id": "G-C12",
+      "group": "design",
+      "title": "모니터링 화면에서 실행·network를 고르고 작업을 취소한다.",
+      "criteria": [
+        "WEB-08"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md UI 구성과 사용 흐름 모니터링",
+        "docs/dev/web-ui-design.md 화면별 구성 Monitoring"
+      ],
+      "code": [
+        "web/src/MonitorPanel.svelte"
+      ],
+      "completion": "모니터링 화면에서 고른 network의 노드 표와 차트가 바뀌고 실행 중 작업을 취소할 수 있다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_monitoring_range.py (native wbft network of 4 producers, real dashboard and browser; receipt chainbench-out/web-ui-development/monitoring-range/receipt.json); node --test tests/webui/metric-chart.test.mjs",
+      "commit": "a65e6432",
+      "evidence": "RED (/private/tmp/chainbench-web-range-red.log): against a dashboard built from 60fa8f04 the proof selected the workspace and network and cancelled the job, then timed out at the node filter, which did not exist. GREEN: the monitoring screen narrowed to the proof's workspace and network, listed the running test job there and cancelled it from its row (cancelled, nodes retained); the node table and charts follow the chosen network."
+    },
+    {
+      "id": "G-C13",
+      "group": "design",
+      "title": "체인 구성 상세에 선택 바이너리의 ChainSurface(문서 출처, stale 여부, 옵션별 지원과 제외 이유)를 표시한다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-design.md 화면별 구성 Chains & Workspaces (선택 바이너리의 출처와 지원 범위)"
+      ],
+      "code": [
+        "web/src/ChainPresetEditor.svelte (surface를 읽지 않는다)"
+      ],
+      "completion": "바이너리를 고르면 상세 영역에 verification, 문서 커밋, 지원·제외 옵션과 이유가 보인다.",
+      "status": "closed",
+      "verification": "python3 tests/webui/run_node_detail.py (native wbft network of 4 bp and 1 en, real dashboard and browser; receipt chainbench-out/web-ui-development/node-detail/receipt.json); node --test tests/webui/node_view.test.mjs tests/webui/routes_jobs.test.mjs tests/webui/api-error.test.mjs; go test ./internal/app -run 'TestNodeControlLimitsExplainEveryRefusedControl|TestPlanNamesTheSSHAccessTheUserLacks|TestPlanPinsTheSurfaceOfEachBinaryItRuns|TestExecutionRefusesAChangedSurface'; go test ./internal/dashboard -run TestPlanWithoutSSHAccessNamesTheMissingServers",
+      "commit": "7db313cd",
+      "evidence": "RED (/private/tmp/chainbench-web-node-red.log): the same proof against a dashboard built from 3a39a8cd timed out waiting for the node page, which did not exist. GREEN (/private/tmp/chainbench-web-node-green.log, source 7db313cd): on the chain screen, choosing the registered wbft binary judged the surface as verified, showed the binary's version, commit and platform, the documentation sources and the option table with each option's support status and reason."
+    },
+    {
+      "id": "G-D01",
+      "group": "defect",
+      "title": "DocumentRevision이 PresetRefs를 복사하지 않아 돌려준 값이 저장된 리비전과 메모리를 공유한다.",
+      "criteria": [
+        "WEB-02"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 데이터 모델 (저장 revision 불변)"
+      ],
+      "code": [
+        "internal/app/deployment_store.go:271-288"
+      ],
+      "completion": "돌려받은 PresetRefs를 바꿔도 저장된 리비전이 바뀌지 않는다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestReadRevisionDoesNotShareItsPresetReferences",
+      "commit": "fd66aa48",
+      "evidence": "RED (/private/tmp/chainbench-web-d01-red.log): changing a read revision's PresetRefs changed the stored revision to 99. GREEN: the read returns its own copy."
+    },
+    {
+      "id": "G-D02",
+      "group": "defect",
+      "title": "없는 경로 DELETE /api/v1/runs의 권한 규칙을 없애고 히스토리 삭제를 미들웨어에서도 관리자로 막는다.",
+      "criteria": [
+        "WEB-09",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한 (역할은 서버가 판정)"
+      ],
+      "code": [
+        "internal/dashboard/security.go:105-109"
+      ],
+      "completion": "운영자의 DELETE /api/v1/history/{runId}가 미들웨어에서 403이다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestHistoryDeletionAndRoleChangesAreGuardedBeforeHandlers",
+      "commit": "fd66aa48",
+      "evidence": "RED (/private/tmp/chainbench-web-d02d03-red.log): an operator's DELETE /api/v1/history/{runId} reached routing (405 with no history route) because the middleware guarded the nonexistent /api/v1/runs. GREEN: the middleware refuses it with 403 before any handler."
+    },
+    {
+      "id": "G-D03",
+      "group": "defect",
+      "title": "역할 변경·비활성화가 철회에 실패하면 변경이 적용된 채 오류만 돌려준다.",
+      "criteria": [
+        "WEB-10",
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 실행 모드와 권한 (역할 변경과 비활성화는 즉시 반영)"
+      ],
+      "code": [
+        "internal/dashboard/security.go:204-208"
+      ],
+      "completion": "철회 실패를 주입하면 응답이 실패이고 사용자 기록이 바뀌지 않거나, 바뀐 상태와 미완료 철회가 함께 기록되어 재시도된다.",
+      "status": "closed",
+      "verification": "go test ./internal/dashboard -run TestHistoryDeletionAndRoleChangesAreGuardedBeforeHandlers",
+      "commit": "fd66aa48",
+      "evidence": "RED: with the job store unable to record revocation, PATCH role viewer still saved the role. GREEN: the change is previewed, jobs are revoked first, and a failed revocation leaves the account unchanged; a retry revokes the running job and saves."
+    },
+    {
+      "id": "G-D04",
+      "group": "defect",
+      "title": "-deployment-accounts 모드가 Web 보안 계층(세션, CSRF, 역할, 감사)을 건너뛰고, WEB-03과 WEB-04 인수 검증이 이 모드로 서버를 띄운다.",
+      "criteria": [
+        "WEB-03",
+        "WEB-04",
+        "WEB-10"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 인증과 호환성 (서버 세션과 HttpOnly 쿠키)"
+      ],
+      "code": [
+        "cmd/chainbench-dashboard/main.go:69-93",
+        "internal/dashboard/security.go:254-286",
+        "tests/webui/run_web03.py:132",
+        "tests/webui/run_web04.py:70"
+      ],
+      "completion": "Web 제어 API가 자체 계정 세션 없이 열리지 않고, WEB-03과 WEB-04가 세션 로그인으로 통과한다.",
+      "status": "closed",
+      "verification": "scratchpad basic_mode_probe.py and basic_mode_probe_web.py against a dashboard built after 0285ba2a; python3 tests/webui/run_web03.py and run_web04.py (development runs of the acceptance proofs, outcome pass); node --test tests/webui/design_tokens.test.mjs",
+      "commit": "0285ba2a, c6ee8edc",
+      "evidence": "RED (/private/tmp/chainbench-web-d04-red.log): the old dashboard with -deployment-accounts accepted a Basic-auth document write without a session or CSRF token (201). GREEN (/private/tmp/chainbench-web-d04-green.log): the flag is refused and the default Web mode answers the same Basic write with 401; the Basic login forms are gone from the SPA and a guard test refuses their return. The WEB-03 proof (two operators, dedicated sshd) and the WEB-04 proof (six manifest setups, restart) now bootstrap an administrator with the setup token, create their operators through /api/v1/users and sign in with sessions; both passed on c6ee8edc. These were development runs before the frozen acceptance rerun."
+    },
+    {
+      "id": "G-D05",
+      "group": "defect",
+      "title": "README의 --dashboard 예시가 지금 서버 기본값에서 401을 받고, 두 인증 모드의 실행 예시가 없다.",
+      "criteria": [
+        "WEB-14"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 인증과 호환성 (두 모드의 인증 차이·실행 예시는 README에 명시)"
+      ],
+      "code": [
+        "README.md:293-294",
+        "web/README.md:20-23"
+      ],
+      "completion": "README의 두 모드 예시를 그대로 실행하면 이벤트가 각각 받아진다.",
+      "status": "closed",
+      "verification": "bash readme_modes.sh: run each README command against the built dashboard and POST one event in the CLI wire format",
+      "commit": "a5c3b127",
+      "evidence": "RED: the old README example (default daemon, no token) answered the event 401. GREEN: README documents personal, team with TLS, team behind a terminator, publisher token and legacy observer; the publisher and legacy commands each accept the event (202) and the unsafe listeners are refused at start."
+    },
+    {
+      "id": "G-D06",
+      "group": "defect",
+      "title": "web-ui-implementation.md가 이미 구현된 바이너리 교체를 미완료로 적고 있다.",
+      "criteria": [
+        "WEB-07"
+      ],
+      "spec": [
+        "docs/dev/web-ui-worklist.md (진척의 정본은 최신 상태여야 한다)"
+      ],
+      "code": [
+        "docs/dev/web-ui-implementation.md 마지막 절",
+        "internal/app/web_chain_execution.go:135-170"
+      ],
+      "completion": "구현 상태 문서가 코드와 같은 한계만 적는다.",
+      "status": "closed",
+      "verification": "go test ./internal/arch -run TestDocs; read docs/dev/web-ui-implementation.md header and the two corrected paragraphs",
+      "commit": "fd66aa48",
+      "evidence": "RED: the implementation document said registered replacement binary staging remained unfinished after e6b3d3c1 and bdd175e6 implemented it. GREEN: the document marks itself a dated log, names those commits and points current open work to the gap list."
+    },
+    {
+      "id": "G-D07",
+      "group": "defect",
+      "title": "verify-docs.sh가 숨김 플래그를 '<flag> --help'로 물어, 값을 받는 플래그면 기본 데이터 디렉터리로 노드를 띄운다.",
+      "criteria": [
+        "WEB-01"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (검증은 노드·DB를 변경하는 명령을 시험 실행하지 않는 격리된 검사다)"
+      ],
+      "code": [
+        "scripts/chain-analysis/verify-docs.sh"
+      ],
+      "completion": "세 실제 바이너리로 스크립트를 돌린 뒤 사용자 기본 데이터 디렉터리에 아무것도 생기지 않고 숨김·거절 판정은 같다.",
+      "status": "closed",
+      "verification": "bash scripts/chain-analysis/verify-docs.sh <binary> docs/chain-analysis/<chain> for the three selected binaries, then list ~/Library/Ethereum",
+      "commit": "4b524de7",
+      "evidence": "RED: asking hidden flags as \"<flag> --help\" created ~/Library/Ethereum/gstable and gwemix (moved to /private/tmp/chainbench-probe-leftovers-20261011). GREEN: same hidden/absent counts (2/3/0, 0 absent) and nothing created."
+    },
+    {
+      "id": "G-D08",
+      "group": "defect",
+      "title": "바이너리 신원 검사가 서버 환경 변수를 물려줘서, go-wbft가 모르는 GWEMIX_* 변수를 경고하면 version 첫 줄이 바뀌어 정상 바이너리를 거절한다.",
+      "criteria": [
+        "WEB-04"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약 (basename이 아니라 checksum·version·커밋으로 판정)"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go manifestProbe"
+      ],
+      "completion": "GWEMIX_* 변수가 있는 환경에서도 세 실제 바이너리의 신원 검사가 통과한다.",
+      "status": "closed",
+      "verification": "GSTABLE_BIN=… GWBFT_BIN=… GWEMIX_BIN=… go test ./internal/app -run TestChainSurfaceJudgesTheSelectedNativeBinaries (run with GWEMIX_BIN set)",
+      "commit": "4b524de7",
+      "evidence": "RED: on 249fd11c, Verify refused the go-wbft binary with \"binary program identity does not match chain build contract\" while GWEMIX_BIN was set. GREEN: probes run with a minimal environment and all three binaries verify."
+    },
+    {
+      "id": "G-D09",
+      "group": "defect",
+      "title": "바이너리 help 검사가 매번 새 임시 HOME에서 돌고 help가 그 경로를 출력해서, 같은 바이너리의 surface 지문이 호출마다 달라지고 검토한 계획을 시작하면 409로 거절된다.",
+      "criteria": [
+        "WEB-01",
+        "WEB-06"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 체인 바이너리 명령·옵션 계약"
+      ],
+      "code": [
+        "internal/app/manifest_setup.go manifestProbe"
+      ],
+      "completion": "같은 바이너리를 두 번 판정하면 지문이 같고, 화면에서 검토한 계획이 그대로 시작된다.",
+      "status": "closed",
+      "verification": "GWBFT_BIN=… go test ./internal/app -run TestChainSurfaceFingerprintIsStableAcrossJudgements; python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json)",
+      "commit": "f248fef8",
+      "evidence": "RED: in the navigation proof, '검토한 계획 실행' returned '409: revision changed; reload before editing'; the new test failed with 'native wbft fingerprint changed between identical judgements' because the --help probe digest differed. The fault came with the isolated probe in 4b524de7. GREEN: the temporary HOME is written back as $HOME, the test passes and the proof starts the reviewed plan."
+    },
+    {
+      "id": "G-D10",
+      "group": "defect",
+      "title": "취소 후 정리가 성공해 노드 처리가 cleaned인데도 작업이 실행 중 남긴 자원을 계속 '확인이 필요한 자원'으로 보인다.",
+      "criteria": [
+        "WEB-13"
+      ],
+      "spec": [
+        "docs/dev/web-ui-spec.md 취소·보존·정리 (정리 결과를 숨기지 않는다)"
+      ],
+      "code": [
+        "internal/app/web_job_execution.go execute"
+      ],
+      "completion": "정리가 성공한 작업은 정리가 보고한 미해결 자원만 남긴다. 정리가 실패하면 둘 다 남긴다.",
+      "status": "closed",
+      "verification": "go test ./internal/app -run TestCleanedJobDoesNotKeepResourcesItsCleanupRemoved; python3 tests/webui/run_navigation.py (native wbft, real dashboard and browser; receipt chainbench-out/web-ui-development/navigation/receipt.json)",
+      "commit": "2df3278e",
+      "evidence": "RED: the navigation proof's job page showed a cleaned job listing its network record and data root as resources to check; the new test failed with 'cleaned job still lists [/fixture/nodes /fixture/record] (cleaned)'. GREEN: a successful cleanup replaces the run's unresolved list with its own; the proof asserts none remain."
+    }
+  ]
+}

@@ -240,6 +240,7 @@ func compareWorkspace(ctx context.Context, d Deps, up ChainUpIn) preflight.Decis
 		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	ws.SetDriver(d.Driver)
 	return ws.Compare(ctx, WantOf(up))
 }

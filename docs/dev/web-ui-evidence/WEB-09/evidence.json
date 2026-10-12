@@ -1,0 +1,478 @@
+{
+  "criterion": "WEB-09",
+  "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+  "scenarios": [
+    {
+      "id": "search-filter-detail",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "case, state, chain, actor, workspace and time filters return only matching runs",
+          "passed": true
+        },
+        {
+          "description": "run detail opens in the browser with its engine session",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+          "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-history-web09-desktop.png",
+          "sha256": "2f9ded5d8a9ad63a3a441971252070e14639c1fd1d47e46dc23905367e464401"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "compatible-comparison-and-reasons",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "two native runs of the same case compare with their verdicts",
+          "passed": true
+        },
+        {
+          "description": "different cases are refused with a stated reason",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+          "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "safe-export",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "UI export carries the run without passwords, setup token or personal credential secret",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-history-export.json",
+          "sha256": "c5d1ae8da8b2b66f3a150c2da78e490311a69bf7cbf0c1df85b355b49f570973"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "retention-across-restart",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "runs, deletion tombstone and archived windows survive a dashboard restart",
+          "passed": true
+        },
+        {
+          "description": "run-window samples are unchanged across a restart",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+          "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+          "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "admin-only-deletion",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "operators and viewers are refused deletion",
+          "passed": true
+        },
+        {
+          "description": "administrator deletion through the UI removes the run",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+          "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+          "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-history-archive-desktop.png",
+          "sha256": "72ca3d860d04abbac0cc7e53d7a4cf596cf271f8d0e68aac810bd4aab02c2f1b"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "protected-active-shared-live",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a running execution cannot be deleted",
+          "passed": true
+        },
+        {
+          "description": "shared case declarations and other runs stay",
+          "passed": true
+        },
+        {
+          "description": "chain record, node data, process and RPC stay after deletion",
+          "passed": true
+        },
+        {
+          "description": "samples outside the run window stay",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+          "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+          "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "partial-deletion-failure",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a failed archive rewrite keeps the run, reports 500 and a retry completes",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+          "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    },
+    {
+      "id": "run-metric-log-archive",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "run detail shows the archived metric and log window of its job",
+          "passed": true
+        },
+        {
+          "description": "archive has no automatic expiry: deletion is administrative only",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+          "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-history-archive-mobile.png",
+          "sha256": "b1e1d03a898ec531b6ec766f47c2e42c2d4668932a9585639487e86da9dbc335"
+        }
+      ],
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "observedAt": "2026-10-11T22:07:06.565135+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/app ./internal/dashboard -run \"TestWebHistory|TestHistory\"",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-09/check-0.log",
+      "sha256": "0d82c1df5632b53cc79f22382c4572dc41efcd5757f2b112229071f19d6969ce"
+    },
+    {
+      "command": "node --test tests/webui/history-json.test.mjs",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-09/check-1.log",
+      "sha256": "7bcd082adc1dda445f2a0593ab8f88402ac0aef2cd0c766861c44bd7c42c035d"
+    }
+  ],
+  "proofs": [
+    {
+      "name": "history-web09",
+      "startedAt": "2026-10-11T22:03:08.617964+00:00",
+      "runtime": "/private/tmp/cbui/bf2e9a5b-6c87-4374-9c2a-2d223fa2bb6d",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "history-archive",
+      "startedAt": "2026-10-11T22:06:33.488496+00:00",
+      "runtime": "/private/tmp/cbui/2f8bce15-a199-418b-812b-8051f7b28053",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
+    }
+  ],
+  "coverage": {
+    "required": [
+      "search-filter-detail",
+      "compatible-comparison-and-reasons",
+      "safe-export",
+      "retention-across-restart",
+      "admin-only-deletion",
+      "protected-active-shared-live",
+      "partial-deletion-failure",
+      "run-metric-log-archive"
+    ],
+    "executed": [
+      "search-filter-detail",
+      "compatible-comparison-and-reasons",
+      "safe-export",
+      "retention-across-restart",
+      "admin-only-deletion",
+      "protected-active-shared-live",
+      "partial-deletion-failure",
+      "run-metric-log-archive"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/web_history.go",
+      "sha256": "1c68eefc3c312e0643ae5b992ffda1d481b12ce0f641fd3245852f7e299ddb7b"
+    },
+    {
+      "path": "internal/app/web_history_capture.go",
+      "sha256": "c08ba5d2baed9de9438fae9b93c2ccb4e045435701c322ced86e324bc0bbbc04"
+    },
+    {
+      "path": "internal/app/web_history_compare.go",
+      "sha256": "05b91eda519561362b46f4436753cfcc0cb4ab94a70386d91dcac8e64ca42d63"
+    },
+    {
+      "path": "internal/app/web_history_contract.go",
+      "sha256": "0b01c39551df641c1f66db92ce936fb1252a841bfa72b44001a15db43ec1f099"
+    },
+    {
+      "path": "internal/app/web_history_observations.go",
+      "sha256": "a1f742c36255fa58417caf187c98c5125a0910119cd2e53cc3808535fc684266"
+    },
+    {
+      "path": "internal/app/web_history_observations_test.go",
+      "sha256": "6162ece00981102b330a1948f5367b8d61b3a1c06a36d12ffca6cc4ef4f41d88"
+    },
+    {
+      "path": "internal/app/web_history_test.go",
+      "sha256": "e5958c43dd0ead00700644c73fc5a7ef955d6f3a0f0dc5cc9440ec296a5a092c"
+    },
+    {
+      "path": "internal/app/web_monitor_archive.go",
+      "sha256": "61ec2297a0cfee954f1495804541e3bb7892958095761f8bbde5c397184952fa"
+    },
+    {
+      "path": "internal/dashboard/history.go",
+      "sha256": "9fae88f4a23c8d46eaafe14972296d509393c7809e597eee95f6cf52f0cced39"
+    },
+    {
+      "path": "internal/core/session/historystore.go",
+      "sha256": "67e5b375ccce091c6f5603599bee0f6a00fc527f302f0d97a6f862cbd67cce45"
+    },
+    {
+      "path": "internal/core/session/observationstore.go",
+      "sha256": "364f963a058a555f31719aab3059283602b39827898ff22756ab2616e0d105e8"
+    },
+    {
+      "path": "web/src/HistoryPanel.svelte",
+      "sha256": "0f661f8947d195f30f6376bc923fce95e46387b157364ce8fbb1af3139ab351d"
+    },
+    {
+      "path": "web/src/history-json.js",
+      "sha256": "2394991700797ccf6ac7696b99366471b7a93e36346aea12dc4fb01ee591bd13"
+    },
+    {
+      "path": "tests/webui/browser_history_web09.mjs",
+      "sha256": "da10ce8142e61179cede3a05ab58d7cc72d89b8fc1f6ca4b1bb577f6b66b1d24"
+    },
+    {
+      "path": "tests/webui/evidence_web09.py",
+      "sha256": "edc7e84cab07eb72446530070e6864505d41d891781337a3250f73157ea7d4c3"
+    },
+    {
+      "path": "tests/webui/run_history_web09.py",
+      "sha256": "4b67b4ad27eece3443705f10ccf2810c1c64ad4c8f75a709c76dcd2100284502"
+    },
+    {
+      "path": "tests/webui/run_web09.py",
+      "sha256": "658b090763e1923a67b740cfe8957e952e8055595be7a1b538d08a5289f347e5"
+    },
+    {
+      "path": "tests/webui/test_evidence_web09.py",
+      "sha256": "7c4248fe6c2056e9f522a7097c3d7ed83375ab57c4b087be20ab6fd7a87883ee"
+    },
+    {
+      "path": "tests/webui/proof_acceptance.py",
+      "sha256": "65e4261b14481e9cc712e58894b84d14c407ca9f67a88445e47f425a97c69074"
+    },
+    {
+      "path": "tests/webui/browser_history_archive.mjs",
+      "sha256": "11b1acf27124fd04cbe07b6e809fc51e0e5cf72fbef475a8a71a574803e6272d"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/check-0.log",
+      "sha256": "0d82c1df5632b53cc79f22382c4572dc41efcd5757f2b112229071f19d6969ce"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/check-1.log",
+      "sha256": "7bcd082adc1dda445f2a0593ab8f88402ac0aef2cd0c766861c44bd7c42c035d"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-history-archive-desktop.png",
+      "sha256": "72ca3d860d04abbac0cc7e53d7a4cf596cf271f8d0e68aac810bd4aab02c2f1b"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-history-archive-mobile.png",
+      "sha256": "b1e1d03a898ec531b6ec766f47c2e42c2d4668932a9585639487e86da9dbc335"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-receipt.json",
+      "sha256": "c3bfaa00d1d83301419dfb4005b41b155973a776dc1ca4b3b6f2af221e2038a8"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-archive-run.log",
+      "sha256": "95fb9f04dd567f773682099ae849ccd4ff1496e2b7b9ebe7c79f960de8026cd2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-history-export.json",
+      "sha256": "c5d1ae8da8b2b66f3a150c2da78e490311a69bf7cbf0c1df85b355b49f570973"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-history-web09-desktop.png",
+      "sha256": "2f9ded5d8a9ad63a3a441971252070e14639c1fd1d47e46dc23905367e464401"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-history-web09-mobile.png",
+      "sha256": "bed05fcf85200ff273b21234525f8275c0cf71bfeb53a3dfb202fae14bec5fbf"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-receipt.json",
+      "sha256": "52cd32e3864c58434d1fb9b62a1e671acdee2257a02c0c2b5af2946c8ca478fb"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-09/history-web09-run.log",
+      "sha256": "cf8781686218b08237f95cb9b459de263ae9a65fb7e336c15e7466ee0ebf727c"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+}

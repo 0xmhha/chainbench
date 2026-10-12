@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/testhelper"
@@ -91,6 +92,11 @@ type AttachConfig struct {
 	// somebody else's network and there is no key set to speak of — labels
 	// then fail by name instead of resolving to something arbitrary.
 	KeysDir string
+	// ReadOnlyKeys prevents test account registration from changing its inputs.
+	ReadOnlyKeys bool
+	// Ring, when set, is the ring a composed run already prepared its declared
+	// accounts in; it replaces the one KeysDir would build.
+	Ring *store.KeySet
 	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
@@ -178,9 +184,16 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 
-	keys, err := ringFor(cfg.KeysDir)
+	keyOutput := cfg.KeysDir
+	if cfg.ReadOnlyKeys {
+		keyOutput = ""
+	}
+	keys, err := ringForOutput(cfg.KeysDir, keyOutput)
 	if err != nil {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
+	if cfg.Ring != nil {
+		keys = cfg.Ring
 	}
 	run := NewRunSpec(interp.Deps{
 		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },
@@ -250,6 +263,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 // a label then fails saying there is nothing to resolve against, which is the
 // truth, instead of failing as if the name were unknown.
 func ringFor(dir string) (*store.KeySet, error) {
+	return ringForOutput(dir, dir)
+}
+
+// ringForOutput reads source identities while keeping registration writes in
+// the chosen output. Empty output is an in-memory ring for immutable inputs.
+func ringForOutput(dir, output string) (*store.KeySet, error) {
 	if dir == "" {
 		// No key set directory does not mean no ring. An attached run can
 		// still declare an account whose key lives in a file of its own
@@ -272,7 +291,7 @@ func ringFor(dir string) (*store.KeySet, error) {
 		// asked.
 		return nil, nil //nolint:nilerr // absence is a valid state, not a failure
 	}
-	ring := store.NewKeySet(dir)
+	ring := store.NewKeySet(output)
 	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
 		return nil, err
 	}
@@ -371,12 +390,12 @@ func chainValidators(chain string) func(context.Context, *rpc.Client) ([]string,
 // read has nothing to say, and the ones beside it may.
 func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCEndpoint) RunSpecFunc {
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
-		if len(spec.EnvAccounts) > 0 && ring != nil {
+		if pending := unprepared(ring, spec.EnvAccounts); len(pending) > 0 {
 			endpoint := ""
 			if len(eps) > 0 {
 				endpoint = eps[0].RPCURL
 			}
-			if err := prepareAccounts(ctx, ring, "", endpoint, spec.EnvAccounts, ""); err != nil {
+			if err := prepareAccounts(ctx, ring, "", endpoint, pending, ""); err != nil {
 				// The reason is set here and not left to the engine: the engine
 				// records a RunSpec error as a bare "fail", because every
 				// failure the interpreter raises has already written its own.
@@ -387,4 +406,22 @@ func withDeclaredAccounts(inner RunSpecFunc, ring *store.KeySet, eps []node.RPCE
 		}
 		return inner(ctx, spec, env, rec)
 	}
+}
+
+// unprepared is the part of a declaration this wrapper still has to prepare.
+// A composed run created and funded its minted accounts before the first spec,
+// and this engine's ring read them back; preparing them again would fund them
+// from no account at all. A keyFile account is always read again, so a file
+// naming a different key than the ring holds is still refused.
+func unprepared(ring *store.KeySet, declared map[string]dsl.AccountV2) map[string]dsl.AccountV2 {
+	if ring == nil {
+		return nil
+	}
+	out := map[string]dsl.AccountV2{}
+	for label, decl := range declared {
+		if _, ok := ring.Get(keyring.Label(label)); !ok || strings.TrimSpace(decl.KeyFile) != "" {
+			out[label] = decl
+		}
+	}
+	return out
 }

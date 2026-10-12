@@ -464,6 +464,7 @@ func (mg *Manager) mayOperate(verb string) error {
 		return err
 	}
 	ws.SetEnv(mg.d.Env)
+	ws.SetServerLookup(mg.d.ServerLookup)
 	ws.SetDriver(mg.d.Driver)
 	return ws.allow(verb)
 }

@@ -32,6 +32,7 @@ func InWorkspace[T any](d Deps, dataDir string, fn func(*Workspace) (T, error)) 
 		return zero, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	ws.SetDriver(d.Driver)
 
 	// One run at a time per workspace. A second run would compose over the

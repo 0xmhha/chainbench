@@ -1,6 +1,7 @@
 package resource_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,20 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
+
+func TestLocalOnlyOpenerRefusesUnsupportedTransportBeforeDial(t *testing.T) {
+	o := resource.Opener{LocalOnly: true, ServerSet: filepath.Join(t.TempDir(), "missing.yaml")}
+	if _, err := o.Open(resource.Spec{Server: "unavailable", DataRoot: "/fixture"}); err == nil || !strings.Contains(err.Error(), "transport") {
+		t.Fatalf("did not refuse at transport boundary: %v", err)
+	}
+	access, err := o.Open(resource.Spec{DataRoot: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = access.Files.Exists(context.Background(), access.DataRoot); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // fixture writes a server set and its localmap side by side, returning the
 // set's path. The addresses are documentation examples, not live hosts —

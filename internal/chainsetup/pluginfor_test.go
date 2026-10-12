@@ -77,3 +77,26 @@ func TestPluginFor_ASwapKeepsTheChainWithTheName(t *testing.T) {
 		t.Errorf("after the swap the node runs binary %q", got)
 	}
 }
+
+// TestSetNodeBinary_DefaultReturnsToTheNetworkBinary: "default" names what the
+// rest of the network runs. A node swapped onto it runs the network binary
+// again, rather than handing the word to exec as a path.
+func TestSetNodeBinary_DefaultReturnsToTheNetworkBinary(t *testing.T) {
+	w := &Workspace{state: State{
+		Chain:        "wemix",
+		Binaries:     map[string]string{"next": "/data/bin/gwbft", "node2": "/data/bin/gwbft"},
+		BinaryChains: map[string]string{"next": "wbft", "node2": "wbft"},
+		Nodes:        []node.Record{{Index: 2, Binary: "node2"}},
+	}}
+	w.setNodeBinary(0, "default")
+	if got := w.binaryFor(w.state.Nodes[0], "/data/bin/gwemix"); got != "/data/bin/gwemix" {
+		t.Errorf("a node swapped onto default runs %q, want the network binary", got)
+	}
+	p, err := w.pluginFor(w.state.Nodes[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := p.Manifest().ID; got != "wemix" {
+		t.Errorf("a node swapped onto default runs chain %q, want the network's", got)
+	}
+}

@@ -1,0 +1,523 @@
+{
+  "criterion": "WEB-14",
+  "invocationId": "da63a50c-ef13-4df6-a603-92fce2cea48c",
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753",
+  "scenarios": [
+    {
+      "id": "criteria",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:22:18.269189+00:00",
+      "assertions": [
+        {
+          "message": "WEB-01 pass: 7 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-02 pass: 6 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-03 pass: 5 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-04 pass: 10 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-05 pass: 10 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-06 pass: 6 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-07 pass: 6 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-08 pass: 6 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-09 pass: 8 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-10 pass: 7 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-11 pass: 6 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-12 pass: 5 scenarios",
+          "passed": true
+        },
+        {
+          "message": "WEB-13 pass: 6 scenarios",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "modes-transports",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:22:18.269256+00:00",
+      "assertions": [
+        {
+          "message": "modes observed: personal, team",
+          "passed": true
+        },
+        {
+          "message": "transports observed: local, ssh",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "mandatory-checks",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:32:51.458941+00:00",
+      "assertions": [
+        {
+          "message": "make check exit 0",
+          "passed": true
+        },
+        {
+          "message": "go test -race -json -p 1 ./... exit 0",
+          "passed": true
+        },
+        {
+          "message": "go vet -tags e2e ./... exit 0",
+          "passed": true
+        },
+        {
+          "message": "npm --prefix web run build exit 0",
+          "passed": true
+        },
+        {
+          "message": "node --test tests/webui/*.test.mjs exit 0",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "live-go-tests",
+      "mode": "team",
+      "transport": "local+SSH",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:32:51.485636+00:00",
+      "assertions": [
+        {
+          "message": "2937 Go tests passed under -race, none skipped and none failed",
+          "passed": true
+        },
+        {
+          "message": "gated live tests ran against real binaries and the docker servers: GSTABLE_BIN, GWEMIX_BIN, CHAINBENCH_DOCKER_SERVERS",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "spa-build",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:32:54.926566+00:00",
+      "assertions": [
+        {
+          "message": "3 SPA files rebuilt byte-identically",
+          "passed": true
+        },
+        {
+          "message": "the Go server serves exactly the embedded files",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "routes",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "role": "admin",
+      "observedAt": "2026-10-11T22:32:58.786204+00:00",
+      "assertions": [
+        {
+          "message": "/: navigated, refreshed and opened directly",
+          "passed": true
+        },
+        {
+          "message": "/chains: navigated, refreshed and opened directly",
+          "passed": true
+        },
+        {
+          "message": "/tests: navigated, refreshed and opened directly",
+          "passed": true
+        },
+        {
+          "message": "/monitoring: navigated, refreshed and opened directly",
+          "passed": true
+        },
+        {
+          "message": "/history: navigated, refreshed and opened directly",
+          "passed": true
+        },
+        {
+          "message": "/settings: navigated, refreshed and opened directly",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "command": "make check",
+      "exitCode": 0,
+      "cwd": "checkout",
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-0.log",
+      "sha256": "b3b8b8d87d619ff87c33d32d770acafea4e76383f0920d289af0ad2b58d2b9a1"
+    },
+    {
+      "command": "go test -race -json -p 1 ./...",
+      "exitCode": 0,
+      "cwd": "checkout",
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-1.log",
+      "sha256": "2106d803d2992603afe76246f8f6ffaf58f6fdae4e2e6fe3838bbb87802a6bf0"
+    },
+    {
+      "command": "go vet -tags e2e ./...",
+      "exitCode": 0,
+      "cwd": "checkout",
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "npm --prefix web run build",
+      "exitCode": 0,
+      "cwd": "staged",
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-3.log",
+      "sha256": "b9783fd461063910a2423dd6734c2626e036c9d0337ded56aea24cc48f99a2df"
+    },
+    {
+      "command": "node --test tests/webui/*.test.mjs",
+      "exitCode": 0,
+      "cwd": "checkout",
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-4.log",
+      "sha256": "9d7f82c399a393b8a0bf1942371b34d014f2a56624695adca5b849c88b108549"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/browser.json",
+      "sha256": "2c141923b88b7775cee5cfe080375fda3f9528ee9d4a2706b01727ddbdd39127"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/browser.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-0.log",
+      "sha256": "b3b8b8d87d619ff87c33d32d770acafea4e76383f0920d289af0ad2b58d2b9a1"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-1.log",
+      "sha256": "2106d803d2992603afe76246f8f6ffaf58f6fdae4e2e6fe3838bbb87802a6bf0"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-3.log",
+      "sha256": "b9783fd461063910a2423dd6734c2626e036c9d0337ded56aea24cc48f99a2df"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/check-4.log",
+      "sha256": "9d7f82c399a393b8a0bf1942371b34d014f2a56624695adca5b849c88b108549"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/docker-prepare.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/report.json",
+      "sha256": "e24438f8171fca50fd0dc56cb250cb4223d1f20e602d5e3352cb6b6836f7f016"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-chains.png",
+      "sha256": "22d68fff9ab6d6d656e48eef300d8faf3908d26ef15e938f5284e90f22a3946c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-history.png",
+      "sha256": "d2620ee7ed1b2ac5c15ec1aa497a1c114f8ba06cfb4eea19156cfa5dd72ead63"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-monitoring.png",
+      "sha256": "79fd1ed53fcab72271591adc87045548101933434485be73f7c0df074a00fd45"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-root.png",
+      "sha256": "c01029c851d4335afcfa5b9008e4c5b6b4e1fe29904c65a2a8394455335e648c"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-settings.png",
+      "sha256": "ba642c71d43fa593f5df67083013f7f063387b9b4993dd6df149c34f86d9b0f9"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/route-tests.png",
+      "sha256": "25e44e1d20691a836dcc152d2ed2947463f74410420dd90fd4968e72812ff641"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-14/server.log",
+      "sha256": "2130462e5ac5ed834beca33a667070fb17b2f9bef7ce70d0a3fc2d533e5607f3"
+    }
+  ],
+  "criteria": [
+    {
+      "criterion": "WEB-01",
+      "invocationId": "52224256-fa63-45a6-aa5c-c862841fd4ba",
+      "outcome": "pass",
+      "scenarios": [
+        "stablenet:preset-fields",
+        "wbft:preset-fields",
+        "wemix:preset-fields",
+        "inheritance-defaults-effective",
+        "unsupported-ui-api",
+        "preset-option-field-coverage",
+        "binary-surface-provenance"
+      ],
+      "evidenceDigest": "0e3998e199f71d964356d81177d7d13d5aaf4b097cbfe3fb8205a298fde32097"
+    },
+    {
+      "criterion": "WEB-02",
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "outcome": "pass",
+      "scenarios": [
+        "bundle-import-preview-commit",
+        "concrete-field-and-extension-errors",
+        "structured-edit-revision-conflict",
+        "export-round-trip-semantics",
+        "setup-from-imported-configuration",
+        "pinned-assets-and-revisions"
+      ],
+      "evidenceDigest": "a6b61ec87b695b4fbd1ea058e2f840a6e1d8fb908771e7667c2232bbd7df6860"
+    },
+    {
+      "criterion": "WEB-03",
+      "invocationId": "14f42b1d-d119-4920-9926-5ec5e23b7dcc",
+      "outcome": "pass",
+      "scenarios": [
+        "two-operator-shared-edit",
+        "personal-ssh-binding",
+        "ssh-access-permissions",
+        "ports-paths-placement-validation",
+        "secret-free-export"
+      ],
+      "evidenceDigest": "5d57b1e3acee665f5708186e1ebba951227e16d2236ee36878e1e5406f07ad04"
+    },
+    {
+      "criterion": "WEB-04",
+      "invocationId": "532f3650-42c1-4e44-b099-e8e9ab634771",
+      "outcome": "pass",
+      "scenarios": [
+        "builtin-stablenet",
+        "external-stablenet",
+        "builtin-wbft",
+        "external-wbft",
+        "builtin-wemix",
+        "external-wemix",
+        "unsupported-family",
+        "unsupported-dialect",
+        "wrong-binary-identity",
+        "manifest-management"
+      ],
+      "evidenceDigest": "68ac1101971e2f189b4e0d892594eb06ea5f62bee94bb334f90a26c39caf3f7a"
+    },
+    {
+      "criterion": "WEB-05",
+      "invocationId": "341e8ab6-4162-49ab-8e17-03e1dedb7b09",
+      "outcome": "pass",
+      "scenarios": [
+        "grammar",
+        "references",
+        "v1-migration",
+        "invalid-unknown",
+        "live-execution",
+        "attach-execution",
+        "actions",
+        "assertions",
+        "readers",
+        "arguments"
+      ],
+      "evidenceDigest": "136eab04486442416b9513f3f9dfd2bca98f0c49b8d465372c553cbe8aa23779"
+    },
+    {
+      "criterion": "WEB-06",
+      "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+      "outcome": "pass",
+      "scenarios": [
+        "ssh-native-deployment",
+        "checksum-database-rpc-pid",
+        "mid-deployment-ssh-failure",
+        "mid-transfer-disconnect",
+        "revocation-during-ssh",
+        "no-automatic-retry"
+      ],
+      "evidenceDigest": "ba8f62095b6cfcb63d8b38f7ade6666673ec10cb15d32229b987308ba4a387db"
+    },
+    {
+      "criterion": "WEB-07",
+      "invocationId": "299fede7-4a77-462f-b777-3a0e69af1a4a",
+      "outcome": "pass",
+      "scenarios": [
+        "owned-start-stop",
+        "config-replacement-restart",
+        "binary-replacement-restart",
+        "non-producer-reset-stopped",
+        "producer-and-attach-refused",
+        "cli-semantics-preserved"
+      ],
+      "evidenceDigest": "4c981e0714f4942fc2e400bb7dc9f651882a2dafeb8d94c733fc1057d4720334"
+    },
+    {
+      "criterion": "WEB-08",
+      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
+      "outcome": "pass",
+      "scenarios": [
+        "native-state-metric-charts",
+        "time-linked-logs",
+        "browser-close-logout-continuity",
+        "reconnect-snapshot-restore",
+        "sse-gap-drop-stale",
+        "collection-failure-reporting"
+      ],
+      "evidenceDigest": "19d0797faf02b0aac0134715d3063fa35bd90d81a93aa90b9527469652c55d28"
+    },
+    {
+      "criterion": "WEB-09",
+      "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+      "outcome": "pass",
+      "scenarios": [
+        "search-filter-detail",
+        "compatible-comparison-and-reasons",
+        "safe-export",
+        "retention-across-restart",
+        "admin-only-deletion",
+        "protected-active-shared-live",
+        "partial-deletion-failure",
+        "run-metric-log-archive"
+      ],
+      "evidenceDigest": "1ba68d166536ea04f3d1783afe67ec97d80c6aaf5a006ad50573c8a1451639a2"
+    },
+    {
+      "criterion": "WEB-10",
+      "invocationId": "89200345-c5b4-4376-9a9c-1afcb5e6196d",
+      "outcome": "pass",
+      "scenarios": [
+        "personal-team-login",
+        "role-ui-api-matrix",
+        "csrf-ownership",
+        "foreign-credential-refusal",
+        "secret-free-output",
+        "bootstrap-restrictions",
+        "encrypted-storage-session"
+      ],
+      "evidenceDigest": "bb09f62a38546a9af7a638fb27a7658612eb1a0db8b7d44b33e66d3210e22c99"
+    },
+    {
+      "criterion": "WEB-11",
+      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
+      "outcome": "pass",
+      "scenarios": [
+        "alias-path-port-conflict-with-owner",
+        "local-ssh-alias-same-physical",
+        "process-and-binary-conflict",
+        "independent-resources-parallel",
+        "test-internal-vs-external-control",
+        "cleanup-releases-claims"
+      ],
+      "evidenceDigest": "405e15ed1a3aac2c535fbec20604cb20e0c2887632e0c8e1c3e7e0bdb76c0746"
+    },
+    {
+      "criterion": "WEB-12",
+      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
+      "outcome": "pass",
+      "scenarios": [
+        "restart-marks-running-work-interrupted",
+        "actual-state-rechecked",
+        "records-and-claims-preserved",
+        "no-automatic-redeploy-or-reset",
+        "explicit-rerun-new-plan"
+      ],
+      "evidenceDigest": "9a3ca3cf27f8558c3dc11089eb8158e5e5809c1e7ded573e53f98dc042e41f93"
+    },
+    {
+      "criterion": "WEB-13",
+      "invocationId": "c74f2c8a-0a60-4196-a359-dca116a2d512",
+      "outcome": "pass",
+      "scenarios": [
+        "normal-end-retain-and-cleanup",
+        "user-cancel-retain-and-cleanup",
+        "executor-and-admin-cancel",
+        "cleanup-failure-reported",
+        "revocation-retains-and-blocks-access",
+        "attach-protection"
+      ],
+      "evidenceDigest": "3d58f5126ad2ff9f6db69e518f7d9f5ef33337ae29adf64b363d73cc2873caad"
+    }
+  ],
+  "checkout": {
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+  },
+  "goTests": {
+    "counts": {
+      "pass": 2937,
+      "fail": 0,
+      "skip": 0
+    },
+    "skipped": [],
+    "env": [
+      "GSTABLE_BIN",
+      "GWEMIX_BIN",
+      "CHAINBENCH_DOCKER_SERVERS"
+    ]
+  },
+  "spa": {
+    "files": {
+      "assets/index--HlbxhPr.css": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf",
+      "assets/index-CE7LAY-s.js": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a",
+      "index.html": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
+    },
+    "reproducible": true,
+    "servedMatchesEmbedded": true
+  },
+  "server": {
+    "sha256": "1f851cb43a3486222a34ba87cafeeae410b8d6efb0810140cd5005b3db8a77e3",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "contractVersion": "2",
+    "url": "http://127.0.0.1:50933"
+  },
+  "fixture": {
+    "runtime": "/private/tmp/cbui/da63a50c-ef13-4df6-a603-92fce2cea48c",
+    "transport": "local",
+    "ownership": "owned",
+    "browserVersion": "154.0.8037.98"
+  },
+  "blockers": []
+}

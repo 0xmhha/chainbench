@@ -1,7 +1,9 @@
 package chainsetup_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
 	"os"
 	"path/filepath"
@@ -9,12 +11,68 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/preset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
+
+func TestGenesisExistingPreparesPlacementBoundGovernanceInputs(t *testing.T) {
+	dir := t.TempDir()
+	finished := []byte("{\n\"config\":{\"chainId\":424242},\"alloc\":{},\"note\":\"prepared\"\n}\n")
+	input := filepath.Join(dir, "finished.json")
+	if err := os.WriteFile(input, finished, 0600); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := chainsetup.Open(dir, fixedClock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Existing files do not need to run the genesis generator.
+	if _, err = ws.New(chainsetup.NewOpts{Chain: "wemix", Binary: "never-executed", KeysDir: filepath.Join("..", "..", "presets", "keys")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ws.Allocate(chainsetup.AllocateOpts{Topology: &node.Topology{Chain: "wemix", Nodes: []node.Entry{{Index: 1, Role: "bp"}, {Index: 2, Role: "en"}, {Index: 3, Role: "bp"}}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ws.Keys(context.Background(), chainsetup.KeysOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ws.Genesis(context.Background(), chainsetup.GenesisOpts{Existing: input}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
+	if err != nil || !bytes.Equal(got, finished) {
+		t.Fatal("governance preparation changed finished genesis", err)
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, poa.ConfigFileName))
+	if err != nil {
+		t.Fatal("finished genesis omitted the governance input needed to start", err)
+	}
+	var cfg poa.Config
+	if err = json.Unmarshal(raw, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if err = cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Members) != 2 || cfg.Members[0].Name != "node1" || cfg.Members[1].Name != "node3" || !cfg.Members[1].Bootnode {
+		t.Fatal("governance membership ignored actual producers", cfg.Members)
+	}
+	placed, err := ws.Netmap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range cfg.Members {
+		for _, p := range placed.Placements() {
+			if string(p.Label) == m.Name && (m.Port != p.Ports.P2P || m.IP != p.Host) {
+				t.Fatal("governance input ignored placement")
+			}
+		}
+	}
+}
 
 // TestGenesis_ExistingIsUsedVerbatim is W4's finished-genesis contract: a genesis
 // named by an "existing" reference is written to the target verbatim, not built

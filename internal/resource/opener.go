@@ -31,11 +31,18 @@ type Opener struct {
 	// ServerSet is the server-set file consulted for srv:// names; empty uses
 	// the default location.
 	ServerSet string
+	// Lookup supplies service-owned named-server credentials in memory. Nil
+	// preserves file-backed CLI/MCP resolution. A supplied lookup is exclusive:
+	// a missing or revoked entry never falls back to shared file credentials.
+	Lookup Lookup
 	// Docker treats the servers as local docker containers: dials are
 	// translated through the localmap next to the server set. The option is
 	// the power switch — with it, a missing localmap is an error; without it,
 	// a leftover localmap changes nothing.
 	Docker bool
+	// LocalOnly restricts a service whose configured transport cannot yet open
+	// remote targets. The default leaves CLI/MCP transport selection unchanged.
+	LocalOnly bool
 	// Env supplies environment lookups for the directly-named host form
 	// (user@host:/path), which has no server set to consult. Nil reads none.
 	Env func(string) string
@@ -48,6 +55,11 @@ type Opener struct {
 // specs come back with local handles through the same path — the consumer
 // never branches on where the machine is.
 func (o Opener) Open(spec Spec) (*Access, error) {
+	if o.LocalOnly {
+		if err := o.Check(spec); err != nil {
+			return nil, err
+		}
+	}
 	env := o.Env
 	if env == nil {
 		env = func(string) string { return "" }
@@ -56,7 +68,20 @@ func (o Opener) Open(spec Spec) (*Access, error) {
 	if err != nil {
 		return nil, err
 	}
-	return spec.ResolveWithPolicy(env, SetLookup(o.ServerSet), m, SetPolicy(o.ServerSet))
+	lookup := o.Lookup
+	if lookup == nil {
+		lookup = SetLookup(o.ServerSet)
+	}
+	return spec.ResolveWithPolicy(env, lookup, m, SetPolicy(o.ServerSet))
+}
+
+// Check validates the configured transport without dialing or writing files.
+// Target locality is decided here, beside the resolver, rather than by consumers.
+func (o Opener) Check(spec Spec) error {
+	if o.LocalOnly && spec.IsRemote() {
+		return fmt.Errorf("resource: target requires an unavailable remote transport")
+	}
+	return spec.Validate()
 }
 
 // HTTPEndpoint returns the URL a caller should dial to reach the HTTP service a

@@ -133,4 +133,4 @@ chainbench-out/
 graphify-out/
 
 # ouroboros local session artifacts
-.ouroboros/
+.ouroboros

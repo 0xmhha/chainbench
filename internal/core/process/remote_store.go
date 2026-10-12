@@ -58,7 +58,7 @@ func (s RemoteFileStore) Read(ctx context.Context, remotePath string) ([]byte, e
 // running sha256sum on the host, so an unchanged file is never downloaded just
 // to compare it. sha256sum prints "<hex>  <path>"; only the digest is taken.
 func (s RemoteFileStore) Checksum(ctx context.Context, remotePath string) (string, error) {
-	res, err := s.Run(ctx, "sha256sum "+remote.ShellQuote(remotePath))
+	res, err := s.Run(ctx, "if command -v sha256sum >/dev/null 2>&1; then sha256sum "+remote.ShellQuote(remotePath)+"; else shasum -a 256 "+remote.ShellQuote(remotePath)+"; fi")
 	if err != nil {
 		return "", fmt.Errorf("driver: remote checksum %s: %w", remotePath, err)
 	}

@@ -1,0 +1,135 @@
+package dashboard
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/collector"
+)
+
+func TestErrorsCarryMachineCodesAndFieldPaths(t *testing.T) {
+	root := t.TempDir()
+	auth, err := app.OpenWebAuth(root, "team")
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := app.OpenDeploymentStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs, err := app.OpenWebJobs(t.TempDir(), conflictFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	s := NewServer(bus, nil, WithDeployments(store, WebAuthenticator(auth)), WithWebJobs(jobs, WebAuthenticator(auth)), WithWebSecurity(auth, store))
+	setup, _ := os.ReadFile(filepath.Join(root, "setup.token"))
+	_, token, err := auth.Bootstrap("admin", "long-admin-password", string(setup))
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, _ := auth.Session(token)
+	call := func(method, path, body string, header map[string]string) (int, map[string]any) {
+		r := httptest.NewRequest(method, path, strings.NewReader(body))
+		r.AddCookie(&http.Cookie{Name: webCookie, Value: token})
+		r.Header.Set("X-CSRF-Token", session.CSRFToken)
+		for k, v := range header {
+			r.Header.Set(k, v)
+		}
+		w := httptest.NewRecorder()
+		s.ServeHTTP(w, r)
+		var out map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return w.Code, out
+	}
+	code, body := call("POST", "/api/v1/documents", `{"kind":"server-set","name":"pool","contractVersion":"2","content":{"version":2,"pool":{"hosts":[],"slots":2}},"assetRefs":[]}`, nil)
+	fields, _ := body["fieldErrors"].([]any)
+	if code != 422 || body["code"] != "invalid" || len(fields) != 1 || fields[0].(map[string]any)["path"] != "/content" {
+		t.Errorf("invalid document: %d %v", code, body)
+	}
+	if code, body = call("GET", "/api/v1/documents/absent", "", nil); code != 404 || body["code"] != "not_found" {
+		t.Errorf("absent document: %d %v", code, body)
+	}
+	actor := app.DeploymentActor{ID: session.User.ID, Role: "admin"}
+	plan, err := jobs.Plan(context.Background(), actor, app.WebPlanInput{WorkspaceID: "w", Operation: "chain.setup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code, body = call("POST", "/api/v1/jobs", `{"planId":"`+plan.ID+`"}`, nil); code != 400 || body["code"] != "bad_request" {
+		t.Errorf("job without an idempotency key: %d %v", code, body)
+	}
+}
+
+func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), conflictFixtureEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	alice, bob := app.DeploymentActor{ID: "alice", Role: "operator"}, app.DeploymentActor{ID: "bob", Role: "operator"}
+	owner, err := jobs.Plan(context.Background(), alice, app.WebPlanInput{WorkspaceID: "owner", Operation: "chain.setup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	held, err := jobs.Start(context.Background(), alice, owner.ID, "one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias, err := jobs.Plan(context.Background(), bob, app.WebPlanInput{WorkspaceID: "alias", Operation: "chain.setup"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	srv := NewServer(bus, nil, WithWebJobs(jobs, func(r *http.Request) (app.DeploymentActor, error) { return bob, nil }))
+	r := httptest.NewRequest("POST", "/api/v1/jobs", strings.NewReader(`{"planId":"`+alias.ID+`"}`))
+	r.Header.Set("Idempotency-Key", "two")
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, r)
+	var body struct {
+		Message string `json:"message"`
+		Details struct {
+			Holders []app.WebResourceConflict `json:"holders"`
+		} `json:"details"`
+	}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if w.Code != 409 || len(body.Details.Holders) != 1 || body.Details.Holders[0].JobID != held.ID || body.Details.Holders[0].ActorID != "alice" {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}
+
+type missingAccessEngine struct{ conflictFixtureEngine }
+
+func (missingAccessEngine) Prepare(context.Context, app.DeploymentActor, app.WebPlanInput) (app.WebPreparedJob, error) {
+	return app.WebPreparedJob{}, &app.WebAccessError{Missing: []string{"ssh:server2"}}
+}
+
+func TestPlanWithoutSSHAccessNamesTheMissingServers(t *testing.T) {
+	jobs, err := app.OpenWebJobs(t.TempDir(), missingAccessEngine{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := collector.NewBus()
+	defer bus.Close()
+	srv := NewServer(bus, nil, WithWebJobs(jobs, func(r *http.Request) (app.DeploymentActor, error) {
+		return app.DeploymentActor{ID: "bob", Role: "operator"}, nil
+	}))
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, httptest.NewRequest("POST", "/api/v1/plans", strings.NewReader(`{"workspaceId":"w","operation":"chain.setup"}`)))
+	var body struct {
+		Details struct {
+			MissingAccess []string `json:"missingAccess"`
+		} `json:"details"`
+	}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if w.Code != 422 || len(body.Details.MissingAccess) != 1 || body.Details.MissingAccess[0] != "ssh:server2" {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}

@@ -1,6 +1,10 @@
 package feature
 
-import "github.com/0xmhha/chainbench/internal/app"
+import (
+	"context"
+
+	"github.com/0xmhha/chainbench/internal/app"
+)
 
 // The compose stage: the nine steps that build and run a network, in the order
 // they resolve (chainsetup's composeNeeds says the same thing for the workspace
@@ -49,6 +53,20 @@ func init() {
 		Name: "chain.start", Stage: StageCompose,
 		Summary: "Launch every stopped node and record its PID",
 	}, app.ChainStart)
+	Register(Registration{
+		Name: "node.restart", Stage: StageCompose,
+		Summary: "Restart one owned node with its recorded inputs while preserving node data",
+	}, app.ChainRestart)
+	Register(Registration{
+		Name: "node.swap", Stage: StageCompose,
+		Summary: "Replace one owned node configuration or binary and preserve its chain data",
+	}, app.NodeSwap)
+	Register(Registration{
+		Name: "node.reset", Stage: StageCompose,
+		Summary: "Reset one non-producing node to its genesis and leave it stopped",
+	}, func(ctx context.Context, deps app.Deps, in app.NodeResetIn) (struct{}, error) {
+		return struct{}{}, app.NodeReset(ctx, deps, in)
+	})
 
 	// Reads of a composed network. They are the compose stage's queries, and
 	// the same declaration the CLI's query group and MCP's read-only tool list

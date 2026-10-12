@@ -26,7 +26,6 @@
     {
       "do": "swapNode",
       "on": "en1",
-      "purpose": "invalid-extra",
       "genesisOverlay": {
         "alloc": {
           "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {

@@ -14,6 +14,11 @@ import (
 // returns a channel closed when forwarding finishes (after the bus is closed
 // and its buffered events are drained), so callers can flush before exiting.
 func Forward(bus *collector.Bus, dashboardURL string, client *http.Client) <-chan struct{} {
+	return ForwardAuthenticated(bus, dashboardURL, "", client)
+}
+
+// ForwardAuthenticated preserves the legacy wire shape for protected publishers.
+func ForwardAuthenticated(bus *collector.Bus, dashboardURL, token string, client *http.Client) <-chan struct{} {
 	if client == nil {
 		client = http.DefaultClient
 	}
@@ -32,6 +37,9 @@ func Forward(bus *collector.Bus, dashboardURL string, client *http.Client) <-cha
 				continue
 			}
 			req.Header.Set("Content-Type", "application/json")
+			if token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 			if resp, err := client.Do(req); err == nil {
 				_ = resp.Body.Close()
 			}

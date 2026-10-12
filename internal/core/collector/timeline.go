@@ -24,7 +24,7 @@ func Timeline(dir string, opts SearchOpts) ([]Match, error) {
 		return nil, err
 	}
 	sort.SliceStable(matches, func(i, j int) bool {
-		ti, tj := lineTimestamp(matches[i].Text), lineTimestamp(matches[j].Text)
+		ti, tj := LineTimestamp(matches[i].Text), LineTimestamp(matches[j].Text)
 		if ti != tj {
 			return ti < tj
 		}
@@ -39,9 +39,9 @@ func Timeline(dir string, opts SearchOpts) ([]Match, error) {
 	return matches, nil
 }
 
-// lineTimestamp returns the "MM-DD|HH:MM:SS.mmm" timestamp of a log line, or ""
+// LineTimestamp returns the "MM-DD|HH:MM:SS.mmm" timestamp of a log line, or ""
 // when the line has none (sorts before any timestamped line).
-func lineTimestamp(text string) string {
+func LineTimestamp(text string) string {
 	if m := tsRE.FindStringSubmatch(text); m != nil {
 		return m[1]
 	}

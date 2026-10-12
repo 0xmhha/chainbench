@@ -1,0 +1,34 @@
+{
+  "criterion": "WEB-04",
+  "invocationId": "532f3650-42c1-4e44-b099-e8e9ab634771",
+  "startedAt": "2026-10-11T21:19:09.498272+00:00",
+  "finishedAt": "2026-10-11T21:19:32.646242+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "builtin-stablenet",
+    "builtin-wbft",
+    "builtin-wemix",
+    "external-stablenet",
+    "external-wbft",
+    "external-wemix",
+    "unsupported-family",
+    "unsupported-dialect",
+    "wrong-binary-identity",
+    "manifest-management"
+  ],
+  "executedScenarios": [
+    "builtin-stablenet",
+    "external-stablenet",
+    "builtin-wbft",
+    "external-wbft",
+    "builtin-wemix",
+    "external-wemix",
+    "unsupported-family",
+    "unsupported-dialect",
+    "wrong-binary-identity",
+    "manifest-management"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "68ac1101971e2f189b4e0d892594eb06ea5f62bee94bb334f90a26c39caf3f7a"
+}

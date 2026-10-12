@@ -101,7 +101,7 @@ func StaleCompositions(ctx context.Context, d Deps, in StaleCompositionsIn) (Sta
 
 	root := wc.DataRoot
 	purposes := []string{wc.Paths.Nodes, wc.Paths.Runtime, wc.Paths.Logs}
-	opener := resource.Opener{ServerSet: in.ServerSet, Docker: in.Docker, Env: d.Env, Report: d.Logf}
+	opener := resource.Opener{ServerSet: in.ServerSet, Docker: in.Docker, Env: d.Env, Lookup: d.ServerLookup, Report: d.Logf}
 	for _, s := range set.Servers {
 		acc, err := opener.Open(resource.TargetOf(s, root))
 		if err != nil {

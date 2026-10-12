@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-06",
+  "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
+  "startedAt": "2026-10-11T21:29:17.222284+00:00",
+  "finishedAt": "2026-10-11T21:43:59.872960+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "ssh-native-deployment",
+    "checksum-database-rpc-pid",
+    "mid-deployment-ssh-failure",
+    "mid-transfer-disconnect",
+    "revocation-during-ssh",
+    "no-automatic-retry"
+  ],
+  "executedScenarios": [
+    "ssh-native-deployment",
+    "checksum-database-rpc-pid",
+    "mid-deployment-ssh-failure",
+    "mid-transfer-disconnect",
+    "revocation-during-ssh",
+    "no-automatic-retry"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "ba8f62095b6cfcb63d8b38f7ade6666673ec10cb15d32229b987308ba4a387db"
+}

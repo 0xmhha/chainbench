@@ -121,6 +121,11 @@ func TestParseV2Strictness(t *testing.T) {
 		"typo expect adjunct": `{"schemaVersion":"2","kind":"case","id":"x",
 			"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"}},
 			"steps":[{"do":"sendTx","from":"0xa","expect":"revrt"},{"expect":"blockNumber","is":1}]}`,
+		// Lowering writes "is" over "expected", so one of the two would be
+		// silently dropped.
+		"is beside expected": `{"schemaVersion":"2","kind":"case","id":"x",
+			"chainPreset":{"chain":"wbft","binaries":{"default":"gwbft"}},
+			"steps":[{"do":"waitFor","source":"blockNumber","is":2,"expected":3},{"expect":"blockNumber","is":1}]}`,
 		// A timeouts value that is not a duration must be refused, not silently
 		// ignored at run time (WA15).
 		"bad timeout duration": `{"schemaVersion":"2","kind":"case","id":"x",

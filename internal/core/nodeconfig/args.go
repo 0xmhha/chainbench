@@ -44,6 +44,10 @@ func (a *Args) Set(k OptionKey, v string, l Layer) {
 			fmt.Errorf("launchopt: %s (%q) is boolean; use Enable (layer %s)", name, k, l))
 		return
 	}
+	if err := CheckValue(a.dialect, k, v); err != nil {
+		a.problems = append(a.problems, fmt.Errorf("launchopt: %w (layer %s)", err, l))
+		return
+	}
 	a.put(k, entry{value: v})
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Deps are the collaborators the use cases share, injected once at the surface
@@ -26,6 +27,9 @@ type Deps struct {
 	// time); nil uses os.Getenv. Injected so tests never depend on the process
 	// environment.
 	Env func(string) string
+	// ServerLookup overrides named-server credentials for this invocation;
+	// nil retains the server-set file lookup used by CLI/MCP.
+	ServerLookup resource.Lookup
 	// Driver resolves the transport used to control node processes of an
 	// already-launched network; nil uses the local process. Injected so the use
 	// cases can be tested without spawning processes, and so a surface that

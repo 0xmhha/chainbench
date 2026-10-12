@@ -241,6 +241,14 @@ func LoadSet(path string) (*Set, error) {
 		}
 		return nil, fmt.Errorf("serverset: read %s: %w", path, err)
 	}
+	return parseSet(b, path)
+}
+
+// ParseSet validates an in-memory server set using the same contract as LoadSet.
+// Relative file references resolve against the current directory.
+func ParseSet(b []byte) (*Set, error) { return parseSet(b, "server-set.yaml") }
+
+func parseSet(b []byte, path string) (*Set, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(b))
 	dec.KnownFields(true)
 	var c Set

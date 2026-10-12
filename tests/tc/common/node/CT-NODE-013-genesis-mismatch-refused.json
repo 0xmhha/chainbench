@@ -23,7 +23,6 @@
     {
       "do": "swapNode",
       "on": "node4",
-      "purpose": "genesis-mismatch",
       "expect": "fail",
       "reason": "incompatible genesis",
       "save": "mismatchEvidence",

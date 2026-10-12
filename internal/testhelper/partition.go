@@ -21,6 +21,10 @@ import (
 // machines instead of peer drops over RPC.
 const partitionByFirewall = "firewall"
 
+// partitionByPeers names the default, dropping peers over RPC, so a case can
+// say which split it means.
+const partitionByPeers = "peers"
+
 type partitionAction struct{}
 
 func (partitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {

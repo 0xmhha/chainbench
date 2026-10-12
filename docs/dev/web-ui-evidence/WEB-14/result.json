@@ -1,0 +1,26 @@
+{
+  "criterion": "WEB-14",
+  "invocationId": "da63a50c-ef13-4df6-a603-92fce2cea48c",
+  "startedAt": "2026-10-11T22:22:15.812948+00:00",
+  "finishedAt": "2026-10-11T22:32:59.220632+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "criteria",
+    "spa-build",
+    "routes",
+    "mandatory-checks",
+    "live-go-tests",
+    "modes-transports"
+  ],
+  "executedScenarios": [
+    "criteria",
+    "modes-transports",
+    "mandatory-checks",
+    "live-go-tests",
+    "spa-build",
+    "routes"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "5cf3c22ae67e6e011f5931b6de74ef0b71d1bfc970c5205a52b3ab060e23d88d"
+}

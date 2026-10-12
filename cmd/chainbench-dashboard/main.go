@@ -5,11 +5,18 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
+	"net/netip"
 	"os"
+	"strings"
 
+	"github.com/0xmhha/chainbench/internal/app"
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -17,21 +24,158 @@ import (
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8787", "listen address")
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
+	presetRoot := flag.String("chain-presets", "presets/chain", "chain preset directory")
+	analysisRoot := flag.String("chain-analysis", "docs/chain-analysis", "captured chain binary documentation directory")
+	deploymentRoot := flag.String("deployment-root", "chainbench-out/web-ui", "persistent deployment data directory")
+	manifestAssets := flag.String("manifest-assets", "", "server-provisioned binary asset JSON enabling manifest management")
+	manifestKeys := flag.String("manifest-keys", "presets/keys", "key preset for isolated manifest setup")
+	webMode := flag.String("web-mode", "personal", "account mode: personal or team")
+	legacy := flag.Bool("legacy-observation", false, "loopback-only legacy event observer without control APIs")
+	tlsCert := flag.String("tls-cert", "", "TLS certificate for the web service")
+	tlsKey := flag.String("tls-key", "", "TLS private key for the web service")
+	trusted := flag.String("trusted-proxy", "", "comma-separated addresses or CIDRs of TLS terminators whose X-Forwarded-Proto is trusted")
 	flag.Parse()
+	if (*tlsCert == "") != (*tlsKey == "") {
+		fmt.Fprintln(os.Stderr, "TLS certificate and key must be configured together")
+		os.Exit(1)
+	}
+	var proxies []netip.Prefix
+	for _, raw := range strings.Split(*trusted, ",") {
+		if raw = strings.TrimSpace(raw); raw == "" {
+			continue
+		}
+		prefix, err := netip.ParsePrefix(raw)
+		if err != nil {
+			ip, ipErr := netip.ParseAddr(raw)
+			if ipErr != nil {
+				fmt.Fprintln(os.Stderr, "trusted proxy:", err)
+				os.Exit(1)
+			}
+			prefix = netip.PrefixFrom(ip, ip.BitLen())
+		}
+		proxies = append(proxies, prefix)
+	}
+	if !*legacy {
+		if err := dashboard.ValidateServiceMode(*webMode, *addr, *tlsCert != "", proxies); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+	if *legacy {
+		host, _, err := net.SplitHostPort(*addr)
+		if err != nil || net.ParseIP(host) == nil || !net.ParseIP(host).IsLoopback() {
+			fmt.Fprintln(os.Stderr, "legacy observation requires an explicit loopback listen address")
+			os.Exit(1)
+		}
+	}
 
 	bus := collector.NewBus()
 	defer bus.Close()
 	store := collector.NewMemStore()
 
-	var opts []dashboard.Option
+	opts := []dashboard.Option{dashboard.WithTrustedProxies(proxies)}
+	if !*legacy && *presetRoot != "" {
+		opts = append(opts, dashboard.WithChainPresets(*presetRoot))
+	}
 	if *artifactRoot != "" {
 		opts = append(opts, dashboard.WithArtifactRoot(*artifactRoot))
 	}
+	if !*legacy {
+		if token := os.Getenv("CHAINBENCH_PUBLISHER_TOKEN"); token != "" {
+			if len(token) < 32 {
+				fmt.Fprintln(os.Stderr, "publisher token must contain at least 32 bytes")
+				os.Exit(1)
+			}
+			opts = append(opts, dashboard.WithPublisherToken(token))
+		}
+		// Every Web control API runs behind the account sessions, CSRF and role
+		// checks of the security layer; there is no other account source.
+		auth, err := app.OpenWebAuth(*deploymentRoot, *webMode)
+		var authenticate dashboard.DeploymentAuthenticator
+		if err == nil {
+			authenticate = dashboard.WebAuthenticator(auth)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "deployment accounts:", err)
+			os.Exit(1)
+		}
+		deployments, err := app.OpenDeploymentStore(*deploymentRoot)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "deployment store:", err)
+			os.Exit(1)
+		}
+		opts = append(opts, dashboard.WithDeployments(deployments, authenticate), dashboard.WithTestCases(authenticate))
+		assets := []app.ManifestBinary{}
+		authorize := auth.AuthorizeJobActor
+		opts = append(opts, dashboard.WithWebSecurity(auth, deployments))
+		fmt.Fprintln(os.Stderr, "First administrator setup uses the private setup.token file in the web data directory.")
+		if *manifestAssets != "" {
+			raw, err := os.ReadFile(*manifestAssets)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			if err = json.Unmarshal(raw, &assets); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
+		manifests, err := app.OpenManifestStore(*deploymentRoot)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		opts = append(opts, dashboard.WithManifests(manifests, authenticate, assets, *manifestKeys))
+		engine := app.NewWebChainEngine(*deploymentRoot, *manifestKeys, deployments, manifests, assets, authorize)
+		// Plans pin the documented surface of every binary they run, so the
+		// documentation has to be readable before the service starts.
+		if err = app.CheckChainSurfaces(*analysisRoot); err != nil {
+			fmt.Fprintln(os.Stderr, "chain analysis:", err)
+			os.Exit(1)
+		}
+		engine.UseChainSurfaces(*analysisRoot)
+		opts = append(opts, dashboard.WithChainSurfaces(engine, authenticate))
+		jobs, err := app.OpenWebJobs(*deploymentRoot, engine, deployments.RedactWeb, authorize)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "job store:", err)
+			os.Exit(1)
+		}
+		opts = append(opts, dashboard.WithWebJobs(jobs, authenticate))
+		history, err := app.OpenWebHistory(*deploymentRoot, *artifactRoot, jobs, deployments.RedactWeb)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "history store:", err)
+			os.Exit(1)
+		}
+		opts = append(opts, dashboard.WithWebHistory(history, authenticate))
+		opts = append(opts, dashboard.WithWebAudit(auth, deployments, jobs, history, manifests))
+		monitor, err := app.OpenWebMonitor(*deploymentRoot, deployments.RedactWeb)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "observation store:", err)
+			os.Exit(1)
+		}
+		go monitor.Run(context.Background())
+		// Local machines of jobs the restart interrupted are checked once,
+		// read-only, so their records show what actually remains.
+		go jobs.ReconcileInterrupted(context.Background())
+		engine.UseMonitor(monitor)
+		history.UseObservations(monitor)
+		opts = append(opts, dashboard.WithWebMonitor(monitor, authenticate))
+	}
 	srv := dashboard.NewServer(bus, store, opts...)
 
-	fmt.Fprintf(os.Stderr, "chainbench-dashboard listening on http://%s\n", *addr)
-	if err := http.ListenAndServe(*addr, srv); err != nil {
-		fmt.Fprintln(os.Stderr, "chainbench-dashboard:", err)
+	scheme := "http"
+	if *tlsCert != "" {
+		scheme = "https"
+	}
+	fmt.Fprintf(os.Stderr, "chainbench-dashboard listening on %s://%s\n", scheme, *addr)
+	var serveErr error
+	if *tlsCert != "" {
+		serveErr = http.ListenAndServeTLS(*addr, *tlsCert, *tlsKey, srv)
+	} else {
+		serveErr = http.ListenAndServe(*addr, srv)
+	}
+	if serveErr != nil {
+		fmt.Fprintln(os.Stderr, "chainbench-dashboard:", serveErr)
 		os.Exit(1)
 	}
 }

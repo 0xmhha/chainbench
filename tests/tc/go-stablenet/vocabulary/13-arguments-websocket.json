@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-websocket",
+  "description": "WEB-05 coverage: wsOpen, wsCollected and wsSubscribe argument paths.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
+      "gas": "200000",
+      "save": "emitter"
+    },
+    {
+      "do": "wsOpen",
+      "on": "bp2",
+      "event": "logs",
+      "address": "$emitter",
+      "topics": [
+        "0x1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "save": "filtered"
+    },
+    {
+      "do": "wsOpen",
+      "onEach": [
+        "en1",
+        "en2"
+      ],
+      "event": "newHeads",
+      "params": [],
+      "save": "heads"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "to": "$emitter",
+      "gas": "100000",
+      "save": "emit1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$emit1",
+      "is": "0x1"
+    },
+    {
+      "expect": "wsCollected",
+      "sub": "$filtered",
+      "count": 1,
+      "timeout": "30s"
+    },
+    {
+      "expect": "wsCollected",
+      "sub": "$heads",
+      "count": 2,
+      "timeout": "30s"
+    },
+    {
+      "expect": "wsSubscribe",
+      "on": "bp1",
+      "event": "newHeads",
+      "count": 2,
+      "timeout": "30s"
+    },
+    {
+      "expect": "wsSubscribe",
+      "on": "en1",
+      "event": "newHeads",
+      "params": [],
+      "count": 1,
+      "timeout": "30s",
+      "is": "1"
+    }
+  ]
+}

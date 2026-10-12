@@ -14,6 +14,12 @@
 # directly, and reported as HIDDEN (accepted, document is right) or ABSENT
 # (rejected, document is wrong).
 #
+# A flag is asked as "<flag> --help --help" in an empty HOME. "<flag> --help"
+# alone hands --help to a flag that takes a value, and the binary then starts a
+# node in its default data directory; the second --help still prints help.
+# Only "not defined" is a refusal: a numeric flag rejects --help as its value,
+# which proves the flag exists.
+#
 # Usage: scripts/chain-analysis/verify-docs.sh <binary> <chain-dir>
 #   e.g. scripts/chain-analysis/verify-docs.sh ~/.../gstable docs/chain-analysis/gstable
 set -uo pipefail
@@ -34,10 +40,13 @@ documented=$(grep -oE '`--[a-zA-Z0-9._-]+`' "$doc" | tr -d '`' | sort -u)
 # knowing, because it is the kind of note a reader trusts and stops looking.
 notaccepted=$(sed -n '/^```not-accepted$/,/^```$/p' "$doc" | grep -oE '^--[a-zA-Z0-9._-]+' | sort -u)
 hidden=0 absent=0 wrongnote=0
+probehome=$(mktemp -d)
+trap 'rm -rf "$probehome"' EXIT
+ask() { (cd "$probehome" && HOME="$probehome" PATH=/usr/bin:/bin "$bin" "$1" --help --help 2>&1 | head -2); }
 
 for flag in $notaccepted; do
-  out=$("$bin" "$flag" --help 2>&1 | head -2)
-  if echo "$out" | grep -qiE "not defined|flag provided|Incorrect Usage"; then
+  out=$(ask "$flag")
+  if echo "$out" | grep -qiE "not defined"; then
     continue
   fi
   echo "WRONG   $flag — documented as not accepted, but the binary takes it"
@@ -47,8 +56,8 @@ for flag in $documented; do
   grep -qx -- "$flag" "$seen" && continue          # visible in help; nothing to check
   echo "$notaccepted" | grep -qx -- "$flag" && continue   # documented as absent, checked above
   [ ${#flag} -gt 3 ] || continue
-  out=$("$bin" "$flag" --help 2>&1 | head -2)
-  if echo "$out" | grep -qiE "not defined|flag provided|Incorrect Usage"; then
+  out=$(ask "$flag")
+  if echo "$out" | grep -qiE "not defined"; then
     echo "ABSENT  $flag — documented but the binary rejects it"
     absent=$((absent + 1))
   else

@@ -30,6 +30,7 @@ type Workspace struct {
 	comp   session.Composition
 	state  State
 	env    func(string) string
+	lookup resource.Lookup
 	now    func() time.Time
 	// wcCache holds the parsed workspace-config for this command, loaded once
 	// from state.WorkspaceConfig. nil until first use; the bool records that a
@@ -114,6 +115,13 @@ func (w *Workspace) SetEnv(fn func(string) string) {
 	if fn != nil {
 		w.env = fn
 	}
+}
+
+// SetServerLookup supplies a private named-server resolver for this command.
+// Credentials are carried only by opened handles, never by the workspace state.
+func (w *Workspace) SetServerLookup(fn resource.Lookup) {
+	w.lookup = fn
+	w.machines = nil
 }
 
 // SetDriver overrides the process driver every machine of this workspace
@@ -223,7 +231,7 @@ func (w *Workspace) eachMachine(fn func(t *resource.Access, nodes []node.Record)
 // opener binds the workspace's recorded server set and docker choice to the
 // netmap module's single wiring point.
 func (w *Workspace) opener() resource.Opener {
-	return resource.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
+	return resource.Opener{ServerSet: w.state.ServerSet, Lookup: w.lookup, Docker: w.state.Docker, Env: w.env}
 }
 
 // markStep records that step finished, with the detail it reports.

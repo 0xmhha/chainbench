@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -37,6 +38,9 @@ type RunSuiteIn struct {
 	Chain string
 	// Binary overrides the declared binary path for a single-binary network.
 	Binary string
+	// BinaryOverrides binds declared binary names to caller-verified executables.
+	// Names remain in the DSL; callers own path verification and registration.
+	BinaryOverrides map[string]string
 	// BPCount overrides the bp node count the specs declare.
 	BPCount int
 	// Server selects where the nodes run, from the operator's server set.
@@ -46,6 +50,8 @@ type RunSuiteIn struct {
 	Docker bool
 	// KeysDir overrides the declared key set (default presets/keys).
 	KeysDir string
+	// ReadOnlyKeys keeps account registration from rewriting accepted key inputs.
+	ReadOnlyKeys bool
 	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string
@@ -167,6 +173,10 @@ type composed struct {
 	// keysDir is the key set the network was composed from, so a spec can name
 	// an account by label instead of by address.
 	keysDir string
+	// ring holds the accounts the run declared, once prepareChain created
+	// them. The engine signs from this same ring, so a key set that must not
+	// change keeps them in memory and they are not minted a second time.
+	ring *store.KeySet
 	// fork is what the readiness gate has to know about a network composed to
 	// cross a hardfork: where the fork is, and which nodes hand over at it.
 	// Zero for a network that crosses none.
@@ -291,7 +301,7 @@ func runSuiteBody(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSu
 }
 
 // prepareChain makes the chain ready for the cases to run against.
-func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp composition, parsed []dsl.Spec, net composed, out *RunSuiteOut) error {
+func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp composition, parsed []dsl.Spec, net *composed, out *RunSuiteOut) error {
 	// The declared fork is crossed before anything else runs, because
 	// everything else assumes a producing chain: funding an account is a
 	// transaction, and a network sitting at the block before its fork seals
@@ -315,9 +325,16 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 	if len(parsed[0].EnvAccounts) == 0 {
 		return nil
 	}
-	ring, rerr := ringFor(net.keysDir)
+	output := net.keysDir
+	if in.ReadOnlyKeys {
+		output = ""
+	}
+	ring, rerr := ringForOutput(net.keysDir, output)
 	if rerr != nil {
 		return fmt.Errorf("engine: run suite: accounts: %w", rerr)
+	}
+	if ring == nil {
+		return fmt.Errorf("engine: run suite: accounts: no key set to fund declared accounts from")
 	}
 	funder, ok := ring.Get("node1")
 	if !ok {
@@ -326,6 +343,7 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 	if err := prepareAccounts(ctx, ring, net.keysDir, net.endpoints[0], parsed[0].EnvAccounts, funder.Address); err != nil {
 		return fmt.Errorf("engine: run suite: %w", err)
 	}
+	net.ring = ring
 	return nil
 }
 
@@ -334,7 +352,7 @@ func runCases(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, chain stri
 	eng, err := wiredAttachEngine(sd, net, attachWiring{
 		Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
 		Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
-		Session: sess,
+		Session: sess, ReadOnlyKeys: in.ReadOnlyKeys,
 	})
 	if err != nil {
 		return fmt.Errorf("engine: run suite: engine: %w", err)

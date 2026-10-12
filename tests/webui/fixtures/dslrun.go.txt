@@ -1,0 +1,35 @@
+// Dedicated owned local fixture for executing the browser's exported DSL.
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/0xmhha/chainbench/internal/app"
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
+	"github.com/0xmhha/chainbench/internal/resource"
+)
+
+func main() {
+	if len(os.Args) < 4 {
+		fmt.Fprintln(os.Stderr, "usage: dslrun runtime binary specs...")
+		os.Exit(2)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	defer cancel()
+	out, err := app.RunSuite(ctx, app.Deps{}, app.RunSuiteIn{SpecPaths: os.Args[3:], Server: resource.ServerRef{SetPath: filepath.Join(os.Args[1], "server-set.json"), Name: "fixture"}, DataDir: filepath.Join(os.Args[1], "network"), Binary: os.Args[2], KeysDir: "presets/keys", WaitBlocks: 1, ArtifactRoot: filepath.Join(os.Args[1], "sessions")})
+	_ = json.NewEncoder(os.Stdout).Encode(out)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	s := out.Summary.Summary
+	if s.Pass != len(os.Args[3:]) || s.Fail != 0 || s.Skip != 0 || s.Blocked != 0 {
+		fmt.Fprintf(os.Stderr, "live fixture incomplete: %+v\n", s)
+		os.Exit(1)
+	}
+}

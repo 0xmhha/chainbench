@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // What a composition is given from outside.
@@ -17,10 +18,11 @@ import (
 // reporter for operational side notes. All may be zero — the defaults are
 // time.Now, the process environment, an empty owner, and silence.
 type Deps struct {
-	Clock   func() time.Time
-	Env     func(string) string
-	Command string
-	Report  func(format string, args ...any)
+	Clock        func() time.Time
+	Env          func(string) string
+	ServerLookup resource.Lookup
+	Command      string
+	Report       func(format string, args ...any)
 	// Driver overrides the transport every machine of a workspace controls
 	// its nodes through; nil uses each machine's own process. Injected for
 	// tests and for surfaces that route the same verb over another transport.

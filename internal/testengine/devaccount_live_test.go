@@ -1,6 +1,7 @@
 package testengine_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -11,6 +12,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -29,7 +31,14 @@ import (
 // no node holds that key, so the transaction can only have been signed here.
 //
 // Gated on GSTABLE_BIN; CI skips it and stays green.
-func TestSuite_Live_DeclaredAccounts(t *testing.T) {
+func TestSuite_Live_DeclaredAccounts(t *testing.T) { runDeclaredAccounts(t, false) }
+
+// TestSuite_Live_DeclaredAccountsWithReadOnlyKeys is the Web's composed run:
+// the accepted key set is read only, so the declared accounts live for this
+// run alone, and the key set is the same bytes afterwards.
+func TestSuite_Live_DeclaredAccountsWithReadOnlyKeys(t *testing.T) { runDeclaredAccounts(t, true) }
+
+func runDeclaredAccounts(t *testing.T, readOnly bool) {
 	bin := os.Getenv("GSTABLE_BIN")
 	if bin == "" {
 		t.Skip("set GSTABLE_BIN to a real gstable binary to run the declared-account live e2e")
@@ -91,14 +100,25 @@ func TestSuite_Live_DeclaredAccounts(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	defer cancel()
 
+	before, err := session.CaptureKeys(ctx, ringDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	out, err := testengine.RunSuite(ctx, chainsetup.Deps{}, testengine.RunSuiteIn{
-		SpecPaths: []string{casePath}, DataDir: ws, Binary: bin, KeysDir: ringDir, WaitBlocks: 1,
+		SpecPaths: []string{casePath}, DataDir: ws, Binary: bin, KeysDir: ringDir, WaitBlocks: 1, ReadOnlyKeys: readOnly,
 	})
 	if err != nil {
 		t.Fatalf("RunSuite: %v (setup %v)", err, out.SetupSteps)
 	}
 	if s := out.Summary.Summary; s.Pass != 1 || s.Fail > 0 || s.Blocked > 0 {
 		t.Fatalf("summary %+v (session %s)", s, out.SessionRoot)
+	}
+	after, err := session.CaptureKeys(ctx, ringDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if readOnly && !bytes.Equal(before, after) {
+		t.Fatal("a read-only key set gained the declared accounts")
 	}
 }
 

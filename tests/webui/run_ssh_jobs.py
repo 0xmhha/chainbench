@@ -1,0 +1,141 @@
+"""Real owned loopback SSH deployment proof; does not award a Seed criterion."""
+import importlib.util
+import json
+import os
+from pathlib import Path
+import secrets
+import shutil
+import socket
+import subprocess
+import time
+import urllib.request
+import uuid
+from runtime_contract import runtime_root
+from browser_process import run_browser
+
+
+def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_inputs=None, dashboard_binary=None):
+    output = Path("chainbench-out/web-ui-development") / proof_name
+    output.mkdir(parents=True, exist_ok=True)
+    identity = str(uuid.uuid4())
+    runtime = runtime_root() / identity
+    runtime.mkdir(parents=True, mode=0o700)
+    spec = importlib.util.spec_from_file_location('ssh_native_fixture', 'tests/webui/fixtures/prepare_web04.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    provenance = module.prepare(runtime, output)
+    extra = fixture_inputs(runtime, None, output) if fixture_inputs else {}
+    ssh_command = ['bash', 'tests/webui/fixtures/ssh_prepare.sh', identity]
+    if extra.get('sshGatePath'):
+        gate = Path(extra['sshGatePath']).resolve(strict=True)
+        if gate != runtime / 'ssh/gate.sh':
+            raise RuntimeError('SSH gate must belong to this exclusively owned fixture')
+        ssh_command.append(str(gate))
+    ssh = subprocess.Popen(ssh_command)
+    server = None
+    try:
+        for _ in range(100):
+            if ssh.poll() is not None:
+                raise RuntimeError('owned SSH fixture exited')
+            if (runtime / 'ssh/manifest.json').exists():
+                break
+            time.sleep(.1)
+        ssh_fixture = json.loads((runtime / 'ssh/manifest.json').read_text())
+        for _ in range(100):
+            try:
+                with socket.create_connection(('127.0.0.1', ssh_fixture['port']), timeout=1):
+                    break
+            except OSError:
+                time.sleep(.1)
+        key_parts = (runtime / 'ssh/host.pub').read_text().split()
+        known_hosts = runtime / 'ssh/known_hosts'
+        known_hosts.write_text(f"[localhost.]:{ssh_fixture['port']} {key_parts[0]} {key_parts[1]}\n")
+        known_hosts.chmod(0o600)
+        with (output / 'build.log').open('w') as log:
+            if dashboard_binary:
+                shutil.copy2(Path(dashboard_binary).resolve(strict=True), runtime / 'dashboard')
+            else:
+                subprocess.run(['go', 'build', '-o', str(runtime / 'dashboard'), './cmd/chainbench-dashboard'], stdout=log, stderr=log, check=True)
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1', 0))
+            port = listener.getsockname()[1]
+        store = runtime / 'store'
+        with (output / 'server.log').open('w') as log:
+            server = subprocess.Popen([str(runtime / 'dashboard'), '-addr', f'127.0.0.1:{port}', '-deployment-root', str(store), '-manifest-assets', str(runtime / 'assets.json'), '-manifest-keys', str(Path('presets/keys').resolve())], stdout=log, stderr=log)
+            url = f'http://127.0.0.1:{port}'
+            for _ in range(200):
+                if server.poll() is not None:
+                    raise RuntimeError('dashboard exited')
+                try:
+                    urllib.request.urlopen(url + '/healthz', timeout=1).close()
+                    break
+                except OSError:
+                    time.sleep(.1)
+            fixture = {'url': url, 'setupToken': (store / 'setup.token').read_text().strip(), 'password': secrets.token_urlsafe(24), 'runtime': str(runtime), 'store': str(store), 'ssh': ssh_fixture, 'knownHosts': str(known_hosts)}
+            fixture.update(extra)
+            private = runtime / 'browser-fixture.json'
+            private.write_text(json.dumps(fixture))
+            private.chmod(0o600)
+            result = run_browser(['node', 'tests/webui/' + browser_script, str(private), str(output.resolve())], timeout=600)
+            (output / 'browser.log').write_text(result.stdout + result.stderr)
+            if result.returncode:
+                raise RuntimeError('SSH browser deployment failed; see browser.log')
+            records = list((store / 'networks').glob('*/chain-record.json'))
+            if len(records) != 1:
+                raise RuntimeError('expected one SSH-owned composition')
+            state = json.loads(records[0].read_text())
+            asset = next(a for a in json.loads((runtime / 'assets.json').read_text()) if a['id'] == 'wbft')
+            from evidence_web04 import digest
+            if not str(state['binary']).startswith(str(runtime / 'd/binaries/')) or digest(Path(state['binary'])) != asset['sha256']:
+                raise RuntimeError('remote binary was not separately uploaded and verified')
+            removed = state.get('statePath') == 'CHAIN/CHAIN_REMOVED'
+            if removed and (state.get('nodes') or any((runtime / 'd/nodes').glob('*/*'))):
+                raise RuntimeError('selected cleanup left remote nodes or their data')
+            declared = {} if removed else json.loads(Path(state['genesisPath']).read_text())
+            for node in [] if removed else state['nodes']:
+                data = Path(node['dataDir'])
+                if len(list(data.glob('*/chaindata/CURRENT'))) != 1:
+                    raise RuntimeError('remote native database missing')
+                dumped = subprocess.run([state['binary'], '--datadir', str(data), 'dumpgenesis'], capture_output=True, text=True, check=True, timeout=20)
+                if json.loads(dumped.stdout)['config']['chainId'] != declared['config']['chainId']:
+                    raise RuntimeError('remote database genesis mismatch')
+            for path in store.rglob('*'):
+                if path.is_file() and path.suffix in {'.json', '.yaml'}:
+                    text = path.read_text()
+                    if 'BEGIN OPENSSH PRIVATE KEY' in text or 'BEGIN RSA PRIVATE KEY' in text:
+                        raise RuntimeError('SSH private key persisted in plaintext')
+            receipt = json.loads((output / 'browser.json').read_text())
+            receipt.update({'nativeDatabaseCheck': 'removed by selected cleanup' if removed else 'passed', 'separateBinaryUpload': 'passed', 'privateSSHKeyPlaintextScan': 'passed', 'binaries': provenance, 'runtime': str(runtime), 'seedAcceptanceAwarded': False})
+            (output / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+            print(proof_name + ' development proof PASS: real owned SSH deployment, native database, private credential and physical alias checks.')
+    finally:
+        # Only this exclusively owned fixture's recorded node PIDs qualify.
+        for record in (runtime / 'store/networks').glob('*/chain-record.json'):
+            for node in json.loads(record.read_text()).get('nodes', []):
+                if node.get('pid'):
+                    try:
+                        os.kill(node['pid'], 15)
+                    except ProcessLookupError:
+                        pass
+        for process in [server, ssh]:
+            if process is not None:
+                process.terminate()
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+
+
+if __name__ == '__main__':
+    from runtime_contract import source_digest
+    import hashlib
+    before = source_digest(Path.cwd())
+    main()
+    if source_digest(Path.cwd()) != before:
+        raise RuntimeError('source changed during SSH deployment verification')
+    path = Path('chainbench-out/web-ui-development/ssh-jobs/receipt.json')
+    receipt = json.loads(path.read_text())
+    receipt['sourceDigest'] = before
+    receipt['dashboardSHA256'] = hashlib.sha256((Path(receipt['runtime']) / 'dashboard').read_bytes()).hexdigest()
+    path.write_text(json.dumps(receipt, indent=2))

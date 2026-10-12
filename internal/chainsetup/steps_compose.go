@@ -360,7 +360,18 @@ func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, op
 		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
 			return nil, genesis.Artifacts{}, err
 		}
-		return b, genesis.Artifacts{}, nil
+		art := genesis.Artifacts{}
+		if source, ok := genesis.SourceFor(p, genesis.Config{KeysDir: w.state.KeysDir, Binary: w.state.Binary}).(genesis.ExistingExtraSource); ok {
+			placed, err := w.Netmap()
+			if err != nil {
+				return nil, art, err
+			}
+			art.Extra, err = source.ExistingExtras(ctx, p, genesis.Request{Validators: w.state.BPCount, Nodes: placed})
+			if err != nil {
+				return nil, genesis.Artifacts{}, err
+			}
+		}
+		return b, art, nil
 	}
 	art, err := w.genesisArtifacts(ctx, p, opts)
 	if err != nil {

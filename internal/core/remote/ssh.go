@@ -54,6 +54,10 @@ type Credentials struct {
 	// elevated runner (SSHSudoRunner) only where elevation is allowed. It is not
 	// a secret; the password it would use is Password, which is.
 	Sudo bool
+	// BeforeDial checks a service-owned access lease before every connection,
+	// including retries using cached credential handles. Nil preserves CLI use.
+	// It is runtime wiring, never serialized alongside credential material.
+	BeforeDial func() error `json:"-"`
 }
 
 // DialTunnelClient opens an SSH connection and returns an *http.Client whose TCP
@@ -66,7 +70,12 @@ func DialTunnelClient(creds Credentials, hostKey ssh.HostKeyCallback) (*http.Cli
 	if err != nil {
 		return nil, nil, err
 	}
-	return &http.Client{Transport: tunnelTransport(sshClient)}, sshClient, nil
+	base := tunnelTransport(sshClient)
+	var transport http.RoundTripper = base
+	if creds.BeforeDial != nil {
+		transport = guardedTunnelTransport{base, creds.BeforeDial}
+	}
+	return &http.Client{Transport: transport}, sshClient, nil
 }
 
 // tunnelTransport builds an http.Transport whose TCP dials go through the SSH
@@ -83,6 +92,16 @@ func tunnelTransport(sshClient *ssh.Client) *http.Transport {
 // dialSSH validates credentials and opens an SSH connection with the given host
 // key policy. Errors never echo the password.
 func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error) {
+	return dialSSHContext(context.Background(), creds, hostKey)
+}
+
+func dialSSHContext(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if creds.BeforeDial != nil && creds.BeforeDial() != nil {
+		return nil, fmt.Errorf("remote: access authorization denied")
+	}
 	if creds.User == "" || creds.Host == "" {
 		return nil, fmt.Errorf("remote: ssh user and host are required")
 	}
@@ -104,11 +123,29 @@ func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error
 		Timeout:         sshDialTimeout,
 	}
 	addr := net.JoinHostPort(creds.Host, strconv.Itoa(port))
-	c, err := ssh.Dial("tcp", addr, cfg)
+	dialCtx, cancel := context.WithTimeout(ctx, sshDialTimeout)
+	defer cancel()
+	conn, err := (&net.Dialer{}).DialContext(dialCtx, "tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("remote: ssh dial %s@%s: %w", creds.User, addr, err)
 	}
-	return c, nil
+	// Closing the socket also interrupts authentication, which NewClientConn
+	// does not otherwise bound with the caller's context.
+	stop := context.AfterFunc(dialCtx, func() { _ = conn.Close() })
+	c, channels, requests, err := ssh.NewClientConn(conn, addr, cfg)
+	stop()
+	if err != nil {
+		_ = conn.Close()
+		if dialCtx.Err() != nil {
+			return nil, dialCtx.Err()
+		}
+		return nil, fmt.Errorf("remote: ssh dial %s@%s: %w", creds.User, addr, err)
+	}
+	if err = dialCtx.Err(); err != nil {
+		_ = c.Close()
+		return nil, err
+	}
+	return ssh.NewClient(c, channels, requests), nil
 }
 
 // insecureKeyPermMask flags any group/other permission bit on a private key
@@ -207,8 +244,9 @@ type ExecResult struct {
 // output. The SSH connection is opened per call and closed before returning.
 // Only dial/session-open failures return an error; a command that exits non-zero
 // returns a populated ExecResult with that code. Errors never include the
-// password. ctx is accepted for symmetry; ssh.Session.Run is not ctx-cancelable,
-// so the dial timeout bounds the connection.
+// password. Cancellation closes the SSH connection during authentication or
+// command execution and returns partial output. This does not prove that a
+// remote process has exited; callers must retain unresolved-resource evidence.
 func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, command string) (ExecResult, error) {
 	return ExecWithInput(ctx, creds, hostKey, command, "")
 }
@@ -218,12 +256,22 @@ func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, c
 // password from stdin — where putting the value in the command line would
 // leave it in the remote host's process list and shell history.
 func ExecWithInput(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, command, stdin string) (ExecResult, error) {
-	_ = ctx
-	c, err := dialSSH(creds, hostKey)
+	if err := ctx.Err(); err != nil {
+		return ExecResult{}, err
+	}
+	c, err := dialSSHContext(ctx, creds, hostKey)
 	if err != nil {
 		return ExecResult{}, err
 	}
 	defer func() { _ = c.Close() }()
+	stop := context.AfterFunc(ctx, func() { _ = c.Close() })
+	defer stop()
+	if err = ctx.Err(); err != nil {
+		return ExecResult{}, err
+	}
+	if creds.BeforeDial != nil && creds.BeforeDial() != nil {
+		return ExecResult{}, fmt.Errorf("remote: access authorization denied")
+	}
 
 	sess, err := c.NewSession()
 	if err != nil {
@@ -240,6 +288,9 @@ func ExecWithInput(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCa
 
 	runErr := sess.Run(command)
 	res := ExecResult{Stdout: stdout.String(), Stderr: stderr.String()}
+	if err = ctx.Err(); err != nil {
+		return res, err
+	}
 	if runErr != nil {
 		var exitErr *ssh.ExitError
 		if errors.As(runErr, &exitErr) {

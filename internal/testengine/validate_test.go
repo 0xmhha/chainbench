@@ -57,6 +57,16 @@ func TestValidateContent(t *testing.T) {
 		{"typo action", caseJSON(`{"do":"waitBlok","target":1},{"expect":"chainId","is":"0"}`), false, "UNRESOLVED"},
 		{"malformed selector", caseJSON(`{"do":"waitBlock","target":1,"on":"node0"},{"expect":"chainId","is":"0"}`), false, "INVALID SELECTOR"},
 		{"unknown assertion", caseJSON(`{"do":"waitBlock","target":1},{"expect":"nosuchcheck","is":"0"}`), false, "UNRESOLVED"},
+		// chainId never reads a timeout; accepting one would let the case
+		// claim a bound it never had.
+		{"ignored assertion argument", caseJSON(`{"do":"waitBlock","target":1},{"expect":"chainId","is":"0","timeout":"5s"}`), false, "IGNORED ARGUMENT: chainId.timeout"},
+		// restartNode never reads expectFail, so the negative would pass as a restart.
+		{"ignored action argument", caseJSON(`{"do":"restartNode","on":"node1","expectFail":true},{"expect":"chainId","is":"0"}`), false, "IGNORED ARGUMENT: restartNode.expectFail"},
+		// blockStalled watches only the first node; a list would drop the rest.
+		{"ignored node list", caseJSON(`{"expect":"blockStalled","onEach":["node1","node2"]}`), false, "IGNORED ARGUMENT: blockStalled.onEach"},
+		// read accepts its reader's arguments and nothing more.
+		{"reader argument", caseJSON(`{"do":"read","source":"balanceAt","address":"node1","save":"b"},{"expect":"chainId","is":"0"}`), true, "OK"},
+		{"ignored reader argument", caseJSON(`{"do":"read","source":"chainId","address":"node1","save":"b"},{"expect":"chainId","is":"0"}`), false, "IGNORED ARGUMENT: read.address"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -106,5 +116,12 @@ func TestPrecheck_FailsBeforeCompose(t *testing.T) {
 	}
 	if err := Precheck([]dsl.Spec{badSel}); err == nil {
 		t.Fatal("Precheck(malformed selector) = nil, want error")
+	}
+	ignored, err := dsl.Parse(caseJSON(`{"do":"waitBlock","target":1},{"expect":"chainId","is":"0","save":"id"}`))
+	if err != nil {
+		t.Fatalf("parse ignored: %v", err)
+	}
+	if err := Precheck([]dsl.Spec{ignored}); err == nil || !strings.Contains(err.Error(), "chainId.save") {
+		t.Fatalf("Precheck(ignored argument) = %v, want chainId.save refused", err)
 	}
 }

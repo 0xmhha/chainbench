@@ -58,7 +58,7 @@ func (d Deps) keyringDeps() operation.Deps {
 		Env: d.Env,
 		Open: func(serverSet string, docker bool) operation.Opener {
 			return resource.Opener{
-				ServerSet: serverSet, Docker: docker,
+				ServerSet: serverSet, Lookup: d.ServerLookup, Docker: docker,
 				Env: d.Env, Report: d.Logf,
 			}
 		},

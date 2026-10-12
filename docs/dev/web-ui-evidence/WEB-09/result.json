@@ -1,0 +1,30 @@
+{
+  "criterion": "WEB-09",
+  "invocationId": "d42aad09-fe51-42c1-b3c9-6a49cbb06ddf",
+  "startedAt": "2026-10-11T22:03:00.704509+00:00",
+  "finishedAt": "2026-10-11T22:07:06.617221+00:00",
+  "outcome": "pass",
+  "requiredScenarios": [
+    "search-filter-detail",
+    "compatible-comparison-and-reasons",
+    "safe-export",
+    "retention-across-restart",
+    "admin-only-deletion",
+    "protected-active-shared-live",
+    "partial-deletion-failure",
+    "run-metric-log-archive"
+  ],
+  "executedScenarios": [
+    "search-filter-detail",
+    "compatible-comparison-and-reasons",
+    "safe-export",
+    "retention-across-restart",
+    "admin-only-deletion",
+    "protected-active-shared-live",
+    "partial-deletion-failure",
+    "run-metric-log-archive"
+  ],
+  "skippedScenarios": [],
+  "failedAssertions": [],
+  "evidenceDigest": "1ba68d166536ea04f3d1783afe67ec97d80c6aaf5a006ad50573c8a1451639a2"
+}

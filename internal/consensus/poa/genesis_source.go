@@ -58,22 +58,9 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 	if req.Nodes == nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: no placement — the governance config names the producer's host and p2p port, so the network has to be placed first")
 	}
-	// With accounts: this genesis funds and stakes the producer's account, and
-	// that is a keystore's answer rather than a nodekey's when a ring says so.
-	keys, err := preset.LoadKeyPresetWithAccounts(s.KeysDir)
-	if err != nil {
-		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
-	}
-	cfg, err := s.config(keys, req)
+	cfg, cfgBytes, err := s.governanceInputs(ctx, req)
 	if err != nil {
 		return genesis.Artifacts{}, err
-	}
-	if err := cfg.Validate(); err != nil {
-		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
-	}
-	cfgBytes, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: encode config: %w", err)
 	}
 
 	chainID := plugin.Manifest().ChainID
@@ -132,6 +119,42 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 		Genesis: gen,
 		Extra:   map[string][]byte{ConfigFileName: cfgBytes},
 	}, nil
+}
+
+// ExistingExtras prepares governance deployment inputs from the accepted keys
+// and current placement without regenerating or rewriting a finished genesis.
+func (s GenesisSource) ExistingExtras(ctx context.Context, _ registry.ChainPlugin, req genesis.Request) (map[string][]byte, error) {
+	_, raw, err := s.governanceInputs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return map[string][]byte{ConfigFileName: raw}, nil
+}
+
+func (s GenesisSource) governanceInputs(ctx context.Context, req genesis.Request) (Config, []byte, error) {
+	if err := ctx.Err(); err != nil {
+		return Config{}, nil, err
+	}
+	if req.Nodes == nil {
+		return Config{}, nil, fmt.Errorf("poa: genesis: no placement for governance input")
+	}
+	// A producer seals with its keystore account when the key ring names one.
+	keys, err := preset.LoadKeyPresetWithAccounts(s.KeysDir)
+	if err != nil {
+		return Config{}, nil, fmt.Errorf("poa: genesis: %w", err)
+	}
+	cfg, err := s.config(keys, req)
+	if err != nil {
+		return Config{}, nil, err
+	}
+	if err = cfg.Validate(); err != nil {
+		return Config{}, nil, fmt.Errorf("poa: genesis: %w", err)
+	}
+	raw, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return Config{}, nil, fmt.Errorf("poa: genesis: encode config: %w", err)
+	}
+	return cfg, raw, ctx.Err()
 }
 
 // config assembles the governance config from the key set and the placement.

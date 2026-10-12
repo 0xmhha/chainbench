@@ -16,7 +16,7 @@ ever disagree, the ratchet is right and this is wrong.
 """
 import re,io,os,sys
 real={}
-for base in ("internal","cmd","scripts"):
+for base in ("internal","cmd","scripts","tests"):
     for root,_,fs in os.walk(base):
         gos=[f for f in fs if f.endswith(".go") and not f.endswith("_test.go")]
         if gos:
@@ -35,7 +35,7 @@ for i,l in enumerate(doc):
     m=entry.match(l)
     if not m: continue
     pre,name,gap,num,tail=m.groups()
-    path = cur if name.startswith("(") else (name if name.startswith(("internal/","cmd/","scripts/")) else (cur+"/"+name if cur else name))
+    path = cur if name.startswith("(") else (name if name.startswith(("internal/","cmd/","scripts/","tests/")) else (cur+"/"+name if cur else name))
     if path not in real:
         c=[k for k in real if k.endswith("/"+name) and (cur is None or k.startswith(cur))]
         if len(c)==1: path=c[0]
@@ -52,7 +52,7 @@ for i,l in enumerate(doc):
     ps=bysec.get(l.strip(),[])
     if not ps: continue
     doc[i]=f"{m.group(1)}{len(ps)}{m.group(3)}{sum(real[x] for x in ps):,}{m.group(5)}"+l[m.end():]
-tot={"internal/":0,"cmd/":0,"scripts/inventory/":0}
+tot={"internal/":0,"cmd/":0,"scripts/inventory/":0,"tests/":0}
 cnt={k:0 for k in tot}
 for k,v in real.items():
     for pre in tot:

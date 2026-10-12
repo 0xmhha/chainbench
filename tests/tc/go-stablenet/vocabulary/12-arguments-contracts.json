@@ -1,0 +1,819 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "web05-contracts",
+  "description": "WEB-05 coverage: deployContract, registerContract and the contract readers and assertions.",
+  "requires": [
+    "rpc",
+    "ws"
+  ],
+  "chainPreset": {
+    "extends": "stablenet-bp4-en1",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "en": 2
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "source": "gasPrice",
+      "on": "bp1",
+      "save": "gp"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "save": "tip"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "mul",
+      "of": [
+        "$gp",
+        "2"
+      ],
+      "save": "cap"
+    },
+    {
+      "do": "newAccount",
+      "save": "dave",
+      "saveKey": "daveKey"
+    },
+    {
+      "do": "faucet",
+      "from": "faucet",
+      "to": "$dave",
+      "amount": "50000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_coinbase",
+      "params": [],
+      "on": "bp1",
+      "save": "cb1"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$cb1",
+      "save": "deployNonce"
+    },
+    {
+      "do": "read",
+      "source": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$deployNonce",
+      "save": "predicted"
+    },
+    {
+      "do": "deployContract",
+      "on": "bp1",
+      "from": "$cb1",
+      "bytecode": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
+      "gas": "200000",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "timeout": "60s",
+      "pollInterval": "500ms",
+      "save": "emitter"
+    },
+    {
+      "expect": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$deployNonce",
+      "is": "$emitter"
+    },
+    {
+      "expect": "createAddress",
+      "from": "$cb1",
+      "nonce": "$deployNonce",
+      "compare": "EqualCI",
+      "is": "$predicted"
+    },
+    {
+      "do": "read",
+      "source": "createAddress",
+      "from": "$cb1",
+      "save": "nextAddress"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$cb1",
+      "save": "n2"
+    },
+    {
+      "do": "deployContract",
+      "from": "$cb1",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "gasPrice": "$gp",
+      "nonce": "$n2",
+      "save": "answer"
+    },
+    {
+      "expect": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$n2",
+      "is": "$answer"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$answer",
+      "is": "0x602a60005260206000f3"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$answer",
+      "compare": "InDelta",
+      "is": "0x602a60005260206000f3",
+      "tol": "0"
+    },
+    {
+      "do": "deployContract",
+      "key": "$daveKey",
+      "data": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "value": "5",
+      "save": "paidAnswer"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$paidAnswer",
+      "compare": "InDelta",
+      "is": "5",
+      "delta": "0"
+    },
+    {
+      "do": "deployContract",
+      "onEach": [
+        "bp2",
+        "bp3"
+      ],
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "save": "lastAnswer"
+    },
+    {
+      "do": "waitFor",
+      "source": "codeAt",
+      "on": "en1",
+      "address": "$lastAnswer",
+      "is": "0x602a60005260206000f3",
+      "timeout": "30s"
+    },
+    {
+      "expect": "codeAt",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "address": "$lastAnswer",
+      "is": "0x602a60005260206000f3"
+    },
+    {
+      "expect": "contractChecksum",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "is": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f"
+    },
+    {
+      "expect": "contractChecksum",
+      "data": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "on": "bp2",
+      "is": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f"
+    },
+    {
+      "expect": "contractChecksum",
+      "address": "$answer",
+      "onEach": [
+        "bp1",
+        "en2"
+      ],
+      "compare": "Equal",
+      "is": "sha256:3faeb100e2cf946f18152ffd1ab6ef455400a84a1425104db6540cb409b74090"
+    },
+    {
+      "do": "read",
+      "source": "contractChecksum",
+      "address": "$answer",
+      "save": "runtimeSum"
+    },
+    {
+      "do": "read",
+      "source": "contractChecksum",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "save": "initSum"
+    },
+    {
+      "do": "read",
+      "source": "contractChecksum",
+      "data": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "save": "initSum2"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "1"
+      ],
+      "is": "1"
+    },
+    {
+      "expect": "call",
+      "to": "$answer",
+      "data": "0x",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "call",
+      "to": "$answer",
+      "data": "0x",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "42",
+      "delta": "0"
+    },
+    {
+      "expect": "call",
+      "to": "$answer",
+      "data": "0x",
+      "on": "en2",
+      "compare": "InDelta",
+      "is": "43",
+      "tol": "1"
+    },
+    {
+      "do": "read",
+      "source": "call",
+      "to": "$answer",
+      "data": "0x",
+      "save": "answerWord"
+    },
+    {
+      "expect": "estimateGas",
+      "to": "$answer",
+      "data": "0x",
+      "from": "$cb1",
+      "compare": "GreaterOrEqual",
+      "is": "21000"
+    },
+    {
+      "expect": "estimateGas",
+      "to": "$answer",
+      "data": "0x",
+      "onEach": [
+        "bp2",
+        "bp3"
+      ],
+      "compare": "InDelta",
+      "is": "21100",
+      "delta": "200"
+    },
+    {
+      "expect": "estimateGas",
+      "to": "$answer",
+      "data": "0x",
+      "on": "en2",
+      "compare": "InDelta",
+      "is": "21100",
+      "tol": "200"
+    },
+    {
+      "do": "read",
+      "source": "estimateGas",
+      "to": "$answer",
+      "data": "0x",
+      "from": "$cb1",
+      "save": "gasEstimate"
+    },
+    {
+      "do": "registerContract",
+      "on": "bp1",
+      "from": "$cb1",
+      "to": "$emitter",
+      "data": "0x00",
+      "gas": "100000",
+      "value": "1",
+      "maxFeePerGas": "$cap",
+      "maxPriorityFeePerGas": "$tip",
+      "timeout": "60s",
+      "pollInterval": "500ms",
+      "save": "logTx"
+    },
+    {
+      "do": "read",
+      "source": "nonceAt",
+      "address": "$cb1",
+      "save": "n3"
+    },
+    {
+      "do": "registerContract",
+      "from": "$cb1",
+      "to": "$emitter",
+      "data": "0x01",
+      "gasPrice": "$gp",
+      "nonce": "$n3",
+      "save": "logTx2"
+    },
+    {
+      "do": "registerContract",
+      "onEach": [
+        "bp2",
+        "bp3"
+      ],
+      "to": "$emitter",
+      "data": "0x02",
+      "save": "logTx3"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$logTx",
+      "compare": "InDelta",
+      "is": "1",
+      "delta": "0"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$logTx2",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "1",
+      "tol": "0"
+    },
+    {
+      "do": "read",
+      "source": "txStatus",
+      "hash": "$logTx3",
+      "save": "status3"
+    },
+    {
+      "expect": "derive",
+      "op": "sum",
+      "of": [
+        "$status3"
+      ],
+      "format": "hex",
+      "is": "0x1"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$emitter",
+      "compare": "InDelta",
+      "is": "1",
+      "tol": "0"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$logTx"
+      ],
+      "select": "blockNumber",
+      "save": "logBlock"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic0": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "index": 0,
+      "select": "data",
+      "is": "0x"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic": 0,
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "EqualCI",
+      "is": "0x1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic": 0,
+      "on": "bp2",
+      "compare": "InDelta",
+      "is": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "delta": "0"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic": 0,
+      "compare": "InDelta",
+      "is": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "tol": "0"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic0": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "index": 0,
+      "select": "data",
+      "save": "logData"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic": 0,
+      "save": "logTopic"
+    },
+    {
+      "expect": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "topics": [
+        "0x1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "is": "1"
+    },
+    {
+      "expect": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "select": "data",
+      "index": 0,
+      "onEach": [
+        "bp1",
+        "en2"
+      ],
+      "is": "0x"
+    },
+    {
+      "expect": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "on": "bp3",
+      "compare": "InDelta",
+      "is": "1",
+      "delta": "0"
+    },
+    {
+      "expect": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "compare": "InDelta",
+      "is": "1",
+      "tol": "0"
+    },
+    {
+      "do": "read",
+      "source": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "topics": [
+        "0x1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "select": "topic0",
+      "index": 0,
+      "save": "logsTopic"
+    },
+    {
+      "expect": "derive",
+      "op": "word",
+      "of": [
+        "0x000000000000000000000000000000000000000000000000000000000000002a"
+      ],
+      "index": 0,
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "derive",
+      "op": "abiCall",
+      "selector": "0x12345678",
+      "of": [
+        "1"
+      ],
+      "on": "bp1",
+      "is": "0x123456780000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "derive",
+      "op": "quorum",
+      "of": [
+        "3"
+      ],
+      "onEach": [
+        "bp1",
+        "bp2"
+      ],
+      "is": "2"
+    },
+    {
+      "expect": "derive",
+      "op": "mul",
+      "of": [
+        "6",
+        "7"
+      ],
+      "compare": "InDelta",
+      "is": "41",
+      "delta": "1"
+    },
+    {
+      "expect": "derive",
+      "op": "diff",
+      "of": [
+        "50",
+        "8"
+      ],
+      "compare": "InDelta",
+      "is": "43",
+      "tol": "1"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x12345678",
+      "of": [
+        "2"
+      ],
+      "save": "calldata"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "word",
+      "of": [
+        "$calldata"
+      ],
+      "index": 0,
+      "save": "firstWord"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "40",
+        "2"
+      ],
+      "format": "hex",
+      "save": "hex42"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "$answer",
+        "latest"
+      ],
+      "is": "0x602a60005260206000f3"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$logTx"
+      ],
+      "select": "logs.#",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "2",
+      "delta": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$logTx"
+      ],
+      "select": "status",
+      "on": "bp2",
+      "compare": "InDelta",
+      "is": "1",
+      "tol": "0"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_chainId",
+      "params": [],
+      "is": "0x205b"
+    },
+    {
+      "do": "read",
+      "source": "blockNumber",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "save": "lastHead"
+    },
+    {
+      "do": "waitFor",
+      "source": "contractChecksum",
+      "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "is": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "contractChecksum",
+      "data": "0x600a600c600039600a6000f3602a60005260206000f3",
+      "is": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$n2",
+      "is": "$answer",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "createAddress",
+      "from": "$cb1",
+      "nonce": "$deployNonce",
+      "compare": "EqualCI",
+      "is": "$emitter",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "40",
+        "2"
+      ],
+      "format": "hex",
+      "is": "0x2a",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "derive",
+      "op": "word",
+      "of": [
+        "0x000000000000000000000000000000000000000000000000000000000000002a"
+      ],
+      "index": 0,
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x12345678",
+      "of": [
+        "1"
+      ],
+      "is": "0x123456780000000000000000000000000000000000000000000000000000000000000001",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "call",
+      "to": "$answer",
+      "data": "0x",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "estimateGas",
+      "to": "$answer",
+      "data": "0x",
+      "from": "$cb1",
+      "compare": "GreaterOrEqual",
+      "is": "21000",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "topics": [
+        "0x1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "is": "1",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "logs",
+      "address": "$emitter",
+      "fromBlock": "$logBlock",
+      "toBlock": "$logBlock",
+      "select": "data",
+      "index": 0,
+      "is": "0x",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic0": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "index": 0,
+      "select": "data",
+      "is": "0x",
+      "timeout": "10s"
+    },
+    {
+      "do": "waitFor",
+      "source": "receiptLog",
+      "hash": "$logTx",
+      "address": "$emitter",
+      "topic": 0,
+      "compare": "EqualCI",
+      "is": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "timeout": "10s"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$answer",
+      "on": "bp1",
+      "compare": "InDelta",
+      "is": "0x602a60005260206000f3",
+      "delta": "0"
+    },
+    {
+      "expect": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$n2",
+      "on": "bp2",
+      "compare": "InDelta",
+      "is": "$answer",
+      "delta": "0"
+    },
+    {
+      "expect": "createAddress",
+      "deployer": "$cb1",
+      "nonce": "$n2",
+      "onEach": [
+        "bp1",
+        "en1"
+      ],
+      "compare": "InDelta",
+      "is": "$answer",
+      "tol": "0"
+    },
+    {
+      "expect": "txMined",
+      "hash": "$logTx",
+      "on": "bp1",
+      "is": "true"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$logTx",
+      "on": "bp3",
+      "is": "0x1"
+    }
+  ]
+}

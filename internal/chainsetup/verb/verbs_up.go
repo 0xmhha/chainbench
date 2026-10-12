@@ -141,6 +141,7 @@ func holdWorkspace(d chainsetup.Deps, dir string) (*chainsetup.Workspace, func()
 		return nil, nil, err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetServerLookup(d.ServerLookup)
 	ws.SetDriver(d.Driver)
 	held, prev, lockState, err := ws.Acquire(d.Owner())
 	if err != nil {

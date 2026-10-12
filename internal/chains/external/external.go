@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/accounts/protocol"
 
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -25,6 +26,19 @@ func Load(manifestPath, templatePath string) (registry.ChainPlugin, error) {
 	if err != nil {
 		return nil, fmt.Errorf("external manifest: %w", err)
 	}
+	var tmpl []byte
+	switch {
+	case templatePath != "":
+		if tmpl, err = os.ReadFile(templatePath); err != nil {
+			return nil, fmt.Errorf("external genesis template: %w", err)
+		}
+	}
+
+	return FromBytes(raw, tmpl)
+}
+
+// FromBytes resolves uploaded declarations through the same engine contracts as files.
+func FromBytes(raw, tmpl []byte) (registry.ChainPlugin, error) {
 	m, err := registry.ParseManifest(raw)
 	if err != nil {
 		return nil, err
@@ -43,17 +57,12 @@ func Load(manifestPath, templatePath string) (registry.ChainPlugin, error) {
 			"(set \"protocol\" to a built-in: stablenet|wbft|wemix): %w", m.ID, protoName, err)
 	}
 
-	var tmpl []byte
-	switch {
-	case templatePath != "":
-		if tmpl, err = os.ReadFile(templatePath); err != nil {
-			return nil, fmt.Errorf("external genesis template: %w", err)
-		}
-	case m.Genesis.Template != "":
-		return nil, fmt.Errorf("external manifest %q declares genesis.template %q "+
-			"but no --genesis-template path was given", m.ID, m.Genesis.Template)
+	if _, err := nodeconfig.DialectFor(m.Dialect); err != nil {
+		return nil, err
 	}
-
+	if m.Genesis.Template != "" && len(tmpl) == 0 {
+		return nil, fmt.Errorf("external manifest %q declares genesis.template %q but no --genesis-template path was given", m.ID, m.Genesis.Template)
+	}
 	return registry.StaticPlugin{M: m, Fam: fam, Proto: proto, Tmpl: tmpl}, nil
 }
 

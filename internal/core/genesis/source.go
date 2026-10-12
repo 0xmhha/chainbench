@@ -28,6 +28,14 @@ type Source interface {
 	Genesis(ctx context.Context, plugin registry.ChainPlugin, req Request) (Artifacts, error)
 }
 
+// ExistingExtraSource prepares a family's runtime inputs for an unchanged,
+// finished genesis. Genesis bytes remain with the caller; this returns only
+// auxiliary files and does not require running the genesis generator.
+// The resolved placement and reviewed keys determine the runtime membership.
+type ExistingExtraSource interface {
+	ExistingExtras(ctx context.Context, plugin registry.ChainPlugin, req Request) (map[string][]byte, error)
+}
+
 // Request is the network a genesis is being built for.
 //
 // Validators alone was enough while every family kept its validator set inside

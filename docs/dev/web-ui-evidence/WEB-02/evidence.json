@@ -1,0 +1,511 @@
+{
+  "criterion": "WEB-02",
+  "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+  "scenarios": [
+    {
+      "id": "bundle-import-preview-commit",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a server and path bundle is previewed in the browser and saved as immutable revisions",
+          "passed": true
+        },
+        {
+          "description": "private SSH values are moved out of the shared declaration",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json",
+          "sha256": "4152fdd47aad7e0b2c4cfc375f8bec477503d977dc0c9ca7f2afa24d16dfc2a0"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-web02-bundle.png",
+          "sha256": "dbe7b60fa7c86651e8e04caacb4553e111a1ed2f57763739c41b23dcf7560ed1"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    },
+    {
+      "id": "concrete-field-and-extension-errors",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "an unregistered extension is refused with its document position and field",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json",
+          "sha256": "4152fdd47aad7e0b2c4cfc375f8bec477503d977dc0c9ca7f2afa24d16dfc2a0"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    },
+    {
+      "id": "structured-edit-revision-conflict",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a stale revision is refused with its reason instead of overwriting the edit",
+          "passed": true
+        },
+        {
+          "description": "a stale preset revision is refused after review",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json",
+          "sha256": "4152fdd47aad7e0b2c4cfc375f8bec477503d977dc0c9ca7f2afa24d16dfc2a0"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-receipt.json",
+          "sha256": "3bb27492595fe230d032d3933911f570e685201f4e429fa87dd914065322bb82"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    },
+    {
+      "id": "export-round-trip-semantics",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "the exported workspace bundle imports back with the same declarations",
+          "passed": true
+        },
+        {
+          "description": "a saved case exports with its pinned preset and imports back pinned to that preset with the same executable meaning",
+          "passed": true
+        },
+        {
+          "description": "a case bundle without the preset it extends is refused by the preset id",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-workspace.bundle.json",
+          "sha256": "e05f4a2dbbed27a66392a4118e5720883f6c04a00231dd9b85636cc688cfec3a"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-case.bundle.json",
+          "sha256": "ae70d62b8bfd189bf810e7cf592fbd6d9454380d071ad463c4a7b6ec0e86b0dc"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    },
+    {
+      "id": "setup-from-imported-configuration",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a native deployment from the imported and edited workspace applies the edited ports",
+          "passed": true
+        },
+        {
+          "description": "saved presets set up native chains whose databases are verified",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json",
+          "sha256": "4152fdd47aad7e0b2c4cfc375f8bec477503d977dc0c9ca7f2afa24d16dfc2a0"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-receipt.json",
+          "sha256": "3bb27492595fe230d032d3933911f570e685201f4e429fa87dd914065322bb82"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-preset-plan.png",
+          "sha256": "a0728be6cc9487411791daa992ad106c6bef3e21cb974fe9db34f63bfa2feedb"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    },
+    {
+      "id": "pinned-assets-and-revisions",
+      "mode": "team",
+      "transport": "local",
+      "ownership": "owned",
+      "assertions": [
+        {
+          "description": "a preset edit after acceptance does not reach the running job",
+          "passed": true
+        },
+        {
+          "description": "a changed uploaded binary is refused before any effect",
+          "passed": true
+        },
+        {
+          "description": "uploaded assets persist across a restart",
+          "passed": true
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-receipt.json",
+          "sha256": "3bb27492595fe230d032d3933911f570e685201f4e429fa87dd914065322bb82"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-receipt.json",
+          "sha256": "47897c48e5d1060fd691c8302228e3422f015276cb6b18cc1b1b57c382d20edd"
+        },
+        {
+          "path": "chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-asset-library.png",
+          "sha256": "b7ba03d297b55f1a3b4eb3789b9451591d5f1785209b1e2b335e70dd931c5437"
+        }
+      ],
+      "invocationId": "ded640d8-bdcf-45d5-8278-1fc359314823",
+      "observedAt": "2026-10-11T21:18:55.085021+00:00"
+    }
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/app ./internal/dashboard -run \"TestDocumentBundle|TestCaseBundle|Import|TestWebSecurityShowsRedacted|TestDeployment\"",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-02/check-0.log",
+      "sha256": "995d9328f0469123d1e022439ae03e7d68c0bf946c2e588f79e61dadd10a21a3"
+    },
+    {
+      "command": "node --test tests/webui/api-error.test.mjs",
+      "exitCode": 0,
+      "log": "chainbench-out/web-ui-acceptance/WEB-02/check-1.log",
+      "sha256": "2ed9a825426edb108cfc7ce26180ccba5e0ebbf161262e98f518a5f8c7f5a3e2"
+    }
+  ],
+  "proofs": [
+    {
+      "name": "web02-bundle",
+      "startedAt": "2026-10-11T21:17:27.085989+00:00",
+      "runtime": "/private/tmp/cbui/4ae8b43f-7091-4665-ac93-d4b2ff3cefd0",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "preset-jobs",
+      "startedAt": "2026-10-11T21:17:39.990537+00:00",
+      "runtime": "/private/tmp/cbui/6bdba254-14ee-441a-b304-d82828eeabed",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "browserVersion": "154.0.8037.98",
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    },
+    {
+      "name": "asset-jobs",
+      "startedAt": "2026-10-11T21:18:13.809686+00:00",
+      "runtime": "/private/tmp/cbui/d02f9de2-af4f-4b44-8d94-51254357dc41",
+      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "browserVersion": null,
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ]
+    }
+  ],
+  "server": {
+    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "contractVersion": "2",
+    "goVersion": "go version go1.26.8 darwin/arm64"
+  },
+  "frontend": [
+    {
+      "path": "internal/dashboard/spa/assets/index--HlbxhPr.css",
+      "sha256": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
+    },
+    {
+      "path": "internal/dashboard/spa/assets/index-CE7LAY-s.js",
+      "sha256": "5056508306b92ddd769f4cf176e47fc006229e4c95afe6008002072e710e666a"
+    },
+    {
+      "path": "internal/dashboard/spa/index.html",
+      "sha256": "5b1d621c7ced246e633a7d979a4a1000b6ea558e17cea4a47f86e194eb29db1f"
+    }
+  ],
+  "coverage": {
+    "required": [
+      "bundle-import-preview-commit",
+      "concrete-field-and-extension-errors",
+      "structured-edit-revision-conflict",
+      "export-round-trip-semantics",
+      "setup-from-imported-configuration",
+      "pinned-assets-and-revisions"
+    ],
+    "executed": [
+      "bundle-import-preview-commit",
+      "concrete-field-and-extension-errors",
+      "structured-edit-revision-conflict",
+      "export-round-trip-semantics",
+      "setup-from-imported-configuration",
+      "pinned-assets-and-revisions"
+    ],
+    "missing": [],
+    "mockTargets": 0
+  },
+  "source": [
+    {
+      "path": "internal/app/document_bundle.go",
+      "sha256": "1ed31e592a8912c44a6d71486e2e54ac02863311e8c0488c2133db65f4b44cff"
+    },
+    {
+      "path": "internal/app/document_bundle_test.go",
+      "sha256": "cc28cd3d29319a86911f8a20ebd2260aa9a255fcc97dfd46a1ef061523e7dccf"
+    },
+    {
+      "path": "internal/app/document_case_bundle_test.go",
+      "sha256": "25ae03e4da7cf3b376037f3a455afefa79f492945c716340b7c0d03a6688d2a7"
+    },
+    {
+      "path": "internal/app/document_import.go",
+      "sha256": "f301b5b07959709a16325aa05b6d8c6afca0ae98cfd7c50c8d6a8595705da4cf"
+    },
+    {
+      "path": "internal/app/document_import_test.go",
+      "sha256": "3d3db8de2ecf8be50611405b0aceb3a3a8dd443577d4820f675af078b3586e90"
+    },
+    {
+      "path": "internal/app/deployment.go",
+      "sha256": "0900d78c0cbf85c72f388fffaad36176f39590b94e229f3b2b5043866f194be6"
+    },
+    {
+      "path": "internal/app/deployment_access.go",
+      "sha256": "1eb671e6412274213b4ccf102fa789fcd95500cee911edde9906cfcc146549b6"
+    },
+    {
+      "path": "internal/app/deployment_account_key_test.go",
+      "sha256": "4b86e9a4ae3060f551ce30d76ccbd086b4f4b119d21881a44ca15046ea3fc718"
+    },
+    {
+      "path": "internal/app/deployment_contract.go",
+      "sha256": "39c605921dd5a4b8bca677072c6be4c2a9bdb869694f07f100653f7c7fcebc00"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease.go",
+      "sha256": "4f395af02624a0ad5f36338ecb0d77878fe166480b07686d9ceaac9a9d29ea7a"
+    },
+    {
+      "path": "internal/app/deployment_credential_lease_test.go",
+      "sha256": "df21852a0cc15e7f82d6b5ced658b2d2b452624e76640322518166c0b79f1534"
+    },
+    {
+      "path": "internal/app/deployment_credential_usage_test.go",
+      "sha256": "c24e79501b985a5848142b4103456937d3be43d19fe8dcccddf3d5bfd4bde355"
+    },
+    {
+      "path": "internal/app/deployment_job_credentials.go",
+      "sha256": "11e3dbed4128dccc53706a33aebe44f1bb6b5dde84c056ba69c1d2fb9739dff2"
+    },
+    {
+      "path": "internal/app/deployment_presets.go",
+      "sha256": "6f7da064a5f5045193672300dc96ddc7d7a231afa7dbb0f8c520b097f9a84e2a"
+    },
+    {
+      "path": "internal/app/deployment_store.go",
+      "sha256": "653ba984fed1a2ea178628fdef7520f432240309ea8e7117756a9762f92754d7"
+    },
+    {
+      "path": "internal/app/deployment_test.go",
+      "sha256": "662ab73aa04dc8e9eea4028d7497a1cf80b17dd6f1c4ead3258eb5d7179e7dff"
+    },
+    {
+      "path": "internal/dashboard/deployment.go",
+      "sha256": "784e711e8b8d2e8d13fb02007cfd023bc8732c64fef3e4b87c5201f22c9311f3"
+    },
+    {
+      "path": "internal/dashboard/security.go",
+      "sha256": "bd5473e8ac3c7b096b120834f4c275b78e47f596ac5e3a8711ec7332f94117da"
+    },
+    {
+      "path": "web/src/BundleImport.svelte",
+      "sha256": "33ba3feaa0810a202e560e310e40cdcb0937fbf37e6c9b1b804667b3352d942c"
+    },
+    {
+      "path": "web/src/DeploymentEditor.svelte",
+      "sha256": "7ed23c876d355581931869b141f7f940a5622c96881019942ffe3d5ac801cb3f"
+    },
+    {
+      "path": "web/src/api-error.mjs",
+      "sha256": "f1b9d4809c31893f012f9b4667324d9be25f1b0b6474a39a51a1178fd1c0c454"
+    },
+    {
+      "path": "tests/webui/browser_web02_bundle.mjs",
+      "sha256": "99aae493c8dacca47ec6d28845119527825064819458cde284d90502dd9ab10a"
+    },
+    {
+      "path": "tests/webui/evidence_web02.py",
+      "sha256": "e9cc89e9b4b189ff3038c2fe7af76fe0c237f94d88c1b96e7154d7c629044ab1"
+    },
+    {
+      "path": "tests/webui/run_web02.py",
+      "sha256": "0784c12e81d40b3c2f32a24dd61863cdb0239ea2bdf8680d302fbc1de29b8b99"
+    },
+    {
+      "path": "tests/webui/run_web02_bundle.py",
+      "sha256": "0e5063e81896f4f6b0ce7f3d489e0accf7f651cabfedfa2acb89c33c14f09ba0"
+    },
+    {
+      "path": "tests/webui/test_evidence_web02.py",
+      "sha256": "34d807574f9aa693d11fb350564c80f4e125a873bfccd29affdb7dcd09185c11"
+    },
+    {
+      "path": "tests/webui/proof_acceptance.py",
+      "sha256": "65e4261b14481e9cc712e58894b84d14c407ca9f67a88445e47f425a97c69074"
+    },
+    {
+      "path": "tests/webui/browser_preset_jobs.mjs",
+      "sha256": "629299ee5b1961f150b081fb6c194c1cfb23cfc459740af419241ee097dd517e"
+    },
+    {
+      "path": "tests/webui/browser_asset_jobs.mjs",
+      "sha256": "6d711beca11085e0f19816e3e5abd9008419f6cf6de8f1cd159af43626190726"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-asset-library.png",
+      "sha256": "b7ba03d297b55f1a3b4eb3789b9451591d5f1785209b1e2b335e70dd931c5437"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-receipt.json",
+      "sha256": "47897c48e5d1060fd691c8302228e3422f015276cb6b18cc1b1b57c382d20edd"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/asset-jobs-run.log",
+      "sha256": "62408c7f59d87454b6ba672d3492eefff970ff586c1cea928d14161487a05428"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/check-0.log",
+      "sha256": "995d9328f0469123d1e022439ae03e7d68c0bf946c2e588f79e61dadd10a21a3"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/check-1.log",
+      "sha256": "2ed9a825426edb108cfc7ce26180ccba5e0ebbf161262e98f518a5f8c7f5a3e2"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-preset-plan.png",
+      "sha256": "a0728be6cc9487411791daa992ad106c6bef3e21cb974fe9db34f63bfa2feedb"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-receipt.json",
+      "sha256": "3bb27492595fe230d032d3933911f570e685201f4e429fa87dd914065322bb82"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/preset-jobs-run.log",
+      "sha256": "af244322f3fe3564976a935a54aa8afa8dece184a880a40f7c13c7d26ca076e8"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-case.bundle.json",
+      "sha256": "ae70d62b8bfd189bf810e7cf592fbd6d9454380d071ad463c4a7b6ec0e86b0dc"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-receipt.json",
+      "sha256": "4152fdd47aad7e0b2c4cfc375f8bec477503d977dc0c9ca7f2afa24d16dfc2a0"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-run.log",
+      "sha256": "2b78a3662f2b90e880749077d0920c53c52f989483766567be43a0bcbad387b8"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-web02-bundle.png",
+      "sha256": "dbe7b60fa7c86651e8e04caacb4553e111a1ed2f57763739c41b23dcf7560ed1"
+    },
+    {
+      "path": "chainbench-out/web-ui-acceptance/WEB-02/web02-bundle-workspace.bundle.json",
+      "sha256": "e05f4a2dbbed27a66392a4118e5720883f6c04a00231dd9b85636cc688cfec3a"
+    }
+  ],
+  "blockers": [],
+  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+}

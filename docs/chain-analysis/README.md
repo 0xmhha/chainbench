@@ -82,14 +82,14 @@ scripts/chain-analysis/verify-docs.sh $CHAIN/go-wemix/build/bin/gwemix     docs/
 > 검증 상태(2026-08-22): 3체인 모두 **ABSENT 0 · 잘못된 주석 0**. 숨겨진 플래그는 문서가
 > 이미 `*(hidden)*` 로 표시하고 있었다.
 
-"방출 가능"은 `internal/core/launchopt` 의 dialect 테이블에 있는 키다. **테이블에 없는 키는
+"방출 가능"은 `internal/core/nodeconfig/launchopt.go` 의 dialect 테이블에 있는 키다. **테이블에 없는 키는
 오류다** — `Args.Set` 이 `dialect %s does not support %q` 로 거절하므로 raw 통과 경로가 없다.
 즉 나머지 ~75% 는 지금 **표현 자체가 불가능**하고, 지원하려면 dialect 테이블을 늘려야 한다.
 
 이 수치가 "DSL 로 체인 구성을 자유롭게 지원한다"의 현재 위치다. 무엇을 먼저 늘릴지는
 `cli-flags.txt` 와 launchopt 키를 차집합으로 놓고 고르면 된다.
 
-**테이블은 이 캡처에 묶여 있다.** `TestDialectSpellingsExistInTheBinaries`(launchopt)가 모든
+**테이블은 이 캡처에 묶여 있다.** `TestDialectSpellingsExistInTheBinaries`(nodeconfig)가 모든
 dialect 항목의 철자와 값/boolean 여부를 위 `cli-surface.txt` 와 대조한다 — 틀린 철자나 그 세대에
 없는 플래그는 **프로비저닝과 datadir 초기화를 다 마친 뒤** 노드가 거절하는 형태로 터지므로,
 테이블에 넣는 시점에 잡는다. 체인을 다시 캡처하면 이 테스트가 낡은 항목을 바로 지목한다.

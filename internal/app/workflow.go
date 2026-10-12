@@ -51,6 +51,9 @@ type AttachRunIn struct {
 	// attached: the addresses are the key set's, and without it the run has no
 	// way to turn "node1" into one.
 	KeysDir string
+	// ReadOnlyKeys reads KeysDir without registering anything into it, for a
+	// key set the caller accepted and must not change.
+	ReadOnlyKeys bool
 	// AllowChainMismatch runs even when the endpoint does not answer as the
 	// declared chain. It exists for a network whose operator chose a chain id
 	// other than the built-in default, which the probe reads as another chain;
@@ -164,7 +167,7 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,
 		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
-		KeysDir: in.KeysDir, Bus: in.Bus, Nodes: in.Nodes,
+		KeysDir: in.KeysDir, ReadOnlyKeys: in.ReadOnlyKeys, Bus: in.Bus, Nodes: in.Nodes,
 	})
 	if err != nil {
 		return "", fmt.Errorf("app: attach run: %w", err)
