@@ -117,6 +117,7 @@ def main():
             if run.returncode:
                 raise RuntimeError(command + ' failed')
         subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench-dashboard'), './cmd/chainbench-dashboard'], cwd=source, check=True, capture_output=True)
+        subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench'), './cmd/chainbench'], cwd=source, check=True, capture_output=True)
         spec = importlib.util.spec_from_file_location('native_fixture', 'tests/webui/fixtures/prepare_web04.py')
         module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
         provenance = module.prepare(runtime, out)

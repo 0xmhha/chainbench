@@ -38,6 +38,7 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
             shutil.copy2(Path(os.environ['WEBUI_DASHBOARD_BINARY']).resolve(strict=True),runtime/'dashboard')
         else:
             subprocess.run(['go','build','-o',str(runtime/'dashboard'),'./cmd/chainbench-dashboard'],stdout=log,stderr=log,check=True)
+            subprocess.run(['go','build','-o',str(runtime/'chainbench'),'./cmd/chainbench'],stdout=log,stderr=log,check=True)
     with socket.socket() as listener:
         listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
     store=runtime/'store'

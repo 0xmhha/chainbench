@@ -3,12 +3,28 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/resource"
 )
+
+// ChainCLI is the chainbench command line as the Web uses it. The dashboard
+// runs the CLI for every network it reads or changes, so the Web and a
+// terminal see and do the same thing; the implementation that starts the
+// process lives above app, in internal/webcli.
+type ChainCLI interface {
+	// ChainStatus is `chainbench chain status --json` for one workspace.
+	ChainStatus(ctx context.Context, dir string) (State, error)
+}
+
+// errNoChainCLI refuses network work on a dashboard started without the CLI.
+var errNoChainCLI = errors.New("the chainbench CLI is not configured for this dashboard")
+
+// UseCLI gives the engine the chainbench command it runs.
+func (e *WebChainEngine) UseCLI(c ChainCLI) { e.cli = c }
 
 type WebNode struct {
 	ID                string   `json:"id"`
@@ -44,15 +60,16 @@ func (e *WebChainEngine) Networks(ctx context.Context) ([]WebNetwork, error) {
 			return nil, err
 		}
 		dir := filepath.Join(e.root, "networks", w.ID)
-		b, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
-		if os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); os.IsNotExist(err) {
 			continue
-		}
-		if err != nil {
+		} else if err != nil {
 			return nil, err
 		}
-		var st State
-		if err = json.Unmarshal(b, &st); err != nil {
+		if e.cli == nil {
+			return nil, errNoChainCLI
+		}
+		st, err := e.cli.ChainStatus(ctx, dir)
+		if err != nil {
 			return nil, err
 		}
 		var target resource.Inspection

@@ -33,6 +33,9 @@ type WebChainEngine struct {
 	verifyAsset func(context.Context, ManifestBinary, string) (ManifestBinaryEvidence, error)
 	// surfaces is the captured chain documentation root; see UseChainSurfaces.
 	surfaces string
+	// cli is the chainbench command the Web runs instead of an engine of its
+	// own; see UseCLI.
+	cli ChainCLI
 }
 
 // errIncompatibleBinary refuses a registered binary of another chain.

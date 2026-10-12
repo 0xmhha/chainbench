@@ -90,7 +90,7 @@ flowchart TD
 > 두 목록의 순서는 일부러 다르다 — `core` 안에 L0·L1·L3 이 함께 있고 L3 인 `dsl/*`·`testhelper` 는
 > `core` 밖이라, 경로만 보고는 층을 알 수 없다.
 
-## 3. 모듈 배치 (53개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22 / core/statemachine 신설; 2026-09-22)
+## 3. 모듈 배치 (54개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01 / chainsetup/verb 분리; 2026-09-21 / core/origin 신설; 2026-09-22 / core/statemachine 신설; 2026-09-22 / webcli 신설; 2026-10-12)
 
 ### L0 커널 — 공용 어휘
 
@@ -182,6 +182,7 @@ flowchart TD
 |---|---|
 | `mcp` | MCP 도구 — 스키마 바인딩과 렌더링 |
 | `dashboard` | 대시보드 데몬 |
+| `webcli` | Web이 chainbench CLI를 하위 프로세스로 실행하는 곳. 바이너리를 찾고, 취소하면 인터럽트를 보내고, CLI가 낸 오류 문장을 그대로 돌려준다 |
 
 ### 규칙 자체
 
