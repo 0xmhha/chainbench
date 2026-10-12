@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
-// ProcessTable reads a machine's process table: whether a pid exists and the argv
-// it runs.
+// ProcessTable reads a machine's process table: whether a pid exists, the argv
+// it runs, and which pids run a binary of a given name.
 type ProcessTable interface {
 	PIDAlive(ctx context.Context, pid int) (bool, error)
 	Cmdline(ctx context.Context, pid int) ([]string, error)
+	FindBinary(ctx context.Context, name string) ([]int, error)
 }
 
 // Ownership is what a recorded pid is found to be.
@@ -29,6 +32,12 @@ const (
 	OwnedMismatch Ownership = "ownership_mismatch"
 	// OwnedUnknown is a pid whose launch could not be established.
 	OwnedUnknown Ownership = "unknown"
+	// OwnedStopped is a node with no recorded pid and no process running its
+	// launch.
+	OwnedStopped Ownership = "stopped"
+	// OwnedUnrecorded is a node with no recorded pid whose exact launch is
+	// nevertheless running: a process the record lost.
+	OwnedUnrecorded Ownership = "unrecorded_running"
 )
 
 // LaunchVerdict is the verdict on one recorded pid, with why when it is not owned.
@@ -73,6 +82,58 @@ func ObserveLaunch(ctx context.Context, o ProcessTable, pid int, binary string, 
 		return missing
 	}
 	return LaunchVerdict{State: OwnedRunning, PID: pid}
+}
+
+// ObserveVacancy reports, for a node with no recorded pid, whether its launch
+// is running anyway. Only an exact argv counts as the node's; a process of the
+// same binary that names the node's data directory or config with a different
+// launch is a mismatch, not a vacancy. The candidates are listed again at the
+// end, and a list that moved makes the answer unknown rather than stopped.
+func ObserveVacancy(ctx context.Context, o ProcessTable, binary string, args []string, dataDir, configPath string) LaunchVerdict {
+	unknown := LaunchVerdict{State: OwnedUnknown, Reason: "discovery_unavailable"}
+	if o == nil || binary == "" || len(args) == 0 || ctx.Err() != nil {
+		return unknown
+	}
+	pids, err := o.FindBinary(ctx, filepath.Base(binary))
+	if err != nil || len(pids) > 4096 {
+		return unknown
+	}
+	for _, pid := range pids {
+		if pid <= 0 {
+			return unknown
+		}
+		alive, err := o.PIDAlive(ctx, pid)
+		if err != nil {
+			return unknown
+		}
+		if !alive {
+			continue
+		}
+		argv, err := o.Cmdline(ctx, pid)
+		if err != nil || len(argv) == 0 {
+			return unknown
+		}
+		if filepath.Clean(argv[0]) == filepath.Clean(binary) && slices.Equal(argv[1:], args) {
+			if v := ObserveLaunch(ctx, o, pid, binary, args); v.State != OwnedRunning {
+				return unknown
+			}
+			return LaunchVerdict{State: OwnedUnrecorded, PID: pid, Reason: "unrecorded_pid_found"}
+		}
+		for _, arg := range argv[1:] {
+			value := arg
+			if _, after, found := strings.Cut(arg, "="); found {
+				value = after
+			}
+			if value != "" && (value == dataDir || value == configPath) {
+				return LaunchVerdict{State: OwnedMismatch, Reason: "unrecorded_argv_mismatch"}
+			}
+		}
+	}
+	after, err := o.FindBinary(ctx, filepath.Base(binary))
+	if err != nil || ctx.Err() != nil || !slices.Equal(pids, after) {
+		return unknown
+	}
+	return LaunchVerdict{State: OwnedStopped, Reason: "no_matching_process"}
 }
 
 // ProcessTableOf is how the machine behind d is read. A darwin machine has no
@@ -129,4 +190,34 @@ func (o darwinObserver) Cmdline(ctx context.Context, pid int) ([]string, error) 
 		return nil, errors.New("process: launch identity unavailable")
 	}
 	return argv, nil
+}
+
+// FindBinary lists the pids whose executable is named name, from the process
+// table's command column.
+func (o darwinObserver) FindBinary(ctx context.Context, name string) ([]int, error) {
+	if name == "" || ctx.Err() != nil {
+		return nil, errors.New("process: process discovery unavailable")
+	}
+	raw, err := o.c.Run(ctx, "ps -ax -o pid= -o comm=")
+	if err != nil || strings.TrimSpace(raw) == "" {
+		return nil, errors.New("process: process discovery unavailable")
+	}
+	pids := []int{}
+	for _, line := range strings.Split(strings.TrimSpace(raw), "\n") {
+		line = strings.TrimSpace(line)
+		split := strings.IndexFunc(line, unicode.IsSpace)
+		if split < 1 {
+			return nil, errors.New("process: process discovery unavailable")
+		}
+		pid, err := strconv.Atoi(line[:split])
+		command := strings.TrimSpace(line[split:])
+		if err != nil || pid <= 0 || command == "" {
+			return nil, errors.New("process: process discovery unavailable")
+		}
+		if filepath.Base(command) == filepath.Base(name) {
+			pids = append(pids, pid)
+		}
+	}
+	slices.Sort(pids)
+	return slices.Compact(pids), nil
 }

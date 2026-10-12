@@ -76,6 +76,10 @@ func init() {
 		Summary: "Show the workspace composition state and which steps have run",
 	}, app.ChainStatus)
 	Register(Registration{
+		Name: "chain.observe", Stage: StageCompose, ReadOnly: true,
+		Summary: "Observe each recorded node's process and binary on its machine, changing nothing",
+	}, app.ChainObserve)
+	Register(Registration{
 		Name: "chain.health", Stage: StageCompose, ReadOnly: true,
 		Summary: "Probe every node's HTTP RPC for its latest block",
 	}, app.ChainHealth)

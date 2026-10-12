@@ -50,6 +50,7 @@ func Default(name, version string) *Server {
 	s.Register(chainNewTool())
 	s.Register(chainUpTool())
 	s.Register(chainStatusTool())
+	s.Register(chainObserveTool())
 	s.Register(chainShowTool())
 	s.Register(resourcePoolTool())
 	s.Register(resourcePlanTool())

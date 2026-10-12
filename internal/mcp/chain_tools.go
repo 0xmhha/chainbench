@@ -92,6 +92,27 @@ func chainStatusTool() Tool {
 	}
 }
 
+// chainObserveTool is the MCP mirror of `chainbench chain observe`.
+func chainObserveTool() Tool {
+	return Tool{
+		Name:        "chainbench_chain_observe",
+		ReadOnly:    true,
+		Description: "Observe each recorded node of a composed network on its machine, changing nothing: whether its recorded launch is running, its pid runs something else, it has no process, or the record lost it; and whether its binary can launch. Args: workspaceDir.",
+		InputSchema: workspaceDirSchema(map[string]any{}),
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			res, err := app.ChainObserve(ctx, app.Deps{}, app.ChainObserveIn{DataDir: argString(args, "workspaceDir", "")})
+			if err != nil {
+				return "", err
+			}
+			b, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return "", fmt.Errorf("mcp: chain observe: %w", err)
+			}
+			return string(b), nil
+		},
+	}
+}
+
 // workspaceDirSchema is the one argument every step shares.
 func workspaceDirSchema(extra map[string]any) map[string]any {
 	props := map[string]any{

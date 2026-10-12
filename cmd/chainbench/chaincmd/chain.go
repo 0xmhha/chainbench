@@ -39,7 +39,7 @@ func newNetCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		newNetUpCmd(),
-		newNetNewCmd(), newNetStatusCmd(),
+		newNetNewCmd(), newNetStatusCmd(), newNetObserveCmd(),
 		newNetKeysCmd(), newNetAllocateCmd(), newNetEnodeCmd(), newNetGenesisCmd(), newNetConfigCmd(),
 		newNetLaunchOptsCmd(), newNetProvisionCmd(),
 		newNetInitCmd(), newNetStartCmd(), newNetStopCmd(), newNetRestartCmd(), newNetResumeCmd(),
