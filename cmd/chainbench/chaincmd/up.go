@@ -1,6 +1,7 @@
 package chaincmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -31,6 +32,7 @@ func newNetUpCmd() *cobra.Command {
 		docker                                               bool
 		presetPath                                           string
 		serverLogins                                         string
+		planOnly, jsonOut                                    bool
 		tf                                                   targetFlags
 		sf                                                   resourcecmd.ServerFlags
 	)
@@ -72,11 +74,35 @@ func newNetUpCmd() *cobra.Command {
 				LaunchSet: launchSet,
 			}
 			if presetPath != "" {
+				if planOnly {
+					raw, err := readUpPreset(cmd, presetPath, &in)
+					if err != nil {
+						return err
+					}
+					plan, err := app.PlanChainPreset(cmd.Context(), raw, in)
+					if err != nil {
+						return err
+					}
+					if jsonOut {
+						return json.NewEncoder(cmd.OutOrStdout()).Encode(plan)
+					}
+					fmt.Fprint(cmd.OutOrStdout(), plan.Plan.String())
+					return nil
+				}
 				if in, err = upFromPreset(cmd, presetPath, in); err != nil {
 					return err
 				}
 			}
+			if planOnly {
+				return fmt.Errorf("chain up --plan requires --chain-preset")
+			}
 			out, err := app.ChainUp(cmd.Context(), surface.Deps(cmd).WithLogins(serverLogins), in)
+			if jsonOut {
+				if encodeErr := json.NewEncoder(cmd.OutOrStdout()).Encode(out); encodeErr != nil {
+					return encodeErr
+				}
+				return err
+			}
 			// The steps that did run are worth printing even when a later one
 			// failed: they say how far the composition got.
 			printUpSteps(cmd, out)
@@ -115,6 +141,8 @@ func newNetUpCmd() *cobra.Command {
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 	cmd.Flags().StringVar(&serverLogins, "server-logins", "", "server-set file whose ssh blocks supply this run's logins, apart from the server set the workspace records")
 	cmd.Flags().StringVar(&presetPath, "chain-preset", "", "chain-preset document to compose: its layout, genesis, config and launch options, as a test run would compose it; layout and genesis flags are refused beside it")
+	cmd.Flags().BoolVar(&planOnly, "plan", false, "resolve --chain-preset without composing or launching nodes")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the resolved plan or composition result as JSON")
 	tf.bind(cmd)
 	sf.Bind(cmd)
 	return cmd
@@ -128,19 +156,27 @@ var presetDecides = []string{"bp", "en", "pn", "endpoint-syncmode", "topology", 
 
 // upFromPreset reads the preset at path and composes the request from it.
 func upFromPreset(cmd *cobra.Command, path string, base app.ChainUpIn) (app.ChainUpIn, error) {
+	raw, err := readUpPreset(cmd, path, &base)
+	if err != nil {
+		return app.ChainUpIn{}, err
+	}
+	return app.ChainUpFromPreset(cmd.Context(), raw, base)
+}
+
+func readUpPreset(cmd *cobra.Command, path string, base *app.ChainUpIn) ([]byte, error) {
 	for _, name := range presetDecides {
 		if cmd.Flags().Changed(name) {
-			return app.ChainUpIn{}, fmt.Errorf("--%s is decided by --chain-preset; change the preset instead", name)
+			return nil, fmt.Errorf("--%s is decided by --chain-preset; change the preset instead", name)
 		}
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return app.ChainUpIn{}, fmt.Errorf("read --chain-preset: %w", err)
+		return nil, fmt.Errorf("read --chain-preset: %w", err)
 	}
 	if !cmd.Flags().Changed("keys") {
 		base.KeysDir = ""
 	}
-	return app.ChainUpFromPreset(cmd.Context(), raw, base)
+	return raw, nil
 }
 
 // printUpSteps lists what each step recorded, in order.

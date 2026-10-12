@@ -9,7 +9,6 @@ import (
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // cliRunReport is the document `chainbench run --json` prints, on success and
@@ -34,9 +33,17 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, l
 	if cli == nil {
 		return RunSuiteOut{}, errNoChainCLI
 	}
-	args, err := writeCLICases(ctx, in.SpecContent, dir)
+	args, err := suiteCLIArgs(ctx, in, dir, logins)
 	if err != nil {
 		return RunSuiteOut{}, err
+	}
+	return runCLIDocument(ctx, cli, args)
+}
+
+func suiteCLIArgs(ctx context.Context, in RunSuiteIn, dir, logins string) ([]string, error) {
+	args, err := writeCLICases(ctx, in.SpecContent, dir)
+	if err != nil {
+		return nil, err
 	}
 	// --suite: the reviewed cases share one network and one session, as the
 	// plan the operator approved composed them.
@@ -52,9 +59,7 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, l
 	}
 	names := make([]string, 0, len(in.BinaryOverrides))
 	for name := range in.BinaryOverrides {
-		if name != dsl.BinaryDefault {
-			names = append(names, name)
-		}
+		names = append(names, name)
 	}
 	slices.Sort(names)
 	for _, name := range names {
@@ -66,7 +71,7 @@ func runSuiteThroughCLI(ctx context.Context, cli ChainCLI, in RunSuiteIn, dir, l
 	if in.KeepUp {
 		args = append(args, "--keep-up")
 	}
-	return runCLIDocument(ctx, cli, args)
+	return args, nil
 }
 
 // attachThroughCLI runs the reviewed cases against the network recorded at

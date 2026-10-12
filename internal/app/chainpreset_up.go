@@ -18,6 +18,19 @@ import (
 // Files the projection needs (a genesis overlay) are written under the
 // workspace, because the genesis step reads them later.
 func ChainUpFromPreset(ctx context.Context, raw []byte, base ChainUpIn) (ChainUpIn, error) {
+	out, err := PlanChainPreset(ctx, raw, base)
+	return out.Layout, err
+}
+
+// PresetPlan is the resolved request and its human-readable compose plan.
+type PresetPlan struct {
+	Layout ChainUpIn   `json:"layout"`
+	Plan   ComposePlan `json:"plan"`
+}
+
+// PlanChainPreset is also the projection ChainUpFromPreset executes. Only
+// content-addressed planning inputs are materialised; nodes are not touched.
+func PlanChainPreset(ctx context.Context, raw []byte, base ChainUpIn) (PresetPlan, error) {
 	in := RunSuiteIn{
 		DataDir: filepath.Join(base.DataDir, "chain-preset-plan"), Chain: base.Chain, Binary: base.Binary,
 		KeysDir: base.KeysDir, Server: base.Server, WorkspaceConfigPath: base.WorkspaceConfigPath, Docker: base.Docker,
@@ -25,9 +38,9 @@ func ChainUpFromPreset(ctx context.Context, raw []byte, base ChainUpIn) (ChainUp
 	if base.Binary != "" {
 		in.BinaryOverrides = map[string]string{dsl.BinaryDefault: base.Binary}
 	}
-	req, _, err := testengine.PlanChainPreset(ctx, raw, in)
+	req, plan, err := testengine.PlanChainPreset(ctx, raw, in)
 	if err != nil {
-		return ChainUpIn{}, err
+		return PresetPlan{}, err
 	}
 	req.DataDir, req.Stage, req.Target = base.DataDir, base.Stage, base.Target
 	req.Server, req.Docker, req.WorkspaceConfigPath = base.Server, base.Docker, base.WorkspaceConfigPath
@@ -43,5 +56,6 @@ func ChainUpFromPreset(ctx context.Context, raw []byte, base ChainUpIn) (ChainUp
 	if base.KeysSource != "" {
 		req.KeysSource = base.KeysSource
 	}
-	return req, nil
+	plan.Workspace = base.DataDir
+	return PresetPlan{Layout: req, Plan: plan}, nil
 }

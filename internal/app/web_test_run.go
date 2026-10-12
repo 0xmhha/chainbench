@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
-	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // Saved case bytes remain intact; the registered binary selection replaces
@@ -108,7 +107,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	// PlanSuite may materialize content-addressed overlays. Keep preparation
 	// inside an owned input directory, away from the network or target servers.
 	in.DataDir = filepath.Join(run.InputDir, "planning")
-	layout, plan, err := testengine.PlanSuiteLayout(ctx, in)
+	layout, plan, err := planSuiteThroughCLI(ctx, e.cli, in, run.InputDir)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +275,7 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		// Replan inside the private input tree, without mutating retained nodes.
 		planning := in
 		planning.DataDir = filepath.Join(p.TestRun.InputDir, "planning")
-		layout, current, err := testengine.PlanSuiteLayout(ctx, planning)
+		layout, current, err := planSuiteThroughCLI(ctx, e.cli, planning, p.TestRun.InputDir)
 		if err != nil {
 			return err
 		}

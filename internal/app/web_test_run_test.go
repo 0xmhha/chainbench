@@ -156,7 +156,10 @@ func TestWebTestSessionReferencesCannotEscapeOrCollideWithLegacy(t *testing.T) {
 type uploadsCLI struct{ calls [][]string }
 
 func (c *uploadsCLI) ChainStatus(context.Context, string) (State, error) { return State{}, nil }
-func (c *uploadsCLI) Run(_ context.Context, args ...string) ([]byte, error) {
+func (c *uploadsCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
+	if slices.Contains(args, "--plan") {
+		return (planningCLI{}).Run(ctx, args...)
+	}
 	c.calls = append(c.calls, args)
 	return nil, nil
 }

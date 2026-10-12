@@ -106,6 +106,9 @@ func NewRun() *cobra.Command {
 				return fmt.Errorf("run: %w", serr)
 			}
 			if start.Adopts() {
+				if planOnly {
+					return fmt.Errorf("plan is only available for composition")
+				}
 				// ${VAR} in a declared endpoint is expanded here because the
 				// surface owns the process environment. A committed case must
 				// not have to carry a machine's address.
@@ -155,7 +158,7 @@ func NewRun() *cobra.Command {
 			}
 			in.ReadOnlyKeys = readOnlyKeys
 			if planOnly {
-				return showPlan(cmd, in, jsonOut)
+				return showPlan(cmd, in, jsonOut, suite)
 			}
 			// The plan goes to stderr, not stdout: --json promises a document
 			// and a run that printed prose above it would break every reader.
@@ -524,8 +527,17 @@ func planPrinter(w io.Writer) func(app.ComposePlan) {
 }
 
 // showPlan resolves what the run would compose and prints it without composing.
-func showPlan(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
-	plans, err := app.PlanSuites(cmd.Context(), in)
+func showPlan(cmd *cobra.Command, in app.RunSuiteIn, jsonOut, suite bool) error {
+	var plans []app.SuitePlan
+	var err error
+	if suite {
+		var layout app.ChainUpIn
+		var plan app.ComposePlan
+		layout, plan, err = app.PlanSuiteLayout(cmd.Context(), in)
+		plans = []app.SuitePlan{{Spec: "suite", Plan: plan, Layout: layout}}
+	} else {
+		plans, err = app.PlanSuites(cmd.Context(), in)
+	}
 	if err != nil {
 		return err
 	}

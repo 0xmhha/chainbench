@@ -376,7 +376,7 @@ func writeScopes(row func(string, string), label string, m map[string][]string) 
 	}
 }
 
-// PlanSuite resolves what RunSuite would compose and returns it without
+// PlanSuiteLayout resolves what RunSuite would compose and returns it without
 // composing anything.
 //
 // It exists for the change that splits a declaration into a shared chain
@@ -388,13 +388,8 @@ func writeScopes(row func(string, string), label string, m map[string][]string) 
 // One file may be written: a declaration carrying a genesis overlay renders it
 // into the workspace. The name is the hash of the content, so planning twice
 // writes the same bytes to the same path and a later run reuses it.
-func PlanSuite(ctx context.Context, in RunSuiteIn) (ComposePlan, error) {
-	_, plan, err := PlanSuiteLayout(ctx, in)
-	return plan, err
-}
-
-// PlanSuiteLayout exposes the same resolved composition input as RunSuite so
-// callers can claim an explicit node table without approximating it by counts.
+// The resolved input includes the explicit node table, so callers do not have
+// to approximate it by counts.
 func PlanSuiteLayout(ctx context.Context, in RunSuiteIn) (chainsetup.ChainUpIn, ComposePlan, error) {
 	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return chainsetup.ChainUpIn{}, ComposePlan{}, fmt.Errorf("engine: plan suite: no specs given")

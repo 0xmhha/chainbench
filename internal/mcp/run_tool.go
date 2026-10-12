@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -22,6 +23,8 @@ func runTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
+				"plan":    map[string]any{"type": "boolean", "description": "resolve the composed network without running it"},
+				"suite":   map[string]any{"type": "boolean", "description": "plan several cases as one suite on one network"},
 				"chain":   map[string]any{"type": "string"},
 				"rpc":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				"spec":    map[string]any{"type": "string"},
@@ -66,6 +69,9 @@ func runTool() Tool {
 				return "", fmt.Errorf("chainbench_run: %w", serr)
 			}
 			if start.Adopts() {
+				if argBool(args, "plan", false) {
+					return "", fmt.Errorf("plan is only available for composition")
+				}
 				return runAttached(ctx, start, chain, rpcURLs, dataDir, specs)
 			}
 			return runCompose(ctx, args, specs)
@@ -104,7 +110,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 			return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 		}
 	}
-	out, err := app.RunSuite(ctx, app.Deps{}, app.RunSuiteIn{
+	in := app.RunSuiteIn{
 		SpecContent: specs,
 		DataDir:     dataDir,
 		Chain:       argString(args, "chain", ""),
@@ -123,7 +129,26 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 			Name:    argString(args, "server", ""),
 			All:     argBool(args, "allServers", false),
 		},
-	})
+	}
+	if argBool(args, "plan", false) {
+		var plans []app.SuitePlan
+		if argBool(args, "suite", false) {
+			layout, plan, err := app.PlanSuiteLayout(ctx, in)
+			if err != nil {
+				return "", err
+			}
+			plans = []app.SuitePlan{{Spec: "suite", Layout: layout, Plan: plan}}
+		} else {
+			var err error
+			plans, err = app.PlanSuites(ctx, in)
+			if err != nil {
+				return "", err
+			}
+		}
+		raw, err := json.Marshal(plans)
+		return string(raw), err
+	}
+	out, err := app.RunSuite(ctx, app.Deps{}, in)
 	if err != nil {
 		return "", err
 	}

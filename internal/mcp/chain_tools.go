@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/app"
@@ -423,6 +424,10 @@ func chainUpTool() Tool {
 		Description: "Compose and launch a network in one call (runs every chain step in order), leaving it up for follow-on rpc/tx/attach. " +
 			"Args: workspaceDir, chain, binary, bp, en, pn, keysDir, keysSource, endpointSyncMode, peering, docker, serverSet/server/allServers.",
 		InputSchema: workspaceDirSchema(map[string]any{
+			"plan":             map[string]any{"type": "boolean", "description": "resolve chainPreset without composing nodes"},
+			"chainPreset":      map[string]any{"type": "string", "description": "chain-preset file; defines layout and scoped options"},
+			"stage":            map[string]any{"type": "string", "enum": []string{"deploy", "init", "start"}},
+			"serverLogins":     map[string]any{"type": "string", "description": "private run logins apart from the server set recorded by the network"},
 			"chain":            map[string]any{"type": "string"},
 			"binary":           map[string]any{"type": "string"},
 			"bp":               map[string]any{"type": "integer", "description": "bp (block-producing) node count"},
@@ -444,7 +449,8 @@ func chainUpTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			out, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{
+			in := app.ChainUpIn{
+				Stage:               app.UpStage(argString(args, "stage", string(app.UpStart))),
 				DataDir:             argString(args, "workspaceDir", ""),
 				Chain:               argString(args, "chain", ""),
 				Binary:              argString(args, "binary", ""),
@@ -463,7 +469,34 @@ func chainUpTool() Tool {
 					Name:    argString(args, "server", ""),
 					All:     argBool(args, "allServers", false),
 				},
-			})
+			}
+			preset := argString(args, "chainPreset", "")
+			if preset != "" {
+				for _, name := range []string{"bp", "en", "pn", "endpointSyncMode", "peering"} {
+					if _, ok := args[name]; ok {
+						return "", fmt.Errorf("%s is decided by chainPreset", name)
+					}
+				}
+				raw, err := os.ReadFile(preset)
+				if err != nil {
+					return "", err
+				}
+				if argBool(args, "plan", false) {
+					out, err := app.PlanChainPreset(ctx, raw, in)
+					if err != nil {
+						return "", err
+					}
+					data, err := json.Marshal(out)
+					return string(data), err
+				}
+				in, err = app.ChainUpFromPreset(ctx, raw, in)
+				if err != nil {
+					return "", err
+				}
+			} else if argBool(args, "plan", false) {
+				return "", fmt.Errorf("plan requires chainPreset")
+			}
+			out, err := app.ChainUp(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), in)
 			if err != nil {
 				return "", err
 			}

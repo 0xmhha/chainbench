@@ -20,7 +20,9 @@ func keySnapshotEngine(t *testing.T) (*WebChainEngine, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return NewWebChainEngine(root, source, documents, nil, nil, nil), source
+	e := NewWebChainEngine(root, source, documents, nil, nil, nil)
+	e.UseCLI(planningCLI{})
+	return e, source
 }
 
 func TestWebKeySnapshotPreservesAcceptedBytesAcrossSourceEditAndRestart(t *testing.T) {
