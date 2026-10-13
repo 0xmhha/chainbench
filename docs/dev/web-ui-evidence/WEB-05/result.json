@@ -35,13 +35,13 @@
     "criterion": "WEB-05",
     "mode": "recheck",
     "outcome": "pass",
-    "seconds": 606,
+    "seconds": 566,
     "scenarios": 10,
     "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc",
-    "invocationId": "822e36fe-b8b4-49ee-a560-25e443567f75",
-    "evidenceDirectory": "/private/tmp/cbui/recheck-m1bi2tq9/source/chainbench-out/web-ui-acceptance/WEB-05",
-    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web-05.log",
-    "evidenceDigest": "4d7f34a885ddcb3891affd4fb7f633f9675010caf8ea0d76665d98ebe4f64544",
-    "resultDigest": "e99506b9a20327e0b6702155d2f23684f7afa3310b05cc95c0e350159544ac41"
+    "invocationId": "03199907-6b25-4e41-85c5-cc23b6326ea6",
+    "evidenceDirectory": "/private/tmp/cbui/recheck-_nroyw_7/source/chainbench-out/web-ui-acceptance/WEB-05",
+    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web05-restored.log",
+    "evidenceDigest": "5efd5dea072e22d50a6cb937a87f1a620bf71d2279b152352a80ebd36bcf909a",
+    "resultDigest": "2a783f4fe4ff04e9bd8c2c78dd841c295363a20a2542c44ef7020a50b3673f92"
   }
 }
