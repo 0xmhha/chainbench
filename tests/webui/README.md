@@ -287,3 +287,25 @@ the browser, saves it, creates a workspace, edits the server-set through the
 form, re-pins the workspace, exports the workspace bundle, re-imports it and
 deploys four native nodes on the edited ports. `verify.sh --criterion WEB-02`
 reruns it with the preset and asset pinning proofs.
+
+Runtime maintenance is opt-in. `python3 scripts/webui_storage.py cleanup
+--created-after 2026-10-09T00:58:00+09:00` only reports a plan. Add `--evidence
+<archive-directory-or-jsonl>` for every external RED archive, campaign receipt,
+and compression audit; pass each separately. Only `--delete` removes candidates.
+An unreadable inventory refuses maintenance. References take priority over newer
+rechecks; equal creation timestamps retain both. Unknown names, session-old or
+recent files, links, active processes, and open files are protected. Immediately
+before each removal the tool inventories references and activity again. Stop
+proof writers and node launchers before applying: an idle check is an observation,
+not an interprocess lock against a new launch.
+
+`python3 scripts/webui_storage.py compress-wal --compress --audit <audit.jsonl>`
+transparently compresses only idle etcd WALs of at least 40 MiB on macOS. Without
+`--compress` it lists candidates. It verifies bytes, mode, owner, mtime, flags,
+extended attributes and ACL before atomic replacement, and records the original
+SHA-256 and saved allocation. Hard links and already compressed files are skipped.
+`PYTHONDONTWRITEBYTECODE=1 python3 tests/webui/storage_probe.py` explicitly tests
+real open-file protection, native compression, reference retention and isolated
+deletion. It also checks the 56 receipts in the retained refactor campaign audit;
+the real acceptance runtime root is inspected without deletion. It needs macOS
+process/open-file inventory access and that campaign's retained audit paths.
