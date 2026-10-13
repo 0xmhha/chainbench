@@ -48,6 +48,9 @@ const loadDefaultBlocks = 1
 type loadAction struct{}
 
 func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err

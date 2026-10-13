@@ -34,6 +34,12 @@ type sendTxAction struct{}
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
+	if err := validateQuantity(ac.Args, "value", 0); err != nil {
+		return err
+	}
 	// A "key" arg switches to local signing: the tx is signed offline with that
 	// private key and submitted via eth_sendRawTransaction, rather than
 	// eth_sendTransaction against a node's keystore. This lets a spec send from a
@@ -320,6 +326,9 @@ func checkLocalSendArgs(args map[string]any) error {
 func noncePointer(v any) (*uint64, error) {
 	q, ok := hexQuantity(v)
 	if !ok {
+		if v != nil {
+			return nil, fmt.Errorf("dsl: sendTx: bad nonce quantity")
+		}
 		return nil, nil
 	}
 	n, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
@@ -336,6 +345,9 @@ func noncePointer(v any) (*uint64, error) {
 func parseValueWei(v any) (*big.Int, error) {
 	q, ok := hexQuantity(v)
 	if !ok {
+		if v != nil {
+			return nil, fmt.Errorf("dsl: sendTx: bad value quantity")
+		}
 		return nil, nil
 	}
 	bi, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)

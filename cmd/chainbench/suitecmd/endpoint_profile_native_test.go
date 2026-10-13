@@ -479,7 +479,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatalf("missing observed deployments: %d", len(observedDeployments))
 	}
 	sources := map[string]string{}
-	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
+	invalidNumericRuns := requireNativeInvalidNumericRuns(t, fixture, signedSpec["chainPreset"], &rawTransactions)
+	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -509,6 +510,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	binarySHA := sha256.Sum256(content)
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
 	proof["chain"] = chain
+	proof["invalidNumericRuns"] = invalidNumericRuns
 	proof["submissionRejections"] = frozenRejections
 	proof["applepieBlock"] = *genesis.Config.ApplepieBlock
 	proof["observedTransactions"] = observedTransactions

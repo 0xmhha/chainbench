@@ -276,6 +276,14 @@ named preset·override·누락·상대 경로의 RED→GREEN, 전체 검사·관
 프리셋 초기값 P2/P3, 다른 영향 케이스의 전체 R5/L1, 대납 계약 생성·숫자 검증·대납 UI 등은 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
+
+**트랜잭션 숫자 입력 보강:** [숫자 입력 증거](transaction-number-evidence.json)는 gas·nonce·수수료·value·amount의
+소수·음수·null·잘못된 문자열·JSON 안전 범위 초과를 RPC와 지갑 호출 전에 거절한다. 큰 정수는 decimal/hex 문자열로
+정확히 보존하고 gas·nonce의 64비트 초과도 거절한다. RED→GREEN·전체 make check·관련 7패키지 race·UI 모델과
+실제 브라우저의 검증·저장·내보내기가 통과했다. 세 체인 CLI/MCP의 잘못된 입력 84건은 fail 1·다른 판정 0으로
+영속되며 추가 거래를 제출하지 않았다. 정상 제출 120건의 회귀도 통과했고 종료 DB와 테스트 노드는 0건이다.
+load의 blocks·fillPercent 등 제어 숫자, 대납 계약 생성·대납 필드 브라우저 검증과 9번 나머지·최종 Web 인수는 남는다.
+
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 
 크리티컬 패스 = 스켈레톤에 필요한 각 컴포넌트의 **얇은 버전**부터.

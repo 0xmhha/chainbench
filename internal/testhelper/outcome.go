@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -265,29 +264,11 @@ func selectorTarget(env interp.NodeTable, args map[string]any) string {
 // hexQuantity normalizes a decimal/0x-hex/number value to a 0x-hex quantity.
 // ok is false when v is absent or unparseable.
 func hexQuantity(v any) (string, bool) {
-	switch x := v.(type) {
-	case string:
-		s := strings.TrimSpace(x)
-		if s == "" {
-			return "", false
-		}
-		if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
-			return s, true
-		}
-		bi, ok := new(big.Int).SetString(s, 10)
-		if !ok {
-			return "", false
-		}
-		return "0x" + bi.Text(16), true
-	case float64:
-		bi := new(big.Int)
-		big.NewFloat(x).Int(bi)
-		return "0x" + bi.Text(16), true
-	case int:
-		return "0x" + strconv.FormatInt(int64(x), 16), true
-	default:
+	n, ok := transactionNumber(v)
+	if !ok {
 		return "", false
 	}
+	return "0x" + n.Text(16), true
 }
 
 // uintArg normalizes a numeric arg (number or decimal string) to a uint64.

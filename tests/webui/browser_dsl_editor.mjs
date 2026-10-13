@@ -141,6 +141,35 @@ try{
  assert.deepEqual(JSON.parse(fs.readFileSync(out+'/access-list-export.json','utf8')),listCase,'access-list authoring/import/export changed a reference or key')
  observed.accessList={structuredFields:true,savedAddressReference:true,storageKey:slot,importExportPreserved:true}
 
+ // Transaction quantities reject lossy JSON numbers and retain exact strings.
+ const numericCase=structuredClone(listCase)
+ numericCase.id='number-browser'
+ await upload.setInputFiles(file('number.json',numericCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const gasPath='/content/steps/1/gas'
+ await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('0')
+ const gasInput=page.getByLabel(gasPath,{exact:true})
+ assert.equal(await gasInput.getAttribute('step'),'1')
+ assert.equal(await gasInput.getAttribute('max'),'9007199254740991')
+ for(const bad of ['1.5','9007199254740992']){
+  await gasInput.fill(bad)
+  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+  await page.locator(`[aria-label="${gasPath}"][aria-invalid="true"]`).waitFor({timeout:15000})
+ }
+ await page.screenshot({path:out+'/numeric-validation.png',fullPage:true})
+ await page.getByLabel(gasPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(gasPath,{exact:true}).fill('18446744073709551615')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const numberDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await numberDownload).saveAs(out+'/numeric-export.json')
+ numericCase.steps[1].gas='18446744073709551615'
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/numeric-export.json','utf8')),numericCase,'integer-string precision changed during save/export')
+ observed.transactionNumbers={fractionRejected:true,unsafeNumberRejected:true,safeIntegerControl:true,uint64StringExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)

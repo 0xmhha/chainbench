@@ -36,6 +36,12 @@ func seedAssetBuiltins(r interp.Registry) {
 type faucetAction struct{}
 
 func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
+	if err := validateQuantity(ac.Args, "amount", 0); err != nil {
+		return err
+	}
 	toRef, _ := ac.Args["to"].(string)
 	if toRef == "" {
 		return fmt.Errorf("dsl: faucet requires \"to\" (the account to fund)")
@@ -97,6 +103,12 @@ func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 type deployContractAction struct{}
 
 func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
+	if err := validateQuantity(ac.Args, "value", 0); err != nil {
+		return err
+	}
 	code, _ := ac.Args["bytecode"].(string)
 	if code == "" {
 		code, _ = ac.Args["data"].(string)
@@ -169,6 +181,12 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 type registerContractAction struct{}
 
 func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateTransactionNumbers(ac.Args); err != nil {
+		return err
+	}
+	if err := validateQuantity(ac.Args, "value", 0); err != nil {
+		return err
+	}
 	toRef, _ := ac.Args["to"].(string)
 	if toRef == "" {
 		return fmt.Errorf("dsl: registerContract requires \"to\" (the deployed contract address)")
