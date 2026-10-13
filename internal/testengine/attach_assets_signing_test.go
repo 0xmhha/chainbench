@@ -43,6 +43,7 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		{"load-legacy", map[string]any{"do": "load", "from": "payer", "gas": "300000", "blocks": 2, "nonce": "7", "gasPrice": "3"}, 2},
 		{"access-list", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"dynamic-list", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"dynamic-list-label", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"dynamic-list-auto", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 	} {
 		t.Run(sample.name, func(t *testing.T) {
@@ -88,7 +89,11 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 						if sample.name == "dynamic-list-auto" {
 							gas = 65536
 						}
-						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
+						listAddress := to
+						if sample.name == "dynamic-list-label" {
+							listAddress = sdktypes.BytesToAddress(sdkcrypto.PubkeyToAddress(key.PubKey()).Bytes())
+						}
+						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: listAddress, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
 						if err := expected.Sign(key); err != nil {
 							t.Error(err)
 						}

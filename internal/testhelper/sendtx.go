@@ -424,7 +424,7 @@ func sendWithAccessListGas(ctx context.Context, ac *interp.ActionCtx, w accounts
 func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
 	var list []accounts.AccessTuple
 	if raw, supplied := ac.Args["accessList"]; supplied {
-		decoded, err := localAccessList(raw)
+		decoded, err := localAccessList(ac.Deps, raw)
 		if err != nil {
 			return "", err
 		}
@@ -477,7 +477,7 @@ func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wal
 	return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: payload, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
 }
 
-func localAccessList(raw any) ([]accounts.AccessTuple, error) {
+func localAccessList(deps *interp.Deps, raw any) ([]accounts.AccessTuple, error) {
 	encoded, err := json.Marshal(raw)
 	if err != nil {
 		return nil, err
@@ -491,12 +491,22 @@ func localAccessList(raw any) ([]accounts.AccessTuple, error) {
 	if list == nil {
 		return nil, fmt.Errorf("dsl: accessList must be an array")
 	}
+	for i := range list {
+		if list[i].StorageKeys == nil {
+			return nil, fmt.Errorf("dsl: accessList storageKeys must be an array")
+		}
+		address, err := ResolveAddress(deps, list[i].Address)
+		if err != nil {
+			return nil, err
+		}
+		list[i].Address = address
+	}
 	return list, nil
 }
 
 // sendDynamicAccessList preserves the supplied list during gas estimation and signing.
 func sendDynamicAccessList(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
-	list, err := localAccessList(ac.Args["accessList"])
+	list, err := localAccessList(ac.Deps, ac.Args["accessList"])
 	if err != nil {
 		return "", err
 	}

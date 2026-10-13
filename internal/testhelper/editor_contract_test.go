@@ -78,6 +78,24 @@ func TestEditorContractCoversRegistrationsAndConsumedFields(t *testing.T) {
 	}
 }
 
+func TestEditorAccessListProvidesStructuredTupleFields(t *testing.T) {
+	_, schemas, err := EditorVocabulary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	properties := schemas["action-sendTx"]["properties"].(map[string]any)
+	variants := properties["accessList"].(map[string]any)["anyOf"].([]any)
+	array := variants[0].(map[string]any)
+	item := array["items"].(map[string]any)
+	if item["type"] != "object" || item["additionalProperties"] != false {
+		t.Fatalf("access list cannot be authored as constrained tuple fields: %+v", item)
+	}
+	fields := item["properties"].(map[string]any)
+	if fields["address"] == nil || fields["storageKeys"] == nil || !reflect.DeepEqual(item["required"], []string{"address", "storageKeys"}) {
+		t.Fatalf("tuple fields absent: %+v", item)
+	}
+}
+
 // This checks each implementation separately: a field in rpcCall's contract
 // cannot accidentally hide a missing partition argument.
 func TestEditorContractDirectBuiltinArguments(t *testing.T) {

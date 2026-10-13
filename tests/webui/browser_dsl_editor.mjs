@@ -114,6 +114,33 @@ try{
  assert.deepEqual(JSON.parse(fs.readFileSync(filePath,'utf8')),endpointCase,'editor changed the imported endpoint declaration')
  observed.endpointProfile={roleSelectors:names,importExportPreserved:true,exclusiveForms:true,jwtOmitsHeader:true}
 
+ // Add a typed access tuple through the shared engine schema, retaining a
+ // saved address reference rather than replacing it with a literal address.
+ const listCase={...endpointCase,id:'list-browser',steps:[
+  {do:'newAccount',save:'created',saveKey:'key'},
+  {do:'sendTx',on:'en1',key:'$key',to:'0x000000000000000000000000000000000000dead',value:'1',gas:'70000',maxFeePerGas:'3',maxPriorityFeePerGas:'1',accessList:[]},
+  {expect:'blockNumber',on:'en1',is:0},
+ ]}
+ await upload.setInputFiles(file('list.json',listCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const listPath='/content/steps/1/accessList'
+ await page.getByLabel(listPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(listPath+'/0/address',{exact:true}).fill('$created')
+ await page.getByLabel(listPath+'/0/storageKeys 항목 추가',{exact:true}).click()
+ const slot='0x'+'0'.repeat(63)+'1'
+ await page.getByLabel(listPath+'/0/storageKeys/0',{exact:true}).fill(slot)
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/access-list-editor.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const listDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await listDownload).saveAs(out+'/access-list-export.json')
+ listCase.steps[1].accessList=[{address:'$created',storageKeys:[slot]}]
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/access-list-export.json','utf8')),listCase,'access-list authoring/import/export changed a reference or key')
+ observed.accessList={structuredFields:true,savedAddressReference:true,storageKey:slot,importExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)

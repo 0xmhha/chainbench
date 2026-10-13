@@ -170,7 +170,14 @@ func editorParameter(field string) map[string]any {
 		return map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`, "description": "Private key binding from an earlier step. Literal private key material cannot be shared through the Web document API."}
 	case "is", "expected", "delta", "tol":
 		return map[string]any{}
-	case "params", "of", "accessList", "topics":
+	case "accessList":
+		binding := `\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})`
+		item := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"address", "storageKeys"}, "properties": map[string]any{
+			"address":     map[string]any{"type": "string", "pattern": `^(?:0x[0-9a-fA-F]{40}|[A-Za-z_][A-Za-z0-9_.:-]*|` + binding + `)$`, "description": "Account label, declared contract, literal address or saved address reference."},
+			"storageKeys": map[string]any{"type": "array", "items": map[string]any{"type": "string", "pattern": `^(?:0x[0-9a-fA-F]{64}|` + binding + `)$`}},
+		}}
+		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": item}, map[string]any{"type": "string", "pattern": "^" + binding + "$"}}}
+	case "params", "of", "topics":
 		// A list may also come whole from an earlier step's saved value.
 		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": map[string]any{}}, map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`}}}
 	case "groups":

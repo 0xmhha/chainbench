@@ -213,7 +213,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "read", "on": "en1", "source": "gasPrice", "save": "legacyPrice"},
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyNonce"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$legacyNonce", "gasPrice": "$legacyPrice"},
-		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "gasPrice": "$legacyPrice", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "gasPrice": "$legacyPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}},
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyDeployNonce"},
 		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "nonce": "$legacyDeployNonce", "gasPrice": "$legacyPrice", "save": "legacyContract"},
 		map[string]any{"expect": "codeAt", "on": "en1", "address": "$legacyContract", "compare": "NotEqual", "is": "0x"},
@@ -221,7 +221,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2, "gasPrice": "$legacyPrice"},
 		map[string]any{"do": "read", "on": "en1", "source": "gasPrice", "save": "listPrice"},
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "listNonce"},
-		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$listNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}})
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$listNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -328,7 +328,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 					t.Fatal(list)
 				}
 				keys, ok := tuple["storageKeys"].([]any)
-				if !ok || len(keys) != 1 || keys[0] != "0x"+strings.Repeat("0", 63)+"1" || tuple["address"] != "0x000000000000000000000000000000000000dead" {
+				if !ok || len(keys) != 1 || keys[0] != "0x"+strings.Repeat("0", 63)+"1" || tuple["address"] != tx["from"] {
 					t.Fatalf("access tuple changed: %+v", tuple)
 				}
 			}
