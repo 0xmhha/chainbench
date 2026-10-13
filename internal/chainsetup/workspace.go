@@ -5,6 +5,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/lifecycle"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -33,10 +34,11 @@ type Workspace struct {
 	lookup resource.Lookup
 	now    func() time.Time
 	// wcCache holds the parsed workspace-config for this command, loaded once
-	// from state.WorkspaceConfig. nil until first use; the bool records that a
-	// load was attempted so a workspace with none is not reloaded per node.
-	wcCache  *resource.WorkspaceConfig
-	wcLoaded bool
+	// from state.WorkspaceConfig. Concurrent node operations share both the
+	// completed load and its error; an invalid config never becomes absent.
+	wcOnce  sync.Once
+	wcCache *resource.WorkspaceConfig
+	wcErr   error
 	// driver, when set, replaces every machine's process driver — the seam a
 	// test uses to control nodes without an OS process, and a caller uses to
 	// route control over another transport.
