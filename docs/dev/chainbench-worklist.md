@@ -220,8 +220,12 @@ legacy의 데이터·가스·nonce·gasPrice와 비어 있지 않은 EIP-2930 �
 faucet·배포·등록·반복 load의 legacy 서명도 SDK 독립 구성 바이트와 대조했다.
 RED→GREEN·전체 make check·관련 6패키지 race와 세 체인 BP4/EN1의 실제 CLI/MCP 실행이 통과했다.
 총 72건을 로컬 서명했고, 온체인 거래 형식·데이터·가스·금액·storage key와 종료 DB 0건을 확인했다.
-대납의 고급 입력, 동적 수수료 접근 목록·구조화 편집 계약, gas 없는 배포 override,
-명시 key 배포의 인자 소비 메타데이터 정정은 남아 있다. native faucet은 동적 수수료 경로다.
+**배포 override 보강:** [배포 입력 증거](deployment-overrides-evidence.json)는 가스를 생략해도
+명시한 nonce·수수료를 추정 요청과 SDK 서명에 보존하고, 명시 key 배포의 인자 소비 검증을 실제 코드와 맞췄다.
+RED→GREEN·전체 검사·관련 race·세 체인 실제 CLI/MCP 72건이 통과했으며,
+배포 12건의 추정 가스·nonce·코드·legacy 가격을 온체인 거래와 대조했다. 성공·실패 종료 DB는 0건이다.
+관측 프록시의 gzip 처리 오류는 별도 RED→GREEN으로 고쳤으며 원본 전송 바이트·헤더·길이를 보존한다.
+대납의 고급 입력과 동적 수수료 접근 목록·구조화 편집 계약은 남아 있다. native faucet은 동적 수수료 경로다.
 R3 나머지, R4 잔여, R1/R5/R6와 전체 Linux L1은 계속 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 

@@ -18,6 +18,18 @@ func argumentCase(t *testing.T, steps string) dsl.Spec {
 	return s
 }
 
+func TestLocalKeyDeploymentConsumesExplicitTransactionFields(t *testing.T) {
+	for _, options := range []string{
+		`"gas":"100000","gasPrice":"3","nonce":"7"`,
+		`"maxFeePerGas":"3","maxPriorityFeePerGas":"1","nonce":"7"`,
+	} {
+		spec := argumentCase(t, `{"do":"newAccount","saveKey":"k"},{"do":"deployContract","key":"$k","bytecode":"0x60006000f3",`+options+`},{"expect":"chainId","is":"1"}`)
+		if got := IgnoredArguments(spec); len(got) != 0 {
+			t.Fatalf("local deployment consumes these fields: %v", got)
+		}
+	}
+}
+
 // An argument that is read only on another path, or that loses to the
 // alternative written beside it, has no effect either, and is refused with
 // the reason.
@@ -28,7 +40,6 @@ func TestIgnoredArgumentsOnTheOtherPath(t *testing.T) {
 		"balanceAt.tol":            `{"expect":"balanceAt","address":"node1","compare":"InDelta","delta":"1","tol":"2","is":"1"}`,
 		"waitFor.delta":            `{"do":"waitFor","source":"blockNumber","compare":"GreaterOrEqual","expected":"1","delta":"1"},{"expect":"chainId","is":"1"}`,
 		"deployContract.data":      `{"do":"deployContract","from":"node1","bytecode":"0x00","data":"0x01"},{"expect":"chainId","is":"1"}`,
-		"deployContract.gas":       `{"do":"newAccount","save":"a","saveKey":"k"},{"do":"deployContract","key":"$k","bytecode":"0x00","gas":"100000"},{"expect":"chainId","is":"1"}`,
 		"deployContract.from":      `{"do":"newAccount","save":"a","saveKey":"k"},{"do":"deployContract","key":"$k","from":"node1","bytecode":"0x00"},{"expect":"chainId","is":"1"}`,
 		"sendTx.from":              `{"do":"newAccount","save":"a","saveKey":"k"},{"do":"sendTx","key":"$k","from":"node1","to":"node2"},{"expect":"chainId","is":"1"}`,
 		"contractChecksum.data":    `{"expect":"contractChecksum","bytecode":"0x00","data":"0x01","is":"x"}`,

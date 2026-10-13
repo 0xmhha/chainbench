@@ -341,15 +341,19 @@ func deployContractLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []by
 		return err
 	}
 	var hash, addr string
-	gas, hasGas := hexQuantity(ac.Args["gas"])
-	if hasGas {
+	_, hasOverrides := ac.Args["gas"]
+	for _, name := range []string{"nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas"} {
+		if _, supplied := ac.Args[name]; supplied {
+			hasOverrides = true
+		}
+	}
+	if hasOverrides {
+		gas, estimateErr := localAssetGas(ctx, ac, w.Address(), "", value, code)
+		if estimateErr != nil {
+			return estimateErr
+		}
 		hash, err = sendWithGas(ctx, ac, w, "", value, code, gas, rpcURL)
 	} else {
-		for _, name := range []string{"nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas"} {
-			if _, supplied := ac.Args[name]; supplied {
-				return fmt.Errorf("dsl: local deploy %s needs explicit gas", name)
-			}
-		}
 		hash, addr, err = w.Deploy(ctx, initCode, value)
 	}
 	if err != nil {

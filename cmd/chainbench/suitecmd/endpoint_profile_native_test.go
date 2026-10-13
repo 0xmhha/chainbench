@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -116,12 +117,15 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		}
 	}
 	var calls, rawTransactions atomic.Int32
+	var estimateMu sync.Mutex
+	estimates := []map[string]any{}
 	gateway := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer native-test-token-only" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 		calls.Add(1)
+		var creationEstimate map[string]any
 		if r.Method == http.MethodPost {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -131,7 +135,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			}
 			r.Body = io.NopCloser(bytes.NewReader(body))
 			var request struct {
-				Method string `json:"method"`
+				Method string            `json:"method"`
+				Params []json.RawMessage `json:"params"`
 			}
 			if err := json.Unmarshal(body, &request); err != nil {
 				t.Error(err)
@@ -142,6 +147,15 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			}
 			if request.Method == "eth_sendTransaction" {
 				t.Error("external signing fell back to a node's unlocked account")
+			}
+			if request.Method == "eth_estimateGas" && len(request.Params) == 1 {
+				var args map[string]any
+				if err := json.Unmarshal(request.Params[0], &args); err != nil {
+					t.Error(err)
+				}
+				if args["data"] == "0x600a600c600039600a6000f3602a60005260206000f3" {
+					creationEstimate = args
+				}
 			}
 		}
 		target := endpoint.RPCURL
@@ -163,6 +177,18 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			request.Out.Host = parsed.Host
 			request.Out.Header.Del("Authorization")
 		}}
+		if creationEstimate != nil {
+			proxy.ModifyResponse = func(response *http.Response) error {
+				gas, err := inspectNativeEstimate(response)
+				if err != nil {
+					return err
+				}
+				estimateMu.Lock()
+				estimates = append(estimates, map[string]any{"request": creationEstimate, "gas": gas})
+				estimateMu.Unlock()
+				return nil
+			}
+		}
 		proxy.ServeHTTP(w, r)
 	}))
 	defer gateway.Close()
@@ -178,7 +204,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	signedSpec["steps"] = append(signedSpec["steps"].([]any),
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "1"},
 		map[string]any{"do": "faucet", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"},
-		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "gas": "200000", "save": "contract"},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "deployNonce"},
+		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "nonce": "$deployNonce", "save": "contract"},
 		map[string]any{"expect": "codeAt", "on": "en1", "address": "$contract", "compare": "NotEqual", "is": "0x"},
 		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$contract", "data": "0x00", "gas": "200000"},
 		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2},
@@ -187,7 +214,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyNonce"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$legacyNonce", "gasPrice": "$legacyPrice"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "gasPrice": "$legacyPrice", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}},
-		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "gas": "200000", "gasPrice": "$legacyPrice", "save": "legacyContract"},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyDeployNonce"},
+		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "nonce": "$legacyDeployNonce", "gasPrice": "$legacyPrice", "save": "legacyContract"},
 		map[string]any{"expect": "codeAt", "on": "en1", "address": "$legacyContract", "compare": "NotEqual", "is": "0x"},
 		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$legacyContract", "data": "0x00", "gas": "200000", "gasPrice": "$legacyPrice"},
 		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2, "gasPrice": "$legacyPrice"})
@@ -231,6 +259,13 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatalf("CLI and MCP must each submit twelve local signatures: %d", rawTransactions.Load())
 	}
 	observedTransactions := []map[string]any{}
+	observedDeployments := []map[string]any{}
+	estimateMu.Lock()
+	frozenEstimates := append([]map[string]any(nil), estimates...)
+	estimateMu.Unlock()
+	if len(frozenEstimates) != 4 {
+		t.Fatalf("expected four actual deployment estimates: %+v", frozenEstimates)
+	}
 	for _, root := range []string{cli.Session, filepath.Join(mcpArtifacts, ids[0])} {
 		files, err := filepath.Glob(filepath.Join(root, "tests", "*", "steps.json"))
 		if err != nil || len(files) != 1 {
@@ -246,6 +281,27 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		}
 		index := 0
 		for _, step := range steps {
+			if step.Type == "deployContract" {
+				var tx map[string]any
+				if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
+					t.Fatal(err)
+				}
+				index := len(observedDeployments)
+				if index >= len(frozenEstimates) {
+					t.Fatal("unexpected extra deployment")
+				}
+				args := frozenEstimates[index]["request"].(map[string]any)
+				if tx["gas"] != frozenEstimates[index]["gas"] || tx["nonce"] != args["nonce"] || tx["input"] != args["data"] || tx["from"] != args["from"] {
+					t.Fatalf("deployment changed estimated transaction: estimate=%+v tx=%+v", frozenEstimates[index], tx)
+				}
+				if index%2 == 1 && (tx["type"] != "0x0" || tx["gasPrice"] != args["gasPrice"]) {
+					t.Fatalf("deployment lost legacy price: %+v", tx)
+				}
+				if index%2 == 0 && tx["type"] != "0x2" {
+					t.Fatalf("nonce-only deployment changed fee model: %+v", tx)
+				}
+				observedDeployments = append(observedDeployments, tx)
+			}
 			if step.Type != "sendTx" {
 				continue
 			}
@@ -280,8 +336,11 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			t.Fatalf("missing native transaction types: %d", index)
 		}
 	}
+	if len(observedDeployments) != 4 {
+		t.Fatalf("missing observed deployments: %d", len(observedDeployments))
+	}
 	sources := map[string]string{}
-	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go"}
+	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -312,6 +371,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
 	proof["chain"] = chain
 	proof["observedTransactions"] = observedTransactions
+	proof["deploymentEstimates"] = frozenEstimates
+	proof["observedDeployments"] = observedDeployments
 	bytes, err := json.MarshalIndent(proof, "", "  ")
 	if err != nil {
 		t.Fatal(err)

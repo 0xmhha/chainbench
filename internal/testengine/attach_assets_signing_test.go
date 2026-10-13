@@ -31,6 +31,9 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 	}{
 		{"faucet", map[string]any{"do": "faucet", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"}, 1},
 		{"deploy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
+		{"deploy-auto-dynamic", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
+		{"deploy-auto-legacy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "gasPrice": "3"}, 1},
+		{"deploy-auto-nonce", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7"}, 1},
 		{"register", map[string]any{"do": "registerContract", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "data": "0xabcdef", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"load", map[string]any{"do": "load", "from": "payer", "gas": "300000", "blocks": 2, "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 2},
 		{"legacy", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
@@ -74,7 +77,33 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getBlockByNumber":
 					value = map[string]string{"number": "0x1", "baseFeePerGas": "0x1", "gasLimit": "0xf4240", "gasUsed": "0x0"}
 				case "eth_sendRawTransaction":
-					if sample.name == "legacy" || strings.HasSuffix(sample.name, "-legacy") || sample.name == "access-list" {
+					if strings.HasPrefix(sample.name, "deploy-auto-") {
+						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
+						key, _ := sdkcrypto.PrivKeyFromBytes(private)
+						data, _ := hex.DecodeString("60006000f3")
+						var encoded []byte
+						if sample.name == "deploy-auto-legacy" {
+							expected := sdktx.LegacyTx{Nonce: 7, Gas: 65536, GasPrice: big.NewInt(3), Value: big.NewInt(5), Data: data}
+							if err := expected.Sign(big.NewInt(8283), key); err != nil {
+								t.Error(err)
+							}
+							encoded = expected.Encode()
+						} else {
+							expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: 65536, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data}
+							if err := expected.Sign(key); err != nil {
+								t.Error(err)
+							}
+							encoded = expected.Encode()
+						}
+						var actual string
+						if err := json.Unmarshal(request.Params[0], &actual); err != nil {
+							t.Error(err)
+						}
+						if actual != "0x"+hex.EncodeToString(encoded) {
+							t.Error("estimated deployment lost gas, nonce, fee model, value or code")
+						}
+					}
+					if !strings.HasPrefix(sample.name, "deploy-auto-") && (sample.name == "legacy" || strings.HasSuffix(sample.name, "-legacy") || sample.name == "access-list") {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)
 						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")

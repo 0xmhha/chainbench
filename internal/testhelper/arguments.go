@@ -198,7 +198,7 @@ var nonNumeric = map[string]bool{assertContractChecksum: true, assertValidators:
 // builds that transaction itself.
 var localSigning = map[string][]string{
 	"sendTx":         {"from"},
-	"deployContract": {"from", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce"},
+	"deployContract": {"from"},
 }
 
 // unreadOnThisPath returns the arguments a statement gives that its
