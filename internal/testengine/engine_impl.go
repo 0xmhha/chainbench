@@ -2,6 +2,7 @@ package testengine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -128,7 +129,10 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		e.recordArtifacts(rec)
 
 		if e.deps.Applicable != nil {
-			switch a := e.deps.Applicable(spec); {
+			a := e.deps.Applicable(spec)
+			observation, _ := json.Marshal(map[string]any{"source": "declared_capabilities", "required": a.Required, "provided": a.Provided, "missing": a.Missing, "runs": a.Runs, "foreseen": a.Foreseen, "stale": a.Stale, "reason": a.Reason})
+			rec.Observation("capability-gate.json", observation)
+			switch {
 			case a.Stale:
 				// The spec says it skips here and it does not. Left alone, the
 				// declaration tells the next reader this test asks nothing on
@@ -142,14 +146,22 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 				// colour of a pass. The spec declared where it skips, and this
 				// is not one of those places.
 				rec.Status(session.StatusFail)
-				rec.Reason("this spec was skipped on a target its skipsOn does not name — the run asked nothing and would have reported no failure")
+				reason := "this spec was skipped on a target its skipsOn does not name — the run asked nothing and would have reported no failure"
+				if a.Reason != "" {
+					reason += ": " + a.Reason
+				}
+				rec.Reason(reason)
 				e.emit(collector.PhaseTest, collector.KindError, "undeclared skip", map[string]any{"seq": seq, "id": spec.ID})
 				continue
 			case !a.Runs:
 				rec.Status(session.StatusSkip)
 				// A skip with no reason reads as "this did not matter"; it
 				// usually means a capability the target does not advertise.
-				rec.Reason("does not apply to this target (chain or required capabilities)")
+				reason := a.Reason
+				if reason == "" {
+					reason = "does not apply to this target (chain or required capabilities)"
+				}
+				rec.Reason(reason)
 				e.emit(collector.PhaseTest, collector.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
 				continue
 			}

@@ -6,7 +6,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
-func TestSatisfies(t *testing.T) {
+func TestCapabilityGateRequiresAllDeclaredCapabilities(t *testing.T) {
 	cases := []struct {
 		name     string
 		required []string
@@ -20,8 +20,8 @@ func TestSatisfies(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := satisfies(tc.required, tc.provided); got != tc.want {
-				t.Fatalf("satisfies(%v,%v) = %v, want %v", tc.required, tc.provided, got, tc.want)
+			if got := applicableWithCaps("stablenet", tc.provided)(dsl.Spec{Requires: tc.required}).Runs; got != tc.want {
+				t.Fatalf("gate(%v,%v) = %v, want %v", tc.required, tc.provided, got, tc.want)
 			}
 		})
 	}

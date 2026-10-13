@@ -1,6 +1,7 @@
 package testengine
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -29,23 +30,6 @@ func applicableTo(chain string) func(dsl.Spec) bool {
 	}
 }
 
-// satisfies reports whether every required capability is present in provided.
-func satisfies(required, provided []string) bool {
-	if len(required) == 0 {
-		return true
-	}
-	set := make(map[string]bool, len(provided))
-	for _, c := range provided {
-		set[c] = true
-	}
-	for _, r := range required {
-		if !set[r] {
-			return false
-		}
-	}
-	return true
-}
-
 // Applicability is what the gate decided about one spec on this target.
 type Applicability struct {
 	// Runs is whether the spec applies here at all.
@@ -60,6 +44,13 @@ type Applicability struct {
 	// The declaration outlived what it described, and a reader who trusts it
 	// is told this test asks nothing here when it does.
 	Stale bool
+	// Reason identifies the declaration that prevents this case from running.
+	Reason string
+	// Required, Provided and Missing retain the inputs to the static gate.
+	// They describe declared capabilities, not successful runtime RPC probes.
+	Required []string
+	Provided []string
+	Missing  []string
 }
 
 // applicableWithCaps composes chain applicability with capability gating: a spec
@@ -73,10 +64,19 @@ type Applicability struct {
 // worth turning into a decision.
 func applicableWithCaps(chain string, provided []string) func(dsl.Spec) Applicability {
 	chainOK := applicableTo(chain)
+	provided = append([]string(nil), provided...)
 	return func(s dsl.Spec) Applicability {
-		runs := chainOK(s) && satisfies(s.Requires, provided)
+		missing := missingCaps(s.Requires, provided)
+		runs := chainOK(s) && len(missing) == 0
+		result := Applicability{Runs: runs, Required: append([]string(nil), s.Requires...), Provided: append([]string(nil), provided...), Missing: missing}
+		if !chainOK(s) {
+			result.Reason = fmt.Sprintf("chain %s is outside applicableChains %s", chain, s.ApplicableChains)
+		} else if len(missing) > 0 {
+			result.Reason = "missing required capabilities: " + strings.Join(missing, ",")
+		}
 		if s.SkipsOn == nil {
-			return Applicability{Runs: runs, Foreseen: true}
+			result.Foreseen = true
+			return result
 		}
 		declared := false
 		for _, c := range s.SkipsOn {
@@ -95,7 +95,8 @@ func applicableWithCaps(chain string, provided []string) func(dsl.Spec) Applicab
 		// a spec vanishing over one of those is the surprise the guard exists
 		// for.
 		foreseen := declared || (!runs && chainOK(s) && unmetAreAllTarget(s.Requires, provided))
-		return Applicability{Runs: runs, Foreseen: foreseen, Stale: runs && declared}
+		result.Foreseen, result.Stale = foreseen, runs && declared
+		return result
 	}
 }
 

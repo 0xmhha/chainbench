@@ -324,6 +324,15 @@ FAIL, 조회 불가·사용 불가 응답은 BLOCKED다. 여러 노드에서 불
 첫 native fixture의 BLOCKED 종료 코드 기대값 오류는 수정 후 세 체인 모두 재실행했으며 실패 자료도 보존했다.
 별도 fresh compose 인수와 Linux HEAD L1을 통과한 것으로 해석하지 않는다. 9번 나머지와 10–14번은 계속 남는다.
 
+**P4 선언 능력 사유 보강:** [능력 판정 증거](capability-reason-evidence.json)는 기존 `requires`와 preset의
+`attach.provides`/`genesis.provides` 계약을 유지하며, 부족한 능력 목록 또는 대상 체인 불일치를 구체적으로
+기록한다. 예상된 SKIP과 예상하지 못한 SKIP의 FAIL 정책을 유지하고 `capability-gate.json`에 선언 입력과
+판정을 보존한다. RED→GREEN·고정 소스 전체 make check·관련 race와 세 체인의 실제 CLI/MCP가 통과했다.
+18판정은 의도한 PASS 6·SKIP 6·정책 FAIL 6이며 Go 테스트 실패·skip은 0건이다. 긍정 사례는 제공 선언을
+소비해 실제 인증된 블록과 선언 계정 잔액을 읽었다. 기존 156제출·12기대 거부·144숫자 오류·18체인 ID 판정도
+회귀했고, 증명별 소스 SHA 96개가 일치하며 종료 DB는 0건이다. 실제 기능 지원의 검증은 R3에 남는다.
+P4 전체 사전 요구의 충분성, 9번 나머지, 10–14번과 최종 Web 인수를 이 부분 증거로 완료하지 않는다.
+
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 
 크리티컬 패스 = 스켈레톤에 필요한 각 컴포넌트의 **얇은 버전**부터.
