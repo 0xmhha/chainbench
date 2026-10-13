@@ -20,12 +20,16 @@ var chainIDQuantity = regexp.MustCompile(`^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$`)
 // capability cannot authorize running a case on a different or unknown chain.
 func identityAndCapabilityGate(chain string, dial func(string) *rpc.Client) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
 	capability := consensusCapabilityGate(chain, dial)
+	vm := shanghaiCapabilityGate(chain, dial)
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, record session.TestRecord) (session.TestStatus, string) {
 		status, reason := checkDeclaredChainIdentity(ctx, spec, env, record, dial)
 		if status != "" {
 			return status, reason
 		}
-		return capability(ctx, spec, env, record)
+		if status, reason := capability(ctx, spec, env, record); status != "" {
+			return status, reason
+		}
+		return vm(ctx, spec, env, record)
 	}
 }
 

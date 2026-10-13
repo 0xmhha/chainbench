@@ -28,6 +28,7 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 		{"unexpected", "fail", []string{"rpc", "ws"}, []string{"ws"}, true},
 		{"consensus", "pass", []string{"rpc", "consensus"}, nil, false},
 		{"consensus-unavailable", "blocked", []string{"rpc", "consensus"}, nil, false},
+		{"vm", "pass", []string{"rpc", "consensus", "evm:shanghai"}, nil, false},
 	} {
 		source, err := json.Marshal(preset)
 		if err != nil {
@@ -40,7 +41,10 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 		if c.name == "provided" {
 			configured["attach"].(map[string]any)["provides"] = []string{"account-extra"}
 		}
-		if strings.HasPrefix(c.name, "consensus") {
+		if c.name == "vm" && configured["chain"] == "wemix" {
+			c.status = "skip"
+		}
+		if strings.HasPrefix(c.name, "consensus") || c.name == "vm" {
 			original := configured["attach"].(map[string]any)["endpoints"].([]any)[0]
 			endpoints := []any{}
 			for _, n := range nodes.Nodes {
@@ -65,6 +69,9 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				endpoints[4].(map[string]any)["rpc"] = unavailable
 			}
 			configured["attach"] = map[string]any{"endpoints": endpoints, "provides": []string{"consensus"}}
+			if c.name == "vm" {
+				configured["attach"].(map[string]any)["provides"] = []string{"consensus", "evm:shanghai"}
+			}
 		}
 		doc := map[string]any{"schemaVersion": "2", "kind": "case", "id": "capability-" + c.name, "chainPreset": configured, "requires": c.requires, "steps": []any{map[string]any{"expect": "blockNumber", "on": "en1", "compare": "GreaterOrEqual", "is": 2}}}
 		if c.name == "provided" {
@@ -159,6 +166,9 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 			if strings.HasPrefix(c.name, "consensus") {
 				wantProvided += ",consensus"
 			}
+			if c.name == "vm" {
+				wantProvided += ",consensus,evm:shanghai"
+			}
 			if strings.Join(probe.Provided, ",") != wantProvided {
 				t.Fatalf("preset provides did not reach gate: %s", data)
 			}
@@ -168,7 +178,7 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				}
 			}
 			observations = append(observations, map[string]any{"surface": surface, "scenario": c.name, "status": verdict.Result, "reason": verdict.Reason, "session": root, "probePath": probePath, "probe": json.RawMessage(data), "rawSubmissions": 0})
-			if strings.HasPrefix(c.name, "consensus") {
+			if strings.HasPrefix(c.name, "consensus") || c.name == "vm" {
 				path := filepath.Join(dir, "observations", "capability-probes.json")
 				data, err := os.ReadFile(path)
 				if err != nil {
@@ -203,6 +213,37 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				}
 				observations[len(observations)-1]["consensusProbePath"] = path
 				observations[len(observations)-1]["consensusProbe"] = json.RawMessage(data)
+			}
+			if c.name == "vm" {
+				path := filepath.Join(dir, "observations", "vm-capability-probes.json")
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var actual struct {
+					Capability, Status, Method, Code string
+					Nodes                            []struct {
+						Node                   int
+						Status, Source, Reason string
+					}
+				}
+				if err := json.Unmarshal(data, &actual); err != nil || len(actual.Nodes) != 5 || actual.Capability != "evm:shanghai" || actual.Method != "eth_call" || actual.Code != "0x5f60005260206000f3" {
+					t.Fatal("invalid VM proof", err, string(data))
+				}
+				wanted := "supported"
+				if c.status == "skip" {
+					wanted = "unsupported"
+				}
+				if actual.Status != wanted {
+					t.Fatalf("invalid VM aggregate: %s", data)
+				}
+				for i, n := range actual.Nodes {
+					if n.Node != i+1 || n.Status != wanted || n.Source != "eth_call:PUSH0" || (wanted == "unsupported" && n.Reason != "push0_unavailable") {
+						t.Fatalf("invalid VM node: %s", data)
+					}
+				}
+				observations[len(observations)-1]["vmProbePath"] = path
+				observations[len(observations)-1]["vmProbe"] = json.RawMessage(data)
 			}
 		}
 	}

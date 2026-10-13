@@ -15,7 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
-type consensusNodeProbe struct {
+type capabilityNodeProbe struct {
 	Node           int    `json:"node"`
 	Role           string `json:"role"`
 	Status         string `json:"status"`
@@ -32,14 +32,14 @@ func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(c
 			return "", ""
 		}
 		result := struct {
-			Capability     string               `json:"capability"`
-			Status         string               `json:"status"`
-			Source         string               `json:"source,omitempty"`
-			Node           int                  `json:"node,omitempty"`
-			Reason         string               `json:"reason,omitempty"`
-			ValidatorCount int                  `json:"validatorCount,omitempty"`
-			Nodes          []consensusNodeProbe `json:"nodes"`
-		}{Capability: "consensus", Status: "unknown", Nodes: []consensusNodeProbe{}}
+			Capability     string                `json:"capability"`
+			Status         string                `json:"status"`
+			Source         string                `json:"source,omitempty"`
+			Node           int                   `json:"node,omitempty"`
+			Reason         string                `json:"reason,omitempty"`
+			ValidatorCount int                   `json:"validatorCount,omitempty"`
+			Nodes          []capabilityNodeProbe `json:"nodes"`
+		}{Capability: "consensus", Status: "unknown", Nodes: []capabilityNodeProbe{}}
 		nodes := env.Nodes()
 		plugin, err := registry.Get(chain)
 		if err != nil || len(nodes) == 0 {
@@ -79,8 +79,8 @@ func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(c
 	}
 }
 
-func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node.Node, dial func(string) *rpc.Client) consensusNodeProbe {
-	result := consensusNodeProbe{Node: n.Index, Role: string(n.Role), Status: "unknown", Reason: "no_probe_target"}
+func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node.Node, dial func(string) *rpc.Client) capabilityNodeProbe {
+	result := capabilityNodeProbe{Node: n.Index, Role: string(n.Role), Status: "unknown", Reason: "no_probe_target"}
 	if n.RPCURL == "" {
 		return result
 	}

@@ -171,7 +171,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; R3 합의 조회의 세 판정·세 체인 native 관측·종료 DB 제거 통과. Linux fleet·전체 L1·R3 나머지·R4/R5/R6은 남음; `endpoint-profile-evidence.json`, `consensus-capability-evidence.json` |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회와 PUSH0 실제 확인, P4 선언 사유 기록을 검증했다. 종료 DB 제거 통과. Linux fleet·전체 L1·R3 나머지·P4 충분성·R4/R5/R6은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
@@ -343,6 +343,17 @@ RED→GREEN·전체 make check·관련 네 패키지 race·세 체인 직렬 nat
 실제 method 미지원과 미지원/조회 불가 혼합은 인증된 단위 fixture로 검증했으며 native 응답은 위조하지 않았다.
 기존 156제출·12기대 거부·144숫자 오류·18체인 ID 판정도 회귀했고 증명별 소스 SHA 98개가 일치한다.
 종료 DB는 0건이다. R3의 다른 RPC·VM·거래·계정 상태·포크 검증과 P4 충분성, 9번 나머지·10–14번은 남는다.
+
+**R3 PUSH0 실제 실행 확인:** [VM 증거](vm-capability-evidence.json)는 기존 `evm:shanghai` 요구의 opcode
+적격성을 모든 실행 노드에서 읽기 전용 `eth_call`로 확인한다. 정해진 제한 가스·바이트코드의 정확한 반환값을
+확인하며 거래는 제출하지 않는다. 실제 PUSH0 미지원 오류는 SKIP이고, 조회용 API 부재·잘못된 인자·무관한
+실행 오류·사용 불가 반환·HTTP 실패는 BLOCKED다. 체인 ID·합의 관측은 별도 파일로 유지한다.
+세 경계 RED→GREEN·최종 전체 make check·관련 네 패키지 race·세 체인 직렬 native race가 통과했다.
+CLI/MCP 6실행·30노드에서 StableNet/WBFT의 지원 20관측과 WEMIX의 실제 미지원 10관측을 확인했다.
+의도한 VM 판정은 PASS 4·SKIP 2이며 Go 테스트 실패·skip은 0건이다. VM 거래 제출은 0건이며 기존
+156제출·12기대 거부·144숫자 오류와 체인 ID·합의 회귀도 통과했다. 소스 SHA 100개씩이 일치하고 종료 DB와
+관련 프로세스는 0건이다. 모든 Shanghai 규칙이나 다른 VM·precompile·계정·거래·포크까지 완료한 증거는 아니다.
+9번 나머지·P4 충분성·10–14번과 최종 Web 인수는 계속 남는다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 
