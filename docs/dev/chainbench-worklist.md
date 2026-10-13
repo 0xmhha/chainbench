@@ -252,6 +252,13 @@ Applepie를 block 0에서 활성화한 genesis를 검사하고 90건의 로컬 �
 102건의 raw 제출 중 90건은 정상 거래이고 12건은 실제 nonce·intrinsic gas 거부다. 노드의 HTTP 200·메서드·code·사유·hash 부재를 기록했다.
 종료 DB와 잔여 테스트 노드는 0건이다. `keptOut` receipt 조회 실패를 무시하는 폴링과 SDK 로컬 guard에서 끝나는 blacklist 케이스는 남는다.
 P2/P3 초기값과 R5/L1의 영향 케이스 전수 검증도 아직 남는다.
+**keptOut receipt 관측 보강:** [관측 증거](keptout-visibility-evidence.json)는 receipt 조회가 RPC/HTTP 오류인데
+블록 진행만 보고 성공하던 문제를 RED→GREEN으로 고쳤다. 조회 실패는 관측 불가 오류로 반환한다.
+로컬 HTTP 오류·미존재·채굴됨의 네 상태, 전체 검사·관련 7패키지 race가 통과했다.
+세 체인 CLI/MCP에서 미래 nonce 거래 6건이 실제 접수되고 두 블록 동안 receipt 없이 pending으로 남는 정상 경로를 확인했다.
+전체 108건 제출에는 정상 거래 90건·pending 6건·실제 제출 거부 12건이 포함된다. 종료 DB와 잔여 테스트 노드는 0건이다.
+RPC/HTTP 오류는 로컬 fault 테스트이며 native 연결 오류를 주입한 증명으로 세지 않는다. 두 블록 관측은 영구 미포함의 증거가 아니다.
+Blacklist의 SDK 로컬 guard 케이스, P2/P3·R5/L1 전수와 다른 제품 잔여는 계속 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)

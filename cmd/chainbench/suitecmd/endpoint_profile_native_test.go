@@ -261,6 +261,10 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	signedSpec["steps"] = append(signedSpec["steps"].([]any),
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "gas": "70000", "nonce": "0", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "expect": "reject", "reason": "nonce"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "gas": "10000", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "expect": "reject", "reason": "intrinsic gas"})
+	signedSpec["steps"] = append(signedSpec["steps"].([]any),
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "queuedBase"},
+		map[string]any{"do": "read", "source": "derive", "op": "sum", "of": []any{"$queuedBase", "100"}, "save": "queuedNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$queuedNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}, "expect": "keptOut", "blocks": 2, "timeout": "15s", "pollInterval": "100ms"})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -297,8 +301,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	wantRaw := int32(34)
-	wantSend := 6
+	wantRaw := int32(36)
+	wantSend := 7
 	if rawTransactions.Load() != wantRaw {
 		t.Fatalf("wrong number of local signatures: %d, want %d", rawTransactions.Load(), wantRaw)
 	}
@@ -383,7 +387,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
 				t.Fatal(err)
 			}
-			if index >= wantSend || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2", "0x16", "0x16"}[index] {
+			if index >= wantSend || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2", "0x16", "0x16", "0x2"}[index] {
 				t.Fatalf("wrong native transaction type: %+v", tx)
 			}
 			if index > 0 && (tx["input"] != "0xab" || (index != 5 && tx["gas"] != "0x11170") || tx["value"] != "0x2") {
@@ -403,7 +407,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 					t.Fatalf("access tuple changed: %+v", tuple)
 				}
 			}
-			if index >= 4 {
+			if index >= 4 && index <= 5 {
 				key, err := os.ReadFile(filepath.Join(repoKeys(t), "node2/private"))
 				if err != nil {
 					t.Fatal(err)
@@ -430,6 +434,12 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 					if tx["gas"] != estimate["gas"] || tx["input"] != args["data"] {
 						t.Fatalf("fee-delegated estimate changed gas or data: estimate=%+v tx=%+v", estimate, tx)
 					}
+				}
+			}
+			if index == 6 {
+				var receipt map[string]any
+				if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionReceipt", &receipt, step.Hash); err != nil || receipt != nil || tx["blockHash"] != nil || tx["blockNumber"] != nil {
+					t.Fatalf("queued transaction did not remain authoritatively absent: %+v receipt=%+v error=%v", tx, receipt, err)
 				}
 			}
 			observedTransactions = append(observedTransactions, tx)

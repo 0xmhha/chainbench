@@ -136,7 +136,10 @@ func checkKeptOut(ctx context.Context, c *rpc.Client, hash string, submitErr err
 	defer t.Stop()
 	for {
 		raw, rerr := c.TxReceipt(ctx, hash)
-		if rerr == nil && raw != nil && strings.TrimSpace(string(raw)) != "null" {
+		if rerr != nil {
+			return fmt.Errorf("dsl: sendTx keptOut: receipt visibility is unknown: %w", rerr)
+		}
+		if raw != nil && strings.TrimSpace(string(raw)) != "null" {
 			return fmt.Errorf("dsl: sendTx %s was accepted and mined, but this chain must keep it out of a block", hash)
 		}
 		head, herr := c.BlockNumber(ctx)
