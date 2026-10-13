@@ -35,7 +35,7 @@ func remoteRPCTool() Tool {
 			if name == "" || stateDir == "" || method == "" {
 				return "", fmt.Errorf("name, state_dir, and method are required")
 			}
-			ns, err := app.Network(app.Deps{}, stateDir, name)
+			ns, err := invokeFeatureFields[app.NodeSet](ctx, app.Deps{}, "network.info", map[string]any{"StateDir": stateDir, "Name": name})
 			if err != nil {
 				return "", err
 			}
@@ -44,7 +44,7 @@ func remoteRPCTool() Tool {
 				return "", fmt.Errorf("network %q has no usable node", name)
 			}
 			params, _ := args["params"].([]any)
-			out, err := app.CallOnNode(ctx, app.Deps{}, n, method, params...)
+			out, err := invokeFeatureFields[[]byte](ctx, app.Deps{}, "network.node-call", map[string]any{"Node": n, "Method": method, "Params": params})
 			if err != nil {
 				return "", err
 			}

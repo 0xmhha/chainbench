@@ -27,7 +27,7 @@ func nodeStopTool() Tool {
 		InputSchema: nodeStopSchema(),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			index := argInt(args, "index", 0)
-			if err := app.NodeStop(ctx, app.Deps{}, app.NodeStopIn{
+			if err := invokeFeatureError[app.NodeStopIn](ctx, app.Deps{}, "node.stop", app.NodeStopIn{
 				DataDir: argString(args, "workspaceDir", ""), Index: index,
 			}); err != nil {
 				return "", err
@@ -44,7 +44,7 @@ func nodeStartTool() Tool {
 		Description: "Relaunch a single stopped node of a composed network by 1-based index, recording its new PID. Args: workspaceDir, index.",
 		InputSchema: nodeStopSchema(),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NodeStart(ctx, app.Deps{}, app.NodeStartIn{
+			res, err := invokeFeature[app.NodeStartIn, app.NodeStartOut](ctx, app.Deps{}, "node.start", app.NodeStartIn{
 				DataDir: argString(args, "workspaceDir", ""), Index: argInt(args, "index", 0),
 			})
 			if err != nil {
@@ -78,7 +78,7 @@ func nodeSwapTool() Tool {
 			if overlay := argString(args, "genesisOverlay", ""); overlay != "" {
 				in.GenesisOverlay = []byte(overlay)
 			}
-			res, err := app.NodeSwap(ctx, app.Deps{}, in)
+			res, err := invokeFeature[app.NodeSwapIn, app.NodeStartOut](ctx, app.Deps{}, "node.swap", in)
 			if err != nil {
 				return "", err
 			}
@@ -96,7 +96,7 @@ func nodeResetTool() Tool {
 		InputSchema: nodeStopSchema(),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			index := argInt(args, "index", 0)
-			if err := app.NodeReset(ctx, app.Deps{}, app.NodeResetIn{
+			if err := invokeFeatureError[app.NodeResetIn](ctx, app.Deps{}, "node.reset", app.NodeResetIn{
 				DataDir: argString(args, "workspaceDir", ""), Index: index,
 			}); err != nil {
 				return "", err

@@ -26,7 +26,7 @@ func chainShowTool() Tool {
 			"addr":  map[string]any{"type": "string", "description": "select by an address as a log line prints it (host:port)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NetworkMap(ctx, app.Deps{}, app.NetworkMapIn{
+			res, err := invokeFeature[app.NetworkMapIn, app.NetworkMapOut](ctx, app.Deps{}, "network.map", app.NetworkMapIn{
 				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0),
 				Label:   argString(args, "label", ""),
@@ -61,11 +61,11 @@ func resourcePoolTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string", "description": "workspace to count used slots from (optional)"},
+				"workspaceDir": commonProperty("workspaceDir", map[string]any{"description": "workspace to count used slots from (optional)"}),
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			res, err := app.NetworkPool(ctx, app.Deps{}, app.NetworkPoolIn{
+			res, err := invokeFeature[app.NetworkPoolIn, app.NetworkPoolOut](ctx, app.Deps{}, "network.pool", app.NetworkPoolIn{
 				DataDir: argString(args, "workspaceDir", ""),
 			})
 			if err != nil {
@@ -93,7 +93,7 @@ func resourcePlanTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix); default stablenet"},
+				"chain": commonProperty("chain", map[string]any{"description": "chain id (stablenet|wbft|wemix); default stablenet"}),
 				"bp":    map[string]any{"type": "number", "description": "bp (block-producing) node count (default 4)"},
 				"en":    map[string]any{"type": "number", "description": "en (endpoint, non-producing) node count"},
 				"serverSet": map[string]any{
@@ -109,7 +109,7 @@ func resourcePlanTool() Tool {
 			if bpCount == 0 {
 				bpCount = 4
 			}
-			res, err := app.NetworkPlan(ctx, app.Deps{}, app.NetworkPlanIn{
+			res, err := invokeFeature[app.NetworkPlanIn, app.NetworkMapOut](ctx, app.Deps{}, "network.plan", app.NetworkPlanIn{
 				Chain:   argString(args, "chain", ""),
 				BPCount: bpCount,
 				ENCount: argInt(args, "en", 0),

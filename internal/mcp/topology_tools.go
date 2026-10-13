@@ -31,7 +31,7 @@ func networkTopologyTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := app.Network(app.Deps{}, stateDir, name)
+			ns, err := invokeFeatureFields[app.NodeSet](ctx, app.Deps{}, "network.info", map[string]any{"StateDir": stateDir, "Name": name})
 			if err != nil {
 				return "", err
 			}
@@ -57,5 +57,5 @@ func networkTopologyTool() Tool {
 // nodePeerCount asks a node how many peers it has, reached through whatever its
 // record says is needed.
 func nodePeerCount(ctx context.Context, n app.Node) (uint64, error) {
-	return app.PeersOfNode(ctx, app.Deps{}, n)
+	return invokeFeature[app.Node, uint64](ctx, app.Deps{}, "network.node-peers", n)
 }

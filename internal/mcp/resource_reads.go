@@ -32,7 +32,7 @@ func resourceInspectTool() Tool {
 		if err = decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
 			return "", errors.New("one resource request is required")
 		}
-		out, err := app.ResourceRead(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), in)
+		out, err := invokeFeature[app.ResourceReadIn, app.ResourceReadOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "resource.inspect", in)
 		if err != nil {
 			return "", err
 		}
@@ -46,7 +46,7 @@ func resourceAccessTool() Tool {
 		"type": "object", "required": []string{"serverSet", "server", "dataRoot"}, "properties": map[string]any{
 			"serverSet": map[string]any{"type": "string"}, "server": map[string]any{"type": "string"}, "dataRoot": map[string]any{"type": "string"}, "serverLogins": map[string]any{"type": "string"},
 		}}, Handler: func(ctx context.Context, args map[string]any) (string, error) {
-		out, err := app.ResourceCheckAccess(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), app.ResourceAccessIn{ServerSet: argString(args, "serverSet", ""), Server: argString(args, "server", ""), DataRoot: argString(args, "dataRoot", "")})
+		out, err := invokeFeature[app.ResourceAccessIn, app.ResourceAccessOut](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "resource.access", app.ResourceAccessIn{ServerSet: argString(args, "serverSet", ""), Server: argString(args, "server", ""), DataRoot: argString(args, "dataRoot", "")})
 		if err != nil {
 			return "", err
 		}

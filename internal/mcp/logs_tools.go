@@ -21,7 +21,7 @@ func logTimelineTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string"},
+				"workspaceDir": commonProperty("workspaceDir", nil),
 				"pattern":      map[string]any{"type": "string"},
 				"regexp":       map[string]any{"type": "boolean"},
 				"node":         map[string]any{"type": "integer"},
@@ -36,7 +36,7 @@ func logTimelineTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
-			matches, err := app.LogTimeline(ctx, app.Deps{}, app.LogSearchIn{
+			matches, err := invokeFeature[app.LogSearchIn, []app.LogMatch](ctx, app.Deps{}, "report.timeline", app.LogSearchIn{
 				Dir: dir,
 				SearchOpts: app.LogSearchFilter{
 					Pattern: argString(args, "pattern", ""),
@@ -72,7 +72,7 @@ func networkPeersTool() Tool {
 		Description: "Report a node's peer count and connected peers (if admin is enabled). Args: rpc.",
 		InputSchema: map[string]any{
 			"type":       "object",
-			"properties": map[string]any{"rpc": map[string]any{"type": "string"}},
+			"properties": map[string]any{"rpc": commonProperty("rpc", nil)},
 			"required":   []string{"rpc"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -80,7 +80,7 @@ func networkPeersTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			count, err := app.PeersOf(ctx, app.Deps{}, rpcURL)
+			count, err := invokeFeature[string, uint64](ctx, app.Deps{}, "node.peers", rpcURL)
 			if err != nil {
 				return "", err
 			}
@@ -94,7 +94,7 @@ func networkPeersTool() Tool {
 					RemoteAddress string `json:"remoteAddress"`
 				} `json:"network"`
 			}
-			if raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: rpcURL, Method: "admin_peers"}); err == nil &&
+			if raw, err := invokeFeature[app.NodeCallIn, []byte](ctx, app.Deps{}, "node.rpc", app.NodeCallIn{RPC: rpcURL, Method: "admin_peers"}); err == nil &&
 				json.Unmarshal(raw, &peers) == nil {
 				for _, p := range peers {
 					addr := p.Network.RemoteAddress

@@ -21,7 +21,7 @@ func validateTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": map[string]any{"type": "string"},
+				"chain": commonProperty("chain", nil),
 				"spec":  map[string]any{"type": "string"},
 				"specs": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			},

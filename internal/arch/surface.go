@@ -193,7 +193,7 @@ func (e Entry) Via() string {
 	hasApp, hasCore := false, false
 	for _, p := range e.Pkgs {
 		switch {
-		case p == "app":
+		case p == "app" || p == "feature":
 			hasApp = true
 		case !surfaceLayer[p]:
 			hasCore = true

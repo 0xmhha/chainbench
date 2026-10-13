@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 82,485 |
+| `internal/` | 54 | 82,628 |
 | `cmd/` | 19 | 5,654 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **89,064** |
+| **합계** | **77** | **89,207** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 58,667줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 58,810줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -179,7 +179,7 @@ internal/feature     804  [L5] 기능 등록의 한 자리 — Descriptor·Regis
                           태그 하나가 만드는 두 바인딩(Flags → cobra 플래그, Schema → MCP JSON 스키마).
                           명령을 생성하지는 않는다 — 이름·계층·도움말은 사람이 정한다
 
-internal/mcp       3,094  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
+internal/mcp       3,237  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
 internal/dashboard 2,351  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 internal/webcli     123  [L6] Web이 chainbench CLI를 하위 프로세스로 실행하는 곳 — 바이너리를 찾고,

@@ -22,7 +22,7 @@ func networkAttachTool() Tool {
 			"type": "object",
 			"properties": map[string]any{
 				"name":      map[string]any{"type": "string"},
-				"rpc":       map[string]any{"type": "string"},
+				"rpc":       commonProperty("rpc", nil),
 				"state_dir": map[string]any{"type": "string"},
 				"override":  map[string]any{"type": "string"},
 				"auth":      map[string]any{"type": "object"},
@@ -39,7 +39,7 @@ func networkAttachTool() Tool {
 			if !app.IsValidNetworkName(name) {
 				return "", fmt.Errorf("invalid network name %q (must match [a-z0-9][a-z0-9_-]* and not be 'local')", name)
 			}
-			res, err := app.DetectNetwork(ctx, app.Deps{}, app.DetectOptions{RPCURL: rpc, Override: argString(args, "override", "")})
+			res, err := invokeFeature[app.DetectOptions, *app.DetectResult](ctx, app.Deps{}, "network.detect", app.DetectOptions{RPCURL: rpc, Override: argString(args, "override", "")})
 			if err != nil {
 				return "", err
 			}
@@ -51,7 +51,7 @@ func networkAttachTool() Tool {
 				Chain: res.ChainType, Network: name,
 				Nodes: []app.Node{n}, Capabilities: []string{"rpc"},
 			}
-			if err := app.AttachNetwork(app.Deps{}, stateDir, ns); err != nil {
+			if err := invokeFeatureFieldsError(ctx, app.Deps{}, "network.attach", map[string]any{"StateDir": stateDir, "Network": ns}); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("attached %q: chain_type=%s chain_id=%d namespaces=%v",
@@ -71,12 +71,12 @@ func networkListTool() Tool {
 			"properties": map[string]any{"state_dir": map[string]any{"type": "string"}},
 			"required":   []string{"state_dir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			stateDir := argString(args, "state_dir", "")
 			if stateDir == "" {
 				return "", fmt.Errorf("state_dir is required")
 			}
-			nets, err := app.Networks(app.Deps{}, stateDir)
+			nets, err := invokeFeatureFields[[]app.NodeSet](ctx, app.Deps{}, "network.list", map[string]any{"StateDir": stateDir})
 			if err != nil {
 				return "", err
 			}
@@ -110,13 +110,13 @@ func networkInfoTool() Tool {
 			},
 			"required": []string{"name", "state_dir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			name := argString(args, "name", "")
 			stateDir := argString(args, "state_dir", "")
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := app.Network(app.Deps{}, stateDir, name)
+			ns, err := invokeFeatureFields[app.NodeSet](ctx, app.Deps{}, "network.info", map[string]any{"StateDir": stateDir, "Name": name})
 			if err != nil {
 				return "", err
 			}
@@ -147,13 +147,13 @@ func networkDetachTool() Tool {
 			},
 			"required": []string{"name", "state_dir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			name := argString(args, "name", "")
 			stateDir := argString(args, "state_dir", "")
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			if err := app.DetachNetwork(app.Deps{}, stateDir, name); err != nil {
+			if err := invokeFeatureFieldsError(ctx, app.Deps{}, "network.detach", map[string]any{"StateDir": stateDir, "Name": name}); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("detached %q", name), nil

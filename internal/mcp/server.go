@@ -38,6 +38,7 @@ func (s *Server) ReadOnlyTools() []string {
 // Register adds a tool (last registration of a name wins; order preserved on
 // first registration).
 func (s *Server) Register(t Tool) {
+	t = registrySchemas(t)
 	if _, exists := s.tools[t.Name]; !exists {
 		s.order = append(s.order, t.Name)
 	}

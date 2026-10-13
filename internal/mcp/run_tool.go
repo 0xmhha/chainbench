@@ -31,7 +31,7 @@ func runTool() Tool {
 				"serverLogins":    map[string]any{"type": "string"},
 				"workspaceConfig": map[string]any{"type": "string"},
 				"artifactRoot":    map[string]any{"type": "string"},
-				"chain":           map[string]any{"type": "string"},
+				"chain":           commonProperty("chain", nil),
 				"rpc":             map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				"spec":            map[string]any{"type": "string"},
 				"specs":           map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
@@ -99,7 +99,7 @@ func runAttached(ctx context.Context, args map[string]any, start app.Start, chai
 			return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 		}
 	}
-	root, err := app.AttachRun(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), attachInput(args, start, chain, rpcURLs, dataDir, artifactRoot, specs))
+	root, err := invokeFeature[app.AttachRunIn, string](ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), "test.attach", attachInput(args, start, chain, rpcURLs, dataDir, artifactRoot, specs))
 	if err != nil {
 		return "", err
 	}
@@ -149,7 +149,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 	}
 	deps := app.Deps{}.WithLogins(argString(args, "serverLogins", ""))
 	if len(specs) > 1 && !argBool(args, "suite", false) {
-		out, err := app.RunSuites(ctx, deps, in)
+		out, err := invokeFeature[app.RunSuiteIn, app.RunSuitesOut](ctx, deps, "test.run-sequence", in)
 		if err != nil {
 			return "", err
 		}
@@ -162,7 +162,7 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 		}
 		return string(raw), nil
 	}
-	out, err := app.RunSuite(ctx, deps, in)
+	out, err := invokeFeature[app.RunSuiteIn, app.RunSuiteOut](ctx, deps, "test.run", in)
 	if err != nil {
 		return "", err
 	}

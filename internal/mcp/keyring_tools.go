@@ -87,7 +87,7 @@ func keyringNewTool() Tool {
 			"keystores, and the index the harness reads. Runs no chain binary.",
 		InputSchema: ringSchema(makeArgs),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			return renderRing(app.KeyringNew(ctx, app.Deps{}, createIn(args)))
+			return renderRing(invokeFeature[app.RingCreateIn, app.RingOut](ctx, app.Deps{}, "keyring.new", createIn(args)))
 		},
 	}
 }
@@ -99,7 +99,7 @@ func keyringAddTool() Tool {
 			"New identities do not join the validator set unless asked.",
 		InputSchema: ringSchema(makeArgs),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			return renderRing(app.KeyringAdd(ctx, app.Deps{}, createIn(args)))
+			return renderRing(invokeFeature[app.RingCreateIn, app.RingOut](ctx, app.Deps{}, "keyring.add", createIn(args)))
 		},
 	}
 }
@@ -116,7 +116,7 @@ func keyringListTool() Tool {
 			},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			return renderRing(app.KeyringList(ctx, app.Deps{}, app.RingListIn{
+			return renderRing(invokeFeature[app.RingListIn, app.RingOut](ctx, app.Deps{}, "keyring.list", app.RingListIn{
 				Ring: ringRef(args), Verify: argBool(args, "verify", false),
 			}))
 		},
@@ -133,7 +133,7 @@ func keyringShowTool() Tool {
 			"name": map[string]any{"type": "string", "description": "identity label, e.g. node1"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			e, err := app.KeyringShow(ctx, app.Deps{}, app.RingEntryIn{
+			e, err := invokeFeature[app.RingEntryIn, app.EntryOut](ctx, app.Deps{}, "keyring.show", app.RingEntryIn{
 				Ring: ringRef(args), Label: argString(args, "name", ""),
 			})
 			if err != nil {
@@ -194,9 +194,9 @@ func keyringImportTool() Tool {
 				FromRing:      argString(args, "fromRing", ""),
 			}
 			if in.FromRing != "" {
-				return renderRing(app.KeyringImportRing(ctx, app.Deps{}, in))
+				return renderRing(invokeFeature[app.RingImportIn, app.RingOut](ctx, app.Deps{}, "keyring.import-ring", in))
 			}
-			e, err := app.KeyringImport(ctx, app.Deps{}, in)
+			e, err := invokeFeature[app.RingImportIn, app.EntryOut](ctx, app.Deps{}, "keyring.import", in)
 			if err != nil {
 				return "", err
 			}
