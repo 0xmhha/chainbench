@@ -21,6 +21,7 @@ var chainIDQuantity = regexp.MustCompile(`^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$`)
 func identityAndCapabilityGate(chain string, dial func(string) *rpc.Client) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
 	capability := consensusCapabilityGate(chain, dial)
 	vm := shanghaiCapabilityGate(chain, dial)
+	p256 := p256CapabilityGate(chain, dial)
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, record session.TestRecord) (session.TestStatus, string) {
 		status, reason := checkDeclaredChainIdentity(ctx, spec, env, record, dial)
 		if status != "" {
@@ -29,7 +30,10 @@ func identityAndCapabilityGate(chain string, dial func(string) *rpc.Client) func
 		if status, reason := capability(ctx, spec, env, record); status != "" {
 			return status, reason
 		}
-		return vm(ctx, spec, env, record)
+		if status, reason := vm(ctx, spec, env, record); status != "" {
+			return status, reason
+		}
+		return p256(ctx, spec, env, record)
 	}
 }
 

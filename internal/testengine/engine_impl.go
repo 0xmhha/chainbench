@@ -128,12 +128,14 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		rec.Spec(raw)
 		e.recordArtifacts(rec)
 
+		staleAfterRuntime := false
 		if e.deps.Applicable != nil {
 			a := e.deps.Applicable(spec)
-			observation, _ := json.Marshal(map[string]any{"source": "declared_capabilities", "required": a.Required, "provided": a.Provided, "missing": a.Missing, "runs": a.Runs, "foreseen": a.Foreseen, "stale": a.Stale, "reason": a.Reason})
+			staleAfterRuntime = a.Stale && e.deps.RuntimeGate != nil
+			observation, _ := json.Marshal(map[string]any{"source": "declared_capabilities", "required": a.Required, "provided": a.Provided, "missing": a.Missing, "runs": a.Runs, "foreseen": a.Foreseen, "stale": a.Stale, "runtimeConfirmationPending": staleAfterRuntime, "reason": a.Reason})
 			rec.Observation("capability-gate.json", observation)
 			switch {
-			case a.Stale:
+			case a.Stale && !staleAfterRuntime:
 				// The spec says it skips here and it does not. Left alone, the
 				// declaration tells the next reader this test asks nothing on
 				// this chain while it is asking and answering.
@@ -205,6 +207,14 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 				e.emit(collector.PhaseSetup, collector.KindInfo, "runtime capability gate", map[string]any{"seq": seq, "id": spec.ID, "status": string(status), "reason": reason})
 				continue
 			}
+		}
+		if staleAfterRuntime {
+			// Only actual support can invalidate an expected runtime skip.
+			// A provided tag is a claim; the probe may still skip or block.
+			rec.Status(session.StatusFail)
+			rec.Reason("this spec declares it skips on this target and it does not — remove this chain from skipsOn")
+			e.emit(collector.PhaseTest, collector.KindError, "stale skipsOn", map[string]any{"seq": seq, "id": spec.ID})
+			continue
 		}
 		if e.deps.PreSpec != nil {
 			if gerr := e.deps.PreSpec(ctx, env); gerr != nil {

@@ -15,7 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
-func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixture string, preset any, nodes node.NodeSet, rawCount *atomic.Int32) []map[string]any {
+func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixture string, preset any, nodes node.NodeSet, p256Expected bool, rawCount *atomic.Int32) []map[string]any {
 	t.Helper()
 	observations := []map[string]any{}
 	for _, c := range []struct {
@@ -29,6 +29,7 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 		{"consensus", "pass", []string{"rpc", "consensus"}, nil, false},
 		{"consensus-unavailable", "blocked", []string{"rpc", "consensus"}, nil, false},
 		{"vm", "pass", []string{"rpc", "consensus", "evm:shanghai"}, nil, false},
+		{"p256", "pass", []string{"rpc", "consensus", "precompile:secp256r1"}, nil, false},
 	} {
 		source, err := json.Marshal(preset)
 		if err != nil {
@@ -41,10 +42,13 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 		if c.name == "provided" {
 			configured["attach"].(map[string]any)["provides"] = []string{"account-extra"}
 		}
+		if c.name == "p256" && !p256Expected {
+			c.status = "skip"
+		}
 		if c.name == "vm" && configured["chain"] == "wemix" {
 			c.status = "skip"
 		}
-		if strings.HasPrefix(c.name, "consensus") || c.name == "vm" {
+		if strings.HasPrefix(c.name, "consensus") || c.name == "vm" || c.name == "p256" {
 			original := configured["attach"].(map[string]any)["endpoints"].([]any)[0]
 			endpoints := []any{}
 			for _, n := range nodes.Nodes {
@@ -72,10 +76,16 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 			if c.name == "vm" {
 				configured["attach"].(map[string]any)["provides"] = []string{"consensus", "evm:shanghai"}
 			}
+			if c.name == "p256" {
+				configured["attach"].(map[string]any)["provides"] = []string{"consensus", "precompile:secp256r1"}
+			}
 		}
 		doc := map[string]any{"schemaVersion": "2", "kind": "case", "id": "capability-" + c.name, "chainPreset": configured, "requires": c.requires, "steps": []any{map[string]any{"expect": "blockNumber", "on": "en1", "compare": "GreaterOrEqual", "is": 2}}}
 		if c.name == "provided" {
 			doc["steps"] = append(doc["steps"].([]any), map[string]any{"expect": "balanceAt", "on": "en1", "address": "sponsor", "compare": "GreaterOrEqual", "is": "1"})
+		}
+		if c.status == "skip" && (c.name == "vm" || c.name == "p256") {
+			doc["skipsOn"] = []string{configured["chain"].(string)}
 		}
 		if c.unexpected {
 			doc["skipsOn"] = []string{}
@@ -169,6 +179,9 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 			if c.name == "vm" {
 				wantProvided += ",consensus,evm:shanghai"
 			}
+			if c.name == "p256" {
+				wantProvided += ",consensus,precompile:secp256r1"
+			}
 			if strings.Join(probe.Provided, ",") != wantProvided {
 				t.Fatalf("preset provides did not reach gate: %s", data)
 			}
@@ -178,7 +191,7 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				}
 			}
 			observations = append(observations, map[string]any{"surface": surface, "scenario": c.name, "status": verdict.Result, "reason": verdict.Reason, "session": root, "probePath": probePath, "probe": json.RawMessage(data), "rawSubmissions": 0})
-			if strings.HasPrefix(c.name, "consensus") || c.name == "vm" {
+			if strings.HasPrefix(c.name, "consensus") || c.name == "vm" || c.name == "p256" {
 				path := filepath.Join(dir, "observations", "capability-probes.json")
 				data, err := os.ReadFile(path)
 				if err != nil {
@@ -213,6 +226,38 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				}
 				observations[len(observations)-1]["consensusProbePath"] = path
 				observations[len(observations)-1]["consensusProbe"] = json.RawMessage(data)
+			}
+			if c.name == "p256" {
+				path := filepath.Join(dir, "observations", "precompile-capability-probes.json")
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var actual struct {
+					Capability, Status, Method, Address, ValidInput, InvalidInput string
+					Nodes                                                         []struct {
+						Node                                               int
+						Status, Source, Reason, ValidResult, InvalidResult string
+					}
+				}
+				if err := json.Unmarshal(data, &actual); err != nil || len(actual.Nodes) != 5 || actual.Capability != "precompile:secp256r1" || actual.Method != "eth_call" || actual.Address != "0x0000000000000000000000000000000000000100" || len(actual.ValidInput) != 322 || actual.InvalidInput[66:130] != strings.Repeat("0", 64) {
+					t.Fatal("invalid P256 proof", err, string(data))
+				}
+				wanted, positive := "unsupported", "0x"
+				if p256Expected {
+					wanted = "supported"
+					positive = "0x" + strings.Repeat("0", 63) + "1"
+				}
+				if actual.Status != wanted {
+					t.Fatalf("incorrect P256 aggregate: %s", data)
+				}
+				for i, n := range actual.Nodes {
+					if n.Node != i+1 || n.Status != wanted || n.Source != "eth_call:secp256r1" || n.ValidResult != positive || n.InvalidResult != "0x" {
+						t.Fatalf("incorrect P256 node: %s", data)
+					}
+				}
+				observations[len(observations)-1]["p256ProbePath"] = path
+				observations[len(observations)-1]["p256Probe"] = json.RawMessage(data)
 			}
 			if c.name == "vm" {
 				path := filepath.Join(dir, "observations", "vm-capability-probes.json")

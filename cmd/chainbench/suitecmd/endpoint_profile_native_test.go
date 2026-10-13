@@ -41,7 +41,11 @@ func TestNativeExternalEndpointProfilesWEMIXCLIAndMCP(t *testing.T) {
 	nativeExternalEndpointProfiles(t, "wemix", "GWEMIX_BIN")
 }
 
-func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
+func TestNativeExternalEndpointProfilesStableBohoCLIAndMCP(t *testing.T) {
+	nativeExternalEndpointProfiles(t, "stablenet", "GSTABLE_BIN", "bohoBlock=0", `boho={"systemContracts":{"govMinter":{"address":"0x0000000000000000000000000000000000001003","version":"v2"}}}`)
+}
+
+func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string, additionalGenesis ...string) {
 	binary := os.Getenv(binaryEnv)
 	if binary == "" {
 		t.Skip("native profile proof requires " + binaryEnv)
@@ -68,7 +72,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
-	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: chain, Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1, GenesisSet: []string{"applepieBlock=0"}})
+	genesisSet := append([]string{"applepieBlock=0"}, additionalGenesis...)
+	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: chain, Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1, GenesisSet: genesisSet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,6 +114,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	var genesis struct {
 		Config struct {
 			ApplepieBlock *int64 `json:"applepieBlock"`
+			BohoBlock     *int64 `json:"bohoBlock"`
 		} `json:"config"`
 	}
 	if err := json.Unmarshal(genesisBytes, &genesis); err != nil || genesis.Config.ApplepieBlock == nil || *genesis.Config.ApplepieBlock != 0 {
@@ -487,8 +493,9 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	})
 	presetValueRuns := requireNativePresetValues(t, ctx, fixture, chain, endpoint.RPCURL, signedSpec["chainPreset"], &rawTransactions)
 	identityRuns := requireNativeChainIdentity(t, ctx, fixture, chain, signedSpec["chainPreset"], up.Nodes.Nodes, &rawTransactions)
-	capabilityRuns := requireNativeDeclaredCapabilities(t, ctx, fixture, signedSpec["chainPreset"], up.Nodes.Nodes, &rawTransactions)
-	assetSources := []string{"../../../internal/testengine/vm_capability.go", "../../../internal/testengine/vm_capability_test.go", "../../../internal/testengine/capability_probe.go", "../../../internal/testengine/capability_nodes_test.go", "../../../internal/testengine/capability.go", "../../../internal/testengine/engine_impl.go", "../../../internal/testengine/capability_reason_test.go", "../../../internal/testengine/chain_identity.go", "../../../internal/testengine/chain_identity_test.go", "../../../internal/app/chain_identity_schema_test.go", "../../../internal/dsl/preset_values.go", "../../../internal/dsl/preset_values_test.go", "../../../internal/dsl/spec.go", "../../../internal/dsl/parse_v2.go", "../../../internal/dsl/interp/binding.go", "../../../internal/dsl/interp/run.go", "../../../internal/dsl/interp/resolve.go", "../../../internal/dsl/interp/preset_values_test.go", "../../../internal/app/preset_values_test.go", "../../../internal/app/web_document_secrets.go", "../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/app/testcase_delegation_test.go", "../../../internal/testhelper/delegated_creation_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
+	p256Expected := chain == "wbft" || (chain == "stablenet" && genesis.Config.BohoBlock != nil && *genesis.Config.BohoBlock == 0)
+	capabilityRuns := requireNativeDeclaredCapabilities(t, ctx, fixture, signedSpec["chainPreset"], up.Nodes.Nodes, p256Expected, &rawTransactions)
+	assetSources := []string{"../../../internal/testengine/runtime_skip_policy_test.go", "../../../internal/testengine/p256_capability.go", "../../../internal/testengine/p256_capability_test.go", "../../../tests/tc/go-wbft/accounts/01-secp256r1-precompile-valid.json", "../../../internal/testengine/vm_capability.go", "../../../internal/testengine/vm_capability_test.go", "../../../internal/testengine/capability_probe.go", "../../../internal/testengine/capability_nodes_test.go", "../../../internal/testengine/capability.go", "../../../internal/testengine/engine_impl.go", "../../../internal/testengine/capability_reason_test.go", "../../../internal/testengine/chain_identity.go", "../../../internal/testengine/chain_identity_test.go", "../../../internal/app/chain_identity_schema_test.go", "../../../internal/dsl/preset_values.go", "../../../internal/dsl/preset_values_test.go", "../../../internal/dsl/spec.go", "../../../internal/dsl/parse_v2.go", "../../../internal/dsl/interp/binding.go", "../../../internal/dsl/interp/run.go", "../../../internal/dsl/interp/resolve.go", "../../../internal/dsl/interp/preset_values_test.go", "../../../internal/app/preset_values_test.go", "../../../internal/app/web_document_secrets.go", "../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/app/testcase_delegation_test.go", "../../../internal/testhelper/delegated_creation_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -525,6 +532,9 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	proof["invalidNumericRuns"] = invalidNumericRuns
 	proof["submissionRejections"] = frozenRejections
 	proof["applepieBlock"] = *genesis.Config.ApplepieBlock
+	proof["bohoBlock"] = genesis.Config.BohoBlock
+	proof["genesisSet"] = genesisSet
+	proof["p256Expected"] = p256Expected
 	proof["observedTransactions"] = observedTransactions
 	proof["deploymentEstimates"] = frozenEstimates
 	proof["feeDelegatedEstimates"] = feeEstimates
