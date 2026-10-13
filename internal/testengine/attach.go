@@ -180,11 +180,16 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	// resolving it here is also what rejects a chain the accounts SDK does not
 	// know before a run gets far enough to fail obscurely. It no longer supplies
 	// identity derivation, which keyring does in process.
-	accts, err := accounts.ForChain(cfg.Chain)
+	clients, headers, err := attachAuthClients(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("engine: attach engine: %w", err)
+		return nil, err
 	}
-
+	accts, err := accounts.ForChainWithRPC(cfg.Chain, func(u string) accounts.RPCRequester {
+		return rpc.DialWithClient(u, clients[u])
+	})
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach accounts: %w", err)
+	}
 	keyOutput := cfg.KeysDir
 	if cfg.ReadOnlyKeys {
 		keyOutput = ""
@@ -196,10 +201,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if cfg.Ring != nil {
 		keys = cfg.Ring
 	}
-	clients, headers, err := attachAuthClients(cfg)
-	if err != nil {
-		return nil, err
-	}
+
 	run := NewRunSpec(interp.Deps{
 		RPC:       func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) },
 		HTTP:      func(u string) *http.Client { return clients[u] },

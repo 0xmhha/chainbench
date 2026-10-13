@@ -196,6 +196,14 @@ capture 실패와 독립 재현 실패의 누적을 RED→GREEN으로 확인했�
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.
 외부 체인 W3와 같은 미해결 조건은 재현이나 인계만으로 구현 완료로 바꾸지 않는다.
 
+**9번 추가 진행:** [접속 이름 증거](attach-client-identity-evidence.json)는 논리 바이너리와
+빌드 대상의 정확한 이름 비교·세 체인 실제 접속과 합의 조회를 확인했다.
+[인증 서명 증거](authenticated-signing-evidence.json)는 SDK 지갑 14종의 인증 전송 계약,
+실제 CLI/MCP 로컬 서명 송금 두 건과 종료 DB 제거를 확인했다.
+기존 세 체인 배포 회귀도 통과했지만 선언 계정의 local deploy를 증명한 것은 아니다.
+R3 나머지, R4의 선언 계정 faucet/deploy/load·고급 입력, R1/R5/R6와 전체 Linux L1은 계속 남는다.
+9번 전체 상태는 **진행**을 유지한다.
+
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 
 크리티컬 패스 = 스켈레톤에 필요한 각 컴포넌트의 **얇은 버전**부터.

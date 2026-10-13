@@ -41,6 +41,7 @@ type AccountProvider interface {
 // defaultProvider adapts an accounts SDK protocol.Protocol to AccountProvider.
 type defaultProvider struct {
 	proto protocol.Protocol
+	dial  func(string) RPCRequester
 }
 
 // New returns the default AccountProvider backed by the given SDK protocol.
@@ -58,6 +59,16 @@ func ForChain(chainID string) (AccountProvider, error) {
 	return New(p), nil
 }
 
+// ForChainWithRPC uses the caller's endpoint transport for all wallet RPCs.
+// Protocol selection, key handling and transaction encoding remain SDK-backed.
+func ForChainWithRPC(chainID string, dial func(string) RPCRequester) (AccountProvider, error) {
+	p, err := protocol.ByName(chainID)
+	if err != nil {
+		return nil, err
+	}
+	return defaultProvider{proto: p, dial: dial}, nil
+}
+
 func (d defaultProvider) Protocol() protocol.Protocol { return d.proto }
 func (d defaultProvider) SupportsTxType(t byte) bool  { return d.proto.SupportsTxType(t) }
 func (d defaultProvider) HasAccountExtra() bool       { return d.proto.HasExtra() }
@@ -67,11 +78,14 @@ func (d defaultProvider) AddressForKey(privKey []byte) (string, error) {
 }
 
 func (d defaultProvider) OpenWallet(ctx context.Context, privKey []byte, rpcURL string) (Wallet, error) {
+	if d.dial != nil {
+		return openWalletWithRPC(ctx, privKey, d.dial(rpcURL))
+	}
 	return openWallet(ctx, privKey, rpcURL)
 }
 
 func (d defaultProvider) Faucet(ctx context.Context, fromKey []byte, toHex string, amountWei *big.Int, rpcURL string) (string, error) {
-	w, err := openWallet(ctx, fromKey, rpcURL)
+	w, err := d.OpenWallet(ctx, fromKey, rpcURL)
 	if err != nil {
 		return "", err
 	}
