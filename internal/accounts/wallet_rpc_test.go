@@ -41,6 +41,11 @@ func TestCallerOwnedFeeDelegationRefusalReturnsNoTransactionHash(t *testing.T) {
 	if err == nil || hash != "" {
 		t.Fatalf("refused submission must have no hash: %q %v", hash, err)
 	}
+	nonce := uint64(7)
+	hash, err = wallet.SendFeeDelegatedTx(context.Background(), mustKey(t, strings.Repeat("0", 63)+"2"), accounts.DynamicTxArgs{ToHex: testAddress, Value: big.NewInt(1), Data: []byte{0xab}, Gas: 70000, GasFeeCap: big.NewInt(3), GasTipCap: big.NewInt(1), Nonce: &nonce})
+	if err == nil || hash != "" {
+		t.Fatalf("specified refusal must have no hash: %q %v", hash, err)
+	}
 }
 
 func TestEveryWalletOperationRetainsCallerAuthentication(t *testing.T) {

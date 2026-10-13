@@ -107,14 +107,13 @@ func TestSendTx_LocalKeyRefusesFieldsItWouldDrop(t *testing.T) {
 		args    map[string]any
 		wantErr string
 	}{
+		{"fee delegation with legacy price", map[string]any{"feePayerKey": testLocalKey, "gasPrice": "3"}, "gasPrice"},
+		{"two fee payer sources", map[string]any{"feePayerKey": testLocalKey, "feePayer": "sponsor"}, "mutually exclusive"},
+		{"empty fee payer", map[string]any{"feePayer": ""}, "feePayer"},
+		{"empty fee key", map[string]any{"feePayerKey": ""}, "feePayerKey"},
 		{"gasPrice with fee caps", map[string]any{"gasPrice": "1000", "maxFeePerGas": "2000", "maxPriorityFeePerGas": "1"}, "gasPrice"},
 		{"non-array access list", map[string]any{"gasPrice": "1000", "accessList": map[string]any{"address": testTo}}, "accessList"},
 		{"unknown access list field", map[string]any{"gasPrice": "1000", "accessList": []any{map[string]any{"address": testTo, "typo": true}}}, "accessList"},
-		{"feePayerKey with gas", map[string]any{"feePayerKey": testLocalKey, "gas": "30000"}, "feePayerKey"},
-		{"feePayerKey with data", map[string]any{"feePayerKey": testLocalKey, "data": "0x01"}, "feePayerKey"},
-		{"feePayerKey with nonce", map[string]any{"feePayerKey": testLocalKey, "nonce": "0"}, "feePayerKey"},
-		{"feePayerKey with fee caps", map[string]any{"feePayerKey": testLocalKey, "maxFeePerGas": "2", "maxPriorityFeePerGas": "1"}, "feePayerKey"},
-		{"feePayerKey with access list", map[string]any{"feePayerKey": testLocalKey, "accessList": []any{}}, "feePayerKey"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

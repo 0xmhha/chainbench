@@ -35,6 +35,8 @@ type Wallet interface {
 	// covers the gas. Returns the transaction hash. Only meaningful on chains
 	// whose provider reports SupportsTxType(0x16).
 	SendFeeDelegated(ctx context.Context, feePayerKey []byte, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendFeeDelegatedTx preserves a fully specified EIP-1559 inner transaction.
+	SendFeeDelegatedTx(ctx context.Context, feePayerKey []byte, args DynamicTxArgs) (txHash string, err error)
 	// SendLegacy sends a type 0x00 (EIP-155 legacy) value transfer of amountWei
 	// to the hex recipient, returning the tx hash. SendCoin uses type 0x02; this
 	// exposes the legacy path for tx-type regression coverage.

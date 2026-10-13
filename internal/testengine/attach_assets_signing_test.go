@@ -30,6 +30,8 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		transactions int32
 	}{
 		{"faucet", map[string]any{"do": "faucet", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"}, 1},
+		{"fee-full", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "gas": "70000", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"fee-auto", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"deploy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"deploy-auto-dynamic", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"deploy-auto-legacy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "gasPrice": "3"}, 1},
@@ -80,6 +82,33 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getBlockByNumber":
 					value = map[string]string{"number": "0x1", "baseFeePerGas": "0x1", "gasLimit": "0xf4240", "gasUsed": "0x0"}
 				case "eth_sendRawTransaction":
+					if strings.HasPrefix(sample.name, "fee-") {
+						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
+						sender, _ := sdkcrypto.PrivKeyFromBytes(private)
+						feePrivate, _ := hex.DecodeString(strings.Repeat("0", 63) + "2")
+						sponsor, _ := sdkcrypto.PrivKeyFromBytes(feePrivate)
+						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
+						data, _ := hex.DecodeString("abcdef")
+						gas := uint64(70000)
+						if sample.name == "fee-auto" {
+							gas = 65536
+						}
+						expected := sdktx.FeeDelegateTx{Sender: sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}}
+						if err := expected.Sign(sender, sponsor); err != nil {
+							t.Error(err)
+						}
+						encoded, err := expected.Encode()
+						if err != nil {
+							t.Error(err)
+						}
+						var actual string
+						if err := json.Unmarshal(request.Params[0], &actual); err != nil {
+							t.Error(err)
+						}
+						if actual != "0x"+hex.EncodeToString(encoded) {
+							t.Error("fee-delegated signature lost sender/payer or explicit transaction fields")
+						}
+					}
 					if strings.HasPrefix(sample.name, "dynamic-list") {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)
@@ -199,6 +228,10 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 			}))
 			defer server.Close()
 			key := filepath.Join(t.TempDir(), "private")
+			feeKey := filepath.Join(t.TempDir(), "sponsor-private")
+			if err := os.WriteFile(feeKey, []byte(strings.Repeat("0", 63)+"2"), 0600); err != nil {
+				t.Fatal(err)
+			}
 			if err := os.WriteFile(key, []byte(strings.Repeat("0", 63)+"1"), 0600); err != nil {
 				t.Fatal(err)
 			}
@@ -206,7 +239,7 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			raw, err := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "case", "id": "external-assets", "requires": []string{"rpc"}, "chainPreset": map[string]any{"schemaVersion": "2", "kind": "chain-preset", "id": "external", "chain": "stablenet", "attach": map[string]any{"rpc": []string{server.URL}}, "accounts": map[string]any{"payer": map[string]any{"keyFile": key}}}, "steps": []map[string]any{sample.step, {"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"}}})
+			raw, err := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "case", "id": "external-assets", "requires": []string{"rpc"}, "chainPreset": map[string]any{"schemaVersion": "2", "kind": "chain-preset", "id": "external", "chain": "stablenet", "attach": map[string]any{"rpc": []string{server.URL}}, "accounts": map[string]any{"payer": map[string]any{"keyFile": key}, "sponsor": map[string]any{"keyFile": feeKey}}}, "steps": []map[string]any{sample.step, {"expect": "blockNumber", "compare": "GreaterOrEqual", "is": "1"}}})
 			if err != nil {
 				t.Fatal(err)
 			}

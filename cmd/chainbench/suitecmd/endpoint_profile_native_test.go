@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -67,7 +68,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
-	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: chain, Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1})
+	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: chain, Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1, GenesisSet: []string{"applepieBlock=0"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,6 +102,18 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			}
 		}
 	})
+	genesisBytes, err := os.ReadFile(status.State.GenesisPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var genesis struct {
+		Config struct {
+			ApplepieBlock *int64 `json:"applepieBlock"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(genesisBytes, &genesis); err != nil || genesis.Config.ApplepieBlock == nil || *genesis.Config.ApplepieBlock != 0 {
+		t.Fatal("native fee delegation requires declared Applepie activation at block zero", err)
+	}
 	endpoint := up.Nodes.Nodes.Nodes[4]
 	if endpoint.Role != node.RoleEN || endpoint.WSURL == "" || endpoint.MetricsURL == "" {
 		t.Fatal("native endpoint lacks recorded transports")
@@ -153,7 +166,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 				if err := json.Unmarshal(request.Params[0], &args); err != nil {
 					t.Error(err)
 				}
-				if args["data"] == "0x600a600c600039600a6000f3602a60005260206000f3" {
+				if args["data"] == "0x600a600c600039600a6000f3602a60005260206000f3" || args["type"] == "0x16" {
 					creationEstimate = args
 				}
 			}
@@ -201,6 +214,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	}
 	signedSpec["chainPreset"].(map[string]any)["chain"] = chain
 	signedSpec["chainPreset"].(map[string]any)["accounts"] = map[string]any{"payer": map[string]any{"keyFile": filepath.Join(repoKeys(t), "node1/private")}}
+	signedSpec["chainPreset"].(map[string]any)["accounts"].(map[string]any)["sponsor"] = map[string]any{"keyFile": filepath.Join(repoKeys(t), "node2/private")}
 	signedSpec["steps"] = append(signedSpec["steps"].([]any),
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "1"},
 		map[string]any{"do": "faucet", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"},
@@ -222,6 +236,11 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "read", "on": "en1", "source": "gasPrice", "save": "listPrice"},
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "listNonce"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$listNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}})
+	signedSpec["steps"] = append(signedSpec["steps"].([]any),
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "feeNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$feeNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "feeAutoNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "nonce": "$feeAutoNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -258,18 +277,32 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	if rawTransactions.Load() != 26 {
-		t.Fatalf("CLI and MCP must each submit thirteen local signatures: %d", rawTransactions.Load())
+	wantRaw := int32(30)
+	wantSend := 6
+	if rawTransactions.Load() != wantRaw {
+		t.Fatalf("wrong number of local signatures: %d, want %d", rawTransactions.Load(), wantRaw)
 	}
 	observedTransactions := []map[string]any{}
 	observedDeployments := []map[string]any{}
 	estimateMu.Lock()
-	frozenEstimates := append([]map[string]any(nil), estimates...)
+	recordedEstimates := append([]map[string]any(nil), estimates...)
 	estimateMu.Unlock()
+	frozenEstimates := []map[string]any{}
+	feeEstimates := []map[string]any{}
+	for _, estimate := range recordedEstimates {
+		if estimate["request"].(map[string]any)["type"] == "0x16" {
+			feeEstimates = append(feeEstimates, estimate)
+		} else {
+			frozenEstimates = append(frozenEstimates, estimate)
+		}
+	}
+	if len(feeEstimates) != 2 {
+		t.Fatalf("expected CLI and MCP fee-delegated estimates: %+v", feeEstimates)
+	}
 	if len(frozenEstimates) != 4 {
 		t.Fatalf("expected four actual deployment estimates: %+v", frozenEstimates)
 	}
-	for _, root := range []string{cli.Session, filepath.Join(mcpArtifacts, ids[0])} {
+	for sessionIndex, root := range []string{cli.Session, filepath.Join(mcpArtifacts, ids[0])} {
 		files, err := filepath.Glob(filepath.Join(root, "tests", "*", "steps.json"))
 		if err != nil || len(files) != 1 {
 			t.Fatal(err, files)
@@ -312,13 +345,13 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
 				t.Fatal(err)
 			}
-			if index >= 4 || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2"}[index] {
+			if index >= wantSend || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2", "0x16", "0x16"}[index] {
 				t.Fatalf("wrong native transaction type: %+v", tx)
 			}
-			if index > 0 && (tx["input"] != "0xab" || tx["gas"] != "0x11170" || tx["value"] != "0x2") {
+			if index > 0 && (tx["input"] != "0xab" || (index != 5 && tx["gas"] != "0x11170") || tx["value"] != "0x2") {
 				t.Fatalf("legacy payload/gas/value changed: %+v", tx)
 			}
-			if index == 2 || index == 3 {
+			if index >= 2 {
 				list, ok := tx["accessList"].([]any)
 				if !ok || len(list) != 1 {
 					t.Fatalf("access list lost: %+v", tx)
@@ -332,10 +365,39 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 					t.Fatalf("access tuple changed: %+v", tuple)
 				}
 			}
+			if index >= 4 {
+				key, err := os.ReadFile(filepath.Join(repoKeys(t), "node2/private"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				private, err := hex.DecodeString(strings.TrimSpace(string(key)))
+				if err != nil {
+					t.Fatal(err)
+				}
+				address, err := accounts.AddressForKey(private)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if tx["feePayer"] != address {
+					t.Fatalf("wrong signed fee payer: %+v", tx)
+				}
+				if index == 5 {
+					estimate := feeEstimates[sessionIndex]
+					args := estimate["request"].(map[string]any)
+					for _, field := range []string{"from", "to", "value", "nonce", "feePayer", "maxFeePerGas", "maxPriorityFeePerGas"} {
+						if tx[field] != args[field] {
+							t.Fatalf("fee-delegated estimate changed %s: estimate=%+v tx=%+v", field, estimate, tx)
+						}
+					}
+					if tx["gas"] != estimate["gas"] || tx["input"] != args["data"] {
+						t.Fatalf("fee-delegated estimate changed gas or data: estimate=%+v tx=%+v", estimate, tx)
+					}
+				}
+			}
 			observedTransactions = append(observedTransactions, tx)
 			index++
 		}
-		if index != 4 {
+		if index != wantSend {
 			t.Fatalf("missing native transaction types: %d", index)
 		}
 	}
@@ -343,7 +405,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatalf("missing observed deployments: %d", len(observedDeployments))
 	}
 	sources := map[string]string{}
-	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go"}
+	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/delegated.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -373,8 +435,10 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	binarySHA := sha256.Sum256(content)
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
 	proof["chain"] = chain
+	proof["applepieBlock"] = *genesis.Config.ApplepieBlock
 	proof["observedTransactions"] = observedTransactions
 	proof["deploymentEstimates"] = frozenEstimates
+	proof["feeDelegatedEstimates"] = feeEstimates
 	proof["observedDeployments"] = observedDeployments
 	bytes, err := json.MarshalIndent(proof, "", "  ")
 	if err != nil {

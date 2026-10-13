@@ -61,6 +61,12 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if sender.SignsLocally() {
 		return sendTxLocalFrom(ctx, ac, sender)
 	}
+	if _, supplied := ac.Args["feePayer"]; supplied {
+		return fmt.Errorf("dsl: feePayer requires a local signing account")
+	}
+	if _, supplied := ac.Args["feePayerKey"]; supplied {
+		return fmt.Errorf("dsl: feePayerKey requires a local signing account")
+	}
 	args := rpc.SendTxArgs{From: sender.Address}
 	if to, ok := ac.Args["to"].(string); ok {
 		// A recipient may be a contract, which has no key. Only "from" has to be
@@ -164,6 +170,7 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 		return err
 	}
 	feePayerKey, _ := ac.Args["feePayerKey"].(string)
+	feePayer, _ := ac.Args["feePayer"].(string)
 	data, _ := ac.Args["data"].(string)
 	gasHex, hasGas := hexQuantity(ac.Args["gas"])
 	_, hasGasPrice := hexQuantity(ac.Args["gasPrice"])
@@ -178,15 +185,8 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	// It is the only way to exercise a blacklisted-fee-payer rejection — the SDK's
 	// static value-transfer guard checks sender and recipient but not the fee
 	// payer, so the tx reaches the node, which is what does the rejecting.
-	case feePayerKey != "":
-		fp, ferr := hex.DecodeString(strings.TrimPrefix(feePayerKey, "0x"))
-		if ferr != nil {
-			return fmt.Errorf("dsl: sendTx feePayerKey: decode: %w", ferr)
-		}
-		if value == nil {
-			value = new(big.Int)
-		}
-		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	case feePayerKey != "" || feePayer != "":
+		hash, err = sendDelegatedOptions(ctx, ac, w, to, value, data, rpcURL)
 	case ac.Args["accessList"] != nil:
 		hash, err = sendDynamicAccessList(ctx, ac, w, to, value, data, rpcURL)
 	// An explicit "gas" is the limit the case asked for. Every other branch
@@ -267,10 +267,6 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	return checkTxOutcome(hash, receipt, ac.Args)
 }
 
-// feePayerKeyExcludes are the fields a locally signed fee-delegated send cannot
-// carry: the wallet signs a value-only 0x16 transfer with its own gas and fees.
-var feePayerKeyExcludes = []string{"gas", "data", "nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "accessList"}
-
 // legacyExcludes rejects mixing the two fee models in one transaction.
 var legacyExcludes = []string{"maxFeePerGas", "maxPriorityFeePerGas"}
 
@@ -278,13 +274,25 @@ var legacyExcludes = []string{"maxFeePerGas", "maxPriorityFeePerGas"}
 // otherwise send without one of its fields. A case that names a field expects
 // the transaction to carry it, so dropping it silently measures something else.
 func checkLocalSendArgs(args map[string]any) error {
-	if _, ok := args["feePayerKey"]; ok {
-		for _, f := range feePayerKeyExcludes {
-			if _, has := args[f]; has {
-				return fmt.Errorf("dsl: sendTx: feePayerKey sends a value-only transfer; %q is not supported with it", f)
-			}
+	_, hasPayer := args["feePayer"]
+	_, hasPayerKey := args["feePayerKey"]
+	if hasPayer && hasPayerKey {
+		return fmt.Errorf("dsl: feePayer and feePayerKey are mutually exclusive")
+	}
+	if hasPayer {
+		if name, ok := args["feePayer"].(string); !ok || strings.TrimSpace(name) == "" {
+			return fmt.Errorf("dsl: feePayer must name a local account")
 		}
-		return nil
+	}
+	if hasPayerKey {
+		if key, ok := args["feePayerKey"].(string); !ok || key == "" {
+			return fmt.Errorf("dsl: feePayerKey must name a private key binding")
+		}
+	}
+	if hasPayer || hasPayerKey {
+		if _, legacy := args["gasPrice"]; legacy {
+			return fmt.Errorf("dsl: fee delegation cannot carry gasPrice")
+		}
 	}
 	al, hasList := args["accessList"]
 	_, hasGasPrice := args["gasPrice"]
@@ -348,6 +356,10 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 }
 
 func sendWithAccessListGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string, list []accounts.AccessTuple) (string, error) {
+	return sendSpecifiedGas(ctx, ac, w, to, value, data, gasHex, rpcURL, list, nil)
+}
+
+func sendSpecifiedGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string, list []accounts.AccessTuple, feeKey []byte) (string, error) {
 	gas, err := strconv.ParseUint(strings.TrimPrefix(gasHex, "0x"), 16, 64)
 	if err != nil {
 		return "", fmt.Errorf("dsl: sendTx gas: %w", err)
@@ -416,6 +428,9 @@ func sendWithAccessListGas(ctx context.Context, ac *interp.ActionCtx, w accounts
 		}
 		args.GasTipCap = tipCap
 		args.GasFeeCap = new(big.Int).Add(new(big.Int).Mul(base, big.NewInt(2)), tipCap)
+	}
+	if feeKey != nil {
+		return w.SendFeeDelegatedTx(ctx, feeKey, args)
 	}
 	return w.SendDynamicFeeTx(ctx, args)
 }

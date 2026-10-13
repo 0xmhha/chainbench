@@ -35,7 +35,7 @@ var builtinArguments = map[string]string{
 	"action:restartNode":                 "on onEach",
 	"action:sendRawTampered":             "feePayerKey on onEach reason save senderKey to value which",
 	"action:sendSetCode":                 "authorityKey delegate key on onEach save",
-	"action:sendTx":                      "accessList blocks data expect expectReject expectRevert feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval reason save timeout to value wait",
+	"action:sendTx":                      "accessList blocks data expect expectReject expectRevert feePayer feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval reason save timeout to value wait",
 	"action:signAuthorization":           "authorityKey delegate on onEach save",
 	"action:startNode":                   "expect expectFail on onEach reason save",
 	"action:stopNode":                    "on onEach",
