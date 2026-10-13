@@ -22,6 +22,7 @@ func requireNativeInvalidNumericRuns(t *testing.T, fixture string, preset any, r
 		{"sendTx", "gas", "not-a-number"}, {"sendTx", "value", 1.5}, {"sendTx", "nonce", "18446744073709551616"},
 		{"faucet", "amount", 1.5}, {"deployContract", "gas", float64(9007199254740992)},
 		{"registerContract", "maxPriorityFeePerGas", "0xgg"}, {"load", "nonce", nil},
+		{"load", "blocks", 1.5}, {"load", "blocks", 0}, {"load", "blocks", "18446744073709551615"}, {"load", "fillPercent", 1.5}, {"load", "fillPercent", 101},
 	}
 	observations := []map[string]any{}
 	for _, mode := range []string{"local", "node"} {
@@ -47,6 +48,11 @@ func requireNativeInvalidNumericRuns(t *testing.T, fixture string, preset any, r
 				step["data"] = "0x01"
 			case "load":
 				step["blocks"] = 1
+			}
+			if c.field == "fillPercent" {
+				// The real DSL rejects fillPercent when gas overrides it.
+				// Exercise this field as the chosen gas-sizing input.
+				delete(step, "gas")
 			}
 			step[c.field] = c.bad
 			raw, err := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "case", "id": id, "requires": []string{"rpc"}, "chainPreset": preset, "steps": []any{step, map[string]any{"expect": "blockNumber", "on": "en1", "compare": "GreaterOrEqual", "is": "0"}}})

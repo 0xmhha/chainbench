@@ -93,6 +93,21 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		if e.Name == "read" || e.Name == "waitFor" {
 			props["source"] = map[string]any{"enum": readers}
 		}
+		if e.Kind == "action" && e.Name == "load" {
+			for _, field := range []string{"blocks", "fillPercent"} {
+				parameter := editorParameter("gas")
+				integer := parameter["anyOf"].([]any)[0].(map[string]any)
+				integer["minimum"] = 1
+				text := parameter["anyOf"].([]any)[1].(map[string]any)
+				literal := `(?:0*[1-9][0-9]*|0[xX]0*[1-9a-fA-F][0-9a-fA-F]*)`
+				if field == "fillPercent" {
+					integer["maximum"] = 100
+					literal = `(?:0*(?:[1-9][0-9]?|100)|0[xX]0*(?:[1-9a-fA-F]|[1-5][0-9a-fA-F]|6[0-4]))`
+				}
+				text["pattern"] = `^(?:\$[A-Za-z_][A-Za-z0-9_]*|.*\$\{[A-Za-z_][A-Za-z0-9_]*\}.*|` + literal + `)$`
+				props[field] = parameter
+			}
+		}
 		required := append([]string{}, editorRequired[e.Name]...)
 		if e.Kind == "action" {
 			required = append(required, "do")

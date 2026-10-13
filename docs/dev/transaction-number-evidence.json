@@ -1144,7 +1144,7 @@
     }
   ],
   "browser": {
-    "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-development/dsl-editor/receipt.json",
+    "path": "/private/tmp/cbui/449d3c65-16d7-4bd8-a43b-26543cde8647/transaction-number-browser-proof/receipt.json",
     "sha256": "6c7321a32d0d7382d77014a5aaccabb12777c430bf8dda3094cfc86303751e28",
     "transactionNumbers": {
       "fractionRejected": true,
@@ -1182,11 +1182,11 @@
     "endedDatabasesRemaining": 0,
     "artifacts": [
       {
-        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-development/dsl-editor/numeric-validation.png",
+        "path": "/private/tmp/cbui/449d3c65-16d7-4bd8-a43b-26543cde8647/transaction-number-browser-proof/numeric-validation.png",
         "sha256": "eddc3663b4f02427c1d4eb7823debe30e1757952fc200eb9d2276619fa273f5b"
       },
       {
-        "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-development/dsl-editor/numeric-export.json",
+        "path": "/private/tmp/cbui/449d3c65-16d7-4bd8-a43b-26543cde8647/transaction-number-browser-proof/numeric-export.json",
         "sha256": "a11790257eafb856dd433a2a9a84bfdbd3cd1ed1313a1ad7972182efd02cc382"
       }
     ],

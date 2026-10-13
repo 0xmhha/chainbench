@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
@@ -64,9 +65,18 @@ func TestTransactionActionsRejectInvalidNumbersBeforeRPCOrSigning(t *testing.T) 
 				fields = append(fields, "amount")
 			} else if action != "load" {
 				fields = append(fields, "value")
+			} else {
+				fields = append(fields, "blocks", "fillPercent")
 			}
 			for _, field := range fields {
-				for i, bad := range []any{"not-a-number", float64(1.5), -1, true, nil, float64(9007199254740992)} {
+				badValues := []any{"not-a-number", float64(1.5), -1, true, nil, float64(9007199254740992)}
+				if field == "blocks" || field == "fillPercent" {
+					badValues = append(badValues, 0, "18446744073709551615")
+				}
+				if field == "fillPercent" {
+					badValues = append(badValues, 101)
+				}
+				for i, bad := range badValues {
 					t.Run(fmt.Sprintf("%s/%s/%s/%d", mode, action, field, i), func(t *testing.T) {
 						var requests atomic.Int32
 						server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +112,9 @@ func TestTransactionActionsRejectInvalidNumbersBeforeRPCOrSigning(t *testing.T) 
 						}
 						args[field] = bad
 						act, _ := local.Actions.Action(action)
-						err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, server.URL), Deps: &local, Args: args})
+						ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+						defer cancel()
+						err := act.Do(ctx, &interp.ActionCtx{Env: envWithNode(t, server.URL), Deps: &local, Args: args})
 						if err == nil || !strings.Contains(err.Error(), field) {
 							t.Errorf("invalid %s accepted or not identified: %v", field, err)
 						}
@@ -137,6 +149,37 @@ func TestQuantityConversionIsExactAndCannotPanic(t *testing.T) {
 	} {
 		if got, ok := hexQuantity(c.input); !ok || got != c.want {
 			t.Errorf("exact conversion of %v: %q %v, want %q", c.input, got, ok, c.want)
+		}
+	}
+}
+
+func TestControlQuantityConversionIsExact(t *testing.T) {
+	for _, bad := range []any{1.5, math.NaN(), math.Inf(1), float64(9007199254740992), "18446744073709551616", -1, nil, true} {
+		if value, ok := uintArg(bad); ok {
+			t.Errorf("invalid control %v converted to %d", bad, value)
+		}
+	}
+	for _, input := range []any{uint64(math.MaxUint64), json.Number("18446744073709551615"), "0XFFFFFFFFFFFFFFFF", "18446744073709551615"} {
+		if value, ok := uintArg(input); !ok || value != math.MaxUint64 {
+			t.Errorf("exact control %v: %d %v", input, value, ok)
+		}
+	}
+}
+
+func TestLoadControlBoundsAndDefaults(t *testing.T) {
+	for _, args := range []map[string]any{
+		{}, {"blocks": 1, "fillPercent": 100}, {"blocks": "0X02", "fillPercent": "0x64"},
+		{"blocks": uint64(^uint(0) >> 1), "fillPercent": "0001"},
+	} {
+		if err := validateLoadControls(args); err != nil {
+			t.Errorf("valid controls %v: %v", args, err)
+		}
+	}
+	for _, args := range []map[string]any{
+		{"blocks": uint64(^uint(0)>>1) + 1}, {"blocks": "0x0"}, {"fillPercent": "0X65"},
+	} {
+		if err := validateLoadControls(args); err == nil {
+			t.Errorf("invalid controls accepted: %v", args)
 		}
 	}
 }
