@@ -29,3 +29,15 @@ func TestSpecifiedLegacyRejectsInvalidInputBeforeRPC(t *testing.T) {
 		})
 	}
 }
+
+func TestDynamicAccessListRejectsInvalidTupleBeforeRPC(t *testing.T) {
+	for _, tuple := range []AccessTuple{
+		{Address: "invalid"},
+		{Address: "0x000000000000000000000000000000000000dead", StorageKeys: []string{"0x01"}},
+	} {
+		hash, err := (sdkWallet{}).SendDynamicFeeTx(context.Background(), DynamicTxArgs{Value: big.NewInt(1), GasFeeCap: big.NewInt(3), GasTipCap: big.NewInt(1), Gas: 70000, AccessList: []AccessTuple{tuple}})
+		if err == nil || hash != "" {
+			t.Fatalf("invalid tuple reached RPC or produced a hash: %q %v", hash, err)
+		}
+	}
+}

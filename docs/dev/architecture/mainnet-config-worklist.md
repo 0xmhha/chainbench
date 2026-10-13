@@ -1155,7 +1155,7 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 | R1 | chainId 를 preset 값과 비교한다 | 지금 `WantChainID` 가 0이면 검사를 건너뛴다(`internal/testengine/nodegate.go:44-56`) | P3 | 미착수 |
 | R2 | 엔드포인트에 역할·WS·metrics 를 담는다 | `attach.endpoints`가 역할·RPC·WS·metrics·인증 환경 참조·선언 API 목록을 보존한다. 기존 `attach.rpc`는 유지하며 둘을 함께 쓰면 거절한다. CLI/MCP 같은 입력으로 native BP4/EN1에서 실제 인증 읽기를 확인했다. API 목록은 실제 지원의 증거가 아니다(R3); SDK 로컬 서명의 인증 전송은 R4에 남는다 | P1 | 읽기 프로필 완료 (2026-10-13), R4 연계 잔여 별도 |
 | R3 | 능력을 실제 RPC 로 확인한다 | 합의 요구는 실제 family 조회를 통해 supported·unsupported·unknown으로 구분하고 관측 출처를 남긴다. 선언 필터·다른 거래/VM 능력·여러 엔드포인트 확인은 남아 있다. [세 체인 실제 증거](../consensus-capability-evidence.json) | P4, V7 | 합의 조회 부분 완료 (2026-10-13), 나머지 진행 |
-| R4 | faucet·deploy·load 를 로컬 서명으로 바꾼다 | SDK 지갑 RPC를 프로필 인증 전송에 연결하고 선언 keyFile 자산 경로를 구현했다. legacy의 전체 필드와 EIP-2930 목록을 보존한다. 가스 없는 배포도 명시 nonce·수수료를 유지하며 key 인자 검증과 코드가 일치한다. 세 체인 BP4/EN1의 실제 CLI/MCP 서명·온체인 필드·배포 추정·종료 DB 제거를 확인했다. 대납 고급 입력과 동적 접근 목록/편집 계약은 남는다. [인증 경계](../authenticated-signing-evidence.json), [전체 필드](../specified-legacy-signing-evidence.json), [배포 입력](../deployment-overrides-evidence.json) | D7 | 자산·legacy·배포 입력 부분 완료 (2026-10-14), 나머지 진행 |
+| R4 | faucet·deploy·load 를 로컬 서명으로 바꾼다 | SDK 지갑 RPC를 인증 전송에 연결하고 선언 keyFile 자산 경로를 구현했다. legacy·EIP-2930·EIP-1559 목록과 배포 override를 보존하며 key 인자 검증과 코드가 일치한다. 세 체인 BP4/EN1의 실제 CLI/MCP 서명·온체인 필드·배포 추정·종료 DB 제거를 확인했다. 대납 고급 입력과 목록의 구조화 편집/참조 계약은 남는다. [전체 필드](../specified-legacy-signing-evidence.json), [배포 입력](../deployment-overrides-evidence.json), [동적 목록](../dynamic-access-list-evidence.json) | D7 | 자산·거래 입력 부분 완료 (2026-10-14), 나머지 진행 |
 | R5 | `expect: reject` 를 사유별로 판정한다 | 지금은 어떤 오류든 통과한다 | P3 | 미착수 |
 | R6 | 한 스위트를 여러 preset 으로 실행하고 결과에 preset id 를 남긴다 | 완료 조건 4번을 증명한다 | P5, R1 | 미착수 |
 

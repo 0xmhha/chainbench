@@ -42,6 +42,8 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		{"register-legacy", map[string]any{"do": "registerContract", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
 		{"load-legacy", map[string]any{"do": "load", "from": "payer", "gas": "300000", "blocks": 2, "nonce": "7", "gasPrice": "3"}, 2},
 		{"access-list", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"dynamic-list", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"dynamic-list-auto", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 	} {
 		t.Run(sample.name, func(t *testing.T) {
 			t.Setenv("CHAINBENCH_TEST_ASSET_TOKEN", "asset-test-token")
@@ -77,6 +79,27 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getBlockByNumber":
 					value = map[string]string{"number": "0x1", "baseFeePerGas": "0x1", "gasLimit": "0xf4240", "gasUsed": "0x0"}
 				case "eth_sendRawTransaction":
+					if strings.HasPrefix(sample.name, "dynamic-list") {
+						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
+						key, _ := sdkcrypto.PrivKeyFromBytes(private)
+						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
+						data, _ := hex.DecodeString("abcdef")
+						gas := uint64(70000)
+						if sample.name == "dynamic-list-auto" {
+							gas = 65536
+						}
+						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
+						if err := expected.Sign(key); err != nil {
+							t.Error(err)
+						}
+						var actual string
+						if err := json.Unmarshal(request.Params[0], &actual); err != nil {
+							t.Error(err)
+						}
+						if actual != "0x"+hex.EncodeToString(expected.Encode()) {
+							t.Error("dynamic access-list signature lost explicit fields or list contents")
+						}
+					}
 					if strings.HasPrefix(sample.name, "deploy-auto-") {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)

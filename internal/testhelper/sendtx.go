@@ -187,6 +187,8 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 			value = new(big.Int)
 		}
 		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	case ac.Args["accessList"] != nil:
+		hash, err = sendDynamicAccessList(ctx, ac, w, to, value, data, rpcURL)
 	// An explicit "gas" is the limit the case asked for. Every other branch
 	// picks its own — SendCoin fixes 21000, Execute estimates — so a case that
 	// sent 100000 gas to a reverting contract ran out at 21000 instead, and
@@ -287,9 +289,6 @@ func checkLocalSendArgs(args map[string]any) error {
 	al, hasList := args["accessList"]
 	_, hasGasPrice := args["gasPrice"]
 	if hasList {
-		if !hasGasPrice {
-			return fmt.Errorf("dsl: sendTx key: accessList needs gasPrice (a locally signed access list is type 0x01)")
-		}
 		if _, ok := al.([]any); !ok {
 			return fmt.Errorf("dsl: sendTx key: accessList must be an array")
 		}
@@ -341,10 +340,14 @@ func parseValueWei(v any) (*big.Int, error) {
 // key hex under "saveKey". The key is an ephemeral, throwaway test key — a spec
 // funds it from a node account, then uses it as sendTx "key" to sign locally.
 
-// sendWithGas signs a type-0x02 transaction with the gas limit the case named,
-// its data if any, and its fee caps if given — else the node's suggestion:
+// sendWithGas retains an explicit legacy gas price, or signs type 0x02 with
+// the named gas limit, data, and fee caps — else the node's suggestion:
 // tip from eth_maxPriorityFeePerGas, cap twice the latest base fee plus the tip.
 func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string) (string, error) {
+	return sendWithAccessListGas(ctx, ac, w, to, value, data, gasHex, rpcURL, nil)
+}
+
+func sendWithAccessListGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, gasHex, rpcURL string, list []accounts.AccessTuple) (string, error) {
 	gas, err := strconv.ParseUint(strings.TrimPrefix(gasHex, "0x"), 16, 64)
 	if err != nil {
 		return "", fmt.Errorf("dsl: sendTx gas: %w", err)
@@ -352,7 +355,7 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 	if value == nil {
 		value = new(big.Int)
 	}
-	args := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: gas}
+	args := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: gas, AccessList: list}
 	if data != "" && data != "0x" {
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
@@ -376,7 +379,7 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 		if !ok {
 			return "", fmt.Errorf("dsl: invalid gasPrice")
 		}
-		return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: args.Data, Gas: gas, GasPrice: gasPrice, Nonce: nonce})
+		return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: args.Data, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
 	}
 	maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
 	tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
@@ -421,18 +424,11 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
 	var list []accounts.AccessTuple
 	if raw, supplied := ac.Args["accessList"]; supplied {
-		encoded, err := json.Marshal(raw)
+		decoded, err := localAccessList(raw)
 		if err != nil {
 			return "", err
 		}
-		decoder := json.NewDecoder(bytes.NewReader(encoded))
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&list); err != nil {
-			return "", fmt.Errorf("dsl: accessList: %w", err)
-		}
-		if list == nil {
-			return "", fmt.Errorf("dsl: accessList must be an array")
-		}
+		list = decoded
 	}
 	gas := uint64(21000)
 	if quantity, explicit := hexQuantity(ac.Args["gas"]); explicit {
@@ -479,4 +475,47 @@ func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wal
 		value = new(big.Int)
 	}
 	return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: payload, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
+}
+
+func localAccessList(raw any) ([]accounts.AccessTuple, error) {
+	encoded, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	var list []accounts.AccessTuple
+	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&list); err != nil {
+		return nil, fmt.Errorf("dsl: accessList: %w", err)
+	}
+	if list == nil {
+		return nil, fmt.Errorf("dsl: accessList must be an array")
+	}
+	return list, nil
+}
+
+// sendDynamicAccessList preserves the supplied list during gas estimation and signing.
+func sendDynamicAccessList(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
+	list, err := localAccessList(ac.Args["accessList"])
+	if err != nil {
+		return "", err
+	}
+	gas, explicit := hexQuantity(ac.Args["gas"])
+	if !explicit {
+		message := rpc.SendTxArgs{From: w.Address(), To: to, Data: data, AccessList: list}
+		if value != nil {
+			message.Value = "0x" + value.Text(16)
+		}
+		if err := applyFeeArgs(&message, ac.Args); err != nil {
+			return "", err
+		}
+		client, err := clientFor(ac.Deps, rpcURL)
+		if err != nil {
+			return "", err
+		}
+		if err := client.Call(ctx, "eth_estimateGas", &gas, message); err != nil {
+			return "", err
+		}
+	}
+	return sendWithAccessListGas(ctx, ac, w, to, value, data, gas, rpcURL, list)
 }

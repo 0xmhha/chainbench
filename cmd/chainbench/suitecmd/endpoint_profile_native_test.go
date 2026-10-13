@@ -218,7 +218,10 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "nonce": "$legacyDeployNonce", "gasPrice": "$legacyPrice", "save": "legacyContract"},
 		map[string]any{"expect": "codeAt", "on": "en1", "address": "$legacyContract", "compare": "NotEqual", "is": "0x"},
 		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$legacyContract", "data": "0x00", "gas": "200000", "gasPrice": "$legacyPrice"},
-		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2, "gasPrice": "$legacyPrice"})
+		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2, "gasPrice": "$legacyPrice"},
+		map[string]any{"do": "read", "on": "en1", "source": "gasPrice", "save": "listPrice"},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "listNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$listNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -255,8 +258,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	if rawTransactions.Load() != 24 {
-		t.Fatalf("CLI and MCP must each submit twelve local signatures: %d", rawTransactions.Load())
+	if rawTransactions.Load() != 26 {
+		t.Fatalf("CLI and MCP must each submit thirteen local signatures: %d", rawTransactions.Load())
 	}
 	observedTransactions := []map[string]any{}
 	observedDeployments := []map[string]any{}
@@ -309,13 +312,13 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
 				t.Fatal(err)
 			}
-			if index >= 3 || tx["type"] != []string{"0x2", "0x0", "0x1"}[index] {
+			if index >= 4 || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2"}[index] {
 				t.Fatalf("wrong native transaction type: %+v", tx)
 			}
 			if index > 0 && (tx["input"] != "0xab" || tx["gas"] != "0x11170" || tx["value"] != "0x2") {
 				t.Fatalf("legacy payload/gas/value changed: %+v", tx)
 			}
-			if index == 2 {
+			if index == 2 || index == 3 {
 				list, ok := tx["accessList"].([]any)
 				if !ok || len(list) != 1 {
 					t.Fatalf("access list lost: %+v", tx)
@@ -332,7 +335,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			observedTransactions = append(observedTransactions, tx)
 			index++
 		}
-		if index != 3 {
+		if index != 4 {
 			t.Fatalf("missing native transaction types: %d", index)
 		}
 	}

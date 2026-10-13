@@ -2,9 +2,7 @@ package accounts
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
 	sdktx "github.com/0xmhha/accounts/tx"
 	sdktypes "github.com/0xmhha/accounts/types"
@@ -22,20 +20,9 @@ func (s sdkWallet) SendLegacyTx(ctx context.Context, args LegacyTxArgs) (string,
 		}
 		to = &address
 	}
-	list := make(sdktx.AccessList, len(args.AccessList))
-	for i, tuple := range args.AccessList {
-		address, err := sdktypes.HexToAddress(tuple.Address)
-		if err != nil {
-			return "", fmt.Errorf("accounts: accessList address: %w", err)
-		}
-		list[i].Address = address
-		for _, key := range tuple.StorageKeys {
-			bytes, err := hex.DecodeString(strings.TrimPrefix(key, "0x"))
-			if err != nil || len(bytes) != 32 || !strings.HasPrefix(key, "0x") {
-				return "", fmt.Errorf("accounts: accessList storage key must be 32-byte hex")
-			}
-			list[i].StorageKeys = append(list[i].StorageKeys, sdktypes.BytesToHash(bytes))
-		}
+	list, err := sdkAccessList(args.AccessList)
+	if err != nil {
+		return "", err
 	}
 	nonce := uint64(0)
 	if args.Nonce != nil {

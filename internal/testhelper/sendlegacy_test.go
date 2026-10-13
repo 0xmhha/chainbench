@@ -79,6 +79,7 @@ func TestSendTx_LocalKeyGasPriceSelectsTheTypeTheCaseNamed(t *testing.T) {
 		{"gasPrice alone is legacy", map[string]any{"gasPrice": "1000"}, "legacy"},
 		{"gasPrice with an empty access list is 0x01", map[string]any{"gasPrice": "1000", "accessList": []any{}}, "accessList"},
 		{"no fee field keeps the plain transfer", map[string]any{}, "coin"},
+		{"empty list with dynamic fee caps", map[string]any{"accessList": []any{}, "gas": "21000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, "dynamic"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -90,7 +91,7 @@ func TestSendTx_LocalKeyGasPriceSelectsTheTypeTheCaseNamed(t *testing.T) {
 			if w.called != tc.wantCalled {
 				t.Fatalf("signed as %q, want %q", w.called, tc.wantCalled)
 			}
-			if tc.wantCalled != "coin" && w.gasPrice.Int64() != 1000 {
+			if (tc.wantCalled == "legacy" || tc.wantCalled == "accessList") && w.gasPrice.Int64() != 1000 {
 				t.Errorf("gasPrice = %v, want 1000", w.gasPrice)
 			}
 		})
@@ -107,7 +108,6 @@ func TestSendTx_LocalKeyRefusesFieldsItWouldDrop(t *testing.T) {
 		wantErr string
 	}{
 		{"gasPrice with fee caps", map[string]any{"gasPrice": "1000", "maxFeePerGas": "2000", "maxPriorityFeePerGas": "1"}, "gasPrice"},
-		{"access list without gasPrice", map[string]any{"accessList": []any{}}, "accessList"},
 		{"non-array access list", map[string]any{"gasPrice": "1000", "accessList": map[string]any{"address": testTo}}, "accessList"},
 		{"unknown access list field", map[string]any{"gasPrice": "1000", "accessList": []any{map[string]any{"address": testTo, "typo": true}}}, "accessList"},
 		{"feePayerKey with gas", map[string]any{"feePayerKey": testLocalKey, "gas": "30000"}, "feePayerKey"},

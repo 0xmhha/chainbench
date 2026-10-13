@@ -102,13 +102,14 @@ type LegacyTxArgs struct {
 // and GasTipCap must be non-nil; Gas must be set (no auto-estimation, so a call
 // that would revert or run out of gas still mines with status 0x0).
 type DynamicTxArgs struct {
-	ToHex     string
-	Value     *big.Int
-	Data      []byte
-	Gas       uint64
-	GasFeeCap *big.Int
-	GasTipCap *big.Int
-	Nonce     *uint64
+	ToHex      string
+	Value      *big.Int
+	Data       []byte
+	Gas        uint64
+	GasFeeCap  *big.Int
+	GasTipCap  *big.Int
+	Nonce      *uint64
+	AccessList []AccessTuple
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -357,6 +358,10 @@ func (s sdkWallet) SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (st
 		}
 		toPtr = &to
 	}
+	list, err := sdkAccessList(args.AccessList)
+	if err != nil {
+		return "", err
+	}
 	nonce := uint64(0)
 	if args.Nonce != nil {
 		nonce = *args.Nonce
@@ -373,7 +378,7 @@ func (s sdkWallet) SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (st
 	}
 	t := &sdktx.DynamicFeeTx{
 		ChainID: chainID, Nonce: nonce, GasTipCap: args.GasTipCap, GasFeeCap: args.GasFeeCap,
-		Gas: args.Gas, To: toPtr, Value: args.Value, Data: args.Data,
+		Gas: args.Gas, To: toPtr, Value: args.Value, Data: args.Data, AccessList: list,
 	}
 	if err := t.Sign(s.account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
