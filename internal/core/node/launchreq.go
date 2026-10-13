@@ -14,7 +14,9 @@ package node
 // ports and had no callers. What was left was this request, which is a launch
 // concern rather than a placement one, so it belongs beside the node model.
 type LaunchReq struct {
-	Role   Role
+	Role Role
+	// Server pins allocation to a named server-set host. Empty uses pool order.
+	Server string
 	Sync   string
 	Binary string
 	// Config is a pre-written config file this node uses verbatim, instead of

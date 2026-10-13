@@ -146,11 +146,59 @@ func (i *Inventory) Assign(reqs []Request, network string) (*node.Map, error) {
 	if len(reqs) == 0 {
 		return nil, fmt.Errorf("netmap: no nodes requested")
 	}
-	slots, err := i.Take(len(reqs), network)
+	free := i.free()
+	if len(free) < len(reqs) {
+		return nil, fmt.Errorf("%w: %d nodes requested, %d free of %d host(s) x %d slot(s) = %d (%d short)\n%s",
+			ErrFull, len(reqs), len(free), len(i.pool.Hosts), i.pool.Slots, i.pool.Cap(), len(reqs)-len(free), i.Usage().Holders())
+	}
+	slots := make([]Slot, len(reqs))
+	selected := make(map[Slot]bool, len(reqs))
+	hosts := make(map[string]bool, len(i.pool.Hosts))
+	for _, host := range i.pool.Hosts {
+		hosts[hostKey(host)] = true
+	}
+	// Pins are resolved first: an earlier automatic request must not consume
+	// the only slot a later explicitly pinned node is permitted to use.
+	for index, request := range reqs {
+		if request.Server == "" {
+			continue
+		}
+		if !hosts[request.Server] {
+			return nil, fmt.Errorf("netmap: node %d names unknown server %q", index+1, request.Server)
+		}
+		for _, slot := range free {
+			if slot.Host == request.Server && !selected[slot] {
+				slots[index], selected[slot] = slot, true
+				break
+			}
+		}
+		if slots[index].Index == 0 {
+			return nil, fmt.Errorf("%w: server %q has no free slot for node %d\n%s", ErrFull, request.Server, index+1, i.Usage().Holders())
+		}
+	}
+	for index, request := range reqs {
+		if request.Server != "" {
+			continue
+		}
+		for _, slot := range free {
+			if !selected[slot] {
+				slots[index], selected[slot] = slot, true
+				break
+			}
+		}
+	}
+	placed, err := place(i.pool, slots, reqs)
 	if err != nil {
 		return nil, err
 	}
-	return place(i.pool, slots, reqs)
+	// Commit claims only after every server, capacity and role check passes.
+	if network != "" {
+		placements := placed.Placements()
+		for index, slot := range slots {
+			i.taken[slot] = Holder{Network: network, Node: string(placements[index].Label)}
+		}
+	}
+	return placed, nil
 }
 
 // Release returns every slot network holds. Stopping a node is not a release

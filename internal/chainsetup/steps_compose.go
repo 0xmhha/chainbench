@@ -332,7 +332,7 @@ func (w *Workspace) Netmap() (*node.Map, error) {
 func netmapRequests(reqs []node.LaunchReq) []resource.Request {
 	out := make([]resource.Request, 0, len(reqs))
 	for _, r := range reqs {
-		out = append(out, resource.Request{Role: r.Role})
+		out = append(out, resource.Request{Role: r.Role, Server: r.Server})
 	}
 	return out
 }

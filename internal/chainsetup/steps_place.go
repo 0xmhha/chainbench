@@ -209,14 +209,7 @@ func blueprintPlacements(bp blueprint.Blueprint) ([]node.LaunchReq, []string, er
 			}
 			role = r
 		}
-		// A field this step cannot honour is refused by name rather than
-		// dropped. Silently ignoring a declared value is the failure this whole
-		// track exists to end: the network comes up looking right and running
-		// something the document does not describe.
-		if n.Server != "" {
-			return nil, nil, fmt.Errorf("chainsetup: allocate: blueprint node %d declares server %q, and per-node server placement is not wired yet (N3) — remove it or use a server set", i+1, n.Server)
-		}
-		reqs[i] = node.LaunchReq{Role: role}
+		reqs[i] = node.LaunchReq{Role: role, Server: n.Server}
 		// A sealing node is pinned to full whatever the document says: it must
 		// hold full state, and the declaration cannot make it stateless.
 		modes[i] = syncModeFor(role, n.SyncMode)
@@ -255,6 +248,11 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	if opts.SetPath != "" {
 		w.state.ServerSet = opts.SetPath
+	}
+	for index, request := range reqs {
+		if request.Server != "" && w.state.ServerSet == "" {
+			return "", fmt.Errorf("chainsetup: allocate: node %d names server %q without a server set", index+1, request.Server)
+		}
 	}
 	if pool.Slots < 1 {
 		pool.Slots = 1
@@ -303,8 +301,12 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		if node.Is(p.Role, node.RoleBP) {
 			validators++
 		}
+		server := nameOf[p.Host]
+		if reqs[i].Server != "" && w.state.Target.IsRemote() {
+			server = reqs[i].Server
+		}
 		nodes[i] = node.Record{
-			Server:     nameOf[p.Host],
+			Server:     server,
 			Index:      p.Index,
 			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),

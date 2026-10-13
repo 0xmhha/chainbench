@@ -55,15 +55,12 @@
       다시 확인했다: N4 는 `chainsetup` 직접 파일 쓰기 **0곳**, N6 은 `verbs_steps.go:149` 가 혼용을 거부
       (병존은 **설계된 이관 기간 동작**이지 미완성이 아니다), N5 는 `chaincmd/blueprint.go` 의 두 플래그.
       `placements()` 의 세 갈래도 N6 이 의도한 병존이다. §1m 의 `◐` 를 `☑` 로 고쳤다. 실제 잔여는 아래 한 줄.
-- [ ] **N3 의 빚 둘** — 근거: §1g 표 `N3` 행이 이름을 대고 적어 둔 둘이다. ①**노드별 `server:` 배치** —
-      `internal/chainsetup/steps_place.go:195` 가 무시하지 않고 `not wired yet (N3)` 로 거절한다.
-      ②**BLS 를 패밀리에 묻지 않고 늘 파생** — `internal/chainsetup/steps_keys.go:159·206·228` 이
-      `derive.WithBLS` 를 박아 써서 wbft 가 아닌 체인도 BLS 를 파생한다. 패밀리를 아는 선택은
-      `internal/app/keyring.go:186-188` 에 이미 있다. **성격은 표현이지 정합성이 아니다 (2026-09-20 확인)**:
-      `Derive` 는 `WithBLS` 일 때 `Identity.BLS` 를 더할 뿐 주소도 개인키도 바꾸지 않고,
-      `deriveBLS` 는 순수 Go 라 CGO 도 필요 없다. 어긋나는 것은 `derive/identity.go` 가 선언한
-      "BLS 없음을 0 이 아니라 부재로 표현한다" 는 의도이고, 새는 자리는 `generate`·`declared`
-      경로다(`keyPreset` 은 커밋된 픽스처를 읽기만 한다).
+- [x] **N3 서버 배치·패밀리 BLS — 완료 (2026-10-13)** — 근거: §1g 표 `N3` 행과 [실제 CLI 증거](n3-allocation-evidence.json).
+      blueprint의 노드별 `server`를 슬롯 요청에 전달하고 명시 배치를 먼저 예약한다. 서버 이름·주소 중복,
+      미등록 서버·지정 서버 용량 초과·잘못된 역할은 점유 없이 거절한다. 원격 참조와 로컬 경로의 계약을 보존했다.
+      생성·선언·혼합 키 모두 `ValidatorsCarryBLS()`에 따라 파생하며 주소와 기존 keyPreset은 보존한다.
+      전체 make check·관련 race·세 체인 4노드 CLI 생성·구동·정지·제거를 통과했다.
+
 - [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. **막힘이 풀렸다 (2026-09-20)** — N1~N6 이 전부 끝난
       것으로 확인돼 3단계의 선행 조건이 충족됐다. 3단계는 A8 을 다시 재고 이어서 A7b 를 결정하는 일이다.
 - [x] **통폐합 — 닫을지 판단** — **완료 (2026-09-20). 닫았다.**
@@ -169,7 +166,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
 | 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 완료 — 59건 미등록 RED→90/90 함수 연결 GREEN; typed·키링·네트워크·RPC 계약, 관련 전체 race와 세 체인 native 호출 통과; `feature-registry-evidence.json` |
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
-| 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 미완료 |
+| 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 미완료 |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 미완료 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
