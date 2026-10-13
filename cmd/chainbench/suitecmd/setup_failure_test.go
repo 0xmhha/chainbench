@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,21 +61,22 @@ func tcPath(name string) string {
 // This drives the command itself rather than the mapping function, because the
 // disagreement was in which branch ran, not in how a total was scored.
 func TestRun_SetupFailureAnswersTheSameWayForOneSpecAndSeveral(t *testing.T) {
-	// A binary that cannot exist: the chain gets as far as init and stops.
+	// A binary that cannot exist: valid inputs reach binary provisioning.
 	const noSuchBinary = "/nonexistent/chainbench-test-binary"
+	definitions := setupFailureDefinitions(t, 2)
 
 	cases := []struct {
 		name  string
 		specs []string
 	}{
-		{"one definition", []string{tcPath("01-basic-consensus.json")}},
-		{"several definitions", []string{tcPath("01-basic-consensus.json"), tcPath("02-basic-peers.json")}},
+		{"one definition", definitions[:1]},
+		{"several definitions", definitions},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			// The artifact root is named, so the test's own failure records do
 			// not land in the operator's ~/.chainbench.
-			args := append([]string{"run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json", "--binary", noSuchBinary}, tc.specs...)
+			args := append([]string{"run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(), "--json", "--binary", noSuchBinary, "--keys", repoKeys(t), "--read-only-keys"}, tc.specs...)
 			stdout, _, err := runSplit(t, args...)
 
 			// A definition that could not run is code 2, not 1.
@@ -89,13 +91,15 @@ func TestRun_SetupFailureAnswersTheSameWayForOneSpecAndSeveral(t *testing.T) {
 			if jerr := json.Unmarshal([]byte(stdout), &doc); jerr != nil {
 				t.Fatalf("stdout does not parse as one JSON document: %v\n%s", jerr, stdout)
 			}
-			// The cause has to be identifiable from the document, not only from
-			// the words on stderr. Which step gave out first depends on the
-			// environment the test runs in — a missing key set is reached before
-			// a missing binary — so what is asserted is that the document says,
-			// not which sentence it says.
+			// Each definition must reach the intended binary setup failure.
 			if !carriesACause(doc) {
 				t.Fatalf("the document does not say what failed: %s", stdout)
+			}
+			requireBinarySetupFailure(t, doc, noSuchBinary)
+			if len(tc.specs) > 1 {
+				if runs, _ := doc["runs"].([]any); len(runs) != len(tc.specs) {
+					t.Fatalf("only %d of %d definitions reached setup", len(runs), len(tc.specs))
+				}
 			}
 		})
 	}
@@ -124,14 +128,87 @@ func carriesACause(doc map[string]any) bool {
 	return true
 }
 
+func requireBinarySetupFailure(t *testing.T, doc map[string]any, binary string) {
+	t.Helper()
+	if runs, ok := doc["runs"].([]any); ok {
+		if len(runs) == 0 {
+			t.Fatal("no definitions reached setup")
+		}
+		for _, run := range runs {
+			cause, _ := run.(map[string]any)["error"].(string)
+			if !strings.Contains(cause, binary) {
+				t.Fatalf("definition did not reach binary setup: %s", cause)
+			}
+		}
+		return
+	}
+	cause, _ := doc["error"].(string)
+	if !strings.Contains(cause, binary) {
+		t.Fatalf("did not reach binary setup: %s", cause)
+	}
+	steps, _ := doc["setupSteps"].([]any)
+	if len(steps) == 0 || doc["failedAt"] == nil {
+		t.Fatalf("missing setup execution or failure state: %#v", doc)
+	}
+}
+
 // TestRun_SetupFailureIsCodeTwoWithoutJSONToo: the code is about what happened,
 // not about how it is printed. Only the document is conditional on --json.
 func TestRun_SetupFailureIsCodeTwoWithoutJSONToo(t *testing.T) {
 	_, _, err := runSplit(t, "run", "--workspace-dir", t.TempDir(), "--artifact-root", t.TempDir(),
-		"--binary", "/nonexistent/chainbench-test-binary", tcPath("01-basic-consensus.json"))
+		"--keys", repoKeys(t), "--read-only-keys", "--binary", "/nonexistent/chainbench-test-binary", setupFailureDefinitions(t, 1)[0])
 	if got := codeOf(t, err); got != 2 {
 		t.Fatalf("exit code = %d, want 2 without --json as well: %v", got, err)
 	}
+	if !strings.Contains(err.Error(), "/nonexistent/chainbench-test-binary") {
+		t.Fatalf("did not reach binary setup: %v", err)
+	}
+}
+
+// Validate each distinct definition before exercising setup. A missing or
+// malformed fixture must fail here, never masquerade as the requested failure.
+func setupFailureDefinitions(t *testing.T, count int) []string {
+	t.Helper()
+	source, err := os.ReadFile(tcPath("07-basic-wbft-consensus.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var definition map[string]any
+	if err := json.Unmarshal(source, &definition); err != nil {
+		t.Fatal(err)
+	}
+	presetPath, err := filepath.Abs(filepath.Join("..", "..", "..", "presets", "chain", "stablenet-bp4-en1.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	presetData, err := os.ReadFile(presetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var preset map[string]any
+	if err := json.Unmarshal(presetData, &preset); err != nil {
+		t.Fatal(err)
+	}
+	preset["keys"] = map[string]any{"nodekeys": map[string]any{"ref": repoKeys(t), "source": "keyPreset"}}
+	definition["chainPreset"] = preset
+	directory := t.TempDir()
+	var paths []string
+	for n := 0; n < count; n++ {
+		definition["id"] = fmt.Sprintf("setup-failure-%d", n)
+		encoded, err := json.Marshal(definition)
+		if err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join(directory, fmt.Sprintf("case-%d.json", n))
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if output, err := run(t, "validate", path); err != nil {
+			t.Fatalf("invalid setup fixture: %v\n%s", err, output)
+		}
+		paths = append(paths, path)
+	}
+	return paths
 }
 
 // TestRun_SetupFailureDocumentCarriesNoKeyMaterial: the failure document is a
