@@ -16,6 +16,7 @@ import sys
 import uuid
 from evidence import digest
 from runtime_contract import base_commit, runtime_root, source_digest
+from runtime_storage import reclaim_evidence
 
 
 def now():
@@ -65,6 +66,7 @@ def run(criterion, proofs, required, checks, scenarios, source_patterns, verify)
             receipts[name] = receipt
             for file in ['receipt.json'] + files:
                 shutil.copy2(development / file, output / f'{name}-{file}')
+            reclaim_evidence(development)
             evidence['proofs'].append({'name': name, 'startedAt': proof_started, 'runtime': receipt['runtime'], 'dashboardSHA256': receipt['dashboardSHA256'], 'browserVersion': receipt.get('browserVersion'), 'binaries': receipt.get('binaries')})
         observed = now()
         evidence['scenarios'] = scenarios(receipts, output)

@@ -309,3 +309,23 @@ real open-file protection, native compression, reference retention and isolated
 deletion. It also checks the 56 receipts in the retained refactor campaign audit;
 the real acceptance runtime root is inspected without deletion. It needs macOS
 process/open-file inventory access and that campaign's retained audit paths.
+
+New proof runtimes now use `runtime_storage.create_runtime`: a 20 GiB free-space
+preflight runs before creation, and a private ownership marker distinguishes these
+fixtures from historical or user data. Successful criterion captures reclaim only
+unreferenced `chaindata`, `lightchaindata` and `etcd` directories beneath numbered
+nodes. Development proofs assembled into a criterion are reclaimed one by one.
+Configuration, logs, binaries, process ledgers, source, receipts, exported snapshots
+and sessions remain available to the unchanged validators. Failed proofs keep their
+node data for diagnosis. A process/open-file inventory failure or activity refuses
+cleanup; every deletion has a durable `storage-audit.jsonl` inside its runtime.
+
+Independent reproductions also discard their staged `node_modules` after passing;
+the staged source and fresh receipts remain. macOS stages large files and native
+binaries with APFS copy-on-write rather than hard links: writes to the copy cannot
+change its input. Other filesystems use independent ordinary copies. Historical
+unmarked runtimes remain subject to the explicit maintenance command above.
+`PYTHONDONTWRITEBYTECODE=1 WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3
+ tests/webui/runtime_storage_probe.py` checks three bounded 128 MiB fixtures with
+real open-file protection, repeated reclamation, metadata retention, APFS isolation
+and hashes of existing runtime JSON proofs. Its report is kept under `/private/tmp`.

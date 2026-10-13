@@ -3,6 +3,7 @@
 WEBUI_REPLACEMENT_BINARY must name a genuine second WBFT native build. This
 development proof never substitutes simulated processes or awards a criterion.
 """
+from runtime_storage import clone_file
 import hashlib
 import json
 import os
@@ -25,7 +26,7 @@ def replacement_input(runtime, source_keys, output):
     if digest == base['sha256']:
         raise RuntimeError('replacement fixture must have distinct executable bytes')
     candidate = runtime / 'replacement-wbft'
-    shutil.copy2(source, candidate)
+    clone_file(source, candidate)
     (output / 'replacement-version.txt').write_text(version)
     return {'replacementPath': str(candidate), 'replacementSHA256': digest,
             'replacementCommit': base['commit']}

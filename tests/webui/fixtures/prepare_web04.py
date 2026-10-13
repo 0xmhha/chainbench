@@ -1,4 +1,5 @@
 """Prepare isolated native chain assets and record independent source provenance."""
+from runtime_storage import clone_file
 import glob
 import json
 from pathlib import Path
@@ -23,7 +24,7 @@ def prepare(runtime,output):
         marker={'stablenet':'Anzeon','wbft':'Croissant','wemix':'Wemix'}[chain]
         if marker not in config:
             raise RuntimeError('binary source commit does not carry expected chain engine: '+chain)
-        destination=runtime/(chain+'-node');shutil.copy2(source,destination)
+        destination=runtime/(chain+'-node');clone_file(source,destination)
         assets.append({'id':chain,'chain':chain,'path':str(destination),'sha256':digest(destination),'commit':commit})
         help_text=subprocess.check_output([str(destination),'--help'],text=True)
         (output/(chain+'-version.txt')).write_text(version)

@@ -2,6 +2,7 @@
 source, a reproducible SPA build served by the real Go server, every route
 navigated and refreshed in a browser, and the mandatory regression checks with
 every gated live Go test opened."""
+from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
 import datetime
@@ -125,8 +126,7 @@ def main():
     invocation = str(uuid.uuid4())
     started = now()
     before = source_digest(Path.cwd())
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-14', 'invocationId': invocation, 'sourceDigest': before, 'scenarios': [], 'checks': [], 'artifacts': []}
     failures, server, handles = [], None, []
     staged = stage_sources(Path.cwd(), runtime)

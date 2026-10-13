@@ -1,5 +1,6 @@
 """Fresh WEB-05 proof: browser editing, corpus round trip and a Web test job
 that executes every builtin argument path on native gstable."""
+from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit, source_digest, stage_sources
 
 import datetime
@@ -101,8 +102,7 @@ def main():
     invocation = str(uuid.uuid4())
     started = now()
     before = source_digest(Path.cwd())
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-05', 'invocationId': invocation, 'scenarios': [], 'checks': [], 'artifacts': [], 'sourceDigest': before}
     failures, server, handles = [], None, []
     source = stage_sources(Path.cwd(), runtime)

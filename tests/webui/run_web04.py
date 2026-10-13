@@ -1,4 +1,5 @@
 """WEB-04 fixture runner; writes incomplete receipts on any missing live evidence."""
+from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit
 from browser_process import run_browser
 
@@ -41,8 +42,7 @@ def main():
     started = now()
     for old in out.iterdir():
         if old.is_file(): old.unlink()
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True,mode=0o700)
+    runtime = create_runtime(invocation)
     server = None
     handles = []
     evidence = {'criterion': 'WEB-04', 'invocationId': invocation, 'scenarios': [], 'artifacts': []}

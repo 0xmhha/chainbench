@@ -1,4 +1,5 @@
 """Fresh native binary surface evidence for preset composition; no node changes."""
+from runtime_storage import clone_file
 import glob
 import hashlib
 import json
@@ -28,7 +29,7 @@ def prepare(runtime, output):
             raise RuntimeError('missing selected native binary: ' + chain)
         source = Path(matches[0])
         destination = runtime / (chain + '-node')
-        shutil.copy2(source, destination)
+        clone_file(source, destination)
         version = subprocess.check_output([str(destination), 'version'], text=True)
         commit = re.search(r'Git Commit: ([0-9a-f]{40})', version).group(1)
         config = subprocess.check_output(['git', '-C', selected['repository'], 'show', commit + ':params/config.go'], text=True)
@@ -42,7 +43,7 @@ def prepare(runtime, output):
         catalog = {'stablenet': 'gstable', 'wbft': 'gwbft', 'wemix': 'gwemix'}[chain]
         directory = output / (chain + '-surface')
         subprocess.check_call(['bash', 'scripts/chain-analysis/capture-cli.sh', selected['repository'], str(destination), str(directory)], stdout=subprocess.DEVNULL)
-        shutil.copy2(Path('docs/chain-analysis') / catalog / 'cli-graph.md', directory / 'cli-graph.md')
+        clone_file(Path('docs/chain-analysis') / catalog / 'cli-graph.md', directory / 'cli-graph.md')
         probe = subprocess.run(['bash', 'scripts/chain-analysis/verify-docs.sh', str(destination), str(directory)], capture_output=True, text=True)
         (directory / 'verify.log').write_text(probe.stdout + probe.stderr)
         if probe.returncode:

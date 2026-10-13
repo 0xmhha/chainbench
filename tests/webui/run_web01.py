@@ -1,5 +1,6 @@
 """Create fresh, fail-closed WEB-01 receipts, even if a prerequisite fails."""
 from runtime_contract import runtime_root, base_commit
+from runtime_storage import create_runtime
 
 import datetime
 import json
@@ -37,7 +38,7 @@ def main():
                                    'log': str(logfile), 'sha256': digest(logfile)})
         if run.returncode:
             failures.append(command + ' failed')
-    runtime = runtime_root() / invocation
+    runtime = create_runtime(invocation)
     process = None
     try:
         prepared = subprocess.run(['bash', 'tests/webui/prepare.sh', invocation], capture_output=True, text=True)

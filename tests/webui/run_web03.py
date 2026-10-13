@@ -1,4 +1,5 @@
 """Fresh WEB-03 browser + dedicated SSH acceptance, with no mock or skipped target."""
+from runtime_storage import create_runtime
 from runtime_contract import runtime_root, base_commit
 
 import datetime
@@ -73,8 +74,7 @@ def main():
             p.unlink()
     invocation = str(uuid.uuid4())
     started = now()
-    runtime = runtime_root() / invocation
-    runtime.mkdir(parents=True, mode=0o700)
+    runtime = create_runtime(invocation)
     evidence = {'criterion': 'WEB-03', 'invocationId': invocation, 'scenarios': [], 'checks': []}
     failures = []
     server = sshd = None

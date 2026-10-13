@@ -8,6 +8,7 @@ import sys
 import tempfile
 from capture import RUNNERS, verify_published
 from runtime_contract import base_commit, runtime_root, source_digest, stage_sources
+from runtime_storage import create_runtime, reclaim_runtime
 
 
 def check(criterion, output):
@@ -31,7 +32,7 @@ def check(criterion, output):
     selection = workspace / '.ouroboros/web-ui-analysis/selected-binaries/manifest.json'
     if selection.is_file() and 'WEBUI_SELECTED_BINARIES' not in env:
         env['WEBUI_SELECTED_BINARIES'] = str(selection)
-    runtime = Path(tempfile.mkdtemp(prefix='recheck-', dir=root))
+    runtime = create_runtime(prefix='recheck-')
     source = stage_sources(workspace, runtime)
     if source_digest(source) != before:
         raise ValueError('Staged source differs from protected source')
@@ -49,6 +50,7 @@ def check(criterion, output):
     after = {str(p.relative_to(directory)): p.read_bytes() for p in directory.rglob('*') if p.is_file()}
     if protected != after:
         raise ValueError('Protected evidence mutated during recheck')
+    reclaim_runtime(runtime, [str(directory)])
     print('Independent fresh evidence: ' + str(fresh_directory))
     print(criterion + ' PASS (fresh reproduction; protected source/evidence unchanged)')
 
