@@ -25,6 +25,9 @@ import (
 func Unresolved(s dsl.Spec, reg Registry) []string {
 	seen := map[string]bool{}
 	bound := map[string]bool{}
+	for name := range s.EnvValues {
+		bound[name] = true
+	}
 
 	// checkAction validates one action entry and records what it saves.
 	checkAction := func(entry map[string]any) {

@@ -485,7 +485,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		defer estimateMu.Unlock()
 		return append([]map[string]any(nil), estimates...)
 	})
-	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/app/testcase_delegation_test.go", "../../../internal/testhelper/delegated_creation_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
+	presetValueRuns := requireNativePresetValues(t, ctx, fixture, chain, endpoint.RPCURL, signedSpec["chainPreset"], &rawTransactions)
+	assetSources := []string{"../../../internal/dsl/preset_values.go", "../../../internal/dsl/preset_values_test.go", "../../../internal/dsl/spec.go", "../../../internal/dsl/parse_v2.go", "../../../internal/dsl/interp/binding.go", "../../../internal/dsl/interp/run.go", "../../../internal/dsl/interp/resolve.go", "../../../internal/dsl/interp/preset_values_test.go", "../../../internal/app/preset_values_test.go", "../../../internal/app/web_document_secrets.go", "../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/app/testcase_delegation_test.go", "../../../internal/testhelper/delegated_creation_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -516,6 +517,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
 	proof["chain"] = chain
 	proof["delegatedCreations"] = delegatedCreations
+	proof["presetValueRuns"] = presetValueRuns
 	proof["invalidNumericRuns"] = invalidNumericRuns
 	proof["submissionRejections"] = frozenRejections
 	proof["applepieBlock"] = *genesis.Config.ApplepieBlock

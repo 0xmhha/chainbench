@@ -67,6 +67,9 @@ func ParseChainPreset(raw []byte) (ChainPresetV2, error) {
 	if env.ID == "" || env.Chain == "" {
 		return ChainPresetV2{}, fmt.Errorf("dsl: env needs \"id\" and \"chain\"")
 	}
+	if err := validatePresetValues(env.Values); err != nil {
+		return ChainPresetV2{}, err
+	}
 	return env, nil
 }
 

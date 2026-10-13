@@ -31,6 +31,7 @@ function compatible(schema, value) {
     return Object.entries(schema.properties??{}).every(([k,p])=>!Object.hasOwn(value,k)||compatible(p,value[k]))
   }
   if(schema.type==='array')return Array.isArray(value)
+  if(schema.type==='null')return value===null
   return schema.type===undefined||schema.type===typeof value||(schema.type==='integer'&&Number.isInteger(value))
 }
 export function selectedVariant(choices, value) {
@@ -47,6 +48,7 @@ export function initial(schema, root) {
   }
   if (schema.type === 'array') return []
   if (schema.type === 'boolean') return false
+  if (schema.type === 'null') return null
   if (schema.type === 'integer' || schema.type === 'number') return 0
   return ''
 }
@@ -78,14 +80,20 @@ export function references(doc, roles = [], defaults = {}, presets = {}) {
   }
   else if (topology.nodes) topology.nodes.forEach((n,i) => nodes.push(`node${n.index ?? i+1}`))
   else { let count=0; for (const role of roles) for(let i=1;i<=(topology[role]??0);i++){nodes.push(`${role}${i}`);nodes.push(`node${++count}`)} }
-  const bindings = []
+  const values={...inherited.values}
+  if(own.values===null){for(const name of Object.keys(values))delete values[name]}
+  else for(const [name,value] of Object.entries(own.values??{})){
+    if(ref&&value===null)delete values[name]
+    else values[name]=value
+  }
+  const bindings = Object.keys(values).sort().map(name=>'$'+name)
   const before = new Map()
   const lists=legacy?[['/content/preActions',doc?.preActions],['/content/steps',doc?.steps],['/content/assertions',doc?.assertions],['/content/postActions',doc?.postActions]]:[['/content/hooks/pre',doc?.hooks?.pre],['/content/steps',doc?.steps],['/content/hooks/post',doc?.hooks?.post],['/content/hooks/onFail',doc?.hooks?.onFail]]
   for (const [path,list] of lists) {
     for (const [i,statement] of (list ?? []).entries()) {
       before.set(`${path}/${i}`, [...bindings])
       const args=legacy&&path!=='/content/assertions'?(Object.values(statement)[0]??{}):statement
-      for (const key of ['save','saveKey']) if (args[key]) bindings.push('$'+args[key])
+      for (const key of ['save','saveKey']) if (args[key]&&!bindings.includes('$'+args[key])) bindings.push('$'+args[key])
     }
   }
   const accounts=Object.keys({...inherited.accounts,...own.accounts})

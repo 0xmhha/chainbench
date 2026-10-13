@@ -82,6 +82,10 @@ type Spec struct {
 	Sequence []Statement `json:"-"`
 	// OnFailActions run when the case fails (v2 hooks.onFail). Runtime-only.
 	OnFailActions []map[string]any `json:"-"`
+	// EnvValues are preset-provided initial bindings. Runtime-only; v1 keeps
+	// its grammar and declarations are retained in the original v2 content.
+	EnvValues map[string]any `json:"-"`
+
 	// EnvKeys is the v2 env's node-key source declaration, for the surface to
 	// fold into the engine's KeySource boundary. Runtime-only.
 	EnvKeys *KeySourceV2 `json:"-"`

@@ -250,6 +250,33 @@ try{
  await page.screenshot({path:out+'/delegation-editor.png',fullPage:true})
  observed.feeDelegation={declaredAccountSelector:true,conflictingFieldsUnavailable:true,conflictingImportPreserved:true,conflictRejected:true,incompleteFeePairRejected:true,keyBindingAndExportPreserved:true}
 
+ // Preset initial values are typed data and available before the first step.
+ const valueCase=structuredClone(endpointCase)
+ valueCase.id='values-browser'
+ valueCase.chainPreset.values={limit:2,recipient:'0x000000000000000000000000000000000000dead',payload:{items:[1,true,null]}}
+ valueCase.steps=[{do:'waitBlock',on:'en1',target:'$limit'},{expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'$limit'}]
+ await upload.setInputFiles(file('values.json',valueCase))
+ const valuesPath='/content/chainPreset/values'
+ await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('enabled')
+ await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
+ await page.getByLabel(valuesPath+'/enabled 형식',{exact:true}).selectOption('2')
+ await page.getByLabel(valuesPath+'/enabled',{exact:true}).check()
+ assert.equal(await page.getByLabel(valuesPath+'/payload/items/2 형식',{exact:true}).inputValue(),'3','null rendered as a string')
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const initialNames=await page.locator('[id="/content/steps/0/target-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))
+ for(const name of ['$limit','$recipient','$payload','$enabled'])assert.ok(initialNames.includes(name),name)
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const valueDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await valueDownload).saveAs(out+'/preset-values-export.json')
+ valueCase.chainPreset.values.enabled=true
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/preset-values-export.json','utf8')),valueCase)
+ await page.screenshot({path:out+'/preset-values-editor.png',fullPage:true})
+ observed.presetValues={typedBooleanAuthoring:true,nestedNullPreserved:true,initialReferencesOffered:true,validationAndExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)

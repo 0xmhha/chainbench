@@ -369,6 +369,10 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 		if _, ok := value.(string); !ok {
 			return fmt.Errorf("%s: expected string", path)
 		}
+	case "null":
+		if value != nil {
+			return fmt.Errorf("%s: expected null", path)
+		}
 	case "boolean":
 		if _, ok := value.(bool); !ok {
 			return fmt.Errorf("%s: expected boolean", path)

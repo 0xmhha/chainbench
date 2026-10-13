@@ -65,6 +65,9 @@ func casePreset(c CaseV2) (ChainPresetV2, error) {
 	if env.Chain == "" {
 		return ChainPresetV2{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
+	if err := validatePresetValues(env.Values); err != nil {
+		return ChainPresetV2{}, err
+	}
 	if err := checkAttach(c.ID, env); err != nil {
 		return ChainPresetV2{}, err
 	}
@@ -104,6 +107,7 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
 		EnvAttach:        env.Attach,
+		EnvValues:        env.Values,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the

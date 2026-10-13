@@ -163,3 +163,22 @@ test('mutually exclusive transaction fields cannot be added together',async()=>{
  assert.deepEqual([...forbiddenFields(schema,{feePayerKey:'$key'})],['feePayer'])
  assert.deepEqual([...forbiddenFields(schema,{})],[])
 })
+
+test('preset values are offered before hooks with deep-merge deletion and shadowing',()=>{
+ const base={values:{count:1,inherited:true,removed:'old'}}
+ const own={schemaVersion:'2',chainPreset:{extends:'base',values:{count:2,removed:null,recipient:'0xabc'}},hooks:{pre:[{do:'read',source:'blockNumber',save:'count'}]},steps:[{expect:'blockNumber',is:'$count'}]}
+ const before=JSON.stringify({base,own})
+ const choices=references(own,['bp'],{}, {base})
+ assert.deepEqual(choices.before.get('/content/hooks/pre/0'),['$count','$inherited','$recipient'])
+ assert.deepEqual(choices.before.get('/content/steps/0'),['$count','$inherited','$recipient'])
+ assert.equal(JSON.stringify({base,own}),before)
+ assert.ok(references({schemaVersion:'2',chainPreset:{values:{empty:null}},steps:[{expect:'blockNumber'}]}).before.get('/content/steps/0').includes('$empty'))
+})
+test('recursive preset JSON values expose a real null variant',async()=>{
+ const fs=await import('node:fs')
+ const root=JSON.parse(fs.readFileSync(new URL('../../internal/dsl/schema/v2.schema.json',import.meta.url),'utf8'))
+ const choices=variants({$ref:'#/$defs/presetValue'},root)
+ assert.equal(choices.length,6)
+ assert.equal(selectedVariant(choices,null),3)
+ assert.equal(initial(choices[3],root),null)
+})

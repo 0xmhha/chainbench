@@ -15,7 +15,7 @@ import (
 // independent of the verdict). It records each step/assertion and the final
 // status, and returns that status.
 //
-// Bindings are scoped to this call: a step that declares "save" binds its result
+// Bindings start from preset values and are scoped to this call. "save" binds a result
 // for later steps and assertions to reference as "$name" (see binding.go). The
 // scope is per-run, so nothing leaks between tests and the interpreter itself
 // stays free of shared state.
@@ -32,7 +32,7 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 		ctx, cancel = context.WithTimeout(ctx, d)
 		defer cancel()
 	}
-	binds := Bindings{}
+	binds := initialBindings(s.EnvValues)
 
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {

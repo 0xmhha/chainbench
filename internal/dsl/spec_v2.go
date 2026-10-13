@@ -70,7 +70,10 @@ type ChainPresetV2 struct {
 	// it is read, rather than in a file beside it.
 	Description string `json:"description,omitempty"`
 	Target      string `json:"target,omitempty"`
-	Chain       string `json:"chain"`
+	// Values are typed initial bindings for each case run. They do not change
+	// the network composition and are shadowed by later saved results.
+	Values map[string]any `json:"values,omitempty"`
+	Chain  string         `json:"chain"`
 	// Manifest is an external, project-supplied chain manifest JSON, run on the
 	// built-in family named by Chain; GenesisTemplate is its genesis template.
 	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
