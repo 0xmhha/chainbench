@@ -1,6 +1,6 @@
 <script>
  import Field from './DSLField.svelte'
- import {variants, selectedVariant, variantLabel, initial, valueProblem} from './dsl-form.js'
+ import {variants, selectedVariant, variantLabel, initial, valueProblem, forbiddenFields} from './dsl-form.js'
  // errors maps a field path to the engine's message about it; that field is
  // marked invalid and described by the message.
  let {schema,root,value,path='/content',label='문서',onchange,suggestions={nodes:[],before:new Map()},errors={}}=$props()
@@ -15,7 +15,8 @@
  const current=$derived(choices[index]??{})
  const type=$derived(current.type??(current.properties?'object':Array.isArray(value)?'array':value===null?'null':typeof value==='object'?'object':typeof value))
  const properties=$derived(current.properties??{})
- const optional=$derived(Object.keys(properties).filter(k=>!(value && Object.hasOwn(value,k))))
+ const forbidden=$derived(forbiddenFields(current,value))
+ const optional=$derived(Object.keys(properties).filter(k=>!forbidden.has(k)&&!(value && Object.hasOwn(value,k))))
  const refs=$derived([...suggestions.before].find(([prefix])=>path.startsWith(prefix+'/'))?.[1]??[])
  function update(k,v){onchange({...value,[k]:v})}
  function remove(k){const next={...value};delete next[k];onchange(next)}
@@ -40,6 +41,7 @@
     <div class="row">
      <Field schema={properties[name]??(typeof current.additionalProperties==='object'?current.additionalProperties:{})} {root} value={child} path={`${path}/${name}`} label={name} {suggestions} {errors} onchange={v=>update(name,v)} />
      {#if !current.required?.includes(name) && properties[name]?.const===undefined}<button aria-label={`${path}/${name} 삭제`} onclick={()=>remove(name)}>삭제</button>{/if}
+     {#if forbidden.has(name)}<p role="alert">현재 형식에서 허용하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
      {#if !Object.hasOwn(properties,name) && current.additionalProperties===false}<p role="alert">지원하지 않는 필드입니다: {name}. 직접 삭제할 때까지 그대로 둡니다.</p>{/if}
     </div>
    {/each}

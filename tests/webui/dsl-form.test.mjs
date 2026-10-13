@@ -109,3 +109,42 @@ test('an attached network offers its endpoints by position only',()=>{
  assert.deepEqual(nodes.filter(n=>n.startsWith('node')),['node1','node2'])
  assert.ok(!nodes.some(n=>/^(bp|en|pn)\d/.test(n)))
 })
+
+test('structured attach profiles expose only their declared role selectors and positions',()=>{
+ const doc={chainPreset:{attach:{endpoints:[{rpc:'http://a',role:'bp'},{rpc:'http://b',role:'en'},{rpc:'http://c'}]}},steps:[]}
+ const names=references(doc,['bp','en','pn']).nodes
+ for(const name of ['node1','node2','node3','bp','bp1','en','en1','en2'])assert.ok(names.includes(name),name)
+ for(const name of ['node4','bp2','pn','pn1'])assert.ok(!names.includes(name),name)
+})
+
+test('object constraints produce distinguishable required alternatives without changing values',()=>{
+ const schema={type:'object',additionalProperties:false,properties:{rpc:{type:'array'},endpoints:{type:'array'}},oneOf:[{title:'RPC URLs',required:['rpc'],not:{required:['endpoints']}},{title:'Profiles',required:['endpoints'],not:{required:['rpc']}}]}
+ const value={endpoints:[{rpc:'http://node'}]};const before=JSON.stringify(value)
+ const choices=variants(schema,{})
+ assert.equal(choices.length,2)
+ assert.equal(selectedVariant(choices,value),1)
+ assert.deepEqual(initial(choices[1],{}),{endpoints:[]})
+ assert.equal(JSON.stringify(value),before)
+})
+
+test('endpoint and auth constraints hide forbidden additions while preserving imported fields',async()=>{
+ const fs=await import('node:fs');const {forbiddenFields}=await import('../../web/src/dsl-form.js')
+ const contract=JSON.parse(fs.readFileSync(new URL('../../internal/dsl/schema/v2.schema.json',import.meta.url),'utf8'))
+ const attach=contract.$defs.envSpec.properties.attach
+ const choices=variants(attach,contract)
+ assert.equal(choices.length,2)
+ assert.deepEqual([...forbiddenFields(choices[0],{rpc:[]})],['endpoints'])
+ assert.deepEqual([...forbiddenFields(choices[1],{endpoints:[]})],['rpc'])
+ const auth=attach.properties.endpoints.items.properties.auth
+ const imported={type:'jwt',env:'TOKEN',header:'X-Ignored'};const before=JSON.stringify(imported)
+ assert.deepEqual([...forbiddenFields(auth,imported)],['header'])
+ assert.deepEqual([...forbiddenFields(auth,{type:'api-key',env:'TOKEN'})],[])
+ assert.equal(JSON.stringify(imported),before,'a forbidden imported field was discarded')
+})
+
+test('profile role selectors also follow the imported shared preset',()=>{
+ const external={schemaVersion:'2',kind:'chain-preset',id:'external',chain:'wbft',attach:{endpoints:[{rpc:'http://a',role:'bp'},{rpc:'http://b',role:'en'}]}}
+ const names=references({schemaVersion:'2',chainPreset:'external',steps:[]},['bp','en','pn'],{}, {external}).nodes
+ for(const name of ['node1','node2','bp1','en1'])assert.ok(names.includes(name),name)
+ assert.ok(!names.includes('node3'))
+})

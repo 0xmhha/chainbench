@@ -1,0 +1,44 @@
+{
+  "scope": "R2 editor connection; development proof only, no final Seed criterion awarded",
+  "tests": 63,
+  "redLogs": [
+    "/private/tmp/chainbench-r2-ui-red.log",
+    "/private/tmp/chainbench-r2-ui-shared-red.log"
+  ],
+  "browserReceipt": "chainbench-out/web-ui-development/dsl-editor/receipt.json",
+  "browserReceiptSHA256": "8395866cab605ac2aa907c361e0d6584994c116e4f1ce498b21ff84d5380a05d",
+  "runtime": "/private/tmp/cbui/8d35cfd8-01af-481c-b306-b0aed7e21e2a",
+  "sourceDigestDuringProof": "064fc6fc74d41f32758663fae6b4c1878a4cdd0029d35ef0c58f9cdc8e77921d",
+  "sourceFiles": {
+    "web/src/dsl-form.js": "5b2ff20fdf3a3057fed7beab2e918f87a745946f6de3277ebf590b081be40d7a",
+    "web/src/DSLField.svelte": "6a2f8e1e6a0c84fa1f4f688bd1c22b0f6fe1f5d8f7ba6e6104e244448f3a59e6",
+    "web/src/DSLEditor.svelte": "cc5f067780f3b3c3d9589bab02e66bc6c89bd8b9a9e0a1805741b3757abe33ca",
+    "tests/webui/dsl-form.test.mjs": "7d9dedccf9da625f071c93b0803ddccf17f216b87368a0de0736e1db0a7c4c16",
+    "tests/webui/browser_dsl_editor.mjs": "8d7cba9da0a0aad36d0b2d61a1176ff1024cafa32a874531cb7f4509c622df42",
+    "internal/dashboard/spa/index.html": "efe0198c858c9683569a7492042272b5da1814818824f6ca7a59fb6fbd021e78",
+    "internal/dashboard/spa/assets/index-Hqdq7BF3.js": "1bc33024451ebf44af9c44797563f1b5bcc1e85385c488694d460290f57c3697",
+    "internal/dashboard/spa/assets/index--HlbxhPr.css": "d58a56c56763c7b0cc61f097b79b216a0156031fa9d8035242711d6048ab13bf"
+  },
+  "browserChecks": {
+    "roleSelectors": [
+      "node1",
+      "bp",
+      "bp1",
+      "node2",
+      "en",
+      "en1"
+    ],
+    "importExportPreserved": true,
+    "exclusiveForms": true,
+    "jwtOmitsHeader": true
+  },
+  "nativeCancellation": {
+    "jobId": "0c13a14017c7d395def84ff15b968083",
+    "disposition": "cleaned"
+  },
+  "nodeDatabasesRemoved": true,
+  "sourceUnchangedDuringProof": true,
+  "firstFixtureFailure": "remote browser download.path unavailable; changed to existing saveAs pattern and reran",
+  "firstFixtureFailureLog": "/private/tmp/chainbench-r2-ui-download-red.log",
+  "finalWeb14Acceptance": "pending"
+}

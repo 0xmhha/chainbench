@@ -86,6 +86,34 @@ try{
  assert.ok(observed.importDiff.length>0)
  await page.screenshot({path:out+'/dsl-editor.png',fullPage:true})
 
+ // The structured external profile has its own form, role selectors, and
+ // conditional auth fields. No RPC request is sent during editor validation.
+ const endpointCase={schemaVersion:'2',kind:'case',id:'endpoint-browser',chainPreset:{schemaVersion:'2',kind:'chain-preset',id:'external',chain:'wbft',attach:{endpoints:[{rpc:'http://example.invalid/bp',role:'bp'},{rpc:'http://example.invalid/en',role:'en',auth:{type:'jwt',env:'TEST_TOKEN'}}]}},steps:[{expect:'blockNumber',on:'en1',is:0}]}
+ await upload.setInputFiles(file('endpoints.json',endpointCase))
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.locator('[data-tree-path=""]').click()
+ const attachPath='/content/chainPreset/attach'
+ const selector=page.getByLabel(attachPath+' 형식',{exact:true})
+ assert.equal(await selector.inputValue(),'1','profile was rendered as RPC list')
+ const add=page.getByLabel(attachPath+' 필드 추가',{exact:true})
+ assert.ok(!(await add.locator('option').allTextContents()).some(text=>text.trim()==='rpc'),'conflicting rpc field is addable')
+ const authAdd=page.getByLabel(attachPath+'/endpoints/1/auth 필드 추가',{exact:true})
+ if(await authAdd.count())assert.ok(!(await authAdd.locator('option').allTextContents()).some(text=>text.trim()==='header'),'jwt offers ignored header')
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const on=page.getByLabel('/content/steps/0/on',{exact:true})
+ const names=await page.locator('[id="/content/steps/0/on-suggestions"] option').evaluateAll(options=>options.map(option=>option.value))
+ assert.ok(names.includes('en1')&&names.includes('bp1')&&names.includes('node2'),JSON.stringify(names))
+ await on.fill('en1')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ const exportedPromise=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ const exported=await exportedPromise
+ const filePath=out+'/endpoint-case-export.json'
+ await exported.saveAs(filePath)
+ assert.deepEqual(JSON.parse(fs.readFileSync(filePath,'utf8')),endpointCase,'editor changed the imported endpoint declaration')
+ observed.endpointProfile={roleSelectors:names,importExportPreserved:true,exclusiveForms:true,jwtOmitsHeader:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)

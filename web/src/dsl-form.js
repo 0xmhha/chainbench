@@ -5,11 +5,16 @@ export function resolve(schema, root) {
 export function variants(schema, root) {
   schema = resolve(schema, root)
   const choices = schema.oneOf ?? schema.anyOf
-  if (!choices || schema.properties) return [schema]
+  if (!choices) return [schema]
+  if (schema.properties) {
+    if (!choices.every(choice=>choice.required)) return [schema]
+    return choices.map(choice=>({...schema,...choice,properties:{...schema.properties,...choice.properties},required:[...new Set([...(schema.required??[]),...(choice.required??[])])],oneOf:undefined,anyOf:undefined}))
+  }
   return choices.flatMap(choice => variants(choice, root))
 }
 export function variantLabel(schema, index) {
   if(schema.title) return schema.title
+  if(schema.not?.required && schema.required?.length) return schema.required.join(' / ')
   const p = schema.properties ?? {}
   if (p.do?.const) return `do ${p.do.const}${p.source?.const ? ' · ' + p.source.const : ''}`
   if (p.expect?.const) return `expect ${p.expect.const}`
@@ -17,10 +22,13 @@ export function variantLabel(schema, index) {
 }
 function compatible(schema, value) {
   if(schema.const!==undefined)return schema.const===value
+  if(schema.enum && !schema.enum.includes(value))return false
+  if(schema.required?.some(k=>!value || !Object.hasOwn(value,k)))return false
+  if(schema.not?.required?.every(k=>value && Object.hasOwn(value,k)))return false
   if(schema.type==='object'){
     if(!value||typeof value!=='object'||Array.isArray(value))return false
-    if(schema.additionalProperties===false && (schema.required?.some(k=>!Object.hasOwn(value,k)) || Object.keys(value).some(k=>!Object.hasOwn(schema.properties??{},k))))return false
-    return Object.entries(schema.properties??{}).every(([k,p])=>!Object.hasOwn(value,k)||((p.const===undefined&&!p.properties)||compatible(p,value[k])))
+    if(schema.additionalProperties===false && Object.keys(value).some(k=>!Object.hasOwn(schema.properties??{},k)))return false
+    return Object.entries(schema.properties??{}).every(([k,p])=>!Object.hasOwn(value,k)||compatible(p,value[k]))
   }
   if(schema.type==='array')return Array.isArray(value)
   return schema.type===undefined||schema.type===typeof value||(schema.type==='integer'&&Number.isInteger(value))
@@ -45,14 +53,30 @@ export function initial(schema, root) {
 // references lists the node names and prior variable bindings a statement may
 // use. roles are the node roles the chain contract lists, in its order, and
 // defaults their counts when the case declares no topology. An attached
-// network's RPC endpoints are addressed by position only, as node1..nodeN.
-export function references(doc, roles = [], defaults = {}) {
-  const nodes = [...roles]
+// network keeps positions; structured profiles also expose declared roles.
+export function references(doc, roles = [], defaults = {}, presets = {}) {
   const legacy=doc?.schemaVersion==='1'
-  const preset = legacy?{topology:doc.topology,accounts:{}}:typeof doc?.chainPreset === 'object' ? doc.chainPreset : {}
+  const ref=typeof doc?.chainPreset==='string'?doc.chainPreset:doc?.chainPreset?.extends
+  const inherited=presets[ref]??{}
+  const own=typeof doc?.chainPreset==='object'?doc.chainPreset:{}
+  const preset=legacy?{topology:doc.topology,accounts:{}}:{...inherited,...own,topology:own.topology?{...inherited.topology,...own.topology}:inherited.topology}
+  const profiles=preset?.attach?.endpoints
+  const nodes=profiles?[]:[...roles]
   const attached = preset?.attach ? {nodes:(preset.attach.rpc??[]).map(()=>({}))} : null
   const topology = preset?.topology ?? attached ?? defaults
-  if (topology.nodes) topology.nodes.forEach((n,i) => nodes.push(`node${n.index ?? i+1}`))
+  if(profiles){
+    const counts={}
+    profiles.forEach((n,i)=>{
+      nodes.push(`node${i+1}`)
+      const role=n.role??'en'
+      if(roles.includes(role)){
+        counts[role]=(counts[role]??0)+1
+        if(counts[role]===1)nodes.push(role)
+        nodes.push(`${role}${counts[role]}`)
+      }
+    })
+  }
+  else if (topology.nodes) topology.nodes.forEach((n,i) => nodes.push(`node${n.index ?? i+1}`))
   else { let count=0; for (const role of roles) for(let i=1;i<=(topology[role]??0);i++){nodes.push(`${role}${i}`);nodes.push(`node${++count}`)} }
   const bindings = []
   const before = new Map()
@@ -148,4 +172,15 @@ export function valueProblem(schema, value) {
   if (max !== undefined && (n < min || n > max)) return `${min}부터 ${max}까지의 정수를 입력하세요.`
   if (min !== undefined && n < min) return `${min} 이상의 정수를 입력하세요.`
   return ''
+}
+
+// Disallowed imported fields stay visible; this only removes forbidden additions.
+export function forbiddenFields(schema, value) {
+ const forbidden=new Set(schema?.not?.required?.length===1?schema.not.required:[])
+ for(const rule of schema?.allOf??[]){
+  const condition=rule.if?{...rule.if,type:rule.if.type??(rule.if.properties?'object':undefined)}:null
+  const active=condition&&compatible(condition,value)?rule.then:rule.else
+  if(active?.not?.required?.length===1)for(const key of active.not.required)forbidden.add(key)
+ }
+ return forbidden
 }

@@ -42,3 +42,9 @@ WebSocket·metrics 검사는 해당 주소가 필요하다. 스키마의 enum과
 
 검증 범위와 자료는 [endpoint-profile-evidence.json](endpoint-profile-evidence.json), 전체 잔여와
 최종 인수 상태는 [chainbench-worklist.md](chainbench-worklist.md) §0a에 있다.
+
+편집기는 RPC 목록과 프로필 형식을 구분하고, 프로필에서 선언한 역할별 선택지를 제시한다.
+공유 프리셋을 참조하는 케이스도 같은 규칙을 사용한다. 선택한 형식에서 사용할 수 없는 필드는
+추가 목록에서 제외하며, 가져온 선언에 이미 있는 필드는 경고와 함께 보존해 사용자가 직접 고칠 수 있다.
+63개 프론트 계약과 실제 브라우저의 import/export·편집·네이티브 취소 검증은
+[편집기 증거](endpoint-profile-editor-evidence.json)에 기록했다. 최종 Web 인수와는 별도 검증이다.

@@ -21,7 +21,7 @@
  // Node names come from the chain contract's roles and, when the selected
  // workspace has a recorded network, from its actual nodes as well.
  let workspaceNodes=$state([]),errorList=$state([]),importDiff=$state([])
- const suggestions=$derived.by(()=>{const r=references(document,topology.roles,topology.defaults);return {...r,nodes:[...new Set([...r.nodes,...workspaceNodes])]}})
+ const suggestions=$derived.by(()=>{const r=references(document,topology.roles,topology.defaults,presets);return {...r,nodes:[...new Set([...r.nodes,...workspaceNodes])]}})
  $effect(()=>{const id=selection.workspaceId;workspaceNodes=[];if(webSession&&id)api('networks').then(v=>{if(selection.workspaceId===id)workspaceNodes=v.items.filter(n=>n.workspaceId===id).flatMap(n=>n.nodes.map(x=>x.id))}).catch(()=>{})})
  $effect(()=>{const id=chain;chainContract=null;if(webSession&&id)api('contracts/chain-preset?chain='+encodeURIComponent(id)).then(c=>{if(chain===id)chainContract=c}).catch(e=>{status=e.message})})
  const api=$derived(webApi(webSession))
