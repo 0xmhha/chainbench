@@ -4,3 +4,4 @@ set -euo pipefail
 runtime="${WEBUI_RUNTIME_ROOT:-/private/tmp/chainbench-web-ui-e2e}/$1"
 mkdir -p "$runtime"
 go build -o "$runtime/chainbench-dashboard" ./cmd/chainbench-dashboard
+go build -o "$runtime/chainbench" ./cmd/chainbench

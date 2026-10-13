@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
-	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // Saved case bytes remain intact; the registered binary selection replaces
@@ -108,7 +107,7 @@ func (e *WebChainEngine) prepareTestRun(ctx context.Context, p *webChainPayload)
 	// PlanSuite may materialize content-addressed overlays. Keep preparation
 	// inside an owned input directory, away from the network or target servers.
 	in.DataDir = filepath.Join(run.InputDir, "planning")
-	layout, plan, err := testengine.PlanSuiteLayout(ctx, in)
+	layout, plan, err := planSuiteThroughCLI(ctx, e.cli, in, run.InputDir)
 	if err != nil {
 		return nil, err
 	}
@@ -261,10 +260,6 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return result, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
-	if err != nil {
-		return result, err
-	}
 	in := e.webSuiteInput(p)
 	in.KeysDir, err = filepath.Abs(keys)
 	if err != nil {
@@ -280,7 +275,7 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		// Replan inside the private input tree, without mutating retained nodes.
 		planning := in
 		planning.DataDir = filepath.Join(p.TestRun.InputDir, "planning")
-		layout, current, err := testengine.PlanSuiteLayout(ctx, planning)
+		layout, current, err := planSuiteThroughCLI(ctx, e.cli, planning, p.TestRun.InputDir)
 		if err != nil {
 			return err
 		}
@@ -309,7 +304,14 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return result, err
 	}
-	err = e.phase(ctx, a, "test.binary", report, func() error { return e.uploadWebBinary(ctx, p, lookup) })
+	err = e.phase(ctx, a, "test.binary", report, func() (phaseErr error) {
+		logins, cleanup, err := e.jobLogins(ctx, a, p)
+		if err != nil {
+			return err
+		}
+		defer func() { phaseErr = errors.Join(phaseErr, cleanup()) }()
+		return e.uploadTestBinaries(ctx, p, logins)
+	})
 	if err != nil {
 		return result, err
 	}
@@ -318,12 +320,25 @@ func (e *WebChainEngine) executeTestRun(ctx context.Context, a DeploymentActor, 
 		result.PartialEffects = append(result.PartialEffects, fmt.Sprintf("Verified test binary %q provisioned: %s · SHA-256 %s", named.Name, named.ExecutionBinary, named.Binary.SHA256))
 	}
 	var out RunSuiteOut
-	err = e.phase(ctx, a, "test.run", report, func() error {
+	err = e.phase(ctx, a, "test.run", report, func() (phaseErr error) {
 		if err := e.recheckTestGenesis(ctx, p); err != nil {
 			return err
 		}
+		// The run happens in the chainbench CLI. Its private directory holds
+		// the cases and, for SSH targets, each bound login as private files;
+		// it is removed when the command ends, whatever the outcome.
+		work, err := os.MkdirTemp(p.TestRun.InputDir, "run-")
+		if err != nil {
+			return err
+		}
+		// Secrets left behind are a failure of the job, not a detail.
+		defer func() { phaseErr = errors.Join(phaseErr, os.RemoveAll(work)) }()
+		serverSet, err := e.documents.writeJobServerSet(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings, filepath.Join(work, "secrets"))
+		if err != nil {
+			return err
+		}
 		var runErr error
-		out, runErr = RunSuite(ctx, Deps{Command: "web test.run by " + a.ID, ServerLookup: lookup}, in)
+		out, runErr = runSuiteThroughCLI(ctx, e.cli, in, work, serverSet)
 		if runErr == nil && out.Summary.Failed() {
 			runErr = errors.New("one or more selected test cases failed or were blocked")
 		}
@@ -352,61 +367,33 @@ func webTestSessionRef(root, dir string) (string, error) {
 	return "web:" + ref, nil
 }
 
-func (e *WebChainEngine) uploadWebBinary(ctx context.Context, p webChainPayload, lookup resource.Lookup) error {
-	asset, err := e.binaryAsset(p.Arguments.AssetID)
-	if err != nil {
-		return err
+// uploadTestBinaries places every accepted test binary on the target through
+// `chainbench file upload`, which refuses bytes that are not the accepted
+// sha256 before writing and checks the written file again. logins supplies the
+// job's own SSH logins.
+func (e *WebChainEngine) uploadTestBinaries(ctx context.Context, p webChainPayload, logins string) error {
+	if e.cli == nil {
+		return errNoChainCLI
 	}
-	wc, err := deploymentWorkspace(p.Config.DeploymentDocumentInput)
-	if err != nil {
-		return err
-	}
-	set, err := deploymentSet(p.Set.DeploymentDocumentInput)
-	if err != nil {
-		return err
-	}
-	server, err := set.ByName(p.Arguments.ServerRef)
-	if err != nil {
-		return err
-	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(resource.TargetOf(server, wc.DataRoot))
-	if err != nil {
-		return err
-	}
-	if err = provisionWebBinary(ctx, access.Files, asset.Path, p.Binary.SHA256, p.ExecutionBinary); err != nil {
-		return err
-	}
-	for _, named := range p.NamedBinaries {
-		asset, err := e.binaryAsset(named.AssetID)
+	upload := func(assetID, sha256, destination string) error {
+		asset, err := e.binaryAsset(assetID)
 		if err != nil {
 			return err
 		}
-		if err = provisionWebBinary(ctx, access.Files, asset.Path, named.Binary.SHA256, named.ExecutionBinary); err != nil {
+		_, err = e.cli.Run(ctx, "file", "upload", asset.Path, "--remote", destination, "--force-upload",
+			"--sha256", sha256, "--mode", "0755", "--server", p.Arguments.ServerRef,
+			"--server-set", filepath.Join(p.TestRun.InputDir, "server-set.yaml"),
+			"--workspace-config", filepath.Join(p.TestRun.InputDir, "workspace-config.yaml"),
+			"--server-logins", logins)
+		return err
+	}
+	if err := upload(p.Arguments.AssetID, p.Binary.SHA256, p.ExecutionBinary); err != nil {
+		return err
+	}
+	for _, named := range p.NamedBinaries {
+		if err := upload(named.AssetID, named.Binary.SHA256, named.ExecutionBinary); err != nil {
 			return fmt.Errorf("binary %q: %w", named.Name, err)
 		}
-	}
-	return nil
-}
-
-// provisionWebBinary writes an accepted asset's bytes to the target and
-// confirms what landed there is those bytes.
-func provisionWebBinary(ctx context.Context, files filestore.Store, source, sha256, destination string) error {
-	bytes, err := os.ReadFile(source)
-	if err != nil {
-		return err
-	}
-	if manifestHash(bytes) != sha256 {
-		return ErrDeploymentConflict
-	}
-	if err = files.Write(ctx, destination, bytes, 0755); err != nil {
-		return err
-	}
-	checksum, err := files.Checksum(ctx, destination)
-	if err != nil {
-		return err
-	}
-	if checksum != "sha256:"+sha256 {
-		return errors.New("provisioned test binary differs from the accepted asset")
 	}
 	return nil
 }

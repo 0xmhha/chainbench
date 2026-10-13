@@ -54,6 +54,8 @@ type AttachRunIn struct {
 	// ReadOnlyKeys reads KeysDir without registering anything into it, for a
 	// key set the caller accepted and must not change.
 	ReadOnlyKeys bool
+	// NoNodeControl attaches for reading only: no step may act on a node.
+	NoNodeControl bool
 	// AllowChainMismatch runs even when the endpoint does not answer as the
 	// declared chain. It exists for a network whose operator chose a chain id
 	// other than the built-in default, which the probe reads as another chain;
@@ -151,6 +153,7 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 		return testengine.AttachWorkspaceRun(ctx, d.chainsetupDeps(), testengine.AttachWorkspaceIn{
 			DataDir: in.DataDir, Chain: in.Chain, ArtifactRoot: in.ArtifactRoot,
 			Caps: in.Caps, Specs: in.Specs,
+			ReadOnlyKeys: in.ReadOnlyKeys, NoNodeControl: in.NoNodeControl,
 		})
 	}
 	if in.Chain == "" {

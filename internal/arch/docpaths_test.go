@@ -55,7 +55,7 @@ var docRoots = []string{"docs/dev", "docs/guide"}
 // in a go-wemix checkout reads as our `scripts/...`, and `netmap/internal/serverset`
 // reads as our `internal/serverset`. Another repository's tree is not ours to hold.
 // A match ending in `_` is a stem in a diagram (`tests/001_<id>/`), not a path.
-var goPathInProse = regexp.MustCompile(`(^|[\s` + "`" + `(|\[])((?:internal|cmd|tests|presets|scripts|env|examples|web)/[A-Za-z0-9_./-]*[A-Za-z0-9])`)
+var goPathInProse = regexp.MustCompile(`(^|[\s` + "`" + `(|\[])((?:internal|cmd|tests|presets|scripts|env|examples|web)/[A-Za-z0-9_./*?-]*[A-Za-z0-9*?])`)
 
 // inTree answers whether a path a document names is one a reader can reach.
 //
@@ -88,12 +88,36 @@ func inTree(t *testing.T, root string) func(string) bool {
 	}
 	return func(path string) bool {
 		path = strings.TrimSuffix(path, "/")
+		if strings.ContainsAny(path, "*?") {
+			for trackedPath := range tracked {
+				if matched, err := filepath.Match(path, trackedPath); err == nil && matched {
+					return true
+				}
+			}
+			return false
+		}
 		if tracked[path] {
 			return true
 		}
 		// git check-ignore exits 1 when the path is not ignored, which is not
 		// an error here, so only the exit status is read.
 		return exec.Command("git", "-C", root, "check-ignore", "-q", path).Run() == nil
+	}
+}
+
+func TestDocumentationGlobsResolveAgainstTrackedFiles(t *testing.T) {
+	reachable := inTree(t, "../..")
+	for _, pattern := range []string{"internal/app/deployment*.go", "tests/webui/test_evidence_web*.py"} {
+		if !reachable(pattern) {
+			t.Errorf("existing tracked pattern is unreachable: %s", pattern)
+		}
+		matches := goPathInProse.FindStringSubmatch("`" + pattern + "`")
+		if len(matches) != 3 || matches[2] != pattern {
+			t.Errorf("glob was truncated to a missing path: %v", matches)
+		}
+	}
+	if reachable("internal/app/does-not-exist*.go") {
+		t.Fatal("a glob without any tracked match was accepted")
 	}
 }
 

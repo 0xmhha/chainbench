@@ -111,14 +111,23 @@ func (p SwapPlan) Execute(ctx context.Context, d process.Driver, specs []process
 		byIndex[s.Index] = s
 	}
 	ns := node.NodeSet{Chain: p.ToChain, Network: "local"}
+	observer := process.ProcessTableOf(ctx, d)
 	for _, s := range p.Swaps {
-		if s.PID > 0 {
-			// Best-effort stop; a node that already exited is fine.
-			_ = d.Stop(ctx, process.Handle{Index: s.Index, PID: s.PID})
-		}
 		orig, ok := byIndex[s.Index]
 		if !ok {
 			return ns, fmt.Errorf("hardfork: no saved spec for node%d; run setup so nodespecs.json exists", s.Index)
+		}
+		if s.PID > 0 {
+			// A recorded pid is not proof of whose process it is: one that now
+			// runs something other than the saved launch is refused. A node
+			// that already exited is fine.
+			if observer != nil {
+				obs := process.ObserveLaunch(ctx, observer, s.PID, orig.Binary, orig.Args)
+				if obs.State != process.OwnedRunning && obs.State != process.OwnedMissing {
+					return ns, fmt.Errorf("hardfork: refusing to signal node%d's recorded pid %d: it is not the recorded launch (%s)", s.Index, s.PID, obs.Reason)
+				}
+			}
+			_ = d.Stop(ctx, process.Handle{Index: s.Index, PID: s.PID})
 		}
 		orig.Binary = binary // swap the binary; keep identity/config/peering args
 		h, err := d.Launch(ctx, orig)

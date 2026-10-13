@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-05",
-  "invocationId": "341e8ab6-4162-49ab-8e17-03e1dedb7b09",
-  "startedAt": "2026-10-11T21:19:34.406734+00:00",
-  "finishedAt": "2026-10-11T21:29:16.562594+00:00",
+  "invocationId": "1a1219be-736d-4458-9c25-37318f86842f",
+  "startedAt": "2026-10-13T01:34:33.592934+00:00",
+  "finishedAt": "2026-10-13T01:43:22.296946+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "grammar",
@@ -30,5 +30,18 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "136eab04486442416b9513f3f9dfd2bca98f0c49b8d465372c553cbe8aa23779"
+  "evidenceDigest": "9084eed82941e55f615c209ac95239d299b1aea31d62010568f42f5d69c72d02",
+  "independentVerification": {
+    "criterion": "WEB-05",
+    "mode": "recheck",
+    "outcome": "pass",
+    "seconds": 566,
+    "scenarios": 10,
+    "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc",
+    "invocationId": "03199907-6b25-4e41-85c5-cc23b6326ea6",
+    "evidenceDirectory": "/private/tmp/cbui/recheck-_nroyw_7/source/chainbench-out/web-ui-acceptance/WEB-05",
+    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web05-restored.log",
+    "evidenceDigest": "5efd5dea072e22d50a6cb937a87f1a620bf71d2279b152352a80ebd36bcf909a",
+    "resultDigest": "2a783f4fe4ff04e9bd8c2c78dd841c295363a20a2542c44ef7020a50b3673f92"
+  }
 }

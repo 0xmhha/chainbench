@@ -38,6 +38,7 @@ func stepCmd(use, short string, run func(cmd *cobra.Command, dataDir string) (st
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
+	surface.BindLogins(cmd)
 	return cmd, &dataDir
 }
 

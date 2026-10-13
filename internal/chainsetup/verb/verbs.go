@@ -69,6 +69,28 @@ type ChainStatusOut struct {
 	State chainsetup.State
 }
 
+// ChainObserveIn names the workspace whose nodes to observe.
+type ChainObserveIn struct {
+	DataDir string
+}
+
+// ChainObserveOut is what every recorded node's machine shows now.
+type ChainObserveOut struct {
+	Nodes []chainsetup.NodeObservation `json:"nodes"`
+}
+
+// ChainObserve reads each recorded node's process and binary on its machine,
+// changing nothing — the `chain observe` step. It takes no lock: an observation
+// is a read that a running command must not have to wait for.
+func ChainObserve(ctx context.Context, d chainsetup.Deps, in ChainObserveIn) (ChainObserveOut, error) {
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
+	if err != nil {
+		return ChainObserveOut{}, err
+	}
+	ws.SetServerLookup(d.ServerLookup)
+	return ChainObserveOut{Nodes: ws.ObserveNodes(ctx)}, nil
+}
+
 // ChainStatus reads the workspace composition state — the `chain status` step.
 func ChainStatus(_ context.Context, d chainsetup.Deps, in ChainStatusIn) (ChainStatusOut, error) {
 	ws, err := chainsetup.Open(in.DataDir, d.Clock)

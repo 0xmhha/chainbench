@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 // Reuse reconciliation for execution.chain = reuse-if-matching.
@@ -297,7 +296,7 @@ func (w *Workspace) stopByPID(ctx context.Context, ns node.Record, pid int) erro
 	if err != nil {
 		return err
 	}
-	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: pid}); err != nil {
+	if _, err := w.stopOwned(ctx, t, ns, pid); err != nil {
 		return fmt.Errorf("chainsetup: reuse: stop node%d (pid %d): %w", ns.Index, pid, err)
 	}
 	return nil

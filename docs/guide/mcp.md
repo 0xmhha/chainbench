@@ -50,9 +50,9 @@ MCP 클라이언트(Claude Code)는 프로젝트의 `.mcp.json` 을 읽어 자�
 |---|---|
 | 체인/워크스페이스 | `chainbench_chains` · `_status` · `_stop` · `_hardfork` |
 | 검증/테스트 | `chainbench_verify` · `_run` · `_validate` · `_test_list` · `_report` |
-| 노드/Tx | `chainbench_node_rpc` · `_node_stop` · `_node_start` · `_tx_send` · `_tx_wait` · `_txpool` · `_account_state` · `_contract_call` · `_contract_deploy` · `_faucet` |
+| 노드/Tx | `chainbench_node_rpc` · `_node_stop` · `_node_start` · `_node_swap` · `_node_reset` · `_tx_send` · `_tx_wait` · `_txpool` · `_account_state` · `_contract_call` · `_contract_deploy` · `_faucet` |
 | 합의 | `chainbench_consensus` · `_consensus_status` · `_consensus_health` · `_consensus_block_info` |
-| 네트워크 구성(`chain`) | `chainbench_chain_up`(전 단계 한 번에) · `_chain_new` · `_chain_keys` · `_chain_place` · `_chain_genesis` · `_chain_config` · `_chain_build` · `_chain_deploy` · `_chain_init` · `_chain_start` · `_chain_stop` · `_chain_restart` · `_chain_resume` · `_chain_rm` · `_chain_status` · `_chain_health` · `_chain_logs` · `_chain_show` |
+| 네트워크 구성(`chain`) | `chainbench_chain_up`(전 단계 한 번에) · `_chain_new` · `_chain_keys` · `_chain_place` · `_chain_genesis` · `_chain_config` · `_chain_build` · `_chain_deploy` · `_chain_init` · `_chain_start` · `_chain_stop` · `_chain_restart` · `_chain_resume` · `_chain_rm` · `_chain_status` · `_chain_observe` · `_chain_health` · `_chain_logs` · `_chain_show` |
 | 자원(`resource`) | `chainbench_resource_pool` · `_resource_plan` |
 | 기존 네트워크 attach | `chainbench_network_attach` · `_network_list` · `_network_info` · `_network_detach` · `_network_peers` · `_network_topology` · `_remote_rpc` |
 | 키 재료 | `chainbench_keyring_new` · `_keyring_add` · `_keyring_list` · `_keyring_show` · `_keyring_import` |

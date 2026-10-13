@@ -74,6 +74,7 @@ def main():
         work.mkdir()
         env = {**os.environ, 'CGO_ENABLED': '0', 'GOOS': 'linux', 'GOARCH': arch}
         subprocess.run(['go', 'build', '-o', str(work / 'chainbench-dashboard'), './cmd/chainbench-dashboard'], env=env, check=True)
+        subprocess.run(['go', 'build', '-o', str(work / 'chainbench'), './cmd/chainbench'], env=env, check=True)
         gstable = Path(os.environ.get('LINUX_GSTABLE_BIN', str(Path.home() / 'cbw/linuxbin/gstable')))
         shutil.copy2(gstable, work / 'gstable')
         shutil.copytree('presets/keys', work / 'keys')

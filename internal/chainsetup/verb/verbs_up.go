@@ -50,11 +50,11 @@ func planUp(in chainsetup.ChainUpIn) (upPlan, error) {
 	if stage == "" {
 		stage = chainsetup.UpStart
 	}
-	if stage != chainsetup.UpDeploy && stage != chainsetup.UpStart {
-		return upPlan{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, chainsetup.UpDeploy, chainsetup.UpStart)
+	if stage != chainsetup.UpDeploy && stage != chainsetup.UpInit && stage != chainsetup.UpStart {
+		return upPlan{}, fmt.Errorf("chainsetup: unknown stage %q (want %s, %s or %s)", stage, chainsetup.UpDeploy, chainsetup.UpInit, chainsetup.UpStart)
 	}
-	if stage == chainsetup.UpStart && in.Binary == "" {
-		return upPlan{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
+	if stage != chainsetup.UpDeploy && in.Binary == "" {
+		return upPlan{}, fmt.Errorf("chainsetup: chain up --stage=%s needs a node binary", stage)
 	}
 	// Before the request is recorded, not before it is used.
 	//

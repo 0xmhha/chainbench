@@ -11,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
-	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 type webPresetComposition struct {
@@ -19,6 +18,9 @@ type webPresetComposition struct {
 	Request  ChainUpIn          `json:"request"`
 	Plan     ComposePlan        `json:"plan"`
 	Genesis  *webPresetGenesis  `json:"genesis,omitempty"`
+	// Content is the preset as `chain up --chain-preset` reads it, with a
+	// registered genesis named by the path it was materialised at.
+	Content json.RawMessage `json:"content,omitempty"`
 }
 
 type webPresetGenesis struct {
@@ -169,10 +171,11 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 		pinnedGenesis = &webPresetGenesis{Asset: *genesis, Fingerprint: fingerprint, Path: path}
 	}
 	in := RunSuiteIn{DataDir: filepath.Join(dir, "planning"), Chain: p.Binary.Chain, Binary: p.ExecutionBinary, BinaryOverrides: map[string]string{dsl.BinaryDefault: p.ExecutionBinary}, KeysDir: webAcceptedKeyPath(e.root, p.Keys.SHA256), Server: resource.ServerRef{SetPath: filepath.Join(dir, "server-set.yaml"), Name: p.Arguments.ServerRef}, WorkspaceConfigPath: filepath.Join(dir, "workspace-config.yaml")}
-	request, plan, err := testengine.PlanChainPreset(ctx, content, in)
+	projection, err := planPresetThroughCLI(ctx, e.cli, content, in)
 	if err != nil {
 		return out, err
 	}
+	request, plan := projection.Layout, projection.Plan
 	total := plan.Nodes.BP + plan.Nodes.EN + plan.Nodes.PN
 	if plan.Nodes.AutoSize || plan.Nodes.BP < 1 || total < 1 || total > 128 {
 		return out, errors.New("preset layout must resolve between one and 128 nodes with producers")
@@ -185,7 +188,7 @@ func (e *WebChainEngine) projectPresetComposition(ctx context.Context, p webChai
 	if _, err = chainsetup.GenesisOptsFor(ChainGenesisIn{GenesisExisting: request.GenesisExisting, ChainID: request.ChainID, Set: request.GenesisSet, OverlayPath: request.OverlayPath}); err != nil {
 		return out, err
 	}
-	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis}, nil
+	return webPresetComposition{Document: doc, Request: request, Plan: plan, Genesis: pinnedGenesis, Content: content}, nil
 }
 
 // validateWebTableInputs refuses per-node files and keys, and per-node binary

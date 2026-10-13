@@ -28,6 +28,7 @@ func TestWebNodeResetRechecksProcessBeforeEffects(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	engine.UseCLI(planningCLI{})
 	control := filepath.Join(root, "network")
 	if err = os.Mkdir(control, 0o700); err != nil {
 		t.Fatal(err)
@@ -212,7 +213,7 @@ func TestWebResetRechecksFilesAndPhysicalDirectory(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			err := verifyWebResetInputs(context.Background(), state, p, nil)
+			err := verifyWebResetInputs(context.Background(), state, p, unitTargetReader(t, nil))
 			if name == "unchanged" {
 				if err != nil {
 					t.Fatal(err)

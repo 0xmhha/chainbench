@@ -242,6 +242,17 @@ func (mg *Manager) ends(ctx context.Context, states ...statemachine.State) error
 	return mg.m.RequireAt(states...)
 }
 
+// stopAfterFor is the last step a stage runs, or "" for every step.
+func stopAfterFor(stage UpStage) string {
+	switch stage {
+	case UpDeploy:
+		return stepDeploy
+	case UpInit:
+		return stepInit
+	}
+	return ""
+}
+
 // Compose walks the composition described by the request.
 //
 // from names the step to begin at, for a resume; empty begins at the first.
@@ -255,9 +266,7 @@ func (mg *Manager) Compose(ctx context.Context, in ChainUpIn, from string) error
 		return err
 	}
 	mg.stopAfter = ""
-	if in.Stage == UpDeploy {
-		mg.stopAfter = stepDeploy
-	}
+	mg.stopAfter = stopAfterFor(in.Stage)
 	if err := mg.m.Start(ctx, mg.stopped); err != nil {
 		return err
 	}
@@ -369,9 +378,7 @@ func (mg *Manager) ReuseFrom(snap ReuseSnapshot) {
 func (mg *Manager) ComposeComparing(ctx context.Context, in ChainUpIn) error {
 	mg.request = in
 	mg.stopAfter = ""
-	if in.Stage == UpDeploy {
-		mg.stopAfter = stepDeploy
-	}
+	mg.stopAfter = stopAfterFor(in.Stage)
 	if err := mg.m.Start(ctx, mg.stopped); err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import subprocess
 
 EXCLUDED = {'.git', '.ouroboros', '.codex', '.agents', '.aws', '.venv', 'venv', 'chainbench-out', 'bin', 'node_modules', '__pycache__', '.DS_Store'}
 SUFFIXES = {'.go', '.svelte', '.js', '.mjs', '.cjs', '.json', '.yaml', '.yml', '.py', '.sh', '.txt', '.md', '.html', '.css', '.mod', '.sum'}
+RECEIPT_CRITERIA = {'WEB-%02d' % i for i in range(1, 15)}
 
 
 def runtime_root():
@@ -26,6 +27,14 @@ def source_digest(root):
             path = Path(directory) / name
             if path.is_symlink():
                 raise ValueError('source symlinks cannot be verified: ' + str(path.relative_to(root)))
+            parts = path.relative_to(root).parts
+            # These two generated publication copies attest the source; they
+            # cannot be inputs to their own fingerprint. Verifiers still bind
+            # their content and artifacts separately. Keep prose, specifications,
+            # verifier code and every other JSON file in the source identity.
+            if (len(parts) == 5 and parts[:3] == ('docs', 'dev', 'web-ui-evidence')
+                    and parts[3] in RECEIPT_CRITERIA and parts[4] in {'evidence.json', 'result.json'}):
+                continue
             if path.suffix not in SUFFIXES and name not in {'Makefile', 'Dockerfile'}:
                 continue
             digest.update(path.relative_to(root).as_posix().encode() + b'\0')

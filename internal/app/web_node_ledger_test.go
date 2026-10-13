@@ -35,6 +35,7 @@ func TestWebNodeExecutionRefusesLedgerPIDSubstitution(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	engine.UseCLI(planningCLI{})
 	p.ControlDir = filepath.Join(root, "network")
 	if err = os.MkdirAll(p.ControlDir, 0700); err != nil {
 		t.Fatal(err)

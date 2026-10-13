@@ -4,31 +4,14 @@ import (
 	"context"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
-
-// shellRunner executes the remote log commands with a local POSIX shell, so
-// the exact command text is exercised without an SSH server.
-func shellRunner(ctx context.Context, cmd string) (remote.ExecResult, error) {
-	c := exec.CommandContext(ctx, "sh", "-c", cmd)
-	var out, errOut strings.Builder
-	c.Stdout, c.Stderr = &out, &errOut
-	err := c.Run()
-	res := remote.ExecResult{Stdout: out.String(), Stderr: errOut.String()}
-	if exit, ok := err.(*exec.ExitError); ok {
-		res.ExitCode = exit.ExitCode()
-		err = nil
-	}
-	return res, err
-}
 
 func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	f := newMonitorFixture(t)
@@ -41,7 +24,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	opened := 0
 	open := func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
 		opened++
-		return webRemoteLogs{run: shellRunner}, nil
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 	}
 	// Without a collection job only the absence is recorded.
 	monitorCollect(t, f, m, 1)
@@ -50,7 +33,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 		t.Fatal(err)
 	}
 	monitorCollect(t, f, m, 1) // The background round no longer reports node1 as unavailable.
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,14 +44,14 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	if reasons := strings.Join(gapReasons(logs.Coverage), ","); strings.Count(reasons, "node1 logs remote_log_collection_unavailable") != 1 {
 		t.Fatalf("gap while no job ran must stay, once: %s", reasons)
 	}
-	other, _ := m.Logs(viewer, f.network+".node2", WebMonitorQuery{})
+	other, _ := m.Logs(context.Background(), viewer, f.network+".node2", WebMonitorQuery{})
 	if !strings.Contains(strings.Join(gapReasons(other.Coverage), ","), "node2 logs log_unavailable") {
 		t.Fatalf("missing remote file not reported: %v", gapReasons(other.Coverage))
 	}
 	detach()
 	f.clock = f.clock.Add(5e9)
 	monitorCollect(t, f, m, 1)
-	logs, _ = m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, _ = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if strings.Count(strings.Join(gapReasons(logs.Coverage), ","), "remote_log_collection_unavailable") != 2 {
 		t.Fatalf("detached collection must be reported again: %v", gapReasons(logs.Coverage))
 	}
@@ -81,7 +64,7 @@ func TestWebRemoteLogsCollectOnlyWhileAttached(t *testing.T) {
 	if err = m.CollectRemoteLogs(ctx, f.network, open); err == nil {
 		t.Fatal("cancelled collection reported success")
 	}
-	logs, _ = m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, _ = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if len(logs.Entries) != 2 {
 		t.Fatalf("cancelled collector archived lines: %+v", logs.Entries)
 	}
@@ -108,7 +91,7 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 				close(blocked)
 				<-release
 			}
-			return webRemoteLogs{run: shellRunner}, nil
+			return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 		})
 	}()
 	<-blocked
@@ -138,7 +121,7 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 		if ns.Label == "node2" {
 			cancel()
 		}
-		return webRemoteLogs{run: shellRunner}, nil
+		return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 	})
 	if err == nil {
 		t.Fatal("cancelled round reported success")
@@ -146,21 +129,21 @@ func TestWebRemoteLogsKeepPositionsAndStopOnRefusal(t *testing.T) {
 	f.clock = f.clock.Add(5 * time.Second)
 	refused := m.CollectRemoteLogs(context.Background(), f.network, func(_ context.Context, _ State, ns node.Record) (webLogSource, error) {
 		if ns.Label == "node1" {
-			return webRemoteLogs{run: shellRunner}, nil
+			return webCLILogs{reader: unitTargetReader(t, nil), spec: resource.Spec{DataRoot: f.root}}, nil
 		}
 		return nil, ErrDeploymentForbidden
 	})
 	if !errors.Is(refused, ErrDeploymentForbidden) {
 		t.Fatalf("refused access must end collection: %v", refused)
 	}
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(logs.Entries) != 2 || logs.Entries[1].Text != "INFO [10-09|00:46:59.000] second" {
 		t.Fatalf("positions lost or lines duplicated: %+v", logs.Entries)
 	}
-	other, _ := m.Logs(viewer, f.network+".node2", WebMonitorQuery{})
+	other, _ := m.Logs(context.Background(), viewer, f.network+".node2", WebMonitorQuery{})
 	for _, g := range other.Coverage.Gaps {
 		if strings.Contains(g.Reason, "collector_error") {
 			t.Fatalf("refusal recorded as an ordinary failure: %v", g)

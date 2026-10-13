@@ -33,6 +33,9 @@ type WebChainEngine struct {
 	verifyAsset func(context.Context, ManifestBinary, string) (ManifestBinaryEvidence, error)
 	// surfaces is the captured chain documentation root; see UseChainSurfaces.
 	surfaces string
+	// cli is the chainbench command the Web runs instead of an engine of its
+	// own; see UseCLI.
+	cli ChainCLI
 }
 
 // errIncompatibleBinary refuses a registered binary of another chain.
@@ -225,7 +228,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 	if missing := webMissingAccess(servers, in.CredentialBindings); len(missing) > 0 {
 		return out, &WebAccessError{Missing: missing}
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, in.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return out, err
 	}
@@ -351,7 +354,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		return out, err
 	}
 	targetClaims := webTargetClaims(servers, webPayloadTargets(p), placement)
-	controlTarget, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
+	controlTarget, err := e.inspectTarget(ctx, a, p, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
 		return out, err
 	}
@@ -412,7 +415,7 @@ func (e *WebChainEngine) Prepare(ctx context.Context, a DeploymentActor, in WebP
 		if webRecordedOperation(in.Operation) && webRecordSpansServers(state) != args.AllServers {
 			return out, errSpreadSelection
 		}
-		ownedTarget, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
+		ownedTarget, err := lookup.Inspect(ctx, state.Target)
 		if err != nil {
 			return out, err
 		}
@@ -670,7 +673,7 @@ func (e *WebChainEngine) revalidate(ctx context.Context, a DeploymentActor, prep
 	if err != nil {
 		return p, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return p, err
 	}
@@ -681,7 +684,7 @@ func (e *WebChainEngine) revalidate(ctx context.Context, a DeploymentActor, prep
 	if !slices.Equal(targets, webPayloadTargets(p)) {
 		return p, ErrDeploymentConflict
 	}
-	control, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
+	control, err := e.inspectTarget(ctx, a, p, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
 		return p, err
 	}
@@ -801,7 +804,7 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 	if err := json.Unmarshal(prepared.Payload, &p); err != nil {
 		return WebJobResult{}, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return WebJobResult{}, err
 	}
@@ -811,14 +814,12 @@ func (e *WebChainEngine) Cleanup(ctx context.Context, a DeploymentActor, prepare
 	if err = recheckWebNetworkRecord(ctx, p, lookup, false); err != nil {
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
-	d := Deps{Command: "web owned composition cleanup", ServerLookup: lookup}
 	// The recheck above verified every recorded process as this network's own;
 	// a test or deployment leaves them running, and removal requires them stopped.
-	if _, err = ChainStop(ctx, d, ChainStopIn{DataDir: p.ControlDir}); err != nil {
+	if err = e.runControl(ctx, a, p, "chain", "stop"); err != nil {
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir, p.Target.DataPath}}, err
 	}
-	_, err = ChainRm(ctx, d, ChainRmIn{DataDir: p.ControlDir})
-	if err != nil {
+	if err = e.runControl(ctx, a, p, "chain", "rm"); err != nil {
 		return WebJobResult{NodeDisposition: "cleanup_failed", UnresolvedResources: []string{p.ControlDir}, PartialEffects: []string{"owned nodes stopped before removal"}}, err
 	}
 	return WebJobResult{NodeDisposition: "cleaned", PartialEffects: []string{"owned nodes stopped", "owned composition cleaned"}}, nil

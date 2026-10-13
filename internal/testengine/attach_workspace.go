@@ -106,6 +106,10 @@ type AttachWorkspaceIn struct {
 	Specs [][]byte
 	// NodeMonitorTimeout budgets the readiness gate; zero takes the default.
 	NodeMonitorTimeout time.Duration
+	// ReadOnlyKeys reads the workspace's key set without registering into it.
+	ReadOnlyKeys bool
+	// NoNodeControl attaches for reading only: no step may act on a node.
+	NoNodeControl bool
 }
 
 // AttachWorkspaceRun attaches to the network the workspace at DataDir composed
@@ -115,17 +119,32 @@ type AttachWorkspaceIn struct {
 // up — but reads the workspace's node table, capabilities, and key set so a
 // spec addresses nodes by role and resolves account labels (WA10).
 func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorkspaceIn) (string, error) {
-	r := newRunner(sd, RunSuiteIn{
-		DataDir: in.DataDir, Chain: in.Chain, SpecContent: in.Specs,
-		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps,
-		NodeMonitorTimeout: in.NodeMonitorTimeout,
-		// The network is somebody else's. Attaching to one and then taking it
-		// down is not attaching.
-		KeepUp: true,
-	})
+	r := newRunner(sd, attachRunSuiteIn(in))
 	r.attach = true
 	out, err := r.Run(ctx)
 	return out.SessionRoot, err
+}
+
+// attachRunSuiteIn is the run an attach to a workspace's network makes.
+func attachRunSuiteIn(in AttachWorkspaceIn) RunSuiteIn {
+	return RunSuiteIn{
+		DataDir: in.DataDir, Chain: in.Chain, SpecContent: in.Specs,
+		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps,
+		NodeMonitorTimeout: in.NodeMonitorTimeout,
+		ReadOnlyKeys:       in.ReadOnlyKeys, NoNodeControl: in.NoNodeControl,
+		// The network is somebody else's. Attaching to one and then taking it
+		// down is not attaching.
+		KeepUp: true,
+	}
+}
+
+// adopted is the network as this run may use it: without node control when
+// the run attached for reading only.
+func (r *runner) adopted(net composed) composed {
+	if r.in.NoNodeControl {
+		net.control = nil
+	}
+	return net
 }
 
 // composedArtifacts is the manifest of composition inputs a workspace-owned

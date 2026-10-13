@@ -79,7 +79,9 @@ func (c *Set) resolve(s Server) Server {
 		s.Slots = 1
 	}
 	s.Ports = s.Ports.inherit(c.Defaults.Ports).inherit(BuiltinPorts())
-	s.SSH = s.SSH.inherit(c.Defaults.SSH)
+	if !s.ownSSH {
+		s.SSH = s.SSH.inherit(c.Defaults.SSH)
+	}
 	return s
 }
 

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -109,32 +111,29 @@ func (e *WebChainEngine) Reconcile(ctx context.Context, a DeploymentActor, prepa
 	if err = json.Unmarshal(raw, &state); err != nil {
 		return out, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return out, err
 	}
-	opener := resource.Opener{Lookup: lookup}
+	opener := lookup
 	present, unknown := false, false
 	for _, ns := range state.Nodes {
 		check := WebNodeCheck{NodeID: string(ns.NodeLabel()), Process: "unknown", Data: "unknown"}
 		spec := webNodeTarget(state, ns)
 		access, err := opener.Open(spec)
-		machine, inspectErr := opener.Inspect(ctx, spec)
+		_, inspectErr := opener.Inspect(ctx, spec)
 		if err == nil && inspectErr == nil {
-			if exists, err := access.Files.Exists(ctx, ns.DataDir); err == nil {
-				check.Data = map[bool]string{true: "present", false: "absent"}[exists]
-			}
-			if observer := webObserverFor(access, machine); observer != nil {
+			// The node's data directory or the configuration a deploy stage
+			// already wrote: either one is this job's, left on the target.
+			check.Data = webNodeFiles(ctx, access.Files, ns)
+			{
 				binary := state.Binary
 				if ns.Binary != "" {
 					binary = state.Binaries[ns.Binary]
 				}
-				observed := observeWebNodeVacancy(ctx, observer, binary, ns)
-				if ns.PID > 0 {
-					observed = observeWebNodeProcess(ctx, observer, binary, ns)
-				}
-				if observed.State == "running" || observed.State == "stopped" {
-					check.Process = observed.State
+				observed, observeErr := access.Observe(ctx, resource.ProcessRead{PID: ns.PID, Binary: binary, Args: ns.Args, DataDir: ns.DataDir, ConfigPath: ns.ConfigPath})
+				if observeErr == nil && (observed.State == process.OwnedRunning || observed.State == process.OwnedStopped) {
+					check.Process = string(observed.State)
 				}
 			}
 		}
@@ -196,4 +195,26 @@ func (s *WebJobs) ReconcileInterrupted(ctx context.Context) {
 		// The initiator's current account decides; a revoked one is skipped.
 		_, _ = s.Reconcile(ctx, DeploymentActor{ID: c.actor, Role: "operator"}, c.id)
 	}
+}
+
+// webNodeFiles reports whether anything a job placed for this node is on its
+// machine: present when either its data directory or its configuration file
+// exists, absent when neither does, unknown when either cannot be checked.
+func webNodeFiles(ctx context.Context, files interface {
+	Exists(context.Context, string) (bool, error)
+}, ns node.Record) string {
+	data := "absent"
+	for _, path := range []string{ns.DataDir, ns.ConfigPath} {
+		if path == "" {
+			continue
+		}
+		exists, err := files.Exists(ctx, path)
+		if err != nil {
+			return "unknown"
+		}
+		if exists {
+			data = "present"
+		}
+	}
+	return data
 }

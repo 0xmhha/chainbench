@@ -36,6 +36,12 @@ pool:
     - { name: local, addr: 127.0.0.1 }
     # - { name: bp1, addr: 10.0.0.11 }
     # - 10.0.0.12
+    # A host may carry its own ssh block (same fields as the top-level one).
+    # It replaces the top-level block whole for that host and inherits nothing
+    # from it, so two hosts can log in as different users with their own secrets.
+    # - name: bp2
+    #   addr: 10.0.0.13
+    #   ssh: { user: ops, key_file: ops_ed25519, known_hosts_file: known_hosts }
 
   # How many port slots one host may hold — i.e. how many nodes can share an
   # address. Defaults to 1.

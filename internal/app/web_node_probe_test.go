@@ -9,71 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
-
-type nodeProbeFixture struct {
-	alive  []bool
-	argv   []string
-	err    error
-	probes int
-}
-
-func (f *nodeProbeFixture) PIDAlive(context.Context, int) (bool, error) {
-	i := f.probes
-	f.probes++
-	if f.err != nil {
-		return false, f.err
-	}
-	if i >= len(f.alive) {
-		return false, nil
-	}
-	return f.alive[i], nil
-}
-func (f *nodeProbeFixture) Cmdline(context.Context, int) ([]string, error) { return f.argv, f.err }
-
-func TestWebNodeProbeVerifiesRecordedProcess(t *testing.T) {
-	ns := node.Record{Index: 1, PID: 1234, DataDir: "/owned/node1", ConfigPath: "/owned/node1.toml", Args: []string{"--config", "/owned/node1.toml"}}
-	for _, tc := range []struct {
-		name          string
-		fixture       nodeProbeFixture
-		pid           int
-		state, reason string
-	}{
-		{name: "exact launch", fixture: nodeProbeFixture{alive: []bool{true, true}, argv: []string{"/owned/gwbft", "--config", "/owned/node1.toml"}}, pid: 1234, state: "running"},
-		{name: "missing recorded process", fixture: nodeProbeFixture{alive: []bool{false}}, pid: 1234, state: "missing", reason: "recorded_pid_absent"},
-		{name: "PID reused for different binary", fixture: nodeProbeFixture{alive: []bool{true}, argv: []string{"/bin/sleep", "30"}}, pid: 1234, state: "ownership_mismatch", reason: "argv_mismatch"},
-		{name: "same binary different owned config", fixture: nodeProbeFixture{alive: []bool{true}, argv: []string{"/owned/gwbft", "--config", "/other/node1.toml"}}, pid: 1234, state: "ownership_mismatch", reason: "argv_mismatch"},
-		{name: "same binary incomplete args", fixture: nodeProbeFixture{alive: []bool{true}, argv: []string{"/owned/gwbft"}}, pid: 1234, state: "ownership_mismatch", reason: "argv_mismatch"},
-		{name: "process exits during read", fixture: nodeProbeFixture{alive: []bool{true, false}, argv: []string{"/owned/gwbft", "--config", "/owned/node1.toml"}}, pid: 1234, state: "missing", reason: "recorded_pid_absent"},
-		{name: "unavailable probe", fixture: nodeProbeFixture{err: errors.New("private-probe-error")}, pid: 1234, state: "unknown", reason: "probe_unavailable"},
-		{name: "no recorded PID", pid: 0, state: "unknown", reason: "no_recorded_pid"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			n := ns
-			n.PID = tc.pid
-			before := n
-			before.Args = append([]string(nil), n.Args...)
-			got := observeWebNodeProcess(context.Background(), &tc.fixture, "/owned/gwbft", n)
-			if got.State != tc.state || got.Reason != tc.reason {
-				t.Fatal(got)
-			}
-			if got.State == "running" && got.PID != n.PID {
-				t.Fatal("lost live PID")
-			}
-			if got.State != "running" && got.PID != 0 {
-				t.Fatal("unverified PID presented as live")
-			}
-			if !reflect.DeepEqual(n, before) {
-				t.Fatal("read-only probe mutated the owned record")
-			}
-		})
-	}
-}
 
 func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 	child := exec.Command("/bin/sleep", "30")
@@ -87,6 +25,7 @@ func TestWebNodeExecutionRechecksProcessBeforeStopping(t *testing.T) {
 		t.Fatal(err)
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	engine.UseCLI(planningCLI{})
 	control := filepath.Join(root, "network")
 	if err = os.Mkdir(control, 0o700); err != nil {
 		t.Fatal(err)
@@ -133,7 +72,7 @@ func TestWebControlRefusesUnrecordedLiveProcess(t *testing.T) {
 	state.Binary = "/bin/sleep"
 	state.Nodes[0].PID = 0
 	state.Nodes[0].Args = []string{"30"}
-	if err := verifyWebNodeProcesses(context.Background(), state, []string{"node1"}, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if err := verifyWebNodeProcesses(context.Background(), state, []string{"node1"}, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatalf("PID-zero record allowed control over a live process: %v", err)
 	}
 	if state.Nodes[0].PID != 0 || !process.Alive(child.Process.Pid) {

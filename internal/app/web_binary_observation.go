@@ -12,7 +12,7 @@ import (
 
 // observedWebBinary resolves the same private binding used by job acceptance.
 // It exposes asset identity only after checking the source and deployed bytes.
-func (e *WebChainEngine) observedWebBinary(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) (*webNodeBinary, error) {
+func (e *WebChainEngine) observedWebBinary(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) (*webNodeBinary, error) {
 	if state.ManifestPath == "" && state.TemplatePath == "" {
 		plugin, err := registry.Get(state.Chain)
 		if err != nil {

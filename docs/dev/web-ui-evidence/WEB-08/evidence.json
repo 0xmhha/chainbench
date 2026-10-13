@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-08",
-  "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
+  "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
   "scenarios": [
     {
       "id": "native-state-metric-charts",
@@ -24,19 +24,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-          "sha256": "9814631cce6c15a00acd1e33ee2eed2070b85247df5054662808f950277f2ce5"
+          "sha256": "9b6bde2157cb9d1de67a05d3dc303f061e7f085096db44460536102e43cb4866"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-          "sha256": "cc600a977a0f4149e77810080d4ce9a6c01c166fa47b1937cddf0faf395155e5"
+          "sha256": "4fd14ca3a8a91b47442a7c14b87d67777cb8038a50a3548ca737d0ece99d88a0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-desktop.png",
-          "sha256": "222610dd053a8a6bde7cafffe8fe00101d059bc01577d1fee4121260dddb39d2"
+          "sha256": "5c801ecdceb71df3a9724cc88d508ee9a66afb536c2c77ddb0e35489d30fc6c0"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     },
     {
       "id": "time-linked-logs",
@@ -56,19 +56,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-          "sha256": "9814631cce6c15a00acd1e33ee2eed2070b85247df5054662808f950277f2ce5"
+          "sha256": "9b6bde2157cb9d1de67a05d3dc303f061e7f085096db44460536102e43cb4866"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-          "sha256": "51229f8285fb3227154eef6f46bb3ac30701197783fbabbd13097b808f1fb5ac"
+          "sha256": "e24c826f92e9cdbb34defa0da84154d76e1df55fedbbf03a7adfc3397cb86ce4"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-ssh-log-collection.png",
-          "sha256": "b5e40d1707239f1d2548e187d3292de2318e0c934cee2e672223c54710d337b4"
+          "sha256": "8b23dd98a6217e725e700179faf6101597f1faa8532f73bd0915494f98da2b5c"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     },
     {
       "id": "browser-close-logout-continuity",
@@ -92,15 +92,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-          "sha256": "468b3996b374de2508dc7946c92b4c6a95834dc47531c121924a9cc2535c05bd"
+          "sha256": "37c7dd4e3ed024308a052a1c2f3a34a2303dc5c4b1b97db91647dcdf6c4591de"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-          "sha256": "3c0463b37fbc10e5316aa62cde2692f034ca0922e3c0436e7acc08ff451c3e2b"
+          "sha256": "ad25109a4bb5595234fe606d248f2a4787c2d1565f199cb53d7383b0ec5804d1"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     },
     {
       "id": "reconnect-snapshot-restore",
@@ -124,15 +124,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-          "sha256": "3c0463b37fbc10e5316aa62cde2692f034ca0922e3c0436e7acc08ff451c3e2b"
+          "sha256": "ad25109a4bb5595234fe606d248f2a4787c2d1565f199cb53d7383b0ec5804d1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-after-restart.json",
-          "sha256": "4b3ad486fc9c562ec586870753efa3ce2142b084b5af7a0673ef4fea33f2c4f2"
+          "sha256": "6223e9383998f45b0ae09b181f00be6859c16974bfd4662804543c1ee7e70c92"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     },
     {
       "id": "sse-gap-drop-stale",
@@ -160,19 +160,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-          "sha256": "468b3996b374de2508dc7946c92b4c6a95834dc47531c121924a9cc2535c05bd"
+          "sha256": "37c7dd4e3ed024308a052a1c2f3a34a2303dc5c4b1b97db91647dcdf6c4591de"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-stream-disconnected.png",
-          "sha256": "1f9a35584448096aac40e15dfa452a4ec519277d0fed556727a7a83bc1caec1c"
+          "sha256": "2a598b53388489064c73f9da2ddcda6de4a201a535c519a0d9af3258fd8e9a65"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-          "sha256": "3f8cfe60b95c4bee74133dd906dfc40f0b160299fdca4366a8eaca81dae20749"
+          "sha256": "8567c6a9a4d72afa089c8d7d5edc773c692e5a396d6ee48623a6c4e4ab8c07df"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     },
     {
       "id": "collection-failure-reporting",
@@ -196,19 +196,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-          "sha256": "cc600a977a0f4149e77810080d4ce9a6c01c166fa47b1937cddf0faf395155e5"
+          "sha256": "4fd14ca3a8a91b47442a7c14b87d67777cb8038a50a3548ca737d0ece99d88a0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-logs-after-revocation.json",
-          "sha256": "40cddc41d9ee82c85745a7bb0f115c0313fbcd50cd0c2e4fee27f38ff4f7d705"
+          "sha256": "eae6a64d919c28d4d18bbca01504f2af44bdf6b883fc8e0355ea78cfbecd5d57"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-          "sha256": "51229f8285fb3227154eef6f46bb3ac30701197783fbabbd13097b808f1fb5ac"
+          "sha256": "e24c826f92e9cdbb34defa0da84154d76e1df55fedbbf03a7adfc3397cb86ce4"
         }
       ],
-      "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-      "observedAt": "2026-10-11T22:02:59.943653+00:00"
+      "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+      "observedAt": "2026-10-13T02:21:47.677048+00:00"
     }
   ],
   "checks": [
@@ -216,21 +216,21 @@
       "command": "go test -race -count=1 ./internal/app ./internal/dashboard ./internal/core/session -run \"TestJobObservation|TestJobSnapshot|TestWebMonitor|TestWebRemoteLogs|TestMonitorRoutes|TestObservationStore|TestWebHistory\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-      "sha256": "3f8cfe60b95c4bee74133dd906dfc40f0b160299fdca4366a8eaca81dae20749"
+      "sha256": "8567c6a9a4d72afa089c8d7d5edc773c692e5a396d6ee48623a6c4e4ab8c07df"
     },
     {
       "command": "node --test tests/webui/job-observation.test.mjs tests/webui/metric-chart.test.mjs",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-08/check-1.log",
-      "sha256": "39c6a0190ecc1fdcfc379325b09b2d3b9b372e3e2aa1871a358c349547753217"
+      "sha256": "c81ef7518f404ddf4e36d6ce9641d5a17bc04a3ccbd6dcc90e5a0bc8055d7a07"
     }
   ],
   "proofs": [
     {
       "name": "monitoring",
-      "startedAt": "2026-10-11T21:59:00.019572+00:00",
-      "runtime": "/private/tmp/cbui/dcda4e81-79b7-4299-b488-3d21fe2bb08b",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:17:25.433418+00:00",
+      "runtime": "/private/tmp/cbui/61bc57da-1c9b-4666-838f-a558670b6cf8",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -261,9 +261,9 @@
     },
     {
       "name": "snapshot-restore",
-      "startedAt": "2026-10-11T21:59:54.716007+00:00",
-      "runtime": "/private/tmp/cbui/45456097-aeac-45eb-a894-7b84785003d8",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:17:50.089332+00:00",
+      "runtime": "/private/tmp/cbui/3c1fabe3-147e-46b2-a405-27e46676e93a",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -294,9 +294,9 @@
     },
     {
       "name": "ssh-log-collection",
-      "startedAt": "2026-10-11T22:00:16.006909+00:00",
-      "runtime": "/private/tmp/cbui/8c85b930-816f-4757-bc4e-e1546e468880",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:18:50.060038+00:00",
+      "runtime": "/private/tmp/cbui/bbdfb14d-3397-4d0f-8257-392e0fe1432a",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -327,9 +327,9 @@
     },
     {
       "name": "logout-continuity",
-      "startedAt": "2026-10-11T22:01:59.132167+00:00",
-      "runtime": "/private/tmp/cbui/fea7b55d-4848-4f3e-aafe-6c18592a962d",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:21:09.683976+00:00",
+      "runtime": "/private/tmp/cbui/245f2750-1758-4522-8295-1161295a6c29",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -360,8 +360,8 @@
     }
   ],
   "server": {
-    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
-    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sha256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
+    "baseCommit": "49ba0c67be2915415d5f014e72c92ac970f488ac",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -402,7 +402,7 @@
   "source": [
     {
       "path": "internal/app/web_monitor.go",
-      "sha256": "8a030c3af3f5671b932c6d320943a6c8de45d75aa9841ac6200e991b84b0081d"
+      "sha256": "c7b8aa33cc7c0cd8cd996448043d5111df0640c46dd31cde27aed0a5ecf8b1d7"
     },
     {
       "path": "internal/app/web_monitor_archive.go",
@@ -414,23 +414,23 @@
     },
     {
       "path": "internal/app/web_monitor_read.go",
-      "sha256": "cb5d03edc98f8e969e139ab3e71443f1d685b2ff034348b79c5b088798426638"
+      "sha256": "f31b4ba9aca783c6c338b869910ff41e6eefb1d882e5746512eec22fc8c7070a"
     },
     {
       "path": "internal/app/web_monitor_remote.go",
-      "sha256": "aa70d0723d67f66857f32d633e8c9283b8f4c4c5f7eccf7dad9e6338d32ed27d"
+      "sha256": "07c5ee6fe0c582ecc55f172e94f086409f1cc5d3b017146d2ffdfde6ef493217"
     },
     {
       "path": "internal/app/web_monitor_remote_test.go",
-      "sha256": "5dfc6abb8c6fbafdaccfb11f6acfcda59d144520cd227e7e1f88144798d818f2"
+      "sha256": "2692c598241ce5b05bd077e2c86475c0a1c3ff7ece51da18d5609f3ca24e9a65"
     },
     {
       "path": "internal/app/web_monitor_rotation_test.go",
-      "sha256": "3bc85c8ac1552678e33926d68d74ff2ec4047adcc722aa1e129250637b73bca8"
+      "sha256": "4e27fda6ade609e2f9fa980575aa39a930df8be168242cf6864304a11c7b5d62"
     },
     {
       "path": "internal/app/web_monitor_test.go",
-      "sha256": "8dcce0e3d71832855bb530ab64ad851ad07620f9aeeaa96d8c69828405884702"
+      "sha256": "fb94663c9d80877a9ce006bf5b66b973dfd2a660842b5523810965018bf0dffd"
     },
     {
       "path": "internal/app/web_job_observation.go",
@@ -438,7 +438,7 @@
     },
     {
       "path": "internal/app/web_network_monitor.go",
-      "sha256": "77c0797379d7c460a761b9fefec4ffdefcb2b07bff74fb599febcaef2016113d"
+      "sha256": "2ece6ea90a05d29ac07b4714a77e3ff474d302fb98db9c52ffcc541ee28d4b09"
     },
     {
       "path": "internal/app/web_history_observations.go",
@@ -446,7 +446,7 @@
     },
     {
       "path": "internal/dashboard/monitor.go",
-      "sha256": "399d406036c7cea3b288feb6aa0bff0638e18c7f1e1ee6c3980cba85c66bff93"
+      "sha256": "e21d57acb7e44ae8bae52692ebab50811ef87d2cbb65ce899624477858507cad"
     },
     {
       "path": "internal/dashboard/snapshot.go",
@@ -508,19 +508,19 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/check-0.log",
-      "sha256": "3f8cfe60b95c4bee74133dd906dfc40f0b160299fdca4366a8eaca81dae20749"
+      "sha256": "8567c6a9a4d72afa089c8d7d5edc773c692e5a396d6ee48623a6c4e4ab8c07df"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/check-1.log",
-      "sha256": "39c6a0190ecc1fdcfc379325b09b2d3b9b372e3e2aa1871a358c349547753217"
+      "sha256": "c81ef7518f404ddf4e36d6ce9641d5a17bc04a3ccbd6dcc90e5a0bc8055d7a07"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-continuity-mobile.png",
-      "sha256": "b0181b457ba378d25adbd115abd573fec3a7cb29c1d0b05a560ab9ebc58f4d13"
+      "sha256": "28aac8878afc6c948dd847a6ddaf8232fdbb7653aaea6223de4eabf4fafba36a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-receipt.json",
-      "sha256": "468b3996b374de2508dc7946c92b4c6a95834dc47531c121924a9cc2535c05bd"
+      "sha256": "37c7dd4e3ed024308a052a1c2f3a34a2303dc5c4b1b97db91647dcdf6c4591de"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-run.log",
@@ -528,27 +528,27 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/logout-continuity-stream-disconnected.png",
-      "sha256": "1f9a35584448096aac40e15dfa452a4ec519277d0fed556727a7a83bc1caec1c"
+      "sha256": "2a598b53388489064c73f9da2ddcda6de4a201a535c519a0d9af3258fd8e9a65"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-after-restart.json",
-      "sha256": "1e35de504066c5351cdc351c509e1397d0940d0ae6bfd9c6d5b9ed37101a87aa"
+      "sha256": "acbf0b241594ba6d2c6c99a219c0bdacbfa49d76b92ef3c1b161b6f4d50755af"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-metrics-before-restart.json",
-      "sha256": "cc600a977a0f4149e77810080d4ce9a6c01c166fa47b1937cddf0faf395155e5"
+      "sha256": "4fd14ca3a8a91b47442a7c14b87d67777cb8038a50a3548ca737d0ece99d88a0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-desktop.png",
-      "sha256": "222610dd053a8a6bde7cafffe8fe00101d059bc01577d1fee4121260dddb39d2"
+      "sha256": "5c801ecdceb71df3a9724cc88d508ee9a66afb536c2c77ddb0e35489d30fc6c0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-monitoring-mobile.png",
-      "sha256": "9902c6ce51b830cd3d0994265af7e8f22eec0873e37101b11eafc6c9333f1e65"
+      "sha256": "ed3ad3f2d2628f6af1ca8f1f7fd70927fddac7ab907c509cb3da52f9dded4038"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-receipt.json",
-      "sha256": "9814631cce6c15a00acd1e33ee2eed2070b85247df5054662808f950277f2ce5"
+      "sha256": "9b6bde2157cb9d1de67a05d3dc303f061e7f085096db44460536102e43cb4866"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/monitoring-run.log",
@@ -556,15 +556,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-after-restart.json",
-      "sha256": "4b3ad486fc9c562ec586870753efa3ce2142b084b5af7a0673ef4fea33f2c4f2"
+      "sha256": "6223e9383998f45b0ae09b181f00be6859c16974bfd4662804543c1ee7e70c92"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-observations-before-restart.json",
-      "sha256": "daac6404e20407dbd47884330b6880307c2178caff00e51a0f501699a46afcae"
+      "sha256": "2689b44829b1898068c03c1fcfd3816fedccab3b380fdb1de3f448d39588b871"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-receipt.json",
-      "sha256": "3c0463b37fbc10e5316aa62cde2692f034ca0922e3c0436e7acc08ff451c3e2b"
+      "sha256": "ad25109a4bb5595234fe606d248f2a4787c2d1565f199cb53d7383b0ec5804d1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-run.log",
@@ -572,15 +572,15 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/snapshot-restore-snapshot-desktop.png",
-      "sha256": "56d3f43cf2f0c544f836bf751944e73d9ee1bc59a60ed4303a3eb296e0bb63f9"
+      "sha256": "26534ebf84c26fe62f033e725e95d191b065f67fe864ccd8359c09916031f1c9"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-logs-after-revocation.json",
-      "sha256": "40cddc41d9ee82c85745a7bb0f115c0313fbcd50cd0c2e4fee27f38ff4f7d705"
+      "sha256": "eae6a64d919c28d4d18bbca01504f2af44bdf6b883fc8e0355ea78cfbecd5d57"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-receipt.json",
-      "sha256": "51229f8285fb3227154eef6f46bb3ac30701197783fbabbd13097b808f1fb5ac"
+      "sha256": "e24c826f92e9cdbb34defa0da84154d76e1df55fedbbf03a7adfc3397cb86ce4"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-run.log",
@@ -588,9 +588,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-08/ssh-log-collection-ssh-log-collection.png",
-      "sha256": "b5e40d1707239f1d2548e187d3292de2318e0c934cee2e672223c54710d337b4"
+      "sha256": "8b23dd98a6217e725e700179faf6101597f1faa8532f73bd0915494f98da2b5c"
     }
   ],
   "blockers": [],
-  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+  "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc"
 }

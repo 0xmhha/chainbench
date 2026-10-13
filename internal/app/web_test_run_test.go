@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -151,7 +152,22 @@ func TestWebTestSessionReferencesCannotEscapeOrCollideWithLegacy(t *testing.T) {
 	}
 }
 
-func TestWebTestBinaryProvisioningChecksBytesBeforeLocalWrite(t *testing.T) {
+// uploadsCLI records every command it is asked to run.
+type uploadsCLI struct{ calls [][]string }
+
+func (c *uploadsCLI) ChainStatus(context.Context, string) (State, error) { return State{}, nil }
+func (c *uploadsCLI) Run(ctx context.Context, args ...string) ([]byte, error) {
+	if slices.Contains(args, "--plan") {
+		return (planningCLI{}).Run(ctx, args...)
+	}
+	c.calls = append(c.calls, args)
+	return nil, nil
+}
+
+// TestWebTestBinariesUploadThroughTheCLI: each accepted test binary reaches
+// the target through `chainbench file upload`, which checks the accepted
+// sha256 before writing and again on the target, and makes it runnable there.
+func TestWebTestBinariesUploadThroughTheCLI(t *testing.T) {
 	e, p := webRunPlanFixture(t, `{"bp":4}`)
 	source := filepath.Join(t.TempDir(), "arbitrary-source-name")
 	bytes := []byte("accepted fixture file bytes")
@@ -164,25 +180,23 @@ func TestWebTestBinaryProvisioningChecksBytesBeforeLocalWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.assets["verified"] = ManifestBinary{ID: "verified", Path: source}
-	if err := e.uploadWebBinary(context.Background(), p, nil); err != nil {
+	cli := &uploadsCLI{}
+	e.UseCLI(cli)
+	if err := e.uploadTestBinaries(context.Background(), p, "/job/logins.yaml"); err != nil {
 		t.Fatal(err)
 	}
-	actual, err := os.ReadFile(p.ExecutionBinary)
-	if err != nil || string(actual) != string(bytes) {
-		t.Fatal("selected source was not provisioned", err)
+	if len(cli.calls) != 1 {
+		t.Fatalf("calls = %v, want one upload", cli.calls)
 	}
-	info, err := os.Stat(p.ExecutionBinary)
-	if err != nil || info.Mode().Perm() != 0755 {
-		t.Fatal("provisioned binary is not executable", err)
+	args := cli.calls[0]
+	if args[0] != "file" || args[1] != "upload" || args[2] != source || !slices.Contains(args, "--force-upload") {
+		t.Fatalf("args = %v", args)
 	}
-	if err = os.WriteFile(source, []byte("changed source"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if err = e.uploadWebBinary(context.Background(), p, nil); err == nil {
-		t.Fatal("changed source was provisioned after acceptance")
-	}
-	actual, err = os.ReadFile(p.ExecutionBinary)
-	if err != nil || string(actual) != string(bytes) {
-		t.Fatal("rejected source changed target bytes", err)
+	for flag, want := range map[string]string{"--remote": p.ExecutionBinary, "--sha256": p.Binary.SHA256, "--mode": "0755",
+		"--server-logins": "/job/logins.yaml", "--server": p.Arguments.ServerRef,
+		"--server-set": filepath.Join(p.TestRun.InputDir, "server-set.yaml"), "--workspace-config": filepath.Join(p.TestRun.InputDir, "workspace-config.yaml")} {
+		if got := flagValue(args, flag); got != want {
+			t.Errorf("%s = %q, want %q", flag, got, want)
+		}
 	}
 }

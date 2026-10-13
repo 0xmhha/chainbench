@@ -20,6 +20,10 @@ const (
 	// starts nothing, so an external launcher can boot from the result. It ends
 	// after the deploy step (the old name was "provision").
 	UpDeploy UpStage = "deploy"
+	// UpInit goes one step further than UpDeploy: it initialises every datadir
+	// at genesis and still starts nothing, so a later start boots nodes that
+	// were set up and checked here.
+	UpInit UpStage = "init"
 	// UpStart additionally initializes the datadirs and launches the nodes.
 	UpStart UpStage = "start"
 )

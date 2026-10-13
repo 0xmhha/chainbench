@@ -16,7 +16,7 @@ import (
 // nodeset, and verifies the stop tool terminates it. This exercises the real
 // LocalDriver stop path without needing a chain binary.
 func TestStopTool(t *testing.T) {
-	proc := exec.Command("sleep", "30")
+	proc := exec.Command("/bin/sleep", "30")
 	if err := proc.Start(); err != nil {
 		t.Skipf("cannot start sleep: %v", err)
 	}
@@ -25,7 +25,11 @@ func TestStopTool(t *testing.T) {
 	t.Cleanup(func() { _ = proc.Process.Kill(); _, _ = proc.Process.Wait() })
 
 	dir := t.TempDir()
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "bp", 8501, pid))
+	// The record names the launch exactly, as a start leaves it: stop signals
+	// only a process that is the recorded launch.
+	n := wsNode(dir, 1, "bp", 8501, pid)
+	n.Args = []string{"30"}
+	writeWorkspace(t, dir, "stablenet", n)
 
 	text, isErr := callText(t, newServer(), "chainbench_stop", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "stopped 1 node") {
@@ -50,7 +54,7 @@ func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
 	}
 	st := chainsetup.State{
 		FormatVersion: chainsetup.StateFormatVersion,
-		Chain:         chain, Binary: "/opt/fakebin", BPCount: len(nodes),
+		Chain:         chain, Binary: "/bin/sleep", BPCount: len(nodes),
 		Target: resource.Spec{DataRoot: dir}, Nodes: nodes,
 		Capabilities: []string{"rpc"},
 		Steps:        map[string]chainsetup.Step{},

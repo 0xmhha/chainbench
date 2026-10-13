@@ -50,7 +50,7 @@ func TestWebControlBinaryAcceptsOnlyRegisteredOwnedExecutables(t *testing.T) {
 	state := State{Target: resource.Spec{DataRoot: root}}
 	for _, binary := range []string{source, native} {
 		state.Binary = binary
-		got, err := bindWebControlBinary(context.Background(), state, payload, nil)
+		got, err := bindWebControlBinary(context.Background(), state, payload, unitTargetReader(t, nil))
 		if err != nil || got != binary {
 			t.Fatalf("registered executable rejected: %s %s %v", binary, got, err)
 		}
@@ -60,20 +60,20 @@ func TestWebControlBinaryAcceptsOnlyRegisteredOwnedExecutables(t *testing.T) {
 		t.Fatal(err)
 	}
 	state.Binary = unrelated
-	if _, err = bindWebControlBinary(context.Background(), state, payload, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if _, err = bindWebControlBinary(context.Background(), state, payload, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatal("same bytes at undeclared executable path accepted", err)
 	}
 	state.Binary = native
 	if err = os.WriteFile(native, []byte("substituted bytes"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = bindWebControlBinary(context.Background(), state, payload, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if _, err = bindWebControlBinary(context.Background(), state, payload, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatal("owned file replacement accepted", err)
 	}
 	if err = os.Remove(native); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = bindWebControlBinary(context.Background(), state, payload, nil); err == nil {
+	if _, err = bindWebControlBinary(context.Background(), state, payload, unitTargetReader(t, nil)); err == nil {
 		t.Fatal("missing execution binary accepted")
 	}
 }
@@ -106,7 +106,7 @@ func TestWebReviewedExecutableCannotChangeItsProtocolOrGenesisMapping(t *testing
 	}
 	p.CurrentNodeBinary = &webNodeBinary{NodeID: "node1", Evidence: evidence, Path: target}
 	state := State{Chain: "wbft", Binary: source, GenesisPath: "/reviewed/genesis", Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, Label: "node1", Binary: "node1"}}, Binaries: map[string]string{"node1": target}}
-	if _, err = bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+	if _, err = bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("valid reviewed executable refused", err)
 	}
 
@@ -114,11 +114,11 @@ func TestWebReviewedExecutableCannotChangeItsProtocolOrGenesisMapping(t *testing
 	if err = os.Chmod(target, 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = bindWebControlBinary(context.Background(), state, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if _, err = bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatal("reviewed named nonexecutable target accepted", err)
 	}
 	p.Input.Operation = "node.stop"
-	if _, err = bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+	if _, err = bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("named target execute permission prevents explicit stop", err)
 	}
 	if err = os.Chmod(target, 0700); err != nil {
@@ -128,7 +128,7 @@ func TestWebReviewedExecutableCannotChangeItsProtocolOrGenesisMapping(t *testing
 		t.Fatal(err)
 	}
 	p.Input.Operation = "node.restart"
-	if _, err = bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+	if _, err = bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("unused base execution permission prevents named relaunch", err)
 	}
 	for _, field := range []string{"chain", "genesis", "genesis-config"} {
@@ -141,7 +141,7 @@ func TestWebReviewedExecutableCannotChangeItsProtocolOrGenesisMapping(t *testing
 		case "genesis-config":
 			changed.GenesisConfigPaths = map[string]string{"node1": "/unreviewed/config"}
 		}
-		if _, err = bindWebControlBinary(context.Background(), changed, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+		if _, err = bindWebControlBinary(context.Background(), changed, p, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 			t.Fatal("reviewed bytes authorized unreviewed node declarations", field, err)
 		}
 	}
@@ -158,13 +158,13 @@ func TestWebControlBinaryRejectsUnboundSelectedNodeExecutables(t *testing.T) {
 	state := State{Binary: path, Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, Label: "node1"}, {Index: 2, Label: "node2"}}, Binaries: map[string]string{"unreviewed": path}}
 	for _, name := range []string{"unreviewed", "missing"} {
 		state.Nodes[0].Binary = name
-		if _, err := bindWebControlBinary(context.Background(), state, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+		if _, err := bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 			t.Fatal("unbound selected executable accepted", name, err)
 		}
 	}
 	state.Nodes[0].Binary = ""
 	state.Nodes[1].Binary = "unreviewed"
-	if got, err := bindWebControlBinary(context.Background(), state, p, nil); err != nil || got != path {
+	if got, err := bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil || got != path {
 		t.Fatal("unselected binary prevents controlling the base node", got, err)
 	}
 }
@@ -180,19 +180,19 @@ func TestWebRelaunchRefusesNonExecutableBytesButAllowsExplicitStop(t *testing.T)
 	state := State{Binary: path, Target: resource.Spec{DataRoot: root}, Nodes: []node.Record{{Index: 1, Label: "node1"}}}
 	for _, operation := range []string{"node.start", "node.restart", "node.swap", "node.reset"} {
 		p.Input.Operation = operation
-		if _, err := bindWebControlBinary(context.Background(), state, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+		if _, err := bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 			t.Errorf("nonexecutable target accepted for %s: %v", operation, err)
 		}
 	}
 	p.Input.Operation = "node.stop"
-	if _, err := bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+	if _, err := bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("removing execute permission prevents explicit stop", err)
 	}
 	if err := os.Chmod(path, 0700); err != nil {
 		t.Fatal(err)
 	}
 	p.Input.Operation = "node.restart"
-	if _, err := bindWebControlBinary(context.Background(), state, p, nil); err != nil {
+	if _, err := bindWebControlBinary(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("restored executable remains blocked", err)
 	}
 }

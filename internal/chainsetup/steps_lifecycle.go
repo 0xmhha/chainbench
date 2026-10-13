@@ -459,7 +459,7 @@ func (w *Workspace) stopNodes(ctx context.Context, pick func(node.Record) bool) 
 		wg.Add(1)
 		go func(i int, ns node.Record, t *resource.Access) {
 			defer wg.Done()
-			err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID})
+			_, err := w.stopOwned(ctx, t, ns, ns.PID)
 			mu.Lock()
 			results = append(results, outcome{i: i, err: err})
 			mu.Unlock()

@@ -46,6 +46,11 @@ const (
 	LockForeign LockState = "foreign"
 )
 
+// afterLockRead runs between reading a lock and writing one. It does nothing in
+// a real run; a test widens the window with it to prove two processes cannot
+// both pass through.
+var afterLockRead = func() {}
+
 // ErrLocked is returned when a workspace is held by a live run.
 var ErrLocked = errors.New("session: workspace is in use")
 
@@ -84,10 +89,19 @@ func AcquireLock(path, command string, now func() time.Time) (*Held, Lock, LockS
 	if now == nil {
 		now = time.Now
 	}
+	if err := os.MkdirAll(filepath.Dir(path), compositionDirPerm); err != nil {
+		return nil, Lock{}, "", fmt.Errorf("session: mkdir for %s: %w", path, err)
+	}
+	unlock, err := guardLock(path)
+	if err != nil {
+		return nil, Lock{}, "", err
+	}
+	defer unlock()
 	prev, state, err := readLock(path)
 	if err != nil {
 		return nil, Lock{}, "", err
 	}
+	afterLockRead()
 	switch state {
 	case LockLive:
 		// A lock is held by one run, not by one call. A composite step
@@ -104,9 +118,6 @@ func AcquireLock(path, command string, now func() time.Time) (*Held, Lock, LockS
 		return nil, prev, state, fmt.Errorf("%w: %s", ErrLocked, prev.Describe())
 	}
 
-	if err := os.MkdirAll(filepath.Dir(path), compositionDirPerm); err != nil {
-		return nil, prev, state, fmt.Errorf("session: mkdir for %s: %w", path, err)
-	}
 	host, _ := os.Hostname()
 	mine := Lock{PID: os.Getpid(), Host: host, Command: command, At: now().UTC().Format(time.RFC3339)}
 	b, err := json.MarshalIndent(mine, "", "  ")
@@ -117,6 +128,25 @@ func AcquireLock(path, command string, now func() time.Time) (*Held, Lock, LockS
 		return nil, prev, state, fmt.Errorf("session: write %s: %w", path, err)
 	}
 	return &Held{path: path, lock: mine}, prev, state, nil
+}
+
+// guardLock serialises the read-then-write of a lock between processes on this
+// host. Without it two runs that both read "free" both write, and each believes
+// it holds the workspace. The guard is an flock on a sidecar file, so the
+// kernel drops it when a process dies and a crash never strands it.
+func guardLock(path string) (func(), error) {
+	f, err := os.OpenFile(path+".guard", os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("session: open guard for %s: %w", path, err)
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
+		_ = f.Close()
+		return nil, fmt.Errorf("session: guard %s: %w", path, err)
+	}
+	return func() {
+		_ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+		_ = f.Close()
+	}, nil
 }
 
 // Release removes the lock. Releasing a lock another run has since taken is not

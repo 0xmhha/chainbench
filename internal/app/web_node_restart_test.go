@@ -35,6 +35,7 @@ func TestWebRestartRefusesChangedInputsBeforeStopping(t *testing.T) {
 				t.Fatal(err)
 			}
 			engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+			engine.UseCLI(planningCLI{})
 			p.ControlDir = filepath.Join(root, "network")
 			if err = os.MkdirAll(p.ControlDir, 0700); err != nil {
 				t.Fatal(err)
@@ -77,11 +78,11 @@ func TestWebRestartInputsPermitProducerAndRefuseUnboundBinary(t *testing.T) {
 	state, p := webResetFixture(t)
 	state.Nodes[0].Role = "bp"
 	p.Input.Operation = "node.restart"
-	if err := verifyWebNodeInputs(context.Background(), state, p, nil); err != nil {
+	if err := verifyWebNodeInputs(context.Background(), state, p, unitTargetReader(t, nil)); err != nil {
 		t.Fatal("producer cannot preserve and restart its data", err)
 	}
 	state.Nodes[0].Binary = "unreviewed"
-	if err := verifyWebNodeInputs(context.Background(), state, p, nil); !errors.Is(err, ErrDeploymentConflict) {
+	if err := verifyWebNodeInputs(context.Background(), state, p, unitTargetReader(t, nil)); !errors.Is(err, ErrDeploymentConflict) {
 		t.Fatal("unbound per-node binary accepted", err)
 	}
 }

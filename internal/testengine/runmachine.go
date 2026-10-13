@@ -485,7 +485,7 @@ func (s *attachingToNetwork) Enter(ctx context.Context, m *statemachine.Machine)
 		r.fail(m, s, err)
 		return nil
 	}
-	r.net = net
+	r.net = r.adopted(net)
 	r.networkUp = true
 	r.out.Endpoints = net.endpoints
 	m.SendSelf(networkReached{})

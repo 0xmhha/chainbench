@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // webTargetPhases change the target machines; the phases before them only
@@ -50,7 +48,7 @@ func webRecordedNodeEffects(state State, exists func(path string) (bool, error))
 
 // nodeEffects checks every node the record names on its own machine after a
 // failed target phase. Without a record, nothing per node is known.
-func (e *WebChainEngine) nodeEffects(ctx context.Context, p webChainPayload, lookup resource.Lookup) ([]string, []string) {
+func (e *WebChainEngine) nodeEffects(ctx context.Context, p webChainPayload, lookup *webTargetReader) ([]string, []string) {
 	raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if err != nil {
 		return []string{"no node record was written, so no node is known"}, []string{p.Target.DataPath}
@@ -59,7 +57,7 @@ func (e *WebChainEngine) nodeEffects(ctx context.Context, p webChainPayload, loo
 	if err = json.Unmarshal(raw, &state); err != nil {
 		return []string{"the node record could not be read"}, []string{p.Target.DataPath}
 	}
-	opener := resource.Opener{Lookup: lookup}
+	opener := lookup
 	return webRecordedNodeEffects(state, func(path string) (bool, error) {
 		for _, ns := range state.Nodes {
 			if ns.DataDir != path {

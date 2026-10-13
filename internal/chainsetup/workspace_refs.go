@@ -15,19 +15,18 @@ import (
 // nil when none was named. It is loaded once per command; a portable reference
 // needs it to resolve its root, while an absolute or srv:// reference does not.
 func (w *Workspace) wc() (*resource.WorkspaceConfig, error) {
-	if w.wcLoaded {
-		return w.wcCache, nil
-	}
-	w.wcLoaded = true
-	if w.state.WorkspaceConfig == "" {
-		return nil, nil
-	}
-	c, err := resource.LoadWorkspaceConfig(w.state.WorkspaceConfig)
-	if err != nil {
-		return nil, fmt.Errorf("chainsetup: workspace-config: %w", err)
-	}
-	w.wcCache = &c
-	return w.wcCache, nil
+	w.wcOnce.Do(func() {
+		if w.state.WorkspaceConfig == "" {
+			return
+		}
+		c, err := resource.LoadWorkspaceConfig(w.state.WorkspaceConfig)
+		if err != nil {
+			w.wcErr = fmt.Errorf("chainsetup: workspace-config: %w", err)
+			return
+		}
+		w.wcCache = &c
+	})
+	return w.wcCache, w.wcErr
 }
 
 // layout builds the path layout for this composition: flat under the data root

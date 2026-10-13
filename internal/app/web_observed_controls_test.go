@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -68,7 +69,8 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 	if err = os.MkdirAll(control, 0700); err != nil {
 		t.Fatal(err)
 	}
-	state := State{Chain: "wbft", Binary: binary, Target: spec, Nodes: []node.Record{{Index: 1, Label: "node1", Role: "en", PID: child.Process.Pid, Args: args, DataDir: filepath.Join(root, "node1"), ConfigPath: filepath.Join(root, "node1.toml")}}}
+	// A record as a composition leaves it, which the CLI reads.
+	state := State{FormatVersion: chainsetup.StateFormatVersion, Steps: map[string]chainsetup.Step{}, Chain: "wbft", Binary: binary, Target: spec, Nodes: []node.Record{{Index: 1, Label: "node1", Role: "en", PID: child.Process.Pid, Args: args, DataDir: filepath.Join(root, "node1"), ConfigPath: filepath.Join(root, "node1.toml")}}}
 	for name, value := range map[string]any{"chain-record.json": state, "web-target.json": target} {
 		encoded, err := json.Marshal(value)
 		if err != nil {
@@ -79,15 +81,26 @@ func TestObservedControlsFollowExecutablePermissionWithoutLosingLiveState(t *tes
 		}
 	}
 	engine := NewWebChainEngine(root, "", store, nil, nil, nil)
+	inspectionCalls := 0
+	engine.UseCLI(targetTestCLI{run: func(ctx context.Context, args []string) ([]byte, error) {
+		if len(args) > 1 && args[0] == "resource" && args[1] == "inspect" {
+			inspectionCalls++
+		}
+		return (observeCLI{}).Run(ctx, args...)
+	}})
 	recordBefore, err := os.ReadFile(filepath.Join(control, "chain-record.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	check := func(launchable bool) {
 		t.Helper()
+		inspectionCalls = 0
 		network, err := engine.ObserveNetwork(ctx, actor, workspace.ID)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if inspectionCalls != 1 {
+			t.Fatalf("one observation queried the same machine %d times, want once", inspectionCalls)
 		}
 		n := network.Nodes[0]
 		if n.State != "running" || n.ObservedPID != child.Process.Pid {

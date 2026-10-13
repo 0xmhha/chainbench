@@ -19,6 +19,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"github.com/0xmhha/chainbench/internal/webcli"
 )
 
 func main() {
@@ -34,6 +35,7 @@ func main() {
 	tlsCert := flag.String("tls-cert", "", "TLS certificate for the web service")
 	tlsKey := flag.String("tls-key", "", "TLS private key for the web service")
 	trusted := flag.String("trusted-proxy", "", "comma-separated addresses or CIDRs of TLS terminators whose X-Forwarded-Proto is trusted")
+	chainbenchBin := flag.String("chainbench", "", "chainbench CLI the Web runs (default: the one beside this binary, then PATH)")
 	flag.Parse()
 	if (*tlsCert == "") != (*tlsKey == "") {
 		fmt.Fprintln(os.Stderr, "TLS certificate and key must be configured together")
@@ -127,6 +129,17 @@ func main() {
 		}
 		opts = append(opts, dashboard.WithManifests(manifests, authenticate, assets, *manifestKeys))
 		engine := app.NewWebChainEngine(*deploymentRoot, *manifestKeys, deployments, manifests, assets, authorize)
+		// The Web runs the chainbench CLI for the networks it reads and changes,
+		// so a dashboard without it refuses to start rather than fail a job.
+		self, _ := os.Executable()
+		cliPath, err := webcli.FindBinary(*chainbenchBin, self)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		engine.UseCLI(webcli.Runner{Binary: cliPath})
+		deployments.UseCLI(webcli.Runner{Binary: cliPath})
+		manifests.UseCLI(webcli.Runner{Binary: cliPath})
 		// Plans pin the documented surface of every binary they run, so the
 		// documentation has to be readable before the service starts.
 		if err = app.CheckChainSurfaces(*analysisRoot); err != nil {
@@ -153,6 +166,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "observation store:", err)
 			os.Exit(1)
 		}
+		monitor.UseCLI(webcli.Runner{Binary: cliPath})
 		go monitor.Run(context.Background())
 		// Local machines of jobs the restart interrupted are checked once,
 		// read-only, so their records show what actually remains.

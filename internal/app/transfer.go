@@ -2,7 +2,10 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -48,6 +51,13 @@ type UploadIn struct {
 	// Force overwrites a destination that already exists; without it, a name
 	// collision is refused.
 	Force bool
+	// SHA256, when set, is the hex digest the one local file must have. It is
+	// checked before anything is written and again on the written file, so a
+	// caller that accepted particular bytes gets exactly those on the target.
+	SHA256 string
+	// Mode, when non-zero, is the mode of the written file; zero keeps the
+	// local file's own.
+	Mode os.FileMode
 }
 
 // UploadOut reports the target paths written.
@@ -69,14 +79,44 @@ func Upload(ctx context.Context, d Deps, in UploadIn) (UploadOut, error) {
 	if err != nil {
 		return UploadOut{}, err
 	}
+	if in.SHA256 != "" {
+		if len(in.LocalPaths) != 1 {
+			return UploadOut{}, fmt.Errorf("upload: --sha256 names the digest of one local file, got %d", len(in.LocalPaths))
+		}
+		if err := localDigest(in.LocalPaths[0], in.SHA256); err != nil {
+			return UploadOut{}, err
+		}
+	}
 	var out UploadOut
 	for i, local := range in.LocalPaths {
-		if err := acc.Upload(ctx, local, dests[i], in.Force); err != nil {
+		if err := acc.UploadMode(ctx, local, dests[i], in.Force, in.Mode); err != nil {
 			return out, err
+		}
+		if in.SHA256 != "" {
+			got, err := acc.Files.Checksum(ctx, dests[i])
+			if err != nil {
+				return out, fmt.Errorf("upload: checksum %s: %w", dests[i], err)
+			}
+			if got != "sha256:"+in.SHA256 {
+				return out, fmt.Errorf("upload: %s on the target is %s, not the sha256 %s that was sent", dests[i], got, in.SHA256)
+			}
 		}
 		out.Uploaded = append(out.Uploaded, dests[i])
 	}
 	return out, nil
+}
+
+// localDigest refuses a local file whose sha256 is not want.
+func localDigest(path, want string) error {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("upload: read local %s: %w", path, err)
+	}
+	sum := sha256.Sum256(b)
+	if got := hex.EncodeToString(sum[:]); got != want {
+		return fmt.Errorf("upload: %s has sha256 %s, not %s", path, got, want)
+	}
+	return nil
 }
 
 // DownloadIn is a request to copy a server file to a local path.
@@ -130,8 +170,22 @@ func openTransferTarget(d Deps, t TransferServer) (resource.WorkspaceConfig, *re
 	if err != nil {
 		return resource.WorkspaceConfig{}, nil, err
 	}
+	// The server is resolved through its set, so a server on this machine is
+	// written locally rather than dialed as if it were remote.
+	setPath := t.ServerSet
+	if setPath == "" {
+		setPath = resource.DefaultSetFile
+	}
+	set, err := resource.LoadSet(setPath)
+	if err != nil {
+		return resource.WorkspaceConfig{}, nil, err
+	}
+	server, err := set.ByName(t.Server)
+	if err != nil {
+		return resource.WorkspaceConfig{}, nil, err
+	}
 	opener := resource.Opener{ServerSet: t.ServerSet, Docker: t.Docker, Env: d.Env, Lookup: d.ServerLookup, Report: d.Logf}
-	acc, err := opener.Open(resource.Spec{Server: t.Server, DataRoot: wc.DataRoot})
+	acc, err := opener.Open(resource.TargetOf(server, wc.DataRoot))
 	if err != nil {
 		return resource.WorkspaceConfig{}, nil, err
 	}

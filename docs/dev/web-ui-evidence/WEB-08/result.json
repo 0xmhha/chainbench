@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-08",
-  "invocationId": "47b0a287-ffbc-42ba-8811-b12238dc741d",
-  "startedAt": "2026-10-11T21:58:49.606408+00:00",
-  "finishedAt": "2026-10-11T22:03:00.020785+00:00",
+  "invocationId": "08a46e0e-2945-4f79-bd5c-6895b6ef012e",
+  "startedAt": "2026-10-13T02:17:15.974225+00:00",
+  "finishedAt": "2026-10-13T02:21:47.762340+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "native-state-metric-charts",
@@ -22,5 +22,18 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "19d0797faf02b0aac0134715d3063fa35bd90d81a93aa90b9527469652c55d28"
+  "evidenceDigest": "7a45597b49b878af9028dfff0397b7b0eaa28f029a62959cfc659c87666d2067",
+  "independentVerification": {
+    "criterion": "WEB-08",
+    "mode": "recheck",
+    "outcome": "pass",
+    "seconds": 234,
+    "scenarios": 6,
+    "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc",
+    "invocationId": "e15ba4e8-c100-474a-95c6-5b5ab3fdb250",
+    "evidenceDirectory": "/private/tmp/cbui/recheck-x24v5npw/source/chainbench-out/web-ui-acceptance/WEB-08",
+    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web-08.log",
+    "evidenceDigest": "a2054dff29455caf8a8938c9d250da3620eda5274074b79df3933115f1984413",
+    "resultDigest": "7486777c29c79f1a67b028c38d214583d6caa23a1c37665ad4a259a9e79ab90b"
+  }
 }

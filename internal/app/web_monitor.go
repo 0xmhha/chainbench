@@ -43,10 +43,12 @@ type WebMonitor struct {
 	redact   func(string) string
 	now      func() time.Time
 	interval time.Duration
-	mu       sync.Mutex
-	resumed  map[string]bool
-	remote   map[string]int
-	runs     func(string) (webObservationWindow, error)
+	// cli is the chainbench command networks are read through; see UseCLI.
+	cli     ChainCLI
+	mu      sync.Mutex
+	resumed map[string]bool
+	remote  map[string]int
+	runs    func(string) (webObservationWindow, error)
 }
 
 type webMonitorSample struct {
@@ -127,18 +129,24 @@ func (m *WebMonitor) CollectOnce(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-func (m *WebMonitor) loadNetwork(network string) (State, resource.Inspection, error) {
+// UseCLI gives the collector the chainbench command it reads networks through.
+func (m *WebMonitor) UseCLI(c ChainCLI) { m.cli = c }
+
+func (m *WebMonitor) loadNetwork(ctx context.Context, network string) (State, resource.Inspection, error) {
 	dir := filepath.Join(m.root, "networks", network)
 	var state State
 	var target resource.Inspection
-	raw, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
+	if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); err != nil {
+		return state, target, err
+	}
+	if m.cli == nil {
+		return state, target, errNoChainCLI
+	}
+	state, err := m.cli.ChainStatus(ctx, dir)
 	if err != nil {
 		return state, target, err
 	}
-	if err = json.Unmarshal(raw, &state); err != nil {
-		return state, target, err
-	}
-	raw, err = os.ReadFile(filepath.Join(dir, "web-target.json"))
+	raw, err := os.ReadFile(filepath.Join(dir, "web-target.json"))
 	if err != nil {
 		return state, target, err
 	}
@@ -146,7 +154,7 @@ func (m *WebMonitor) loadNetwork(network string) (State, resource.Inspection, er
 }
 
 func (m *WebMonitor) collectNetwork(ctx context.Context, network string) error {
-	state, target, err := m.loadNetwork(network)
+	state, target, err := m.loadNetwork(ctx, network)
 	if os.IsNotExist(err) {
 		return nil
 	}

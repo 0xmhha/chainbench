@@ -51,7 +51,7 @@ func TestBuildPlan_WemixToWbft(t *testing.T) {
 // TestExecute_StopsAndRelaunches stops a running "from" node and relaunches it
 // on the target binary, verifying the swap end to end with fake processes.
 func TestExecute_StopsAndRelaunches(t *testing.T) {
-	old := exec.Command("sleep", "30")
+	old := exec.Command("/bin/sleep", "30")
 	if err := old.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -75,12 +75,14 @@ func TestExecute_StopsAndRelaunches(t *testing.T) {
 	}
 
 	// Execute reuses the node's original launch spec (identity-bearing args) and
-	// swaps only the binary — mirror what setup persists to nodespecs.json.
+	// swaps only the binary — mirror what setup persists to nodespecs.json. The
+	// spec is also what proves the running pid is that node's launch, so it
+	// names the running process exactly.
 	specs := []process.NodeSpec{{
 		Index: 1, Role: node.RoleBP, Host: "127.0.0.1",
-		Binary: "oldbin", DataDir: dir, LogPath: filepath.Join(dir, "node.log"),
+		Binary: "/bin/sleep", DataDir: dir, LogPath: filepath.Join(dir, "node.log"),
 		Ports: node.Endpoints{HTTP: 8501, P2P: 30301},
-		Args:  []string{"--datadir", dir, "--nodekey", filepath.Join(dir, "nk")},
+		Args:  []string{"30"},
 	}}
 	newNS, err := plan.Execute(context.Background(), process.NewLocalDriver(), specs, bin)
 	if err != nil {

@@ -142,8 +142,15 @@ func suiteSpecUnits(in RunSuiteIn) ([]specUnit, error) {
 // SuitePlan is one definition's compose plan, labelled the way RunSuites labels
 // its results so a reader can line the two up.
 type SuitePlan struct {
-	Spec string      `json:"spec"`
-	Plan ComposePlan `json:"plan"`
+	Spec   string      `json:"spec"`
+	Plan   ComposePlan `json:"plan"`
+	Layout ChainUpIn   `json:"layout"`
+}
+
+// PlanSuiteLayout resolves one suite exactly as RunSuite does, including its
+// node table and scoped options. It does not compose or contact target nodes.
+func PlanSuiteLayout(ctx context.Context, in RunSuiteIn) (ChainUpIn, ComposePlan, error) {
+	return testengine.PlanSuiteLayout(ctx, in)
 }
 
 // PlanSuites resolves what RunSuites would compose, definition by definition,
@@ -162,11 +169,11 @@ func PlanSuites(ctx context.Context, in RunSuiteIn) ([]SuitePlan, error) {
 	for _, unit := range specs {
 		one := in
 		one.SpecPaths, one.SpecContent = unit.paths, unit.content
-		p, err := testengine.PlanSuite(ctx, one)
+		layout, p, err := PlanSuiteLayout(ctx, one)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", unit.label, err)
 		}
-		out = append(out, SuitePlan{Spec: unit.label, Plan: p})
+		out = append(out, SuitePlan{Spec: unit.label, Plan: p, Layout: layout})
 	}
 	return out, nil
 }

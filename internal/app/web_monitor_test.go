@@ -98,6 +98,7 @@ func (f *monitorFixture) monitor() *WebMonitor {
 		panic(err)
 	}
 	m.now = func() time.Time { return f.clock }
+	m.UseCLI(recordCLI{})
 	return m
 }
 
@@ -202,7 +203,7 @@ func TestWebMonitorArchivesTimeLinkedLogsAcrossRestart(t *testing.T) {
 	if err := m.CollectOnce(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,14 +231,14 @@ func TestWebMonitorArchivesTimeLinkedLogsAcrossRestart(t *testing.T) {
 	if err = restarted.CollectOnce(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	logs, err = restarted.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err = restarted.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(logs.Entries) != 3 || !strings.HasSuffix(logs.Entries[2].Text, "resumed") {
 		t.Fatalf("restart duplicated or lost lines: %+v", logs.Entries)
 	}
-	window, err := restarted.Logs(viewer, f.network+".node1", WebMonitorQuery{From: time.Date(2026, 10, 9, 0, 46, 20, 900000000, time.Local), To: time.Date(2026, 10, 9, 0, 46, 21, 500000000, time.Local)})
+	window, err := restarted.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{From: time.Date(2026, 10, 9, 0, 46, 20, 900000000, time.Local), To: time.Date(2026, 10, 9, 0, 46, 21, 500000000, time.Local)})
 	if err != nil || len(window.Entries) != 1 || !strings.HasSuffix(window.Entries[0].Text, "resumed") {
 		t.Fatalf("time-linked window = %+v, %v", window.Entries, err)
 	}
@@ -251,7 +252,7 @@ func TestWebMonitorArchivesTimeLinkedLogsAcrossRestart(t *testing.T) {
 	if !strings.Contains(strings.Join(gapReasons(metrics.Coverage), ","), "collector_stopped") {
 		t.Fatalf("restart interval not reported: %v", gapReasons(metrics.Coverage))
 	}
-	if _, err = restarted.Logs(viewer, f.network+".node9", WebMonitorQuery{}); !errors.Is(err, ErrDeploymentNotFound) {
+	if _, err = restarted.Logs(context.Background(), viewer, f.network+".node9", WebMonitorQuery{}); !errors.Is(err, ErrDeploymentNotFound) {
 		t.Fatalf("unknown node err = %v", err)
 	}
 }
@@ -263,7 +264,7 @@ func TestWebMonitorReportsRemoteLogsAsUnavailable(t *testing.T) {
 	if err := m.CollectOnce(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	logs, err := m.Logs(DeploymentActor{ID: "viewer", Role: "viewer"}, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), DeploymentActor{ID: "viewer", Role: "viewer"}, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +291,7 @@ func TestWebMonitorLogArchiveSurvivesOversizedRotatedAndMultilineSecrets(t *test
 	}
 	m := f.monitor()
 	monitorCollect(t, f, m, 4)
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +318,7 @@ func TestWebMonitorLogArchiveSurvivesOversizedRotatedAndMultilineSecrets(t *test
 		t.Fatal(err)
 	}
 	monitorCollect(t, f, m, 3)
-	logs, err = m.Logs(viewer, f.network+".node1", WebMonitorQuery{From: time.Date(2026, 10, 9, 0, 46, 29, 0, time.Local), To: time.Date(2026, 10, 9, 0, 46, 31, 0, time.Local), Limit: 100})
+	logs, err = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{From: time.Date(2026, 10, 9, 0, 46, 29, 0, time.Local), To: time.Date(2026, 10, 9, 0, 46, 31, 0, time.Local), Limit: 100})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,15 +326,15 @@ func TestWebMonitorLogArchiveSurvivesOversizedRotatedAndMultilineSecrets(t *test
 		t.Fatalf("rotation read from the middle: %d %q", len(logs.Entries), logs.Entries[0].Text)
 	}
 	// The unread interval is known only by collection time, so it is reported there.
-	recent, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{Limit: 1})
+	recent, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{Limit: 1})
 	if err != nil || !strings.Contains(strings.Join(gapReasons(recent.Coverage), ","), "node1 logs log_rotated") {
 		t.Fatalf("rotation unreported: %v %v", gapReasons(recent.Coverage), err)
 	}
-	next, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{Cursor: *logs.NextCursor})
+	next, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{Cursor: *logs.NextCursor})
 	if err != nil || len(next.Entries) != 100 {
 		t.Fatalf("cursor must keep its window: %d %v", len(next.Entries), err)
 	}
-	if _, err = m.Logs(viewer, f.network+".node1", WebMonitorQuery{Cursor: *logs.NextCursor, From: time.Date(2026, 10, 9, 0, 0, 0, 0, time.Local)}); !errors.Is(err, ErrWebMonitorQuery) {
+	if _, err = m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{Cursor: *logs.NextCursor, From: time.Date(2026, 10, 9, 0, 0, 0, 0, time.Local)}); !errors.Is(err, ErrWebMonitorQuery) {
 		t.Fatalf("cursor reused with another window: %v", err)
 	}
 }
@@ -382,7 +383,7 @@ func TestWebMonitorKeepsRecordingWhenOneNodeFails(t *testing.T) {
 	f := newMonitorFixture(t)
 	viewer := DeploymentActor{ID: "viewer", Role: "viewer"}
 	// node2's log path is a directory: reading it fails, node1 must still be archived.
-	state, target, err := (&WebMonitor{root: f.root}).loadNetwork(f.network)
+	state, target, err := (&WebMonitor{root: f.root, cli: recordCLI{}}).loadNetwork(context.Background(), f.network)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,11 +396,11 @@ func TestWebMonitorKeepsRecordingWhenOneNodeFails(t *testing.T) {
 	}
 	m := f.monitor()
 	monitorCollect(t, f, m, 2)
-	logs, err := m.Logs(viewer, f.network+".node1", WebMonitorQuery{})
+	logs, err := m.Logs(context.Background(), viewer, f.network+".node1", WebMonitorQuery{})
 	if err != nil || len(logs.Entries) != 1 {
 		t.Fatalf("a failing sibling duplicated or lost lines: %+v %v", logs.Entries, err)
 	}
-	other, err := m.Logs(viewer, f.network+".node2", WebMonitorQuery{})
+	other, err := m.Logs(context.Background(), viewer, f.network+".node2", WebMonitorQuery{})
 	if err != nil || other.Coverage.Complete || len(other.Coverage.Gaps) == 0 {
 		t.Fatalf("failing node not reported: %+v %v", other.Coverage, err)
 	}
@@ -438,4 +439,49 @@ func TestStalledCollectorShowsAsAGapAndDownsamplingNamesItsBucket(t *testing.T) 
 	if !found || stalled.Coverage.Complete {
 		t.Fatalf("a stalled collector reads as complete coverage: %+v", stalled.Coverage)
 	}
+}
+
+// recordCLI answers `chain status` from the fixture's record file, standing in
+// for the CLI so the collector's own rules are what a test exercises.
+type recordCLI struct{}
+
+func (recordCLI) ChainStatus(_ context.Context, dir string) (State, error) {
+	var st State
+	raw, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
+	if err == nil {
+		err = json.Unmarshal(raw, &st)
+	}
+	return st, err
+}
+
+// TestWebMonitorSamplesTheNodesTheCLIReportsRunning: a node the record shows
+// with no pid but the CLI reports running (its ledger holds the pid a later
+// start recorded) is sampled, because the CLI is what says what runs.
+func TestWebMonitorSamplesTheNodesTheCLIReportsRunning(t *testing.T) {
+	f := newMonitorFixture(t)
+	dir := filepath.Join(f.root, "networks", f.network)
+	reported, err := recordCLI{}.ChainStatus(context.Background(), dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale := reported
+	stale.Nodes = append([]node.Record(nil), reported.Nodes...)
+	stale.Nodes[0].PID = 0
+	writeMonitorJSON(t, filepath.Join(dir, "chain-record.json"), stale)
+	m := f.monitor()
+	m.UseCLI(statusCLI{dir: reported})
+	if err = m.CollectOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	got, err := m.Metrics(DeploymentActor{ID: "viewer", Role: "viewer"}, f.network, WebMonitorQuery{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if values := seriesValues(got, "node1", "block_height", "rpc"); len(values) != 1 || values[0] != 7 {
+		t.Fatalf("node1 block height = %v, want the one sample of the node the CLI reports running", values)
+	}
+}
+
+func (recordCLI) Run(context.Context, ...string) ([]byte, error) {
+	return nil, errors.New("recordCLI answers chain status only")
 }

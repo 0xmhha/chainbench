@@ -7,16 +7,15 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // verifyWebNetworkProcesses checks every node before a network-wide operation.
 // Cleanup may stop verified launches; recomposition requires confirmed vacancy.
-func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup, vacant bool) error {
+func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader, vacant bool) error {
 	if err := verifyWebRecordLedger(state, p.ControlDir); err != nil {
 		return err
 	}
-	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
+	actual, err := lookup.Inspect(ctx, state.Target)
 	if err != nil || actual != p.Target {
 		return webConflict("the recorded network target is not the reviewed target")
 	}
@@ -47,7 +46,7 @@ func verifyWebNetworkProcesses(ctx context.Context, state State, p webChainPaylo
 
 // recheckWebNetworkRecord verifies the current record and live processes without
 // opening the mutable core workspace or adopting ledger identities.
-func recheckWebNetworkRecord(ctx context.Context, p webChainPayload, lookup resource.Lookup, vacant bool) error {
+func recheckWebNetworkRecord(ctx context.Context, p webChainPayload, lookup *webTargetReader, vacant bool) error {
 	raw, err := os.ReadFile(filepath.Join(p.ControlDir, "chain-record.json"))
 	if os.IsNotExist(err) && (!vacant || p.RecordDigest == "") {
 		return nil

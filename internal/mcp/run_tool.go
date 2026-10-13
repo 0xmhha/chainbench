@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -22,14 +23,22 @@ func runTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":   map[string]any{"type": "string"},
-				"rpc":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"spec":    map[string]any{"type": "string"},
-				"specs":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"dataDir": map[string]any{"type": "string"},
-				"binary":  map[string]any{"type": "string"},
-				"bp":      map[string]any{"type": "integer", "description": "bp node count, overriding what the specs declare"},
-				"keysDir": map[string]any{"type": "string"},
+				"plan":            map[string]any{"type": "boolean", "description": "resolve the composed network without running it"},
+				"suite":           map[string]any{"type": "boolean", "description": "run or plan several cases as one suite on one network; otherwise sequence definitions"},
+				"binaryFor":       map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "string"}, "description": "declared binary name to accepted executable path"},
+				"readOnlyKeys":    map[string]any{"type": "boolean"},
+				"noNodeControl":   map[string]any{"type": "boolean", "description": "attach without granting node control"},
+				"serverLogins":    map[string]any{"type": "string"},
+				"workspaceConfig": map[string]any{"type": "string"},
+				"artifactRoot":    map[string]any{"type": "string"},
+				"chain":           map[string]any{"type": "string"},
+				"rpc":             map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"spec":            map[string]any{"type": "string"},
+				"specs":           map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"dataDir":         map[string]any{"type": "string"},
+				"binary":          map[string]any{"type": "string"},
+				"bp":              map[string]any{"type": "integer", "description": "bp node count, overriding what the specs declare"},
+				"keysDir":         map[string]any{"type": "string"},
 				"attach": map[string]any{
 					"type":        "boolean",
 					"description": "the network in dataDir is already up: run against it, with the capabilities its composition advertised, instead of composing again",
@@ -66,7 +75,10 @@ func runTool() Tool {
 				return "", fmt.Errorf("chainbench_run: %w", serr)
 			}
 			if start.Adopts() {
-				return runAttached(ctx, start, chain, rpcURLs, dataDir, specs)
+				if argBool(args, "plan", false) {
+					return "", fmt.Errorf("plan is only available for composition")
+				}
+				return runAttached(ctx, args, start, chain, rpcURLs, dataDir, specs)
 			}
 			return runCompose(ctx, args, specs)
 		},
@@ -78,20 +90,29 @@ func runTool() Tool {
 // One function for all three ways in: which network, and where it came from, is
 // the start state. This tool had only two of the three until that state existed
 // — a spec declaring env.attach could not be run through it at all.
-func runAttached(ctx context.Context, start app.Start, chain string, rpcURLs []string, dataDir string, specs [][]byte) (string, error) {
-	artifactRoot, err := os.MkdirTemp("", "cb-run")
-	if err != nil {
-		return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
+func runAttached(ctx context.Context, args map[string]any, start app.Start, chain string, rpcURLs []string, dataDir string, specs [][]byte) (string, error) {
+	artifactRoot := argString(args, "artifactRoot", "")
+	if artifactRoot == "" {
+		var err error
+		artifactRoot, err = os.MkdirTemp("", "cb-run")
+		if err != nil {
+			return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
+		}
 	}
-	root, err := app.AttachRun(ctx, app.Deps{}, app.AttachRunIn{
-		At: start.At, Declared: start.Declared,
-		Chain: chain, RPCURLs: rpcURLs, DataDir: dataDir,
-		ArtifactRoot: artifactRoot, Specs: specs,
-	})
+	root, err := app.AttachRun(ctx, app.Deps{}.WithLogins(argString(args, "serverLogins", "")), attachInput(args, start, chain, rpcURLs, dataDir, artifactRoot, specs))
 	if err != nil {
 		return "", err
 	}
 	return formatRunSummary(root)
+}
+
+func attachInput(args map[string]any, start app.Start, chain string, rpcURLs []string, dataDir, artifactRoot string, specs [][]byte) app.AttachRunIn {
+	return app.AttachRunIn{
+		At: start.At, Declared: start.Declared,
+		Chain: chain, RPCURLs: rpcURLs, DataDir: dataDir,
+		ArtifactRoot: artifactRoot, Specs: specs,
+		KeysDir: argString(args, "keysDir", ""), ReadOnlyKeys: argBool(args, "readOnlyKeys", false), NoNodeControl: argBool(args, "noNodeControl", false),
+	}
 }
 
 // runCompose composes the network the specs declare and runs against it,
@@ -104,26 +125,44 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 			return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 		}
 	}
-	out, err := app.RunSuite(ctx, app.Deps{}, app.RunSuiteIn{
-		SpecContent: specs,
-		DataDir:     dataDir,
-		Chain:       argString(args, "chain", ""),
-		Binary:      argString(args, "binary", ""),
-		BPCount:     argInt(args, "bp", 0),
-		KeysDir:     argString(args, "keysDir", ""),
-		// Parity with the CLI `run` flags (WA3): leave the network up for
-		// follow-on dynamic actions, target a server set or docker, and wait for
-		// the chain to reach a height before the specs run.
-		KeepUp:     argBool(args, "keepUp", false),
-		Docker:     argBool(args, "docker", false),
-		WaitBlocks: uint64(argInt(args, "waitBlocks", 0)),
-		NetworkID:  int64(argInt(args, "networkId", 0)),
-		Server: app.ServerRef{
-			SetPath: argString(args, "serverSet", ""),
-			Name:    argString(args, "server", ""),
-			All:     argBool(args, "allServers", false),
-		},
-	})
+	in, err := composeInput(args, specs, dataDir)
+	if err != nil {
+		return "", err
+	}
+	if argBool(args, "plan", false) {
+		var plans []app.SuitePlan
+		if argBool(args, "suite", false) {
+			layout, plan, err := app.PlanSuiteLayout(ctx, in)
+			if err != nil {
+				return "", err
+			}
+			plans = []app.SuitePlan{{Spec: "suite", Layout: layout, Plan: plan}}
+		} else {
+			var err error
+			plans, err = app.PlanSuites(ctx, in)
+			if err != nil {
+				return "", err
+			}
+		}
+		raw, err := json.Marshal(plans)
+		return string(raw), err
+	}
+	deps := app.Deps{}.WithLogins(argString(args, "serverLogins", ""))
+	if len(specs) > 1 && !argBool(args, "suite", false) {
+		out, err := app.RunSuites(ctx, deps, in)
+		if err != nil {
+			return "", err
+		}
+		raw, err := json.Marshal(out)
+		if err != nil {
+			return "", err
+		}
+		if out.Failed() {
+			return string(raw), fmt.Errorf("sequential test run failed: %s", raw)
+		}
+		return string(raw), nil
+	}
+	out, err := app.RunSuite(ctx, deps, in)
 	if err != nil {
 		return "", err
 	}
@@ -182,4 +221,46 @@ func formatRunSummary(root string) (string, error) {
 		return text, fmt.Errorf("%s", text)
 	}
 	return text, nil
+}
+
+// composeInput binds the same accepted inputs that the CLI passes to the engine.
+func composeInput(args map[string]any, specs [][]byte, dataDir string) (app.RunSuiteIn, error) {
+	in := app.RunSuiteIn{
+		SpecContent: specs,
+		DataDir:     dataDir,
+		Chain:       argString(args, "chain", ""),
+		Binary:      argString(args, "binary", ""),
+		BPCount:     argInt(args, "bp", 0),
+		KeysDir:     argString(args, "keysDir", ""),
+		// Parity with the CLI `run` flags (WA3): leave the network up for
+		// follow-on dynamic actions, target a server set or docker, and wait for
+		// the chain to reach a height before the specs run.
+		KeepUp:     argBool(args, "keepUp", false),
+		Docker:     argBool(args, "docker", false),
+		WaitBlocks: uint64(argInt(args, "waitBlocks", 0)),
+		NetworkID:  int64(argInt(args, "networkId", 0)),
+		Server: app.ServerRef{
+			SetPath: argString(args, "serverSet", ""),
+			Name:    argString(args, "server", ""),
+			All:     argBool(args, "allServers", false),
+		},
+	}
+	in.ReadOnlyKeys = argBool(args, "readOnlyKeys", false)
+	in.ArtifactRoot = argString(args, "artifactRoot", "")
+	in.WorkspaceConfigPath = argString(args, "workspaceConfig", "")
+	if raw, ok := args["binaryFor"]; ok {
+		b, err := json.Marshal(raw)
+		if err != nil {
+			return in, err
+		}
+		if err = json.Unmarshal(b, &in.BinaryOverrides); err != nil {
+			return in, fmt.Errorf("binaryFor must map names to executable paths: %w", err)
+		}
+		for name, path := range in.BinaryOverrides {
+			if name == "" || path == "" {
+				return in, fmt.Errorf("binaryFor needs nonempty names and paths")
+			}
+		}
+	}
+	return in, nil
 }

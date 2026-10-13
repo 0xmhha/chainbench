@@ -192,6 +192,9 @@ func (w *Workspace) FirstUndone() string {
 		if stage == UpDeploy && (name == "init" || name == "start") {
 			return ""
 		}
+		if stage == UpInit && name == "start" {
+			return ""
+		}
 		if !w.state.Steps[name].Done {
 			return name
 		}

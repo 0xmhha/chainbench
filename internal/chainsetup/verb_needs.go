@@ -139,6 +139,7 @@ var verbNeeds = map[string]verbNeed{
 	"Acquire":         {why: "resolves the machine set; it runs before place has anything to record"},
 	"MarkStepFailed":  {why: "records a failure, which by definition happens where a requirement was not met"},
 	"Reconcile":       {why: "its job is to meet a record that disagrees with reality, so it must run on any state"},
+	"ObserveNodes":    {why: "a read of each recorded node's machine; an empty table observes nothing, and a node that is down is an answer, not a refusal"},
 	"SnapshotForReuse": {why: "it photographs whatever is on the target before a composition starts; an empty " +
 		"workspace yields an empty snapshot, which is the answer that composes everything"},
 	"Retarget":            {why: "rewrites where the workspace points, which is what a stale target needs"},

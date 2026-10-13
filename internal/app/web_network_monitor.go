@@ -95,7 +95,7 @@ func (e *WebChainEngine) prepareMonitor(ctx context.Context, a DeploymentActor, 
 	if err = recordedMonitorTarget(p); err != nil {
 		return out, err
 	}
-	control, err := (resource.Opener{}).Inspect(ctx, resource.Spec{DataRoot: p.ControlDir})
+	control, err := e.inspectTarget(ctx, a, p, resource.Spec{DataRoot: p.ControlDir})
 	if err != nil {
 		return out, err
 	}
@@ -162,7 +162,7 @@ func (e *WebChainEngine) monitorTargets(ctx context.Context, a DeploymentActor, 
 	if err != nil {
 		return nil, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return nil, err
 	}
@@ -193,11 +193,11 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 	if err = recordedMonitorTarget(p); err != nil {
 		return result, err
 	}
-	lookup, err := e.documents.jobCredentialLookup(ctx, a, p.Set.DeploymentDocumentInput, p.Input.CredentialBindings)
+	lookup, err := e.targetReader(ctx, a, p)
 	if err != nil {
 		return result, err
 	}
-	opener := resource.Opener{Lookup: lookup}
+	opener := lookup
 	open := func(ctx context.Context, state State, ns node.Record) (webLogSource, error) {
 		// The lookup guard reports revocation as ErrDeploymentForbidden, which
 		// ends collection; a refused SSH dial alone carries no such cause.
@@ -205,7 +205,7 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 		if server == "" {
 			server = p.Arguments.ServerRef
 		}
-		if _, err := lookup(server); err != nil {
+		if err := lookup.CheckServer(ctx, server); err != nil {
 			return nil, err
 		}
 		spec := webNodeTarget(state, ns)
@@ -216,14 +216,7 @@ func (e *WebChainEngine) executeMonitor(ctx context.Context, a DeploymentActor, 
 		if pinned, ok := webNodeMachine(p, ns); !ok || machine != pinned {
 			return nil, ErrDeploymentConflict
 		}
-		access, err := opener.Open(spec)
-		if err != nil {
-			return nil, err
-		}
-		if access.Runner == nil {
-			return nil, errors.New("remote log access requires an SSH runner")
-		}
-		return webRemoteLogs{run: access.Runner}, nil
+		return webCLILogs{reader: lookup, spec: spec}, nil
 	}
 	network := filepath.Base(p.ControlDir)
 	detach := e.monitor.attachRemote(network)

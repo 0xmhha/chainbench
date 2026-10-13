@@ -106,6 +106,7 @@ type deploymentState struct {
 // DeploymentStore owns team configuration and encrypted, user-owned SSH overlays.
 // Open one store per data directory; all changes are committed atomically.
 type DeploymentStore struct {
+	cli                 ChainCLI
 	mu                  sync.Mutex
 	storage             *session.WebStore
 	aead                cipher.AEAD
@@ -113,6 +114,9 @@ type DeploymentStore struct {
 	authorize           func(DeploymentActor) error
 	quarantinedNodeKeys []string
 }
+
+// UseCLI binds private access checks to the same command runner as Web jobs.
+func (s *DeploymentStore) UseCLI(cli ChainCLI) { s.mu.Lock(); defer s.mu.Unlock(); s.cli = cli }
 
 // SetAuthorizer connects private access checks to current server-owned account
 // permissions. Configure at service startup; nil supports provisioned accounts.

@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"errors"
-	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -52,7 +52,7 @@ func webResetNode(state State, p webChainPayload) (node.Record, error) {
 
 // verifyWebResetInputs verifies the target directory and the inputs reset reads
 // before it can remove data. The accepted shared declarations stay authoritative.
-func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) error {
+func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) error {
 	if _, err := webResetNode(state, p); err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func verifyWebResetInputs(ctx context.Context, state State, p webChainPayload, l
 // verifyWebNodeInputs binds a relaunch to the recorded declarations, directory,
 // config and genesis before stopping its current process. Named per-node
 // executables need their own reviewed asset binding.
-func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lookup resource.Lookup) error {
+func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lookup *webTargetReader) error {
 	if err := webSelectedNode(state, p.Input.NodeIDs); err != nil {
 		return err
 	}
@@ -79,22 +79,12 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	if err != nil {
 		return err
 	}
-	for _, entry := range []struct {
-		path string
-		doc  DeploymentDocument
-	}{{state.WorkspaceConfig, p.Config}, {state.ServerSet, p.Set}} {
-		expected, err := ExportDeploymentDocument(entry.doc.DeploymentDocumentInput, "yaml")
-		if err != nil {
-			return err
-		}
-		actual, err := os.ReadFile(entry.path)
-		if err != nil || manifestHash(actual) != manifestHash(expected) {
-			return webConflict("the recorded declarations differ from the reviewed documents")
-		}
+	if err = recordedDeclarationsMatch(state, p); err != nil {
+		return err
 	}
 	spec := webNodeTarget(state, ns)
 	spec.DataRoot = ns.DataDir
-	actual, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
+	actual, err := lookup.Inspect(ctx, spec)
 	if err != nil {
 		return err
 	}
@@ -103,7 +93,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 	if !ok || actual.HostIdentity != machine.HostIdentity || actual.DataPath != expected {
 		return webConflict("the node directory is not on its recorded machine")
 	}
-	access, err := (resource.Opener{Lookup: lookup}).Open(webNodeTarget(state, ns))
+	access, err := lookup.Open(webNodeTarget(state, ns))
 	if err != nil {
 		return err
 	}
@@ -122,7 +112,7 @@ func verifyWebNodeInputs(ctx context.Context, state State, p webChainPayload, lo
 // verifyWebNodeProcesses observes one recorded node on its own machine. The
 // machine must be the network's recorded target or, for a spread network,
 // one of the other machines its plan pinned in also.
-func verifyWebNodeProcesses(ctx context.Context, state State, selected []string, lookup resource.Lookup, also ...resource.Inspection) error {
+func verifyWebNodeProcesses(ctx context.Context, state State, selected []string, lookup *webTargetReader, also ...resource.Inspection) error {
 	if len(selected) != 1 {
 		return webConflict("select exactly one node")
 	}
@@ -131,36 +121,36 @@ func verifyWebNodeProcesses(ctx context.Context, state State, selected []string,
 			continue
 		}
 		spec := webNodeTarget(state, ns)
-		access, err := (resource.Opener{Lookup: lookup}).Open(spec)
+		access, err := lookup.Open(spec)
 		if err != nil {
 			return err
 		}
-		target, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, spec)
+		target, err := lookup.Inspect(ctx, spec)
 		if err != nil {
 			return err
 		}
-		owned, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, state.Target)
+		owned, err := lookup.Inspect(ctx, state.Target)
 		if err != nil {
 			return err
 		}
 		if target != owned && !slices.Contains(also, target) {
 			return webConflict("the node is not on a machine this plan reviewed")
 		}
-		observer := webObserverFor(access, target)
-		if observer == nil {
-			return webConflict("the node machine cannot be observed")
-		}
 		binary := state.Binary
 		if ns.Binary != "" {
 			binary = state.Binaries[ns.Binary]
 		}
+		observed, err := access.Observe(ctx, resource.ProcessRead{PID: ns.PID, Binary: binary, Args: ns.Args, DataDir: ns.DataDir, ConfigPath: ns.ConfigPath})
+		if err != nil {
+			return err
+		}
 		if ns.PID == 0 {
-			if observeWebNodeVacancy(ctx, observer, binary, ns).State != "stopped" {
+			if observed.State != process.OwnedStopped {
 				return webConflict("the stopped node still has a process")
 			}
 			continue
 		}
-		if observeWebNodeProcess(ctx, observer, binary, ns).State != "running" {
+		if observed.State != process.OwnedRunning {
 			return webConflict("the recorded node process is not running")
 		}
 	}

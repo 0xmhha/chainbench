@@ -170,6 +170,9 @@ func TestWebTestGenesisRecheckedAfterBinaryTransfer(t *testing.T) {
 	if _, err := e.prepareTestRun(context.Background(), &p); err != nil {
 		t.Fatal(err)
 	}
+	// The transfer goes through the CLI, which this test only records; what it
+	// checks is the genesis recheck after the transfer.
+	e.UseCLI(&uploadsCLI{})
 	seen := false
 	_, err := e.executeTestRun(context.Background(), a, p, func(phase WebJobPhase) error {
 		if phase.Name == "test.run" && phase.State == "running" {

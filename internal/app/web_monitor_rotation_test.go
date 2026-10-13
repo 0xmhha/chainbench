@@ -59,7 +59,7 @@ func TestWebMonitorLogRotationIsSeenWhenTheInodeIsReused(t *testing.T) {
 // A log rewritten in place keeps its inode on every filesystem; the local and
 // the remote reader both see that the bytes they read from are gone.
 func TestWebMonitorLogRewrittenInPlaceIsReadFromItsStart(t *testing.T) {
-	for name, source := range map[string]webLogSource{"local": webLocalLogs{}, "remote": webRemoteLogs{run: shellRunner}} {
+	for name, source := range map[string]webLogSource{"local": webLocalLogs{}, "cli": webCLILogs{reader: unitTargetReader(t, nil)}} {
 		t.Run(name, func(t *testing.T) {
 			m := newMonitorFixture(t).monitor()
 			cursor, err := m.readCursor("net")

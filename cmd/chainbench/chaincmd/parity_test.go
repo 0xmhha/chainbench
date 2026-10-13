@@ -21,7 +21,7 @@ func TestChainCommandSurface(t *testing.T) {
 	bringUp := []string{"init", "start", "up"}
 	// Operational verbs the C decision keeps under chain rather than forcing
 	// into the dictionary.
-	operational := []string{"new", "status", "show", "stop", "restart", "resume", "rm", "logs", "health"}
+	operational := []string{"new", "status", "observe", "show", "stop", "restart", "resume", "rm", "logs", "health"}
 	// Authoring verbs write a declaration rather than act on a network. They
 	// are a fourth category rather than an operational verb because they touch
 	// no target at all: `blueprint` reads a key set and prints a document, and

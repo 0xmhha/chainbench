@@ -94,6 +94,7 @@ def run_checks(out, checkout, staged, evidence):
 
 def serve(out, runtime, staged, handles):
     subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench-dashboard'), './cmd/chainbench-dashboard'], cwd=staged, check=True, capture_output=True)
+    subprocess.run(['go', 'build', '-o', str(runtime / 'chainbench'), './cmd/chainbench'], cwd=staged, check=True, capture_output=True)
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
     url = 'http://127.0.0.1:' + str(port)

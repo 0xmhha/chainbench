@@ -47,11 +47,11 @@ func webPlanServers(set *resource.Set, args webChainArguments, operation string)
 // webInspectServers inspects each server's data plane. Two servers that are
 // the same machine would claim the same paths and ports under two names, so
 // a spread plan refuses them.
-func webInspectServers(ctx context.Context, lookup resource.Lookup, servers []resource.Server, dataRoot string) ([]resource.Inspection, error) {
+func webInspectServers(ctx context.Context, lookup *webTargetReader, servers []resource.Server, dataRoot string) ([]resource.Inspection, error) {
 	out := make([]resource.Inspection, 0, len(servers))
 	seen := map[string]bool{}
 	for _, server := range servers {
-		t, err := (resource.Opener{Lookup: lookup}).Inspect(ctx, resource.TargetOf(server, dataRoot))
+		t, err := lookup.Inspect(ctx, resource.TargetOf(server, dataRoot))
 		if err != nil {
 			return nil, err
 		}

@@ -18,6 +18,8 @@ import (
 type (
 	ChainNewIn         = verb.ChainNewIn
 	ChainNewOut        = verb.ChainNewOut
+	ChainObserveIn     = verb.ChainObserveIn
+	ChainObserveOut    = verb.ChainObserveOut
 	ChainStatusIn      = verb.ChainStatusIn
 	ChainStatusOut     = verb.ChainStatusOut
 	StepOut            = chainsetupmod.StepOut
@@ -69,6 +71,7 @@ type (
 
 const (
 	UpDeploy = chainsetupmod.UpDeploy
+	UpInit   = chainsetupmod.UpInit
 	UpStart  = chainsetupmod.UpStart
 )
 
@@ -146,6 +149,12 @@ func ChainRm(ctx context.Context, d Deps, in ChainRmIn) (chainsetupmod.StepOut, 
 
 func ChainStart(ctx context.Context, d Deps, in ChainStartIn) (chainsetupmod.StepOut, error) {
 	return verb.ChainStart(ctx, d.chainsetupDeps(), in)
+}
+
+// ChainObserve reports what each recorded node's machine shows, changing
+// nothing.
+func ChainObserve(ctx context.Context, d Deps, in ChainObserveIn) (ChainObserveOut, error) {
+	return verb.ChainObserve(ctx, d.chainsetupDeps(), in)
 }
 
 func ChainStatus(ctx context.Context, d Deps, in ChainStatusIn) (verb.ChainStatusOut, error) {

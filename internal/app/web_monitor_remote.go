@@ -3,64 +3,16 @@ package app
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // webRemoteNodeTimeout bounds one node's remote reads so an unresponsive host
 // cannot hold a collection round indefinitely.
 const webRemoteNodeTimeout = 30 * time.Second
-
-// webRemoteLogs reads a node log over one SSH runner. Each command is a new
-// connection, so the runner's credential guard rechecks revocation every time.
-type webRemoteLogs struct{ run process.Runner }
-
-// Snapshot reports identity, size, first bytes and bytes from offset in one
-// command, so a rotation between separate stat and read commands cannot mix
-// two files. The first bytes travel as hex, "-" when the file is empty.
-func (r webRemoteLogs) Snapshot(ctx context.Context, path string, offset int64, limit int) (webLogSnapshot, error) {
-	q := remote.ShellQuote(path)
-	cmd := "test -f " + q + " || exit 3; set -- $(ls -diL " + q + "); s=$(wc -c < " + q + "); h=$(head -c " +
-		strconv.Itoa(webMonitorHeadBytes) + " " + q + " | od -An -v -tx1 | tr -d ' \\n'); echo \"$1 $s ${h:--}\"; tail -c +" +
-		strconv.FormatInt(offset+1, 10) + " " + q + " | head -c " + strconv.Itoa(limit)
-	res, err := r.run(ctx, cmd)
-	if err != nil {
-		return webLogSnapshot{}, err
-	}
-	if res.ExitCode == 3 {
-		return webLogSnapshot{}, os.ErrNotExist
-	}
-	header, data, found := strings.Cut(res.Stdout, "\n")
-	fields := strings.Fields(header)
-	if res.ExitCode != 0 || !found || len(fields) != 3 {
-		return webLogSnapshot{}, fmt.Errorf("remote log read %s: exit %d", path, res.ExitCode)
-	}
-	id, err := strconv.ParseUint(fields[0], 10, 64)
-	if err != nil {
-		return webLogSnapshot{}, err
-	}
-	size, err := strconv.ParseInt(fields[1], 10, 64)
-	if err != nil {
-		return webLogSnapshot{}, err
-	}
-	var head []byte
-	if fields[2] != "-" {
-		if head, err = hex.DecodeString(fields[2]); err != nil {
-			return webLogSnapshot{}, fmt.Errorf("remote log read %s: head: %w", path, err)
-		}
-	}
-	return webLogSnapshot{ID: id, Size: size, Head: head, Data: []byte(data)}, nil
-}
 
 // attachRemote marks a network as having an operator-started remote log
 // collector; the returned function closes its open gaps and detaches it.
@@ -93,7 +45,7 @@ func (m *WebMonitor) attachRemote(network string) func() {
 // nothing else is recorded.
 func (m *WebMonitor) CollectRemoteLogs(ctx context.Context, network string, open func(context.Context, State, node.Record) (webLogSource, error)) error {
 	m.mu.Lock()
-	state, _, err := m.loadNetwork(network)
+	state, _, err := m.loadNetwork(ctx, network)
 	var work webMonitorCursor
 	if err == nil {
 		work, err = m.readCursor(network)
