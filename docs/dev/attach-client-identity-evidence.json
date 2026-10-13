@@ -1,0 +1,111 @@
+{
+  "scope": "Client name matching against logical binary and native build target. Native three-chain identity and consensus checks; remaining R3/R4/R5/R6, Linux L1 and final acceptance remain open.",
+  "redLog": "/private/tmp/chainbench-attach-alias-red.log",
+  "raceLog": "/private/tmp/chainbench-attach-alias-race.log",
+  "fullCheckLog": "/private/tmp/chainbench-attach-alias-check.log",
+  "nativeLog": "/private/tmp/chainbench-attach-alias-native.jsonl",
+  "nativeElapsedSeconds": 144.17,
+  "nativeProofs": [
+    {
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "chain": "stablenet",
+      "clientBuildAliasAccepted": true,
+      "clientVersion": "Gstable/v1.1.0-stable-0937ac5c/darwin-arm64/go1.25.2",
+      "facts": {
+        "Status": "supported",
+        "Source": "istanbul_getValidators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-2345861224/reports/20261013-130006-39376/UTC-20261013-130006/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-2345861224/reports/20261013-130006-39376/UTC-20261013-130006",
+      "sources": {
+        "../chains/stablenet/manifest.json": "b371b7a46c3767fd581a4144165ab4cc1ffad0b1ca5597061200e33021ca93fa",
+        "../chains/wbft/manifest.json": "850fe1e9525872601cedf12723d6df3e30acca84f22e5fd34b7315916c8b8a35",
+        "../chains/wemix/manifest.json": "e93afc34f01f0f53c382b85472da7d8cb0e5a3616ddf5c7d5c4029d3971468e9",
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "68ca1073f806a96362cf5904c627ef5c47389f6826bfc1284889af8eda60ff22",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-2345861224/proof.json",
+      "proofSHA256": "e1b9e996e3b65ebf9acca47cf2cdf90e23294664f040c7c2932eae362d01f4a9",
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "chain": "wbft",
+      "clientBuildAliasAccepted": true,
+      "clientVersion": "gwemix/v1.0.0-alpha-7af50e45-20260811/darwin-arm64/go1.25.2",
+      "facts": {
+        "Status": "supported",
+        "Source": "istanbul_getValidators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-607793526/reports/20261013-130006-39376/UTC-20261013-130015/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-607793526/reports/20261013-130006-39376/UTC-20261013-130015",
+      "sources": {
+        "../chains/stablenet/manifest.json": "b371b7a46c3767fd581a4144165ab4cc1ffad0b1ca5597061200e33021ca93fa",
+        "../chains/wbft/manifest.json": "850fe1e9525872601cedf12723d6df3e30acca84f22e5fd34b7315916c8b8a35",
+        "../chains/wemix/manifest.json": "e93afc34f01f0f53c382b85472da7d8cb0e5a3616ddf5c7d5c4029d3971468e9",
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "68ca1073f806a96362cf5904c627ef5c47389f6826bfc1284889af8eda60ff22",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-607793526/proof.json",
+      "proofSHA256": "ff42ea8bf4489ab83c885b50390e3e43729ad2e040c962bea84c0ba2722e2424",
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "chain": "wemix",
+      "clientBuildAliasAccepted": true,
+      "clientVersion": "Gwemix/v0.10.14-stable-1350376a/darwin-arm64/go1.25.2",
+      "facts": {
+        "Status": "supported",
+        "Source": "poa runtime validators",
+        "validatorCount": 4
+      },
+      "observation": "/private/tmp/cbui/capability-native-3521564754/reports/20261013-130006-39376/UTC-20261013-130103/tests/001_runtime-consensus/observations/capability-probes.json",
+      "session": "/private/tmp/cbui/capability-native-3521564754/reports/20261013-130006-39376/UTC-20261013-130103",
+      "sources": {
+        "../chains/stablenet/manifest.json": "b371b7a46c3767fd581a4144165ab4cc1ffad0b1ca5597061200e33021ca93fa",
+        "../chains/wbft/manifest.json": "850fe1e9525872601cedf12723d6df3e30acca84f22e5fd34b7315916c8b8a35",
+        "../chains/wemix/manifest.json": "e93afc34f01f0f53c382b85472da7d8cb0e5a3616ddf5c7d5c4029d3971468e9",
+        "../consensus/poa/validators.go": "bb736917c4125777ae93d154f23bec3cb33fa5e00a1e6c072f60440f2d53615d",
+        "../consensus/poa/validators_test.go": "56df3ff693426c181a2bbc4763632dbef7364d947262d3811b57950ce995c5bc",
+        "../core/registry/consensus.go": "e735acc93a58252ab684d55bb9bf3d635d4d03ac21f70bb287f5d42957b9b8e1",
+        "attach.go": "34265683235fb077eece49e0851e075463dd86e9ea4aa5c2935bd3f3132b199e",
+        "attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "capability_probe.go": "481e41890991bce3fbd5e92189f3c263920517dd8d88c13656870154dd0b514d",
+        "capability_probe_native_test.go": "68ca1073f806a96362cf5904c627ef5c47389f6826bfc1284889af8eda60ff22",
+        "capability_probe_test.go": "af42ba2098d2ad84fe9de7488a80ea66953c30d7b7d878a09cbca125ad5e4b8d",
+        "engine_impl.go": "c14c85d1d96012d29f54d0ac0bd4318e5f0556fdcdc632bac993212ed974b173"
+      },
+      "proof": "/private/tmp/cbui/capability-native-3521564754/proof.json",
+      "proofSHA256": "c4cad0ec511d50d98f66118e9245bbeb583e00d1515600f7062bbb819ec03865",
+      "endedDatabasesRemaining": 0
+    }
+  ],
+  "limitations": [
+    "WBFT and WEMIX share the Gwemix client name; a matching name alone does not distinguish those two chains.",
+    "Existing explicit allow-chain-mismatch policy and unavailable-client fallback remain unchanged.",
+    "All proofs use local native four-node networks; authenticated signing and full Linux fleet acceptance are separate remaining work."
+  ]
+}

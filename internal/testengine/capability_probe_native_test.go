@@ -12,6 +12,8 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/chainsetup/verb"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -50,9 +52,25 @@ func TestNativeConsensusCapabilityProbes(t *testing.T) {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
-			output, err := testengine.RunSuite(ctx, chainsetup.Deps{}, testengine.RunSuiteIn{DataDir: workspace, SpecContent: [][]byte{raw}, Binary: os.Getenv(sample.variable), KeysDir: filepath.Join(repoRoot(t), "presets/keys"), ReadOnlyKeys: true, ArtifactRoot: filepath.Join(fixture, "reports"), WaitBlocks: 2})
+			output, err := testengine.RunSuite(ctx, chainsetup.Deps{}, testengine.RunSuiteIn{DataDir: workspace, SpecContent: [][]byte{raw}, Binary: os.Getenv(sample.variable), KeysDir: filepath.Join(repoRoot(t), "presets/keys"), ReadOnlyKeys: true, ArtifactRoot: filepath.Join(fixture, "reports"), WaitBlocks: 2, KeepUp: true})
 			if err != nil || output.Summary.Summary.Pass != 1 || output.Summary.Failed() || output.Summary.Summary.Skip != 0 {
 				t.Fatalf("native consensus probe: %v %+v", err, output)
+			}
+			if output.Stopped || len(output.Endpoints) != 4 {
+				t.Fatal("native identity probe requires four still-running nodes")
+			}
+			endpoint := node.Node{Index: 1, RPCURL: output.Endpoints[0]}
+			var client string
+			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "web3_clientVersion", &client); err != nil || client == "" {
+				t.Fatalf("native client name: %q %v", client, err)
+			}
+			if err := testengine.VerifyAttachedNode(ctx, sample.chain, endpoint, false); err != nil {
+				t.Fatalf("actual native build alias refused: %v", err)
+			}
+			if sample.chain != "stablenet" {
+				if err := testengine.VerifyAttachedNode(ctx, "stablenet", endpoint, false); err == nil {
+					t.Fatal("actual non-stablenet client accepted as stablenet")
+				}
 			}
 			observation := filepath.Join(output.SessionRoot, "tests", "001_runtime-consensus", "observations", "capability-probes.json")
 			bytes, err := os.ReadFile(observation)
@@ -67,7 +85,7 @@ func TestNativeConsensusCapabilityProbes(t *testing.T) {
 				t.Fatalf("native facts: %v %s", err, bytes)
 			}
 			sources := map[string]string{}
-			for _, pattern := range []string{"capability_probe*.go", "attach.go", "engine_impl.go", "../core/registry/consensus.go", "../consensus/poa/validators*.go"} {
+			for _, pattern := range []string{"capability_probe*.go", "attach.go", "attach_verify*.go", "engine_impl.go", "../core/registry/consensus.go", "../consensus/poa/validators*.go", "../chains/*/manifest.json"} {
 				files, err := filepath.Glob(pattern)
 				if err != nil {
 					t.Fatal(err)
@@ -86,7 +104,7 @@ func TestNativeConsensusCapabilityProbes(t *testing.T) {
 				t.Fatal(err)
 			}
 			binarySHA := sha256.Sum256(binary)
-			proof := map[string]any{"chain": sample.chain, "binary": os.Getenv(sample.variable), "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "observation": observation, "facts": facts, "session": output.SessionRoot}
+			proof := map[string]any{"chain": sample.chain, "binary": os.Getenv(sample.variable), "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "observation": observation, "facts": facts, "session": output.SessionRoot, "clientVersion": client, "clientBuildAliasAccepted": true}
 			content, err := json.MarshalIndent(proof, "", "  ")
 			if err != nil {
 				t.Fatal(err)
