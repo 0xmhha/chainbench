@@ -201,3 +201,14 @@ export function forbiddenFields(schema, value) {
  }
  return forbidden
 }
+
+// An open map can reserve particular names without inventing a fixed field set.
+export function propertySchema(schema, name) {
+ const rules=[]
+ if(schema.properties?.[name])rules.push(schema.properties[name])
+ for(const [pattern,rule] of Object.entries(schema.patternProperties??{})){
+  if(new RegExp(pattern).test(name))rules.push(rule)
+ }
+ if(rules.length)return rules.length===1?rules[0]:{...rules[0],allOf:[...(rules[0].allOf??[]),...rules.slice(1)]}
+ return typeof schema.additionalProperties==='object'?schema.additionalProperties:{}
+}

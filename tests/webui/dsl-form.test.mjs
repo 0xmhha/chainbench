@@ -182,3 +182,11 @@ test('recursive preset JSON values expose a real null variant',async()=>{
  assert.equal(selectedVariant(choices,null),3)
  assert.equal(initial(choices[3],root),null)
 })
+
+test('map fields use the engine pattern contract for declared chain identity',async()=>{
+ const {propertySchema}=await import('../../web/src/dsl-form.js')
+ const schema={patternProperties:{'^chainId$':{type:'integer',minimum:0,maximum:9007199254740991}},additionalProperties:{type:'string'}}
+ assert.equal(propertySchema(schema,'chainId').type,'integer')
+ assert.equal(propertySchema(schema,'other').type,'string')
+ assert.equal(initial(propertySchema(schema,'chainId'),{}),0)
+})

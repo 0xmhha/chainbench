@@ -432,6 +432,19 @@ func checkEditorValue(value any, s, root map[string]any, path string) error {
 				}
 			}
 			child, exists := props[key].(map[string]any)
+			patterns, _ := s["patternProperties"].(map[string]any)
+			for pattern, constraint := range patterns {
+				matched, err := regexp.MatchString(pattern, key)
+				if err != nil {
+					return fmt.Errorf("%s: invalid property pattern", path)
+				}
+				if matched {
+					exists = true
+					if err := checkEditorValue(v, constraint.(map[string]any), root, path+"/"+key); err != nil {
+						return err
+					}
+				}
+			}
 			if !exists {
 				switch a := s["additionalProperties"].(type) {
 				case bool:

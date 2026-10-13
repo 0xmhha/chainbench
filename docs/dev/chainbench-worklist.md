@@ -145,7 +145,7 @@
 B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은
 [`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md).
 
-**일부러 비워 둔 자리 (요구가 생기면 연다)**: 게이트의 `WantChainID`(권위 있는 출처 없음) ·
+**일부러 비워 둔 자리 (요구가 생기면 연다)**: 네트워크 공통 건강 게이트의 `WantChainID`(케이스별 선언은 아래 R1 실행 관문에서 검사) ·
 stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.go` 의 취소 의미(의도적).
 
 
@@ -313,6 +313,16 @@ null 삭제·배열 교체를 유지한다. 초기값은 첫 사전 hook부터 �
 소비·케이스 격리를 확인했다. 전체 제출 150건(기대된 노드 거부 12건 포함)과 숫자 오류 144건도 회귀했다. 종료 DB는
 0건이고 증명은 별도 보존 경로에 두었다. R1 체인 ID 실행 관문은 케이스 assertion과 구분해 미완료로 둔다.
 R3/R4 잔여·P4/R6·나머지 R5/전체 Linux L1·10–14번과 최종 Web 인수는 계속 남는다.
+
+**R1 선언 체인 ID 관문 완료:** [체인 ID 증거](chain-identity-evidence.json)는 preset의 `values.chainId`와
+기록된 모든 실행 노드의 인증된 `eth_chainId`를 사전 hook보다 먼저 비교한다. 명시 0도 검사하며, 불일치는
+FAIL, 조회 불가·사용 불가 응답은 BLOCKED다. 여러 노드에서 불일치와 조회 불가가 함께 나타나면 FAIL로 판정한다.
+선언이 없으면 기존 동작을 유지하며 관측한 값으로 기대값을 만들지 않는다. 구조화 Web의 정수·문자열 입력,
+소수 거절과 내보내기도 확인했다. RED→GREEN·전체 make check·관련 race·브라우저·세 체인 직렬 native race가
+통과했다. CLI/MCP의 18판정에서 90개 노드 관측과 실패/차단 시 거래 미제출을 확인했고, 전체 제출 156건
+(기대된 거부 12건 포함)·숫자 오류 144건을 회귀했다. 증명별 소스 SHA 92개가 일치하고 종료 DB는 0건이다.
+첫 native fixture의 BLOCKED 종료 코드 기대값 오류는 수정 후 세 체인 모두 재실행했으며 실패 자료도 보존했다.
+별도 fresh compose 인수와 Linux HEAD L1을 통과한 것으로 해석하지 않는다. 9번 나머지와 10–14번은 계속 남는다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

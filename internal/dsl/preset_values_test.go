@@ -56,3 +56,12 @@ func TestPresetValuesRefuseUnaddressableBindingNames(t *testing.T) {
 		}
 	}
 }
+
+func TestPresetChainIdentityRefusesLossyOrUnusableExpectations(t *testing.T) {
+	for _, value := range []any{nil, true, -1, 1.5, float64(9007199254740992), "", "-1", "0xgg", "18446744073709551616"} {
+		raw, _ := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "chain-preset", "id": "p", "chain": "wbft", "values": map[string]any{"chainId": value}})
+		if _, err := dsl.ParseChainPreset(raw); err == nil {
+			t.Errorf("invalid declared chain id accepted: %v", value)
+		}
+	}
+}

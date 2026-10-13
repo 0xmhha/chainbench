@@ -262,6 +262,19 @@ try{
  await page.getByLabel(valuesPath+'/enabled 형식',{exact:true}).selectOption('2')
  await page.getByLabel(valuesPath+'/enabled',{exact:true}).check()
  assert.equal(await page.getByLabel(valuesPath+'/payload/items/2 형식',{exact:true}).inputValue(),'3','null rendered as a string')
+ await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('chainId')
+ await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
+ const chainPath=valuesPath+'/chainId'
+ assert.equal(await page.getByLabel(chainPath+' 형식',{exact:true}).inputValue(),'0')
+ const expectedID=page.getByLabel(chainPath,{exact:true})
+ assert.equal(await expectedID.getAttribute('step'),'1')
+ assert.equal(await expectedID.getAttribute('max'),'9007199254740991')
+ await expectedID.fill('1.5')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:'chainId'}).waitFor({timeout:15000})
+ await page.getByLabel(chainPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(chainPath,{exact:true}).fill('8283')
+
  await page.locator('[data-tree-path="/content/steps/0"]').click()
  const initialNames=await page.locator('[id="/content/steps/0/target-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))
  for(const name of ['$limit','$recipient','$payload','$enabled'])assert.ok(initialNames.includes(name),name)
@@ -273,9 +286,10 @@ try{
  await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
  await (await valueDownload).saveAs(out+'/preset-values-export.json')
  valueCase.chainPreset.values.enabled=true
+ valueCase.chainPreset.values.chainId='8283'
  assert.deepEqual(JSON.parse(fs.readFileSync(out+'/preset-values-export.json','utf8')),valueCase)
  await page.screenshot({path:out+'/preset-values-editor.png',fullPage:true})
- observed.presetValues={typedBooleanAuthoring:true,nestedNullPreserved:true,initialReferencesOffered:true,validationAndExportPreserved:true}
+ observed.presetValues={typedBooleanAuthoring:true,nestedNullPreserved:true,initialReferencesOffered:true,declaredIdentityControl:true,fractionalIdentityRejected:true,validationAndExportPreserved:true}
 
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}

@@ -412,6 +412,22 @@
           },
           "additionalProperties": {
             "$ref": "#/$defs/presetValue"
+          },
+          "patternProperties": {
+            "^chainId$": {
+              "description": "Authoritative expected chain identity, checked on every reached node before hooks. Omission keeps legacy behavior; explicit zero is checked.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(0[xX][0-9a-fA-F]+|[0-9]+)$"
+                }
+              ]
+            }
           }
         }
       }
