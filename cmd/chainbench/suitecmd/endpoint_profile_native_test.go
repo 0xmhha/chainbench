@@ -164,6 +164,11 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 	signedSpec["chainPreset"].(map[string]any)["accounts"] = map[string]any{"payer": map[string]any{"keyFile": filepath.Join(repoKeys(t), "node1/private")}}
 	signedSpec["steps"] = append(signedSpec["steps"].([]any),
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "1"},
+		map[string]any{"do": "faucet", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"},
+		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "gas": "200000", "save": "contract"},
+		map[string]any{"expect": "codeAt", "on": "en1", "address": "$contract", "compare": "NotEqual", "is": "0x"},
+		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$contract", "data": "0x00", "gas": "200000"},
+		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2},
 		map[string]any{"expect": "balanceAt", "on": "en1", "address": "0x000000000000000000000000000000000000dead", "compare": "GreaterOrEqual", "is": "1"})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
@@ -201,10 +206,19 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	if rawTransactions.Load() != 2 {
-		t.Fatalf("CLI and MCP must each submit one local signature: %d", rawTransactions.Load())
+	if rawTransactions.Load() != 12 {
+		t.Fatalf("CLI and MCP must each submit six local signatures: %d", rawTransactions.Load())
 	}
 	sources := map[string]string{}
+	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go"}
+	for _, name := range assetSources {
+		content, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(content)
+		sources[name] = hex.EncodeToString(sum[:])
+	}
 	for _, pattern := range []string{"../../../internal/app/workflow.go", "../../../internal/accounts/provider.go", "../../../internal/accounts/wallet*.go", "../../../internal/core/node/*.go", "../../../internal/core/remote/auth.go", "../../../internal/core/rpc/subscribe.go", "../../../internal/core/collector/metrics.go", "../../../internal/dsl/endpoint_profile_test.go", "../../../internal/dsl/spec_v2.go", "../../../internal/dsl/lower_v1.go", "../../../internal/dsl/schema/v2.schema.json", "../../../internal/dsl/interp/interpreter.go", "../../../internal/testengine/attach*.go", "../../../internal/testhelper/metric.go", "../../../internal/testhelper/websocket.go", "run.go", "endpoint_profile*_test.go"} {
 		files, err := filepath.Glob(pattern)
 		if err != nil {

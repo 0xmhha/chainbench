@@ -201,7 +201,12 @@ WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에
 [인증 서명 증거](authenticated-signing-evidence.json)는 SDK 지갑 14종의 인증 전송 계약,
 실제 CLI/MCP 로컬 서명 송금 두 건과 종료 DB 제거를 확인했다.
 기존 세 체인 배포 회귀도 통과했지만 선언 계정의 local deploy를 증명한 것은 아니다.
-R3 나머지, R4의 선언 계정 faucet/deploy/load·고급 입력, R1/R5/R6와 전체 Linux L1은 계속 남는다.
+**2026-10-14 선언 계정 자산 경로 보강:** [자산 서명 증거](declared-asset-signing-evidence.json)는
+faucet·deployContract·registerContract·load의 선언 keyFile 계정 로컬 서명을 확인했다.
+인증 RPC 계약과 반복 load의 명시 nonce 증가를 RED→GREEN으로 검증했고, make check·관련 6패키지 race가 통과했다.
+실제 stablenet BP4/EN1에서 CLI와 MCP 각각 여섯 서명(총 12건)을 제출하고 세션 PASS·배포 코드·종료 DB 0건을 확인했다.
+다른 체인의 로컬 자산 실증, legacy/access-list/delegation 등 고급 입력은 이 증거의 완료 범위가 아니다.
+R3 나머지, R4 고급 입력, R1/R5/R6와 전체 Linux L1은 계속 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)

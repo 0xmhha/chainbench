@@ -3,6 +3,8 @@ package testhelper
 import (
 	"context"
 	"fmt"
+	"maps"
+	"math/big"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
@@ -54,6 +56,10 @@ func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return fmt.Errorf("dsl: load: %w", err)
 	}
+	sender, err := declaredFunder(ac.Deps, ac.Args)
+	if err != nil {
+		return err
+	}
 
 	blocks := loadDefaultBlocks
 	if n, ok := uintArg(ac.Args["blocks"]); ok && n > 0 {
@@ -70,7 +76,38 @@ func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		if err := applyFeeArgs(&args, ac.Args); err != nil {
 			return err
 		}
-		receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
+		var receipt map[string]any
+		var hash string
+		if sender.SignsLocally() {
+			if args.GasPrice != "" {
+				return fmt.Errorf("dsl: local load gasPrice requires the legacy transaction contract")
+			}
+			if ac.Deps.Accounts == nil {
+				return fmt.Errorf("dsl: local load needs an account provider")
+			}
+			wallet, walletErr := ac.Deps.Accounts.OpenWallet(ctx, sender.Key, selectorTarget(ac.Env, ac.Args))
+			if walletErr != nil {
+				return walletErr
+			}
+			local := *ac
+			nonce, nonceErr := noncePointer(ac.Args["nonce"])
+			if nonceErr != nil {
+				return nonceErr
+			}
+			if nonce != nil {
+				if uint64(i) > ^uint64(0)-*nonce {
+					return fmt.Errorf("dsl: load nonce range overflows uint64")
+				}
+				local.Args = maps.Clone(ac.Args)
+				local.Args["nonce"] = fmt.Sprintf("%#x", *nonce+uint64(i))
+			}
+			hash, err = sendWithGas(ctx, &local, wallet, "", new(big.Int), burnInitCode, gasHex, selectorTarget(ac.Env, ac.Args))
+			if err == nil {
+				receipt, err = waitReceipt(ctx, c, hash, durationArg(ac.Args, "timeout", defaultTxTimeout), durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+			}
+		} else {
+			receipt, hash, err = sendAndConfirm(ctx, c, args, ac.Args)
+		}
 		if err != nil {
 			return fmt.Errorf("dsl: load: burn %d/%d: %w", i+1, blocks, err)
 		}

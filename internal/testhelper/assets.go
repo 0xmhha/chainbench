@@ -49,6 +49,17 @@ func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if !ok {
 		return fmt.Errorf("dsl: faucet requires a numeric \"amount\" in wei")
 	}
+	sender, err := declaredFunder(ac.Deps, ac.Args)
+	if err != nil {
+		return err
+	}
+	if sender.SignsLocally() {
+		amount, err := amountFromQuantity(value)
+		if err != nil {
+			return err
+		}
+		return localAssetTransaction(ctx, ac, sender, to, amount, "")
+	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -100,6 +111,13 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	// behind the deployment, which no test means to measure.
 	if keyHex, ok := ac.Args["key"].(string); ok && keyHex != "" {
 		return deployContractLocal(ctx, ac, keyHex, code)
+	}
+	sender, err := declaredFunder(ac.Deps, ac.Args)
+	if err != nil {
+		return err
+	}
+	if sender.SignsLocally() {
+		return deployContractLocalKey(ctx, ac, sender.Key, code)
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -164,6 +182,17 @@ func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) erro
 	if data == "" {
 		return fmt.Errorf("dsl: registerContract requires \"data\" (the encoded call)")
 	}
+	sender, err := declaredFunder(ac.Deps, ac.Args)
+	if err != nil {
+		return err
+	}
+	if sender.SignsLocally() {
+		value, err := parseValueWei(ac.Args["value"])
+		if err != nil {
+			return err
+		}
+		return localAssetTransaction(ctx, ac, sender, to, value, data)
+	}
 	c, cerr := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if cerr != nil {
 		return cerr
@@ -194,6 +223,14 @@ func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) erro
 	return nil
 }
 
+// declaredFunder resolves only an explicitly named funding account.
+func declaredFunder(d *interp.Deps, args map[string]any) (Account, error) {
+	if from, ok := args["from"].(string); ok && from != "" {
+		return ResolveAccount(d, from)
+	}
+	return Account{}, nil
+}
+
 // funder resolves the sending account: the explicit "from" if given, else the
 // target node's unlocked coinbase (a validator signs with it, so it is the one
 // account a locally launched network can always spend from).
@@ -204,6 +241,7 @@ func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) erro
 // for the role rather than for whichever address holds the money. Naming none
 // falls back to the node's own coinbase, which is what specs written before
 // labels relied on.
+
 func funder(ctx context.Context, c *rpc.Client, d *interp.Deps, args map[string]any) (string, error) {
 	if from, ok := args["from"].(string); ok && from != "" {
 		acct, err := ResolveAccount(d, from)
@@ -278,12 +316,16 @@ func applyFeeArgs(args *rpc.SendTxArgs, in map[string]any) error {
 // The created address comes from the wallet when it reports one and from the
 // receipt otherwise, so a provider that only returns a hash still works.
 func deployContractLocal(ctx context.Context, ac *interp.ActionCtx, keyHex, code string) error {
-	if ac.Deps == nil || ac.Deps.Accounts == nil {
-		return fmt.Errorf("dsl: deployContract: no account provider")
-	}
 	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
 	if err != nil {
 		return fmt.Errorf("dsl: deployContract key: decode: %w", err)
+	}
+	return deployContractLocalKey(ctx, ac, priv, code)
+}
+
+func deployContractLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte, code string) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("dsl: deployContract: no account provider")
 	}
 	initCode, err := hex.DecodeString(strings.TrimPrefix(code, "0x"))
 	if err != nil {
@@ -298,7 +340,21 @@ func deployContractLocal(ctx context.Context, ac *interp.ActionCtx, keyHex, code
 	if err != nil {
 		return err
 	}
-	hash, addr, err := w.Deploy(ctx, initCode, value)
+	var hash, addr string
+	gas, hasGas := hexQuantity(ac.Args["gas"])
+	if hasGas {
+		if _, legacy := ac.Args["gasPrice"]; legacy {
+			return fmt.Errorf("dsl: local deploy gasPrice requires the legacy transaction contract")
+		}
+		hash, err = sendWithGas(ctx, ac, w, "", value, code, gas, rpcURL)
+	} else {
+		for _, name := range []string{"nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas"} {
+			if _, supplied := ac.Args[name]; supplied {
+				return fmt.Errorf("dsl: local deploy %s needs explicit gas", name)
+			}
+		}
+		hash, addr, err = w.Deploy(ctx, initCode, value)
+	}
 	if err != nil {
 		return fmt.Errorf("dsl: deployContract: %w", err)
 	}
@@ -316,8 +372,8 @@ func deployContractLocal(ctx context.Context, ac *interp.ActionCtx, keyHex, code
 	if statusReverted(receipt) {
 		return fmt.Errorf("dsl: deployContract %s reverted", hash)
 	}
-	if addr == "" {
-		addr, _ = receipt["contractAddress"].(string)
+	if actual, _ := receipt["contractAddress"].(string); actual != "" {
+		addr = actual
 	}
 	if addr == "" {
 		return fmt.Errorf("dsl: deployContract %s: receipt carries no contract address", hash)

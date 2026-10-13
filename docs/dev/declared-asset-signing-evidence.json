@@ -1,0 +1,167 @@
+{
+  "scope": "R4 declared keyFile accounts sign faucet/deployContract/registerContract/load through authenticated caller RPC, preserving node-owned flow. Advanced legacy/access-list/delegation inputs and three-chain native local-asset coverage remain open.",
+  "redLog": "/private/tmp/chainbench-local-assets-red.log",
+  "consecutiveNonceRedLog": "/private/tmp/chainbench-local-load-nonce-red.log",
+  "greenLog": "/private/tmp/chainbench-local-assets-green.log",
+  "raceLog": "/private/tmp/chainbench-local-assets-race.log",
+  "fullCheckLog": "/private/tmp/chainbench-local-assets-check.log",
+  "nativeLog": "/private/tmp/chainbench-local-assets-native-source-bound.jsonl",
+  "nativeProof": "/private/tmp/cbui/endpoint-native-3204501574/proof.json",
+  "nativeProofSHA256": "c1f5c45b3a080106d1bfaf28fb5aeadff1d9ee47dade113229a8f573cf208db5",
+  "native": {
+    "actualEndpoint": {
+      "index": 5,
+      "role": "en",
+      "host": "127.0.0.1",
+      "rpc_url": "http://127.0.0.1:8640",
+      "metrics_url": "http://127.0.0.1:8643/debug/metrics/prometheus",
+      "ws_url": "ws://127.0.0.1:8641",
+      "ports": {
+        "p2p": 31040,
+        "http": 8640,
+        "ws": 8641,
+        "auth": 8642,
+        "metrics": 8643
+      },
+      "pid": 21934
+    },
+    "authenticatedGatewayRequests": 149,
+    "authenticatedRawTransactions": 12,
+    "binary": "/private/tmp/chainbench-head-native/gstable",
+    "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+    "cliSession": "/private/tmp/cbui/endpoint-native-3204501574/cli-reports/20261013-150206-21898/UTC-20261013-150219",
+    "gateway": "auth and byte forwarding only",
+    "mcpSession": "/private/tmp/cbui/endpoint-native-3204501574/mcp-reports/20261013-150206-21898/UTC-20261013-150229",
+    "sources": {
+      "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+      "../../../internal/accounts/wallet.go": "74c310171127af43532a27245692dd1f00d0d3c4d88a85b50770fb1dc668eb56",
+      "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+      "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+      "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+      "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+      "../../../internal/accounts/wallet_rpc_test.go": "e1f05b4689f8b8f17ddf6761a1cf33aa7793f3a69b623d9dbb8fea4eb6903105",
+      "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+      "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+      "../../../internal/app/workflow.go": "2ecab624c4ca98bccd080ec55473d5145d22088e2104d05c2d88d829b2a53db8",
+      "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+      "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+      "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+      "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+      "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+      "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+      "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+      "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+      "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+      "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+      "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+      "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+      "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+      "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+      "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+      "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+      "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+      "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+      "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+      "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+      "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+      "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+      "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+      "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+      "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+      "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+      "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+      "../../../internal/dsl/lower_v1.go": "614d2ea05880a0042d467721f51225568c060c6c5edfe34cb65aa8d029c75a08",
+      "../../../internal/dsl/schema/v2.schema.json": "9cc8688d3addbfc5e43eb21ca3c69856eeea3c9819813b78ab7460a1fded7dcc",
+      "../../../internal/dsl/spec_v2.go": "b04d8cde561e040a08866c24e36055aa0d0d7ccf1e76f8cea63ea465f963dd32",
+      "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+      "../../../internal/testengine/attach_assets_signing_test.go": "b3ada03ddb507c73b61555781dedc599faaf22a137293e9d8bb94160e20574c2",
+      "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+      "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+      "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+      "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+      "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+      "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+      "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+      "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+      "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+      "../../../internal/testhelper/assets.go": "453127b5808db9c9d71ae85c9942dcc7b601a376ba33ff92203904b1127fe88c",
+      "../../../internal/testhelper/load.go": "97f528d25cd2f22dd7e315409238f9a634134589521965a095f4b041102f2913",
+      "../../../internal/testhelper/local_assets.go": "781efb9fe08df6c930da16929c6d74cadab9d4a79116dc44c40f979087df16cd",
+      "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+      "../../../internal/testhelper/sendtx.go": "6bc314a21dc9ccfec866dd9bd2d219dd69ddbff8e08db3d5ffd6cf4e025fb7e0",
+      "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+      "endpoint_profile_native_test.go": "bbce718cc1d07418cbd370213db0311f9a9627e3bf375a3a121fa66f05638f5a",
+      "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+      "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+    }
+  },
+  "sessions": [
+    {
+      "channel": "cliSession",
+      "steps": [
+        {
+          "action": "sendTx",
+          "hash": "0xb7c93132bb0df997d41e30c5aa4ca5826c4bae454e9b7fbc78878f0669278ee5",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "faucet",
+          "hash": "0x3ccf3379529fa328314bee884f7802ee0a9331a138276e8afc724c9805e72c24",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "deployContract",
+          "hash": "0x0b573f94ea7199c2e2ac3ae02897773daa4d993584c9737a7a82756a07d596dc",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "registerContract",
+          "hash": "0xb8586791f4604e779a7d354f644deb30b4f2956a7e8055787fcf99c0a0c92aa7",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "load",
+          "hash": "0xd5b63ee628f1e33f8632f1bd2efcf15709abdb889d02a79eb6f24ea2a0075a9a",
+          "receiptStatus": null
+        }
+      ]
+    },
+    {
+      "channel": "mcpSession",
+      "steps": [
+        {
+          "action": "sendTx",
+          "hash": "0xf69c249c81a10e1864ee6fc604952c85489f5b7caf3976781354e524e1c4e419",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "faucet",
+          "hash": "0x5f3125119ea63bea05e83bb425c3ac89b6a3c47d0411852e97c5a5f5c863ad68",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "deployContract",
+          "hash": "0xf08395fcd234416564a983c7f3865a314f55d9e2f60db0d9c5c9b129e223f866",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "registerContract",
+          "hash": "0xe92aa5e935942e64d43bbf7caca6bcdae4c5a221b9a14df5a4bfab35dc25b70e",
+          "receiptStatus": "0x1"
+        },
+        {
+          "action": "load",
+          "hash": "0x01be5dc4073f40861649e065dd8d6edb59dfee134056ea46c7f8631a91643ba9",
+          "receiptStatus": null
+        }
+      ]
+    }
+  ],
+  "endedDatabasesRemaining": 0,
+  "limitations": [
+    "Native asset execution uses stablenet BP4/EN1; other chain local asset paths need native verification.",
+    "Twelve raw submissions were observed. Each channel stores five action entries; load waits for both burns but retains only its last hash.",
+    "Explicit gasPrice on local asset paths is refused; advanced transaction options remain pending.",
+    "Task 9, Linux L1 and final frozen Web14 acceptance remain incomplete."
+  ]
+}
