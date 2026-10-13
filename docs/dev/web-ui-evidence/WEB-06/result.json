@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-06",
-  "invocationId": "302afbef-9a4d-4325-a6e3-dd22028b8667",
-  "startedAt": "2026-10-11T21:29:17.222284+00:00",
-  "finishedAt": "2026-10-11T21:43:59.872960+00:00",
+  "invocationId": "3a316d21-cf85-4a3d-b088-a1421297d016",
+  "startedAt": "2026-10-13T01:43:22.823539+00:00",
+  "finishedAt": "2026-10-13T01:59:51.980172+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "ssh-native-deployment",
@@ -22,5 +22,18 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "ba8f62095b6cfcb63d8b38f7ade6666673ec10cb15d32229b987308ba4a387db"
+  "evidenceDigest": "ee57532df405e8f9f069239b78bf223f9d4df43214ab7903036e56a664ca2d9c",
+  "independentVerification": {
+    "criterion": "WEB-06",
+    "mode": "recheck",
+    "outcome": "pass",
+    "seconds": 1001,
+    "scenarios": 6,
+    "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc",
+    "invocationId": "f72fecd2-2dc6-482b-b551-311ed22aab61",
+    "evidenceDirectory": "/private/tmp/cbui/recheck-2q712mg7/source/chainbench-out/web-ui-acceptance/WEB-06",
+    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web-06.log",
+    "evidenceDigest": "a80994a5c602fa6f6eabcf5ef53101069a3a23346f3e4d09cc9d008fc1879212",
+    "resultDigest": "121dcd16dfba2339801e31beebc47cf09752dc7f91bc47c1fe5a479c31a52a6a"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-11",
-  "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
+  "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
   "scenarios": [
     {
       "id": "alias-path-port-conflict-with-owner",
@@ -20,19 +20,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
-          "sha256": "c50c40131c194385a0b3008df4833f78eb558caa04d7712ee7aff385f00469eb"
+          "sha256": "b896694224306e0751b153b6452e4f57716dae473d6be6c8de3483d56d2729d6"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-resource-conflict.png",
-          "sha256": "8b491463dc7a41ea2656305e927d0dd3e014bc2e626cbe0846cb30088ae34730"
+          "sha256": "ebd2044421f53dc35153217a6d087efc326ab734ec2bc4f8e5f43f2e2d6d03e1"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-physical-conflict.png",
-          "sha256": "0b7aaafde33b9ec07b72e087df72e1c0c3db5cdf35991fc0e613326dde92b8f1"
+          "sha256": "1392045836119b06ec6ee32d2ec69f30fb4625f83982d46c98fc00c9a3fd0cc0"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     },
     {
       "id": "local-ssh-alias-same-physical",
@@ -48,15 +48,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-receipt.json",
-          "sha256": "46b2553d48dc479a1f2855e347f37926dbab15355e70dea22d82ea8f176cec36"
+          "sha256": "332ef79b009affbec85d7c3c3bfda286b78838c0fe0804a404c1acd855686e76"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-ssh-plan.png",
-          "sha256": "65e686aa1b01c3f8f72a9eaed0451537bf5cf0eeb410046d77d7c9226d456973"
+          "sha256": "2cd82378cbaf9fdea92bce2d5c17871a421bd6584ae7e72445441cc3def9700c"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     },
     {
       "id": "process-and-binary-conflict",
@@ -76,15 +76,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
-          "sha256": "3bd825e6f7d2d4511c8c4cf4752531d91b8f21fe2d31492c7fc7f4d28916c879"
+          "sha256": "299052cdec7077098061d20fbb224a8393b9ca441260d12acdca5dcb64e14e49"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
-          "sha256": "c50c40131c194385a0b3008df4833f78eb558caa04d7712ee7aff385f00469eb"
+          "sha256": "b896694224306e0751b153b6452e4f57716dae473d6be6c8de3483d56d2729d6"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     },
     {
       "id": "independent-resources-parallel",
@@ -100,11 +100,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
-          "sha256": "3bd825e6f7d2d4511c8c4cf4752531d91b8f21fe2d31492c7fc7f4d28916c879"
+          "sha256": "299052cdec7077098061d20fbb224a8393b9ca441260d12acdca5dcb64e14e49"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     },
     {
       "id": "test-internal-vs-external-control",
@@ -124,11 +124,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
-          "sha256": "3bd825e6f7d2d4511c8c4cf4752531d91b8f21fe2d31492c7fc7f4d28916c879"
+          "sha256": "299052cdec7077098061d20fbb224a8393b9ca441260d12acdca5dcb64e14e49"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     },
     {
       "id": "cleanup-releases-claims",
@@ -144,11 +144,11 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
-          "sha256": "c50c40131c194385a0b3008df4833f78eb558caa04d7712ee7aff385f00469eb"
+          "sha256": "b896694224306e0751b153b6452e4f57716dae473d6be6c8de3483d56d2729d6"
         }
       ],
-      "invocationId": "30fbc746-1857-4ca2-aeb5-76d7b9acb578",
-      "observedAt": "2026-10-11T22:10:02.840368+00:00"
+      "invocationId": "b3a1007c-f317-424d-9de7-981bf0f98b6c",
+      "observedAt": "2026-10-13T02:28:26.525532+00:00"
     }
   ],
   "checks": [
@@ -162,9 +162,9 @@
   "proofs": [
     {
       "name": "resource-parallel",
-      "startedAt": "2026-10-11T22:07:23.617973+00:00",
-      "runtime": "/private/tmp/cbui/37d80ca0-9eb5-41ee-a319-ad6d51a29bda",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:25:42.660372+00:00",
+      "runtime": "/private/tmp/cbui/75250cdb-4869-45a7-843a-ba1d5d6d79a9",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -195,9 +195,9 @@
     },
     {
       "name": "resource-holds",
-      "startedAt": "2026-10-11T22:08:32.392106+00:00",
-      "runtime": "/private/tmp/cbui/a5d19af2-43ed-435a-9eb3-402103072403",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:26:51.777751+00:00",
+      "runtime": "/private/tmp/cbui/dda10f1e-dc27-49c3-b139-386a29801950",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -228,9 +228,9 @@
     },
     {
       "name": "ssh-jobs",
-      "startedAt": "2026-10-11T22:08:59.809117+00:00",
-      "runtime": "/private/tmp/cbui/4f0094d2-6c1e-4ed6-94b4-38295b5b7a88",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:27:15.944134+00:00",
+      "runtime": "/private/tmp/cbui/54e94f0c-83b6-48f1-a982-6769bfe1504d",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": null,
       "binaries": [
         {
@@ -261,8 +261,8 @@
     }
   ],
   "server": {
-    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
-    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sha256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
+    "baseCommit": "49ba0c67be2915415d5f014e72c92ac970f488ac",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -315,7 +315,7 @@
     },
     {
       "path": "internal/app/web_chain_engine.go",
-      "sha256": "e338bd40be7aa0f6eabf108aaa93509cd378b3d126d0894937e034ad4de5cfeb"
+      "sha256": "aefbd8e35bd53b027a8711c34a07e353b547a075da5f1c6cd05e5d3d19675616"
     },
     {
       "path": "web/src/JobPanel.svelte",
@@ -357,11 +357,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-receipt.json",
-      "sha256": "c50c40131c194385a0b3008df4833f78eb558caa04d7712ee7aff385f00469eb"
+      "sha256": "b896694224306e0751b153b6452e4f57716dae473d6be6c8de3483d56d2729d6"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-resource-conflict.png",
-      "sha256": "8b491463dc7a41ea2656305e927d0dd3e014bc2e626cbe0846cb30088ae34730"
+      "sha256": "ebd2044421f53dc35153217a6d087efc326ab734ec2bc4f8e5f43f2e2d6d03e1"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-holds-run.log",
@@ -369,11 +369,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-physical-conflict.png",
-      "sha256": "0b7aaafde33b9ec07b72e087df72e1c0c3db5cdf35991fc0e613326dde92b8f1"
+      "sha256": "1392045836119b06ec6ee32d2ec69f30fb4625f83982d46c98fc00c9a3fd0cc0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-receipt.json",
-      "sha256": "3bd825e6f7d2d4511c8c4cf4752531d91b8f21fe2d31492c7fc7f4d28916c879"
+      "sha256": "299052cdec7077098061d20fbb224a8393b9ca441260d12acdca5dcb64e14e49"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/resource-parallel-run.log",
@@ -381,7 +381,7 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-receipt.json",
-      "sha256": "46b2553d48dc479a1f2855e347f37926dbab15355e70dea22d82ea8f176cec36"
+      "sha256": "332ef79b009affbec85d7c3c3bfda286b78838c0fe0804a404c1acd855686e76"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-run.log",
@@ -389,9 +389,9 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-11/ssh-jobs-ssh-plan.png",
-      "sha256": "65e686aa1b01c3f8f72a9eaed0451537bf5cf0eeb410046d77d7c9226d456973"
+      "sha256": "2cd82378cbaf9fdea92bce2d5c17871a421bd6584ae7e72445441cc3def9700c"
     }
   ],
   "blockers": [],
-  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+  "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc"
 }

@@ -1,8 +1,8 @@
 {
   "criterion": "WEB-04",
-  "invocationId": "532f3650-42c1-4e44-b099-e8e9ab634771",
-  "startedAt": "2026-10-11T21:19:09.498272+00:00",
-  "finishedAt": "2026-10-11T21:19:32.646242+00:00",
+  "invocationId": "42fb78d5-61a4-4395-9e4e-200ae873f9ef",
+  "startedAt": "2026-10-13T01:34:14.164162+00:00",
+  "finishedAt": "2026-10-13T01:34:32.568475+00:00",
   "outcome": "pass",
   "requiredScenarios": [
     "builtin-stablenet",
@@ -30,5 +30,18 @@
   ],
   "skippedScenarios": [],
   "failedAssertions": [],
-  "evidenceDigest": "68ac1101971e2f189b4e0d892594eb06ea5f62bee94bb334f90a26c39caf3f7a"
+  "evidenceDigest": "ce2d688279772ecd9d95354fc44c64208a8657a595147515d8fc610cc0d369c7",
+  "independentVerification": {
+    "criterion": "WEB-04",
+    "mode": "recheck",
+    "outcome": "pass",
+    "seconds": 28,
+    "scenarios": 10,
+    "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc",
+    "invocationId": "b853dff1-9c43-416c-874e-33d02f1ff5d8",
+    "evidenceDirectory": "/private/tmp/cbui/recheck-n4i989ve/source/chainbench-out/web-ui-acceptance/WEB-04",
+    "log": "/private/tmp/chainbench-frozen-refactor-recheck-web-04.log",
+    "evidenceDigest": "bd4ba2d9c61d6268e8051baeba7a618afbbcbb4ba4dd4aa065ac3fbc9e95bab1",
+    "resultDigest": "0069518c28fbbd01cacc079e640eb5ecee3e04183c333ec36a361a6c1df83896"
+  }
 }

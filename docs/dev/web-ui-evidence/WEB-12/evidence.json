@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-12",
-  "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
+  "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
   "scenarios": [
     {
       "id": "restart-marks-running-work-interrupted",
@@ -24,15 +24,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-          "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+          "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-          "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+          "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
         }
       ],
-      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
-      "observedAt": "2026-10-11T22:11:04.309803+00:00"
+      "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
+      "observedAt": "2026-10-13T02:30:08.560387+00:00"
     },
     {
       "id": "actual-state-rechecked",
@@ -56,19 +56,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-          "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+          "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-restart-observation.png",
-          "sha256": "8ce9cef18b2ffccbde0d5f39ee54bec86aa7e260ecc36ccb79ba8ea1a0d8ca39"
+          "sha256": "dc27b7e16d55b880be449d4ca93797d755e2a0d1fe351f01480fbcd894e08ccf"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-          "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+          "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
         }
       ],
-      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
-      "observedAt": "2026-10-11T22:11:04.309803+00:00"
+      "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
+      "observedAt": "2026-10-13T02:30:08.560387+00:00"
     },
     {
       "id": "records-and-claims-preserved",
@@ -88,15 +88,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-          "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+          "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-          "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+          "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
         }
       ],
-      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
-      "observedAt": "2026-10-11T22:11:04.309803+00:00"
+      "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
+      "observedAt": "2026-10-13T02:30:08.560387+00:00"
     },
     {
       "id": "no-automatic-redeploy-or-reset",
@@ -120,19 +120,19 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-          "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+          "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-          "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+          "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-deploy-interrupted.png",
-          "sha256": "ca2e1e5fb0ad485603556deae5aa31254cd5e3cd8404a4b03dd396f29385e2aa"
+          "sha256": "bb7e8c36d9c486446b9ef4c35e042f23fdf1fef1869f21a93f9bef457d0ca8d7"
         }
       ],
-      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
-      "observedAt": "2026-10-11T22:11:04.309803+00:00"
+      "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
+      "observedAt": "2026-10-13T02:30:08.560387+00:00"
     },
     {
       "id": "explicit-rerun-new-plan",
@@ -152,15 +152,15 @@
       "artifacts": [
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-          "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+          "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
         },
         {
           "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-          "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+          "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
         }
       ],
-      "invocationId": "308af749-d5bd-4444-8439-572c6b844a19",
-      "observedAt": "2026-10-11T22:11:04.309803+00:00"
+      "invocationId": "cc3b0e67-b935-4338-98cc-67bde55ea6c8",
+      "observedAt": "2026-10-13T02:30:08.560387+00:00"
     }
   ],
   "checks": [
@@ -168,15 +168,15 @@
       "command": "go test -race -count=1 ./internal/app -run \"TestWebJobsInterrupted|TestWebJobCancelledAcceptance|TestJobObservationReplays\"",
       "exitCode": 0,
       "log": "chainbench-out/web-ui-acceptance/WEB-12/check-0.log",
-      "sha256": "b228e007b7bfd6292d408e352c10e3955fe1092ba2a1fd23bd8417ffdf41ef48"
+      "sha256": "8fd1c52a746dfd0bc3ed93fa54fda168a640c5aecb73dbb567fa309e89c20d3a"
     }
   ],
   "proofs": [
     {
       "name": "interrupted-test",
-      "startedAt": "2026-10-11T22:10:06.568203+00:00",
-      "runtime": "/private/tmp/cbui/678d6246-1ce0-44d5-8dfc-50098326c164",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:28:29.924316+00:00",
+      "runtime": "/private/tmp/cbui/e9abb2b1-7924-47a5-a90f-8ad28a32f123",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -207,9 +207,9 @@
     },
     {
       "name": "deploy-restart",
-      "startedAt": "2026-10-11T22:10:34.528877+00:00",
-      "runtime": "/private/tmp/cbui/9dc2547b-05d1-4691-abca-8804179c31e9",
-      "dashboardSHA256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
+      "startedAt": "2026-10-13T02:29:35.778427+00:00",
+      "runtime": "/private/tmp/cbui/1ab2d222-0aba-4a7d-ba22-255f1f333360",
+      "dashboardSHA256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
       "browserVersion": "154.0.8037.98",
       "binaries": [
         {
@@ -240,8 +240,8 @@
     }
   ],
   "server": {
-    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
-    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sha256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
+    "baseCommit": "49ba0c67be2915415d5f014e72c92ac970f488ac",
     "contractVersion": "2",
     "goVersion": "go version go1.26.8 darwin/arm64"
   },
@@ -292,7 +292,7 @@
     },
     {
       "path": "internal/app/web_node_observations.go",
-      "sha256": "c097e389cfda3634e8a658a41a0d801c9d2add141c5de234ab934d5707d825fa"
+      "sha256": "86ba036bbe71f68f50e98f00b57763ae228381afb47a22476de876fd9652b6b6"
     },
     {
       "path": "tests/webui/evidence_web12.py",
@@ -322,15 +322,15 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/check-0.log",
-      "sha256": "b228e007b7bfd6292d408e352c10e3955fe1092ba2a1fd23bd8417ffdf41ef48"
+      "sha256": "8fd1c52a746dfd0bc3ed93fa54fda168a640c5aecb73dbb567fa309e89c20d3a"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-deploy-interrupted.png",
-      "sha256": "ca2e1e5fb0ad485603556deae5aa31254cd5e3cd8404a4b03dd396f29385e2aa"
+      "sha256": "bb7e8c36d9c486446b9ef4c35e042f23fdf1fef1869f21a93f9bef457d0ca8d7"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-receipt.json",
-      "sha256": "a95cf5df0cbc89aab7ca4105b7c8a55af95069f7006942b6ead785c816a76c77"
+      "sha256": "ee80d729a01a91c1a2a17c7170a1f55e7998175f5e3629ee48fd4d53853bde60"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/deploy-restart-run.log",
@@ -338,11 +338,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-receipt.json",
-      "sha256": "8d909ed1c3ab4223eb69b9e159a12d44f21c0a0772cf3b1c843f519eed8a75c6"
+      "sha256": "6ebf66ec2814e23fba48b5336230ba5bbb4d21bad843632da13e3dadeca036b0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-restart-observation.png",
-      "sha256": "8ce9cef18b2ffccbde0d5f39ee54bec86aa7e260ecc36ccb79ba8ea1a0d8ca39"
+      "sha256": "dc27b7e16d55b880be449d4ca93797d755e2a0d1fe351f01480fbcd894e08ccf"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-12/interrupted-test-run.log",
@@ -350,5 +350,5 @@
     }
   ],
   "blockers": [],
-  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+  "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc"
 }

@@ -1,6 +1,6 @@
 {
   "criterion": "WEB-04",
-  "invocationId": "532f3650-42c1-4e44-b099-e8e9ab634771",
+  "invocationId": "42fb78d5-61a4-4395-9e4e-200ae873f9ef",
   "scenarios": [
     {
       "id": "builtin-stablenet",
@@ -8,7 +8,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:23.905Z",
+      "observedAt": "2026-10-13T01:34:25.351Z",
       "assertions": [
         {
           "message": "Engine validated and initialized builtin stablenet through the browser",
@@ -26,7 +26,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:25.721Z",
+      "observedAt": "2026-10-13T01:34:27.130Z",
       "assertions": [
         {
           "message": "Engine validated and initialized external stablenet through the browser",
@@ -44,7 +44,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:27.536Z",
+      "observedAt": "2026-10-13T01:34:28.625Z",
       "assertions": [
         {
           "message": "Engine validated and initialized builtin wbft through the browser",
@@ -62,7 +62,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:29.460Z",
+      "observedAt": "2026-10-13T01:34:30.133Z",
       "assertions": [
         {
           "message": "Engine validated and initialized external wbft through the browser",
@@ -80,7 +80,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:30.821Z",
+      "observedAt": "2026-10-13T01:34:31.009Z",
       "assertions": [
         {
           "message": "Engine validated and initialized builtin wemix through the browser",
@@ -98,7 +98,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:31.902Z",
+      "observedAt": "2026-10-13T01:34:31.976Z",
       "assertions": [
         {
           "message": "Engine validated and initialized external wemix through the browser",
@@ -116,7 +116,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:32.049Z",
+      "observedAt": "2026-10-13T01:34:32.010Z",
       "assertions": [
         {
           "message": "Validation and persistence both rejected raft",
@@ -130,7 +130,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:32.075Z",
+      "observedAt": "2026-10-13T01:34:32.040Z",
       "assertions": [
         {
           "message": "Validation and persistence both rejected unknown",
@@ -144,7 +144,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:32.254Z",
+      "observedAt": "2026-10-13T01:34:32.205Z",
       "assertions": [
         {
           "message": "Both gwemix identities rejected for the opposite chain",
@@ -162,7 +162,7 @@
       "transport": "local",
       "ownership": "owned",
       "role": "operator",
-      "observedAt": "2026-10-11T21:19:32.256Z",
+      "observedAt": "2026-10-13T01:34:32.207Z",
       "assertions": [
         {
           "message": "Browser imported and persisted three external declarations without semantic change",
@@ -178,15 +178,15 @@
   "artifacts": [
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/api-observations.json",
-      "sha256": "7cac13eb12671fb1eb5d74429cd00fbbc86b8fc193e6077f72da5fe86fb979ee"
+      "sha256": "ae61f814ce373fd6c169431bad3e3e27cc8727b721d71ab8d004722de8337373"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/audit.json",
-      "sha256": "b0d90de7b013029a4ae94472dd4dcf74f4d0860fc16497585399ca2f34e89bf9"
+      "sha256": "36f49f827852cf1a6ed68ee8267758d60c93144d07f2905f4af7657e22c4901c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/browser.json",
-      "sha256": "121de23fad21c5b5a299aefb0fab283f95db627d198af38ec6b10b523afce0fb"
+      "sha256": "5bc1a7705441d61c5717126a167b262b6c23dda060b5e16ca02f574d651e2a2f"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/browser.log",
@@ -194,7 +194,7 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/build.log",
-      "sha256": "db609d07e82c56f1085674639460585f5d2f374a649d118e2c71d7607c9d67c1"
+      "sha256": "b9783fd461063910a2423dd6734c2626e036c9d0337ded56aea24cc48f99a2df"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-bundle.json",
@@ -222,11 +222,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet-state.json",
-      "sha256": "d2f228cf494d36979ee16fc36ce6593665047964a743e05ba58b8a6233cee24e"
+      "sha256": "c44ee4962f617843b1ef047b728542b34d14ddd1d6d8097b5e598b3bff06bdf8"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-stablenet.png",
-      "sha256": "4d79709d258b1463cca6125a9bcf0381d69594f2589fb7d76b2a243d01981aea"
+      "sha256": "05d43afe7e93a6a4869944d7ee21234e10c0d346c0b7ad9dd6b59594ccd7f28e"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-bundle.json",
@@ -254,11 +254,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft-state.json",
-      "sha256": "0154d956e7cad959c799b16c7dca0eb6a38e6c623bc756749886635c3ebfcb9a"
+      "sha256": "b7a42765be5cb9155c357aa9f4d27528ff78d6ef3c847df161495b92a42857c3"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wbft.png",
-      "sha256": "8df10f1c51eb6b08ce8100421eed73a4bc1cff6a28e1babb70c0f835d24a2c4b"
+      "sha256": "2c4c3063ee04ef990bed1020fd1c28b33ff881fa26b83df89e1fb09103e2f0e9"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-bundle.json",
@@ -286,11 +286,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix-state.json",
-      "sha256": "31d709bed948e1ef343f07ebcb1e7cb0f0d46a35b9a7ff352337eb48169afb7c"
+      "sha256": "b0523dbf8e97374ddab21faa293ad2f205d1e67de9f69d8a0169af9f6c7eb017"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/builtin-wemix.png",
-      "sha256": "908da775b1016ca5d7e66416caec382158bccb4fa79e1519477fe58d4af21317"
+      "sha256": "2a27ba8584bea468e96b512b3668d02c2278d4891204a58ffb3591228d5bbff0"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-bundle.json",
@@ -318,11 +318,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet-state.json",
-      "sha256": "abcd868a55778207f40420eb1cc4a1e78f88ba6f5aeaacc57090c195a4f4f8ea"
+      "sha256": "1fab083e54c57e494f1f8ed5c3f06186e9c333adcac34a40ddd5e6bc2ce6b618"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-stablenet.png",
-      "sha256": "724e44987deda7070a15ebb605761399feed5f3aeca1ea25362f186e272773fa"
+      "sha256": "360d733a02628a17412d674458f83664a4c05c21089af3b5e9715521946d5f93"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-tests.log",
@@ -354,11 +354,11 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft-state.json",
-      "sha256": "f65554f38d881b3224d087142eba49b3d317b8e3c356b0c445481f1a42c7105d"
+      "sha256": "56e9d9e62711c0a08f6f22b49bffb006fadd71030f7ba454cc2fa1370e2b3845"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wbft.png",
-      "sha256": "6c8d48820c0df5620ea0ca71431ca0d9022f3449a456fddb72afd515d8e8fa28"
+      "sha256": "95497187684e6bb72bd65bb528b4c137307a48eb3a669a036643d7c0c01102dc"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-bundle.json",
@@ -386,19 +386,19 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix-state.json",
-      "sha256": "39ce6571ecdd82e629e9968fbe6f6e42e486fb2239ab802a48dbfd9418284135"
+      "sha256": "d9a9d6311439b649400d2ec6d8e43be0eb391f47461d84b510dd0fba00f8535b"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/external-wemix.png",
-      "sha256": "b3604994b1106ddbfa5579c89530791691e3424a89f1eff95235d62e1371afd7"
+      "sha256": "d0b0e8433b2a9c9784d4eb714f43a5146a5d4e97b6016fa47025e746878d351c"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/observations.json",
-      "sha256": "d8a618c265746b0fb1a07345ca863f62fbf46c7e25431101bb8d5c2126c86b33"
+      "sha256": "d7f551c71ef7e3e4c391a9f767715b4ff24b42681727edc65ff6691e5efe2f72"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/server.log",
-      "sha256": "d4eb0db3fb37251db0a17a934d376b33e5a104fa146f556eb06ae82e22dc01e2"
+      "sha256": "36b7e5e34c428d465258d4d343922aed9189b46c25d9d4500f788928c2af11c8"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/stablenet-help.txt",
@@ -410,7 +410,7 @@
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/tests.log",
-      "sha256": "545fa9aefa04372456bf67096fbe91316b9902ac3fd5923571777a1ac5d7b19e"
+      "sha256": "14fdb7537886207d185d0db5d62a402d26f8a75490536c7a616f399e6c4b9118"
     },
     {
       "path": "chainbench-out/web-ui-acceptance/WEB-04/wbft-help.txt",
@@ -456,10 +456,10 @@
     }
   ],
   "server": {
-    "sha256": "aa56d32a648c6f981d571b5b3ccef03062a8a05fce72cc960f90de8018f73d20",
-    "baseCommit": "34c951a82158edfdf7472e2e7540a5c1e9d88e2c",
+    "sha256": "796c91fb02c81ad6f69b030f6d4deb2e91a102619585ce8f01cbc279d5baf562",
+    "baseCommit": "49ba0c67be2915415d5f014e72c92ac970f488ac",
     "contractVersion": "2",
-    "url": "http://127.0.0.1:62014"
+    "url": "http://127.0.0.1:61564"
   },
   "frontend": [
     {
@@ -476,11 +476,11 @@
     }
   ],
   "fixture": {
-    "runtime": "/private/tmp/cbui/532f3650-42c1-4e44-b099-e8e9ab634771",
+    "runtime": "/private/tmp/cbui/42fb78d5-61a4-4395-9e4e-200ae873f9ef",
     "transport": "local",
     "ownership": "owned",
     "browserVersion": "154.0.8037.98",
     "mockTargets": 0
   },
-  "sourceDigest": "470ab4bb2345f320eab9bb3e1dbeafecb130912558bc57fe4de49a910c8b8753"
+  "sourceDigest": "3887afccc004727a051e913ce61d937e37a7274cd1036bc3b0372bb3d15a70bc"
 }
