@@ -31,6 +31,9 @@ type Deps struct {
 	// Applicable reports whether a spec applies to this run's target chain and,
 	// when it does not, whether the spec said so. Nil means always applicable.
 	Applicable func(spec dsl.Spec) Applicability
+	// RuntimeGate confirms capabilities against the reached environment. An empty
+	// status permits execution; unavailable probes block and unsupported APIs skip.
+	RuntimeGate func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string)
 	// PreSpec gates the environment right before each test runs on it (E6): a
 	// network left unfit by a prior fault test is waited on or restarted within
 	// limits, and a state needing a destructive remedy blocks the test. A
@@ -182,6 +185,15 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec.SetEnvRef(env.ID())
+		if e.deps.RuntimeGate != nil {
+			status, reason := e.deps.RuntimeGate(ctx, spec, env, rec)
+			if status != "" {
+				rec.Status(status)
+				rec.Reason(reason)
+				e.emit(collector.PhaseSetup, collector.KindInfo, "runtime capability gate", map[string]any{"seq": seq, "id": spec.ID, "status": string(status), "reason": reason})
+				continue
+			}
+		}
 		if e.deps.PreSpec != nil {
 			if gerr := e.deps.PreSpec(ctx, env); gerr != nil {
 				rec.Status(session.StatusBlocked)

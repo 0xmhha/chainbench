@@ -251,14 +251,15 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
-		BuildEnv:   withCollection(build, cfg.Bus, nil, cfg.LogReader),
-		RunSpec:    run,
-		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
-		PreSpec:    cfg.PreSpec,
-		OnFail:     cfg.OnFail,
-		Emit:       busEmit(cfg.Bus),
-		Network:    cfg.Chain,
-		Artifacts:  cfg.Artifacts,
+		BuildEnv:    withCollection(build, cfg.Bus, nil, cfg.LogReader),
+		RunSpec:     run,
+		Applicable:  applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
+		RuntimeGate: consensusCapabilityGate(cfg.Chain, func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) }),
+		PreSpec:     cfg.PreSpec,
+		OnFail:      cfg.OnFail,
+		Emit:        busEmit(cfg.Bus),
+		Network:     cfg.Chain,
+		Artifacts:   cfg.Artifacts,
 	}), nil
 }
 
