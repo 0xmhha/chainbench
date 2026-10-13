@@ -1,0 +1,1273 @@
+{
+  "scope": "R3 consensus API multiple-endpoint probe completed; other RPC/VM/account/transaction/fork probes and full task 9 remain open.",
+  "contract": {
+    "targets": "Every recorded execution node; auth client selected by each endpoint. Probes finish before PreSpec and hooks.",
+    "classification": "All supported permits execution. Any unavailable/unusable node yields unknown/BLOCKED. If all are observable and one lacks its consensus method, unsupported/SKIP. Unknown outranks unsupported. Existing unexpected runtime skip policy still yields FAIL.",
+    "provenance": "capability-probes.json nodes include index, role, status, source, reason and validator count. Original primary-node fields retained. Raw transport errors/credentials are omitted.",
+    "bound": "Sequential calls bounded at five seconds per node and caller cancellation; number of calls grows with the node set."
+  },
+  "logs": {
+    "red": {
+      "path": "/private/tmp/chainbench-capability-nodes-red.log",
+      "sha256": "2f688dd528a0d9ff5628c53edcb4103ea9cd9c0276f59770481f87d383c53440"
+    },
+    "green": {
+      "path": "/private/tmp/chainbench-capability-nodes-green.log",
+      "sha256": "5060dc9eea5f8e0c775cf61783efd9a49770fa9a3132ed872dadb5e8db78ae0c"
+    },
+    "raceFinal": {
+      "path": "/private/tmp/chainbench-capability-nodes-race-final.log",
+      "sha256": "57f70e45751e3b35dbc847b2c6ae50cc26b044cfc9afd921955f3893f47399a5"
+    },
+    "suiteRace": {
+      "path": "/private/tmp/chainbench-capability-nodes-suite-race.log",
+      "sha256": "2846dce2e30a43d5f5cc804fc45463116b5baaac388f6d0f5aa76710fe797d2a"
+    },
+    "initialFixtureCompilationFailure": {
+      "path": "/private/tmp/chainbench-capability-nodes-race.log",
+      "sha256": "c53687253a785f864e033d918935c4d177e5549e8a14db674d33db71ba3daf01"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-capability-nodes-check.log",
+      "sha256": "dc9e295423d1d519db5950d9019baa638b5f582ba870988c781d1614eaf118f7"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-capability-nodes-native.jsonl",
+      "sha256": "c16ffce8e79667fd05b40c4dee01d6de3d28c1c3d4d0357b9e62fab781ada3a2"
+    }
+  },
+  "nativeElapsedSeconds": 338.462,
+  "nativeConsensusRuns": 12,
+  "nativeNodeObservations": 60,
+  "nativeSupportedObservations": 54,
+  "nativeUnknownObservations": 6,
+  "nativeExpectedConsensusPasses": 6,
+  "nativeExpectedConsensusBlocks": 6,
+  "nativeGoTestFailures": 0,
+  "nativeGoTestSkips": 0,
+  "nativeRawSubmissions": 156,
+  "nativeExpectedSubmissionRejections": 12,
+  "nativeInvalidNumericFailures": 144,
+  "proofs": [
+    {
+      "path": "/private/tmp/cbui/endpoint-native-490427283/proof.json",
+      "sha256": "9a53e9a00782f020d50d43913fe28d9d4faa7d05becd99a44f74af920a720743",
+      "chain": "stablenet",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "consensusRuns": [
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220756",
+          "status": "pass",
+          "surface": "CLI",
+          "sessionSHA256": "e9688ddd581827e2fe0dd82a2380365ea711fca7a4fa2fbc894981a3e8c81678",
+          "consensusProbeSHA256": "ee6c3cb72664499086ce4100d6fed3384575a8c6e0b5808e68fe14d5a4dce9e9"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220756",
+          "status": "pass",
+          "surface": "MCP",
+          "sessionSHA256": "e9688ddd581827e2fe0dd82a2380365ea711fca7a4fa2fbc894981a3e8c81678",
+          "consensusProbeSHA256": "ee6c3cb72664499086ce4100d6fed3384575a8c6e0b5808e68fe14d5a4dce9e9"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "istanbul_getValidators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-490427283/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756",
+          "status": "blocked",
+          "surface": "CLI",
+          "sessionSHA256": "6ae4a106eeb5a16890d9e5f014a9f05c67e28d72475f33af6d061eb4b794ea7c",
+          "consensusProbeSHA256": "9190161a01e30b4bf59c11b0dad89cec91f2a3370ae72348b2603df15fc491e4"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "istanbul_getValidators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-490427283/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220756",
+          "status": "blocked",
+          "surface": "MCP",
+          "sessionSHA256": "6ae4a106eeb5a16890d9e5f014a9f05c67e28d72475f33af6d061eb4b794ea7c",
+          "consensusProbeSHA256": "9190161a01e30b4bf59c11b0dad89cec91f2a3370ae72348b2603df15fc491e4"
+        }
+      ],
+      "sources": {
+        "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_access_list.go": "305d5d063331cadd42d964c78af2016e77aa1c79411afc22ab5aaacbd26a5396",
+        "../../../internal/accounts/wallet_delegated_tx.go": "cad3b5835535b7faa5de42715eee58fe6b3f6022c83ccf7adc3ff48c199bb292",
+        "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+        "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+        "../../../internal/accounts/wallet_legacy_tx.go": "95391749e8a3fbcdace1e1efabe9889b144795f72eaa72e1eee597664ae775a6",
+        "../../../internal/accounts/wallet_legacy_tx_test.go": "8da8d9aacbf22ee3a1012c3cdbfbdd3b4e0c3b9511687d5c2124ff2ba56c339a",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/accounts/wallet_rpc_test.go": "1a07ba692bf0f0c530dda536d3dd7ab63c320e1ad548278ddb6be11ead6ea549",
+        "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+        "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+        "../../../internal/app/chain_identity_schema_test.go": "0afb3e003292fac8b3b1654de012293224a280afead630928277f0c1a993e406",
+        "../../../internal/app/preset_values_test.go": "2ea639eed771b0abc873de95297c59d740be8db2b3b8d4769bc75a4605ad1c5f",
+        "../../../internal/app/testcase_delegation_test.go": "ee1b3436695faac5bd66418f1c8f0a51a81d623b1faf5231ea038aaabc135bbd",
+        "../../../internal/app/testcase_transaction_numbers_test.go": "d4b0e3ef56ba854051590a5998412a32d18dd72e3ae6bd0dfe292e84e01cf632",
+        "../../../internal/app/web_document_secrets.go": "f8e6a19f18655e9efd8d60cf1840240506f63ca1ba479e0677b0094361fe57c5",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+        "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+        "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+        "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+        "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+        "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+        "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+        "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+        "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+        "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+        "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+        "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+        "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+        "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+        "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+        "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+        "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+        "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+        "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+        "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+        "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+        "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+        "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+        "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+        "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+        "../../../internal/dsl/interp/binding.go": "1bd8be67bb9f6a1b0f3e0782bf9f6b8adfc696b5c32a588d87ca640f47395bc8",
+        "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+        "../../../internal/dsl/interp/preset_values_test.go": "8c627cdd97379c327c65ebd86ddc0d8e2d6bbfd129f9c2f3adb9706fed3a2944",
+        "../../../internal/dsl/interp/resolve.go": "0cf54db6444879b4d3c74075aa198eebb51a6ce9febb205e6719c3449c871a85",
+        "../../../internal/dsl/interp/run.go": "716b2571f52f5fbadafec50284f65f4db222db4e9ef55d6f06dd88ce99c28b3a",
+        "../../../internal/dsl/lower_v1.go": "b0afce85613d208cbc3ae31f382c345ed1e5dacc8bd3545cd5fd823931dd8486",
+        "../../../internal/dsl/parse_v2.go": "90d80cdf34efdf036982b80f3eb7f881882c9028b0058b476800e3453c96da5e",
+        "../../../internal/dsl/preset_values.go": "9153e98813d1cfee322c0a81c120a354dbdbc559c9ba8967fe9b0ce585b703c2",
+        "../../../internal/dsl/preset_values_test.go": "3b05b751c869860db05cfab69674bb666148c2f8bdcd7fe7c9148cd346661b29",
+        "../../../internal/dsl/schema/v2.schema.json": "42806f5538a46ab7771feee5e17fe191f2db967fb60bbc64e23ab7dce9b2ef96",
+        "../../../internal/dsl/spec.go": "5c4772759a0f3b10df8b66cff329100a2e33227525066886df0ed9de0706bc9b",
+        "../../../internal/dsl/spec_v2.go": "6eec6d605fe1e08ea91480f00897c2d6b7d86274c1280659b148c02b1fe24422",
+        "../../../internal/testengine/attach.go": "82f8da0391ded0c9b2ff46e47d3a1f75dce6ac9722dec0bd05c656b2fcf3043c",
+        "../../../internal/testengine/attach_assets_signing_test.go": "a8e3acb0f36b4b1c61813ae9bef0c952853331e4c0746c664b1ff82392e6014c",
+        "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+        "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+        "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+        "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+        "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+        "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+        "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+        "../../../internal/testengine/capability.go": "8e953c19633f58642c2e2e1d6fe6e8678499045fa03d1232dc3d0f02cd365dad",
+        "../../../internal/testengine/capability_nodes_test.go": "6466b78deff164ea51996f0a106edfb8064e24d7e640933691da77e571364425",
+        "../../../internal/testengine/capability_probe.go": "cb73c09faa5c9f72f56c09121895775539ec51e7dc31d90687f6e24b08c7307d",
+        "../../../internal/testengine/capability_reason_test.go": "2c932bde35cd39d99c450fc73a308800ef0bc3e94b791715a4cd45cf9e3d4bc6",
+        "../../../internal/testengine/chain_identity.go": "1e4622c958e0e71d39a3127a11833e8ac27b6d0fbef3a5b12f2027308c6ce65f",
+        "../../../internal/testengine/chain_identity_test.go": "3dac086cbd5f22e50527940a12306d34b8a0cda20f4eec17e730bb8c2813edd9",
+        "../../../internal/testengine/engine_impl.go": "c870b17da581f2eca6bc9b464195ff0a93b8b7ef59c0510fd0d50fcdbc5693e4",
+        "../../../internal/testhelper/arguments.go": "dccb21fa5b10d37193538c4aa3c4407631498658a400a28fe1b850ed8e8a5d75",
+        "../../../internal/testhelper/assets.go": "0ca555af77bf988683e73ab1f44ef6b8063c71cc45d4ce84fc0c7c7e11932502",
+        "../../../internal/testhelper/delegated.go": "72c4374e6e13b65000e2ab2b0fd306ea3947a3d7d6dc9075392e66d737edf1b3",
+        "../../../internal/testhelper/delegated_creation_test.go": "abafde33f7e6b464bd2bac14483ccad54eb3b46e2c1f1b4457818f61085855ca",
+        "../../../internal/testhelper/editor_contract.go": "a9d834ead8844a10a05f5aee90465d04994aba1494759468252f4af8ca903a78",
+        "../../../internal/testhelper/load.go": "598d909771f876e9ac3281792fa19298f9026a572d325e6c4e977da973a7278f",
+        "../../../internal/testhelper/local_assets.go": "d085811b30a8b2e94f58608353dcace27eb8a2b869a95b0b8a889153f5e04ba5",
+        "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+        "../../../internal/testhelper/outcome.go": "3ce6c60c77b85485b81ec9e66d45cc70bb0817b35a9d12ba9a832b77f9e10ae0",
+        "../../../internal/testhelper/sendtx.go": "9bc4d840f0e2e15ff2c8a9ed36f6975c2132ab791ccd4424d242bce2ffc68182",
+        "../../../internal/testhelper/transaction_numbers.go": "e19e829b09a3b05beaa868fbb7496cd007cf12c5a6f0347824fa8de4bbe60ae4",
+        "../../../internal/testhelper/transaction_numbers_test.go": "836bcc74345c132717fc81803622064bd48c84b5524310c21a46a66aaf6afc6c",
+        "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+        "endpoint_profile_capability_test.go": "280cfd6494ed79548c27b05726d921b808c7dac663ec13727a30bf547e8efb5c",
+        "endpoint_profile_delegated_test.go": "bbcdbea5688e071af362f87929139adfe62abfc8eeca8c365fb3a7efc37818fd",
+        "endpoint_profile_identity_test.go": "2bcdd7f9121b38c2811bed805453b0630efa691b5029fa30c65e21dc0f8c2527",
+        "endpoint_profile_native_test.go": "3c8831de7b323f7c4c8de407c16cb9c833e7ec5ddac8e4c1b9807575750c3297",
+        "endpoint_profile_numbers_test.go": "e65bd96e7487d8d1bb0629915d7515829a670368b602f82dd61a9c6d3f09e37c",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a",
+        "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+        "endpoint_profile_values_test.go": "564879c3b5581039645b11db4f2e5ce8e1ab7de7b24bf897a97a3864ab940e39",
+        "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+      },
+      "rawSubmissions": 52,
+      "expectedSubmissionRejections": 4,
+      "identityVerdicts": 6,
+      "invalidNumericFailures": 48,
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-33281392/proof.json",
+      "sha256": "ed2f6a702d7e6b750e84e530e72253e1f9fc6bc7c3e07e79c60fb7e7536d9643",
+      "chain": "wbft",
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "consensusRuns": [
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus/20261013-220620-31397/UTC-20261013-220904",
+          "status": "pass",
+          "surface": "CLI",
+          "sessionSHA256": "5a9e9139da73e2386a314b8aea283b414f746bbf87520e16192931fb44bd2c1c",
+          "consensusProbeSHA256": "ee6c3cb72664499086ce4100d6fed3384575a8c6e0b5808e68fe14d5a4dce9e9"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-220904",
+          "status": "pass",
+          "surface": "MCP",
+          "sessionSHA256": "5a9e9139da73e2386a314b8aea283b414f746bbf87520e16192931fb44bd2c1c",
+          "consensusProbeSHA256": "ee6c3cb72664499086ce4100d6fed3384575a8c6e0b5808e68fe14d5a4dce9e9"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "istanbul_getValidators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-33281392/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904",
+          "status": "blocked",
+          "surface": "CLI",
+          "sessionSHA256": "8f4eafa643225db2b1c4abfe4850db4c4c96768045218bc8511f3073169eb441",
+          "consensusProbeSHA256": "9190161a01e30b4bf59c11b0dad89cec91f2a3370ae72348b2603df15fc491e4"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "istanbul_getValidators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "istanbul_getValidators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "istanbul_getValidators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-33281392/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-220904",
+          "status": "blocked",
+          "surface": "MCP",
+          "sessionSHA256": "8f4eafa643225db2b1c4abfe4850db4c4c96768045218bc8511f3073169eb441",
+          "consensusProbeSHA256": "9190161a01e30b4bf59c11b0dad89cec91f2a3370ae72348b2603df15fc491e4"
+        }
+      ],
+      "sources": {
+        "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_access_list.go": "305d5d063331cadd42d964c78af2016e77aa1c79411afc22ab5aaacbd26a5396",
+        "../../../internal/accounts/wallet_delegated_tx.go": "cad3b5835535b7faa5de42715eee58fe6b3f6022c83ccf7adc3ff48c199bb292",
+        "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+        "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+        "../../../internal/accounts/wallet_legacy_tx.go": "95391749e8a3fbcdace1e1efabe9889b144795f72eaa72e1eee597664ae775a6",
+        "../../../internal/accounts/wallet_legacy_tx_test.go": "8da8d9aacbf22ee3a1012c3cdbfbdd3b4e0c3b9511687d5c2124ff2ba56c339a",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/accounts/wallet_rpc_test.go": "1a07ba692bf0f0c530dda536d3dd7ab63c320e1ad548278ddb6be11ead6ea549",
+        "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+        "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+        "../../../internal/app/chain_identity_schema_test.go": "0afb3e003292fac8b3b1654de012293224a280afead630928277f0c1a993e406",
+        "../../../internal/app/preset_values_test.go": "2ea639eed771b0abc873de95297c59d740be8db2b3b8d4769bc75a4605ad1c5f",
+        "../../../internal/app/testcase_delegation_test.go": "ee1b3436695faac5bd66418f1c8f0a51a81d623b1faf5231ea038aaabc135bbd",
+        "../../../internal/app/testcase_transaction_numbers_test.go": "d4b0e3ef56ba854051590a5998412a32d18dd72e3ae6bd0dfe292e84e01cf632",
+        "../../../internal/app/web_document_secrets.go": "f8e6a19f18655e9efd8d60cf1840240506f63ca1ba479e0677b0094361fe57c5",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+        "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+        "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+        "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+        "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+        "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+        "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+        "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+        "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+        "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+        "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+        "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+        "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+        "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+        "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+        "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+        "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+        "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+        "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+        "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+        "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+        "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+        "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+        "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+        "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+        "../../../internal/dsl/interp/binding.go": "1bd8be67bb9f6a1b0f3e0782bf9f6b8adfc696b5c32a588d87ca640f47395bc8",
+        "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+        "../../../internal/dsl/interp/preset_values_test.go": "8c627cdd97379c327c65ebd86ddc0d8e2d6bbfd129f9c2f3adb9706fed3a2944",
+        "../../../internal/dsl/interp/resolve.go": "0cf54db6444879b4d3c74075aa198eebb51a6ce9febb205e6719c3449c871a85",
+        "../../../internal/dsl/interp/run.go": "716b2571f52f5fbadafec50284f65f4db222db4e9ef55d6f06dd88ce99c28b3a",
+        "../../../internal/dsl/lower_v1.go": "b0afce85613d208cbc3ae31f382c345ed1e5dacc8bd3545cd5fd823931dd8486",
+        "../../../internal/dsl/parse_v2.go": "90d80cdf34efdf036982b80f3eb7f881882c9028b0058b476800e3453c96da5e",
+        "../../../internal/dsl/preset_values.go": "9153e98813d1cfee322c0a81c120a354dbdbc559c9ba8967fe9b0ce585b703c2",
+        "../../../internal/dsl/preset_values_test.go": "3b05b751c869860db05cfab69674bb666148c2f8bdcd7fe7c9148cd346661b29",
+        "../../../internal/dsl/schema/v2.schema.json": "42806f5538a46ab7771feee5e17fe191f2db967fb60bbc64e23ab7dce9b2ef96",
+        "../../../internal/dsl/spec.go": "5c4772759a0f3b10df8b66cff329100a2e33227525066886df0ed9de0706bc9b",
+        "../../../internal/dsl/spec_v2.go": "6eec6d605fe1e08ea91480f00897c2d6b7d86274c1280659b148c02b1fe24422",
+        "../../../internal/testengine/attach.go": "82f8da0391ded0c9b2ff46e47d3a1f75dce6ac9722dec0bd05c656b2fcf3043c",
+        "../../../internal/testengine/attach_assets_signing_test.go": "a8e3acb0f36b4b1c61813ae9bef0c952853331e4c0746c664b1ff82392e6014c",
+        "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+        "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+        "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+        "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+        "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+        "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+        "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+        "../../../internal/testengine/capability.go": "8e953c19633f58642c2e2e1d6fe6e8678499045fa03d1232dc3d0f02cd365dad",
+        "../../../internal/testengine/capability_nodes_test.go": "6466b78deff164ea51996f0a106edfb8064e24d7e640933691da77e571364425",
+        "../../../internal/testengine/capability_probe.go": "cb73c09faa5c9f72f56c09121895775539ec51e7dc31d90687f6e24b08c7307d",
+        "../../../internal/testengine/capability_reason_test.go": "2c932bde35cd39d99c450fc73a308800ef0bc3e94b791715a4cd45cf9e3d4bc6",
+        "../../../internal/testengine/chain_identity.go": "1e4622c958e0e71d39a3127a11833e8ac27b6d0fbef3a5b12f2027308c6ce65f",
+        "../../../internal/testengine/chain_identity_test.go": "3dac086cbd5f22e50527940a12306d34b8a0cda20f4eec17e730bb8c2813edd9",
+        "../../../internal/testengine/engine_impl.go": "c870b17da581f2eca6bc9b464195ff0a93b8b7ef59c0510fd0d50fcdbc5693e4",
+        "../../../internal/testhelper/arguments.go": "dccb21fa5b10d37193538c4aa3c4407631498658a400a28fe1b850ed8e8a5d75",
+        "../../../internal/testhelper/assets.go": "0ca555af77bf988683e73ab1f44ef6b8063c71cc45d4ce84fc0c7c7e11932502",
+        "../../../internal/testhelper/delegated.go": "72c4374e6e13b65000e2ab2b0fd306ea3947a3d7d6dc9075392e66d737edf1b3",
+        "../../../internal/testhelper/delegated_creation_test.go": "abafde33f7e6b464bd2bac14483ccad54eb3b46e2c1f1b4457818f61085855ca",
+        "../../../internal/testhelper/editor_contract.go": "a9d834ead8844a10a05f5aee90465d04994aba1494759468252f4af8ca903a78",
+        "../../../internal/testhelper/load.go": "598d909771f876e9ac3281792fa19298f9026a572d325e6c4e977da973a7278f",
+        "../../../internal/testhelper/local_assets.go": "d085811b30a8b2e94f58608353dcace27eb8a2b869a95b0b8a889153f5e04ba5",
+        "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+        "../../../internal/testhelper/outcome.go": "3ce6c60c77b85485b81ec9e66d45cc70bb0817b35a9d12ba9a832b77f9e10ae0",
+        "../../../internal/testhelper/sendtx.go": "9bc4d840f0e2e15ff2c8a9ed36f6975c2132ab791ccd4424d242bce2ffc68182",
+        "../../../internal/testhelper/transaction_numbers.go": "e19e829b09a3b05beaa868fbb7496cd007cf12c5a6f0347824fa8de4bbe60ae4",
+        "../../../internal/testhelper/transaction_numbers_test.go": "836bcc74345c132717fc81803622064bd48c84b5524310c21a46a66aaf6afc6c",
+        "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+        "endpoint_profile_capability_test.go": "280cfd6494ed79548c27b05726d921b808c7dac663ec13727a30bf547e8efb5c",
+        "endpoint_profile_delegated_test.go": "bbcdbea5688e071af362f87929139adfe62abfc8eeca8c365fb3a7efc37818fd",
+        "endpoint_profile_identity_test.go": "2bcdd7f9121b38c2811bed805453b0630efa691b5029fa30c65e21dc0f8c2527",
+        "endpoint_profile_native_test.go": "3c8831de7b323f7c4c8de407c16cb9c833e7ec5ddac8e4c1b9807575750c3297",
+        "endpoint_profile_numbers_test.go": "e65bd96e7487d8d1bb0629915d7515829a670368b602f82dd61a9c6d3f09e37c",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a",
+        "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+        "endpoint_profile_values_test.go": "564879c3b5581039645b11db4f2e5ce8e1ab7de7b24bf897a97a3864ab940e39",
+        "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+      },
+      "rawSubmissions": 52,
+      "expectedSubmissionRejections": 4,
+      "identityVerdicts": 6,
+      "invalidNumericFailures": 48,
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-318453177/proof.json",
+      "sha256": "02c148781fe5ed66b35701bb1351d133faeeac8f7722f66b250af932c14ce25f",
+      "chain": "wemix",
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "consensusRuns": [
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "poa runtime validators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus/20261013-220620-31397/UTC-20261013-221142",
+          "status": "pass",
+          "surface": "CLI",
+          "sessionSHA256": "422767b848f1528e37c30d0fcc8347a8c3de3f4404dc96733eb9608faff2ead2",
+          "consensusProbeSHA256": "4e1e04c278c073226b78d5e4ef59d8af2d9e35dfdc0c222f20fe57f23add751a"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "supported",
+            "source": "poa runtime validators",
+            "node": 1,
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "",
+          "scenario": "consensus",
+          "session": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus/20261013-220620-31397/UTC-20261013-221142",
+          "status": "pass",
+          "surface": "MCP",
+          "sessionSHA256": "422767b848f1528e37c30d0fcc8347a8c3de3f4404dc96733eb9608faff2ead2",
+          "consensusProbeSHA256": "4e1e04c278c073226b78d5e4ef59d8af2d9e35dfdc0c222f20fe57f23add751a"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "poa runtime validators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "poa runtime validators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-318453177/capability-cli/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142",
+          "status": "blocked",
+          "surface": "CLI",
+          "sessionSHA256": "ecb36968d36c10b29737e19852c95b39364aceff152d06e6ef17fffee33fbfc4",
+          "consensusProbeSHA256": "6a9b31a5f3f96fb5f48243cb16a6be97a29cd3d1980dbf38fdcbfa6ed6dc88b4"
+        },
+        {
+          "consensusProbe": {
+            "capability": "consensus",
+            "status": "unknown",
+            "source": "poa runtime validators",
+            "node": 1,
+            "reason": "rpc_probe_unavailable",
+            "validatorCount": 4,
+            "nodes": [
+              {
+                "node": 1,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 2,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 3,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 4,
+                "role": "bp",
+                "status": "supported",
+                "source": "poa runtime validators",
+                "validatorCount": 4
+              },
+              {
+                "node": 5,
+                "role": "en",
+                "status": "unknown",
+                "source": "poa runtime validators",
+                "reason": "rpc_probe_unavailable"
+              }
+            ]
+          },
+          "consensusProbePath": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus-unavailable/observations/capability-probes.json",
+          "probe": {
+            "foreseen": true,
+            "missing": null,
+            "provided": [
+              "rpc",
+              "consensus"
+            ],
+            "reason": "",
+            "required": [
+              "rpc",
+              "consensus"
+            ],
+            "runs": true,
+            "source": "declared_capabilities",
+            "stale": false
+          },
+          "probePath": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142/tests/001_capability-consensus-unavailable/observations/capability-gate.json",
+          "rawSubmissions": 0,
+          "reason": "consensus capability unknown: rpc_probe_unavailable",
+          "scenario": "consensus-unavailable",
+          "session": "/private/tmp/cbui/endpoint-native-318453177/capability-mcp/consensus-unavailable/20261013-220620-31397/UTC-20261013-221142",
+          "status": "blocked",
+          "surface": "MCP",
+          "sessionSHA256": "ecb36968d36c10b29737e19852c95b39364aceff152d06e6ef17fffee33fbfc4",
+          "consensusProbeSHA256": "6a9b31a5f3f96fb5f48243cb16a6be97a29cd3d1980dbf38fdcbfa6ed6dc88b4"
+        }
+      ],
+      "sources": {
+        "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+        "../../../internal/accounts/wallet.go": "398c87c465b683fbbe829a33ed9f4e2f763e3f79d522d959ea80f728d222e0e3",
+        "../../../internal/accounts/wallet_access_list.go": "305d5d063331cadd42d964c78af2016e77aa1c79411afc22ab5aaacbd26a5396",
+        "../../../internal/accounts/wallet_delegated_tx.go": "cad3b5835535b7faa5de42715eee58fe6b3f6022c83ccf7adc3ff48c199bb292",
+        "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+        "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+        "../../../internal/accounts/wallet_legacy_tx.go": "95391749e8a3fbcdace1e1efabe9889b144795f72eaa72e1eee597664ae775a6",
+        "../../../internal/accounts/wallet_legacy_tx_test.go": "8da8d9aacbf22ee3a1012c3cdbfbdd3b4e0c3b9511687d5c2124ff2ba56c339a",
+        "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+        "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+        "../../../internal/accounts/wallet_rpc_test.go": "1a07ba692bf0f0c530dda536d3dd7ab63c320e1ad548278ddb6be11ead6ea549",
+        "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+        "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+        "../../../internal/app/chain_identity_schema_test.go": "0afb3e003292fac8b3b1654de012293224a280afead630928277f0c1a993e406",
+        "../../../internal/app/preset_values_test.go": "2ea639eed771b0abc873de95297c59d740be8db2b3b8d4769bc75a4605ad1c5f",
+        "../../../internal/app/testcase_delegation_test.go": "ee1b3436695faac5bd66418f1c8f0a51a81d623b1faf5231ea038aaabc135bbd",
+        "../../../internal/app/testcase_transaction_numbers_test.go": "d4b0e3ef56ba854051590a5998412a32d18dd72e3ae6bd0dfe292e84e01cf632",
+        "../../../internal/app/web_document_secrets.go": "f8e6a19f18655e9efd8d60cf1840240506f63ca1ba479e0677b0094361fe57c5",
+        "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+        "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+        "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+        "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+        "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+        "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+        "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+        "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+        "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+        "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+        "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+        "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+        "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+        "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+        "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+        "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+        "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+        "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+        "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+        "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+        "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+        "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+        "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+        "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+        "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+        "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+        "../../../internal/dsl/interp/binding.go": "1bd8be67bb9f6a1b0f3e0782bf9f6b8adfc696b5c32a588d87ca640f47395bc8",
+        "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+        "../../../internal/dsl/interp/preset_values_test.go": "8c627cdd97379c327c65ebd86ddc0d8e2d6bbfd129f9c2f3adb9706fed3a2944",
+        "../../../internal/dsl/interp/resolve.go": "0cf54db6444879b4d3c74075aa198eebb51a6ce9febb205e6719c3449c871a85",
+        "../../../internal/dsl/interp/run.go": "716b2571f52f5fbadafec50284f65f4db222db4e9ef55d6f06dd88ce99c28b3a",
+        "../../../internal/dsl/lower_v1.go": "b0afce85613d208cbc3ae31f382c345ed1e5dacc8bd3545cd5fd823931dd8486",
+        "../../../internal/dsl/parse_v2.go": "90d80cdf34efdf036982b80f3eb7f881882c9028b0058b476800e3453c96da5e",
+        "../../../internal/dsl/preset_values.go": "9153e98813d1cfee322c0a81c120a354dbdbc559c9ba8967fe9b0ce585b703c2",
+        "../../../internal/dsl/preset_values_test.go": "3b05b751c869860db05cfab69674bb666148c2f8bdcd7fe7c9148cd346661b29",
+        "../../../internal/dsl/schema/v2.schema.json": "42806f5538a46ab7771feee5e17fe191f2db967fb60bbc64e23ab7dce9b2ef96",
+        "../../../internal/dsl/spec.go": "5c4772759a0f3b10df8b66cff329100a2e33227525066886df0ed9de0706bc9b",
+        "../../../internal/dsl/spec_v2.go": "6eec6d605fe1e08ea91480f00897c2d6b7d86274c1280659b148c02b1fe24422",
+        "../../../internal/testengine/attach.go": "82f8da0391ded0c9b2ff46e47d3a1f75dce6ac9722dec0bd05c656b2fcf3043c",
+        "../../../internal/testengine/attach_assets_signing_test.go": "a8e3acb0f36b4b1c61813ae9bef0c952853331e4c0746c664b1ff82392e6014c",
+        "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+        "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+        "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+        "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+        "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+        "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+        "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+        "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+        "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+        "../../../internal/testengine/capability.go": "8e953c19633f58642c2e2e1d6fe6e8678499045fa03d1232dc3d0f02cd365dad",
+        "../../../internal/testengine/capability_nodes_test.go": "6466b78deff164ea51996f0a106edfb8064e24d7e640933691da77e571364425",
+        "../../../internal/testengine/capability_probe.go": "cb73c09faa5c9f72f56c09121895775539ec51e7dc31d90687f6e24b08c7307d",
+        "../../../internal/testengine/capability_reason_test.go": "2c932bde35cd39d99c450fc73a308800ef0bc3e94b791715a4cd45cf9e3d4bc6",
+        "../../../internal/testengine/chain_identity.go": "1e4622c958e0e71d39a3127a11833e8ac27b6d0fbef3a5b12f2027308c6ce65f",
+        "../../../internal/testengine/chain_identity_test.go": "3dac086cbd5f22e50527940a12306d34b8a0cda20f4eec17e730bb8c2813edd9",
+        "../../../internal/testengine/engine_impl.go": "c870b17da581f2eca6bc9b464195ff0a93b8b7ef59c0510fd0d50fcdbc5693e4",
+        "../../../internal/testhelper/arguments.go": "dccb21fa5b10d37193538c4aa3c4407631498658a400a28fe1b850ed8e8a5d75",
+        "../../../internal/testhelper/assets.go": "0ca555af77bf988683e73ab1f44ef6b8063c71cc45d4ce84fc0c7c7e11932502",
+        "../../../internal/testhelper/delegated.go": "72c4374e6e13b65000e2ab2b0fd306ea3947a3d7d6dc9075392e66d737edf1b3",
+        "../../../internal/testhelper/delegated_creation_test.go": "abafde33f7e6b464bd2bac14483ccad54eb3b46e2c1f1b4457818f61085855ca",
+        "../../../internal/testhelper/editor_contract.go": "a9d834ead8844a10a05f5aee90465d04994aba1494759468252f4af8ca903a78",
+        "../../../internal/testhelper/load.go": "598d909771f876e9ac3281792fa19298f9026a572d325e6c4e977da973a7278f",
+        "../../../internal/testhelper/local_assets.go": "d085811b30a8b2e94f58608353dcace27eb8a2b869a95b0b8a889153f5e04ba5",
+        "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+        "../../../internal/testhelper/outcome.go": "3ce6c60c77b85485b81ec9e66d45cc70bb0817b35a9d12ba9a832b77f9e10ae0",
+        "../../../internal/testhelper/sendtx.go": "9bc4d840f0e2e15ff2c8a9ed36f6975c2132ab791ccd4424d242bce2ffc68182",
+        "../../../internal/testhelper/transaction_numbers.go": "e19e829b09a3b05beaa868fbb7496cd007cf12c5a6f0347824fa8de4bbe60ae4",
+        "../../../internal/testhelper/transaction_numbers_test.go": "836bcc74345c132717fc81803622064bd48c84b5524310c21a46a66aaf6afc6c",
+        "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+        "endpoint_profile_capability_test.go": "280cfd6494ed79548c27b05726d921b808c7dac663ec13727a30bf547e8efb5c",
+        "endpoint_profile_delegated_test.go": "bbcdbea5688e071af362f87929139adfe62abfc8eeca8c365fb3a7efc37818fd",
+        "endpoint_profile_identity_test.go": "2bcdd7f9121b38c2811bed805453b0630efa691b5029fa30c65e21dc0f8c2527",
+        "endpoint_profile_native_test.go": "3c8831de7b323f7c4c8de407c16cb9c833e7ec5ddac8e4c1b9807575750c3297",
+        "endpoint_profile_numbers_test.go": "e65bd96e7487d8d1bb0629915d7515829a670368b602f82dd61a9c6d3f09e37c",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a",
+        "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+        "endpoint_profile_values_test.go": "564879c3b5581039645b11db4f2e5ce8e1ab7de7b24bf897a97a3864ab940e39",
+        "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+      },
+      "rawSubmissions": 52,
+      "expectedSubmissionRejections": 4,
+      "identityVerdicts": 6,
+      "invalidNumericFailures": 48,
+      "endedDatabasesRemaining": 0
+    }
+  ],
+  "limitations": [
+    "Actual method-unavailable and mixed unsupported/unknown cases use authenticated unit fixtures. Native binaries qualify real support and a genuinely unreachable endpoint; no RPC replies are fabricated by the gateway.",
+    "Consensus support is API availability, not equality of validator sets or finality correctness.",
+    "No browser UI source changed; browser was not separately rerun in this stage.",
+    "Initial fixture import placement caused a compilation failure; final fixed-source full check and four-package race passed before native proof.",
+    "R3 other capability probes, P4 adequacy, R4/R5 remainders, R6/full Linux HEAD L1, tasks 10–14 and frozen Web14 acceptance remain pending."
+  ],
+  "relatedRuntimeProcessesRemaining": 0
+}

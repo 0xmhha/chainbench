@@ -8,65 +8,98 @@ import (
 	"slices"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
-// This first runtime probe covers consensus APIs. Additional RPC/VM probes and
-// their native evidence remain part of R3, not inferred from manifest entries.
+type consensusNodeProbe struct {
+	Node           int    `json:"node"`
+	Role           string `json:"role"`
+	Status         string `json:"status"`
+	Source         string `json:"source,omitempty"`
+	Reason         string `json:"reason,omitempty"`
+	ValidatorCount int    `json:"validatorCount,omitempty"`
+}
+
+// Consensus support is checked on every recorded endpoint before execution.
+// Other RPC/VM probes remain part of R3, not inferred from manifest entries.
 func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, record session.TestRecord) (session.TestStatus, string) {
 		if !slices.Contains(spec.Requires, "consensus") {
 			return "", ""
 		}
 		result := struct {
-			Capability     string `json:"capability"`
-			Status         string `json:"status"`
-			Source         string `json:"source,omitempty"`
-			Node           int    `json:"node,omitempty"`
-			Reason         string `json:"reason,omitempty"`
-			ValidatorCount int    `json:"validatorCount,omitempty"`
-		}{Capability: "consensus", Status: "unknown"}
-		status := session.StatusBlocked
+			Capability     string               `json:"capability"`
+			Status         string               `json:"status"`
+			Source         string               `json:"source,omitempty"`
+			Node           int                  `json:"node,omitempty"`
+			Reason         string               `json:"reason,omitempty"`
+			ValidatorCount int                  `json:"validatorCount,omitempty"`
+			Nodes          []consensusNodeProbe `json:"nodes"`
+		}{Capability: "consensus", Status: "unknown", Nodes: []consensusNodeProbe{}}
 		nodes := env.Nodes()
 		plugin, err := registry.Get(chain)
-		if err == nil && len(nodes) > 0 {
-			result.Node = nodes[0].Index
-			bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
-			label, validators, probeErr := registry.RunningValidators(bounded, plugin, dial(nodes[0].RPCURL))
-			cancel()
-			result.Source = label
-			switch {
-			case probeErr == nil && validators != nil:
-				result.Status = "supported"
-				result.ValidatorCount = len(validators)
-				status = ""
-			case probeErr != nil:
-				var serverErr *rpc.ServerError
-				if errors.As(probeErr, &serverErr) && serverErr.Code == -32601 {
-					result.Status = "unsupported"
-					result.Reason = "rpc_method_unavailable"
-					status = session.StatusSkip
-				} else {
-					result.Reason = "rpc_probe_unavailable"
-				}
-			default:
-				result.Reason = "rpc_response_unusable"
-			}
-		} else {
+		if err != nil || len(nodes) == 0 {
 			result.Reason = "no_probe_target"
+		} else {
+			result.Status = "supported"
+			for i, n := range nodes {
+				probe := probeConsensusNode(ctx, plugin, n, dial)
+				result.Nodes = append(result.Nodes, probe)
+				if i == 0 {
+					// Preserve the primary-node fields for existing readers.
+					result.Node, result.Source, result.ValidatorCount = probe.Node, probe.Source, probe.ValidatorCount
+				}
+				if probe.Status == "unknown" || (probe.Status == "unsupported" && result.Status != "unknown") {
+					result.Status, result.Reason = probe.Status, probe.Reason
+				}
+			}
+		}
+		status := session.StatusBlocked
+		switch result.Status {
+		case "supported":
+			status = ""
+		case "unsupported":
+			status = session.StatusSkip
 		}
 		bytes, _ := json.Marshal(result)
 		record.Observation("capability-probes.json", bytes)
+		reason := result.Reason
 		if status == session.StatusSkip && spec.SkipsOn != nil && !slices.Contains(spec.SkipsOn, chain) {
 			status = session.StatusFail
-			result.Reason = "undeclared_runtime_capability_skip"
+			reason = "undeclared_runtime_capability_skip"
 		}
 		if status == "" {
 			return "", ""
 		}
-		return status, fmt.Sprintf("consensus capability %s: %s", result.Status, result.Reason)
+		return status, fmt.Sprintf("consensus capability %s: %s", result.Status, reason)
 	}
+}
+
+func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node.Node, dial func(string) *rpc.Client) consensusNodeProbe {
+	result := consensusNodeProbe{Node: n.Index, Role: string(n.Role), Status: "unknown", Reason: "no_probe_target"}
+	if n.RPCURL == "" {
+		return result
+	}
+	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	label, validators, err := registry.RunningValidators(bounded, plugin, dial(n.RPCURL))
+	result.Source = label
+	switch {
+	case err == nil && validators != nil:
+		result.Status, result.Reason, result.ValidatorCount = "supported", "", len(validators)
+	case err != nil:
+		var serverErr *rpc.ServerError
+		if errors.As(err, &serverErr) && serverErr.Code == -32601 {
+			result.Status, result.Reason = "unsupported", "rpc_method_unavailable"
+		} else {
+			result.Reason = "rpc_probe_unavailable"
+		}
+	default:
+		result.Reason = "rpc_response_unusable"
+	}
+	return result
 }
