@@ -90,7 +90,7 @@ def reclaim_runtime(runtime, references=()):
         for name in list(directories):
             path = Path(current) / name
             relative = path.relative_to(runtime)
-            dependency = relative.as_posix() in ('source/node_modules', 'source/web/node_modules')
+            dependency = relative.as_posix() in ('source/node_modules', 'source/web/node_modules', 'source/tests/webui/node_modules')
             if name not in ('chaindata', 'lightchaindata', 'etcd') and not dependency:
                 continue
             if not dependency and (set(relative.parts) & {'source', 'snapshots', 'sessions', 'logs', 'artifacts'}

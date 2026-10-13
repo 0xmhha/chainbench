@@ -323,7 +323,8 @@ Partial JSON/JSONL evidence, failure logs and explicitly cited databases survive
 the failed verdict and original assertion are preserved. A process/open-file inventory failure or activity refuses
 cleanup; every deletion has a durable `storage-audit.jsonl` inside its runtime.
 
-Independent reproductions also discard their staged `node_modules` after termination;
+Independent reproductions also discard their staged `source/node_modules`,
+`source/web/node_modules` and `source/tests/webui/node_modules` after termination;
 the staged source and fresh receipts remain. macOS stages large files and native
 binaries with APFS copy-on-write rather than hard links: writes to the copy cannot
 change its input. Other filesystems use independent ordinary copies. Historical
@@ -335,3 +336,9 @@ and hashes of existing runtime JSON proofs. Its report is kept under `/private/t
 Add `--failures` to exercise three deliberate failures, preserve their incomplete
 results and original exceptions, and verify the same bounded storage behavior.
 This uses a separate report so the earlier successful proof is not overwritten.
+`PYTHONDONTWRITEBYTECODE=1 WEBUI_RUNTIME_ROOT=/private/tmp/cbui python3
+ tests/webui/dependency_storage_probe.py` copies the installed Playwright package
+three times, protects an open dependency, then deliberately fails each reproduction
+and checks that dependency copies disappear while locks, partial verdicts and all
+existing JSON proof bytes, modes and mtimes remain unchanged. It writes a separate
+`/private/tmp/chainbench-browser-dependency-proof.json` report.

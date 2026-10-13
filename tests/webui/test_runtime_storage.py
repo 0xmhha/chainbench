@@ -104,6 +104,29 @@ class RuntimeStorageTests(unittest.TestCase):
         self.assertFalse(dep.exists())
         self.assertTrue(src.exists()); self.assertTrue(proof.exists())
 
+    def test_browser_test_dependencies_do_not_accumulate_across_completions(self):
+        for _ in range(3):
+            runtime = self.runtime()
+            dependency = runtime / 'source/tests/webui/node_modules/playwright/index.js'
+            dependency.parent.mkdir(parents=True); dependency.write_text('installed browser dependency')
+            lock = runtime / 'source/tests/webui/package-lock.json'; lock.write_text('{}'); lock.chmod(0o600)
+            original = (lock.read_bytes(), lock.stat().st_mode, lock.stat().st_mtime_ns)
+            out = runtime / 'source/chainbench-out/proof'; out.mkdir(parents=True)
+            (out / 'partial.json').write_text('{"outcome":"incomplete"}')
+            with patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+                storage.reclaim_after_shutdown(runtime, out)
+            self.assertFalse(dependency.exists())
+            self.assertEqual((lock.read_bytes(), lock.stat().st_mode, lock.stat().st_mtime_ns), original)
+
+    def test_explicitly_cited_dependency_artifacts_are_preserved(self):
+        for prefix in ('source/node_modules', 'source/web/node_modules', 'source/tests/webui/node_modules'):
+            with self.subTest(prefix=prefix):
+                runtime = self.runtime()
+                artifact = runtime / prefix / 'tool/index.js'
+                artifact.parent.mkdir(parents=True); artifact.write_text('cited artifact')
+                self.reclaim(runtime, [str(artifact)])
+                self.assertEqual(artifact.read_text(), 'cited artifact')
+
     def test_preflight_rejects_under_twenty_gib_before_creating_runtime(self):
         with patch.object(storage.shutil, 'disk_usage', return_value=type('Usage', (), {'free': 19 * 1024**3})()):
             with self.assertRaisesRegex(storage.maintenance.UnsafeMaintenance, '20 GiB'):
