@@ -269,9 +269,6 @@
           "type": "object",
           "description": "Run against a network that is already up instead of composing one. Exclusive with every field that describes a network to build.",
           "additionalProperties": false,
-          "required": [
-            "rpc"
-          ],
           "properties": {
             "rpc": {
               "type": "array",
@@ -292,8 +289,120 @@
                 "type": "string"
               },
               "description": "What the running network offers, for capability-gated cases. Not \"capabilities\", which is a requirement."
+            },
+            "endpoints": {
+              "type": "array",
+              "minItems": 1,
+              "description": "External endpoint profile: roles, reachable RPC/WS/metrics, authentication environment references and declared open namespaces.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "rpc"
+                ],
+                "properties": {
+                  "rpc": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "role": {
+                    "enum": [
+                      "bp",
+                      "en",
+                      "pn"
+                    ],
+                    "default": "en"
+                  },
+                  "ws": {
+                    "type": "string"
+                  },
+                  "metrics": {
+                    "type": "string"
+                  },
+                  "host": {
+                    "type": "string"
+                  },
+                  "httpPort": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "apis": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "auth": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "type",
+                      "env"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "api-key",
+                          "jwt"
+                        ]
+                      },
+                      "env": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      },
+                      "header": {
+                        "type": "string",
+                        "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+                      }
+                    },
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "type": {
+                              "const": "jwt"
+                            }
+                          }
+                        },
+                        "then": {
+                          "not": {
+                            "required": [
+                              "header"
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
             }
-          }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "rpc"
+              ],
+              "not": {
+                "required": [
+                  "endpoints"
+                ]
+              }
+            },
+            {
+              "required": [
+                "endpoints"
+              ],
+              "not": {
+                "required": [
+                  "rpc"
+                ]
+              }
+            }
+          ]
         }
       }
     },

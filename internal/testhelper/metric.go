@@ -110,13 +110,13 @@ const onMachineScrapeTimeoutSeconds = 10
 func scrapeNode(ctx context.Context, d *interp.Deps, n node.Node, url string) (map[string]float64, error) {
 	cmd, ok := machineReader(d, n)
 	if !ok {
-		return collector.ScrapeMetrics(ctx, url)
+		return scrapeWithRunClient(ctx, d, url)
 	}
 	samples, machineErr := scrapeOnMachine(ctx, cmd, n)
 	if machineErr == nil {
 		return samples, nil
 	}
-	samples, err := collector.ScrapeMetrics(ctx, url)
+	samples, err := scrapeWithRunClient(ctx, d, url)
 	if err != nil {
 		return nil, fmt.Errorf("%w; on node%d's machine: %v", err, n.Index, machineErr)
 	}
@@ -200,4 +200,11 @@ func metricTargets(ac *interp.AssertCtx) []metricTarget {
 		}
 	}
 	return nil
+}
+
+func scrapeWithRunClient(ctx context.Context, d *interp.Deps, url string) (map[string]float64, error) {
+	if d != nil && d.HTTP != nil {
+		return collector.ScrapeMetricsWithClient(ctx, url, d.HTTP(url))
+	}
+	return collector.ScrapeMetrics(ctx, url)
 }

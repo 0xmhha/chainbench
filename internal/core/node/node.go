@@ -114,6 +114,8 @@ type Node struct {
 	// Auth is the optional authentication descriptor for reaching a remote
 	// attached endpoint. Empty for local or unauthenticated nodes.
 	Auth Auth `json:"auth,omitempty"`
+	// APIs is the operator-declared open namespace list, not proof of support.
+	APIs []string `json:"apis,omitempty"`
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached

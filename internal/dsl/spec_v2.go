@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // The v2 grammar: the types a declaration parses into, and the checks that are
@@ -121,7 +122,10 @@ type AttachV2 struct {
 	// RPC are the endpoints, in the order a spec's node selectors address them.
 	// "${VAR:-default}" works here as it does for a binary, which is what keeps
 	// a machine's address out of a committed case.
-	RPC []string `json:"rpc"`
+	RPC []string `json:"rpc,omitempty"`
+	// Endpoints preserves external node roles and each reachable transport.
+	// It is exclusive with the legacy RPC-only list.
+	Endpoints []node.RPCEndpoint `json:"endpoints,omitempty"`
 	// KeysDir is the key set the running network was composed from. Without it
 	// a spec attached to a network cannot turn "node1" into an address — the
 	// run holds no key set of its own.

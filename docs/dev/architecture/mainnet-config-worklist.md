@@ -1133,6 +1133,11 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 
 ## 8. 실제 망 대응 (R)
 
+**2026-10-13 현행 보강:** [엔드포인트 실제 증거](../endpoint-profile-evidence.json)와
+[HEAD 바이너리 출처](../head-binary-provenance.json)를 추가했다. 이 기록은 R2 읽기 프로필 범위이며
+전체 L1, R3·R4·R5·R6과 최종 Web 인수는 완료하지 않았다. 아래 오래된 전제는 해당 항목의 현행 코드·테스트와 대조하며 갱신한다.
+
+
 여기부터는 로컬에서 확인할 수 없는 것이 섞인다.
 
 **착수 순서는 의존이 정한다 (2026-09-18).** P3 없이 갈 수 있는 것은 **R2 · R3 · R4**
@@ -1143,7 +1148,7 @@ reported `Applepie: #<nil>`". 노드가 포크 표에 찍었다는 것은 바이
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
 | R1 | chainId 를 preset 값과 비교한다 | 지금 `WantChainID` 가 0이면 검사를 건너뛴다(`internal/testengine/nodegate.go:44-56`) | P3 | 미착수 |
-| R2 | 엔드포인트에 역할·WS·metrics 를 담는다 | `--rpc` 는 URL 만 받는다. 워크스페이스 attach 는 역할을 안다 | P1 | 미착수 |
+| R2 | 엔드포인트에 역할·WS·metrics 를 담는다 | `attach.endpoints`가 역할·RPC·WS·metrics·인증 환경 참조·선언 API 목록을 보존한다. 기존 `attach.rpc`는 유지하며 둘을 함께 쓰면 거절한다. CLI/MCP 같은 입력으로 native BP4/EN1에서 실제 인증 읽기를 확인했다. API 목록은 실제 지원의 증거가 아니다(R3); SDK 로컬 서명의 인증 전송은 R4에 남는다 | P1 | 읽기 프로필 완료 (2026-10-13), R4 연계 잔여 별도 |
 | R3 | 능력을 실제 RPC 로 확인한다 | 매니페스트의 `capabilities` 는 손으로 쓴 목록이다 | P4, V7 | 미착수 |
 | R4 | faucet·deploy·load 를 로컬 서명으로 바꾼다 | 실제 망 노드는 남의 키를 열어주지 않는다. 지금 로컬 서명 sendTx 는 gas 21000 고정이고 컨트랙트 생성을 못 한다 | D7 | 미착수 |
 | R5 | `expect: reject` 를 사유별로 판정한다 | 지금은 어떤 오류든 통과한다 | P3 | 미착수 |

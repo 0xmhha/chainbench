@@ -109,12 +109,7 @@ func NewRun() *cobra.Command {
 				if planOnly {
 					return fmt.Errorf("plan is only available for composition")
 				}
-				// ${VAR} in a declared endpoint is expanded here because the
-				// surface owns the process environment. A committed case must
-				// not have to carry a machine's address.
-				if start.Declared != nil {
-					start.Declared.RPCURLs = expandEach(start.Declared.RPCURLs)
-				}
+				// AttachRun expands declared addresses identically for CLI and MCP.
 				// A flag's value is passed only when the flag was given, which
 				// is how "what the caller said outranks the document" is said
 				// to the layer that applies it.
@@ -266,29 +261,6 @@ func runAttached(cmd *cobra.Command, args []string, start app.Start,
 		return err
 	}
 	return printSession(cmd.OutOrStdout(), runReport{Session: root}, jsonOut, noSkips)
-}
-
-// expandEach resolves ${VAR} and ${VAR:-default} in each endpoint, the same
-// expansion a declared binary path gets. An endpoint is a fact about a machine,
-// and a committed case must not have to carry one.
-func expandEach(in []string) []string {
-	out := make([]string, len(in))
-	for i, s := range in {
-		out[i] = os.Expand(s, envOrDefault)
-	}
-	return out
-}
-
-// envOrDefault expands NAME or NAME:-fallback from the process environment.
-func envOrDefault(spec string) string {
-	name, fallback, hasDefault := strings.Cut(spec, ":-")
-	if v, ok := os.LookupEnv(name); ok && v != "" {
-		return v
-	}
-	if hasDefault {
-		return fallback
-	}
-	return ""
 }
 
 // runComposed composes the network the specs declare and runs them against

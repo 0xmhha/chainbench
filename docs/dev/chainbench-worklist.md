@@ -171,7 +171,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 미완료 |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 현재 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 구조화 프로필과 실제 BP4/EN1 CLI/MCP 인증 RPC·WS·metrics 읽기 통과. Linux fleet 재빌드·전체 L1·R3/R4/R5/R6은 남음; `endpoint-profile-evidence.json` |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |

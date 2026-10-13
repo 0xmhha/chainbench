@@ -718,12 +718,25 @@ func checkAttach(caseID string, env ChainPresetV2) error {
 	if env.Attach == nil {
 		return nil
 	}
-	if len(env.Attach.RPC) == 0 {
+	if len(env.Attach.RPC) == 0 && len(env.Attach.Endpoints) == 0 {
 		return fmt.Errorf("dsl: case %s: env.attach needs \"rpc\" (the endpoints of the network to run against)", caseID)
 	}
 	for i, u := range env.Attach.RPC {
 		if strings.TrimSpace(u) == "" {
 			return fmt.Errorf("dsl: case %s: env.attach.rpc[%d] is empty", caseID, i)
+		}
+	}
+	if len(env.Attach.RPC) > 0 && len(env.Attach.Endpoints) > 0 {
+		return fmt.Errorf("dsl: case %s: attach rpc and endpoints are exclusive", caseID)
+	}
+	if len(env.Attach.Endpoints) > 0 {
+		if _, err := node.AttachedSet(env.Chain, "attached", env.Attach.Endpoints); err != nil {
+			return fmt.Errorf("dsl: case %s: %w", caseID, err)
+		}
+		for index, ep := range env.Attach.Endpoints {
+			if err := ep.Validate(); err != nil {
+				return fmt.Errorf("dsl: case %s: attach endpoint %d: %w", caseID, index+1, err)
+			}
 		}
 	}
 	var composing []string

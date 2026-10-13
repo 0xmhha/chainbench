@@ -57,7 +57,7 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if extra, ok := args["params"].([]any); ok {
 		params = append(params, extra...)
 	}
-	sub, err := rpc.Subscribe(ctx, wsURL, params...)
+	sub, err := subscribeWithRunHeaders(ctx, ac.Deps, wsURL, params...)
 	if err != nil {
 		return fmt.Errorf("dsl: wsOpen %s: %w", event, err)
 	}
@@ -208,7 +208,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	sctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	sub, err := rpc.Subscribe(sctx, wsURL, params...)
+	sub, err := subscribeWithRunHeaders(sctx, ac.Deps, wsURL, params...)
 	if err != nil {
 		res.Actual = err.Error()
 		return res, fmt.Errorf("dsl: wsSubscribe %s: %w", event, err)
@@ -330,3 +330,10 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 // could read a receipt's block number but not ask anything about the block
 // after it — which is the only way to check a rule stated over a block and its
 // child, such as the base fee an in-band block hands on unchanged.
+
+func subscribeWithRunHeaders(ctx context.Context, d *interp.Deps, url string, params ...any) (*rpc.Subscription, error) {
+	if d != nil && d.Headers != nil {
+		return rpc.SubscribeWithHeaders(ctx, url, d.Headers(url), params...)
+	}
+	return rpc.Subscribe(ctx, url, params...)
+}

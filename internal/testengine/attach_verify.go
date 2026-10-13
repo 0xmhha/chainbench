@@ -3,6 +3,10 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/remote"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -10,7 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-// VerifyAttachedChain refuses an attach whose endpoint speaks a different RPC
+// VerifyAttachedNode refuses an attach whose endpoint speaks a different RPC
 // surface than the chain the declaration claims.
 //
 // Nothing composed an attached network, so its chain-preset is an assertion by
@@ -40,7 +44,16 @@ import (
 // A probe that cannot reach the endpoint is not a mismatch. The run will fail
 // on its own with a clearer message, and refusing here would turn "the node is
 // down" into "the chain is wrong".
-func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMismatch bool) error {
+// VerifyAttachedNode verifies a profile through its own authentication transport.
+func VerifyAttachedNode(ctx context.Context, declared string, endpoint node.Node, allowMismatch bool) error {
+	client, err := remote.HTTPClientFromAuth(remote.Auth(endpoint.Auth), os.Getenv)
+	if err != nil {
+		return err
+	}
+	return verifyAttachedChain(ctx, declared, endpoint.RPCURL, allowMismatch, client)
+}
+
+func verifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMismatch bool, client *http.Client) error {
 	if declared == "" || rpcURL == "" || allowMismatch {
 		return nil
 	}
@@ -57,7 +70,7 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 	// catches a stablenet declaration pointed at a wemix endpoint even when
 	// every identifying namespace is shut.
 	if m.Binary != "" {
-		if v, err := clientVersion(ctx, rpcURL); err == nil && v != "" {
+		if v, err := clientVersion(ctx, rpcURL, client); err == nil && v != "" {
 			if !strings.Contains(strings.ToLower(v), strings.ToLower(m.Binary)) {
 				return fmt.Errorf(
 					"engine: attach declares chain %q, which runs %s, but %s answers web3_clientVersion %q — "+
@@ -79,7 +92,7 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 	if m.Probe.Method == "" {
 		return nil
 	}
-	res, derr := collector.Detect(ctx, collector.Options{RPCURL: rpcURL})
+	res, derr := collector.Detect(ctx, collector.Options{RPCURL: rpcURL, Client: client})
 	if derr != nil || res == nil || res.ChainType == "" || res.ChainType == declared {
 		return nil
 	}
@@ -94,9 +107,9 @@ func VerifyAttachedChain(ctx context.Context, declared, rpcURL string, allowMism
 }
 
 // clientVersion reads web3_clientVersion from one endpoint.
-func clientVersion(ctx context.Context, rpcURL string) (string, error) {
+func clientVersion(ctx context.Context, rpcURL string, client *http.Client) (string, error) {
 	var v string
-	if err := rpc.Dial(rpcURL).Call(ctx, "web3_clientVersion", &v); err != nil {
+	if err := rpc.DialWithClient(rpcURL, client).Call(ctx, "web3_clientVersion", &v); err != nil {
 		return "", err
 	}
 	return v, nil

@@ -2,6 +2,7 @@ package dsl
 
 import (
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"reflect"
 	"sort"
 	"strings"
@@ -28,6 +29,8 @@ import (
 // builds, so a rename on either side shows up as an unpaired object rather than
 // as silence.
 var nestedObjects = map[string]reflect.Type{
+	"envSpec.attach.endpoints[items]":               reflect.TypeOf(node.RPCEndpoint{}),
+	"envSpec.attach.endpoints[items].auth":          reflect.TypeOf(node.EndpointAuth{}),
 	"envSpec.binaries[additionalProperties].oneOf1": reflect.TypeOf(BinaryRefV2{}),
 	"envSpec.keys":                           reflect.TypeOf(KeysV2{}),
 	"envSpec.genesis":                        reflect.TypeOf(GenesisV2{}),

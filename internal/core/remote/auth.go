@@ -136,5 +136,28 @@ func HTTPClientFromAuth(auth Auth, envLookup func(string) string) (*http.Client,
 	if rt == nil {
 		return http.DefaultClient, nil
 	}
-	return &http.Client{Transport: rt}, nil
+	return &http.Client{Transport: rt, CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return fmt.Errorf("authenticated endpoint exceeded redirect limit")
+		}
+		if len(via) > 0 && (req.URL.Scheme != via[0].URL.Scheme || req.URL.Host != via[0].URL.Host) {
+			return http.ErrUseLastResponse
+		}
+		return nil
+	}}, nil
+}
+
+// RequestHeaders resolves the same authentication as TransportFromAuth for a
+// WebSocket handshake. Only environment references belong in persisted inputs.
+func RequestHeaders(auth Auth, envLookup func(string) string) (http.Header, error) {
+	transport, err := TransportFromAuth(auth, envLookup)
+	if err != nil {
+		return nil, err
+	}
+	headers := http.Header{}
+	if transport != nil {
+		header := transport.(*headerTransport)
+		headers.Set(header.header, header.value)
+	}
+	return headers, nil
 }

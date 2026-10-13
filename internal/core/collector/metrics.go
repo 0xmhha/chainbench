@@ -48,13 +48,21 @@ func MetricsURLOn(base string) string {
 // assertions compare single gauges/counters, so label sets collapse to the
 // final sample, which for geth's unlabeled metrics is the only one.
 func ScrapeMetrics(ctx context.Context, url string) (map[string]float64, error) {
+	return ScrapeMetricsWithClient(ctx, url, http.DefaultClient)
+}
+
+// ScrapeMetricsWithClient retains scrape limits with a caller-owned auth client.
+func ScrapeMetricsWithClient(ctx context.Context, url string, client *http.Client) (map[string]float64, error) {
+	if client == nil {
+		client = http.DefaultClient
+	}
 	ctx, cancel := context.WithTimeout(ctx, scrapeTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("collector: metrics: %w", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("collector: metrics: %w", err)
 	}

@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -195,8 +196,14 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if cfg.Ring != nil {
 		keys = cfg.Ring
 	}
+	clients, headers, err := attachAuthClients(cfg)
+	if err != nil {
+		return nil, err
+	}
 	run := NewRunSpec(interp.Deps{
-		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },
+		RPC:       func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) },
+		HTTP:      func(u string) *http.Client { return clients[u] },
+		Headers:   func(u string) http.Header { return headers[u].Clone() },
 		Actions:   testhelper.Registry(),
 		Accounts:  accts,
 		Keys:      keys,

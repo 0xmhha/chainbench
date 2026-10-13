@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,7 +28,12 @@ func (s *Subscription) Notifications() <-chan json.RawMessage { return s.notific
 // streams each notification's result. The caller must Close it; cancelling ctx
 // also ends the stream.
 func Subscribe(ctx context.Context, wsURL string, params ...any) (*Subscription, error) {
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+	return SubscribeWithHeaders(ctx, wsURL, nil, params...)
+}
+
+// SubscribeWithHeaders opens a subscription with caller-resolved authentication.
+func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header, params ...any) (*Subscription, error) {
+	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, headers)
 	if err != nil {
 		return nil, fmt.Errorf("rpc: dial %s: %w", wsURL, err)
 	}
