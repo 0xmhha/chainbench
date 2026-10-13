@@ -33,6 +33,7 @@ func runTool() Tool {
 				"artifactRoot":    map[string]any{"type": "string"},
 				"chain":           commonProperty("chain", nil),
 				"rpc":             map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"baseDir":         map[string]any{"type": "string", "description": "Preset search directory for inline definitions; defaults to the process working directory."},
 				"spec":            map[string]any{"type": "string"},
 				"specs":           map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				"dataDir":         map[string]any{"type": "string"},
@@ -56,9 +57,14 @@ func runTool() Tool {
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			specs := collectSpecs(args)
+			specs, resolutionErrors := readToolSpecs(args)
 			if len(specs) == 0 {
 				return "", fmt.Errorf("chainbench_run: provide spec or specs")
+			}
+			for i, err := range resolutionErrors {
+				if err != nil {
+					return "", fmt.Errorf("chainbench_run: spec[%d]: %w", i, err)
+				}
 			}
 			// The same four-way answer the CLI gets, from the same place.
 			// This used to be two branches here with no third: a spec that
@@ -196,6 +202,28 @@ func collectSpecs(args map[string]any) [][]byte {
 		specs = append(specs, []byte(s))
 	}
 	return specs
+}
+
+// readToolSpecs shares normalization between run and validate. An unresolved
+// definition retains its original bytes so validation can report every input.
+func readToolSpecs(args map[string]any) ([][]byte, []error) {
+	specs := collectSpecs(args)
+	resolutionErrors := make([]error, len(specs))
+	baseDir, valid := args["baseDir"].(string)
+	_, supplied := args["baseDir"]
+	for i, raw := range specs {
+		if supplied && !valid {
+			resolutionErrors[i] = fmt.Errorf("baseDir must be a directory string")
+			continue
+		}
+		resolved, err := app.ReadSpecContent(raw, baseDir)
+		if err != nil {
+			resolutionErrors[i] = err
+			continue
+		}
+		specs[i] = resolved
+	}
+	return specs, resolutionErrors
 }
 
 // formatRunSummary renders the session verdict as agent-readable text and

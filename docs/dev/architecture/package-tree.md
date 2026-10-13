@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 84,069 |
+| `internal/` | 54 | 84,133 |
 | `cmd/` | 19 | 5,626 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **90,620** |
+| **합계** | **77** | **90,684** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 59,601줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 59,665줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -136,7 +136,7 @@ internal/resource  3,806  [L1] 네트워크가 무엇으로 조립되는가 — 
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
 
 internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인)
-├── (dsl)      2,251  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
+├── (dsl)      2,274  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
 │                     순수 — 실행 인프라(rpc·session·collector)를 import 하지 않는다
 ├── assert       399  타입 인식 비교 프리미티브 — 해석기가 어세션을 검사할 때 쓰는 비교기(Equal·InDelta 등)
 └── interp     1,056  실행 계약(Action·Assertion·Registry·Reader·Deps·ActionCtx·AssertCtx·NodeControl)
@@ -171,7 +171,7 @@ internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app      17,052  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app      17,058  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
                           RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
@@ -179,7 +179,7 @@ internal/feature     804  [L5] 기능 등록의 한 자리 — Descriptor·Regis
                           태그 하나가 만드는 두 바인딩(Flags → cobra 플래그, Schema → MCP JSON 스키마).
                           명령을 생성하지는 않는다 — 이름·계층·도움말은 사람이 정한다
 
-internal/mcp       3,237  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
+internal/mcp       3,272  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
 internal/dashboard 2,351  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 internal/webcli     123  [L6] Web이 chainbench CLI를 하위 프로세스로 실행하는 곳 — 바이너리를 찾고,

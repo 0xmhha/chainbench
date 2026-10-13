@@ -266,6 +266,14 @@ nonce·수수료가 SDK Execute 경로에서 사라지던 문제와 legacy 추�
 기존 대납·접근 목록·거부·pending 경로도 통과했고 종료 DB와 잔여 테스트 노드는 0건이다.
 실제 실행은 동적 옵션을 함께 지정한 경로와 legacy이며, nonce-only/fee-only는 SDK 테스트 범위다.
 대납 계약 생성·대납 계정 UI 검증·잘못된 숫자 입력, blacklist 실제 제출과 P2/P3·전체 L1은 남는다.
+**blacklist 실제 제출·MCP 프리셋 보강:** [실제 거부/프리셋 증거](blacklist-preset-parity-evidence.json)는
+원래 Sender 케이스가 SDK guard에서 끝나 raw 제출 0건으로 실패하는 RED를 기록했다. 명시 gas를 추가해 실제 노드로 제출한다.
+Sender·Recipient·FeePayer 원본 세 정의서의 CLI/MCP 여섯 실행과 실제 blacklist 거부 6건이 통과했다.
+노드 서명·raw 서명 메서드, HTTP 200·code -32000·사유·hash 부재를 관측하고 종료 DB 0건을 확인했다.
+이 실제 실행에서 발견한 MCP `chainPreset.extends` 미해석도 고쳤다. `baseDir`와 cwd/상대 문맥에서
+CLI와 같은 DSL 검색·병합을 app 경계를 통해 재사용한다. run은 해석 뒤 실행하고 validate는 입력별 결과를 보존한다.
+named preset·override·누락·상대 경로의 RED→GREEN, 전체 검사·관련 7패키지 race가 통과했다.
+프리셋 초기값 P2/P3, 다른 영향 케이스의 전체 R5/L1, 대납 계약 생성·숫자 검증·대납 UI 등은 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)

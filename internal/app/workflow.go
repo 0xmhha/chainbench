@@ -311,6 +311,12 @@ func ListSpecs(dir string) ([]SpecInfo, error) { return dsl.ListSpecs(dir) }
 // two answers to where a spec's environment lives.
 func ReadSpecFiles(paths []string) ([][]byte, error) { return dsl.ReadFiles(paths) }
 
+// ReadSpecContent resolves an inline declaration's preset in its source context.
+// It is the bytes counterpart of ReadSpecFiles for surfaces without a file.
+func ReadSpecContent(raw []byte, baseDir string) ([]byte, error) {
+	return dsl.ReadContent(raw, baseDir)
+}
+
 // SessionSummary reads a session's collected summary.
 func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)

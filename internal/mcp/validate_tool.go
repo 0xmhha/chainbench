@@ -21,13 +21,14 @@ func validateTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain": commonProperty("chain", nil),
-				"spec":  map[string]any{"type": "string"},
-				"specs": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"chain":   commonProperty("chain", nil),
+				"baseDir": map[string]any{"type": "string", "description": "Preset search directory for inline definitions; defaults to the process working directory."},
+				"spec":    map[string]any{"type": "string"},
+				"specs":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			},
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			specs := collectSpecs(args)
+			specs, resolutionErrors := readToolSpecs(args)
 			if len(specs) == 0 {
 				return "", fmt.Errorf("chainbench_validate: provide spec or specs")
 			}
@@ -38,6 +39,12 @@ func validateTool() Tool {
 			results, err := app.ValidateContent(specs, labels, argString(args, "chain", ""))
 			if err != nil {
 				return "", err
+			}
+			for i, err := range resolutionErrors {
+				if err != nil {
+					results[i].OK = false
+					results[i].Result = "ERROR: " + err.Error()
+				}
 			}
 			var b strings.Builder
 			invalid := 0

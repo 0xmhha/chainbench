@@ -78,6 +78,29 @@ func ReadFilesWithChainPreset(paths []string, presetRef string) ([][]byte, error
 	return specs, nil
 }
 
+// ReadContent resolves an inline case using the same preset search and merge
+// rules as a file. baseDir is its reference context; empty uses the process cwd.
+func ReadContent(raw []byte, baseDir string) ([]byte, error) {
+	if baseDir == "" {
+		var err error
+		baseDir, err = os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("dsl: inline spec context: %w", err)
+		}
+	}
+	contextDir, err := filepath.Abs(baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: inline spec context: %w", err)
+	}
+	baseDir = contextDir
+	return InlineChainPreset(raw, func(id string) ([]byte, error) {
+		if content, ok := findChainPresetFile(baseDir, id); ok {
+			return content, nil
+		}
+		return nil, fmt.Errorf("no chain-preset %q beside %s, in a chain-preset/ directory above it, or in %s", id, baseDir, sharedPresetDir)
+	})
+}
+
 // resolveChainPresetRef turns the caller's env reference into the id the cases will
 // name and the bytes that id resolves to.
 //
