@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -20,9 +21,10 @@ import (
 // migration is in flight is one more thing to move later, and one more chance
 // for the three surfaces to describe it three ways.
 //
-// Measured 2026-09-08, after S1 and S4 registered the compose and report stages.
+// All 90 app entry points are bound (2026-10-13). AST reachability prevents
+// duplicate descriptors for one function from inflating that coverage.
 // Lower it as more register; never raise it.
-const unregistered = 59
+const unregistered = 0
 
 // TestRegistry_CoversMoreOfAppEachTime counts the use cases in internal/app and
 // holds the unregistered remainder to a ceiling that only comes down.
@@ -36,32 +38,114 @@ func TestRegistry_CoversMoreOfAppEachTime(t *testing.T) {
 	if len(cases) == 0 {
 		t.Fatal("no use case was found in internal/app, so the walk is wrong rather than app empty")
 	}
-	registered := map[string]bool{}
-	for _, d := range feature.Registered() {
-		// Probes registered by this package's own tests are not migration
-		// progress, and counting them would make the ratchet depend on which
-		// test ran first.
-		if strings.HasPrefix(d.Name, "probe.") {
-			continue
+	registered := registeredAppUseCases(t, cases)
+	var missing []string
+	for _, name := range cases {
+		if !registered[name] {
+			missing = append(missing, name)
 		}
-		// The registry spells a feature "chain.genesis"; app spells it
-		// ChainGenesis. Only the count is compared here — the names converge as
-		// features move, and pinning a mapping now would be a third spelling
-		// of something being actively renamed.
-		registered[d.Name] = true
 	}
-	got := len(cases) - len(registered)
-	if got < 0 {
-		got = 0
-	}
+	got := len(missing)
 	switch {
 	case got > unregistered:
 		t.Errorf("%d of app's %d use cases are unregistered, up from %d — a new use case should be registered rather than added beside the registry",
 			got, len(cases), unregistered)
+		t.Logf("missing bindings: %v", missing)
 	case got < unregistered:
 		t.Errorf("%d unregistered, down from %d — lower the constant so it keeps tracking reality", got, unregistered)
 	}
 	t.Logf("app exposes %d use cases; %d are registered, %d are not", len(cases), len(registered), got)
+}
+
+// Count the app functions each real registration invokes, not descriptor names.
+// Two names for one function cannot conceal an unregistered function elsewhere.
+func registeredAppUseCases(t *testing.T, cases []string) map[string]bool {
+	t.Helper()
+	known := map[string]bool{}
+	for _, name := range cases {
+		known[name] = true
+	}
+	registered := map[string]bool{}
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range files {
+		if strings.HasSuffix(path, "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		appAlias := ""
+		for _, spec := range file.Imports {
+			if spec.Path.Value == `"github.com/0xmhha/chainbench/internal/app"` {
+				appAlias = "app"
+				if spec.Name != nil {
+					appAlias = spec.Name.Name
+				}
+			}
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok || len(call.Args) != 2 {
+				return true
+			}
+			fn, ok := call.Fun.(*ast.Ident)
+			if !ok || fn.Name != "Register" {
+				return true
+			}
+			descriptor, ok := call.Args[0].(*ast.CompositeLit)
+			if !ok {
+				t.Errorf("uninspectable descriptor in %s", path)
+				return true
+			}
+			name := ""
+			for _, entry := range descriptor.Elts {
+				pair, ok := entry.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+				key, ok := pair.Key.(*ast.Ident)
+				if !ok || key.Name != "Name" {
+					continue
+				}
+				if literal, ok := pair.Value.(*ast.BasicLit); ok {
+					name, _ = strconv.Unquote(literal.Value)
+				}
+			}
+			if _, ok := feature.Lookup(name); !ok {
+				t.Errorf("AST registration %s was not installed", name)
+			}
+			reached := map[string]bool{}
+			mark := func(expr ast.Expr) {
+				selector, ok := expr.(*ast.SelectorExpr)
+				if !ok {
+					return
+				}
+				alias, ok := selector.X.(*ast.Ident)
+				if ok && alias.Name == appAlias && known[selector.Sel.Name] {
+					reached[selector.Sel.Name] = true
+				}
+			}
+			mark(call.Args[1])
+			ast.Inspect(call.Args[1], func(node ast.Node) bool {
+				if invoke, ok := node.(*ast.CallExpr); ok {
+					mark(invoke.Fun)
+				}
+				return true
+			})
+			if len(reached) != 1 {
+				t.Errorf("registration %s must reach exactly one app usecase, got %v", name, reached)
+			}
+			for usecase := range reached {
+				registered[usecase] = true
+			}
+			return true
+		})
+	}
+	return registered
 }
 
 // appUseCases returns the exported functions in internal/app that a surface

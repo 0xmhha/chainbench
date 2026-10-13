@@ -104,8 +104,12 @@
       스무 개 전부 리팩토링이 남긴 경로(`chainbench run` + `wemix-to-wbft` chain-preset)로
       옮겼고 21건이 통과한다. 상세는 §1s G4 · G4-a.
 
-- [ ] **feature 레지스트리 미등록 59건** — 근거: `internal/feature/coverage_test.go`. 현재 app usecase 90개 중
-      등록 31개·미등록 59개다(2026-10-13 AST 래칫 측정). 등록과 CLI/MCP 계약을 검증하며 잔여를 줄인다.
+- [x] **feature 레지스트리 미등록 0건 — 완료 (2026-10-13)** — 근거: `internal/feature/coverage_test.go`와
+      [실제 등록 호출 증거](feature-registry-evidence.json).
+      현재 app usecase 90개 모두 등록되었고 미등록은 0개다(2026-10-13 AST 함수 연결 측정).
+      새 등록의 typed 호출·키링 공개/비밀 분리·네트워크 기록·RPC 계약과 CLI/MCP 관련 race가 통과했다.
+      같은 등록을 통해 세 체인 각각 4노드를 실제 구성·구동·조회하고 정지·제거하는 직렬 race 증명을 통과했다.
+      MCP의 입력 스키마와 실행 경로를 레지스트리 소비로 바꾸는 후속 작업은 S2에 남는다.
 
 - [x] **`R` 접두사가 두 계획에서 충돌한다** — **해소 (2026-09-20). 개명하지 않고 한쪽을 닫아서 풀었다.**
       근거: §1n 표 `R1` 행(원격 트랙)과 `architecture/consolidation-plan.md` (2026-09-24 삭제) §R1(소형 모듈 흡수)이
@@ -161,7 +165,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건 |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
-| 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 미완료 |
+| 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 완료 — 59건 미등록 RED→90/90 함수 연결 GREEN; typed·키링·네트워크·RPC 계약, 관련 전체 race와 세 체인 native 호출 통과; `feature-registry-evidence.json` |
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 미완료 |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 미완료 |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 미완료 |

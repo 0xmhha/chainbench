@@ -165,7 +165,7 @@ func TestRun_SetupFailureIsCodeTwoWithoutJSONToo(t *testing.T) {
 	}
 }
 
-// Validate each distinct definition before exercising setup. A missing or
+// setupFailureDefinitions validates each distinct definition before setup. A missing or
 // malformed fixture must fail here, never masquerade as the requested failure.
 func setupFailureDefinitions(t *testing.T, count int) []string {
 	t.Helper()

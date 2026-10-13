@@ -1,0 +1,113 @@
+{
+  "usecases": 90,
+  "registered": 90,
+  "unregistered": 0,
+  "coverage": "AST bindings to actual app functions, not descriptor counts",
+  "nativeMode": "race, serial, three chains, four nodes each; stop and remove before fixture completion",
+  "nativeTestLog": "/private/tmp/chainbench-feature-native-green.jsonl",
+  "nativeTestLogSHA256": "f3f7045e2ac480052fd8eea70e59b28a0577d2a235d3b8379b5c0eee5a254e7f",
+  "records": [
+    {
+      "chain": "wemix",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "binarySHA256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+      "proofFile": "/private/tmp/cbui/feature-native-1295187211/proof.json",
+      "proofSHA256": "a7b58bbe333fb3cdf65f7a50ea16d20f1ce98fc8636b281a0efe687c25ffd0db",
+      "nodes": 4,
+      "readings": {
+        "blockNumber": 29,
+        "chainId": 8285,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "sourceFiles": {
+        "bind.go": "afd64a1eddb313d36db422a503ea8aa7b52ec032659a4cc6180fbabbb401f01d",
+        "bind_test.go": "613c5fffee01e889e4fe29937b3115d47a2c16da46a2908e7129573cea2852e2",
+        "catalog_helpers.go": "5604f94020fcbadcc517618ed078c06156bd25e4bf9bb4bdbd8b37bd7b1be7cd",
+        "compose.go": "14b5296f372a52c5e114b09f715e534f0a974ce288053581faea784b95842dff",
+        "coverage_test.go": "37cf1ea1678729ffd8af116e958033d62fe283b889e3ab811b598aa1791c2a22",
+        "feature.go": "37f0154f5efee1e073013d954ac75ac45474b97a0d308ffd43b02fb54637eb22",
+        "key_helpers.go": "22977d8f3ed2caf4ffa07e9b91eb1204d57db4ad0c54c2503c8f3271b4af71f2",
+        "native_test.go": "94471b807866d8e90677f699195eb08b84f79b2b97ab089029d8774f36de00b1",
+        "network_helpers.go": "21216fb99415a78b3346c9f0f462b5f0f7f09ca1fdf8ccf766a04656333a9558",
+        "node_reset_test.go": "942b6f1eaaff434ddb6f4282b63ed8fc1bddbd7dd1d480bf49f1206008e6227c",
+        "node_restart_test.go": "184def78f87a361f6b437e8c65b2f899abc4efab1f681a6baaffcdd841edf58b",
+        "node_swap_test.go": "08302a1a8fd8dba0959bb937c7995eb24d79098b77652cf3f52515555bea6149",
+        "operations.go": "bd02e7cbb1f51209861e1a1aee8efd9484d9bdaa6c7b540cf3347c40f3dca6b8",
+        "operations_test.go": "7cf996da6fa614c9151d345449eb149d10963f2b1454b614110e133723c45021",
+        "report.go": "21614de05efd15c6fb680fe89bc7073751e0f4dab2e4b5fdccf995973414a977",
+        "resource_read.go": "c176b3897f456279da682f9903459ca03d6057326a9ef3e8947d82afa68a5bed",
+        "test.go": "f9e7d551f46e9c0a028fe90e72f92ff8d81862cf5e055f5ed4c58fedfdd4a2e6",
+        "transfer.go": "a8a9e9af5cd5826c129a30ee8731e739707dc6f715f5edb64c7668a9303204c9"
+      }
+    },
+    {
+      "chain": "stablenet",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+      "binarySHA256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+      "proofFile": "/private/tmp/cbui/feature-native-3774682796/proof.json",
+      "proofSHA256": "b22b43619edbc1fcec4f4c0a692121aa7b5bf6570160136b2ae1a8b5d29808f0",
+      "nodes": 4,
+      "readings": {
+        "blockNumber": 33,
+        "chainId": 8283,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "sourceFiles": {
+        "bind.go": "afd64a1eddb313d36db422a503ea8aa7b52ec032659a4cc6180fbabbb401f01d",
+        "bind_test.go": "613c5fffee01e889e4fe29937b3115d47a2c16da46a2908e7129573cea2852e2",
+        "catalog_helpers.go": "5604f94020fcbadcc517618ed078c06156bd25e4bf9bb4bdbd8b37bd7b1be7cd",
+        "compose.go": "14b5296f372a52c5e114b09f715e534f0a974ce288053581faea784b95842dff",
+        "coverage_test.go": "37cf1ea1678729ffd8af116e958033d62fe283b889e3ab811b598aa1791c2a22",
+        "feature.go": "37f0154f5efee1e073013d954ac75ac45474b97a0d308ffd43b02fb54637eb22",
+        "key_helpers.go": "22977d8f3ed2caf4ffa07e9b91eb1204d57db4ad0c54c2503c8f3271b4af71f2",
+        "native_test.go": "94471b807866d8e90677f699195eb08b84f79b2b97ab089029d8774f36de00b1",
+        "network_helpers.go": "21216fb99415a78b3346c9f0f462b5f0f7f09ca1fdf8ccf766a04656333a9558",
+        "node_reset_test.go": "942b6f1eaaff434ddb6f4282b63ed8fc1bddbd7dd1d480bf49f1206008e6227c",
+        "node_restart_test.go": "184def78f87a361f6b437e8c65b2f899abc4efab1f681a6baaffcdd841edf58b",
+        "node_swap_test.go": "08302a1a8fd8dba0959bb937c7995eb24d79098b77652cf3f52515555bea6149",
+        "operations.go": "bd02e7cbb1f51209861e1a1aee8efd9484d9bdaa6c7b540cf3347c40f3dca6b8",
+        "operations_test.go": "7cf996da6fa614c9151d345449eb149d10963f2b1454b614110e133723c45021",
+        "report.go": "21614de05efd15c6fb680fe89bc7073751e0f4dab2e4b5fdccf995973414a977",
+        "resource_read.go": "c176b3897f456279da682f9903459ca03d6057326a9ef3e8947d82afa68a5bed",
+        "test.go": "f9e7d551f46e9c0a028fe90e72f92ff8d81862cf5e055f5ed4c58fedfdd4a2e6",
+        "transfer.go": "a8a9e9af5cd5826c129a30ee8731e739707dc6f715f5edb64c7668a9303204c9"
+      }
+    },
+    {
+      "chain": "wbft",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "binarySHA256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+      "proofFile": "/private/tmp/cbui/feature-native-869729779/proof.json",
+      "proofSHA256": "1376f1a7c06a2e2e288f324a2e9bd88720567be90b4b9b5b9aacbbc40d52ed58",
+      "nodes": 4,
+      "readings": {
+        "blockNumber": 2,
+        "chainId": 8284,
+        "peerCount": 3,
+        "syncing": false
+      },
+      "sourceFiles": {
+        "bind.go": "afd64a1eddb313d36db422a503ea8aa7b52ec032659a4cc6180fbabbb401f01d",
+        "bind_test.go": "613c5fffee01e889e4fe29937b3115d47a2c16da46a2908e7129573cea2852e2",
+        "catalog_helpers.go": "5604f94020fcbadcc517618ed078c06156bd25e4bf9bb4bdbd8b37bd7b1be7cd",
+        "compose.go": "14b5296f372a52c5e114b09f715e534f0a974ce288053581faea784b95842dff",
+        "coverage_test.go": "37cf1ea1678729ffd8af116e958033d62fe283b889e3ab811b598aa1791c2a22",
+        "feature.go": "37f0154f5efee1e073013d954ac75ac45474b97a0d308ffd43b02fb54637eb22",
+        "key_helpers.go": "22977d8f3ed2caf4ffa07e9b91eb1204d57db4ad0c54c2503c8f3271b4af71f2",
+        "native_test.go": "94471b807866d8e90677f699195eb08b84f79b2b97ab089029d8774f36de00b1",
+        "network_helpers.go": "21216fb99415a78b3346c9f0f462b5f0f7f09ca1fdf8ccf766a04656333a9558",
+        "node_reset_test.go": "942b6f1eaaff434ddb6f4282b63ed8fc1bddbd7dd1d480bf49f1206008e6227c",
+        "node_restart_test.go": "184def78f87a361f6b437e8c65b2f899abc4efab1f681a6baaffcdd841edf58b",
+        "node_swap_test.go": "08302a1a8fd8dba0959bb937c7995eb24d79098b77652cf3f52515555bea6149",
+        "operations.go": "bd02e7cbb1f51209861e1a1aee8efd9484d9bdaa6c7b540cf3347c40f3dca6b8",
+        "operations_test.go": "7cf996da6fa614c9151d345449eb149d10963f2b1454b614110e133723c45021",
+        "report.go": "21614de05efd15c6fb680fe89bc7073751e0f4dab2e4b5fdccf995973414a977",
+        "resource_read.go": "c176b3897f456279da682f9903459ca03d6057326a9ef3e8947d82afa68a5bed",
+        "test.go": "f9e7d551f46e9c0a028fe90e72f92ff8d81862cf5e055f5ed4c58fedfdd4a2e6",
+        "transfer.go": "a8a9e9af5cd5826c129a30ee8731e739707dc6f715f5edb64c7668a9303204c9"
+      }
+    }
+  ]
+}
