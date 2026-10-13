@@ -3,6 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -64,16 +65,25 @@ func wantReject(args map[string]any) bool {
 }
 
 // checkSubmitRejected enforces an expect:"reject" step: the node must refuse the
-// transaction at submit time (SendTransaction returns an error and no hash). An
-// accepted submit fails the step. An optional "reason" (case-insensitive
+// transaction at submit time (a typed node error from the submission method and
+// no hash). Preparation, transport, HTTP and RPC protocol failures fail the step.
+// An accepted submit also fails the step. An optional "reason" (case-insensitive
 // substring) tightens the check to a specific rejection message, so a spec can
 // require e.g. an "insufficient funds" rejection rather than any error.
 func checkSubmitRejected(hash string, submitErr error, ac *interp.ActionCtx) error {
 	if submitErr == nil {
 		return fmt.Errorf("dsl: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
 	}
+	var rejection *rpc.ServerError
+	if hash != "" || !errors.As(submitErr, &rejection) || rejection == nil || (rejection.Method != "eth_sendTransaction" && rejection.Method != "eth_sendRawTransaction") {
+		return fmt.Errorf("dsl: sendTx expected node submission rejection; preparation or transport failed instead: %w", submitErr)
+	}
+	switch rejection.Code {
+	case -32700, -32600, -32601, -32602, -32603:
+		return fmt.Errorf("dsl: sendTx expected transaction rejection; RPC protocol failed instead: %w", submitErr)
+	}
 	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
-		if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {
+		if !strings.Contains(strings.ToLower(rejection.Message), strings.ToLower(reason)) {
 			return fmt.Errorf("dsl: sendTx was rejected but not for %q: %v", reason, submitErr)
 		}
 	}

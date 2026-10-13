@@ -10,34 +10,38 @@ import (
 	"testing"
 )
 
-func inspectNativeEstimate(response *http.Response) (string, error) {
+func inspectNativeResponse(response *http.Response, out any) error {
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if err := response.Body.Close(); err != nil {
-		return "", err
+		return err
 	}
 	response.Body = io.NopCloser(bytes.NewReader(body))
 	decoded := body
 	if strings.EqualFold(response.Header.Get("Content-Encoding"), "gzip") {
 		reader, err := gzip.NewReader(bytes.NewReader(body))
 		if err != nil {
-			return "", err
+			return err
 		}
 		decoded, err = io.ReadAll(reader)
 		closeErr := reader.Close()
 		if err != nil {
-			return "", err
+			return err
 		}
 		if closeErr != nil {
-			return "", closeErr
+			return closeErr
 		}
 	}
+	return json.Unmarshal(decoded, out)
+}
+
+func inspectNativeEstimate(response *http.Response) (string, error) {
 	var reply struct {
 		Result string `json:"result"`
 	}
-	if err := json.Unmarshal(decoded, &reply); err != nil {
+	if err := inspectNativeResponse(response, &reply); err != nil {
 		return "", err
 	}
 	return reply.Result, nil

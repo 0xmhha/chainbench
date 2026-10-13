@@ -91,6 +91,9 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 		return fmt.Errorf("rpc: %s: %w", method, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("rpc: %s: HTTP status %d", method, resp.StatusCode)
+	}
 
 	var rr rpcResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {

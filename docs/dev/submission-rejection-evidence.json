@@ -1,0 +1,210 @@
+{
+  "scope": "R5 submission provenance and reason matching, not completion of all real-network R5 or task 9",
+  "logs": {
+    "red": {
+      "path": "/private/tmp/chainbench-submission-rejection-red.log",
+      "sha256": "81fa33dd0ce6a06f851f145be194714296037a0cc361b451be1b72eaae48367b"
+    },
+    "green": {
+      "path": "/private/tmp/chainbench-submission-rejection-green.log",
+      "sha256": "51c4ab10c166d0f23d8caf6f48bbfcb4f8559a5d3d1adc38a9b37c07807bf55b"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-submission-rejection-check.log",
+      "sha256": "a4f4da65d58eab4fefc8e19a06d3dd62e5895c503d8abb2229327027726ec56a"
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-submission-rejection-race.log",
+      "sha256": "dc55f42e44b7ad77f13b804b0dee5042cf4b99037c2f0d1475913fc8cfe0b4b8"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-submission-rejection-native.jsonl",
+      "sha256": "39f4586b2f797ab06aa330b8dd1b4070b4823a1ff7eb350edd89ec368b5700bf"
+    }
+  },
+  "nativeElapsedSeconds": 286.175,
+  "nativeRawSubmissions": 102,
+  "nativeGenuineRejections": 12,
+  "nativeAcceptedTransactions": 90,
+  "proofs": [
+    {
+      "chain": "stablenet",
+      "proofPath": "/private/tmp/cbui/endpoint-native-3784539093/proof.json",
+      "proofSHA256": "faf43435463cfbfce3841f43ecf844c13f17dbec5e6e872d080a8a711afd91eb",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gstable",
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "authenticatedRawTransactions": 34,
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low: next nonce 15, tx nonce 0"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low: gas 10000, minimum needed 21000"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low: next nonce 30, tx nonce 0"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low: gas 10000, minimum needed 21000"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "cliSession": "/private/tmp/cbui/endpoint-native-3784539093/cli-reports/20261013-172737-48425/UTC-20261013-172750",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-3784539093/mcp-reports/20261013-172737-48425/UTC-20261013-172809",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "eaea901244d9ba9d466c402a044cf3d786b5d6b0702620b905b18b3df14bbf3a",
+        "endpoint_profile_native_test.go": "2abd9d4f220ae88d808db63a65d269e0e63f2fd69e99bed1be7e07ea99fe4060",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    },
+    {
+      "chain": "wbft",
+      "proofPath": "/private/tmp/cbui/endpoint-native-3442864864/proof.json",
+      "proofSHA256": "a6d7032c066fa8fba0a15ee8bc38b14c0e05143c45612c7ae6ceedb9c1d0bb3e",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gwbft",
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "authenticatedRawTransactions": 34,
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low: next nonce 15, tx nonce 0"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low: gas 10000, minimum needed 21000"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low: next nonce 30, tx nonce 0"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low: gas 10000, minimum needed 21000"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "cliSession": "/private/tmp/cbui/endpoint-native-3442864864/cli-reports/20261013-172737-48425/UTC-20261013-172907",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-3442864864/mcp-reports/20261013-172737-48425/UTC-20261013-172931",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "eaea901244d9ba9d466c402a044cf3d786b5d6b0702620b905b18b3df14bbf3a",
+        "endpoint_profile_native_test.go": "2abd9d4f220ae88d808db63a65d269e0e63f2fd69e99bed1be7e07ea99fe4060",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    },
+    {
+      "chain": "wemix",
+      "proofPath": "/private/tmp/cbui/endpoint-native-2285041310/proof.json",
+      "proofSHA256": "b1f590a80dc88572522f9225894feb476e238569565d759455ac49dda7cb6935",
+      "proofMode": "0o600",
+      "binary": "/private/tmp/chainbench-head-native/gwemix",
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "authenticatedRawTransactions": 34,
+      "submissionRejections": [
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "nonce too low"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        },
+        {
+          "error": {
+            "code": -32000,
+            "message": "intrinsic gas too low"
+          },
+          "method": "eth_sendRawTransaction",
+          "result": null,
+          "statusCode": 200
+        }
+      ],
+      "cliSession": "/private/tmp/cbui/endpoint-native-2285041310/cli-reports/20261013-172737-48425/UTC-20261013-173116",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-2285041310/mcp-reports/20261013-172737-48425/UTC-20261013-173142",
+      "endedDatabasesRemaining": 0,
+      "sources": {
+        "../../../internal/core/rpc/client.go": "107381d5c6855d71c0b44cf0e1f1b4775828e0ebb3dcd05e37851780e6aa021a",
+        "../../../internal/testhelper/outcome.go": "eaea901244d9ba9d466c402a044cf3d786b5d6b0702620b905b18b3df14bbf3a",
+        "endpoint_profile_native_test.go": "2abd9d4f220ae88d808db63a65d269e0e63f2fd69e99bed1be7e07ea99fe4060",
+        "endpoint_profile_proxy_test.go": "b951f7453e0477f4f4726de37c00c4ede4480830af35ecbfc487d05f6d28e74a"
+      }
+    }
+  ],
+  "unitSources": {
+    "internal/testhelper/outcome_rejection_test.go": "5d7e9135f8e6f65c5886f73a41a94d6985ec9e65aeca2e6b5f0e1b0b020e79e8",
+    "internal/core/rpc/http_status_test.go": "5b4e768fe6eea68bd0bbbfc210f60b1d4988b98b6b5daed7ee1f29565b88e0d9"
+  },
+  "limitations": [
+    "keptOut receipt lookup errors are still ignored during polling; this can report success when receipt visibility is unknown and must be fixed separately.",
+    "The blacklist sender case without explicit gas can stop in an SDK local guard. It now correctly fails instead of pretending the node rejected it; actual submit validation remains pending.",
+    "Reason matching is a case-insensitive substring of the node message. Preset initial values (P2/P3), broader reason taxonomy and all affected test cases require remaining R5/L1 verification.",
+    "Untyped third-party wallet errors fail closed; the production test engine uses the caller-owned RPC transport preserving typed method/code/message.",
+    "R3/R4 remainders, R1/R6, Linux L1, tasks 10–14 and frozen Web14 acceptance remain pending."
+  ]
+}
