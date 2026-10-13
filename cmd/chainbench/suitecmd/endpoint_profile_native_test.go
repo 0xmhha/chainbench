@@ -169,7 +169,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 				if err := json.Unmarshal(request.Params[0], &args); err != nil {
 					t.Error(err)
 				}
-				if args["data"] == "0x600a600c600039600a6000f3602a60005260206000f3" || args["type"] == "0x16" {
+				if args["data"] == "0x600a600c600039600a6000f3602a60005260206000f3" || args["type"] == "0x16" || (args["data"] == "0xab" && args["accessList"] == nil) {
 					creationEstimate = args
 				}
 			}
@@ -265,6 +265,11 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "queuedBase"},
 		map[string]any{"do": "read", "source": "derive", "op": "sum", "of": []any{"$queuedBase", "100"}, "save": "queuedNonce"},
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$queuedNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice", "accessList": []any{map[string]any{"address": "payer", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}, "expect": "keptOut", "blocks": 2, "timeout": "15s", "pollInterval": "100ms"})
+	signedSpec["steps"] = append(signedSpec["steps"].([]any),
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "calldataNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "nonce": "$calldataNonce", "maxFeePerGas": "$listPrice", "maxPriorityFeePerGas": "$listPrice"},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyCalldataNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "nonce": "$legacyCalldataNonce", "gasPrice": "$listPrice"})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -301,8 +306,8 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	wantRaw := int32(36)
-	wantSend := 7
+	wantRaw := int32(40)
+	wantSend := 9
 	if rawTransactions.Load() != wantRaw {
 		t.Fatalf("wrong number of local signatures: %d, want %d", rawTransactions.Load(), wantRaw)
 	}
@@ -323,12 +328,18 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	}
 	frozenEstimates := []map[string]any{}
 	feeEstimates := []map[string]any{}
+	transferEstimates := []map[string]any{}
 	for _, estimate := range recordedEstimates {
 		if estimate["request"].(map[string]any)["type"] == "0x16" {
 			feeEstimates = append(feeEstimates, estimate)
+		} else if args := estimate["request"].(map[string]any); args["data"] == "0xab" && args["accessList"] == nil {
+			transferEstimates = append(transferEstimates, estimate)
 		} else {
 			frozenEstimates = append(frozenEstimates, estimate)
 		}
+	}
+	if len(transferEstimates) != 4 {
+		t.Fatalf("expected four actual calldata estimates: %+v", transferEstimates)
 	}
 	if len(feeEstimates) != 2 {
 		t.Fatalf("expected CLI and MCP fee-delegated estimates: %+v", feeEstimates)
@@ -387,13 +398,13 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
 				t.Fatal(err)
 			}
-			if index >= wantSend || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2", "0x16", "0x16", "0x2"}[index] {
+			if index >= wantSend || tx["type"] != []string{"0x2", "0x0", "0x1", "0x2", "0x16", "0x16", "0x2", "0x2", "0x0"}[index] {
 				t.Fatalf("wrong native transaction type: %+v", tx)
 			}
-			if index > 0 && (tx["input"] != "0xab" || (index != 5 && tx["gas"] != "0x11170") || tx["value"] != "0x2") {
+			if index > 0 && (tx["input"] != "0xab" || (index != 5 && index < 7 && tx["gas"] != "0x11170") || tx["value"] != "0x2") {
 				t.Fatalf("legacy payload/gas/value changed: %+v", tx)
 			}
-			if index >= 2 {
+			if index >= 2 && index <= 6 {
 				list, ok := tx["accessList"].([]any)
 				if !ok || len(list) != 1 {
 					t.Fatalf("access list lost: %+v", tx)
@@ -440,6 +451,18 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 				var receipt map[string]any
 				if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionReceipt", &receipt, step.Hash); err != nil || receipt != nil || tx["blockHash"] != nil || tx["blockNumber"] != nil {
 					t.Fatalf("queued transaction did not remain authoritatively absent: %+v receipt=%+v error=%v", tx, receipt, err)
+				}
+			}
+			if index >= 7 {
+				estimate := transferEstimates[sessionIndex*2+index-7]
+				args := estimate["request"].(map[string]any)
+				for _, field := range []string{"from", "to", "value", "nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas"} {
+					if expected, supplied := args[field]; supplied && tx[field] != expected {
+						t.Fatalf("calldata estimate changed %s: estimate=%+v tx=%+v", field, estimate, tx)
+					}
+				}
+				if tx["gas"] != estimate["gas"] || tx["input"] != args["data"] {
+					t.Fatalf("calldata estimate changed gas/data: estimate=%+v tx=%+v", estimate, tx)
 				}
 			}
 			observedTransactions = append(observedTransactions, tx)
@@ -491,6 +514,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	proof["observedTransactions"] = observedTransactions
 	proof["deploymentEstimates"] = frozenEstimates
 	proof["feeDelegatedEstimates"] = feeEstimates
+	proof["calldataEstimates"] = transferEstimates
 	proof["observedDeployments"] = observedDeployments
 	bytes, err := json.MarshalIndent(proof, "", "  ")
 	if err != nil {

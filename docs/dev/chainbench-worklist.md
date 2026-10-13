@@ -259,6 +259,13 @@ P2/P3 초기값과 R5/L1의 영향 케이스 전수 검증도 아직 남는다.
 전체 108건 제출에는 정상 거래 90건·pending 6건·실제 제출 거부 12건이 포함된다. 종료 DB와 잔여 테스트 노드는 0건이다.
 RPC/HTTP 오류는 로컬 fault 테스트이며 native 연결 오류를 주입한 증명으로 세지 않는다. 두 블록 관측은 영구 미포함의 증거가 아니다.
 Blacklist의 SDK 로컬 guard 케이스, P2/P3·R5/L1 전수와 다른 제품 잔여는 계속 남는다.
+**gas 생략 calldata 입력 보강:** [calldata 증거](calldata-overrides-evidence.json)는 access list 없이 data를 보낼 때
+nonce·수수료가 SDK Execute 경로에서 사라지던 문제와 legacy 추정 요청에서 nonce·gasPrice가 빠지던 문제를 RED→GREEN으로 고쳤다.
+동적 nonce/수수료 조합 세 가지와 legacy를 추정 요청·독립 SDK 서명 바이트와 대조했다. 전체 검사·관련 7패키지 race가 통과했다.
+세 체인 CLI/MCP 120건 제출 중 새 calldata 거래 12건의 gas·nonce·수수료·data를 실제 추정 요청과 온체인 거래로 대조했다.
+기존 대납·접근 목록·거부·pending 경로도 통과했고 종료 DB와 잔여 테스트 노드는 0건이다.
+실제 실행은 동적 옵션을 함께 지정한 경로와 legacy이며, nonce-only/fee-only는 SDK 테스트 범위다.
+대납 계약 생성·대납 계정 UI 검증·잘못된 숫자 입력, blacklist 실제 제출과 P2/P3·전체 L1은 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)

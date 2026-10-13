@@ -188,13 +188,15 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	case feePayerKey != "" || feePayer != "":
 		hash, err = sendDelegatedOptions(ctx, ac, w, to, value, data, rpcURL)
 	case ac.Args["accessList"] != nil:
-		hash, err = sendDynamicAccessList(ctx, ac, w, to, value, data, rpcURL)
+		hash, err = sendDynamicOptions(ctx, ac, w, to, value, data, rpcURL)
 	// An explicit "gas" is the limit the case asked for. Every other branch
 	// picks its own — SendCoin fixes 21000, Execute estimates — so a case that
 	// sent 100000 gas to a reverting contract ran out at 21000 instead, and
 	// measured out-of-gas where it meant to measure a revert.
 	case hasGas:
 		hash, err = sendWithGas(ctx, ac, w, to, value, data, gasHex, rpcURL)
+	case data != "" && data != "0x" && (ac.Args["nonce"] != nil || ac.Args["maxFeePerGas"] != nil || ac.Args["maxPriorityFeePerGas"] != nil):
+		hash, err = sendDynamicOptions(ctx, ac, w, to, value, data, rpcURL)
 	case data != "" && data != "0x":
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
@@ -457,13 +459,14 @@ func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wal
 		if err != nil {
 			return "", err
 		}
-		message := map[string]any{"from": w.Address(), "to": to, "data": data}
+		message := rpc.SendTxArgs{From: w.Address(), To: to, Data: data, AccessList: list}
 		if value != nil {
-			message["value"] = "0x" + value.Text(16)
+			message.Value = "0x" + value.Text(16)
 		}
-		if list != nil {
-			message["accessList"] = list
+		if err := applyFeeArgs(&message, ac.Args); err != nil {
+			return "", err
 		}
+
 		var quantity string
 		if err := client.Call(ctx, "eth_estimateGas", &quantity, message); err != nil {
 			return "", err
@@ -519,11 +522,15 @@ func localAccessList(deps *interp.Deps, raw any) ([]accounts.AccessTuple, error)
 	return list, nil
 }
 
-// sendDynamicAccessList preserves the supplied list during gas estimation and signing.
-func sendDynamicAccessList(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
-	list, err := localAccessList(ac.Deps, ac.Args["accessList"])
-	if err != nil {
-		return "", err
+// sendDynamicOptions preserves explicit fields during gas estimation and signing.
+func sendDynamicOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
+	var list []accounts.AccessTuple
+	if raw, supplied := ac.Args["accessList"]; supplied {
+		decoded, err := localAccessList(ac.Deps, raw)
+		if err != nil {
+			return "", err
+		}
+		list = decoded
 	}
 	gas, explicit := hexQuantity(ac.Args["gas"])
 	if !explicit {

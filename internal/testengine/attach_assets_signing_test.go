@@ -29,6 +29,10 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		step         map[string]any
 		transactions int32
 	}{
+		{"dynamic-auto-full", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
+		{"dynamic-auto-nonce", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7"}, 1},
+		{"dynamic-auto-fees", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
+		{"legacy-auto", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "gasPrice": "3"}, 1},
 		{"faucet", map[string]any{"do": "faucet", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"}, 1},
 		{"fee-full", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "gas": "70000", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"fee-auto", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
@@ -78,6 +82,17 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getTransactionCount":
 					value = fmt.Sprintf("%#x", signed.Load())
 				case "eth_estimateGas":
+					if strings.Contains(sample.name, "auto") && !strings.HasPrefix(sample.name, "deploy-") {
+						var args map[string]any
+						if err := json.Unmarshal(request.Params[0], &args); err != nil {
+							t.Error(err)
+						}
+						for field, expected := range map[string]string{"nonce": "0x7", "gasPrice": "0x3", "maxFeePerGas": "0x3", "maxPriorityFeePerGas": "0x1"} {
+							if _, supplied := sample.step[field]; supplied && args[field] != expected {
+								t.Errorf("estimate lost %s: %v", field, args[field])
+							}
+						}
+					}
 					value = "0x10000"
 				case "eth_getBlockByNumber":
 					value = map[string]string{"number": "0x1", "baseFeePerGas": "0x1", "gasLimit": "0xf4240", "gasUsed": "0x0"}
@@ -109,13 +124,13 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 							t.Error("fee-delegated signature lost sender/payer or explicit transaction fields")
 						}
 					}
-					if strings.HasPrefix(sample.name, "dynamic-list") {
+					if strings.HasPrefix(sample.name, "dynamic-") {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)
 						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
 						data, _ := hex.DecodeString("abcdef")
 						gas := uint64(70000)
-						if sample.name == "dynamic-list-auto" {
+						if sample.name == "dynamic-list-auto" || strings.HasPrefix(sample.name, "dynamic-auto-") {
 							gas = 65536
 						}
 						listAddress := to
@@ -123,6 +138,12 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 							listAddress = sdktypes.BytesToAddress(sdkcrypto.PubkeyToAddress(key.PubKey()).Bytes())
 						}
 						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: listAddress, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
+						if strings.HasPrefix(sample.name, "dynamic-auto-") {
+							expected.AccessList = nil
+						}
+						if sample.name == "dynamic-auto-fees" {
+							expected.Nonce = 0
+						}
 						if err := expected.Sign(key); err != nil {
 							t.Error(err)
 						}
@@ -160,7 +181,7 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 							t.Error("estimated deployment lost gas, nonce, fee model, value or code")
 						}
 					}
-					if !strings.HasPrefix(sample.name, "deploy-auto-") && (sample.name == "legacy" || strings.HasSuffix(sample.name, "-legacy") || sample.name == "access-list") {
+					if !strings.HasPrefix(sample.name, "deploy-auto-") && (sample.name == "legacy" || sample.name == "legacy-auto" || strings.HasSuffix(sample.name, "-legacy") || sample.name == "access-list") {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)
 						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
@@ -169,6 +190,9 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 						if sample.name != "access-list" {
 							var target = &to
 							gas, value := uint64(70000), big.NewInt(5)
+							if sample.name == "legacy-auto" {
+								gas = 65536
+							}
 							if sample.name == "faucet-legacy" {
 								data = nil
 							}
