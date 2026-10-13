@@ -1,0 +1,225 @@
+{
+  "scope": "19 requirements behavioral sufficiency review; this is not final Web acceptance nor the remaining live/mainnet and upgrade tracks",
+  "decision": "reviewed with strengthened R11/R14/R15/R19 and AST traceability; separate live limitations remain tracked",
+  "requirements": [
+    {
+      "id": "R01",
+      "criterion": "로컬과 서버별 원격 배치가 실제 노드 기록의 host·server·port로 전달된다",
+      "tests": [
+        "TestChainAllocate_RemoteServerRetargetsTheDataPlane",
+        "TestChainAllocate_AllServersRecordsEachNodesOwnHost",
+        "TestNativeBlueprintPinnedGeneration"
+      ],
+      "limit": "새 HEAD 원격 fleet 전수는 작업 9와 최종 WEB-06에서 확인한다"
+    },
+    {
+      "id": "R02",
+      "criterion": "Docker 주소 변환은 접속 경계에만 적용하며 누락된 localmap을 거절한다",
+      "tests": [
+        "TestWorkspace_DockerWithoutLocalmapRefusesLoudly",
+        "TestOpener_TranslatesAndReportsInOnePlace",
+        "TestOpener_DockerIsThePowerSwitch"
+      ],
+      "limit": "단위 주소 계약과 실제 Docker SSH 실행은 별개다. 새 HEAD fleet 재검증은 작업 9에 남는다"
+    },
+    {
+      "id": "R03",
+      "criterion": "내용 해시로 동일·상이·누락 자료를 구별하고 파일 전송의 권한과 실패를 보존한다",
+      "tests": [
+        "TestProvision_ReusesIdenticalOverwritesDifferent",
+        "TestProvision_UploadIfAbsent",
+        "TestRemoteFileStore_Checksum",
+        "TestRemoteFileStore_Write",
+        "TestUpload_RefusesNameCollisionUnlessForced",
+        "TestDownloadTo_OverwritesAnExistingFileAt0600"
+      ],
+      "limit": "전송 단위 테스트는 SSH 대역이다. WEB-06 실제 전송 중단·무결성은 최종 인수에서 다시 실행한다"
+    },
+    {
+      "id": "R04",
+      "criterion": "PID·argv 기록이 재개방 후 유지되고 다른 프로세스·다른 config·조회 실패를 running으로 표시하지 않는다",
+      "tests": [
+        "TestLedger_RecordsQueriesAndSurvivesReopen",
+        "TestObserveLaunchVerifiesTheRecordedProcess",
+        "TestObserveVacancyRequiresAReadableStableTable",
+        "TestLocalCmdline_ReadsArgvOfARunningProcess"
+      ],
+      "limit": "소유권 판정 단위 계약에 native 구성·조회·정지를 보탰다. 원격 관찰 전수는 작업 9와 최종 인수에 남는다"
+    },
+    {
+      "id": "R05",
+      "criterion": "개별 stop/start는 대상만 바꾸고 재기동 argv·PID를 영속한다",
+      "tests": [
+        "TestNodeStop_ClearsThePID",
+        "TestNodeStart_RelaunchesWithTheRecordedArgv",
+        "TestNodeStart_RefusesARunningNode"
+      ],
+      "limit": "driver 대역 계약과 WEB-07 실제 제어를 구분한다. 최종 고정 소스 WEB-07은 아직 실행하지 않았다"
+    },
+    {
+      "id": "R06",
+      "criterion": "역할·동기화·키·ports·peers·metrics를 config/argv로 반영하고 선언과 실행 기록 불일치를 거절한다",
+      "tests": [
+        "TestGenerate_Validator",
+        "TestGenerate_EndpointHasNoMiner",
+        "TestArchiveEndpointUsesFullSyncWithoutPruning",
+        "TestArgv_SaysMetricsOnTheCommandLine",
+        "TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv",
+        "TestPhasePlan_EachNodeCarriesItsOwnBinary"
+      ],
+      "limit": "실제 프로세스 argv·연결 검증을 N3 native로 보완했다. metrics 시계열의 최종 검증은 WEB-08이다"
+    },
+    {
+      "id": "R07",
+      "criterion": "실행 중 binary/config 교체는 대상 노드에만 적용되고 실패 시 기존 실행 이력을 보존한다",
+      "tests": [
+        "TestNodeSwap_ConfigOnlyRewritesOneNode",
+        "TestNodeSwap_RelaunchesOnNewBinaryKeepingRevision",
+        "TestSwapFailurePersistsStoppedStateAndPriorExecution",
+        "TestRestartStopFailureDoesNotLaunchOrClearPID"
+      ],
+      "limit": "실제 바이너리 교체는 최종 WEB-07에서 재검증한다. 단위 대역을 native 교체로 부르지 않는다"
+    },
+    {
+      "id": "R08",
+      "criterion": "노드별 binary 선택이 기록·genesis·phase·이미 실행된 프로세스 발견까지 이어진다",
+      "tests": [
+        "TestChainAllocate_PerNodeBinaryReachesTheRecordsAndState",
+        "TestGenesisFor_ANodeInitializesFromItsOwnBinarysGenesis",
+        "TestPhasePlan_EachNodeCarriesItsOwnBinary",
+        "TestMergeRunning_FindsNodesOnDifferentBinaries"
+      ],
+      "limit": "현재 실제 세 체인 검증은 체인별 단일 바이너리다. 혼합 upgrade 실제 회귀는 작업 11에 남는다"
+    },
+    {
+      "id": "R09",
+      "criterion": "override가 파일·기본값보다 우선하며 노드별 scope와 binary 허용 범위를 지킨다",
+      "tests": [
+        "TestBuildOverridesWin",
+        "TestResolve_Precedence",
+        "TestChainConfig_OverrideIsolationAndProvenance",
+        "TestBuilderRefusesAnOverrideOutsideItsRange"
+      ],
+      "limit": "우선순위와 범위 계약을 검토했다. arbitrary 외부 바이너리의 모든 옵션을 지원한다고 주장하지 않는다"
+    },
+    {
+      "id": "R10",
+      "criterion": "config-purpose 이름·노드·override·checksum·시각과 이전 revision을 보존한다",
+      "tests": [
+        "TestChainConfig_OverrideIsolationAndProvenance",
+        "TestConfigProvenance_ASwapKeepsTheRevisionItReplaced",
+        "TestConfigProvenance_TheTimeIsTheInjectedClock"
+      ],
+      "limit": "생산 config 단계와 swap 경로를 대조했다. 추적 테스트는 fixture 이름만 확인하는 한 테스트로 대신하지 않는다"
+    },
+    {
+      "id": "R11",
+      "criterion": "CREATE 주소 계산·save/ref 배포와 배포자·실제 nonce·예상/receipt 주소·tx/receipt·bytecode SHA256을 영속한다",
+      "tests": [
+        "TestReadCreateAddress_ExplicitNonce",
+        "TestDeployContractRecordsObservedNonceAndBytecode",
+        "TestDeploymentUnavailableObservationNeverInventsNonceZero",
+        "TestInterpreterPreservesPublicDeploymentProvenance",
+        "TestDeploymentProvenanceSurvivesDiskRecording",
+        "TestNativeDeploymentPublicProvenance"
+      ],
+      "limit": "새 native 증명은 성공한 배포다. metadata RPC가 불가능하면 nonce를 만들지 않고 observationError를 기록한다. 실패 tx는 기존 hash/receipt 증거를 유지한다"
+    },
+    {
+      "id": "R12",
+      "criterion": "실패한 테스트와 setup에 로그·process·health 자료 또는 수집 실패 이유를 귀속하고 report에서 연결한다",
+      "tests": [
+        "TestEngine_OnFailGathersOnFailedTest",
+        "TestGatherFailureData_KeepsTheWholeLog",
+        "TestRecordBlockedBySetup_EveryWaitingTestGetsItsOwnCopy",
+        "TestReport_LinksFailureObservations"
+      ],
+      "limit": "collector 생산 경로는 health.Run·ledger·노드별 Logs를 독립 수집한다. 원격 로그의 최신 실제 증명은 최종 WEB-08에서 다시 실행한다"
+    },
+    {
+      "id": "R13",
+      "criterion": "전체 테스트 종료 후 root report를 생성·다시 읽고 verdict 수와 증거 링크를 보존한다",
+      "tests": [
+        "TestGenerateAndRead_RoundTrip",
+        "TestReport_LinksFailureObservations",
+        "TestEngineSerialExecutionContinuesAfterFailedVerdict",
+        "TestNativeRequirementsRunSurfacesAndEvidence"
+      ],
+      "limit": "집계 함수만으로 완료하지 않았다. 실제 CLI PASS/FAIL/PASS와 MCP report를 확인했다"
+    },
+    {
+      "id": "R14",
+      "criterion": "한 명령의 여러 정의를 순서대로 최대 하나씩 수행하고 정책에 따라 실패 뒤 마지막 정의까지 실행한다",
+      "tests": [
+        "TestEngineSerialExecutionContinuesAfterFailedVerdict",
+        "TestNativeRequirementsRunSurfacesAndEvidence"
+      ],
+      "limit": "실제 engine callback의 동시 상한과 마지막 정의 제거 변이 RED를 확인했다. CLI 실행 간 동시성은 Web job 점유 계약의 별도 영역이다"
+    },
+    {
+      "id": "R15",
+      "criterion": "CLI·MCP·DSL의 같은 입력은 공개 계획과 실행 의미가 동일하다",
+      "tests": [
+        "TestCLIMCPAndDSLResolveTheSameComposition",
+        "TestNativeRequirementsRunSurfacesAndEvidence",
+        "TestMCPOperationsConsumeTypedRegistry"
+      ],
+      "limit": "public JSON 계약을 대조했다. 구조 내부 nil/map 표현의 동일성을 public 동등성으로 취급하지 않는다"
+    },
+    {
+      "id": "R16",
+      "criterion": "문법·미등록 어휘·잘못된 selector·지원하지 않는 선언과 범위를 외부 구성 전에 거절한다",
+      "tests": [
+        "TestValidateContent",
+        "TestRunSuite_PrecheckStopsAnUnresolvedReference",
+        "TestValidateChainPresetRefusesUnsupportedDeclarations",
+        "TestValidateChainPresetRefusesValuesOutsideTheBinaryRange",
+        "TestValidate_TouchesNothing",
+        "TestAttachEngine_SkipsUnmetCapability"
+      ],
+      "limit": "실제 RPC capability probing은 작업 9의 별도 R3다. 선언된 capability의 사전 검사와 실제 RPC 존재 확인을 혼동하지 않는다"
+    },
+    {
+      "id": "R17",
+      "criterion": "fingerprint뿐 아니라 genesis/config/binary 해시와 실행 상태를 비교해 일치 노드는 보존하고 drift/refusal을 분리한다",
+      "tests": [
+        "TestEngine_ReusesEnvByFingerprint",
+        "TestReconcileReuse_AllMatchLeavesRunningNodesUntouched",
+        "TestReconcileReuse_GenesisChangeRefusesAndTouchesNothing",
+        "TestPlanReuse_DeadOrSilentNodeRedone",
+        "TestMergeRunning_SecondBinaryMismatchIsRefused"
+      ],
+      "limit": "대역으로 모든 비교 분기를 검토했다. 실제 재사용 반복·원격 노드 복구의 최종 검증은 작업 9와 WEB-12이다"
+    },
+    {
+      "id": "R18",
+      "criterion": "READY·WAITABLE 시간 예산·제한 재시작·FATAL 즉시 종료가 서로 다른 전이를 따른다",
+      "tests": [
+        "TestGate_AllReadyImmediately",
+        "TestGate_WaitBudgetExhausted",
+        "TestGate_RestartsThenReady",
+        "TestGate_RestartCapExhausted",
+        "TestGate_FatalTerminatesWithoutRestart"
+      ],
+      "limit": "주입된 시계와 observer/restarter로 정확한 예산·횟수를 검사한다. 데이터 삭제를 자동 복구로 바꾸지 않는다"
+    },
+    {
+      "id": "R19",
+      "criterion": "같은 초와 동시 실행도 세션이 충돌하지 않고 테스트별 DSL/verdict/증거·root report가 이전 실행을 덮지 않는다",
+      "tests": [
+        "TestSessionsInOneSecondPreserveEachTestArtifact",
+        "TestConcurrentSameSecondSessionsHaveDistinctRoots",
+        "TestRapidRunsPreserveRootReportsAndEvidence",
+        "TestNativeRequirementsRunSurfacesAndEvidence"
+      ],
+      "limit": "atomic mkdir 고유 root와 실제 report 링크를 확인했다. 기존 세션 ID 형식은 첫 실행에서 유지하고 충돌에만 suffix를 붙인다"
+    }
+  ],
+  "newNativeEvidence": [
+    "deployment-provenance-evidence.json",
+    "requirement-execution-evidence.json",
+    "n3-allocation-evidence.json",
+    "mcp-registry-evidence.json"
+  ],
+  "finalWeb14Acceptance": "pending"
+}

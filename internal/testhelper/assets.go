@@ -133,6 +133,7 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 		return fmt.Errorf("dsl: deployContract %s: receipt carries no contract address", hash)
 	}
 	ac.Value = addr
+	recordContractDeployment(ctx, ac, c, code)
 	return nil
 }
 
@@ -322,5 +323,6 @@ func deployContractLocal(ctx context.Context, ac *interp.ActionCtx, keyHex, code
 		return fmt.Errorf("dsl: deployContract %s: receipt carries no contract address", hash)
 	}
 	ac.Value = addr
+	recordContractDeployment(ctx, ac, c, code)
 	return nil
 }

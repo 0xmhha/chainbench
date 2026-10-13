@@ -69,9 +69,12 @@
       **방향 뒤집기(큰 덩어리)는 이 문서를 이어받지 않고 백지에서 새로 설계한다** — 이 계획은 "조각이 너무 많다"
       는 진단 위에 서 있어 이어받으면 반대 방향으로 끌린다. 제약 셋은 문서가 아니라 코드가 지킨다
       (`filestore/doc.go` + `arch.TestCommentsDoNotContradictTheCode`, `arch.TestNoUpwardDependency`, Go 의 순환 금지).
-- [ ] **요구 19개의 충분성** — 근거: §1s. `arch.TestEveryRequirementNamesEvidence` 가 *연결*은
-      지키지만 그 테스트가 요구를 **증명하는지**는 사람이 읽어야 한다. 표본 6개 중 R14·R15·R19 가
-      `partial` 로 읽혔다.
+- [x] **요구 19개의 충분성 — 검토·보강 완료 (2026-10-13)** — 근거: §1s와
+      [19개 행동·증거·한계 검토](requirement-sufficiency-review.json). 연결된 이름만으로 충분하다고 판단하지 않고
+      각각의 실제 assertion과 생산 경로를 대조했다. R11 배포 provenance, R14 직렬 수행, R15 공개 계획 동등성,
+      R19 같은 초·동시 세션 격리를 RED→GREEN으로 보강했다. 주석·문자열을 테스트로 세던 연결 검사는 Go AST로 바꿨다.
+      관련 전체 race와 세 체인 실제 배포·세션 영속·종료 데이터 회수를 통과했다.
+      이 검토는 아래 메인넷·공통 TC·수직 슬라이스와 최종 Web 인수를 닫는 근거가 아니다.
 - [ ] **메인넷 설정 트랙 — 라이브 잔여 셋** — 근거: [`architecture/mainnet-config-worklist.md`](architecture/mainnet-config-worklist.md).
       결과는 그 문서 §11.4.1(L1)·§11.4.2(L2). 오프라인 잔여는 2026-09-18 에 0 이 됐고, L1 전체 회귀와 L2 경합 전수는 2026-09-20 에
       닫혔다(§11.4.1·§11.4.2). `restart-at-boho` 도 2026-09-20 에 닫혔다 — pre/post 두 바이너리를
@@ -167,7 +170,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 완료 — 59건 미등록 RED→90/90 함수 연결 GREEN; typed·키링·네트워크·RPC 계약, 관련 전체 race와 세 체인 native 호출 통과; `feature-registry-evidence.json` |
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
-| 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 진행 — 같은 초·동시 세션 충돌 RED→GREEN; 실제 직렬 실행·마지막 정의 누락 변이·CLI/MCP/DSL 계획·native 단일/다중/MCP와 root report 통과. R11 배포자·nonce·바이트코드 체크섬 증명 보강은 남음; `requirement-execution-evidence.json` |
+| 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 미완료 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |

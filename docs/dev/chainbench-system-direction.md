@@ -183,7 +183,7 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 | R08 | 노드별 서로 다른 binary | §4·§7 | E3·E7 | `TestBinaryFor_ResolvesPerNodeOverFallback` |
 | R09 | Config Builder와 override | §5·§7 | E3 | `TestBuildOverridesWin` |
 | R10 | `config-<test-purpose>` fixture naming | §7 | E3 | `TestConfigProvenance_ASwapKeepsTheRevisionItReplaced` |
-| R11 | contract 배포, 동적·결정적 주소 | §8 | E7 | `TestReadCreateAddress_ExplicitNonce` |
+| R11 | contract 배포, 동적·결정적 주소 | §8 | E7 | `TestDeployContractRecordsObservedNonceAndBytecode` |
 | R12 | 실패 시 log와 디버깅 자료 수집 | §11 | E6·E8 | `TestEngine_OnFailGathersOnFailedTest` |
 | R13 | 전체 테스트 종료 후 최종 report | §11 | E8 | `TestCombine_SumsTheTally` |
 | R14 | 단일 테스트 직렬 실행과 한 명령의 다중 테스트 | §11 | E7·E8 | `TestEngineSerialExecutionContinuesAfterFailedVerdict` |
@@ -197,7 +197,9 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 마지막 정의를 누락하는 생산 코드 변이를 거절했다. R15는 동일 DSL의 CLI·MCP 공개 계획 계약을 대조한다.
 R19는 동일 초와 동시 생성에서 세션을 원자적으로 분리하고 이전 DSL·verdict·root report의 불변성을 지킨다.
 [실제 노드 증거](requirement-execution-evidence.json)는 CLI 단일·다중과 MCP 실행을 포함한다.
-이 세 항목의 보강을 19개 전체 완료로 취급하지 않는다. 특히 R11의 명시적 배포 provenance 보강은 worklist §0a에 남는다.
+이후 R11도 배포자·실제 nonce·예상/receipt 주소·transaction·bytecode SHA256을 steps에 보존하도록 보강했다. 세 체인 실제 배포·disk recording과 종료 DB 회수는 [배포 증거](deployment-provenance-evidence.json)에 남겼다.
+[19개 충분성 검토](requirement-sufficiency-review.json)는 각 요구의 추가 테스트와 assertion·생산 경로·검증 한계를 함께 기록한다. 연결 검사도 Go AST의 실제 테스트 선언을 사용한다.
+검토·보강의 완료는 남은 메인넷·공통 TC·업그레이드와 최신 고정 소스 Web 인수를 완료했다는 뜻이 아니다. 그 상태는 worklist §0a가 관리한다.
 
 ## 13. 현재 상태와 목표 구분
 

@@ -1,12 +1,19 @@
 package arch
 
 import (
+	"encoding/json"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
+	"unicode"
+	"unicode/utf8"
 )
 
 // directionDoc owns the product requirements; §12 is the traceability table.
@@ -90,22 +97,149 @@ func TestEveryNamedTestExists(t *testing.T) {
 	}
 }
 
-// declaredTests returns every Test function name in the module, found with go
-// vet's own view of the tree rather than a hand-kept list of directories.
+// declaredTests parses Go declarations, including gated tests. Existence is
+// distinct from execution: the sufficiency review records live runs separately.
 func declaredTests(t *testing.T) map[string]bool {
 	t.Helper()
-	out, err := exec.Command("grep", "-rho", "--include=*_test.go", `^func Test[A-Za-z_0-9]*`, moduleRoot).Output()
-	if err != nil {
-		t.Fatalf("scan for test functions: %v", err)
-	}
+	return declaredTestsAt(t, moduleRoot)
+}
+
+func declaredTestsAt(t *testing.T, root string) map[string]bool {
+	t.Helper()
 	set := map[string]bool{}
-	for _, line := range strings.Split(string(out), "\n") {
-		if name := strings.TrimPrefix(strings.TrimSpace(line), "func "); name != "" {
-			set[name] = true
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", "node_modules", "chainbench-out", "vendor":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+		if err != nil {
+			return err
+		}
+		aliases := map[string]bool{}
+		for _, imp := range file.Imports {
+			imported, err := strconv.Unquote(imp.Path.Value)
+			if err != nil {
+				return err
+			}
+			if imported == "testing" {
+				name := "testing"
+				if imp.Name != nil {
+					name = imp.Name.Name
+				}
+				aliases[name] = true
+			}
+		}
+		for _, declaration := range file.Decls {
+			function, ok := declaration.(*ast.FuncDecl)
+			if !ok || function.Recv != nil || function.Body == nil || !strings.HasPrefix(function.Name.Name, "Test") {
+				continue
+			}
+			suffix := strings.TrimPrefix(function.Name.Name, "Test")
+			if suffix != "" {
+				first, _ := utf8.DecodeRuneInString(suffix)
+				if unicode.IsLower(first) {
+					continue
+				}
+			}
+			if function.Type.TypeParams != nil || function.Type.Params.NumFields() != 1 || function.Type.Results.NumFields() != 0 {
+				continue
+			}
+			pointer, ok := function.Type.Params.List[0].Type.(*ast.StarExpr)
+			if !ok {
+				continue
+			}
+			selector, ok := pointer.X.(*ast.SelectorExpr)
+			if !ok || selector.Sel.Name != "T" {
+				continue
+			}
+			pkg, ok := selector.X.(*ast.Ident)
+			if ok && aliases[pkg.Name] {
+				set[function.Name.Name] = true
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("parse test declarations: %v", err)
 	}
 	if len(set) == 0 {
-		t.Fatal("found no test functions at all, so the scan is wrong rather than the module empty")
+		t.Fatal("found no test declarations; the inventory cannot attest anything")
 	}
 	return set
+}
+
+// Formatting or source text must never change whether a real Go test exists.
+func TestDeclaredTestsUseDeclarationsRatherThanText(t *testing.T) {
+	root := t.TempDir()
+	source := "package fixture\nimport tst \"testing\"\n" +
+		"/*\nfunc TestCommentIsNotEvidence\n*/\n" +
+		"var text = `\nfunc TestStringIsNotEvidence\n`\n" +
+		"func\nTestFormatted(t *tst.T) {}\n" +
+		"func TestOrdinary(t *tst.T) {}\n" +
+		"func TestWrongSignature(x int) {}\n" +
+		"type receiver struct{}\nfunc (receiver) TestMethod(t *tst.T) {}\n"
+	if err := os.WriteFile(filepath.Join(root, "fixture_test.go"), []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got := declaredTestsAt(t, root)
+	if len(got) != 2 || !got["TestFormatted"] || !got["TestOrdinary"] {
+		t.Fatalf("text was mistaken for test declarations: %v", got)
+	}
+}
+
+// This holds the review's links and honest scope, not the sufficiency judgment.
+func TestRequirementSufficiencyReviewKeepsEveryEvidenceLink(t *testing.T) {
+	bytes, err := os.ReadFile("../../docs/dev/requirement-sufficiency-review.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var review struct {
+		Scope        string `json:"scope"`
+		Final        string `json:"finalWeb14Acceptance"`
+		Requirements []struct {
+			ID        string   `json:"id"`
+			Criterion string   `json:"criterion"`
+			Tests     []string `json:"tests"`
+			Limit     string   `json:"limit"`
+		} `json:"requirements"`
+	}
+	if err := json.Unmarshal(bytes, &review); err != nil {
+		t.Fatal(err)
+	}
+	if review.Scope == "" || review.Final == "" {
+		t.Fatal("review must distinguish final acceptance")
+	}
+	have, seen := declaredTests(t), map[string]bool{}
+	for _, row := range review.Requirements {
+		if seen[row.ID] {
+			t.Errorf("duplicate requirement %s", row.ID)
+		}
+		seen[row.ID] = true
+		if row.Criterion == "" || row.Limit == "" || len(row.Tests) == 0 {
+			t.Errorf("%s omits behavior, evidence, or its limits", row.ID)
+		}
+		for _, name := range row.Tests {
+			if !have[name] {
+				t.Errorf("%s evidence %s is not a Go test declaration", row.ID, name)
+			}
+		}
+	}
+	if len(seen) != 19 {
+		t.Errorf("review contains %d requirements, want 19", len(seen))
+	}
+	for i := 1; i <= 19; i++ {
+		if !seen[fmt.Sprintf("R%02d", i)] {
+			t.Errorf("missing R%02d", i)
+		}
+	}
 }

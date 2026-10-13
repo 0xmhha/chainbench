@@ -1,0 +1,176 @@
+{
+  "scope": "R11 successful deployment provenance: actual transaction and receipt, persisted steps; failed observation explicitly unknown",
+  "test": "TestNativeDeploymentPublicProvenance",
+  "elapsedSeconds": 185.03,
+  "log": "/private/tmp/chainbench-r11-native.jsonl",
+  "red": "/private/tmp/chainbench-r11-red.log",
+  "checks": [
+    "make check",
+    "related packages race",
+    "three chains serial native race, no skips",
+    "sources and binary hashes verified",
+    "stop/remove preserved proof and session, reclaimed node databases"
+  ],
+  "chains": [
+    {
+      "chain": "stablenet",
+      "proof": "/private/tmp/cbui/deployment-native-878037880/proof.json",
+      "proofSHA256": "55d27fda02a433bb809b5a9565bea5c2a49b053f08bb58b88860d71145d4f2a2",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-stablenet/build/bin/gstable",
+      "binarySHA256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+      "step": {
+        "Index": 0,
+        "Type": "deployContract",
+        "On": "",
+        "Signer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "Nonce": 0,
+        "Gas": "",
+        "Hash": "0x3ca661b192044c90d280d8e1630527708fdc0f4aa5c11964955bfc8ded205bb9",
+        "Receipt": {
+          "blockHash": "0x5d167100eb6276477e08411ad49f320a715a3ae6f3815579ddd32891f7b1da5e",
+          "blockNumber": "0x27",
+          "contractAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "cumulativeGasUsed": "0xd820",
+          "effectiveGasPrice": "0x2b4abd176000",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gasUsed": "0xd820",
+          "logs": [],
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "status": "0x1",
+          "to": null,
+          "transactionHash": "0x3ca661b192044c90d280d8e1630527708fdc0f4aa5c11964955bfc8ded205bb9",
+          "transactionIndex": "0x0",
+          "type": "0x2"
+        },
+        "Deployment": {
+          "deployer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "nonce": 0,
+          "expectedAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "actualAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "bytecodeSHA256": "06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f",
+          "artifact": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f"
+        },
+        "Error": ""
+      },
+      "sources": {
+        "../core/session/record.go": "7689ae4c75ac5398fba00dd0e1e0a509530b0e013d0004aff14f7c5be69fb9cc",
+        "../dsl/interp/interpreter.go": "3d3f0ef989078430ee96093e81f393b7c15599b22bae7293cce6143997aa4ee8",
+        "../dsl/interp/run.go": "dd2c7ea80b1de654b0e018ebe746ce9730e0d258e016b281b3cd4f81465af124",
+        "../testhelper/assets.go": "2e98b692eab514abd3b0043699c947c481f1d217d2a300a4aae5af4060062247",
+        "../testhelper/deployment_provenance.go": "de380ad4816c53736e9e9e1522cdffed8302ddc4efd06ffbf4f74e84b6bab4ec",
+        "../testhelper/deployment_provenance_test.go": "bdba37051e564870b2a5934f7c1325bdbaa56b890c285e88aa9386def3cd42ed",
+        "deployment_provenance_native_test.go": "df408d108a585b7b82ad80f33e7d3ced7382d3ae423badda111872ae4b163904"
+      },
+      "nodeDatabasesRemoved": true,
+      "processLedgerEmpty": true,
+      "processLedgerSHA256": "359e1bd33b8675aa5e325e7e99b3b82c70bc6fabfedf9fdcbb926f8c9485fac3"
+    },
+    {
+      "chain": "wbft",
+      "proof": "/private/tmp/cbui/deployment-native-1149651802/proof.json",
+      "proofSHA256": "c4b8f7cfc8986d1a55bc7d127d519f78947813bf5269525507de97c4634be589",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-wbft/build/bin/gwemix",
+      "binarySHA256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+      "step": {
+        "Index": 0,
+        "Type": "deployContract",
+        "On": "",
+        "Signer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "Nonce": 0,
+        "Gas": "",
+        "Hash": "0x2a66d40c858cc5bcce4a76c948e02c01890d88b28857fca03c7325b70feb7963",
+        "Receipt": {
+          "blockHash": "0xf9ea05ec79701dfe34f74d1cf076567111b09a78cc39dc51c620249403d65c41",
+          "blockNumber": "0x9",
+          "contractAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "cumulativeGasUsed": "0xd820",
+          "effectiveGasPrice": "0x175a62948b",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gasUsed": "0xd820",
+          "logs": [],
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "status": "0x1",
+          "to": null,
+          "transactionHash": "0x2a66d40c858cc5bcce4a76c948e02c01890d88b28857fca03c7325b70feb7963",
+          "transactionIndex": "0x0",
+          "type": "0x2"
+        },
+        "Deployment": {
+          "deployer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "nonce": 0,
+          "expectedAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "actualAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "bytecodeSHA256": "06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f",
+          "artifact": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f"
+        },
+        "Error": ""
+      },
+      "sources": {
+        "../core/session/record.go": "7689ae4c75ac5398fba00dd0e1e0a509530b0e013d0004aff14f7c5be69fb9cc",
+        "../dsl/interp/interpreter.go": "3d3f0ef989078430ee96093e81f393b7c15599b22bae7293cce6143997aa4ee8",
+        "../dsl/interp/run.go": "dd2c7ea80b1de654b0e018ebe746ce9730e0d258e016b281b3cd4f81465af124",
+        "../testhelper/assets.go": "2e98b692eab514abd3b0043699c947c481f1d217d2a300a4aae5af4060062247",
+        "../testhelper/deployment_provenance.go": "de380ad4816c53736e9e9e1522cdffed8302ddc4efd06ffbf4f74e84b6bab4ec",
+        "../testhelper/deployment_provenance_test.go": "bdba37051e564870b2a5934f7c1325bdbaa56b890c285e88aa9386def3cd42ed",
+        "deployment_provenance_native_test.go": "df408d108a585b7b82ad80f33e7d3ced7382d3ae423badda111872ae4b163904"
+      },
+      "nodeDatabasesRemoved": true,
+      "processLedgerEmpty": true,
+      "processLedgerSHA256": "359e1bd33b8675aa5e325e7e99b3b82c70bc6fabfedf9fdcbb926f8c9485fac3"
+    },
+    {
+      "chain": "wemix",
+      "proof": "/private/tmp/cbui/deployment-native-390505388/proof.json",
+      "proofSHA256": "470ac202ee84f4d413a5c9fb31a7e14f82ed4985952d0337aee10a2cb0538f8a",
+      "binary": "/Users/0xtopaz/work/github/0xmhha/chain/go-wemix/build/bin/gwemix",
+      "binarySHA256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+      "step": {
+        "Index": 0,
+        "Type": "deployContract",
+        "On": "",
+        "Signer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "Nonce": 0,
+        "Gas": "",
+        "Hash": "0x613d4bf95ba211a8d1e60394a7109c92fd77ba00a94eada6f8f5121f08966240",
+        "Receipt": {
+          "blockHash": "0x9a004f5b2e82d43d6b211f7cd8bbaecfac734d4d5cc143fb2c33a9dc1d13199c",
+          "blockNumber": "0x24",
+          "contractAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "cumulativeGasUsed": "0xd820",
+          "effectiveGasPrice": "0x174876e801",
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "gasUsed": "0xd820",
+          "logs": [],
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "status": "0x1",
+          "to": null,
+          "transactionHash": "0x613d4bf95ba211a8d1e60394a7109c92fd77ba00a94eada6f8f5121f08966240",
+          "transactionIndex": "0x0",
+          "type": "0x2"
+        },
+        "Deployment": {
+          "deployer": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "nonce": 0,
+          "expectedAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "actualAddress": "0xd3c768bd95605d98d8370131e06789c86a3eac06",
+          "bytecodeSHA256": "06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f",
+          "artifact": "sha256:06906dbcba90587d13a92ff51d6c241c2c987ec414355b79ac57832db6114f0f"
+        },
+        "Error": ""
+      },
+      "sources": {
+        "../core/session/record.go": "7689ae4c75ac5398fba00dd0e1e0a509530b0e013d0004aff14f7c5be69fb9cc",
+        "../dsl/interp/interpreter.go": "3d3f0ef989078430ee96093e81f393b7c15599b22bae7293cce6143997aa4ee8",
+        "../dsl/interp/run.go": "dd2c7ea80b1de654b0e018ebe746ce9730e0d258e016b281b3cd4f81465af124",
+        "../testhelper/assets.go": "2e98b692eab514abd3b0043699c947c481f1d217d2a300a4aae5af4060062247",
+        "../testhelper/deployment_provenance.go": "de380ad4816c53736e9e9e1522cdffed8302ddc4efd06ffbf4f74e84b6bab4ec",
+        "../testhelper/deployment_provenance_test.go": "bdba37051e564870b2a5934f7c1325bdbaa56b890c285e88aa9386def3cd42ed",
+        "deployment_provenance_native_test.go": "df408d108a585b7b82ad80f33e7d3ced7382d3ae423badda111872ae4b163904"
+      },
+      "nodeDatabasesRemoved": true,
+      "processLedgerEmpty": true,
+      "processLedgerSHA256": "359e1bd33b8675aa5e325e7e99b3b82c70bc6fabfedf9fdcbb926f8c9485fac3"
+    }
+  ],
+  "finalWeb14Acceptance": "pending frozen final source"
+}

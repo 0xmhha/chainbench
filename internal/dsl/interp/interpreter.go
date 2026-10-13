@@ -214,6 +214,8 @@ type ActionCtx struct {
 	// record step provenance. They are outputs, set by the action.
 	Hash    string
 	Receipt map[string]any
+	// Deployment is the public provenance emitted by a contract creation action.
+	Deployment *session.ContractDeployment
 	// Value is the action's result for step value binding: when the step declares
 	// "save", the interpreter binds this under that name for later steps and
 	// assertions to reference as "$name". An action that only sets Hash (a tx)

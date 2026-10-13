@@ -171,7 +171,13 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 func (i *interpreter) dispatchStep(ctx context.Context, idx int, name string, act Action, on string, args map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
 	runErr := act.Do(ctx, ac)
-	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt}
+	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt, Deployment: ac.Deployment}
+	if ac.Deployment != nil {
+		step.Signer = ac.Deployment.Deployer
+		if ac.Deployment.Nonce != nil {
+			step.Nonce = *ac.Deployment.Nonce
+		}
+	}
 	if runErr != nil {
 		step.Error = runErr.Error()
 	}
