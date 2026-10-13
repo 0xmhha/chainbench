@@ -201,6 +201,55 @@ try{
  await page.screenshot({path:out+'/load-controls.png',fullPage:true})
  observed.loadControls={fractionRejected:true,zeroRejected:true,percentRangeEnforced:true,integerControls:true,saveExportPreserved:true}
 
+ // Create the fee payer through the declared account selector, retaining
+ // key bindings and preserving an invalid imported pair until corrected.
+ const feeCase=structuredClone(endpointCase)
+ feeCase.id='fee-browser'
+ feeCase.chainPreset.accounts={sponsor:{keyFile:'${CHAINBENCH_BROWSER_SPONSOR_KEY}'}}
+ feeCase.steps=[
+  {do:'newAccount',saveKey:'key'},
+  {do:'deployContract',on:'en1',key:'$key',bytecode:'0x600a600c600039600a6000f3602a60005260206000f3',value:'5',gas:'200000',accessList:[]},
+  {expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'0'},
+ ]
+ await upload.setInputFiles(file('fee.json',feeCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const feePath='/content/steps/1/feePayer'
+ const feeFields=page.getByLabel('/content/steps/1 필드 추가',{exact:true})
+ await feeFields.selectOption('feePayer')
+ const payer=page.getByLabel(feePath,{exact:true})
+ assert.equal(await payer.evaluate(e=>e.tagName),'SELECT')
+ assert.deepEqual(await payer.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['sponsor'])
+ await payer.selectOption('sponsor')
+ const remaining=await feeFields.locator('option').evaluateAll(options=>options.map(o=>o.value))
+ assert.ok(!remaining.includes('feePayerKey')&&!remaining.includes('gasPrice'),'ignored fee model fields can still be added')
+ feeCase.steps[1].feePayer='sponsor'
+ const conflicting=structuredClone(feeCase)
+ conflicting.steps[1].feePayerKey='$key'
+ await upload.setInputFiles(file('conflicting-fee.json',conflicting))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ assert.equal(await page.getByLabel('/content/steps/1/feePayerKey',{exact:true}).inputValue(),'$key','invalid imported key was discarded')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:/feePayer.*feePayerKey/}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/delegation-conflict.png',fullPage:true})
+ const partial=structuredClone(feeCase)
+ partial.steps[1].maxFeePerGas='3'
+ await upload.setInputFiles(file('partial-fee.json',partial))
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByTestId('dsl-error-summary').filter({hasText:'maxPriorityFeePerGas'}).waitFor({timeout:15000})
+
+ await upload.setInputFiles(file('fee.json',feeCase))
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const feeDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await feeDownload).saveAs(out+'/delegation-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/delegation-export.json','utf8')),feeCase)
+ await page.screenshot({path:out+'/delegation-editor.png',fullPage:true})
+ observed.feeDelegation={declaredAccountSelector:true,conflictingFieldsUnavailable:true,conflictingImportPreserved:true,conflictRejected:true,incompleteFeePairRejected:true,keyBindingAndExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)

@@ -35,7 +35,7 @@ func sendDelegatedOptions(ctx context.Context, ac *interp.ActionCtx, wallet acco
 	if value == nil {
 		value = new(big.Int)
 	}
-	custom := false
+	custom := to == "" // Contract creation must use the full envelope, including its init code.
 	for _, field := range []string{"gas", "data", "nonce", "maxFeePerGas", "maxPriorityFeePerGas", "accessList"} {
 		if _, supplied := ac.Args[field]; supplied {
 			custom = true

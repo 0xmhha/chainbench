@@ -148,3 +148,18 @@ test('profile role selectors also follow the imported shared preset',()=>{
  for(const name of ['node1','node2','bp1','en1'])assert.ok(names.includes(name),name)
  assert.ok(!names.includes('node3'))
 })
+
+test('fee payer choices merge declared accounts and exclude node-signed identities',()=>{
+ const own={schemaVersion:'2',chainPreset:{extends:'base',accounts:{sponsor:{},node1:{},faucet:{},'0xdead':{}}}}
+ const inherited={base:{accounts:{payer:{keyFile:'${PAYER_KEY}'},sponsor:{keyFile:'${SPONSOR_KEY}'}}}}
+ const before=JSON.stringify({own,inherited})
+ assert.deepEqual(references(own,['bp','en'],{},inherited).accounts,['payer','sponsor'])
+ assert.equal(JSON.stringify({own,inherited}),before)
+})
+test('mutually exclusive transaction fields cannot be added together',async()=>{
+ const {forbiddenFields}=await import('../../web/src/dsl-form.js')
+ const schema={allOf:[{not:{required:['feePayer','feePayerKey']}},{not:{required:['feePayer','gasPrice']}}]}
+ assert.deepEqual([...forbiddenFields(schema,{feePayer:'sponsor'})],['feePayerKey','gasPrice'])
+ assert.deepEqual([...forbiddenFields(schema,{feePayerKey:'$key'})],['feePayer'])
+ assert.deepEqual([...forbiddenFields(schema,{})],[])
+})

@@ -88,7 +88,9 @@ export function references(doc, roles = [], defaults = {}, presets = {}) {
       for (const key of ['save','saveKey']) if (args[key]) bindings.push('$'+args[key])
     }
   }
-  return {nodes, before}
+  const accounts=Object.keys({...inherited.accounts,...own.accounts})
+    .filter(name=>name!=='faucet'&&!/^node[1-9][0-9]*$/.test(name)&&!/^0[xX]/.test(name)).sort()
+  return {nodes, before, accounts}
 }
 
 export function finishedGenesisRef(doc) {
@@ -176,8 +178,15 @@ export function valueProblem(schema, value) {
 
 // Disallowed imported fields stay visible; this only removes forbidden additions.
 export function forbiddenFields(schema, value) {
- const forbidden=new Set(schema?.not?.required?.length===1?schema.not.required:[])
+ const forbidden=new Set()
+ function exclude(required){
+  for(const field of required??[]){
+   if(required.filter(other=>other!==field).every(other=>value&&Object.hasOwn(value,other)))forbidden.add(field)
+  }
+ }
+ exclude(schema?.not?.required)
  for(const rule of schema?.allOf??[]){
+  exclude(rule.not?.required)
   const condition=rule.if?{...rule.if,type:rule.if.type??(rule.if.properties?'object':undefined)}:null
   const active=condition&&compatible(condition,value)?rule.then:rule.else
   if(active?.not?.required?.length===1)for(const key of active.not.required)forbidden.add(key)

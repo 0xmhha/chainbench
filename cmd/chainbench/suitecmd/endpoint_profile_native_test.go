@@ -480,7 +480,12 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	}
 	sources := map[string]string{}
 	invalidNumericRuns := requireNativeInvalidNumericRuns(t, fixture, signedSpec["chainPreset"], &rawTransactions)
-	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
+	delegatedCreations := requireNativeDelegatedCreations(t, ctx, fixture, signedSpec["chainPreset"], endpoint.RPCURL, &rawTransactions, func() []map[string]any {
+		estimateMu.Lock()
+		defer estimateMu.Unlock()
+		return append([]map[string]any(nil), estimates...)
+	})
+	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go", "../../../internal/testhelper/arguments.go", "../../../internal/testhelper/transaction_numbers.go", "../../../internal/testhelper/transaction_numbers_test.go", "../../../internal/testhelper/editor_contract.go", "../../../internal/app/testcase_transaction_numbers_test.go", "../../../internal/app/testcase_delegation_test.go", "../../../internal/testhelper/delegated_creation_test.go", "../../../internal/testhelper/delegated.go", "../../../internal/testhelper/outcome.go", "../../../internal/core/rpc/client.go"}
 	for _, name := range assetSources {
 		content, err := os.ReadFile(name)
 		if err != nil {
@@ -510,6 +515,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
 	binarySHA := sha256.Sum256(content)
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
 	proof["chain"] = chain
+	proof["delegatedCreations"] = delegatedCreations
 	proof["invalidNumericRuns"] = invalidNumericRuns
 	proof["submissionRejections"] = frozenRejections
 	proof["applepieBlock"] = *genesis.Config.ApplepieBlock

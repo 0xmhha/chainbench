@@ -155,6 +155,22 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		case assertDerive:
 			parameterSchema["anyOf"] = []any{map[string]any{"required": []string{"selector"}, "properties": map[string]any{"op": map[string]any{"const": "abiCall"}}}, map[string]any{"required": []string{"of"}}}
 		}
+		if e.Kind == "action" && (e.Name == actionSendTx || e.Name == actionDeployContract) {
+			rules := []any{}
+			for _, fields := range [][]string{{"feePayer", "feePayerKey"}, {"feePayer", "gasPrice"}, {"feePayerKey", "gasPrice"}, {"gasPrice", "maxFeePerGas"}, {"gasPrice", "maxPriorityFeePerGas"}} {
+				rules = append(rules, map[string]any{"not": map[string]any{"required": fields}})
+			}
+			for _, payer := range []string{"feePayer", "feePayerKey"} {
+				for _, caps := range [][]string{{"maxFeePerGas", "maxPriorityFeePerGas"}, {"maxPriorityFeePerGas", "maxFeePerGas"}} {
+					rules = append(rules, map[string]any{"anyOf": []any{
+						map[string]any{"not": map[string]any{"required": []string{payer}}},
+						map[string]any{"not": map[string]any{"required": []string{caps[0]}}},
+						map[string]any{"required": []string{caps[1]}},
+					}})
+				}
+			}
+			parameterSchema["allOf"] = rules
+		}
 		schemas[e.Kind+"-"+e.Name] = parameterSchema
 		if strings.Contains(" stopNode startNode restartNode resetNode swapNode crossFork readNodeLog ", " "+e.Name+" ") {
 			r.entries[i].Prerequisites = []string{"owned-node-control"}
@@ -181,6 +197,8 @@ func editorParameter(field string) map[string]any {
 		s["format"] = "duration"
 	}
 	switch field {
+	case "feePayer":
+		return map[string]any{"type": "string", "minLength": 1, "description": "Declared local account that signs and pays transaction fees."}
 	case "key", "feePayerKey", "senderKey", "authorityKey":
 		return map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`, "description": "Private key binding from an earlier step. Literal private key material cannot be shared through the Web document API."}
 	case "is", "expected", "delta", "tol":

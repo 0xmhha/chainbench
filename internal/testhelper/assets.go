@@ -109,6 +109,9 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	if err := validateQuantity(ac.Args, "value", 0); err != nil {
 		return err
 	}
+	if err := checkLocalSendArgs(ac.Args); err != nil {
+		return err
+	}
 	code, _ := ac.Args["bytecode"].(string)
 	if code == "" {
 		code, _ = ac.Args["data"].(string)
@@ -131,6 +134,12 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	if sender.SignsLocally() {
 		return deployContractLocalKey(ctx, ac, sender.Key, code)
 	}
+	if _, supplied := ac.Args["feePayer"]; supplied {
+		return fmt.Errorf("dsl: feePayer requires a local signing account")
+	}
+	if _, supplied := ac.Args["feePayerKey"]; supplied {
+		return fmt.Errorf("dsl: feePayerKey requires a local signing account")
+	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -146,6 +155,13 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	}
 	if v, ok := hexQuantity(ac.Args["value"]); ok {
 		args.Value = v
+	}
+	if raw, supplied := ac.Args["accessList"]; supplied {
+		list, err := localAccessList(ac.Deps, raw)
+		if err != nil {
+			return err
+		}
+		args.AccessList = list
 	}
 	if err := applyFeeArgs(&args, ac.Args); err != nil {
 		return err
@@ -365,7 +381,17 @@ func deployContractLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []by
 			hasOverrides = true
 		}
 	}
-	if hasOverrides {
+	if payer, _ := ac.Args["feePayer"].(string); payer != "" {
+		hash, err = sendDelegatedOptions(ctx, ac, w, "", value, code, rpcURL)
+	} else if key, _ := ac.Args["feePayerKey"].(string); key != "" {
+		hash, err = sendDelegatedOptions(ctx, ac, w, "", value, code, rpcURL)
+	} else if _, list := ac.Args["accessList"]; list {
+		if _, legacy := ac.Args["gasPrice"]; legacy {
+			hash, err = sendLegacyOptions(ctx, ac, w, "", value, code, rpcURL)
+		} else {
+			hash, err = sendDynamicOptions(ctx, ac, w, "", value, code, rpcURL)
+		}
+	} else if hasOverrides {
 		gas, estimateErr := localAssetGas(ctx, ac, w.Address(), "", value, code)
 		if estimateErr != nil {
 			return estimateErr

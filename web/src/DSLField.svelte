@@ -35,6 +35,12 @@
  {:else if current.enum}
   <label>{label} <select aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
   {#if !current.enum.includes(value)}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}</p>{/if}
+ {:else if label==='feePayer' && type==='string'}
+  <label>{label} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+   {#if !value}<option value="">대납 계정 선택</option>{:else if !(suggestions.accounts??[]).includes(value)}<option value={value}>가져온 계정 · {value}</option>{/if}
+   {#each suggestions.accounts??[] as account}<option value={account}>{account}</option>{/each}
+  </select></label>
+  {#if !(suggestions.accounts??[]).length}<p>체인 프리셋에 대납 계정을 선언하세요.</p>{/if}
  {:else if type==='object'}
   <fieldset><legend>{label}</legend>
    {#each Object.entries(value??{}) as [name,child] (name)}

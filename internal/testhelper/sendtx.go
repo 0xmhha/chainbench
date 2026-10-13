@@ -298,6 +298,11 @@ func checkLocalSendArgs(args map[string]any) error {
 		}
 	}
 	if hasPayer || hasPayerKey {
+		_, fee := args["maxFeePerGas"]
+		_, tip := args["maxPriorityFeePerGas"]
+		if fee != tip {
+			return fmt.Errorf("dsl: fee delegation: maxFeePerGas and maxPriorityFeePerGas come together")
+		}
 		if _, legacy := args["gasPrice"]; legacy {
 			return fmt.Errorf("dsl: fee delegation cannot carry gasPrice")
 		}

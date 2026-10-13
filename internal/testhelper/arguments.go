@@ -22,7 +22,7 @@ import (
 // case claim a timeout, a node or a saved value it never had.
 var builtinArguments = map[string]string{
 	"action:crossFork":                   "timeout",
-	"action:deployContract":              "bytecode data from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout value",
+	"action:deployContract":              "accessList bytecode data feePayer feePayerKey from gas gasPrice key maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout value",
 	"action:faucet":                      "amount from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout to",
 	"action:healPartition":               "groups method",
 	"action:load":                        "blocks fillPercent from gas gasPrice maxFeePerGas maxPriorityFeePerGas nonce on onEach pollInterval save timeout",

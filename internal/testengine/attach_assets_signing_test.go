@@ -36,6 +36,13 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		{"faucet", map[string]any{"do": "faucet", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "1"}, 1},
 		{"fee-full", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "gas": "70000", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"fee-auto", map[string]any{"do": "sendTx", "from": "payer", "feePayer": "sponsor", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"fee-create-full", map[string]any{"do": "deployContract", "from": "payer", "feePayer": "sponsor", "bytecode": "0x60006000f3", "value": "5", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"fee-create-auto", map[string]any{"do": "deployContract", "from": "payer", "feePayer": "sponsor", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"fee-create-default", map[string]any{"do": "deployContract", "from": "payer", "feePayer": "sponsor", "bytecode": "0x60006000f3", "value": "5"}, 1},
+		{"fee-create-refused", map[string]any{"do": "deployContract", "from": "payer", "feePayer": "sponsor", "bytecode": "0x60006000f3", "value": "5"}, 0},
+		{"dynamic-create-list", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"access-list-create", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "gas": "70000", "nonce": "7", "gasPrice": "3", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
+		{"fee-create-key", map[string]any{"do": "deployContract", "from": "payer", "feePayerKey": strings.Repeat("0", 63) + "2", "bytecode": "0x60006000f3", "value": "5", "gas": "70000", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 		{"deploy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"deploy-auto-dynamic", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"deploy-auto-legacy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "nonce": "7", "gasPrice": "3"}, 1},
@@ -82,6 +89,10 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getTransactionCount":
 					value = fmt.Sprintf("%#x", signed.Load())
 				case "eth_estimateGas":
+					if sample.name == "fee-create-refused" {
+						_ = json.NewEncoder(out).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "error": map[string]any{"code": -32000, "message": "creation estimate refused"}})
+						return
+					}
 					if strings.Contains(sample.name, "auto") && !strings.HasPrefix(sample.name, "deploy-") {
 						var args map[string]any
 						if err := json.Unmarshal(request.Params[0], &args); err != nil {
@@ -91,6 +102,13 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 							if _, supplied := sample.step[field]; supplied && args[field] != expected {
 								t.Errorf("estimate lost %s: %v", field, args[field])
 							}
+						}
+					}
+					if sample.name == "fee-create-auto" {
+						var args map[string]any
+						_ = json.Unmarshal(request.Params[0], &args)
+						if args["to"] != nil || args["type"] != "0x16" || args["feePayer"] == nil || args["data"] != sample.step["bytecode"] || args["value"] != "0x5" || args["nonce"] != "0x7" {
+							t.Errorf("creation estimate lost intent or payer: %+v", args)
 						}
 					}
 					value = "0x10000"
@@ -105,10 +123,21 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
 						data, _ := hex.DecodeString("abcdef")
 						gas := uint64(70000)
-						if sample.name == "fee-auto" {
+						if strings.HasSuffix(sample.name, "auto") || sample.name == "fee-create-default" {
 							gas = 65536
 						}
-						expected := sdktx.FeeDelegateTx{Sender: sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}}
+						target := &to
+						if sample.step["do"] == "deployContract" {
+							target = nil
+							data, _ = hex.DecodeString("60006000f3")
+						}
+						list := sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}
+						nonce := uint64(7)
+						if sample.name == "fee-create-default" {
+							list = nil
+							nonce = 0
+						}
+						expected := sdktx.FeeDelegateTx{Sender: sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: nonce, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: target, AccessList: list}}
 						if err := expected.Sign(sender, sponsor); err != nil {
 							t.Error(err)
 						}
@@ -137,7 +166,12 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 						if sample.name == "dynamic-list-label" {
 							listAddress = sdktypes.BytesToAddress(sdkcrypto.PubkeyToAddress(key.PubKey()).Bytes())
 						}
-						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: listAddress, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
+						target := &to
+						if sample.name == "dynamic-create-list" {
+							target = nil
+							data, _ = hex.DecodeString("60006000f3")
+						}
+						expected := sdktx.DynamicFeeTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: gas, GasTipCap: big.NewInt(1), GasFeeCap: big.NewInt(3), Value: big.NewInt(5), Data: data, To: target, AccessList: sdktx.AccessList{{Address: listAddress, StorageKeys: []sdktypes.Hash{sdktypes.BytesToHash([]byte{1})}}}}
 						if strings.HasPrefix(sample.name, "dynamic-auto-") {
 							expected.AccessList = nil
 						}
@@ -213,7 +247,12 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 							encoded = expected.Encode()
 						} else {
 							slot := sdktypes.BytesToHash([]byte{1})
-							expected := sdktx.AccessListTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: 70000, GasPrice: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{slot}}}}
+							target := &to
+							if sample.name == "access-list-create" {
+								target = nil
+								data, _ = hex.DecodeString("60006000f3")
+							}
+							expected := sdktx.AccessListTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: 70000, GasPrice: big.NewInt(3), Value: big.NewInt(5), Data: data, To: target, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{slot}}}}
 							if err := expected.Sign(key); err != nil {
 								t.Error(err)
 							}
@@ -281,7 +320,11 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 			var verdict struct {
 				Result string `json:"result"`
 			}
-			if err := json.Unmarshal(content, &verdict); err != nil || verdict.Result != "pass" || signed.Load() != sample.transactions || unsigned.Load() != 0 {
+			wanted := "pass"
+			if sample.transactions == 0 {
+				wanted = "fail"
+			}
+			if err := json.Unmarshal(content, &verdict); err != nil || verdict.Result != wanted || signed.Load() != sample.transactions || unsigned.Load() != 0 {
 				t.Fatalf("declared key did not sign locally: %v %s signed=%d unsigned=%d", err, content, signed.Load(), unsigned.Load())
 			}
 		})
