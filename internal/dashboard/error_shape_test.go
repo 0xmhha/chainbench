@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -73,6 +74,11 @@ func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertBusyStartNamesTheHolder(t, jobs)
+}
+
+func assertBusyStartNamesTheHolder(t *testing.T, jobs *app.WebJobs) {
+	t.Helper()
 	alice, bob := app.DeploymentActor{ID: "alice", Role: "operator"}, app.DeploymentActor{ID: "bob", Role: "operator"}
 	owner, err := jobs.Plan(context.Background(), alice, app.WebPlanInput{WorkspaceID: "owner", Operation: "chain.setup"})
 	if err != nil {
@@ -82,6 +88,30 @@ func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		deadline := time.Now().Add(3 * time.Second)
+		for {
+			job, err := jobs.Get(held.ID)
+			if err != nil {
+				t.Errorf("read accepted job before fixture cleanup: %v", err)
+				return
+			}
+			// Get owns the same lock as the final durable commit. Observing
+			// its terminal state means every disk write is already finished.
+			if job.State == "succeeded" {
+				return
+			}
+			if job.State == "failed" || job.State == "cancelled" {
+				t.Errorf("fixture job ended %s: %v", job.State, job.Error)
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Errorf("fixture job did not finish before cleanup: %s", job.State)
+				return
+			}
+			time.Sleep(time.Millisecond)
+		}
+	})
 	alias, err := jobs.Plan(context.Background(), bob, app.WebPlanInput{WorkspaceID: "alias", Operation: "chain.setup"})
 	if err != nil {
 		t.Fatal(err)
@@ -102,6 +132,57 @@ func TestBusyStartNamesTheHolderOverHTTP(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &body)
 	if w.Code != 409 || len(body.Details.Holders) != 1 || body.Details.Holders[0].JobID != held.ID || body.Details.Holders[0].ActorID != "alice" {
 		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}
+
+type delayedConflictEngine struct {
+	conflictFixtureEngine
+	entered, release, returned chan struct{}
+}
+
+func (e delayedConflictEngine) Execute(context.Context, app.DeploymentActor, app.WebPreparedJob, func(app.WebJobPhase) error) (app.WebJobResult, error) {
+	close(e.entered)
+	<-e.release
+	// Represents slow work after the HTTP assertion has finished. Completion
+	// must govern teardown, rather than how quickly this fixture usually runs.
+	time.Sleep(50 * time.Millisecond)
+	close(e.returned)
+	return app.WebJobResult{NodeDisposition: "retained"}, nil
+}
+
+func TestBusyStartFinishesDiskWritesBeforeFixtureCleanup(t *testing.T) {
+	engine := delayedConflictEngine{entered: make(chan struct{}), release: make(chan struct{}), returned: make(chan struct{})}
+	var jobs *app.WebJobs
+	var root string
+	t.Run("slow execution", func(t *testing.T) {
+		root = t.TempDir()
+		var err error
+		jobs, err = app.OpenWebJobs(root, engine, nil, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer close(engine.release)
+		assertBusyStartNamesTheHolder(t, jobs)
+		select {
+		case <-engine.entered:
+		case <-time.After(3 * time.Second):
+			t.Fatal("job never entered execution")
+		}
+	})
+	// Even the engine's return is earlier than its final durable commit. The
+	// scenario must drain that commit before testing.T removes its own TempDir.
+	select {
+	case <-engine.returned:
+	case <-time.After(3 * time.Second):
+		t.Fatal("fixture execution did not return")
+	}
+	for _, job := range jobs.List() {
+		if job.State != "succeeded" {
+			t.Errorf("fixture directory reclaimed before final job commit: state %s", job.State)
+		}
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Errorf("fixture directory was recreated after cleanup: %v", err)
 	}
 }
 
