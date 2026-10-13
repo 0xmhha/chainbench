@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
@@ -64,7 +65,7 @@ def clone_file(source, destination):
     return shutil.copy2(source, destination)
 
 
-def reclaim_runtime(runtime, references=()):
+def validate_runtime(runtime):
     runtime = Path(runtime).absolute()
     if runtime.parent != runtime_root():
         raise maintenance.UnsafeMaintenance('runtime is outside the owned root')
@@ -75,6 +76,11 @@ def reclaim_runtime(runtime, references=()):
     owned = json.loads(marker.read_text())
     if owned != {'version': 1, 'path': str(runtime), 'policy': 'completed-disposable-data'}:
         raise maintenance.UnsafeMaintenance('runtime ownership mismatch')
+    return runtime
+
+
+def reclaim_runtime(runtime, references=()):
+    runtime = validate_runtime(runtime)
     if maintenance.active(runtime, maintenance.inventory()):
         raise maintenance.UnsafeMaintenance('runtime still has a process or open file')
     candidates = []
@@ -123,13 +129,41 @@ def reclaim_runtime(runtime, references=()):
     return reclaimed
 
 
-def reclaim_evidence(directory):
-    runtimes, references = set(), []
+def reclaim_after_shutdown(runtime, directory, timeout=10):
+    """Finalize both passed and failed proofs after their owned processes exit.
+
+    The caller's finally block closes its servers/logs first. Partial evidence,
+    logs and source inputs survive; an explicitly cited database survives too.
+    No process is killed here, and an unavailable inventory refuses deletion.
+    """
+    runtime = validate_runtime(runtime)
+    deadline = time.monotonic() + timeout
+    while maintenance.active(runtime, maintenance.inventory()):
+        if time.monotonic() >= deadline:
+            raise maintenance.UnsafeMaintenance('runtime remains active after shutdown')
+        time.sleep(.1)
+    return reclaim_evidence(directory, (runtime,))
+
+
+def reclaim_evidence(directory, owned_runtimes=()):
+    # A failed invocation may have no success receipt. Its caller still knows
+    # exactly which runtime it created; validate that explicit ownership first.
+    runtimes = {validate_runtime(runtime) for runtime in owned_runtimes}
+    references = []
+    directory = Path(directory)
+    maintenance.safe_tree(directory)
     def visit(value):
         if isinstance(value, dict):
             runtime = value.get('runtime')
             if isinstance(runtime, str) and Path(runtime).parent == runtime_root():
                 runtimes.add(Path(runtime))
+            # Criterion fixtures use their invocation UUID as the runtime name.
+            # A partial failure receipt can precede the full runtime field.
+            invocation = value.get('invocationId')
+            if isinstance(invocation, str) and re.fullmatch(r'[0-9a-f]{8}-[0-9a-f-]{27}', invocation):
+                candidate = runtime_root() / invocation
+                if (candidate / MARKER).is_file():
+                    runtimes.add(candidate)
             for child in value.values():
                 visit(child)
         elif isinstance(value, list):
@@ -139,9 +173,11 @@ def reclaim_evidence(directory):
             references.append(value)
             if value and '\0' not in value and not value.startswith('/'):
                 references.append(str(Path(value).absolute()))
-    for path in Path(directory).rglob('*.json'):
+    for path in directory.rglob('*'):
         if path.is_symlink():
             raise maintenance.UnsafeMaintenance('evidence contains a symlink')
+        if not path.is_file() or path.suffix not in ('.json', '.jsonl'):
+            continue
         raw = path.read_text()
         try:
             visit(json.loads(raw))

@@ -1,5 +1,6 @@
 """Contracts for automatic cleanup of completed, exclusively owned proofs."""
 import ast
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import runtime_storage as storage
+import capture
+import recheck
 
 
 class RuntimeStorageTests(unittest.TestCase):
@@ -128,10 +131,115 @@ class RuntimeStorageTests(unittest.TestCase):
         for name in ('run_test_jobs.py', 'run_native_jobs.py', 'run_ssh_jobs.py'):
             tree = ast.parse((Path(__file__).parent / name).read_text())
             main = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'main')
-            self.assertTrue(isinstance(main.body[-1], ast.Expr) and
-                            isinstance(main.body[-1].value, ast.Call) and
-                            isinstance(main.body[-1].value.func, ast.Name) and
-                            main.body[-1].value.func.id == 'reclaim_evidence', name)
+            lifecycle = next(n for n in main.body if isinstance(n, ast.Try) and n.finalbody)
+            final = lifecycle.finalbody[-1]
+            self.assertTrue(isinstance(final, ast.Expr) and isinstance(final.value, ast.Call) and
+                            isinstance(final.value.func, ast.Name) and
+                            final.value.func.id == 'reclaim_after_shutdown', name)
+
+    def test_failed_partial_proof_without_success_receipt_reclaims_only_unreferenced_data(self):
+        runtime = self.runtime(); db, config, binary = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        log = out / 'browser.log'; log.write_text('original assertion failed')
+        evidence = out / 'partial.json'; evidence.write_text('{"outcome":"incomplete"}')
+        protected = {p: (p.read_bytes(), p.stat().st_mode, p.stat().st_mtime_ns)
+                     for p in (config, binary, log, evidence)}
+        with patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+            storage.reclaim_after_shutdown(runtime, out)
+        self.assertFalse(db.exists())
+        for path, expected in protected.items():
+            self.assertEqual((path.read_bytes(), path.stat().st_mode, path.stat().st_mtime_ns), expected)
+
+    def test_failed_proof_explicit_database_evidence_survives_reclamation(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        receipt = out / 'partial.json'; receipt.write_text(json.dumps({'artifact': str(db)}))
+        with patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+            storage.reclaim_after_shutdown(runtime, out)
+        self.assertEqual(db.read_bytes(), b'disposable')
+
+    def test_partial_jsonl_database_evidence_is_preserved(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        (out / 'observations.jsonl').write_text(json.dumps({'artifact': str(db)}) + '\n{"partial":')
+        with patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+            storage.reclaim_after_shutdown(runtime, out)
+        self.assertEqual(db.read_bytes(), b'disposable')
+
+    def test_evidence_inventory_with_a_link_refuses_reclamation(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        (out / 'external').symlink_to(self.root, target_is_directory=True)
+        with patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+            with self.assertRaises(storage.maintenance.UnsafeMaintenance):
+                storage.reclaim_after_shutdown(runtime, out)
+        self.assertTrue(db.exists())
+
+    def test_shutdown_waits_for_open_files_instead_of_racing_async_node_exit(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        with patch.object(storage.maintenance, 'inventory', side_effect=[('', [str(db)]), ('', []), ('', []), ('', [])]), \
+             patch.object(storage.time, 'sleep') as pause:
+            storage.reclaim_after_shutdown(runtime, out)
+        pause.assert_called_once()
+        self.assertFalse(db.exists())
+
+    def test_shutdown_timeout_preserves_data_and_refuses_cleanup(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        with patch.object(storage.maintenance, 'inventory', return_value=('', [str(db)])):
+            with self.assertRaisesRegex(storage.maintenance.UnsafeMaintenance, 'active'):
+                storage.reclaim_after_shutdown(runtime, self.root, timeout=0)
+        self.assertEqual(db.read_bytes(), b'disposable')
+
+    @contextlib.contextmanager
+    def workspace(self):
+        before = Path.cwd()
+        os.chdir(self.root)
+        try:
+            yield
+        finally:
+            os.chdir(before)
+
+    def test_failed_capture_reclaims_partial_invocation_without_awarding_acceptance(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        with self.workspace():
+            out = Path('proofs/WEB-08'); out.mkdir(parents=True)
+            evidence = out / 'evidence.json'
+            evidence.write_text(json.dumps({'invocationId': runtime.name, 'outcome': 'incomplete'}))
+            original = evidence.read_bytes()
+            with patch.object(capture.sys, 'argv', ['capture.py', 'WEB-08', 'proofs']), \
+                 patch.object(capture.subprocess, 'run', return_value=type('Result', (), {'returncode': 1})()), \
+                 patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+                with self.assertRaises(SystemExit) as error:
+                    capture.main()
+            self.assertEqual(error.exception.code, 1)
+            self.assertEqual(evidence.read_bytes(), original)
+            self.assertFalse(db.exists())
+
+    def test_failed_independent_reproduction_reclaims_dependencies_and_keeps_fresh_evidence(self):
+        with self.workspace():
+            out = Path('proofs/WEB-08'); out.mkdir(parents=True)
+            protected = out / 'evidence.json'; protected.write_text('{"sourceDigest":"frozen"}')
+            before = protected.read_bytes()
+            staged = []
+            def stage(workspace, runtime):
+                source = runtime / 'source'; source.mkdir()
+                dependency = source / 'web/node_modules/tool/index.js'
+                dependency.parent.mkdir(parents=True); dependency.write_text('disposable dependency')
+                fresh = source / out / 'result.json'; fresh.parent.mkdir(parents=True)
+                fresh.write_text('{"outcome":"incomplete","reason":"native failure"}')
+                staged.append((dependency, fresh))
+                return source
+            with patch.object(recheck, 'source_digest', return_value='frozen'), \
+                 patch.object(recheck, 'base_commit', return_value='commit'), \
+                 patch.object(recheck, 'verify_published'), patch.object(recheck, 'stage_sources', side_effect=stage), \
+                 patch.object(recheck.subprocess, 'run', return_value=type('Result', (), {'returncode': 1})()), \
+                 patch.object(storage.maintenance, 'inventory', return_value=('', [])):
+                with self.assertRaisesRegex(ValueError, 'Fresh independent live reproduction failed'):
+                    recheck.check('WEB-08', 'proofs')
+            self.assertEqual(protected.read_bytes(), before)
+            self.assertFalse(staged[0][0].exists())
+            self.assertIn('native failure', staged[0][1].read_text())
 
     def test_capture_collects_runtimes_and_artifact_paths_without_deleting_receipts(self):
         runtime = self.runtime(); db, _, _ = self.fixture(runtime)

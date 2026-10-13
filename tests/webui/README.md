@@ -316,11 +316,14 @@ fixtures from historical or user data. Successful criterion captures reclaim onl
 unreferenced `chaindata`, `lightchaindata` and `etcd` directories beneath numbered
 nodes. Development proofs assembled into a criterion are reclaimed one by one.
 Configuration, logs, binaries, process ledgers, source, receipts, exported snapshots
-and sessions remain available to the unchanged validators. Failed proofs keep their
-node data for diagnosis. A process/open-file inventory failure or activity refuses
+and sessions remain available to the unchanged validators. Failed standalone jobs
+also finalize after their owned processes exit; failed captures reclaim through
+partial evidence, and failed independent reproductions discard staged dependencies.
+Partial JSON/JSONL evidence, failure logs and explicitly cited databases survive;
+the failed verdict and original assertion are preserved. A process/open-file inventory failure or activity refuses
 cleanup; every deletion has a durable `storage-audit.jsonl` inside its runtime.
 
-Independent reproductions also discard their staged `node_modules` after passing;
+Independent reproductions also discard their staged `node_modules` after termination;
 the staged source and fresh receipts remain. macOS stages large files and native
 binaries with APFS copy-on-write rather than hard links: writes to the copy cannot
 change its input. Other filesystems use independent ordinary copies. Historical
@@ -329,3 +332,6 @@ unmarked runtimes remain subject to the explicit maintenance command above.
  tests/webui/runtime_storage_probe.py` checks three bounded 128 MiB fixtures with
 real open-file protection, repeated reclamation, metadata retention, APFS isolation
 and hashes of existing runtime JSON proofs. Its report is kept under `/private/tmp`.
+Add `--failures` to exercise three deliberate failures, preserve their incomplete
+results and original exceptions, and verify the same bounded storage behavior.
+This uses a separate report so the earlier successful proof is not overwritten.

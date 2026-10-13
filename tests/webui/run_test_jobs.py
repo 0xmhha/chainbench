@@ -1,5 +1,5 @@
 """Real browser/engine test job proof; does not award a Seed criterion."""
-from runtime_storage import reclaim_evidence
+from runtime_storage import reclaim_after_shutdown
 from runtime_storage import clone_file
 from runtime_storage import create_runtime
 import importlib.util
@@ -108,6 +108,6 @@ def main(browser_script="browser_test_jobs.mjs", proof_name="test-jobs", restart
         try:server.wait(timeout=10)
         except subprocess.TimeoutExpired:server.kill();server.wait()
         log.close()
-    reclaim_evidence(output)
+        reclaim_after_shutdown(runtime, output)
 
 if __name__=='__main__':main()

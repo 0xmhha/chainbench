@@ -1,5 +1,5 @@
 """Real owned loopback SSH deployment proof; does not award a Seed criterion."""
-from runtime_storage import reclaim_evidence
+from runtime_storage import reclaim_after_shutdown
 from runtime_storage import clone_file
 from runtime_storage import create_runtime
 import importlib.util
@@ -131,7 +131,7 @@ def main(browser_script="browser_ssh_jobs.mjs", proof_name="ssh-jobs", fixture_i
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
-    reclaim_evidence(output)
+        reclaim_after_shutdown(runtime, output)
 
 
 if __name__ == '__main__':

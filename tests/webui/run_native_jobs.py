@@ -1,5 +1,5 @@
 """Development proof for native durable jobs; does not award any Seed criterion."""
-from runtime_storage import reclaim_evidence
+from runtime_storage import reclaim_after_shutdown
 from runtime_storage import create_runtime
 import importlib.util
 import json
@@ -98,6 +98,6 @@ def main():
         try:server.wait(timeout=10)
         except subprocess.TimeoutExpired:server.kill();server.wait()
         log.close()
-    reclaim_evidence(output)
+        reclaim_after_shutdown(runtime, output)
 
 if __name__=='__main__':main()
