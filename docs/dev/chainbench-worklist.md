@@ -167,7 +167,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 5 | feature usecase 등록 | 잔여 app usecase 전부를 의미 있는 레지스트리 호출·타입 계약으로 연결; 미등록 0 래칫과 CLI/MCP 회귀 | 완료 — 59건 미등록 RED→90/90 함수 연결 GREEN; typed·키링·네트워크·RPC 계약, 관련 전체 race와 세 체인 native 호출 통과; `feature-registry-evidence.json` |
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
-| 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 미완료 |
+| 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 진행 — 같은 초·동시 세션 충돌 RED→GREEN; 실제 직렬 실행·마지막 정의 누락 변이·CLI/MCP/DSL 계획·native 단일/다중/MCP와 root report 통과. R11 배포자·nonce·바이트코드 체크섬 증명 보강은 남음; `requirement-execution-evidence.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 미완료 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |

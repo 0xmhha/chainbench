@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 82,713 |
+| `internal/` | 54 | 82,740 |
 | `cmd/` | 19 | 5,654 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **89,292** |
+| **합계** | **77** | **89,319** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 19,985줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,012줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -80,7 +80,7 @@ internal/core/
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
 │                            reuse / rebuild-nodes N / rebuild-all / compose 를 답한다. 판단만 하고 보지 않는다
-├── session      2,782  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
+├── session      2,809  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
 │                            이름 붙인 네트워크 레지스트리(SaveNetwork·LoadNetwork·ListNetworks·RemoveNetwork)
 ├── collector    1,460  [L3] live tail·chainstate·bp 참여·reorg + 이벤트(Bus·Event·Kind·Phase)
 │                            + 로그 검색·타임라인(Search·Timeline) + RPC 로부터의 체인 종류·능력 감지

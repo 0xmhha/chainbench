@@ -18,7 +18,7 @@ CHECKS = ['make check', 'go test -race -json -p 1 ./...', 'go vet -tags e2e ./..
 RACE = CHECKS[1]
 # A gated Go test skips without these. A skipped test is not a passed one, so
 # the regression run needs every gate opened.
-LIVE_ENV = ['GSTABLE_BIN', 'GWEMIX_BIN', 'CHAINBENCH_DOCKER_SERVERS']
+LIVE_ENV = ['GSTABLE_BIN', 'GWBFT_BIN', 'GWEMIX_BIN', 'CHAINBENCH_DOCKER_SERVERS']
 VERIFIERS = {'WEB-01': 'evidence', **{'WEB-%02d' % i: 'evidence_web%02d' % i for i in range(2, 14)}}
 
 

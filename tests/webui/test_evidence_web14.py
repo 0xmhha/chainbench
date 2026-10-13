@@ -6,7 +6,7 @@ import tempfile
 import types
 import unittest
 from unittest import mock
-from evidence_web14 import CHECKS, CRITERIA, RACE, REQUIRED, VERIFIERS, acceptance_root, coverage, digest, go_tests, verify, verify_criterion
+from evidence_web14 import LIVE_ENV, CHECKS, CRITERIA, RACE, REQUIRED, VERIFIERS, acceptance_root, coverage, digest, go_tests, verify, verify_criterion
 
 
 class EvidenceWEB14Tests(unittest.TestCase):
@@ -24,6 +24,12 @@ class EvidenceWEB14Tests(unittest.TestCase):
             self.assertIn(check, CHECKS)
         self.assertIn('-race', RACE)
         self.assertIn('-json', RACE)
+
+    def test_all_three_chain_binary_gates_are_opened_only_by_serial_race(self):
+        self.assertIn('GWBFT_BIN', LIVE_ENV)
+        self.assertIn('GSTABLE_BIN', LIVE_ENV)
+        self.assertIn('GWEMIX_BIN', LIVE_ENV)
+        self.assertIn('-p 1', RACE)
 
     def test_a_skipped_go_test_is_reported_not_passed(self):
         lines = [json.dumps({'Action': 'pass', 'Package': 'p', 'Test': 'TestA'}),
