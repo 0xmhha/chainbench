@@ -16,9 +16,6 @@ func localAssetTransaction(ctx context.Context, ac *interp.ActionCtx, sender Acc
 	if ac.Deps == nil || ac.Deps.Accounts == nil {
 		return fmt.Errorf("dsl: local asset needs an account provider")
 	}
-	if _, legacy := ac.Args["gasPrice"]; legacy {
-		return fmt.Errorf("dsl: local asset gasPrice requires the legacy transaction contract")
-	}
 	url := selectorTarget(ac.Env, ac.Args)
 	wallet, err := ac.Deps.Accounts.OpenWallet(ctx, sender.Key, url)
 	if err != nil {

@@ -214,8 +214,15 @@ WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에
 faucet·deployContract·registerContract·load의 선언 keyFile 계정 로컬 서명을 확인했다.
 인증 RPC 계약과 반복 load의 명시 nonce 증가를 RED→GREEN으로 검증했고, make check·관련 6패키지 race가 통과했다.
 실제 stablenet BP4/EN1에서 CLI와 MCP 각각 여섯 서명(총 12건)을 제출하고 세션 PASS·배포 코드·종료 DB 0건을 확인했다.
-다른 체인의 로컬 자산 실증, legacy/access-list/delegation 등 고급 입력은 이 증거의 완료 범위가 아니다.
-R3 나머지, R4 고급 입력, R1/R5/R6와 전체 Linux L1은 계속 남는다.
+다른 체인의 로컬 자산 실증과 고급 입력은 위 단일 체인 증거의 완료 범위가 아니다.
+**같은 날 legacy·접근 목록 보강:** [전체 필드 서명 증거](specified-legacy-signing-evidence.json)는
+legacy의 데이터·가스·nonce·gasPrice와 비어 있지 않은 EIP-2930 접근 목록 보존을 확인했다.
+faucet·배포·등록·반복 load의 legacy 서명도 SDK 독립 구성 바이트와 대조했다.
+RED→GREEN·전체 make check·관련 6패키지 race와 세 체인 BP4/EN1의 실제 CLI/MCP 실행이 통과했다.
+총 72건을 로컬 서명했고, 온체인 거래 형식·데이터·가스·금액·storage key와 종료 DB 0건을 확인했다.
+대납의 고급 입력, 동적 수수료 접근 목록·구조화 편집 계약, gas 없는 배포 override,
+명시 key 배포의 인자 소비 메타데이터 정정은 남아 있다. native faucet은 동적 수수료 경로다.
+R3 나머지, R4 잔여, R1/R5/R6와 전체 Linux L1은 계속 남는다.
 9번 전체 상태는 **진행**을 유지한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)

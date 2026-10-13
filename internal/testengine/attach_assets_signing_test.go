@@ -16,6 +16,7 @@ import (
 
 	sdkcrypto "github.com/0xmhha/accounts/crypto"
 	sdktx "github.com/0xmhha/accounts/tx"
+	sdktypes "github.com/0xmhha/accounts/types"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -32,6 +33,12 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 		{"deploy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"register", map[string]any{"do": "registerContract", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "data": "0xabcdef", "gas": "200000", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 1},
 		{"load", map[string]any{"do": "load", "from": "payer", "gas": "300000", "blocks": 2, "nonce": "7", "maxFeePerGas": "3", "maxPriorityFeePerGas": "1"}, 2},
+		{"legacy", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
+		{"faucet-legacy", map[string]any{"do": "faucet", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "amount": "5", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
+		{"deploy-legacy", map[string]any{"do": "deployContract", "from": "payer", "bytecode": "0x60006000f3", "value": "5", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
+		{"register-legacy", map[string]any{"do": "registerContract", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3"}, 1},
+		{"load-legacy", map[string]any{"do": "load", "from": "payer", "gas": "300000", "blocks": 2, "nonce": "7", "gasPrice": "3"}, 2},
+		{"access-list", map[string]any{"do": "sendTx", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "5", "data": "0xabcdef", "gas": "70000", "nonce": "7", "gasPrice": "3", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}}, 1},
 	} {
 		t.Run(sample.name, func(t *testing.T) {
 			t.Setenv("CHAINBENCH_TEST_ASSET_TOKEN", "asset-test-token")
@@ -67,6 +74,49 @@ func TestDeclaredExternalAccountSignsAssetActionsLocally(t *testing.T) {
 				case "eth_getBlockByNumber":
 					value = map[string]string{"number": "0x1", "baseFeePerGas": "0x1", "gasLimit": "0xf4240", "gasUsed": "0x0"}
 				case "eth_sendRawTransaction":
+					if sample.name == "legacy" || strings.HasSuffix(sample.name, "-legacy") || sample.name == "access-list" {
+						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
+						key, _ := sdkcrypto.PrivKeyFromBytes(private)
+						to, _ := sdktypes.HexToAddress("0x000000000000000000000000000000000000dead")
+						data, _ := hex.DecodeString("abcdef")
+						var encoded []byte
+						if sample.name != "access-list" {
+							var target = &to
+							gas, value := uint64(70000), big.NewInt(5)
+							if sample.name == "faucet-legacy" {
+								data = nil
+							}
+							if sample.name == "deploy-legacy" {
+								target = nil
+								data, _ = hex.DecodeString("60006000f3")
+							}
+							if sample.name == "load-legacy" {
+								target = nil
+								gas = 300000
+								value = new(big.Int)
+								data, _ = hex.DecodeString("60005b600101620186a05a1160025760006000f3")
+							}
+							expected := sdktx.LegacyTx{Nonce: uint64(7 + signed.Load()), Gas: gas, GasPrice: big.NewInt(3), Value: value, Data: data, To: target}
+							if err := expected.Sign(big.NewInt(8283), key); err != nil {
+								t.Error(err)
+							}
+							encoded = expected.Encode()
+						} else {
+							slot := sdktypes.BytesToHash([]byte{1})
+							expected := sdktx.AccessListTx{ChainID: big.NewInt(8283), Nonce: 7, Gas: 70000, GasPrice: big.NewInt(3), Value: big.NewInt(5), Data: data, To: &to, AccessList: sdktx.AccessList{{Address: to, StorageKeys: []sdktypes.Hash{slot}}}}
+							if err := expected.Sign(key); err != nil {
+								t.Error(err)
+							}
+							encoded = expected.Encode()
+						}
+						var actual string
+						if err := json.Unmarshal(request.Params[0], &actual); err != nil {
+							t.Error(err)
+						}
+						if actual != "0x"+hex.EncodeToString(encoded) {
+							t.Error("legacy/access-list signature lost data, gas, nonce, fees, or list contents")
+						}
+					}
 					if sample.name == "load" {
 						private, _ := hex.DecodeString(strings.Repeat("0", 63) + "1")
 						key, _ := sdkcrypto.PrivKeyFromBytes(private)

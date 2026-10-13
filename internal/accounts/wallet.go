@@ -74,6 +74,27 @@ type Wallet interface {
 	// helpers do not expose — gas-limit bounds, out-of-gas, revert receipts, nonce
 	// ordering, and replacement transactions.
 	SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (txHash string, err error)
+	// SendLegacyTx signs a fully specified legacy or EIP-2930 transaction.
+	// A non-nil AccessList selects EIP-2930, including an explicitly empty list.
+	SendLegacyTx(ctx context.Context, args LegacyTxArgs) (txHash string, err error)
+}
+
+// AccessTuple names an address and its exact 32-byte storage keys.
+type AccessTuple struct {
+	Address     string   `json:"address"`
+	StorageKeys []string `json:"storageKeys"`
+}
+
+// LegacyTxArgs preserves gas, calldata, nonce and access-list contents.
+// Empty ToHex creates a contract; nil Nonce uses the account's pending nonce.
+type LegacyTxArgs struct {
+	ToHex      string
+	Value      *big.Int
+	Data       []byte
+	Gas        uint64
+	GasPrice   *big.Int
+	Nonce      *uint64
+	AccessList []AccessTuple
 }
 
 // DynamicTxArgs fully specifies a type-0x02 transaction. A nil Nonce uses the

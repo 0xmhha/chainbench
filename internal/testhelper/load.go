@@ -79,9 +79,6 @@ func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		var receipt map[string]any
 		var hash string
 		if sender.SignsLocally() {
-			if args.GasPrice != "" {
-				return fmt.Errorf("dsl: local load gasPrice requires the legacy transaction contract")
-			}
 			if ac.Deps.Accounts == nil {
 				return fmt.Errorf("dsl: local load needs an account provider")
 			}

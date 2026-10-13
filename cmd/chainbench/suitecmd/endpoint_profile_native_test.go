@@ -28,9 +28,21 @@ import (
 // Native nodes supply every RPC, WS notification, and metric. The gateway only
 // enforces authentication and forwards bytes; it never fabricates chain data.
 func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
-	binary := os.Getenv("GSTABLE_BIN")
+	nativeExternalEndpointProfiles(t, "stablenet", "GSTABLE_BIN")
+}
+
+func TestNativeExternalEndpointProfilesWBFTCLIAndMCP(t *testing.T) {
+	nativeExternalEndpointProfiles(t, "wbft", "GWBFT_BIN")
+}
+
+func TestNativeExternalEndpointProfilesWEMIXCLIAndMCP(t *testing.T) {
+	nativeExternalEndpointProfiles(t, "wemix", "GWEMIX_BIN")
+}
+
+func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string) {
+	binary := os.Getenv(binaryEnv)
 	if binary == "" {
-		t.Skip("native profile proof requires GSTABLE_BIN")
+		t.Skip("native profile proof requires " + binaryEnv)
 	}
 	root := os.Getenv("WEBUI_RUNTIME_ROOT")
 	if root == "" {
@@ -54,7 +66,7 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
-	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: "stablenet", Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1})
+	up, err := app.ChainUp(ctx, app.Deps{}, app.ChainUpIn{DataDir: workspace, Chain: chain, Binary: binary, KeysDir: repoKeys(t), BPCount: 4, ENCount: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,6 +173,7 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 	if err := json.Unmarshal(raw, &signedSpec); err != nil {
 		t.Fatal(err)
 	}
+	signedSpec["chainPreset"].(map[string]any)["chain"] = chain
 	signedSpec["chainPreset"].(map[string]any)["accounts"] = map[string]any{"payer": map[string]any{"keyFile": filepath.Join(repoKeys(t), "node1/private")}}
 	signedSpec["steps"] = append(signedSpec["steps"].([]any),
 		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "1"},
@@ -169,7 +182,15 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 		map[string]any{"expect": "codeAt", "on": "en1", "address": "$contract", "compare": "NotEqual", "is": "0x"},
 		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$contract", "data": "0x00", "gas": "200000"},
 		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2},
-		map[string]any{"expect": "balanceAt", "on": "en1", "address": "0x000000000000000000000000000000000000dead", "compare": "GreaterOrEqual", "is": "1"})
+		map[string]any{"expect": "balanceAt", "on": "en1", "address": "0x000000000000000000000000000000000000dead", "compare": "GreaterOrEqual", "is": "1"},
+		map[string]any{"do": "read", "on": "en1", "source": "gasPrice", "save": "legacyPrice"},
+		map[string]any{"do": "read", "on": "en1", "source": "nonceAt", "address": "payer", "save": "legacyNonce"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "nonce": "$legacyNonce", "gasPrice": "$legacyPrice"},
+		map[string]any{"do": "sendTx", "on": "en1", "from": "payer", "to": "0x000000000000000000000000000000000000dead", "value": "2", "data": "0xab", "gas": "70000", "gasPrice": "$legacyPrice", "accessList": []any{map[string]any{"address": "0x000000000000000000000000000000000000dead", "storageKeys": []any{"0x" + strings.Repeat("0", 63) + "1"}}}},
+		map[string]any{"do": "deployContract", "on": "en1", "from": "payer", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "gas": "200000", "gasPrice": "$legacyPrice", "save": "legacyContract"},
+		map[string]any{"expect": "codeAt", "on": "en1", "address": "$legacyContract", "compare": "NotEqual", "is": "0x"},
+		map[string]any{"do": "registerContract", "on": "en1", "from": "payer", "to": "$legacyContract", "data": "0x00", "gas": "200000", "gasPrice": "$legacyPrice"},
+		map[string]any{"do": "load", "on": "en1", "from": "payer", "gas": "300000", "blocks": 2, "gasPrice": "$legacyPrice"})
 	raw, err = json.Marshal(signedSpec)
 	if err != nil {
 		t.Fatal(err)
@@ -206,8 +227,58 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 		t.Fatal(err, ids)
 	}
 	requireProfilePass(t, filepath.Join(mcpArtifacts, ids[0]))
-	if rawTransactions.Load() != 12 {
-		t.Fatalf("CLI and MCP must each submit six local signatures: %d", rawTransactions.Load())
+	if rawTransactions.Load() != 24 {
+		t.Fatalf("CLI and MCP must each submit twelve local signatures: %d", rawTransactions.Load())
+	}
+	observedTransactions := []map[string]any{}
+	for _, root := range []string{cli.Session, filepath.Join(mcpArtifacts, ids[0])} {
+		files, err := filepath.Glob(filepath.Join(root, "tests", "*", "steps.json"))
+		if err != nil || len(files) != 1 {
+			t.Fatal(err, files)
+		}
+		content, err := os.ReadFile(files[0])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var steps []struct{ Type, Hash string }
+		if err := json.Unmarshal(content, &steps); err != nil {
+			t.Fatal(err)
+		}
+		index := 0
+		for _, step := range steps {
+			if step.Type != "sendTx" {
+				continue
+			}
+			var tx map[string]any
+			if err := rpc.Dial(endpoint.RPCURL).Call(ctx, "eth_getTransactionByHash", &tx, step.Hash); err != nil {
+				t.Fatal(err)
+			}
+			if index >= 3 || tx["type"] != []string{"0x2", "0x0", "0x1"}[index] {
+				t.Fatalf("wrong native transaction type: %+v", tx)
+			}
+			if index > 0 && (tx["input"] != "0xab" || tx["gas"] != "0x11170" || tx["value"] != "0x2") {
+				t.Fatalf("legacy payload/gas/value changed: %+v", tx)
+			}
+			if index == 2 {
+				list, ok := tx["accessList"].([]any)
+				if !ok || len(list) != 1 {
+					t.Fatalf("access list lost: %+v", tx)
+				}
+				tuple, ok := list[0].(map[string]any)
+				if !ok {
+					t.Fatal(list)
+				}
+				keys, ok := tuple["storageKeys"].([]any)
+				if !ok || len(keys) != 1 || keys[0] != "0x"+strings.Repeat("0", 63)+"1" || tuple["address"] != "0x000000000000000000000000000000000000dead" {
+					t.Fatalf("access tuple changed: %+v", tuple)
+				}
+			}
+			observedTransactions = append(observedTransactions, tx)
+			index++
+		}
+		if index != 3 {
+			t.Fatalf("missing native transaction types: %d", index)
+		}
 	}
 	sources := map[string]string{}
 	assetSources := []string{"../../../internal/testhelper/assets.go", "../../../internal/testhelper/load.go", "../../../internal/testhelper/local_assets.go", "../../../internal/testhelper/sendtx.go"}
@@ -239,6 +310,8 @@ func TestNativeExternalEndpointProfilesCLIAndMCP(t *testing.T) {
 	}
 	binarySHA := sha256.Sum256(content)
 	proof := map[string]any{"binary": binary, "binarySHA256": hex.EncodeToString(binarySHA[:]), "sources": sources, "actualEndpoint": endpoint, "cliSession": cli.Session, "mcpSession": filepath.Join(mcpArtifacts, ids[0]), "authenticatedGatewayRequests": calls.Load(), "authenticatedRawTransactions": rawTransactions.Load(), "gateway": "auth and byte forwarding only"}
+	proof["chain"] = chain
+	proof["observedTransactions"] = observedTransactions
 	bytes, err := json.MarshalIndent(proof, "", "  ")
 	if err != nil {
 		t.Fatal(err)

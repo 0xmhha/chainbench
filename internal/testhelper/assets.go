@@ -343,9 +343,6 @@ func deployContractLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []by
 	var hash, addr string
 	gas, hasGas := hexQuantity(ac.Args["gas"])
 	if hasGas {
-		if _, legacy := ac.Args["gasPrice"]; legacy {
-			return fmt.Errorf("dsl: local deploy gasPrice requires the legacy transaction contract")
-		}
 		hash, err = sendWithGas(ctx, ac, w, "", value, code, gas, rpcURL)
 	} else {
 		for _, name := range []string{"nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas"} {

@@ -13,8 +13,17 @@ import (
 // typeWallet records which signing path a locally signed send took.
 type typeWallet struct {
 	accounts.Wallet
-	called   string
-	gasPrice *big.Int
+	called      string
+	gasPrice    *big.Int
+	transaction *accounts.LegacyTxArgs
+}
+
+func (w *typeWallet) SendLegacyTx(_ context.Context, args accounts.LegacyTxArgs) (string, error) {
+	w.called, w.gasPrice, w.transaction = "legacy", args.GasPrice, &args
+	if args.AccessList != nil {
+		w.called = "accessList"
+	}
+	return "0xh", nil
 }
 
 func (w *typeWallet) SendLegacyGas(_ context.Context, _ string, _, gasPrice *big.Int) (string, error) {
@@ -98,11 +107,9 @@ func TestSendTx_LocalKeyRefusesFieldsItWouldDrop(t *testing.T) {
 		wantErr string
 	}{
 		{"gasPrice with fee caps", map[string]any{"gasPrice": "1000", "maxFeePerGas": "2000", "maxPriorityFeePerGas": "1"}, "gasPrice"},
-		{"gasPrice with gas", map[string]any{"gasPrice": "1000", "gas": "30000"}, "gas"},
-		{"gasPrice with data", map[string]any{"gasPrice": "1000", "data": "0x01"}, "data"},
-		{"gasPrice with nonce", map[string]any{"gasPrice": "1000", "nonce": "0"}, "nonce"},
 		{"access list without gasPrice", map[string]any{"accessList": []any{}}, "accessList"},
-		{"non-empty access list", map[string]any{"gasPrice": "1000", "accessList": []any{map[string]any{"address": testTo}}}, "accessList"},
+		{"non-array access list", map[string]any{"gasPrice": "1000", "accessList": map[string]any{"address": testTo}}, "accessList"},
+		{"unknown access list field", map[string]any{"gasPrice": "1000", "accessList": []any{map[string]any{"address": testTo, "typo": true}}}, "accessList"},
 		{"feePayerKey with gas", map[string]any{"feePayerKey": testLocalKey, "gas": "30000"}, "feePayerKey"},
 		{"feePayerKey with data", map[string]any{"feePayerKey": testLocalKey, "data": "0x01"}, "feePayerKey"},
 		{"feePayerKey with nonce", map[string]any{"feePayerKey": testLocalKey, "nonce": "0"}, "feePayerKey"},
@@ -123,6 +130,19 @@ func TestSendTx_LocalKeyRefusesFieldsItWouldDrop(t *testing.T) {
 				t.Errorf("something was signed (%q) before the refusal", w.called)
 			}
 		})
+	}
+}
+
+func TestSendTx_LocalLegacyPreservesExplicitFields(t *testing.T) {
+	w := &typeWallet{}
+	key := "0x" + strings.Repeat("0", 63) + "1"
+	err := runLocalSend(t, w, map[string]any{"gasPrice": "1000", "gas": "70000", "nonce": "7", "data": "0xabcdef", "accessList": []any{map[string]any{"address": testTo, "storageKeys": []any{key}}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := w.transaction
+	if a == nil || a.Gas != 70000 || a.Nonce == nil || *a.Nonce != 7 || a.ToHex != testTo || a.Value.Cmp(big.NewInt(1)) != 0 || string(a.Data) != string([]byte{0xab, 0xcd, 0xef}) || a.GasPrice.Cmp(big.NewInt(1000)) != 0 || len(a.AccessList) != 1 || a.AccessList[0].Address != testTo || len(a.AccessList[0].StorageKeys) != 1 || a.AccessList[0].StorageKeys[0] != key {
+		t.Fatalf("explicit transaction changed: %+v", a)
 	}
 }
 

@@ -1,0 +1,1182 @@
+{
+  "scope": "R4 specified legacy and EIP-2930 local signing. Preserve gas, calldata, value, nonce, gasPrice and nonempty access lists, including legacy asset creation and consecutive load nonces. R4 remains incomplete.",
+  "redLogs": [
+    "/private/tmp/chainbench-local-legacy-red.log",
+    "/private/tmp/chainbench-local-legacy-assets-red.log"
+  ],
+  "greenLog": "/private/tmp/chainbench-local-legacy-green.log",
+  "raceLog": "/private/tmp/chainbench-local-legacy-race.log",
+  "fullCheckLog": "/private/tmp/chainbench-local-legacy-check.log",
+  "finalContractsLog": "/private/tmp/chainbench-local-legacy-final-contracts.log",
+  "nativeLog": "/private/tmp/chainbench-local-legacy-native.jsonl",
+  "nativeElapsedSeconds": 250.809,
+  "nativeRawSubmissions": 72,
+  "proofs": [
+    {
+      "proof": "/private/tmp/cbui/endpoint-native-2770026605/proof.json",
+      "proofSHA256": "02e82c41a0145e50b48d250f009c88998dc88868e7fd1f0eb0b91b3f02d2d571",
+      "native": {
+        "actualEndpoint": {
+          "index": 5,
+          "role": "en",
+          "host": "127.0.0.1",
+          "rpc_url": "http://127.0.0.1:8640",
+          "metrics_url": "http://127.0.0.1:8643/debug/metrics/prometheus",
+          "ws_url": "ws://127.0.0.1:8641",
+          "ports": {
+            "p2p": 31040,
+            "http": 8640,
+            "ws": 8641,
+            "auth": 8642,
+            "metrics": 8643
+          },
+          "pid": 71088
+        },
+        "authenticatedGatewayRequests": 231,
+        "authenticatedRawTransactions": 24,
+        "binary": "/private/tmp/chainbench-head-native/gstable",
+        "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+        "chain": "stablenet",
+        "cliSession": "/private/tmp/cbui/endpoint-native-2770026605/cli-reports/20261013-152746-71055/UTC-20261013-152759",
+        "gateway": "auth and byte forwarding only",
+        "mcpSession": "/private/tmp/cbui/endpoint-native-2770026605/mcp-reports/20261013-152746-71055/UTC-20261013-152818",
+        "observedTransactions": [
+          {
+            "accessList": [],
+            "blockHash": "0xfb20139c2a11ee7eaf3b166e26f2c71546ca3bdc84d27765e7f3815703b8807c",
+            "blockNumber": "0xe",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0xb7c93132bb0df997d41e30c5aa4ca5826c4bae454e9b7fbc78878f0669278ee5",
+            "input": "0x",
+            "maxFeePerGas": "0x4464dd498000",
+            "maxPriorityFeePerGas": "0x191a20322000",
+            "nonce": "0x0",
+            "r": "0x8f7565aea8685266979707a5a26d942580f7147b66821a8e69ac75dc90c03cc0",
+            "s": "0x50863900b2f7ae50829d77400cac19f19b2c5c74489f60c8f56e510cb42e113f",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1",
+            "yParity": "0x1"
+          },
+          {
+            "blockHash": "0xc62458bcb7d79ff4c693493dd09048e510728495733f13cac8c48a737d5fadde",
+            "blockNumber": "0x15",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0xa52cff497d43a9b57bf4b5c68a3a610c6757aac27c225f5e74677342f502b6e8",
+            "input": "0xab",
+            "nonce": "0x6",
+            "r": "0x9e9eca811e8bbd354947786cc9bcc7a8501629e0afb5d87b6ec8d93d12cb4733",
+            "s": "0x190ad27048ebf5e61c7957cb9eeb19caf4d50e849cf64929d8d8b6f1cf2344ef",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40da",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0xdc0e242e1f43fc37959f45ad9adedbef0b3c2738e97bf79102079ec9822894f7",
+            "blockNumber": "0x17",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0xd55aac183559fd0247bcecdb03510e201c173e97fd07f229741f000782f20ffa",
+            "input": "0xab",
+            "nonce": "0x7",
+            "r": "0x9af00cb3b3dacb827f3fd1d5d3ae23387a92a9d1e18f5d9894e792668addf5b6",
+            "s": "0x6fd9d057ecb27607e27d8e3f370d310a3c979583c80cc0c0092aad85de5ba88b",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x0",
+            "value": "0x2",
+            "yParity": "0x0"
+          },
+          {
+            "accessList": [],
+            "blockHash": "0x41b3bc68536d5993ec7e5a90c10d1604b882753122e00117b09bc6e0a6e59680",
+            "blockNumber": "0x1e",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0x2fdc47fe080e991b226cc87af908e6616a6f04382eaff1dbeae08e057589ddf8",
+            "input": "0x",
+            "maxFeePerGas": "0x4464dd498000",
+            "maxPriorityFeePerGas": "0x191a20322000",
+            "nonce": "0xc",
+            "r": "0xd878ad824751ca6d82c91bc42b35b64b2d14499797790d0c8121393eab835717",
+            "s": "0x41be523b7544253b2901a4e44c80897b75129cc9ebf6c7a09d50180145549d15",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1",
+            "yParity": "0x1"
+          },
+          {
+            "blockHash": "0x929ac8d2af8d7dd1486174a82985188a9404bdfb6aaf51837e81c6711d8b223a",
+            "blockNumber": "0x26",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0xde366da40876ec6a7ab8611cdcdb6603350734dbf8014644a775442cfd4ebc45",
+            "input": "0xab",
+            "nonce": "0x12",
+            "r": "0x7e107b7e7985216919960864a697b5dfed96caf06fd86b8d66394cce50bbf76b",
+            "s": "0x579788cf66462667e76bab75f74c4ddd51ab9c6b9ce3bc5966382ad5273f3681",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40d9",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0x4a3c749d39b9f0d39463be613b1b93fc5870c7943a9532e31970ca6f911ef49c",
+            "blockNumber": "0x27",
+            "chainId": "0x205b",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x2b4abd176000",
+            "hash": "0x31aa09201d7286e3945621a8335f2d62de4bcd4592d58d73373a615cbd82a414",
+            "input": "0xab",
+            "nonce": "0x13",
+            "r": "0x7e22712b44414e683a4aaf867dd69205d023976824f43ac6d51561d7babe8f6e",
+            "s": "0x30c0df94203137043485004a38e863e0967e8c72b66cdd16d8c868beaed13a3b",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x0",
+            "value": "0x2",
+            "yParity": "0x0"
+          }
+        ],
+        "sources": {
+          "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+          "../../../internal/accounts/wallet.go": "3093059c6224fdc790b42888299a4ead2a9c3328e4189b9cc1f1a35a6811fd5b",
+          "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+          "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+          "../../../internal/accounts/wallet_legacy_tx.go": "0eec13e02d96f5a35547d14a675154efd41745127d56639120cef778958fa6c6",
+          "../../../internal/accounts/wallet_legacy_tx_test.go": "0087f9374679794352f54fdc4b1e092e9eb09a8eaae680c5f8e36721f5689144",
+          "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+          "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+          "../../../internal/accounts/wallet_rpc_test.go": "e1f05b4689f8b8f17ddf6761a1cf33aa7793f3a69b623d9dbb8fea4eb6903105",
+          "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+          "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+          "../../../internal/app/workflow.go": "2ecab624c4ca98bccd080ec55473d5145d22088e2104d05c2d88d829b2a53db8",
+          "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+          "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+          "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+          "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+          "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+          "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+          "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+          "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+          "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+          "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+          "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+          "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+          "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+          "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+          "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+          "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+          "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+          "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+          "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+          "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+          "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+          "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+          "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+          "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+          "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+          "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+          "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+          "../../../internal/dsl/lower_v1.go": "614d2ea05880a0042d467721f51225568c060c6c5edfe34cb65aa8d029c75a08",
+          "../../../internal/dsl/schema/v2.schema.json": "9cc8688d3addbfc5e43eb21ca3c69856eeea3c9819813b78ab7460a1fded7dcc",
+          "../../../internal/dsl/spec_v2.go": "b04d8cde561e040a08866c24e36055aa0d0d7ccf1e76f8cea63ea465f963dd32",
+          "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+          "../../../internal/testengine/attach_assets_signing_test.go": "69b2e40d8e954fc8286ca8e22dc8e6a66a3038bae305a795b1cd337b2709d01f",
+          "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+          "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+          "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+          "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+          "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+          "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+          "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+          "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+          "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+          "../../../internal/testhelper/assets.go": "ee76fc12fd74acf94ca197ec3f4139d5f94292fe7b125610a3acb5b31e896ebe",
+          "../../../internal/testhelper/load.go": "a7a568a86435dafcfef233019254f49db09878b6945a754f1cd3675ca0bf6fce",
+          "../../../internal/testhelper/local_assets.go": "e34515b72edc8f7eb7272a05e63601067818350910b02c689fbaf972b40e0b27",
+          "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+          "../../../internal/testhelper/sendtx.go": "239b505c33fde0c3bfd7d482b999993794d42913c12a0e400face7052f556bfe",
+          "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+          "endpoint_profile_native_test.go": "0bc7e49d131f1972ab46a89e504e0a835d0d35605d730ec304d37029d8689d2f",
+          "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+          "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+        }
+      },
+      "sessions": [
+        {
+          "channel": "cliSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0xb7c93132bb0df997d41e30c5aa4ca5826c4bae454e9b7fbc78878f0669278ee5",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0x3ccf3379529fa328314bee884f7802ee0a9331a138276e8afc724c9805e72c24",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x0b573f94ea7199c2e2ac3ae02897773daa4d993584c9737a7a82756a07d596dc",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0xb8586791f4604e779a7d354f644deb30b4f2956a7e8055787fcf99c0a0c92aa7",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0xd5b63ee628f1e33f8632f1bd2efcf15709abdb889d02a79eb6f24ea2a0075a9a",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0xa52cff497d43a9b57bf4b5c68a3a610c6757aac27c225f5e74677342f502b6e8",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0xd55aac183559fd0247bcecdb03510e201c173e97fd07f229741f000782f20ffa",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x25439a86db5e2205e287307c356b87786fa9aa1cd9744ed4bb2642edb6a7c457",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x565c0824ee0e2b38fcb72b586289e6f264a842d13a22952c4b717dc7b85cb2e9",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x9f4626555f4a090983f8875fa470f3d1002a19f5608f34c14e56246fe0077bd6",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        },
+        {
+          "channel": "mcpSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0x2fdc47fe080e991b226cc87af908e6616a6f04382eaff1dbeae08e057589ddf8",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0xde6629b6243295e6e21ae00da3fc8ed566f3d2736ebf5220dc8bfa95ab3f82fc",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0xc05cb80f03e370a571dd9246ad6a71eec579eddb721f07f39b31f2eab95b794b",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0xc21b02a1deb0e43dc3fa633069fc848091a3170455852316f4d88e44fc74ff04",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x8edb009f0f7fbd074df7119d4b39f04c43310f0d0fe7d15f5e8d575d87e2e965",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0xde366da40876ec6a7ab8611cdcdb6603350734dbf8014644a775442cfd4ebc45",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x31aa09201d7286e3945621a8335f2d62de4bcd4592d58d73373a615cbd82a414",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x62720ed15fd619fa1095ed831edd74360a8175b4261d7f9c54571efdae289222",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0xb513115cad3bfe66fcf00355943b0e17cdbfc616147a27be3c9635030f9eb8d1",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x028a6ce66162159694df336a92b464a9fb09bd970ce2db585becb8088ed0693f",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        }
+      ],
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "proof": "/private/tmp/cbui/endpoint-native-828707852/proof.json",
+      "proofSHA256": "c2576e9d54710842f3336bbcee89407cc6a702150de9657486e79eabb527be6d",
+      "native": {
+        "actualEndpoint": {
+          "index": 5,
+          "role": "en",
+          "host": "127.0.0.1",
+          "rpc_url": "http://127.0.0.1:8640",
+          "metrics_url": "http://127.0.0.1:8643/debug/metrics/prometheus",
+          "ws_url": "ws://127.0.0.1:8641",
+          "ports": {
+            "p2p": 31040,
+            "http": 8640,
+            "ws": 8641,
+            "auth": 8642,
+            "metrics": 8643
+          },
+          "pid": 72156
+        },
+        "authenticatedGatewayRequests": 224,
+        "authenticatedRawTransactions": 24,
+        "binary": "/private/tmp/chainbench-head-native/gwbft",
+        "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+        "chain": "wbft",
+        "cliSession": "/private/tmp/cbui/endpoint-native-828707852/cli-reports/20261013-152746-71055/UTC-20261013-152913",
+        "gateway": "auth and byte forwarding only",
+        "mcpSession": "/private/tmp/cbui/endpoint-native-828707852/mcp-reports/20261013-152746-71055/UTC-20261013-152927",
+        "observedTransactions": [
+          {
+            "accessList": [],
+            "blockHash": "0x4bf1a9a2e5da262f0ce1c7464d37b9fcfc5239e52b30bc321c4850a7319f2ca2",
+            "blockNumber": "0x5",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x1767094688",
+            "hash": "0x459ddb6984a5a8bbbcab9a71a120c2a6eb5aad54f05014ca328f0c6a571b8208",
+            "input": "0x",
+            "maxFeePerGas": "0x2eb3de3c09",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0x293a76d1c045045ae2c296ebdb6e84403e82e1145b4582f347770850e3b5b480",
+            "s": "0x1a119e94beb9e5ef9212d2ad3b715253b6fb61fe4e3fcd0e747486d6bf905aed",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1",
+            "yParity": "0x1"
+          },
+          {
+            "blockHash": "0xf256dc0ba4a1fa1e8eefe14802870b0d2ef1d190793f3bc306a2ba3122000395",
+            "blockNumber": "0xb",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x175828a09c",
+            "hash": "0x1a8f6c544251ef01277e52e330c2d6b25a5ad618f2e3cfdb5e4427c51ef06fa3",
+            "input": "0xab",
+            "nonce": "0x6",
+            "r": "0xcdef8f40a9b0418de9d51993537e275a4fd9dd3a726bf3b9544f42b89d5b7047",
+            "s": "0x7b432c481e8e025a396e6bb25e70aefe70d8f59c2f6a2d7945ed0cca9be8b61b",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40db",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0x8a545b06b990953d7eea688c08c56f6a78914d4653abef110ccaa644fc8934e0",
+            "blockNumber": "0xc",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x175828a09c",
+            "hash": "0x4794608e489b10f17f880c6edfb537dc9703b5b8c6b48aff82fc2276d00b9764",
+            "input": "0xab",
+            "nonce": "0x7",
+            "r": "0xb2934e885aa94d93b79756fb23f9072577c2510eea2d249269f19466e6039633",
+            "s": "0x578be89791a8bb0ba87f0055684e766e87bac1bf1541f4b96997e4528a68b6a",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x0",
+            "value": "0x2",
+            "yParity": "0x0"
+          },
+          {
+            "accessList": [],
+            "blockHash": "0x3cc620d7ef44703c02b3c6de691e453fb62c6fe539cdf2b109e63914136d1208",
+            "blockNumber": "0x13",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x174d314652",
+            "hash": "0x26de34e8bfd265771d2b2086879b4ecef23be05fe05a050677cd89f516859324",
+            "input": "0x",
+            "maxFeePerGas": "0x2e96551739",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0xc",
+            "r": "0xcace83d2bdb3c2339c9f69eb0a36e1b71df6fb7407aded94fbd1e7d87986f03d",
+            "s": "0x713cc704f0feb2992b180cf58bfb2da227f5bbc81355a3f4884e3ea5acc8448d",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1",
+            "yParity": "0x1"
+          },
+          {
+            "blockHash": "0xb2cbe505886f7fcc5075ee467d2abac5e5290ff6945135e798837b36678e6e09",
+            "blockNumber": "0x1a",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174a96986c",
+            "hash": "0xecaa699486c8601d47ec1292a1f1dc08d81393121e16b1432cd70af2257424b0",
+            "input": "0xab",
+            "nonce": "0x12",
+            "r": "0x5db429f4b85a8a475a6863cdc4be068b467108fc2440aa8cbfea6f62faf29c4c",
+            "s": "0x62e06b77dce92150b75afb6dcbee2e660efe2fb441f68a3b998683e98d5e128c",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40db",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0xf2924a83d7e16205da34664eba4adc72c8f6a11931f78e4277d81afa5593e603",
+            "blockNumber": "0x1c",
+            "chainId": "0x205c",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174a96986c",
+            "hash": "0x82967a9b5f622e4fa52cc6d05964624d589ce5d3607c875ced467243a050019d",
+            "input": "0xab",
+            "nonce": "0x13",
+            "r": "0x947f25e525efdbdede03d1cb18dd12770597ab2fb10a7f90751a20dca1c71add",
+            "s": "0x5a66570246863d7f29739b92d16400929587476e9a44dfeda4d284be4f2391cc",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x1",
+            "value": "0x2",
+            "yParity": "0x1"
+          }
+        ],
+        "sources": {
+          "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+          "../../../internal/accounts/wallet.go": "3093059c6224fdc790b42888299a4ead2a9c3328e4189b9cc1f1a35a6811fd5b",
+          "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+          "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+          "../../../internal/accounts/wallet_legacy_tx.go": "0eec13e02d96f5a35547d14a675154efd41745127d56639120cef778958fa6c6",
+          "../../../internal/accounts/wallet_legacy_tx_test.go": "0087f9374679794352f54fdc4b1e092e9eb09a8eaae680c5f8e36721f5689144",
+          "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+          "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+          "../../../internal/accounts/wallet_rpc_test.go": "e1f05b4689f8b8f17ddf6761a1cf33aa7793f3a69b623d9dbb8fea4eb6903105",
+          "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+          "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+          "../../../internal/app/workflow.go": "2ecab624c4ca98bccd080ec55473d5145d22088e2104d05c2d88d829b2a53db8",
+          "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+          "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+          "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+          "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+          "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+          "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+          "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+          "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+          "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+          "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+          "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+          "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+          "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+          "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+          "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+          "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+          "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+          "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+          "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+          "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+          "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+          "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+          "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+          "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+          "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+          "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+          "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+          "../../../internal/dsl/lower_v1.go": "614d2ea05880a0042d467721f51225568c060c6c5edfe34cb65aa8d029c75a08",
+          "../../../internal/dsl/schema/v2.schema.json": "9cc8688d3addbfc5e43eb21ca3c69856eeea3c9819813b78ab7460a1fded7dcc",
+          "../../../internal/dsl/spec_v2.go": "b04d8cde561e040a08866c24e36055aa0d0d7ccf1e76f8cea63ea465f963dd32",
+          "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+          "../../../internal/testengine/attach_assets_signing_test.go": "69b2e40d8e954fc8286ca8e22dc8e6a66a3038bae305a795b1cd337b2709d01f",
+          "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+          "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+          "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+          "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+          "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+          "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+          "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+          "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+          "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+          "../../../internal/testhelper/assets.go": "ee76fc12fd74acf94ca197ec3f4139d5f94292fe7b125610a3acb5b31e896ebe",
+          "../../../internal/testhelper/load.go": "a7a568a86435dafcfef233019254f49db09878b6945a754f1cd3675ca0bf6fce",
+          "../../../internal/testhelper/local_assets.go": "e34515b72edc8f7eb7272a05e63601067818350910b02c689fbaf972b40e0b27",
+          "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+          "../../../internal/testhelper/sendtx.go": "239b505c33fde0c3bfd7d482b999993794d42913c12a0e400face7052f556bfe",
+          "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+          "endpoint_profile_native_test.go": "0bc7e49d131f1972ab46a89e504e0a835d0d35605d730ec304d37029d8689d2f",
+          "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+          "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+        }
+      },
+      "sessions": [
+        {
+          "channel": "cliSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0x459ddb6984a5a8bbbcab9a71a120c2a6eb5aad54f05014ca328f0c6a571b8208",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0xcfa554b142868262c8880bb0f3a937787223c399817ca522f435e87d08be6402",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x1526dc85e8f668c4e547e55ba2bf93a4c1fe5a0b905fabd7978f0bf25ab273ef",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x7070d642798f603c0a55b6ae806cd2b5d049880ba8c3c982712e7e1ce66acbd1",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x496a65a06febdb487895f4e34d0ac46a1bcb5d19a3696b00b25f725817556965",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x1a8f6c544251ef01277e52e330c2d6b25a5ad618f2e3cfdb5e4427c51ef06fa3",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x4794608e489b10f17f880c6edfb537dc9703b5b8c6b48aff82fc2276d00b9764",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x6cf043044d4be019a8c86064ed58625f863a42890684faf0fca81576c4bc9d36",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x23a61ee02f3d197b2ccc0eb83efb304b61cad162b7008e595fbf95a8a9bef11b",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x34db04f1f544f777c63a9bf53aba0ada0a71ac138386a2a01f1465ae3707aabf",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        },
+        {
+          "channel": "mcpSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0x26de34e8bfd265771d2b2086879b4ecef23be05fe05a050677cd89f516859324",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0x3fcdb777cd89af60629e0b86f0a2ad5f4d0ee6fa2dd387fa92382b0ba35e275a",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x97869ec6f2a7e3c0ebba25c4d2777f21e4720afb6fbc2c5eb6502339db4cebcb",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x62a617824dc2984f72967c792eecf8e46a41213eabe981acd2235b36c649e08c",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x88b9323b4c3e689866131487b428a19f3e7cf3003000c5234983df441c4c0062",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0xecaa699486c8601d47ec1292a1f1dc08d81393121e16b1432cd70af2257424b0",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x82967a9b5f622e4fa52cc6d05964624d589ce5d3607c875ced467243a050019d",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0xa21a124307dd33090ec2d09a247d593ad77b87b079c24938c94eefaf8f4a3de0",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x4d3c6e441684ac0f1254e93429eff99c205991f29e4c93493db80158451b715a",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x77d7e1c47eb067fe1e71537f7e3898e7a3df07047b975ec600b0233c79d4f41b",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        }
+      ],
+      "endedDatabasesRemaining": 0
+    },
+    {
+      "proof": "/private/tmp/cbui/endpoint-native-1949247842/proof.json",
+      "proofSHA256": "e58992f00976da6dc0573cc16eea9afa40d5601c684fa8712e7b93daa76fbbf0",
+      "native": {
+        "actualEndpoint": {
+          "index": 5,
+          "role": "en",
+          "host": "127.0.0.1",
+          "rpc_url": "http://127.0.0.1:8640",
+          "metrics_url": "http://127.0.0.1:8643/debug/metrics/prometheus",
+          "ws_url": "ws://127.0.0.1:8641",
+          "ports": {
+            "p2p": 31040,
+            "etcd": 31041,
+            "etcdClient": 31042,
+            "http": 8640,
+            "ws": 8641,
+            "auth": 8642,
+            "metrics": 8643
+          },
+          "pid": 74106
+        },
+        "authenticatedGatewayRequests": 245,
+        "authenticatedRawTransactions": 24,
+        "binary": "/private/tmp/chainbench-head-native/gwemix",
+        "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+        "chain": "wemix",
+        "cliSession": "/private/tmp/cbui/endpoint-native-1949247842/cli-reports/20261013-152746-71055/UTC-20261013-153101",
+        "gateway": "auth and byte forwarding only",
+        "mcpSession": "/private/tmp/cbui/endpoint-native-1949247842/mcp-reports/20261013-152746-71055/UTC-20261013-153121",
+        "observedTransactions": [
+          {
+            "accessList": [],
+            "blockHash": "0x223ddd4e9f8a0162eed1ee80a16ae5659fe68c23ba1297858322d8e765677e3b",
+            "blockNumber": "0x2b",
+            "chainId": "0x205d",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x174876e801",
+            "hash": "0x0aa32ef93fa35fd20db2058c23d7b1969b910d91f80ce4ebd3d297a4f376958f",
+            "input": "0x",
+            "maxFeePerGas": "0x2e90eddbe2",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0x0",
+            "r": "0xdf80495dc3d821864aeafd53d34e3dff878718ccda30d40e84ac61e522d36344",
+            "s": "0x42da5e537ca4d87d12a04af77b09ee6632bdc36c3bfd3711424a55f96e6e2863",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1"
+          },
+          {
+            "blockHash": "0x199892a355e5b0200c89b8c668142d67aa26c1ab8d93e8d53037e379191f31f2",
+            "blockNumber": "0x37",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174876e801",
+            "hash": "0x49b1f4f4c745d5110f5c07d06b96e72522b395a8a95dca110beeea68e00de3f6",
+            "input": "0xab",
+            "nonce": "0x6",
+            "r": "0xba1568059b6d4baa16ba7ecbfb04c4fff51e2918bf1208d53a770d093ce15334",
+            "s": "0x13375b5c162843d6830959bd7ba15657b7b57fdaf265686e0638c652be3ccd76",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40dd",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0x1e4dc18c8a6eb93a7bd871cd37f1a5bf4423704b9c6a1ec49c9c8e2d7c1521e1",
+            "blockNumber": "0x39",
+            "chainId": "0x205d",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174876e801",
+            "hash": "0x8649f18ccce28fc3f924e1a7ec4dac65ec86ff0ef70ba0d7dfb481a393ef7362",
+            "input": "0xab",
+            "nonce": "0x7",
+            "r": "0xadc438e6569516121c86dc66dee2afda7e49ad0a20c58ce83ea3d504402a61fe",
+            "s": "0x46f497dee86ccdeeacc9c56cf8445c71721f810f6f33b763ba4a558867297515",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x1",
+            "value": "0x2"
+          },
+          {
+            "accessList": [],
+            "blockHash": "0xf9312837aab0aa3366fb5fc950d33e2c56ab2e65902c026ef56d1a053844aefe",
+            "blockNumber": "0x43",
+            "chainId": "0x205d",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x5208",
+            "gasPrice": "0x174876e801",
+            "hash": "0xb305b5a0f42ba1786b782b893bd2447a05cf4a44749117d76a7864e2d5246914",
+            "input": "0x",
+            "maxFeePerGas": "0x2e90edd001",
+            "maxPriorityFeePerGas": "0x174876e800",
+            "nonce": "0xc",
+            "r": "0x85db7cb956cc02e4b2b098f52071c8608723004629261240ece1fced7b4135d9",
+            "s": "0x7528fce284acd24012f6e38e71d3b993b49dd0cc95364193dbd56660427026af",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x2",
+            "v": "0x1",
+            "value": "0x1"
+          },
+          {
+            "blockHash": "0x681bc8ba87e1884bfbdaba79ad5689857fff425bdaab64e452aa31a326c8ca0d",
+            "blockNumber": "0x4f",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174876e801",
+            "hash": "0x789f7e109d2d8e55818578c352a5dc475a440141a626a11f61d41f485003b63b",
+            "input": "0xab",
+            "nonce": "0x12",
+            "r": "0x57c0a7de1946e42cee65b2aabb2d3287e54a712c020fb75f26e3179710b00f3c",
+            "s": "0x2abb98b0edc1a46831a66d0c2ac7d8577fbbe36e3d8c5d8d59ffc27b96ae36cc",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x0",
+            "v": "0x40dd",
+            "value": "0x2"
+          },
+          {
+            "accessList": [
+              {
+                "address": "0x000000000000000000000000000000000000dead",
+                "storageKeys": [
+                  "0x0000000000000000000000000000000000000000000000000000000000000001"
+                ]
+              }
+            ],
+            "blockHash": "0xad0f66b8aa62affd859daf0b2cec5746aa000f6903d2bd400edea87dad02a240",
+            "blockNumber": "0x51",
+            "chainId": "0x205d",
+            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+            "gas": "0x11170",
+            "gasPrice": "0x174876e801",
+            "hash": "0xa2dfeee4345bddc545e66d5fb4ee6c920d8c33bd51a80a79278c944a6315495f",
+            "input": "0xab",
+            "nonce": "0x13",
+            "r": "0x2be03eee9bd1297ab5e53f38164068c97b2eb26c0c67a810e87bd5c6b78223c7",
+            "s": "0x4097db5b12b54d3c00170574e8ec7088b137a5367b5a74502836c10cef935e79",
+            "to": "0x000000000000000000000000000000000000dead",
+            "transactionIndex": "0x0",
+            "type": "0x1",
+            "v": "0x0",
+            "value": "0x2"
+          }
+        ],
+        "sources": {
+          "../../../internal/accounts/provider.go": "1f1042343d50b052512bec2042e93f60bf64c8111d5fcea08a89755838f4890f",
+          "../../../internal/accounts/wallet.go": "3093059c6224fdc790b42888299a4ead2a9c3328e4189b9cc1f1a35a6811fd5b",
+          "../../../internal/accounts/wallet_feedelegated_test.go": "6e90645483dc229f123f1e6fab86fd2c8c8837848881242d5f740512a9b717b8",
+          "../../../internal/accounts/wallet_legacy_test.go": "2e070c62e87a4a949feb426f889d6292dcdb0b716be765ea3f5db3242a62b352",
+          "../../../internal/accounts/wallet_legacy_tx.go": "0eec13e02d96f5a35547d14a675154efd41745127d56639120cef778958fa6c6",
+          "../../../internal/accounts/wallet_legacy_tx_test.go": "0087f9374679794352f54fdc4b1e092e9eb09a8eaae680c5f8e36721f5689144",
+          "../../../internal/accounts/wallet_rpc.go": "72d01c34a00334675243409adeb613dbaafee8f17c248c65458c2866fcad7459",
+          "../../../internal/accounts/wallet_rpc_send.go": "e904b406053c814985e7d655afa13cc01da807cb0106ea559649ed34ccba5797",
+          "../../../internal/accounts/wallet_rpc_test.go": "e1f05b4689f8b8f17ddf6761a1cf33aa7793f3a69b623d9dbb8fea4eb6903105",
+          "../../../internal/accounts/wallet_setcode_test.go": "41f09c350249dab4718df7bbf85120ab712360d28b020bd4b7d7be12da356517",
+          "../../../internal/accounts/wallet_txtype_test.go": "0db6e483ca43585920bb510ca09afb7b81fe0d49a90ecedfb8a96327925cfa28",
+          "../../../internal/app/workflow.go": "2ecab624c4ca98bccd080ec55473d5145d22088e2104d05c2d88d829b2a53db8",
+          "../../../internal/core/collector/metrics.go": "5b8b1b982c07176bbce0add4b918650be22891ce22f8e870350637a349461bb2",
+          "../../../internal/core/node/attached.go": "ee20c983313689b0bab7c31973dafe3c1860a2cfc740b93eeead11140f9f2ddf",
+          "../../../internal/core/node/endpoint_profile.go": "f9a474083bd69719149683c909585d067e4b0a25b1647085ee543cef3a851d7f",
+          "../../../internal/core/node/enode.go": "5fe43ff496464d70ac77517c90ce110c52aa13457083d6c520200a9f2264f44c",
+          "../../../internal/core/node/enode_test.go": "3546f62eb09dcc8358d40566887dfd4d2f619e03211a5f7907c0ab46c5ce3499",
+          "../../../internal/core/node/label.go": "75474edfedc3153aad5df790bb46bf099c2fdefd45b416fe49ec9c2b756d44fd",
+          "../../../internal/core/node/launchreq.go": "edb88b8d3a40673ef9d7ef5af74ca43450aa16a7bd5441384febea4bbc0ad6dd",
+          "../../../internal/core/node/layout.go": "8f836d96ac45e6517f2cc9e97cf1f53ef27eeac835feef8ba77a7907bba331c7",
+          "../../../internal/core/node/layout_isolation_test.go": "719b6ba21164b0e4144cfb28af0fb9574ebefcaabca0ad0a6aa0d0f862895bd4",
+          "../../../internal/core/node/node.go": "98f77f8ba7e1fc27b29494af2e4ccd4b8b87e880af1d5faf0a6f1d314f6ede45",
+          "../../../internal/core/node/node_test.go": "02702499ce4aaeeeb50c29c610e8920d56d0c9e2ad62789d6bf96b7f221ca354",
+          "../../../internal/core/node/peering.go": "8ecb66023ea4ca6b8581c33a010bade170130d31232f7ba5bd2583c3e0d78bc9",
+          "../../../internal/core/node/peering_test.go": "802271f6e413e3ea5b0711cb569247cd233b9e35aed762c8f5bcd337580fa1bf",
+          "../../../internal/core/node/placement.go": "dd394aecfbca44d96ff913be5ad42751bc5756739161edaa42470b14b7a3e5a4",
+          "../../../internal/core/node/record.go": "f171bb12954b1157b415a5b2b2bd0dbda317bb42b7aad610c5a009338924af33",
+          "../../../internal/core/node/reservation.go": "25ba86e42b4e68126f3eb1b45f8497b85651e0cab4f24b4184d60938a8ab3cc4",
+          "../../../internal/core/node/role.go": "3067826cc92eddb2bc0f9e8ba5be85383f631a3e0fb8bdb31e4b5810b4d3c462",
+          "../../../internal/core/node/scope.go": "9c726b81070eb686d7d022d9182ddb485b3e764916d3774573e0086e3bf8d991",
+          "../../../internal/core/node/scope_test.go": "8eda4fd257b56743472fabd1496ffa1a3382479a981241a51796e9b0f3323d0d",
+          "../../../internal/core/node/spelling_test.go": "858375c6cd4a15f32c596185aa6853183e2ae807839fa31fa7f16798d07f58a7",
+          "../../../internal/core/node/topology.go": "5c64a79a306543cb3a802ae1a1fb6213eb981b2c81af02f1ea8f3da789d57ed1",
+          "../../../internal/core/node/topology_test.go": "28c79279dd85f654f84e7233acdaaccc8300c29db508bdaff64c5047dc84fa0f",
+          "../../../internal/core/node/vocabulary_test.go": "a75e517069476f87bfb52c7064c1797c8d0a630458666fe1566ef5997a4c796e",
+          "../../../internal/core/remote/auth.go": "49cb9b2a18ec44f7947618b0037b8293597f3f89334097e6c48e8213ec2c1883",
+          "../../../internal/core/rpc/subscribe.go": "f681aa69569473685c680a1fdb312af590678546bdd41e1bf508e0aaf7908191",
+          "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+          "../../../internal/dsl/interp/interpreter.go": "fb34c5e77da838b793ec39c6c8f20742bb2d3d716486262992cbdeda26b752e5",
+          "../../../internal/dsl/lower_v1.go": "614d2ea05880a0042d467721f51225568c060c6c5edfe34cb65aa8d029c75a08",
+          "../../../internal/dsl/schema/v2.schema.json": "9cc8688d3addbfc5e43eb21ca3c69856eeea3c9819813b78ab7460a1fded7dcc",
+          "../../../internal/dsl/spec_v2.go": "b04d8cde561e040a08866c24e36055aa0d0d7ccf1e76f8cea63ea465f963dd32",
+          "../../../internal/testengine/attach.go": "8d00e1fd4972b35f8c45291f708e5d99e40bba9693941504d9566313c7ae81a3",
+          "../../../internal/testengine/attach_assets_signing_test.go": "69b2e40d8e954fc8286ca8e22dc8e6a66a3038bae305a795b1cd337b2709d01f",
+          "../../../internal/testengine/attach_auth.go": "2db4482a1f5dc8ead2c0c6ce24f516e3c3425be627b7f34ad2b6e7d9bea10d42",
+          "../../../internal/testengine/attach_auth_internal_test.go": "da4cb72de4bd64abc12afc14cec58bfec8e838a435cccab3a3c3f5670d0b47d8",
+          "../../../internal/testengine/attach_nocontrol_internal_test.go": "ae2c50d8a54515197b41040a977dfb563c8aee33fc763e3282fa7e356a539641",
+          "../../../internal/testengine/attach_roles_test.go": "23da0ea079629d028842350cf8d98333b4482b2d8e64b1c61379ac8ae4d512e2",
+          "../../../internal/testengine/attach_signing_test.go": "ae2674cfdd4274b311b422cf2f6abbdb01d8c3da96f0dc2a1a98066bc77c0096",
+          "../../../internal/testengine/attach_test.go": "ef10045fb1bad6e1dd98c8447c6d6d9f4e681a841ca41edf0ce81969f72219de",
+          "../../../internal/testengine/attach_verify.go": "d7a48ab2b90ca3b08c7fe6392f3c661a8ff1bcbdfc7b5e28c9feba7a5a4dcabf",
+          "../../../internal/testengine/attach_verify_test.go": "7a614f42d4352a8e33a508842ebe68a688835dc0902c959bfdf531a098d0ae03",
+          "../../../internal/testengine/attach_workspace.go": "bea46d15d90684a1f2633adc66c9f04572a823527e58cd76cf24c1f2104d90b3",
+          "../../../internal/testhelper/assets.go": "ee76fc12fd74acf94ca197ec3f4139d5f94292fe7b125610a3acb5b31e896ebe",
+          "../../../internal/testhelper/load.go": "a7a568a86435dafcfef233019254f49db09878b6945a754f1cd3675ca0bf6fce",
+          "../../../internal/testhelper/local_assets.go": "e34515b72edc8f7eb7272a05e63601067818350910b02c689fbaf972b40e0b27",
+          "../../../internal/testhelper/metric.go": "faf5105c333eda38edf86c309245134f59b2b2f417c9258f272d0449c2a5ff55",
+          "../../../internal/testhelper/sendtx.go": "239b505c33fde0c3bfd7d482b999993794d42913c12a0e400face7052f556bfe",
+          "../../../internal/testhelper/websocket.go": "93cfcfb4753bbe2b6e11db7b07a6e08ddabf9426b385fcd5e349498f305f477a",
+          "endpoint_profile_native_test.go": "0bc7e49d131f1972ab46a89e504e0a835d0d35605d730ec304d37029d8689d2f",
+          "endpoint_profile_test.go": "799d4ace45a56de313fa14706eaca3ee41e4110c8a05105bd6bdef85646357ab",
+          "run.go": "8cbaa0ac3a8cec182f2090c0d08bb9c30a85561ef4395c9c2a43e38072387854"
+        }
+      },
+      "sessions": [
+        {
+          "channel": "cliSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0x0aa32ef93fa35fd20db2058c23d7b1969b910d91f80ce4ebd3d297a4f376958f",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0x375c4dcf76a920ce0e4c5a4b856506f3395fe40bd2b59bfa483e22b3649712a8",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x339d83a6a74cc5b27487368565cc412e517a82580a52961120b5ec392cbecf16",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x15176a57d676d19a04f33bd6e04fc76ad29d7dcf6bddb390c571c59511df709f",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0xaf2d66bdb0e034387ccd586c69728201ed2eb1ec62abaf7157e257b1ab932516",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x49b1f4f4c745d5110f5c07d06b96e72522b395a8a95dca110beeea68e00de3f6",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x8649f18ccce28fc3f924e1a7ec4dac65ec86ff0ef70ba0d7dfb481a393ef7362",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0xe3a2fdcdd2c11ae0fe05f582efcb6f99ca34b9364c4e38f33f85c41413b3d01d",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x0bf3f0651d399ce95da21b210ed46a370df32d30ae6f8bb3adb01b12cc7c8c84",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x4a05751818b05700cf4eb67a9a325fddf2f8ed5eb9094eb1fa6be2e026fa6831",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        },
+        {
+          "channel": "mcpSession",
+          "steps": [
+            {
+              "action": "sendTx",
+              "hash": "0xb305b5a0f42ba1786b782b893bd2447a05cf4a44749117d76a7864e2d5246914",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "faucet",
+              "hash": "0x56d72415c32a372436e8b871ce0527652c020db448d7d343c9356e33855685d9",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0xe2efc7bd1dde8b33bbec77f7f51165a731ba372119d23640238250b68073fcc6",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0xe868835adb5a297e0ecafb507f9205fd3a943a53ac45ba98c8b1d541e01905d6",
+              "receiptType": "0x2",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x02149dbd7a291284e81e48370c061990bc7476d6e4d363aa55df3074c53274bd",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "read",
+              "hash": "",
+              "receiptType": null,
+              "receiptStatus": null
+            },
+            {
+              "action": "sendTx",
+              "hash": "0x789f7e109d2d8e55818578c352a5dc475a440141a626a11f61d41f485003b63b",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "sendTx",
+              "hash": "0xa2dfeee4345bddc545e66d5fb4ee6c920d8c33bd51a80a79278c944a6315495f",
+              "receiptType": "0x1",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "deployContract",
+              "hash": "0x06dfdfe5069c3ca9ede1716f2792f9a2987b52f118ba09967b2280b3abb76015",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "registerContract",
+              "hash": "0x973179f3b86a5fefb56257d1afa4050163feb88a59d2fc1be01f1c5a9b7c8558",
+              "receiptType": "0x0",
+              "receiptStatus": "0x1"
+            },
+            {
+              "action": "load",
+              "hash": "0x04c95ee1e0a14f5ef16dc332280fdde70097da1817effd8dd8125eaae4a5f8c7",
+              "receiptType": null,
+              "receiptStatus": null
+            }
+          ]
+        }
+      ],
+      "endedDatabasesRemaining": 0
+    }
+  ],
+  "limitations": [
+    "Fee-delegation advanced gas/data/nonce/fee fields remain pending.",
+    "Dynamic-fee access lists and the shared structured access-list editor contract remain pending.",
+    "Deployment fee/nonce overrides without explicit gas remain pending.",
+    "Explicit key deployment argument-consumption metadata still claims gas and fees are unread; this requires correction before closing R4.",
+    "Legacy faucet is proven by authenticated RPC signature contracts; the native campaign uses dynamic faucet and legacy transfer/deploy/register/load.",
+    "Native load waits for each burn but persists only its last hash, not every receipt.",
+    "Task 9, fresh Linux fleet/L1 and final frozen Web14 acceptance remain pending."
+  ]
+}

@@ -1,8 +1,10 @@
 package testhelper
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -118,7 +120,8 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // reject/wait/revert logic as the node-signed path. It uses the injected
 // account provider's Wallet: a "feePayerKey" arg makes it a 0x16 fee-delegated
 // transfer (the "key" account is the sender, feePayerKey covers the gas), a
-// "gasPrice" makes it a legacy (or, with an empty accessList, 0x01) transfer,
+// "gasPrice" makes it a fully specified legacy transaction (or, with an
+// accessList, an EIP-2930 transaction preserving the list's entries),
 // Execute when a "data" payload is present, else SendCoin for a value-only
 // transfer. The target node RPC comes from the usual "on" selector so the wallet
 // dials the same endpoint the node-signed path would.
@@ -163,24 +166,13 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 	feePayerKey, _ := ac.Args["feePayerKey"].(string)
 	data, _ := ac.Args["data"].(string)
 	gasHex, hasGas := hexQuantity(ac.Args["gas"])
-	gasPriceHex, hasGasPrice := hexQuantity(ac.Args["gasPrice"])
+	_, hasGasPrice := hexQuantity(ac.Args["gasPrice"])
 	var hash string
 	switch {
 	// A "gasPrice" names the pre-1559 fee field, so the case asked for a type
 	// that carries it: legacy, or EIP-2930 when an access list comes with it.
 	case hasGasPrice:
-		gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(gasPriceHex, "0x"), 16)
-		if !ok {
-			return fmt.Errorf("dsl: sendTx key: bad gasPrice %v", ac.Args["gasPrice"])
-		}
-		if value == nil {
-			value = new(big.Int)
-		}
-		if _, withList := ac.Args["accessList"]; withList {
-			hash, err = w.SendAccessListGas(ctx, to, value, gasPrice)
-			break
-		}
-		hash, err = w.SendLegacyGas(ctx, to, value, gasPrice)
+		hash, err = sendLegacyOptions(ctx, ac, w, to, value, data, rpcURL)
 	// A "feePayerKey" arg makes this a 0x16 fee-delegated transfer: the "key"
 	// account signs as the sender (moves value) while feePayerKey covers the gas.
 	// It is the only way to exercise a blacklisted-fee-payer rejection — the SDK's
@@ -277,9 +269,8 @@ func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) erro
 // carry: the wallet signs a value-only 0x16 transfer with its own gas and fees.
 var feePayerKeyExcludes = []string{"gas", "data", "nonce", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "accessList"}
 
-// legacyExcludes are the fields a locally signed gasPrice send cannot carry:
-// the wallet signs a 21000-gas value transfer at the account's next nonce.
-var legacyExcludes = []string{"gas", "data", "nonce", "maxFeePerGas", "maxPriorityFeePerGas"}
+// legacyExcludes rejects mixing the two fee models in one transaction.
+var legacyExcludes = []string{"maxFeePerGas", "maxPriorityFeePerGas"}
 
 // checkLocalSendArgs refuses a combination the local signing path would
 // otherwise send without one of its fields. A case that names a field expects
@@ -299,8 +290,8 @@ func checkLocalSendArgs(args map[string]any) error {
 		if !hasGasPrice {
 			return fmt.Errorf("dsl: sendTx key: accessList needs gasPrice (a locally signed access list is type 0x01)")
 		}
-		if list, ok := al.([]any); !ok || len(list) > 0 {
-			return fmt.Errorf("dsl: sendTx key: only an empty accessList can be signed here")
+		if _, ok := al.([]any); !ok {
+			return fmt.Errorf("dsl: sendTx key: accessList must be an array")
 		}
 	}
 	if !hasGasPrice {
@@ -308,7 +299,7 @@ func checkLocalSendArgs(args map[string]any) error {
 	}
 	for _, f := range legacyExcludes {
 		if _, has := args[f]; has {
-			return fmt.Errorf("dsl: sendTx key: gasPrice sends a 21000-gas legacy transfer; %q is not supported with it", f)
+			return fmt.Errorf("dsl: sendTx key: gasPrice cannot be combined with %q", f)
 		}
 	}
 	return nil
@@ -374,6 +365,19 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 		return "", err
 	}
 	args.Nonce = nonce
+	if price, legacy := hexQuantity(ac.Args["gasPrice"]); legacy {
+		if _, supplied := ac.Args["maxFeePerGas"]; supplied {
+			return "", fmt.Errorf("dsl: gasPrice and maxFeePerGas are mutually exclusive")
+		}
+		if _, supplied := ac.Args["maxPriorityFeePerGas"]; supplied {
+			return "", fmt.Errorf("dsl: gasPrice and maxPriorityFeePerGas are mutually exclusive")
+		}
+		gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(price, "0x"), 16)
+		if !ok {
+			return "", fmt.Errorf("dsl: invalid gasPrice")
+		}
+		return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: args.Data, Gas: gas, GasPrice: gasPrice, Nonce: nonce})
+	}
 	maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
 	tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
 	if hasMaxFee != hasTip {
@@ -411,4 +415,68 @@ func sendWithGas(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, t
 		args.GasFeeCap = new(big.Int).Add(new(big.Int).Mul(base, big.NewInt(2)), tipCap)
 	}
 	return w.SendDynamicFeeTx(ctx, args)
+}
+
+// sendLegacyOptions is exclusive to sendTx: asset actions keep their own schema.
+func sendLegacyOptions(ctx context.Context, ac *interp.ActionCtx, w accounts.Wallet, to string, value *big.Int, data, rpcURL string) (string, error) {
+	var list []accounts.AccessTuple
+	if raw, supplied := ac.Args["accessList"]; supplied {
+		encoded, err := json.Marshal(raw)
+		if err != nil {
+			return "", err
+		}
+		decoder := json.NewDecoder(bytes.NewReader(encoded))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&list); err != nil {
+			return "", fmt.Errorf("dsl: accessList: %w", err)
+		}
+		if list == nil {
+			return "", fmt.Errorf("dsl: accessList must be an array")
+		}
+	}
+	gas := uint64(21000)
+	if quantity, explicit := hexQuantity(ac.Args["gas"]); explicit {
+		parsed, err := strconv.ParseUint(strings.TrimPrefix(quantity, "0x"), 16, 64)
+		if err != nil {
+			return "", fmt.Errorf("dsl: gas: %w", err)
+		}
+		gas = parsed
+	} else if (data != "" && data != "0x") || len(list) > 0 {
+		client, err := clientFor(ac.Deps, rpcURL)
+		if err != nil {
+			return "", err
+		}
+		message := map[string]any{"from": w.Address(), "to": to, "data": data}
+		if value != nil {
+			message["value"] = "0x" + value.Text(16)
+		}
+		if list != nil {
+			message["accessList"] = list
+		}
+		var quantity string
+		if err := client.Call(ctx, "eth_estimateGas", &quantity, message); err != nil {
+			return "", err
+		}
+		gas, err = strconv.ParseUint(strings.TrimPrefix(quantity, "0x"), 16, 64)
+		if err != nil {
+			return "", err
+		}
+	}
+	price, _ := hexQuantity(ac.Args["gasPrice"])
+	gasPrice, ok := new(big.Int).SetString(strings.TrimPrefix(price, "0x"), 16)
+	if !ok {
+		return "", fmt.Errorf("dsl: invalid gasPrice")
+	}
+	nonce, err := noncePointer(ac.Args["nonce"])
+	if err != nil {
+		return "", err
+	}
+	payload, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		return "", fmt.Errorf("dsl: data: %w", err)
+	}
+	if value == nil {
+		value = new(big.Int)
+	}
+	return w.SendLegacyTx(ctx, accounts.LegacyTxArgs{ToHex: to, Value: value, Data: payload, Gas: gas, GasPrice: gasPrice, Nonce: nonce, AccessList: list})
 }
