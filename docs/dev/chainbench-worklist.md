@@ -182,6 +182,21 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 WBFT-006 RoundRobin 50블록 보강:** 서로 다른 proposer 존재만 보는 baseline은
+짧은 구간·낯선 proposer·연속 중복·불균등·높이/parent·상태 집계/범위 불일치 여덟 조건을
+통과시켰다. 이 RED를 확인하고 실제 5검증자의 정확한 101~150 구간·각10회·연속 중복 없음·
+모든 parent 연결과 `istanbul_status`의 author 집계/범위를 대조하도록 GREEN을 보강했다.
+최초 native는 chainPreset 누락으로 기동 전에 실패했고 준비 오류 RED→GREEN으로 BP5 파싱도
+확인했다. 실패를 성공으로 바꾸어 표기하지 않는다.
+
+관련 실행 엔진 전체 race·전체 검사와 실제 WBFT BP5 native race(189.628초, skip 0)가 통과했다.
+genesis의 proposerPolicy0·targetValidators5, 50헤더와 RPC 집계에서 5개 주소 모두 각10회인 것을
+독립 대조했다. 고정 소스 `17cabc2579784001569bba02f1ddefc601724bf0fde39c911ef4ebf3c2d27a86`
+전후가 같고 준비 실패를 포함한 247파일의 내용·권한을 보존했으며 활성 프로세스·종료 DB는 0이다.
+[RoundRobin 증거](round-robin-evidence.json)는 Croissant0으로 시작한 현재 로컬 환경 범위다.
+원문의 단계적 이관 환경·Linux·메인넷·legacy·최종 Web 인수는 별도 잔여이며 §0a 11번 전체는
+계속 진행이다. 기존 4검증자/16블록 테스트는 더 좁은 과거 참조로 유지한다.
+
 **2026-10-15 WBFT-001·RPC-005 현재 commit 집계 서명 보강:** 존재·길이만 보는 baseline은
 잘못된 서명·bitmap·quorum·헤더·round·키·무한대 점·중복 키 아홉 조건을 통과시켰다.
 이 합성 RED를 확인하고 현재 epoch 순서의 키·bitmap·quorum과 원본 헤더의 commit 메시지를

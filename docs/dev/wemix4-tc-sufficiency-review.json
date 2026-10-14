@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 63,
-    "confirmed_scope": 19,
+    "partial": 62,
+    "confirmed_scope": 20,
     "conflict": 3,
     "merged": 2
   },
@@ -3442,13 +3442,33 @@
       "id": "WBFT-006",
       "title": "RoundRobin Proposer 정책 검증",
       "criterionSha256": "81b66f00495979ccb68a92811a7ca58f2d9b474e3d9587e59ea3b48b514b7be0",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_proposer_test.go",
           "sha256": "c6d476bc16c3e2e1e2b9cefc59f6ec005e6b37164e5e1251a5cb1120187b404d",
           "function": "TestE2E_WbftRoundRobinProposer"
+        },
+        {
+          "path": "internal/testengine/round_robin_native_test.go",
+          "function": "verifyRoundRobin50",
+          "sha256": "09d1a36bff0a3e3abd932692cc49d30447dee063e107636f9e79e7c825b6bdf0"
+        },
+        {
+          "path": "internal/testengine/round_robin_native_test.go",
+          "function": "TestRoundRobin50RejectsShortAndUnbalancedEvidence",
+          "sha256": "09d1a36bff0a3e3abd932692cc49d30447dee063e107636f9e79e7c825b6bdf0"
+        },
+        {
+          "path": "internal/testengine/round_robin_native_test.go",
+          "function": "TestNativeRoundRobinFiveValidators",
+          "sha256": "09d1a36bff0a3e3abd932692cc49d30447dee063e107636f9e79e7c825b6bdf0"
+        },
+        {
+          "path": "internal/testengine/round_robin_native_test.go",
+          "function": "TestRoundRobinSpecsBindFiveValidatorPreset",
+          "sha256": "09d1a36bff0a3e3abd932692cc49d30447dee063e107636f9e79e7c825b6bdf0"
         }
       ],
       "observations": [
@@ -3456,12 +3476,17 @@
           "analysis": "4validator,16block 중 >=3distinctminer"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Original five-validator/fifty-block balancing and AuthorCounts conditions now verified in controlled current fixture; old four-validator sixteen-block presence check remains a narrower reference. Preparation failure preserved separately.",
       "remainingConditions": [
-        "5validator/50block 균등10회 및 consecutive sameproposer 없음·status AuthorCounts 원문미충족"
+        "Original migrated/mainnet environment, Linux/legacy consumer and final Web acceptance remain separate. Current fixture starts Croissant0 rather than using original staged migration; no full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP5/Croissant0, actual proposerPolicy0/target5 genesis, exact headers101..150, all five authors10, no adjacent repeats, linked hashes and actual istanbul_status author counts/range match. Unit negative controls and actual native race/skip0/source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/round-robin-evidence.json",
+          "sha256": "385b501432b7fe536699617f822a6bd25369925fb81bce10e2e761588db23148"
+        }
+      ]
     },
     {
       "id": "WBFT-007",

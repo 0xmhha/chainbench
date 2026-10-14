@@ -1,0 +1,524 @@
+{
+  "scope": "WBFT-006 current managed Croissant0 BP5: original exact blocks101..150, each validator10, no adjacent same proposer, all parent links and exact istanbul_status author/blockRange, actual genesis policy0/target5. Not original migrated environment, Linux/mainnet/legacy/complete87/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Distinct-proposer baseline accepted eight short/unbalanced/unknown/duplicate/height/parent/status/range contexts; missing chainPreset preparation RED also confirmed.",
+  "unitGreen": "Exact five-validator/fifty-header and status consistency controls, real preset parsing into wbft BP5.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "17cabc2579784001569bba02f1ddefc601724bf0fde39c911ef4ebf3c2d27a86",
+    "sourceAfter": "17cabc2579784001569bba02f1ddefc601724bf0fde39c911ef4ebf3c2d27a86",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeRoundRobinFiveValidators"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-t7kzqka_"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-t7kzqka_/reports/round-robin-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-t7kzqka_": []
+    },
+    "elapsedSeconds": 189.628,
+    "summary": {
+      "path": "/private/tmp/chainbench-round-robin-retry-summary.json",
+      "sha256": "ff9d4331552c8c3b3b2530ed8f52634cc214d149dea56350b697d80e3cfca85b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012313214619907
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-round-robin-retry-native.jsonl",
+      "sha256": "21d2ad4943bc7b5f9ddac6344cbd21efed3cb6e7539afc14db2e4c7e303b693e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012312754459604
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-round-robin-retry-start.json",
+      "sha256": "e688e330024d784d321f5f86e6054af621d4f9061627524997926c4cee220743",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012121000894532
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-t7kzqka_/reports/round-robin-proof.json",
+    "sha256": "567455d59ea861090de9c770ebe99bb86ee4098af17a9bfe03a1c624bf3f9fba",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792012309542142164
+  },
+  "genesis": {
+    "path": "/private/tmp/cbui/txfail-t7kzqka_/w/genesis.json",
+    "sha256": "8df351769432aa62759441476ddf243e34b592669cbedb9f6c37f52753afb56e",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792012123592437930
+  },
+  "wbftConfig": {
+    "blockPeriodSeconds": 1,
+    "epochLength": 10,
+    "maxRequestTimeoutSeconds": null,
+    "proposerPolicy": 0,
+    "requestTimeoutSeconds": 1,
+    "stabilizingStakersThreshold": 5,
+    "targetValidators": 5
+  },
+  "counts": {
+    "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": 10,
+    "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c": 10,
+    "0x8c4a10b9108d49b9d23f764464090831d9c17764": 10,
+    "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6": 10,
+    "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee": 10
+  },
+  "samples": [
+    {
+      "Number": 101,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0xafb91c018fc748c1db5b0a6dee732a5e235cf14bf4d71704ead24c1566780812",
+      "ParentHash": "0x37f945e7a935fb463fd505cd4514da3e646ac1fb0864c24c518aa912ec8b9e69"
+    },
+    {
+      "Number": 102,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0x350ae8a4ca78369e5f3d4b1916b9ed005094e458cc607215f9fa6316cc78fab0",
+      "ParentHash": "0xafb91c018fc748c1db5b0a6dee732a5e235cf14bf4d71704ead24c1566780812"
+    },
+    {
+      "Number": 103,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x90ebee3e5e3bec3079ae14b46138c98344c21550d03741d1be2aa08a6d332c70",
+      "ParentHash": "0x350ae8a4ca78369e5f3d4b1916b9ed005094e458cc607215f9fa6316cc78fab0"
+    },
+    {
+      "Number": 104,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x26f9460c4106d7878404d05708db3d2bf800ef21b4fdbb1db2af119ef3f0d317",
+      "ParentHash": "0x90ebee3e5e3bec3079ae14b46138c98344c21550d03741d1be2aa08a6d332c70"
+    },
+    {
+      "Number": 105,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x54a79499be51881707daea8f3702d56d315070add77813645f6387601faeb859",
+      "ParentHash": "0x26f9460c4106d7878404d05708db3d2bf800ef21b4fdbb1db2af119ef3f0d317"
+    },
+    {
+      "Number": 106,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0xabc27d845a47a691f1fe5d69556ffe567c96100ef2190efbe13f1b0090c8c897",
+      "ParentHash": "0x54a79499be51881707daea8f3702d56d315070add77813645f6387601faeb859"
+    },
+    {
+      "Number": 107,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0x7292b4bc4a63f3479ef6a7efe473cd153a29017052b8c4495a976a7691272ce6",
+      "ParentHash": "0xabc27d845a47a691f1fe5d69556ffe567c96100ef2190efbe13f1b0090c8c897"
+    },
+    {
+      "Number": 108,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0xef671513ac5677728b88ddd102761647f41a2e6a5f37ea9ca84b859ac98a3c9e",
+      "ParentHash": "0x7292b4bc4a63f3479ef6a7efe473cd153a29017052b8c4495a976a7691272ce6"
+    },
+    {
+      "Number": 109,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x1e960a47adeb3f17e8259ab77ec80bea1a132e2ae305429861a7959ee6f0c72c",
+      "ParentHash": "0xef671513ac5677728b88ddd102761647f41a2e6a5f37ea9ca84b859ac98a3c9e"
+    },
+    {
+      "Number": 110,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x2f62fa8124cbf531f0f8220e9b436217b02c792980dbd5da119bfe86c8dd386a",
+      "ParentHash": "0x1e960a47adeb3f17e8259ab77ec80bea1a132e2ae305429861a7959ee6f0c72c"
+    },
+    {
+      "Number": 111,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0xeaedf5dc4ab70ccd2204c569aa93d46e9ef45908687a4b6413ebd6f7b281b141",
+      "ParentHash": "0x2f62fa8124cbf531f0f8220e9b436217b02c792980dbd5da119bfe86c8dd386a"
+    },
+    {
+      "Number": 112,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xd369cb2989b22f87651f16be9aae6cff32e3b132c44042b80c742c095db772e1",
+      "ParentHash": "0xeaedf5dc4ab70ccd2204c569aa93d46e9ef45908687a4b6413ebd6f7b281b141"
+    },
+    {
+      "Number": 113,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0xed2dbed3a6f9d82c206b48b2751e5c0c233658bf6d9dc443afc78a5db954f7f5",
+      "ParentHash": "0xd369cb2989b22f87651f16be9aae6cff32e3b132c44042b80c742c095db772e1"
+    },
+    {
+      "Number": 114,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0xd55c722605036135deab98b0456cc7094f770416477aa0cc5b6ff34629ea48c9",
+      "ParentHash": "0xed2dbed3a6f9d82c206b48b2751e5c0c233658bf6d9dc443afc78a5db954f7f5"
+    },
+    {
+      "Number": 115,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x148068028617703c9f8a46d8d9cdcfb9386ace2318ac19290b4bf178ce8fec8f",
+      "ParentHash": "0xd55c722605036135deab98b0456cc7094f770416477aa0cc5b6ff34629ea48c9"
+    },
+    {
+      "Number": 116,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x41103d1aee9739241c5b9bbcb1195d971407297d1871b3635858db0619440a04",
+      "ParentHash": "0x148068028617703c9f8a46d8d9cdcfb9386ace2318ac19290b4bf178ce8fec8f"
+    },
+    {
+      "Number": 117,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xa9c28f378d6b8f18677e45cac1bc473c3cd35d1aac2b76d6519a75da432e21f2",
+      "ParentHash": "0x41103d1aee9739241c5b9bbcb1195d971407297d1871b3635858db0619440a04"
+    },
+    {
+      "Number": 118,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x7720b3a7473810a97c7b6f04bc3552d62a28eb67c246ad9dbf333fb9768f37bc",
+      "ParentHash": "0xa9c28f378d6b8f18677e45cac1bc473c3cd35d1aac2b76d6519a75da432e21f2"
+    },
+    {
+      "Number": 119,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x67fa52321b507ee12539daf90951f8a99112f98aae3b949d393d0b89ffeee927",
+      "ParentHash": "0x7720b3a7473810a97c7b6f04bc3552d62a28eb67c246ad9dbf333fb9768f37bc"
+    },
+    {
+      "Number": 120,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x6f4eb7de45e00303b792a451085ebc4df19bb3b86955a098eb9f5921acacd482",
+      "ParentHash": "0x67fa52321b507ee12539daf90951f8a99112f98aae3b949d393d0b89ffeee927"
+    },
+    {
+      "Number": 121,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x1f3dfb4f8afe1197b98217667e1c6c261f763befcbb17fafa53fb0d47fd0dcfa",
+      "ParentHash": "0x6f4eb7de45e00303b792a451085ebc4df19bb3b86955a098eb9f5921acacd482"
+    },
+    {
+      "Number": 122,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0x0092044f891649c28ad4f558ba2c2baf8bbe8bb3cbd6d3ccd530f38e2217b50d",
+      "ParentHash": "0x1f3dfb4f8afe1197b98217667e1c6c261f763befcbb17fafa53fb0d47fd0dcfa"
+    },
+    {
+      "Number": 123,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x81d3c05869efc615c8b7791004c85d7deba405aa3a247d2e138d6477830c7b91",
+      "ParentHash": "0x0092044f891649c28ad4f558ba2c2baf8bbe8bb3cbd6d3ccd530f38e2217b50d"
+    },
+    {
+      "Number": 124,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x5b6a53df13b4fde300d828f2b51ef1e5317554ecc1db4d9a8edd3a29ed280e79",
+      "ParentHash": "0x81d3c05869efc615c8b7791004c85d7deba405aa3a247d2e138d6477830c7b91"
+    },
+    {
+      "Number": 125,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x935b908114503fec834394c81f00ee391c5a5e36eeb7ede23c62114b2174cf05",
+      "ParentHash": "0x5b6a53df13b4fde300d828f2b51ef1e5317554ecc1db4d9a8edd3a29ed280e79"
+    },
+    {
+      "Number": 126,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0xc4415534f77a5ebe8421cc2f666eccea1c1c43e806eaf0f0f00e715df827ce72",
+      "ParentHash": "0x935b908114503fec834394c81f00ee391c5a5e36eeb7ede23c62114b2174cf05"
+    },
+    {
+      "Number": 127,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xf98fcd66a250682937d9b9b9e3aaca80bdfd77f79f5f33de2b47429affb061b7",
+      "ParentHash": "0xc4415534f77a5ebe8421cc2f666eccea1c1c43e806eaf0f0f00e715df827ce72"
+    },
+    {
+      "Number": 128,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0xa9e4471f4615255635e7adfc0d7fe459f8370493abcd70cc70bdb87efb2982ec",
+      "ParentHash": "0xf98fcd66a250682937d9b9b9e3aaca80bdfd77f79f5f33de2b47429affb061b7"
+    },
+    {
+      "Number": 129,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x244d839f1e97f37249250f65dadb6fb897f3e9ef16893d7320d76228ec44353a",
+      "ParentHash": "0xa9e4471f4615255635e7adfc0d7fe459f8370493abcd70cc70bdb87efb2982ec"
+    },
+    {
+      "Number": 130,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0xc88c0f39b86474caba758a70b6a5525741186d50a4089b48387234b791a5e208",
+      "ParentHash": "0x244d839f1e97f37249250f65dadb6fb897f3e9ef16893d7320d76228ec44353a"
+    },
+    {
+      "Number": 131,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x4fff034e77c83a951dd9c1154ef7bd63de7ae0ddf92a91f0ce796a8662432cbc",
+      "ParentHash": "0xc88c0f39b86474caba758a70b6a5525741186d50a4089b48387234b791a5e208"
+    },
+    {
+      "Number": 132,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xd35b6c2dcbaaf9d7b715806e1ee970cf6a49e4e8563be07f8688ddcc4c4a972e",
+      "ParentHash": "0x4fff034e77c83a951dd9c1154ef7bd63de7ae0ddf92a91f0ce796a8662432cbc"
+    },
+    {
+      "Number": 133,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x889c441f6fb55cc86007c5ae2e75586c03c2d6b39f95ed714c6c9cdab07f2952",
+      "ParentHash": "0xd35b6c2dcbaaf9d7b715806e1ee970cf6a49e4e8563be07f8688ddcc4c4a972e"
+    },
+    {
+      "Number": 134,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x846b21c240e00fd4d525db8c230fb8c489ffdc1be3ea80b60c95d758bfecc714",
+      "ParentHash": "0x889c441f6fb55cc86007c5ae2e75586c03c2d6b39f95ed714c6c9cdab07f2952"
+    },
+    {
+      "Number": 135,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0xee435ab63bcdea94bded603d838891989f4cf5d667572e626ae8616c08d9739a",
+      "ParentHash": "0x846b21c240e00fd4d525db8c230fb8c489ffdc1be3ea80b60c95d758bfecc714"
+    },
+    {
+      "Number": 136,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x93cb6952aab779c08286bb81f1484eb93195b94b5d9baec2f7f0a561baa1daa7",
+      "ParentHash": "0xee435ab63bcdea94bded603d838891989f4cf5d667572e626ae8616c08d9739a"
+    },
+    {
+      "Number": 137,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0x6ecd0c4a8e0ab4e344f0603ebd5e0e7935e58b49732eba0412c7644184931a9c",
+      "ParentHash": "0x93cb6952aab779c08286bb81f1484eb93195b94b5d9baec2f7f0a561baa1daa7"
+    },
+    {
+      "Number": 138,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x4d11e8ca639da456a020c58eaa106e04af6fb71d72c6f177c5f14ec495f5f2a9",
+      "ParentHash": "0x6ecd0c4a8e0ab4e344f0603ebd5e0e7935e58b49732eba0412c7644184931a9c"
+    },
+    {
+      "Number": 139,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x16cc9defca729ea40451af11e2495a632456554bd170237dfbdae19e8221c48f",
+      "ParentHash": "0x4d11e8ca639da456a020c58eaa106e04af6fb71d72c6f177c5f14ec495f5f2a9"
+    },
+    {
+      "Number": 140,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x903275e80b16dc27c6873005eea2791c6055b22d4466263dd94d9e9f2c18d5a3",
+      "ParentHash": "0x16cc9defca729ea40451af11e2495a632456554bd170237dfbdae19e8221c48f"
+    },
+    {
+      "Number": 141,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x575270751b4da69994289c9d27e15ad43704ed7b77d76098814f75fb815977f2",
+      "ParentHash": "0x903275e80b16dc27c6873005eea2791c6055b22d4466263dd94d9e9f2c18d5a3"
+    },
+    {
+      "Number": 142,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xa1b0eb210222b84242395bc506f0700eecda61786801915715d9e2c8330436da",
+      "ParentHash": "0x575270751b4da69994289c9d27e15ad43704ed7b77d76098814f75fb815977f2"
+    },
+    {
+      "Number": 143,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0xaa2f08fb78935a73486d2b4e49a08e7af9b451823016e98972994c20a413eac0",
+      "ParentHash": "0xa1b0eb210222b84242395bc506f0700eecda61786801915715d9e2c8330436da"
+    },
+    {
+      "Number": 144,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x60ebf2b9758c2936cebf5fcb8f139d773928a4b884e98495ee13ed3d82d7b6bc",
+      "ParentHash": "0xaa2f08fb78935a73486d2b4e49a08e7af9b451823016e98972994c20a413eac0"
+    },
+    {
+      "Number": 145,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0x55a3fbf5cf0c5424158b59dde3d1097fedddd8dd16fec6145a698956e109c5d6",
+      "ParentHash": "0x60ebf2b9758c2936cebf5fcb8f139d773928a4b884e98495ee13ed3d82d7b6bc"
+    },
+    {
+      "Number": 146,
+      "Miner": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "Hash": "0x747342bd2d5954a9ee209c41952c6d3758a7c00331602e96226710cb2d4e15c4",
+      "ParentHash": "0x55a3fbf5cf0c5424158b59dde3d1097fedddd8dd16fec6145a698956e109c5d6"
+    },
+    {
+      "Number": 147,
+      "Miner": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "Hash": "0xcb7586599800e47dad1b1e7378e90fc49106bae67bd2a88afe7b185d7ae2e7d4",
+      "ParentHash": "0x747342bd2d5954a9ee209c41952c6d3758a7c00331602e96226710cb2d4e15c4"
+    },
+    {
+      "Number": 148,
+      "Miner": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "Hash": "0x89ff5e1ca3be8a8a894b5929e616a6fcec8da0a8e2a6fdd8896b6e4fdb9e2923",
+      "ParentHash": "0xcb7586599800e47dad1b1e7378e90fc49106bae67bd2a88afe7b185d7ae2e7d4"
+    },
+    {
+      "Number": 149,
+      "Miner": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "Hash": "0x9c2f3ffc104f2057cb7200d099f0e6d079cd101d377b8d7f49d261b00f8c3913",
+      "ParentHash": "0x89ff5e1ca3be8a8a894b5929e616a6fcec8da0a8e2a6fdd8896b6e4fdb9e2923"
+    },
+    {
+      "Number": 150,
+      "Miner": "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "Hash": "0xdf12e5c877ab5865ffbd1f4467bde61f63c2de11257ba09fcbfd9da4d1709a50",
+      "ParentHash": "0x9c2f3ffc104f2057cb7200d099f0e6d079cd101d377b8d7f49d261b00f8c3913"
+    }
+  ],
+  "status": {
+    "author": {
+      "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c": 10,
+      "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee": 10,
+      "0x8c4a10b9108d49b9d23f764464090831d9c17764": 10,
+      "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6": 10,
+      "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": 10
+    },
+    "blockRange": {
+      "StartBlock": 101,
+      "EndBlock": 150,
+      "TotalBlocks": 50
+    }
+  },
+  "priorPreparationFailure": {
+    "summary": {
+      "path": "/private/tmp/chainbench-round-robin-native-summary.json",
+      "sha256": "f9d6950afe56aedf7545c6c1ae61edb53d4a960e67b5bd62fefae9deada38319",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011908066529411
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-round-robin-native-native.jsonl",
+      "sha256": "6610c90338821dcdeea5130d41426b4e1661ada0e1ac493fe1e312a4ae5f92f0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011907827659453
+    },
+    "exitCode": 1,
+    "accepted": false
+  },
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/txfail-7wdma6e9",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 7,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-7wdma6e9/reports/round-robin-inventory.json",
+        "sha256": "659bec4b262ec493585d4f483e47f48a0e2a84f36990b5121c5e2a29da7a1a67",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792012341825840841
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/txfail-t7kzqka_",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 240,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-t7kzqka_/reports/round-robin-inventory.json",
+        "sha256": "55748a432bac71cf5659008e08850f15b4c4a40436769ba622b09d91edf4b4ab",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792012341861324319
+      }
+    }
+  ],
+  "retainedFiles": 247,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-round-robin-publication.json",
+    "sha256": "6d136ad2f23a73ae0f5a31381cab9d6ac5bd445354cce510e60a3791a003f0ad",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792012018874994965
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-round-robin-red.log",
+      "sha256": "a7f61fb2775da3ead034819232cbfb9f0fe3bdcb8fdbaa8cf00cf2f650a3e5b4",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011650034049875
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-green.log",
+      "sha256": "2934cb489da5bf907dd5c41a9e1fc71152a202bcfd7ef3363741c35f52a6d602",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011712348455670
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-related-green.log",
+      "sha256": "92de12e91bb2dd4fa2eb53f326429c70f16018f454c5e84b399d26e68f69f262",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011802553628350
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-check-green.log",
+      "sha256": "097e554ff47d89b56715f17079dc9c2e5010d99571718e1a7de1e180e34010c7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011886533519998
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-preset-red.log",
+      "sha256": "c23d80a3be10dc0558f4d8efa58551e805efe43c8ff0ebb83489f118f9e6859a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011981101672208
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-preset-green.log",
+      "sha256": "43c24fe32299e889d4440f4054c455aad3ce088f647893dceeec608dc1dc905f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011997705420519
+    },
+    {
+      "path": "/private/tmp/chainbench-round-robin-preset-check.log",
+      "sha256": "f1f232c811e4fc11ede35afcdf6e28cb03767bae1625026ace885f85b3221318",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792012106557082324
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  }
+}
