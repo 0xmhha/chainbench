@@ -1,0 +1,907 @@
+{
+  "scope": "R6 suite execution on multiple presets and per-case preset provenance complete for CLI/MCP. Overall task 9, the expanded common-TC provenance requirements and fresh Web14 acceptance remain open.",
+  "contract": {
+    "inputs": "CLI --chain-presets is repeatable. MCP chainPresets accepts an array of preset IDs or JSON paths; raw inline specs use baseDir for named lookup. The same app.RunMatrix usecase is registered as test.run-matrix.",
+    "cases": "Movable v2 preset references/extends are replaced before lookup, preserving case overrides. Selected preset content is read once for each target and used for every case. Inline fixed declarations and v1 cases are explicitly refused as unmovable.",
+    "lifecycle": "All targets are prechecked before execution. Each target owns a separate ordinal workspace and session. Execution is serial; default suites stop before the next starts. An ordinary target failure preserves later results. Cleanup failure or cancellation prevents further attempts. Explicit keepUp retains owned networks.",
+    "results": "Selected preset IDs appear in matrix rows; resolved case preset IDs appear in CLI summaries, session.json, status.json and report.json, including skipped/blocked branches. Case override IDs remain distinct from the selected base ID.",
+    "metadata": "Preset names do not alter execution fingerprints or v1 migration equivalence. Legacy v1 records omit the new optional field.",
+    "verdict": "Both surfaces use RunMatrixOut.ExitCode: infrastructure/blocked or strict skips=2; test failures=1; otherwise=0. MCP retains JSON on isError instead of replacing per-target results with prose.",
+    "planning": "Composition matrix planning produces labelled plans without executing targets. Attach plans retain the existing explicit refusal.",
+    "chainID": "MCP chainId now matches CLI --chain-id; unsafe/fractional JSON numbers and int64 overflow fail instead of being ignored. Full-width nonnegative decimal/hex strings retain exact values."
+  },
+  "logs": {
+    "red": {
+      "path": "/private/tmp/chainbench-matrix-red-confirmed.log",
+      "sha256": "fd488ec89c9d7d2fa58a5f7876697923473fdea577190737ef8e159ad74a0900"
+    },
+    "cleanupRed": {
+      "path": "/private/tmp/chainbench-matrix-cleanup-red-verified.log",
+      "sha256": "046672ce08c0b0eef353eb69c4d4ba4f41a9ef2b7e9259c17aa3662692aa7dd3"
+    },
+    "chainIDRed": {
+      "path": "/private/tmp/chainbench-matrix-chainid-red.log",
+      "sha256": "985c75e227664aaf835c6f20214029c273bba27b21c8dce61783aa95b74d5cc8"
+    },
+    "contracts": {
+      "path": "/private/tmp/chainbench-matrix-contracts-final-green.log",
+      "sha256": "f9025f0ba5249296976ec43955102594ab13e4385c1f3eb7707d01c310bfc354"
+    },
+    "finalContracts": {
+      "path": "/private/tmp/chainbench-matrix-final-contracts.log",
+      "sha256": "2f777048320088e771af2512fe77eef268eb7dd89213d9b2de46df32cf6054ef"
+    },
+    "race": {
+      "path": "/private/tmp/chainbench-matrix-race.log",
+      "sha256": "3dbb97a13a1112bd0ccfa8f7484f522447ed899c1bfbaf9819c359192bf09dee"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-matrix-check-final-pass.log",
+      "sha256": "70335714ecf02eac7d16257b3920de3d59c6170c50140e38e7c3aaaf7b475398"
+    },
+    "browser": {
+      "path": "/private/tmp/chainbench-matrix-browser.log",
+      "sha256": "80c5cee199a3460cc52680429342c418ef4129df4b754b21089c89428f0c0729"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-matrix-native.jsonl",
+      "sha256": "2f53afe9b414a18ea96a9e7f524bde1b03d07cc14aede557c734d337c7d4f2af"
+    },
+    "initialMigrationRegression": {
+      "path": "/private/tmp/chainbench-matrix-related.log",
+      "sha256": "13faa1df9cc9fc751d0af9db5079207063cdf6249c9aadf1bf44218d244806fe"
+    },
+    "initialStaticCheck": {
+      "path": "/private/tmp/chainbench-matrix-check.log",
+      "sha256": "d814448e511e4eadea6f1249f207aa53da5fc5dcc142c1a2bed258418af92276"
+    },
+    "initialNativeFixturePreflight": {
+      "path": "/private/tmp/chainbench-matrix-cleanup-red.log",
+      "sha256": "d0c321fae1d2755f1fe553c7e1b6a3bcb6146002946e408f779e288c481968b5"
+    },
+    "finalDocContracts": {
+      "path": "/private/tmp/chainbench-matrix-doc-contract.log",
+      "sha256": "258e1d5ca2530485cc6cf0216beba738a6cf6ae8933cec99edcd4a4d527e3cb9"
+    }
+  },
+  "native": {
+    "path": "/private/tmp/cbui/matrix-native-2426566276/proof.json",
+    "sha256": "f0977d297acca59178ef80f382255c72e61bc56c831a60af5f95ca87d5d0c4cd",
+    "mode": "0o600",
+    "elapsedSeconds": 354.329,
+    "goTestPasses": 1,
+    "goTestFailures": 0,
+    "goTestSkips": 0,
+    "cliSummary": {
+      "pass": 6,
+      "fail": 0,
+      "blocked": 0,
+      "skip": 0
+    },
+    "mcpSummary": {
+      "pass": 4,
+      "fail": 2,
+      "blocked": 0,
+      "skip": 0
+    },
+    "intentionalFailure": "WBFT preset declares 77774 while the native runtime uses 77773; the later WEMIX target still runs",
+    "binaries": {
+      "stablenet": "/private/tmp/chainbench-head-native/gstable",
+      "wbft": "/private/tmp/chainbench-head-native/gwbft",
+      "wemix": "/private/tmp/chainbench-head-native/gwemix"
+    },
+    "binarySHA256": {
+      "stablenet": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "wbft": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "wemix": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e"
+    },
+    "sources": {
+      "../../../internal/app/preset_provenance_test.go": "777ddbf95fa8847dfd58e310bdbc7fca1132a019907b53c277643c0608a1bb4e",
+      "../../../internal/app/runmatrix.go": "5a64cf129144b4bfbd8dcd359db9a59c4c2ad949d78112d38f596a52f459149e",
+      "../../../internal/app/runmatrix_test.go": "fcd1e3ebe0c49c3d7151741e1872bff4bb635b622aa9fb95d538f3696197023b",
+      "../../../internal/app/runsuites.go": "d60a35bbe6e17996728c2a24953ad01df83a85c2af3aaa495ceb81b226452345",
+      "../../../internal/app/start.go": "7e55fae4357965d7cb8d8d8840263cdae56397a866e7a4cc6d98a624e1f731c7",
+      "../../../internal/app/testcase.go": "751295aee8a5b3cbf54d9bc327d4091d31fc8a0cee4198e6ea72e94cc8a8e3ee",
+      "../../../internal/app/workflow.go": "56cc689a8a71a4589b5026831b904ed26939de47d760dc648a5ea8944c1519c8",
+      "../../../internal/core/report/combine_test.go": "78672ec5e9dfc49ab971a56fa4b73967966729ccb75f26d9f8ba71131b2f34b6",
+      "../../../internal/core/report/doc.go": "6d7f03816606ae76e2ac56b462048cca69419e50c779b2c7bf692e11f9135397",
+      "../../../internal/core/report/report.go": "46c1512f7908dc3594300085d29f31aba2a014a5a8622969d52b71f9986159fc",
+      "../../../internal/core/report/report_test.go": "cd0ba9f00e4672954e89d561cbc6a17610f8a956ddb5d2a1a3455fb232920fa5",
+      "../../../internal/core/session/accountstore.go": "b0fbfa7c2b294f41d7f955a8087b912acd441a50b563959c8fb98f3c12f458ec",
+      "../../../internal/core/session/artifacts_test.go": "385e076425cd0d4ec722da1159b49e465f43074fc63a3a730ddd6e65bc0d39e5",
+      "../../../internal/core/session/asset_inputs.go": "09736b91d367d02df78dd52eba75a9d96820ed84b36a31a9c83fd232a7be3c8d",
+      "../../../internal/core/session/asset_inputs_test.go": "c173d65bb1b1e34a0caa4f76d06579e6ea149081f08ece8ee88339dbbc840986",
+      "../../../internal/core/session/assetstore.go": "34af23243ad0faa4e3e6c36716baf5de3f8b52294916ad5a70c2a00ca15e9316",
+      "../../../internal/core/session/assetstore_test.go": "bb7776cd2d779ab636dbfa4e269ee75a5d10b35f3eb8bb898a09cb997c130cc1",
+      "../../../internal/core/session/collision_test.go": "37d2a93593e8b77541a647ce15c1c95efa833c704f609364e2344888bd6d5877",
+      "../../../internal/core/session/composition.go": "134b44beb90c4b9ba6cf0890fa60929ce6443a0dbc2d14a6e729e98ef241185d",
+      "../../../internal/core/session/composition_test.go": "9ad3cfec9a4f28dd42f87c9237a8894cd90adaf555d24b56ebcab6dda9d250a3",
+      "../../../internal/core/session/deployment_provenance_test.go": "226bd83c0074218c2918cc31a35b99367da59f1e6c0d83f0a9478f2ecaa1c568",
+      "../../../internal/core/session/docs.go": "fabae34bbc6d254296fa11567201e6b4143bbf00ffbe310e006c67b7371e6aaa",
+      "../../../internal/core/session/environment_impl.go": "b2f072537aeed96208c2eca65946a1795007a37d91faad33f280a7f85df55ddb",
+      "../../../internal/core/session/history_capture.go": "d285bbc32ed351365b56639512cf35712d1b0a077ff8637271175a4103ed01a2",
+      "../../../internal/core/session/history_capture_test.go": "2a74d3f81b70beb29cf5a94cfa3ea358a7aaebd1f9007734df1b1a0954f1ee17",
+      "../../../internal/core/session/historystore.go": "67e5b375ccce091c6f5603599bee0f6a00fc527f302f0d97a6f862cbd67cce45",
+      "../../../internal/core/session/jobstore.go": "df0cbf0a7bf1de809e1b0e5548e2191bf9bae8cd526794209ea5e0d091fb72c3",
+      "../../../internal/core/session/key_snapshot.go": "2e6e3767632ccabc87b2bd42389b21fc7a300fed7c2de305299f5566fb6ae8e6",
+      "../../../internal/core/session/lock.go": "e98c20aa17e438d070b9f102896d4926f9c7d4045386812b42b1cd7012a473ea",
+      "../../../internal/core/session/lock_race_test.go": "876e3310ef2635a4d7bac0d756c6d38692fe1ca5eece8ce2520c6005529a274a",
+      "../../../internal/core/session/lock_test.go": "66f915c3d18a769fb24cc6f235bc877f97969e08e1783a8579c343aa8240c36e",
+      "../../../internal/core/session/manifeststore.go": "d0cb7a0ad90519fb78d248f7eb9c065b84d803ca03906f111fb5eae3e8aff1e5",
+      "../../../internal/core/session/networks.go": "fb06c921eef36a834e08e47ecae9c58166cc56cca50bdd472f41869e79583ae0",
+      "../../../internal/core/session/networks_test.go": "64efcf40421105898e73555ac0da644eee4c4b83625969ef4b6beeae640b5f27",
+      "../../../internal/core/session/observation_test.go": "59ada2d57ae4a8a602ccea43fbf5517e8d9d8385b2ebde77050defa02a3fc70b",
+      "../../../internal/core/session/observationstore.go": "364f963a058a555f31719aab3059283602b39827898ff22756ab2616e0d105e8",
+      "../../../internal/core/session/observationstore_test.go": "cd55e9bae5563f6ed24aa3ae04459577976e022f6645d3b752ec8d4a59e4bc2b",
+      "../../../internal/core/session/read.go": "aa227f062bace57b9dba2bdb78496b3284cbacb82c3207f7d8383d6b734ca278",
+      "../../../internal/core/session/read_test.go": "c6b0991829f9c20ad42624aed36228c2870c062c72087764e858e4d3f5cd9884",
+      "../../../internal/core/session/record.go": "7689ae4c75ac5398fba00dd0e1e0a509530b0e013d0004aff14f7c5be69fb9cc",
+      "../../../internal/core/session/record_impl.go": "d657cf900ab4fae99aaae594c1a9fc8ed31c8967c3efd6bc22096100a20921d6",
+      "../../../internal/core/session/scrub.go": "287978a64a05415370cf59765a65747669c22a688c7124a9c2642da05d194c8a",
+      "../../../internal/core/session/scrub_test.go": "aaa701665cc55bef71a49ee70acdd7d077d6167ab2085fc3e42b23ea07e2306a",
+      "../../../internal/core/session/session.go": "aa1c3388f3b79a7d11f6df2accd6424b5c9ada7401e8895ff4629cc622b8b6cd",
+      "../../../internal/core/session/session_impl.go": "ad20309cd515e6e0e29849b71de65d2d095e84fe8cca005fc3d1195f3c5a6d3f",
+      "../../../internal/core/session/session_impl_test.go": "8819c3a59b34cbf4fac8617d71eda52b387499fc0fa7ddfcc585c07394b6da6f",
+      "../../../internal/core/session/webstore.go": "9debdae68ecec9d52b12b308d2ffc9d4be01ec7a36e35eeced445e45735223a4",
+      "../../../internal/core/session/write.go": "607286cd958976d18e7ba299806d6f242ae61b98f8025566c8f70f065a2e393a",
+      "../../../internal/dsl/attach_test.go": "56964e4997a503b2fb2f106c81a4ed49e4a450edc96fbc236a268be9b6c0f5ed",
+      "../../../internal/dsl/catalog.go": "f2f1461c825659feb75860bbeec0011446580414534c4d682dc62b54ce81bc58",
+      "../../../internal/dsl/catalog_test.go": "fd7a8ba1240a0cec40b2c8a95c5b1d489178b1a8ebd4533f5c4dc5761edc4ce3",
+      "../../../internal/dsl/docs.go": "936a76d6c2d0943def7d7d04cff11bcf89051d53b3ed9ae3af110ba2450f51cf",
+      "../../../internal/dsl/editor_schema.go": "fe0691fd84cab0282d132946e9401b51149198d51c2a135ec45637caf78e87e2",
+      "../../../internal/dsl/endpoint_profile_test.go": "d60243f98dbde9eae3012cb453883d49eb339a12a65b860f2e3e44f023ab27f0",
+      "../../../internal/dsl/files.go": "b138beadf6f753afd587ec83e5f320fde3c9ca51e3d9ac643408308b80042c81",
+      "../../../internal/dsl/fuzz_test.go": "0f2008fd9472f2391d702babb85ea88e5fbaa92e03106e95a66bdc24152deb90",
+      "../../../internal/dsl/lower_v1.go": "572ef0a8cb2afe491cdd38981f6b82d909f0492126ef4ae85d829a2dea358420",
+      "../../../internal/dsl/matrix_test.go": "ab5171792889d49d9e17cff7bd5e5e0f71d848991c2efcb92ea1c317a7207f93",
+      "../../../internal/dsl/migrate.go": "066501ebd4a5b29d37e3f43241061423c97edcce1d1fc1f02b113a0519bb6c43",
+      "../../../internal/dsl/outcome_perchain_internal_test.go": "2c445131781888f5f5de30c352a6b3b4fb599c97b85dcb01e8ce21718a79874a",
+      "../../../internal/dsl/parse_v2.go": "90d80cdf34efdf036982b80f3eb7f881882c9028b0058b476800e3453c96da5e",
+      "../../../internal/dsl/perchain_test.go": "f6b115f2bcfae0c95530c5d4d0c9560b9e6c4e8b3bc5a6510bd997303c1a4760",
+      "../../../internal/dsl/preset_values.go": "9153e98813d1cfee322c0a81c120a354dbdbc559c9ba8967fe9b0ce585b703c2",
+      "../../../internal/dsl/preset_values_test.go": "3b05b751c869860db05cfab69674bb666148c2f8bdcd7fe7c9148cd346661b29",
+      "../../../internal/dsl/schemanested_test.go": "1c75277fb4e296c7752ba279011327cc2a468a5da2d361a4ba9b802a6bd1daf6",
+      "../../../internal/dsl/schemasync_test.go": "3fc4d8b90aca3500d5625ad187ad4d937d1c1acec6a6c9e3385ebadd70043106",
+      "../../../internal/dsl/spec.go": "3c76c431cd287b400e1b65965a246d9907445dc8acfb2c4f0742603de9644455",
+      "../../../internal/dsl/spec_test.go": "c2f80c0ac50451951f0ceb3ae5933b887905ff28a1f41434b5616ee9ba218784",
+      "../../../internal/dsl/spec_v2.go": "6eec6d605fe1e08ea91480f00897c2d6b7d86274c1280659b148c02b1fe24422",
+      "../../../internal/dsl/spec_v2_test.go": "f79e838793cf730a8b95c65d99ed41178bb6b3396c7a264af336fd9cde0782aa",
+      "../../../internal/dsl/spec_v2_timeouts_test.go": "da1515014ebf53603a2a84141ed996be7fc1a0cf78a026e0fc7995aa63070fb5",
+      "../../../internal/dsl/statement.go": "66db3ed954fc71a0fea11e9045fe2d1722c988bb399b75181ba0946a251c525f",
+      "../../../internal/dsl/useenv_test.go": "30704a224baae176eea875f95853fb7beaf326943cd64d8a0bdbfdba323240ca",
+      "../../../internal/feature/test.go": "f025c996be3c859b2853afb6bcc42813c432a0fd30f312fdc94ba22593173ffc",
+      "../../../internal/mcp/chain_id_input.go": "dbc21c88b1cf81a588fed6e9944de8cd6e834acf04dcdc313c696f6bfeee3c02",
+      "../../../internal/mcp/chain_id_input_test.go": "c767ebdff10e4c0f7f697a19360b9523ffe082da8a44b8091171f4d72e60cfe6",
+      "../../../internal/mcp/run_matrix.go": "31743e5ed5f92e51764ce438ff888cdb7e68787faacade18e7ac23b8ef19d09f",
+      "../../../internal/mcp/run_tool.go": "455b1ece7896e29d64b717df119239810ec6b42fdb89bb596f9f52b6462d8a1e",
+      "../../../internal/mcp/run_tool_modeselect_test.go": "ed3b54c17e0bf2f15dec8d2859d37153d28067f879dec5fb07fdd907a4447133",
+      "../../../internal/mcp/run_tool_test.go": "afb2e061d91a7a9f793c653f53e4d340211bb06393c96f1f0dde935569b46902",
+      "../../../internal/mcp/server.go": "8f4d68ce9ad79502a5478443f80c6d4bf8fa1cf0798a33d4b75eb2a000ac39ec",
+      "../../../internal/testengine/engine_impl.go": "f6cc539d9aec5a5edd18e0529b2fce135d8e8895dcdaeb594cef1b0bf343ea71",
+      "../../../internal/testengine/runmachine.go": "6626b33834a261216e7b05955b9b74068ee7d6b80375c3d9657a3a0f33f3e9c6",
+      "../../../internal/testengine/suite.go": "6f39fdeddd4d3db18e31c8bf624132cfef6f5ab8aaa37758ebf658b3efc9b850",
+      "../../../internal/testengine/summary.go": "f69331646f1a8307ea16e7def6562db75d9813dea829dbcdccb4358917609c01",
+      "matrix.go": "b3d015e8a51143c833689f23fe71f2bd9cd0ff3981dced949d4e526362078f95",
+      "matrix_native_test.go": "7c8a8d67a107f5ac1add803f392b9bdb32f50c90687bad1baf602cbc56c5b867",
+      "matrix_test.go": "a5e4b0ddd1ca453012e1fb20f479b5cd4e939d6cae366b1191d92790f04e9dfa",
+      "run.go": "53728cf2a9f14437ca30888caeb937478da419781a8044c7b2c4c4f2b7759105"
+    },
+    "runs": [
+      {
+        "surface": "cli",
+        "index": 1,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/stablenet.json",
+        "presetId": "native-stablenet",
+        "chain": "stablenet",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-001",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012107",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: stablenet: family wbft, chain id 8283, bootstrap static; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-001",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 6274 bytes at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-001/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-001",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gstable",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-001/runs/20261014-012108",
+          "nodemonitor r1 node1 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node2 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node3 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node4 WAITABLE: rpc not ready yet",
+          "nodemonitor r2 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing"
+        ],
+        "tests": [
+          {
+            "presetId": "native-stablenet",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "pass"
+          },
+          {
+            "presetId": "native-stablenet",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 2,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012107/session.json",
+            "sha256": "ec474e7c7a5916906a68b301bc798917fc949fe4e5cc2b04d0f22cf2e359d408"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012107/report.json",
+            "sha256": "fc361bbb7e485c261af7a50fb944868dfee29cbf5ca3f98d0ea36324c0f078de"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012107/tests/002_shared-2/status.json",
+            "sha256": "250e5a6d32ea6d611b742ccbfccb03784a1c833072e425c91c3760f05677eda9"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012107/tests/001_shared-1/status.json",
+            "sha256": "9bc4f1426a9e74f6e38497cd23d8aae3e0730e96beda37693c9578ab01cc00c0"
+          }
+        ]
+      },
+      {
+        "surface": "cli",
+        "index": 2,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/wbft.json",
+        "presetId": "native-wbft",
+        "chain": "wbft",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-002",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012118",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: wbft: family wbft, chain id 8284, bootstrap static; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-002",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 4175 bytes at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-002/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-002",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwbft",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-002/runs/20261014-012120",
+          "nodemonitor r1 node1 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node2 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node3 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node4 WAITABLE: rpc not ready yet",
+          "nodemonitor r2 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node3 WAITABLE: still syncing; behind the network: height 0, network at 5; peers 0 < wanted 1",
+          "nodemonitor r2 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node3 WAITABLE: still syncing; behind the network: height 0, network at 10; peers 0 < wanted 1",
+          "nodemonitor r3 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node3 WAITABLE: still syncing; behind the network: height 0, network at 15; peers 0 < wanted 1",
+          "nodemonitor r4 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node3 WAITABLE: still syncing; behind the network: height 0, network at 20; peers 0 < wanted 1",
+          "nodemonitor r5 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node3 WAITABLE: still syncing; behind the network: height 0, network at 25; peers 0 < wanted 1",
+          "nodemonitor r6 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node3 WAITABLE: still syncing; behind the network: height 0, network at 30; peers 0 < wanted 1",
+          "nodemonitor r7 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node3 WAITABLE: still syncing; behind the network: height 0, network at 35; peers 0 < wanted 1",
+          "nodemonitor r8 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing"
+        ],
+        "tests": [
+          {
+            "presetId": "native-wbft",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "pass"
+          },
+          {
+            "presetId": "native-wbft",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 2,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012118/session.json",
+            "sha256": "52acd7c6ed7fc3e3a654aeed00a83b54364d20dbf51a1b833ffc20a21d4c5d75"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012118/report.json",
+            "sha256": "01b4a6f17345ff1805a412f05c5e6dfd891bcf9a841fb25a20110e362579b751"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012118/tests/002_shared-2/status.json",
+            "sha256": "a1564dd6a0290d533ad56ff1cc9910db587759f308cb6d32aeb2f0f12d6fe381"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012118/tests/001_shared-1/status.json",
+            "sha256": "fdfb0fe72a254cbe315c391ab9817e157ab8e45baa5914a43628839de8c2a0d1"
+          }
+        ]
+      },
+      {
+        "surface": "cli",
+        "index": 3,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/wemix.json",
+        "presetId": "native-wemix",
+        "chain": "wemix",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-003",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012208",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: wemix: family poa, chain id 8285, bootstrap governance-etcd; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-003",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 1509 bytes at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-003/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-003",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwemix",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/cli-workspace/matrix/preset-003/runs/20261014-012319",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing"
+        ],
+        "tests": [
+          {
+            "presetId": "native-wemix",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "pass"
+          },
+          {
+            "presetId": "native-wemix",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 2,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012208/session.json",
+            "sha256": "6c8da72f67a402216ae88fd063bbdf97bd7f5f53f24b78cd58b7995a883b1607"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012208/report.json",
+            "sha256": "cae42cbd9523753420e899e33689b949f83bc8236cd5dbeb812eda20b0a37c4b"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012208/tests/002_shared-2/status.json",
+            "sha256": "5aac0f30fc4d42524b0be1e000d1bc60c5786c51870f6fa720a3fdc07d172b09"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/cli-artifacts/20261014-012107-38916/UTC-20261014-012208/tests/001_shared-1/status.json",
+            "sha256": "74962d01592e59be0c92aefa8ec090b06e7e550c5168fe2053807bb092ad26cd"
+          }
+        ]
+      },
+      {
+        "surface": "mcp",
+        "index": 1,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/stablenet.json",
+        "presetId": "native-stablenet",
+        "chain": "stablenet",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-001",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012340",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: stablenet: family wbft, chain id 8283, bootstrap static; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-001",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 6274 bytes at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-001/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-001",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gstable",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-001/runs/20261014-012342",
+          "nodemonitor r1 node1 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node2 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node3 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node4 WAITABLE: rpc not ready yet",
+          "nodemonitor r2 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node2 WAITABLE: still syncing; behind the network: height 0, network at 4; peers 0 < wanted 1",
+          "nodemonitor r2 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r2 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node2 WAITABLE: still syncing; behind the network: height 0, network at 7; peers 0 < wanted 1",
+          "nodemonitor r3 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r3 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node2 WAITABLE: still syncing; behind the network: height 0, network at 13; peers 0 < wanted 1",
+          "nodemonitor r4 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r4 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node2 WAITABLE: still syncing; behind the network: height 0, network at 16; peers 0 < wanted 1",
+          "nodemonitor r5 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r5 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node2 WAITABLE: still syncing; behind the network: height 0, network at 22; peers 0 < wanted 1",
+          "nodemonitor r6 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r6 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node2 WAITABLE: still syncing; behind the network: height 0, network at 25; peers 0 < wanted 1",
+          "nodemonitor r7 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r7 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node2 WAITABLE: still syncing; behind the network: height 0, network at 31; peers 0 < wanted 1",
+          "nodemonitor r8 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r8 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r9 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing"
+        ],
+        "tests": [
+          {
+            "presetId": "native-stablenet",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "pass"
+          },
+          {
+            "presetId": "native-stablenet",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 2,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012340/session.json",
+            "sha256": "837a4ac2280a74d8d14ac058b89f571e5cb114a382f362780eaf15c2116f4057"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012340/report.json",
+            "sha256": "adcf70eb1c7754bc82789007a5ce99b07ba87f3ff81b494c4444dbcdbcdcedd3"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012340/tests/002_shared-2/status.json",
+            "sha256": "250e5a6d32ea6d611b742ccbfccb03784a1c833072e425c91c3760f05677eda9"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012340/tests/001_shared-1/status.json",
+            "sha256": "9bc4f1426a9e74f6e38497cd23d8aae3e0730e96beda37693c9578ab01cc00c0"
+          }
+        ]
+      },
+      {
+        "surface": "mcp",
+        "index": 2,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/wbft-mismatch.json",
+        "presetId": "native-wbft",
+        "chain": "wbft",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-002",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012427",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: wbft: family wbft, chain id 8284, bootstrap static; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-002",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 4175 bytes at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-002/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-002",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwbft",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-002/runs/20261014-012428",
+          "nodemonitor r1 node1 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node2 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node3 WAITABLE: rpc not ready yet",
+          "nodemonitor r1 node4 WAITABLE: rpc not ready yet",
+          "nodemonitor r2 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 5; peers 0 < wanted 1",
+          "nodemonitor r2 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r2 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r2 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r3 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 10; peers 0 < wanted 1",
+          "nodemonitor r3 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r3 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r3 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r4 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 15; peers 0 < wanted 1",
+          "nodemonitor r4 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r4 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r4 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r5 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 20; peers 0 < wanted 1",
+          "nodemonitor r5 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r5 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r5 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r6 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 25; peers 0 < wanted 1",
+          "nodemonitor r6 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r6 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r6 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r7 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 30; peers 0 < wanted 1",
+          "nodemonitor r7 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r7 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r7 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r8 node1 WAITABLE: still syncing; block height not advancing yet; behind the network: height 0, network at 35; peers 0 < wanted 1",
+          "nodemonitor r8 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r8 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r8 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r9 node1 WAITABLE: block height not advancing yet; behind the network: height 35, network at 40",
+          "nodemonitor r9 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r9 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r9 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r10 node1 WAITABLE: block height not advancing yet; behind the network: height 35, network at 45",
+          "nodemonitor r10 node2 WAITABLE: block height not advancing yet",
+          "nodemonitor r10 node3 WAITABLE: block height not advancing yet",
+          "nodemonitor r10 node4 WAITABLE: block height not advancing yet",
+          "nodemonitor r11 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r11 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r11 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r11 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan"
+        ],
+        "tests": [
+          {
+            "presetId": "native-wbft",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "fail"
+          },
+          {
+            "presetId": "native-wbft",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "fail"
+          }
+        ],
+        "summary": {
+          "pass": 0,
+          "fail": 2,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012427/session.json",
+            "sha256": "1ea80ef2d0371dfd88fbf070b02c12c64a26ee9230e08ca406a385b9dc086c4b"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012427/report.json",
+            "sha256": "98146e7be43b185fc12d79f6d683b500afe51c2e05883c68ff56600720a1a723"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012427/tests/002_shared-2/status.json",
+            "sha256": "8a2ed4e9fe3604d1e0523c0e098ad9dc489919a54a72a6606b30494141bd0dd1"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012427/tests/001_shared-1/status.json",
+            "sha256": "0142cdc601992ea38350fad83ee5eb0ecce21304f8360c6877aa4d399ed64a79"
+          }
+        ]
+      },
+      {
+        "surface": "mcp",
+        "index": 3,
+        "preset": "/private/tmp/cbui/matrix-native-2426566276/wemix.json",
+        "presetId": "native-wemix",
+        "chain": "wemix",
+        "workspace": "/private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-003",
+        "attempted": true,
+        "session": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012524",
+        "stopped": true,
+        "setupSteps": [
+          "preflight: compose: nothing is composed on the target",
+          "new: wemix: family poa, chain id 8285, bootstrap governance-etcd; keys /Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys; target local /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-003",
+          "place: 4 node(s): 4 bp + 0 en + 0 pn; ports: built-in defaults (no server config); p2p from 31000, http from 8600",
+          "keys: keys:/Users/0xtopaz/work/github/0xmhha/chainbench/presets/keys: 5 identities, 4 declared validators",
+          "genesis: 1509 bytes at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-003/genesis.json, 4 validator(s), chain id 77773 (override)",
+          "config: 4 config(s) under /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-003",
+          "build: 4 argv(s) assembled",
+          "deploy: 5 launch input(s) present on the target (reused, not rewritten)",
+          "init: 4 datadir(s) initialized with /private/tmp/chainbench-head-native/gwemix",
+          "start: 4 node(s) started (0 already running); run recorded at /private/tmp/cbui/matrix-native-2426566276/mcp-workspace/matrix/preset-003/runs/20261014-012638",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "verify: the launched network matches the plan",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node1 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node2 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node3 READY: alive, rpc ready, advancing",
+          "nodemonitor r1 node4 READY: alive, rpc ready, advancing"
+        ],
+        "tests": [
+          {
+            "presetId": "native-wemix",
+            "seq": 1,
+            "id": "shared-1",
+            "status": "pass"
+          },
+          {
+            "presetId": "native-wemix",
+            "seq": 2,
+            "id": "shared-2",
+            "status": "pass"
+          }
+        ],
+        "summary": {
+          "pass": 2,
+          "fail": 0,
+          "blocked": 0,
+          "skip": 0
+        },
+        "evidence": [
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012524/session.json",
+            "sha256": "50b78ab900cf62dacb1f8bcaf7cee1f2d34ec4bc7ca20279d0027c354a18a524"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012524/report.json",
+            "sha256": "8871e199dd4b536c157c37236550ebaef486b1969a9d8f5d538121203a2b5955"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012524/tests/002_shared-2/status.json",
+            "sha256": "5aac0f30fc4d42524b0be1e000d1bc60c5786c51870f6fa720a3fdc07d172b09"
+          },
+          {
+            "path": "/private/tmp/cbui/matrix-native-2426566276/mcp-artifacts/20261014-012107-38916/UTC-20261014-012524/tests/001_shared-1/status.json",
+            "sha256": "74962d01592e59be0c92aefa8ec090b06e7e550c5168fe2053807bb092ad26cd"
+          }
+        ]
+      }
+    ],
+    "endedDatabasesRemaining": 0,
+    "nodeProcessesRemaining": 0,
+    "runtimeApparentSize": "9.9 MiB (du -sh after cleanup)",
+    "diagnosticFiles": 200
+  },
+  "browser": {
+    "path": "/private/tmp/cbui/be1bcc69-dab7-4c13-b29b-f73959338e08/matrix-browser-proof/receipt.json",
+    "sha256": "74bc3a15648e99aad8495f5bc74ea11124b3e9a2f898ad7b2ff42b2916f28e3d",
+    "runtime": "/private/tmp/cbui/be1bcc69-dab7-4c13-b29b-f73959338e08",
+    "binaries": [
+      {
+        "chain": "stablenet",
+        "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+        "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+        "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+        "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+        "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+      },
+      {
+        "chain": "wbft",
+        "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+        "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+        "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+        "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+        "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+      },
+      {
+        "chain": "wemix",
+        "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+        "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+        "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+        "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+        "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+      }
+    ],
+    "receipt": {
+      "browserVersion": "155.0.8059.41",
+      "errorLink": {
+        "path": "/content/steps/1/do",
+        "focusedInvalid": true
+      },
+      "keyboardMove": true,
+      "keyboardSaveAndDuplicate": [
+        "dsl-proof",
+        "dsl-proof-copy"
+      ],
+      "importDiff": [
+        "/assertions · 없어짐",
+        "/chain · 없어짐",
+        "/chainPreset · 추가됨",
+        "/kind · 추가됨",
+        "/schemaVersion · 바뀜",
+        "/steps/0/do · 추가됨",
+        "/steps/0/on · 추가됨",
+        "/steps/0/read · 없어짐"
+      ],
+      "endpointProfile": {
+        "roleSelectors": [
+          "node1",
+          "bp",
+          "bp1",
+          "node2",
+          "en",
+          "en1"
+        ],
+        "importExportPreserved": true,
+        "exclusiveForms": true,
+        "jwtOmitsHeader": true
+      },
+      "accessList": {
+        "structuredFields": true,
+        "savedAddressReference": true,
+        "storageKey": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "importExportPreserved": true
+      },
+      "transactionNumbers": {
+        "fractionRejected": true,
+        "unsafeNumberRejected": true,
+        "safeIntegerControl": true,
+        "uint64StringExportPreserved": true
+      },
+      "loadControls": {
+        "fractionRejected": true,
+        "zeroRejected": true,
+        "percentRangeEnforced": true,
+        "integerControls": true,
+        "saveExportPreserved": true
+      },
+      "unsignedControls": {
+        "integerControls": true,
+        "fractionRejected": true,
+        "zeroCountRejected": true,
+        "indexOverflowRejected": true,
+        "zeroBoundPreserved": true,
+        "hexIndexPreserved": true,
+        "uint64BoundPreserved": true,
+        "saveExportPreserved": true
+      },
+      "durationControls": {
+        "zeroRejected": true,
+        "negativeRejected": true,
+        "malformedRejected": true,
+        "overflowRejected": true,
+        "fractionalUnitsPreserved": true,
+        "compoundDurationPreserved": true,
+        "microsecondsPreserved": true,
+        "saveExportPreserved": true
+      },
+      "feeDelegation": {
+        "declaredAccountSelector": true,
+        "conflictingFieldsUnavailable": true,
+        "conflictingImportPreserved": true,
+        "conflictRejected": true,
+        "incompleteFeePairRejected": true,
+        "keyBindingAndExportPreserved": true
+      },
+      "presetValues": {
+        "typedBooleanAuthoring": true,
+        "nestedNullPreserved": true,
+        "initialReferencesOffered": true,
+        "declaredIdentityControl": true,
+        "fractionalIdentityRejected": true,
+        "validationAndExportPreserved": true
+      },
+      "keyboardCancel": {
+        "jobId": "122d39d87ff98e562a6ef645e842c04c",
+        "disposition": "cleaned"
+      },
+      "seedAcceptanceAwarded": false,
+      "binaries": [
+        {
+          "chain": "stablenet",
+          "sha256": "82a1c61e9a5b67e7a93df9beca96741120a9a256007a78d565f5fbe3f5ddf92e",
+          "version": "Gstable\nVersion: 1.1.0-stable\nGit Commit: 0937ac5c93d4f56ded5b24899f381d3d1f208c02\nGit Commit Date: 20260810\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "0937ac5c93d4f56ded5b24899f381d3d1f208c02",
+          "helpDigest": "077e62e3349a6d55d64636cb142113bd63e2fd8c23ffb1b7c641701cd419085c",
+          "sourceConfigDigest": "7b4bdf2a75cd77dda476586cc87bdcc341911365859a7a4a91ebf37de58f7028"
+        },
+        {
+          "chain": "wbft",
+          "sha256": "4a79ce8e47d95f8e1920a802e4219ef16bbc6d96476f1891d941581e12a79971",
+          "version": "gwemix\nVersion: 1.0.0-alpha\nGit Commit: 7af50e45db4a48a2a77e565c7ff7bde0e8f95505\nGit Commit Date: 20260811\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+          "helpDigest": "9780c704c36fe8abafcbf5bbf2c936b91111d93df9fb9bf95b6c112679e9f20d",
+          "sourceConfigDigest": "05900f674dc464b170f69b33608af28f2bb25c88f9d8a5c80aa51cf488f911b4"
+        },
+        {
+          "chain": "wemix",
+          "sha256": "b4211fbb89a7cd8cd083687f3eb97fb57d1821c0112f262985e6856d87d37f2e",
+          "version": "Gwemix\nVersion: 0.10.14-stable\nGit Commit: 1350376a680489298b3203a44d9ebddb7747f9cc\nGit Commit Date: 20260728\nArchitecture: arm64\nGo Version: go1.25.2\nOperating System: darwin\nGOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.26.8/global\nGOROOT=/Users/0xtopaz/.gvm/gos/go1.26.8\n",
+          "commit": "1350376a680489298b3203a44d9ebddb7747f9cc",
+          "helpDigest": "d2e0c3cc0f4e321a73ef647a0716731bde6b2940a71fa8064c8d65a31080d173",
+          "sourceConfigDigest": "8043eb0408d547448114aba4a4c45fc69925f1dfea1a4578c972c1ae27e39f09"
+        }
+      ],
+      "runtime": "/private/tmp/cbui/be1bcc69-dab7-4c13-b29b-f73959338e08"
+    },
+    "endedDatabasesRemaining": 0,
+    "sources": {
+      "internal/app/testcase.go": "751295aee8a5b3cbf54d9bc327d4091d31fc8a0cee4198e6ea72e94cc8a8e3ee",
+      "internal/dsl/spec.go": "3c76c431cd287b400e1b65965a246d9907445dc8acfb2c4f0742603de9644455",
+      "internal/dsl/lower_v1.go": "572ef0a8cb2afe491cdd38981f6b82d909f0492126ef4ae85d829a2dea358420",
+      "tests/webui/browser_dsl_editor.mjs": "a4806091047d63b82a44d423761c897eca7fd58e809d29a39b539bea6119333f"
+    }
+  },
+  "storage": "CLI owned node data is stopped, public diagnostics are preserved with content/mode/group/mtime, and chain rm runs before MCP starts. A 20 GiB free-space check precedes each surface. Browser evidence copies preserve SHA256, mode, uid/gid and nanosecond mtime. No referenced prior proof or user file removed.",
+  "limitations": [
+    "Native CLI positive and MCP intentional-middle-failure scenarios use different WBFT declarations; identical-input CLI/MCP parity is proved by the RPC contract tests.",
+    "Matrix launching was added to CLI/MCP; existing Web history/session capture receives the additive preset IDs. This stage does not add a Web multi-target launch form.",
+    "Full common-TC provenance also asks for binary/version/fork/signing/skip context; existing artifacts hold some dimensions, but complete adequacy remains part of tasks 9 and 10.",
+    "Fresh Linux HEAD L1, remaining R3/P4/R4/R5, tasks 10–14 and frozen Web14 acceptance remain open."
+  ]
+}

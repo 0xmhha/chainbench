@@ -507,3 +507,34 @@ tests/tc/common/node/CT-NODE-009-head-hash-agreement.json
 ### 쓸 수 없는 것은 쓸 수 없다고 적는다
 
 어떤 주장은 지금 어휘로 단정할 수 없다. 그때는 **단정하는 척하는 대신 스펙 설명에 무엇을 못 보는지 적는다.** 한 사이클 안의 제안 차례 수 동등성이 그런 경우다 — DSL 이 런타임에 알게 된 높이 기준 상대 블록을 주소지정하지 못한다. 못 보는 것을 적어 둔 케이스는 다음 사람이 채울 수 있고, 보는 척하는 케이스는 아무도 다시 열지 않는다.
+
+
+## 같은 스위트를 여러 chain preset에서 실행
+
+케이스의 `chainPreset`을 참조 문자열 또는 `extends` 객체로 선언하면, 파일을 수정하지 않고 다른 preset에 올릴 수 있다.
+`--chain-presets`를 반복하면 모든 케이스를 대상별 한 스위트로 직렬 실행한다. 케이스가 선언한 override는 보존한다.
+고정된 inline preset과 v1 케이스는 자동 교체하지 않으며 명시 오류로 거절한다.
+
+```sh
+chainbench run --json --workspace-dir ./matrix-workspace \
+  --chain-presets ./chain-a.json --chain-presets ./chain-b.json \
+  --artifact-root ./matrix-results ./case-1.json ./case-2.json
+```
+
+각 선택 대상은 `matrix/preset-001` 같은 별도 workspace와 독립 세션을 사용한다. 기본값은 대상 종료 뒤 다음 대상으로
+진행한다. `--keep-up`을 명시하면 각 소유 망을 남긴다. 선언형 attach preset은 기존 망을 읽으며 노드를 제어하지 않는다.
+사전 검사 오류는 첫 실행 전에 거절한다. 실행 중 대상 실패는 다음 결과를 가리지 않지만, 취소나 소유 망의 정리 실패는
+후속 대상을 시작하지 않고 이유와 `attempted: false`를 남긴다.
+
+JSON의 `runs`는 선택 순서대로 `preset`, `presetId`, `chain`, `session`, `tests`, `summary`를 기록한다. 케이스가 preset ID를
+override한 경우 선택 행의 ID와 케이스의 실제 ID가 다를 수 있다. 실제 ID는 `session.json`, `status.json`, `report.json`에도
+남는다. 이름은 실행 지문을 바꾸지 않는다. 기존 v1 결과에는 이 선택 필드가 없다.
+
+MCP `chainbench_run`은 같은 의미의 `chainPresets` 배열을 받는다. `specs`의 원본 참조를 대상별로 교체한 뒤 `baseDir`에서
+preset ID를 조회한다. JSON 파일 경로는 CLI처럼 호출 프로세스의 작업 디렉터리에서 해석하며 절대 경로도 받을 수 있다.
+`dataDir`, `artifactRoot`, `binaryFor`, `readOnlyKeys`, `workspaceConfig`, `serverLogins`는 기존 구성 입력을 사용한다.
+MCP `chainId`는 CLI `--chain-id`와 대응하며, JSON 안전 범위를 넘는 정수는 정확한 decimal/hex 문자열로 보낸다.
+
+구성 대상에 `--plan` 또는 MCP `plan: true`를 쓰면 대상별 계획만 반환한다. 기존과 같이 attach 대상의 계획은 거절한다.
+CLI 종료 코드는 테스트 실패 1, 셋업/blocked 또는 `--no-skips` 아래 skip 2, 그 외 0이다. MCP는 대응하는 `noSkips`를 받고,
+실패해도 `isError: true`와 함께 대상별 JSON을 보존한다. Web의 현재 실행 폼은 단일 대상이며, 이 배열은 CLI/MCP 입력이다.

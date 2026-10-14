@@ -42,9 +42,10 @@ type fakeRecord struct {
 	posts       []session.PostResult
 }
 
-func (r *fakeRecord) Dir() string      { return "" }
-func (r *fakeRecord) SetEnvRef(string) {}
-func (r *fakeRecord) Spec([]byte)      {}
+func (r *fakeRecord) Dir() string        { return "" }
+func (r *fakeRecord) SetEnvRef(string)   {}
+func (r *fakeRecord) SetPresetID(string) {}
+func (r *fakeRecord) Spec([]byte)        {}
 func (r *fakeRecord) Step(_ int, res session.StepResult) {
 	r.steps++
 	r.stepResults = append(r.stepResults, res)

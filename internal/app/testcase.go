@@ -248,6 +248,9 @@ func PrepareTestCase(in TestCaseInput) (TestCasePrepared, error) {
 }
 
 func testCaseSemantics(s dsl.Spec) string {
+	// Declaration names are provenance. Migrating v1 introduces a preset ID
+	// without changing the executable body or environment configuration.
+	s.PresetID = ""
 	// v2 stores actions only in Sequence, while v1 stores them in Steps as well.
 	// Normalize the duplicate representations, but include every exported field
 	// (encoding Spec directly would omit runtime-only env fields).

@@ -64,6 +64,8 @@ type Environment interface {
 type TestRecord interface {
 	Dir() string
 	SetEnvRef(presetID string)
+	// SetPresetID records the declaration, independently of the reused environment.
+	SetPresetID(id string)
 	Spec(raw []byte)
 	Step(i int, r StepResult)
 	Assert(r AssertResult)

@@ -108,6 +108,7 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		Timeouts:         c.Timeouts,
 		EnvAttach:        env.Attach,
 		EnvValues:        env.Values,
+		PresetID:         env.ID,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the

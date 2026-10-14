@@ -85,6 +85,8 @@ type Spec struct {
 	// EnvValues are preset-provided initial bindings. Runtime-only; v1 keeps
 	// its grammar and declarations are retained in the original v2 content.
 	EnvValues map[string]any `json:"-"`
+	// PresetID identifies the resolved v2 declaration without changing reuse.
+	PresetID string `json:"-"`
 
 	// EnvKeys is the v2 env's node-key source declaration, for the surface to
 	// fold into the engine's KeySource boundary. Runtime-only.

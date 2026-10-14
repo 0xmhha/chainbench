@@ -125,6 +125,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec := sess.Test(seq, spec.ID)
+		rec.SetPresetID(spec.PresetID)
 		rec.Spec(raw)
 		e.recordArtifacts(rec)
 

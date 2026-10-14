@@ -81,6 +81,12 @@ func ReadFilesWithChainPreset(paths []string, presetRef string) ([][]byte, error
 // ReadContent resolves an inline case using the same preset search and merge
 // rules as a file. baseDir is its reference context; empty uses the process cwd.
 func ReadContent(raw []byte, baseDir string) ([]byte, error) {
+	return ReadContentWithChainPreset(raw, baseDir, "")
+}
+
+// ReadContentWithChainPreset applies the same movable-reference contract as
+// ReadFilesWithChainPreset before resolving inline input, preserving overrides.
+func ReadContentWithChainPreset(raw []byte, baseDir, presetRef string) ([]byte, error) {
 	if baseDir == "" {
 		var err error
 		baseDir, err = os.Getwd()
@@ -93,12 +99,64 @@ func ReadContent(raw []byte, baseDir string) ([]byte, error) {
 		return nil, fmt.Errorf("dsl: inline spec context: %w", err)
 	}
 	baseDir = contextDir
+	var presetID string
+	var presetRaw []byte
+	if presetRef != "" {
+		presetID, presetRaw, err = resolveChainPresetRef([]string{filepath.Join(baseDir, "inline.json")}, presetRef)
+		if err != nil {
+			return nil, err
+		}
+		raw, err = UseChainPreset(raw, presetID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return InlineChainPreset(raw, func(id string) ([]byte, error) {
+		if id == presetID && presetRaw != nil {
+			return presetRaw, nil
+		}
 		if content, ok := findChainPresetFile(baseDir, id); ok {
 			return content, nil
 		}
 		return nil, fmt.Errorf("no chain-preset %q beside %s, in a chain-preset/ directory above it, or in %s", id, baseDir, sharedPresetDir)
 	})
+}
+
+// CasesOnPreset reads the selected declaration once and moves every case onto
+// that exact content. File and inline matrix callers supply the same raw cases.
+func CasesOnPreset(raws [][]byte, baseDir, presetRef string) (ChainPresetV2, [][]byte, error) {
+	if baseDir == "" {
+		baseDir = "."
+	}
+	id, presetRaw, err := resolveChainPresetRef([]string{filepath.Join(baseDir, "inline.json")}, presetRef)
+	if err != nil {
+		return ChainPresetV2{}, nil, err
+	}
+	preset, err := ParseChainPreset(presetRaw)
+	if err != nil {
+		return ChainPresetV2{}, nil, err
+	}
+	out := make([][]byte, 0, len(raws))
+	for index, raw := range raws {
+		moved, err := UseChainPreset(raw, id)
+		if err != nil {
+			return ChainPresetV2{}, nil, fmt.Errorf("case %d: %w", index+1, err)
+		}
+		resolved, err := InlineChainPreset(moved, func(name string) ([]byte, error) {
+			if name == id {
+				return presetRaw, nil
+			}
+			return nil, fmt.Errorf("matrix case did not select preset %q", id)
+		})
+		if err != nil {
+			return ChainPresetV2{}, nil, err
+		}
+		if spec, err := Parse(resolved); err != nil || spec.PresetID == "" {
+			return ChainPresetV2{}, nil, fmt.Errorf("matrix case %d needs a valid movable v2 preset declaration: %v", index+1, err)
+		}
+		out = append(out, resolved)
+	}
+	return preset, out, nil
 }
 
 // resolveChainPresetRef turns the caller's env reference into the id the cases will

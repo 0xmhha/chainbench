@@ -138,6 +138,9 @@ type RunSuiteOut struct {
 	Summary Summary
 	// Stopped reports whether the network was torn down afterwards.
 	Stopped bool
+	// CleanupFailed means an owned network may still be running. A batch must
+	// not start its next network while this condition remains unresolved.
+	CleanupFailed bool `json:"cleanupFailed,omitempty"`
 	// Preflight is the reuse decision the run started from: reuse, which
 	// nodes were rebuilt, or why everything was. A handoff is always composed.
 	Preflight string
@@ -427,6 +430,7 @@ func recordBlockedBySetup(ctx context.Context, sd chainsetup.Deps, dataDir strin
 	ev := gatherFailureData(ctx, sd, dataDir, net.nodes)
 	for i, spec := range blocked.specs {
 		rec := blocked.sess.Test(i+1, spec.ID)
+		rec.SetPresetID(spec.PresetID)
 		if i < len(blocked.raw) {
 			rec.Spec(blocked.raw[i])
 		}

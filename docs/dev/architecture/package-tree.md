@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 85,105 |
-| `cmd/` | 19 | 5,626 |
+| `internal/` | 54 | 85,564 |
+| `cmd/` | 19 | 5,686 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **91,656** |
+| **합계** | **77** | **92,175** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,154줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,168줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -80,13 +80,13 @@ internal/core/
 │                            · 인자 디코딩(ArgString·ArgInt·ArgBigInt·ArgStrings·ArgBool)
 ├── preflight      311  [L1] 현재 vs 목표 비교 — 타깃에 조립된 체인(Have)과 다음 테스트가 원하는 체인(Want)을 견줘
 │                            reuse / rebuild-nodes N / rebuild-all / compose 를 답한다. 판단만 하고 보지 않는다
-├── session      2,823  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
+├── session      2,835  [L3] 아티팩트 레이아웃의 소유자 .chainbench/<session>/ — 세션·환경·컴포지션 +
 │                            이름 붙인 네트워크 레지스트리(SaveNetwork·LoadNetwork·ListNetworks·RemoveNetwork)
 ├── collector    1,468  [L3] live tail·chainstate·bp 참여·reorg + 이벤트(Bus·Event·Kind·Phase)
 │                            + 로그 검색·타임라인(Search·Timeline) + RPC 로부터의 체인 종류·능력 감지
 ├── health         425  [L3] "이 네트워크가 블록을 만드나"(요구 9) — NodeSet 전수 RPC 샘플 → chain id·height·peers·sync
 │                            + 1차 노드 height 전진으로 producing 판정
-├── report         214  [L3] 실행 전체 report 의 집계자 — 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를
+├── report         216  [L3] 실행 전체 report 의 집계자 — 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를
 │                            모아 report.json(Build·Generate·Write·Read). 판정을 다시 하지 않는다
 └── hardfork       144  [L3] 바이너리 교체(swap) 업그레이드 계획/실행 — 같은 데이터디렉토리를 멈췄다 fork 를 켠 새
                              바이너리로 재기동(합의 엔진 불변). 합의 엔진이 바뀌는 하드포크는 env.upgrade 로 선언한다
@@ -123,7 +123,7 @@ internal/validatorset 85  [L3] 체인의 합의 신원 제시 — 키셋에서 �
 
 ---
 
-## 3. 자원 · 테스트 · 표면 — 17패키지 60,637줄
+## 3. 자원 · 테스트 · 표면 — 17패키지 61,082줄
 
 ```
 internal/preset    553  [L1] preset 문서 두 갈래의 정의와 로더 — 체인(`Chain`·`LoadChainPreset`)과
@@ -136,7 +136,7 @@ internal/resource  3,806  [L1] 네트워크가 무엇으로 조립되는가 — 
                           워크스페이스 설정·머신 지정(Spec·Access)·devp2p network id 해석(Resolve·Flag·ValidateUniform)
 
 internal/dsl/             [L3] 테스트 정의 언어 (DDD C1, 핵심 도메인)
-├── (dsl)      2,359  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
+├── (dsl)      2,420  v1·v2 문법·파싱·검증·statement 파생(Parse·SequenceOf·ActionName·ArgsOf) + JSON 스키마.
 │                     순수 — 실행 인프라(rpc·session·collector)를 import 하지 않는다
 ├── assert       399  타입 인식 비교 프리미티브 — 해석기가 어세션을 검사할 때 쓰는 비교기(Equal·InDelta 등)
 └── interp     1,093  실행 계약(Action·Assertion·Registry·Reader·Deps·ActionCtx·AssertCtx·NodeControl)
@@ -148,7 +148,7 @@ internal/testhelper 6,845 [L3] DSL 내장 어휘 — 액션(sendTx·waitBlock·r
                           registerContract·newAccount·faucet·partition/heal·start/stop/restart/swapNode·ws open/subscribe)
                           과 어세션·리더의 구현 및 등록(Register·Registry) + 계정 해석(ResolveAccount)
 
-internal/testengine 6,262 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
+internal/testengine 6,270 [L4] 테스트 엔진 — RunSuite 가 4단계를 소유: ① DSL 이 선언한 체인을 chainsetup 으로 구성
                           ② pre-test hook ③ test ④ post-test hook(②~④는 해석기가 spec 에서 수행).
                           + attach 경로(AttachWorkspaceRun·NewAttachEngine) · Precheck · ValidateSpecs ·
                           overlay 작성 · 노드 게이트 연결(factsFromReport) · 세션 요약
@@ -171,15 +171,15 @@ internal/nodemonitor  412 [L4] 테스트 실행 허가 판정 + 제한 복구(E6
                           WAITABLE 은 예산까지 대기 · RESTARTABLE 은 상한까지 재시작 · FATAL 은 파괴적 조치 없이 종료(Gate).
                           관측과 재시작은 재구현하지 않고 seam(Observer·Restarter)으로 주입받는다
 
-internal/app      17,118  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
+internal/app      17,340  [L5] 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다. Net*(20여) · Keyring*(8) ·
                           Tx/Contract(TxSend·TxWait·ContractDeploy·ContractCall) · Faucet · Report · Log* ·
                           Network*(attach/detach/registry) · Upgrade{Run,Genesis} · Hardfork{Plan,Execute} ·
-                          RunSuite(s) · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
-internal/feature     804  [L5] 기능 등록의 한 자리 — Descriptor·Register[In,Out]·Stage·ReadOnly, 그리고 입력 struct
+                          RunSuite(s) · RunMatrix · Verify* · Capabilit* · Resolve*(binary·chain·key·nodes·server) · GCSessions
+internal/feature     805  [L5] 기능 등록의 한 자리 — Descriptor·Register[In,Out]·Stage·ReadOnly, 그리고 입력 struct
                           태그 하나가 만드는 두 바인딩(Flags → cobra 플래그, Schema → MCP JSON 스키마).
                           명령을 생성하지는 않는다 — 이름·계층·도움말은 사람이 정한다
 
-internal/mcp       3,272  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
+internal/mcp       3,425  [L6] MCP 표면(요구 14) — 도구 스키마 바인딩과 렌더링.
                           chain·network·keyring·capability·run·log·tx·consensus 도구군 + read-only 선언
 internal/dashboard 2,351  [L6] 대시보드 HTTP 백엔드(요구 19) — SSE 스트림 · runs/sessions API · SPA 자산
 internal/webcli     123  [L6] Web이 chainbench CLI를 하위 프로세스로 실행하는 곳 — 바이너리를 찾고,
@@ -193,7 +193,7 @@ internal/testsupport  26  [L0] 교차 패키지 테스트 게이트 — ServersB
 
 ---
 
-## 4. `cmd/` — 19패키지 5,626줄 · [L6] 표면
+## 4. `cmd/` — 19패키지 5,686줄 · [L6] 표면
 
 `layers.md` §3 의 배치 검사는 `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고 무엇이든
 import 할 수 있다.
@@ -208,7 +208,7 @@ cmd/chainbench           303  main. 사용자용 CLI(요구 15) 루트 조립
 ├── lifecyclecmd         498  up 이후의 네트워크 — stop·ps·clean(실행이 남긴 것 제거)·
 │                             여전히 하나의 건강한 체인인지 판정(verify·consensus·baseline)
 ├── nodecmd              178  네트워크의 노드 1개 — 개별 start/stop, RPC 대화
-├── suitecmd             647  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
+├── suitecmd             707  테스트 스펙 실행 — run(스펙이 선언한 네트워크를 구성 또는 attach 후 실행)·
 │                             validate(실행 없이 검사)·migrate-spec(v1 → v2)
 ├── testcmd               65  디렉토리의 DSL 테스트 케이스 목록 — run 전에 무엇이 있는지 발견
 ├── txcmd                212  체인에 일을 맡기고 결과를 기다리기 — send·wait·deploy·call

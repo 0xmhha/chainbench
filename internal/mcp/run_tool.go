@@ -23,6 +23,9 @@ func runTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
+				"chainId":         map[string]any{"anyOf": []any{map[string]any{"type": "integer", "minimum": 0, "maximum": 9007199254740991}, map[string]any{"type": "string", "pattern": `^(?:[0-9]+|0[xX][0-9A-Fa-f]+)$`}}, "description": "Compose chain ID, matching CLI --chain-id. Exact nonnegative int64; use decimal/hex strings above the JSON safe range."},
+				"chainPresets":    map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1}, "minItems": 1, "description": "Run the same suite serially on every selected preset id or JSON path; report preset IDs and independent sessions."},
+				"noSkips":         map[string]any{"type": "boolean", "description": "matrix: count skipped tests as a failed run"},
 				"plan":            map[string]any{"type": "boolean", "description": "resolve the composed network without running it"},
 				"suite":           map[string]any{"type": "boolean", "description": "run or plan several cases as one suite on one network; otherwise sequence definitions"},
 				"binaryFor":       map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "string"}, "description": "declared binary name to accepted executable path"},
@@ -57,6 +60,9 @@ func runTool() Tool {
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			if _, matrix := args["chainPresets"]; matrix {
+				return runMatrixTool(ctx, args)
+			}
 			specs, resolutionErrors := readToolSpecs(args)
 			if len(specs) == 0 {
 				return "", fmt.Errorf("chainbench_run: provide spec or specs")
@@ -253,7 +259,12 @@ func formatRunSummary(root string) (string, error) {
 
 // composeInput binds the same accepted inputs that the CLI passes to the engine.
 func composeInput(args map[string]any, specs [][]byte, dataDir string) (app.RunSuiteIn, error) {
+	chainID, err := exactChainID(args)
+	if err != nil {
+		return app.RunSuiteIn{}, err
+	}
 	in := app.RunSuiteIn{
+		ChainID:     chainID,
 		SpecContent: specs,
 		DataDir:     dataDir,
 		Chain:       argString(args, "chain", ""),
