@@ -1,0 +1,465 @@
+{
+  "scope": "RPC-005 explicit ordinary epochInfo-null and boundary populated control, actual epochLength10 genesis, RPC extra fields bound to raw headers and independent BLS verification over eleven headers after actual WEMIX\u2192WBFT handoff. Not full87/Linux/mainnet/legacy/public DSL/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence-only committed seal baseline accepted missing epochInfo, unexpected boundary, malformed previous round/reveal/signature.",
+  "unitGreen": "Explicit ordinary null vs omitted field, malformed basic fields and boundary populated positive control; existing BLS verification retained.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "49e064e32bc3f0dce14ae0cba4ba555b80a408b2e3b4b45b321fbbaef1746da2",
+    "sourceAfter": "49e064e32bc3f0dce14ae0cba4ba555b80a408b2e3b4b45b321fbbaef1746da2",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixWbftAggregateSealE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-upitljxz"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-upitljxz": []
+    },
+    "elapsedSeconds": 48.37,
+    "summary": {
+      "path": "/private/tmp/chainbench-extra-epoch-native-summary.json",
+      "sha256": "737f6f8b7786f372d3cf39976a499b8dbe35f213476041274ff61f192040720c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015415493503323
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-extra-epoch-native-native.jsonl",
+      "sha256": "37bb4ea9e5e8cf3c454daf58dbc4d31065d8d4316e22e810f38a83ace15fc81d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015415053777494
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-extra-epoch-native-start.json",
+      "sha256": "0569a2b935371274385eedd488c978a36979a5a6254953577edd2231152909b1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015364325316834
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-extra-epoch-observed.json",
+    "sha256": "647d79431e327e25322fc106600505deaa545fde329dd274b5e00671e549f802",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015435280650767
+  },
+  "independentProof": {
+    "path": "/private/tmp/chainbench-extra-epoch-independent-result.json",
+    "sha256": "a3b6249253c215164d5717af337db2d3a9e6c2685a646182a061a8d42f80dcae",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015435881092948
+  },
+  "independentVerifier": {
+    "binary": {
+      "path": "/private/tmp/chainbench-extra-independent/verify",
+      "sha256": "c9941f9f69bc597592126a91179ebcd23e644e384b4955823d035cde60a33327",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792015218661023759
+    },
+    "source": {
+      "path": "/private/tmp/chainbench-extra-independent/main.go",
+      "sha256": "ee6d9519aa0e2c40bf09ec1bef22db9e1dc349deea11b4860bda58ddab3a57ac",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015216152280846
+    },
+    "module": {
+      "path": "/private/tmp/chainbench-extra-independent/go.mod",
+      "sha256": "3194e4121c46845ea03a9310d27bdf852f8bd7b18e85cdfd1aa5faa10c423876",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010945989595610
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-extra-epoch-independent-recheck.log",
+      "sha256": "c11f77856c2805245f5c3bbeeff5252619454ccdbd23ef7db5ac80ee7d289cf0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015435881236864
+    },
+    "externalRevision": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+    "externalTrackedFilesUnmodified": true,
+    "implementation": "chain WBFT canonical RLP, filtered header hash, blst aggregate verify, separate from chainbench minimal RLP/kilic pairing"
+  },
+  "headerCount": 11,
+  "ordinaryCount": 10,
+  "boundaryCount": 1,
+  "genesis": [
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015367243080699
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/node1/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015367270437779
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/node4/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015368072720452
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/node3/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015367795162186
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/node2/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015367540009784
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/node5/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015368373618668
+    },
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz/w/runs/20261014-220259/genesis.json",
+      "sha256": "99238aeca3ef0cbd8adccba3a55806104adb8925e0cc41cefb86e92aa3b94a07",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015379801127866
+    }
+  ],
+  "epochBlocks": [
+    20,
+    30
+  ],
+  "headers": [
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0xb6369e464e05de5f003b60134e94ecc1a937176f87edef23fd9a798af292dba1",
+      "number": 24,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0xb9916cfaecdacac098c634ec3fe163b44cd617d98572b59bf85ad0dd8bc4dd55",
+      "number": 25,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        1,
+        2
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0xe6e5d9811abddd9b32dd98765258a2769ea9c65a27dbf99802c1de49bdb31ed9",
+      "number": 26,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0x74deb68964f4f3536f89322cab778a250f5a5e5f6a67e27d123dd7a5a86d1900",
+      "number": 27,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0x9f964f1f3d4048606f5d2e01a2ea2109b3536589fed2cc8f39a7c8ce402892a1",
+      "number": 28,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": false,
+      "hash": "0x3a106a7b788e1577716ef0a3d81f6afb8092604a672e11df9225ac74c60c303a",
+      "number": 29,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        1,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "epochInfoPresent": true,
+      "hash": "0x34d40e0d7f9da9c9317bfd2ff39c5fc7e2d31a69de081295fd013e01c8daa310",
+      "number": 30,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "epochInfoPresent": false,
+      "hash": "0xd74d551187cb62491c2dc56d11deb65b0d71ae94eb6c7faca81f47ca9c36a780",
+      "number": 31,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        1,
+        2
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "epochInfoPresent": false,
+      "hash": "0x3675025be03d1dc922b2138c0973a8cef81d654dbd33c3dbb03a553f4a010fe0",
+      "number": 32,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "epochInfoPresent": false,
+      "hash": "0xcbaf8fa03a70044e43a9472b8188108682fd332b5e5b49f1daba7ef719aec7c7",
+      "number": 33,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "epochInfoPresent": false,
+      "hash": "0xa7e0402060d35d946ca7a6691da42f7e1a5d2cebdfa4ff6f4e09ec3aae5255dc",
+      "number": 34,
+      "round": 0,
+      "rpcExtraMatchesRaw": true,
+      "sealers": [
+        0,
+        1,
+        3
+      ],
+      "signatureVerified": true
+    }
+  ],
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-upitljxz",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-upitljxz/reports/extra-epoch-inventory.json",
+        "sha256": "fea38fdf48ec1369b5e7331f5ceb560bca8c55cdf787aac403734a9198b8008e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792015436159105590
+      }
+    }
+  ],
+  "retainedFiles": 228,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-extra-epoch-publication.json",
+    "sha256": "38cd8e289e22b2ead40ac47a09ed89021174d64b7cfafe36af8c4b35ff8f16a9",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015186325749911
+  },
+  "nativeDenominator": {
+    "compiledTestWemixCount": 24,
+    "list": {
+      "path": "/private/tmp/chainbench-bls-native-list.txt",
+      "sha256": "b789012dd88c103757a124aa36ebe2cf0ce7055a2c0f15eb9f9abfa78dee71ef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011030906394601
+    },
+    "all24Executed": false
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-extra-epoch-red.log",
+      "sha256": "040ac99ad56a97e0f179ede57088f2fad88b207acf471856520c3f39cdc3fa08",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015143828809359
+    },
+    {
+      "path": "/private/tmp/chainbench-extra-epoch-green.log",
+      "sha256": "fb3a036848bfb2dfc3ec51b84a567c12c2b29ec8c4e0585cbe59b02481ed9525",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015163971008013
+    },
+    {
+      "path": "/private/tmp/chainbench-extra-epoch-related-race.log",
+      "sha256": "1825730221be3e92a39f01d28a00846bc25c85737d5ae902a174417a129c686c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015264438139145
+    },
+    {
+      "path": "/private/tmp/chainbench-extra-epoch-check.log",
+      "sha256": "355b6f906ed5c008db22a507980b2315054294909ff00a6ff973674761c7d231",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015351952868388
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/consensus/wbft/committed_seal.go",
+      "sha256": "b4a1aba67cd166aa3587004cfb343d24f5675449e33ceb2d649583c97a7ca549",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010732200058498
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/consensus/wbft/committed_seal_test.go",
+      "sha256": "c3821c9f8d5db4ef736c964afc683f0b4e7f84da0583c915d17c9ba3a5b923f1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010837019615473
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
+      "sha256": "dbcdd1c1b551b3602673f66709e6230887e08f838cb90099b955e24c7b5432b0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792015158590599842
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/wbft_extra_shape_e2e_test.go",
+      "sha256": "fd7f38c1f367c6e7e49fcd838ded705522a778179c9528fd82ce8ea93d8b02f7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792015158590619259
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "closure": "Ordinary null and boundary control verified explicitly. Consensus log order/full87/environment/public DSL remain separate; external source unmodified.",
+  "independentNegativeControls": {
+    "path": "/private/tmp/chainbench-extra-epoch-independent-negative.json",
+    "sha256": "63690f440c236c2d21dc277984129361721b05f89cbd0b1e84708f82eb3010bf",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792015435935970608
+  }
+}

@@ -21,7 +21,7 @@ func TestWemixWbftAggregateSealE2E(t *testing.T) {
 	if from == "" || to == "" {
 		t.Skip("set FROM/TO binaries for actual aggregate proof")
 	}
-	url := runGovHandoffOverlay(t, from, to, map[string]any{"config": map[string]any{"croissant": map[string]any{"wBFT": map[string]any{"blockPeriodSeconds": 1, "requestTimeoutSeconds": 1}}}})
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"config": map[string]any{"croissant": map[string]any{"wBFT": map[string]any{"blockPeriodSeconds": 1, "requestTimeoutSeconds": 1, "epochLength": 10}}}})
 	c := rpc.Dial(url)
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
@@ -33,6 +33,7 @@ func TestWemixWbftAggregateSealE2E(t *testing.T) {
 	type epoch struct{ Validators []struct{ Addr, BLS string } }
 	cache := map[uint64]*epoch{}
 	proofs := []map[string]any{}
+	ordinary, boundary := 0, 0
 	for n := start; n <= start+10; n++ {
 		tag := fmt.Sprintf("0x%x", n)
 		var h map[string]any
@@ -101,7 +102,22 @@ func TestWemixWbftAggregateSealE2E(t *testing.T) {
 		if wbft.VerifyCommittedHeader(raw, wrong) == nil {
 			t.Fatal("actual duplicate epoch key accepted")
 		}
-		proofs = append(proofs, map[string]any{"number": n, "hash": h["hash"], "headerRLP": encoded, "epochBlock": epochBlock, "validators": addresses, "blsKeys": keyHex, "signatureVerified": true})
+		var extra map[string]any
+		if err = c.Call(ctx, "istanbul_getWbftExtraInfo", &extra, tag); err != nil {
+			t.Fatal(err)
+		}
+		if err = verifyExtraEpochShape(n, 10, extra); err != nil {
+			t.Fatalf("header %d extra shape: %v", n, err)
+		}
+		if extra["epochInfo"] == nil {
+			ordinary++
+		} else {
+			boundary++
+		}
+		proofs = append(proofs, map[string]any{"number": n, "hash": h["hash"], "headerRLP": encoded, "epochBlock": epochBlock, "validators": addresses, "blsKeys": keyHex, "signatureVerified": true, "rpcExtra": extra})
+	}
+	if ordinary < 9 || boundary < 1 {
+		t.Fatal("missing actual ordinary/boundary controls", ordinary, boundary)
 	}
 	b, err := json.Marshal(map[string]any{"scope": "Actual managed WEMIX-to-WBFT fork, current preceding epoch key ordering, eleven committed headers. Not complete87/mainnet/Linux/final Web acceptance.", "headers": proofs})
 	if err != nil {

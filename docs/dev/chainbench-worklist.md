@@ -182,6 +182,18 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-005 일반 블록 epochInfo 보강:** committedSeal 존재만 보는 baseline이
+누락된 epochInfo·일반 블록의 객체·경계의 null·잘못된 PrevRound/Randao/서명을 통과시키는 RED를
+확인했다. 명시적 null과 경계 검증자 정보의 정상 대조군·잘못된 응답 거절을 GREEN으로 보강했다.
+관련 tagged CLI 전체 race·전체 검사와 실제 WEMIX→WBFT 후11헤더 native race(48.370초,
+skip0)가 통과했다. 실제 genesis epochLength10과24~34의 일반10블록 null·경계30블록 객체를
+확인했다. 기존 현재 epoch 키/BLS 검증을 유지하고 별도 외부 체인 RLP·types·blst 검증기로
+RPC의 reveal·PrevRound·서명자·서명이 원본 헤더와 같은지 대조했다. 변형 RPC 네 필드도 거절했다.
+고정 소스 `49e064e32bc3f0dce14ae0cba4ba555b80a408b2e3b4b45b321fbbaef1746da2` 전후가 같고
+[일반/경계 증거](extra-epoch-evidence.json)는228파일의 내용·권한·소유자·mtime을 보존했다.
+활성 프로세스·종료 DB는0이며 외부 소스는 수정하지 않았다. 원문87개 전체·Linux·메인넷·legacy·
+공개 DSL 암호 단언·최종 Web 인수와 WBFT-001 합의 단계 로그 순서는 별도 잔여다.
+
 **2026-10-15 TX-002·016 승인 기준 보강:** 사용자가 조회 시점/대상 블록의 BaseFee 구분과
 현행 대납자 제출 거부·동일 바이트 자금 충전 대조군 기준을 승인했다. 원문에 조정과 과거 기대 차이를
 명시하고 기존 진단 자료는 그대로 보존했다. 대상 블록 없이 snapshot만으로 판단하거나 잘못된 오류

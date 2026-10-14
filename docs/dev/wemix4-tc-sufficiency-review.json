@@ -3238,7 +3238,7 @@
         {
           "path": "cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
           "function": "TestWemixWbftAggregateSealE2E",
-          "sha256": "a70bc4beba29010fe9d7010bf226ca70d9b0a54ef361fcb347fb26ce406b512a"
+          "sha256": "dbcdd1c1b551b3602673f66709e6230887e08f838cb90099b955e24c7b5432b0"
         }
       ],
       "observations": [
@@ -5471,7 +5471,22 @@
         {
           "path": "cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
           "function": "TestWemixWbftAggregateSealE2E",
-          "sha256": "a70bc4beba29010fe9d7010bf226ca70d9b0a54ef361fcb347fb26ce406b512a"
+          "sha256": "dbcdd1c1b551b3602673f66709e6230887e08f838cb90099b955e24c7b5432b0"
+        },
+        {
+          "path": "cmd/chainbench/wbft_extra_shape_e2e_test.go",
+          "function": "verifyExtraEpochShape",
+          "sha256": "fd7f38c1f367c6e7e49fcd838ded705522a778179c9528fd82ce8ea93d8b02f7"
+        },
+        {
+          "path": "cmd/chainbench/wbft_extra_shape_e2e_test.go",
+          "function": "TestExtraEpochShapeRejectsImplicitNull",
+          "sha256": "fd7f38c1f367c6e7e49fcd838ded705522a778179c9528fd82ce8ea93d8b02f7"
+        },
+        {
+          "path": "cmd/chainbench/wbft_extra_shape_e2e_test.go",
+          "function": "TestExtraEpochShapeRequiresBoundaryControl",
+          "sha256": "fd7f38c1f367c6e7e49fcd838ded705522a778179c9528fd82ce8ea93d8b02f7"
         }
       ],
       "observations": [
@@ -5507,15 +5522,19 @@
           }
         }
       ],
-      "semanticAssessment": "Current committed aggregate crypto is now verified; previous seal count/presence is not substituted. Native two tests race, skip0, frozen source and DB0; 24 compiled TestWemix functions is the current denominator, not all executed.",
+      "semanticAssessment": "Explicit epochInfo field presence/null for ten actual nonboundary headers, populated boundary30 control, PrevRound/Randao/current committed seal bound to raw headers and actual BLS epoch context. Four altered RPC fields rejected by independent chain RLP/blst verifier.",
       "remainingConditions": [
-        "WBFT-001 consensus stage log ordering remains separate; RPC-005 explicit nonboundary epochInfo-null selection remains separate. Generic public DSL crypto assertion, full original migrated environment/Linux/mainnet/legacy/final Web acceptance not claimed."
+        "Full original/Linux/mainnet/legacy environment, public DSL crypto assertion and final Web acceptance remain separate. WBFT-001 consensus-stage log ordering remains tracked under WBFT-001."
       ],
-      "confirmedScope": "Eleven current committed BLS aggregates from actual post-fork raw headers, preceding epoch20/30 keys matched to current ordered validator set, bitmap subset/quorum and pairing verified. Independent chain RLP/types/blst agrees and rejects altered messages. Related actual ECDSA/mix/healthy interval regression passes.",
+      "confirmedScope": "Actual WEMIX→WBFT handoff, epochLength10 genesis, eleven headers24..34: ten ordinary explicit epochInfo null and boundary30 populated; RPC reveal/PrevRound/signature/signers match raw headers, current epoch ordered keys and BLS pairing plus independent blst verification. RED/GREEN, related race, make check, native race skip0/source invariance verified.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/wbft-aggregate-seal-evidence.json",
           "sha256": "7123a3e79bd611f5d7cfbc668e5178d69d50ab6dd9ed1bc00b548b70f1d5d487"
+        },
+        {
+          "path": "docs/dev/extra-epoch-evidence.json",
+          "sha256": "1dffb9458953f13356851b5c895616d17faf11f99943fb17387052b26d6316d1"
         }
       ]
     },
