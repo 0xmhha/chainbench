@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 67,
-    "confirmed_scope": 15,
+    "partial": 66,
+    "confirmed_scope": 16,
     "conflict": 3,
     "merged": 2
   },
@@ -5661,7 +5661,7 @@
         },
         {
           "path": "tests/e2e/wbft_rpc_test.go",
-          "sha256": "81f356969fb11890eac22831d34fbd8bc52793b9ebe44c06f60dc22fa48e6d13",
+          "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftIsValidator"
         }
       ],
@@ -5707,7 +5707,7 @@
         },
         {
           "path": "tests/e2e/wbft_rpc_test.go",
-          "sha256": "81f356969fb11890eac22831d34fbd8bc52793b9ebe44c06f60dc22fa48e6d13",
+          "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftIsValidator"
         }
       ],
@@ -6860,18 +6860,33 @@
       "id": "RPC-019",
       "title": "admin\\_peers",
       "criterionSha256": "2295b43a1e51019a54050f890f77c58d7a118096968dad09470587cfc0046e3d",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/node/CT-NODE-008-peers.json",
-          "sha256": "b9ee320c7de721acb896a67fd4f1d3d7be305669ab753e167f08f5662ea97bfb",
+          "sha256": "636eb96d40c4facb88d09bc36359502f5c17435c92d461a7759f8b5d2b4a4833",
           "id": "basic-peers"
         },
         {
           "path": "tests/e2e/wbft_rpc_test.go",
-          "sha256": "81f356969fb11890eac22831d34fbd8bc52793b9ebe44c06f60dc22fa48e6d13",
+          "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftAdminPeers"
+        },
+        {
+          "path": "internal/testhelper/peer_fields_semantics_test.go",
+          "function": "TestPublicPeersRejectMissingFields",
+          "sha256": "b8c3a455daf990892ff3fd9906710526b14ff8589a09ac0ff284545536299a44"
+        },
+        {
+          "path": "internal/testengine/peer_fields_native_test.go",
+          "function": "TestNativePeerFields",
+          "sha256": "8ef25be131f9547905f0812881d878c5d24c231cac2a57a3af523c7ac36b23d6"
+        },
+        {
+          "path": "tests/e2e/peer_error_test.go",
+          "function": "TestAdminPeerCountDoesNotHideRPCFailure",
+          "sha256": "e36e6de93791a2ccd5dffbdf9c369166c83dfb82f0c424a59f6118797c69bd09"
         }
       ],
       "observations": [
@@ -6894,7 +6909,7 @@
           "path": "tests/tc/common/node/CT-NODE-008-peers.json",
           "pointer": "/steps/3",
           "statement": {
-            "compare": "GreaterOrEqual",
+            "compare": "Equal",
             "expect": "rpcCall",
             "on": "node1",
             "is": "4",
@@ -6949,14 +6964,91 @@
             "compare": "Contains",
             "is": "$id5"
           }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/12",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "0.id",
+            "compare": "Regexp",
+            "is": "^.+$"
+          }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/13",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "0.network.remoteAddress",
+            "compare": "Regexp",
+            "is": "^.+$"
+          }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/14",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "0.protocols.#",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/21",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "3.id",
+            "compare": "Regexp",
+            "is": "^.+$"
+          }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/22",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "3.network.remoteAddress",
+            "compare": "Regexp",
+            "is": "^.+$"
+          }
+        },
+        {
+          "path": "tests/tc/common/node/CT-NODE-008-peers.json",
+          "pointer": "/steps/23",
+          "statement": {
+            "expect": "rpcCall",
+            "on": "node1",
+            "method": "admin_peers",
+            "select": "3.protocols.#",
+            "compare": "GreaterOrEqual",
+            "is": "1"
+          }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Public four-peer structure assertions and independent exact single-response/remote-ID proof passed on three families; typed E2E RPC cause preserved. 54 recorder assertions, native race/skip0/source invariance passed.",
       "remainingConditions": [
-        "each network.remoteAddress/protocols structure없음; counthelper은RPC오류0으로숨김"
+        "Fixed managed local BP4/EN1 fixture; original migration environment, Linux/mainnet, legacy consumer and final Web acceptance are separate."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Exactly four peers in five-node fixture, each id/remoteAddress/protocols nonempty and each remote node identity matched; order-independent ID inclusion retained. E2E RPC error cannot masquerade as zero peers.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/peer-fields-evidence.json",
+          "sha256": "584510091d42ba0ccdc12b7f5433f3e474bb0bdbfa3248366489b509acc8f673"
+        }
+      ]
     },
     {
       "id": "RPC-020",
@@ -7096,7 +7188,7 @@
       "targets": [
         {
           "path": "tests/e2e/wbft_rpc_test.go",
-          "sha256": "81f356969fb11890eac22831d34fbd8bc52793b9ebe44c06f60dc22fa48e6d13",
+          "sha256": "f24fe146e6498a6a5de9430a6e88b8dab5270c41f05ca3d9a3e4661be25d94d2",
           "function": "TestE2E_WbftIsValidator"
         },
         {

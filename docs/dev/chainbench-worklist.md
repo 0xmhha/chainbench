@@ -182,6 +182,18 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-019 peer 구조 보강:** 기존 공개 사례는 ID 포함·개수만 확인해 마지막 peer의
+빈 주소·누락 network·누락/빈 protocols를 통과시켰다. 네 조건의 RED를 확인하고 BP4·EN1 고정 fixture의
+정확한 네 peer 전수 필드를 검사하도록 GREEN으로 보강했다. 기존 E2E도 RPC 오류를 0개로 숨기는
+RED를 확인하고 typed 오류 코드·사유를 반환하도록 고쳤다. 정상 빈 목록과 오류의 의미를 구분한다.
+관련 전체 race·전체 검사·E2E 오류 회귀·세 체인 native race(167.636초, skip 0)가 통과했다.
+노드별 peerCount는 한 recorder 단언으로 합산돼 실제 기록은 총 54단언이다. 단일 응답의 네 peer
+필드와 각 상대 노드의 직접 조회 ID도 독립 대조했다. 고정 소스
+`cb17d43508cd1e2f43d103e0520a25ce84caef93aaea14f4db5673f0685457db` 전후가 같고,
+608파일의 내용·권한을 보존했으며 활성 프로세스·종료 DB는 0이다.
+[peer 증거](peer-fields-evidence.json)는 로컬 fixture 범위다. §0a 11번 전체·원문 이관 환경·
+Linux·메인넷·legacy·최종 Web 인수는 계속 미완료다.
+
 **2026-10-15 RPC-017 수수료 이력 보강:** 기존 NotNil 검사는 짧은 배열·0 기본 수수료·범위 밖
 사용률·빠진 percentile을 통과시켰다. 정상 대조군과 잘못된 응답 일곱 가지의 RED를 확인하고
 원문 `10/latest/[25,75]` 입력, 11개 기본 수수료 양수, 10개 사용률 0..1,
