@@ -965,7 +965,12 @@
 
 ### WBFT-010 — RandaoReveal / MixDigest 검증
 
-**목적**: 각 블록의 `RandaoReveal`이 Proposer의 ECDSA 서명이고, `MixDigest = XOR(이전 MixDigest, RandaoReveal)` 규칙이 연속 블록에서 올바르게 유지되는지 확인
+**목적**: 각 블록의 `RandaoReveal`이 Proposer의 ECDSA 서명이고, `MixDigest = XOR(이전 MixDigest, Keccak256(RandaoReveal))` 규칙이 연속 블록에서 올바르게 유지되는지 확인
+
+> **2026-10-15 검증식 명확화:** 65바이트 ECDSA reveal을 32바이트 mix에 직접 XOR하지 않는다.
+> 현행 WBFT는 reveal의 Keccak256을 XOR하며, 서명 메시지는 Croissant-v1의
+> `Keccak256(Keccak256(chainID 최소 bytes || version 최소 bytes || blockNumber 최소 bytes))`다.
+> 실제 바이너리에서 복구 주소·연쇄를 검증하며 존재 여부만으로 통과시키지 않는다.
 
 **사전 조건**: Croissant 이후 블록 3개 이상 존재
 
@@ -975,14 +980,14 @@
 
 1. `istanbul_getWbftExtraInfo(N)` 에서 `RandaoReveal` 추출
 2. `eth_getBlockByNumber(N).mixHash` 조회
-3. `eth_getBlockByNumber(N+1).mixHash == XOR(block[N].mixHash, block[N+1].RandaoReveal)` 검증
+3. `eth_getBlockByNumber(N+1).mixHash == XOR(block[N].mixHash, Keccak256(block[N+1].RandaoReveal))` 검증
 4. `RandaoReveal` 이 해당 블록 Proposer의 서명인지 확인 (`eth_getBlockByNumber(N+1).miner`)
 
 **기대 결과**: MixDigest 연쇄가 XOR 규칙 준수, RandaoReveal은 Proposer ECDSA 서명으로 검증 가능
 
 **검증 포인트**:
 
-- `block[N+1].mixHash == XOR(block[N].mixHash, block[N+1].RandaoReveal)`
+- `block[N+1].mixHash == XOR(block[N].mixHash, Keccak256(block[N+1].RandaoReveal))`
 - `RandaoReveal` 서명 복구 주소 = `block[N+1].miner`
 
 ---
