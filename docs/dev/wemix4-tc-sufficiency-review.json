@@ -9,9 +9,8 @@
   "allCriteriaAccepted": false,
   "statusCounts": {
     "partial": 70,
-    "confirmed_scope": 11,
+    "confirmed_scope": 12,
     "conflict": 3,
-    "not_verified": 1,
     "merged": 2
   },
   "records": [
@@ -1618,22 +1617,45 @@
       "id": "TX-008",
       "title": "SetCode Tx (type 0x4, EIP-7702) 기본 동작",
       "criterionSha256": "4d3c695c77a97dea6468747d8478417288cc11ae599f5204babdf4e839966b7b",
-      "status": "not_verified",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
-          "sha256": "295af904ee1792aec485a254b5561eb1b0ad7ca7173127a23dcd919424a7b4b7",
+          "sha256": "0f8baf5b194a39e6897b937e5d1e4d4de815c487849176cc9137ba8a69c05264",
           "id": "set-code-delegation"
+        },
+        {
+          "path": "internal/testengine/setcode_execution_native_test.go",
+          "function": "TestNativeSetCodeExecution",
+          "sha256": "683e1116c2544dd13c0a601f00748b3c8a061a1760878f4508ede89e2ae7d3df"
         }
       ],
       "observations": [
         {
-          "analysis": "StableNet type4/status1 및 임의 0x1111.. 주소 위임 prefix exact"
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/4",
+          "statement": {
+            "expect": "codeAt",
+            "address": "$delegate",
+            "compare": "Equal",
+            "is": "0x36602011600e57600035600055005b60005460005260206000f3"
+          }
         },
         {
           "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
           "pointer": "/steps/5",
+          "statement": {
+            "expect": "call",
+            "to": "$delegate",
+            "data": "0x00",
+            "compare": "Equal",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/9",
           "statement": {
             "expect": "txStatus",
             "hash": "$fundHash",
@@ -1642,7 +1664,7 @@
         },
         {
           "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
-          "pointer": "/steps/6",
+          "pointer": "/steps/10",
           "statement": {
             "expect": "txStatus",
             "hash": "$scHash",
@@ -1651,35 +1673,120 @@
         },
         {
           "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
-          "pointer": "/steps/7",
+          "pointer": "/steps/11",
           "statement": {
-            "compare": "Equal",
             "expect": "rpcCall",
-            "is": "0x4",
             "method": "eth_getTransactionByHash",
             "params": [
               "$scHash"
             ],
-            "select": "type"
+            "select": "type",
+            "compare": "Equal",
+            "is": "0x4"
           }
         },
         {
           "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
-          "pointer": "/steps/8",
+          "pointer": "/steps/12",
           "statement": {
+            "expect": "codeAt",
             "address": "$authority",
             "compare": "Equal",
+            "is": "$marker"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/13",
+          "statement": {
+            "expect": "call",
+            "to": "$authority",
+            "data": "0x00",
+            "compare": "Equal",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/15",
+          "statement": {
+            "expect": "txStatus",
+            "hash": "$writeHash",
+            "is": "0x1"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/16",
+          "statement": {
+            "expect": "call",
+            "to": "$authority",
+            "data": "0x00",
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/17",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getStorageAt",
+            "params": [
+              "$authority",
+              "0x0",
+              "latest"
+            ],
+            "compare": "Equal",
+            "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/18",
+          "statement": {
+            "expect": "call",
+            "to": "$delegate",
+            "data": "0x00",
+            "compare": "Equal",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/19",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getStorageAt",
+            "params": [
+              "$delegate",
+              "0x0",
+              "latest"
+            ],
+            "compare": "Equal",
+            "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "path": "tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+          "pointer": "/steps/20",
+          "statement": {
             "expect": "codeAt",
-            "is": "0xef01001111111111111111111111111111111111111111"
+            "address": "$authority",
+            "compare": "Equal",
+            "is": "$marker"
           }
         }
       ],
-      "semanticAssessment": "not_verified",
-      "remainingConditions": [
-        "현재후보 StableNet/applepie preset,위임대상 0x1111.. 코드배포없음·위임후함수호출없음. WBFT Croissant 이후 complete delegation 실행증명확인안함"
-      ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "semanticAssessment": "Public assertion mutation controls and actual native transactions/storage verified.",
+      "remainingConditions": [],
+      "confirmedScope": "Actual public EIP-7702 case on local managed WBFT (Croissant/Applepie0), delegate contract code, exact marker/authorization and authority storage42 vs unchanged delegate storage0. Not all87, migration, Linux/mainnet or final Web acceptance.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/setcode-execution-evidence.json",
+          "sha256": "69b5b022242024679469c5727469c9efde7ab026493e4bc3a4084e8f46770eac"
+        }
+      ]
     },
     {
       "id": "TX-009",

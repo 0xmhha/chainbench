@@ -1,0 +1,217 @@
+{
+  "scope": "TX-008 public DSL EIP-7702: actual deployed London bytecode, exact delegate marker, actual type4 authorization target, sponsor call executes in authority storage, original contract storage remains zero. Managed local WBFT, Croissant/Applepie block0. Not migrated 8285, other family, complete87, legacy, Linux/mainnet or final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Existing public case accepted marker-only, wrong storage context, both storages changed and constant return42 without storage commit. Four semantic failures retained; positive control passed.",
+  "unitGreen": "Actual public assertions interpreted against valid/invalid authority/delegate states; one positive and four negative controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "01b125456dd4e4899b6876a4f6da69d2b133a5d60979cd8cb4fd6aa76bc0a027",
+    "sourceAfter": "01b125456dd4e4899b6876a4f6da69d2b133a5d60979cd8cb4fd6aa76bc0a027",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeSetCodeExecution"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-2sm7ceha"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-2sm7ceha/reports/setcode-execution-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-2sm7ceha": []
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-setcode-native-summary.json",
+      "sha256": "4b7c1c785e839daea2a5d3533833110b1e12bea4d5c848bb225015886c8a2779",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002925009021518
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-setcode-native-native.jsonl",
+      "sha256": "9633558fe18a885318d5d0cfaa75d4f005e9ea9991ee61d37de81e1484763899",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002924538324980
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-setcode-native-start.json",
+      "sha256": "75095312739ed99ca450f3c31dfb29f0e228ce4a9c0b7e174a0415c608f65806",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002893898940233
+    },
+    "elapsedSeconds": 28.503
+  },
+  "proof": {
+    "path": "/private/tmp/cbui/txfail-2sm7ceha/reports/setcode-execution-proof.json",
+    "sha256": "b7b71e3759b87b7f55a560aed18934dfd41f6a7d14e064e3c32f5985408aa2b2",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792002919212516133
+  },
+  "assertions": {
+    "path": "/private/tmp/cbui/txfail-2sm7ceha/reports/20261014-183456-49290/UTC-20261014-183456/tests/001_set-code-delegation/assert.json",
+    "sha256": "a991f6bc1a60b3967ef50c8f2793217cef6a10697bb284562a4301450cebf59d",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792002919199497118
+  },
+  "steps": {
+    "path": "/private/tmp/cbui/txfail-2sm7ceha/reports/20261014-183456-49290/UTC-20261014-183456/tests/001_set-code-delegation/steps.json",
+    "sha256": "c3eb322c8626c4aae5bb386664fc48546044cc5ee6ee3f0143ae61d09f985f06",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792002919171612073
+  },
+  "assertionCount": 13,
+  "delegate": "0x682a521765a1ccc46fdc9a6810131392142d86a5",
+  "authority": "0x7732390a1378a2e9f5601a1c296268d203d7c21f",
+  "marker": "0xef0100682a521765a1ccc46fdc9a6810131392142d86a5",
+  "authorization": [
+    {
+      "address": "0x682a521765a1ccc46fdc9a6810131392142d86a5",
+      "chainId": "0x205c",
+      "nonce": "0x0",
+      "r": "0x44b30a6f29c64e054ff46f3b4c1f1e2b918f25fbca4f7e1c346389b414e97d18",
+      "s": "0x6e5b663660907c4378cd80c4a95c3d7367956e44f01a3db393848e9f0b8a8c6d",
+      "yParity": "0x0"
+    }
+  ],
+  "storageContexts": [
+    {
+      "address": "0x7732390a1378a2e9f5601a1c296268d203d7c21f",
+      "storage": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "view": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "address": "0x682a521765a1ccc46fdc9a6810131392142d86a5",
+      "storage": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "view": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "runtime": {
+    "path": "/private/tmp/cbui/txfail-2sm7ceha",
+    "active": false,
+    "remainingDatabases": 0,
+    "retainedFiles": 240,
+    "inventory": {
+      "path": "/private/tmp/cbui/txfail-2sm7ceha/reports/setcode-inventory.json",
+      "sha256": "37a1e4d273ec2da75e3b51626f814f1c6428b2ae35ba6366c4170649ea96de5e",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003029532737820
+    }
+  },
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/setcode_semantics_test.go",
+      "sha256": "9fe435137ffcba0dc8b93ee52a1c7038e587aa90f51bc2991065e905df60bc20",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792002193251022958
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/setcode_execution_native_test.go",
+      "sha256": "683e1116c2544dd13c0a601f00748b3c8a061a1760878f4508ede89e2ae7d3df",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792002395134370170
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/go-stablenet/regression/ethereum/18-set-code-delegation.json",
+      "sha256": "0f8baf5b194a39e6897b937e5d1e4d4de815c487849176cc9137ba8a69c05264",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792002193234394230
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "1686cb17740e411ae1093ddd5b6570a719d90be159fa673374f63a938bb658fd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792002622340063998
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-setcode-publication.json",
+    "sha256": "524b71b3dcbbfbefdf7c9c4f394db28619cc2e9b6f9b095dc220982a9b54cc49",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792002622464139678
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-setcode-red.log",
+      "sha256": "8eb527a8a35a6335243b2e28725df94c2bfe51a913bd4c2ab15aeece5748f7ab",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002060663767489
+    },
+    {
+      "path": "/private/tmp/chainbench-setcode-green.log",
+      "sha256": "7b7f5d575331fc2815e7b089754e93aa102fca2816378caf937cc11fc77b6ca3",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002197992131395
+    },
+    {
+      "path": "/private/tmp/chainbench-setcode-preflight-unit.log",
+      "sha256": "7238572ae5f9fb64351deea10c61a636fab715ee0f8af57b5d49af5abcafaf8d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002399650704572
+    },
+    {
+      "path": "/private/tmp/chainbench-setcode-corpus-update.log",
+      "sha256": "91702887a50d2bb446db4bc155afc2092f8ada61c853855ebe758688c920480e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002622341560168
+    },
+    {
+      "path": "/private/tmp/chainbench-setcode-related-race.log",
+      "sha256": "63faed0c9703b882e3578c996441aa4905b2603d09d869eba57b2bade6d0d2c9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002640012235385
+    },
+    {
+      "path": "/private/tmp/chainbench-setcode-check.log",
+      "sha256": "a0add9442ae21a7a5b34dea923185b1a57f44313a3fe4ea1af5df0c47fa0273b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792002865925832760
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  },
+  "closure": "Scope evidence, not overall product or requirement acceptance. No external sources changed.",
+  "localCriterionScopeComplete": true
+}

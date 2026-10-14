@@ -2,13 +2,13 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "set-code-delegation",
-  "description": "RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx)",
+  "description": "TX-008 / RT-A-2-10 — 실제 London 호환 저장소 계약을 배포하고 새 authority 계정에 EIP-7702 위임한다. 스폰서가 authority를 호출해 그 계정의 slot0에 42를 저장하고 view와 직접 저장소 조회로 확인한다. 위임 원본 계약의 slot0은 0이며 authority의 정확한 23바이트 위임 표시도 유지된다. 코드 표시만으로 실행을 대신하지 않는다.",
   "requires": [
     "rpc",
     "family:wbft"
   ],
   "chainPreset": {
-    "extends": "stablenet-bp4",
+    "extends": "wbft-bp4-en1",
     "genesis": {
       "overlay": {
         "config": {
@@ -41,8 +41,39 @@
       "value": "30000000000000000000"
     },
     {
+      "do": "deployContract",
+      "from": "node1",
+      "bytecode": "0x601a600c600039601a6000f336602011600e57600035600055005b60005460005260206000f3",
+      "gas": "200000",
+      "save": "delegate"
+    },
+    {
+      "expect": "codeAt",
+      "address": "$delegate",
+      "compare": "Equal",
+      "is": "0x36602011600e57600035600055005b60005460005260206000f3"
+    },
+    {
+      "expect": "call",
+      "to": "$delegate",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "0xef01000000000000000000000000000000000000000000",
+        "$delegate"
+      ],
+      "format": "hex",
+      "save": "marker"
+    },
+    {
       "authorityKey": "$authorityKey",
-      "delegate": "0x1111111111111111111111111111111111111111",
+      "delegate": "$delegate",
       "do": "sendSetCode",
       "key": "$sponsorKey",
       "on": "en1",
@@ -52,7 +83,7 @@
       "address": "$authority",
       "compare": "Equal",
       "do": "waitFor",
-      "expected": "0xef01001111111111111111111111111111111111111111",
+      "expected": "$marker",
       "pollInterval": "1s",
       "source": "codeAt",
       "timeout": "90s"
@@ -68,20 +99,83 @@
       "is": "0x1"
     },
     {
-      "compare": "Equal",
       "expect": "rpcCall",
-      "is": "0x4",
       "method": "eth_getTransactionByHash",
       "params": [
         "$scHash"
       ],
-      "select": "type"
+      "select": "type",
+      "compare": "Equal",
+      "is": "0x4"
     },
     {
+      "expect": "codeAt",
       "address": "$authority",
       "compare": "Equal",
+      "is": "$marker"
+    },
+    {
+      "expect": "call",
+      "to": "$authority",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "key": "$sponsorKey",
+      "to": "$authority",
+      "data": "0x000000000000000000000000000000000000000000000000000000000000002a",
+      "gas": "100000",
+      "expect": "receipt",
+      "save": "writeHash"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$writeHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "call",
+      "to": "$authority",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$authority",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x000000000000000000000000000000000000000000000000000000000000002a"
+    },
+    {
+      "expect": "call",
+      "to": "$delegate",
+      "data": "0x00",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "$delegate",
+        "0x0",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
       "expect": "codeAt",
-      "is": "0xef01001111111111111111111111111111111111111111"
+      "address": "$authority",
+      "compare": "Equal",
+      "is": "$marker"
     }
   ]
 }

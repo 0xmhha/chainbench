@@ -182,6 +182,25 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 TX-008 위임 실행 보강:** 기존 공개 케이스는 고정된 빈 주소를 위임 대상으로
+삼고 코드 표시만 확인했다. 실제 실행이 없거나 잘못된/양쪽 저장소가 바뀌어도 통과하는 네 조건의 RED를
+정상 대조군과 함께 확인했다. 실제 London 호환 저장소 계약을 배포해 새 authority에 위임하고,
+스폰서가 authority에 쓰기·조회한 값을 직접 저장소와 대조하도록 GREEN으로 바꿨다.
+원본 계약의 저장소가 그대로 0인지도 검사한다. 정확한 23바이트 marker는 실제 배포 주소와
+정수 연산으로 구성한다. EN이 없던 프리셋도 WBFT BP4+EN1로 바로잡았다.
+
+공개 케이스와 독립 RPC 대조는 실제 WBFT(Croissant/Applepie0)에서 13단언·native race·skip 0·
+28.503초 PASS였다. 실제 type4의 authorization target, marker, authority view/slot0 42와
+원본 계약 view/slot0 0을 확인했다. 고정 소스
+`01b125456dd4e4899b6876a4f6da69d2b133a5d60979cd8cb4fd6aa76bc0a027`의 전후 지문이 같았고
+활성 프로세스·DB 0, 240파일의 내용·권한·소유자·mtime을 보존했다.
+전체 make check와 실행·DSL·계정 세 패키지 전체 race도 통과했다.
+주소 golden의 880→888은 이 단일 케이스의 주소 위치 이동·추가만 포함한다.
+
+87개 대조에서 TX-008을 명시한 범위 증명으로 갱신했다. 다른 체인·이관·Linux/mainnet·전체 87개·
+최종 Web 인수 완료는 아니다. 나머지 부분 70·범위 증명 12·충돌 3·통합 2이며 전체 완료는 false다.
+근거: [실제 위임 코드 실행·저장소 분리 증거](setcode-execution-evidence.json).
+
 **2026-10-15 TX-002·016 실제 정책 진단:** 새 진단 분류에서 준비·추정·HTTP 실패, 잘못된
 서명 바이트/해시, 답 없는 요청과 error+hash 혼합을 실제 노드 제출 거부로 세지 않도록 RED→GREEN을 검증했다.
 실제 Croissant 전환 뒤 최신 BaseFee 70,557에서 cap 70,556의 유효 type2를 제출했더니 받아졌고,
