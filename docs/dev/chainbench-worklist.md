@@ -182,6 +182,23 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-022 타 스테이커 청구 차단 보강:** receipt 실패만 보는 baseline이
+누락된 상태 추적·보상 계정/타 운영자 변경·호출자 보상 수령·잘못된 nonce/사유·보상 미누적·보호
+계정 누락을 통과시키는 RED를 확인했다. 두 스테이커 등록·각 보상 누적, OperatorA→B와 무관한
+계정C→A의 실제 채굴 실패·정확한 사유·거래 단위 prestate diff를 GREEN으로 보강했다.
+블록 보상 유입은 전역 latest 잔액에 섞이므로 실패 거래 자체의 변경을 직접 검사한다.
+두 rewardee·OperatorB·GovStaking은 거래 diff에서 변경되지 않고 호출자는 정확한 가스비만
+차감되며 nonce가1 증가한다. 기존 증가만 보는 조건과 임의 Execute 오류 통과는 제거했다.
+
+관련 tagged CLI 전체 race·전체 검사와 무권한/정당한 운영자 청구 두 native race(199.182초,
+skip0)가 통과했다. 두 보상 계정의3e18/1e18 wei와 두 호출의 정확한 ABI·status0·revert·상태/
+가스비를 독립 대조했다. 최초 준비 실패는 보존했고 재시도 뒤에 검증했으며 준비 경합/W3 해결로
+표시하지 않는다. 고정 소스 `ce94ceeb27d61eb34231b74851a7f8013ff2c08f93dd57c841bf3ca5ad829b55`
+전후가 같다. [청구 차단 증거](claim-guard-evidence.json)는3실행682파일의 내용·권한·소유자·
+mtime을 보존했고 활성 프로세스·종료 DB는0이다. 정당한 청구 성공 회귀는 GOV-013의 정확한
+금액/이벤트 전체 완료를 의미하지 않는다. 원문87개 전체·Linux·메인넷·legacy·공개 DSL·최종 Web
+인수는 별도 잔여이며 외부 소스는 수정하지 않았다.
+
 **2026-10-15 GOV-015·017 채굴 거절 보강:** 원문의2minimum 예치/minimum+1 언스테이킹과
 useNCP=true 긴급 모드 stake·unstake·delegate 세 동작을 명시 가스로 제출하도록 보강했다.
 추정 오류·불완전/중복 동작·잘못된 사유/입력/상태를 통과시키는 RED→GREEN을 확인했다.

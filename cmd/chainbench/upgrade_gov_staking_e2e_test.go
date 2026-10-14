@@ -237,70 +237,94 @@ func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	}
 }
 
-// TestWemixGovernanceClaimGuardE2E ports wemix4 GOV-022 (claim theft guard): an
-// account that is neither the staker's operator nor a delegator to it cannot
-// claim that staker's rewards. GovStaking.claim resolves the caller to _user =
-// (operator match ? staker : msg.sender) and requires that user to have a stake
-// or pending reward, so a third party's claim reverts with "no reward to claim"
-// — the staker's rewardee balance is never touched. This needs no accrued
-// rewards: the guard reverts before any transfer.
-//
-//	go test -tags e2e -run TestWemixGovernanceClaimGuardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceClaimGuardE2E verifies both original unauthorized callers
+// against two registered stakers with accrued rewards, using actual mined failures
+// and transaction-level state diffs to separate block reward income from claims.
 func TestWemixGovernanceClaimGuardE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual claim guards")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
-	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
-	}
-	staker := presetNodeAddr(t, 1)
-	blsPK, blsSig := presetNodeBLS(t, 1)
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
-
-	// The staker's rewardee (word 1 of the struct) holds any rewards; its balance
-	// must not change on a thief's claim.
-	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
-	balBefore, err := c.BalanceAt(ctx, rewardee)
-	if err != nil {
-		t.Fatalf("balance rewardee: %v", err)
-	}
-
-	// A third party (node3) is neither node1's operator nor a delegator to it.
-	thief, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
-	if err != nil {
-		t.Fatalf("open thief wallet: %v", err)
-	}
-	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	if err != nil {
-		t.Fatalf("decode calldata: %v", err)
-	}
-	hash, execErr := thief.Execute(ctx, e2eGovStaking, raw, nil)
-	if execErr == nil {
-		// The tx was admitted; it must revert (status 0x0), not succeed.
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("thief's claim succeeded (status 0x1) — reward theft not prevented")
+	names := []string{"op1", "op2", "opX"}
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range names {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		address, err := provider.AddressForKey(key)
+		if err != nil {
+			t.Fatal(err)
 		}
+		keys = append(keys, key)
+		alloc[address] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
 	}
-	// execErr != nil (reverted at estimate) or status 0x0 both mean the guard held.
-
-	balAfter, err := c.BalanceAt(ctx, rewardee)
-	if err != nil {
-		t.Fatalf("balance rewardee after: %v", err)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
 	}
-	if balAfter.Cmp(balBefore) < 0 {
-		t.Fatalf("rewardee balance decreased (%s -> %s) — reward stolen", balBefore, balAfter)
+	stakers := []string{presetNodeAddr(t, 1), presetNodeAddr(t, 2)}
+	rewardees := []string{}
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	for i, staker := range stakers {
+		pk, sig := presetNodeBLS(t, i+1)
+		stakingRegister(t, c, wallets[i], staker, pk, sig, minimum)
+		if !strings.EqualFold(stakingStakerByOperator(t, c, wallets[i].Address()), staker) {
+			t.Fatal("operator mapping absent")
+		}
+		rewardees = append(rewardees, wordToAddr(stakingInfoWord(t, c, staker, 1)))
+	}
+	deadline := time.Now().Add(90 * time.Second)
+	balances := []string{}
+	for {
+		balances = nil
+		ready := true
+		for _, address := range rewardees {
+			n, err := c.BalanceAt(t.Context(), address)
+			if err != nil {
+				t.Fatal(err)
+			}
+			balances = append(balances, n.String())
+			ready = ready && n.Sign() > 0
+		}
+		if ready {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("both registered stakers did not accrue reward", balances)
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	proofs := []claimGuardProof{}
+	for _, attempt := range []struct {
+		name            string
+		caller, subject int
+	}{{"operatorA-to-B", 0, 1}, {"third-party-to-A", 2, 0}} {
+		caller := wallets[attempt.caller]
+		staker := stakers[attempt.subject]
+		input := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
+		failure := stakingRejectedTx(t, c, caller, input, big.NewInt(0), "no reward to claim")
+		p := claimGuardProof{Name: attempt.name, Caller: caller.Address(), Staker: staker, Rewardees: rewardees, RewardBalances: balances, Protected: []string{rewardees[0], rewardees[1], wallets[1].Address(), e2eGovStaking}, Failure: failure}
+		if err = c.Call(t.Context(), "debug_traceTransaction", &p.Diff, failure.Hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+			t.Fatal("claim guard state diff unavailable", err)
+		}
+		logGovernanceProof(t, "GOV-022-claim-diff", p)
+		if err := verifyClaimGuardDiff(p); err != nil {
+			t.Fatal(err)
+		}
+		proofs = append(proofs, p)
+	}
+	if len(proofs) != 2 {
+		t.Fatal("original caller matrix incomplete")
 	}
 }
 
