@@ -173,7 +173,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
-| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json) |
+| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. 최소 금액 미달 원문과 현행 계약의 차이·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 미완료 |
@@ -234,8 +234,8 @@ WBFT 4·WEMIX 1의 합의 출처와 다섯 노드의 PID·역할·체인 불변�
 
 **이관 충분성은 별도 잔여다.** 삭제된 과거 tracker의 ID는 84개로, 현재 명세 87개 중 WBFT-004와
 GOV-018/019는 독립 행이 없다. WBFT-004는 병합 항목이고 GOV-018/019는 기존 함수의 실제 단언을 대조해야 한다.
-Go AST로 현재 일곱 파일의 함수 67개·native 테스트 20개·실패 조건 150곳을 읽었으며,
-GOV-018의 staking 재개, GOV-019의 목록·후속 에폭 후보 복귀는 현행 두 테스트에 없다.
+당시 Go AST로 일곱 파일의 함수 67개·native 테스트 20개·실패 조건 150곳을 읽었으며,
+GOV-018의 staking 재개, GOV-019의 목록·후속 에폭 후보 복귀가 당시 두 테스트에 없었다. 아래 후속 보강과 구분한다.
 GOV-019의 최소 금액 미달 원문과 현행 계약 거절 조건도 다르다. NODE-002는 앞서 적은 데이터 인식 범위만 검증한다.
 따라서 기존 테스트 20개 전체 통과를 원문 87개 충분성이나 11번 완료로 바꾸지 않는다.
 근거: [20개 실제 회귀와 초기 차단·보존 목록](handoff-regression-evidence.json).
@@ -250,6 +250,25 @@ RED와 GREEN의 시도 5곳은 모두 프로세스·종료 DB 0건이다.
 이것은 GOV-018의 범위 보강이다. 앞의 20개 전수 회귀는 그 당시 소스의 증거이며, 이 변경 뒤에는 관련 3개를 재검증했다.
 GOV-019와 원문 87개 충분성·legacy 재평가·최종 Web 인수는 계속 남는다.
 근거: [실제 RED→GREEN·receipt·종료 증거](gov-staking-resume-evidence.json).
+
+**GOV-019 누락 보강:** 주소 존재만 확인하면 안정화 단계의 이전 검증자 목록으로 통과할 수 있었다.
+그 첫 관찰을 RED로 쓰지 않고, 안정화 종료를 요구한 단언으로 실제 RED를 확인했다.
+기존 fixture는 45초 뒤에도 stabilizing=true·후보/검증자 4개였다. 이제 permissioned operator 세 명과
+두 보조 staker를 등록해 대상의 비활성 상태에서도 생산이 이어지도록 한다.
+실제 에폭 40→50→60에서 계약 목록과 후보·검증자가 정확한 주소로 3→2→3을 보였고,
+각 에폭은 상태 변경 뒤의 새 경계이며 stabilizing=false였다. 재활성화 receipt의 성공·hash와
+Staked emitter·indexed staker·금액도 모두 확인했다.
+
+초기 보강 fixture는 genesis overlay를 한 단계 더 감싸 자금 배정에 실패했다.
+그 실패도 보존했으며, 수정 후 같은 고정 소스에서 재활성화와 관련 세 회귀가 모두 PASS·Go skip 0이었다.
+전체 make check·최종 tagged race를 통과했고, 이번 단계의 모든 시도 11곳은 활성 프로세스·종료 DB 0건이다.
+보존 파일은 경로·해시·권한·소유자·mtime을 inventory로 기록하고 다시 대조했다.
+
+원문의 최소 금액 미달 "revert 없이 단순 stake만 추가"는 현행 v1 계약과 다르다.
+실제 eth_call은 error 3과 정확한 minimum-staking revert 사유를 반환했으며 비활성/금액 0 상태를 유지했다.
+이것은 현행 계약의 거절 확인이며 미달 금액 거래의 채굴 성공이나 원문 충족을 주장하지 않는다.
+그 차이와 원문 87개 충분성·legacy 재평가·최종 Web 인수는 계속 미완료다.
+근거: [실제 RED→GREEN·에폭·receipt·보존 inventory](gov-staking-reactivation-evidence.json).
 
 **최종 공통 게이트: 미완료.** 위 변경 뒤 고정 소스에서 Web 14개 capture·독립 재현을 직렬 실행하며
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.

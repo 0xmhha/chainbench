@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"os"
 	"strconv"
@@ -542,56 +543,179 @@ func stakingWaitStatus(t *testing.T, c *rpc.Client, hash string) string {
 	return ""
 }
 
-// TestWemixGovernanceReactivateE2E ports wemix4 GOV-016 (inactive -> active): a
-// staker deactivated by a full unstake can be reactivated by staking again.
-// isStaker tracks the active set, so it flips true -> false (full unstake) ->
-// true (re-stake); the staker stays registered throughout, so stake() (which
-// requires a registered staker) reactivates it.
-//
-//	go test -tags e2e -run TestWemixGovernanceReactivateE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceReactivateE2E covers GOV-019 reactivation on a decided
+// permissioned candidate set. Two supporting stakers keep producing while the
+// subject is inactive; epochs must exclude it and later include it again.
+// The imported below-minimum/no-revert expectation conflicts with the current
+// v1 contract. This test records its specific rejection without claiming that
+// original requirement is satisfied.
 func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
 	ctx := context.Background()
-
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
-	if err != nil {
-		t.Fatalf("open operator wallet: %v", err)
+	operators := make([]string, 3)
+	alloc := map[string]any{}
+	for i, name := range []string{"op1", "op2", "op3"} {
+		operators[i], err = ap.AddressForKey(mustHexBytes(t, scenarioOpKeys[name]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		alloc[operators[i]] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
+	}
+	overlay := map[string]any{
+		"alloc": alloc,
+		"config": map[string]any{"croissant": map[string]any{
+			"wBFT":         map[string]any{"useNCP": true, "targetValidators": 4, "stabilizingStakersThreshold": 2},
+			"govContracts": map[string]any{"govNCP": map[string]any{"params": map[string]any{"ncps": strings.Join(operators, ",")}}},
+		}},
+	}
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
+	c := rpc.Dial(url)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	var operator accounts.Wallet
+	// Register the supporting validators first, then the subject (node1).
+	for _, i := range []int{2, 3, 1} {
+		w, err := ap.OpenWallet(ctx, mustHexBytes(t, scenarioOpKeys["op"+strconv.Itoa(i)]), url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pk, sig := presetNodeBLS(t, i)
+		stakingRegister(t, c, w, presetNodeAddr(t, i), pk, sig, amount)
+		if i == 1 {
+			operator = w
+		}
 	}
 	staker := presetNodeAddr(t, 1)
-	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
-	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
-	if !stakingIsStaker(t, c, staker) {
-		t.Fatal("staker not active after register")
-	}
+	assertReactivationSet(t, c, staker, true)
 
-	// Full unstake -> INACTIVE.
 	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
-	if stakingIsStaker(t, c, staker) {
-		t.Fatal("staker still active after full unstake")
+	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 full unstake did not deactivate and clear the subject stake")
 	}
-	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Sign() != 0 {
-		t.Fatalf("getStakerAmount = %s after full unstake, want 0", v)
-	}
+	assertReactivationSet(t, c, staker, false)
 
-	// Re-stake -> ACTIVE again (stake is payable, value == amount).
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
-	if !stakingIsStaker(t, c, staker) {
-		t.Fatal("staker not reactivated after re-stake")
+	// Check the actual contract rejection, not a transport failure. The original
+	// no-revert expectation remains an explicitly unresolved specification gap.
+	below := new(big.Int).Sub(amount, big.NewInt(1))
+	var out string
+	err = c.Call(ctx, "eth_call", &out, map[string]string{
+		"from": operator.Address(), "to": e2eGovStaking,
+		"data":  accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(below)),
+		"value": "0x" + below.Text(16),
+	}, "latest")
+	var refusal *rpc.ServerError
+	if !errors.As(err, &refusal) || refusal.Code != 3 || refusal.Message != "execution reverted: amount is less than minimum staking" {
+		t.Fatalf("GOV-019 below-minimum call did not return the specific v1 rejection: %v", err)
 	}
-	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Cmp(amount) != 0 {
-		t.Fatalf("getStakerAmount = %s after re-stake, want %s", v, amount)
+	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 rejected below-minimum call changed the inactive state")
 	}
+	t.Logf("GOV-019 original no-revert expectation remains unresolved; v1 response: %v", refusal)
+
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
+	if !stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Cmp(amount) != 0 {
+		t.Fatal("GOV-019 minimum stake did not restore active state and exact amount")
+	}
+	receipt, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		Status          string         `json:"status"`
+		TransactionHash string         `json:"transactionHash"`
+		Logs            []accounts.Log `json:"logs"`
+	}
+	if err := json.Unmarshal(receipt, &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != "0x1" || !strings.EqualFold(result.TransactionHash, hash) {
+		t.Fatalf("GOV-019 wrong or failed receipt: %s", receipt)
+	}
+	event, found := accounts.FindLog(result.Logs, accounts.EventTopic("Staked(address,uint256)"))
+	if !found || !strings.EqualFold(event.Address, e2eGovStaking) || len(event.Topics) != 2 || !strings.EqualFold(accounts.TopicToAddress(event.Topics[1]), staker) {
+		t.Fatalf("GOV-019 wrong or missing Staked event: %+v", event)
+	}
+	value, ok := accounts.WordToBig(event.Data)
+	if !ok || len(event.Data) != 66 || value.Cmp(amount) != 0 {
+		t.Fatalf("GOV-019 event amount differs: %q", event.Data)
+	}
+	t.Logf("GOV-019 reactivation receipt: %s", receipt)
+	assertReactivationSet(t, c, staker, true)
+}
+
+// assertReactivationSet checks the contract's exact active list and the next
+// completed epoch after the latest state change. A historical matching epoch
+// or the stabilizing stage's inherited validators cannot satisfy this check.
+func assertReactivationSet(t *testing.T, c *rpc.Client, subject string, active bool) {
+	t.Helper()
+	want := map[string]bool{}
+	for _, i := range []int{1, 2, 3} {
+		addr := strings.ToLower(presetNodeAddr(t, i))
+		if active || !strings.EqualFold(addr, subject) {
+			want[addr] = true
+		}
+	}
+	out, err := c.EthCall(context.Background(), e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := hex.DecodeString(strings.TrimPrefix(out, "0x"))
+	// A sole address[] result has offset 32, its length, and padded addresses.
+	if err != nil || len(data) != 64+32*len(want) || new(big.Int).SetBytes(data[:32]).Cmp(big.NewInt(32)) != 0 || new(big.Int).SetBytes(data[32:64]).Cmp(big.NewInt(int64(len(want)))) != 0 {
+		t.Fatalf("GOV-019 malformed or wrong-size stakers() result: %s", out)
+	}
+	seen := map[string]bool{}
+	for i := 64; i < len(data); i += 32 {
+		addr := "0x" + hex.EncodeToString(data[i+12:i+32])
+		if new(big.Int).SetBytes(data[i:i+12]).Sign() != 0 || !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 unexpected or duplicate contract staker: %s", addr)
+		}
+		seen[addr] = true
+	}
+	head, err := c.BlockNumber(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	boundary := (head/scenarioEpochLen + 1) * scenarioEpochLen
+	waitForHead(t, c, boundary, 90*time.Second)
+	epoch := epochInfoAt(t, c, boundary)
+	if epoch.Stabilizing || len(epoch.Stakers) != len(want) || len(epoch.Validators) != len(want) {
+		t.Fatalf("GOV-019 epoch %d has wrong or inherited candidate set: %+v", boundary, epoch)
+	}
+	seen = map[string]bool{}
+	for _, raw := range epoch.Stakers {
+		var candidate struct {
+			Addr string `json:"addr"`
+		}
+		if err := json.Unmarshal(raw, &candidate); err != nil {
+			t.Fatal(err)
+		}
+		addr := strings.ToLower(candidate.Addr)
+		if !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 epoch %d unexpected or duplicate candidate: %s", boundary, addr)
+		}
+		seen[addr] = true
+	}
+	seen = map[string]bool{}
+	for _, validator := range epoch.Validators {
+		addr := strings.ToLower(validator.Addr)
+		if !want[addr] || seen[addr] {
+			t.Fatalf("GOV-019 epoch %d unexpected or duplicate validator: %s", boundary, addr)
+		}
+		seen[addr] = true
+	}
+	encoded, err := json.Marshal(epoch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("GOV-019 active=%v contract stakers=%s subsequent epoch=%d info=%s", active, out, boundary, encoded)
 }
 
 // TestWemixGovernanceEmergencyModeE2E ports wemix4 GOV-017 (emergency mode): the
