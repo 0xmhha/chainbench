@@ -168,17 +168,8 @@ func burnGas(blockGasLimit, fillPercent uint64) (uint64, error) {
 // retains the default; a supplied invalid value must never become that default.
 func validateLoadControls(args map[string]any) error {
 	for _, field := range []string{"blocks", "fillPercent"} {
-		value, supplied := args[field]
-		if !supplied {
-			continue
-		}
-		n, ok := uintArg(value)
-		max := uint64(^uint(0) >> 1)
-		if field == "fillPercent" {
-			max = 100
-		}
-		if !ok || n < 1 || n > max {
-			return fmt.Errorf("dsl: bad %s: expected an integer from 1 to %d", field, max)
+		if err := validateUnsignedControl("action", "load", field, args); err != nil {
+			return err
 		}
 	}
 	return nil

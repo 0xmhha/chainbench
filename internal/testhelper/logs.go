@@ -32,6 +32,10 @@ const (
 // toBlock, select (count | data | address | blockNumber | txHash | topic0..3),
 // index (which matching log, default 0).
 func readLogs(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
+	if err := validateUnsignedControl("reader", "logs", "index", spec); err != nil {
+		return nil, err
+	}
+
 	filter := rpc.LogFilter{}
 	filter.Address, _ = spec["address"].(string)
 	filter.FromBlock, _ = spec["fromBlock"].(string)

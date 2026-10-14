@@ -121,6 +121,10 @@ func Register(r interp.Registry) {
 type waitBlockAction struct{}
 
 func (waitBlockAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateUnsignedControl("action", "waitBlock", "target", ac.Args); err != nil {
+		return err
+	}
+
 	target, ok := uintArg(ac.Args["target"])
 	if !ok {
 		return fmt.Errorf("dsl: waitBlock requires a numeric \"target\"")

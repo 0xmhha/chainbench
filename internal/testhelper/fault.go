@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -165,6 +164,10 @@ func nodeAnswers(ctx context.Context, ac *interp.ActionCtx, n node.Node) bool {
 type readNodeLogAction struct{}
 
 func (readNodeLogAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateUnsignedControl("action", "readNodeLog", "maxBytes", ac.Args); err != nil {
+		return err
+	}
+
 	n, ctrl, err := faultTarget(ac, actionReadNodeLog)
 	if err != nil {
 		return err
@@ -192,25 +195,11 @@ func (readNodeLogAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // positiveIntArg reads a DSL numeric argument that must be above zero. JSON
 // numbers arrive as float64, and a spec may also write one as a string.
 func positiveIntArg(v any, name string) (int, error) {
-	var n int
-	switch t := v.(type) {
-	case float64:
-		n = int(t)
-	case int:
-		n = t
-	case string:
-		parsed, err := strconv.Atoi(t)
-		if err != nil {
-			return 0, fmt.Errorf("%s %q is not a number: %w", name, t, err)
-		}
-		n = parsed
-	default:
-		return 0, fmt.Errorf("%s must be a number", name)
+	n, ok := uintArg(v)
+	if !ok || n == 0 || n > uint64(^uint(0)>>1) {
+		return 0, fmt.Errorf("%s must be an exact positive integer", name)
 	}
-	if n <= 0 {
-		return 0, fmt.Errorf("%s must be greater than zero (got %d)", name, n)
-	}
-	return n, nil
+	return int(n), nil
 }
 
 // stopNodeAction stops one node. Args: on (selector, required).

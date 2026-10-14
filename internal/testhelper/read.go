@@ -334,6 +334,10 @@ func readBalanceAt(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[
 // the returned address. It reuses accounts.CreateAddress (the SDK's own
 // computation); nothing is deployed here.
 func readCreateAddress(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
+	if err := validateUnsignedControl("reader", "createAddress", "nonce", spec); err != nil {
+		return nil, err
+	}
+
 	deployer, _ := spec["deployer"].(string)
 	if deployer == "" {
 		deployer, _ = spec["from"].(string)
@@ -447,6 +451,12 @@ func readTxStatus(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[s
 // 0); topic (which topic to return, default 1) or select:"data" for the log
 // data. The returned 32-byte 0x-hex is directly usable as an abiCall argument.
 func readReceiptLog(ctx context.Context, _ *interp.Deps, c *rpc.Client, spec map[string]any) (any, error) {
+	for _, field := range []string{"index", "topic"} {
+		if err := validateUnsignedControl("reader", "receiptLog", field, spec); err != nil {
+			return nil, err
+		}
+	}
+
 	hash, ok := spec["hash"].(string)
 	if !ok || hash == "" {
 		return nil, fmt.Errorf("dsl: receiptLog requires \"hash\"")

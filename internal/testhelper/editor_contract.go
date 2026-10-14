@@ -93,21 +93,10 @@ func EditorVocabulary() ([]VocabularyEntry, map[string]ParameterSchema, error) {
 		if e.Name == "read" || e.Name == "waitFor" {
 			props["source"] = map[string]any{"enum": readers}
 		}
-		if e.Kind == "action" && e.Name == "load" {
-			for _, field := range []string{"blocks", "fillPercent"} {
-				parameter := editorParameter("gas")
-				integer := parameter["anyOf"].([]any)[0].(map[string]any)
-				integer["minimum"] = 1
-				text := parameter["anyOf"].([]any)[1].(map[string]any)
-				literal := `(?:0*[1-9][0-9]*|0[xX]0*[1-9a-fA-F][0-9a-fA-F]*)`
-				if field == "fillPercent" {
-					integer["maximum"] = 100
-					literal = `(?:0*(?:[1-9][0-9]?|100)|0[xX]0*(?:[1-9a-fA-F]|[1-5][0-9a-fA-F]|6[0-4]))`
-				}
-				text["pattern"] = `^(?:\$[A-Za-z_][A-Za-z0-9_]*|.*\$\{[A-Za-z_][A-Za-z0-9_]*\}.*|` + literal + `)$`
-				props[field] = parameter
-			}
+		for field, rule := range unsignedControlRules(e.Kind, e.Name) {
+			props[field] = unsignedControlSchema(rule)
 		}
+
 		required := append([]string{}, editorRequired[e.Name]...)
 		if e.Kind == "action" {
 			required = append(required, "do")
@@ -224,6 +213,9 @@ func editorParameter(field string) map[string]any {
 	case "wait", "expectRevert", "expectReject", "expectFail":
 		s["type"] = "boolean"
 	case "value", "gas", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "amount":
+		if field == "gas" || field == "nonce" {
+			return unsignedControlSchema(unsignedRule(0, ^uint64(0)))
+		}
 		return map[string]any{"anyOf": []any{map[string]any{"type": "integer", "minimum": 0, "maximum": 9007199254740991}, map[string]any{"type": "string", "pattern": "^(\\$[A-Za-z_][A-Za-z0-9_]*|.*\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}.*|0[xX][0-9a-fA-F]+|[0-9]+)$"}}}
 	case "target", "blocks", "count", "index", "topic", "maxBytes", "maxAdvance", "maxMillis", "maxSeconds", "minMillis", "minSeconds", "fillPercent":
 		return map[string]any{"anyOf": []any{map[string]any{"type": "number", "minimum": 0}, map[string]any{"type": "string", "pattern": "^(\\$[A-Za-z_][A-Za-z0-9_]*|.*\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}.*|0x[0-9a-fA-F]+|[0-9]+)$"}}}

@@ -279,6 +279,10 @@ func dotPath(v any, path string) (any, bool) {
 }
 
 func readDerive(_ context.Context, _ *interp.Deps, _ *rpc.Client, spec map[string]any) (any, error) {
+	if err := validateUnsignedControl("reader", "derive", "index", spec); err != nil {
+		return nil, err
+	}
+
 	op, _ := spec["op"].(string)
 	if op == "abiCall" {
 		return deriveAbiCall(spec)

@@ -142,7 +142,7 @@ func checkKeptOut(ctx context.Context, c *rpc.Client, hash string, submitErr err
 			return fmt.Errorf("dsl: sendTx %s was accepted and mined, but this chain must keep it out of a block", hash)
 		}
 		head, herr := c.BlockNumber(ctx)
-		if herr == nil && head >= start+blocks {
+		if herr == nil && head >= start && head-start >= blocks {
 			ac.Value = "kept out for " + strconv.FormatUint(blocks, 10) + " block(s)"
 			return nil
 		}

@@ -34,6 +34,10 @@ type sendTxAction struct{}
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateUnsignedControl("action", "sendTx", "blocks", ac.Args); err != nil {
+		return err
+	}
+
 	if err := validateTransactionNumbers(ac.Args); err != nil {
 		return err
 	}

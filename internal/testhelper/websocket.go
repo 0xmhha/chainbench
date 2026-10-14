@@ -110,6 +110,11 @@ func (wsCollectedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 		return res, err
 	}
 	defer func() { _ = sub.Close() }()
+	if err := validateUnsignedControl("assertion", "wsCollected", "count", ac.Spec); err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+
 	want := 1
 	if n, ok := uintArg(ac.Spec["count"]); ok && n > 0 {
 		want = int(n)
@@ -175,6 +180,10 @@ func sanitizeWSProvenance(spec map[string]any) map[string]any {
 type wsSubscribeAssertion struct{}
 
 func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	if err := validateUnsignedControl("assertion", "wsSubscribe", "count", ac.Spec); err != nil {
+		return session.AssertResult{Assert: "wsSubscribe", Actual: err.Error(), Provenance: ac.Spec}, err
+	}
+
 	res := session.AssertResult{Assert: assertWSSubscribe, Provenance: ac.Spec}
 
 	wsURL, err := wsTarget(ac)

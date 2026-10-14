@@ -201,6 +201,54 @@ try{
  await page.screenshot({path:out+'/load-controls.png',fullPage:true})
  observed.loadControls={fractionRejected:true,zeroRejected:true,percentRangeEnforced:true,integerControls:true,saveExportPreserved:true}
 
+ // All unsigned controls share integer ranges and preserve explicit zero.
+ const controlCase=structuredClone(loadCase)
+ controlCase.id='unsigned-controls-browser'
+ controlCase.steps=[
+  {do:'read',source:'derive',op:'word',of:['0x'+'0'.repeat(64)+'1'.repeat(64)],index:0,save:'word'},
+  {expect:'blockHalt',on:'node1',maxAdvance:0,within:'1s'},
+  {expect:'blockInterval',on:'node1',blocks:2,minMillis:0,maxMillis:3000},
+  {expect:'wsSubscribe',on:'node1',count:1,timeout:'3s'},
+ ]
+ await upload.setInputFiles(file('unsigned-controls.json',controlCase))
+ for(const [step,field,zeroAllowed,good] of [[0,'index',true,'0'],[1,'maxAdvance',true,'0'],[2,'maxMillis',true,'3000'],[3,'count',false,'1']]){
+  await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
+  const path=`/content/steps/${step}/${field}`
+  await page.getByLabel(path+' 형식',{exact:true}).selectOption('0')
+  const input=page.getByLabel(path,{exact:true})
+  assert.equal(await input.getAttribute('step'),'1')
+  assert.equal(await input.getAttribute('min'),zeroAllowed?'0':'1')
+  assert.equal(await input.getAttribute('max'),'9007199254740991')
+  await input.fill('1.5')
+  await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+  await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  if(!zeroAllowed){await input.fill('0');await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click();await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})}
+  await input.fill(good)
+ }
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ const indexPath='/content/steps/0/index'
+ await page.getByLabel(indexPath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(indexPath,{exact:true}).fill('18446744073709551615')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await summary.filter({hasText:'index'}).waitFor({timeout:15000})
+ await page.getByLabel(indexPath,{exact:true}).fill('0X01')
+ controlCase.steps[0].index='0X01'
+ await page.locator('[data-tree-path="/content/steps/1"]').click()
+ const advancePath='/content/steps/1/maxAdvance'
+ await page.getByLabel(advancePath+' 형식',{exact:true}).selectOption('1')
+ await page.getByLabel(advancePath,{exact:true}).fill('18446744073709551615')
+ controlCase.steps[1].maxAdvance='18446744073709551615'
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/unsigned-controls.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const controlDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await controlDownload).saveAs(out+'/unsigned-controls-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/unsigned-controls-export.json','utf8')),controlCase)
+ observed.unsignedControls={integerControls:true,fractionRejected:true,zeroCountRejected:true,indexOverflowRejected:true,zeroBoundPreserved:true,hexIndexPreserved:true,uint64BoundPreserved:true,saveExportPreserved:true}
+
  // Create the fee payer through the declared account selector, retaining
  // key bindings and preserving an invalid imported pair until corrected.
  const feeCase=structuredClone(endpointCase)
