@@ -1,13 +1,20 @@
 # netmap — 노드 배치의 단일 소유자
 
-> **[현행 설계]** 노드 배치(역할·호스트·포트·피어링).
-> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
-> 작업 순서는 [[chainbench-worklist]] §1g 다.
-
-> [[keyring-design]] 이 *누가 있는가*(신원)를 정했다면, 이 문서는 **어디에 어떻게 있는가**
-> (배치)를 정한다. 해석 순서(N9)의 두 번째 단계다:
-> ① keyring → **② netmap** → ③ enode → ④ genesis → ⑤ config.
-> 실측: 2026-08-22, AST 기반.
+> **[역사 설계·현행 소유자 정정]** 아래 2026-08-22 측정과 당시 목표는 역사 기록이다.
+> 2026-10-14 현행 배치는 `resource`의 Pool·Assign·Inventory·Placement가 소유하고,
+> 역할·주소 Map·Peering·Layout은 `core/node`, 선언은 `core/blueprint`가 소유한다.
+> `core/netmap`과 별도 portplan/place 스택은 현재 트리에 없다. 현행 판정은
+> [[chainbench-worklist]] §0a 13번의 AST 재측정과 관련 회귀를 따른다.
+>
+> `composeNeeds`와 현재 구성 단계가 해석 순서의 정본이다. place는 키 물질화보다 먼저 실행되고,
+> genesis의 직접 선행 조건은 place, config의 직접 조건은 place·keys다. 키를 실제로 읽는지는
+> consensus family가 결정한다. 예전 keyring→netmap 순서를 현행 동작으로 인용하지 않는다.
+>
+> `node.NormalizeRole`은 bp/en/pn만 허용하고 validator/endpoint/boot는 거절한다.
+> 구 철자의 읽기 호환을 유지한다는 아래의 당시 계획은 현재 계약이 아니다.
+> NM6을 현행 미완료로 표시하지 않는다. §0a 7번의 실제 세 체인 생성 키·서버 배치 회귀에서
+> 역할·BLS 잔여를 확인했고, 후속 b-5 재평가에서도 공개 CLI 세 체인 회귀를 확인했다.
+> 전체 mainnet·외부 W3/W4·최종 Web 인수는 별도 범위다.
 
 ---
 

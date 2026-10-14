@@ -68,6 +68,34 @@ func TestSetupTransitionRecordMatchesCurrentCLI(t *testing.T) {
 	t.Fatal("b-5 record is missing")
 }
 
+func TestForkReassessmentUsesCurrentCommands(t *testing.T) {
+	root := newRootCmd()
+	for _, path := range [][]string{{"hardfork"}, {"run"}} {
+		command, _, err := root.Find(path)
+		if err != nil || command.Name() != path[0] {
+			t.Fatalf("current fork command %v is missing: %v", path, err)
+		}
+	}
+	doc, err := os.ReadFile("../../docs/dev/chainbench-worklist.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	section := strings.SplitN(string(doc), "| **A7b** |", 2)
+	if len(section) != 2 {
+		t.Fatal("A7b record is missing")
+	}
+	current := strings.SplitN(section[1], "| **A8** |", 2)[0]
+	for _, line := range strings.Split(current, "\n") {
+		cells := strings.Split(line, "|")
+		if len(cells) == 5 && (strings.Contains(cells[2], "`upgrade run`") || strings.Contains(cells[2], "`chain hardfork`")) {
+			t.Fatal("A7b still names a retired command as a current fork route")
+		}
+	}
+	if !strings.Contains(current, "UpgradeV2") {
+		t.Fatal("A7b does not describe the current declarative fork model")
+	}
+}
+
 func TestEveryCommandATestInvokesExists(t *testing.T) {
 	root := newRootCmd()
 	paths, files := invokedCommands(t)

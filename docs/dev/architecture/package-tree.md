@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,323 |
+| `internal/` | 54 | 86,324 |
 | `cmd/` | 19 | 5,686 |
-| `scripts/inventory/` | 3 | 790 |
+| `scripts/inventory/` | 4 | 905 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **92,934** |
+| **합계** | **78** | **93,050** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,211줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,212줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -88,7 +88,7 @@ internal/core/
 │                            + 1차 노드 height 전진으로 producing 판정
 ├── report         216  [L3] 실행 전체 report 의 집계자 — 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를
 │                            모아 report.json(Build·Generate·Write·Read). 판정을 다시 하지 않는다
-└── hardfork       144  [L3] 바이너리 교체(swap) 업그레이드 계획/실행 — 같은 데이터디렉토리를 멈췄다 fork 를 켠 새
+└── hardfork       145  [L3] 바이너리 교체(swap) 업그레이드 계획/실행 — 같은 데이터디렉토리를 멈췄다 fork 를 켠 새
                              바이너리로 재기동(합의 엔진 불변). 합의 엔진이 바뀌는 하드포크는 env.upgrade 로 선언한다
 ```
 
@@ -227,7 +227,7 @@ cmd/chainbench-dashboard 195  main. 대시보드 데몬(요구 19) — obs 이�
 
 ---
 
-## 5. `scripts/inventory/` — 3패키지 790줄
+## 5. `scripts/inventory/` — 4패키지 905줄
 
 측정 도구다. 제품 바이너리가 아니고, 이 문서와 `code-graph.md`·`consolidation-plan.md` (2026-09-24 삭제) 의 숫자가
 여기서 나온다. (`consolidation-plan.md` (2026-09-24 삭제) 는 2026-09-20 에 닫혔고 그 안의 숫자는 그때의 기록이다.)
@@ -236,6 +236,7 @@ cmd/chainbench-dashboard 195  main. 대시보드 데몬(요구 19) — obs 이�
 scripts/inventory/
 ├── code-graph        449  chainbench 모듈의 AST 그래프 — 패키지=노드, import=엣지, 그 엣지가 실제로
 │                          참조하는 exported 심볼. 빌드 불필요
+├── source-ast        115  Go 표준 파서로 모든 Go 파일·테스트·빌드 태그를 파싱하고 선언·호출·import를 JSON으로 내보낸다
 ├── chain-flag-graph  282  go-ethereum 파생 체인 저장소의 명령/플래그 그래프를 cmd/ 트리 파싱으로 추출
 └── surface-graph      59  각 표면(CLI·MCP·DSL)이 등록한 것과 그중 app 층을 넘는 것 — U 트랙 진척을
                            추정이 아니라 코드에서 읽는다

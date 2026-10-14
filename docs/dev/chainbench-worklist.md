@@ -175,7 +175,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. 최소 금액 미달 원문과 현행 계약의 차이·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
-| 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
+| 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 미완료 |
 
 **2026-10-13 저장 공간 보강 완료:** `runtime_storage.py`가 새 테스트 폴더를 소유권 표시와 20 GiB 사전 검사로 만들고,
@@ -269,6 +269,29 @@ Staked emitter·indexed staker·금액도 모두 확인했다.
 이것은 현행 계약의 거절 확인이며 미달 금액 거래의 채굴 성공이나 원문 충족을 주장하지 않는다.
 그 차이와 원문 87개 충분성·legacy 재평가·최종 Web 인수는 계속 미완료다.
 근거: [실제 RED→GREEN·에폭·receipt·보존 inventory](gov-staking-reactivation-evidence.json).
+
+**13번 전체 언어 AST·netmap 재평가:** Go 전용 도구가 빌드 태그 테스트의 선언과 비Go 코드를 빠뜨리고,
+잘못된 비Go 코드도 성공으로 처리하는 RED를 확인했다. 새 도구는 Go 표준 파서·Python ast·Acorn/Svelte/PostCSS·
+mvdan 셸 AST·고정 Tree-sitter 문법으로 실제 소스 전체를 읽는다. Go 테스트/빌드 태그·생성 SPA·go.txt fixture도 포함한다.
+Make recipe·workflow run·Docker 명령·HTML script/style·알려진 인터프리터 heredoc은 따로 파싱하며,
+치환을 실행하지 않고 심볼과 변환 원문 위치/해시로 보존한다. 파싱 실패·알 수 없는 파일·링크는 실패한다.
+문서·키/퍼즈 데이터·생성 증명 메타데이터와 외부 의존성/무시된 산출물의 범위를 명시했다.
+
+고정 소스에서 14개 언어/형식의 1,922파일, Go 테스트 670파일, 내장 AST 21개를 파싱했다.
+그래프는 노드 120,391개·간선 128,233개이며 파싱 누락·중복 ID·끊어진 간선은 0개였다.
+독립 실행도 그래프 SHA256 284088d4756433ca73ee58fa1931dd322e1a20d1d6dc65583a05754f1ad2473a로 동일했고,
+실행 전후 전체 소스 해시도 같았다. 모든 파싱 파일의 해시를 실제 원문과 다시 대조했다.
+초기 파서 비정상 종료의 정확한 원인은 확정하지 않았다. 호환 버전 고정과 파서 수명 보강 뒤 전체 실행과 재현을 통과했다.
+사용하지 않는 새 파서 라이브러리 약 347 MiB는 정리했고 필요한 분석 도구만 남겼다.
+
+A8의 공개 비메서드 심볼은 1,888개였다: 외부 1,168·테스트 174·공개 시그니처 81·상수 집합 9·내부 소비 456,
+도달 불가 0. 이 규칙은 메서드를 재는 것으로 오인하지 않는다. A7b의 과거 명령/입력 표는 RED→GREEN으로
+현행 hardfork와 UpgradeV2/ChainCrossFork로 정정했다. 별도 폐기된 스택을 복원하거나 이름 충돌로 통합을 결정하지 않는다.
+netmap 문서의 현재 소유자는 resource·core/node·core/blueprint이며, 역할은 bp/en/pn만 허용한다.
+N3 잔여는 §0a 7번에서 실제로 해소했고 b-5의 후속 공개 CLI 세 체인 회귀도 통과했다.
+전체 make check·관련 전체 race·AST 계약을 통과했다. 새 Go 분석 패키지의 문서 누락도 전체 검사에서 잡아 정정했다.
+이 그래프는 구조·선언·import·호출을 분류한 구문 그래프이며 타입 해석·전체 동적 호출·실행 커버리지를 주장하지 않는다.
+근거: [도구·고정 소스·독립 그래프·실패 및 회귀](all-code-graph-evidence.json), [사용 방법](../../scripts/inventory/README.md).
 
 **최종 공통 게이트: 미완료.** 위 변경 뒤 고정 소스에서 Web 14개 capture·독립 재현을 직렬 실행하며
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.
@@ -793,17 +816,19 @@ K0·S0 가 추측 위에 서게 된다.
 | **A4b** | `chainsetup`·`consensus/upgrade` 를 `FileStore` 경유로 | ☑ **완료 2026-08-23.** 실측은 8+2 가 아니라 **11+2 = 13곳**. `Options`/`HandoffOptions`/`upgrade.LaunchOptions` 에 `Files` boundary(nil=로컬). **직접 쓰기 0건**이 되어 [[layers]] §5 의 ❌ 가 사라졌고, **A2 가 stale 예외를 잡아** 표에서 지우게 했다(가드가 의도대로 동작). `os.MkdirAll` 대부분이 함께 사라진 게 핵심 — `Write` 가 부모를 만들므로 디렉토리를 미리 만들던 코드는 **경로를 아는 코드**였고 그게 위반의 실체였다. 라이브: `chain up --case wemix` 15/15 · 엔진 게이트 통과 | ☑ |
 | **A5** | ~~`core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun`~~ **전부 소멸 2026-09-06** | — | ☑ 앞 둘은 #241 에서(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘도 이제 없다 — 케이스 이관(P6.4)과 R 트랙 재편이 가져갔다 |
 | **A6** | ~~`netreg`·`obs` 를 `session` 으로 흡수~~ **완료 2026-09-06 확인** | 컨트롤 플레인 단일화 | ☑ R1 에서 끝났다. `internal/netreg` 도 `core/obs` 도 없고, 네트워크 레지스트리는 `core/session/netreg.go`(`SaveNetwork`·`ListNetworks`), 이벤트 버스는 `core/collector/bus.go` 다 |
-| **A7b** | ~~**`hardfork` 와 `upgrade` 통합**~~ **통합하지 않기로 재확인 (2026-09-07)** | 세 사례가 한 선언에서 갈리는지 | ☒ **결정 유지, 근거는 다시 세웠다.** 2026-08-31 의 근거는 "의도적으로 다른 모델"과 `Plan`·`BuildPlan` 이름 충돌이었는데, **이름 충돌은 근거가 아니다** — A7 이 보였듯 이름은 여러 이유로 겹친다. 입력을 세어 다시 판단했다.
+| **A7b** | `hardfork`와 선언형 upgrade의 현행 관계 재평가 (2026-10-14) | 입력·효과·실제 소비 경로를 대조 | ☒ **표면을 억지로 통합하지 않는 결정 유지.** 과거 `upgrade run`과 별도 upgrade.Plan 스택은 없다. 현재는 선언형 `UpgradeV2`가 concurrent/restart를 공통으로 표현하고 chainsetup이 구성·전환을 수행한다. 아래는 현행 입력 대조이며 예전 11개/8개 추가 필드 수치는 현재 근거로 쓰지 않는다. |
 
-| 사례 | 지금 어떻게 표현되나 | 입력 |
+| 사례 | 현행 표면과 선언 | 입력·효과 |
 |---|---|---|
-| 같은 체인 바이너리 스왑 | `chain hardfork` | 4개(워크스페이스·대상 체인·대상 바이너리·블록). **이미 조립된 망**에 작용한다. 제네시스는 그대로, 데이터 디렉터리도 그대로, 노드만 새 실행 파일로 돌아온다 |
-| wemix→wbft 핸드오프 | `upgrade run` | 11개(역할·network id·포크 블록·from 제네시스 바이트·to 제네시스 입력·거버넌스 멤버 주소·노드 공개키·포트 4종). **제네시스를 만들고 망을 새로 조립**하며 두 바이너리를 동시에 돌린다 |
-| genesis 전용 포크 | `hardforks: {"boho": 10}` 또는 `--set bohoBlock=10` | **계획이 아니다.** 제네시스 config 필드 하나이고, 스왑도 계획도 없다 |
+| 이미 구성된 망의 실행 파일 교체 | root `hardfork` → app/verb HardforkPlan·HardforkExecute → core/hardfork.SwapPlan | HardforkPlanIn 네 필드: DataDir·ToChain·ToBinary·Block. 기존 상태에서 from-chain과 노드·설정·데이터 경로를 읽어 계획하고, 같은 노드 데이터를 유지해 재실행한다. CLI의 dry-run은 별도 실행 정책이다 |
+| 테스트 망 구성 중 선언한 포크 | `run`의 chainPreset/env에 `UpgradeV2` → composeWorkspace·ChainCrossFork | Fork·At·From·To·Style·Carry를 선언한다. deprecated Template은 입력하면 거절한다. concurrent는 별도 역할의 두 빌드를 함께 구성하고, restart는 같은 노드를 재실행한다. 각 선언은 체인·배치·genesis와 함께 해석한다 |
+| genesis만으로 활성화하는 포크 | genesis hardforks 또는 `--set bohoBlock=10` | 실행 파일 교체 계획이 아니라 config의 활성화 블록이다. 추가 SwapPlan이나 두 번째 포크 선언으로 중복 표현하지 않는다 |
 
-제안된 선언 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 를 대 보면 첫째는 들어맞지만, **셋째는 애초에 이 모양의 선언이 아니고**(제네시스가 이미 말하는 것을 두 번째 철자로 다시 말하게 되는데, 그게 A7 이 막으려는 것이다), **둘째는 자기만 쓰는 필드 여덟 개가 더 필요하다.** 그것들을 공용 선언에 넣으면 모든 하드포크 선언이 자기와 무관한 여덟 칸을 이고 다니고, "메커니즘은 파생된다"는 규칙은 결국 **그 필드들의 존재로 메커니즘을 판별**하게 된다. 메커니즘의 입력에서 메커니즘을 파생하는 것은 파생이 아니다.
+이 구분은 이름 충돌이나 삭제된 구현의 추가 필드 수에 기대지 않는다.
+이미 존재하는 망의 명령과 망 구성 시의 선언은 상태 전제와 부수 효과가 다르며,
+concurrent/restart는 현행 선언에서 이미 공통화되어 있다. 새 범용 선언이나 폐기된 명령을 도입하지 않는다.
+실제 root 등록·입력과 문서의 불일치를 RED→GREEN으로 검사하고, 관련 코어·선언·전환 회귀를 확인한다.
 
-대신 A7 이 지목한 이름을 고쳤다: `hardfork.Plan`→`SwapPlan`, `hardfork.BuildPlan`→`PlanSwap`. 둘이 다른 것이라면 같은 낱말을 쓰지 말아야 한다. `BuildPlan` 겹침은 사라졌고 `Plan` 은 넷에서 셋으로 줄었다. 비테스트 수정 4곳 |
 | **A8** | **외부 소비자 0 인 공개 심볼 정리** | 원인별로 갈라 세고, 진짜 도달 불가만 없앤다 | ☑ **완료 2026-09-07 — 세 번 보고한 숫자가 모두 틀린 것을 말하고 있었다.** 230 → 896 → 928 은 "이만큼 죽었다"로 읽혔지만, 실제로는 "다른 패키지가 셀렉터로 이름을 대지 않는다"였고 거기엔 원인이 다섯 있다. ① **메서드**(928 중 424): 수신자가 값이라 이 방식으로는 **아예 측정 불가**다. ② **공개 시그니처에 든 타입**: 호출자가 값만 받고 타입 이름을 안 적는다(`app` 의 반환 타입들). ③ **형제가 쓰이는 상수 세트의 한 멤버**: govbind 의 제안 상태 일곱은 컨트랙트 getter 가 돌려주는 값의 대응표라, 아직 아무도 안 쓴 것을 지우면 표가 반쪽이 된다. ④ **자기 패키지만 쓰는 것**(277). 여기서 제안된 처방인 "대부분 unexport"는 **틀렸다** — `nodeconfig` 의 `Key*` 111개는 knob 의 공개 어휘이고 일부는 밖에서도 쓴다. ⑤ **정말 아무도 안 부르는 것: 1,226개 중 3개**. 지웠다: 컨텍스트 없는 `store.Import` 래퍼(A7 의 겹침도 함께 사라졌다) · 구현체도 소비자도 없이 `Driver` 를 다시 설명하던 `process.Transport` · 표면이 자기 목록을 안 들게 하려고 만들었는데 그런 표면이 없던 `remote.EnvNames`. 계산은 `internal/arch/reach.go` 한 곳에 있고 도구(`code-graph -dead`)와 테스트가 그것을 함께 쓴다(#349 의 교훈). 테스트가 지키는 것은 개수가 아니라 **불변식**이다 — 공개인데 아무도 이름을 대지 않는 것이 0. 개수에 예산을 걸면 knob 하나 추가할 때마다 실패하고, 옳은 일을 벌하는 래칫은 사람들이 끄는 법을 배운다. **변이가 내 결함을 잡았다**: 첫 판은 자기 선언이 자기 이름을 한 번 쓴다는 것을 안 빼서 `nowhere` 가 구조적으로 0 이었고, 안 부르는 함수를 넣어도 통과했다 |
 | **A7** | **이름 겹침 검출 테스트** — 공개 패키지 레벨 선언이 두 패키지 이상에 같은 이름으로 있으면 보고한다 | ☑ **완료 2026-09-07.** `internal/arch/naming.go` 가 세고 `naming_test.go` 가 래칫을 건다. **메서드는 세지 않는다** — 수신자가 이름공간이라 `Stop`·`Save` 같은 것 577개가 목록을 채우고 `RoleValidator` 를 덮었다. 규칙으로 설명되는 것 101개(app 파사드는 **참조까지 확인한다**. 그래야 뜻이 다른 `app.Network` 대 `keyring.Network` 를 파사드로 오인하지 않는다), 관용 19개, 빚 33개이며 관용과 빚은 둘 다 줄기만 하고 유령 항목도 거부한다. 변이 둘(새 겹침 추가 · 참조 검사 제거)로 확인했다. **첫 수확이 `RoleValidator`×3** 이라 그 자리에서 지웠다: `dsl.RoleValidator`→`BinaryAfter`(포크 뒤 바이너리), `validatorset.RoleValidator`→`AccountValidator`(계정의 기능). 08-25 이 지목했던 `Runner`×3 과 `Ports` 는 빚 목록에 이유와 함께 남았다 | ☑ |
 
@@ -1623,7 +1648,7 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 **1단계 ☑ 2026-09-07. A7 이름 겹침 검출.** 규칙으로 설명되는 것 101개, 관용 19개, 빚 33개.
 첫 수확이 `RoleValidator`×3 이었고, 그것이 2단계의 입구가 되었다.
 
-**2단계 ◐.** `steps_compose.go` 세 덩어리 가운데 둘이 끝났다.
+**2단계 ☑ 현행 재평가 2026-10-14.** N1~N6은 현행 blueprint·resource·node·chainsetup으로 소비된다. §0a 7번에서 노드별 서버 배치와 가족별 BLS 잔여도 닫았다. 아래 표의 과거 설명을 현행 미완료로 해석하지 않는다.
 
 | 무엇 | 상태 |
 |---|---|
@@ -1637,7 +1662,7 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 | **N1** 선언 스키마와 파서 | ☑ `internal/core/blueprint`. `steps_compose.go` 를 건드리지 않는 새 패키지라 앞의 둘과 파일이 겹치지 않았다 |
 | **N2~N6** 해석·raw 경로·물질화·preset·topology 흡수 | ☑ **정정 2026-09-20 — 이 칸의 `◐` 가 틀렸다.** 판정에 쓴 잣대가 "`chainsetup` 이 `blueprint.X` 를 부르는가" 였는데 **그건 N3·N4·N6 어느 것의 게이트도 아니다.** 각 게이트는 §1g 표에 있고 다섯 전부 2026-09-07 에 라이브로 통과했다. 셋을 코드로 다시 확인: N4(로컬/원격 분기 없음) — `chainsetup` 직접 파일 쓰기 **0곳**; N6(혼용 거부) — `verbs_steps.go:149`, 그리고 **두 형식 병존은 "이관 기간 병존" 이라고 게이트가 명시한 설계 동작**이다; N5 — `chaincmd/blueprint.go` 의 `--from-preset`/`--from-topology` 가 서로 배타. `placements()`(`steps_place.go:72`)의 세 갈래는 미완성이 아니라 그 병존이다. **잘못 판정한 방식이 문제였다** — 흡수 여부를 호출 관계로 물었고, 게이트는 동작으로 묻는다. 실제 잔여는 §1g `N3` 행이 이름을 대고 적은 빚 둘(노드별 `server:` 배치, BLS 항상 파생)뿐이다 |
 
-**3단계 ☐.** A8 을 다시 재고, 이어서 A7b 를 결정한다. N1~N6 뒤다.
+**3단계 ☑ 2026-10-14.** A8 재측정과 A7b 현행 대조를 수행했다. 모든 언어 AST 인벤토리·그래프의 고정 소스 capture/독립 재현과 관련 전체 검사가 통과했다. [증거](all-code-graph-evidence.json). 이 완료는 원문 87개 충분성·전체 mainnet·외부 W3/W4·최종 Web 인수를 뜻하지 않는다.
 
 **병행할 수 있는 것** — 위와 파일이 겹치지 않는다.
 

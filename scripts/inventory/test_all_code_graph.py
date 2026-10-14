@@ -1,0 +1,96 @@
+"""Observable inventory contracts: every source, test symbols, and refusals."""
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+
+REPO = Path(__file__).resolve().parents[2]
+TOOL = REPO / 'scripts/inventory/all_code_graph.py'
+
+
+class AllCodeGraphTest(unittest.TestCase):
+    def run_graph(self, root):
+        # Exercise the existing Go-only tool as the RED baseline. Once the
+        # complete inventory exists, exercise its public CLI with the same input.
+        command = ['python3', '-B', str(TOOL), '--root', str(root), '--all-files']
+        if not TOOL.exists():
+            command = ['go', 'run', './scripts/inventory/code-graph', '-symbols', str(root)]
+        return subprocess.run(command, cwd=REPO, capture_output=True, text=True, check=False)
+
+    def fixture(self, root, path, content):
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+
+    def test_every_language_and_build_tagged_test_has_graph_nodes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = {
+                'internal/app/demo.go': 'package app\nfunc Hello() {}\n',
+                'internal/app/demo_test.go': '//go:build e2e\npackage app\nfunc TestHidden() { Hello() }\n',
+                'scripts/check.py': 'def verify():\n    print("ok")\n',
+                'scripts/check.sh': '#!/bin/bash\nverify() { echo ok; }\nverify\n',
+                'web/src/App.svelte': '<script>import View from "./View.svelte"; let count=0;</script><button onclick={()=>count++}>{count}</button>',
+                'web/src/View.svelte': '<p>Ready</p>',
+                'web/src/entry.js': 'import View from "./View.svelte"; export function show() { console.log(View); }',
+                'web/index.html': '<html><body><script>console.log("ok")</script></body></html>',
+                'web/main.css': 'button { color: red; }',
+                'Makefile': 'all:\n\techo ok\n',
+                'env/Dockerfile': 'FROM alpine\nRUN echo ok\n',
+                'tests/demo.json': '{"schemaVersion":"2","kind":"case","id":"sample","steps":[{"do":"waitBlock","target":2}]}',
+                'tests/fixture.go.txt': 'package main\nfunc main() {}\n',
+            }
+            for path, content in sources.items():
+                self.fixture(root, path, content)
+            result = self.run_graph(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            graph = json.loads(result.stdout)
+            self.assertEqual({f['path'] for f in graph.get('files', [])}, set(sources))
+            self.assertEqual(graph['missing'], [])
+            identifiers = {n['id'] for n in graph['nodes']}
+            self.assertTrue(all(e['from'] in identifiers and e['to'] in identifiers for e in graph['edges']))
+            self.assertTrue(any(n.get('name') == 'TestHidden' for n in graph['nodes']))
+            self.assertTrue(any(e['kind'] == 'imports' and e['to'] == 'web/src/View.svelte' for e in graph['edges']))
+            self.assertTrue(any(n.get('name') == 'waitBlock' and n['kind'] == 'dsl-operation' for n in graph['nodes']))
+
+    def test_invalid_syntax_and_unknown_code_cannot_be_reported_complete(self):
+        for path, source in [('bad.go', 'package main\nfunc broken( {'), ('bad.js', 'function broken( {'), ('bad.css', 'a { color: red;'), ('bad.py', 'def broken(:\n'), ('bad.sh', 'if then\n'), ('bad.svelte', '<p>{#if true}'), ('new.rs', 'fn main() {}')]:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertNotEqual(result.returncode, 0)
+                graph = json.loads(result.stdout)
+                self.assertIn(path, [failure['path'] for failure in graph['missing']])
+
+    def test_embedded_workflow_and_build_commands_are_not_opaque(self):
+        cases = [('Makefile', 'all:\n\tif then\n'),
+                 ('.github/workflows/check.yml', 'jobs:\n  build:\n    steps:\n      - run: if then\n'),
+                 ('Dockerfile', 'FROM alpine\nRUN if then\n'),
+                 ('inline.sh', "python3 - <<'PY'\ndef broken(:\nPY\n")]
+        for path, source in cases:
+            with self.subTest(path=path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.fixture(root, path, source)
+                result = self.run_graph(root)
+                self.assertNotEqual(result.returncode, 0)
+                graph = json.loads(result.stdout)
+                self.assertIn(path, [f['path'] for f in graph['missing']])
+
+    def test_dependencies_are_explicitly_excluded_and_symlinks_are_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root, 'node_modules/vendor.js', 'not JavaScript')
+            self.fixture(root, 'README.md', '# Documentation')
+            self.fixture(root, 'source.py', 'print("safe")\n')
+            (root / 'linked.py').symlink_to(root / 'source.py')
+            result = self.run_graph(root)
+            self.assertNotEqual(result.returncode, 0)
+            graph = json.loads(result.stdout)
+            self.assertTrue(any(f['path'] == 'node_modules/vendor.js' and f['reason'] == 'external dependency' for f in graph['excluded']))
+            self.assertTrue(any(f['path'] == 'linked.py' and f['reason'] == 'symlink' for f in graph['missing']))
+
+
+if __name__ == '__main__':
+    unittest.main()

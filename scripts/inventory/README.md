@@ -1,0 +1,56 @@
+# Source inventory
+
+`all_code_graph.py` parses owned repository sources, including Go test files and
+all build tags, generated SPA files, the Go fixture with a `.go.txt` extension,
+JSON DSL/contracts and build configuration. Each file records its source digest
+and owning area. Declarations, imports, calls and DSL operations become graph
+nodes; every edge has an endpoint. External/dynamically resolved imports remain
+explicit dependency nodes. This is a structural syntax graph, not a type-resolved
+call graph or evidence of runtime coverage.
+
+The default inventory uses Git's tracked and unignored untracked files. Gitignored
+build outputs, caches and dependencies are outside that owned source set.
+Dependency directories, documentation, test keys/fuzz data and generated proof
+metadata are explicitly classified as exclusions. Unknown files, symlinks and
+parser failures remain in `missing` and make the command fail. The `--all-files`
+option is for synthetic fixture directories.
+
+Go uses `go/parser`; Python uses `ast`; JavaScript/Svelte/CSS use the project's
+Acorn/Svelte/PostCSS installations. Build/HTML/config syntax uses pinned
+Tree-sitter grammars. Bash uses mvdan's syntax AST (through shfmt's `-to-json`).
+The shell arithmetic supported by mvdan avoids a Tree-sitter Bash limitation
+encountered in the real repository. The exact native-crash cause observed with
+the initial dependency versions was not established; the pinned runtime and
+retained parser objects have passed the full scan.
+
+Make recipes, workflow runs, Docker shell commands, HTML script/style and known
+interpreter heredocs are parsed separately. Make variables, workflow expressions,
+genesis placeholders and heredoc expansions remain symbolic; their transformations
+and source positions/digests are recorded. Source code, make recipes and workflow
+commands are never executed. Dynamically assembled programs are not resolved.
+
+Prepare dependencies outside the repository (macOS example):
+
+```sh
+python3 -m pip install --no-cache-dir --target /private/tmp/chainbench-ast-tools -r scripts/inventory/ast-requirements.txt
+GOBIN=/private/tmp/chainbench-ast-tools GOMODCACHE=/private/tmp/chainbench-ast-go-modcache GOCACHE=/private/tmp/chainbench-go-cache go install mvdan.cc/sh/v3/cmd/shfmt@v3.12.0
+npm ci --prefix web
+```
+
+Use the project Go cache and disable Python bytecode files:
+
+```sh
+export GOCACHE=/private/tmp/chainbench-go-cache
+export PYTHONPATH=/private/tmp/chainbench-ast-tools
+export PYTHONDONTWRITEBYTECODE=1
+export CHAINBENCH_AST_SHFMT=/private/tmp/chainbench-ast-tools/shfmt
+python3 -B scripts/inventory/test_all_code_graph.py
+python3 -B scripts/inventory/all_code_graph.py > /private/tmp/chainbench-all-code-graph.json
+```
+
+Use `CHAINBENCH_AST_PROGRESS=1` for per-file diagnostics on stderr. Store generated
+graphs outside the source inventory. Reproduce the graph with unchanged sources;
+compare the file sets and digests, parser provenance, missing list and graph hash.
+
+Parser references: [mvdan AST JSON output](https://github.com/mvdan/sh/blob/master/cmd/shfmt/main.go),
+[Tree-sitter Python API](https://github.com/xberg-io/tree-sitter-language-pack/blob/main/docs-site/src/content/docs/reference/api-python.md).
