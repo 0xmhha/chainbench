@@ -542,3 +542,29 @@ wbft 노드 1대가 서로 다른 포트 대역에 올라간다.
 세 건의 원래 관측 기록은 [`chainbench-worklist.md`](chainbench-worklist.md) 에 있고, 이
 문서가 그 기록의 인계본이다. 워크리스트가 작업 상태의 정본이므로, 체인팀 쪽에서 진행되면
 그쪽 이슈 번호를 워크리스트 항목에 붙인다.
+
+## 6. W4 — ETH/LES fetcher 계량기 이름 충돌 (2026-10-14)
+
+**미해결.** 최신 로컬 native go-wemix `1350376a680489298b3203a44d9ebddb7747f9cc`에서
+공통 `CT-NODE-007`의 EN은 새 블록을 받으며 같은 높이의 블록 해시·state root도 일치하지만,
+`eth_fetcher_block_broadcasts_in`과 `eth_fetcher_block_announces_in`이 모두 0이다.
+chainbench parser 결과뿐 아니라 원본 Prometheus·expvar에도 같은 0이 있다.
+근거와 원본 해시는 [동기화 증거](sync-path-evidence.json)에 있다.
+
+외부 소스에서 `eth/fetcher/block_fetcher.go:50,55`와
+`les/fetcher/block_fetcher.go:52,57`이 같은 이름으로 서로 다른 meter를 만든다.
+`metrics/meter.go:80`의 `NewRegisteredMeter`는 `Registry.Register` 오류를 확인하지 않고
+새 객체를 반환한다. `metrics/registry.go:195`는 기존 이름을 `DuplicateMetric`으로 거절한다.
+실제 바이너리를 `GODEBUG=inittrace=1`로 실행한 추적에서도 LES fetcher가 먼저,
+ETH fetcher가 뒤에 초기화된다. 따라서 exporter에 남은 객체는 사용되지 않는 LES 계량기이고,
+블록 수신을 기록하는 ETH 객체는 registry에 들어가지 못한다.
+
+외부 수정 제안은 LES 지표에 별도 이름 공간을 주고 중복 등록 실패를 감지하는 것이다.
+단순히 `GetOrRegisterMeter`로 합치면 두 종류의 경로를 섞을 수 있으므로 같은 지표로 볼지 먼저 결정해야 한다.
+수정 뒤 실제 full node의 새 블록 수신과 두 exporter의 증가를 확인하고, light node도 별도로 검증해야 한다.
+이 문서의 제안은 chainbench에서 적용한 변경이 아니다. 외부 소스는 수정하지 않았다.
+
+chainbench는 전체 블록 전파와 해시 통지 후 fetcher 조회를 각각 기록하고, 선언한 모든 지표의
+출처·유한값을 확인한다. 이 케이스의 metric 조건을 제거하거나 downloader 누적값으로 대체하지 않았다.
+따라서 WEMIX 실시간 경로와 작업 목록 10번은 열린 상태로 남는다. 다른 동기화 경로 14개가
+통과한 것은 이 결함이나 기존 W3의 해결을 뜻하지 않는다. 체인팀에 메시지나 리뷰 요청은 보내지 않았다.

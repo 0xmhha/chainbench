@@ -204,6 +204,8 @@ func editorParameter(field string) map[string]any {
 		return map[string]any{"anyOf": []any{map[string]any{"type": "array", "items": map[string]any{}}, map[string]any{"type": "string", "pattern": `^\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})$`}}}
 	case "groups":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}}
+	case "alternatives":
+		return map[string]any{"type": "array", "minItems": 1, "maxItems": 31, "uniqueItems": true, "items": map[string]any{"type": "string", "minLength": 1}, "description": "Additional metric names on the same node. Every name must expose a finite value; at least one sample must satisfy compare."}
 	case "onEach", "args":
 		return map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
 	case "genesisOverlay":

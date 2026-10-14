@@ -62,7 +62,7 @@ var builtinArguments = map[string]string{
 	"assertion:gasPriceIsBaseFeePlusTip": "on",
 	"assertion:logs":                     "address compare delta expected fromBlock index on onEach select toBlock tol topics",
 	"assertion:methodPresent":            "method on params",
-	"assertion:metric":                   "compare expected name on onEach",
+	"assertion:metric":                   "alternatives compare expected name on onEach",
 	"assertion:nonceAt":                  "address compare delta expected on onEach tol",
 	"assertion:peerCount":                "compare delta expected on onEach tol",
 	"assertion:receiptLog":               "address compare delta expected hash index on onEach select tol topic topic0",

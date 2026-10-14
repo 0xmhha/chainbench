@@ -114,6 +114,32 @@ try{
  assert.deepEqual(JSON.parse(fs.readFileSync(filePath,'utf8')),endpointCase,'editor changed the imported endpoint declaration')
  observed.endpointProfile={roleSelectors:names,importExportPreserved:true,exclusiveForms:true,jwtOmitsHeader:true}
 
+ // Receive-path alternatives are authored through the engine's array contract.
+ const metricCase={schemaVersion:'2',kind:'case',id:'metric-path-browser',chainPreset:{chain:'wbft',topology:{bp:4,en:1},launch:{all:{metrics:true}}},steps:[{expect:'metric',on:'en1',name:'eth_fetcher_block_broadcasts_in',compare:'GreaterOrEqual',is:1}]}
+ await upload.setInputFiles(file('metric-path.json',metricCase))
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.locator('[data-tree-path="/content/steps/0"]').click()
+ await page.getByLabel('/content/steps/0 필드 추가',{exact:true}).selectOption('alternatives')
+ const metricPath='/content/steps/0/alternatives'
+ await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(metricPath+'/0',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.getByLabel(metricPath+' 항목 추가',{exact:true}).click()
+ await page.getByLabel(metricPath+'/1',{exact:true}).fill('eth_fetcher_block_announces_in')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await summary.filter({hasText:'alternatives'}).waitFor({timeout:15000})
+ await page.getByLabel(metricPath+'/1 삭제',{exact:true}).click()
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const metricDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await metricDownload).saveAs(out+'/metric-path-export.json')
+ metricCase.steps[0].alternatives=['eth_fetcher_block_announces_in']
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/metric-path-export.json','utf8')),metricCase)
+ await page.screenshot({path:out+'/metric-path-editor.png',fullPage:true})
+ observed.metricPaths={structuredList:true,duplicateRejected:true,saveExportPreserved:true}
+
  // Add a typed access tuple through the shared engine schema, retaining a
  // saved address reference rather than replacing it with a literal address.
  const listCase={...endpointCase,id:'list-browser',steps:[

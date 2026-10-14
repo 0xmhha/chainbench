@@ -2,6 +2,7 @@ package collector
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -70,7 +71,14 @@ func ScrapeMetricsWithClient(ctx context.Context, url string, client *http.Clien
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("collector: metrics: %s returned %s", url, resp.Status)
 	}
-	return ParseMetrics(io.LimitReader(resp.Body, maxMetricsBody))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxMetricsBody+1))
+	if err != nil {
+		return nil, fmt.Errorf("collector: metrics: %w", err)
+	}
+	if len(body) > maxMetricsBody {
+		return nil, fmt.Errorf("collector: metrics: response exceeds %d bytes", maxMetricsBody)
+	}
+	return ParseMetrics(bytes.NewReader(body))
 }
 
 // ParseMetrics parses Prometheus text-format samples. Comment and empty lines

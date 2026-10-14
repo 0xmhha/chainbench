@@ -175,3 +175,19 @@ func TestEditorContractDirectBuiltinArguments(t *testing.T) {
 		}
 	}
 }
+
+func TestEditorMetricAlternativesAreAStructuredConstrainedList(t *testing.T) {
+	_, schemas, err := EditorVocabulary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	properties := schemas["assertion-metric"]["properties"].(map[string]any)
+	list, ok := properties["alternatives"].(map[string]any)
+	if !ok || list["type"] != "array" || list["uniqueItems"] != true || list["minItems"] != 1 || list["maxItems"] != 31 {
+		t.Fatal("metric receive alternatives cannot be authored as a constrained list", list)
+	}
+	item := list["items"].(map[string]any)
+	if item["type"] != "string" || item["minLength"] != 1 {
+		t.Fatal(item)
+	}
+}

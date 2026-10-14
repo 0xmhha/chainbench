@@ -384,7 +384,7 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 | `callError` | `data`, `on`, `reason`, `to` | 1 | `internal/testhelper/txprobe.go` |
 | `gasPriceIsBaseFeePlusTip` | `on` | 1 | `internal/testhelper/derived.go` |
 | `methodPresent` | `method`, `on`, `params` | 1 | `internal/testhelper/txprobe.go` |
-| `metric` | `compare`, `expected`, `name`, `on` | 6 | `internal/testhelper/metric.go` |
+| `metric` | `alternatives`, `compare`, `expected`, `name`, `on`, `onEach` | 6 | `internal/testhelper/metric.go` |
 | `rpcError` | `method`, `on`, `params`, `reason` | 1 | `internal/testhelper/txprobe.go` |
 | `sameBlockHash` | `block`, `on` | 13 | `internal/testhelper/blockassert.go` |
 | `txMined` | `expected`, `hash`, `on` | 1 | `internal/testhelper/txprobe.go` |
@@ -565,3 +565,15 @@ Web의 실행 목록은 공급자 문서를 먼저 선택하며 계획에서 고
 개별 케이스를 편집할 때는 공급자를 동시에 제출하지 않아도 된다. 전체 실행 계획에서 순서와 공개 이름을 검사한다.
 
 [실제 주소·영수증 공유와 실패 소비자 차단 증거](../dev/prepared-sharing-evidence.json).
+
+## 동기화 경로 metric의 출처와 대체 경로
+
+`metric`은 선택한 노드의 Prometheus 표본을 비교한다. 결과의 `metricSamples`에는 노드 번호·역할·현재 PID·조회 시각·출처(`node-machine`, `recorded-endpoint`, `derived-endpoint`)·지표 이름·값·관측 상태가 남는다. 원격 머신 조회가 실패하면 다른 로컬 HTTP 서버의 값으로 대체하지 않는다. HTTP 실패·누락 지표·무한대·NaN은 성공으로 판정하지 않는다. 직접 HTTP 클라이언트는 크기 제한을 넘는 응답도 거절한다.
+
+서로 다른 전달 경로가 유효하다면 선택 항목 `alternatives`에 추가 지표 이름을 적는다. 같은 노드에서 선언한 모든 지표를 유한값으로 읽고, 하나 이상이 같은 `compare`·`is` 조건을 만족해야 한다. 목록은 서로 다른 비어 있지 않은 이름 1~31개이며 `name`을 다시 넣을 수 없다. Web 편집기는 어휘 계약에서 이 목록 필드를 생성한다.
+
+```json
+{"expect":"metric","on":"en1","name":"eth_fetcher_block_broadcasts_in","alternatives":["eth_fetcher_block_announces_in"],"compare":"GreaterOrEqual","is":1}
+```
+
+이 예는 전체 블록 전파와 해시 통지 후 fetcher 조회를 각각 기록한다. downloader의 header·receipt 수신량도 받은 항목 수를 뜻하며 블록의 검증·상태 반영 완료를 뜻하지 않는다. 공통 동기화 케이스는 같은 높이의 블록 해시·state root, 잔액 또는 receipt 내용을 함께 검증한다. 노드를 초기화·재시작하는 케이스는 새 PID에서 읽어 이전 프로세스의 누적값과 구분한다.

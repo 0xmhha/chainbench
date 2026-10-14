@@ -172,7 +172,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
-| 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 구현·개별/배치 검증·CLI/MCP/Web 실제 실행·환경/세션 격리 완료. 동기화 경로 관측의 출처·의미 실증은 남음; [증거](prepared-sharing-evidence.json) |
+| 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
@@ -444,6 +444,19 @@ RED→GREEN·프론트 31개·SPA 빌드·전체 make check·관련 여섯 패�
 각 증명의 소스 해시 134개가 일치하고 종료 DB·관련 프로세스는 0건이다. 브라우저의 선언/배치 혼동은 실제 RED로 고쳤고,
 잘못된 증명 선택자와 step JSON 필드명은 fixture 오류로 구분해 보존했다. 10번의 동기화 관찰·9번 나머지·11–14번·
 과거 receipt 미확인과 최종 Web 인수는 계속 남는다.
+
+**10번 동기화 관찰 부분 보강:** [증거](sync-path-evidence.json)는 원격 머신 조회 실패를 다른 HTTP 프로세스의 값으로
+대체하던 경로, HTTP 실패 본문·무한대·직접 HTTP 클라이언트의 크기 제한을 넘은 응답의 거짓 성공을 RED→GREEN으로 막았다.
+metric 표본마다 노드·역할·현재 PID·조회 시각·출처·값·관측 상태를 기록한다. 선택 항목 `alternatives`는 같은 노드의
+선언한 모든 지표가 유한값으로 관측되고 하나 이상이 비교를 만족해야 한다. 구조화 UI의 클릭 작성·중복 거절·저장·내보내기,
+프론트 31개·전체 make check·관련 6개 패키지 race가 통과했다. full/snap/누락 복구/실시간/receipt 가격 케이스는
+블록 해시·state root·잔액·receipt 내용도 비교하며 수신량만으로 상태 반영을 판정하지 않는다.
+stablenet·WBFT 각 5개와 WEMIX 4개가 최종 동결 소스로 직렬 race 증명을 통과했다. 표본 16개·소스 해시 70건 일치,
+종료 DB 0개다. 추가한 RPC 비교의 십진 높이 오류는 `format: hex`로 수정했고 fixture 오류로 따로 기록했다.
+WEMIX 실시간 케이스는 같은 높이의 hash/stateRoot가 맞아도 두 fetcher 지표가 0이어서 엄격한 검사가 실패한다.
+원본 Prometheus·expvar, 실제 바이너리 초기화 추적과 소스를 대조해 LES가 먼저 같은 이름을 등록하고 ETH 등록 오류가
+무시되는 외부 결함을 확인했다. 외부 코드를 고치거나 조건을 낮추지 않았다. **15개 전체와 10번 전체는 미완료**다.
+기존 W3·Linux fleet/L1·9번 나머지·11–14번·과거 receipt 확인·최종 Web 14개 인수도 계속 열린 상태다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 
