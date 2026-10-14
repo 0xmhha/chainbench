@@ -35,6 +35,12 @@
  {:else if current.enum}
   <label>{label} <select aria-label={path} {...invalid} value={value} onchange={e=>onchange(e.target.value)}>{#if !current.enum.includes(value)}<option value={value}>지원하지 않음 · {String(value)}</option>{/if}{#each current.enum as option}<option value={option}>{option}</option>{/each}</select></label>
   {#if !current.enum.includes(value)}<p role="alert">지원하지 않는 값을 그대로 두었습니다: {String(value)}</p>{/if}
+ {:else if type==='string'&&path.startsWith('/content/prepared/imports/')&&(label==='case'||label==='name')}
+  {@const options=label==='case'?(suggestions.preparedCases??[]):(suggestions.preparedNames?.[path.split('/')[4]]??[])}
+  <label>{label==='case'?'준비 케이스':'공개된 준비물'} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
+   {#if !value}<option value="">선택</option>{:else if !options.includes(value)}<option value={value}>가져온 참조 · {value}</option>{/if}
+   {#each options as option}<option value={option}>{option}</option>{/each}
+  </select></label>
  {:else if label==='feePayer' && type==='string'}
   <label>{label} <select aria-label={path} {...invalid} value={value??''} onchange={e=>onchange(e.target.value)}>
    {#if !value}<option value="">대납 계정 선택</option>{:else if !(suggestions.accounts??[]).includes(value)}<option value={value}>가져온 계정 · {value}</option>{/if}

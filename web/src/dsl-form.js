@@ -86,19 +86,34 @@ export function references(doc, roles = [], defaults = {}, presets = {}) {
     if(ref&&value===null)delete values[name]
     else values[name]=value
   }
-  const bindings = Object.keys(values).sort().map(name=>'$'+name)
+  const bindings = [...new Set([...Object.keys(values),...Object.keys(doc?.prepared?.imports??{})])].sort().map(name=>'$'+name)
+  const privateBindings = new Set()
   const before = new Map()
   const lists=legacy?[['/content/preActions',doc?.preActions],['/content/steps',doc?.steps],['/content/assertions',doc?.assertions],['/content/postActions',doc?.postActions]]:[['/content/hooks/pre',doc?.hooks?.pre],['/content/steps',doc?.steps],['/content/hooks/post',doc?.hooks?.post],['/content/hooks/onFail',doc?.hooks?.onFail]]
   for (const [path,list] of lists) {
+    if(path==='/content/hooks/onFail')before.set('/content/prepared/exports',bindings.filter(name=>!privateBindings.has(name)))
     for (const [i,statement] of (list ?? []).entries()) {
       before.set(`${path}/${i}`, [...bindings])
       const args=legacy&&path!=='/content/assertions'?(Object.values(statement)[0]??{}):statement
       for (const key of ['save','saveKey']) if (args[key]&&!bindings.includes('$'+args[key])) bindings.push('$'+args[key])
+      if(args.saveKey)privateBindings.add('$'+args.saveKey)
     }
   }
+  if(!before.has('/content/prepared/exports'))before.set('/content/prepared/exports',bindings.filter(name=>!privateBindings.has(name)))
   const accounts=Object.keys({...inherited.accounts,...own.accounts})
     .filter(name=>name!=='faucet'&&!/^node[1-9][0-9]*$/.test(name)&&!/^0[xX]/.test(name)).sort()
   return {nodes, before, accounts}
+}
+
+// Producer choices are declarations from the saved library, never guessed
+// exports or an ambiguous case ID. Unknown imported choices remain visible.
+export function preparedChoices(doc, saved = []) {
+  const counts=new Map()
+  for(const item of saved){const id=item.content?.id;if(id)counts.set(id,(counts.get(id)??0)+1)}
+  const sources=saved.map(item=>item.content).filter(c=>c?.id&&c.id!==doc?.id&&counts.get(c.id)===1&&Object.keys(c.prepared?.exports??{}).length)
+  const preparedCases=sources.map(c=>c.id).sort()
+  const preparedNames=Object.fromEntries(Object.entries(doc?.prepared?.imports??{}).map(([alias,ref])=>[alias,Object.keys(sources.find(c=>c.id===ref.case)?.prepared?.exports??{}).sort()]))
+  return {preparedCases,preparedNames}
 }
 
 export function finishedGenesisRef(doc) {

@@ -492,6 +492,7 @@ type CaseV2 struct {
 	Timeouts map[string]string `json:"timeouts,omitempty"`
 	Hooks    *HooksV2          `json:"hooks,omitempty"`
 	Steps    []map[string]any  `json:"steps"`
+	Prepared *PreparedV2       `json:"prepared,omitempty"`
 }
 
 // sniff reads just enough to route a raw spec to its grammar.

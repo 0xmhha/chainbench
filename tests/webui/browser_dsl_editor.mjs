@@ -388,11 +388,66 @@ try{
  await page.screenshot({path:out+'/preset-values-editor.png',fullPage:true})
  observed.presetValues={typedBooleanAuthoring:true,nestedNullPreserved:true,initialReferencesOffered:true,declaredIdentityControl:true,fractionalIdentityRejected:true,validationAndExportPreserved:true}
 
+ // Shared results are declared through the schema and selected from saved
+ // producers. A consumer never gains an implicit binding from another case.
+ const preparedProducer=structuredClone(endpointCase)
+ preparedProducer.id='prepared-producer'
+ preparedProducer.steps=[{do:'read',source:'blockNumber',on:'en1',save:'head'},{expect:'blockNumber',on:'en1',is:0}]
+ await upload.setInputFiles(file('prepared-producer.json',preparedProducer))
+ await page.getByLabel('/content 필드 추가',{exact:true}).selectOption('prepared')
+ await page.getByLabel('/content/prepared 필드 추가',{exact:true}).selectOption('exports')
+ await page.getByLabel('/content/prepared/exports 항목 이름',{exact:true}).fill('head')
+ await page.locator('[data-field-path="/content/prepared/exports"] > fieldset > button').click()
+ assert.ok((await page.locator('[id="/content/prepared/exports/head-suggestions"] option').evaluateAll(options=>options.map(o=>o.value))).includes('$head'))
+ await page.getByLabel('/content/prepared/exports/head',{exact:true}).fill('$head')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const preparedConsumer=structuredClone(endpointCase)
+ preparedConsumer.id='prepared-consumer'
+ preparedConsumer.steps=[{expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'$head'}]
+ await upload.setInputFiles(file('prepared-consumer.json',preparedConsumer))
+ await page.getByLabel('/content 필드 추가',{exact:true}).selectOption('prepared')
+ await page.getByLabel('/content/prepared 필드 추가',{exact:true}).selectOption('imports')
+ await page.getByLabel('/content/prepared/imports 항목 이름',{exact:true}).fill('head')
+ await page.locator('[data-field-path="/content/prepared/imports"] > fieldset > button').click()
+ const producerSelect=page.getByLabel('/content/prepared/imports/head/case',{exact:true})
+ assert.deepEqual(await producerSelect.locator('option').evaluateAll(options=>options.filter(o=>o.value).map(o=>o.value)),['prepared-producer'])
+ await producerSelect.selectOption('prepared-producer')
+ await page.getByLabel('/content/prepared/imports/head/name',{exact:true}).selectOption('head')
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const preparedDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await preparedDownload).saveAs(out+'/prepared-consumer-export.json')
+ preparedConsumer.prepared={imports:{head:{case:'prepared-producer',name:'head'}}}
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/prepared-consumer-export.json','utf8')),preparedConsumer)
+ await page.screenshot({path:out+'/prepared-editor.png',fullPage:true})
+ observed.preparedEditor={producerExportAuthored:true,onlySavedProducerChoices:true,declaredExportSelected:true,typedReferenceAndExportPreserved:true}
+
  // 5. Keyboard only: cancel a running native job from its page.
  const paths={version:1,dataRoot:f.runtime+'/d',paths:Object.fromEntries(['binaries','configs','genesis','keystore','keyrings','nodes','runtime','logs'].map(k=>[k,k])),control:{artifactRoot:f.runtime+'/output'},inputs:{mode:'generated'},execution:{chain:'fresh'},limits:{minFreeDisk:'0'}}
  const set=await api('documents','POST',{kind:'server-set',name:'dsl pool',contractVersion:'2',assetRefs:[],content:{version:2,pool:{hosts:[{name:'local',addr:'127.0.0.1'}],slots:4,ports:{p2p:{base:40100,step:10},rpc:{base:12700,step:10}}}}},undefined,201)
  const config=await api('documents','POST',{kind:'workspace-config',name:'dsl paths',contractVersion:'2',assetRefs:[],content:paths},undefined,201)
  const w=await api('workspaces','POST',{name:'dsl chain',documents:[{id:set.id,revision:set.revision},{id:config.id,revision:config.revision}]},undefined,201)
+ const preparedPreset={chain:'wbft',binaries:{default:'gwemix'},topology:{bp:4},launch:{all:{ipcdisable:true}}}
+ const prepareLive=await api('documents','POST',{kind:'case',name:'prepare live contract',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'web-prepare',chainPreset:preparedPreset,prepared:{exports:{contract:'$contract'}},steps:[{do:'deployContract',on:'node1',from:'node1',bytecode:'0x600a600c600039600a6000f3602a60005260206000f3',save:'contract'},{expect:'codeAt',on:'bp1',address:'$contract',is:'0x602a60005260206000f3'}]}},undefined,201)
+ const consumeLive=await api('documents','POST',{kind:'case',name:'consume live contract',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'web-consume',chainPreset:preparedPreset,prepared:{imports:{contract:{case:'web-prepare',name:'contract'}}},steps:[{expect:'codeAt',on:'bp1',address:'$contract',is:'0x602a60005260206000f3'},{expect:'call',on:'bp1',to:'$contract',data:'0x',is:'0x'+('2a').padStart(64,'0')}]}},undefined,201)
+ const sharedPlan=await api('plans','POST',{workspaceId:w.id,documentRefs:w.documents,assetRefs:['wbft'],retention:'cleanup',operation:'test.run',arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',caseRefs:[prepareLive,consumeLive].map(c=>({id:c.id,revision:c.revision}))}},undefined,201)
+ const sharedJob=await settle(api,(await api('jobs','POST',{planId:sharedPlan.id},sharedPlan.id,202)).id)
+ assert.equal(sharedJob.state,'succeeded',JSON.stringify(sharedJob))
+ assert.equal(sharedJob.runIds.length,1,'prepared cases did not share an engine session')
+ const sharedHistory=(await api('history?caseId=web-consume')).items.filter(r=>r.jobId===sharedJob.id&&r.summary.kind==='engine-session')
+ assert.equal(sharedHistory.length,1)
+ const sharedDetail=await api('history/'+sharedHistory[0].id)
+ assert.equal(sharedDetail.summary.counts.pass,2,JSON.stringify(sharedDetail.summary))
+ const sharedExport=await api('history/'+sharedHistory[0].id+'/export')
+ const creationSteps=JSON.parse(sharedExport.files['tests/001_web-prepare/steps.json'])
+ assert.equal(creationSteps.filter(s=>s.Type==='deployContract').length,1,'preparation was repeated')
+ observed.preparedExecution={job:sharedJob.id,history:sharedHistory[0].id,producer:'web-prepare',consumer:'web-consume',passes:2,ownedContractDeployedOnce:true}
  const long=await api('documents','POST',{kind:'case',name:'dsl long case',contractVersion:'2',assetRefs:[],content:{schemaVersion:'2',kind:'case',id:'dsl-long',chainPreset:{chain:'wbft',binaries:{default:'gwemix'},topology:{bp:4},launch:{all:{ipcdisable:true}}},steps:[{do:'waitBlock',on:'node1',target:1000000000,timeout:'5m'},{expect:'blockNumber',on:'node1',compare:'GreaterOrEqual',is:0}]}},undefined,201)
  const plan=await api('plans','POST',{workspaceId:w.id,documentRefs:w.documents,assetRefs:['wbft'],retention:'cleanup',operation:'test.run',arguments:{manifestId:'wbft',assetId:'wbft',serverRef:'local',caseRefs:[{id:long.id,revision:long.revision}]}},undefined,201)
  const jobId=(await api('jobs','POST',{planId:plan.id},plan.id,202)).id

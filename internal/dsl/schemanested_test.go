@@ -39,7 +39,9 @@ var nestedObjects = map[string]reflect.Type{
 	"envSpec.attach":                         reflect.TypeOf(AttachV2{}),
 	"envSpec.peering":                        reflect.TypeOf(PeeringV2{}),
 	"envSpec.genesis.perBinary[additionalProperties]": reflect.TypeOf(GenesisSideV2{}),
-	"caseSpec.hooks": reflect.TypeOf(HooksV2{}),
+	"caseSpec.hooks":    reflect.TypeOf(HooksV2{}),
+	"caseSpec.prepared": reflect.TypeOf(PreparedV2{}),
+	"caseSpec.prepared.imports[additionalProperties]": reflect.TypeOf(PreparedRef{}),
 }
 
 // schemaObject is one object the walk found.

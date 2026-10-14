@@ -110,6 +110,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 	}()
 
 	e.emit(collector.PhaseTest, collector.KindInfo, "run started", map[string]any{"specs": len(specs)})
+	prepared := preparedScope{}
 
 	for i, raw := range specs {
 		seq := i + 1
@@ -170,7 +171,15 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			}
 		}
 
-		env, ok := sess.Environment(e.deps.Fingerprint(spec))
+		fingerprint := e.deps.Fingerprint(spec)
+		if err := prepared.inputs(&spec, fingerprint); err != nil {
+			rec.Status(session.StatusBlocked)
+			rec.Reason(err.Error())
+			data, _ := json.Marshal(map[string]any{"source": "ordered_case_results", "case": spec.ID, "environment": fingerprint, "imports": spec.Prepared.Imports, "status": "blocked", "published": 0, "reason": err.Error()})
+			rec.Observation("prepared-results.json", data)
+			continue
+		}
+		env, ok := sess.Environment(fingerprint)
 		if !ok {
 			var berr error
 			env, berr = sess.NewEnvironment(e.deps.Fingerprint(spec))
@@ -230,6 +239,13 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		if runErr != nil {
 			rec.Status(session.StatusFail)
 			st = session.StatusFail
+		}
+		if st == session.StatusPass {
+			if err := prepared.publish(spec, fingerprint, rec); err != nil {
+				rec.Status(session.StatusFail)
+				rec.Reason(err.Error())
+				st = session.StatusFail
+			}
 		}
 		// A failed or blocked test gets its evidence gathered before the run moves
 		// on: the network it failed against may be gone or changed by the next

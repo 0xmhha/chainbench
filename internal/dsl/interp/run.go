@@ -33,6 +33,11 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 		defer cancel()
 	}
 	binds := initialBindings(s.EnvValues)
+	if err := importPrepared(s, binds); err != nil {
+		rec.Reason(err.Error())
+		rec.Status(session.StatusBlocked)
+		return session.StatusBlocked, nil
+	}
 
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {
@@ -86,6 +91,12 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 
 	// Post-actions: recorded, but they do not change the verdict.
 	i.runRecorded(ctx, s.PostActions, env, rec, binds)
+	if status == session.StatusPass {
+		if err := exportPrepared(s, binds); err != nil {
+			rec.Reason(err.Error())
+			status = session.StatusFail
+		}
+	}
 
 	rec.Status(status)
 	return status, nil

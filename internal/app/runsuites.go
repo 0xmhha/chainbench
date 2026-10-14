@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -127,7 +129,7 @@ func suiteSpecUnits(in RunSuiteIn) ([]specUnit, error) {
 		for i, c := range in.SpecContent {
 			units = append(units, specUnit{label: fmt.Sprintf("spec %d", i+1), content: [][]byte{c}})
 		}
-		return units, nil
+		return units, refuseSeparatePrepared(units)
 	}
 	if len(in.SpecPaths) == 0 {
 		return nil, fmt.Errorf("run: no test definition given")
@@ -136,7 +138,32 @@ func suiteSpecUnits(in RunSuiteIn) ([]specUnit, error) {
 	for _, p := range in.SpecPaths {
 		units = append(units, specUnit{label: p, paths: []string{p}})
 	}
-	return units, nil
+	return units, refuseSeparatePrepared(units)
+}
+
+func refuseSeparatePrepared(units []specUnit) error {
+	if len(units) < 2 {
+		return nil
+	}
+	for _, unit := range units {
+		var raw []byte
+		if len(unit.content) > 0 {
+			raw = unit.content[0]
+		} else {
+			var err error
+			raw, err = os.ReadFile(unit.paths[0])
+			if err != nil {
+				continue
+			} // Preserve the existing per-definition read error.
+		}
+		var declaration struct {
+			Prepared struct{ Imports map[string]json.RawMessage }
+		}
+		if json.Unmarshal(raw, &declaration) == nil && len(declaration.Prepared.Imports) > 0 {
+			return fmt.Errorf("prepared dependencies need one shared execution; use --suite (MCP: suite=true) before running definitions")
+		}
+	}
+	return nil
 }
 
 // SuitePlan is one definition's compose plan, labelled the way RunSuites labels

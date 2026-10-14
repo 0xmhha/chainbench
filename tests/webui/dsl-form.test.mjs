@@ -190,3 +190,28 @@ test('map fields use the engine pattern contract for declared chain identity',as
  assert.equal(propertySchema(schema,'other').type,'string')
  assert.equal(initial(propertySchema(schema,'chainId'),{}),0)
 })
+
+test('prepared imports seed references and public exports exclude failure-only and private bindings',()=>{
+ const doc={schemaVersion:'2',prepared:{imports:{contract:{case:'setup',name:'address'}}},steps:[{do:'read',save:'receipt'},{do:'newAccount',save:'owner',saveKey:'ownerKey'}],hooks:{onFail:[{do:'read',save:'diagnostic'}]}}
+ const r=references(doc)
+ assert.ok(r.before.get('/content/steps/0').includes('$contract'))
+ const exported=r.before.get('/content/prepared/exports')
+ assert.ok(exported.includes('$contract')&&exported.includes('$receipt')&&exported.includes('$owner'))
+ assert.ok(!exported.includes('$ownerKey')&&!exported.includes('$diagnostic'))
+})
+
+test('prepared producer choices come only from unambiguous saved case exports',async()=>{
+ const {preparedChoices}=await import('../../web/src/dsl-form.js')
+ const doc={id:'consumer',prepared:{imports:{contract:{case:'setup',name:'address'}}}}
+ const saved=[{content:{id:'setup',prepared:{exports:{address:'$deployed',receipt:'$receipt'}}}},{content:{id:'consumer',prepared:{exports:{self:'$x'}}}},{content:{id:'empty'}},{content:{id:'ambiguous',prepared:{exports:{a:'$a'}}}},{content:{id:'ambiguous',prepared:{exports:{b:'$b'}}}}]
+ assert.deepEqual(preparedChoices(doc,saved),{preparedCases:['setup'],preparedNames:{contract:['address','receipt']}})
+})
+
+test('prepared aliases that resemble object prototype properties remain ordinary own names',async()=>{
+ const {preparedChoices}=await import('../../web/src/dsl-form.js')
+ const doc=JSON.parse('{"id":"consumer","prepared":{"imports":{"__proto__":{"case":"prepare","name":"public"}}}}')
+ const choices=preparedChoices(doc,[{content:{id:'prepare',prepared:{exports:{public:'$value'}}}}])
+ assert.ok(Object.hasOwn(choices.preparedNames,'__proto__'))
+ assert.deepEqual(choices.preparedNames.__proto__,['public'])
+ assert.equal(Object.getPrototypeOf(choices.preparedNames),Object.prototype)
+})

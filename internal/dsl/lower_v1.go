@@ -28,6 +28,9 @@ func lowerCase(c CaseV2) (Spec, error) {
 		return Spec{}, err
 	}
 	spec := newSpec(c, env)
+	if err := validatePrepared(c.ID, c.Prepared, env.Values); err != nil {
+		return Spec{}, err
+	}
 	for _, step := range []func(CaseV2, ChainPresetV2, *Spec) error{
 		lowerChain, lowerEnvDeclarations, lowerHooks, lowerStatements,
 	} {
@@ -109,6 +112,7 @@ func newSpec(c CaseV2, env ChainPresetV2) Spec {
 		EnvAttach:        env.Attach,
 		EnvValues:        env.Values,
 		PresetID:         env.ID,
+		Prepared:         c.Prepared,
 	}
 	// The env's capabilities and the case's requires are both gating inputs, so
 	// they union — a case that lists its own requires must not lose the ones the

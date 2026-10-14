@@ -85,6 +85,11 @@ type Spec struct {
 	// EnvValues are preset-provided initial bindings. Runtime-only; v1 keeps
 	// its grammar and declarations are retained in the original v2 content.
 	EnvValues map[string]any `json:"-"`
+	// Prepared declares case-to-case public results without changing composition.
+	Prepared *PreparedV2 `json:"prepared,omitempty"`
+	// PreparedInputs and PreparedOutputs are isolated, engine-owned runtime maps.
+	PreparedInputs  map[string]any `json:"-"`
+	PreparedOutputs map[string]any `json:"-"`
 	// PresetID identifies the resolved v2 declaration without changing reuse.
 	PresetID string `json:"-"`
 
@@ -167,6 +172,9 @@ func (s Spec) validate() error {
 	}
 	if s.SchemaVersion != supportedSchemaVersion {
 		return fmt.Errorf("dsl: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
+	}
+	if err := validatePrepared(s.ID, s.Prepared, s.EnvValues); err != nil {
+		return err
 	}
 	return s.validateSequence()
 }

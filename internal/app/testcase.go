@@ -237,7 +237,7 @@ func PrepareTestCase(in TestCaseInput) (TestCasePrepared, error) {
 	if err != nil {
 		return TestCasePrepared{}, err
 	}
-	if err = testengine.Precheck([]dsl.Spec{spec}); err != nil {
+	if err = testengine.PrecheckCase(spec); err != nil {
 		return TestCasePrepared{}, err
 	}
 	fingerprint := testCaseSemantics(spec)

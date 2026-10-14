@@ -25,8 +25,14 @@ import (
 func Unresolved(s dsl.Spec, reg Registry) []string {
 	seen := map[string]bool{}
 	bound := map[string]bool{}
+	private := map[string]bool{}
 	for name := range s.EnvValues {
 		bound[name] = true
+	}
+	if s.Prepared != nil {
+		for name := range s.Prepared.Imports {
+			bound[name] = true
+		}
 	}
 
 	// checkAction validates one action entry and records what it saves.
@@ -67,6 +73,7 @@ func Unresolved(s dsl.Spec, reg Registry) []string {
 		// newAccount binds a second name (the generated private key) via "saveKey".
 		if sk, _ := args["saveKey"].(string); sk != "" {
 			bound[sk] = true
+			private[sk] = true
 		}
 	}
 
@@ -108,6 +115,14 @@ func Unresolved(s dsl.Spec, reg Registry) []string {
 	}
 	for _, po := range s.PostActions {
 		checkAction(po)
+	}
+	if s.Prepared != nil {
+		for _, ref := range s.Prepared.Exports {
+			checkRefs(ref, bound, seen)
+			if private[dsl.PreparedBinding(ref)] {
+				seen["prepared:private-binding:"+dsl.PreparedBinding(ref)] = true
+			}
+		}
 	}
 
 	out := make([]string, 0, len(seen))

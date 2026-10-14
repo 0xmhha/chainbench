@@ -172,7 +172,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
-| 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
+| 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 구현·개별/배치 검증·CLI/MCP/Web 실제 실행·환경/세션 격리 완료. 동기화 경로 관측의 출처·의미 실증은 남음; [증거](prepared-sharing-evidence.json) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
@@ -430,6 +430,20 @@ R3 나머지·P4 충분성·Linux L1·9번 잔여·10–14번과 후속 Web 최�
 과거 publication audit의 56 receipt는 28 일치·26 경로 없음·WEB-08 2개 다른 해시다. 둘의 수정 시각은 이번 작업 전인
 2026-10-13이다. 원인을 추정하거나 과거 audit를 고치지 않았다. 실제 감사는 이 한계를 기록하고 code 2를 반환한다.
 보존 코드와 새 참조 실증은 완료됐지만 1번 전체 자료 확인과 후속 소스의 고정 인수는 열린 상태다.
+
+**10번 준비물 공유 완료:** [증거](prepared-sharing-evidence.json)는 케이스가 `prepared.exports`로 공개한 값을
+뒤 케이스가 `prepared.imports`의 `{case, name}`으로 가져오게 한다. 한 실행·동일 환경에서만 공유하고 결과는 깊이 복사한다.
+PASS 뒤에만 모든 공개 값을 원자적으로 게시한다. 실패·blocked·skip한 공급자와 누락 자료는 소비 케이스를 훅/환경 생성 전에
+BLOCKED로 남긴다. 사적인 byte buffer·opaque handle·기존 scrub 대상 비밀 필드와 saveKey 공개는 거절한다.
+개별 작성은 선언·변수만 검증하며 실행 목록은 공급자 누락·순서 역전·미선언 이름·중복을 사전 검사한다.
+별도 정의 실행 모드는 의존 케이스를 부분 실행하기 전에 `--suite` / MCP `suite=true`를 안내한다.
+v1 이관·v2 스키마·구조화 UI의 저장된 공급자/공개 이름 선택·import/export를 연결했다. 스키마의 중첩 Go 타입도 래칫에 등록했다.
+RED→GREEN·프론트 31개·SPA 빌드·전체 make check·관련 여섯 패키지 전체 race가 통과했다.
+실제 브라우저에서 한 번 배포한 계약을 다음 케이스가 읽고 호출해 2 PASS를 확인했다. 네 native 프로필의 CLI/MCP
+16캠페인·32판정은 16 PASS·의도한 8 FAIL/8 BLOCKED다. 캠페인마다 공급자만 2거래를 제출하며 소비자는 재제출하지 않는다.
+각 증명의 소스 해시 134개가 일치하고 종료 DB·관련 프로세스는 0건이다. 브라우저의 선언/배치 혼동은 실제 RED로 고쳤고,
+잘못된 증명 선택자와 step JSON 필드명은 fixture 오류로 구분해 보존했다. 10번의 동기화 관찰·9번 나머지·11–14번·
+과거 receipt 미확인과 최종 Web 인수는 계속 남는다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

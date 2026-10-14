@@ -538,3 +538,30 @@ MCP `chainId`는 CLI `--chain-id`와 대응하며, JSON 안전 범위를 넘는 
 구성 대상에 `--plan` 또는 MCP `plan: true`를 쓰면 대상별 계획만 반환한다. 기존과 같이 attach 대상의 계획은 거절한다.
 CLI 종료 코드는 테스트 실패 1, 셋업/blocked 또는 `--no-skips` 아래 skip 2, 그 외 0이다. MCP는 대응하는 `noSkips`를 받고,
 실패해도 `isError: true`와 함께 대상별 JSON을 보존한다. Web의 현재 실행 폼은 단일 대상이며, 이 배열은 CLI/MCP 입력이다.
+
+
+## 케이스 파일 사이에서 준비물 공유
+
+한 번 준비한 주소·거래 hash·영수증을 같은 실행의 다음 케이스에서 읽는다. 공급자는 공개 이름에 기존 binding을 연결한다.
+
+```json
+"prepared": {"exports": {"contract": "$deployed", "receipt": "$receipt"}}
+```
+
+소비자는 자기 binding 이름에 공급 케이스의 ID와 공개 이름을 연결하고 기존 `$name` 참조를 사용한다.
+
+```json
+"prepared": {"imports": {"contract": {"case": "prepare-assets", "name": "contract"}}},
+"steps": [{"expect": "codeAt", "on": "node1", "address": "$contract", "is": "0x602a60005260206000f3"}]
+```
+
+공급 케이스를 먼저 나열한다. 구성 실행은 `chainbench run --suite --workspace-dir <작업 폴더> prepare.json consume.json`을
+사용하고 MCP `chainbench_run`은 `specs` 배열과 `suite: true`를 사용한다. attach의 여러 케이스는 이미 한 실행으로 처리한다.
+Web의 실행 목록은 공급자 문서를 먼저 선택하며 계획에서 고정한 리비전을 사용한다.
+
+공급자가 PASS여야 공개된다. 실패·미실행·누락 결과는 소비자를 BLOCKED로 남기며 새 환경을 만들거나 소비자 훅을 실행하지 않는다.
+값은 실행별로 폐기하고 다른 환경·명령·독립 정의로 넘기지 않는다. 중첩 객체·배열·큰 정수는 복사하며 사적인 byte buffer,
+살아 있는 handle, scrub 대상 비밀 필드와 saveKey binding은 공개할 수 없다. 설정 파일에는 실제 결과를 저장하지 않는다.
+개별 케이스를 편집할 때는 공급자를 동시에 제출하지 않아도 된다. 전체 실행 계획에서 순서와 공개 이름을 검사한다.
+
+[실제 주소·영수증 공유와 실패 소비자 차단 증거](../dev/prepared-sharing-evidence.json).
