@@ -174,7 +174,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. 최소 금액 미달 원문과 현행 계약의 차이·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json) |
-| 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
+| 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 미완료 |
 
@@ -669,8 +669,28 @@ WEMIX 실시간 케이스는 같은 높이의 hash/stateRoot가 맞아도 두 fe
 | **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
 | **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
 | **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
-| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `ChainUp` 으로 교체. **전제가 바뀌었다**: b-6 이 먼저 일어나 `setup` 은 이미 `engine.LocalSetup` 위에 있다. 남은 것은 두 경로(`setup` / `net up`)를 하나로 합칠지의 판단이며, 그 자체가 S 계열(표면 통일)의 문제다 | ◐ **재검토 필요** |
+| **b-5** | 과거 `setup` → `net up` 전제 대조 | 현행 root에 두 명령과 별칭이 없고 `chain up`이 구성 표면이다. 아래 2026-08 기록은 당시 전제이며 현행 두 경로의 중복을 뜻하지 않는다. 새 명령이나 스택을 복원하지 않는다 | ☑ **현행 경로 확인 2026-10-14** — 실제 세 체인 공개 CLI 회귀까지 완료; §0a 12번과 [증거](setup-transition-evidence.json) |
 | **b-6** | `core/bringup`·`core/state` 삭제 | ☑ **완료** — #241 병합 시 `engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴하며 두 패키지가 소멸했다(§1f-x) | ☑ |
+
+### 2026-10-14 현행 경로 재평가
+
+b-5가 전제한 root의 setup/net 명령은 별칭까지 없다. 실제 Cobra 트리의 chain up과
+workspace-dir·stage·blueprint·chain-preset·server-set 입력을 확인하고, 그 사실과 어긋난 표를 RED→GREEN으로 정정했다.
+CLI는 app.ChainUp→verb.ChainUp을 사용하고, MCP는 feature의 chain.up을 통해 같은 경로를 사용한다.
+Web 구성과 매니페스트 셋업은 chain up 하위 프로세스를 호출하며, DSL 구성은
+composeWorkspace→ChainUpComparing을 통해 같은 구성 코어를 사용한다.
+app/net.go라는 파일명이나 과거 주석은 별도의 폐기된 실행 스택이 있다는 근거가 아니다.
+
+전체 make check와 cmd·chaincmd·chainsetup/verb의 관련 전체 race를 통과했다.
+외부 HEAD 출처·바이너리 해시를 확인한 stablenet/wbft/wemix에서 공개 CLI를 직렬 race로 실행했다.
+각각 생성한 키로 네 노드를 구성하고 9개 이상 단계 출력, 블록 전진·peer 연결과 stop/rm 성공을 확인했다.
+세 체인 PASS·Go skip 0, 소스 해시는 실행 전후 동일했다. 종료 후 프로세스·노드 DB·기록의 노드는 0건이고,
+설정·로그·실행 기록 126파일은 해시·권한·소유자·mtime을 보존 목록으로 대조했다.
+chain rm은 데이터 평면만 제거하므로 작업공간의 제어 기록은 남는다.
+
+이것으로 b-5의 현행 경로 재평가는 완료다. 이후의 2026-08 절은 당시 분석과 절차를 남긴 역사 기록이다.
+Linux fleet·전체 mainnet fidelity·wemix4 충분성·W3/W4·최종 Web 인수는 이 결과의 범위에 포함하지 않는다.
+근거: [RED→GREEN·현행 소비 경로·세 체인 실제 CLI](setup-transition-evidence.json).
 
 ### 1f-x. 병합에서 달라진 것 (2026-08-21)
 

@@ -32,6 +32,42 @@ import (
 // nobody can run is sitting here, and what would be lost by deleting it instead.
 var invocationDebt = map[string]string{}
 
+// The historical b-5 transition cannot stay open after both old commands have
+// retired and composition is exposed by chain up. Compare its status with the
+// real command tree, rather than deriving the current surface from old prose.
+func TestSetupTransitionRecordMatchesCurrentCLI(t *testing.T) {
+	root := newRootCmd()
+	for _, command := range root.Commands() {
+		for _, retired := range []string{"setup", "net"} {
+			if command.Name() == retired || command.HasAlias(retired) {
+				t.Fatalf("retired composition command %q is registered", retired)
+			}
+		}
+	}
+	up, _, err := root.Find([]string{"chain", "up"})
+	if err != nil || up.CommandPath() != "chainbench chain up" {
+		t.Fatalf("current composition command is missing: %v", err)
+	}
+	for _, name := range []string{"workspace-dir", "stage", "blueprint", "chain-preset", "server-set"} {
+		if up.Flags().Lookup(name) == nil {
+			t.Fatalf("chain up lost its %s input", name)
+		}
+	}
+	doc, err := os.ReadFile("../../docs/dev/chainbench-worklist.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(doc), "\n") {
+		if strings.HasPrefix(line, "| **b-5** |") {
+			if !strings.Contains(line, "chain up") || !strings.Contains(line, "☑") || strings.Contains(line, "◐") {
+				t.Fatalf("b-5 still assumes retired setup/net commands despite the current CLI: %s", line)
+			}
+			return
+		}
+	}
+	t.Fatal("b-5 record is missing")
+}
+
 func TestEveryCommandATestInvokesExists(t *testing.T) {
 	root := newRootCmd()
 	paths, files := invokedCommands(t)
