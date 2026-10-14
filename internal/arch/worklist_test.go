@@ -29,7 +29,7 @@ const worklistDoc = "../../docs/dev/chainbench-worklist.md"
 // The honest limit: this cannot catch an item added only to the narrative, deep in
 // 2,900 lines. What it catches is the canonical list going stale — which is the
 // failure that actually happened.
-const openWork = 6
+const openWork = 4
 
 var (
 	openItem    = regexp.MustCompile(`(?m)^- \[ \] `)
@@ -74,6 +74,42 @@ func TestWorklistOpenWorkIsListed(t *testing.T) {
 		t.Errorf("§0 lists %d open items, down from %d — lower the constant so it keeps tracking reality", got, openWork)
 	}
 	t.Logf("§0 lists %d open items", got)
+}
+
+// The summary and the detailed execution table must agree. A completed
+// reassessment left open in the canonical list becomes duplicated work later.
+func TestCompletedReassessmentsAreClosedInCanonicalWorklist(t *testing.T) {
+	doc := worklist(t)
+	canonical := openSection(t, doc)
+	for _, item := range []struct {
+		name, execution, evidence string
+	}{
+		{"b-5", "| 12 | b-5 재평가 |", "setup-transition-evidence.json"},
+		{"2단계·3단계 (netmap 트랙)", "| 13 | netmap 2/3 재평가 |", "all-code-graph-evidence.json"},
+	} {
+		t.Run(item.name, func(t *testing.T) {
+			var execution, summary string
+			for _, line := range strings.Split(doc, "\n") {
+				if strings.HasPrefix(line, item.execution) {
+					execution = line
+				}
+			}
+			for _, line := range strings.Split(canonical, "\n") {
+				if strings.HasPrefix(line, "- [") && strings.Contains(line, "**"+item.name) {
+					summary = line
+				}
+			}
+			if !strings.Contains(execution, "| 완료 —") || !strings.Contains(execution, item.evidence) {
+				t.Fatalf("execution record is not a proven completion: %s", execution)
+			}
+			if !strings.HasPrefix(summary, "- [x] ") {
+				t.Fatalf("completed reassessment remains open in §0: %s", summary)
+			}
+			if _, err := os.Stat(filepath.Join("../../docs/dev", item.evidence)); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
 }
 
 // TestWorklistOpenWorkPointsSomewhere keeps each entry attached to its evidence.
