@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 65,
-    "confirmed_scope": 17,
+    "partial": 63,
+    "confirmed_scope": 19,
     "conflict": 3,
     "merged": 2
   },
@@ -3184,7 +3184,7 @@
       "id": "WBFT-001",
       "title": "블록 생성 및 Finalize 정상 동작",
       "criterionSha256": "78dad75608bd8a009253959cb76fa8610b1e2638a488d5ed0fae9606331216be",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -3196,6 +3196,21 @@
           "path": "tests/tc/basic/07-basic-wbft-consensus.json",
           "sha256": "403e0cda5d4514e754c3f9c95a0a9d1344da7519f4f7034d58ce9d86196eab3c",
           "id": "basic-wbft-consensus"
+        },
+        {
+          "path": "internal/consensus/wbft/committed_seal.go",
+          "function": "VerifyCommittedHeader",
+          "sha256": "b4a1aba67cd166aa3587004cfb343d24f5675449e33ceb2d649583c97a7ca549"
+        },
+        {
+          "path": "internal/consensus/wbft/committed_seal_test.go",
+          "function": "TestCommittedSealRejectsPresenceOnlyEvidence",
+          "sha256": "c3821c9f8d5db4ef736c964afc683f0b4e7f84da0583c915d17c9ba3a5b923f1"
+        },
+        {
+          "path": "cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
+          "function": "TestWemixWbftAggregateSealE2E",
+          "sha256": "a70bc4beba29010fe9d7010bf226ca70d9b0a54ef361fcb347fb26ce406b512a"
         }
       ],
       "observations": [
@@ -3259,12 +3274,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Current committed aggregate crypto is now verified; previous seal count/presence is not substituted. Native two tests race, skip0, frozen source and DB0; 24 compiled TestWemix functions is the current denominator, not all executed.",
       "remainingConditions": [
-        "current CommittedSeal의 BLS 집합서명 crypto 검증·현재block commit signers quorum/집합 일치·합의 log순서 없음. prevCommitted quorum count를 current CommittedSeal crypto 증거로 확대하지 않음."
+        "WBFT-001 consensus stage log ordering remains separate; RPC-005 explicit nonboundary epochInfo-null selection remains separate. Generic public DSL crypto assertion, full original migrated environment/Linux/mainnet/legacy/final Web acceptance not claimed."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Eleven current committed BLS aggregates from actual post-fork raw headers, preceding epoch20/30 keys matched to current ordered validator set, bitmap subset/quorum and pairing verified. Independent chain RLP/types/blst agrees and rejects altered messages. Related actual ECDSA/mix/healthy interval regression passes.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/wbft-aggregate-seal-evidence.json",
+          "sha256": "7123a3e79bd611f5d7cfbc668e5178d69d50ab6dd9ed1bc00b548b70f1d5d487"
+        }
+      ]
     },
     {
       "id": "WBFT-002",
@@ -5201,7 +5221,7 @@
       "id": "RPC-005",
       "title": "istanbul\\_getWbftExtraInfo — 일반 블록 (EpochInfo null)",
       "criterionSha256": "163248bf4af95fb0b1b6f7809af997ba2f111edb4be2096c9d664eadf7999571",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -5213,6 +5233,21 @@
           "path": "cmd/chainbench/wbft_header_integrity_e2e_test.go",
           "sha256": "20b33c16ae0870d77b211b09317044db5169a48cb3a0f3a600934d78f1dd0b87",
           "function": "TestWemixWbftHeaderIntegrityE2E"
+        },
+        {
+          "path": "internal/consensus/wbft/committed_seal.go",
+          "function": "VerifyCommittedHeader",
+          "sha256": "b4a1aba67cd166aa3587004cfb343d24f5675449e33ceb2d649583c97a7ca549"
+        },
+        {
+          "path": "internal/consensus/wbft/committed_seal_test.go",
+          "function": "TestCommittedSealRejectsPresenceOnlyEvidence",
+          "sha256": "c3821c9f8d5db4ef736c964afc683f0b4e7f84da0583c915d17c9ba3a5b923f1"
+        },
+        {
+          "path": "cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
+          "function": "TestWemixWbftAggregateSealE2E",
+          "sha256": "a70bc4beba29010fe9d7010bf226ca70d9b0a54ef361fcb347fb26ce406b512a"
         }
       ],
       "observations": [
@@ -5248,12 +5283,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Current committed aggregate crypto is now verified; previous seal count/presence is not substituted. Native two tests race, skip0, frozen source and DB0; 24 compiled TestWemix functions is the current denominator, not all executed.",
       "remainingConditions": [
-        "nonboundary 지정+EpochInfo null,CommittedSeal BLS crypto 없음"
+        "WBFT-001 consensus stage log ordering remains separate; RPC-005 explicit nonboundary epochInfo-null selection remains separate. Generic public DSL crypto assertion, full original migrated environment/Linux/mainnet/legacy/final Web acceptance not claimed."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Eleven current committed BLS aggregates from actual post-fork raw headers, preceding epoch20/30 keys matched to current ordered validator set, bitmap subset/quorum and pairing verified. Independent chain RLP/types/blst agrees and rejects altered messages. Related actual ECDSA/mix/healthy interval regression passes.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/wbft-aggregate-seal-evidence.json",
+          "sha256": "7123a3e79bd611f5d7cfbc668e5178d69d50ab6dd9ed1bc00b548b70f1d5d487"
+        }
+      ]
     },
     {
       "id": "RPC-006",

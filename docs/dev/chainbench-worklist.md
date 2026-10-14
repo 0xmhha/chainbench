@@ -182,6 +182,23 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 WBFT-001·RPC-005 현재 commit 집계 서명 보강:** 존재·길이만 보는 baseline은
+잘못된 서명·bitmap·quorum·헤더·round·키·무한대 점·중복 키 아홉 조건을 통과시켰다.
+이 합성 RED를 확인하고 현재 epoch 순서의 키·bitmap·quorum과 원본 헤더의 commit 메시지를
+연결하는 kilic BLS pairing으로 GREEN을 보강했다. 합성 WBFT 9필드·StableNet 10필드 extra,
+잘못된 헤더·무한대 공개키도 회귀했다. 과거 공개 사례의 native RED를 실행한 것으로 표시하지 않는다.
+
+실제 WEMIX→WBFT 포크 이후 연속 11헤더를 epoch20·30의 키와 현재 검증자 순서로 검증했다.
+수정하지 않은 외부 WBFT의 RLP·types 해시·blst를 사용하는 별도 임시 검증기로 헤더 번호·해시·
+quorum·서명을 독립 대조하고 변경 메시지 거절도 확인했다. 관련 전체 tagged CLI race·전체 검사와
+새 집계 서명/기존 헤더 무결성 두 native race(165.578초, skip 0)가 통과했다.
+고정 소스 `793b2e0a2363c7b8a62400ad51955437fd7d560581173a8131e3344865ee70ca` 전후가 같고
+456파일의 내용·권한을 보존했으며 활성 프로세스·종료 DB는 0이다.
+[집계 서명 증거](wbft-aggregate-seal-evidence.json)는 현재 commit 암호 검증 범위다.
+합의 단계 log 순서·비경계 RPC의 epochInfo null·공개 DSL 암호 단언·Linux·메인넷·legacy·
+최종 Web 인수는 별도 잔여다. 현재 컴파일된 `TestWemix`는 24개이며 이번 두 실행을 24개 전체
+통과로 확대하지 않는다. §0a 11번 전체는 계속 진행이며 외부 소스는 수정하지 않았다.
+
 **2026-10-15 RPC-018 EN 격리·풀 상세 보강:** 기존 합의 중단 사례는 다른 hash의 같은 nonce·가스를
 통과시켰다. 두 hash 변형 RED→GREEN을 보강하고 실제 EN(node5)만 BP4에서 peer 격리하는 사례를 별도로
 추가했다. 최초 세 체인과 후속 진단은 복구·격리·전파 관문에서 실패했고 실패 자료를 유지했다.

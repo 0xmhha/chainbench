@@ -1,0 +1,400 @@
+{
+  "scope": "WBFT-001/RPC-005 actual committed aggregate signature and current epoch/quorum/bitmap context for eleven consecutive post-fork WEMIX-to-WBFT headers across epoch boundary. Separate independent actual-chain RLP/types/blst verifier and related ECDSA/mix/interval native regression. Not full criteria, complete87, mainnet/Linux/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence-only baseline accepted nine invalid synthetic signature/bitmap/quorum/header/round/key/infinity/duplicate-key contexts; not claimed as an old public-case native execution.",
+  "unitGreen": "Valid synthetic WBFT and StableNet extra-data and exact pairing; malformed header and infinite public key rejection; actual epoch context established by native caller.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "793b2e0a2363c7b8a62400ad51955437fd7d560581173a8131e3344865ee70ca",
+    "sourceAfter": "793b2e0a2363c7b8a62400ad51955437fd7d560581173a8131e3344865ee70ca",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixWbftAggregateSealE2E",
+      "TestWemixWbftHeaderIntegrityE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-xhwrjmd_",
+      "/private/tmp/cbui/hf-z6jcy_pg"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-xhwrjmd_": [],
+      "/private/tmp/cbui/hf-z6jcy_pg": []
+    },
+    "elapsedSeconds": 165.578,
+    "summary": {
+      "path": "/private/tmp/chainbench-wbft-header-aggregate-summary.json",
+      "sha256": "5fc176bedd4f5773246e9c57eb4fe92948e5ba73f0ff17d311267b5f3cbe1f54",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011365085455614
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-wbft-header-aggregate-native.jsonl",
+      "sha256": "699e49176880f26b94db2103dee510392e784a35f01051c74362f8695db9b981",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011364604555858
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-wbft-header-aggregate-start.json",
+      "sha256": "7e91826271e7c50ea774cecc7fc527a78ca5e4dc23b50b49f37edd579a791b66",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011195260549022
+    }
+  },
+  "proof": {
+    "path": "/private/tmp/chainbench-bls-aggregate-observed.json",
+    "sha256": "a272bafddf2d9f0a74adada1eb93be558a935916723365a0290003f5159a222f",
+    "mode": "0o600",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792011383478093381
+  },
+  "independentProof": {
+    "path": "/private/tmp/chainbench-bls-independent-result.json",
+    "sha256": "30c3035605164df4b863c722c3b666061dfab650a3f1666d9c93e05e5cc9e1cd",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792011384078469970
+  },
+  "independentVerifier": {
+    "binary": {
+      "path": "/private/tmp/chainbench-bls-independent/verify",
+      "sha256": "5606a3121687450cf26614f606ff682e4c1d9b8c8ca0e150efb5c59f1fdd8f59",
+      "mode": "0o755",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010970094265470
+    },
+    "source": {
+      "path": "/private/tmp/chainbench-bls-independent/main.go",
+      "sha256": "1fb5b976e290c2f0bc74f657c5cc9860b52dd141e8a2f256ffc4a2cecea445fc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010945241597888
+    },
+    "module": {
+      "path": "/private/tmp/chainbench-bls-independent/go.mod",
+      "sha256": "3194e4121c46845ea03a9310d27bdf852f8bd7b18e85cdfd1aa5faa10c423876",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010945989595610
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-bls-independent-recheck.log",
+      "sha256": "c11f77856c2805245f5c3bbeeff5252619454ccdbd23ef7db5ac80ee7d289cf0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011384078606345
+    },
+    "externalRevision": "7af50e45db4a48a2a77e565c7ff7bde0e8f95505",
+    "externalTrackedFilesUnmodified": true,
+    "implementation": "chain WBFT canonical RLP, filtered header hash, blst aggregate verify, separate from chainbench minimal RLP/kilic pairing"
+  },
+  "headerCount": 11,
+  "epochBlocks": [
+    20,
+    30
+  ],
+  "headers": [
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0xeafe432732256de51644cf15c768be09b029e905b0a7a354ed7836bcaa576f49",
+      "number": 25,
+      "round": 0,
+      "sealers": [
+        0,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0x676d600dcfceeb40f40e1fb64b809b19b59427fcc887c3757438aea8a1b07758",
+      "number": 26,
+      "round": 0,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0x327bcc0630b701b70527387eef701511290fe5a9689bdf83ef6871524aa32347",
+      "number": 27,
+      "round": 0,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0xb2d8180a99cab370efc792bf7396d44f236bee021d9d21df4d37f0ca75404b20",
+      "number": 28,
+      "round": 0,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0xb3dd209fd9ce5f9bc0cfb29c25a5ffb0265a2c4673284258df189e629527e45f",
+      "number": 29,
+      "round": 0,
+      "sealers": [
+        1,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 20,
+      "hash": "0x180409ae96d87ff1ac227e715505abf3325291f81842e88ecf52e882cb36eeca",
+      "number": 30,
+      "round": 0,
+      "sealers": [
+        0,
+        1,
+        2
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "hash": "0xe919c5cd72b6baf2c35b67fb4f3d27159229fc93f743cfd1bc689055eeda03a4",
+      "number": 31,
+      "round": 0,
+      "sealers": [
+        0,
+        1,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "hash": "0x4f4112fa6aa8f53ae068042bd8b6ec41ea33f522eab462dea787ab4843803b8c",
+      "number": 32,
+      "round": 0,
+      "sealers": [
+        0,
+        1,
+        2
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "hash": "0x4b52e31d908aa2e0ebd74401165a0387183ed71e4cc5addbc56f3c6be764c5ac",
+      "number": 33,
+      "round": 0,
+      "sealers": [
+        0,
+        1,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "hash": "0x3590e5223403462685537bb1b98956760f18f66bf3d95a92d409a766342b0f7e",
+      "number": 34,
+      "round": 0,
+      "sealers": [
+        0,
+        2,
+        3
+      ],
+      "signatureVerified": true
+    },
+    {
+      "alteredMessageRejected": true,
+      "epochBlock": 30,
+      "hash": "0x6ebf66c3d535a5066bf408a84c6c3281a55c42910c8637c03de1a5f6b7dde974",
+      "number": 35,
+      "round": 0,
+      "sealers": [
+        0,
+        1,
+        3
+      ],
+      "signatureVerified": true
+    }
+  ],
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-xhwrjmd_",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-xhwrjmd_/reports/bls-aggregate-inventory.json",
+        "sha256": "59c83cb1048b8e5b1131935b89a0412122b29d06a98feb3e63829384862b01ff",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792011440051159072
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-z6jcy_pg",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-z6jcy_pg/reports/bls-aggregate-inventory.json",
+        "sha256": "4b69ff731eeb2c11a92b93ca091e2b4b6dac59717d0287f6e23a5ef84389020a",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792011440102153620
+      }
+    }
+  ],
+  "retainedFiles": 456,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-bls-publication.json",
+    "sha256": "6683f4012b6cafef111726ab938d284304ebd504a813905ead4011a608d7c452",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792010889055547996
+  },
+  "nativeDenominator": {
+    "compiledTestWemixCount": 24,
+    "list": {
+      "path": "/private/tmp/chainbench-bls-native-list.txt",
+      "sha256": "b789012dd88c103757a124aa36ebe2cf0ce7055a2c0f15eb9f9abfa78dee71ef",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011030906394601
+    },
+    "all24Executed": false
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-red.log",
+      "sha256": "7efc87e25f9a82af6aea71c4dd3165206a8e6f3f00553690175306018cdaf5a2",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010696850089679
+    },
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-green.log",
+      "sha256": "1de0be19b6aae18aa3be70a9220dcaa43d444abf82af4a5df5f2de03f855d1e6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010735908623179
+    },
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-unit-race.log",
+      "sha256": "838c2d83edd069041419ad616f43d75f90cde4321e9cdea206e54cc36afc126f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010840679067652
+    },
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-compile.log",
+      "sha256": "1fe552ad27231deb0d8eb17514b4a5401c53e35fbec169c26840149c44ddc926",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010813587875746
+    },
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-command-race.log",
+      "sha256": "910df531ff62e3e62f8b3a542e310582f1427981afc848bff1784b02a9c32439",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792010986948940052
+    },
+    {
+      "path": "/private/tmp/chainbench-bls-aggregate-check.log",
+      "sha256": "bf396b1aa5fcee7b0904c8a161f4ab0134f4d746c0ad0877a30e8961e0b0ef7a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792011171909314977
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/consensus/wbft/committed_seal.go",
+      "sha256": "b4a1aba67cd166aa3587004cfb343d24f5675449e33ceb2d649583c97a7ca549",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010732200058498
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/consensus/wbft/committed_seal_test.go",
+      "sha256": "c3821c9f8d5db4ef736c964afc683f0b4e7f84da0583c915d17c9ba3a5b923f1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010837019615473
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/wbft_aggregate_seal_e2e_test.go",
+      "sha256": "a70bc4beba29010fe9d7010bf226ca70d9b0a54ef361fcb347fb26ce406b512a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792010809709448145
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "closure": "Current committed BLS crypto proof only; consensus log order and nonboundary RPC epochInfo-null selection remain tracked separately. External source not modified."
+}

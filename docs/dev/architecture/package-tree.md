@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 86,433 |
+| `internal/` | 54 | 86,533 |
 | `cmd/` | 19 | 5,686 |
 | `scripts/inventory/` | 4 | 905 |
 | `tests/` | 1 | 135 |
-| **합계** | **78** | **93,159** |
+| **합계** | **78** | **93,259** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -97,11 +97,11 @@ L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.
 
 ---
 
-## 2. 체인·합의 정의 — 11패키지 4,314줄
+## 2. 체인·합의 정의 — 11패키지 4,414줄
 
 ```
 internal/consensus/             합의 패밀리 [L2a] — 체인 id 를 모른다
-├── wbft            579  wbft genesis(extraData RLP) · start flags. stablenet 과 wbft 체인이 공유
+├── wbft            679  wbft genesis(extraData RLP) · start flags. stablenet 과 wbft 체인이 공유
 └── poa           1,547  wemix config · genesis 생성 · 거버넌스/etcd 부트스트랩 프리미티브와 그 실행자
 │                        (Bootstrap: 패밀리가 선언한 액션을 한 타깃에서 / Info·WaitEtcdCluster: 클러스터가 실제로 섰는지)
 
