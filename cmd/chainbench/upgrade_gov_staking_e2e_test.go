@@ -1325,102 +1325,116 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 
 }
 
-// TestWemixGovernanceCredentialExpiryE2E ports wemix4 GOV-023 (per-credential
-// unbonding expiry). A single account accumulates two withdrawal credentials of
-// different maturities:
-//
-//   - a STAKER credential from unstake (unbondingPeriodStaker, longer), and
-//   - a DELEGATOR credential from undelegate (unbondingPeriodDelegator, shorter).
-//
-// GovStaking.withdraw(count) scans credentials in creation order, SKIPS any that
-// are still locked, and processes matured ones until `count` are drained (or
-// reverts the whole call if fewer mature — all-or-nothing). So withdraw(1) after
-// only the delegator window elapses must skip the still-locked staker credential
-// (created first, lower index) and drain the matured delegator one; a second
-// withdraw(1) after the staker window elapses then drains the staker credential.
-// The proof that the first call did NOT wrongly drain the staker credential is
-// that the second call also succeeds with a full-sized payout — had both been
-// drained at once, the second withdraw would revert with no credential left. The
-// unbonding windows are block.timestamp-based (short in the test genesis).
-//
-//	go test -tags e2e -run TestWemixGovernanceCredentialExpiryE2E -timeout 10m ./cmd/chainbench
+// TestWemixGovernanceCredentialExpiryE2E proves individual chain-time maturity,
+// exact skipped/drained slots, event indices, pointers and withdrawal ledgers.
 func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual credential expiry")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	open := func(idx int) accounts.Wallet {
-		w, err := ap.OpenWallet(ctx, presetNodeKey(t, idx), url)
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range []string{"op1", "op2"} {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		address, err := provider.AddressForKey(key)
 		if err != nil {
-			t.Fatalf("open wallet node%d: %v", idx, err)
+			t.Fatal(err)
+		}
+		keys = append(keys, key)
+		alloc[address] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
+	}
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
+	}
+	op := wallets[0]
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	valA, valB := presetNodeAddr(t, 2), presetNodeAddr(t, 4)
+	pkA, sigA := presetNodeBLS(t, 2)
+	pkB, sigB := presetNodeBLS(t, 4)
+	stakingRegister(t, c, op, valA, pkA, sigA, new(big.Int).Mul(minimum, big.NewInt(2)))
+	stakingRegister(t, c, wallets[1], valB, pkB, sigB, minimum)
+	// Delegation setup precedes creation of the long-lived credential.
+	stakingSendOK(t, c, op, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(valB), accounts.Uint(minimum)), minimum)
+	p := credentialExpiryProof{Caller: op.Address(), Contract: e2eGovStaking, Amount: minimum.String(), StakerDelay: govConfigUint(t, c, "unbondingPeriodStaker()").String(), DelegatorDelay: govConfigUint(t, c, "unbondingPeriodDelegator()").String()}
+	index, _ := credentialPointers(t, c, p.Caller)
+	parsed, ok := new(big.Int).SetString(index, 10)
+	if !ok || !parsed.IsUint64() {
+		t.Fatal("initial credential pointer invalid")
+	}
+	p.N = parsed.Uint64()
+	longHash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(minimum)), nil)
+	if !stakingIsStaker(t, c, valA) || stakingUint(t, c, "getStakerAmount(address)", valA).Cmp(minimum) != 0 {
+		t.Fatal("partial unstake changed active minimum")
+	}
+	shortHash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("undelegate(address,uint256)", accounts.Address(valB), accounts.Uint(minimum)), nil)
+	p.Created = []withdrawalCredential{credentialAt(t, c, p.Caller, p.N), credentialAt(t, c, p.Caller, p.N+1)}
+	for i, hash := range []string{longHash, shortHash} {
+		var receipt map[string]any
+		if err = c.Call(t.Context(), "eth_getTransactionReceipt", &receipt, hash); err != nil {
+			t.Fatal(err)
+		}
+		block, err := c.BlockByNumber(t.Context(), fmt.Sprint(receipt["blockNumber"]))
+		if err != nil || fmt.Sprint(block.Timestamp) != p.Created[i].RequestTime {
+			t.Fatal("credential request does not match actual creation block", err)
+		}
+	}
+	withdraw := func(index uint64) credentialWithdrawal {
+		hash := stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
+		w := credentialWithdrawal{Hash: hash, Index: index}
+		if err = c.Call(t.Context(), "eth_getTransactionByHash", &w.Transaction, hash); err != nil {
+			t.Fatal(err)
+		}
+		if err = c.Call(t.Context(), "eth_getTransactionReceipt", &w.Receipt, hash); err != nil {
+			t.Fatal(err)
+		}
+		block, err := c.BlockByNumber(t.Context(), fmt.Sprint(w.Receipt["blockNumber"]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.Timestamp = block.Timestamp
+		w.Credentials = []withdrawalCredential{credentialAt(t, c, p.Caller, p.N), credentialAt(t, c, p.Caller, p.N+1)}
+		w.CredentialIndex, w.WithdrawalIndex = credentialPointers(t, c, p.Caller)
+		logs := feeReceipt(t, c, hash)
+		encoded, err := json.Marshal(logs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.LogsJSON = string(encoded)
+		if err = c.Call(t.Context(), "debug_traceTransaction", &w.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+			t.Fatal(err)
+		}
+		logGovernanceProof(t, "GOV-023-withdrawal", w)
+		if err := verifyWithdrawalLedger(p, w); err != nil {
+			t.Fatal(err)
 		}
 		return w
 	}
-
-	min := govConfigUint(t, c, "minimumStaking()")
-
-	// VAL_A = node2 staker via operator node3, registered at 2*minimumStaking so a
-	// partial unstake of `min` leaves exactly `min` and keeps it active.
-	op := open(3)
-	valA := presetNodeAddr(t, 2)
-	pkA, sigA := presetNodeBLS(t, 2)
-	regA := new(big.Int).Mul(min, big.NewInt(2))
-	stakingRegister(t, c, op, valA, pkA, sigA, regA)
-
-	// VAL_B = node4 staker via operator node1 — a distinct active staker that node3
-	// (VAL_A's operator, barred from delegating to VAL_A) can delegate to. node1 is
-	// a funded, non-operator account (node5's preset address is not genesis-funded).
-	valB := presetNodeAddr(t, 4)
-	pkB, sigB := presetNodeBLS(t, 4)
-	stakingRegister(t, c, open(1), valB, pkB, sigB, min)
-
-	// (1) Staker credential: OP_A unstakes `min` from VAL_A. Remaining == min (not
-	// below minimum), so VAL_A stays active and a staker credential is created.
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(min)), nil)
-	if !stakingIsStaker(t, c, valA) {
-		t.Fatal("VAL_A deactivated by partial unstake (should stay active with min remaining)")
+	shortMature, _ := strconv.ParseUint(p.Created[1].WithdrawableTime, 10, 64)
+	longMature, _ := strconv.ParseUint(p.Created[0].WithdrawableTime, 10, 64)
+	waitCredentialTime(t, c, shortMature)
+	latest, err := c.BlockByNumber(t.Context(), "latest")
+	if err != nil || latest.Timestamp >= longMature {
+		t.Fatal("missed distinct maturity window", err)
 	}
-
-	// (2) Delegator credential: OP_A delegates `min` to VAL_B then undelegates it,
-	// producing a delegator credential (shorter unbonding) for the same account.
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(valB), accounts.Uint(min)), min)
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("undelegate(address,uint256)", accounts.Address(valB), accounts.Uint(min)), nil)
-
-	delegUnbond := govConfigUint(t, c, "unbondingPeriodDelegator()")
-	stakerUnbond := govConfigUint(t, c, "unbondingPeriodStaker()")
-
-	// A withdrawal of ~min is unambiguous against gas (< 1e15 wei), so a net
-	// balance rise above min-1e18 proves exactly one credential was drained.
-	threshold := new(big.Int).Sub(min, big.NewInt(1_000_000_000_000_000_000))
-	drained := func(before, after *big.Int, what string) {
-		t.Helper()
-		if delta := new(big.Int).Sub(after, before); delta.Cmp(threshold) < 0 {
-			t.Fatalf("%s: balance rose by %s, want ~%s (one credential drained)", what, delta, min)
-		}
+	p.First = withdraw(p.N + 1)
+	waitCredentialTime(t, c, longMature)
+	p.Second = withdraw(p.N)
+	logGovernanceProof(t, "GOV-023-expiry", p)
+	if err := verifyCredentialExpiry(p); err != nil {
+		t.Fatal(err)
 	}
-
-	// (3) After only the delegator window elapses, withdraw(1) skips the locked
-	// staker credential and drains the matured delegator credential.
-	time.Sleep(time.Duration(delegUnbond.Int64()+3) * time.Second)
-	before := balanceOf(t, c, op.Address())
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
-	drained(before, balanceOf(t, c, op.Address()), "delegator withdraw(1)")
-
-	// (4) After the staker window elapses, withdraw(1) drains the staker credential
-	// that the first call correctly left in place. Sleeping the full staker window
-	// again (from now) guarantees maturity regardless of the delegator wait.
-	time.Sleep(time.Duration(stakerUnbond.Int64()+3) * time.Second)
-	before = balanceOf(t, c, op.Address())
-	stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
-	drained(before, balanceOf(t, c, op.Address()), "staker withdraw(1)")
 }
 
 // stabilizingStakersThreshold is the wbft test genesis'

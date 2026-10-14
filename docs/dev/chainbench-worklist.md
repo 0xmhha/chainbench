@@ -182,6 +182,23 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-023 개별 credential 만료 보강:** 머신 시계 sleep·큰 잔액 증가로
+처리 항목을 추정하는 조건을 실제 체인 시각·슬롯 상태·포인터·정확한 이벤트/출금 ledger로
+바꿨다. 잘못된 시간/처리/포인터9조건과 threshold/이벤트/슬롯/입력/가스비6조건의 RED→GREEN을
+확인했다. 위임 setup을 먼저 마친 뒤 긴 unstake/짧은 undelegate credential을 만들고,
+쿼리한15/5초 기간과 실제 생성 블록 timestamp·requestTime·withdrawableTime을 연결한다.
+
+관련 tagged CLI 전체 race·전체 검사와 실제 native race(95.220초, skip0)가 통과했다.
+첫 출금 timestamp1792021917은 짧은 만료1792021916 이후·긴 만료1792021924 이전이며
+slot1만 삭제·slot0 그대로·withdrawalIndex0을 확인했다. 두 번째1792021925는 긴 만료 이후
+slot0 삭제·withdrawalIndex2가 됐다. 각 Withdrawn 인덱스1/0·amount1e25·caller 수령−실제가스/
+contract 출금·nonce를 독립 대조했다. 고정 소스
+`123c42867acb9a6733077c0d9fbe4e5c3c457fbdb859997830de08da26875180` 전후가 같다.
+[개별 만료 증거](credential-expiry-evidence.json)는228파일의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0이다. 원문은 block 기반 표현을 쓰지만 현행 v1은 timestamp
+초 단위이므로 차이를 명시하며 원문 block-number 기대까지 받아들인 것으로 표시하지 않는다.
+원문87개 전체·Linux·메인넷 기간·legacy·공개 DSL·최종 Web 인수는 별도 잔여다.
+
 **2026-10-15 GOV-012 보상 누적·전환 옵션 보강:** 단순 잔액 증가 baseline이 짧은 구간·
 잘못된 합계/RPC·헤더 연결·대상 검증자·다른 거래·등록 계정·등록 목록을 통과시키는 RED→GREEN을
 확인했다. 원문의 RPC 호출은 세 실제 시도에서 실패했다. 최초 구성은 명시 Brioche 객체와 HTTP
