@@ -1,0 +1,972 @@
+{
+  "scope": "GOV015 original two-minimum stake/minimum-plus-one partial unstake; GOV017 actual useNCP true sole-council fixture, stake/unstake/delegate all mined exact council revert with state/refunded value/fee, successful emergency deactivation ballot and GOV018 resumed stake event. Not full87/Linux/mainnet/legacy/final Web acceptance.",
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "fdc8a5b856e73cd87f31964a863eaec380a9ae3b2fae68b1ead9e3ff0bac552d",
+    "sourceAfter": "fdc8a5b856e73cd87f31964a863eaec380a9ae3b2fae68b1ead9e3ff0bac552d",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixGovernanceUnstakeMinimumGuardE2E",
+      "TestWemixGovernanceEmergencyModeE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-48d4s1zm",
+      "/private/tmp/cbui/hf-m01fp2z8"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-48d4s1zm": [],
+      "/private/tmp/cbui/hf-m01fp2z8": []
+    },
+    "elapsedSeconds": 160.708,
+    "summary": {
+      "path": "/private/tmp/chainbench-gov-guards-caller-summary.json",
+      "sha256": "ec4a80878513e220bc594d4c48fb29d444f956368435207d9dfce80d8747b0b7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017029292234780
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-gov-guards-caller-native.jsonl",
+      "sha256": "1e20ac9d4372e8fdfaf04dd8b3453ac1aed751a7e09def22cba041f257c27097",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017028836987312
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-gov-guards-caller-start.json",
+      "sha256": "a68be802f541c7bc9f8459247a526be5fb6abb6ce6ce5272ee03bb6640418e56",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016865676877968
+    }
+  },
+  "proofs": {
+    "GOV-015": {
+      "path": "/private/tmp/chainbench-gov-guards-GOV-015-observed.json",
+      "sha256": "2e9dc6b3235064abed10e3bd424387dc6f7d2526b5684935efce49e759c468dd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017059639094575
+    },
+    "GOV-017": {
+      "path": "/private/tmp/chainbench-gov-guards-GOV-017-observed.json",
+      "sha256": "5dde7258ab60512b4cf6f915f683e12baabd7eaa175c1d96696bfdab7a01f208",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792017059640155184
+    }
+  },
+  "failures": [
+    {
+      "criterion": "GOV-015",
+      "operation": "unstake",
+      "hash": "0xc9698de19fd9564f5ecf17cbaeae4113d9a831fc8efdda2e63a52abcbc2619e0",
+      "reason": "amount must equal balance to deactivate staker",
+      "fee": 17713909583751317,
+      "inputAmount": 10000000000000000000000001,
+      "value": 0
+    },
+    {
+      "criterion": "GOV-017",
+      "operation": "stake",
+      "hash": "0x8ed238efcff964ea153385eead551f0e7082b4209d949f6a47a066bf9da72fd1",
+      "reason": "operation not permitted by council",
+      "fee": 4004600572137202,
+      "inputAmount": 10000000000000000000000000,
+      "value": 10000000000000000000000000
+    },
+    {
+      "criterion": "GOV-017",
+      "operation": "unstake",
+      "hash": "0x80c4e7e4ce96bd76c0cc385fef26f178f0cfb1fe01f1b99471b723b304b0ce2a",
+      "reason": "operation not permitted by council",
+      "fee": 4217700527296854,
+      "inputAmount": 1,
+      "value": 0
+    },
+    {
+      "criterion": "GOV-017",
+      "operation": "delegate",
+      "hash": "0x965a7befa82783567a0bd2a0e8b6c7d344e16f2b2c5d2b90266f83b31a43a869",
+      "reason": "operation not permitted by council",
+      "fee": 4062100444434361,
+      "inputAmount": 10000000000000000000000000,
+      "value": 10000000000000000000000000
+    }
+  ],
+  "genesis": [
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016360537386856
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/node1/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016360563912310
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/node4/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016361831901723
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/node3/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016361383644341
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/node2/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016361100690650
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/node5/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016362228369198
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/w/runs/20261014-221935/genesis.json",
+        "sha256": "c6ba9dcd14b09c77c8cb35b58e3af54b133f873fbfef8aa9bfaf664a35b41aea",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016375609161401
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016868834170141
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/node1/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016868860702728
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/node4/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016869568076657
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/node3/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016869332501274
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/node2/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016869095560622
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/node5/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016869833164416
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/w/runs/20261014-222802/genesis.json",
+        "sha256": "513afb7bab57a44f39d7f9cd0b76d78483c45d464a8daa963b50b4047eaeac7a",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016882436728141
+      },
+      "config": {
+        "requestTimeoutSeconds": 1,
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "proposerPolicy": 0,
+        "targetValidators": 4,
+        "maxRequestTimeoutSeconds": null,
+        "stabilizingStakersThreshold": 5
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016477125815263
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/node1/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016477153291552
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/node4/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016477914732292
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/node3/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016477676635998
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/node2/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016477392093055
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/node5/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016478141821863
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-egwktrco/w/runs/20261014-222127/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016487493317841
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016944216495730
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/node1/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016944246786179
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/node4/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016945270723944
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/node3/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016944967471462
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/node2/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016944716363800
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/node5/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016945592481598
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/w/runs/20261014-222915/genesis.json",
+        "sha256": "5bac9088fbc84c0220d0e736126ddb5d57faa4fc61ecf8df9a69967676341382",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016955097516968
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016438188431147
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/node1/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016438216436478
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/node4/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016439034095173
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/node3/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016438793685292
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/node2/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016438543906565
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/node5/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016439272037842
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    },
+    {
+      "file": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/w/runs/20261014-222051/genesis.json",
+        "sha256": "43def1bede55e540080032fc2206f75a9b88378aa1c5f13f6413957e6ddec856",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792016451866029060
+      },
+      "config": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 10,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 1,
+        "stabilizingStakersThreshold": 5,
+        "targetValidators": 4,
+        "useNCP": true
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-20vsj_y1",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-20vsj_y1/reports/gov-guards-inventory.json",
+        "sha256": "42b635067f2b8e68594b8a69ad5be7d9e58657cd55d5e156c9e8c4cc3ee621ec",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017059714117249
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-48d4s1zm",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-48d4s1zm/reports/gov-guards-inventory.json",
+        "sha256": "3886fd29e9f9d8acea802dfd532b0746cd102cd2b9a6b178712644c520c5ec0b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017059748189265
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-egwktrco",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-egwktrco/reports/gov-guards-inventory.json",
+        "sha256": "716e7dd4fb05f8c1c07c4fecaa4dd4592fc9f69f4a7b5c0fa52ef6d77312ae0b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017059792571329
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-m01fp2z8",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-m01fp2z8/reports/gov-guards-inventory.json",
+        "sha256": "fc6d474f206797dfde243e75383faf1c07c1ff40639d7f8f46102aea44aa47f4",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017059834261727
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-vhthov9g",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 226,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-vhthov9g/reports/gov-guards-inventory.json",
+        "sha256": "3c21f4c8dee0f4b8110cba017d645decf5271c0620199a8d292a9a6b4fd74d4c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792017059887556487
+      }
+    }
+  ],
+  "retainedFiles": 1138,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-gov-guards-publication.json",
+    "sha256": "db776127675036273b02b39fd8024de6acb52167960f3b1b5332dbe1885f391e",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792016669972666624
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-gov-guards-red.log",
+      "sha256": "31c77997016c83284af55db1517f6b90580cc2f59da21e9ecd0ec8a0a94db8b6",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016065318355968
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-guards-green.log",
+      "sha256": "2fe84946397da8b745cc8c33b064e74098aa97abd9f2b81a8373df305da0aa94",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016129906583256
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-guards-related-race.log",
+      "sha256": "4b1e59ef36c4094b469400d6f4d5d73f03fb85e622eeef3e04a87a350c6b9afe",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016252115780339
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-guards-check.log",
+      "sha256": "af25814725bd2cd838e0e9d2761addb945440e889ad0224db67bef75005b0479",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016336714873429
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-guards-caller-related-race.log",
+      "sha256": "a24dd8f1f878601a407b31b600b1bac8c6b3090474016ff1a3a4057d2b868498",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016768730717853
+    },
+    {
+      "path": "/private/tmp/chainbench-gov-guards-caller-check.log",
+      "sha256": "a9e717119dfb09f8685d181638b0cc12f9e825f216a8b5bc7310b64a898319cc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016854774346658
+    }
+  ],
+  "priorFailure": {
+    "summary": {
+      "path": "/private/tmp/chainbench-gov-guards-native-summary.json",
+      "sha256": "99e9572d0422c161b343a48e53d9f180d56e479462cd52b3be8fe774ada44b9c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016552595395937
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-gov-guards-native-native.jsonl",
+      "sha256": "a45be0ec9ce98616f9872429d84ac913b66c5fe98ec46b74911ccb6105914e48",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792016552071558282
+    },
+    "accepted": false,
+    "interpretation": "Minimum guard passed; emergency first setup blocked with consensus rpc_probe_unavailable then actual stake reverted with exact council reason but sender was that block proposer and fee-only balance oracle failed. Controlled caller is now outside actual validators; fee/refund equality retained."
+  },
+  "independentABISelectors": {
+    "stake(uint256)": "0xa694fc3a",
+    "unstake(uint256)": "0x2e17de78",
+    "delegate(address,uint256)": "0x026e402b",
+    "Staked(address,uint256)": "0x9e71bc8e"
+  },
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "independentKeccakVerifier": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086"
+  }
+}

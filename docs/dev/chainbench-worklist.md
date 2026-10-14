@@ -182,6 +182,23 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-015·017 채굴 거절 보강:** 원문의2minimum 예치/minimum+1 언스테이킹과
+useNCP=true 긴급 모드 stake·unstake·delegate 세 동작을 명시 가스로 제출하도록 보강했다.
+추정 오류·불완전/중복 동작·잘못된 사유/입력/상태를 통과시키는 RED→GREEN을 확인했다.
+최초 native는 언스테이킹만 통과했고 긴급 모드에서 정확한 채굴 revert 뒤 가스비 등식이 실패했다.
+해당 실패 블록의 proposer가 송신자인 것을 로그로 확인했다. 비검증자 운영자 계정을 별도 자금으로
+구성하고 실제 검증자 목록 밖임을 확인하도록 보강해, 가스비·환불의 정확한 등식을 유지했다.
+최초 긴급 모드 준비도 consensus rpc_probe_unavailable로 한 번 blocked됐으며 재시도/실패를 보존한다.
+
+보강 후 관련 tagged CLI 전체 race·전체 검사와 실제 두 native race(160.708초, skip0)가 통과했다.
+총 네 채굴 실패의 정확한 입력·status0·부분 가스·ABI revert 사유·stake/delegation/active 불변·
+환불·가스비, 긴급 모드 해제 투표와 GOV-018 재개 거래의 정확한 이벤트도 독립 대조했다.
+고정 소스 `fdc8a5b856e73cd87f31964a863eaec380a9ae3b2fae68b1ead9e3ff0bac552d` 전후가 같다.
+[거버넌스 차단 증거](governance-guards-evidence.json)는 최초 실패 포함5실행의1,138파일 내용·
+권한·소유자·mtime을 보존했고 활성 프로세스·종료 DB는0이다. W3 또는 이전 경합 해결로
+표시하지 않는다. 단일 NCP 로컬 범위이며 원문87개 전체·다중 council/Linux·메인넷·legacy·공개 DSL·
+최종 Web 인수는 별도 잔여다. 외부 체인 소스는 수정하지 않았다.
+
 **2026-10-15 RPC-023 검증자 제외·복귀 보강:** static 역할/flag만 보는 baseline이
 다른 주소·접속점·과거/미적용 에폭·RPC와 실제 목록 불일치 등 여덟 조건을 통과시키는 RED를
 확인했다. 동일 노드·접속점·적용 후 높이, 기본/특정 높이 isValidator와 실제 getValidators

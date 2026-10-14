@@ -194,21 +194,16 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 }
 
-// TestWemixGovernanceUnstakeMinimumGuardE2E ports wemix4 GOV-015 (unstake below
-// minimum is rejected): a staker registered at exactly minimumStaking cannot be
-// partially unstaked, because unstake requires the remaining balance to be either
-// >= minimumStaking or exactly 0 ("amount must equal balance to deactivate
-// staker"). Unstaking 1 wei would leave minimumStaking-1, which is neither, so it
-// reverts and the stake is unchanged.
-//
-//	go test -tags e2e -run TestWemixGovernanceUnstakeMinimumGuardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceUnstakeMinimumGuardE2E verifies the original two-minimum
+// stake and minimum-plus-one unstake using an actual mined revert and exact reason.
 func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	overlay, operatorKey := governanceGuardOverlay(t, false)
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -216,34 +211,29 @@ func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, operatorKey, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
 	staker := presetNodeAddr(t, 1)
 	blsPK, blsSig := presetNodeBLS(t, 1)
-	amount := govConfigUint(t, c, "minimumStaking()")
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	amount := new(big.Int).Mul(minimum, big.NewInt(2))
 	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
 
 	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
 		t.Fatalf("getStakerAmount = %s after register, want %s", staked, amount)
 	}
 
-	// Unstaking 1 wei leaves minimumStaking-1 (neither >= minimum nor 0) -> revert.
-	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(big.NewInt(1)))
-	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
-	if err != nil {
-		t.Fatalf("decode calldata: %v", err)
-	}
-	hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, nil)
-	if execErr == nil {
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("partial unstake below minimum succeeded (status 0x1) — guard missing")
-		}
-	}
-	// The reverted unstake left the stake untouched.
-	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
-		t.Fatalf("getStakerAmount = %s after rejected partial unstake, want %s (unchanged)", staked, amount)
+	assertGuardCallerOutsideValidators(t, c, operator.Address())
+	before := readGovernanceGuardState(t, c, staker)
+	input := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(new(big.Int).Add(minimum, big.NewInt(1))))
+	reason := "amount must equal balance to deactivate staker"
+	failure := stakingRejectedTx(t, c, operator, input, big.NewInt(0), reason)
+	cases := []guardCase{{Name: "unstake", Input: input, Sender: operator.Address(), Subject: staker, Value: "0", Reason: reason, Before: before, After: readGovernanceGuardState(t, c, staker), Failure: failure}}
+	logGovernanceProof(t, "GOV-015-guards", map[string]any{"minimum": minimum.String(), "cases": cases})
+	if err := verifyGovernanceGuards(cases, minimum, false); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -772,7 +762,8 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	overlay, operatorKey := governanceGuardOverlay(t, true)
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 
@@ -780,7 +771,7 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, operatorKey, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
@@ -804,12 +795,26 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 		t.Fatal("emergencyMode not true after the accepted proposal")
 	}
 
-	// A guarded staking op is now blocked by the council.
-	raw, _ := hex.DecodeString(strings.TrimPrefix(accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), "0x"))
-	if hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, amount); execErr == nil {
-		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
-			t.Fatal("stake() succeeded during emergency mode — council guard missing")
-		}
+	// All original guarded operations must fail in a mined transaction, rather
+	// than accepting an SDK preparation/estimation/HTTP error as the guard.
+	guardCases := []guardCase{}
+	for _, op := range []struct {
+		name, input string
+		value       *big.Int
+	}{
+		{"stake", accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount},
+		{"unstake", accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(big.NewInt(1))), big.NewInt(0)},
+		{"delegate", accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(amount)), amount},
+	} {
+		assertGuardCallerOutsideValidators(t, c, operator.Address())
+		before := readGovernanceGuardState(t, c, staker)
+		reason := "operation not permitted by council"
+		failure := stakingRejectedTx(t, c, operator, op.input, op.value, reason)
+		guardCases = append(guardCases, guardCase{Name: op.name, Input: op.input, Sender: operator.Address(), Subject: staker, Value: op.value.String(), Reason: reason, Before: before, After: readGovernanceGuardState(t, c, staker), Failure: failure})
+	}
+	logGovernanceProof(t, "GOV-017-guards", map[string]any{"minimum": amount.String(), "cases": guardCases, "emergencyMode": ncpBool(t, c, "emergencyMode()")})
+	if err := verifyGovernanceGuards(guardCases, amount, true); err != nil {
+		t.Fatal(err)
 	}
 
 	// Leave emergency mode; the flag clears.
