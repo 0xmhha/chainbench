@@ -351,6 +351,9 @@ type ChainForkIn struct {
 type ChainForkOut struct {
 	// Fork is the declared hardfork, nil when the network crosses none.
 	Fork *chainsetup.GenesisFork `json:"fork,omitempty"`
+	// HandedOver says every successor's recorded role/build has been changed.
+	// Actual block production must still be confirmed through runtime health.
+	HandedOver bool `json:"handedOver,omitempty"`
 	// PreFork are the indices of the nodes running the build that seals up to
 	// the fork block and stops there. After the handover they stay where they
 	// stopped: they cannot validate what the successors produce.
@@ -379,6 +382,11 @@ func ChainFork(_ context.Context, d chainsetup.Deps, in ChainForkIn) (ChainForkO
 		if out.Fork == nil {
 			return "", nil
 		}
+		standing, err := ws.ForkStanding()
+		if err != nil {
+			return "", err
+		}
+		out.HandedOver = standing.Crossed
 		for _, ns := range st.Nodes {
 			if ns.Binary != out.Fork.Binary {
 				out.PreFork = append(out.PreFork, ns.Index)

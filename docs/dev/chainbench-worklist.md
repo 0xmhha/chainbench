@@ -173,7 +173,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
-| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — handoff 종료 실패의 삭제·재시도 거절, 종료 DB 회수와 설정·로그 보존 완료. 혼합 체인의 합의 API 선택·전환 후 PID/역할 갱신·생산 대기를 RED→GREEN으로 수정했고, 실제 거버넌스 조회·데이터 인식 이관 두 건이 race로 통과했다. 전체 governance E2E·wemix4 범위 대조·legacy 소비자 재평가·재접속 시 handover 준비 상태는 남음; [증거](handoff-runtime-evidence.json) |
+| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — handoff 종료 실패의 삭제·재시도 거절, 종료 DB 회수와 설정·로그 보존 완료. 혼합 체인의 합의 API 선택·전환 후 PID/역할 갱신·생산 대기와 재접속 시 저장된 전환 상태 반영을 RED→GREEN으로 수정했고, 실제 거버넌스 조회·데이터 인식 이관·CLI 재접속이 race로 통과했다. 전체 governance E2E·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환 증거](handoff-runtime-evidence.json), [재접속 증거](handoff-reattach-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 미완료 |
@@ -213,6 +213,16 @@ RED→GREEN·전체 make check·관련 네 패키지 race·tagged 명령 AST/종
 이관은 producer/reader 높이 19와 기존 블록 상태 읽기까지다. 이관 노드의 이후 생산이나 87개 wemix4 시나리오,
 governance E2E 전체, Linux L1, 최종 Web 인수를 완료한 증거가 아니다. §0a 11번은 계속 진행 상태다.
 근거: [handoff 증거](handoff-runtime-evidence.json).
+
+**같은 날 workspace 재접속 보강:** 포크 조회가 저장된 전환 완료 상태를 전달하지 않아 재접속 시
+fork-1 대기를 다시 허용하던 경로를 두 RED로 확인했다. 기존 `ForkStanding`의 기록 읽기를 재사용해
+모든 successor의 역할/바이너리 전환 상태를 전달하고 준비 관문을 복원한다. 기록 상태는 실제 생산의 증거가
+아니므로 전환한 망은 계속 RPC 건강·생산 확인을 거친다. 전환 전·부분·완료 상태 계약,
+관련 두 패키지 전체 race·전체 make check·tagged 명령/종료 계약이 통과했다.
+실제 전환 뒤 CLI `run --attach --no-node-control`로 다시 읽어 PASS 1·skip 0,
+WBFT 4·WEMIX 1의 합의 출처와 다섯 노드의 PID·역할·체인 불변성을 확인했다. 종료 DB는 0건이다.
+소스 SHA 6개가 일치한다. 전체 governance E2E와 11번의 다른 재평가는 계속 남는다.
+근거: [재접속 증거](handoff-reattach-evidence.json).
 
 **최종 공통 게이트: 미완료.** 위 변경 뒤 고정 소스에서 Web 14개 capture·독립 재현을 직렬 실행하며
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.
