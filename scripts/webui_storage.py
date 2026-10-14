@@ -63,7 +63,11 @@ def newest_mtime(path):
 
 
 def evidence_text(repository, entries, extras):
-    roots = [repository / 'chainbench-out', repository / 'docs/dev/web-ui-evidence']
+    # Follow-up proofs live beside worklists, not only in web-ui-evidence.
+    # Handoff prose also cites runtimes; losing that reference must not make
+    # the referenced source, logs or receipts disposable.
+    roots = [repository / 'chainbench-out', repository / 'docs']
+    roots += list(repository.glob('*.md'))
     roots += [entry / 'source/chainbench-out' for entry in entries if entry.name.startswith('recheck-')]
     roots += list(extras)
     text = []
@@ -85,7 +89,7 @@ def evidence_text(repository, entries, extras):
                     yield Path(current) / name
         files = [root] if root.is_file() else readable_files(root)
         for path in files:
-            if path.suffix not in ('.json', '.jsonl'):
+            if path.suffix not in ('.json', '.jsonl', '.md'):
                 continue
             if path.is_symlink():
                 raise UnsafeMaintenance('evidence symlink: ' + str(path))

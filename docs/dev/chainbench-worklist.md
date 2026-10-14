@@ -163,7 +163,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 
 | 순서 | 작업 | 완료 기준 | 상태 |
 |---|---|---|---|
-| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 docs/dev 증명 참조 검색 누락 보강 필요. 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
+| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 JSON/Markdown/인계 참조 보강·47계약·실제 보존/압축·호환 명령 dry run 완료. 과거 56 receipt는 28 일치·26 없음·2 다른 해시이므로 자료 전수 확인/후속 인수는 미완료. [새 증거](storage-document-evidence.json). 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
 | 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건 |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
@@ -420,6 +420,16 @@ R3 나머지·P4 충분성·Linux L1·9번 잔여·10–14번과 후속 Web 최�
 관련 여섯 패키지 race·프론트 28개 테스트·SPA 빌드·전체 make check·실제 브라우저·네 native 프로필 직렬 race가 통과했다.
 각 native 소스 해시 125개가 일치하며 종료 노드 DB는 0건이다. 이 단계는 R3 전체나 후속 Web 최종 인수를 닫지 않는다.
 정리 도구의 기본 증명 검색 범위가 새 docs/dev JSON/Markdown을 빠뜨리는 누락은 다음 보강 단계에서 별도로 검증한다.
+
+**저장 공간 정리의 새 문서 참조 보강:** [증거](storage-document-evidence.json)는 docs의 JSON/JSONL/Markdown과
+루트 인수인계 Markdown을 기본 보존 참조로 읽는다. 참조 누락·읽기 실패를 RED로 확인했고, receipt가 없거나 해시가 다르면
+완료로 세지 않는 감사 계약까지 47개 보존 테스트와 전체 make check가 통과했다. 실제 전용 폴더에서 새 문서 참조 보존,
+미참조 자료 삭제, 열린 WAL 보존, 내용·권한·소유자·mtime·xattr·ACL을 유지한 투명 압축을 확인했다.
+기존 `/private/tmp/cbui-cleanup.py`는 원본을 백업하고 테스트된 fail-closed 도구를 호출하도록 교체했다.
+실제 runtime 182개 계획은 177 보존·5 삭제 후보이며 운영 자료 삭제는 하지 않았다.
+과거 publication audit의 56 receipt는 28 일치·26 경로 없음·WEB-08 2개 다른 해시다. 둘의 수정 시각은 이번 작업 전인
+2026-10-13이다. 원인을 추정하거나 과거 audit를 고치지 않았다. 실제 감사는 이 한계를 기록하고 code 2를 반환한다.
+보존 코드와 새 참조 실증은 완료됐지만 1번 전체 자료 확인과 후속 소스의 고정 인수는 열린 상태다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

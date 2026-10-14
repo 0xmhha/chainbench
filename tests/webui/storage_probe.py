@@ -18,6 +18,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
 import webui_storage as storage
 
 
+def receipt_audit(protected):
+    missing, changed, verified = [], [], 0
+    for name, expected in protected.items():
+        path = Path(name)
+        if not path.is_file():
+            missing.append(name)
+        elif storage.digest(path) != expected:
+            changed.append(name)
+        else:
+            verified += 1
+    return {'expected': len(protected), 'verified': verified, 'missing': missing,
+            'changed': changed, 'complete': not missing and not changed}
+
+
 def main():
     if sys.platform != 'darwin':
         raise RuntimeError('native proof requires macOS')
@@ -56,6 +70,11 @@ def main():
     evidence = repo / 'chainbench-out'; evidence.mkdir()
     (evidence / 'result.json').write_text(json.dumps({'recheck': str(old)}))
     disposable = root / '00000000-0000-0000-0000-000000000002'; disposable.mkdir()
+    documented = root / '00000000-0000-0000-0000-000000000003'; documented.mkdir()
+    handoff = root / '00000000-0000-0000-0000-000000000004'; handoff.mkdir()
+    development = repo / 'docs/dev'; development.mkdir(parents=True)
+    (development / 'new-proof.json').write_text(json.dumps({'proof': str(documented / 'proof.json')}))
+    (development / 'handoff.md').write_text('Continue from ' + str(handoff / 'source'))
     aged = time.time() - 7200
     for path in [*root.rglob('*'), root]:
         os.utime(path, (aged, aged))
@@ -63,12 +82,12 @@ def main():
         storage.cleanup(root, repo, time.time() - 86400, extras=[audit], delete=True)
     assert old.exists() and new.exists() and runtime.exists()
     assert not disposable.exists()
+    assert documented.exists() and handoff.exists()
 
     # Confirm real accepted proof artifacts survived and are protected by policy.
     accepted = Path('/private/tmp/chainbench-frozen-refactor-publication-audit.json')
     protected = json.loads(accepted.read_text())['protectedReceiptDigests']
-    for name, expected in protected.items():
-        assert storage.digest(Path(name)) == expected, name
+    receipts = receipt_audit(protected)
     actual_root = Path(os.environ.get('WEBUI_RUNTIME_ROOT', '/private/tmp/cbui'))
     actual_repo = Path(__file__).resolve().parents[2]
     extras = [accepted, Path('/private/tmp/chainbench-frozen-refactor-results.jsonl'),
@@ -78,13 +97,18 @@ def main():
         path = Path(name)
         if path.is_relative_to(actual_root):
             runtime_path = actual_root / path.relative_to(actual_root).parts[0]
-            assert plan[runtime_path] is not None, str(runtime_path)
+            if runtime_path in plan:
+                assert plan[runtime_path] is not None, str(runtime_path)
     record = {'activeWALPreserved': True, 'compression': compressed,
               'referencedRecheckPreserved': True, 'unreferencedFixtureDeleted': True,
-              'protectedReceiptsVerified': len(protected), 'realRootDryRunOnly': True,
+              'developmentJSONReferencePreserved': True, 'handoffReferencePreserved': True,
+              'protectedReceiptsVerified': receipts['verified'], 'receiptAudit': receipts,
+              'historicalReceiptAuditComplete': receipts['complete'], 'realRootDryRunOnly': True,
               'sourceFiles': {str(path): storage.digest(path) for path in [actual_repo / 'scripts/webui_storage.py', Path(__file__).resolve(), actual_repo / 'tests/webui/test_storage.py']}}
     (base / 'proof.json').write_text(json.dumps(record, indent=2) + '\n')
     print(json.dumps({'proof': str(base / 'proof.json'), 'verified': record}))
+    if not receipts['complete']:
+        raise SystemExit(2)
 
 
 if __name__ == '__main__':

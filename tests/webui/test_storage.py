@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
 import webui_storage as storage
+import storage_probe as probe
 
 
 class StorageTests(unittest.TestCase):
@@ -61,6 +62,47 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(self.plan([receipt])[path], 'named by evidence')
         with self.assertRaisesRegex(storage.UnsafeMaintenance, 'missing evidence'):
             self.plan([self.base / 'missing.json'])
+
+    def test_development_proof_documents_are_default_references(self):
+        for name in ['network-capability-evidence.json', 'architecture/new-proof.jsonl', 'web-ui-claude-handoff.md']:
+            with self.subTest(document=name):
+                path = self.fixture('00000000-0000-0000-0000-' + str(len(list(self.root.iterdir())) + 1).zfill(12))
+                document = self.repo / 'docs/dev' / name
+                document.parent.mkdir(parents=True, exist_ok=True)
+                document.write_text('proof: ' + str(path / 'browser-proof/receipt.json'))
+                self.assertEqual(self.plan()[path], 'named by evidence')
+
+    def test_root_handoff_is_a_default_reference(self):
+        path = self.fixture()
+        (self.repo / 'CLAUDE.md').write_text('Continue from ' + str(path / 'source'))
+        self.assertEqual(self.plan()[path], 'named by evidence')
+
+    def test_unreadable_development_document_refuses_maintenance(self):
+        self.fixture()
+        document = self.repo / 'docs/dev/new-proof.json'
+        document.parent.mkdir(parents=True)
+        document.write_text('{}')
+        with patch.object(Path, 'read_text', side_effect=PermissionError('denied')):
+            with self.assertRaises(PermissionError):
+                self.plan()
+
+    def test_receipt_audit_reports_missing_without_claiming_complete(self):
+        present = self.base / 'receipt.json'; present.write_text('{}')
+        missing = self.base / 'missing.json'
+        result = probe.receipt_audit({str(present): storage.digest(present), str(missing): 'absent'})
+        self.assertEqual(result, {'expected': 2, 'verified': 1, 'missing': [str(missing)], 'changed': [], 'complete': False})
+
+    def test_receipt_audit_reports_changed_without_altering_bytes(self):
+        receipt = self.base / 'receipt.json'; receipt.write_text('{}')
+        result = probe.receipt_audit({str(receipt): 'wrong digest'})
+        self.assertEqual(result['changed'], [str(receipt)])
+        self.assertFalse(result['complete'])
+        self.assertEqual(receipt.read_text(), '{}')
+
+    def test_receipt_audit_is_complete_only_for_matching_existing_files(self):
+        receipt = self.base / 'receipt.json'; receipt.write_text('{}')
+        result = probe.receipt_audit({str(receipt): storage.digest(receipt)})
+        self.assertEqual(result, {'expected': 1, 'verified': 1, 'missing': [], 'changed': [], 'complete': True})
 
     def test_unreadable_evidence_does_not_turn_into_no_references(self):
         archive = self.repo / 'chainbench-out'; archive.mkdir()

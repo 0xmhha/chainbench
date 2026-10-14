@@ -1,0 +1,104 @@
+{
+  "scope": "Default proof references in docs JSON/JSONL/Markdown and root Markdown handoffs; conservative deletion and explicit incomplete historical receipt reporting. These code contracts are verified; task 1 overall and final frozen Web acceptance remain open due unavailable/different historical receipts.",
+  "logs": {
+    "documentReferenceRed": {
+      "path": "/private/tmp/chainbench-storage-document-red.log",
+      "sha256": "a1228758dc21446c9a0e79ad34abc8c7f163f24f05dfed523f4ee1d20d26cc9d"
+    },
+    "receiptReportRed": {
+      "path": "/private/tmp/chainbench-storage-receipt-report-red.log",
+      "sha256": "d2118562f9a4bda1bf4ad93dc4f496b76839aac0f1cf0115d73759a7ba75491b"
+    },
+    "preservationGreen": {
+      "path": "/private/tmp/chainbench-storage-document-final-green.log",
+      "sha256": "de5cde7d589a249ffba4006efd2844e1fb70a0d8cd824b24b4caa89daeb18b11"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-storage-document-final-check.log",
+      "sha256": "fd3881e3791b45003bd218e4b2742f3a48f30384ddcc6d24ac7503069da84088"
+    },
+    "initialIncompleteNativeAudit": {
+      "path": "/private/tmp/chainbench-storage-document-proof.jsonl",
+      "sha256": "33d731890bd275c5d329b436702239286d5659e02a12e5a0da046f3bf352e116"
+    },
+    "nativeContractsAndIncompleteAudit": {
+      "path": "/private/tmp/chainbench-storage-document-final-proof.jsonl",
+      "sha256": "6ccf066803a833fc92bbbb711ff9ed37cbef1d4b1a98905dc2b5d74b0b99350a"
+    },
+    "compatibilityDryRun": {
+      "path": "/private/tmp/chainbench-storage-document-compat-dry.jsonl",
+      "sha256": "b497e923d6d0402967a176ce66499dfeb176bca66be4be2d46e02677aba8bf83"
+    },
+    "finalArchitecture": {
+      "path": "/private/tmp/chainbench-storage-document-final-arch.log",
+      "sha256": "d993d44a0a734aa82e3cea8e3ce72d6caa46e0b9549f72c4b33fe0bf478584c9"
+    }
+  },
+  "nativeProof": {
+    "path": "/private/tmp/chainbench-storage-proof-1abgamfz/proof.json",
+    "sha256": "ff98507eb6c399abca84a1982426692c20fc6db611d3da107d542df575422319"
+  },
+  "storageContractsVerified": true,
+  "historicalReceiptAuditComplete": false,
+  "expectedNativeExitCode": 2,
+  "receiptAudit": {
+    "expected": 56,
+    "verified": 28,
+    "missing": [
+      "/private/tmp/cbui/recheck-fhblu965/source/chainbench-out/web-ui-acceptance/WEB-01/evidence.json",
+      "/private/tmp/cbui/recheck-fhblu965/source/chainbench-out/web-ui-acceptance/WEB-01/result.json",
+      "/private/tmp/cbui/recheck-2dv8spe_/source/chainbench-out/web-ui-acceptance/WEB-02/evidence.json",
+      "/private/tmp/cbui/recheck-2dv8spe_/source/chainbench-out/web-ui-acceptance/WEB-02/result.json",
+      "/private/tmp/cbui/recheck-pou24_s7/source/chainbench-out/web-ui-acceptance/WEB-03/evidence.json",
+      "/private/tmp/cbui/recheck-pou24_s7/source/chainbench-out/web-ui-acceptance/WEB-03/result.json",
+      "/private/tmp/cbui/recheck-n4i989ve/source/chainbench-out/web-ui-acceptance/WEB-04/evidence.json",
+      "/private/tmp/cbui/recheck-n4i989ve/source/chainbench-out/web-ui-acceptance/WEB-04/result.json",
+      "/private/tmp/cbui/recheck-2q712mg7/source/chainbench-out/web-ui-acceptance/WEB-06/evidence.json",
+      "/private/tmp/cbui/recheck-2q712mg7/source/chainbench-out/web-ui-acceptance/WEB-06/result.json",
+      "/private/tmp/cbui/recheck-wcqxhaed/source/chainbench-out/web-ui-acceptance/WEB-07/evidence.json",
+      "/private/tmp/cbui/recheck-wcqxhaed/source/chainbench-out/web-ui-acceptance/WEB-07/result.json",
+      "/private/tmp/cbui/recheck-x24v5npw/source/chainbench-out/web-ui-acceptance/WEB-08/evidence.json",
+      "/private/tmp/cbui/recheck-x24v5npw/source/chainbench-out/web-ui-acceptance/WEB-08/result.json",
+      "/private/tmp/cbui/recheck-_0rsuw90/source/chainbench-out/web-ui-acceptance/WEB-09/evidence.json",
+      "/private/tmp/cbui/recheck-_0rsuw90/source/chainbench-out/web-ui-acceptance/WEB-09/result.json",
+      "/private/tmp/cbui/recheck-5eyxts13/source/chainbench-out/web-ui-acceptance/WEB-10/evidence.json",
+      "/private/tmp/cbui/recheck-5eyxts13/source/chainbench-out/web-ui-acceptance/WEB-10/result.json",
+      "/private/tmp/cbui/recheck-5irt3m2t/source/chainbench-out/web-ui-acceptance/WEB-11/evidence.json",
+      "/private/tmp/cbui/recheck-5irt3m2t/source/chainbench-out/web-ui-acceptance/WEB-11/result.json",
+      "/private/tmp/cbui/recheck-8tvr7532/source/chainbench-out/web-ui-acceptance/WEB-12/evidence.json",
+      "/private/tmp/cbui/recheck-8tvr7532/source/chainbench-out/web-ui-acceptance/WEB-12/result.json",
+      "/private/tmp/cbui/recheck-oznb5gka/source/chainbench-out/web-ui-acceptance/WEB-13/evidence.json",
+      "/private/tmp/cbui/recheck-oznb5gka/source/chainbench-out/web-ui-acceptance/WEB-13/result.json",
+      "/private/tmp/cbui/recheck-h87uoyjd/source/chainbench-out/web-ui-acceptance/WEB-14/evidence.json",
+      "/private/tmp/cbui/recheck-h87uoyjd/source/chainbench-out/web-ui-acceptance/WEB-14/result.json"
+    ],
+    "changed": [
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-08/evidence.json",
+      "/Users/0xtopaz/work/github/0xmhha/chainbench/chainbench-out/web-ui-acceptance/WEB-08/result.json"
+    ],
+    "complete": false
+  },
+  "compressionSavedBytes": 43692032,
+  "compatibilityEntryPoint": {
+    "path": "/private/tmp/cbui-cleanup.py",
+    "sha256": "1389e50c0b84e00a8c54491d75bb93607bd833af20fd6a9ace4a4ebb21d84201"
+  },
+  "legacyEntryPointBackup": {
+    "path": "/private/tmp/cbui-cleanup-legacy-20261014-_y3i3gaa.py",
+    "sha256": "2874a7ff447d080a2870c004c1d9d63db1aa506f63afc484d710efe1d1d89bc6"
+  },
+  "runtimeDryRun": {
+    "entries": 182,
+    "actions": {
+      "keep": 177,
+      "would-delete": 5
+    }
+  },
+  "productionRuntimeDeleted": false,
+  "sources": {
+    "/Users/0xtopaz/work/github/0xmhha/chainbench/scripts/webui_storage.py": "72c9951986aeeb860bd8e6ec7e40b230e3613399f325e13f89da22ff5bce9b76",
+    "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/test_storage.py": "14353090894e0ca397f726ed7977b4b004960dafeb68a0906c27a8317be6f6a0",
+    "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/storage_probe.py": "4d16a41b0f3dac213e6b2136ff54a557bd97a0d323c17327c73f33d5fdbaf816"
+  },
+  "limits": "26 historical receipt paths are absent and two WEB-08 digests differ from the old publication audit. The two present files have October 13 mtimes, before this turn. No cause is inferred and the old audit is preserved. New final source capture and independent reproduction remain required."
+}
