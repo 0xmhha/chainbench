@@ -84,7 +84,7 @@ func TestWemixW3PartialGovernanceReproductionE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 	readerLog := filepath.Join(root, "reports/w3-reader.log")
-	readerURL := launchW3Reader(t, from, readerDir, readerLog)
+	readerURL := launchHandoffReader(t, from, readerDir, readerLog)
 	reader := rpc.Dial(readerURL)
 	deadline := time.Now().Add(30 * time.Second)
 	for {
@@ -217,7 +217,7 @@ func findW3Registry(t *testing.T, c *rpc.Client, head uint64) (string, uint64, j
 	return "", 0, nil
 }
 
-func launchW3Reader(t *testing.T, binary, dataDir, logPath string) string {
+func launchHandoffReader(t *testing.T, binary, dataDir, logPath string) string {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
