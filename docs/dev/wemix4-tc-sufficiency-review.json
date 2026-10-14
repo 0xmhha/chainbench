@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 61,
-    "confirmed_scope": 22,
+    "partial": 56,
+    "confirmed_scope": 27,
     "conflict": 3,
     "merged": 1
   },
@@ -3562,7 +3562,7 @@
       "id": "WBFT-007",
       "title": "밸리데이터 1/3 미만 장애 시 합의 지속",
       "criterionSha256": "4fbbcb16333899958a4b1c33fe80242b99d6f7343d7c15adff815751a4129e1e",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -3574,6 +3574,21 @@
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftFaultTolerance"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "verifyQuorumBoundary",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestQuorumBoundariesRejectWeakFaultEvidence",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestNativeQuorumFaultBoundaries",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
         }
       ],
       "observations": [
@@ -3611,18 +3626,23 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Exact validator counts, healthy signer/status agreement, ten fault blocks with eligible quorum or all-survivor halt, managed restart identity and recovery now verified in current native profiles.",
       "remainingConditions": [
-        "7node 이상 실제10block 유지·5이상 commit signer 직접 검증 없음"
+        "Original staged migration/mainnet, Linux/legacy consumers, public DSL scenario and final Web acceptance remain separate; current Croissant0 fixture is not full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP7/Croissant0, 1 stopped, quorum5, healthy three-block signer/status agreement, ten fault blocks with surviving signers, original identities restarted and caught up to three recovery headers; unit negative controls, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/quorum-boundaries-evidence.json",
+          "sha256": "ebae60b9c3d00c6e9bc235d9c26e363c8e1532eff3bed9136d95f021f38101ae"
+        }
+      ]
     },
     {
       "id": "WBFT-008",
       "title": "밸리데이터 1/3 이상 장애 시 합의 중단",
       "criterionSha256": "89dd4a9f2a52837b6980fd3691801fd3871968fcea68a1f3356ca9f95c2941a0",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -3639,6 +3659,21 @@
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftFaultHalt"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "verifyQuorumBoundary",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestQuorumBoundariesRejectWeakFaultEvidence",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestNativeQuorumFaultBoundaries",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
         }
       ],
       "observations": [
@@ -3706,12 +3741,17 @@
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Exact validator counts, healthy signer/status agreement, ten fault blocks with eligible quorum or all-survivor halt, managed restart identity and recovery now verified in current native profiles.",
       "remainingConditions": [
-        "7node 원문 fixture의 최신 실제 증명 확인 안함; halted settle/window bounds만"
+        "Original staged migration/mainnet, Linux/legacy consumers, public DSL scenario and final Web acceptance remain separate; current Croissant0 fixture is not full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP7/Croissant0, 3 stopped, quorum5, healthy three-block signer/status agreement, all remaining nodes unchanged for at least eight seconds after one-second settle, original identities restarted and caught up to three recovery headers; unit negative controls, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/quorum-boundaries-evidence.json",
+          "sha256": "ebae60b9c3d00c6e9bc235d9c26e363c8e1532eff3bed9136d95f021f38101ae"
+        }
+      ]
     },
     {
       "id": "WBFT-009",
@@ -3867,13 +3907,28 @@
       "id": "WBFT-011",
       "title": "쿼럼 계산 검증 — validator 3개 (전원 필요)",
       "criterionSha256": "72cda58d376b722518734b6b08c58e3add072ac6a4813eb110f677d07ed3f906",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftQuorumAllRequired"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "verifyQuorumBoundary",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestQuorumBoundariesRejectWeakFaultEvidence",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestNativeQuorumFaultBoundaries",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
         }
       ],
       "observations": [
@@ -3881,24 +3936,44 @@
           "analysis": "n3 singlefault halt20sec/restartadvance"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Exact validator counts, healthy signer/status agreement, ten fault blocks with eligible quorum or all-survivor halt, managed restart identity and recovery now verified in current native profiles.",
       "remainingConditions": [
-        "healthy commit signers=3 및 istanbul_status quorum 간접확인 없음"
+        "Original staged migration/mainnet, Linux/legacy consumers, public DSL scenario and final Web acceptance remain separate; current Croissant0 fixture is not full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP3/Croissant0, 1 stopped, quorum3, healthy three-block signer/status agreement, all remaining nodes unchanged for at least eight seconds after one-second settle, original identities restarted and caught up to three recovery headers; unit negative controls, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/quorum-boundaries-evidence.json",
+          "sha256": "ebae60b9c3d00c6e9bc235d9c26e363c8e1532eff3bed9136d95f021f38101ae"
+        }
+      ]
     },
     {
       "id": "WBFT-012",
       "title": "쿼럼 계산 검증 — validator 6개, 1개 장애 시 합의 지속",
       "criterionSha256": "c56054f8654dbe1e4a7dc1d4f025a172530decbd5c4c378ba149ab23c0cd5415",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftQuorum6of6Tolerates1"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "verifyQuorumBoundary",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestQuorumBoundariesRejectWeakFaultEvidence",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestNativeQuorumFaultBoundaries",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
         }
       ],
       "observations": [
@@ -3906,24 +3981,44 @@
           "analysis": "n6 singlefaultadvance/restartcatchup"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Exact validator counts, healthy signer/status agreement, ten fault blocks with eligible quorum or all-survivor halt, managed restart identity and recovery now verified in current native profiles.",
       "remainingConditions": [
-        "fault상태10block 유지 및 exact5 commit signers 누락"
+        "Original staged migration/mainnet, Linux/legacy consumers, public DSL scenario and final Web acceptance remain separate; current Croissant0 fixture is not full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP6/Croissant0, 1 stopped, quorum5, healthy three-block signer/status agreement, ten fault blocks with surviving signers, original identities restarted and caught up to three recovery headers; unit negative controls, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/quorum-boundaries-evidence.json",
+          "sha256": "ebae60b9c3d00c6e9bc235d9c26e363c8e1532eff3bed9136d95f021f38101ae"
+        }
+      ]
     },
     {
       "id": "WBFT-013",
       "title": "쿼럼 계산 검증 — validator 6개, 2개 장애 시 합의 중단",
       "criterionSha256": "74dcc28ede20406e5d391183fb565e68c0aaac66a4d78ba65b298cb7d393b3fe",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_fault_test.go",
           "sha256": "ea9ca175cad3b75679083aac063e7953bdd6812df9e6988de691416a7fd041f8",
           "function": "TestE2E_WbftQuorum6of6Halts2"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "verifyQuorumBoundary",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestQuorumBoundariesRejectWeakFaultEvidence",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
+        },
+        {
+          "path": "internal/testengine/quorum_boundaries_native_test.go",
+          "function": "TestNativeQuorumFaultBoundaries",
+          "sha256": "f48939dc5ad750d12bae2a1b354383140c3731eab10a4197ab3560ab1a214496"
         }
       ],
       "observations": [
@@ -3931,12 +4026,18 @@
           "analysis": "n6 twofault halted20sec/restartadvance"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Exact validator counts, healthy signer/status agreement, ten fault blocks with eligible quorum or all-survivor halt, managed restart identity and recovery now verified in current native profiles.",
       "remainingConditions": [
-        "예전18연속pass는 현재binary/source의 인수가 아님; 원인미확정 이전flake해결로 표시 금지"
+        "Original staged migration/mainnet, Linux/legacy consumers, public DSL scenario and final Web acceptance remain separate; current Croissant0 fixture is not full87 acceptance.",
+        "Historical intermittent failure has no established cause; this fresh successful proof is not evidence that the old defect was fixed."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Current managed WBFT BP6/Croissant0, 2 stopped, quorum5, healthy three-block signer/status agreement, all remaining nodes unchanged for at least eight seconds after one-second settle, original identities restarted and caught up to three recovery headers; unit negative controls, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/quorum-boundaries-evidence.json",
+          "sha256": "ebae60b9c3d00c6e9bc235d9c26e363c8e1532eff3bed9136d95f021f38101ae"
+        }
+      ]
     },
     {
       "id": "GOV-001",

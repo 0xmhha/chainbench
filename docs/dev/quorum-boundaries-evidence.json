@@ -1,0 +1,1927 @@
+{
+  "scope": "Exact current managed WBFT Croissant0 quorum/fault profiles 7/1,7/3,3/1,6/1,6/2; original staged migration/mainnet/Linux/legacy/full87/final Web acceptance remains separate. Independent offline replay of retained actual RPC evidence, not a second native run.",
+  "originalAll87Complete": false,
+  "unitRed": "Presence/liveness-only baseline accepted deficient signer/quorum/count/halt/status evidence.",
+  "unitGreen": "Five positive profiles and eleven negative controls reject weakened quorum, signers, live count, status and all-survivor halt window.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "9a7259f6311d00d3685d5d26a7df5f5a2b319e76a39804ef958852103e9a0a49",
+    "sourceAfter": "9a7259f6311d00d3685d5d26a7df5f5a2b319e76a39804ef958852103e9a0a49",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeQuorumFaultBoundaries/WBFT-007",
+      "TestNativeQuorumFaultBoundaries/WBFT-008",
+      "TestNativeQuorumFaultBoundaries/WBFT-011",
+      "TestNativeQuorumFaultBoundaries/WBFT-012",
+      "TestNativeQuorumFaultBoundaries/WBFT-013",
+      "TestNativeQuorumFaultBoundaries"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-lia0i6sg",
+      "/private/tmp/cbui/txfail-mjx8q1ul",
+      "/private/tmp/cbui/txfail-p6xpdo74",
+      "/private/tmp/cbui/txfail-q323_5j9",
+      "/private/tmp/cbui/txfail-z5cd4dpz"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-lia0i6sg/reports/quorum-boundary-proof.json",
+      "/private/tmp/cbui/txfail-mjx8q1ul/reports/quorum-boundary-proof.json",
+      "/private/tmp/cbui/txfail-p6xpdo74/reports/quorum-boundary-proof.json",
+      "/private/tmp/cbui/txfail-q323_5j9/reports/quorum-boundary-proof.json",
+      "/private/tmp/cbui/txfail-z5cd4dpz/reports/quorum-boundary-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-lia0i6sg": [],
+      "/private/tmp/cbui/txfail-mjx8q1ul": [],
+      "/private/tmp/cbui/txfail-p6xpdo74": [],
+      "/private/tmp/cbui/txfail-q323_5j9": [],
+      "/private/tmp/cbui/txfail-z5cd4dpz": []
+    },
+    "elapsedSeconds": 254.555,
+    "summary": {
+      "path": "/private/tmp/chainbench-quorum-boundaries-native-summary.json",
+      "sha256": "a90078189d55375b8eb6c0d7e958ddd54cb8eb7ea92f33c5d27db1578a89e881",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014320818960060
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-quorum-boundaries-native-native.jsonl",
+      "sha256": "49d6753b1506add3a5a5be7e43c31962d99bc7bfb8785ceb2b533241e1fd8216",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014320360056263
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-quorum-boundaries-native-start.json",
+      "sha256": "cf8af911cbb7dc0183ebd5468f52c27aa61eb626889e09ddf20f23d1c39ca766",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014063335002961
+    }
+  },
+  "profiles": [
+    {
+      "criterion": "WBFT-011",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-lia0i6sg/reports/quorum-boundary-proof.json",
+        "sha256": "a97e847105e973c13ae090db61eca9ebdad9c0a9c5fcf9dbb18fc17c184a6d3f",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792014187269227555
+      },
+      "quorum": {
+        "N": 3,
+        "Faults": 1,
+        "Quorum": 3,
+        "LiveCount": 2,
+        "Validators": [
+          "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+          "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+          "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+        ],
+        "Stopped": [
+          "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+        ],
+        "Healthy": [
+          {
+            "Number": 8,
+            "Hash": "0xe4155ad4f209d5a841a57c4692951be22ef2cdf9b9f5529e8113398096d5568a",
+            "ParentHash": "0x4f8d0fcd7046e5b746ea0dce22fb21b37ed5f28c42e1cd1068202d6bc6996699",
+            "Author": "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          },
+          {
+            "Number": 9,
+            "Hash": "0xf877a40460393abc3481c7105f8cd6341f0db7bb6500cafce6871242c20a7b61",
+            "ParentHash": "0xe4155ad4f209d5a841a57c4692951be22ef2cdf9b9f5529e8113398096d5568a",
+            "Author": "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          },
+          {
+            "Number": 10,
+            "Hash": "0x866b0822d828fa0b13587c2720ea152122d449dbb653c48ee64cd8491dc9992f",
+            "ParentHash": "0xf877a40460393abc3481c7105f8cd6341f0db7bb6500cafce6871242c20a7b61",
+            "Author": "0x8149738809d8b1e6ff844c463ba7752d6ff272c4",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          }
+        ],
+        "Fault": null,
+        "Recovery": [
+          {
+            "Number": 11,
+            "Hash": "0x73f67dd84f0423385a856d3a567d15a8a07fcfe19b08232ada738fa8cf3f0550",
+            "ParentHash": "0x866b0822d828fa0b13587c2720ea152122d449dbb653c48ee64cd8491dc9992f",
+            "Author": "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          },
+          {
+            "Number": 12,
+            "Hash": "0x8745cf1bd4bf6a6f212e930fc700e7e64672abdd67a0304d3e3daddd7030e47b",
+            "ParentHash": "0x73f67dd84f0423385a856d3a567d15a8a07fcfe19b08232ada738fa8cf3f0550",
+            "Author": "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          },
+          {
+            "Number": 13,
+            "Hash": "0x33eb90edf398b4209d30ca6235ec6ec3e2a85972045f5330e297ffb89b241ac1",
+            "ParentHash": "0x8745cf1bd4bf6a6f212e930fc700e7e64672abdd67a0304d3e3daddd7030e47b",
+            "Author": "0x8149738809d8b1e6ff844c463ba7752d6ff272c4",
+            "Committers": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ],
+            "Validators": [
+              "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+              "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+              "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+            ]
+          }
+        ],
+        "HaltStart": 10,
+        "HaltEnd": 10,
+        "HaltMillis": 8001,
+        "HealthyStatusCommitted": {
+          "0x8149738809d8b1e6ff844c463ba7752d6ff272c4": 3,
+          "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38": 3,
+          "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30": 3
+        },
+        "HaltHeads": {
+          "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38": [
+            10,
+            10
+          ],
+          "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30": [
+            10,
+            10
+          ]
+        }
+      },
+      "oldPIDs": {
+        "1": 82752,
+        "2": 82753,
+        "3": 82754
+      },
+      "newPIDs": {
+        "3": 83825
+      },
+      "nodeAddresses": {
+        "1": "0xc7d64668bcb96a009ca36a30600ad09a17dfbf38",
+        "2": "0xd2079b73bcb555007017d7f701b3b3c1f8e99e30",
+        "3": "0x8149738809d8b1e6ff844c463ba7752d6ff272c4"
+      },
+      "recoveryTarget": 13,
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/w/genesis.json",
+          "sha256": "f394a05b844159a44a09fc9c9d2f789f75683c33b81beb12c827d8b4a21c964e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014131550438014
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/w/node1/genesis.json",
+          "sha256": "f394a05b844159a44a09fc9c9d2f789f75683c33b81beb12c827d8b4a21c964e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014131567999018
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/w/node3/genesis.json",
+          "sha256": "f394a05b844159a44a09fc9c9d2f789f75683c33b81beb12c827d8b4a21c964e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014132193857681
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/w/node2/genesis.json",
+          "sha256": "f394a05b844159a44a09fc9c9d2f789f75683c33b81beb12c827d8b4a21c964e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014131903787666
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/w/runs/20261014-214212/genesis.json",
+          "sha256": "f394a05b844159a44a09fc9c9d2f789f75683c33b81beb12c827d8b4a21c964e",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014132542408415
+        }
+      ],
+      "runtime": {
+        "path": "/private/tmp/cbui/txfail-lia0i6sg",
+        "active": false,
+        "remainingDatabases": 0,
+        "retainedFiles": 174,
+        "inventory": {
+          "path": "/private/tmp/cbui/txfail-lia0i6sg/reports/quorum-boundaries-inventory.json",
+          "sha256": "645d89674dda90c3d9ec3ca9fe1004edb77b9cae33298340f7700636c391a741",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014460001133207
+        }
+      }
+    },
+    {
+      "criterion": "WBFT-013",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-mjx8q1ul/reports/quorum-boundary-proof.json",
+        "sha256": "d06ab55e2e3d453cb9c2b50b91212998bd27cd1e695deb3098536157b6fafe74",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792014317022688614
+      },
+      "quorum": {
+        "N": 6,
+        "Faults": 2,
+        "Quorum": 5,
+        "LiveCount": 4,
+        "Validators": [
+          "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+          "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+          "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+          "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+          "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+          "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+        ],
+        "Stopped": [
+          "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+          "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+        ],
+        "Healthy": [
+          {
+            "Number": 8,
+            "Hash": "0x9a75e75711e3c889fbff05795f57a1c11b08505028435df097e0d856ac956a6b",
+            "ParentHash": "0xdd4e8525047f985c4d7625ba9b1057586a149376a5c218e33466fabb183810db",
+            "Author": "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          },
+          {
+            "Number": 9,
+            "Hash": "0x0512ebf9f156ad03d44019bd64353653564ad5ad1a038e26938a9305a5636baa",
+            "ParentHash": "0x9a75e75711e3c889fbff05795f57a1c11b08505028435df097e0d856ac956a6b",
+            "Author": "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          },
+          {
+            "Number": 10,
+            "Hash": "0xec130434b6e0d5b987450c16a4b8771fd95e9e18a80b3594e19d5940d05253a8",
+            "ParentHash": "0x0512ebf9f156ad03d44019bd64353653564ad5ad1a038e26938a9305a5636baa",
+            "Author": "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          }
+        ],
+        "Fault": null,
+        "Recovery": [
+          {
+            "Number": 11,
+            "Hash": "0xff65b68563df7d7188aa5f6638e2da233d39ec3525d4463b94fb12136fd49ae0",
+            "ParentHash": "0xec130434b6e0d5b987450c16a4b8771fd95e9e18a80b3594e19d5940d05253a8",
+            "Author": "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          },
+          {
+            "Number": 12,
+            "Hash": "0x8fd7d395faace8f1e5fedc442bf0c47bb39e006ef922a46125f5e23cfdc1cb32",
+            "ParentHash": "0xff65b68563df7d7188aa5f6638e2da233d39ec3525d4463b94fb12136fd49ae0",
+            "Author": "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          },
+          {
+            "Number": 13,
+            "Hash": "0x343912f45b1558fbd4f8523570f241c22374500d2afb128006f3b7d49bc22f7f",
+            "ParentHash": "0x8fd7d395faace8f1e5fedc442bf0c47bb39e006ef922a46125f5e23cfdc1cb32",
+            "Author": "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+            "Committers": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a"
+            ],
+            "Validators": [
+              "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+              "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+              "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+              "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+              "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+              "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+            ]
+          }
+        ],
+        "HaltStart": 10,
+        "HaltEnd": 10,
+        "HaltMillis": 8002,
+        "HealthyStatusCommitted": {
+          "0x0224d6606062d4861b0abb49920815c3cfbfa8f8": 3,
+          "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a": 1,
+          "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2": 3,
+          "0xc79a8b668ddba90fca397b04b34ad698841e8ec6": 3,
+          "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf": 2,
+          "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00": 3
+        },
+        "HaltHeads": {
+          "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2": [
+            10,
+            10
+          ],
+          "0xc79a8b668ddba90fca397b04b34ad698841e8ec6": [
+            10,
+            10
+          ],
+          "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf": [
+            10,
+            10
+          ],
+          "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00": [
+            10,
+            10
+          ]
+        }
+      },
+      "oldPIDs": {
+        "1": 85748,
+        "2": 85749,
+        "3": 85750,
+        "4": 85751,
+        "5": 85752,
+        "6": 85753
+      },
+      "newPIDs": {
+        "5": 86479,
+        "6": 86480
+      },
+      "nodeAddresses": {
+        "1": "0x9f26f112840f8e5179f9e95d6566b357c1ea83a2",
+        "2": "0xceaef9554aa3daa5e3ab5214ca7a23454e91edbf",
+        "3": "0xc79a8b668ddba90fca397b04b34ad698841e8ec6",
+        "4": "0xd5ee959551067cd59fe7838ee8ae50ea0ec77c00",
+        "5": "0x61d1ca22cdb8f5837b47d628cb0ca5760cfb0a0a",
+        "6": "0x0224d6606062d4861b0abb49920815c3cfbfa8f8"
+      },
+      "recoveryTarget": 13,
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014244454727422
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node6/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014245903969329
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node1/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014244480329427
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node4/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014245345676054
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node3/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014245076247002
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node2/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014244809664200
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/node5/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014245617712398
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/w/runs/20261014-214406/genesis.json",
+          "sha256": "0c52b9d481d9f9b68a0ab99cc35007be1a9486bc5a33485912ffcbe51974d571",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014246247954188
+        }
+      ],
+      "runtime": {
+        "path": "/private/tmp/cbui/txfail-mjx8q1ul",
+        "active": false,
+        "remainingDatabases": 0,
+        "retainedFiles": 320,
+        "inventory": {
+          "path": "/private/tmp/cbui/txfail-mjx8q1ul/reports/quorum-boundaries-inventory.json",
+          "sha256": "5d7a8cfc6400c4421847dd565628c34a22077e43186c35c3daa8df68ff5ebfd1",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014460068505053
+        }
+      }
+    },
+    {
+      "criterion": "WBFT-008",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-p6xpdo74/reports/quorum-boundary-proof.json",
+        "sha256": "103cd472368b5538086d1f0398bbe0f3bb2de2424cabc3e9a61a37f1ca49acb8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792014127104021525
+      },
+      "quorum": {
+        "N": 7,
+        "Faults": 3,
+        "Quorum": 5,
+        "LiveCount": 4,
+        "Validators": [
+          "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+          "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+          "0xc5ce441db7cf654533876d693742f57ac23391b5",
+          "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+          "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+          "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+          "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+        ],
+        "Stopped": [
+          "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+          "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+          "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+        ],
+        "Healthy": [
+          {
+            "Number": 8,
+            "Hash": "0xeb2308d53f2d24805429d4976dd1688004911bfb957c16b2eee933023efebb2f",
+            "ParentHash": "0x0af41b38647b042cc86b2984c654d6dc6d3c17f51c313b7f61852b829def250d",
+            "Author": "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+            "Committers": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          },
+          {
+            "Number": 9,
+            "Hash": "0x99a900af98ab05d840b82165d77da487838b4b38d6f49615f8ab653c9af064de",
+            "ParentHash": "0xeb2308d53f2d24805429d4976dd1688004911bfb957c16b2eee933023efebb2f",
+            "Author": "0xc5ce441db7cf654533876d693742f57ac23391b5",
+            "Committers": [
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          },
+          {
+            "Number": 10,
+            "Hash": "0x3fd5779cd05f96fcace5988608c3fad624dd58dff31348ee6a42860fe328ed0c",
+            "ParentHash": "0x99a900af98ab05d840b82165d77da487838b4b38d6f49615f8ab653c9af064de",
+            "Author": "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+            "Committers": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          }
+        ],
+        "Fault": null,
+        "Recovery": [
+          {
+            "Number": 11,
+            "Hash": "0xc235292304d0d4cc5686c24f0d3735a1379f006dadaafa10b9a33f0cf32cd77f",
+            "ParentHash": "0x3fd5779cd05f96fcace5988608c3fad624dd58dff31348ee6a42860fe328ed0c",
+            "Author": "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+            "Committers": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          },
+          {
+            "Number": 12,
+            "Hash": "0xa546b97a7e707c36616e7c408bd885ede25e3a79e529656bd5f802d6ceeb624e",
+            "ParentHash": "0xc235292304d0d4cc5686c24f0d3735a1379f006dadaafa10b9a33f0cf32cd77f",
+            "Author": "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+            "Committers": [
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          },
+          {
+            "Number": 13,
+            "Hash": "0xe0550651d5cf5bdfa5d62aefd3d395c73baed122a8bbdbb9f2fc36f67e2b9e39",
+            "ParentHash": "0xa546b97a7e707c36616e7c408bd885ede25e3a79e529656bd5f802d6ceeb624e",
+            "Author": "0xc5ce441db7cf654533876d693742f57ac23391b5",
+            "Committers": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ],
+            "Validators": [
+              "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+              "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+              "0xc5ce441db7cf654533876d693742f57ac23391b5",
+              "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+              "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+              "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+              "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+            ]
+          }
+        ],
+        "HaltStart": 10,
+        "HaltEnd": 10,
+        "HaltMillis": 8002,
+        "HealthyStatusCommitted": {
+          "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb": 3,
+          "0x146b82d43bc5d43d5639a769afd183782f20f3bd": 2,
+          "0x1649d192cae7f8003c91f200a3bc053df802c6a6": 2,
+          "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2": 1,
+          "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926": 2,
+          "0xc5ce441db7cf654533876d693742f57ac23391b5": 3,
+          "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451": 2
+        },
+        "HaltHeads": {
+          "0x146b82d43bc5d43d5639a769afd183782f20f3bd": [
+            10,
+            10
+          ],
+          "0x1649d192cae7f8003c91f200a3bc053df802c6a6": [
+            10,
+            10
+          ],
+          "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926": [
+            10,
+            10
+          ],
+          "0xc5ce441db7cf654533876d693742f57ac23391b5": [
+            10,
+            10
+          ]
+        }
+      },
+      "oldPIDs": {
+        "1": 81665,
+        "2": 81667,
+        "3": 81672,
+        "4": 81674,
+        "5": 81675,
+        "6": 81676,
+        "7": 81680
+      },
+      "newPIDs": {
+        "5": 82582,
+        "6": 82595,
+        "7": 82597
+      },
+      "nodeAddresses": {
+        "1": "0x8f87c1a2f4060dbb2740ce3ae3872dc31b2b8926",
+        "2": "0x146b82d43bc5d43d5639a769afd183782f20f3bd",
+        "3": "0xc5ce441db7cf654533876d693742f57ac23391b5",
+        "4": "0x1649d192cae7f8003c91f200a3bc053df802c6a6",
+        "5": "0xca5ab0ed32c48441acf7e88e5ca61d8c10cba451",
+        "6": "0x6ff4b2b7c81ddee072394554b9da0f421f0389d2",
+        "7": "0x00b0e7f16dcb6e9f1c3822ca4f88d74def951cfb"
+      },
+      "recoveryTarget": 13,
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014101725138257
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node7/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014103917161559
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node6/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014103612186124
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node1/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014101759090389
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node4/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014102827936180
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node3/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014102449208565
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node2/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014102130653170
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/node5/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014103254049930
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/w/runs/20261014-214144/genesis.json",
+          "sha256": "06e679cebf64930a11ee8bdb58c97cb108c754f3e37a26ff9dbd93044a385752",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014104416425156
+        }
+      ],
+      "runtime": {
+        "path": "/private/tmp/cbui/txfail-p6xpdo74",
+        "active": false,
+        "remainingDatabases": 0,
+        "retainedFiles": 370,
+        "inventory": {
+          "path": "/private/tmp/cbui/txfail-p6xpdo74/reports/quorum-boundaries-inventory.json",
+          "sha256": "15a44d9d79335bc8f50cbd4aa136977defecc9d494ca586d5fe00cfa288a16d3",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014460187596286
+        }
+      }
+    },
+    {
+      "criterion": "WBFT-012",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-q323_5j9/reports/quorum-boundary-proof.json",
+        "sha256": "f348be2fd9f27d24c6e4cd48f15064ba5ee99265e5913dc21bc2432b709e5faf",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792014240140300209
+      },
+      "quorum": {
+        "N": 6,
+        "Faults": 1,
+        "Quorum": 5,
+        "LiveCount": 5,
+        "Validators": [
+          "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+          "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+          "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+          "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+          "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+          "0x11940894419450b91f2694b5d2db72879e4fe94e"
+        ],
+        "Stopped": [
+          "0x11940894419450b91f2694b5d2db72879e4fe94e"
+        ],
+        "Healthy": [
+          {
+            "Number": 8,
+            "Hash": "0xf556c4561d484e3031c881c0ea005ee7a25ef2d2b0b2a647085cec543afdf21b",
+            "ParentHash": "0x7fa4e8f68f79cb81eba8d1ed2639208d44b9a6b45e35adf2a368faa92b549bb0",
+            "Author": "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 9,
+            "Hash": "0x55bba67329f35f0624a9c8d2e709721e9050ab9f6002e77f6cb5c00bdfcc5cfe",
+            "ParentHash": "0xf556c4561d484e3031c881c0ea005ee7a25ef2d2b0b2a647085cec543afdf21b",
+            "Author": "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+            "Committers": [
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 10,
+            "Hash": "0xa604ae49a8fa8f85af208ad1c134404826a3a16cbe250d0a1600d75636e05b52",
+            "ParentHash": "0x55bba67329f35f0624a9c8d2e709721e9050ab9f6002e77f6cb5c00bdfcc5cfe",
+            "Author": "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+            "Committers": [
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          }
+        ],
+        "Fault": [
+          {
+            "Number": 11,
+            "Hash": "0x425ec88ddcda940d53ee2008852d9b4f716e3df3d37a2d5eaa99028039745833",
+            "ParentHash": "0xa604ae49a8fa8f85af208ad1c134404826a3a16cbe250d0a1600d75636e05b52",
+            "Author": "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 12,
+            "Hash": "0xe6aebbc6c7e71f8c6d5100632551b9b3dfa0f2e1205fb46f4baee0eec34f5208",
+            "ParentHash": "0x425ec88ddcda940d53ee2008852d9b4f716e3df3d37a2d5eaa99028039745833",
+            "Author": "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 13,
+            "Hash": "0x07ec661ddd7114fb7371f0cab9d98f0c263c999a54684d091e8d6a9d8330058c",
+            "ParentHash": "0xe6aebbc6c7e71f8c6d5100632551b9b3dfa0f2e1205fb46f4baee0eec34f5208",
+            "Author": "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 14,
+            "Hash": "0xab95cbf2fe39652157499e3d17afb4aecec83e2bffec93b421564fba2b71e2d3",
+            "ParentHash": "0x07ec661ddd7114fb7371f0cab9d98f0c263c999a54684d091e8d6a9d8330058c",
+            "Author": "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 15,
+            "Hash": "0x3a9abbd9cfd279e356f6c91a1b11f670d4a7f516f47f11b91ffad7b16a83a201",
+            "ParentHash": "0xab95cbf2fe39652157499e3d17afb4aecec83e2bffec93b421564fba2b71e2d3",
+            "Author": "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 16,
+            "Hash": "0xd1e96ebbc44d1c3fd0ccf282e952f75f26dbd6c28d1a7ff5f86d39b0a7b2ce2d",
+            "ParentHash": "0x3a9abbd9cfd279e356f6c91a1b11f670d4a7f516f47f11b91ffad7b16a83a201",
+            "Author": "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 17,
+            "Hash": "0xd23b2812b81aeedea3c69e2bb5e8fc2971e1ae4c1d4d9b6d7709451546833f29",
+            "ParentHash": "0xd1e96ebbc44d1c3fd0ccf282e952f75f26dbd6c28d1a7ff5f86d39b0a7b2ce2d",
+            "Author": "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 18,
+            "Hash": "0x18e70e1c9e4f3df7ba8301b88371c40ec9974e4e69b4416bd0cd0c4b211a01b1",
+            "ParentHash": "0xd23b2812b81aeedea3c69e2bb5e8fc2971e1ae4c1d4d9b6d7709451546833f29",
+            "Author": "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 19,
+            "Hash": "0x92999aa177c4c090ea6b4cba6e683b3c6fd453fa96641b843ba4caed0a615ac6",
+            "ParentHash": "0x18e70e1c9e4f3df7ba8301b88371c40ec9974e4e69b4416bd0cd0c4b211a01b1",
+            "Author": "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 20,
+            "Hash": "0xb889bdb64a41b3095ca66f9b2f0396ed84e6d5f54e4cfae4e0808eecffd75e9a",
+            "ParentHash": "0x92999aa177c4c090ea6b4cba6e683b3c6fd453fa96641b843ba4caed0a615ac6",
+            "Author": "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          }
+        ],
+        "Recovery": [
+          {
+            "Number": 21,
+            "Hash": "0x746d2faa3a6828485d312e519fc23a46a11ca604d8c4688f25f7ade02193019c",
+            "ParentHash": "0xb889bdb64a41b3095ca66f9b2f0396ed84e6d5f54e4cfae4e0808eecffd75e9a",
+            "Author": "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+            "Committers": [
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 22,
+            "Hash": "0x20c396424c959cf03951879c6bb862831bfc029c0d7ffbec92f0ce1030da7d76",
+            "ParentHash": "0x746d2faa3a6828485d312e519fc23a46a11ca604d8c4688f25f7ade02193019c",
+            "Author": "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+            "Committers": [
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          },
+          {
+            "Number": 23,
+            "Hash": "0xb11530c3c9865439da0e57b1fff77763200cd2941e141bc6549a9545761ddaa1",
+            "ParentHash": "0x20c396424c959cf03951879c6bb862831bfc029c0d7ffbec92f0ce1030da7d76",
+            "Author": "0x11940894419450b91f2694b5d2db72879e4fe94e",
+            "Committers": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ],
+            "Validators": [
+              "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+              "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+              "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+              "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+              "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+              "0x11940894419450b91f2694b5d2db72879e4fe94e"
+            ]
+          }
+        ],
+        "HaltStart": 0,
+        "HaltEnd": 0,
+        "HaltMillis": 0,
+        "HealthyStatusCommitted": {
+          "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4": 3,
+          "0x11940894419450b91f2694b5d2db72879e4fe94e": 3,
+          "0x38ad7361198a4857c14df4a906974bf9b03f71df": 3,
+          "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3": 2,
+          "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f": 1,
+          "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b": 3
+        },
+        "HaltHeads": null
+      },
+      "oldPIDs": {
+        "1": 84251,
+        "2": 84252,
+        "3": 84253,
+        "4": 84254,
+        "5": 84255,
+        "6": 84256
+      },
+      "newPIDs": {
+        "6": 85555
+      },
+      "nodeAddresses": {
+        "1": "0x9b3c0ac385282bd3f5593f8d5524d799ff803e3f",
+        "2": "0x0d37b3e983dad9ae4f2f8cd01d1124cd5b0734e4",
+        "3": "0xa73e60d31d2003ebc59b0fcd82e2041dff967c7b",
+        "4": "0x487b5d92484c21bfa1cdf9b7aee2e15cc06a69d3",
+        "5": "0x38ad7361198a4857c14df4a906974bf9b03f71df",
+        "6": "0x11940894419450b91f2694b5d2db72879e4fe94e"
+      },
+      "recoveryTarget": 23,
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014191465713788
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node6/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014192947045075
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node1/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014191493023668
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node4/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014192371194880
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node3/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014192100077369
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node2/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014191815784647
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/node5/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014192642470933
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/w/runs/20261014-214313/genesis.json",
+          "sha256": "cd18e951e36bbb82c813f7d84eba64522c3c17d5dae71cdcbb8d857c5407d0ef",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014193312028771
+        }
+      ],
+      "runtime": {
+        "path": "/private/tmp/cbui/txfail-q323_5j9",
+        "active": false,
+        "remainingDatabases": 0,
+        "retainedFiles": 318,
+        "inventory": {
+          "path": "/private/tmp/cbui/txfail-q323_5j9/reports/quorum-boundaries-inventory.json",
+          "sha256": "9fbfff5d880129de173d13788db80c7b13795952366b0de579ab0614f912470a",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014460259983223
+        }
+      }
+    },
+    {
+      "criterion": "WBFT-007",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-z5cd4dpz/reports/quorum-boundary-proof.json",
+        "sha256": "ceb47e5fb8c96e9854c8fd9411c932cf084b31ce1263b96cb25b838409d6bc6c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792014096236578524
+      },
+      "quorum": {
+        "N": 7,
+        "Faults": 1,
+        "Quorum": 5,
+        "LiveCount": 6,
+        "Validators": [
+          "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+          "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+          "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+          "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+          "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+          "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+          "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+        ],
+        "Stopped": [
+          "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+        ],
+        "Healthy": [
+          {
+            "Number": 8,
+            "Hash": "0x1ad3f8052b7ac7259d50e9915966305bb9698fd52906f1b91fd3f997a288e732",
+            "ParentHash": "0x3b915e3d5c5260885290285ddda92b38b990541a62005049f6d2d5beec19c6e8",
+            "Author": "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+            "Committers": [
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 9,
+            "Hash": "0xf3cf53b616d156f7d33c4c90276d1b861bbe177a924180140a6c980b9d602ee6",
+            "ParentHash": "0x1ad3f8052b7ac7259d50e9915966305bb9698fd52906f1b91fd3f997a288e732",
+            "Author": "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+            "Committers": [
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 10,
+            "Hash": "0x779b4b51e183f70da57f97d1a8690d82cbfd5df54dda7c15bdfb00f5d3a4d11c",
+            "ParentHash": "0xf3cf53b616d156f7d33c4c90276d1b861bbe177a924180140a6c980b9d602ee6",
+            "Author": "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          }
+        ],
+        "Fault": [
+          {
+            "Number": 12,
+            "Hash": "0xa2883a3afb58ab02302dcc4ca8465158f4593b94a1b646b6cf159752ffde9c09",
+            "ParentHash": "0x84e972decc3e0e373972f07d893fa2514b1d292b44ceebf859c1108ffbc381cd",
+            "Author": "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 13,
+            "Hash": "0x0ac7c80078e74f02563a8eb1e0bc73eb1d6b3f3710779dff032e4e00607c18aa",
+            "ParentHash": "0xa2883a3afb58ab02302dcc4ca8465158f4593b94a1b646b6cf159752ffde9c09",
+            "Author": "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 14,
+            "Hash": "0x768c50a302ed1a478cf65d35424a401a44b95c823921dededea4ebe29c973af8",
+            "ParentHash": "0x0ac7c80078e74f02563a8eb1e0bc73eb1d6b3f3710779dff032e4e00607c18aa",
+            "Author": "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 15,
+            "Hash": "0x1d532035fafa7c5dbecbfb8c7d35bf7aeb764d249d22faa0539c4ef94aa48bb9",
+            "ParentHash": "0x768c50a302ed1a478cf65d35424a401a44b95c823921dededea4ebe29c973af8",
+            "Author": "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 16,
+            "Hash": "0xe353b32aaa576e69652b895bbc74a2c1369ae8d08e6471f53acbbaaef4c6acd9",
+            "ParentHash": "0x1d532035fafa7c5dbecbfb8c7d35bf7aeb764d249d22faa0539c4ef94aa48bb9",
+            "Author": "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+            "Committers": [
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 17,
+            "Hash": "0x2d6c62479e7f3826983487d0a7174e4aae75a2ba2e9e0229adbb7aabc925a4bd",
+            "ParentHash": "0xe353b32aaa576e69652b895bbc74a2c1369ae8d08e6471f53acbbaaef4c6acd9",
+            "Author": "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 18,
+            "Hash": "0x01bcb8ca0136bc64c19adb24bb93236c06acc27e55a87d0450ff60ba41ea3313",
+            "ParentHash": "0x2d6c62479e7f3826983487d0a7174e4aae75a2ba2e9e0229adbb7aabc925a4bd",
+            "Author": "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 19,
+            "Hash": "0x67dc6559d9d710de5e0e94a659a073bdb1f1e9bbae7e85b8c58699b2ac7b48a0",
+            "ParentHash": "0x01bcb8ca0136bc64c19adb24bb93236c06acc27e55a87d0450ff60ba41ea3313",
+            "Author": "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 20,
+            "Hash": "0xb9c4844380556699fb6ce5d851dac508f632862242907d37a13b0255d47472d6",
+            "ParentHash": "0x67dc6559d9d710de5e0e94a659a073bdb1f1e9bbae7e85b8c58699b2ac7b48a0",
+            "Author": "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 21,
+            "Hash": "0x02b4b4a31fdacb9819071102a52ab2fb6845d992b1ef7b523cdf8acd9ab886d7",
+            "ParentHash": "0xb9c4844380556699fb6ce5d851dac508f632862242907d37a13b0255d47472d6",
+            "Author": "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          }
+        ],
+        "Recovery": [
+          {
+            "Number": 22,
+            "Hash": "0x7e12091166621a27d3f0ed979844149c06372f2218da2e6a1b9971b5fbe65c2e",
+            "ParentHash": "0x02b4b4a31fdacb9819071102a52ab2fb6845d992b1ef7b523cdf8acd9ab886d7",
+            "Author": "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 23,
+            "Hash": "0x58c49a6c1dfce1ae4a84ec1b98096e88e0d5abe8c33bd6228f9d48fc8ca4ad19",
+            "ParentHash": "0x7e12091166621a27d3f0ed979844149c06372f2218da2e6a1b9971b5fbe65c2e",
+            "Author": "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          },
+          {
+            "Number": 24,
+            "Hash": "0x53c54c17eced73c7c314cb78bb82fb038ce06bee34661000e03fc7a9172b91ee",
+            "ParentHash": "0x58c49a6c1dfce1ae4a84ec1b98096e88e0d5abe8c33bd6228f9d48fc8ca4ad19",
+            "Author": "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+            "Committers": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ],
+            "Validators": [
+              "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+              "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+              "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+              "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+              "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+              "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+              "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+            ]
+          }
+        ],
+        "HaltStart": 0,
+        "HaltEnd": 0,
+        "HaltMillis": 0,
+        "HealthyStatusCommitted": {
+          "0x2a9127682b41f0c055735a46f75520bf3a6234c2": 2,
+          "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d": 2,
+          "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288": 3,
+          "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524": 1,
+          "0x8f06c7641cc2916f698eab0803f362abc8fcd99d": 2,
+          "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a": 3,
+          "0xce490108f816fbe5da3b43450b13122bea97a2a5": 2
+        },
+        "HaltHeads": null
+      },
+      "oldPIDs": {
+        "1": 80018,
+        "2": 80019,
+        "3": 80020,
+        "4": 80021,
+        "5": 80022,
+        "6": 80023,
+        "7": 80024
+      },
+      "newPIDs": {
+        "7": 80577
+      },
+      "nodeAddresses": {
+        "1": "0x62afbbe5e20a7cc1842d2189a091b8c96e05c524",
+        "2": "0x8f06c7641cc2916f698eab0803f362abc8fcd99d",
+        "3": "0x53f42c7e6dcbdd6230c92f3fc3bccf70102eb07d",
+        "4": "0xce490108f816fbe5da3b43450b13122bea97a2a5",
+        "5": "0x9073738ee6c4eb5e078f689f150faa023a4d4b1a",
+        "6": "0x2a9127682b41f0c055735a46f75520bf3a6234c2",
+        "7": "0x5ed46602cd03d586c3a5b3feba92ea828c9cd288"
+      },
+      "recoveryTarget": 24,
+      "genesis": [
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014068967593181
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node7/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014070956239109
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node6/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014070636578505
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node1/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014068997107645
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node4/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014070061298685
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node3/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014069738290164
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node2/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014069429682896
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/node5/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014070335768822
+        },
+        {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/w/runs/20261014-214111/genesis.json",
+          "sha256": "9b7d1e21c82df73a46049b53032353c1fe9b26e23a4ebd11cd343187063fa8f7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014071334933974
+        }
+      ],
+      "runtime": {
+        "path": "/private/tmp/cbui/txfail-z5cd4dpz",
+        "active": false,
+        "remainingDatabases": 0,
+        "retainedFiles": 366,
+        "inventory": {
+          "path": "/private/tmp/cbui/txfail-z5cd4dpz/reports/quorum-boundaries-inventory.json",
+          "sha256": "41ddac9a7e3b82120633994625d9977ca032c65a9b4b73473f1a0b866bd755db",
+          "mode": "0o600",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1792014460367888126
+        }
+      }
+    }
+  ],
+  "retainedFiles": 1548,
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-quorum-boundaries-publication.json",
+    "sha256": "2cac6b086303156d645ce573e3438aeb7a2f9792b166d59ffb31e42fc9045ccd",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792013953968793824
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-quorum-boundaries-red.log",
+      "sha256": "541fcf32dddf7b1d9ed74f117d4045c8eb02c19394c3b41d5e611f7fd6f4709c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013725486145570
+    },
+    {
+      "path": "/private/tmp/chainbench-quorum-boundaries-green-fixed.log",
+      "sha256": "1abd0fa5817903ecf12493cb2f31a48cb0d6ca61a6e92ed5275a351aac19aa0b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013807104164146
+    },
+    {
+      "path": "/private/tmp/chainbench-quorum-boundaries-related-race.log",
+      "sha256": "48a777e9d1e28d84b70110eac15cb69df4292c5b33329ae3d732806502a74391",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792013896770516495
+    },
+    {
+      "path": "/private/tmp/chainbench-quorum-boundaries-check.log",
+      "sha256": "9f040fe3cf54c892ed24d4f08d4f975ed6f73d29a1c72df97be77f45c7ab7ca8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014046626889254
+    }
+  ],
+  "binaryProvenance": {
+    "path": "/private/tmp/chainbench-head-native/provenance.json",
+    "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1791888562536028657
+  }
+}
