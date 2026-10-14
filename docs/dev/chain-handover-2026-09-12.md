@@ -374,6 +374,45 @@ chainbench 는 **클라이언트 쪽에서 태그를 풀어** 우회하고 있�
 
 > 2026-09-24 추가. **W1 과 같은 함수의 이웃한 줄이다** — 함께 읽기를 권한다.
 
+### 2026-10-14 최신 원격 HEAD 재현 — 미해결
+
+go-wemix 원격 HEAD `4538a9f5f2e4bcd2cb9515f8c466fabc24f73987`를 별도 임시 checkout에
+받아 Go 1.25.2로 빌드했다. 기존 로컬 HEAD `1350376a680489298b3203a44d9ebddb7747f9cc`와
+다르다. 기존 외부 checkout과 체인 코드는 수정하지 않았다. 소스 2,056개 파일의 인벤토리,
+깨끗한 tracked 상태, 바이너리의 VCS revision과 SHA-256을 기록했다.
+구체적인 입력·해시·원본 증명은 [W3 증거](wemix-w3-evidence.json)에 있다.
+
+`TestWemixW3PartialGovernanceReproductionE2E`는 실제 `run` 핸드오프로 WEMIX 생산자가
+19번 블록까지 만든 이력을 얻고, 별도 full-sync 관측 노드에 Registry 생성 블록까지의
+prefix를 import한다. 이번 두 성공 실행에서는 Registry가 3번 블록에 생겼다. 같은 높이의
+블록 해시가 생산자와 일치하고, `GovernanceContract` 주소 조회는 정확히
+`address should be non-zero`로 거절된다. 뒤의 블록들을 두 번 import하면 실제 seal verifier가
+`unauthorized block`을 반환하고 관측 노드의 head는 3에 머문다.
+
+관측 노드는 생산자와 다른 P2P 키로 실제 피어에 연결한다. 2초 간격 10회 head·peer 수를
+기록하고, downloader의 `Downloaded item processing failed`와
+`Synchronisation failed, dropping peer` **각 로그에** `unauthorized block`이 있어야 통과한다.
+최종 실행은 4번 블록을 거절했다. 빈·잘못된 peer 수, 수동 import 거절만 있는 로그,
+동기화 timeout과 별도 거절 로그가 섞인 경우를 RED→GREEN으로 검사했다.
+
+최종 race 실행은 90.32초, skip 0건으로 통과했다. 실행 중 저장소 소스 지문은 바뀌지 않았다.
+준비 오류로 실패한 첫 실행도 보존했다. 세 실행 모두 owned 프로세스와 열린 파일이 없는 것을
+확인했고 종료 DB는 0개다. 설정·원본 블록 export·로그·세션 등 746개 파일의
+내용 해시·권한·소유자·mtime을 별도 인벤토리로 보존했다.
+
+재현 시 `CHAINBENCH_W3_PROOF=1`, `CHAINBENCH_E2E_FROM_BIN`(검증한 gwemix),
+`CHAINBENCH_E2E_TO_BIN`(검증한 gwbft)과 기존 runtime/cache 환경을 지정하고 실행한다:
+
+```sh
+go test -tags e2e -race ./cmd/chainbench \
+  -run '^TestWemixW3PartialGovernanceReproductionE2E$' -count=1 -timeout 15m
+```
+
+이 PASS는 **결함을 재현한 진단의 통과**다. 현재 소스 `wemix/admin.go:982-987`도 초기 주소
+조회 revert를 준비 전 상태로 인정하지 않는다. 수정·재시작 복구·무한 시간 정지와 과거
+15노드 배치 경합의 재실행은 이번 증명의 범위가 아니다. 아래 15노드 기록은 당시의 측정이고,
+`02-wemix-chain-up-15`와 W3는 계속 열린 상태다. 체인팀에 메시지나 리뷰 요청은 보내지 않았다.
+
 ### 증상
 
 15노드 wemix(poa) 망(`bp 7 · en 7 · pn 1`)을 세우면 endpoint 한 대가 초기 블록에서 멈추고
