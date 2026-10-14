@@ -265,7 +265,7 @@ func overlayFromJSON(t *testing.T, doc string) map[string]any {
 // a temp directory, and a named preset is looked for beside the case or under
 // presets/chain — neither of which is there. Reading the committed file keeps
 // the test on the same declaration the shipped case uses.
-func writeHandoffCase(t *testing.T, overlay map[string]any) string {
+func writeHandoffCase(t *testing.T, overlay map[string]any, launch ...map[string]map[string]any) string {
 	t.Helper()
 	b, err := os.ReadFile(handoffPresetPath)
 	if err != nil {
@@ -278,6 +278,12 @@ func writeHandoffCase(t *testing.T, overlay map[string]any) string {
 	merged := mergeOverlay(baseOverlay(t), overlay)
 	withForkBlock(t, preset, merged)
 	preset["genesis"] = map[string]any{"overlay": merged}
+	if len(launch) > 1 {
+		t.Fatal("multiple launch declarations")
+	}
+	if len(launch) == 1 {
+		preset["launch"] = launch[0]
+	}
 	doc := map[string]any{
 		"schemaVersion": "2",
 		"kind":          "case",
@@ -380,13 +386,13 @@ func runGovHandoff(t *testing.T, fromBin, toBin string) string {
 // runGovHandoffOverlay is runGovHandoff with a genesis overlay deep-merged into
 // the handoff genesis — the shape `upgrade run --genesis-overlay` took, declared
 // on the chain-preset instead of passed as a flag.
-func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[string]any) string {
+func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[string]any, launch ...map[string]map[string]any) string {
 	t.Helper()
 	// The preset names its binaries through these, so a test points them at the
 	// builds it was given rather than at whatever is on PATH.
 	t.Setenv("GWEMIX_BIN", fromBin)
 	t.Setenv("GWBFT_BIN", toBin)
-	spec := writeHandoffCase(t, overlay)
+	spec := writeHandoffCase(t, overlay, launch...)
 
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {

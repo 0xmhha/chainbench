@@ -182,6 +182,27 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-012 보상 누적·전환 옵션 보강:** 단순 잔액 증가 baseline이 짧은 구간·
+잘못된 합계/RPC·헤더 연결·대상 검증자·다른 거래·등록 계정·등록 목록을 통과시키는 RED→GREEN을
+확인했다. 원문의 RPC 호출은 세 실제 시도에서 실패했다. 최초 구성은 명시 Brioche 객체와 HTTP
+namespace가 없었고, 추가 선언/값을 실행 명령과 실제 설정에서 확인해도 전환 뒤 모듈이 사라졌다.
+전환 재실행의 직접 Argv 생성이 기록된 launch override를 건너뛰는 것을 확인했다.
+지원되는 옵션의 누락/잘못된 옵션 무시 RED→GREEN을 보강하고, 공통 검증·조합 경로로 연결했다.
+현재 역할·노드·호출 시 설정의 우선순위를 유지하고, EN→BP 승격 뒤에도 필요한 RPC는 node1~4
+범위로 선언했다. 옵션 없는 기존 handoff 유지도 검증했다. 첫 단위 준비의 unsupported verbosity와
+패키지 줄 수 문서 불일치도 보존하고 지원되는 maxpeers/측정 문서 갱신으로 바로잡았다.
+
+관련 chainsetup 전체·nodeconfig·tagged CLI 전체 race·전체 검사와 실제 native race(91.380초,
+skip0)가 통과했다. 실제 전환 후4개 BP의 기록 args와 live wemix 모듈, 등록 이벤트의 rewardee·
+단일 등록 stake·15개 연결된 무거래/적격 블록의 원문 RPC 합계15e18 wei와 고정 높이 잔액 차이가
+일치하는 것을 독립 대조했다. 명시 보상은 기본값과 같은1e18이고 별도 수혜자 배분은 없다.
+고정 소스 `9fddc3a76b17168e914f2a51e3501796a328b10c31bd4a6c7ed199766282ed5b` 전후가 같다.
+[보상 누적 증거](block-reward-evidence.json)는 세 실패 포함4실행912파일의 내용·권한·소유자·
+mtime을 보존했고 활성 프로세스·종료 DB는0이다. R4의 이 옵션 재실행 범위도 보강했지만 전체
+R4/Linux/mainnet 인수가 아니다. 원문87개 전체·legacy·공개 DSL·최종 Web 인수는 별도 잔여다.
+동일 높이의 GOV-013 원문 operator 프리뷰0과 staker 지분 프리뷰17e18은 별도 입력 충돌로
+사용자 결정 대기이며 이 보상 누적 완료에 포함하지 않는다. 외부 소스는 수정하지 않았다.
+
 **2026-10-15 GOV-014 정상 위임자 청구 보강:** 잔액 증가만 보는 baseline이
 누락/중복 이벤트·잘못된 amount/restake/fee·계정별 잔액 차이·프리뷰 시점·fee 비율 등11조건을
 통과시키는 RED를 확인했다. 비검증자 운영자/위임자/feeRecipient, 동일 stake·feeRate250/

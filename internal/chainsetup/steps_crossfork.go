@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -401,7 +400,7 @@ func (w *Workspace) handOver(ctx context.Context, f GenesisFork, successors []in
 		if nerr != nil {
 			return fmt.Errorf("chainsetup: cross-fork: %s: %w", ns.NodeLabel(), nerr)
 		}
-		args, aerr := nodeconfig.Argv(process.NodeConfig(np, net, preset, spec, w.keysBase(), staticNodes))
+		args, aerr := w.crossForkNodeArgs(w.state.Nodes[i], process.NodeConfig(np, net, preset, spec, w.keysBase(), staticNodes))
 		if aerr != nil {
 			return fmt.Errorf("chainsetup: cross-fork: %s: %w", ns.NodeLabel(), aerr)
 		}

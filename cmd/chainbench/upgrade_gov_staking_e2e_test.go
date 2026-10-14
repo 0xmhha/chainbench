@@ -445,7 +445,7 @@ func stakingInfoWord(t *testing.T, c *rpc.Client, staker string, idx int) *big.I
 
 // stakingRegister sends registerStaker(amount, staker, staker, 0, blsPK, blsSig)
 // from operator (value=amount) and fails unless it mines successfully.
-func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) {
+func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) string {
 	t.Helper()
 	data := accounts.EncodeCallArgs(
 		"registerStaker(uint256,address,address,uint256,bytes,bytes)",
@@ -467,6 +467,7 @@ func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, stak
 	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
 		t.Fatalf("registerStaker reverted (status %s)", st)
 	}
+	return hash
 }
 
 // stakingUint reads a GovStaking uint256 getter taking a single address arg.
@@ -961,41 +962,90 @@ func registerProducingStaker(t *testing.T, c *rpc.Client, ap accounts.AccountPro
 	return staker, operator
 }
 
-// TestWemixGovernanceBlockRewardE2E ports wemix4 GOV-012 (block reward accrual):
-// once a producing validator is a registered staker, its unclaimed reward
-// (previewReward) grows block over block as the engine distributes block rewards.
-//
-//	go test -tags e2e -run TestWemixGovernanceBlockRewardE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceBlockRewardE2E binds a sole registered validator rewardee
+// to exact fixed-height balances and fifteen actual per-height reward RPC values.
 func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual block reward ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"config": map[string]any{"brioche": map[string]any{"blockReward": json.Number("1000000000000000000")}}}, rewardNodeLaunchScopes())
 	c := rpc.Dial(url)
-	ap, err := accounts.ForChain("wbft")
-	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	var modules map[string]string
+	var nodeInfo map[string]any
+	if err := c.Call(t.Context(), "rpc_modules", &modules); err != nil {
+		t.Fatal(err)
 	}
-	staker, _ := registerProducingStaker(t, c, ap, url)
+	if err := c.Call(t.Context(), "admin_nodeInfo", &nodeInfo); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-012-api-context", map[string]any{"rpcModules": modules, "nodeInfo": nodeInfo})
 
-	before := stakingPreviewPending(t, c, staker, staker)
-	start, _ := c.BlockNumber(context.Background())
-	// Wait ~15 blocks for rewards to accrue.
-	deadline := time.Now().Add(90 * time.Second)
-	for {
-		if h, _ := c.BlockNumber(context.Background()); h >= start+15 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("chain did not advance 15 blocks")
-		}
-		time.Sleep(2 * time.Second)
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
 	}
-	after := stakingPreviewPending(t, c, staker, staker)
-	if after.Cmp(before) <= 0 {
-		t.Fatalf("previewReward did not grow: before=%s after=%s", before, after)
+	operator, err := provider.OpenWallet(t.Context(), presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	staker := presetNodeAddr(t, 2)
+	pk, sig := presetNodeBLS(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	hash := stakingRegister(t, c, operator, staker, pk, sig, minimum)
+	p := rewardLedgerProof{Staker: staker, Operator: operator.Address(), Rewardee: wordToAddr(stakingInfoWord(t, c, staker, 1)), Minimum: minimum.String(), BLSKey: "0x" + hex.EncodeToString(pk), Logs: feeReceipt(t, c, hash)}
+	if p.Start, err = c.BlockNumber(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	p.End = p.Start + 15
+	var beforeHex, afterHex string
+	if err = c.Call(t.Context(), "eth_getBalance", &beforeHex, p.Rewardee, hexUint(p.Start)); err != nil {
+		t.Fatal(err)
+	}
+	waitForHead(t, c, p.End, 90*time.Second)
+	if err = c.Call(t.Context(), "eth_getBalance", &afterHex, p.Rewardee, hexUint(p.End)); err != nil {
+		t.Fatal(err)
+	}
+	before, ok := new(big.Int).SetString(strings.TrimPrefix(beforeHex, "0x"), 16)
+	if !ok {
+		t.Fatal("balance missing")
+	}
+	after, ok := new(big.Int).SetString(strings.TrimPrefix(afterHex, "0x"), 16)
+	if !ok {
+		t.Fatal("balance missing")
+	}
+	p.Before = before.String()
+	p.After = after.String()
+	for n := p.Start + 1; n <= p.End; n++ {
+		tag := hexUint(n)
+		var h struct {
+			Hash, ParentHash string
+			Transactions     []string
+		}
+		if err = c.Call(t.Context(), "eth_getBlockByNumber", &h, tag, false); err != nil {
+			t.Fatal(err)
+		}
+		row := rewardLedgerBlock{Number: n, Hash: h.Hash, ParentHash: h.ParentHash, Transactions: h.Transactions}
+		if err = c.Call(t.Context(), "wemix_getBriocheBlockReward", &row.Reward, tag); err != nil {
+			t.Fatal("actual reward RPC missing", err)
+		}
+		if err = c.Call(t.Context(), "istanbul_getValidators", &row.Validators, tag); err != nil {
+			t.Fatal(err)
+		}
+		p.Blocks = append(p.Blocks, row)
+	}
+	if err = c.Call(t.Context(), "eth_call", &p.ContractStakers, map[string]string{"to": e2eGovStaking, "data": accounts.EncodeCallArgs("stakers()")}, hexUint(p.End)); err != nil {
+		t.Fatal(err)
+	}
+	for user, dest := range map[string]*string{p.Operator: &p.OriginalOperatorPreview, p.Staker: &p.StakerPreview} {
+		data := accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(p.Staker), accounts.Address(user))
+		if err = c.Call(t.Context(), "eth_call", dest, map[string]string{"to": e2eGovStaking, "data": data}, hexUint(p.End)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	logGovernanceProof(t, "GOV-012-reward-ledger", p)
+	if err := verifyBlockRewardLedger(p); err != nil {
+		t.Fatal(err)
 	}
 }
 
