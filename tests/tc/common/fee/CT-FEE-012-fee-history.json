@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fee-history-well-formed",
-  "description": "RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history)",
+  "description": "CT-FEE-012 / RPC-017 — 10개 블록과 [25,75] percentile의 fee history를 조회한다. baseFee 11개 모두 양수, gasUsedRatio 10개 모두 0..1, reward 10행 각 2개를 검증한다. 노드의 동적 head를 각 RPC에서 조회하므로 고정 블록별 재계산과 동일 snapshot의 원자성은 native 독립 대조에서 별도 확인한다.",
   "requires": [
     "rpc"
   ],
@@ -15,28 +15,684 @@
   },
   "steps": [
     {
-      "compare": "Regexp",
-      "expect": "rpcCall",
-      "is": "^0x[0-9a-fA-F]+$",
-      "method": "eth_feeHistory",
-      "params": [
-        "0x10",
-        "latest",
-        []
-      ],
-      "select": "oldestBlock"
+      "do": "waitBlock",
+      "target": 10,
+      "timeout": "120s"
     },
     {
-      "compare": "NotNil",
       "expect": "rpcCall",
-      "is": null,
       "method": "eth_feeHistory",
       "params": [
-        "0x10",
+        "0xa",
         "latest",
-        []
+        [
+          25,
+          75
+        ]
       ],
-      "select": "baseFeePerGas"
+      "select": "oldestBlock",
+      "compare": "Regexp",
+      "is": "^0x[0-9a-fA-F]+$"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.#",
+      "compare": "Equal",
+      "is": "11"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.#",
+      "compare": "Equal",
+      "is": "10"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.#",
+      "compare": "Equal",
+      "is": "10"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.0",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.1",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.2",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.3",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.4",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.5",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.6",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.7",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.8",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.9",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "baseFeePerGas.10",
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.0",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.0",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.0.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.1",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.1",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.1.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.2",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.2",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.2.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.3",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.3",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.3.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.4",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.4",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.4.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.5",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.5",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.5.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.6",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.6",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.6.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.7",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.7",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.7.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.8",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.8",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.8.#",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.9",
+      "compare": "GreaterOrEqual",
+      "is": "0"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "gasUsedRatio.9",
+      "compare": "LessOrEqual",
+      "is": "1"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_feeHistory",
+      "params": [
+        "0xa",
+        "latest",
+        [
+          25,
+          75
+        ]
+      ],
+      "select": "reward.9.#",
+      "compare": "Equal",
+      "is": "2"
     }
   ]
 }

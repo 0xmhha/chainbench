@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 68,
-    "confirmed_scope": 14,
+    "partial": 67,
+    "confirmed_scope": 15,
     "conflict": 3,
     "merged": 2
   },
@@ -6304,58 +6304,193 @@
       "id": "RPC-017",
       "title": "eth\\_feeHistory",
       "criterionSha256": "0c510e6a70e9a81bbc4862a8e4da865956fa930af2d581f11ab987ce6e8080d0",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
-          "sha256": "6e4155e01177f7d6f482db81a975dd48c6c3a43e69e7ad2cd69e8f2f64f23b26",
+          "sha256": "f9902ef87cf2c24d8a1e714dabfcb7ae9283237517c8ee6fbd0596927ac5cd6a",
           "id": "fee-history-well-formed"
+        },
+        {
+          "path": "internal/testengine/fee_history_native_test.go",
+          "sha256": "e11b90d7a0cb2f051cf43ec5098b2def728a69b92ff33fc52fd7703b1eebab19",
+          "function": "TestNativeFeeHistoryArrays"
+        },
+        {
+          "path": "internal/testhelper/fee_history_semantics_test.go",
+          "sha256": "7f34d0a3dcc0392d8f6f7417d395301f19f9efeeeda144251794d56f1d168e69",
+          "function": "TestPublicFeeHistoryRejectsMalformedArrays"
         }
       ],
       "observations": [
         {
-          "analysis": "16blockpercentile빈배열에서 oldestBlockhex/baseFeePerGas nonnil"
+          "analysis": "Original 10/latest/[25,75] input, explicit every-index baseFee/ratio/reward length assertions; local native pending."
         },
         {
           "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
-          "pointer": "/steps/0",
+          "pointer": "/steps/2",
           "statement": {
-            "compare": "Regexp",
             "expect": "rpcCall",
-            "is": "^0x[0-9a-fA-F]+$",
             "method": "eth_feeHistory",
             "params": [
-              "0x10",
+              "0xa",
               "latest",
-              []
+              [
+                25,
+                75
+              ]
             ],
-            "select": "oldestBlock"
+            "select": "baseFeePerGas.#",
+            "compare": "Equal",
+            "is": "11"
           }
         },
         {
           "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
-          "pointer": "/steps/1",
+          "pointer": "/steps/3",
           "statement": {
-            "compare": "NotNil",
             "expect": "rpcCall",
-            "is": null,
             "method": "eth_feeHistory",
             "params": [
-              "0x10",
+              "0xa",
               "latest",
-              []
+              [
+                25,
+                75
+              ]
             ],
-            "select": "baseFeePerGas"
+            "select": "gasUsedRatio.#",
+            "compare": "Equal",
+            "is": "10"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/4",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "reward.#",
+            "compare": "Equal",
+            "is": "10"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/5",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "baseFeePerGas.0",
+            "compare": "Greater",
+            "is": "0"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/15",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "baseFeePerGas.10",
+            "compare": "Greater",
+            "is": "0"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/43",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "gasUsedRatio.9",
+            "compare": "GreaterOrEqual",
+            "is": "0"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/44",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "gasUsedRatio.9",
+            "compare": "LessOrEqual",
+            "is": "1"
+          }
+        },
+        {
+          "path": "tests/tc/common/fee/CT-FEE-012-fee-history.json",
+          "pointer": "/steps/45",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_feeHistory",
+            "params": [
+              "0xa",
+              "latest",
+              [
+                25,
+                75
+              ]
+            ],
+            "select": "reward.9.#",
+            "compare": "Equal",
+            "is": "2"
           }
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Original RPC input and every required array element checked by actual public DSL and independent single-response native proof on three families; 135 assertions, race, skip0 and source invariance.",
       "remainingConditions": [
-        "원문10/[25,75] 입력,11/10/10길이,eachbaseFee>0,gRatio0..1 없음"
+        "Managed local current-family fixture; complete original migration environment, Linux/mainnet, legacy consumers and final Web acceptance remain separate."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "10/latest/[25,75], 11 positive baseFees, 10 gas ratios within [0,1], 10 reward rows of two percentile values; 45 public assertions per family and independent exact single-response validation.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/fee-history-evidence.json",
+          "sha256": "fbbc4bf4b34424d75a85dfb160cd1c4f634e90e632f4b56f63617975e4818faa"
+        }
+      ]
     },
     {
       "id": "RPC-018",
