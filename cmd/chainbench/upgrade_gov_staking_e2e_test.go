@@ -652,11 +652,41 @@ func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
 	if ncpBool(t, c, "emergencyMode()") {
 		t.Fatal("emergencyMode still true after deactivation")
 	}
+	// GOV-018 requires the guarded operation to resume, beyond flag clearing.
+	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
+	want := new(big.Int).Mul(amount, big.NewInt(2))
+	if got := stakingUint(t, c, "getStakerAmount(address)", staker); got.Cmp(want) != 0 {
+		t.Fatalf("GOV-018 staking did not resume after deactivation: amount=%s, want %s", got, want)
+	}
+	receipt, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		t.Fatal("GOV-018 resumed staking receipt", err)
+	}
+	var result struct {
+		Status          string         `json:"status"`
+		TransactionHash string         `json:"transactionHash"`
+		Logs            []accounts.Log `json:"logs"`
+	}
+	if err := json.Unmarshal(receipt, &result); err != nil {
+		t.Fatal("GOV-018 receipt decoding", err)
+	}
+	if result.Status != "0x1" || !strings.EqualFold(result.TransactionHash, hash) {
+		t.Fatalf("GOV-018 wrong or failed resumed transaction receipt: %s", receipt)
+	}
+	event, found := accounts.FindLog(result.Logs, accounts.EventTopic("Staked(address,uint256)"))
+	if !found || !strings.EqualFold(event.Address, e2eGovStaking) || len(event.Topics) != 2 || !strings.EqualFold(accounts.TopicToAddress(event.Topics[1]), staker) {
+		t.Fatalf("GOV-018 Staked event is missing or belongs to another contract/staker: %+v", event)
+	}
+	value, ok := accounts.WordToBig(event.Data)
+	if !ok || len(event.Data) != 66 || value.Cmp(amount) != 0 {
+		t.Fatalf("GOV-018 Staked event amount differs: %q, want %s", event.Data, amount)
+	}
+	t.Logf("GOV-018 resumed staking receipt: %s", receipt)
 }
 
 // stakingSendOK sends calldata to GovStaking from w (with optional value) and
 // fails unless it mines with status 0x1.
-func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, value *big.Int) {
+func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, value *big.Int) string {
 	t.Helper()
 	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 	if err != nil {
@@ -669,6 +699,7 @@ func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, 
 	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
 		t.Fatalf("GovStaking tx reverted (status %s)", st)
 	}
+	return hash
 }
 
 // ncpBool reads a no-arg bool getter from GovNCP.

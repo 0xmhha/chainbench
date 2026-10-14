@@ -173,7 +173,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
-| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강 완료. 고정 소스에서 현행 WEMIX migration/governance 실제 E2E 20개 전체 race PASS·Go skip 0, 시도 22곳 종료 DB 0을 확인했다. wemix4 범위 대조·GOV-018/019 등 단언 보강·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 실제 회귀](handoff-regression-evidence.json) |
+| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019·wemix4 범위 대조·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 미완료 |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 미완료 |
@@ -239,6 +239,17 @@ GOV-018의 staking 재개, GOV-019의 목록·후속 에폭 후보 복귀는 현
 GOV-019의 최소 금액 미달 원문과 현행 계약 거절 조건도 다르다. NODE-002는 앞서 적은 데이터 인식 범위만 검증한다.
 따라서 기존 테스트 20개 전체 통과를 원문 87개 충분성이나 11번 완료로 바꾸지 않는다.
 근거: [20개 실제 회귀와 초기 차단·보존 목록](handoff-regression-evidence.json).
+
+**GOV-018 누락 보강:** 위 AST 대조에서 발견한 staking 재개 누락을 실제 체인에서 RED로 확인했다.
+긴급 모드 플래그가 해제돼도 추가 staking을 수행하지 않아 금액이 1e25에 머물렀고, 새 단언은 2e25를 요구하며 실패했다.
+이제 해제 후 staking을 실행하고 receipt의 성공·transaction hash, 실제 금액 증가,
+`Staked(address,uint256)`의 GovStaking emitter·정확한 staker·금액을 모두 확인한다.
+원본 receipt도 보존한다. 전체 make check·tagged race와 실제 재활성화·긴급 모드·지연 수수료 변경
+3개 직렬 race 회귀가 PASS·Go skip 0으로 통과했다. 재활성화의 초기 준비 차단 한 번은 그대로 기록했고,
+RED와 GREEN의 시도 5곳은 모두 프로세스·종료 DB 0건이다.
+이것은 GOV-018의 범위 보강이다. 앞의 20개 전수 회귀는 그 당시 소스의 증거이며, 이 변경 뒤에는 관련 3개를 재검증했다.
+GOV-019와 원문 87개 충분성·legacy 재평가·최종 Web 인수는 계속 남는다.
+근거: [실제 RED→GREEN·receipt·종료 증거](gov-staking-resume-evidence.json).
 
 **최종 공통 게이트: 미완료.** 위 변경 뒤 고정 소스에서 Web 14개 capture·독립 재현을 직렬 실행하며
 WEB-10과 WEB-14, 전체 필수 race·live 검사를 포함한다. 실행 중에는 문서도 수정하지 않는다.
