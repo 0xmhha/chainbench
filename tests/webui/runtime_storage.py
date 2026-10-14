@@ -79,10 +79,14 @@ def validate_runtime(runtime):
     return runtime
 
 
+class RuntimeBusy(maintenance.UnsafeMaintenance):
+    """A fresh inventory saw activity; callers may wait, never force deletion."""
+
+
 def reclaim_runtime(runtime, references=()):
     runtime = validate_runtime(runtime)
     if maintenance.active(runtime, maintenance.inventory()):
-        raise maintenance.UnsafeMaintenance('runtime still has a process or open file')
+        raise RuntimeBusy('runtime still has a process or open file')
     candidates = []
     # These are node databases, not logs, configuration, process ledgers,
     # snapshots exported by the application, binaries, source or receipts.
@@ -120,7 +124,7 @@ def reclaim_runtime(runtime, references=()):
         record_audit({'path': str(path), 'event': 'reclaim-start', 'allocatedBytes': allocated})
         # Close our own audit descriptor before inventorying the runtime again.
         if maintenance.active(runtime, maintenance.inventory()):
-            raise maintenance.UnsafeMaintenance('runtime became active before reclamation')
+            raise RuntimeBusy('runtime became active before reclamation')
         shutil.rmtree(path)
         record = {'path': str(path), 'event': 'reclaimed', 'allocatedBytes': allocated,
                   'finishedAt': datetime.datetime.now(datetime.timezone.utc).isoformat()}
@@ -138,11 +142,21 @@ def reclaim_after_shutdown(runtime, directory, timeout=10):
     """
     runtime = validate_runtime(runtime)
     deadline = time.monotonic() + timeout
-    while maintenance.active(runtime, maintenance.inventory()):
-        if time.monotonic() >= deadline:
-            raise maintenance.UnsafeMaintenance('runtime remains active after shutdown')
-        time.sleep(.1)
-    return reclaim_evidence(directory, (runtime,))
+    while True:
+        if maintenance.active(runtime, maintenance.inventory()):
+            if time.monotonic() >= deadline:
+                raise RuntimeBusy('runtime remains active after shutdown')
+            time.sleep(.1)
+            continue
+        try:
+            return reclaim_evidence(directory, (runtime,))
+        except RuntimeBusy:
+            # A process or descriptor can become visible between inventories.
+            # Retry the entire safe operation with fresh evidence references;
+            # ownership, links and unavailable inventories still fail immediately.
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.1)
 
 
 def reclaim_evidence(directory, owned_runtimes=()):

@@ -214,6 +214,35 @@ class RuntimeStorageTests(unittest.TestCase):
                 storage.reclaim_after_shutdown(runtime, self.root, timeout=0)
         self.assertEqual(db.read_bytes(), b'disposable')
 
+    def test_shutdown_rechecks_activity_that_appears_during_reclamation(self):
+        runtime = self.runtime(); db, config, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        states = [('', []), ('', []), ('', [str(db)]),
+                  ('', [str(db)]), ('', []), ('', []), ('', [])]
+        with patch.object(storage.maintenance, 'inventory', side_effect=states), \
+             patch.object(storage.time, 'sleep') as pause:
+            storage.reclaim_after_shutdown(runtime, out)
+        self.assertEqual(pause.call_count, 2)
+        self.assertFalse(db.exists())
+        self.assertEqual(config.read_text(), 'config')
+
+    def test_shutdown_mid_reclamation_activity_timeout_preserves_database(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        out = self.root / 'failed'; out.mkdir()
+        with patch.object(storage.maintenance, 'inventory', side_effect=[('', []), ('', []), ('', [str(db)])]):
+            with self.assertRaises(storage.maintenance.UnsafeMaintenance):
+                storage.reclaim_after_shutdown(runtime, out, timeout=0)
+        self.assertEqual(db.read_bytes(), b'disposable')
+
+    def test_shutdown_does_not_retry_unavailable_inventory(self):
+        runtime = self.runtime(); db, _, _ = self.fixture(runtime)
+        with patch.object(storage.maintenance, 'inventory', side_effect=storage.maintenance.UnsafeMaintenance('cannot inventory open files')), \
+             patch.object(storage.time, 'sleep') as pause:
+            with self.assertRaisesRegex(storage.maintenance.UnsafeMaintenance, 'cannot inventory'):
+                storage.reclaim_after_shutdown(runtime, self.root)
+        pause.assert_not_called()
+        self.assertEqual(db.read_bytes(), b'disposable')
+
     @contextlib.contextmanager
     def workspace(self):
         before = Path.cwd()
