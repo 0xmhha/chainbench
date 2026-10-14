@@ -669,25 +669,37 @@
 
 **목적**: `gasLimit`을 실제 소비보다 부족하게 설정한 tx 실행 시 가스를 전량 소비하고 상태가 롤백되는지 확인
 
-**사전 조건**: TX-002 통과, `eth_estimateGas`로 실제 소비 가스 확인
+> **2026-10-15 사용자 승인:** 추정치는 성공에 충분한 상한으로 별도 검증한다.
+> 기존 `eth_estimateGas - 1` 실패 전제는 실제 WBFT·StableNet에서 성립하지 않았다
+> (추정 31,513·한도 31,512·소비 31,160·status 1). 이 진단을 숨기거나 실패로 바꾸지 않는다.
+> [실측과 승인 기준 검증](../../dev/estimate-boundary-evidence.json).
 
-**입력값**: `gasLimit = 실제 소비 가스 - 1`
+**사전 조건**: 동일 runtime·동일 초기 저장 값 42를 가진 유한한 쓰기 계약 두 개 배포,
+별도 호출자 자금 확보. 호출은 SSTORE 뒤 유한한 연산을 수행하고 종료하며 저장소 환불이 없다.
+
+**입력값**: 같은 sender·calldata로 성공한 기준 거래의 `receipt.gasUsed - 1`.
+한도는 intrinsic gas 이상이며 실행 부족으로 실패하도록 선택한다.
 
 **실행 절차**:
 
-1. `eth_estimateGas` 로 예상 가스 조회
-2. `gasLimit = 예상 가스 - 1` 로 tx 전송
-3. receipt 확인
+1. `eth_estimateGas`로 첫 계약의 유한한 호출을 추정하고, 추정 한도로 전송한다.
+2. 성공 영수증과 `gasUsed <= estimate`를 확인하며 저장 값이 42→1로 바뀌었는지 확인한다.
+3. 같은 초기 상태의 두 번째 계약에 동일 호출을 `gasLimit = 성공 gasUsed - 1`로 전송한다.
+4. 실제 채굴된 거래의 calldata·가스 한도와 영수증, 실패 전후 상태·정확한 수수료를 대조한다.
+5. trace에서 실패 전에 SSTORE가 완료됐는지 확인한다. 쓰기 없이 실패한 fixture는 롤백 증거로 세지 않는다.
 
-**기대 결과**: `receipt.status == 0`, `gasUsed == gasLimit` (가스 전량 소비), 상태 롤백
+**기대 결과**: 실패 거래는 `receipt.status == 0`, `gasUsed == gasLimit`, 저장 값 42 유지.
+추정치는 실제 소비보다 클 수 있고 `estimate - 1`의 성공 여부는 별도 진단이다.
 
 **검증 포인트**:
 
-- `receipt.status == 0`
-- `receipt.gasUsed == gasLimit` (환불 없음)
-- 상태 변경 없음
+- 성공 기준 거래의 status 1·유한한 실제 소비와 추정 상한
+- 실패 거래의 status 0·가스 전량 소비·완료된 쓰기 뒤 롤백
+- `eth_call` 및 `eth_getStorageAt`의 실패 전후 값 일치
+- 호출자 잔액에서 `gasUsed × effectiveGasPrice`만 차감, 후속 블록 전진
 
-**회귀 테스트 참조**: RT-A-3-07
+**회귀 테스트 참조**: `CT-CONTRACT-008-finite-gas-boundary`.
+기존 RT-A-3-07의 무한 반복 가스 소진은 `CT-CONTRACT-007`로 별도 유지한다.
 
 ---
 
@@ -1547,7 +1559,11 @@
 - 재활성화 후 `isStaker(staker) == true`
 - `Staked(staker, amount)` 이벤트
 - `stakers()` 목록 포함 확인
-- 재활성화 금액 \< minimumStaking 시 여전히 INACTIVE (revert 없이 단순 stake만 추가)
+- 재활성화 금액 \< minimumStaking 거래는 채굴 status 0·정확한 minimum-staking revert 사유·INACTIVE/금액 불변을 확인한다.
+
+> **2026-10-15 사용자 승인:** 기존 "revert 없이 단순 stake만 추가" 기대를 현행 v1 계약의
+> 거절 계약에 맞췄다. 기존 eth_call 거절은 실제 채굴 실패의 대체 증거가 아니며,
+> 이 미달 거래의 채굴·사유·상태 검증은 후속 보강 전까지 미완료다.
 
 ---
 

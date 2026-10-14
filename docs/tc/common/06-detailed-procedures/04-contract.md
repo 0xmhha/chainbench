@@ -95,4 +95,17 @@
 - **자동 테스트**: Native trace에서 실패 전에 실제 SSTORE가 완료돼야 한다. 준비 거절이나 쓰기 없는 루프는 롤백 증명이 아니다.
 - **원문과의 차이**: RT-A-3-07의 가스 전량 소비와 롤백을 검증한다. TX-018 원문의 `estimateGas - 1` 절차를 이 무한 반복 fixture로 충족했다고 주장하지 않는다.
   WBFT 추정기는 상향 오차를 허용하므로 추정값에서 1을 뺀 한도가 항상 실패한다는 전제도 별도 검증이 필요하다.
-  TX-018 전체는 열린 상태다. [범위와 증거](../../../dev/transaction-failure-evidence.json).
+  이것은 2026-10-14의 검증 범위다. 아래 CT-CONTRACT-008이 2026-10-15 승인된 TX-018 기준을 담당한다. [기존 범위와 증거](../../../dev/transaction-failure-evidence.json).
+
+## CT-CONTRACT-008 · 유한한 쓰기 호출의 가스 경계
+
+- **목적**: 추정치를 상한으로 검증하고 실제 부족한 한도의 가스 전량 소비·쓰기 롤백을 확인한다.
+- **절차**:
+    1. 같은 runtime·초기 슬롯 값 42의 독립 계약 두 개를 배포하고 코드·eth_call·저장소를 대조한다.
+    2. 별도 호출자를 펀딩하고 첫 계약의 calldata 0x01을 추정 한도로 전송한다. 성공·gasUsed ≤ estimate·슬롯 값 1을 확인한다.
+    3. 두 번째 계약에 같은 호출을 성공 gasUsed−1로 전송한다. 채굴 status 0·gasUsed == gasLimit·슬롯 값 42·정확한 수수료를 확인한다.
+    4. 실패 뒤 블록 전진과, native trace의 완료된 SSTORE 뒤 실패를 확인한다. 실제 거래의 calldata·가스 한도를 RPC로 다시 대조한다.
+- **승인 기준**: 2026-10-15 사용자는 TX-018의 목적에 맞춰 추정 상한과 실제 부족한 한도를 구분하도록 승인했다.
+  기존 estimate−1 진단도 보존한다. StableNet·WBFT에서는 성공했고 WEMIX에서는 실패했으며 이를 같은 결과로 표시하지 않는다.
+- **범위**: 세 체인 공통 DSL과 local native 회귀. 전체 원문 87개·Linux/mainnet·최종 Web 인수의 완료가 아니다.
+  [승인·실제 실행·보존 증거](../../../dev/estimate-boundary-evidence.json).

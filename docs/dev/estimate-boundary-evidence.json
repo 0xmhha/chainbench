@@ -1,0 +1,847 @@
+{
+  "scope": "TX-018 finite-write diagnostic: exact eth_estimateGas request/result, estimate-minus-one actual mined input, independent initial-state successful baseline and actual-used-minus-one full-gas failure. Approved TX-018 local native criterion and public DSL case complete; original estimate-minus-one failure assumption not accepted. Not post-handoff or Linux/mainnet acceptance, complete 87-case review, W3/W4 resolution or final Web acceptance.",
+  "tx018OriginalComplete": false,
+  "approvedTx018CriterionComplete": true,
+  "requirementDecision": "2026-10-15 user approved estimating a sufficient upper bound separately and using actual successful consumption minus one on independent initial storage for a mined full-gas failure and rollback",
+  "fixture": {
+    "initialStorage": 42,
+    "writtenStorage": 1,
+    "burnPushPopPairs": 1024,
+    "gasRefund": false,
+    "calldata": "0x01",
+    "independentContracts": 3,
+    "transactionType": "legacy"
+  },
+  "unitRed": "11 invalid evidence inputs accepted by an unconditional diagnostic validator; retained failing unit log.",
+  "nativeRed": "WBFT estimate 31513, limit 31512, gasUsed 31160, status 0x1, storage 42->1 contradict original failure expectation. Fixture-path refusal is separate, not product RED.",
+  "diagnosticGreen": {
+    "chains": 3,
+    "diagnosticWriteTransactions": 9,
+    "approvedDslWriteTransactions": 6,
+    "casesSkipped": 0,
+    "source": "bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7",
+    "counterexamples": [
+      "wbft",
+      "stablenet"
+    ]
+  },
+  "runs": [
+    {
+      "exitCode": 1,
+      "sourceBefore": "3edd3b7e03f24fdfbf5ecda12696d96cb08b077c3b0d121563fcc599816703a2",
+      "sourceAfter": "3edd3b7e03f24fdfbf5ecda12696d96cb08b077c3b0d121563fcc599816703a2",
+      "sourceUnchanged": true,
+      "passed": [],
+      "failed": [
+        "TestNativeEstimateMinusOneBoundary/wbft",
+        "TestNativeEstimateMinusOneBoundary"
+      ],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-1u68q3bx"
+      ],
+      "proofs": [],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-1u68q3bx": []
+      },
+      "label": "red",
+      "kind": "fixture-path-refusal",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-red-summary.json",
+        "sha256": "3b80a8e054640e180d8de9ce13a704dce9ebb8b4afd1dcb0fc6180c484d65e2c",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791990613729585149
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-red-native.jsonl",
+        "sha256": "4ce37cef348672289488e2ea45dd353a7879dd5816aaa976426748e79a412202",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791990613351116819
+      }
+    },
+    {
+      "exitCode": 1,
+      "sourceBefore": "fc716b59e934fb109a9c742c90358c61a80f33d3e602dd7085b72963ea12cd2f",
+      "sourceAfter": "fc716b59e934fb109a9c742c90358c61a80f33d3e602dd7085b72963ea12cd2f",
+      "sourceUnchanged": true,
+      "passed": [],
+      "failed": [
+        "TestNativeEstimateMinusOneBoundary/wbft",
+        "TestNativeEstimateMinusOneBoundary"
+      ],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-3re350em"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-3re350em/reports/estimate-boundary-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-3re350em": []
+      },
+      "label": "original-red",
+      "kind": "original-expectation-counterexample",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-original-red-summary.json",
+        "sha256": "d935b3fb707fc8957decd8a7f6c632afe673f8f9e8f4629c140d84d87a358efc",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791990750640639385
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-original-red-native.jsonl",
+        "sha256": "8fac9267aa7f95cc4c1a46568574d892ff0cf2cc1ed610fb0ff5a0727bb8e2e7",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791990750226442401
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "aa700fb41042eb559cfb91a41d88ea57993a6514c8a066bcb03e7927ef109b77",
+      "sourceAfter": "aa700fb41042eb559cfb91a41d88ea57993a6514c8a066bcb03e7927ef109b77",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeEstimateMinusOneBoundary/stablenet",
+        "TestNativeEstimateMinusOneBoundary/wbft",
+        "TestNativeEstimateMinusOneBoundary/wemix",
+        "TestNativeEstimateMinusOneBoundary"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-6nkvsavl",
+        "/private/tmp/cbui/txfail-m7sxr8kx",
+        "/private/tmp/cbui/txfail-uxbi3goz"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-6nkvsavl/reports/estimate-boundary-proof.json",
+        "/private/tmp/cbui/txfail-m7sxr8kx/reports/estimate-boundary-proof.json",
+        "/private/tmp/cbui/txfail-uxbi3goz/reports/estimate-boundary-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-6nkvsavl": [],
+        "/private/tmp/cbui/txfail-m7sxr8kx": [],
+        "/private/tmp/cbui/txfail-uxbi3goz": []
+      },
+      "label": "green",
+      "kind": "three-chain-diagnostic",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-green-summary.json",
+        "sha256": "62a357344ea817dced7e1d02a4c4316e54eec112d6b4e71d1791102832af4376",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991076715869050
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-green-native.jsonl",
+        "sha256": "82e1b823900d70a8524f7d0d60b27a5dfacced74c47f0bc98161269fcde2185d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991076248152770
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "aa700fb41042eb559cfb91a41d88ea57993a6514c8a066bcb03e7927ef109b77",
+      "sourceAfter": "aa700fb41042eb559cfb91a41d88ea57993a6514c8a066bcb03e7927ef109b77",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeTransactionFailureRollback/stablenet",
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback/wemix",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-ahs24p_h",
+        "/private/tmp/cbui/txfail-k0_pzbkw",
+        "/private/tmp/cbui/txfail-p56514c0"
+      ],
+      "proofs": [],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-ahs24p_h": [],
+        "/private/tmp/cbui/txfail-k0_pzbkw": [],
+        "/private/tmp/cbui/txfail-p56514c0": []
+      },
+      "label": "related",
+      "kind": "six-case-failure-regression",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-related-summary.json",
+        "sha256": "79418604b95e7b0b413352b05cc07898e0123c87203fd630809cf46af27e0135",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991325387798885
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-related-native.jsonl",
+        "sha256": "09f41f5901cb19ad624eb53600b8ecacd7d5d0e620155425093bd3963ccf2743",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991324817908080
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7",
+      "sourceAfter": "bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeEstimateMinusOneBoundary/stablenet",
+        "TestNativeEstimateMinusOneBoundary/wbft",
+        "TestNativeEstimateMinusOneBoundary/wemix",
+        "TestNativeEstimateMinusOneBoundary"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-ec5owrw6",
+        "/private/tmp/cbui/txfail-kz1axgoc",
+        "/private/tmp/cbui/txfail-v1ul0n6k"
+      ],
+      "proofs": [
+        "/private/tmp/cbui/txfail-ec5owrw6/reports/estimate-boundary-proof.json",
+        "/private/tmp/cbui/txfail-kz1axgoc/reports/estimate-boundary-proof.json",
+        "/private/tmp/cbui/txfail-v1ul0n6k/reports/estimate-boundary-proof.json"
+      ],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-ec5owrw6": [],
+        "/private/tmp/cbui/txfail-kz1axgoc": [],
+        "/private/tmp/cbui/txfail-v1ul0n6k": []
+      },
+      "label": "approved-green",
+      "kind": "approved-dsl-and-diagnostic",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-approved-green-summary.json",
+        "sha256": "937a610a990b8276ddd2ea38eda87641d80a1facedb93dae23a0e5ef5c89af9d",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992058711612533
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-approved-green-native.jsonl",
+        "sha256": "2ac673de7e2c910ab94a66cab48104df0e5e21a88ee0160642e34cbbf64d3748",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992058255152692
+      }
+    },
+    {
+      "exitCode": 0,
+      "sourceBefore": "bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7",
+      "sourceAfter": "bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7",
+      "sourceUnchanged": true,
+      "passed": [
+        "TestNativeTransactionFailureRollback/stablenet",
+        "TestNativeTransactionFailureRollback/wbft",
+        "TestNativeTransactionFailureRollback/wemix",
+        "TestNativeTransactionFailureRollback"
+      ],
+      "failed": [],
+      "skipped": [],
+      "roots": [
+        "/private/tmp/cbui/txfail-2o_h79q7",
+        "/private/tmp/cbui/txfail-660zog05",
+        "/private/tmp/cbui/txfail-yg8st19t"
+      ],
+      "proofs": [],
+      "remainingDatabases": {
+        "/private/tmp/cbui/txfail-2o_h79q7": [],
+        "/private/tmp/cbui/txfail-660zog05": [],
+        "/private/tmp/cbui/txfail-yg8st19t": []
+      },
+      "label": "approved-related",
+      "kind": "final-six-case-failure-regression",
+      "summary": {
+        "path": "/private/tmp/chainbench-estimate-boundary-approved-related-summary.json",
+        "sha256": "52ae4df913f87d77b068caf7a4389f31cc8c6ca543928aab30f953504a00bb9f",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992228693172432
+      },
+      "log": {
+        "path": "/private/tmp/chainbench-estimate-boundary-approved-related-native.jsonl",
+        "sha256": "efa1c10ca7f16ccc718b830fa4c4c7c6b767245a82319dfb0bc8fdb61f5589c7",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992228250202211
+      }
+    }
+  ],
+  "records": [
+    {
+      "approvedPublicCase": {
+        "steps": {
+          "path": "/private/tmp/cbui/txfail-ec5owrw6/reports/20261014-153017-37383/UTC-20261014-153123/tests/001_finite-gas-boundary/steps.json",
+          "sha256": "59f4c0845d9cf7094bcfe4e7e0a7c397f32e185311b6db71a54f246761e08948",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791991932471285837
+        },
+        "assertions": {
+          "path": "/private/tmp/cbui/txfail-ec5owrw6/reports/20261014-153017-37383/UTC-20261014-153123/tests/001_finite-gas-boundary/assert.json",
+          "sha256": "808355bcf98a28740bf391078b2114145318d07595588ef59a2d496d9ec483c7",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791991933505257328
+        },
+        "assertionCount": 16,
+        "writeTransactions": 2
+      },
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-ec5owrw6/reports/estimate-boundary-proof.json",
+        "sha256": "a528a67b03fea6e0f11c2ab4c01000c2160451a8c2af4dcd544e4b19ded5eef2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991943359380444
+      },
+      "estimate": 31513,
+      "successfulGasUsed": 31160,
+      "estimateMinusOne": {
+        "Limit": 31512,
+        "Used": 31160,
+        "Status": "0x1",
+        "Before": "42",
+        "After": "1"
+      },
+      "actualUsedMinusOne": {
+        "Limit": 31159,
+        "Used": 31159,
+        "Status": "0x0",
+        "Before": "42",
+        "After": "42"
+      },
+      "counterexample": true
+    },
+    {
+      "approvedPublicCase": {
+        "steps": {
+          "path": "/private/tmp/cbui/txfail-kz1axgoc/reports/20261014-153017-37383/UTC-20261014-153017/tests/001_finite-gas-boundary/steps.json",
+          "sha256": "0a0df2c283c311adaf25b750e7353f7a70011f020f0e97fa2f0669d98100430c",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791991867358300263
+        },
+        "assertions": {
+          "path": "/private/tmp/cbui/txfail-kz1axgoc/reports/20261014-153017-37383/UTC-20261014-153017/tests/001_finite-gas-boundary/assert.json",
+          "sha256": "1a341fb85b7792ef0e5a9a78f8a3a1c3feab85b68ab3b3aa52b51645b337b9bf",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791991868422871679
+        },
+        "assertionCount": 16,
+        "writeTransactions": 2
+      },
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-kz1axgoc/reports/estimate-boundary-proof.json",
+        "sha256": "a4c839dfd1918974f1bc71f47b90bea139960b5fd06da228e8bf21f6deb9648c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991880720821035
+      },
+      "estimate": 31513,
+      "successfulGasUsed": 31160,
+      "estimateMinusOne": {
+        "Limit": 31512,
+        "Used": 31160,
+        "Status": "0x1",
+        "Before": "42",
+        "After": "1"
+      },
+      "actualUsedMinusOne": {
+        "Limit": 31159,
+        "Used": 31159,
+        "Status": "0x0",
+        "Before": "42",
+        "After": "42"
+      },
+      "counterexample": true
+    },
+    {
+      "approvedPublicCase": {
+        "steps": {
+          "path": "/private/tmp/cbui/txfail-v1ul0n6k/reports/20261014-153017-37383/UTC-20261014-153225/tests/001_finite-gas-boundary/steps.json",
+          "sha256": "09e6b11045081dce28b81da79fc4dd569c59582ca7076dc5687e844206863013",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791992025713221737
+        },
+        "assertions": {
+          "path": "/private/tmp/cbui/txfail-v1ul0n6k/reports/20261014-153017-37383/UTC-20261014-153225/tests/001_finite-gas-boundary/assert.json",
+          "sha256": "dc33ee36f1ce22a37207091f39b367bcc2262fd60d9b6f107272695b402facd0",
+          "mode": "0o644",
+          "uid": 501,
+          "gid": 0,
+          "mtimeNS": 1791992026249893752
+        },
+        "assertionCount": 16,
+        "writeTransactions": 2
+      },
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-v1ul0n6k/reports/estimate-boundary-proof.json",
+        "sha256": "18508a8519ce08227d07db739ed7c91c450ad5da7bd93cf98d3d49ca02e9ef9b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992040439807637
+      },
+      "estimate": 31160,
+      "successfulGasUsed": 31160,
+      "estimateMinusOne": {
+        "Limit": 31159,
+        "Used": 31159,
+        "Status": "0x0",
+        "Before": "42",
+        "After": "42"
+      },
+      "actualUsedMinusOne": {
+        "Limit": 31159,
+        "Used": 31159,
+        "Status": "0x0",
+        "Before": "42",
+        "After": "42"
+      },
+      "counterexample": false
+    }
+  ],
+  "relatedRegression": [
+    {
+      "runtime": "/private/tmp/cbui/txfail-2o_h79q7",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-2o_h79q7/reports/transaction-failure-proof.json",
+        "sha256": "ae03db7b5a69f40195c9cad9ef20882970788b553d15887d36a11eef17f97c01",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992210353550530
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-660zog05",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-660zog05/reports/transaction-failure-proof.json",
+        "sha256": "9fd0f3085272894e8967db478a46cc4d1acd9cc70a48362810b7f3604328d6f7",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992119359573693
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-yg8st19t",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-yg8st19t/reports/transaction-failure-proof.json",
+        "sha256": "7ef91fbd3bf39c52a3dc6fbf3aa36a3e65a5a7f75f6715cd7ce1893c35624143",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992092644952316
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/txfail-1u68q3bx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 5,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-1u68q3bx/reports/estimate-boundary-inventory.json",
+        "sha256": "36e10c33802c62c32d282804731a3bf5a8517e839e40664e2191c7f12a235a49",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239010103007
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-2o_h79q7",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 118,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-2o_h79q7/reports/estimate-boundary-inventory.json",
+        "sha256": "9f39ac6b2808d9b92feb9c783f07cbc5abab87f47931a201ab8556ff3f076b24",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239042995387
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-3re350em",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-3re350em/reports/estimate-boundary-inventory.json",
+        "sha256": "eaa132b273cfd74c989c4b38652b7454a3e041435dc5513b1baa2a21ece5284e",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239076909454
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-660zog05",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-660zog05/reports/estimate-boundary-inventory.json",
+        "sha256": "4e28c5ad8f3f6c5d01bb9da37318ec91afaad97445352a647db514990338f78c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239104124156
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-6nkvsavl",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-6nkvsavl/reports/estimate-boundary-inventory.json",
+        "sha256": "2167910ccb9f7cdedfc00de619e26fbff22f898ed8e2fe91df23913aca629c57",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239156325939
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-ahs24p_h",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-ahs24p_h/reports/estimate-boundary-inventory.json",
+        "sha256": "8822afd7b41cdcce00bc5df62bc06154a7ca5423c75ae1155eddd0fdc2ad48cc",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239190341796
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-ec5owrw6",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 204,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-ec5owrw6/reports/estimate-boundary-inventory.json",
+        "sha256": "8d58bb34919ff76a0a9b7cbbc0cc8b443e12767321861a514904a5078f384308",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239223215551
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-k0_pzbkw",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 118,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-k0_pzbkw/reports/estimate-boundary-inventory.json",
+        "sha256": "23b1d057027ce99a317da24c13f1705f37ed7f25f429ba507a2eb39d137443d8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239259532195
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-kz1axgoc",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 204,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-kz1axgoc/reports/estimate-boundary-inventory.json",
+        "sha256": "5c66c3f4156921ff4118394c894875410ffb5161c2c173b0b436ac077b3ebd23",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239298297164
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-m7sxr8kx",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 196,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-m7sxr8kx/reports/estimate-boundary-inventory.json",
+        "sha256": "53cb7205f422c2db760c84935db7042cc8c3f02412993e0ef0d72e8e3d82e002",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239338073655
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-p56514c0",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-p56514c0/reports/estimate-boundary-inventory.json",
+        "sha256": "87c597eb849a373c225f3c942cca8946a89aa756416d7d979f0d71d778b4b1ad",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239373684730
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-uxbi3goz",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 109,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-uxbi3goz/reports/estimate-boundary-inventory.json",
+        "sha256": "587323627ec24e459e75199f6b8944f38a83f1b019d33c9194d56f7265e932a2",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239408440739
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-v1ul0n6k",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 117,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-v1ul0n6k/reports/estimate-boundary-inventory.json",
+        "sha256": "040b9c9c9b82fa7bd5c16902197e066659a61cc336c28599e79c66c015925e7d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239445520159
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/txfail-yg8st19t",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-yg8st19t/reports/estimate-boundary-inventory.json",
+        "sha256": "81984191de9dd8aa1e38454be4811a75cc15b3d316dc4a173c8e5c44a4e2fd35",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992239478553452
+      }
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/estimate_boundary_native_test.go",
+      "sha256": "9531d2fef28bccd79052740aba43c0117b103b11d50758584395b290c33f723a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791992452794961817
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testengine/transaction_failure_native_test.go",
+      "sha256": "ecbad1f08a3aeffb35427c9fd89a7359ac5dbc8f8f15c1e7f9e486f1f0cbe2f9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791986079453419997
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/wemix4.0/01-test-scenarios.md",
+      "sha256": "f8f6c9744b7deafbc11ad882dcc4739eca71196d3aeaab7bdb29635197c919f0",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791991720112507025
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/tc/common/contract/CT-CONTRACT-008-finite-gas-boundary.json",
+      "sha256": "e04e7a994ed60451d6fbd1c2a9046b7e76067e75c58f79afc72416c448e7a1fc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791991648117191888
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/testhelper/testdata/corpus-addresses.golden",
+      "sha256": "141b3e2fbbe3a694d2f432a704dcad35810204a78cdeddad755072d33817168d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791991675395996687
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/tc/common/06-detailed-procedures/04-contract.md",
+      "sha256": "2b0ca23c9d21aa72531e39525af9b023c05ae6c49e9d4e4df4445305ed0ff6dd",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1791992301985550903
+    }
+  ],
+  "binaries": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "unitLogs": [
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-unit-red.log",
+      "sha256": "ce7e2262c228968f844396c9a88f68fb95fd61fb7710d69d17521fa99c6270ad",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791990459637470027
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-unit-green.log",
+      "sha256": "980774a0a76ee177b7c88e7bfb8bd50067b45917368639800423e6091d78d159",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791990559078912551
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-unit-race.log",
+      "sha256": "25ba34bba12236e9c23d0bee2efb04ff5cd806ae81ec7433b696ee27e39190da",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791990593480847392
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-unit-retry.log",
+      "sha256": "642001cc1c7d3656cce09003660933e039b6eadee61b959814970fc5de14b8a7",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791990684797860561
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-final-unit.log",
+      "sha256": "46d72d7fdb06997fe438d729b7dd637794642b811a847bc869642c9a81335d60",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791990840580006273
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-canonical-unit.log",
+      "sha256": "5e11bad1449df815c2112cf707fe324b96aee6b303939ca8724ba1d856c04027",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791991655496215272
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-canonical-unit-green.log",
+      "sha256": "2006bbbd6e78e0afa6b93e86e38f032ad70053e4b06a75e2ccbd25e39aaadafb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791991681297931802
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-related-race.log",
+      "sha256": "26d5b5ccff83c609f927cce1dea62914f7a96a93f17e3d231e88b632b0fa4e22",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791991768441138553
+    },
+    {
+      "path": "/private/tmp/chainbench-estimate-boundary-corpus-update.log",
+      "sha256": "4775e6fb01d871055ccfe3cef6626189e58a79392548e94d9ed5edb496574be9",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791991675398378263
+    }
+  ],
+  "finalChecks": {
+    "makeCheck": "pass",
+    "relatedFullRace": "pass",
+    "nativeSkipped": 0,
+    "logs": [
+      {
+        "path": "/private/tmp/chainbench-estimate-boundary-check.log",
+        "sha256": "27b66b1f7687413a0da5050fb8a6ae77e788ee435076c4c385ee798e1845ab53",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991461028393016
+      },
+      {
+        "path": "/private/tmp/chainbench-estimate-boundary-final-check.log",
+        "sha256": "7d29835ba9f03d42dbb434a2484ffac4ee24b7d6cadf08ee5af13517b35b97ef",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992419038495674
+      },
+      {
+        "path": "/private/tmp/chainbench-estimate-boundary-final-check-retry.log",
+        "sha256": "7ff3517c41e2b46657daafc7cc8cf179c5f0a350c24589c3bac12ae3bc73d44e",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791992542423233567
+      },
+      {
+        "path": "/private/tmp/chainbench-estimate-boundary-related-race.log",
+        "sha256": "26d5b5ccff83c609f927cce1dea62914f7a96a93f17e3d231e88b632b0fa4e22",
+        "mode": "0o644",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1791991768441138553
+      }
+    ]
+  },
+  "postProofPublicationChanges": "Approved evidence and status publication; documentation clarification; one function comment corrected to name verifyFiniteGasCase. Executable test logic and public DSL input unchanged after the final native proofs."
+}

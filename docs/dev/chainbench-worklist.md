@@ -177,10 +177,42 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
 | 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 저장소의 로컬 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 진행 — 준비물 공유 완료. metric 출처·실패 거절·대체 경로·구조화 UI와 세 체인 관측 가능한 14개 실제 케이스 완료. WEMIX CT-NODE-007은 외부 ETH/LES 계량기 중복 등록으로 미완료이며 15개 전체 통과로 표시하지 않는다; [준비물 증거](prepared-sharing-evidence.json), [동기화 증거](sync-path-evidence.json), [W4 인계](chain-handover-2026-09-12.md#6-w4--ethles-fetcher-계량기-이름-충돌-2026-10-14) |
-| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. NODE-002의 정확한 블록·트랜잭션·영수증 이관과 포크 이후 동기화도 실제 race로 보강했다. TX-017과 기존 RT-A-3-07의 실제 쓰기 뒤 롤백·가스·수수료도 세 체인에서 보강했다. 최소 금액 미달 원문과 현행 계약의 차이·TX-018의 estimateGas - 1 절차 등 원문 충분성·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json), [NODE-002](data-migration-evidence.json), [실패 거래](transaction-failure-evidence.json) |
+| 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 진행 — 종료·전환·재접속 회귀 보강과 기존 고정 소스 20개 전체 race/DB 회수 완료. GOV-018 staking 재개를 실제 RED→GREEN으로 보강해 receipt·금액·정확한 이벤트를 확인했고 관련 실제 3개 회귀도 통과했다. GOV-019의 목록·후속 에폭 복귀·정확한 이벤트도 실제 RED→GREEN으로 보강했다. NODE-002의 정확한 블록·트랜잭션·영수증 이관과 포크 이후 동기화도 실제 race로 보강했다. TX-017과 기존 RT-A-3-07의 실제 쓰기 뒤 롤백·가스·수수료도 세 체인에서 보강했다. 최소 금액 미달 원문과 현행 계약의 차이·TX-018의 유한한 estimateGas - 1 입력은 실제 대조했지만 WBFT·StableNet에서 성공해 원문 기대와 충돌했고 사용자가 추정 상한과 실제 부족한 가스를 구분하도록 승인했다. 승인 기준의 공통 DSL 케이스와 세 체인 실제 회귀를 완료했다. 원문 충분성·legacy 소비자 재평가는 남음; [종료·전환](handoff-runtime-evidence.json), [재접속](handoff-reattach-evidence.json), [20개 회귀](handoff-regression-evidence.json), [GOV-018](gov-staking-resume-evidence.json), [GOV-019](gov-staking-reactivation-evidence.json), [NODE-002](data-migration-evidence.json), [실패 거래](transaction-failure-evidence.json) |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 완료 — 실제 root 등록·구성 입력과 과거 상태를 RED→GREEN으로 대조. CLI/MCP/Web/DSL의 현행 구성 소비 경로 확인; 전체 검사·관련 race·외부 저장소 로컬 HEAD 바이너리 세 체인의 공개 CLI 구성·블록 전진·종료·노드 데이터 제거 통과. 설정·기록 126파일 보존; [증거](setup-transition-evidence.json) |
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
+
+**2026-10-15 TX-018 유한한 추정 경계 진단:** 잘못된 입력·거래 hash·블록·영수증·상태를
+받아들이던 검증을 단위 RED→GREEN으로 보강했다. 원문 기대를 실제 WBFT에 적용한 RED는
+추정치 31,513·한도 31,512·실제 소비 31,160·status 1·저장소 42→1을 기록했다.
+임시 파일의 프리셋 조회 실패는 준비 오류로 별도 보존하며 제품 RED로 세지 않는다.
+
+같은 초기 상태의 독립 계약 세 개에서 추정 한도, 추정치−1, 실제 성공 소비량−1을 비교했다.
+StableNet·WBFT는 추정치−1이 성공했고, WEMIX는 추정치와 실제 소비가 31,160으로 같아
+추정치−1이 실패했다. 세 체인의 실제 소비량−1 입력은 모두 status 0·gasUsed 31,159·
+저장소 42 유지·완료된 SSTORE 뒤 실패를 확인했다. 실제 calldata·가스 한도·영수증·정확한
+수수료 차감과 후속 블록 전진도 대조했다. 진단 9개 거래와 기존 실패 거래 6개 회귀는 같은
+고정 소스 `aa700fb41042eb559cfb91a41d88ea57993a6514c8a066bcb03e7927ef109b77`에서
+직렬 race로 통과했고 Go skip은 0이었다. 8개 시도의 활성 프로세스·종료 DB는 0이며
+1,230파일의 내용·권한·소유자·mtime을 다시 대조했다.
+
+이것은 유한한 입력에 대한 진단이며 TX-018 원문 인수 완료가 아니다. 진단 뒤 사용자는 추정 상한과 실제 부족한 가스를 구분하는 완료 기준을 승인했다.
+원문 변경 전의 위 진단 기록은 보존하고, 승인 기록과 공통 DSL 케이스를 추가했다.
+아래 승인 기준의 새 케이스 실제 회귀를 별도로 완료했다. GOV-019의 미달 거래 채굴 검증·87개 충분성·legacy·Linux/mainnet·최종 Web 인수도 남는다.
+근거: [추정 경계·실제 영수증·보존 자료](estimate-boundary-evidence.json).
+
+**TX-018 승인 기준 완료:** 사용자 승인 뒤 공통 `CT-CONTRACT-008-finite-gas-boundary`를 추가했다.
+두 독립 초기 상태에서 추정 한도의 성공·실제 소비 상한과 성공 소비량−1의 실제 채굴 실패·전량 소비·롤백을
+DSL로 실행한다. 새 호출자의 정확한 수수료와 실제 쓰기 뒤 실패를 확인한다. 기존 무한 반복 케이스는 보존했다.
+주소 golden은 새 케이스의 16위치만 추가했고 기존 862위치는 그대로다.
+
+세 체인의 공통 DSL 케이스 각 16단언·실제 쓰기 거래 6건과 estimate−1 진단 거래 9건,
+기존 실패 거래 6건 회귀가 고정 소스 `bc491358c03f64bb50a6fa583875764f24de838976c4737a684356240a8da7e7`에서
+직렬 race로 통과했다. 준비 실패·원문 기대 RED와 이전 진단도 보존했고 전체 14시도의 활성 프로세스·종료 DB는 0,
+2,283파일의 해시·권한·소유자·mtime 대조가 통과했다. 관련 두 패키지 전체 race와 최종 전체 make check도 통과했다.
+이 완료는 승인된 TX-018의 공통 local native 범위이며 Linux/mainnet·87개 충분성·최종 Web 인수의 완료가 아니다.
+GOV-019도 현행 거절 계약에 맞추도록 승인했지만 미달 거래 채굴·사유·상태 보강은 다음 단계다.
+근거: [승인 케이스·진단·실제 회귀 증거](estimate-boundary-evidence.json).
 
 **2026-10-13 저장 공간 보강 완료:** `runtime_storage.py`가 새 테스트 폴더를 소유권 표시와 20 GiB 사전 검사로 만들고,
 성공한 실행 뒤 인용되지 않은 종료 노드 DB와 독립 재현의 의존성 복사본만 자동 제거한다.
