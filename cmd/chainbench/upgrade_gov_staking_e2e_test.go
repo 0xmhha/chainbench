@@ -1056,74 +1056,82 @@ func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
 	}
 }
 
-// TestWemixGovernanceDelegatorClaimE2E ports wemix4 GOV-014 (delegator claim): a
-// delegator to a producing staker accrues its share of block rewards and can
-// claim them — claiming as a non-operator resolves _user to the caller, so the
-// reward (minus fee) is sent to the delegator, raising its balance.
-//
-//	go test -tags e2e -run TestWemixGovernanceDelegatorClaimE2E -timeout 8m ./cmd/chainbench
+// TestWemixGovernanceDelegatorClaimE2E binds the actual payout and fee to
+// parent-state preview, exact events and transaction-level balance changes.
 func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
-	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
-	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
-	if fromBin == "" || toBin == "" {
-		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
+	from, to := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	if from == "" || to == "" {
+		t.Skip("set FROM/TO for actual delegator ledger")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
-	c := rpc.Dial(url)
-	ctx := context.Background()
-	ap, err := accounts.ForChain("wbft")
+	provider, err := accounts.ForChain("wbft")
 	if err != nil {
-		t.Fatalf("accounts.ForChain(wbft): %v", err)
+		t.Fatal(err)
 	}
-	staker, _ := registerProducingStaker(t, c, ap, url)
-
-	// A delegator (node4) delegates to the producing staker.
-	delegator, err := ap.OpenWallet(ctx, presetNodeKey(t, 4), url)
-	if err != nil {
-		t.Fatalf("open delegator wallet: %v", err)
-	}
-	delegAmount, _ := new(big.Int).SetString("1000000000000000000000000", 10) // 1e24
-	dData := accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(delegAmount))
-	dRaw, _ := hex.DecodeString(strings.TrimPrefix(dData, "0x"))
-	dHash, err := delegator.Execute(ctx, e2eGovStaking, dRaw, delegAmount)
-	if err != nil {
-		t.Fatalf("delegate execute: %v", err)
-	}
-	if st := stakingWaitStatus(t, c, dHash); st != "0x1" {
-		t.Fatalf("delegate reverted (status %s)", st)
-	}
-
-	// Wait until the delegator's own share of rewards has accrued.
-	deleg := delegator.Address()
-	want, _ := new(big.Int).SetString("2000000000000000000", 10) // 2e18
-	deadline := time.Now().Add(120 * time.Second)
-	for stakingPreviewPending(t, c, staker, deleg).Cmp(want) < 0 {
-		if time.Now().After(deadline) {
-			t.Fatal("delegator reward did not accrue past the claim threshold")
+	keys := [][]byte{}
+	alloc := map[string]any{}
+	for _, name := range []string{"op1", "op2", "opX"} {
+		key := mustHexBytes(t, scenarioOpKeys[name])
+		addr, err := provider.AddressForKey(key)
+		if err != nil {
+			t.Fatal(err)
 		}
-		time.Sleep(3 * time.Second)
+		keys = append(keys, key)
+		alloc[addr] = map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}
 	}
-
-	// The delegator claims its share; the reward (minus fee) lands in its balance.
-	balBefore, err := c.BalanceAt(ctx, deleg)
+	url := runGovHandoffOverlay(t, from, to, map[string]any{"alloc": alloc})
+	c := rpc.Dial(url)
+	wallets := []accounts.Wallet{}
+	for _, key := range keys {
+		w, err := provider.OpenWallet(t.Context(), key, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wallets = append(wallets, w)
+		assertGuardCallerOutsideValidators(t, c, w.Address())
+	}
+	operator, delegator := wallets[0], wallets[1]
+	feeRecipient := wallets[2].Address()
+	staker := presetNodeAddr(t, 2)
+	minimum := govConfigUint(t, c, "minimumStaking()")
+	rate := big.NewInt(250)
+	precision := govConfigUint(t, c, "feePrecision()")
+	pk, sig := presetNodeBLS(t, 2)
+	input := accounts.EncodeCallArgs("registerStaker(uint256,address,address,uint256,bytes,bytes)", accounts.Uint(minimum), accounts.Address(staker), accounts.Address(feeRecipient), accounts.Uint(rate), accounts.Bytes(pk), accounts.Bytes(sig))
+	stakingSendOK(t, c, operator, input, minimum)
+	if stakingInfoWord(t, c, staker, 3).Cmp(rate) != 0 {
+		t.Fatal("declared fee rate not applied")
+	}
+	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
+	stakingSendOK(t, c, delegator, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(minimum)), minimum)
+	start, err := c.BlockNumber(t.Context())
 	if err != nil {
-		t.Fatalf("delegator balance: %v", err)
+		t.Fatal(err)
 	}
-	cData := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
-	cRaw, _ := hex.DecodeString(strings.TrimPrefix(cData, "0x"))
-	cHash, err := delegator.Execute(ctx, e2eGovStaking, cRaw, nil)
-	if err != nil {
-		t.Fatalf("delegator claim execute: %v", err)
+	waitForHead(t, c, start+10, 90*time.Second)
+	hash := stakingSendOK(t, c, delegator, accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0})), nil)
+	p := claimLedgerProof{Hash: hash, Caller: delegator.Address(), Staker: staker, Rewardee: rewardee, FeeRecipient: feeRecipient, FeeRate: rate.String(), FeePrecision: precision.String()}
+	if err = c.Call(t.Context(), "eth_getTransactionByHash", &p.Transaction, hash); err != nil {
+		t.Fatal(err)
 	}
-	if st := stakingWaitStatus(t, c, cHash); st != "0x1" {
-		t.Fatalf("delegator claim reverted (status %s)", st)
+	if err = c.Call(t.Context(), "eth_getTransactionReceipt", &p.Receipt, hash); err != nil {
+		t.Fatal(err)
 	}
-	balAfter, err := c.BalanceAt(ctx, deleg)
-	if err != nil {
-		t.Fatalf("delegator balance after: %v", err)
+	number, err := strconv.ParseUint(strings.TrimPrefix(fmt.Sprint(p.Receipt["blockNumber"]), "0x"), 16, 64)
+	if err != nil || number == 0 {
+		t.Fatal("receipt block missing", err)
 	}
-	if balAfter.Cmp(balBefore) <= 0 {
-		t.Fatalf("delegator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	p.PreviewBlock = fmt.Sprintf("0x%x", number-1)
+	previewInput := accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(p.Caller))
+	if err = c.Call(t.Context(), "eth_call", &p.Preview, map[string]string{"from": p.Caller, "to": e2eGovStaking, "data": previewInput}, p.PreviewBlock); err != nil {
+		t.Fatal("execution-parent preview unavailable", err)
+	}
+	p.Logs = feeReceipt(t, c, hash)
+	if err = c.Call(t.Context(), "debug_traceTransaction", &p.Diff, hash, map[string]any{"tracer": "prestateTracer", "tracerConfig": map[string]any{"diffMode": true}}); err != nil {
+		t.Fatal(err)
+	}
+	logGovernanceProof(t, "GOV-014-claim-ledger", p)
+	if err := verifyClaimLedger(p); err != nil {
+		t.Fatal(err)
 	}
 }
 

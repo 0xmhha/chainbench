@@ -182,6 +182,22 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 GOV-014 정상 위임자 청구 보강:** 잔액 증가만 보는 baseline이
+누락/중복 이벤트·잘못된 amount/restake/fee·계정별 잔액 차이·프리뷰 시점·fee 비율 등11조건을
+통과시키는 RED를 확인했다. 비검증자 운영자/위임자/feeRecipient, 동일 stake·feeRate250/
+precision10000, 위임 뒤10블록 보상 누적과 정확한 청구 ledger를 GREEN으로 보강했다.
+청구 거래 index0의 parent 상태에서 previewReward를 다시 읽어 실행 직전의 총액/수수료를 묶고,
+Claimed·FeePaid의 emitter/indexed/data와 거래 단위 계정/가스비/nonce를 전수 대조한다.
+Claimed.amount는 계약 수수료 차감 뒤의 값이며 거래 가스비는 별도다.
+
+관련 tagged CLI 전체 race·전체 검사와 실제 위임자 청구 native race(89.377초, skip0)가
+통과했다. 프리뷰 총액6e18·수수료1.5e17 wei, Claimed5.85e18, rewardee6e18 출금,
+feeRecipient1.5e17 수령, 위임자5.85e18−gas13,515,606,368,415,564 증가를 독립 재계산했다.
+고정 소스 `65016892622acd06dccfad84a2b7ddf083d4dc1169be18b39511c41a65480382` 전후가 같다.
+[정상 청구 ledger 증거](claim-ledger-evidence.json)는228파일의 내용·권한·소유자·mtime을
+보존했고 활성 프로세스·종료 DB는0이다. 원문87개 전체·Linux·메인넷·legacy·공개 DSL·최종
+Web 인수와 다른 비율/반올림 구성 전수는 별도 잔여이며 외부 소스는 수정하지 않았다.
+
 **2026-10-15 GOV-022 타 스테이커 청구 차단 보강:** receipt 실패만 보는 baseline이
 누락된 상태 추적·보상 계정/타 운영자 변경·호출자 보상 수령·잘못된 nonce/사유·보상 미누적·보호
 계정 누락을 통과시키는 RED를 확인했다. 두 스테이커 등록·각 보상 누적, OperatorA→B와 무관한
