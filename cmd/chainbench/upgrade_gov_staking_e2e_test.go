@@ -615,13 +615,15 @@ func TestWemixGovernanceReactivateE2E(t *testing.T) {
 		}
 	}
 	staker := presetNodeAddr(t, 1)
-	assertReactivationSet(t, c, staker, true)
+	boundary := assertReactivationSet(t, c, staker, true)
+	observations := []validatorObservation{observeValidatorTransition(t, c, url, staker, boundary)}
 
 	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
 	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
 		t.Fatal("GOV-019 full unstake did not deactivate and clear the subject stake")
 	}
-	assertReactivationSet(t, c, staker, false)
+	boundary = assertReactivationSet(t, c, staker, false)
+	observations = append(observations, observeValidatorTransition(t, c, url, staker, boundary))
 
 	// Preserve the typed call refusal and separately prove the actual mined failure.
 	below := new(big.Int).Sub(amount, big.NewInt(1))
@@ -680,13 +682,18 @@ func TestWemixGovernanceReactivateE2E(t *testing.T) {
 		t.Fatalf("GOV-019 event amount differs: %q", event.Data)
 	}
 	t.Logf("GOV-019 reactivation receipt: %s", receipt)
-	assertReactivationSet(t, c, staker, true)
+	boundary = assertReactivationSet(t, c, staker, true)
+	observations = append(observations, observeValidatorTransition(t, c, url, staker, boundary))
+	logGovernanceProof(t, "RPC-023-transition", map[string]any{"subject": staker, "epochLength": scenarioEpochLen, "observations": observations})
+	if err := verifyValidatorTransition(observations, staker, scenarioEpochLen); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // assertReactivationSet checks the contract's exact active list and the next
 // completed epoch after the latest state change. A historical matching epoch
 // or the stabilizing stage's inherited validators cannot satisfy this check.
-func assertReactivationSet(t *testing.T, c *rpc.Client, subject string, active bool) {
+func assertReactivationSet(t *testing.T, c *rpc.Client, subject string, active bool) uint64 {
 	t.Helper()
 	want := map[string]bool{}
 	for _, i := range []int{1, 2, 3} {
@@ -749,6 +756,7 @@ func assertReactivationSet(t *testing.T, c *rpc.Client, subject string, active b
 		t.Fatal(err)
 	}
 	t.Logf("GOV-019 active=%v contract stakers=%s subsequent epoch=%d info=%s", active, out, boundary, encoded)
+	return boundary
 }
 
 // TestWemixGovernanceEmergencyModeE2E ports wemix4 GOV-017 (emergency mode): the

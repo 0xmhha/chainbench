@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 56,
-    "confirmed_scope": 29,
+    "partial": 55,
+    "confirmed_scope": 30,
     "conflict": 1,
     "merged": 1
   },
@@ -4307,7 +4307,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceRegisterStakerE2E"
         }
       ],
@@ -4392,12 +4392,12 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceUnstakeE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
         }
       ],
@@ -4562,7 +4562,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceStabilizingE2E"
         },
         {
@@ -4592,12 +4592,12 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceDelegateE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
         }
       ],
@@ -4622,7 +4622,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceBlockRewardE2E"
         }
       ],
@@ -4647,7 +4647,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceOperatorClaimE2E"
         }
       ],
@@ -4672,7 +4672,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceDelegatorClaimE2E"
         }
       ],
@@ -4697,7 +4697,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceUnstakeMinimumGuardE2E"
         }
       ],
@@ -4722,12 +4722,12 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceUnstakeE2E"
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceReactivateE2E"
         }
       ],
@@ -4752,7 +4752,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceEmergencyModeE2E"
         }
       ],
@@ -4777,7 +4777,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceEmergencyModeE2E"
         }
       ],
@@ -4807,7 +4807,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceReactivateE2E"
         }
       ],
@@ -4837,7 +4837,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceFeeChangeE2E"
         }
       ],
@@ -4867,7 +4867,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceFeeChangeDelayedE2E"
         }
       ],
@@ -4897,7 +4897,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceClaimGuardE2E"
         }
       ],
@@ -4922,7 +4922,7 @@
       "targets": [
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceCredentialExpiryE2E"
         }
       ],
@@ -7469,7 +7469,7 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceStabilizingE2E"
         }
       ],
@@ -7489,7 +7489,7 @@
       "id": "RPC-023",
       "title": "istanbul\\_isValidator — 에폭 전환 후 제외된 노드",
       "criterionSha256": "ea3fc3c476050c69459311c9a2bb727f2faf6ff427788f94a34cd39da28ad024",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -7499,8 +7499,23 @@
         },
         {
           "path": "cmd/chainbench/upgrade_gov_staking_e2e_test.go",
-          "sha256": "cb4e09ed24004670fabd61a260ccb855d128bb1afbe00d562d0e7a53b898dc84",
+          "sha256": "3da4c338766bb71fdb4730ffc8a83e5b220ac0455bbaf3543721839f7213891c",
           "function": "TestWemixGovernanceReactivateE2E"
+        },
+        {
+          "path": "cmd/chainbench/validator_transition_e2e_test.go",
+          "function": "verifyValidatorTransition",
+          "sha256": "d78835134a75d385896c3b55260520e4ee3a7b017802e372889a7b91d03fcc72"
+        },
+        {
+          "path": "cmd/chainbench/validator_transition_e2e_test.go",
+          "function": "TestValidatorTransitionRejectsStaticRoleEvidence",
+          "sha256": "d78835134a75d385896c3b55260520e4ee3a7b017802e372889a7b91d03fcc72"
+        },
+        {
+          "path": "cmd/chainbench/validator_transition_e2e_test.go",
+          "function": "observeValidatorTransition",
+          "sha256": "d78835134a75d385896c3b55260520e4ee3a7b017802e372889a7b91d03fcc72"
         }
       ],
       "observations": [
@@ -7508,12 +7523,17 @@
           "analysis": "static BP/EN false/true와reactivatevalidator epochmembership"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Same actual validator identity/endpoint queried before exclusion and after the applying epoch, plus restored positive control. Both default and explicitly bound-height isValidator agree with current getValidators membership. Static BP/EN role flags no longer substitute for this criterion.",
       "remainingConditions": [
-        "동일노드 에폭전isValidatortrue→unstake후false 직접 RPC조회없음; static BP/EN포트이름의 misleading gap"
+        "Full original/Linux/mainnet/legacy environment, public DSL scenario and final Web acceptance remain separate. No full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Managed WEMIX→WBFT handoff: node1 address/endpoint unchanged; epoch40/head41 true with three validators, epoch50/head51 false with two after full unstake, epoch60/head62 true with three after reactivation. Existing GOV019 mined failure/state/event conditions retained. RED/GREEN, full related race/check, native race/skip0 and source invariance verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/validator-transition-evidence.json",
+          "sha256": "630821a3d74e4e8e1ab8b58632b3de095327d529a4af3aee2d13d356fb9d4bd2"
+        }
+      ]
     }
   ],
   "legacy": {
