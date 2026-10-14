@@ -18,6 +18,10 @@ class CriterionReviewTests(unittest.TestCase):
         self.assertEqual(len(self.review['records']), 87)
 
     def test_unverified_claims_stale_sources_and_hidden_conditions_fail(self):
+        def self_merge(review):
+            row = next(r for r in review['records'] if r['status'] == 'merged')
+            row['mergedInto'] = row['id']
+
         mutations = {
             'missing criterion': lambda x: x['records'].pop(),
             'duplicate criterion': lambda x: x['records'][0].update(id=x['records'][1]['id']),
@@ -32,7 +36,7 @@ class CriterionReviewTests(unittest.TestCase):
             'false scoped proof': lambda x: x['records'][1].update(verifiedEvidence=[]),
             'stale evidence': lambda x: x['records'][1]['verifiedEvidence'][0].update(sha256='0' * 64),
             'wrong merge target': lambda x: next(r for r in x['records'] if r['status']=='merged').update(mergedInto='WBFT-999'),
-            'self merge': lambda x: next(r for r in x['records'] if r['status']=='merged').update(mergedInto='WBFT-004'),
+            'self merge': self_merge,
             'missing function': lambda x: next(t for r in x['records'] for t in r['targets'] if 'function' in t).update(function='UnknownFunction'),
             'wrong status counts': lambda x: x['statusCounts'].update(partial=0),
         }

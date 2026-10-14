@@ -8,10 +8,10 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 62,
-    "confirmed_scope": 20,
+    "partial": 61,
+    "confirmed_scope": 22,
     "conflict": 3,
-    "merged": 2
+    "merged": 1
   },
   "records": [
     {
@@ -3347,13 +3347,43 @@
       "id": "WBFT-003",
       "title": "View Change 발생 및 라운드 체인지 후 블록 연결 검증",
       "criterionSha256": "48dcf9393c75bd02ae4eececf2f4048fa9467b6f8635adfc5882c984553f1cf4",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_proposer_test.go",
           "sha256": "c6d476bc16c3e2e1e2b9cefc59f6ec005e6b37164e5e1251a5cb1120187b404d",
           "function": "TestE2E_WbftViewChange"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "verifyViewChange",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "TestViewChangeRejectsPresenceOnlyRecovery",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "TestNativeProposerViewChangeAndFiveLinks",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestRestartIdentityWaitsForRPCReadiness",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestViewChangeUsesGenerationDelayRatherThanHeaderTimestamp",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestRestartReadinessRejectsWrongIdentityAndDeadline",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
         }
       ],
       "observations": [
@@ -3361,24 +3391,59 @@
           "analysis": "node1 stop 후3block advance, 최근3parent link, node1 restart"
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Actual next round-zero proposer selected from current header/order and managed identity; round1/different proposer, successor PrevRound1, surviving three-node propagation logs and actual commit delay3055ms, original node restarted/resynced, five subsequent links. Header timestamp gap2 distinguished from generation delay; startup failure retained.",
       "remainingConditions": [
-        "현재 proposer identity 선택 안함·PrevRound>0/roundchange log 없음·5block아닌3link·시간 RequestTimeout 직접 비교 없음"
+        "Local current Croissant0 fixture rather than original staged migration/mainnet. Linux/legacy/public DSL scenario and final Web acceptance are separate; no full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "Managed local WBFT Croissant0 BP4, configured actual blockPeriod2/requestTimeout3, observed next round-zero proposer stopped, exact following header changed round/proposer and logs delayed, original PID/identity restarted and rejoined, six headers/five linked edges after restart. Native race and independent original-log checks passed.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/view-change-evidence.json",
+          "sha256": "6aa87e68d77c8197f73d7d381fdc5f0db91a0f070797bc4d24827c2cd5ea3fed"
+        }
+      ]
     },
     {
       "id": "WBFT-004",
       "title": "라운드 체인지 후 블록 연결 (parentHash 검증)",
       "criterionSha256": "1fa1c9016d155f8a85692788731cbf73165c03dba382e4eebcb30c9d351e1d34",
-      "status": "merged",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/e2e/wbft_proposer_test.go",
           "sha256": "c6d476bc16c3e2e1e2b9cefc59f6ec005e6b37164e5e1251a5cb1120187b404d",
           "function": "TestE2E_WbftViewChange"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "verifyViewChange",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "TestViewChangeRejectsPresenceOnlyRecovery",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/view_change_native_test.go",
+          "function": "TestNativeProposerViewChangeAndFiveLinks",
+          "sha256": "d739d540132735bd2090acdd9f47c72ef32cceeec9897f01417761ace2394bf7"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestRestartIdentityWaitsForRPCReadiness",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestViewChangeUsesGenerationDelayRatherThanHeaderTimestamp",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
+        },
+        {
+          "path": "internal/testengine/restart_readiness_test.go",
+          "function": "TestRestartReadinessRejectsWrongIdentityAndDeadline",
+          "sha256": "93ba2be6d502a82fd4fcc076248a4ec4fe28341c73e9a0a325de7a31e0a199da"
         }
       ],
       "observations": [
@@ -3386,12 +3451,17 @@
           "analysis": "원문 WBFT003 통합으로 별도 ID 유지"
         }
       ],
-      "semanticAssessment": "merged",
+      "semanticAssessment": "Actual next round-zero proposer selected from current header/order and managed identity; round1/different proposer, successor PrevRound1, surviving three-node propagation logs and actual commit delay3055ms, original node restarted/resynced, five subsequent links. Header timestamp gap2 distinguished from generation delay; startup failure retained.",
       "remainingConditions": [
-        "WBFT003의 회복과 3link만 검사; 통합 사실은 테스트 충분성 증거 아님"
+        "Local current Croissant0 fixture rather than original staged migration/mainnet. Linux/legacy/public DSL scenario and final Web acceptance are separate; no full87 acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": [],
+      "confirmedScope": "Managed local WBFT Croissant0 BP4, configured actual blockPeriod2/requestTimeout3, observed next round-zero proposer stopped, exact following header changed round/proposer and logs delayed, original PID/identity restarted and rejoined, six headers/five linked edges after restart. Native race and independent original-log checks passed.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/view-change-evidence.json",
+          "sha256": "6aa87e68d77c8197f73d7d381fdc5f0db91a0f070797bc4d24827c2cd5ea3fed"
+        }
+      ],
       "mergedInto": "WBFT-003"
     },
     {
