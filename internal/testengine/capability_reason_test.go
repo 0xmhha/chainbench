@@ -18,7 +18,7 @@ func TestCapabilityGateRecordsExactMissingRequirementsBeforeExecution(t *testing
 		skips                        []string
 	}{
 		{"missing", "", "skip", "missing required capabilities: ws,process-control", nil, []string{"rpc", "ws", "process-control"}, []string{"ws", "process-control"}, nil},
-		{"provided", "", "pass", "", []string{"ws"}, []string{"rpc", "ws"}, nil, nil},
+		{"provided", "", "pass", "", []string{"account-extra"}, []string{"rpc", "account-extra"}, nil, nil},
 		{"wrong-chain", "wbft", "skip", "chain stablenet is outside applicableChains wbft", nil, []string{"rpc"}, nil, nil},
 		{"unexpected", "", "fail", "missing required capabilities: ws", nil, []string{"rpc", "ws"}, []string{"ws"}, []string{}},
 	} {

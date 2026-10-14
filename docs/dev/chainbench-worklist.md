@@ -171,7 +171,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. Linux fleet·전체 L1·R3 나머지·P4 충분성·R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R4 포크 제어 실증·전수 회귀 등 나머지·R5·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. R6 CLI/MCP 다중 preset 실행·출처 기록도 검증했다. R3 RPC·WS·시스템 컨트랙트의 실제 존재 확인은 네 native 프로필·24실행·320노드 관측으로 통과했다. Linux fleet·전체 L1·R3 다른 동작·P4 충분성·R4 포크 제어 실증/전수 회귀·R5 영향 케이스·전체 출처 충분성은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
@@ -399,6 +399,19 @@ CLI는 6 PASS, MCP는 의도한 WBFT ID 불일치 2 FAIL을 보존하고 다음 
 91개 app usecase의 등록 누락도 0건이다. 이 단계는 Web 다중 대상 기동 폼을 추가하거나 전체 공통 TC의
 바이너리/버전/fork/서명/skip 출처 충분성을 완료한 근거가 아니다. Linux L1·R3/P4/R4/R5·10–14번과
 후속 소스의 Web 최종 인수는 계속 남는다.
+
+**R3 RPC·WS·시스템 컨트랙트 확인 완료:** [관측 증거](network-capability-evidence.json)는 모든 기록된 노드의
+`eth_blockNumber`, 기록된 WS 주소의 인증된 `eth_subscribe(newHeads)`, 매니페스트 시스템 컨트랙트의 코드를 확인한다.
+바이너리 내장 accountManager는 코드가 없으므로 `isBlacklisted(address)`의 boolean 응답으로 확인한다.
+지원·미지원·조회 불가를 구분하며 조회 불가는 다른 미지원 판정보다 우선해 BLOCKED로 남긴다.
+관측에는 노드·역할·메서드·주소·코드 해시를 보존하고 URL·자격증명·원문 오류를 쓰지 않는다.
+WS 구독은 응답 대기 중 취소·빈 ID 거절·typed RPC 오류·명시 종료와 알림 버퍼 종료를 보강했다.
+RED→GREEN·전체 make check·관련 여섯 패키지 race·실제 브라우저와 네 native 프로필의 직렬 race 증명이 통과했다.
+새 캠페인 24실행은 16 PASS와 의도한 8 BLOCKED를 기록했고, 노드 관측 320건은 supported 312·unknown 8이다.
+숫자 입력 실패 192건·정수 제어 실패 144건·시간 입력 실패 168건과 기존 raw 제출 208건도 회귀했다.
+각 증명의 소스 123개 해시가 일치하며 종료 DB·관련 프로세스는 0건이다. 설정·로그·세션·증명은 보존했다.
+RPC 전체 메서드, WS 이벤트 완전성, 계약 ABI/버전/권한/포크 동작을 확인한 근거는 아니다.
+R3 나머지·P4 충분성·Linux L1·9번 잔여·10–14번과 후속 Web 최종 인수는 계속 남는다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

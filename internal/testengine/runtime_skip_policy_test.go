@@ -60,7 +60,9 @@ func TestDeclaredRuntimeSkipIsJudgedAfterActualCapabilityProbe(t *testing.T) {
 							}
 						}
 					default:
-						steps.Add(1)
+						if request.Method == "test_hook" || request.Method == "test_body" {
+							steps.Add(1)
+						}
 						response["result"] = "0x10"
 					}
 					_ = json.NewEncoder(w).Encode(response)
@@ -70,7 +72,7 @@ func TestDeclaredRuntimeSkipIsJudgedAfterActualCapabilityProbe(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				raw, _ := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "case", "id": "runtime-skip", "requires": []string{"rpc", capability}, "skipsOn": []string{"wbft"}, "chainPreset": map[string]any{"chain": "wbft"}, "hooks": map[string]any{"pre": []any{map[string]any{"do": "read", "source": "blockNumber", "save": "height"}}}, "steps": []any{map[string]any{"expect": "blockNumber", "is": 16}}})
+				raw, _ := json.Marshal(map[string]any{"schemaVersion": "2", "kind": "case", "id": "runtime-skip", "requires": []string{"rpc", capability}, "skipsOn": []string{"wbft"}, "chainPreset": map[string]any{"chain": "wbft"}, "hooks": map[string]any{"pre": []any{map[string]any{"do": "read", "source": "rpcCall", "method": "test_hook", "save": "height"}}}, "steps": []any{map[string]any{"expect": "rpcCall", "method": "test_body", "is": "0x10"}}})
 				root, err := eng.Run(context.Background(), [][]byte{raw})
 				if err != nil {
 					t.Fatal(err)

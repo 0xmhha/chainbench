@@ -6,23 +6,42 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
 func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixture string, preset any, nodes node.NodeSet, p256Expected bool, rawCount *atomic.Int32) []map[string]any {
 	t.Helper()
+	encoded, _ := json.Marshal(preset)
+	var declaration struct{ Chain string }
+	if err := json.Unmarshal(encoded, &declaration); err != nil {
+		t.Fatal(err)
+	}
+	plugin, err := registry.Get(declaration.Chain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contractCaps := []string{}
+	for name := range plugin.Manifest().SystemContracts {
+		contractCaps = append(contractCaps, "contract:"+name)
+	}
+	sort.Strings(contractCaps)
 	observations := []map[string]any{}
 	for _, c := range []struct {
 		name, status      string
 		requires, missing []string
 		unexpected        bool
 	}{
+		{"network", "pass", []string{"rpc", "ws"}, nil, false},
+		{"rpc-unavailable", "blocked", []string{"rpc"}, nil, false},
+		{"contracts", "pass", append([]string{"rpc"}, contractCaps...), nil, false},
 		{"provided", "pass", []string{"rpc", "account-extra"}, nil, false},
 		{"missing", "skip", []string{"rpc", "ws", "process-control", "metrics"}, []string{"ws", "process-control", "metrics"}, false},
 		{"unexpected", "fail", []string{"rpc", "ws"}, []string{"ws"}, true},
@@ -48,11 +67,11 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 		if c.name == "vm" && configured["chain"] == "wemix" {
 			c.status = "skip"
 		}
-		if strings.HasPrefix(c.name, "consensus") || c.name == "vm" || c.name == "p256" {
+		if strings.HasPrefix(c.name, "consensus") || c.name == "vm" || c.name == "p256" || c.name == "network" || c.name == "rpc-unavailable" || c.name == "contracts" {
 			original := configured["attach"].(map[string]any)["endpoints"].([]any)[0]
 			endpoints := []any{}
 			for _, n := range nodes.Nodes {
-				ep := map[string]any{"rpc": n.RPCURL, "role": string(n.Role)}
+				ep := map[string]any{"rpc": n.RPCURL, "role": string(n.Role), "ws": n.WSURL}
 				if n.Role == node.RoleEN {
 					ep = original.(map[string]any)
 				}
@@ -78,6 +97,15 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 			}
 			if c.name == "p256" {
 				configured["attach"].(map[string]any)["provides"] = []string{"consensus", "precompile:secp256r1"}
+			}
+			if c.name == "network" {
+				configured["attach"].(map[string]any)["provides"] = []string{"ws"}
+			}
+			if c.name == "rpc-unavailable" {
+				configured["attach"].(map[string]any)["provides"] = []string{}
+			}
+			if c.name == "contracts" {
+				configured["attach"].(map[string]any)["provides"] = contractCaps
 			}
 		}
 		doc := map[string]any{"schemaVersion": "2", "kind": "case", "id": "capability-" + c.name, "chainPreset": configured, "requires": c.requires, "steps": []any{map[string]any{"expect": "blockNumber", "on": "en1", "compare": "GreaterOrEqual", "is": 2}}}
@@ -170,18 +198,10 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				t.Fatalf("incorrect gate observation: %s", data)
 			}
 			wantProvided := "rpc"
-			if c.name == "provided" {
-				wantProvided += ",account-extra"
+			if supplied, ok := configured["attach"].(map[string]any)["provides"].([]string); ok && len(supplied) > 0 {
+				wantProvided += "," + strings.Join(supplied, ",")
 			}
-			if strings.HasPrefix(c.name, "consensus") {
-				wantProvided += ",consensus"
-			}
-			if c.name == "vm" {
-				wantProvided += ",consensus,evm:shanghai"
-			}
-			if c.name == "p256" {
-				wantProvided += ",consensus,precompile:secp256r1"
-			}
+
 			if strings.Join(probe.Provided, ",") != wantProvided {
 				t.Fatalf("preset provides did not reach gate: %s", data)
 			}
@@ -189,6 +209,43 @@ func requireNativeDeclaredCapabilities(t *testing.T, ctx context.Context, fixtur
 				if _, err := os.Stat(filepath.Join(dir, "steps.json")); err == nil {
 					t.Fatal("unmet requirement executed steps")
 				}
+			}
+			if c.name == "network" || c.name == "rpc-unavailable" || c.name == "contracts" {
+				path := filepath.Join(dir, "observations", "network-capability-probes.json")
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var actual struct {
+					Probes []struct {
+						Capability, Status string
+						Nodes              []struct {
+							Node                                int
+							Status, Source, Address, CodeSHA256 string
+						}
+					}
+				}
+				if err := json.Unmarshal(data, &actual); err != nil {
+					t.Fatal(err)
+				}
+				if len(actual.Probes) != len(c.requires) {
+					t.Fatal("missing network probes", string(data))
+				}
+				for _, cap := range actual.Probes {
+					if len(cap.Nodes) != 5 {
+						t.Fatal("missing actual endpoints", string(data))
+					}
+					for index, n := range cap.Nodes {
+						wanted := "supported"
+						if c.name == "rpc-unavailable" && index == 4 {
+							wanted = "unknown"
+						}
+						if n.Node != index+1 || n.Status != wanted || n.Source == "" {
+							t.Fatal("incorrect actual network observation", string(data))
+						}
+					}
+				}
+				observations = append(observations, map[string]any{"surface": surface, "scenario": c.name, "status": verdict.Result, "session": root, "networkProbePath": path, "networkProbe": json.RawMessage(data), "rawSubmissions": 0})
 			}
 			observations = append(observations, map[string]any{"surface": surface, "scenario": c.name, "status": verdict.Result, "reason": verdict.Reason, "session": root, "probePath": probePath, "probe": json.RawMessage(data), "rawSubmissions": 0})
 			if strings.HasPrefix(c.name, "consensus") || c.name == "vm" || c.name == "p256" {

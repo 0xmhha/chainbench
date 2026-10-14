@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,22 +19,28 @@ var chainIDQuantity = regexp.MustCompile(`^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$`)
 
 // identityAndCapabilityGate validates the declared identity first. A matching
 // capability cannot authorize running a case on a different or unknown chain.
-func identityAndCapabilityGate(chain string, dial func(string) *rpc.Client) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
+func identityAndCapabilityGate(chain string, dial func(string) *rpc.Client, authHeaders ...func(string) http.Header) func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string) {
 	capability := consensusCapabilityGate(chain, dial)
 	vm := shanghaiCapabilityGate(chain, dial)
 	p256 := p256CapabilityGate(chain, dial)
+	var headers func(string) http.Header
+	if len(authHeaders) > 0 {
+		headers = authHeaders[0]
+	}
+	network := networkCapabilityGate(chain, dial, headers)
 	return func(ctx context.Context, spec dsl.Spec, env session.Environment, record session.TestRecord) (session.TestStatus, string) {
 		status, reason := checkDeclaredChainIdentity(ctx, spec, env, record, dial)
 		if status != "" {
 			return status, reason
 		}
-		if status, reason := capability(ctx, spec, env, record); status != "" {
-			return status, reason
+		verdict, why := session.TestStatus(""), ""
+		for _, gate := range []func(context.Context, dsl.Spec, session.Environment, session.TestRecord) (session.TestStatus, string){capability, vm, p256, network} {
+			candidate, reason := gate(ctx, spec, env, record)
+			if preferred := preferCapabilityVerdict(verdict, candidate); preferred != verdict {
+				verdict, why = preferred, reason
+			}
 		}
-		if status, reason := vm(ctx, spec, env, record); status != "" {
-			return status, reason
-		}
-		return p256(ctx, spec, env, record)
+		return verdict, why
 	}
 }
 

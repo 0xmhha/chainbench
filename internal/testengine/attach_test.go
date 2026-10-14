@@ -159,7 +159,7 @@ func TestAttachEngine_SkipsUnmetCapability(t *testing.T) {
 // carries a capability attach cannot detect over RPC, so naming it in Caps must
 // make the gated spec run (its assertion executes and passes) rather than skip.
 func TestAttachEngine_AdvertisesConfiguredCaps(t *testing.T) {
-	srv := mockRPC(t, map[string]any{"eth_chainId": "0x1"})
+	srv := mockRPC(t, map[string]any{"eth_chainId": "0x1", "eth_blockNumber": "0x1"})
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain:        "stablenet",
 		RPCURLs:      []string{srv.URL},

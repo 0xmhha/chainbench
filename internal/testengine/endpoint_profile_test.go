@@ -57,7 +57,7 @@ func TestExternalEndpointProfileAuthenticatesAllReadTransports(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": "0x2"})
 	}))
 	defer server.Close()
-	profiles := []node.RPCEndpoint{{RPCURL: server.URL, Role: node.RoleBP}, {RPCURL: server.URL + "/en", Role: node.RoleEN, WSURL: "ws" + strings.TrimPrefix(server.URL, "http") + "/ws", MetricsURL: server.URL + "/metrics", Auth: &node.EndpointAuth{Type: "jwt", Env: "CHAINBENCH_TEST_ENDPOINT_TOKEN"}}}
+	profiles := []node.RPCEndpoint{{RPCURL: server.URL, Role: node.RoleBP, Auth: &node.EndpointAuth{Type: "jwt", Env: "CHAINBENCH_TEST_ENDPOINT_TOKEN"}}, {RPCURL: server.URL + "/en", Role: node.RoleEN, WSURL: "ws" + strings.TrimPrefix(server.URL, "http") + "/ws", MetricsURL: server.URL + "/metrics", Auth: &node.EndpointAuth{Type: "jwt", Env: "CHAINBENCH_TEST_ENDPOINT_TOKEN"}}}
 	ns, err := node.AttachedSet("stablenet", "external", profiles)
 	if err != nil {
 		t.Fatal(err)

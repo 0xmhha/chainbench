@@ -256,7 +256,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		BuildEnv:    withCollection(build, cfg.Bus, nil, cfg.LogReader),
 		RunSpec:     run,
 		Applicable:  applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
-		RuntimeGate: identityAndCapabilityGate(cfg.Chain, func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) }),
+		RuntimeGate: identityAndCapabilityGate(cfg.Chain, func(u string) *rpc.Client { return rpc.DialWithClient(u, clients[u]) }, func(u string) http.Header { return headers[u].Clone() }),
 		PreSpec:     cfg.PreSpec,
 		OnFail:      cfg.OnFail,
 		Emit:        busEmit(cfg.Bus),

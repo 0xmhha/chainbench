@@ -44,7 +44,9 @@ func TestShanghaiDeclarationRequiresActualOpcodeExecution(t *testing.T) {
 						return
 					}
 					if request.Method != "eth_call" {
-						steps.Add(1)
+						if request.Method == "test_hook" || request.Method == "test_body" {
+							steps.Add(1)
+						}
 						_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": "0x10"})
 						return
 					}
@@ -75,7 +77,7 @@ func TestShanghaiDeclarationRequiresActualOpcodeExecution(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			raw := []byte(`{"schemaVersion":"2","kind":"case","id":"vm-probe","requires":["rpc","evm:shanghai"],"chainPreset":{"chain":"stablenet"},"hooks":{"pre":[{"do":"read","source":"blockNumber","save":"height"}]},"steps":[{"expect":"blockNumber","on":"node2","is":16}]}`)
+			raw := []byte(`{"schemaVersion":"2","kind":"case","id":"vm-probe","requires":["rpc","evm:shanghai"],"chainPreset":{"chain":"stablenet"},"hooks":{"pre":[{"do":"read","source":"rpcCall","method":"test_hook","save":"height"}]},"steps":[{"expect":"rpcCall","method":"test_body","on":"node2","is":"0x10"}]}`)
 			root, err := eng.Run(context.Background(), [][]byte{raw})
 			if err != nil {
 				t.Fatal(err)
