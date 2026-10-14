@@ -182,6 +182,31 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 TX-002·016 실제 정책 진단:** 새 진단 분류에서 준비·추정·HTTP 실패, 잘못된
+서명 바이트/해시, 답 없는 요청과 error+hash 혼합을 실제 노드 제출 거부로 세지 않도록 RED→GREEN을 검증했다.
+실제 Croissant 전환 뒤 최신 BaseFee 70,557에서 cap 70,556의 유효 type2를 제출했더니 받아졌고,
+다음 26번 블록 BaseFee가 61,738로 내려가 status 1로 채굴됐다. 실제 적용 가격은 70,556으로
+`baseFee + min(tipCap, cap-baseFee)`의 cap 제한 분기와 정확한 잔액·nonce·송금 영향을 독립 대조했다.
+최신 블록의 fee와 대상 채굴 블록의 fee는 같은 값이라고 가정할 수 없다.
+
+미충전 FeePayer의 유효한 이중 서명 type16은 eth_sendRawTransaction의 code -32000,
+정확한 `fee delegation: insufficient feePayer's funds for gas * price`로 제출 거부됐다.
+다섯 블록 뒤에도 원본 서명 bytes의 해시 조회와 영수증은 null이고 계정 상태는 그대로였다.
+FeePayer를 충전한 뒤 같은 서명 bytes가 status 1/type16으로 채굴됐으며 송신자는 value 1,
+대납자는 정확한 gasUsed×effectiveGasPrice 2,100,000,153,174,000만 부담했다.
+서명·요청/응답·raw RLP 인자·SDK 래퍼를 통하지 않은 표준 Keccak 재계산도 대조했다.
+
+진단과 관련 거버넌스 읽기 두 native는 고정 소스
+`31e98b9bd57449f035815a631f65dac9493a0856499b6a52703cbd6fd3c0408c`에서 161.174초·race PASS·skip 0,
+전후 지문 일치를 확인했다. 두 환경의 활성 프로세스/DB는 0이며 456파일 내용·권한·소유자·mtime을 보존했다.
+전체 make check·tagged vet·CLI tagged 전체 race(105.072초)와 최종 분류 단위 race도 통과했다.
+현재 컴파일된 TestWemix 분모는 새 진단을 포함한 23개다. 앞 절의 22개는 그 검토 당시 값이다.
+
+이것은 요구 충돌의 실제 진단이며 TX-002·016 원문 통과나 결함 해결이 아니다.
+기준 변경 질문은 남겼지만 답은 아직 없으므로 원문을 수정하지 않았고 두 조건은 conflict로 유지한다.
+TX-019 결정·원문 87개 잔여·legacy·Linux/mainnet·외부 W3/W4·최종 Web 인수도 계속 남는다.
+근거: [원본 서명 입력·노드 정책·정상 대조군 증거](tx-policy-boundary-evidence.json).
+
 **2026-10-15 원문 87개 충분성 대조 고정:** 삭제된 tracker의 84개나 테스트 이름의 존재를
 분모로 쓰지 않고 원문 87개 ID 전부와 공통 70개를 포함한 현행 TC 입력·단언을 대조했다.
 [조건별 정본 대조](wemix4-tc-sufficiency-review.json)는 부분 70·명시 범위 증명 11·충돌 3·

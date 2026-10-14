@@ -1,0 +1,343 @@
+{
+  "scope": "TX-002 exact latest-baseFee-minus-one dynamic transaction after real Croissant handoff; TX-016 actual dual-signed unfunded-payer submission and same-byte funded control. Diagnostic and related native regression complete; original criteria not accepted or revised, decision pending. Not complete87, legacy, Linux/mainnet, W3/W4 resolution or final Web acceptance.",
+  "originalCriteriaAccepted": false,
+  "requirementDecisions": "TX-002 and TX-016 user decisions pending; no external source or original criterion edits.",
+  "source": "31e98b9bd57449f035815a631f65dac9493a0856499b6a52703cbd6fd3c0408c",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "31e98b9bd57449f035815a631f65dac9493a0856499b6a52703cbd6fd3c0408c",
+    "sourceAfter": "31e98b9bd57449f035815a631f65dac9493a0856499b6a52703cbd6fd3c0408c",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixTransactionPolicyBoundaryE2E",
+      "TestWemixGovernanceE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-0wsyzdqc",
+      "/private/tmp/cbui/hf-2rnzvf3e"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-0wsyzdqc": [],
+      "/private/tmp/cbui/hf-2rnzvf3e": []
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-tx-policy-native-summary.json",
+      "sha256": "35f66fe3e3822d485bfca64a3cd23ab61567e14f2c59a2f1df9958ce1e498050",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001210744436118
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-tx-policy-native-native.jsonl",
+      "sha256": "d38f9e88e4fb8bb2639fdc3fe5c9a103793038e87fb61c2dbfde15c2eee28b57",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001210198349284
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-tx-policy-native-start.json",
+      "sha256": "e8ccad1d9294162f1e78e4cfe31a92b7918914b78596c6bfe07ef0d5051433b5",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001046606941486
+    }
+  },
+  "TX002": {
+    "initialBaseFee": 70557,
+    "submittedFeeCap": 70556,
+    "classification": "admitted",
+    "minedBlock": 26,
+    "minedBaseFee": 61738,
+    "receiptStatus": "0x1",
+    "effectiveGasPrice": 70556,
+    "exactFee": 1481676000,
+    "snapshotBefore": {
+      "SenderBalance": "100000000000000000000",
+      "SenderNonce": "0x0",
+      "PayerBalance": "0",
+      "PayerNonce": "0x0",
+      "RecipientBalance": "0"
+    },
+    "snapshotAfter": {
+      "SenderBalance": "99999999998518323999",
+      "SenderNonce": "0x1",
+      "PayerBalance": "0",
+      "PayerNonce": "0x0",
+      "RecipientBalance": "1"
+    },
+    "raw": {
+      "path": "/private/tmp/chainbench-tx002-policy-observed.json",
+      "sha256": "b8530ef4377cf1c9b20fa4e00e087ab0df0e827d7071b1d5697c39b4f52418aa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001266664789511
+    },
+    "interpretation": "Pool admission and mining legality differ. Next block baseFee fell below cap; the capped price matches EIP-1559 exactly. Original latest-minus-one rejection expectation is false here."
+  },
+  "TX016": {
+    "classification": "rejected",
+    "exactNodeError": {
+      "Method": "eth_sendRawTransaction",
+      "Code": -32000,
+      "Message": "fee delegation: insufficient feePayer's funds for gas * price"
+    },
+    "unchangedState": true,
+    "receiptAbsent": true,
+    "validDualSignature": true,
+    "sameSignedBytesFundedControl": true,
+    "controlStatus": "0x1",
+    "exactFee": 2100000153174000,
+    "raw": {
+      "path": "/private/tmp/chainbench-tx016-policy-observed.json",
+      "sha256": "bb257eb60c6a08ab1a5f2388315aaed873ba97a41e4c2755a0428df37a6d7ab8",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001266665135771
+    }
+  },
+  "independentRawEnvelopeChecks": {
+    "method": "standard RLP field decoding and golang.org/x/crypto/sha3.NewLegacyKeccak256, not accounts SDK hash",
+    "payloads": [
+      {
+        "type": "0x2",
+        "chainId": 8285,
+        "nonce": 0,
+        "tipCap": 70556,
+        "feeCap": 70556,
+        "gas": 21000,
+        "to": "0xabd728a0df8f4e3e7c8d88c2ead34a10efa72483",
+        "value": 1,
+        "data": "0x"
+      },
+      {
+        "type": "0x2",
+        "chainId": 8285,
+        "nonce": 1,
+        "tipCap": 141112,
+        "feeCap": 300000236119,
+        "gas": 21000,
+        "to": "0xabd728a0df8f4e3e7c8d88c2ead34a10efa72483",
+        "value": 1,
+        "data": "0x"
+      },
+      {
+        "type": "0x16",
+        "chainId": 8285,
+        "nonce": 0,
+        "tipCap": 100000000000,
+        "feeCap": 300000236119,
+        "gas": 21000,
+        "to": "0xabd728a0df8f4e3e7c8d88c2ead34a10efa72483",
+        "value": 1,
+        "data": "0x",
+        "feePayer": "0x64cec1dd1d13fc091037514205fc6915938f20d2"
+      },
+      {
+        "type": "0x2",
+        "chainId": 8285,
+        "nonce": 2,
+        "tipCap": 100000000000,
+        "feeCap": 300000236119,
+        "gas": 21000,
+        "to": "0x64cec1dd1d13fc091037514205fc6915938f20d2",
+        "value": 1000000000000000000,
+        "data": "0x"
+      },
+      {
+        "type": "0x16",
+        "chainId": 8285,
+        "nonce": 0,
+        "tipCap": 100000000000,
+        "feeCap": 300000236119,
+        "gas": 21000,
+        "to": "0xabd728a0df8f4e3e7c8d88c2ead34a10efa72483",
+        "value": 1,
+        "data": "0x",
+        "feePayer": "0x64cec1dd1d13fc091037514205fc6915938f20d2"
+      }
+    ],
+    "verifier": {
+      "path": "/private/tmp/chainbench-policy-keccak.go",
+      "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792001507798664088
+    }
+  },
+  "runtimes": [
+    {
+      "runtime": "/private/tmp/cbui/hf-0wsyzdqc",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-0wsyzdqc/reports/tx-policy-inventory.json",
+        "sha256": "6a0147bed497dcaaa185b36b69fa9cb2d47f33fd3b5ef9921f5794b8e513b42d",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792001509544416957
+      }
+    },
+    {
+      "runtime": "/private/tmp/cbui/hf-2rnzvf3e",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-2rnzvf3e/reports/tx-policy-inventory.json",
+        "sha256": "4f588c4ccf6d39334a41cb10665ca9a7fcaa166f4029396329e50b0cae1a8263",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792001509586222461
+      }
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/cmd/chainbench/tx_policy_boundary_e2e_test.go",
+      "sha256": "2f3822c0a128c66ebea7c8ee8760f70b710671778c48927d1a2c38b9abadc998",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792000781823727955
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/docs/dev/wemix4-tc-sufficiency-review.json",
+      "sha256": "9030c6c5c21566193825dbdb2a381b1dd423f5d817d2456caad3fa43be25286f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 20,
+      "mtimeNS": 1792000785217873672
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "unitAndRegressionLogs": [
+    {
+      "path": "/private/tmp/chainbench-tx-policy-red.log",
+      "sha256": "03dae4e76a45971b0afcc5095b679bced8355523ade69c15bf695c2c44f5dbdc",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791999971098559479
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-green.log",
+      "sha256": "37bead71aab6543e84a9d51d7581fba1303ba5776e7e1185146784d2702fd63d",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000012120647480
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-compile.log",
+      "sha256": "9a8c116331e412d6fb15b7fb84127e45dbac527cf8c39ea7bb94423606957d8c",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000186583400153
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-final-unit.log",
+      "sha256": "89c5af4d21e0daf1ddf6e7d7fb111ee54df053a54ed6ce199fb7fe2136cc3363",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000295211124887
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-preflight-unit.log",
+      "sha256": "a9d28ce401a6dbb0f4c04c2985cf7bf254d7eaac9843c3d326037c18efc4084e",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000438881330275
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-related-race.log",
+      "sha256": "0b1af03205b7deb5e297f5a296fcc68fa104894989b2754915f382db4fc7e123",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000706522058293
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-check.log",
+      "sha256": "09e24d25b8c1c84fecca3d2850c73e8d016b8ba073870b0a5d2524c4860e5ac5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000872058934526
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-tagged-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000972215070398
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-final-green.log",
+      "sha256": "1118758ad95b5bc9f92667fbc121952d4ee1a3033d4c8994b54659df705ff3eb",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000977717650355
+    }
+  ],
+  "currentCompiledNativeFunctions": 23,
+  "compiledList": {
+    "path": "/private/tmp/chainbench-tx-policy-native-list.txt",
+    "sha256": "e7bdb701b2473b935918fad49b29c5de84de539ce47e141745a37ced3fa79ab1",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792000785116321390
+  },
+  "historicalReviewPreservation": {
+    "commit": "59510e3f",
+    "copy": {
+      "path": "/private/tmp/chainbench-tc-review-59510e3f.json",
+      "sha256": "51a4e473c5f0d2a3fb535edc7cf7ea6786bf20dc86c13990ed287abdc05f31fa",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792000902920509168
+    }
+  },
+  "frozenReviewSnapshot": {
+    "path": "/private/tmp/chainbench-tc-review-before-policy-publication.json",
+    "sha256": "9030c6c5c21566193825dbdb2a381b1dd423f5d817d2456caad3fa43be25286f",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792000785217873672
+  }
+}

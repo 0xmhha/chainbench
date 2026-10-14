@@ -733,6 +733,11 @@
           "path": "tests/tc/common/fee/CT-FEE-002-min-gas-price-boundary.json",
           "sha256": "d654dc872cf328b296c879d6a532017d0779f4e6ceebe68a5e5140df5fc6be5d",
           "id": "legacy-gasprice-below-min-rejected"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_boundary_e2e_test.go",
+          "function": "TestWemixTransactionPolicyBoundaryE2E",
+          "sha256": "2f3822c0a128c66ebea7c8ee8760f70b710671778c48927d1a2c38b9abadc998"
         }
       ],
       "observations": [
@@ -973,14 +978,22 @@
             "timeout": "30s",
             "pollInterval": "1s"
           }
+        },
+        {
+          "analysis": "Native diagnostic: snapshot baseFee 70557, cap 70556; block 26 baseFee 61738, status1, capped effective price 70556 and exact balance/nonce/value impact independently checked. Original criterion not accepted."
         }
       ],
-      "semanticAssessment": "conflict",
+      "semanticAssessment": "Exact signed latest-baseFee-minus-one input observed after real Croissant; pool admitted and next block lowered baseFee enough for successful mining.",
       "remainingConditions": [
-        "원문 BaseFee−1 경계가 아님; WBFT keptOut은 txpool 거부와 다름. 승인 없는 원문 실패 의미 변경"
+        "Original submission-refusal expectation conflicts with actual admitted/mined behavior as baseFee changes. User criterion decision pending; target-block-under-baseFee condition not yet implemented."
       ],
       "confirmedScope": null,
-      "verifiedEvidence": []
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/tx-policy-boundary-evidence.json",
+          "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        }
+      ]
     },
     {
       "id": "TX-003",
@@ -1085,6 +1098,9 @@
             "compare": "Equal",
             "is": "1000000000000000"
           }
+        },
+        {
+          "analysis": "Independent raw TX-002 diagnostic also witnesses a real EIP-1559 cap-limited price: 61738 + min(70556,70556-61738) = 70556. Common DSL min-cap branch and original complete input procedure remain open."
         }
       ],
       "semanticAssessment": "normal_unclipped_price_branch_and_exact_balances_present; clipped_cap_branch_missing",
@@ -1092,7 +1108,12 @@
         "min(tipCap,gasFeeCap−inclusion-baseFee) 중 cap 제한 분기 미구현. 실제 eth_getTransactionByHash의 두 cap 값과 입력을 직접 대조하지 않음. receipt.type은 transaction.type으로 확인한다."
       ],
       "confirmedScope": null,
-      "verifiedEvidence": []
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/tx-policy-boundary-evidence.json",
+          "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        }
+      ]
     },
     {
       "id": "TX-004",
@@ -2373,6 +2394,11 @@
           "path": "tests/tc/common/tx/CT-TX-008-feepayer-insufficient-rejected.json",
           "sha256": "e0fc0472e879d2112ccb81183f5bb86e6f28d03acf30de65e10a424e0c4e4b59",
           "id": "feepayer-insufficient-rejected"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_boundary_e2e_test.go",
+          "function": "TestWemixTransactionPolicyBoundaryE2E",
+          "sha256": "2f3822c0a128c66ebea7c8ee8760f70b710671778c48927d1a2c38b9abadc998"
         }
       ],
       "observations": [
@@ -2470,14 +2496,22 @@
             "timeout": "30s",
             "pollInterval": "1s"
           }
+        },
+        {
+          "analysis": "Native node code -32000 and exact insufficient feePayer funds reason, five advancing blocks with absent tx/receipt and unchanged state; same signed bytes after funding yield status1/type16 with exact sender value and payer gas fee."
         }
       ],
-      "semanticAssessment": "conflict",
+      "semanticAssessment": "Valid dual-signed original input got exact typed node submission refusal; same signed bytes mine after funding only payer.",
       "remainingConditions": [
-        "원문 채굴 status0/rollback 기대와 제출거부가 충돌; 채굴 영수증으로 위장 금지"
+        "Original mined status0 expectation conflicts with actual submission refusal and absent receipt. User criterion decision pending; original not accepted."
       ],
       "confirmedScope": null,
-      "verifiedEvidence": []
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/tx-policy-boundary-evidence.json",
+          "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        }
+      ]
     },
     {
       "id": "TX-017",
@@ -6807,12 +6841,12 @@
   },
   "pendingDecisions": [
     "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output.",
-    "TX-002 actual baseFee-minus-one behavior needs source-bound observation before any criterion revision.",
-    "TX-016 original mined failure conflicts with existing submission rejection; actual observation/decision still required."
+    "TX-002 latest baseFee-minus-one admitted and mined after baseFee fell; target-block eligibility criterion decision pending.",
+    "TX-016 exact unfunded-payer submission refusal vs original mined-failure expectation: decision pending."
   ],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",
-    "Native compiled denominator is 22 TestWemix functions at reviewedHead, not historical 20.",
+    "Native compiled denominator was 22 TestWemix functions at reviewedHead; new policy diagnostic makes 23 compiled functions, not historical 20.",
     "Old Web receipt verification fails; final fresh WEB-01 through WEB-14 capture and independent replay remain.",
     "External Ouroboros QA transmission rejected by automatic approval review; optional approval pending. Local artifact and process review completed."
   ]
