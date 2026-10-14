@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 70,
-    "confirmed_scope": 12,
+    "partial": 68,
+    "confirmed_scope": 14,
     "conflict": 3,
     "merged": 2
   },
@@ -998,49 +998,21 @@
       "id": "TX-003",
       "title": "DynamicFee Tx (type 0x2) 정상 처리",
       "criterionSha256": "919195382768b4648910d3e908b6422e8cb2f9ae5179a01a5ebc60ce3bff66a6",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "sha256": "63ab705615feb40c59bed67c025e6c8abc3a0bda202cbda3a6e2473ce0ac6e65",
+          "sha256": "41afb9543079352922dacd474076318c3ed18f1abd453438e839bcac023c435c",
           "id": "dynamic-fee-transfer"
+        },
+        {
+          "path": "internal/testengine/fee_price_native_test.go",
+          "function": "TestNativeFeePriceFields",
+          "sha256": "9614670bbe5268c170ba6beb9a71e3fa4d6233c7c9ab2718f50d093f195637a6"
         }
       ],
       "observations": [
-        {
-          "analysis": "CT-TX-003: 실제 signed raw type0x2·status1, receipt.blockNumber로 포함 블록 baseFee를 읽고 baseFee+submitted tip과 effectiveGasPrice exact equality, gasUsed*effectiveGasPrice로 송신자 before−value−fee 및 수신자 value 정확 잔액. maxFee=2*submission-head-base+tip 입력."
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/2",
-          "statement": {
-            "do": "sendTx",
-            "from": "faucet",
-            "on": "node1",
-            "to": "$sender",
-            "value": "10000000000000000000",
-            "expect": "receipt",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/7",
-          "statement": {
-            "do": "sendTx",
-            "key": "$senderKey",
-            "on": "node1",
-            "to": "$recipient",
-            "value": "1000000000000000",
-            "gas": "21000",
-            "maxFeePerGas": "$feeCap",
-            "maxPriorityFeePerGas": "$tip",
-            "expect": "receipt",
-            "save": "h",
-            "timeout": "120s"
-          }
-        },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
           "pointer": "/steps/8",
@@ -1066,7 +1038,46 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/13",
+          "pointer": "/steps/14",
+          "statement": {
+            "expect": "derive",
+            "op": "sum",
+            "of": [
+              "$txCap"
+            ],
+            "compare": "Equal",
+            "is": "$feeCap"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
+          "pointer": "/steps/15",
+          "statement": {
+            "expect": "derive",
+            "op": "sum",
+            "of": [
+              "$txTip"
+            ],
+            "compare": "Equal",
+            "is": "$tip"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
+          "pointer": "/steps/16",
+          "statement": {
+            "expect": "derive",
+            "op": "sum",
+            "of": [
+              "$txCap"
+            ],
+            "compare": "GreaterOrEqual",
+            "is": "$blockBase"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
+          "pointer": "/steps/20",
           "statement": {
             "expect": "rpcCall",
             "method": "eth_getTransactionReceipt",
@@ -1080,7 +1091,7 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/18",
+          "pointer": "/steps/25",
           "statement": {
             "expect": "balanceAt",
             "address": "$sender",
@@ -1090,7 +1101,7 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/19",
+          "pointer": "/steps/26",
           "statement": {
             "expect": "balanceAt",
             "address": "$recipient",
@@ -1099,18 +1110,33 @@
           }
         },
         {
-          "analysis": "Independent raw TX-002 diagnostic also witnesses a real EIP-1559 cap-limited price: 61738 + min(70556,70556-61738) = 70556. Common DSL min-cap branch and original complete input procedure remain open."
+          "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
+          "pointer": "/steps/27",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$h"
+            ],
+            "select": "type",
+            "compare": "Equal",
+            "is": "0x2"
+          }
         }
       ],
-      "semanticAssessment": "normal_unclipped_price_branch_and_exact_balances_present; clipped_cap_branch_missing",
+      "semanticAssessment": "Controlled public cases independently verified against actual signed transaction fields, receipt type/status/price and exact mined block on StableNet, WBFT and WEMIX; 6 cases/48 assertions, race and source invariance passed.",
       "remainingConditions": [
-        "min(tipCap,gasFeeCap−inclusion-baseFee) 중 cap 제한 분기 미구현. 실제 eth_getTransactionByHash의 두 cap 값과 입력을 직접 대조하지 않음. receipt.type은 transaction.type으로 확인한다."
+        "Local controlled fixture scope; not migrated 8285, Linux/mainnet, arbitrary-price policy equivalence, original legacy consumer or final Web acceptance."
       ],
-      "confirmedScope": null,
+      "confirmedScope": "TX-003: cap=observed base+tip; actual signed cap/tip, mined-block base+min(tip,cap-base), type2/status1. TX-006: node-suggested signed legacy gasPrice equals receipt price, type0/status1. Exact fee/balances preserved. Cap-limited positive and malformed fields rejected by public DSL unit controls; native fixture branch is recorded separately.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/tx-policy-boundary-evidence.json",
           "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        },
+        {
+          "path": "docs/dev/fee-price-evidence.json",
+          "sha256": "53310dfa5de554dc2e8c6e2866653b3ecf257dc8ac4c8771637a61a0aae2f4a9"
         }
       ]
     },
@@ -1447,47 +1473,21 @@
       "id": "TX-006",
       "title": "Legacy Tx (type 0x0)",
       "criterionSha256": "778b9b18dadd1044507fe6f2a6075ad9cce8b6267106cdc6478b54dbbc37573e",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
           "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
-          "sha256": "4659f9e70c26a2db2dcbf83e92c5a2d327c06117ff2897d5f4ad67128187e160",
+          "sha256": "529906efeb91e38974d01e9b2d40227d222ce099fe80105353da95cc9c479724",
           "id": "legacy-value-transfer"
+        },
+        {
+          "path": "internal/testengine/fee_price_native_test.go",
+          "function": "TestNativeFeePriceFields",
+          "sha256": "9614670bbe5268c170ba6beb9a71e3fa4d6233c7c9ab2718f50d093f195637a6"
         }
       ],
       "observations": [
-        {
-          "analysis": "CT-TX-002: eth_gasPrice 읽은 값을 gasPrice로 raw legacy 송금, mined status1, transaction type0x0, receipt.gasUsed 및 effectiveGasPrice를 읽어 송신자 balance=before−value−used*price, 수신자 balance=value exact."
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
-          "pointer": "/steps/2",
-          "statement": {
-            "do": "sendTx",
-            "from": "faucet",
-            "on": "node1",
-            "to": "$sender",
-            "value": "10000000000000000000",
-            "expect": "receipt",
-            "timeout": "120s"
-          }
-        },
-        {
-          "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
-          "pointer": "/steps/5",
-          "statement": {
-            "do": "sendTx",
-            "key": "$senderKey",
-            "on": "node1",
-            "to": "$recipient",
-            "value": "1000000000000000",
-            "gasPrice": "$gp",
-            "expect": "receipt",
-            "save": "h",
-            "timeout": "120s"
-          }
-        },
         {
           "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
           "pointer": "/steps/6",
@@ -1530,14 +1530,59 @@
             "compare": "Equal",
             "is": "1000000000000000"
           }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
+          "pointer": "/steps/15",
+          "statement": {
+            "expect": "derive",
+            "op": "sum",
+            "of": [
+              "$actualGasPrice"
+            ],
+            "compare": "Equal",
+            "is": "$gp"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
+          "pointer": "/steps/16",
+          "statement": {
+            "expect": "derive",
+            "op": "sum",
+            "of": [
+              "$price"
+            ],
+            "compare": "Equal",
+            "is": "$actualGasPrice"
+          }
+        },
+        {
+          "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
+          "pointer": "/steps/17",
+          "statement": {
+            "expect": "rpcCall",
+            "method": "eth_getTransactionReceipt",
+            "params": [
+              "$h"
+            ],
+            "select": "type",
+            "compare": "Equal",
+            "is": "0x0"
+          }
         }
       ],
-      "semanticAssessment": "legacy_success_and_actual_fee_balances_present; submitted_price_equivalence_missing",
+      "semanticAssessment": "Controlled public cases independently verified against actual signed transaction fields, receipt type/status/price and exact mined block on StableNet, WBFT and WEMIX; 6 cases/48 assertions, race and source invariance passed.",
       "remainingConditions": [
-        "receipt.effectiveGasPrice == submitted gasPrice == mined transaction.gasPrice의 직접 등가 대조가 없음. 실제 사용 수수료와 송수신 잔액 검사 자체는 존재함."
+        "Local controlled fixture scope; not migrated 8285, Linux/mainnet, arbitrary-price policy equivalence, original legacy consumer or final Web acceptance."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "TX-003: cap=observed base+tip; actual signed cap/tip, mined-block base+min(tip,cap-base), type2/status1. TX-006: node-suggested signed legacy gasPrice equals receipt price, type0/status1. Exact fee/balances preserved. Cap-limited positive and malformed fields rejected by public DSL unit controls; native fixture branch is recorded separately.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/fee-price-evidence.json",
+          "sha256": "53310dfa5de554dc2e8c6e2866653b3ecf257dc8ac4c8771637a61a0aae2f4a9"
+        }
+      ]
     },
     {
       "id": "TX-007",
@@ -5710,12 +5755,12 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-002-legacy-transfer.json",
-          "sha256": "4659f9e70c26a2db2dcbf83e92c5a2d327c06117ff2897d5f4ad67128187e160",
+          "sha256": "529906efeb91e38974d01e9b2d40227d222ce099fe80105353da95cc9c479724",
           "id": "legacy-value-transfer"
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "sha256": "63ab705615feb40c59bed67c025e6c8abc3a0bda202cbda3a6e2473ce0ac6e65",
+          "sha256": "41afb9543079352922dacd474076318c3ed18f1abd453438e839bcac023c435c",
           "id": "dynamic-fee-transfer"
         }
       ],
@@ -5932,7 +5977,7 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/13",
+          "pointer": "/steps/20",
           "statement": {
             "expect": "rpcCall",
             "method": "eth_getTransactionReceipt",
@@ -5946,7 +5991,7 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/18",
+          "pointer": "/steps/25",
           "statement": {
             "expect": "balanceAt",
             "address": "$sender",
@@ -5956,7 +6001,7 @@
         },
         {
           "path": "tests/tc/common/tx/CT-TX-003-dynamic-fee-transfer.json",
-          "pointer": "/steps/19",
+          "pointer": "/steps/26",
           "statement": {
             "expect": "balanceAt",
             "address": "$recipient",
@@ -5965,7 +6010,7 @@
           }
         }
       ],
-      "semanticAssessment": "core_original_assertions_present; current_actual_proof_not_executed_by_probe",
+      "semanticAssessment": "Original balance assertions retained; dynamic price assertion now uses actual signed cap/tip and mined block baseFee with capped min formula. Fresh three-family native proof remains pending.",
       "remainingConditions": [
         "localfreshfixture currentpostfork nativecase 재증명없음"
       ],
@@ -6792,7 +6837,7 @@
         },
         {
           "path": "internal/testhelper/websocket.go",
-          "sha256": "6b92bf33f09b66fc567e6592773754ee8380efc55d04ed38d02835ed718f87e7",
+          "sha256": "0be2ee7b6d7a144980d83e954f6b21c62080ff61251dd2e39f7adec2e7db724e",
           "function": "wsSubscribeAssertion.Check"
         }
       ],
@@ -6833,7 +6878,7 @@
         },
         {
           "path": "internal/testhelper/websocket.go",
-          "sha256": "6b92bf33f09b66fc567e6592773754ee8380efc55d04ed38d02835ed718f87e7",
+          "sha256": "0be2ee7b6d7a144980d83e954f6b21c62080ff61251dd2e39f7adec2e7db724e",
           "function": "wsCollectedAssertion.Check"
         }
       ],

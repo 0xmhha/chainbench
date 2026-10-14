@@ -307,8 +307,8 @@ func unreadOnThisPath(kind, name, source string, args map[string]any, outcomes [
 			if op != "word" {
 				refuse("index", "read only with op word")
 			}
-			if op != "sum" && op != "diff" && op != "mul" {
-				refuse("format", "read only with op sum, diff or mul")
+			if op != "sum" && op != "diff" && op != "mul" && op != "min" {
+				refuse("format", "read only with op sum, diff, mul or min")
 			}
 		}
 	case assertLogs:

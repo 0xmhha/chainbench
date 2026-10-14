@@ -340,8 +340,9 @@ func wsTargetURL(nodes []node.Node) (string, error) {
 // readDerive computes an arithmetic combination of already-bound values —
 // the saved-value arithmetic the migration ledger recorded as a gap
 // (gasPrice == baseFee + gasTip; block-period timestamp diffs). Spec:
-// op (sum | diff), of (values or "$bindings"; hex 0x or decimal strings, or
-// numbers). diff subtracts the rest from the first. The result is a decimal
+// op (sum | diff | mul | min), of (values or "$bindings"; hex 0x or decimal
+// strings, or numbers). diff subtracts the rest from the first; min selects
+// the smallest exact integer. The result is a decimal
 // string, comparable with the numeric assert primitives.
 //
 // format: "hex" returns a 0x-hex quantity instead. A block-scoped RPC method

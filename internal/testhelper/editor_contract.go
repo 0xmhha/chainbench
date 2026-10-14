@@ -222,7 +222,7 @@ func editorParameter(field string) map[string]any {
 	case "target", "blocks", "count", "index", "topic", "maxBytes", "maxAdvance", "maxMillis", "maxSeconds", "minMillis", "minSeconds", "fillPercent":
 		return map[string]any{"anyOf": []any{map[string]any{"type": "number", "minimum": 0}, map[string]any{"type": "string", "pattern": "^(\\$[A-Za-z_][A-Za-z0-9_]*|.*\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}.*|0x[0-9a-fA-F]+|[0-9]+)$"}}}
 	case "op":
-		return map[string]any{"enum": []string{"sum", "diff", "mul", "abiCall", "word", "quorum"}}
+		return map[string]any{"enum": []string{"sum", "diff", "mul", "min", "abiCall", "word", "quorum"}}
 	case "format":
 		return map[string]any{"enum": []string{"dec", "hex"}}
 	case "which":

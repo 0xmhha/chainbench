@@ -1,0 +1,376 @@
+{
+  "scope": "TX-003/006 controlled public fee cases on three local chain families: signed cap/tip or gasPrice, exact mined block and receipt type/status/price, sender/recipient balances. Dynamic min-cap branch has positive/negative public-DSL unit controls; native cases use node-suggested inputs, not arbitrary-price equivalence, complete87, migrated/mainnet, Linux or final Web acceptance.",
+  "originalAll87Complete": false,
+  "unitRed": "Missing min operation/editor enum/format consumption; incorrect fee/actual cap/actual tip/receipt type/legacy signed price passed old assertions and valid cap-limited price failed. Unsupported single-operand operation also incorrectly passed.",
+  "unitGreen": "Exact arbitrary-precision min, schema and format consumption, actual public DSL interpreted against valid and malformed fee/transaction controls.",
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "3e147f8c5447b1cf949b332ec22b9b029b3b205903fb1c0e0cfdbb2efca0d38a",
+    "sourceAfter": "3e147f8c5447b1cf949b332ec22b9b029b3b205903fb1c0e0cfdbb2efca0d38a",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestNativeFeePriceFields/stablenet",
+      "TestNativeFeePriceFields/wbft",
+      "TestNativeFeePriceFields/wemix",
+      "TestNativeFeePriceFields"
+    ],
+    "failed": [],
+    "skipped": [],
+    "roots": [
+      "/private/tmp/cbui/txfail-_a5h9z1w",
+      "/private/tmp/cbui/txfail-ffqr65hp",
+      "/private/tmp/cbui/txfail-jg62l61t"
+    ],
+    "proofs": [
+      "/private/tmp/cbui/txfail-_a5h9z1w/reports/fee-price-proof.json",
+      "/private/tmp/cbui/txfail-ffqr65hp/reports/fee-price-proof.json",
+      "/private/tmp/cbui/txfail-jg62l61t/reports/fee-price-proof.json"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/txfail-_a5h9z1w": [],
+      "/private/tmp/cbui/txfail-ffqr65hp": [],
+      "/private/tmp/cbui/txfail-jg62l61t": []
+    },
+    "elapsedSeconds": 169.408,
+    "log": {
+      "path": "/private/tmp/chainbench-fee-price-native-native.jsonl",
+      "sha256": "1c5b927557db46593f79a7a201d0aa67980632447b5b151d7a38922238d0949f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005173879435630
+    },
+    "summary": {
+      "path": "/private/tmp/chainbench-fee-price-native-summary.json",
+      "sha256": "2b69fdcfacdad4630ac58c6a6a6e6e581f328c163eedbae918660299e5b5dbc5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005174323078562
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-fee-price-native-start.json",
+      "sha256": "4b09fc4c9f36dee3758b9818fca3449b509fd0a8497bcae9ed09d87f469b9dde",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792005000873594128
+    }
+  },
+  "families": [
+    {
+      "chain": "wbft",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/fee-price-proof.json",
+        "sha256": "5e45a0401b0731d43f321d1394c56c4adc8fdc81e31beba8e388559dbdaefbae",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005071566836087
+      },
+      "cases": [
+        {
+          "id": "legacy-value-transfer",
+          "transactionHash": "0x6359777dafd2fff085b0097ac03286261d5ab174d63458d7a71c19f52a3e1d1e",
+          "blockHash": "0x4de4c289c1b09ec8b77c563763da88a08d8c992215ac9b6f0c030e16177da5ae",
+          "price": "100003208830",
+          "assertionCount": 7,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/20261014-191005-94035/UTC-20261014-191021/tests/001_legacy-value-transfer/assert.json",
+            "sha256": "c4b325a2f45757f4e6b2ff21049f2b4bf40ea888b56eaf791b89774686db8995",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005067390382026
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/20261014-191005-94035/UTC-20261014-191021/tests/001_legacy-value-transfer/steps.json",
+            "sha256": "197d698a8d587307de800c0df3b887de45436bbb83af04182717ab4cc2335cbe",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005067384633062
+          }
+        },
+        {
+          "id": "dynamic-fee-transfer",
+          "transactionHash": "0x30070256f1603fceceb1a623009e983118d92fe15766f70872c49132c4b74af9",
+          "blockHash": "0x3afe6e255d4b60007068eefe31017175cfaed091b635f06914919e878c5c17d8",
+          "price": "100001646134",
+          "assertionCount": 9,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/20261014-191005-94035/UTC-20261014-191021/tests/002_dynamic-fee-transfer/assert.json",
+            "sha256": "b68b604ea3eae701e1e4d73f8888f7c736be68af8f9a5fd0e36d9ca845ac6470",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005071557509120
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/20261014-191005-94035/UTC-20261014-191021/tests/002_dynamic-fee-transfer/steps.json",
+            "sha256": "c9f2aea1fbb68c988f2bfcdc5e79ea8313d3b808939e1ccdc9e8d6840d02157d",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005071551314447
+          }
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-_a5h9z1w",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-_a5h9z1w/reports/fee-price-inventory.json",
+        "sha256": "3d15fdf3038c316ab184fd976fa31e0ccb9da2c133823749a9a00a45c99c212b",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005210928481953
+      }
+    },
+    {
+      "chain": "stablenet",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/fee-price-proof.json",
+        "sha256": "70790573880e74bbd029855b1a28625d74922984de975b2db5585169881b831c",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005019581466447
+      },
+      "cases": [
+        {
+          "id": "legacy-value-transfer",
+          "transactionHash": "0x95027499c29f9dce40651c6481d6a4ea75910ec901423d46910e7f143b2a7f9b",
+          "blockHash": "0xb303b32c5725c46091ffcdcb77923c5cff758a3d83df0d49c50701b71b89d716",
+          "price": "47600000000000",
+          "assertionCount": 7,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/20261014-191005-94035/UTC-20261014-191005/tests/001_legacy-value-transfer/assert.json",
+            "sha256": "64f4f76226dedd6bbfefa1dc9923042683d4c160699c6299792590aaa8b569c8",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005015420403442
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/20261014-191005-94035/UTC-20261014-191005/tests/001_legacy-value-transfer/steps.json",
+            "sha256": "f0edf15d941f4590766eb160e7d796daa684b986835a558281ce12b2115e4b48",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005015414415436
+          }
+        },
+        {
+          "id": "dynamic-fee-transfer",
+          "transactionHash": "0x078de43eb5cd68bd14a14243adb72cb92c5b25234ffe12f9858b822a3bc9bb74",
+          "blockHash": "0xa3c1633108d33f669d0804057c4be8980be7d477202470637bba61fc7f39e1c2",
+          "price": "47600000000000",
+          "assertionCount": 9,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/20261014-191005-94035/UTC-20261014-191005/tests/002_dynamic-fee-transfer/assert.json",
+            "sha256": "40ecb73bd131a318b08bda995cf8a4d1c070ddb3fb4990bfa6e9c5da0e911984",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005019571540312
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/20261014-191005-94035/UTC-20261014-191005/tests/002_dynamic-fee-transfer/steps.json",
+            "sha256": "4f550c36dbf184046079cee3d6d83e5c7088f3ca0deffb6deb93bf998c7b05db",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005019565908890
+          }
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-ffqr65hp",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 205,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-ffqr65hp/reports/fee-price-inventory.json",
+        "sha256": "fe2de0fa70ffcd6a9e3d1f566d977895b436ff8bebdf952f4ecac28bdd324754",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005210969857410
+      }
+    },
+    {
+      "chain": "wemix",
+      "proof": {
+        "path": "/private/tmp/cbui/txfail-jg62l61t/reports/fee-price-proof.json",
+        "sha256": "986122abeb22d9fb54f3f3e152b6f63ba458f05fb8a5ae6b95a6c9dbb46f7883",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005156362767512
+      },
+      "cases": [
+        {
+          "id": "legacy-value-transfer",
+          "transactionHash": "0xbaf1c303260db574f1fa1923318d3d7bcda3a27bba13b5d074752fdc42432c4e",
+          "blockHash": "0x6f99a1e3b26989b57a24833e384e726a25cb2c79ae868a0c680b4cf95f0521d1",
+          "price": "100000000001",
+          "assertionCount": 7,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-jg62l61t/reports/20261014-191005-94035/UTC-20261014-191113/tests/001_legacy-value-transfer/assert.json",
+            "sha256": "58cd21f86ccc929dbf656b6240192131c62de85b96f3f3b6682cc8cf4502eb82",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005151714465907
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-jg62l61t/reports/20261014-191005-94035/UTC-20261014-191113/tests/001_legacy-value-transfer/steps.json",
+            "sha256": "081030402319888366a49f18ed43f201a3fe691536bcc0cae2fe9f7f75aefde3",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005151708723776
+          }
+        },
+        {
+          "id": "dynamic-fee-transfer",
+          "transactionHash": "0x0306309fd5ce00051e8e50f38ec44e0660265b37197c968d172d6cf71dac6ad8",
+          "blockHash": "0x90cdc8a1d230422cc0fb57368df52d47d5702cc45f20c9afa8cfe4aadc7709a3",
+          "price": "100000000001",
+          "assertionCount": 9,
+          "assertions": {
+            "path": "/private/tmp/cbui/txfail-jg62l61t/reports/20261014-191005-94035/UTC-20261014-191113/tests/002_dynamic-fee-transfer/assert.json",
+            "sha256": "4a173a12f5a14d0f917fb48501c9b5a812d0bcd869a2e525ac89a541b5559dc3",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005156353155086
+          },
+          "steps": {
+            "path": "/private/tmp/cbui/txfail-jg62l61t/reports/20261014-191005-94035/UTC-20261014-191113/tests/002_dynamic-fee-transfer/steps.json",
+            "sha256": "6e5982cab18cf72140072918b02a89f06ea29fde808db325373bb3736f9523ae",
+            "mode": "0o644",
+            "uid": 501,
+            "gid": 0,
+            "mtimeNS": 1792005156347620705
+          }
+        }
+      ],
+      "runtime": "/private/tmp/cbui/txfail-jg62l61t",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 118,
+      "inventory": {
+        "path": "/private/tmp/cbui/txfail-jg62l61t/reports/fee-price-inventory.json",
+        "sha256": "5236d8a252ab447cccb76edc6a55d14f1f91a1bd8fbe0a3dd6bee46f1bf194a8",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792005211007962655
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-fee-price-publication.json",
+    "sha256": "a21217684a507cac513576c00be47ce71483baec5a5a1119982fd88c3584c611",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792004861406985493
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-fee-price-min-red.log",
+      "sha256": "8ab692495db62c98bee02689ceea754aa45db0453966f925e2607a105f1e9d5f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003378405343506
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-min-green.log",
+      "sha256": "f4c536f3d03349983922025f90e760618fd8352faef29c66ed49338d24a32943",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003405880619065
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-case-red.log",
+      "sha256": "fb9729e0449de03149b544d8bd49a54c2db0defef0051765281520521e7dfb2f",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003522198810741
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-case-green.log",
+      "sha256": "3fdbc896d87cf9aca69e08712abb674c0b9951bc2bfc8e401459c3348a676695",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003579282737199
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-format-red.log",
+      "sha256": "73a409904c89bdf47f9f16d8e8b0c32689d78277bccb583f70116b7ab7439b87",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003864507646109
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-final-unit-green.log",
+      "sha256": "9c49260dbae30380821af72a62f6d35d2e1ac7b0c1a5dbfbff5f00703ac56849",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003895983133235
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-related-race.log",
+      "sha256": "52a4a75b79c8fd55766992403a67f2d147f006c01fa4d215136856772c84d726",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792003837384072302
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-final-related-race.log",
+      "sha256": "2b6f24a191c19e223efceb57976fb70a778e050062126cf1e62f2a7f0396a90b",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792004015590109457
+    },
+    {
+      "path": "/private/tmp/chainbench-fee-price-check-approved.log",
+      "sha256": "211a757441579cc3757d1803efd8aeaa274d215db7f8d3c4fbb46893da64f6ee",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792004988544792638
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ],
+  "closure": "Scoped semantic evidence only; pending original-policy decisions remain open."
+}
