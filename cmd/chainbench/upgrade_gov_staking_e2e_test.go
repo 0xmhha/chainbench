@@ -23,6 +23,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"strconv"
@@ -379,6 +380,28 @@ func TestWemixGovernanceFeeChangeE2E(t *testing.T) {
 		t.Fatalf("requestChangingFee reverted (status %s)", st)
 	}
 
+	if stakingUint(t, c, "getDelegatedAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-020 fixture unexpectedly has delegators")
+	}
+	logs := feeReceipt(t, c, hash)
+	if !exactFeeEvent(logs, staker, "ChangingFeeRateRequested(address,uint256,uint256)", big.NewInt(0), big.NewInt(newRate)) {
+		t.Fatal("GOV-020 missing or incorrect immediate Requested event")
+	}
+	if _, found := accounts.FindLog(logs, accounts.EventTopic("ChangingFeeRateExecuted(address,uint256)")); found {
+		t.Fatal("GOV-020 v1 immediate request emitted unexpected Executed event")
+	}
+	pending, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pending != "0x"+strings.Repeat("0", 128) {
+		t.Fatal("GOV-020 immediate fee left a delayed request", pending, err)
+	}
+	var transaction map[string]any
+	if err := c.Call(ctx, "eth_getTransactionByHash", &transaction, hash); err != nil {
+		t.Fatal(err)
+	}
+	if transaction["hash"] != hash || transaction["input"] != data || transaction["value"] != "0x0" || !strings.EqualFold(fmt.Sprint(transaction["from"]), operator.Address()) || !strings.EqualFold(fmt.Sprint(transaction["to"]), e2eGovStaking) {
+		t.Fatal("GOV-020 actual request input differs", transaction)
+	}
+	logGovernanceProof(t, "GOV-020-immediate", map[string]any{"hash": hash, "staker": staker, "oldRate": 0, "newRate": newRate, "delegatedAmount": "0", "pending": pending, "transaction": transaction})
 	// No delegators -> the fee change is immediate.
 	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
 		t.Fatalf("feeRate = %s after immediate change, want %d", fee, newRate)
@@ -546,9 +569,8 @@ func stakingWaitStatus(t *testing.T, c *rpc.Client, hash string) string {
 // TestWemixGovernanceReactivateE2E covers GOV-019 reactivation on a decided
 // permissioned candidate set. Two supporting stakers keep producing while the
 // subject is inactive; epochs must exclude it and later include it again.
-// The imported below-minimum/no-revert expectation conflicts with the current
-// v1 contract. This test records its specific rejection without claiming that
-// original requirement is satisfied.
+// The approved below-minimum criterion requires a mined v1 rejection with its
+// exact reason and unchanged inactive state, distinct from eth_call refusal.
 func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
 	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
@@ -601,8 +623,7 @@ func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	}
 	assertReactivationSet(t, c, staker, false)
 
-	// Check the actual contract rejection, not a transport failure. The original
-	// no-revert expectation remains an explicitly unresolved specification gap.
+	// Preserve the typed call refusal and separately prove the actual mined failure.
 	below := new(big.Int).Sub(amount, big.NewInt(1))
 	var out string
 	err = c.Call(ctx, "eth_call", &out, map[string]string{
@@ -617,7 +638,19 @@ func TestWemixGovernanceReactivateE2E(t *testing.T) {
 	if stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
 		t.Fatal("GOV-019 rejected below-minimum call changed the inactive state")
 	}
-	t.Logf("GOV-019 original no-revert expectation remains unresolved; v1 response: %v", refusal)
+	listBefore, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rejected := stakingRejectedTx(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(below)), below, "amount is less than minimum staking")
+	listAfter, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("stakers()"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listAfter != listBefore || stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Sign() != 0 {
+		t.Fatal("GOV-019 mined below-minimum failure changed inactive state or list")
+	}
+	logGovernanceProof(t, "GOV-019-state", map[string]any{"hash": rejected.Hash, "staker": staker, "minimum": amount.String(), "inputAmount": below.String(), "activeAfter": false, "amountAfter": "0", "listBefore": listBefore, "listAfter": listAfter, "callRefusal": refusal})
 
 	hash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
 	if !stakingIsStaker(t, c, staker) || stakingUint(t, c, "getStakerAmount(address)", staker).Cmp(amount) != 0 {
@@ -1061,8 +1094,8 @@ func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
 // delayed path): when a staker HAS delegators, requestChangingFee does NOT apply
 // the new rate immediately (unlike GOV-020's no-delegator case) — it records a
 // pending request (changingFeeRequests[staker].requestTime != 0) and leaves the
-// current feeRate unchanged until executeChangingFee after changeFeeDelay (which
-// this test, bounded to seconds, does not wait out).
+// current feeRate unchanged until the chain timestamp reaches changeFeeDelay.
+// It checks a mined early revert and exact request/execution events.
 //
 //	go test -tags e2e -run TestWemixGovernanceFeeChangeDelayedE2E -timeout 8m ./cmd/chainbench
 func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
@@ -1071,14 +1104,24 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN and CHAINBENCH_E2E_TO_BIN to run")
 	}
-	url := runGovHandoff(t, fromBin, toBin)
+	key := mustHexBytes(t, scenarioOpKeys["op2"])
+	provider, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatal(err)
+	}
+	operatorAddress, err := provider.AddressForKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	overlay := map[string]any{"alloc": map[string]any{operatorAddress: map[string]any{"balance": "0x33b2e3c9fd0803ce8000000"}}, "config": map[string]any{"croissant": map[string]any{"govContracts": map[string]any{"govConfig": map[string]any{"params": map[string]any{"changeFeeDelay": "30"}}}}}}
+	url := runGovHandoffOverlay(t, fromBin, toBin, overlay)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 	ap, err := accounts.ForChain("wbft")
 	if err != nil {
 		t.Fatalf("accounts.ForChain(wbft): %v", err)
 	}
-	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	operator, err := ap.OpenWallet(ctx, key, url)
 	if err != nil {
 		t.Fatalf("open operator wallet: %v", err)
 	}
@@ -1096,7 +1139,14 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 
 	// Request a new fee rate; with a delegator present it must NOT apply now.
 	const newRate = 250
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate))), nil)
+	requestHash := stakingSendOK(t, c, operator, accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate))), nil)
+	requestLogs := feeReceipt(t, c, requestHash)
+	if !exactFeeEvent(requestLogs, staker, "ChangingFeeRateRequested(address,uint256,uint256)", big.NewInt(0), big.NewInt(newRate)) {
+		t.Fatal("GOV-021 missing or incorrect request event")
+	}
+	if _, found := accounts.FindLog(requestLogs, accounts.EventTopic("ChangingFeeRateExecuted(address,uint256)")); found {
+		t.Fatal("GOV-021 executed before delay")
+	}
 
 	if fee := stakingInfoWord(t, c, staker, 3); fee.Sign() != 0 {
 		t.Fatalf("feeRate changed immediately despite a delegator (got %s, want 0 until execute)", fee)
@@ -1120,14 +1170,64 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 		t.Fatalf("pending newFeeRate = %s, want %d", newFee, newRate)
 	}
 
-	// After changeFeeDelay elapses (short in the test genesis), executeChangingFee
-	// applies the pending rate. The delay is block.timestamp-based, so wait it out.
 	delay := govConfigUint(t, c, "changeFeeDelay()")
-	time.Sleep(time.Duration(delay.Int64()+3) * time.Second)
-	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("executeChangingFee(address)", accounts.Address(staker)), nil)
-	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
-		t.Fatalf("feeRate = %s after executeChangingFee, want %d", fee, newRate)
+	if delay.Cmp(big.NewInt(30)) != 0 {
+		t.Fatal("GOV-021 explicit delay overlay not applied", delay)
 	}
+	boundary := new(big.Int).Add(reqTime, delay)
+	block, err := c.BlockByNumber(ctx, "latest")
+	if err != nil || new(big.Int).SetUint64(block.Timestamp).Cmp(boundary) >= 0 {
+		t.Fatalf("early check missed chain time window: %v %+v", err, block)
+	}
+	executeInput := accounts.EncodeCallArgs("executeChangingFee(address)", accounts.Address(staker))
+	var callResult string
+	callErr := c.Call(ctx, "eth_call", &callResult, map[string]string{"from": operator.Address(), "to": e2eGovStaking, "data": executeInput}, "latest")
+	var refusal *rpc.ServerError
+	const reason = "the request cannot be executed before delay time"
+	if !errors.As(callErr, &refusal) || refusal.Code != 3 || refusal.Message != "execution reverted: "+reason {
+		t.Fatal("GOV-021 wrong early call refusal", callErr)
+	}
+	early := stakingRejectedTx(t, c, operator, executeInput, new(big.Int), reason)
+	earlyBlock, err := c.BlockByNumber(ctx, fmt.Sprint(early.Receipt["blockNumber"]))
+	if err != nil || new(big.Int).SetUint64(earlyBlock.Timestamp).Cmp(boundary) >= 0 {
+		t.Fatal("GOV-021 refusal was not mined before delay", err)
+	}
+	pendingAfter, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pendingAfter != out || stakingInfoWord(t, c, staker, 3).Sign() != 0 {
+		t.Fatal("GOV-021 early failure changed pending request or fee")
+	}
+	deadline := time.Now().Add(90 * time.Second)
+	for {
+		block, err = c.BlockByNumber(ctx, "latest")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if new(big.Int).SetUint64(block.Timestamp).Cmp(boundary) >= 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("GOV-021 chain timestamp did not reach delay")
+		}
+		select {
+		case <-t.Context().Done():
+			t.Fatal(t.Context().Err())
+		case <-time.After(time.Second):
+		}
+	}
+	executionHash := stakingSendOK(t, c, operator, executeInput, nil)
+	executionLogs := feeReceipt(t, c, executionHash)
+	if !exactFeeEvent(executionLogs, staker, "ChangingFeeRateExecuted(address,uint256)", big.NewInt(newRate)) {
+		t.Fatal("GOV-021 missing or incorrect executed event")
+	}
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
+		t.Fatal("GOV-021 applied rate differs", fee)
+	}
+	pending, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil || pending != "0x"+strings.Repeat("0", 128) {
+		t.Fatal("GOV-021 applied request not cleared", pending, err)
+	}
+	logGovernanceProof(t, "GOV-021-delay", map[string]any{"requestHash": requestHash, "executionHash": executionHash, "earlyHash": early.Hash, "staker": staker, "requestTime": reqTime.String(), "delay": delay.String(), "boundary": boundary.String(), "earlyTimestamp": earlyBlock.Timestamp, "readyTimestamp": block.Timestamp, "newRate": newRate, "pendingAfterEarlyRefusal": pendingAfter, "pendingAfterExecution": pending})
+
 }
 
 // TestWemixGovernanceCredentialExpiryE2E ports wemix4 GOV-023 (per-credential

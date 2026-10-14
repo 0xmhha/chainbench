@@ -1563,11 +1563,14 @@
 
 > **2026-10-15 사용자 승인:** 기존 "revert 없이 단순 stake만 추가" 기대를 현행 v1 계약의
 > 거절 계약에 맞췄다. 기존 eth_call 거절은 실제 채굴 실패의 대체 증거가 아니며,
-> 이 미달 거래의 채굴·사유·상태 검증은 후속 보강 전까지 미완료다.
+> 이 미달 거래의 채굴·사유·상태를 독립 trace와 실제 영수증으로 보강한다. 이전 eth_call 전용 증거와 구분한다.
 
 ---
 
 ### GOV-020 — 수수료율 변경 — 위임자 없음 (즉시 적용)
+
+> **2026-10-15 사용자 승인:** 현행 v1의 즉시 요율 변경·Requested 이벤트·지연 요청 없음으로 검증한다.
+> 기존 Executed만 발생한다는 기대와의 차이는 보존하며 외부 계약은 수정하지 않는다.
 
 **목적**: 위임자가 없는 Staker의 수수료율 변경 시 `changeFeeDelay` 없이 즉시 적용되는지 확인
 
@@ -1578,15 +1581,15 @@
 **실행 절차**:
 
 1. 위임자 없는 상태에서 Operator가 `requestChangingFee(newFeeRate)` 전송
-2. 동일 트랜잭션에서 `ChangingFeeRateExecuted(staker, newFeeRate)` 이벤트 확인 (즉시 적용)
+2. 동일 트랜잭션에서 `ChangingFeeRateRequested(staker, oldFeeRate, newFeeRate)` 이벤트의 emitter·staker·두 요율을 확인
 3. `stakerInfo(staker).feeRate == newFeeRate` 확인
 
 **기대 결과**: 위임자 없으면 `requestChangingFee()` 단일 호출로 즉시 변경
 
 **검증 포인트**:
 
-- `ChangingFeeRateExecuted(staker, newFeeRate)` 이벤트 즉시 발생
-- `ChangingFeeRateRequested` 이벤트 없음
+- 정확한 `ChangingFeeRateRequested` 이벤트, `ChangingFeeRateExecuted` 이벤트 없음
+- 위임량 0 및 `changingFeeRequests(staker)`가 비어 있음
 - `stakerInfo.feeRate` 변경 확인
 
 ---
@@ -1594,6 +1597,9 @@
 ### GOV-021 — 수수료율 변경 — 위임자 있음 (지연 적용)
 
 **목적**: 위임자가 있는 Staker의 수수료율 변경 시 `changeFeeDelay` 경과 후에만 `executeChangingFee()` 로 적용 가능한지 확인
+
+> **2026-10-15 사용자 승인:** 실제 행동 검증에는 30초 축약 fixture를 허용한다.
+> 원문의 604,800초 메인넷 설정과 범위를 구분하며, 7일 실제 경과를 검증했다고 주장하지 않는다.
 
 **사전 조건**: GOV-011 통과 (위임자 있는 Staker 상태), `changeFeeDelay = 604,800초` (GovConfig)
 
