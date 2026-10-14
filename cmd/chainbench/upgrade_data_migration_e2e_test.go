@@ -48,8 +48,7 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 	// node the preset leaves on the from-binary — mines the pre-fork chain into
 	// its own <datadir>/geth. Which node that is belongs to the declaration, so
 	// the record answers it rather than this test assuming node1.
-	dataRoot, producerURL, producerDir, pids := runHandoffKeepDatadir(t, fromBin, toBin)
-	t.Cleanup(func() { _ = os.RemoveAll(dataRoot) })
+	dataRoot, producerURL, producerDir := runHandoffKeepDatadir(t, fromBin, toBin)
 
 	// Record the producer's pre-fork head before shutting it down.
 	preforkHead, err := rpc.Dial(producerURL).BlockNumber(ctx)
@@ -59,8 +58,8 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 	t.Logf("go-wemix producer pre-fork head: %d", preforkHead)
 
 	// 2. Stop every handoff node so node1's chaindata is closed and reopenable.
-	if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-		t.Logf("process: leaked handoff PIDs before migration: %v", leaks)
+	if err := stopHandoffWorkspace(ctx, dataRoot); err != nil {
+		t.Fatalf("cannot close producer data before migration: %v", err)
 	}
 	// Give the OS a moment to release the DB lock.
 	time.Sleep(2 * time.Second)
@@ -128,9 +127,8 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 // chaindata after the network stops, which is the thing it is checking.
 //
 // It returns the workspace, the PRODUCER's RPC URL (the node that runs the
-// from-binary and stops at the fork) and every launched pid, which the caller
-// stops.
-func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, producerURL, producerDir string, pids []int) {
+// from-binary and stops at the fork) which the caller stops through the workspace record.
+func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, producerURL, producerDir string) {
 	t.Helper()
 	t.Setenv("GWEMIX_BIN", fromBin)
 	t.Setenv("GWBFT_BIN", toBin)
@@ -138,15 +136,16 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, prod
 
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
-		dataDir, err := os.MkdirTemp("/tmp", "cbmigrate")
-		if err != nil {
-			t.Fatalf("mkdir temp workspace: %v", err)
-		}
+		runtime := createHandoffRuntime(t, spec)
+		dataDir := filepath.Join(runtime, "w")
 		cmd := newRootCmd()
 		cmd.SetArgs([]string{
 			"run", spec,
 			"--workspace-dir", dataDir,
+			"--artifact-root", filepath.Join(runtime, "reports"),
 			"--keys", presetKeysDir(t),
+			"--read-only-keys",
+			"--no-skips",
 			"--keep-up",
 			"--node-monitor-timeout", "5m",
 		})
@@ -154,13 +153,14 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, prod
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
 		runErr := cmd.Execute()
+		preserveHandoffRun(t, runtime, out.String(), runErr)
 
 		if runErr == nil && strings.Contains(out.String(), "fail=0") {
-			url, nodeDir, launched := producerRPC(t, dataDir)
+			url, nodeDir := producerRPC(t, dataDir)
 			if attempt > 1 {
 				t.Logf("handoff composed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
-			return dataDir, url, nodeDir, launched
+			return dataDir, url, nodeDir
 		}
 
 		// The error Execute returns is the only account of a refusal cobra
@@ -170,22 +170,19 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin string) (workspace, prod
 		if runErr != nil {
 			lastOut += "\nerror: " + runErr.Error()
 		}
-		if pids := recordedPIDs(dataDir); len(pids) > 0 {
-			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
-			}
+		if err := closeHandoffRuntime(runtime); err != nil {
+			t.Fatalf("failed migration attempt cannot be reclaimed; no retry: %v", err)
 		}
-		_ = os.RemoveAll(dataDir)
 		t.Logf("handoff attempt %d/%d did not compose; retrying", attempt, govHandoffAttempts)
 	}
 	t.Fatalf("handoff not composed after %d attempts:\n%s", govHandoffAttempts, lastOut)
-	return "", "", "", nil
+	return "", "", ""
 }
 
-// producerRPC answers the from-binary node's RPC URL and every launched pid. It
+// producerRPC answers the from-binary node's RPC URL and data directory. It
 // is the mirror of successorRPC: the producer is the node the preset leaves on
 // the default binary.
-func producerRPC(t *testing.T, dataDir string) (url, nodeDir string, pids []int) {
+func producerRPC(t *testing.T, dataDir string) (url, nodeDir string) {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
 	if err != nil {
@@ -196,9 +193,6 @@ func producerRPC(t *testing.T, dataDir string) (url, nodeDir string, pids []int)
 		t.Fatalf("parse chain record: %v", err)
 	}
 	for _, n := range rec.Nodes {
-		if n.PID > 0 {
-			pids = append(pids, n.PID)
-		}
 		if url == "" && n.Binary != "next" && n.HTTP > 0 {
 			url, nodeDir = fmt.Sprintf("http://%s:%d", n.Host, n.HTTP), n.DataDir
 		}
@@ -206,7 +200,7 @@ func producerRPC(t *testing.T, dataDir string) (url, nodeDir string, pids []int)
 	if url == "" {
 		t.Fatalf("no producer node in %s/chain-record.json", dataDir)
 	}
-	return url, nodeDir, pids
+	return url, nodeDir
 }
 
 // launchOfflineReader starts the go-wbft binary on a datadir as a non-mining,

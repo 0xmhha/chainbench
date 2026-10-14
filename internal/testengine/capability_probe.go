@@ -16,6 +16,7 @@ import (
 )
 
 type capabilityNodeProbe struct {
+	Chain          string `json:"chain,omitempty"`
 	Node           int    `json:"node"`
 	Role           string `json:"role"`
 	Status         string `json:"status"`
@@ -47,7 +48,15 @@ func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(c
 		} else {
 			result.Status = "supported"
 			for i, n := range nodes {
-				probe := probeConsensusNode(ctx, plugin, n, dial)
+				selected := plugin
+				var selectErr error
+				if n.Chain != "" {
+					selected, selectErr = registry.Get(n.Chain)
+				}
+				probe := capabilityNodeProbe{Node: n.Index, Role: string(n.Role), Chain: n.Chain, Status: "unknown", Reason: "recorded_chain_unavailable"}
+				if selectErr == nil {
+					probe = probeConsensusNode(ctx, selected, n, dial)
+				}
 				result.Nodes = append(result.Nodes, probe)
 				if i == 0 {
 					// Preserve the primary-node fields for existing readers.
@@ -80,7 +89,7 @@ func consensusCapabilityGate(chain string, dial func(string) *rpc.Client) func(c
 }
 
 func probeConsensusNode(ctx context.Context, plugin registry.ChainPlugin, n node.Node, dial func(string) *rpc.Client) capabilityNodeProbe {
-	result := capabilityNodeProbe{Node: n.Index, Role: string(n.Role), Status: "unknown", Reason: "no_probe_target"}
+	result := capabilityNodeProbe{Node: n.Index, Role: string(n.Role), Chain: plugin.Manifest().ID, Status: "unknown", Reason: "no_probe_target"}
 	if n.RPCURL == "" {
 		return result
 	}

@@ -29,7 +29,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -336,19 +335,18 @@ type handoffNodes struct {
 		Label   string `json:"label"`
 		Host    string `json:"host"`
 		HTTP    int    `json:"http"`
-		PID     int    `json:"pid"`
 		Binary  string `json:"binary"`
 		DataDir string `json:"dataDir"`
 	} `json:"nodes"`
 }
 
 // successorRPC reads the record the run wrote and answers a successor's RPC
-// URL, with every launched pid beside it for teardown.
+// URL. Teardown uses the workspace record through the production stop path.
 //
 // The retired command printed both, and the tests parsed its stdout. The record
 // is the better source: it is what resume, status and stop already read, so a
 // test asks the same question the product does.
-func successorRPC(t *testing.T, dataDir string) (string, []int) {
+func successorRPC(t *testing.T, dataDir string) string {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
 	if err != nil {
@@ -359,11 +357,7 @@ func successorRPC(t *testing.T, dataDir string) (string, []int) {
 		t.Fatalf("parse chain record: %v", err)
 	}
 	var url string
-	var pids []int
 	for _, n := range rec.Nodes {
-		if n.PID > 0 {
-			pids = append(pids, n.PID)
-		}
 		// "next" is the successor binary the preset declares; the producer runs
 		// "default" and stops at the fork, so it can answer nothing after it.
 		if url == "" && n.Binary == "next" && n.HTTP > 0 {
@@ -373,7 +367,7 @@ func successorRPC(t *testing.T, dataDir string) (string, []int) {
 	if url == "" {
 		t.Fatalf("no successor node in %s/chain-record.json", dataDir)
 	}
-	return url, pids
+	return url
 }
 
 // runGovHandoff composes the handoff, leaves it up, and returns a successor's
@@ -396,15 +390,16 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
-		dataDir, err := os.MkdirTemp("/tmp", "cbgov")
-		if err != nil {
-			t.Fatalf("mkdir temp workspace: %v", err)
-		}
+		runtime := createHandoffRuntime(t, spec)
+		dataDir := filepath.Join(runtime, "w")
 		cmd := newRootCmd()
 		cmd.SetArgs([]string{
 			"run", spec,
 			"--workspace-dir", dataDir,
+			"--artifact-root", filepath.Join(runtime, "reports"),
 			"--keys", presetKeysDir(t),
+			"--read-only-keys",
+			"--no-skips",
 			"--keep-up",
 			"--node-monitor-timeout", "5m",
 		})
@@ -412,15 +407,10 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
 		runErr := cmd.Execute()
+		preserveHandoffRun(t, runtime, out.String(), runErr)
 
 		if runErr == nil && strings.Contains(out.String(), "fail=0") {
-			url, pids := successorRPC(t, dataDir)
-			t.Cleanup(func() {
-				if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-					t.Logf("process: leaked node PIDs after test: %v", leaks)
-				}
-				_ = os.RemoveAll(dataDir)
-			})
+			url := successorRPC(t, dataDir)
 			if attempt > 1 {
 				t.Logf("handoff composed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
@@ -434,37 +424,13 @@ func runGovHandoffOverlay(t *testing.T, fromBin, toBin string, overlay map[strin
 		if runErr != nil {
 			lastOut += "\nerror: " + runErr.Error()
 		}
-		if pids := recordedPIDs(dataDir); len(pids) > 0 {
-			if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
-				t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
-			}
+		if err := closeHandoffRuntime(runtime); err != nil {
+			t.Fatalf("failed handoff attempt cannot be reclaimed; no retry: %v", err)
 		}
-		_ = os.RemoveAll(dataDir)
 		t.Logf("handoff attempt %d/%d did not compose; retrying", attempt, govHandoffAttempts)
 	}
 	t.Fatalf("handoff not composed after %d attempts:\n%s", govHandoffAttempts, lastOut)
 	return ""
-}
-
-// recordedPIDs reads the pids a failed attempt left behind, so teardown can
-// reach nodes the run launched before it gave up. A workspace with no record
-// launched nothing, and answers none.
-func recordedPIDs(dataDir string) []int {
-	b, err := os.ReadFile(filepath.Join(dataDir, "chain-record.json"))
-	if err != nil {
-		return nil
-	}
-	var rec handoffNodes
-	if err := json.Unmarshal(b, &rec); err != nil {
-		return nil
-	}
-	var pids []int
-	for _, n := range rec.Nodes {
-		if n.PID > 0 {
-			pids = append(pids, n.PID)
-		}
-	}
-	return pids
 }
 
 // presetNodeKey loads node idx's raw private key from presets/keys/metadata.json.

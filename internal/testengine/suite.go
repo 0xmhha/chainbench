@@ -320,6 +320,10 @@ func prepareChain(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn, comp c
 			return fmt.Errorf("engine: run suite: %w", cerr)
 		}
 		out.SetupSteps = append(out.SetupSteps, "cross-fork: "+res.Detail)
+		recordHandover(net, res.Nodes)
+		if err := gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps, in.NodeMonitorTimeout, net.fork); err != nil {
+			return fmt.Errorf("engine: run suite after handover: %w", err)
+		}
 	}
 	if in.WaitBlocks > 0 {
 		if err := waitForHead(ctx, net.endpoints[0], in.WaitBlocks); err != nil {

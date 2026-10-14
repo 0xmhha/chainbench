@@ -106,6 +106,9 @@ type forkGate struct {
 	// treating them all as retired would report a network where nothing runs
 	// as ready.
 	restart bool
+	// handedOver prevents a freshly relaunched successor parked at fork-1
+	// from satisfying readiness before it has produced the fork block.
+	handedOver bool
 }
 
 // parked reports whether every node stands at the block before the fork,
@@ -113,7 +116,7 @@ type forkGate struct {
 // syncing is a network that has not arrived, and it is exactly the node the
 // handover would leave behind.
 func (g forkGate) parked(rep health.Report) bool {
-	if g.restart || g.at <= 0 || len(rep.Nodes) == 0 {
+	if g.restart || g.handedOver || g.at <= 0 || len(rep.Nodes) == 0 {
 		return false
 	}
 	want := uint64(g.at - 1) //nolint:gosec // a declared block height, checked positive above

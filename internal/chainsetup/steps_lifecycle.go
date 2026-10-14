@@ -124,12 +124,19 @@ func (w *Workspace) checkUniformNetworkID() error {
 // composition's, which wrote one devp2p id into a successor's config file and
 // passed another on its command line.
 func (w *Workspace) pluginFor(ns node.Record) (registry.ChainPlugin, error) {
-	if ns.Binary != "" {
-		if id := w.state.BinaryChains[ns.Binary]; id != "" {
-			return external.ResolveChain(id, "", "")
-		}
+	if id := w.chainFor(ns); id != w.state.Chain {
+		return external.ResolveChain(id, "", "")
 	}
 	return w.plugin()
+}
+
+func (w *Workspace) chainFor(ns node.Record) string {
+	if ns.Binary != "" {
+		if id := w.state.BinaryChains[ns.Binary]; id != "" {
+			return id
+		}
+	}
+	return w.state.Chain
 }
 
 // genesisPaths is every genesis this composition wrote, deduplicated, with the

@@ -76,6 +76,9 @@ type Endpoints struct {
 // Node is one chain node, whether locally launched, remotely launched, or
 // attached to an already-running endpoint.
 type Node struct {
+	// Chain is the chain declared for this node's recorded binary. Empty on
+	// older records and bare attachments, which use the network's chain.
+	Chain string `json:"chain,omitempty"`
 	// Index is the 1-based node number within the set.
 	Index int `json:"index"`
 	// Role is the node's operational role.
