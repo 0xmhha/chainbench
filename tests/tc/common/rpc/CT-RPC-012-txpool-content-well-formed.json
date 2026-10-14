@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "txpool-content-well-formed",
-  "description": "RT-G-4-03 — txpool_content 의 항목에 보낸 이, nonce, 가스 가격이 들어 있는지 본다 (원본 regression/api/19-test-txpool-content, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-012). CT-RPC-011 과 같은 상태를 만든다: 검증 노드 둘을 멈춰 합의를 세운 뒤 연속 nonce 0, 1 과 격차 nonce 3, 4 를 넣는다. 대기(pending) 칸에 0, 1 이, 보류(queued) 칸에 3, 4 가 보낸 이, gas, 가스 가격과 함께 있어야 한다. 끝나면 두 노드를 다시 켜고 연속 두 건이 채굴되는 것까지 기다린다.",
+  "description": "RT-G-4-03 — txpool_content 의 항목에 보낸 이, nonce, 가스 가격이 들어 있는지 본다 (원본 regression/api/19-test-txpool-content, 절차는 docs/tc/common/06-detailed-procedures/05-rpc.md 의 CT-RPC-012). CT-RPC-011 과 같은 상태를 만든다: 검증 노드 둘을 멈춰 합의를 세운 뒤 연속 nonce 0, 1 과 격차 nonce 3, 4 를 넣는다. 대기(pending) 칸에 0, 1 이, 보류(queued) 칸에 3, 4 가 보낸 이, gas, 가스 가격과 함께 있어야 한다. 끝나면 두 노드를 다시 켜고 연속 두 건이 채굴되는 것까지 기다린다. 각 pending·queued 항목의 hash도 실제 제출 결과와 대조해 다른 거래의 같은 nonce·가스 필드로 통과할 수 없게 한다. 이 사례는 합의 중단 fixture이며 원문 EN 격리와 동일하다고 주장하지 않는다.",
   "requires": [
     "rpc"
   ],
@@ -52,7 +52,8 @@
       "nonce": "0",
       "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
-      "wait": false
+      "wait": false,
+      "save": "h0"
     },
     {
       "do": "sendTx",
@@ -64,7 +65,8 @@
       "nonce": "1",
       "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
-      "wait": false
+      "wait": false,
+      "save": "h1"
     },
     {
       "do": "sendTx",
@@ -76,7 +78,8 @@
       "nonce": "3",
       "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
-      "wait": false
+      "wait": false,
+      "save": "h3"
     },
     {
       "do": "sendTx",
@@ -88,7 +91,8 @@
       "nonce": "4",
       "maxFeePerGas": "35000000000000",
       "maxPriorityFeePerGas": "30000000000000",
-      "wait": false
+      "wait": false,
+      "save": "h4"
     },
     {
       "expect": "rpcCall",
@@ -265,6 +269,50 @@
       "select": "queued.4.gasPrice",
       "compare": "NotNil",
       "is": null
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.0.hash",
+      "compare": "EqualCI",
+      "is": "$h0"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "pending.1.hash",
+      "compare": "EqualCI",
+      "is": "$h1"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.3.hash",
+      "compare": "EqualCI",
+      "is": "$h3"
+    },
+    {
+      "expect": "rpcCall",
+      "on": "node1",
+      "method": "txpool_contentFrom",
+      "params": [
+        "$spender"
+      ],
+      "select": "queued.4.hash",
+      "compare": "EqualCI",
+      "is": "$h4"
     },
     {
       "do": "startNode",

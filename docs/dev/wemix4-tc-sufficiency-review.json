@@ -8,8 +8,8 @@
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
-    "partial": 66,
-    "confirmed_scope": 16,
+    "partial": 65,
+    "confirmed_scope": 17,
     "conflict": 3,
     "merged": 2
   },
@@ -6496,7 +6496,7 @@
       "id": "RPC-018",
       "title": "txpool\\_status / txpool\\_content",
       "criterionSha256": "eae670132a5d93e593e531467daceabfb6c2a11a844e99f0553f92e9853c3389",
-      "status": "partial",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -6506,8 +6506,23 @@
         },
         {
           "path": "tests/tc/common/rpc/CT-RPC-012-txpool-content-well-formed.json",
-          "sha256": "25f59143ed3a18936acca7bff37a2e9e5e21e65f8743bae2505d8c4b6b261879",
+          "sha256": "cb9672deba44b6a83ca49c053e13cce4fbc5265f2c6634f8d74e055e564f7c3a",
           "id": "txpool-content-well-formed"
+        },
+        {
+          "path": "internal/testhelper/pool_content_semantics_test.go",
+          "function": "TestPublicPoolContentBindsSubmittedHashes",
+          "sha256": "842141a5cea0c2d013ec9ddd3b490d90c156e604651e41f019a9cc4014b6824e"
+        },
+        {
+          "path": "internal/testengine/pool_isolation_native_test.go",
+          "function": "TestNativePoolIsolation",
+          "sha256": "fcefb719c84a1c0677c3ff7aef2abf325115d1a9343d4e648413a527df6d986e"
+        },
+        {
+          "path": "tests/tc/common/rpc/CT-RPC-016-isolated-en-pending-queued.json",
+          "id": "isolated-en-pending-queued",
+          "sha256": "ed622f83b844c6429ec1ab319e6a14c3884c561946d8e48fdb5d1adf71690771"
         }
       ],
       "observations": [
@@ -6847,14 +6862,22 @@
             "compare": "NotNil",
             "is": null
           }
+        },
+        {
+          "analysis": "Original EN peer isolation fixture added separately; peer0, EN halt, BP advance, nonce0 pending/nonce2 queued hashes and no receipts, heal and gap-fill success. Actual isolation not yet verified."
         }
       ],
-      "semanticAssessment": "specific_gap_or_narrower_fixture",
+      "semanticAssessment": "Original managed EN peer-isolation fixture plus separate consensus-halt content regression passed on three families: 6 cases/147 assertions, exact submitted hashes and mined nonce/receipt requery, source invariant and DB0. Historical failures retained.",
       "remainingConditions": [
-        "EN2 peer disconnect fixture아님,N/N+2대신0,1/3,4; raw txpool_content와 contentFrom범위차이"
+        "Local BP4/EN1 uses one EN node5 rather than original named en_2. Full migrated environment/Linux/mainnet/legacy consumer/final Web acceptance remain separate; no originalAll87 completion."
       ],
-      "confirmedScope": null,
-      "verifiedEvidence": []
+      "confirmedScope": "EN peer0 and block halt while BP advances, nonce0 pending/nonce2 queued exact submitted hash/nonce/from/gas, txpool_status and global content plus account buckets, receipt nulls; heal using managed recorded endpoints, current suggested fee quote, nonce1 fill and all three successful actual receipts. Related consensus-halt four hashes also verified.",
+      "verifiedEvidence": [
+        {
+          "path": "docs/dev/pool-isolation-evidence.json",
+          "sha256": "e0452ba30bb18113620d5570a3a3d32dda863437b2341675862f2164cad5fe69"
+        }
+      ]
     },
     {
       "id": "RPC-019",

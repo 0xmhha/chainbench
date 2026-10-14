@@ -139,7 +139,7 @@ common/rpc/CT-RPC-011-txpool-status.json	.steps[7]	to	0x000000000000000000000000
 common/rpc/CT-RPC-011-txpool-status.json	.steps[8]	to	0x00000000000000000000000000000000c0ffee11
 common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[1]	to	$spender
-common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[27]	address	$spender
+common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[31]	address	$spender
 common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[5]	to	0x00000000000000000000000000000000c0ffee11
 common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[6]	to	0x00000000000000000000000000000000c0ffee11
 common/rpc/CT-RPC-012-txpool-content-well-formed.json	.steps[7]	to	0x00000000000000000000000000000000c0ffee11
@@ -148,6 +148,13 @@ common/rpc/CT-RPC-014-ws-subscribe-logs.json	.steps[0]	from	0xc17d493883eaa3b4cc
 common/rpc/CT-RPC-014-ws-subscribe-logs.json	.steps[2]	address	$addr
 common/rpc/CT-RPC-014-ws-subscribe-logs.json	.steps[3]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/rpc/CT-RPC-014-ws-subscribe-logs.json	.steps[3]	to	$addr
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[16]	to	0x00000000000000000000000000000000c0ffee11
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[17]	to	0x00000000000000000000000000000000c0ffee11
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[1]	to	$spender
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[2]	address	$spender
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[38]	to	0x00000000000000000000000000000000c0ffee11
+common/rpc/CT-RPC-016-isolated-en-pending-queued.json	.steps[40]	address	$spender
 common/tx/CT-TX-001-value-transfer.json	.steps[11]	address	$recipient
 common/tx/CT-TX-001-value-transfer.json	.steps[1]	from	0xc17d493883eaa3b4cceb0f214b273392d562f9d8
 common/tx/CT-TX-001-value-transfer.json	.steps[1]	to	$nodePayee

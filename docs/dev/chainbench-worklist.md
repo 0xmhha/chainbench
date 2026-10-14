@@ -182,6 +182,24 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 13 | netmap 2/3 재평가 | A8 재측정; A7b 현행 판단과 실제 코드 근거; Go·Python을 포함한 모든 코드 언어의 AST 인벤토리·분류 그래프와 누락 0 검증; 열린 단계와 역사 기록 일치 | 완료 — N3 잔여 해소와 현행 resource/node 소유자·역할 계약 대조; A8 1,888심볼/도달 불가 0, A7b 현행 입력 대조 RED→GREEN. 14언어/형식 1,922파일·Go 테스트 670파일·내장 AST 21개 파싱, 누락/끊어진 간선 0. 전체 검사·관련 race·고정 소스 capture/독립 그래프 해시 일치; [증거](all-code-graph-evidence.json) |
 | 14 | go-wemix W3 | 최신 외부 소스·바이너리 상태와 실제 재현 확인; 외부 체인 수정 없이 재현 자료·인계 갱신; 해결 없으면 열린 상태 보존 | 재현·인계 완료, 결함 미해결 — 원격 HEAD `4538a9f5`를 별도 빌드해 실제 verifier 거절 2회와 연결된 full-sync downloader 거절을 race로 확인했다. 관측·로그 검증 RED→GREEN; 준비 오류도 보존. 종료 DB 0개·746파일 내용/권한 보존. 과거 15노드 경합·재시작 복구·최종 Web 인수는 이번 범위 아님; [증거](wemix-w3-evidence.json). 외부 수정 전 제품 항목은 열림 |
 
+**2026-10-15 RPC-018 EN 격리·풀 상세 보강:** 기존 합의 중단 사례는 다른 hash의 같은 nonce·가스를
+통과시켰다. 두 hash 변형 RED→GREEN을 보강하고 실제 EN(node5)만 BP4에서 peer 격리하는 사례를 별도로
+추가했다. 최초 세 체인과 후속 진단은 복구·격리·전파 관문에서 실패했고 실패 자료를 유지했다.
+실제 `admin_nodeInfo`의 NAT 외부 주소, EN 자금 동기화 누락, 늦은 연결, 로컬 풀에서만 허용되는
+고정 수수료를 대조했다. peer 변경 false 거절·기록된 host/port 복구(attach 광고 보존)·교차 그룹 peer
+연속 부재 확인과 잔존 연결 재제거·확인 불가 응답 거절의 각 RED→GREEN을 보강했다.
+새 사례는 EN 잔액 동기화 뒤 실제 추천 가격·팁으로 충분한 cap을 구성한다. EN peer0·블록 정지와
+BP 전진, nonce0 pending·nonce2 queued의 정확한 hash·필드·미채굴 영수증, 재연결 뒤 nonce1을
+채우고 세 거래의 성공 영수증을 검사한다. 기존 합의 중단 사례는 별도 회귀로 유지한다.
+
+관련 전체 race·전체 검사와 최신 고정 소스의 세 체인 6사례·147단언 native race(261.555초,
+skip 0)가 통과했다. 독립 hash·nonce·블록·영수증 대조도 통과했고 지문
+`bc919d1a958d5cb3f313e6c085e43d4fdbbc6a4fb7c04afd0248140471e38f39` 전후가 같다.
+이전 실패·진단을 포함한 17실행 3,814파일의 내용·권한을 보존했으며 활성 프로세스·종료 DB는 0이다.
+[풀 격리 증거](pool-isolation-evidence.json)의 과거 실패는 실패로 유지했다. 이 결과는 BP4·EN1 로컬
+범위이며 원문의 `en_2` 대신 node5를 썼다. §0a 11번 전체·이관 환경·Linux·메인넷·legacy·최종
+Web 인수는 계속 미완료다. 외부 체인 소스는 수정하지 않았다.
+
 **2026-10-15 RPC-019 peer 구조 보강:** 기존 공개 사례는 ID 포함·개수만 확인해 마지막 peer의
 빈 주소·누락 network·누락/빈 protocols를 통과시켰다. 네 조건의 RED를 확인하고 BP4·EN1 고정 fixture의
 정확한 네 peer 전수 필드를 검사하도록 GREEN으로 보강했다. 기존 E2E도 RPC 오류를 0개로 숨기는

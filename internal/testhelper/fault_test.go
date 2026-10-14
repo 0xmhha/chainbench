@@ -157,6 +157,8 @@ func (p *peerRPC) server(t *testing.T, enode string) *httptest.Server {
 		switch req.Method {
 		case "admin_nodeInfo":
 			result = map[string]any{"enode": enode}
+		case "admin_peers":
+			result = []any{}
 		case "admin_removePeer":
 			p.mu.Lock()
 			p.removed = append(p.removed, req.Params[0].(string))
