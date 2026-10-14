@@ -35,6 +35,9 @@ func seedCrossForkBuiltins(r interp.Registry) {
 type crossForkAction struct{}
 
 func (crossForkAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if err := validateDurationControl("crossFork", "timeout", ac.Args); err != nil {
+		return err
+	}
 	if ac.Deps == nil || ac.Deps.Nodes == nil {
 		return fmt.Errorf("dsl: %s needs node control, which this run has none of (attach mode does not own the node processes)", dsl.ActionCrossFork)
 	}
@@ -45,14 +48,7 @@ func (crossForkAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if !ok {
 		return fmt.Errorf("dsl: %s: this run's node control cannot cross a fork", dsl.ActionCrossFork)
 	}
-	timeout := crossForkStepTimeout
-	if raw, given := ac.Args["timeout"].(string); given && raw != "" {
-		d, err := time.ParseDuration(raw)
-		if err != nil {
-			return fmt.Errorf("dsl: %s: timeout %q: %w", dsl.ActionCrossFork, raw, err)
-		}
-		timeout = d
-	}
+	timeout := durationArg(ac.Args, "timeout", crossForkStepTimeout)
 	nodes, err := crosser.CrossFork(ctx, timeout)
 	if err != nil {
 		return fmt.Errorf("dsl: %s: %w", dsl.ActionCrossFork, err)

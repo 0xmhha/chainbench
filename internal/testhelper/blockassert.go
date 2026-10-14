@@ -123,6 +123,12 @@ func lowestHead(ctx context.Context, deps *interp.Deps, targets []assertTarget) 
 type blockStalledAssertion struct{}
 
 func (blockStalledAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("blockStalled", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "blockStalled", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
 	res := session.AssertResult{Assert: assertBlockStalled, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -175,6 +181,12 @@ func (blockStalledAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (s
 type blockAdvanceAssertion struct{}
 
 func (blockAdvanceAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("blockAdvance", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "blockAdvance", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
 	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {

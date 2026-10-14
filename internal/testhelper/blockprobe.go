@@ -42,6 +42,12 @@ const (
 type blockHaltAssertion struct{}
 
 func (blockHaltAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	for _, field := range []string{"within"} {
+		if err := validateDurationControl("blockHalt", field, ac.Spec); err != nil {
+			return session.AssertResult{Assert: "blockHalt", Actual: err.Error(), Provenance: ac.Spec}, err
+		}
+	}
+
 	if err := validateUnsignedControl("assertion", "blockHalt", "maxAdvance", ac.Spec); err != nil {
 		return session.AssertResult{Assert: "blockHalt", Actual: err.Error(), Provenance: ac.Spec}, err
 	}

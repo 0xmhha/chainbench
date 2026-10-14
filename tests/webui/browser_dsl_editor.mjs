@@ -249,6 +249,37 @@ try{
  assert.deepEqual(JSON.parse(fs.readFileSync(out+'/unsigned-controls-export.json','utf8')),controlCase)
  observed.unsignedControls={integerControls:true,fractionRejected:true,zeroCountRejected:true,indexOverflowRejected:true,zeroBoundPreserved:true,hexIndexPreserved:true,uint64BoundPreserved:true,saveExportPreserved:true}
 
+ const durationCase=structuredClone(controlCase)
+ durationCase.id='duration-controls-browser'
+ durationCase.steps=[
+  {do:'waitBlock',on:'node1',target:0,timeout:'1s',pollInterval:'1ms'},
+  {expect:'blockHalt',on:'node1',maxAdvance:0,within:'1s'},
+  {expect:'wsSubscribe',on:'node1',count:1,timeout:'3s'},
+ ]
+ await upload.setInputFiles(file('duration-controls.json',durationCase))
+ for(const [step,field,good] of [[0,'timeout','1m0.5s'],[0,'pollInterval','1.5ms'],[1,'within','+2s'],[2,'timeout','250µs']]){
+  await page.locator(`[data-tree-path="/content/steps/${step}"]`).click()
+  const path=`/content/steps/${step}/${field}`
+  const input=page.getByLabel(path,{exact:true})
+  for(const bad of ['0s','-1ms','invalid','9223372036854775808ns']){
+   await input.fill(bad)
+   await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+   await page.locator(`[aria-label="${path}"][aria-invalid="true"]`).waitFor({timeout:15000})
+  }
+  await input.fill(good)
+  durationCase.steps[step][field]=good
+ }
+ await page.getByRole('button',{name:'테스트 시나리오 검증',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'엔진 검증 통과'}).waitFor({timeout:15000})
+ await page.screenshot({path:out+'/duration-controls.png',fullPage:true})
+ await page.getByRole('button',{name:'공유 테스트 저장',exact:true}).click()
+ await page.getByRole('status',{name:'DSL 상태'}).filter({hasText:'저장됨'}).waitFor({timeout:15000})
+ const durationDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'테스트 시나리오 내보내기',exact:true}).click()
+ await (await durationDownload).saveAs(out+'/duration-controls-export.json')
+ assert.deepEqual(JSON.parse(fs.readFileSync(out+'/duration-controls-export.json','utf8')),durationCase)
+ observed.durationControls={zeroRejected:true,negativeRejected:true,malformedRejected:true,overflowRejected:true,fractionalUnitsPreserved:true,compoundDurationPreserved:true,microsecondsPreserved:true,saveExportPreserved:true}
+
  // Create the fee payer through the declared account selector, retaining
  // key bindings and preserving an invalid imported pair until corrected.
  const feeCase=structuredClone(endpointCase)

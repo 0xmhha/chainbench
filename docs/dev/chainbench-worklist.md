@@ -171,7 +171,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 | 6 | S2 MCP 레지스트리 소비 | 실제 중복·설명 차이 측정; 공통 입력은 레지스트리 소비; 특수 입력 보존; 스키마·실행 계약 회귀 | 완료 — 표준 호출 60곳·공통 문자열 스키마 36곳 전환; 복합 배열·카탈로그 보존; 계약·make check·race·세 체인 실제 MCP 실행 통과; `mcp-registry-evidence.json` |
 | 7 | N3 서버 배치·BLS | blueprint 노드별 server 반영; 중복·미등록 배치 거절; BLS 필요 패밀리만 파생; 관련 실제 체인 회귀 | 완료 — 배치·실패 원자성·로컬 경로·3종 키 원천 RED→GREEN; make check·race·세 체인 CLI 실제 구동과 정리 통과; `n3-allocation-evidence.json` |
 | 8 | 요구 19개 충분성 | R1–R19 각각의 동작을 증명하는 테스트 대조; R14·R15·R19 등 부족분 RED→GREEN 보강 | 완료 — 19개 assertion·생산 경로·검증 한계 대조; R11·R14·R15·R19 RED→GREEN; Go AST 증거 연결; 관련 전체 race·세 체인 실제 배포·CLI/MCP 실행·root report와 종료 DB 회수 통과. 전체 live·upgrade·최종 Web 인수는 별도 잔여; `requirement-sufficiency-review.json` |
-| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. Linux fleet·전체 L1·R3 나머지·P4 충분성·R4 대기 시간 등 나머지·R5/R6은 남음; 상세 증거는 아래 단계 기록 |
+| 9 | 메인넷 설정 live | HEAD 소스 출처가 확인된 실제 바이너리로 L1 회귀; 실제 망 R2–R6 전수 결과·제약 기록 | 진행 — 외부 HEAD 세 체인 native 재빌드·출처 기록; R2 BP4/EN1 CLI/MCP 인증 읽기와 구조화 UI 통과; P2/P3 초기값·R1 선언 ID 관문 완료. R3 합의 여러 노드 조회·PUSH0·P256 실제 확인, P4 선언 사유 기록을 검증했다. R4 정수 제어 18필드와 실제 CLI/MCP 실패 144건·Web 검증도 통과했다. 종료 DB 제거 통과. Linux fleet·전체 L1·R3 나머지·P4 충분성·R4 포크 제어 실증·전수 회귀 등 나머지·R5/R6은 남음; 상세 증거는 아래 단계 기록 |
 | 10 | 공통 TC 도구 둘 | 블록 수신 경로 관측의 출처와 의미 검증; 케이스 사이 이름 기반 준비물 공유·격리·실제 실행 | 미완료 |
 | 11 | 수직 슬라이스 재평가 | upgrade·wemix4 이관·legacy 잔여를 실제 소비자와 회귀로 확인; 제품 잔여 구현 또는 근거 있는 해소 | 미완료 |
 | 12 | b-5 재평가 | 현행 `chain up`과 기존 `setup→net up` 전제 대조; 죽은 명령 도입 없이 경로·회귀·상태 정정 | 미완료 |
@@ -376,6 +376,17 @@ StableNet 기본·Boho 활성·WBFT·WEMIX의 CLI/MCP에서 제어 실패 144건
 증명 입력의 expect 누락·단언 오류 기록 위치·WS 불필요 인자는 실패 자료를 보존하고 사전 계약 검사로 보강했다.
 이 증명 입력 실패는 생산 코드의 RED나 통과 자료로 세지 않는다. 대기 시간·기본값·R4 나머지, R3/P4/R5/R6·Linux L1·
 10–14번과 후속 소스의 Web 최종 인수는 계속 남는다.
+
+**대기 시간 입력·기본값 보강:** [증거](duration-control-evidence.json)는 timeout·pollInterval·within 22필드의
+0·음수·빈 문자열·잘못된 타입·범위 초과를 소비자 IO 또는 제어 전에 거절한다. 생략한 기존 기본값과
+소수 단위·복합 시간·microsecond·양수 int64 nanosecond를 보존한다. blockHalt·crossFork의 기존 기본값도
+Web에 표시한다. 잘못된 wsCollected 시간은 열린 구독을 닫고 JSON 가능한 관측을 남긴다.
+실제 결함 RED→GREEN·전체 make check·관련 다섯 패키지 race·브라우저 저장/내보내기와 네 프로필 native race가 통과했다.
+attach 가능한 21필드의 CLI/MCP 실패 168건은 추가 제출 없이 fail 1·다른 판정 0으로 기록됐다.
+기존 정수 제어 실패 144건·숫자 입력 실패 192건·거래 제출 208건도 회귀했다. 소스 120개씩 해시가 일치하며
+종료 노드 DB·프로세스는 0건이고 여유 공간은 약 38 GiB다. crossFork는 제어 callback 차단의 단위 증거이며
+실제 fork handover 증거가 아니다. 업그레이드가 없는 attach 입력은 사전 검사에서 거절되므로 라이브 fixture에서 제외했다.
+이 한계와 실제 포크 제어·R4 전수·R3/P4/R5/R6·Linux L1·10–14번·후속 Web 최종 인수는 열린 상태로 보존한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

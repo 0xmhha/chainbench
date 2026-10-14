@@ -67,6 +67,12 @@ const (
 type waitForAction struct{}
 
 func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("waitFor", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	source, _ := ac.Args["source"].(string)
 	if source == "" {
 		return fmt.Errorf("dsl: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))

@@ -36,6 +36,12 @@ func seedAssetBuiltins(r interp.Registry) {
 type faucetAction struct{}
 
 func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("faucet", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	if err := validateTransactionNumbers(ac.Args); err != nil {
 		return err
 	}
@@ -103,6 +109,12 @@ func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 type deployContractAction struct{}
 
 func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("deployContract", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	if err := validateTransactionNumbers(ac.Args); err != nil {
 		return err
 	}
@@ -197,6 +209,12 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 type registerContractAction struct{}
 
 func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("registerContract", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	if err := validateTransactionNumbers(ac.Args); err != nil {
 		return err
 	}

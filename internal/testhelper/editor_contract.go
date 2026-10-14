@@ -241,6 +241,10 @@ func editorDefaults(name string) map[string]any {
 		return map[string]any{"timeout": defaultWaitForTimeout.String(), "pollInterval": defaultWaitForPoll.String(), "compare": "Equal"}
 	case assertBlockAdvance, assertBlockStalled:
 		return map[string]any{"timeout": defaultBlockAdvanceTimeout.String(), "pollInterval": defaultBlockAdvancePoll.String()}
+	case assertBlockHalt:
+		return map[string]any{"within": defaultBlockHaltWindow.String()}
+	case "crossFork":
+		return map[string]any{"timeout": crossForkStepTimeout.String()}
 	case assertWSSubscribe, assertWSCollected:
 		return map[string]any{"timeout": defaultSubscribeTimeout.String(), "count": 1}
 	case actionReadNodeLog:

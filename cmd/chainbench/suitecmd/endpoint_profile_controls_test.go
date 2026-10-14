@@ -21,13 +21,13 @@ func TestNativeUnsignedControlFixturesUseOnlyConsumedArguments(t *testing.T) {
 	requireNativeUnsignedControls(t, t.TempDir(), preset, &count, true)
 }
 
-func requireNativeUnsignedControls(t *testing.T, fixture string, preset any, rawCount *atomic.Int32, fixtureOnly bool) []map[string]any {
-	t.Helper()
-	observations := []map[string]any{}
-	for index, c := range []struct {
-		kind, name, field string
-		bad               any
-	}{
+type nativeControlCase struct {
+	kind, name, field string
+	bad               any
+}
+
+func nativeUnsignedControlCases() []nativeControlCase {
+	return []nativeControlCase{
 		{"action", "waitBlock", "target", 1.5},
 		{"action", "sendTx", "blocks", 0},
 		{"action", "load", "blocks", 1.5},
@@ -46,14 +46,24 @@ func requireNativeUnsignedControls(t *testing.T, fixture string, preset any, raw
 		{"reader", "receiptLog", "index", 1.5},
 		{"reader", "receiptLog", "topic", "18446744073709551615"},
 		{"reader", "createAddress", "nonce", 1.5},
-	} {
-		id := fmt.Sprintf("unsigned-%d", index)
+	}
+}
+
+func requireNativeUnsignedControls(t *testing.T, fixture string, preset any, rawCount *atomic.Int32, fixtureOnly bool) []map[string]any {
+	return requireNativeControlCases(t, fixture, preset, rawCount, "unsigned", nativeUnsignedControlCases(), fixtureOnly)
+}
+
+func requireNativeControlCases(t *testing.T, fixture string, preset any, rawCount *atomic.Int32, prefix string, cases []nativeControlCase, fixtureOnly bool) []map[string]any {
+	t.Helper()
+	observations := []map[string]any{}
+	for index, c := range cases {
+		id := fmt.Sprintf("%s-%d", prefix, index)
 		step := map[string]any{"on": "en1"}
 		steps := []any{}
 		switch c.kind {
 		case "action":
 			step["do"] = c.name
-			if c.name == "sendTx" || c.name == "load" {
+			if c.name == "sendTx" || c.name == "load" || c.name == "faucet" || c.name == "deployContract" || c.name == "registerContract" {
 				step["from"] = "payer"
 				step["gas"] = "300000"
 			}
@@ -61,6 +71,23 @@ func requireNativeUnsignedControls(t *testing.T, fixture string, preset any, raw
 				step["to"] = "0x000000000000000000000000000000000000dead"
 				step["value"] = "1"
 				step["expect"] = "keptOut"
+			}
+			switch c.name {
+			case "waitBlock":
+				step["target"] = 0
+			case "waitFor":
+				step["source"] = "blockNumber"
+				step["expected"] = "0"
+				step["compare"] = "GreaterOrEqual"
+			case "faucet", "registerContract":
+				step["to"] = "0x000000000000000000000000000000000000dead"
+				if c.name == "faucet" {
+					step["amount"] = "1"
+				} else {
+					step["data"] = "0x"
+				}
+			case "deployContract":
+				step["bytecode"] = "0x00"
 			}
 			if c.name == "load" {
 				step["blocks"] = 1
@@ -117,7 +144,7 @@ func requireNativeUnsignedControls(t *testing.T, fixture string, preset any, raw
 		}
 		for _, surface := range []string{"CLI", "MCP"} {
 			before := rawCount.Load()
-			artifacts := filepath.Join(fixture, "unsigned-"+surface, id)
+			artifacts := filepath.Join(fixture, prefix+"-"+surface, id)
 			root := ""
 			if surface == "CLI" {
 				out, progress, runErr := runSplit(t, "run", "--json", "--no-skips", "--artifact-root", artifacts, path)

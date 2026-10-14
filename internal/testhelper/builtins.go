@@ -121,6 +121,12 @@ func Register(r interp.Registry) {
 type waitBlockAction struct{}
 
 func (waitBlockAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("waitBlock", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	if err := validateUnsignedControl("action", "waitBlock", "target", ac.Args); err != nil {
 		return err
 	}

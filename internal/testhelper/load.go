@@ -48,6 +48,12 @@ const loadDefaultBlocks = 1
 type loadAction struct{}
 
 func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	for _, field := range []string{"timeout", "pollInterval"} {
+		if err := validateDurationControl("load", field, ac.Args); err != nil {
+			return err
+		}
+	}
+
 	if err := validateTransactionNumbers(ac.Args); err != nil {
 		return err
 	}
