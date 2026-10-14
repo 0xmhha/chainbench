@@ -56,8 +56,10 @@ func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header
 		return nil, fmt.Errorf("rpc: send eth_subscribe: %w", err)
 	}
 	var resp struct {
-		Result string `json:"result"`
-		Error  *struct {
+		JSONRPC string `json:"jsonrpc"`
+		ID      int    `json:"id"`
+		Result  string `json:"result"`
+		Error   *struct {
 			Code    int    `json:"code"`
 			Message string `json:"message"`
 		} `json:"error"`
@@ -65,6 +67,10 @@ func SubscribeWithHeaders(ctx context.Context, wsURL string, headers http.Header
 	if err := conn.ReadJSON(&resp); err != nil {
 		_ = sub.Close()
 		return nil, fmt.Errorf("rpc: read subscribe response: %w", err)
+	}
+	if resp.JSONRPC != "2.0" || resp.ID != 1 {
+		_ = sub.Close()
+		return nil, fmt.Errorf("rpc: uncorrelated subscription acknowledgement")
 	}
 	if resp.Error != nil {
 		_ = sub.Close()
@@ -84,15 +90,17 @@ func (s *Subscription) readLoop() {
 	defer func() { _ = s.Close() }()
 	for {
 		var msg struct {
-			Method string `json:"method"`
-			Params struct {
-				Result json.RawMessage `json:"result"`
+			JSONRPC string `json:"jsonrpc"`
+			Method  string `json:"method"`
+			Params  struct {
+				Subscription string          `json:"subscription"`
+				Result       json.RawMessage `json:"result"`
 			} `json:"params"`
 		}
 		if err := s.conn.ReadJSON(&msg); err != nil {
 			return
 		}
-		if msg.Method == "eth_subscription" && len(msg.Params.Result) > 0 {
+		if msg.JSONRPC == "2.0" && msg.Method == "eth_subscription" && msg.Params.Subscription == s.id && len(msg.Params.Result) > 0 {
 			select {
 			case s.notifications <- msg.Params.Result:
 			case <-s.closed:

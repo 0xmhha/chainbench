@@ -24,11 +24,11 @@
 
 | 묶음 | 패키지 | 줄 |
 |---|---|---|
-| `internal/` | 54 | 85,808 |
+| `internal/` | 54 | 85,816 |
 | `cmd/` | 19 | 5,686 |
 | `scripts/inventory/` | 3 | 790 |
 | `tests/` | 1 | 135 |
-| **합계** | **77** | **92,419** |
+| **합계** | **77** | **92,427** |
 
 이 묶음의 숫자는 `internal/arch/packagetree_test.go` 가 `go list ./...` 와 맞춰 본다. `layers.md` §3 의
 제목에 있던 개수가 43 에서 멈춰 실제 48 과 갈라져 있었기 때문에 — 개수는 사람이 세면 늦는다 —
@@ -36,7 +36,7 @@
 
 ---
 
-## 1. `internal/core` — 26패키지 20,192줄 · 프로젝트 공용 기반
+## 1. `internal/core` — 26패키지 20,200줄 · 프로젝트 공용 기반
 
 ```
 internal/core/
@@ -55,7 +55,7 @@ internal/core/
 ├── origin          88  [L0] 값이 어디서 왔는지를 말하는 어휘 하나 — Origin 과 일곱 rung, 그리고 그 순서.
 │                            기제가 아니다: 무엇이 이기는지는 상류에서 정해지고 여기는 적을 낱말만 갖는다.
 │                            해결된 망과 조립 계획이 각자 낱말을 쓰던 것을 모았다. 내부 import 0
-├── rpc            558  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
+├── rpc            566  [L1] JSON-RPC over HTTP 최소 클라이언트 (verify·test 단계용)
 ├── remote         651  [L1] 원격 접근 — API key/JWT 전송, SSH 터널, host-key 정책. rpc.DialWithClient 용 *http.Client
 ├── process      1,781  [L1] 프로세스 기동/정지/provision(Initializer·LogReader)·PID 추적·검증된 종료(run ledger)
 │                            + 기동 정책(Direct: arm·materialize·init·launch / Launcher: 헬스 게이트·진단·재시도·teardown)

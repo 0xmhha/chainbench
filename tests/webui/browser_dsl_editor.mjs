@@ -334,8 +334,26 @@ try{
  valueCase.id='values-browser'
  valueCase.chainPreset.values={limit:2,recipient:'0x000000000000000000000000000000000000dead',payload:{items:[1,true,null]}}
  valueCase.steps=[{do:'waitBlock',on:'en1',target:'$limit'},{expect:'blockNumber',on:'en1',compare:'GreaterOrEqual',is:'$limit'}]
- await upload.setInputFiles(file('values.json',valueCase))
  const valuesPath='/content/chainPreset/values'
+ // An import response must not overwrite edits made while it is in flight.
+ // Hold that response explicitly; a timing-dependent retry would hide the bug.
+ let releaseImport,importContinued
+ const importResume=new Promise(resolve=>{releaseImport=resolve})
+ const importDone=new Promise(resolve=>{importContinued=resolve})
+ const importRequest=page.waitForRequest(r=>r.url().endsWith('/api/v1/test-cases/import')&&r.postDataJSON()?.content?.id===valueCase.id)
+ const delayImport=async route=>{const held=route.request().postDataJSON()?.content?.id===valueCase.id;if(held)await importResume;await route.continue();if(held)importContinued()}
+ await page.route('**/api/v1/test-cases/import',delayImport)
+ try{
+  await upload.setInputFiles(file('values.json',valueCase))
+  await importRequest
+  assert.equal(await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).isDisabled(),true,'import response can overwrite edits made during verification')
+  assert.equal(await page.getByRole('button',{name:'새 테스트 시나리오',exact:true}).isDisabled(),true,'a new case can be overwritten by the pending import')
+  observed.pendingImport={editingDisabled:true,newCaseDisabled:true}
+ }finally{
+  releaseImport()
+  await importDone
+  await page.unroute('**/api/v1/test-cases/import',delayImport)
+ }
  await page.getByLabel(valuesPath+' 항목 이름',{exact:true}).fill('enabled')
  await page.locator(`[data-field-path="${valuesPath}"] > fieldset > button`).click()
  await page.getByLabel(valuesPath+'/enabled 형식',{exact:true}).selectOption('2')

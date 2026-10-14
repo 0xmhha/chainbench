@@ -506,7 +506,7 @@ func nativeExternalEndpointProfiles(t *testing.T, chain, binaryEnv string, addit
 		sum := sha256.Sum256(content)
 		sources[name] = hex.EncodeToString(sum[:])
 	}
-	for _, pattern := range []string{"../../../internal/app/workflow.go", "../../../internal/accounts/provider.go", "../../../internal/accounts/wallet*.go", "../../../internal/core/node/*.go", "../../../internal/core/remote/auth.go", "../../../internal/core/rpc/subscribe.go", "../../../internal/core/collector/metrics.go", "../../../internal/dsl/endpoint_profile_test.go", "../../../internal/dsl/spec_v2.go", "../../../internal/dsl/lower_v1.go", "../../../internal/dsl/schema/v2.schema.json", "../../../internal/dsl/interp/interpreter.go", "../../../internal/testengine/attach*.go", "../../../internal/testhelper/metric.go", "../../../internal/testhelper/websocket.go", "run.go", "endpoint_profile*_test.go"} {
+	for _, pattern := range []string{"../../../internal/app/workflow.go", "../../../internal/accounts/provider.go", "../../../internal/accounts/wallet*.go", "../../../internal/core/node/*.go", "../../../internal/core/remote/auth.go", "../../../internal/core/rpc/subscribe*.go", "../../../internal/core/collector/metrics.go", "../../../internal/dsl/endpoint_profile_test.go", "../../../internal/dsl/spec_v2.go", "../../../internal/dsl/lower_v1.go", "../../../internal/dsl/schema/v2.schema.json", "../../../internal/dsl/interp/interpreter.go", "../../../internal/testengine/attach*.go", "../../../internal/testhelper/metric.go", "../../../internal/testhelper/websocket.go", "run.go", "endpoint_profile*_test.go"} {
 		files, err := filepath.Glob(pattern)
 		if err != nil {
 			t.Fatal(err)

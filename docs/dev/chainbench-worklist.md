@@ -163,7 +163,7 @@ stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.g
 
 | 순서 | 작업 | 완료 기준 | 상태 |
 |---|---|---|---|
-| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 완료 — `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
+| 1 | 증명 보존 정리·WAL 압축 도구 | 참조·활성·링크·최근 파일 보존; 조회 실패 거절; macOS 압축 bytes·권한·소유자·mtime·xattr·ACL 보존; 56개 receipt 해시 대조 | 진행 — 기존 보존 계약·압축 검증 완료; 새 docs/dev 증명 참조 검색 누락 보강 필요. 기존 근거: `9812165f`, 보존 계약 17개·Python 74개·`storage_probe.py` 실제 실증 |
 | 2 | 문서·현재 상태 정합성 | Web JSON/Markdown 상태 일치; 과거 단계와 후속 HEAD 검증 구분; feature 수치의 AST 래칫 대조 | 완료 — `worklist_status_test.go` RED→GREEN; 출시 14/14·누락 48/48·미등록 59건 |
 | 3 | suite 실패 테스트 3건 보강 | 존재하고 유효한 DSL·키 입력으로 실제 setup 실패까지 도달; JSON/비JSON 동일 code 2와 구체 원인 | 완료 — `setup_failure_test.go` 세 경로 RED→GREEN; suite 전체 race와 실제 CLI 단일·다중·비JSON 실행 모두 code 2·바이너리 셋업 원인 확인 |
 | 4 | dashboard 임시 폴더 정리 경합 | 재현 또는 수명 주기 근거 확보; 작업 종료 대기 뒤 폴더 정리; 반복·race 통과 | 완료 — 원래 테스트 1,000회 race 미재현; 지연 fixture에서 최종 commit 전 TempDir 정리를 RED로 재현; terminal 기록 대기 후 두 테스트 100회·dashboard 전체 race 통과 |
@@ -412,6 +412,14 @@ RED→GREEN·전체 make check·관련 여섯 패키지 race·실제 브라우�
 각 증명의 소스 123개 해시가 일치하며 종료 DB·관련 프로세스는 0건이다. 설정·로그·세션·증명은 보존했다.
 RPC 전체 메서드, WS 이벤트 완전성, 계약 ABI/버전/권한/포크 동작을 확인한 근거는 아니다.
 R3 나머지·P4 충분성·Linux L1·9번 잔여·10–14번과 후속 Web 최종 인수는 계속 남는다.
+
+**WS 응답·알림 격리와 편집기 경합 수정:** [증거](ws-protocol-evidence.json)는 요청 ID·JSON-RPC 버전이 다른
+구독 응답을 거절하고, 다른 구독의 알림을 소비자에게 넘기지 않는다. 다섯 응답 오류와 알림 혼선을 RED→GREEN으로 확인했다.
+브라우저 회귀에서 발견한 가져오기/편집 경합도 응답을 의도적으로 지연해 RED로 재현했다. 비동기 처리 중에는 선언 편집과
+새 케이스·파일 선택을 비활성화하고 완료 후 편집·저장·내보내기를 확인했다. 첫 지연 테스트의 route 정리 오류는 제품 RED로 세지 않는다.
+관련 여섯 패키지 race·프론트 28개 테스트·SPA 빌드·전체 make check·실제 브라우저·네 native 프로필 직렬 race가 통과했다.
+각 native 소스 해시 125개가 일치하며 종료 노드 DB는 0건이다. 이 단계는 R3 전체나 후속 Web 최종 인수를 닫지 않는다.
+정리 도구의 기본 증명 검색 범위가 새 docs/dev JSON/Markdown을 빠뜨리는 누락은 다음 보강 단계에서 별도로 검증한다.
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
 

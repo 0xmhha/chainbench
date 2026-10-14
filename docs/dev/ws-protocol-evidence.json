@@ -1,0 +1,182 @@
+{
+  "scope": "WS response correlation and notification isolation, plus the real browser import/edit race discovered by this regression. Overall R3/task 9 and fresh final Web acceptance remain open.",
+  "wsContract": "Acknowledgement must use JSON-RPC 2.0 and numeric ID 1. Only JSON-RPC 2.0 eth_subscription notifications with the acknowledged subscription ID reach the consumer. Existing cancellation, typed method errors and close behavior retained.",
+  "editorContract": "While async import/load/validation/save is pending, declaration editing and replacement controls are disabled. After completion editing, saving and export remain available. A held import request deterministically proves the guard.",
+  "logs": {
+    "wsRed": {
+      "path": "/private/tmp/chainbench-ws-protocol-red.log",
+      "sha256": "3a2c9e31abdab5e1e9a3dde49edf74da75dc98d649ab83408bede45896c8e2fc"
+    },
+    "wsRaceGreen": {
+      "path": "/private/tmp/chainbench-ws-protocol-green.log",
+      "sha256": "6fc2cc088fea4be66cc04d17c0e12a08bd0dbf9f549abd761e1e6107798e9ec0"
+    },
+    "fullCheckBeforeEditorFix": {
+      "path": "/private/tmp/chainbench-ws-protocol-check.log",
+      "sha256": "5e6d16cd15cd40ff1073f3cded23ab23797f166c973675fb23338e82149ab37e"
+    },
+    "fullCheck": {
+      "path": "/private/tmp/chainbench-ws-protocol-final-check.log",
+      "sha256": "8c5e07531dc86f13c4a2f4941ad9313ea19ae94b90dee5ab722275ae71d62678"
+    },
+    "initialBrowserFailure": {
+      "path": "/private/tmp/chainbench-ws-protocol-browser.log",
+      "sha256": "a906d960fc00ef2d912d0918b73f1f5b6131e9fc0612a9ec5de9482f2d691e55"
+    },
+    "importTestFixtureFailure": {
+      "path": "/private/tmp/chainbench-ws-import-fixture-error.log",
+      "sha256": "c36605daf7568f4e2d8017920c418c40bc42cbeedc11af9ee291edeb6ed64e8e"
+    },
+    "importRed": {
+      "path": "/private/tmp/chainbench-ws-import-red.log",
+      "sha256": "8a6b84b76b867ea6b2162219761f175d268a564f495b2d0f05b84c36a807b208"
+    },
+    "build": {
+      "path": "/private/tmp/chainbench-ws-import-build.log",
+      "sha256": "270450b5495f07ecc97e701486033a6ba8b366396423c6aae8e5598676b925a5"
+    },
+    "frontendUnit": {
+      "path": "/private/tmp/chainbench-ws-import-unit.log",
+      "sha256": "f5c398fce9609bdc6a7caf4e437c95b26e7dabc9385dd41ff30a1ce0ea7e1e53"
+    },
+    "browserGreen": {
+      "path": "/private/tmp/chainbench-ws-protocol-import-browser.log",
+      "sha256": "8e320ed035c5f7c2ef38078d5e32a44d62744358cc7f3d801545ab14e266c986"
+    },
+    "native": {
+      "path": "/private/tmp/chainbench-ws-protocol-native.jsonl",
+      "sha256": "047227e5d595b5b1191111191ea93d0ef8f849016efa5e9c7130fbe7ddccee91"
+    },
+    "finalArchitecture": {
+      "path": "/private/tmp/chainbench-ws-protocol-final-arch.log",
+      "sha256": "7c537e1ce1a04aa83ab689e47329dde95ebe5c3c9ee51043826ba3b5fa6acda9"
+    }
+  },
+  "redBrowserFailure": {
+    "path": "/private/tmp/chainbench-ws-import-browser-red/failure.txt",
+    "sha256": "355a351d9b969c27c2900a711a934c69da5a7ebfd7d1902af11254714c3ca6fd"
+  },
+  "redBrowserScreenshot": {
+    "path": "/private/tmp/chainbench-ws-import-browser-red/failure.png",
+    "sha256": "76fe5ad8d9a5f7b3e65ddff694e52a50a4c498a171d7027167497b85faf77df3"
+  },
+  "fixtureFailureIsFunctionalRed": false,
+  "sources": [
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/rpc/subscribe.go",
+      "sha256": "0dcda3d4a2635cc8b11043b02c3f2e86537d470bf3d0d825d6f931eb7a8a1ab1"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/core/rpc/subscribe_protocol_test.go",
+      "sha256": "08f017bb83dc4b3e1b923d16cef4488eb3973efe36d426f884fe6b9cfa8f29d1"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/web/src/DSLEditor.svelte",
+      "sha256": "8fedfa840d17652284258768ac7bd5467d3ddbe36a08207d6d589dd067b10502"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/tests/webui/browser_dsl_editor.mjs",
+      "sha256": "0776dc8d149599cd6d3b4ef4a2222e12f68eb5b4a99137ed5374b9728541ec08"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/dashboard/spa/index.html",
+      "sha256": "64011a06a10c7f3f245c883b12df4db1f3f7ddd7471e256ed6d5a7ae9678a60d"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/dashboard/spa/assets/index-B_5GzF9v.css",
+      "sha256": "364645a059da6017367942cba331511d098f440ee4f9bb257c6b007294d05c4a"
+    },
+    {
+      "path": "/Users/0xtopaz/work/github/0xmhha/chainbench/internal/dashboard/spa/assets/index-4aBE_sCH.js",
+      "sha256": "1a315b451c35a61938ad73e67956878bbf5007fe8838a14558ad9061df2e4fc5"
+    }
+  ],
+  "browserReceipt": {
+    "path": "/private/tmp/cbui/2d09f44a-40a8-4105-8523-f072b3afe189/ws-protocol-import-browser-proof/receipt.json",
+    "sha256": "36d4ed1bef58c59ffc84caa17d2d5d8d0c71220906dfe1c6e5cda33de3716ae9"
+  },
+  "browserBinaries": [
+    {
+      "path": "/private/tmp/cbui/2d09f44a-40a8-4105-8523-f072b3afe189/dashboard",
+      "sha256": "764742e4f773677fb8d9d3c204a1d992e919df937cd1ad3b49ff4b83d2188e4b"
+    },
+    {
+      "path": "/private/tmp/cbui/2d09f44a-40a8-4105-8523-f072b3afe189/chainbench",
+      "sha256": "69e7a5faaf4389471b1a982027e827697a443ad09c22bd394e20b068189fc159"
+    }
+  ],
+  "nativeElapsedSeconds": 391.335,
+  "nativeGoFailures": 0,
+  "nativeGoSkips": 0,
+  "proofs": [
+    {
+      "path": "/private/tmp/cbui/endpoint-native-1176035265/proof.json",
+      "sha256": "ef1f008d397607b8d97ea0930b7cb60689f93527bffd0a51c399bcaa3ea1d457",
+      "chain": "stablenet",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "sourceHashesVerified": 125,
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/endpoint-native-1176035265/cli-reports/20261014-023058-94787/UTC-20261014-023111",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-1176035265/mcp-reports/20261014-023058-94787/UTC-20261014-023142",
+      "networkRuns": 6,
+      "rawSubmissions": 52,
+      "remainingNodeDataDirectories": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-366947148/proof.json",
+      "sha256": "08f3f5146becdd7a38175ad734340e576c94f6448b2dbea690b6305367931277",
+      "chain": "wbft",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "sourceHashesVerified": 125,
+      "binarySHA256": "2bad639ec4c699d5e9ffc16700cfb20f4acced6f56aebf4b9deec97622235f79",
+      "cliSession": "/private/tmp/cbui/endpoint-native-366947148/cli-reports/20261014-023058-94787/UTC-20261014-023230",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-366947148/mcp-reports/20261014-023058-94787/UTC-20261014-023250",
+      "networkRuns": 6,
+      "rawSubmissions": 52,
+      "remainingNodeDataDirectories": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-3242164512/proof.json",
+      "sha256": "20dce56c9be6e4873544a91b72bf0f0a7faa144dd534b6c90c84ac1586b3adac",
+      "chain": "wemix",
+      "genesisSet": [
+        "applepieBlock=0"
+      ],
+      "sourceHashesVerified": 125,
+      "binarySHA256": "680138fcdcbb0168ad6e39cf78e70aaf3b4d86c2991d6b042c4f812626740e9e",
+      "cliSession": "/private/tmp/cbui/endpoint-native-3242164512/cli-reports/20261014-023058-94787/UTC-20261014-023446",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-3242164512/mcp-reports/20261014-023058-94787/UTC-20261014-023515",
+      "networkRuns": 6,
+      "rawSubmissions": 52,
+      "remainingNodeDataDirectories": 0
+    },
+    {
+      "path": "/private/tmp/cbui/endpoint-native-2277967002/proof.json",
+      "sha256": "385f13e80d0a6420ac362050951dd80adcbf26f8e6ad48e9ea31f88cb2f314de",
+      "chain": "stablenet",
+      "genesisSet": [
+        "applepieBlock=0",
+        "bohoBlock=0",
+        "boho={\"systemContracts\":{\"govMinter\":{\"address\":\"0x0000000000000000000000000000000000001003\",\"version\":\"v2\"}}}"
+      ],
+      "sourceHashesVerified": 125,
+      "binarySHA256": "6d64343440ca57bc10948027fa064c69f5c2b945d108822324700ca1f6e2d159",
+      "cliSession": "/private/tmp/cbui/endpoint-native-2277967002/cli-reports/20261014-023058-94787/UTC-20261014-023634",
+      "mcpSession": "/private/tmp/cbui/endpoint-native-2277967002/mcp-reports/20261014-023058-94787/UTC-20261014-023654",
+      "networkRuns": 6,
+      "rawSubmissions": 52,
+      "remainingNodeDataDirectories": 0
+    }
+  ],
+  "nodeObservations": {
+    "supported": 312,
+    "unknown": 8
+  },
+  "remainingOwnedNodeDataDirectories": 0,
+  "limits": "Native proofs validate genuine CLI/MCP RPC, WS heads and metrics on four profiles. Invalid response injection is a unit test, not native chain behavior. Import guard is a browser proof; no Seed criterion or final acceptance is awarded.",
+  "remainingOwnedNodeProcesses": 0
+}
