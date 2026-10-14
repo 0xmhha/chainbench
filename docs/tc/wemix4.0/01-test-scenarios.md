@@ -257,6 +257,14 @@
 
 ### TX-002 — BaseFee 미달 트랜잭션 거부
 
+> **사용자 승인 기준 조정 (2026-10-15):** 조회 시점과 채굴 시점의 BaseFee를 구분한다.
+> 원래 `latest BaseFee - 1` 입력의 실제 제출·채굴 결과는 그대로 기록한다. 실제 대상 블록의
+> BaseFee보다 낮은 cap은 별도 유효 서명 거래로 검증하며, 연속 다섯 실제 블록의 BaseFee·
+> 미포함·영수증 부재·계정 상태 불변을 확인한다. 풀에서 받았다는 이유만으로 채굴 가능으로
+> 판단하지 않는다. 원문의 즉시 제출 거부가 모든 latest-minus-one 입력에서 발생한다는 기대는
+> 현행 관찰과 다르며, 아래 원래 절차·기대는 이 차이의 기록으로 유지한다.
+
+
 **목적**: `maxFeePerGas < BaseFee`인 트랜잭션이 txpool에서 거부되는지 확인
 
 **사전 조건**: Croissant 이후 블록, `eth_getBlockByNumber("latest").baseFeePerGas`로 현재 BaseFee 확인
@@ -617,6 +625,14 @@
 ---
 
 ### TX-016 — Fee Delegation FeePayer 잔액 부족 시 거부
+
+> **사용자 승인 기준 조정 (2026-10-15):** 현행 노드의 정확한 제출 거부를 검증한다.
+> 유효한 이중 서명·대납자 잔액0에서 `eth_sendRawTransaction`의 코드 `-32000`과
+> `fee delegation: insufficient feePayer's funds for gas * price` 사유, 거래/영수증 부재와
+> 계정 상태 불변을 확인한다. 대납자 자금 충전 뒤 같은 서명 바이트의 성공·정확한 수수료·
+> 송신자 값과 대납자 가스의 분리도 확인한다. 아래 원문 채굴 실패/status0 기대는 현행
+> 제출 거부와의 차이 기록이며, 존재하지 않는 실패 영수증을 만들거나 성공으로 간주하지 않는다.
+
 
 **목적**: Fee Delegation tx에서 FeePayer 잔액이 가스비보다 부족한 경우 실행이 거부되는지 확인
 

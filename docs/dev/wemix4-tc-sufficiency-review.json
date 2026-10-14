@@ -4,13 +4,13 @@
   "reviewedHead": "0cf2b9ccd14b3e3a25bc9d01dd78ccec03ade229",
   "criterionSource": {
     "path": "docs/tc/wemix4.0/01-test-scenarios.md",
-    "sha256": "9429357efb65195caa141bdd76426595bd8c4d239200008ef5239c4640b2a0dc"
+    "sha256": "a883b3c75eb4dc8f315d6d59f11760eecab2f48d399c0df6f19f1cfa6c079da8"
   },
   "allCriteriaAccepted": false,
   "statusCounts": {
     "partial": 56,
-    "confirmed_scope": 27,
-    "conflict": 3,
+    "confirmed_scope": 29,
+    "conflict": 1,
     "merged": 1
   },
   "records": [
@@ -724,8 +724,8 @@
     {
       "id": "TX-002",
       "title": "BaseFee 미달 트랜잭션 거부",
-      "criterionSha256": "45b1dcff4a4f310755fa367cf30a11d359f4c91727abd65cb34768ca4fee8908",
-      "status": "conflict",
+      "criterionSha256": "6ee7bd9a996db3373033aa897b04145d07a156f37008e97d2caa3dbbdd116b9c",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -736,7 +736,17 @@
         {
           "path": "cmd/chainbench/tx_policy_boundary_e2e_test.go",
           "function": "TestWemixTransactionPolicyBoundaryE2E",
-          "sha256": "2f3822c0a128c66ebea7c8ee8760f70b710671778c48927d1a2c38b9abadc998"
+          "sha256": "6557e947cb98551c7b0d5e45c9044e418ba634c88054c0057e82e8fd00b38212"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_acceptance_e2e_test.go",
+          "function": "verifyBelowBaseProof",
+          "sha256": "4b4eb6052ce0e7d28921686513916cc9cb7555bdbd70450166cd4843444f1f0e"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_acceptance_e2e_test.go",
+          "function": "TestBelowBaseProofRejectsSnapshotOnlyEvidence",
+          "sha256": "4b4eb6052ce0e7d28921686513916cc9cb7555bdbd70450166cd4843444f1f0e"
         }
       ],
       "observations": [
@@ -982,15 +992,19 @@
           "analysis": "Native diagnostic: snapshot baseFee 70557, cap 70556; block 26 baseFee 61738, status1, capped effective price 70556 and exact balance/nonce/value impact independently checked. Original criterion not accepted."
         }
       ],
-      "semanticAssessment": "Exact signed latest-baseFee-minus-one input observed after real Croissant; pool admitted and next block lowered baseFee enough for successful mining.",
+      "semanticAssessment": "User-approved current-node criterion verified after actual Croissant handoff; the earlier diagnostic retains its historical decision-pending wording and is superseded for these decisions by the approved proof.",
       "remainingConditions": [
-        "Original submission-refusal expectation conflicts with actual admitted/mined behavior as baseFee changes. User criterion decision pending; target-block-under-baseFee condition not yet implemented."
+        "Approved criterion verified only in current local WEMIX→WBFT Croissant handoff. Original full87 environment, Linux/mainnet/legacy consumer and final Web acceptance remain separate."
       ],
-      "confirmedScope": null,
+      "confirmedScope": "Original latest-minus-one result retained separately; cap1 signed transaction admitted but absent from five actual blocks with baseFee203718/178254/155973/136477/119418, null receipt and exact unchanged account state. Independent raw RLP/Keccak and target-window replay verified.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/tx-policy-boundary-evidence.json",
           "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        },
+        {
+          "path": "docs/dev/tx-policy-approved-evidence.json",
+          "sha256": "e271b9b1e6bd9ce3e1430c8ca17ae3c8aadf957938afc26de95e6b698a201c5f"
         }
       ]
     },
@@ -2538,8 +2552,8 @@
     {
       "id": "TX-016",
       "title": "Fee Delegation FeePayer 잔액 부족 시 거부",
-      "criterionSha256": "2cbd8eabece59c38202681d9b7ee4b90fd7f6da0ac811c4d450e2fa6b42a1e44",
-      "status": "conflict",
+      "criterionSha256": "4ada76481fb2d62d1b0bfbcbf24aee2d478c788252176f01eae75139c6ac1d8e",
+      "status": "confirmed_scope",
       "fullCriterionAccepted": false,
       "targets": [
         {
@@ -2550,7 +2564,17 @@
         {
           "path": "cmd/chainbench/tx_policy_boundary_e2e_test.go",
           "function": "TestWemixTransactionPolicyBoundaryE2E",
-          "sha256": "2f3822c0a128c66ebea7c8ee8760f70b710671778c48927d1a2c38b9abadc998"
+          "sha256": "6557e947cb98551c7b0d5e45c9044e418ba634c88054c0057e82e8fd00b38212"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_acceptance_e2e_test.go",
+          "function": "verifyUnfundedPayer",
+          "sha256": "4b4eb6052ce0e7d28921686513916cc9cb7555bdbd70450166cd4843444f1f0e"
+        },
+        {
+          "path": "cmd/chainbench/tx_policy_acceptance_e2e_test.go",
+          "function": "TestUnfundedPayerRejectsGenericNodeErrors",
+          "sha256": "4b4eb6052ce0e7d28921686513916cc9cb7555bdbd70450166cd4843444f1f0e"
         }
       ],
       "observations": [
@@ -2653,15 +2677,19 @@
           "analysis": "Native node code -32000 and exact insufficient feePayer funds reason, five advancing blocks with absent tx/receipt and unchanged state; same signed bytes after funding yield status1/type16 with exact sender value and payer gas fee."
         }
       ],
-      "semanticAssessment": "Valid dual-signed original input got exact typed node submission refusal; same signed bytes mine after funding only payer.",
+      "semanticAssessment": "User-approved current-node criterion verified after actual Croissant handoff; the earlier diagnostic retains its historical decision-pending wording and is superseded for these decisions by the approved proof.",
       "remainingConditions": [
-        "Original mined status0 expectation conflicts with actual submission refusal and absent receipt. User criterion decision pending; original not accepted."
+        "Approved criterion verified only in current local WEMIX→WBFT Croissant handoff. Original full87 environment, Linux/mainnet/legacy consumer and final Web acceptance remain separate."
       ],
-      "confirmedScope": null,
+      "confirmedScope": "Valid actual dual signatures, zero payer balance, exact eth_sendRawTransaction -32000 feePayer funds error, null transaction/receipt and unchanged state; funding then same signed bytes status1 with exact separate sender value/payer fee verified.",
       "verifiedEvidence": [
         {
           "path": "docs/dev/tx-policy-boundary-evidence.json",
           "sha256": "079f0a3a17f8cf72291bd004e385aa4d8b4252f59f53d5b8f9f718e135d2e1e4"
+        },
+        {
+          "path": "docs/dev/tx-policy-approved-evidence.json",
+          "sha256": "e271b9b1e6bd9ce3e1430c8ca17ae3c8aadf957938afc26de95e6b698a201c5f"
         }
       ]
     },
@@ -7478,9 +7506,7 @@
     "W4": "unresolved; original metric requirement retained"
   },
   "pendingDecisions": [
-    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output.",
-    "TX-002 latest baseFee-minus-one admitted and mined after baseFee fell; target-block eligibility criterion decision pending.",
-    "TX-016 exact unfunded-payer submission refusal vs original mined-failure expectation: decision pending."
+    "TX-019 exact invalid P256 output: decision pending; do not substitute NotEqual for exact output."
   ],
   "limitations": [
     "Relevant sources were read, not all 87 freshly executed. Partial records intentionally remain open.",

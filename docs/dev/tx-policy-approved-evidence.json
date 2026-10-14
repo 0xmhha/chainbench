@@ -1,0 +1,274 @@
+{
+  "scope": "User-approved TX002 snapshot vs mined fees, separate actual target-block ineligibility window, TX016 exact node refusal and identical funded signed bytes after actual WEMIX to WBFT Croissant handoff. Not full87/Linux/mainnet/legacy/final Web acceptance.",
+  "userApprovedCriteria": true,
+  "originalAll87Complete": false,
+  "run": {
+    "exitCode": 0,
+    "sourceBefore": "7020d246fec1b9fa80cb2526244de50efcd2fef70b7540f7f3a08480bff43b88",
+    "sourceAfter": "7020d246fec1b9fa80cb2526244de50efcd2fef70b7540f7f3a08480bff43b88",
+    "sourceUnchanged": true,
+    "passed": [
+      "TestWemixTransactionPolicyBoundaryE2E",
+      "TestWemixGovernanceE2E"
+    ],
+    "failed": [],
+    "skipped": [],
+    "runtimes": [
+      "/private/tmp/cbui/hf-3gckf632",
+      "/private/tmp/cbui/hf-amlre979"
+    ],
+    "remainingDatabases": {
+      "/private/tmp/cbui/hf-3gckf632": [],
+      "/private/tmp/cbui/hf-amlre979": []
+    },
+    "elapsedSeconds": 166.489,
+    "summary": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-summary.json",
+      "sha256": "87adabfadde819ca59f0737112f6baf4b327b98066503345376923c785911086",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015021765382856
+    },
+    "log": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-native.jsonl",
+      "sha256": "4efe33ca5dafa164490125fe5369cb2ed45aa97ad5d938be44f6f231f5e8fb30",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015021186273247
+    },
+    "start": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-start.json",
+      "sha256": "b33716f93ba1c8358b17f566e4f5edef72bd91e886d69941ee68130a35cc7194",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014852404929032
+    }
+  },
+  "observations": {
+    "tx002-policy": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-tx002-policy.json",
+      "sha256": "ff602ed4eb33cca6a4e0fdb943b30b7fcd3c79098a16502034d2cff0cda58263",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015032967490527
+    },
+    "tx002-target-basefee": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-tx002-target-basefee.json",
+      "sha256": "4552bf8bdf7cb8389f6862fe7f1eb5f50d79e4e1189e973f0b49b5174520b6e0",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015032967700527
+    },
+    "tx016-policy": {
+      "path": "/private/tmp/chainbench-tx-policy-approved-tx016-policy.json",
+      "sha256": "114dc2975ee21eb4a140c70bbcc96d83b4d3281373862d2834f15e42d188c7b1",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792015032968181278
+    }
+  },
+  "targetBlockFees": [
+    "203718",
+    "178254",
+    "155973",
+    "136477",
+    "119418"
+  ],
+  "targetSubmissionError": null,
+  "exactPayerError": {
+    "Method": "eth_sendRawTransaction",
+    "Code": -32000,
+    "Message": "fee delegation: insufficient feePayer's funds for gas * price"
+  },
+  "sameBytesControlFee": 2100000754068000,
+  "independentDecodedPayloads": [
+    {
+      "type": "0x2",
+      "chainId": 8285,
+      "nonce": 0,
+      "tipCap": 774267,
+      "feeCap": 774267,
+      "gas": 21000,
+      "to": "0xc7104b47b16a27ef0d14cdd1fd573334dfb1c953",
+      "value": 1,
+      "data": "0x"
+    },
+    {
+      "type": "0x2",
+      "chainId": 8285,
+      "nonce": 1,
+      "tipCap": 1548534,
+      "feeCap": 300002591061,
+      "gas": 21000,
+      "to": "0xc7104b47b16a27ef0d14cdd1fd573334dfb1c953",
+      "value": 1,
+      "data": "0x"
+    },
+    {
+      "type": "0x16",
+      "chainId": 8285,
+      "nonce": 0,
+      "tipCap": 100000000000,
+      "feeCap": 300002591061,
+      "gas": 21000,
+      "to": "0xc7104b47b16a27ef0d14cdd1fd573334dfb1c953",
+      "value": 1,
+      "data": "0x",
+      "feePayer": "0x659473e94cb597cd074b04dd67aed426f4dd6fc9"
+    },
+    {
+      "type": "0x2",
+      "chainId": 8285,
+      "nonce": 2,
+      "tipCap": 100000000000,
+      "feeCap": 300002591061,
+      "gas": 21000,
+      "to": "0x659473e94cb597cd074b04dd67aed426f4dd6fc9",
+      "value": 1000000000000000000,
+      "data": "0x"
+    },
+    {
+      "type": "0x16",
+      "chainId": 8285,
+      "nonce": 0,
+      "tipCap": 100000000000,
+      "feeCap": 300002591061,
+      "gas": 21000,
+      "to": "0xc7104b47b16a27ef0d14cdd1fd573334dfb1c953",
+      "value": 1,
+      "data": "0x",
+      "feePayer": "0x659473e94cb597cd074b04dd67aed426f4dd6fc9"
+    },
+    {
+      "type": "0x2",
+      "chainId": 8285,
+      "nonce": 2,
+      "tipCap": 1,
+      "feeCap": 1,
+      "gas": 21000,
+      "to": "0xc7104b47b16a27ef0d14cdd1fd573334dfb1c953",
+      "value": 1,
+      "data": "0x"
+    }
+  ],
+  "independentVerifier": {
+    "path": "/private/tmp/chainbench-policy-keccak.go",
+    "sha256": "e712a2ea7a5fd17fe5c42be711867d9475c91c4f276563b7888d8a69f5e17086",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792001507798664088
+  },
+  "runtimes": [
+    {
+      "path": "/private/tmp/cbui/hf-3gckf632",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-3gckf632/reports/tx-policy-approved-inventory.json",
+        "sha256": "2958c14b88391f468a285a057b750ea17af75139a1f9065329dfd355d2aa10ab",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792015033491930142
+      }
+    },
+    {
+      "path": "/private/tmp/cbui/hf-amlre979",
+      "active": false,
+      "remainingDatabases": 0,
+      "retainedFiles": 228,
+      "inventory": {
+        "path": "/private/tmp/cbui/hf-amlre979/reports/tx-policy-approved-inventory.json",
+        "sha256": "6dcea61c7b30b7425bdeb503502637812884dcc1a5927fd7bb02fffa7b170bbf",
+        "mode": "0o600",
+        "uid": 501,
+        "gid": 0,
+        "mtimeNS": 1792015033563479534
+      }
+    }
+  ],
+  "frozenReview": {
+    "path": "/private/tmp/chainbench-tc-review-before-tx-policy-approved-publication.json",
+    "sha256": "c5160c0272ad444a155cfa1fd34df9a46ebb76224069a65d7b6619780ba97280",
+    "mode": "0o644",
+    "uid": 501,
+    "gid": 0,
+    "mtimeNS": 1792014640187345274
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-red.log",
+      "sha256": "e3a2bb8e8db096c2f8fa31377f463e2a1d96189076e55fef684ed2d33a0383a1",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014551028453713
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-payer-red.log",
+      "sha256": "d283fdaaa361ff563f72eeb1c07c2e240c71e345e469df027b842063e90ca02a",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014569019245616
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-green.log",
+      "sha256": "dd82251786c26a3397907af841b2d54bc51e1373775e77bd9bfba05d22a09955",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014593026392100
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-related-race-unrestricted.log",
+      "sha256": "7cc013b10d9a9553e91244526cda27a8a02d5eddfe7212d18049309532ad98ff",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014754190194035
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-check.log",
+      "sha256": "37104507521d2c0b3e303f5240cdeb0d0b74c930fef97f90c2cd10b5a164aef5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014838498766297
+    },
+    {
+      "path": "/private/tmp/chainbench-tx-policy-approved-tagged-vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1792014838502796303
+    }
+  ],
+  "binaryProvenance": [
+    {
+      "path": "/private/tmp/chainbench-head-native/provenance.json",
+      "sha256": "8788632c70ede6fe6e683855029254ff3101d696434d64a2900d9e9afc8a80d5",
+      "mode": "0o644",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791888562536028657
+    },
+    {
+      "path": "/private/tmp/chainbench-w3-head-native/provenance.json",
+      "sha256": "88d809c9dffa7e277d5765e6deeaf2f3f77f8789d66d866be3f00e09bbf996fd",
+      "mode": "0o600",
+      "uid": 501,
+      "gid": 0,
+      "mtimeNS": 1791981215910192091
+    }
+  ]
+}

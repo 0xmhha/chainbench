@@ -184,8 +184,8 @@ func policyDynamic(t *testing.T, c *rpc.Client, key *sdkcrypto.PrivateKey, to sd
 	return tx
 }
 
-// TestWemixTransactionPolicyBoundaryE2E observes original TX-002/TX-016 inputs
-// after a real Croissant handoff. A diagnostic pass is not criterion acceptance.
+// TestWemixTransactionPolicyBoundaryE2E separates snapshot and target-block fees
+// and verifies the user-approved current-node fee-payer rejection after handoff.
 func TestWemixTransactionPolicyBoundaryE2E(t *testing.T) {
 	fromBin, toBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN"), os.Getenv("CHAINBENCH_E2E_TO_BIN")
 	if fromBin == "" || toBin == "" {
@@ -296,6 +296,50 @@ func TestWemixTransactionPolicyBoundaryE2E(t *testing.T) {
 	low["positiveControl"] = map[string]any{"submission": positive, "receipt": policyControlReceipt(t, c, positive)}
 	logGovernanceProof(t, "tx002-policy", low)
 
+	// A separate low cap must remain below every actual target block, rather than
+	// assuming the earlier latest quote equals a later block's base fee.
+	bounded := policyDynamic(t, c, actors[0], addresses[3], chainID, big.NewInt(1), big.NewInt(1), big.NewInt(1))
+	boundedBefore := policyState(t, c, addresses[0].Hex(), addresses[2].Hex(), addresses[3].Hex())
+	boundedHead, err := c.BlockNumber(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	boundedSubmit := policySubmit(t, c, bounded.Encode())
+	boundedProof := belowBaseProof{Cap: "1", Submission: boundedSubmit, Before: boundedBefore}
+	for i := uint64(1); i <= 5; i++ {
+		waitForHead(t, c, boundedHead+i, 30*time.Second)
+		tag := fmt.Sprintf("0x%x", boundedHead+i)
+		block, err := c.BlockByNumber(t.Context(), tag)
+		if err != nil || block.BaseFeePerGas == nil {
+			t.Fatal("target block fee missing", err)
+		}
+		var body struct{ Transactions []string }
+		if err = c.Call(t.Context(), "eth_getBlockByNumber", &body, tag, false); err != nil {
+			t.Fatal(err)
+		}
+		sample := belowBaseSample{Height: boundedHead + i, BaseFee: block.BaseFeePerGas.String()}
+		for _, hash := range body.Transactions {
+			if hash == boundedSubmit.ExpectedHash {
+				sample.Included = true
+			}
+		}
+		if err = c.Call(t.Context(), "eth_getTransactionReceipt", &sample.Receipt, boundedSubmit.ExpectedHash); err != nil {
+			t.Fatal(err)
+		}
+		boundedProof.Samples = append(boundedProof.Samples, sample)
+	}
+	if err = c.Call(t.Context(), "eth_getTransactionByHash", &boundedProof.Transaction, boundedSubmit.ExpectedHash); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Call(t.Context(), "eth_getTransactionReceipt", &boundedProof.Receipt, boundedSubmit.ExpectedHash); err != nil {
+		t.Fatal(err)
+	}
+	boundedProof.After = policyState(t, c, addresses[0].Hex(), addresses[2].Hex(), addresses[3].Hex())
+	logGovernanceProof(t, "tx002-target-basefee", boundedProof)
+	if err = verifyBelowBaseProof(boundedProof); err != nil {
+		t.Fatal(err)
+	}
+
 	// Same valid dual-signed bytes are resubmitted after funding only the fee payer.
 	inner := policyDynamic(t, c, actors[1], addresses[3], chainID, highCap, tip, big.NewInt(1))
 	delegated := sdktx.FeeDelegateTx{Sender: inner}
@@ -341,6 +385,9 @@ func TestWemixTransactionPolicyBoundaryE2E(t *testing.T) {
 	if classification == "rejected" && actualTx != nil {
 		t.Fatal("rejected dual signed hash remains")
 	}
+	if err = verifyUnfundedPayer(refusal, before, after, actualTx, actualReceipt); err != nil {
+		t.Fatal(err)
+	}
 	original := actualReceipt != nil && actualReceipt["status"] == "0x0"
 	fund := policyDynamic(t, c, actors[0], addresses[2], chainID, highCap, tip, big.NewInt(1000000000000000000))
 	funded := policySubmit(t, c, fund.Encode())
@@ -378,5 +425,5 @@ func TestWemixTransactionPolicyBoundaryE2E(t *testing.T) {
 	if controlAfter.SenderBalance != new(big.Int).Sub(senderBefore, big.NewInt(1)).String() || controlAfter.PayerBalance != new(big.Int).Sub(payerBefore, fee).String() || controlAfter.RecipientBalance != new(big.Int).Add(recipientBefore, big.NewInt(1)).String() || controlAfter.SenderNonce != "0x1" || controlAfter.PayerNonce != controlBefore.PayerNonce {
 		t.Fatal("same-bytes positive control did not separate sender value and payer gas", controlBefore, controlAfter)
 	}
-	logGovernanceProof(t, "tx016-policy", map[string]any{"criterion": "TX-016", "input": delegated, "senderSignatureValid": true, "payerSignatureValid": true, "submission": refusal, "classification": classification, "initialBlock": head, "observedThroughBlock": head + 5, "transaction": actualTx, "receipt": actualReceipt, "before": before, "after": after, "originalExpectationObserved": original, "fundingControl": map[string]any{"submission": funded, "receipt": fundReceipt}, "sameBytesControl": map[string]any{"submission": resubmission, "receipt": receipt, "before": controlBefore, "after": controlAfter, "exactFee": fee.String()}, "originalCriteriaAccepted": false})
+	logGovernanceProof(t, "tx016-policy", map[string]any{"criterion": "TX-016", "input": delegated, "senderSignatureValid": true, "payerSignatureValid": true, "submission": refusal, "classification": classification, "initialBlock": head, "observedThroughBlock": head + 5, "transaction": actualTx, "receipt": actualReceipt, "before": before, "after": after, "originalExpectationObserved": original, "fundingControl": map[string]any{"submission": funded, "receipt": fundReceipt}, "sameBytesControl": map[string]any{"submission": resubmission, "receipt": receipt, "before": controlBefore, "after": controlAfter, "exactFee": fee.String()}, "userApprovedCurrentNodeCriteria": true})
 }
